@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -39,7 +38,6 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
   @Override
   public boolean has(byte[] key) {
     byte[] assetIssue = dbSource.getData(key);
-    logger.info("name is {}, asset issue is {}", key, assetIssue);
     return null != assetIssue;
   }
 

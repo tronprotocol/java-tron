@@ -1,6 +1,6 @@
 package org.tron.core.exception;
 
-public class RevokingStoreIllegalStateException extends TronException {
+public class RevokingStoreIllegalStateException extends TronRuntimeException {
 
   /**
    * Constructs an RevokingStoreIllegalStateException with no detail message. A detail message is a

@@ -48,6 +48,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
@@ -55,7 +56,9 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.AbstractRevokingStore.Dialog;
+import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.exception.AccountResourceInsufficientException;
+import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -66,7 +69,7 @@ import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.exception.RevokingStoreIllegalStateException;
+import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
@@ -106,6 +109,9 @@ public class Manager {
   private RecentBlockStore recentBlockStore;
   @Autowired
   private VotesStore votesStore;
+  @Autowired
+  private TransactionHistoryStore transactionHistoryStore;
+
 
   // for network
   @Autowired
@@ -487,7 +493,6 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, DupTransactionException, TaposException,
       TooBigTransactionException, TransactionExpirationException {
-    logger.info("push transaction");
 
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
@@ -503,8 +508,6 @@ public class Manager {
         processTransaction(trx);
         pendingTransactions.add(trx);
         tmpDialog.merge();
-      } catch (RevokingStoreIllegalStateException e) {
-        logger.debug(e.getMessage(), e);
       }
     }
     return true;
@@ -554,18 +557,18 @@ public class Manager {
   /**
    * when switch fork need erase blocks on fork branch.
    */
-  public void eraseBlock() throws BadItemException, ItemNotFoundException {
+  public void eraseBlock() {
     dialog.reset();
-    BlockCapsule oldHeadBlock =
-        getBlockStore().get(getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes());
     try {
+      BlockCapsule oldHeadBlock = getBlockById(getDynamicPropertiesStore().getLatestBlockHeaderHash());
+      logger.info("begin to erase block:" + oldHeadBlock);
+      khaosDb.pop();
       revokingStore.pop();
-    } catch (RevokingStoreIllegalStateException e) {
-      logger.info(e.getMessage(), e);
+      logger.info("end to erase block:" + oldHeadBlock);
+      popedTransactions.addAll(oldHeadBlock.getTransactions());
+    } catch (ItemNotFoundException | BadItemException e) {
+      logger.warn(e.getMessage(), e);
     }
-    logger.info("erase block:" + oldHeadBlock);
-    khaosDb.pop();
-    popedTransactions.addAll(oldHeadBlock.getTransactions());
   }
 
   private void applyBlock(BlockCapsule block) throws ContractValidateException,
@@ -577,57 +580,90 @@ public class Manager {
     this.blockIndexStore.put(block.getBlockId());
   }
 
-  private void switchFork(BlockCapsule newHead) {
-    Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> binaryTree =
-        khaosDb.getBranch(
-            newHead.getBlockId(), getDynamicPropertiesStore().getLatestBlockHeaderHash());
+  private void switchFork(BlockCapsule newHead)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException,
+      ValidateScheduleException, AccountResourceInsufficientException, TaposException,
+      TooBigTransactionException, DupTransactionException, TransactionExpirationException,
+      NonCommonBlockException {
+    Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
+    try {
+      binaryTree =
+          khaosDb.getBranch(
+              newHead.getBlockId(), getDynamicPropertiesStore().getLatestBlockHeaderHash());
+    } catch (NonCommonBlockException e) {
+      logger.info("there is not the most recent common ancestor, need to remove all blocks in the fork chain.");
+      BlockCapsule tmp = newHead;
+      while (tmp != null) {
+        khaosDb.removeBlk(tmp.getBlockId());
+        tmp = khaosDb.getBlock(tmp.getParentHash());
+      }
 
+      throw e;
+    }
     if (CollectionUtils.isNotEmpty(binaryTree.getValue())) {
       while (!getDynamicPropertiesStore()
           .getLatestBlockHeaderHash()
           .equals(binaryTree.getValue().peekLast().getParentHash())) {
-        try {
-          eraseBlock();
-        } catch (BadItemException e) {
-          logger.info(e.getMessage());
-        } catch (ItemNotFoundException e) {
-          logger.info(e.getMessage());
-        }
+        eraseBlock();
       }
     }
 
     if (CollectionUtils.isNotEmpty(binaryTree.getKey())) {
-      LinkedList<BlockCapsule> branch = binaryTree.getKey();
-      Collections.reverse(branch);
-      branch.forEach(
-          item -> {
-            // todo  process the exception carefully later
-            try (Dialog tmpDialog = revokingStore.buildDialog()) {
-              applyBlock(item);
-              tmpDialog.commit();
-            } catch (AccountResourceInsufficientException e) {
-              logger.debug(e.getMessage(), e);
-            } catch (ValidateSignatureException e) {
-              logger.debug(e.getMessage(), e);
-            } catch (ContractValidateException e) {
-              logger.debug(e.getMessage(), e);
-            } catch (ContractExeException e) {
-              logger.debug(e.getMessage(), e);
-            } catch (RevokingStoreIllegalStateException e) {
-              logger.debug(e.getMessage(), e);
-            } catch (TaposException e) {
-              logger.debug(e.getMessage(), e);
-            } catch (DupTransactionException e) {
-              logger.debug(e.getMessage(), e);
-            } catch (TooBigTransactionException e) {
-              logger.debug(e.getMessage(), e);
-            } catch (TransactionExpirationException e) {
-              logger.debug(e.getMessage(), e);
-            } catch (ValidateScheduleException e) {
-              logger.debug(e.getMessage(), e);
+      List<KhaosBlock> first = new ArrayList<>(binaryTree.getKey());
+      Collections.reverse(first);
+      for (KhaosBlock item : first) {
+        Exception exception = null;
+        // todo  process the exception carefully later
+        try (Dialog tmpDialog = revokingStore.buildDialog()) {
+          applyBlock(item.getBlk());
+          tmpDialog.commit();
+        } catch (AccountResourceInsufficientException
+            | ValidateSignatureException
+            | ContractValidateException
+            | ContractExeException
+            | TaposException
+            | DupTransactionException
+            | TransactionExpirationException
+            | TooBigTransactionException
+            | ValidateScheduleException e) {
+          logger.warn(e.getMessage(), e);
+          exception = e;
+          throw e;
+        } finally {
+          if (exception != null) {
+            logger.warn("switch back because exception thrown while switching forks. " + exception.getMessage(),
+                exception);
+            first.forEach(khaosBlock -> khaosDb.removeBlk(khaosBlock.getBlk().getBlockId()));
+            khaosDb.setHead(binaryTree.getValue().peekFirst());
+
+            while (!getDynamicPropertiesStore()
+                .getLatestBlockHeaderHash()
+                .equals(binaryTree.getValue().peekLast().getParentHash())) {
+              eraseBlock();
             }
-          });
-      return;
+
+            List<KhaosBlock> second = new ArrayList<>(binaryTree.getValue());
+            Collections.reverse(second);
+            for (KhaosBlock khaosBlock : second) {
+              // todo  process the exception carefully later
+              try (Dialog tmpDialog = revokingStore.buildDialog()) {
+                applyBlock(khaosBlock.getBlk());
+                tmpDialog.commit();
+              } catch (AccountResourceInsufficientException
+                  | ValidateSignatureException
+                  | ContractValidateException
+                  | ContractExeException
+                  | TaposException
+                  | DupTransactionException
+                  | TransactionExpirationException
+                  | TooBigTransactionException
+                  | ValidateScheduleException e) {
+                logger.warn(e.getMessage(), e);
+              }
+            }
+          }
+        }
+      }
     }
   }
 
@@ -641,25 +677,25 @@ public class Manager {
    */
   public synchronized void pushBlock(final BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException, BadNumberBlockException {
+      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
+      TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException,
+      BadNumberBlockException, BadBlockException, NonCommonBlockException {
 
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
         if (!block.validateSignature()) {
-          logger.info("The signature is not validated.");
-          // TODO: throw exception here.
-          return;
+          logger.warn("The signature is not validated.");
+          throw new BadBlockException("The signature is not validated");
         }
 
         if (!block.calcMerkleRoot().equals(block.getMerkleRoot())) {
-          logger.info(
-              "The merkler root doesn't match, Calc result is "
+          logger.warn(
+              "The merkle root doesn't match, Calc result is "
                   + block.calcMerkleRoot()
                   + " , the headers is "
                   + block.getMerkleRoot());
-          // TODO:throw exception here.
-          return;
+          throw new BadBlockException("The merkle hash is not validated");
         }
       }
 
@@ -728,8 +764,6 @@ public class Manager {
         try (Dialog tmpDialog = revokingStore.buildDialog()) {
           applyBlock(newBlock);
           tmpDialog.commit();
-        } catch (RevokingStoreIllegalStateException e) {
-          logger.error(e.getMessage(), e);
         } catch (Throwable throwable) {
           logger.error(throwable.getMessage(), throwable);
           khaosDb.removeBlk(block.getBlockId());
@@ -783,12 +817,12 @@ public class Manager {
   /**
    * Get the fork branch.
    */
-  public LinkedList<BlockId> getBlockChainHashesOnFork(final BlockId forkBlockHash) {
-    final Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> branch =
+  public LinkedList<BlockId> getBlockChainHashesOnFork(final BlockId forkBlockHash) throws NonCommonBlockException {
+    final Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> branch =
         this.khaosDb.getBranch(
             getDynamicPropertiesStore().getLatestBlockHeaderHash(), forkBlockHash);
 
-    LinkedList<BlockCapsule> blockCapsules = branch.getValue();
+    LinkedList<KhaosBlock> blockCapsules = branch.getValue();
 
     if (blockCapsules.isEmpty()) {
       logger.info("empty branch {}", forkBlockHash);
@@ -796,10 +830,11 @@ public class Manager {
     }
 
     LinkedList<BlockId> result = blockCapsules.stream()
-        .map(blockCapsule -> blockCapsule.getBlockId())
+        .map(KhaosBlock::getBlk)
+        .map(BlockCapsule::getBlockId)
         .collect(Collectors.toCollection(LinkedList::new));
 
-    result.add(blockCapsules.peekLast().getParentBlockId());
+    result.add(blockCapsules.peekLast().getBlk().getParentBlockId());
 
     return result;
   }
@@ -891,6 +926,12 @@ public class Manager {
     trxCap.setResult(ret);
 
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
+    if (Args.getInstance().isSolidityNode()) {
+      TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
+      transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());
+      transactionInfoCapsule.setFee(ret.getFee());
+      transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfoCapsule);
+    }
     return true;
   }
 
@@ -945,7 +986,7 @@ public class Manager {
       // apply transaction
       try (Dialog tmpDialog = revokingStore.buildDialog()) {
         processTransaction(trx);
-        trx.resetResult();
+//        trx.resetResult();
         tmpDialog.merge();
         // push into block
         blockCapsule.addTransaction(trx);
@@ -955,9 +996,6 @@ public class Manager {
         logger.debug(e.getMessage(), e);
       } catch (ContractValidateException e) {
         logger.info("contract not processed during validate");
-        logger.debug(e.getMessage(), e);
-      } catch (RevokingStoreIllegalStateException e) {
-        logger.info("contract not processed during RevokingStoreIllegalState");
         logger.debug(e.getMessage(), e);
       } catch (TaposException e) {
         logger.info("contract not processed during TaposException");
@@ -1005,6 +1043,10 @@ public class Manager {
       logger.info("contract not processed during TransactionExpirationException");
     } catch (BadNumberBlockException e) {
       logger.info("generate block using wrong number");
+    } catch (BadBlockException e) {
+      logger.info("block exception");
+    } catch (NonCommonBlockException e) {
+      logger.info("non common exception");
     }
 
     return null;
@@ -1020,6 +1062,14 @@ public class Manager {
 
   private void setTransactionStore(final TransactionStore transactionStore) {
     this.transactionStore = transactionStore;
+  }
+
+  public TransactionHistoryStore getTransactionHistoryStore() {
+    return this.transactionHistoryStore;
+  }
+
+  private void setTransactionHistoryStore(final TransactionHistoryStore transactionHistoryStore) {
+    this.transactionHistoryStore = transactionHistoryStore;
   }
 
   public BlockStore getBlockStore() {
@@ -1175,11 +1225,6 @@ public class Manager {
 
     this.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
 
-    try {
-      adjustBalance(accountStore.getSun(), -WITNESS_PAY_PER_BLOCK);
-    } catch (BalanceInsufficientException e) {
-      logger.warn(e.getMessage(), e);
-    }
     try {
       adjustAllowance(witnessCapsule.getAddress().toByteArray(), WITNESS_PAY_PER_BLOCK);
     } catch (BalanceInsufficientException e) {

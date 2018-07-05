@@ -85,10 +85,6 @@ public class NodeStatistics {
     discoverMessageLatency = new SimpleStatter(node.getIdString());
   }
 
-  private int getSessionReputation() {
-    return getSessionFairReputation() + (isPredefined ? REPUTATION_PREDEFINED : 0);
-  }
-
   private int getSessionFairReputation() {
     int discoverReput = 0;
 
@@ -129,7 +125,14 @@ public class NodeStatistics {
   }
 
   public int getReputation() {
-    return isReputationPenalized() ? 0 : persistedReputation / 2 + getSessionReputation();
+    int score = 0;
+    if (!isReputationPenalized()){
+      score += persistedReputation / 2 + getSessionFairReputation();
+    }
+    if (isPredefined){
+      score += REPUTATION_PREDEFINED;
+    }
+    return score;
   }
 
   public ReasonCode getDisconnectReason() {

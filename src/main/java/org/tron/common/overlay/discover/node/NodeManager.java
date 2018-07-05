@@ -138,8 +138,6 @@ public class NodeManager implements EventHandler {
       for (Node node : bootNodes) {
         getNodeHandler(node);
       }
-
-
     }
   }
 
@@ -227,14 +225,13 @@ public class NodeManager implements EventHandler {
     Message m = udpEvent.getMessage();
     InetSocketAddress sender = udpEvent.getAddress();
 
-    Node n = new Node(m.getFrom().getId(), sender.getHostString(), sender.getPort());
+    Node n = new Node(m.getNodeId(), sender.getHostString(), sender.getPort());
 
     if (inboundOnlyFromKnownNodes && !hasNodeHandler(n)) {
       logger.debug("Inbound packet from unknown peer {}.", sender.getAddress());
       return;
     }
     NodeHandler nodeHandler = getNodeHandler(n);
-    nodeHandler.setSourceNode(m.getFrom());
 
     switch (m.getType()) {
       case DISCOVER_PING:

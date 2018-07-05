@@ -28,11 +28,14 @@ import org.tron.api.GrpcAPI.BlockLimit;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.BlockReference;
 import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.EasyTransferMessage;
+import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.PaginatedMessage;
+import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletExtensionGrpc;
@@ -74,6 +77,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionSign;
 
 @Component
@@ -282,6 +286,20 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getTransactionInfoById(BytesMessage request,
+        StreamObserver<TransactionInfo> responseObserver) {
+      ByteString id = request.getValue();
+      if (null != id) {
+        TransactionInfo reply = walletSolidity.getTransactionInfoById(id);
+
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void generateAddress(EmptyMessage request, StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver){
       ECKey ecKey = new ECKey(Utils.getRandom());
       byte[] priKey = ecKey.getPrivKeyBytes();
@@ -396,6 +414,50 @@ public class RpcApiService implements Service {
         StreamObserver<Transaction> responseObserver) {
       TransactionCapsule retur = wallet.getTransactionSign(req);
       responseObserver.onNext(retur.getInstance());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void createAdresss(BytesMessage req,
+        StreamObserver<BytesMessage> responseObserver) {
+      byte[] address = wallet.createAdresss(req.getValue().toByteArray());
+      BytesMessage.Builder builder = BytesMessage.newBuilder();
+      builder.setValue(ByteString.copyFrom(address));
+      responseObserver.onNext(builder.build());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void easyTransfer(EasyTransferMessage req,
+        StreamObserver<EasyTransferResponse> responseObserver) {
+      byte[] privateKey = wallet.pass2Key(req.getPassPhrase().toByteArray());
+      ECKey ecKey = ECKey.fromPrivate(privateKey);
+      byte[] owner = ecKey.getAddress();
+      TransferContract.Builder builder = TransferContract.newBuilder();
+      builder.setOwnerAddress(ByteString.copyFrom(owner));
+      builder.setToAddress(req.getToAddress());
+      builder.setAmount(req.getAmount());
+
+      TransactionCapsule transactionCapsule = null;
+      GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
+      EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
+      try {
+        transactionCapsule = createTransactionCapsule(builder.build(),
+            ContractType.TransferContract);
+      } catch (ContractValidateException e) {
+        returnBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getMessage()));
+        responseBuild.setResult(returnBuilder.build());
+        responseObserver.onNext(responseBuild.build());
+        responseObserver.onCompleted();
+        return;
+      }
+
+      transactionCapsule.sign(privateKey);
+      GrpcAPI.Return retur = wallet.broadcastTransaction(transactionCapsule.getInstance());
+      responseBuild.setTransaction(transactionCapsule.getInstance());
+      responseBuild.setResult(retur);
+      responseObserver.onNext(responseBuild.build());
       responseObserver.onCompleted();
     }
 

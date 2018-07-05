@@ -1,0 +1,40 @@
+package org.tron.core.services.http;
+
+import com.alibaba.fastjson.JSONObject;
+import java.io.IOException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.Wallet;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.protos.Protocol.Block;
+
+
+@Component
+@Slf4j
+public class GetNowBlockServlet extends HttpServlet {
+
+  @Autowired
+  private Wallet wallet;
+
+  protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+    try {
+      Block reply = wallet.getNowBlock();
+      if (reply != null) {
+        response.getWriter().println(Util.printBlock(reply));
+      } else {
+        response.getWriter().println("{}");
+      }
+    } catch (IOException e) {
+      logger.debug("IOException: {}", e.getMessage());
+    }
+  }
+
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+    doGet(request, response);
+  }
+}
