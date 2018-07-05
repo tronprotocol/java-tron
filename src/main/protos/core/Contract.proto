@@ -144,11 +144,11 @@ message ProposalCreateContract {
 
 message ProposalApproveContract {
   bytes owner_address = 1;
-  long proposal_id = 2;
+  int64 proposal_id = 2;
   bool is_add_approval = 3; // add or remove approval
 }
 
 message ProposalDeleteContract {
   bytes owner_address = 1;
-  bytes proposal_id = 2;
+  int64 proposal_id = 2;
 }
