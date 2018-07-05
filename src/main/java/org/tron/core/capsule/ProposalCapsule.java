@@ -100,7 +100,6 @@ public class ProposalCapsule implements ProtoCapsule<Proposal> {
         .build();
   }
 
-
   public byte[] createDbKey() {
     return ByteArray.fromLong(getID());
   }
