@@ -321,6 +321,26 @@ service Wallet {
     };
   };
   //Warning: do not invoke this interface provided by others.
+  rpc CreateAddress (BytesMessage) returns (BytesMessage) {
+    option (google.api.http) = {
+      post: "/wallet/createadresss"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/createadresss"
+      }
+    };
+  };
+  //Warning: do not invoke this interface provided by others.
+  rpc EasyTransfer (EasyTransferMessage) returns (EasyTransferResponse) {
+    option (google.api.http) = {
+      post: "/wallet/easytransfer"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/easytransfer"
+      }
+    };
+  };
+  //Warning: do not invoke this interface provided by others.
   rpc GenerateAddress (EmptyMessage) returns (AddressPrKeyPairMessage){
     option (google.api.http) = {
       post: "/wallet/generateaddress"
@@ -363,7 +383,7 @@ service WalletSolidity {
     };
   }
   rpc GetPaginatedAssetIssueList (PaginatedMessage) returns (AssetIssueList) {
-       option (google.api.http) = {
+    option (google.api.http) = {
         post: "/walletsolidity/getpaginatedassetissuelist"
         body: "*"
         additional_bindings {
@@ -395,6 +415,16 @@ service WalletSolidity {
       body: "*"
       additional_bindings {
         get: "/walletsolidity/gettransactionbyid"
+      }
+    };
+  }
+
+  rpc GetTransactionInfoById (BytesMessage) returns (TransactionInfo) {
+    option (google.api.http) = {
+      post: "/walletsolidity/gettransactioninfobyid"
+      body: "*"
+      additional_bindings {
+        get: "/walletsolidity/gettransactioninfobyid"
       }
     };
   }
@@ -552,6 +582,17 @@ message AccountNetMessage {
 message PaginatedMessage {
   int64 offset = 1;
   int64 limit = 2;
+}
+
+message EasyTransferMessage{
+  bytes passPhrase = 1;
+  bytes toAddress = 2;
+  int64 amount = 3;
+}
+
+message EasyTransferResponse{
+  Transaction transaction = 1;
+  Return result = 2;
 }
 
 message AddressPrKeyPairMessage {
