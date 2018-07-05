@@ -341,6 +341,16 @@ service Wallet {
     };
   };
   //Warning: do not invoke this interface provided by others.
+  rpc EasyTransferByPrivate (EasyTransferByPrivateMessage) returns (EasyTransferResponse) {
+    option (google.api.http) = {
+      post: "/wallet/easytransferbyprivate"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/easytransferbyprivate"
+      }
+    };
+  };
+  //Warning: do not invoke this interface provided by others.
   rpc GenerateAddress (EmptyMessage) returns (AddressPrKeyPairMessage){
     option (google.api.http) = {
       post: "/wallet/generateaddress"
@@ -418,7 +428,6 @@ service WalletSolidity {
       }
     };
   }
-
   rpc GetTransactionInfoById (BytesMessage) returns (TransactionInfo) {
     option (google.api.http) = {
       post: "/walletsolidity/gettransactioninfobyid"
@@ -586,6 +595,12 @@ message PaginatedMessage {
 
 message EasyTransferMessage{
   bytes passPhrase = 1;
+  bytes toAddress = 2;
+  int64 amount = 3;
+}
+
+message EasyTransferByPrivateMessage{
+  bytes privateKey = 1;
   bytes toAddress = 2;
   int64 amount = 3;
 }
