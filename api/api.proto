@@ -304,6 +304,17 @@ service Wallet {
       }
     };
   };
+
+  rpc ListProposals (EmptyMessage) returns (ProposalList) {
+    option (google.api.http) = {
+      post: "/wallet/listproposals"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/listproposals"
+      }
+    };
+  };
+
   rpc GetAssetIssueList (EmptyMessage) returns (AssetIssueList) {
     option (google.api.http) = {
         post: "/wallet/getassetissuelist"
@@ -541,6 +552,9 @@ service Network {
 
 message WitnessList {
   repeated Witness witnesses = 1;
+}
+message ProposalList {
+  repeated Proposal proposals = 1;
 }
 message AssetIssueList {
   repeated AssetIssueContract assetIssue = 1;
