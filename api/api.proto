@@ -321,7 +321,7 @@ service Wallet {
     };
   };
   //Warning: do not invoke this interface provided by others.
-  rpc CreateAdresss (BytesMessage) returns (BytesMessage) {
+  rpc CreateAddress (BytesMessage) returns (BytesMessage) {
     option (google.api.http) = {
       post: "/wallet/createadresss"
       body: "*"
