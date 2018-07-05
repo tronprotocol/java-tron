@@ -139,7 +139,7 @@ message UpdateAssetContract {
 
 message ProposalCreateContract {
   bytes owner_address = 1;
-  repeated ChainParameter parameters = 2;
+  map<int64, int64> parameters = 2;
 }
 
 message ProposalApproveContract {

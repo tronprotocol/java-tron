@@ -30,21 +30,15 @@ message Vote {
   int64 vote_count = 2;
 }
 
-// Chain parameter set by witness
-message ChainParameter {
-  bytes parameter = 1;
-  int64 value = 2;
-}
-
-
 // Proposal
 message Proposal {
   int64 proposal_id = 1;
   bytes proposer_address = 2;
-  repeated ChainParameter parameters = 3;
+  map<int64, int64> parameters = 3;
   int64 expiration_time = 4;
-  repeated bytes approvals = 5;
-  bool is_approved = 6;
+  int64 effective_period_time = 5;
+  repeated bytes approvals = 6;
+  bool is_approved = 7;
 }
 
 // Account
