@@ -172,6 +172,36 @@ service Wallet {
     };
   }
 
+  rpc ProposalCreate (ProposalCreateContract) returns (Transaction) {
+    option (google.api.http) = {
+      post: "/wallet/proposalcreate"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/proposalcreate"
+      }
+    };
+  }
+
+  rpc ProposalApprove (ProposalApproveContract) returns (Transaction) {
+    option (google.api.http) = {
+      post: "/wallet/proposalapprove"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/proposalapprove"
+      }
+    };
+  }
+
+  rpc ProposalDelete (ProposalDeleteContract) returns (Transaction) {
+    option (google.api.http) = {
+      post: "/wallet/proposaldelete"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/proposaldelete"
+      }
+    };
+  }
+
   rpc ListNodes (EmptyMessage) returns (NodeList) {
     option (google.api.http) = {
       post: "/wallet/listnodes"
