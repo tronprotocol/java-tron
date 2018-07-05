@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -34,11 +35,10 @@ import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.runtime.Runtime;
-import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactory;
-import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.vm.program.ProgramResult;
+import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DialogOptional;
@@ -46,14 +46,11 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Time;
 import org.tron.core.Constant;
-import org.tron.core.actuator.Actuator;
-import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
@@ -82,7 +79,6 @@ import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.witness.WitnessController;
-import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
@@ -310,7 +306,7 @@ public class Manager {
 
     this.codeStore = CodeStore.create("code");
     this.contractStore = ContractStore.create("contract");
-    this.storageStore  = StorageStore.create("storage");
+    this.storageStore = StorageStore.create("storage");
 
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
@@ -589,7 +585,8 @@ public class Manager {
   public void eraseBlock() {
     dialog.reset();
     try {
-      BlockCapsule oldHeadBlock = getBlockById(getDynamicPropertiesStore().getLatestBlockHeaderHash());
+      BlockCapsule oldHeadBlock = getBlockById(
+          getDynamicPropertiesStore().getLatestBlockHeaderHash());
       logger.info("begin to erase block:" + oldHeadBlock);
       khaosDb.pop();
       revokingStore.pop();
@@ -649,7 +646,8 @@ public class Manager {
           throw e;
         } finally {
           if (exception != null) {
-            logger.warn("switch back because exception thrown while switching forks. " + exception.getMessage(),
+            logger.warn("switch back because exception thrown while switching forks. " + exception
+                    .getMessage(),
                 exception);
             first.forEach(khaosBlock -> khaosDb.removeBlk(khaosBlock.getBlk().getBlockId()));
             khaosDb.setHead(binaryTree.getValue().peekFirst());
@@ -835,7 +833,8 @@ public class Manager {
   /**
    * Get the fork branch.
    */
-  public LinkedList<BlockId> getBlockChainHashesOnFork(final BlockId forkBlockHash) throws NonCommonBlockException {
+  public LinkedList<BlockId> getBlockChainHashesOnFork(final BlockId forkBlockHash)
+      throws NonCommonBlockException {
     final Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> branch =
         this.khaosDb.getBranch(
             getDynamicPropertiesStore().getLatestBlockHeaderHash(), forkBlockHash);
@@ -937,36 +936,44 @@ public class Manager {
     //                   ProgramInvokeFactory programInvokeFactory)
 
     DepositImpl deposit = DepositImpl.createRoot(this);
+    Runtime runtime;
     if (block != null) {
-      Runtime runtime = new Runtime(trxCap.getInstance(), block, deposit, new ProgramInvokeFactoryImpl());
+      runtime = new Runtime(trxCap.getInstance(), block, deposit,
+          new ProgramInvokeFactoryImpl());
       runtime.execute();
       runtime.go();
       if (runtime.getResult().getException() != null) {
         throw new RuntimeException("Runtime exe failed!");
       }
     } else {
-      Runtime runtime = new Runtime(trxCap.getInstance(), deposit, new ProgramInvokeFactoryImpl());
+      runtime = new Runtime(trxCap.getInstance(), deposit, new ProgramInvokeFactoryImpl());
       runtime.execute();
       runtime.go();
       if (runtime.getResult().getException() != null) {
         throw new RuntimeException("Runtime exe failed!");
       }
     }
+    if (Objects.nonNull(runtime)) {
+      TransactionResultCapsule retResult = new TransactionResultCapsule();
+      ProgramResult result = runtime.getResult();
+      retResult.setConstantResult(result.getHReturn());
+      trxCap.setResult(retResult);
 
+    }
     ///////////////////////////
-//    final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
-    TransactionResultCapsule ret = new TransactionResultCapsule();
+//    final  <Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
+    TransactionResultCapsule retBandwidth = new TransactionResultCapsule();
 //
-    consumeBandwidth(trxCap, ret);
+    consumeBandwidth(trxCap, retBandwidth);
 //
 //    for (Actuator act : actuatorList) {
 //      act.validate();
 //      act.execute(ret);
 //    }
-//    trxCap.setResult(ret);
+    trxCap.setResult(retBandwidth);
     ///////////////////////////
 
-//    transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
+    transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
 //    if (Args.getInstance().isSolidityNode()) {
 //      TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
 //      transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());
@@ -1143,7 +1150,6 @@ public class Manager {
     if (!witnessController.validateWitnessSchedule(block)) {
       throw new ValidateScheduleException("validateWitnessSchedule error");
     }
-
 
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       if (block.generatedByMyself) {
@@ -1330,6 +1336,9 @@ public class Manager {
     closeOneStore(dynamicPropertiesStore);
     closeOneStore(transactionStore);
     closeOneStore(utxoStore);
+    closeOneStore(codeStore);
+    closeOneStore(contractStore);
+    closeOneStore(storageStore);
     System.err.println("******** end to close db ********");
   }
 

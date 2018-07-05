@@ -851,18 +851,16 @@ public class RpcApiService implements Service {
     @Override
     public void triggerContract(Contract.TriggerSmartContract request,
                                 StreamObserver<Transaction> responseObserver) {
-      Transaction trx;
+      TransactionCapsule trxCap;
       try {
-        trx = createTransactionCapsule(request, ContractType.TriggerSmartContract)
-            .getInstance();//wallet.triggerContract(request);
+        trxCap = createTransactionCapsule(request, ContractType.TriggerSmartContract);//wallet.triggerContract(request);
       } catch (ContractValidateException e) {
-        trx = null;
-        responseObserver.onNext(trx);
+        responseObserver.onNext(null);
         responseObserver.onCompleted();
         return;
       }
 
-      trx = wallet.triggerContract(request, trx);
+      Transaction trx = wallet.triggerContract(request, trxCap);
       responseObserver.onNext(trx);
       responseObserver.onCompleted();
     }

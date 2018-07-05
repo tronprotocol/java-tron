@@ -491,7 +491,7 @@ public class Wallet {
             .getInstance();
   }
 
-  public Transaction triggerContract(TriggerSmartContract triggerSmartContract, Transaction trx) {
+  public Transaction triggerContract(TriggerSmartContract triggerSmartContract, TransactionCapsule trxCap) {
     ContractStore contractStore = dbManager.getContractStore();
     byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
     SmartContract.ABI abi = contractStore.getABI(contractAddress);
@@ -506,10 +506,10 @@ public class Wallet {
       }
 
       if (!isConstant(abi, selector)) {
-        return trx;
+        return trxCap.getInstance();
       } else {
         DepositImpl deposit = DepositImpl.createRoot(dbManager);
-        Runtime runtime = new Runtime(trx, deposit, new ProgramInvokeFactoryImpl());
+        Runtime runtime = new Runtime(trxCap.getInstance(), deposit, new ProgramInvokeFactoryImpl());
         runtime.execute();
         runtime.go();
         if (runtime.getResult().getException() != null) {
@@ -517,10 +517,10 @@ public class Wallet {
         }
 
         ProgramResult result = runtime.getResult();
-        Transaction.Result.Builder builder = Transaction.Result.newBuilder();
-        builder.setConstantResult(ByteString.copyFrom(result.getHReturn()));
-        trx = trx.toBuilder().addRet(builder.build()).build();
-        return trx;
+        TransactionResultCapsule retBandwidth = new TransactionResultCapsule();
+        retBandwidth.setConstantResult(result.getHReturn());
+        trxCap.setResult(retBandwidth);
+        return trxCap.getInstance();
       }
     } catch (Exception e) {
       logger.error(e.getMessage());

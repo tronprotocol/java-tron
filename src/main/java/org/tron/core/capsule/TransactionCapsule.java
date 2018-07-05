@@ -58,6 +58,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   private Transaction transaction;
   @Setter
   private boolean isVerified = false;
+
   /**
    * constructor TransactionCapsule.
    */
@@ -68,7 +69,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   /**
    * get account from bytes data.
    */
-  public TransactionCapsule(byte[] data) throws BadItemException{
+  public TransactionCapsule(byte[] data) throws BadItemException {
     try {
       this.transaction = Transaction.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
@@ -138,7 +139,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public void setResult(TransactionResultCapsule transactionResultCapsule) {
-//    this.transaction = this.getInstance().toBuilder().addRet(transactionResultCapsule.getInstance()).build();
+    this.transaction = this.getInstance().toBuilder().addRet(transactionResultCapsule.getInstance())
+        .build();
   }
 
   public void setReference(long blockNum, byte[] blockHash) {
