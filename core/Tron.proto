@@ -30,6 +30,23 @@ message Vote {
   int64 vote_count = 2;
 }
 
+// Chain parameter set by witness
+message ChainParameter {
+  bytes parameter = 1;
+  int64 value = 2;
+}
+
+
+// Proposal
+message Proposal {
+  bytes proposal_id = 1;
+  bytes proposer_address = 2;
+  repeated ChainParameter parameters = 3;
+  int64 expiration_time = 4;
+  repeated bytes approvals = 5;
+  bool is_approved = 6;
+}
+
 // Account
 message Account {
   // frozen balance
@@ -78,14 +95,12 @@ message Account {
   int64 latest_consume_free_time = 22;
 }
 
-//FIXME authority?
-message acuthrity {
+message authority {
   AccountId account = 1;
   bytes permission_name = 2;
 }
 
-//FIXME permission
-message permision {
+message permission {
   AccountId account = 1;
 }
 
