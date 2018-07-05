@@ -189,7 +189,7 @@ message Transaction {
     int64 ref_block_num = 3;
     bytes ref_block_hash = 4;
     int64 expiration = 8;
-    repeated acuthrity auths = 9; //FIXME authority
+    repeated acthority auths = 9;
     // data not used
     bytes data = 10;
     //only support size = 1,  repeated list here for extension
