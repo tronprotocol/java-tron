@@ -39,7 +39,7 @@ message ChainParameter {
 
 // Proposal
 message Proposal {
-  bytes proposal_id = 1;
+  int64 proposal_id = 1;
   bytes proposer_address = 2;
   repeated ChainParameter parameters = 3;
   int64 expiration_time = 4;
