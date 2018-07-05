@@ -36,8 +36,9 @@ message Proposal {
   bytes proposer_address = 2;
   map<int64, int64> parameters = 3;
   int64 expiration_time = 4;
-  repeated bytes approvals = 5;
-  bool is_approved = 6;
+  int64 effective_period_time = 5;
+  repeated bytes approvals = 6;
+  bool is_approved = 7;
 }
 
 // Account
