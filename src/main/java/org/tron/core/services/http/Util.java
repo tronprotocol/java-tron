@@ -1,12 +1,14 @@
 package org.tron.core.services.http;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.Any;
+import java.util.List;
+import org.tron.api.GrpcAPI.BlockList;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.AssetIssueContract;
@@ -35,15 +37,44 @@ public class Util {
     return jsonObject.toJSONString();
   }
 
+
+  public static String printBlockList(BlockList list){
+    List<Block> blocks = list.getBlockList();
+    JSONArray jsonArray = new JSONArray();
+    blocks.stream().forEach(block -> {
+      jsonArray.add(printBlockToJSON(block));
+    });
+    return jsonArray.toJSONString();
+  }
+
   public static String printBlock(Block block) {
+    return printBlockToJSON(block).toJSONString();
+  }
+
+  public static JSONObject printBlockToJSON(Block block) {
     BlockCapsule blockCapsule = new BlockCapsule(block);
     String blockID = ByteArray.toHexString(blockCapsule.getBlockId().getBytes());
     JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(block));
     jsonObject.put("blockID", blockID);
-    return jsonObject.toJSONString();
+    if (!blockCapsule.getTransactions().isEmpty()) {
+      jsonObject.put("transactions", printTransationListToJSON(blockCapsule.getTransactions()));
+    }
+    return jsonObject;
+  }
+
+  public static JSONArray printTransationListToJSON(List<TransactionCapsule> list) {
+    JSONArray transactions = new JSONArray();
+    list.stream().forEach(transactionCapsule -> {
+      transactions.add(printTransactionToJSON(transactionCapsule.getInstance()));
+    });
+    return transactions;
   }
 
   public static String printTransaction(Transaction transaction) {
+    return printTransactionToJSON(transaction).toJSONString();
+  }
+
+  public static JSONObject printTransactionToJSON(Transaction transaction) {
     JSONObject jsonTransaction = JSONObject.parseObject(JsonFormat.printToString(transaction));
     JSONArray contracts = new JSONArray();
     transaction.getRawData().getContractList().stream().forEach(contract -> {
@@ -151,6 +182,6 @@ public class Util {
     jsonTransaction.put("raw_data", rawData);
     String txID = ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
     jsonTransaction.put("txID", txID);
-    return jsonTransaction.toJSONString();
+    return jsonTransaction;
   }
 }

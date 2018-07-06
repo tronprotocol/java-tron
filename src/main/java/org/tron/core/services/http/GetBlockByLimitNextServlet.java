@@ -28,7 +28,7 @@ public class GetBlockByLimitNextServlet extends HttpServlet {
       if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
         BlockList reply = wallet.getBlocksByLimitNext(startNum, endNum - startNum);
         if (reply != null) {
-          response.getWriter().println(JsonFormat.printToString(reply));
+          response.getWriter().println(Util.printBlockList(reply));
           return;
         }
       }
