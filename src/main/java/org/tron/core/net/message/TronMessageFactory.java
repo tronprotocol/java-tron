@@ -19,13 +19,11 @@ public class TronMessageFactory extends MessageFactory {
       byte type = data[0];
       byte[] rawData = ArrayUtils.subarray(data, 1, data.length);
       return create(type, rawData);
-    } catch (Exception e) {
-      if (e instanceof P2pException) {
-        throw e;
-      } else {
-        throw new P2pException(P2pException.TypeEnum.PARSE_MESSAGE_FAILED,
-            "type=" + data[0] + ", len=" + data.length);
-      }
+    } catch (final P2pException e) {
+      throw e;
+    } catch (final Exception e) {
+      throw new P2pException(P2pException.TypeEnum.PARSE_MESSAGE_FAILED,
+          "type=" + data[0] + ", len=" + data.length);
     }
   }
 
