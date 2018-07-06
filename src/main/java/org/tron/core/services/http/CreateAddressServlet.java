@@ -33,10 +33,13 @@ public class CreateAddressServlet extends HttpServlet {
       BytesMessage.Builder builder = BytesMessage.newBuilder();
       builder.setValue(ByteString.copyFrom(address));
       response.getWriter().println(JsonFormat.printToString(builder.build()));
-    } catch (ParseException e) {
-      logger.debug("ParseException: {}", e.getMessage());
-    } catch (IOException e) {
-      logger.debug("IOException: {}", e.getMessage());
+    } catch (Exception e) {
+      logger.debug("Exception: {}", e.getMessage());
+      try {
+        response.getWriter().println(Util.printErrorMsg(e));
+      } catch (IOException ioe) {
+        logger.debug("IOException: {}", ioe.getMessage());
+      }
     }
   }
 
@@ -50,10 +53,13 @@ public class CreateAddressServlet extends HttpServlet {
       BytesMessage.Builder builder = BytesMessage.newBuilder();
       builder.setValue(ByteString.copyFrom(address));
       response.getWriter().println(JsonFormat.printToString(builder.build()));
-    } catch (ParseException e) {
-      logger.debug("ParseException: {}", e.getMessage());
-    } catch (IOException e) {
-      logger.debug("IOException: {}", e.getMessage());
+    } catch (Exception e) {
+      logger.debug("Exception: {}", e.getMessage());
+      try {
+        response.getWriter().println(Util.printErrorMsg(e));
+      } catch (IOException ioe) {
+        logger.debug("IOException: {}", ioe.getMessage());
+      }
     }
   }
 }

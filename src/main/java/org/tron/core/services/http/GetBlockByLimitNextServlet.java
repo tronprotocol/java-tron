@@ -28,15 +28,18 @@ public class GetBlockByLimitNextServlet extends HttpServlet {
       if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
         BlockList reply = wallet.getBlocksByLimitNext(startNum, endNum - startNum);
         if (reply != null) {
-          response.getWriter().println(JsonFormat.printToString(reply));
+          response.getWriter().println(Util.printBlockList(reply));
           return;
         }
       }
       response.getWriter().println("{}");
-    } catch (ParseException e) {
-      logger.debug("ParseException: {}", e.getMessage());
-    } catch (IOException e) {
-      logger.debug("IOException: {}", e.getMessage());
+    } catch (Exception e) {
+      logger.debug("Exception: {}", e.getMessage());
+      try {
+        response.getWriter().println(Util.printErrorMsg(e));
+      } catch (IOException ioe) {
+        logger.debug("IOException: {}", ioe.getMessage());
+      }
     }
   }
 
@@ -56,10 +59,13 @@ public class GetBlockByLimitNextServlet extends HttpServlet {
         }
       }
       response.getWriter().println("{}");
-    } catch (ParseException e) {
-      logger.debug("ParseException: {}", e.getMessage());
-    } catch (IOException e) {
-      logger.debug("IOException: {}", e.getMessage());
+    } catch (Exception e) {
+      logger.debug("Exception: {}", e.getMessage());
+      try {
+        response.getWriter().println(Util.printErrorMsg(e));
+      } catch (IOException ioe) {
+        logger.debug("IOException: {}", ioe.getMessage());
+      }
     }
   }
 }

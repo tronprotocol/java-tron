@@ -56,12 +56,8 @@ public class EasyTransferByPrivateServlet extends HttpServlet {
       GrpcAPI.Return retur = wallet.broadcastTransaction(transactionCapsule.getInstance());
       responseBuild.setTransaction(transactionCapsule.getInstance());
       responseBuild.setResult(retur);
-      response.getWriter().println(JsonFormat.printToString(responseBuild.build()));
-    } catch (ParseException e) {
-      logger.debug("ParseException: {}", e.getMessage());
-    } catch (IOException e) {
-      logger.debug("IOException: {}", e.getMessage());
-    } catch (ContractValidateException e) {
+      response.getWriter().println(Util.printEasyTransferResponse(responseBuild.build()));
+    } catch (Exception e) {
       returnBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getMessage()));
       responseBuild.setResult(returnBuilder.build());
