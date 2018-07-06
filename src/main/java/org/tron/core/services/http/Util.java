@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.Any;
 import java.util.List;
 import org.tron.api.GrpcAPI.BlockList;
+import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -37,8 +38,7 @@ public class Util {
     return jsonObject.toJSONString();
   }
 
-
-  public static String printBlockList(BlockList list){
+  public static String printBlockList(BlockList list) {
     List<Block> blocks = list.getBlockList();
     JSONArray jsonArray = new JSONArray();
     blocks.stream().forEach(block -> {
@@ -60,6 +60,15 @@ public class Util {
       jsonObject.put("transactions", printTransationListToJSON(blockCapsule.getTransactions()));
     }
     return jsonObject;
+  }
+
+  public static String printTransactionList(TransactionList list) {
+    List<Transaction> transactions = list.getTransactionList();
+    JSONArray jsonArray = new JSONArray();
+    transactions.stream().forEach(transaction -> {
+      jsonArray.add(printTransactionToJSON(transaction));
+    });
+    return jsonArray.toJSONString();
   }
 
   public static JSONArray printTransationListToJSON(List<TransactionCapsule> list) {
