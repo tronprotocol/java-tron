@@ -1,12 +1,21 @@
 package org.tron.common.runtime;
 
+import static org.apache.commons.lang3.ArrayUtils.isEmpty;
+import static org.tron.common.runtime.vm.program.InternalTransaction.ExecuterType.ET_CONSTANT_TYPE;
+import static org.tron.common.runtime.vm.program.InternalTransaction.ExecuterType.ET_NORMAL_TYPE;
+import static org.tron.common.runtime.vm.program.InternalTransaction.ExecuterType.ET_PRE_TYPE;
+import static org.tron.common.runtime.vm.program.InternalTransaction.ExecuterType.ET_UNKNOWN_TYPE;
+import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE;
+import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
+import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_PRECOMPILED_TYPE;
+import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_UNKNOWN_TYPE;
+
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.PrecompiledContracts;
-import org.tron.common.runtime.vm.PrecompiledContracts.Sha256;
 import org.tron.common.runtime.vm.VM;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.Program;
@@ -26,17 +35,10 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.SmartContract;
-import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
-
-import java.util.List;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-
-import static org.apache.commons.lang3.ArrayUtils.isEmpty;
-import static org.tron.common.runtime.vm.program.InternalTransaction.ExecuterType.*;
-import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.*;
 
 /**
  * @author Guo Yonggang
@@ -56,6 +58,8 @@ public class Runtime {
 
   PrecompiledContracts.PrecompiledContract precompiledContract = null;
   private ProgramResult result = new ProgramResult();
+
+
   private VM vm = null;
   private Program program = null;
 
@@ -65,11 +69,6 @@ public class Runtime {
 
   /**
    * For block's trx run
-   *
-   * @param tx
-   * @param block
-   * @param deosit
-   * @param programInvokeFactory
    */
   public Runtime(Transaction tx, Block block, Deposit deosit,
       ProgramInvokeFactory programInvokeFactory) {
@@ -95,10 +94,6 @@ public class Runtime {
 
   /**
    * For pre trx run
-   *
-   * @param tx
-   * @param deposit
-   * @param programInvokeFactory
    */
   public Runtime(Transaction tx, DepositImpl deposit, ProgramInvokeFactory programInvokeFactory) {
     this.trx = tx;
@@ -121,9 +116,6 @@ public class Runtime {
 
   /**
    * For constant trx
-   *
-   * @param tx
-   * @param programInvokeFactory
    */
   public Runtime(Transaction tx, ProgramInvokeFactory programInvokeFactory, Deposit deposit) {
     trx = tx;
@@ -139,13 +131,12 @@ public class Runtime {
 
     try {
       TransactionCapsule trxCap = new TransactionCapsule(trx);
-      final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, deposit.getDbManager());
-      TransactionResultCapsule ret = new TransactionResultCapsule();
+      final List<Actuator> actuatorList = ActuatorFactory
+          .createActuator(trxCap, deposit.getDbManager());
 
       for (Actuator act : actuatorList) {
         act.validate();
-        act.execute(ret);
-        trxCap.setResult(ret);
+        act.execute(result.getRet());
       }
     } catch (RuntimeException e) {
       program.setRuntimeFailure(e);
@@ -175,19 +166,23 @@ public class Runtime {
 
   private void call() {
     Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
-    if (contract == null) return;
+    if (contract == null) {
+      return;
+    }
 
     byte[] contractAddress = contract.getContractAddress().toByteArray();
     byte[] code = this.deposit.getCode(contractAddress);
     if (isEmpty(code)) {
 
     } else {
-      ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(TRX_CONTRACT_CALL_TYPE, executerType, trx,
-          block, deposit);
+      ProgramInvoke programInvoke = programInvokeFactory
+          .createProgramInvoke(TRX_CONTRACT_CALL_TYPE, executerType, trx,
+              block, deposit);
       this.vm = new VM(config);
       this.program = new Program(null, code, programInvoke,
           new InternalTransaction(trx), config);
     }
+
   }
 
   /*
@@ -222,11 +217,12 @@ public class Runtime {
     try {
       byte[] ops = contract.getBytecode().toByteArray();
       InternalTransaction internalTransaction = new InternalTransaction(trx);
-      ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executerType, trx,
-          block, deposit);
+      ProgramInvoke programInvoke = programInvokeFactory
+          .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executerType, trx,
+              block, deposit);
       this.vm = new VM(config);
       this.program = new Program(ops, programInvoke, internalTransaction, config);
-    } catch(Exception e) {
+    } catch (Exception e) {
       logger.error(e.getMessage());
       return;
     }
@@ -241,7 +237,7 @@ public class Runtime {
     try {
       if (vm != null) {
 //        if (config.vmOn()) {
-          vm.play(program);
+        vm.play(program);
 //        }
 
         result = program.getResult();
@@ -267,7 +263,7 @@ public class Runtime {
           deposit.commit();
         }
       }
-    } catch(Exception e) {
+    } catch (Exception e) {
       logger.error(e.getMessage());
       runtimeError = e.getMessage();
     }
@@ -281,4 +277,5 @@ public class Runtime {
   public ProgramResult getResult() {
     return result;
   }
+
 }

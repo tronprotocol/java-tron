@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -37,7 +36,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.Runtime;
-import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
@@ -51,6 +49,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
@@ -940,6 +939,7 @@ public class Manager {
     if (block != null) {
       runtime = new Runtime(trxCap.getInstance(), block, deposit,
           new ProgramInvokeFactoryImpl());
+      consumeBandwidth(trxCap, runtime.getResult().getRet());
       runtime.execute();
       runtime.go();
       if (runtime.getResult().getException() != null) {
@@ -947,39 +947,39 @@ public class Manager {
       }
     } else {
       runtime = new Runtime(trxCap.getInstance(), deposit, new ProgramInvokeFactoryImpl());
+      consumeBandwidth(trxCap, runtime.getResult().getRet());
       runtime.execute();
       runtime.go();
       if (runtime.getResult().getException() != null) {
         throw new RuntimeException("Runtime exe failed!");
       }
     }
-    if (Objects.nonNull(runtime)) {
-      TransactionResultCapsule retResult = new TransactionResultCapsule();
-      ProgramResult result = runtime.getResult();
-      retResult.setConstantResult(result.getHReturn());
-      trxCap.setResult(retResult);
-
-    }
+//    if (Objects.nonNull(runtime)) {
+//      TransactionResultCapsule retResult = new TransactionResultCapsule();
+//      ProgramResult result = runtime.getResult();
+//      retResult.setConstantResult(result.getHReturn());
+//      trxCap.setResult(retResult);
+//
+//    }
     ///////////////////////////
 //    final  <Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
-    TransactionResultCapsule retBandwidth = new TransactionResultCapsule();
 //
-    consumeBandwidth(trxCap, retBandwidth);
+
 //
 //    for (Actuator act : actuatorList) {
 //      act.validate();
 //      act.execute(ret);
 //    }
-    trxCap.setResult(retBandwidth);
+    //trxCap.setResult(retBandwidth);
     ///////////////////////////
 
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
-//    if (Args.getInstance().isSolidityNode()) {
-//      TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
-//      transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());
-//      transactionInfoCapsule.setFee(ret.getFee());
-//      transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfoCapsule);
-//    }
+    if (Args.getInstance().isSolidityNode()) {
+      TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
+      transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());
+      transactionInfoCapsule.setFee(runtime.getResult().getRet().getFee());
+      transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfoCapsule);
+    }
     return true;
   }
 

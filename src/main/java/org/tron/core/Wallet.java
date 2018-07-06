@@ -20,14 +20,12 @@ package org.tron.core;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -53,10 +51,16 @@ import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
-import org.tron.core.capsule.*;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.AccountStore;
-import org.tron.core.db.ContractStore;
 import org.tron.core.db.BandwidthProcessor;
+import org.tron.core.db.ContractStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.PendingManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
@@ -78,8 +82,8 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.TransactionSign;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.TransactionSign;
 
 @Slf4j
 @Component
@@ -310,7 +314,7 @@ public class Wallet {
     return trx;
   }
 
-  public byte[] pass2Key(byte[] passPhrase){
+  public byte[] pass2Key(byte[] passPhrase) {
     return Sha256Hash.hash(passPhrase);
   }
 
@@ -488,10 +492,11 @@ public class Wallet {
 
   public Transaction deployContract(SmartContract smartContract) {
     return new TransactionCapsule(smartContract, ContractType.SmartContract)
-            .getInstance();
+        .getInstance();
   }
 
-  public Transaction triggerContract(TriggerSmartContract triggerSmartContract, TransactionCapsule trxCap) {
+  public Transaction triggerContract(TriggerSmartContract triggerSmartContract,
+      TransactionCapsule trxCap) {
     ContractStore contractStore = dbManager.getContractStore();
     byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
     SmartContract.ABI abi = contractStore.getABI(contractAddress);
@@ -509,7 +514,8 @@ public class Wallet {
         return trxCap.getInstance();
       } else {
         DepositImpl deposit = DepositImpl.createRoot(dbManager);
-        Runtime runtime = new Runtime(trxCap.getInstance(), deposit, new ProgramInvokeFactoryImpl());
+        Runtime runtime = new Runtime(trxCap.getInstance(), deposit,
+            new ProgramInvokeFactoryImpl());
         runtime.execute();
         runtime.go();
         if (runtime.getResult().getException() != null) {
@@ -532,11 +538,13 @@ public class Wallet {
     byte[] address = bytesMessage.getValue().toByteArray();
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
     if (accountCapsule == null) {
-      logger.error("Get contract failed, the account is not exist or the account does not have code hash!");
+      logger.error(
+          "Get contract failed, the account is not exist or the account does not have code hash!");
       return null;
     }
 
-    ContractCapsule contractCapsule = dbManager.getContractStore().get(bytesMessage.getValue().toByteArray());
+    ContractCapsule contractCapsule = dbManager.getContractStore()
+        .get(bytesMessage.getValue().toByteArray());
     Transaction trx = contractCapsule.getInstance();
     Any contract = trx.getRawData().getContract(0).getParameter();
     if (contract.is(SmartContract.class)) {
@@ -551,7 +559,7 @@ public class Wallet {
 
   private byte[] getSelector(byte[] data) {
     if (data == null ||
-            data.length < 4) {
+        data.length < 4) {
       return null;
     }
 
@@ -560,7 +568,7 @@ public class Wallet {
     return ret;
   }
 
-  private boolean isConstant(SmartContract.ABI abi, byte[] selector) throws Exception{
+  private boolean isConstant(SmartContract.ABI abi, byte[] selector) throws Exception {
     if (selector == null || selector.length != 4) {
       throw new Exception("Selector's length or selector itself is invalid");
     }
