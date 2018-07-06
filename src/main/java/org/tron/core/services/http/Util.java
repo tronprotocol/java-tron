@@ -222,7 +222,7 @@ public class Util {
         JSONObject contract = rawContractArray.getJSONObject(i);
         JSONObject parameter = contract.getJSONObject("parameter");
         String contractType = contract.getString("type");
-        Any any;
+        Any any = null;
         switch (contractType) {
           case "AccountCreateContract":
             AccountCreateContract.Builder accountCreateContractBuilder = AccountCreateContract
@@ -333,7 +333,7 @@ public class Util {
             any = Any.pack(updateAssetContractBuilder.build());
             break;
           // todo add other contract
-          default: any = Any.getDefaultInstance();
+          default:
         }
         if (any != null) {
           String value = ByteArray.toHexString(any.getValue().toByteArray());
