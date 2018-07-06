@@ -6,6 +6,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.Parameter.ChainParameters;
 import org.tron.core.db.Manager;
@@ -25,8 +26,12 @@ public class ProposalCreateActuator extends AbstractActuator {
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
     try {
-      final ProposalCreateContract ProposalCreateContract = this.contract
+      final ProposalCreateContract proposalCreateContract = this.contract
           .unpack(ProposalCreateContract.class);
+      long id = dbManager.getDynamicPropertiesStore().getLatestProposalNum();
+      ProposalCapsule proposalCapsule
+          = new ProposalCapsule(proposalCreateContract.getOwnerAddress(), id);
+      proposalCapsule.setParameters(proposalCreateContract.getParametersMap());
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
@@ -93,4 +98,6 @@ public class ProposalCreateActuator extends AbstractActuator {
   private boolean validParameters(long idx) {
     return idx > ChainParameters.MIN.ordinal() && idx < ChainParameters.MAX.ordinal();
   }
+
+  private boolean setParameter()
 }

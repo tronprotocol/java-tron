@@ -13,8 +13,8 @@ public class ProposalCapsule implements ProtoCapsule<Proposal> {
 
   private Proposal proposal;
 
-  public ProposalCapsule(final Proposal Proposal) {
-    this.proposal = Proposal;
+  public ProposalCapsule(final Proposal proposal) {
+    this.proposal = proposal;
   }
 
   public ProposalCapsule(final byte[] data) {
