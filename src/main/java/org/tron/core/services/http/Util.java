@@ -333,7 +333,7 @@ public class Util {
             any = Any.pack(updateAssetContractBuilder.build());
             break;
           // todo add other contract
-          default: any = null;
+          default: any = Any.getDefaultInstance();
         }
         String value = ByteArray.toHexString(any.getValue().toByteArray());
         parameter.put("value", value);
