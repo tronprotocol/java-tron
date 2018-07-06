@@ -38,7 +38,12 @@ message Proposal {
   int64 expiration_time = 4;
   int64 effective_period_time = 5;
   repeated bytes approvals = 6;
-  bool is_approved = 7;
+  enum State {
+    DISAPPROVED = 0;
+    APPROVED = 1;
+    CANCELED = 2;
+  }
+  State state = 7;
 }
 
 // Account
