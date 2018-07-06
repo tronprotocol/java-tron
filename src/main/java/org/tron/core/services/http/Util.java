@@ -222,7 +222,7 @@ public class Util {
         JSONObject contract = rawContractArray.getJSONObject(i);
         JSONObject parameter = contract.getJSONObject("parameter");
         String contractType = contract.getString("type");
-        Any any = null;
+        Any any;
         switch (contractType) {
           case "AccountCreateContract":
             AccountCreateContract.Builder accountCreateContractBuilder = AccountCreateContract
