@@ -7,6 +7,7 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocol.Proposal;
+import org.tron.protos.Protocol.Proposal.State;
 
 @Slf4j
 public class ProposalCapsule implements ProtoCapsule<Proposal> {
@@ -100,18 +101,31 @@ public class ProposalCapsule implements ProtoCapsule<Proposal> {
         .build();
   }
 
-  public int getState() {
-    return this.proposal.getStateValue();
+  public State getState() {
+    return this.proposal.getState();
   }
 
-  public void setState(int state) {
+  public void setState(State state) {
     this.proposal = this.proposal.toBuilder()
-        .setStateValue(state)
+        .setState(state)
         .build();
   }
 
+  public boolean hasProcessed() {
+    return this.proposal.getState().equals(State.DISAPPROVED) || this.proposal.getState()
+        .equals(State.APPROVED);
+  }
+
+  public boolean hasCanceled() {
+    return this.proposal.getState().equals(State.CANCELED);
+  }
+
   public byte[] createDbKey() {
-    return ByteArray.fromLong(getID());
+    return calculateDbKey(getID());
+  }
+
+  public static byte[] calculateDbKey(long number) {
+    return ByteArray.fromLong(number);
   }
 
   @Override

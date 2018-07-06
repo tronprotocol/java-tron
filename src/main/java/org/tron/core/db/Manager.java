@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -47,6 +48,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -106,6 +108,9 @@ public class Manager {
   private RecentBlockStore recentBlockStore;
   @Autowired
   private VotesStore votesStore;
+  @Autowired
+  private ProposalStore proposalStore;
+
 
   // for network
   @Autowired
@@ -1148,9 +1153,48 @@ public class Manager {
    * Perform maintenance.
    */
   private void processMaintenance(BlockCapsule block) {
+    processProposals();
     witnessController.updateWitness();
     this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
   }
+
+  private void processProposals() {
+    long latestProposalNum = this.dynamicPropertiesStore.getLatestProposalNum();
+    if (latestProposalNum == 0) {
+      return;
+    }
+
+    long proposalNum = latestProposalNum;
+
+    ProposalCapsule proposalCapsule;
+
+    while (proposalNum > 0) {
+      proposalCapsule = this.proposalStore
+          .get(ProposalCapsule.calculateDbKey(proposalNum));
+      if (proposalCapsule.hasProcessed()) {
+        //proposals with number less than this one, have been processed before
+        break;
+      }
+
+      if (proposalCapsule.hasCanceled()) {
+        proposalNum--;
+        continue;
+      }
+
+      processProposal(proposalCapsule);
+      proposalNum--;
+    }
+
+  }
+
+  private void processProposal(ProposalCapsule proposalCapsule) {
+
+    Map<Long, Long> map = proposalCapsule.getInstance().getParametersMap();
+    for (Map.Entry<Long, Long> entry : map.entrySet()) {
+
+    }
+  }
+
 
   /**
    * @param block the block update signed witness. set witness who signed block the 1. the latest
