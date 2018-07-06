@@ -1197,6 +1197,21 @@ public class Manager {
     Map<Long, Long> map = proposalCapsule.getInstance().getParametersMap();
     for (Map.Entry<Long, Long> entry : map.entrySet()) {
 
+      switch (entry.getKey().intValue()) {
+        case(1): {
+          getDynamicPropertiesStore().saveAccountUpgradeCost(entry.getValue());
+          break;
+        }
+        case(2): {
+          getDynamicPropertiesStore().saveCreateAccountFee(entry.getValue());
+          break;
+        }
+        case(3): {
+          getDynamicPropertiesStore().saveTransactionFee(entry.getValue());
+          break;
+        }
+        default: break;
+      }
     }
   }
 
