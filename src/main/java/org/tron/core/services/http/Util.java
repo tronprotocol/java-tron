@@ -41,11 +41,14 @@ public class Util {
 
   public static String printBlockList(BlockList list) {
     List<Block> blocks = list.getBlockList();
+    JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(list));
     JSONArray jsonArray = new JSONArray();
     blocks.stream().forEach(block -> {
       jsonArray.add(printBlockToJSON(block));
     });
-    return jsonArray.toJSONString();
+    jsonObject.put("block", jsonArray);
+
+    return jsonObject.toJSONString();
   }
 
   public static String printBlock(Block block) {
