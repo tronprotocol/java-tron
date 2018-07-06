@@ -523,9 +523,9 @@ public class Wallet {
         }
 
         ProgramResult result = runtime.getResult();
-        TransactionResultCapsule retBandwidth = new TransactionResultCapsule();
-        retBandwidth.setConstantResult(result.getHReturn());
-        trxCap.setResult(retBandwidth);
+        TransactionResultCapsule ret = new TransactionResultCapsule();
+        ret.setConstantResult(result.getHReturn());
+        trxCap.setResult(ret);
         return trxCap.getInstance();
       }
     } catch (Exception e) {

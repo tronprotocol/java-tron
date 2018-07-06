@@ -11,31 +11,31 @@ option java_outer_classname = "Protocol"; //Specify the class name of the genera
 option go_package = "github.com/tronprotocol/grpc-gateway/core";
 
 enum AccountType {
-  Normal      = 0x00;
-  AssetIssue  = 0x01;
-  Contract    = 0x02;
+  Normal = 0x00;
+  AssetIssue = 0x01;
+  Contract = 0x02;
 }
 
 // AccountId, (name, address) use name, (null, address) use address, (name, null) use name,
 message AccountId {
-  bytes name    = 0x01;
+  bytes name = 0x01;
   bytes address = 0x02;
 }
 
 // vote message
 message Vote {
   // the super rep address
-  bytes vote_address  = 0x01;
+  bytes vote_address = 0x01;
   // the vote num to this super rep.
-  int64 vote_count    = 0x02;
+  int64 vote_count = 0x02;
 }
 
 /* Account */
 message Account {
   /* frozen balance */
   message Frozen {
-    int64 frozen_balance    = 0x01; // the frozen trx balance
-    int64 expire_time       = 0x02; // the expire time
+    int64 frozen_balance = 0x01; // the frozen trx balance
+    int64 expire_time = 0x02; // the expire time
   }
   bytes account_name = 1;
   AccountType type = 2;
@@ -99,7 +99,6 @@ message Witness {
   int64 latestSlotNum = 8;
   bool isJobs = 9;
 }
-
 
 // Vote Change
 message Votes {
@@ -192,10 +191,11 @@ message Transaction {
 }
 
 message TransactionInfo {
- bytes id = 1;
- int64 fee = 2;
- int64 blockNumber = 3;
- int64 blockTimeStamp = 4;
+  bytes id = 1;
+  int64 fee = 2;
+  int64 blockNumber = 3;
+  int64 blockTimeStamp = 4;
+  repeated bytes contractResult = 5;
 }
 
 message Transactions {

@@ -32,7 +32,6 @@ import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.SmartContract;
 import org.tron.protos.Protocol;
