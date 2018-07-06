@@ -100,13 +100,13 @@ public class ProposalCapsule implements ProtoCapsule<Proposal> {
         .build();
   }
 
-  public boolean getIsApproved() {
-    return this.proposal.getIsApproved();
+  public int getState() {
+    return this.proposal.getStateValue();
   }
 
-  public void setIsApproved(boolean isApproved) {
+  public void setState(int state) {
     this.proposal = this.proposal.toBuilder()
-        .setIsApproved(isApproved)
+        .setStateValue(state)
         .build();
   }
 
