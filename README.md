@@ -123,11 +123,6 @@ cd java-tron
 ./gradlew build
 ```
 
-* Build an executable JAR
-
-```bash
-./gradlew clean shadowJar
-```
 
 * Build in [IntelliJ IDEA](https://www.jetbrains.com/idea/) (community version is enough):
 

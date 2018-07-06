@@ -514,6 +514,7 @@ public class Wallet {
     return null;
   }
 
+
   public NodeList listNodes(){
     List<NodeHandler> handlerList = nodeManager.dumpActiveNodes();
 
