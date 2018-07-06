@@ -335,10 +335,12 @@ public class Util {
           // todo add other contract
           default: any = Any.getDefaultInstance();
         }
-        String value = ByteArray.toHexString(any.getValue().toByteArray());
-        parameter.put("value", value);
-        contract.put("parameter", parameter);
-        contracts.add(contract);
+        if (any != null) {
+          String value = ByteArray.toHexString(any.getValue().toByteArray());
+          parameter.put("value", value);
+          contract.put("parameter", parameter);
+          contracts.add(contract);
+        }
       } catch (ParseException e) {
         logger.debug("ParseException: {}", e.getMessage());
       }
