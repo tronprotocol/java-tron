@@ -931,8 +931,6 @@ public class Manager {
     }
 
     /**  VM execute  **/
-    //Runtime(Transaction tx, Block block, Manager dbManager,
-    //                   ProgramInvokeFactory programInvokeFactory)
 
     DepositImpl deposit = DepositImpl.createRoot(this);
     Runtime runtime;
@@ -954,24 +952,6 @@ public class Manager {
         throw new RuntimeException("Runtime exe failed!");
       }
     }
-//    if (Objects.nonNull(runtime)) {
-//      TransactionResultCapsule retResult = new TransactionResultCapsule();
-//      ProgramResult result = runtime.getResult();
-//      retResult.setConstantResult(result.getHReturn());
-//      trxCap.setResult(retResult);
-//
-//    }
-    ///////////////////////////
-//    final  <Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
-//
-
-//
-//    for (Actuator act : actuatorList) {
-//      act.validate();
-//      act.execute(ret);
-//    }
-    //trxCap.setResult(retBandwidth);
-    ///////////////////////////
 
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     if (Args.getInstance().isSolidityNode()) {
