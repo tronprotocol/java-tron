@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.Any;
 import java.util.List;
 import org.tron.api.GrpcAPI.BlockList;
+import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -77,6 +78,12 @@ public class Util {
       transactions.add(printTransactionToJSON(transactionCapsule.getInstance()));
     });
     return transactions;
+  }
+
+  public static String printEasyTransferResponse(EasyTransferResponse response){
+    JSONObject jsonResponse = JSONObject.parseObject(JsonFormat.printToString(response));
+    jsonResponse.put("transaction", printTransactionToJSON(response.getTransaction()));
+    return jsonResponse.toJSONString();
   }
 
   public static String printTransaction(Transaction transaction) {
