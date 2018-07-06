@@ -65,11 +65,14 @@ public class Util {
 
   public static String printTransactionList(TransactionList list) {
     List<Transaction> transactions = list.getTransactionList();
+    JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(list));
     JSONArray jsonArray = new JSONArray();
     transactions.stream().forEach(transaction -> {
       jsonArray.add(printTransactionToJSON(transaction));
     });
-    return jsonArray.toJSONString();
+    jsonObject.put("transaction", jsonArray);
+
+    return jsonObject.toJSONString();
   }
 
   public static JSONArray printTransationListToJSON(List<TransactionCapsule> list) {
