@@ -10,7 +10,7 @@ public abstract class AbstractIterator<T> implements Iterator<Map.Entry<byte[], 
 
   protected Iterator<Map.Entry<byte[], byte[]>> iterator;
 
-  AbstractIterator(Iterator<Map.Entry<byte[], byte[]>> iterator) {
+  public AbstractIterator(Iterator<Map.Entry<byte[], byte[]>> iterator) {
     this.iterator = iterator;
   }
 
