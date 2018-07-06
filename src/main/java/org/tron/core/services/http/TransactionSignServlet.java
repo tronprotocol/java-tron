@@ -33,7 +33,7 @@ public class TransactionSignServlet extends HttpServlet {
       JsonFormat.merge(contract, build);
       TransactionCapsule reply = wallet.getTransactionSign(build.build());
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply.getInstance()));
+        response.getWriter().println(Util.printTransaction(reply.getInstance()));
       } else {
         response.getWriter().println("{}");
       }
