@@ -4,14 +4,16 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.ProposalApproveContract;
+import org.tron.protos.Protocol.Proposal.State;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
@@ -25,8 +27,17 @@ public class ProposalApproveActuator extends AbstractActuator {
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
     try {
-      final ProposalApproveContract ProposalApproveContract = this.contract
-          .unpack(ProposalApproveContract.class);
+      final ProposalApproveContract proposalApproveContract =
+          this.contract.unpack(ProposalApproveContract.class);
+      ProposalCapsule proposalCapsule = dbManager.getProposalStore().
+          get(ByteArray.fromLong(proposalApproveContract.getProposalId()));
+      ByteString committeeAddress = proposalApproveContract.getOwnerAddress();
+      if (proposalApproveContract.getIsAddApproval()) {
+        proposalCapsule.addApproval(committeeAddress);
+      } else {
+        proposalCapsule.removeApproval(committeeAddress);
+      }
+      dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
@@ -63,23 +74,26 @@ public class ProposalApproveActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
 
-    AccountCapsule accountCapsule = this.dbManager.getAccountStore().get(ownerAddress);
-
-    if (accountCapsule == null) {
+    if (!this.dbManager.getAccountStore().has(ownerAddress)) {
       throw new ContractValidateException("account[" + readableOwnerAddress + "] not exists");
     }
-    /* todo later
-    if (ArrayUtils.isEmpty(accountCapsule.getAccountName().toByteArray())) {
-      throw new ContractValidateException("account name not set");
-    } */
 
-    if (this.dbManager.getWitnessStore().has(ownerAddress)) {
-      throw new ContractValidateException("Witness[" + readableOwnerAddress + "] has existed");
+    if (!this.dbManager.getWitnessStore().has(ownerAddress)) {
+      throw new ContractValidateException("Witness[" + readableOwnerAddress + "] not exists");
     }
 
-    if (accountCapsule.getBalance() < dbManager.getDynamicPropertiesStore()
-        .getAccountUpgradeCost()) {
-      throw new ContractValidateException("balance < AccountUpgradeCost");
+    if (contract.getProposalId() > dbManager.getDynamicPropertiesStore().getLatestProposalNum()) {
+      throw new ContractValidateException("Proposal[" + contract.getProposalId() + "] not exists");
+    }
+
+    long now = dbManager.getHeadBlockTimeStamp();
+    ProposalCapsule proposalCapsule = dbManager.getProposalStore().
+        get(ByteArray.fromLong(contract.getProposalId()));
+    if (now >= proposalCapsule.getExpirationTime()) {
+      throw new ContractValidateException("Proposal[" + contract.getProposalId() + "] expired");
+    }
+    if (proposalCapsule.getState() == State.CANCELED) {
+      throw new ContractValidateException("Proposal[" + contract.getProposalId() + "] canceled");
     }
 
     return true;
@@ -92,7 +106,7 @@ public class ProposalApproveActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    return dbManager.getDynamicPropertiesStore().getAccountUpgradeCost();
+    return 0;
   }
 
 }
