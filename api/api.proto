@@ -264,7 +264,24 @@ service Wallet {
       }
     };
   }
-
+  rpc DeployContract (SmartContract) returns (Transaction) {
+    option (google.api.http) = {
+      post: "/wallet/deploycontract"
+      body: "*"
+    };
+  }
+  rpc GetContract (BytesMessage) returns (SmartContract) {
+    option (google.api.http) = {
+      post: "/wallet/getcontract"
+      body: "*"
+    };
+  }
+  rpc TriggerContract (TriggerSmartContract) returns (Transaction) {
+    option (google.api.http) = {
+      post: "/wallet/triggercontract"
+      body: "*"
+    };
+  }
   rpc ListWitnesses (EmptyMessage) returns (WitnessList) {
     option (google.api.http) = {
       post: "/wallet/listwitnesses"
@@ -341,7 +358,7 @@ service Wallet {
     };
   };
   //Warning: do not invoke this interface provided by others.
-  rpc GenerateAddress (EmptyMessage) returns (AddressPrKeyPairMessage){
+  rpc GenerateAddress (EmptyMessage) returns (AddressPrKeyPairMessage) {
     option (google.api.http) = {
       post: "/wallet/generateaddress"
       body: "*"
@@ -428,7 +445,7 @@ service WalletSolidity {
     };
   }
   //Warning: do not invoke this interface provided by others.
-  rpc GenerateAddress (EmptyMessage) returns (AddressPrKeyPairMessage){
+  rpc GenerateAddress (EmptyMessage) returns (AddressPrKeyPairMessage) {
     option (google.api.http) = {
       post: "/walletsolidity/generateaddress"
       body: "*"
@@ -583,13 +600,13 @@ message PaginatedMessage {
   int64 limit = 2;
 }
 
-message EasyTransferMessage{
+message EasyTransferMessage {
   bytes passPhrase = 1;
   bytes toAddress = 2;
   int64 amount = 3;
 }
 
-message EasyTransferResponse{
+message EasyTransferResponse {
   Transaction transaction = 1;
   Return result = 2;
 }
