@@ -113,7 +113,7 @@ public class ProposalCreateActuator extends AbstractActuator {
   }
 
   private boolean validParameters(long idx) {
-    return idx > 0 && idx < ChainParameters.values().length;
+    return idx >= 0 && idx < ChainParameters.values().length;
   }
 
 }

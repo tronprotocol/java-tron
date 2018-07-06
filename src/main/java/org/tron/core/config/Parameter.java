@@ -62,11 +62,9 @@ public interface Parameter {
   }
 
   enum ChainParameters {
-    MIN,
     ACCOUNT_UPGRADE_COST,
     CREATE_ACCOUNT_FEE,
     TRANSACTION_FEE,
-    MAX,
   }
 
 }
