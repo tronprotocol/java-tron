@@ -23,7 +23,9 @@ public interface Parameter {
     long PRECISION = 1000_000;
     long ONE_DAY_NET_LIMIT = 57_600_000_000L;
     long WINDOW_SIZE_MS = 24 * 3600 * 1000L;
+    long MS_PER_DAY = 24 * 3600 * 1000L;
     long CREATE_NEW_ACCOUNT_BANDWIDTH_COST = 200;
+    int PROPOSAL_VOTE_PERIOD_TIME = 3; // 3 days
   }
 
   interface NodeConstant {
@@ -55,13 +57,15 @@ public interface Parameter {
 
     int TRANSACTIONS_COUNT_LIMIT_MAX = 1000;
     int ASSET_ISSUE_COUNT_LIMIT_MAX = 1000;
+
+
   }
 
   enum ChainParameters {
     MIN,
-    TRANSFER_FEE,
-    ASSET_ISSUE_FEE,
+    ACCOUNT_UPGRADE_COST,
     CREATE_ACCOUNT_FEE,
+    TRANSACTION_FEE,
     MAX,
   }
 

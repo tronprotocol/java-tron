@@ -8,6 +8,7 @@ import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.ChainParameters;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
@@ -29,9 +30,25 @@ public class ProposalCreateActuator extends AbstractActuator {
       final ProposalCreateContract proposalCreateContract = this.contract
           .unpack(ProposalCreateContract.class);
       long id = dbManager.getDynamicPropertiesStore().getLatestProposalNum();
-      ProposalCapsule proposalCapsule
-          = new ProposalCapsule(proposalCreateContract.getOwnerAddress(), id);
+      ProposalCapsule proposalCapsule =
+          new ProposalCapsule(proposalCreateContract.getOwnerAddress(), id);
+
       proposalCapsule.setParameters(proposalCreateContract.getParametersMap());
+
+      long now = dbManager.getHeadBlockTimeStamp();
+      long maintenanceTimeInterval = dbManager.getDynamicPropertiesStore()
+          .getMaintenanceTimeInterval();
+      proposalCapsule.setCreateTime(now);
+
+      long currentMaintenanceTime = dbManager.getDynamicPropertiesStore().getNextMaintenanceTime();
+      long now3 = now + 3 * ChainConstant.MS_PER_DAY;
+      long round = (now3 - currentMaintenanceTime) / maintenanceTimeInterval;
+      long expirationTime =
+          currentMaintenanceTime + (round + 1) * maintenanceTimeInterval;
+      proposalCapsule.setExpirationTime(expirationTime);
+
+      dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
+
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
@@ -96,8 +113,7 @@ public class ProposalCreateActuator extends AbstractActuator {
   }
 
   private boolean validParameters(long idx) {
-    return idx > ChainParameters.MIN.ordinal() && idx < ChainParameters.MAX.ordinal();
+    return idx > 0 && idx < ChainParameters.values().length;
   }
 
-  private boolean setParameter()
 }
