@@ -6,11 +6,10 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.capsule.utils.TransactionUtil;
+import org.tron.core.config.Parameter.ChainParameters;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.ProposalCreateContract;
@@ -27,15 +26,14 @@ public class ProposalCreateActuator extends AbstractActuator {
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
     try {
-      final ProposalCreateContract ProposalCreateContract = this.contract
+      final ProposalCreateContract proposalCreateContract = this.contract
           .unpack(ProposalCreateContract.class);
-      this.createWitness(ProposalCreateContract);
+      long id = dbManager.getDynamicPropertiesStore().getLatestProposalNum();
+      ProposalCapsule proposalCapsule
+          = new ProposalCapsule(proposalCreateContract.getOwnerAddress(), id);
+      proposalCapsule.setParameters(proposalCreateContract.getParametersMap());
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
-      ret.setStatus(fee, code.FAILED);
-      throw new ContractExeException(e.getMessage());
-    } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -70,27 +68,18 @@ public class ProposalCreateActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
 
-    if (!TransactionUtil.validUrl(contract.getUrl().toByteArray())) {
-      throw new ContractValidateException("Invalid url");
-    }
-
-    AccountCapsule accountCapsule = this.dbManager.getAccountStore().get(ownerAddress);
-
-    if (accountCapsule == null) {
+    if (!this.dbManager.getAccountStore().has(ownerAddress)) {
       throw new ContractValidateException("account[" + readableOwnerAddress + "] not exists");
     }
-    /* todo later
-    if (ArrayUtils.isEmpty(accountCapsule.getAccountName().toByteArray())) {
-      throw new ContractValidateException("account name not set");
-    } */
 
-    if (this.dbManager.getWitnessStore().has(ownerAddress)) {
-      throw new ContractValidateException("Witness[" + readableOwnerAddress + "] has existed");
+    if (!this.dbManager.getWitnessStore().has(ownerAddress)) {
+      throw new ContractValidateException("Witness[" + readableOwnerAddress + "] not exists");
     }
 
-    if (accountCapsule.getBalance() < dbManager.getDynamicPropertiesStore()
-        .getAccountUpgradeCost()) {
-      throw new ContractValidateException("balance < AccountUpgradeCost");
+    for (long idx : contract.getParametersMap().keySet()) {
+      if (!validParameters(idx)) {
+        throw new ContractValidateException("Bad chain parameter id");
+      }
     }
 
     return true;
@@ -103,8 +92,12 @@ public class ProposalCreateActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    return dbManager.getDynamicPropertiesStore().getAccountUpgradeCost();
+    return 0;
   }
 
-  private void validParameters
+  private boolean validParameters(long idx) {
+    return idx > ChainParameters.MIN.ordinal() && idx < ChainParameters.MAX.ordinal();
+  }
+
+  private boolean setParameter()
 }

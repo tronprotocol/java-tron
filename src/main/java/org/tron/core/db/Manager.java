@@ -937,7 +937,8 @@ public class Manager {
     while (iterator.hasNext()) {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
       if (DateTime.now().getMillis() - when
-          > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5 * ChainConstant.BLOCK_PRODUCED_TIME_OUT) {
+          > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5 * ChainConstant.BLOCK_PRODUCED_TIME_OUT
+          / 100) {
         logger.warn("Processing transaction time exceeds the 50% producing time。");
         break;
       }
@@ -1106,7 +1107,7 @@ public class Manager {
             .collect(Collectors.toList());
 
     long size = witnessController.getActiveWitnesses().size();
-    int solidifiedPosition = (int) (size * (1 - SOLIDIFIED_THRESHOLD));
+    int solidifiedPosition = (int) (size * (1 - SOLIDIFIED_THRESHOLD / 100));
     if (solidifiedPosition < 0) {
       logger.warn(
           "updateLatestSolidifiedBlock error, solidifiedPosition:{},wits.size:{}",
