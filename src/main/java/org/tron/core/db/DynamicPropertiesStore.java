@@ -33,6 +33,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] LATEST_SOLIDIFIED_BLOCK_NUM = "LATEST_SOLIDIFIED_BLOCK_NUM"
       .getBytes();
 
+  private static final byte[] LATEST_PROPOSAL_NUM = "LATEST_PROPOSAL_NUM".getBytes();
+
   private static final byte[] BLOCK_FILLED_SLOTS = "BLOCK_FILLED_SLOTS".getBytes();
 
   private static final byte[] BLOCK_FILLED_SLOTS_INDEX = "BLOCK_FILLED_SLOTS_INDEX".getBytes();
@@ -136,6 +138,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getLatestSolidifiedBlockNum();
     } catch (IllegalArgumentException e) {
       this.saveLatestSolidifiedBlockNum(0);
+    }
+
+    try {
+      this.getLatestProposalNum();
+    } catch (IllegalArgumentException e) {
+      this.saveLatestProposalNum(0);
     }
 
     try {
@@ -709,8 +717,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return Optional.ofNullable(this.dbSource.getData(LATEST_SOLIDIFIED_BLOCK_NUM))
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found latest SOLIDIFIED_BLOCK_NUM timestamp"));
-    //return ByteArray.toLong(this.dbSource.getData(this.SOLIDIFIED_THRESHOLD));
+            () -> new IllegalArgumentException("not found latest SOLIDIFIED_BLOCK_NUM"));
+  }
+
+  public void saveLatestProposalNum(long number) {
+    this.put(LATEST_PROPOSAL_NUM, new BytesCapsule(ByteArray.fromLong(number)));
+  }
+
+
+  public long getLatestProposalNum() {
+    return Optional.ofNullable(this.dbSource.getData(LATEST_PROPOSAL_NUM))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found latest PROPOSAL_NUM"));
   }
 
   /**
