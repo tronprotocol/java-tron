@@ -56,4 +56,13 @@ public interface Parameter {
     int TRANSACTIONS_COUNT_LIMIT_MAX = 1000;
     int ASSET_ISSUE_COUNT_LIMIT_MAX = 1000;
   }
+
+  enum ChainParameters {
+    MIN,
+    TRANSFER_FEE,
+    ASSET_ISSUE_FEE,
+    CREATE_ACCOUNT_FEE,
+    MAX,
+  }
+
 }

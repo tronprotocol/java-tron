@@ -8,12 +8,10 @@ import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract.ProposalCreateContract;
+import org.tron.protos.Contract.ProposalDeleteContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
@@ -27,15 +25,10 @@ public class ProposalDeleteActuator extends AbstractActuator {
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
     try {
-      final ProposalCreateContract ProposalCreateContract = this.contract
-          .unpack(ProposalCreateContract.class);
-      this.createWitness(ProposalCreateContract);
+      final ProposalDeleteContract ProposalDeleteContract = this.contract
+          .unpack(ProposalDeleteContract.class);
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
-      ret.setStatus(fee, code.FAILED);
-      throw new ContractExeException(e.getMessage());
-    } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -51,14 +44,14 @@ public class ProposalDeleteActuator extends AbstractActuator {
     if (this.dbManager == null) {
       throw new ContractValidateException("No dbManager!");
     }
-    if (!this.contract.is(ProposalCreateContract.class)) {
+    if (!this.contract.is(ProposalDeleteContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [ProposalCreateContract],real type[" + contract
+          "contract type error,expected type [ProposalDeleteContract],real type[" + contract
               .getClass() + "]");
     }
-    final ProposalCreateContract contract;
+    final ProposalDeleteContract contract;
     try {
-      contract = this.contract.unpack(ProposalCreateContract.class);
+      contract = this.contract.unpack(ProposalDeleteContract.class);
     } catch (InvalidProtocolBufferException e) {
       throw new ContractValidateException(e.getMessage());
     }
@@ -70,9 +63,6 @@ public class ProposalDeleteActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
 
-    if (!TransactionUtil.validUrl(contract.getUrl().toByteArray())) {
-      throw new ContractValidateException("Invalid url");
-    }
 
     AccountCapsule accountCapsule = this.dbManager.getAccountStore().get(ownerAddress);
 
@@ -98,13 +88,11 @@ public class ProposalDeleteActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(ProposalCreateContract.class).getOwnerAddress();
+    return contract.unpack(ProposalDeleteContract.class).getOwnerAddress();
   }
 
   @Override
   public long calcFee() {
     return dbManager.getDynamicPropertiesStore().getAccountUpgradeCost();
   }
-
-  private void validParameters
 }
