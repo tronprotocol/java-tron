@@ -25,8 +25,13 @@ public class GetNextMaintenanceTimeServlet extends HttpServlet {
       } else {
         response.getWriter().println("{}");
       }
-    } catch (IOException e) {
-      logger.debug("IOException: {}", e.getMessage());
+    } catch (Exception e) {
+      logger.debug("Exception: {}", e.getMessage());
+      try {
+        response.getWriter().println(Util.printErrorMsg(e));
+      } catch (IOException ioe) {
+        logger.debug("IOException: {}", ioe.getMessage());
+      }
     }
   }
 
