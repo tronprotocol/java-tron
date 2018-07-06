@@ -3,7 +3,6 @@ package org.tron.core.services.http.solidity;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.stream.Collectors;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -15,6 +14,7 @@ import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.core.WalletSolidity;
 import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.JsonFormat.ParseException;
+import org.tron.core.services.http.Util;
 
 @Component
 @Slf4j
@@ -35,7 +35,7 @@ public class GetTransactionsToThisServlet extends HttpServlet {
       long limit = accountPaginated.getLimit();
       if (toAddress != null && offset >= 0 && limit >= 0) {
         TransactionList list = walletSolidity.getTransactionsToThis(toAddress, offset, limit);
-        resp.getWriter().println(JsonFormat.printToString(list));
+        resp.getWriter().println(Util.printTransactionList(list));
       } else {
         resp.getWriter().print("{}");
       }

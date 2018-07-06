@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.EasyTransferMessage;
+import org.tron.api.GrpcAPI.EasyTransferByPrivateMessage;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.common.crypto.ECKey;
@@ -24,7 +24,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Component
 @Slf4j
-public class EasyTransferServlet extends HttpServlet {
+public class EasyTransferByPrivateServlet extends HttpServlet {
 
   @Autowired
   private Wallet wallet;
@@ -39,9 +39,9 @@ public class EasyTransferServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
-      EasyTransferMessage.Builder build = EasyTransferMessage.newBuilder();
+      EasyTransferByPrivateMessage.Builder build = EasyTransferByPrivateMessage.newBuilder();
       JsonFormat.merge(input, build);
-      byte[] privateKey = wallet.pass2Key(build.getPassPhrase().toByteArray());
+      byte[] privateKey = build.getPrivateKey().toByteArray();
       ECKey ecKey = ECKey.fromPrivate(privateKey);
       byte[] owner = ecKey.getAddress();
       TransferContract.Builder builder = TransferContract.newBuilder();
