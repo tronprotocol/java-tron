@@ -173,6 +173,10 @@ public class Manager {
     return this.votesStore;
   }
 
+  public ProposalStore getProposalStore() {
+    return this.proposalStore;
+  }
+
   public List<TransactionCapsule> getPendingTransactions() {
     return this.pendingTransactions;
   }

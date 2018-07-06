@@ -73,13 +73,13 @@ public class ProposalCapsule implements ProtoCapsule<Proposal> {
         .build();
   }
 
-  public long getEffectivePeriodTime() {
-    return this.proposal.getEffectivePeriodTime();
+  public long getCreateTime() {
+    return this.proposal.getCreateTime();
   }
 
-  public void setEffectivePeriodTime(long time) {
+  public void setCreateTime(long time) {
     this.proposal = this.proposal.toBuilder()
-        .setEffectivePeriodTime(time)
+        .setCreateTime(time)
         .build();
   }
 
