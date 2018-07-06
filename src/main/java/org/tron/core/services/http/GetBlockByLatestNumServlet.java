@@ -32,10 +32,13 @@ public class GetBlockByLatestNumServlet extends HttpServlet {
         }
       }
       response.getWriter().println("{}");
-    } catch (ParseException e) {
-      logger.debug("ParseException: {}", e.getMessage());
-    } catch (IOException e) {
-      logger.debug("IOException: {}", e.getMessage());
+    } catch (Exception e) {
+      logger.debug("Exception: {}", e.getMessage());
+      try {
+        response.getWriter().println(Util.printErrorMsg(e));
+      } catch (IOException ioe) {
+        logger.debug("IOException: {}", ioe.getMessage());
+      }
     }
   }
 
@@ -54,10 +57,13 @@ public class GetBlockByLatestNumServlet extends HttpServlet {
         }
       }
       response.getWriter().println("{}");
-    } catch (ParseException e) {
-      logger.debug("ParseException: {}", e.getMessage());
-    } catch (IOException e) {
-      logger.debug("IOException: {}", e.getMessage());
+    } catch (Exception e) {
+      logger.debug("Exception: {}", e.getMessage());
+      try {
+        response.getWriter().println(Util.printErrorMsg(e));
+      } catch (IOException ioe) {
+        logger.debug("IOException: {}", ioe.getMessage());
+      }
     }
   }
 }

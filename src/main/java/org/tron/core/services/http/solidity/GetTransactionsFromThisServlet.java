@@ -39,10 +39,13 @@ public class GetTransactionsFromThisServlet extends HttpServlet {
       } else {
         resp.getWriter().print("{}");
       }
-    } catch (ParseException e) {
-      logger.debug("ParseException: {}", e.getMessage());
-    } catch (IOException e) {
-      logger.debug("IOException: {}", e.getMessage());
+    } catch (Exception e) {
+      logger.debug("Exception: {}", e.getMessage());
+      try {
+        resp.getWriter().println(e.getMessage());
+      } catch (IOException ioe) {
+        logger.debug("IOException: {}", ioe.getMessage());
+      }
     }
   }
 
