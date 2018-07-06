@@ -24,9 +24,8 @@ public class BroadcastServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
-      Transaction.Builder build = Transaction.newBuilder();
-      JsonFormat.merge(input, build);
-      GrpcAPI.Return retur = wallet.broadcastTransaction(build.build());
+      Transaction transaction = Util.packTransaction(input);
+      GrpcAPI.Return retur = wallet.broadcastTransaction(transaction);
       response.getWriter().println(JsonFormat.printToString(retur));
     } catch (ParseException e) {
       logger.debug("ParseException: {}", e.getMessage());

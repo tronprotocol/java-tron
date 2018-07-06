@@ -1,12 +1,14 @@
 package org.tron.core.services.http;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.Any;
+import com.google.protobuf.InvalidProtocolBufferException;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.AssetIssueContract;
@@ -27,6 +29,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 
 
+@Slf4j
 public class Util {
 
   public static String printErrorMsg(Exception e) {
@@ -141,8 +144,8 @@ public class Util {
         jsonContract.put("parameter", parameter);
         jsonContract.put("type", contract.getType());
         contracts.add(jsonContract);
-      } catch (Exception e) {
-        e.printStackTrace();
+      } catch (InvalidProtocolBufferException e) {
+        logger.debug("InvalidProtocolBufferException: {}", e.getMessage());
       }
     });
 
@@ -152,5 +155,121 @@ public class Util {
     String txID = ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
     jsonTransaction.put("txID", txID);
     return jsonTransaction.toJSONString();
+  }
+
+  public static Transaction packTransaction(String strTransaction) {
+    JSONObject jsonTransaction = JSONObject.parseObject(strTransaction);
+    JSONObject rawData = jsonTransaction.getJSONObject("raw_data");
+    JSONArray contracts = new JSONArray();
+    JSONArray rawContractArray = rawData.getJSONArray("contract");
+
+    for(int i=0; i < rawContractArray.size(); i++) {
+      try {
+        JSONObject contract = rawContractArray.getJSONObject(i);
+        JSONObject parameter = contract.getJSONObject("parameter");
+        String contractType = contract.getString("type");
+        Any any = null;
+        switch (contractType) {
+          case "AccountCreateContract":
+            AccountCreateContract.Builder accountCreateContractBuilder = AccountCreateContract.newBuilder();
+            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(), accountCreateContractBuilder);
+            any = Any.pack(accountCreateContractBuilder.build());
+            break;
+          case "TransferContract":
+            TransferContract.Builder transferContractBuilder = TransferContract.newBuilder();
+            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(), transferContractBuilder);
+            any = Any.pack(transferContractBuilder.build());
+            break;
+          case "TransferAssetContract":
+            TransferAssetContract.Builder transferAssetContractBuilder = TransferAssetContract.newBuilder();
+            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(), transferAssetContractBuilder);
+            any = Any.pack(transferAssetContractBuilder.build());
+            break;
+          case "VoteAssetContract":
+            VoteAssetContract.Builder voteAssetContractBuilder = VoteAssetContract.newBuilder();
+            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(), voteAssetContractBuilder);
+            any = Any.pack(voteAssetContractBuilder.build());
+            break;
+          case "VoteWitnessContract":
+            VoteWitnessContract.Builder voteWitnessContractBuilder = VoteWitnessContract.newBuilder();
+            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(), voteWitnessContractBuilder);
+            any = Any.pack(voteWitnessContractBuilder.build());
+            break;
+          case "WitnessCreateContract":
+            WitnessCreateContract.Builder witnessCreateContractBuilder = WitnessCreateContract.newBuilder();
+            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(), witnessCreateContractBuilder);
+            any = Any.pack(witnessCreateContractBuilder.build());
+            break;
+          case "AssetIssueContract":
+            AssetIssueContract.Builder assetIssueContractBuilder = AssetIssueContract.newBuilder();
+            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(), assetIssueContractBuilder);
+            any = Any.pack(assetIssueContractBuilder.build());
+            break;
+          case "DeployContract":
+            DeployContract.Builder deployContractBuilder = DeployContract.newBuilder();
+            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(), deployContractBuilder);
+            any = Any.pack(deployContractBuilder.build());
+            break;
+          case "WitnessUpdateContract":
+            WitnessUpdateContract.Builder witnessUpdateContractBuilder = WitnessUpdateContract.newBuilder();
+            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(), witnessUpdateContractBuilder);
+            any = Any.pack(witnessUpdateContractBuilder.build());
+            break;
+          case "ParticipateAssetIssueContract":
+            ParticipateAssetIssueContract.Builder participateAssetIssueContractBuilder = ParticipateAssetIssueContract.newBuilder();
+            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(), participateAssetIssueContractBuilder);
+            any = Any.pack(participateAssetIssueContractBuilder.build());
+            break;
+          case "AccountUpdateContract":
+            AccountUpdateContract.Builder accountUpdateContractBuilder = AccountUpdateContract.newBuilder();
+            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(), accountUpdateContractBuilder);
+            any = Any.pack(accountUpdateContractBuilder.build());
+            break;
+          case "FreezeBalanceContract":
+            FreezeBalanceContract.Builder freezeBalanceContractBuilder = FreezeBalanceContract.newBuilder();
+            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(), freezeBalanceContractBuilder);
+            any = Any.pack(freezeBalanceContractBuilder.build());
+            break;
+          case "UnfreezeBalanceContract":
+            UnfreezeBalanceContract.Builder unfreezeBalanceContractBuilder = UnfreezeBalanceContract.newBuilder();
+            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(), unfreezeBalanceContractBuilder);
+            any = Any.pack(unfreezeBalanceContractBuilder.build());
+            break;
+          case "UnfreezeAssetContract":
+            UnfreezeAssetContract.Builder unfreezeAssetContractBuilder = UnfreezeAssetContract.newBuilder();
+            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(), unfreezeAssetContractBuilder);
+            any = Any.pack(unfreezeAssetContractBuilder.build());
+            break;
+          case "WithdrawBalanceContract":
+            WithdrawBalanceContract.Builder withdrawBalanceContractBuilder = WithdrawBalanceContract.newBuilder();
+            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(), withdrawBalanceContractBuilder);
+            any = Any.pack(withdrawBalanceContractBuilder.build());
+            break;
+          case "UpdateAssetContract":
+            UpdateAssetContract.Builder updateAssetContractBuilder = UpdateAssetContract.newBuilder();
+            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(), updateAssetContractBuilder);
+            any = Any.pack(updateAssetContractBuilder.build());
+            break;
+          // todo add other contract
+          default:
+        }
+        String value = ByteArray.toHexString(any.getValue().toByteArray());
+        parameter.put("value", value);
+        contract.put("parameter", parameter);
+        contracts.add(contract);
+      } catch (ParseException e) {
+        logger.debug("ParseException: {}", e.getMessage());
+      }
+    }
+    rawData.put("contract", contracts);
+    jsonTransaction.put("raw_data", rawData);
+    Transaction.Builder transactionBuilder = Transaction.newBuilder();
+    try {
+      JsonFormat.merge(jsonTransaction.toJSONString(), transactionBuilder);
+      return transactionBuilder.build();
+    } catch (ParseException e) {
+      logger.debug("ParseException: {}", e.getMessage());
+      return null;
+    }
   }
 }

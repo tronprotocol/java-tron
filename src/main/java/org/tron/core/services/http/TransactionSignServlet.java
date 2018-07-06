@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import com.alibaba.fastjson.JSONObject;
 import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.services.http.JsonFormat.ParseException;
+import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionSign;
 
 
@@ -29,11 +31,16 @@ public class TransactionSignServlet extends HttpServlet {
     try {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      JSONObject input = JSONObject.parseObject(contract);
+      String strTransaction = input.getJSONObject("transaction").toJSONString();
+      Transaction transaction = Util.packTransaction(strTransaction);
+      JSONObject jsonTransaction = JSONObject.parseObject(JsonFormat.printToString(transaction));
+      input.put("transaction", jsonTransaction);
       TransactionSign.Builder build = TransactionSign.newBuilder();
-      JsonFormat.merge(contract, build);
+      JsonFormat.merge(input.toJSONString(), build);
       TransactionCapsule reply = wallet.getTransactionSign(build.build());
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply.getInstance()));
+        response.getWriter().println(Util.printTransaction(reply.getInstance()));
       } else {
         response.getWriter().println("{}");
       }
