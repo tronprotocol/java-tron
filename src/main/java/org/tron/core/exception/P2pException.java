@@ -16,6 +16,7 @@ public class P2pException extends Exception {
     public enum TypeEnum {
         NO_SUCH_MESSAGE                         (1, "No such message"),
         PARSE_MESSAGE_FAILED                    (2, "Parse message failed"),
+        MESSAGE_WITH_WRONG_LENGTH               (3, "Message with wrong length"),
         DEFAULT                                 (100, "default exception");
 
         private Integer value;

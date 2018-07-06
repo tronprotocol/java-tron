@@ -512,6 +512,8 @@ public class Args {
         config.hasPath("node.walletExtensionApi") && config.getBoolean("node.walletExtensionApi");
 
     initBackupProperty(config);
+
+    logConfig();
   }
 
 
@@ -701,5 +703,26 @@ public class Args {
         ? config.getInt("node.backup.port") : 10001;
     INSTANCE.backupMembers = config.hasPath("node.backup.members")
         ? config.getStringList("node.backup.members") : new ArrayList<>();
+  }
+
+  private static void logConfig(){
+    Args args = getInstance();
+    logger.info("\n");
+    logger.info("************************ Net config ************************");
+    logger.info("P2P version: {}", args.getNodeP2pVersion());
+    logger.info("Bind IP: {}", args.getNodeDiscoveryBindIp());
+    logger.info("External IP: {}", args.getNodeExternalIp());
+    logger.info("Listen port: {}", args.getNodeListenPort());
+    logger.info("Discover enable: {}", args.isNodeDiscoveryEnable());
+    logger.info("Active node size: {}", args.getActiveNodes().size());
+    logger.info("Passive node size: {}", args.getPassiveNodes().size());
+    logger.info("Seed node size: {}", args.getSeedNodes().size());
+    logger.info("Max connection: {}", args.getNodeMaxActiveNodes());
+    logger.info("Max connection with same IP: {}", args.getNodeMaxActiveNodesWithSameIp());
+    logger.info("************************ Backup config ************************");
+    logger.info("Backup listen port: {}", args.getBackupPort());
+    logger.info("Backup member size: {}", args.getBackupMembers().size());
+    logger.info("Backup priority: {}", args.getBackupPriority());
+    logger.info("\n");
   }
 }
