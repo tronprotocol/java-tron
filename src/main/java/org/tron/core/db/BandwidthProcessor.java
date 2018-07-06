@@ -86,7 +86,7 @@ public class BandwidthProcessor {
         trx.getInstance().getRawData().getContractList();
 
     for (Contract contract : contracts) {
-      long bytes = trx.getInstance().getRawData().getSerializedSize();
+      long bytes = trx.getInstance().getSerializedSize();
       logger.debug("trxId {},bandwidth cost :{}", trx.getTransactionId(), bytes);
       byte[] address = TransactionCapsule.getOwner(contract);
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
