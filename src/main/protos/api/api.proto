@@ -315,6 +315,16 @@ service Wallet {
     };
   };
 
+  rpc GetProposalById (BytesMessage) returns (Proposal) {
+      option (google.api.http) = {
+        post: "/wallet/getproposalbyid"
+        body: "*"
+        additional_bindings {
+          get: "/wallet/getproposalbyid"
+        }
+      };
+   };
+
   rpc GetAssetIssueList (EmptyMessage) returns (AssetIssueList) {
     option (google.api.http) = {
         post: "/wallet/getassetissuelist"
