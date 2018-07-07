@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.services.http.JsonFormat.ParseException;
 
@@ -30,9 +31,12 @@ public class CreateAddressServlet extends HttpServlet {
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(jsonObject.toJSONString(), build);
       byte[] address = wallet.createAdresss(build.getValue().toByteArray());
-      BytesMessage.Builder builder = BytesMessage.newBuilder();
-      builder.setValue(ByteString.copyFrom(address));
-      response.getWriter().println(JsonFormat.printToString(builder.build()));
+      String base58check = Wallet.encode58Check(address);
+      String hexString = ByteArray.toHexString(address);
+      JSONObject jsonAddress = new JSONObject();
+      jsonAddress.put("base58checkAddress", base58check);
+      jsonAddress.put("value", hexString);
+      response.getWriter().println(jsonAddress.toJSONString());
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {
@@ -50,9 +54,12 @@ public class CreateAddressServlet extends HttpServlet {
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build);
       byte[] address = wallet.createAdresss(build.getValue().toByteArray());
-      BytesMessage.Builder builder = BytesMessage.newBuilder();
-      builder.setValue(ByteString.copyFrom(address));
-      response.getWriter().println(JsonFormat.printToString(builder.build()));
+      String base58check = Wallet.encode58Check(address);
+      String hexString = ByteArray.toHexString(address);
+      JSONObject jsonAddress = new JSONObject();
+      jsonAddress.put("base58checkAddress", base58check);
+      jsonAddress.put("value", hexString);
+      response.getWriter().println(jsonAddress.toJSONString());
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {
