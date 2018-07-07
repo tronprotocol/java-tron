@@ -35,7 +35,7 @@ public class CreateAddressServlet extends HttpServlet {
       String hexString = ByteArray.toHexString(address);
       JSONObject jsonAddress = new JSONObject();
       jsonAddress.put("base58checkAddress", base58check);
-      jsonAddress.put("hexAddress", hexString);
+      jsonAddress.put("value", hexString);
       response.getWriter().println(jsonAddress.toJSONString());
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
@@ -58,7 +58,7 @@ public class CreateAddressServlet extends HttpServlet {
       String hexString = ByteArray.toHexString(address);
       JSONObject jsonAddress = new JSONObject();
       jsonAddress.put("base58checkAddress", base58check);
-      jsonAddress.put("hexAddress", hexString);
+      jsonAddress.put("value", hexString);
       response.getWriter().println(jsonAddress.toJSONString());
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
