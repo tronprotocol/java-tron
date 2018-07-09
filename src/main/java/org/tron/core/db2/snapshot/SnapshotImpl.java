@@ -1,5 +1,7 @@
 package org.tron.core.db2.snapshot;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicates;
 import com.google.common.collect.Streams;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.HashDB;
@@ -11,6 +13,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
 
@@ -31,6 +34,9 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
 
   @Override
   public void put(byte[] key, byte[] value) {
+    Preconditions.checkNotNull(key, "key in db is not null.");
+    Preconditions.checkNotNull(value, "value in db is not null.");
+
     Value.Operator operator;
     if (get(key) == null) {
       operator = Value.Operator.CREATE;
@@ -43,6 +49,8 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
 
   @Override
   public void remove(byte[] key) {
+    Preconditions.checkNotNull(key, "key in db is not null.");
+
     if (get(key) != null) {
       db.put(Key.of(key), Value.of(Value.Operator.DELETE, null));
     }
