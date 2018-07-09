@@ -127,6 +127,7 @@ public class NodeHandler {
 
   // Manages state transfers
   public void changeState(State newState) {
+    logger.info("Node {} change status {} to {}", node.getHost(), state, newState);
     State oldState = state;
     if (newState == State.Discovered) {
       sendPing();
@@ -225,7 +226,7 @@ public class NodeHandler {
   }
 
   public void handleTimedOut() {
-    logger.debug("ping timeout {}", node);
+    logger.info("ping timeout {}", node);
     waitForPong = false;
     if (--pingTrials > 0) {
       sendPing();
