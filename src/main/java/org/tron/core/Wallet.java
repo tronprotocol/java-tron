@@ -55,7 +55,6 @@ import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.db.PendingManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
-import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
@@ -70,6 +69,7 @@ import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionSign;
 
@@ -468,7 +468,7 @@ public class Wallet {
     try {
       transactionCapsule = dbManager.getTransactionStore()
           .get(transactionId.toByteArray());
-    } catch (BadItemException e) {
+    } catch (StoreException e) {
     }
     if (transactionCapsule != null) {
       return transactionCapsule.getInstance();
@@ -476,4 +476,19 @@ public class Wallet {
     return null;
   }
 
+  public Proposal getProposalById(ByteString proposalId) {
+    if (Objects.isNull(proposalId)) {
+      return null;
+    }
+    ProposalCapsule proposalCapsule = null;
+    try {
+      proposalCapsule = dbManager.getProposalStore()
+          .get(proposalId.toByteArray());
+    } catch (StoreException e) {
+    }
+    if (proposalCapsule != null) {
+      return proposalCapsule.getInstance();
+    }
+    return null;
+  }
 }

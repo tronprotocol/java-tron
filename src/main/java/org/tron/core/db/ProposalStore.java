@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.ProposalCapsule;
-import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.exception.ItemNotFoundException;
 
 @Component
 public class ProposalStore extends TronStoreWithRevoking<ProposalCapsule> {
@@ -18,9 +18,12 @@ public class ProposalStore extends TronStoreWithRevoking<ProposalCapsule> {
   }
 
   @Override
-  public ProposalCapsule get(byte[] key) {
+  public ProposalCapsule get(byte[] key) throws ItemNotFoundException {
     byte[] value = dbSource.getData(key);
-    return ArrayUtils.isEmpty(value) ? null : new ProposalCapsule(value);
+    if (ArrayUtils.isEmpty(value)) {
+      throw new ItemNotFoundException();
+    }
+    return new ProposalCapsule(value);
   }
 
   @Override

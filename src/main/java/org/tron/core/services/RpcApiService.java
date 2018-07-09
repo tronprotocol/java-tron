@@ -73,6 +73,7 @@ import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
+import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.TransactionSign;
@@ -747,6 +748,19 @@ public class RpcApiService implements Service {
 
       if (Objects.nonNull(blockId)) {
         responseObserver.onNext(wallet.getBlockById(blockId));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getProposalById(BytesMessage request,
+        StreamObserver<Proposal> responseObserver) {
+      ByteString proposalId = request.getValue();
+
+      if (Objects.nonNull(proposalId)) {
+        responseObserver.onNext(wallet.getProposalById(proposalId));
       } else {
         responseObserver.onNext(null);
       }
