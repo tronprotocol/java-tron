@@ -5,7 +5,7 @@ import org.tron.core.db.common.iterator.DBIterator;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CacheDB implements DB<Key, Value> {
+public class HashDB implements DB<Key, Value> {
   private Map<Key, Value> db = new HashMap<>();
 
   @Override
