@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
@@ -84,7 +83,7 @@ public class ProposalDeleteActuator extends AbstractActuator {
     long now = dbManager.getHeadBlockTimeStamp();
     if (proposalCapsule.getProposalAddress() != contract.getOwnerAddress()) {
       throw new ContractValidateException("Proposal[" + contract.getProposalId() + "] "
-          + "is not proposed by "+ readableOwnerAddress);
+          + "is not proposed by " + readableOwnerAddress);
     }
     if (now >= proposalCapsule.getExpirationTime()) {
       throw new ContractValidateException("Proposal[" + contract.getProposalId() + "] expired");
