@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Proposal.State;
 
@@ -120,6 +121,11 @@ public class ProposalCapsule implements ProtoCapsule<Proposal> {
     return this.proposal.getState().equals(State.CANCELED);
   }
 
+  public boolean hasExpired(long time) {
+    return this.proposal.getExpirationTime() <= time;
+  }
+
+
   public byte[] createDbKey() {
     return calculateDbKey(getID());
   }
@@ -138,4 +144,7 @@ public class ProposalCapsule implements ProtoCapsule<Proposal> {
     return this.proposal;
   }
 
+  public boolean hasMostApprovals() {
+    return this.proposal.getApprovalsCount() >= ChainConstant.MAX_ACTIVE_WITNESS_NUM * 7 / 10;
+  }
 }
