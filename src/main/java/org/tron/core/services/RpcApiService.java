@@ -33,6 +33,7 @@ import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.PaginatedMessage;
+import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletExtensionGrpc;
@@ -64,7 +65,6 @@ import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
-import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
@@ -825,6 +825,13 @@ public class RpcApiService implements Service {
     public void listWitnesses(EmptyMessage request,
         StreamObserver<WitnessList> responseObserver) {
       responseObserver.onNext(wallet.getWitnessList());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void listProposals(EmptyMessage request,
+        StreamObserver<ProposalList> responseObserver) {
+      responseObserver.onNext(wallet.getProposalList());
       responseObserver.onCompleted();
     }
 

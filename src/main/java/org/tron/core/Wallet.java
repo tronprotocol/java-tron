@@ -35,6 +35,7 @@ import org.tron.api.GrpcAPI.AccountNetMessage;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
@@ -46,6 +47,7 @@ import org.tron.common.utils.Utils;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.AccountStore;
@@ -324,6 +326,14 @@ public class Wallet {
     List<WitnessCapsule> witnessCapsuleList = dbManager.getWitnessStore().getAllWitnesses();
     witnessCapsuleList
         .forEach(witnessCapsule -> builder.addWitnesses(witnessCapsule.getInstance()));
+    return builder.build();
+  }
+
+  public ProposalList getProposalList() {
+    ProposalList.Builder builder = ProposalList.newBuilder();
+    List<ProposalCapsule> proposalCapsuleList = dbManager.getProposalStore().getAllProposals();
+    proposalCapsuleList
+        .forEach(proposalCapsule -> builder.addProposals(proposalCapsule.getInstance()));
     return builder.build();
   }
 
