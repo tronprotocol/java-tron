@@ -12,6 +12,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Contract.ProposalDeleteContract;
 import org.tron.protos.Protocol.Proposal.State;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -29,8 +30,12 @@ public class ProposalDeleteActuator extends AbstractActuator {
     try {
       final ProposalDeleteContract proposalDeleteContract = this.contract
           .unpack(ProposalDeleteContract.class);
-      ProposalCapsule proposalCapsule = dbManager.getProposalStore().
-          get(ByteArray.fromLong(proposalDeleteContract.getProposalId()));
+      ProposalCapsule proposalCapsule = null;
+      try {
+        dbManager.getProposalStore().
+            get(ByteArray.fromLong(proposalDeleteContract.getProposalId()));
+      } catch (ItemNotFoundException ex) {
+      }
       proposalCapsule.setState(State.CANCELED);
       dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
       ret.setStatus(fee, code.SUCESS);
@@ -77,8 +82,13 @@ public class ProposalDeleteActuator extends AbstractActuator {
       throw new ContractValidateException("Proposal[" + contract.getProposalId() + "] not exists");
     }
 
-    ProposalCapsule proposalCapsule = dbManager.getProposalStore().
-        get(ByteArray.fromLong(contract.getProposalId()));
+    ProposalCapsule proposalCapsule = null;
+    try {
+      proposalCapsule = dbManager.getProposalStore().
+          get(ByteArray.fromLong(contract.getProposalId()));
+    } catch (ItemNotFoundException ex) {
+      throw new ContractValidateException("Proposal[" + contract.getProposalId() + "] not exists");
+    }
 
     long now = dbManager.getHeadBlockTimeStamp();
     if (proposalCapsule.getProposalAddress() != contract.getOwnerAddress()) {

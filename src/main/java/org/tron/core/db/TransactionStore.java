@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.common.iterator.TransactionIterator;
 import org.tron.core.exception.BadItemException;
-import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.StoreException;
 
 @Slf4j
@@ -24,12 +23,9 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
   }
 
   @Override
-  public TransactionCapsule get(byte[] key) throws ItemNotFoundException, BadItemException {
+  public TransactionCapsule get(byte[] key) throws BadItemException {
     byte[] value = dbSource.getData(key);
-    if (ArrayUtils.isEmpty(value)) {
-      throw new ItemNotFoundException();
-    }
-    return new TransactionCapsule(value);
+    return ArrayUtils.isEmpty(value) ? null : new TransactionCapsule(value);
   }
 
   @Override

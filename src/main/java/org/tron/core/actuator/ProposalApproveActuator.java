@@ -12,6 +12,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Contract.ProposalApproveContract;
 import org.tron.protos.Protocol.Proposal.State;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -29,8 +30,12 @@ public class ProposalApproveActuator extends AbstractActuator {
     try {
       final ProposalApproveContract proposalApproveContract =
           this.contract.unpack(ProposalApproveContract.class);
-      ProposalCapsule proposalCapsule = dbManager.getProposalStore().
-          get(ByteArray.fromLong(proposalApproveContract.getProposalId()));
+      ProposalCapsule proposalCapsule = null;
+      try {
+        dbManager.getProposalStore().
+            get(ByteArray.fromLong(proposalApproveContract.getProposalId()));
+      } catch (ItemNotFoundException ex) {
+      }
       ByteString committeeAddress = proposalApproveContract.getOwnerAddress();
       if (proposalApproveContract.getIsAddApproval()) {
         proposalCapsule.addApproval(committeeAddress);
@@ -87,8 +92,14 @@ public class ProposalApproveActuator extends AbstractActuator {
     }
 
     long now = dbManager.getHeadBlockTimeStamp();
-    ProposalCapsule proposalCapsule = dbManager.getProposalStore().
-        get(ByteArray.fromLong(contract.getProposalId()));
+    ProposalCapsule proposalCapsule = null;
+    try {
+      dbManager.getProposalStore().
+          get(ByteArray.fromLong(contract.getProposalId()));
+    } catch (ItemNotFoundException ex) {
+      throw new ContractValidateException("Proposal[" + contract.getProposalId() + "] not exists");
+    }
+
     if (now >= proposalCapsule.getExpirationTime()) {
       throw new ContractValidateException("Proposal[" + contract.getProposalId() + "] expired");
     }

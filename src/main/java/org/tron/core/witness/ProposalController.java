@@ -4,7 +4,6 @@ import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.Proposal.State;
@@ -32,11 +31,16 @@ public class ProposalController {
 
     long proposalNum = latestProposalNum;
 
-    ProposalCapsule proposalCapsule;
+    ProposalCapsule proposalCapsule = null;
 
     while (proposalNum > 0) {
-      proposalCapsule = manager.getProposalStore()
-          .get(ProposalCapsule.calculateDbKey(proposalNum));
+      try {
+        proposalCapsule = manager.getProposalStore()
+            .get(ProposalCapsule.calculateDbKey(proposalNum));
+      } catch (Exception ex) {
+        logger.error("", ex);
+      }
+
       if (proposalCapsule.hasProcessed()) {
         logger
             .info("Proposal has processed，id:[{}],skip it and before it", proposalCapsule.getID());
@@ -56,23 +60,24 @@ public class ProposalController {
         continue;
       }
 
+      proposalNum--;
       logger.info("Proposal has not expired，id:[{}],skip it", proposalCapsule.getID());
     }
-    logger.info("Process proposals done, oldest proposal[{}]", proposalNum);
+    logger.info("Processing proposals done, oldest proposal[{}]", proposalNum);
   }
 
   public void processProposal(ProposalCapsule proposalCapsule) {
 
     if (proposalCapsule.hasMostApprovals()) {
       logger.info(
-          "Process proposal,id:{},it has received most approvals ,begins to set dynamic parameter,{},and set  proposal state as DISAPPROVED",
+          "Processing proposal,id:{},it has received most approvals ,begin to set dynamic parameter,{},and set  proposal state as DISAPPROVED",
           proposalCapsule.getID(), proposalCapsule.getParameters());
       setDynamicParameters(proposalCapsule);
       proposalCapsule.setState(State.APPROVED);
       manager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
     } else {
       logger.info(
-          "Process proposal,id:{},it has not received enough approvals,set proposal state as DISAPPROVED",
+          "Processing proposal,id:{},it has not received enough approvals,set proposal state as DISAPPROVED",
           proposalCapsule.getID());
       proposalCapsule.setState(State.DISAPPROVED);
       manager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
