@@ -36,7 +36,7 @@ message Proposal {
   bytes proposer_address = 2;
   map<int64, int64> parameters = 3;
   int64 expiration_time = 4;
-  int64 effective_period_time = 5;
+  int64 create_time = 5;
   repeated bytes approvals = 6;
   enum State {
     DISAPPROVED = 0;
