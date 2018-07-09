@@ -22,7 +22,7 @@ public class ProposalController {
   }
 
 
-  public void processProposals(long currentMaintenanceTime) {
+  public void processProposals() {
     long latestProposalNum = manager.getDynamicPropertiesStore().getLatestProposalNum();
     if (latestProposalNum == 0) {
       logger.info("latestProposalNum is 0,return");
@@ -54,7 +54,8 @@ public class ProposalController {
         continue;
       }
 
-      if (proposalCapsule.hasExpired(currentMaintenanceTime)) {
+      long currentTime = manager.getDynamicPropertiesStore().getNextMaintenanceTime();
+      if (proposalCapsule.hasExpired(currentTime)) {
         processProposal(proposalCapsule);
         proposalNum--;
         continue;
