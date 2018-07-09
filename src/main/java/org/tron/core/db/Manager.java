@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -48,7 +47,6 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -75,6 +73,7 @@ import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
@@ -138,6 +137,10 @@ public class Manager {
   @Getter
   @Setter
   private WitnessController witnessController;
+
+  @Getter
+  @Setter
+  private ProposalController proposalController;
 
   private ExecutorService validateSignService;
 
@@ -263,6 +266,7 @@ public class Manager {
     revokingStore = RevokingStore.getInstance();
     revokingStore.disable();
     this.setWitnessController(WitnessController.createInstance(this));
+    this.setProposalController(ProposalController.createInstance(this));
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
     this.initGenesis();
     try {
@@ -1158,63 +1162,10 @@ public class Manager {
    * Perform maintenance.
    */
   private void processMaintenance(BlockCapsule block) {
-    processProposals();
+    proposalController.processProposals(block);
     witnessController.updateWitness();
     this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
   }
-
-  private void processProposals() {
-    long latestProposalNum = this.dynamicPropertiesStore.getLatestProposalNum();
-    if (latestProposalNum == 0) {
-      return;
-    }
-
-    long proposalNum = latestProposalNum;
-
-    ProposalCapsule proposalCapsule;
-
-    while (proposalNum > 0) {
-      proposalCapsule = this.proposalStore
-          .get(ProposalCapsule.calculateDbKey(proposalNum));
-      if (proposalCapsule.hasProcessed()) {
-        //proposals with number less than this one, have been processed before
-        break;
-      }
-
-      if (proposalCapsule.hasCanceled()) {
-        proposalNum--;
-        continue;
-      }
-
-      processProposal(proposalCapsule);
-      proposalNum--;
-    }
-
-  }
-
-  private void processProposal(ProposalCapsule proposalCapsule) {
-
-    Map<Long, Long> map = proposalCapsule.getInstance().getParametersMap();
-    for (Map.Entry<Long, Long> entry : map.entrySet()) {
-
-      switch (entry.getKey().intValue()) {
-        case(1): {
-          getDynamicPropertiesStore().saveAccountUpgradeCost(entry.getValue());
-          break;
-        }
-        case(2): {
-          getDynamicPropertiesStore().saveCreateAccountFee(entry.getValue());
-          break;
-        }
-        case(3): {
-          getDynamicPropertiesStore().saveTransactionFee(entry.getValue());
-          break;
-        }
-        default: break;
-      }
-    }
-  }
-
 
   /**
    * @param block the block update signed witness. set witness who signed block the 1. the latest
