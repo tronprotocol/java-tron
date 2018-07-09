@@ -23,9 +23,10 @@ public class ProposalController {
   }
 
 
-  public void processProposals(BlockCapsule block) {
+  public void processProposals(long currentMaintenanceTime) {
     long latestProposalNum = manager.getDynamicPropertiesStore().getLatestProposalNum();
     if (latestProposalNum == 0) {
+      logger.info("latestProposalNum is 0,return");
       return;
     }
 
@@ -49,7 +50,7 @@ public class ProposalController {
         continue;
       }
 
-      if (proposalCapsule.hasExpired(block.getTimeStamp())) {
+      if (proposalCapsule.hasExpired(currentMaintenanceTime)) {
         processProposal(proposalCapsule);
         proposalNum--;
         continue;
@@ -57,9 +58,10 @@ public class ProposalController {
 
       logger.info("Proposal has not expired，id:[{}],skip it", proposalCapsule.getID());
     }
+    logger.info("Process proposals done, oldest proposal[{}]", proposalNum);
   }
 
-  private void processProposal(ProposalCapsule proposalCapsule) {
+  public void processProposal(ProposalCapsule proposalCapsule) {
 
     if (proposalCapsule.hasMostApprovals()) {
       logger.info(
@@ -78,7 +80,7 @@ public class ProposalController {
 
   }
 
-  private void setDynamicParameters(ProposalCapsule proposalCapsule) {
+  public void setDynamicParameters(ProposalCapsule proposalCapsule) {
     Map<Long, Long> map = proposalCapsule.getInstance().getParametersMap();
     for (Map.Entry<Long, Long> entry : map.entrySet()) {
 

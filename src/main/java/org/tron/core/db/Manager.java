@@ -1162,7 +1162,7 @@ public class Manager {
    * Perform maintenance.
    */
   private void processMaintenance(BlockCapsule block) {
-    proposalController.processProposals(block);
+    proposalController.processProposals(this.dynamicPropertiesStore.getNextMaintenanceTime());
     witnessController.updateWitness();
     this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
   }
