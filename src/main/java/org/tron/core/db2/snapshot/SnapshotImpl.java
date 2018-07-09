@@ -14,6 +14,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
 
@@ -73,45 +74,44 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   @Override
   public void merge(Snapshot from) {
     SnapshotImpl fromImpl = (SnapshotImpl) from;
-    Set<Key> delete = new HashSet<>();
-    Map<Key, Value> create = new HashMap<>();
-    Map<Key, Value> modify = new HashMap<>();
-    Streams.stream(fromImpl.db)
-        .filter(e -> e.getValue().getOperator() == Value.Operator.DELETE)
-        .forEach(e -> delete.add(e.getKey()));
+
     Streams.stream(fromImpl.db)
         .filter(e -> e.getValue().getOperator() == Value.Operator.CREATE)
-        .forEach(e -> create.put(e.getKey(), e.getValue()));
+        .forEach(e -> {
+          Key k = e.getKey();
+          Value v = e.getValue();
+          Value value = db.get(k);
+          if (value == null) {
+            db.put(k, v);
+          } else if (value.getOperator() == Value.Operator.DELETE) {
+            db.put(k, Value.of(Value.Operator.MODIFY, v.getBytes()));
+          }
+        });
+
     Streams.stream(fromImpl.db)
         .filter(e -> e.getValue().getOperator() == Value.Operator.MODIFY)
-        .forEach(e -> modify.put(e.getKey(), e.getValue()));
+        .forEach(e -> {
+          Key k = e.getKey();
+          Value v = e.getValue();
+          Value value = db.get(k);
+          if (value == null || value.getOperator() == Value.Operator.MODIFY) {
+            db.put(k, v);
+          } else if (value.getOperator() == Value.Operator.CREATE) {
+            db.put(k, Value.of(Value.Operator.CREATE, v.getBytes()));
+          }
+        });
 
-    create.forEach((k, v) -> {
-      Value value = db.get(k);
-      if (value == null) {
-        db.put(k, v);
-      } else if (value.getOperator() == Value.Operator.DELETE) {
-        db.put(k, Value.of(Value.Operator.MODIFY, v.getBytes()));
-      }
-    });
-
-    modify.forEach((k, v) -> {
-      Value value = db.get(k);
-      if (value == null || value.getOperator() == Value.Operator.MODIFY) {
-        db.put(k, v);
-      } else if (value.getOperator() == Value.Operator.CREATE) {
-        db.put(k, Value.of(Value.Operator.CREATE, v.getBytes()));
-      }
-    });
-
-    delete.forEach(k -> {
-      Value value = db.get(k);
-      if (value == null || value.getOperator() == Value.Operator.MODIFY) {
-        db.put(k, Value.of(Value.Operator.DELETE, null));
-      } else if (value.getOperator() == Value.Operator.CREATE) {
-        db.remove(k);
-      }
-    });
+    Streams.stream(fromImpl.db)
+        .filter(e -> e.getValue().getOperator() == Value.Operator.DELETE)
+        .map(Map.Entry::getKey)
+        .forEach(k -> {
+          Value value = db.get(k);
+          if (value == null || value.getOperator() == Value.Operator.MODIFY) {
+            db.put(k, Value.of(Value.Operator.DELETE, null));
+          } else if (value.getOperator() == Value.Operator.CREATE) {
+            db.remove(k);
+          }
+        });
   }
 
   //todo current cache need iterator
