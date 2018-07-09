@@ -113,12 +113,11 @@ public class Manager {
   private VotesStore votesStore;
   @Autowired
   private TransactionHistoryStore transactionHistoryStore;
-
-
+  @Autowired
   private CodeStore codeStore;
-
+  @Autowired
   private ContractStore contractStore;
-
+  @Autowired
   private StorageStore storageStore;
 
   // for network
@@ -303,9 +302,9 @@ public class Manager {
     }
     revokingStore.enable();
 
-    this.codeStore = CodeStore.create("code");
-    this.contractStore = ContractStore.create("contract");
-    this.storageStore = StorageStore.create("storage");
+//    this.codeStore = CodeStore.create("code");
+//    this.contractStore = ContractStore.create("contract");
+//    this.storageStore = StorageStore.create("storage");
 
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());

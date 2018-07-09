@@ -2,12 +2,17 @@ package org.tron.core.db;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.tron.core.capsule.StorageCapsule;
 
 @Slf4j
+@Component
 public class StorageStore extends TronStoreWithRevoking<StorageCapsule> {
 
-  private StorageStore(String dbName) {
+  @Autowired
+  private StorageStore(@Value("storage") String dbName) {
     super(dbName);
   }
 
@@ -39,20 +44,6 @@ public class StorageStore extends TronStoreWithRevoking<StorageCapsule> {
 
   void destroy() {
     instance = null;
-  }
-
-  /**
-   * create Fun.
-   */
-  public static StorageStore create(String dbName) {
-    if (instance == null) {
-      synchronized (StorageStore.class) {
-        if (instance == null) {
-          instance = new StorageStore(dbName);
-        }
-      }
-    }
-    return instance;
   }
 
   /**
