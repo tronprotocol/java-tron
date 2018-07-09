@@ -165,6 +165,9 @@ message Transaction {
       WithdrawBalanceContract = 13;
       UnfreezeAssetContract = 14;
       UpdateAssetContract = 15;
+      ProposalCreateContract = 16;
+      ProposalApproveContract = 17;
+      ProposalDeleteContract = 18;
       CustomContract = 20;
     }
     ContractType type = 1;
