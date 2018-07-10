@@ -724,7 +724,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     this.put(LATEST_PROPOSAL_NUM, new BytesCapsule(ByteArray.fromLong(number)));
   }
 
-
   public long getLatestProposalNum() {
     return Optional.ofNullable(this.dbSource.getData(LATEST_PROPOSAL_NUM))
         .map(ByteArray::toLong)

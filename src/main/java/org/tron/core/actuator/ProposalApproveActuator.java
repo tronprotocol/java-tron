@@ -106,6 +106,13 @@ public class ProposalApproveActuator extends AbstractActuator {
     if (proposalCapsule.getState() == State.CANCELED) {
       throw new ContractValidateException("Proposal[" + contract.getProposalId() + "] canceled");
     }
+    if (!contract.getIsAddApproval()) {
+      if (!proposalCapsule.getApprovals().contains(contract.getOwnerAddress())) {
+        throw new ContractValidateException(
+            "witness [" + readableOwnerAddress + "]has not approved proposal[" + contract
+                .getProposalId() + "] before");
+      }
+    }
 
     return true;
   }

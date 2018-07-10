@@ -91,7 +91,7 @@ public class ProposalDeleteActuator extends AbstractActuator {
     }
 
     long now = dbManager.getHeadBlockTimeStamp();
-    if (proposalCapsule.getProposalAddress() != contract.getOwnerAddress()) {
+    if (!proposalCapsule.getProposalAddress().equals(contract.getOwnerAddress()) ) {
       throw new ContractValidateException("Proposal[" + contract.getProposalId() + "] "
           + "is not proposed by " + readableOwnerAddress);
     }

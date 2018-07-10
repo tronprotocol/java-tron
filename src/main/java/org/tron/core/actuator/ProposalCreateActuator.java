@@ -29,7 +29,7 @@ public class ProposalCreateActuator extends AbstractActuator {
     try {
       final ProposalCreateContract proposalCreateContract = this.contract
           .unpack(ProposalCreateContract.class);
-      long id = dbManager.getDynamicPropertiesStore().getLatestProposalNum();
+      long id = dbManager.getDynamicPropertiesStore().getLatestProposalNum() + 1;
       ProposalCapsule proposalCapsule =
           new ProposalCapsule(proposalCreateContract.getOwnerAddress(), id);
 
@@ -48,6 +48,7 @@ public class ProposalCreateActuator extends AbstractActuator {
       proposalCapsule.setExpirationTime(expirationTime);
 
       dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
+      dbManager.getDynamicPropertiesStore().saveLatestProposalNum(id);
 
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
