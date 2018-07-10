@@ -490,10 +490,6 @@ public class Args {
     INSTANCE.maxHeaderListSize = config.hasPath("node.rpc.maxHeaderListSize") ?
         config.getInt("node.rpc.maxHeaderListSize") : GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE;
 
-    INSTANCE.maintenanceTimeInterval =
-        config.hasPath("block.maintenanceTimeInterval") ? config
-            .getInt("block.maintenanceTimeInterval") : 21600000L;
-
     INSTANCE.tcpNettyWorkThreadNum = config.hasPath("node.tcpNettyWorkThreadNum") ? config
         .getInt("node.tcpNettyWorkThreadNum") : 0;
 

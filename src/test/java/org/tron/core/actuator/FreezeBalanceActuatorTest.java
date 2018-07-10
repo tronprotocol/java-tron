@@ -313,7 +313,7 @@ public class FreezeBalanceActuatorTest {
       actuator.execute(ret);
       fail("cannot run here.");
     } catch (ContractValidateException e) {
-      long maxFrozenNumber = dbManager.getDynamicPropertiesStore().getMaxFrozenNumber();
+      long maxFrozenNumber = ChainConstant.MAX_FROZEN_NUMBER;
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("max frozen number is: " + maxFrozenNumber, e.getMessage());
 

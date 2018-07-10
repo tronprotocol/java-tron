@@ -1,7 +1,6 @@
 package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
-import static org.tron.core.config.Parameter.ChainConstant.WITNESS_PAY_PER_BLOCK;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
@@ -1244,7 +1243,8 @@ public class Manager {
     this.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
 
     try {
-      adjustAllowance(witnessCapsule.getAddress().toByteArray(), WITNESS_PAY_PER_BLOCK);
+      adjustAllowance(witnessCapsule.getAddress().toByteArray(),
+          getDynamicPropertiesStore().getWitnessPayPerBlock());
     } catch (BalanceInsufficientException e) {
       logger.warn(e.getMessage(), e);
     }

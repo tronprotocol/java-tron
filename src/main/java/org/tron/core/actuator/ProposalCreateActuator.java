@@ -36,8 +36,7 @@ public class ProposalCreateActuator extends AbstractActuator {
       proposalCapsule.setParameters(proposalCreateContract.getParametersMap());
 
       long now = dbManager.getHeadBlockTimeStamp();
-      long maintenanceTimeInterval = dbManager.getDynamicPropertiesStore()
-          .getMaintenanceTimeInterval();
+      long maintenanceTimeInterval = ChainConstant.MAINTENANCE_TIME_INTERVAL;
       proposalCapsule.setCreateTime(now);
 
       long currentMaintenanceTime = dbManager.getDynamicPropertiesStore().getNextMaintenanceTime();
