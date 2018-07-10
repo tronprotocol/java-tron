@@ -290,7 +290,7 @@ class Fp12 implements Field<Fp12> {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o.getClass() == getClass())) return false;
+        if (o == null || !(o.getClass() == getClass())) return false;
 
         Fp12 fp12 = (Fp12) o;
 

@@ -123,6 +123,11 @@ public class Type {
     }
 
     @Override
+    public int hashCode() {
+        return new Integer(type).hashCode();
+    }
+
+    @Override
     public String toString() {
         return "Type{" +
             "type=" + type +

@@ -176,7 +176,7 @@ class Fp6 implements Field<Fp6> {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o.getClass() == getClass())) return false;
+        if (o == null || !(o.getClass() == getClass())) return false;
 
         Fp6 fp6 = (Fp6) o;
 

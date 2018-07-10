@@ -184,6 +184,11 @@ public class Value {
         return false;
     }
 
+    @Override
+    public int hashCode() {
+        return new Integer(type.hashCode() + Arrays.hashCode(any)).hashCode();
+    }
+
     public static Value create(byte[] any, int type) {
         return new Value(any, type);
     }

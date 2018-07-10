@@ -284,7 +284,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
             + callValue.hashCode()
             + caller.hashCode()
             + coinbase.hashCode()
-            + msgData.hashCode()
+            + Arrays.hashCode(msgData)
             + number.hashCode()
             + origin.hashCode()
             + prevHash.hashCode()

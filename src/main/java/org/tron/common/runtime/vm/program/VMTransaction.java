@@ -455,10 +455,10 @@ public class VMTransaction {
     }
 
     @Override
-    public boolean equals(Object obj) {
-
-        if (!(obj.getClass() == getClass())) return false;
-        VMTransaction tx = (VMTransaction) obj;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || !(o.getClass() == getClass())) return false;
+        VMTransaction tx = (VMTransaction) o;
 
         return tx.hashCode() == this.hashCode();
     }
