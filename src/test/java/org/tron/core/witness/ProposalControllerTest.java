@@ -145,15 +145,14 @@ public class ProposalControllerTest {
     proposalCapsule5.setExpirationTime(12000L);
 
     dbManager.getDynamicPropertiesStore().saveLatestProposalNum(5);
+    dbManager.getDynamicPropertiesStore().saveNextMaintenanceTime(10000L);
     dbManager.getProposalStore().put(proposalCapsule1.createDbKey(), proposalCapsule1);
     dbManager.getProposalStore().put(proposalCapsule2.createDbKey(), proposalCapsule2);
     dbManager.getProposalStore().put(proposalCapsule3.createDbKey(), proposalCapsule3);
     dbManager.getProposalStore().put(proposalCapsule4.createDbKey(), proposalCapsule4);
     dbManager.getProposalStore().put(proposalCapsule5.createDbKey(), proposalCapsule5);
 
-    long currentMaintenanceTime = 10000L;
-
-    proposalController.processProposals(currentMaintenanceTime);
+    proposalController.processProposals();
 
     try {
       proposalCapsule3 = dbManager.getProposalStore().get(proposalCapsule3.createDbKey());

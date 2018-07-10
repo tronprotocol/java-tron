@@ -808,7 +808,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return MAINTENANCE_SKIP_SLOTS;
   }
 
-  private void saveNextMaintenanceTime(long nextMaintenanceTime) {
+  public void saveNextMaintenanceTime(long nextMaintenanceTime) {
     this.put(NEXT_MAINTENANCE_TIME,
         new BytesCapsule(ByteArray.fromLong(nextMaintenanceTime)));
   }
