@@ -15,6 +15,8 @@ import org.tron.common.storage.Value;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
 
 /**
  * Deposit controller : process pre transaction , block, query contract and etc..
@@ -56,7 +58,8 @@ public class DepositController {
   /**
    * The trx may be invalid due to check with not newest data.
    */
-  public int preProcessTransaction(TransactionCapsule trxCap) {
+  public int preProcessTransaction(TransactionCapsule trxCap)
+      throws ContractValidateException, ContractExeException {
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
     Runtime runtime = new Runtime(trxCap.getInstance(), deposit, programInvokeFactory);
     runtime.execute();
@@ -73,7 +76,8 @@ public class DepositController {
    * @param block
    * @return
    */
-  public int processBlock(BlockCapsule block) {
+  public int processBlock(BlockCapsule block)
+      throws ContractValidateException, ContractExeException {
     Deposit lastDeposit = getLastDeposit();
     Deposit currentDeposit;
     if (lastDeposit == null) {
@@ -124,7 +128,8 @@ public class DepositController {
    * @param trxCap
    * @return
    */
-  public ProgramResult processConstantTransaction(TransactionCapsule trxCap) {
+  public ProgramResult processConstantTransaction(TransactionCapsule trxCap)
+      throws ContractValidateException, ContractExeException {
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
     Runtime runtime = new Runtime(trxCap.getInstance(), programInvokeFactory, deposit);
     runtime.execute();
