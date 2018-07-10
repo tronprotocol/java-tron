@@ -54,6 +54,7 @@ import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadTransactionException;
+import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TraitorPeerException;
 import org.tron.core.exception.TronException;
@@ -180,7 +181,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       send.forEach((peer, ids) ->
           ids.forEach((key, value) -> {
             if (key.equals(InventoryType.BLOCK)) {
-              value.sort(Comparator.comparingDouble(value1 -> value1.getBlockNum()));
+              value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
             }
             peer.sendMessage(new InventoryMessage(value, key));
           }));
@@ -190,7 +191,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       send.forEach((peer, ids) ->
           ids.forEach((key, value) -> {
             if (key.equals(InventoryType.BLOCK)) {
-              value.sort(Comparator.comparingDouble(value1 -> value1.getBlockNum()));
+              value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
             }
             peer.sendMessage(new FetchInvDataMessage(value, key));
           }));
@@ -238,10 +239,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private ConcurrentHashMap<Sha256Hash, InventoryType> advObjToSpread = new ConcurrentHashMap<>();
 
   private HashMap<Sha256Hash, Long> advObjWeRequested = new HashMap<>();
-
-  //private ConcurrentHashMap<Sha256Hash, InventoryType> advObjToFetch = new ConcurrentHashMap<>();
-
-  //private ConcurrentLinkedQueue<PriorItem> advObjToFetch = new ConcurrentLinkedQueue<PriorItem>();
 
   private ConcurrentHashMap<Sha256Hash, PriorItem> advObjToFetch = new ConcurrentHashMap<Sha256Hash, PriorItem>();
 
@@ -717,7 +714,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
               targetPriorItem.refreshTime();
             } else {
               fetchWaterLine.increase();
-              logger.info("water line:" + fetchWaterLine.totalCount());
               this.advObjToFetch.put(id, new PriorItem(new Item(id, msg.getInventoryType()),
                   fetchSequenceCounter.incrementAndGet()));
             }
@@ -809,6 +805,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             block.getBlockId().getString(), peer.getNode().getHost(),
             del.getHeadBlockId().getString());
         startSyncWithPeer(peer);
+      } catch (NonCommonBlockException e) {
+        logger.error("We get a block {} that do not have the most recent common ancestor with the main chain, from {}, reason is {} ",
+            block.getBlockId().getString(), peer.getNode().getHost(), e.getMessage());
+        badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
+        disconnectPeer(peer, ReasonCode.FORKED);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       }
@@ -840,6 +841,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       logger.error("We get a unlinked block {}, head is {}", block.getBlockId().getString(),
           del.getHeadBlockId().getString());
       reason = ReasonCode.UNLINKABLE;
+    } catch (NonCommonBlockException e) {
+      logger.error("We get a block {} that do not have the most recent common ancestor with the main chain, head is {}",
+          block.getBlockId().getString(),
+          del.getHeadBlockId().getString());
+      reason = ReasonCode.FORKED;
     }
 
     if (!isAccept) {

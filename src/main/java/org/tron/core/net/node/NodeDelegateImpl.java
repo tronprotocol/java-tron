@@ -29,6 +29,7 @@ import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
@@ -52,7 +53,7 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
   public synchronized LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode)
-      throws BadBlockException, UnLinkedBlockException, InterruptedException {
+      throws BadBlockException, UnLinkedBlockException, InterruptedException, NonCommonBlockException {
 
     if (block.getInstance().getSerializedSize() > BLOCK_SIZE + 100) {
       throw new BadBlockException("block size over limit");

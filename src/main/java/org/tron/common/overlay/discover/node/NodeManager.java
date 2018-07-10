@@ -138,8 +138,6 @@ public class NodeManager implements EventHandler {
       for (Node node : bootNodes) {
         getNodeHandler(node);
       }
-
-
     }
   }
 
@@ -234,7 +232,6 @@ public class NodeManager implements EventHandler {
       return;
     }
     NodeHandler nodeHandler = getNodeHandler(n);
-    nodeHandler.setSourceNode(m.getFrom());
 
     switch (m.getType()) {
       case DISCOVER_PING:

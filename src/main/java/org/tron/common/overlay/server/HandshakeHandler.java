@@ -20,6 +20,7 @@ package org.tron.common.overlay.server;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.List;
@@ -125,7 +126,8 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   private void handleHelloMsg(ChannelHandlerContext ctx, HelloMessage msg) {
     if (remoteId.length != 64) {
       channel.initNode(msg.getFrom().getId(), msg.getFrom().getPort());
-      if (!syncPool.isCanConnect()) {
+      InetAddress address = ((InetSocketAddress)ctx.channel().remoteAddress()).getAddress();
+      if (!channelManager.getTrustPeers().keySet().contains(address) && !syncPool.isCanConnect()) {
         channel.disconnect(ReasonCode.TOO_MANY_PEERS);
         return;
       }

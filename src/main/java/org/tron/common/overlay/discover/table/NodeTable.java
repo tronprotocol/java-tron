@@ -61,7 +61,7 @@ public class NodeTable {
     NodeEntry e = new NodeEntry(node.getId(), n);
     if (nodes.contains(e)) {
       nodes.forEach(nodeEntry -> {
-        if (nodeEntry.equals(e)){
+        if (nodeEntry.equals(e)) {
           nodeEntry.touch();
         }
       });
