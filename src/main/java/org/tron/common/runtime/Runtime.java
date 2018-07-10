@@ -32,6 +32,8 @@ import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.SmartContract;
 import org.tron.protos.Protocol;
@@ -126,28 +128,18 @@ public class Runtime {
   }
 
 
-  public void precompiled() {
+  public void precompiled() throws ContractValidateException, ContractExeException {
+    TransactionCapsule trxCap = new TransactionCapsule(trx);
+    final List<Actuator> actuatorList = ActuatorFactory
+        .createActuator(trxCap, deposit.getDbManager());
 
-    try {
-      TransactionCapsule trxCap = new TransactionCapsule(trx);
-      final List<Actuator> actuatorList = ActuatorFactory
-          .createActuator(trxCap, deposit.getDbManager());
-
-      for (Actuator act : actuatorList) {
-        act.validate();
-        act.execute(result.getRet());
-      }
-    } catch (RuntimeException e) {
-      program.setRuntimeFailure(e);
-    } catch (Exception e) {
-      program.setRuntimeFailure(new RuntimeException(e.getMessage()));
-    } finally {
-
+    for (Actuator act : actuatorList) {
+      act.validate();
+      act.execute(result.getRet());
     }
-
   }
 
-  public void execute() {
+  public void execute() throws ContractValidateException, ContractExeException {
     switch (trxType) {
       case TRX_PRECOMPILED_TYPE:
         precompiled();
