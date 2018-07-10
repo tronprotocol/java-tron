@@ -11,35 +11,32 @@ option java_outer_classname = "Protocol"; //Specify the class name of the genera
 option go_package = "github.com/tronprotocol/grpc-gateway/core";
 
 enum AccountType {
-  Normal = 0;
-  AssetIssue = 1;
-  Contract = 2;
+  Normal      = 0;
+  AssetIssue  = 1;
+  Contract    = 2;
 }
 
 // AccountId, (name, address) use name, (null, address) use address, (name, null) use name,
 message AccountId {
-  bytes name = 1;
+  bytes name    = 1;
   bytes address = 2;
 }
 
 // vote message
 message Vote {
   // the super rep address
-  bytes vote_address = 1;
+  bytes vote_address  = 1;
   // the vote num to this super rep.
-  int64 vote_count = 2;
+  int64 vote_count    = 2;
 }
 
-// Account
+/* Account */
 message Account {
-  // frozen balance
+  /* frozen balance */
   message Frozen {
-    // the frozen trx balance
-    int64 frozen_balance = 1;
-    // the expire time
-    int64 expire_time = 2;
+    int64 frozen_balance    = 1; // the frozen trx balance
+    int64 expire_time       = 2; // the expire time
   }
-
   bytes account_name = 1;
   AccountType type = 2;
   // the create address
@@ -76,6 +73,7 @@ message Account {
   map<string, int64> free_asset_net_usage = 20;
   int64 latest_consume_time = 21;
   int64 latest_consume_free_time = 22;
+  bytes codeHash = 30;
 }
 
 //FIXME authority?
@@ -101,7 +99,6 @@ message Witness {
   int64 latestSlotNum = 8;
   bool isJobs = 9;
 }
-
 
 // Vote Change
 message Votes {
@@ -142,7 +139,6 @@ message Transaction {
       VoteWitnessContract = 4;
       WitnessCreateContract = 5;
       AssetIssueContract = 6;
-      DeployContract = 7;
       WitnessUpdateContract = 8;
       ParticipateAssetIssueContract = 9;
       AccountUpdateContract = 10;
@@ -152,6 +148,9 @@ message Transaction {
       UnfreezeAssetContract = 14;
       UpdateAssetContract = 15;
       CustomContract = 20;
+      SmartContract = 30;
+      TriggerSmartContract = 31;
+      GetContract = 32;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
@@ -167,6 +166,7 @@ message Transaction {
     }
     int64 fee = 1;
     code ret = 2;
+    bytes constant_result = 3;
   }
 
   message raw {
@@ -191,10 +191,11 @@ message Transaction {
 }
 
 message TransactionInfo {
- bytes id = 1;
- int64 fee = 2;
- int64 blockNumber = 3;
- int64 blockTimeStamp = 4;
+  bytes id = 1;
+  int64 fee = 2;
+  int64 blockNumber = 3;
+  int64 blockTimeStamp = 4;
+  repeated bytes contractResult = 5;
 }
 
 message Transactions {
@@ -324,3 +325,9 @@ message HelloMessage {
   BlockId solidBlockId = 5;
   BlockId headBlockId = 6;
 }
+
+message StorageItem {
+  bytes contract_address = 1;
+  map<string, bytes> items = 2;
+}
+
