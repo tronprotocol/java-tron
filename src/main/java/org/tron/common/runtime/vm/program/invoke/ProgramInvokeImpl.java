@@ -17,12 +17,11 @@
  */
 package org.tron.common.runtime.vm.program.invoke;
 
+import java.math.BigInteger;
+import java.util.Arrays;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.storage.Deposit;
 import org.tron.core.db.BlockStore;
-
-import java.math.BigInteger;
-import java.util.Arrays;
 
 public class ProgramInvokeImpl implements ProgramInvoke {
 
@@ -137,7 +136,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
         int size = 32; // maximum datavalue size
 
         if (msgData == null || index >= msgData.length
-                || tempIndex.compareTo(MAX_MSG_DATA) == 1)
+                || tempIndex.compareTo(MAX_MSG_DATA) > 0)
             return new DataWord();
         if (index + size > msgData.length)
             size = msgData.length - index;
@@ -274,6 +273,24 @@ public class ProgramInvokeImpl implements ProgramInvoke {
         if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) return false;
 
         return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return new Integer(new Boolean(byTestingSuite).hashCode()
+            + new Boolean(byTransaction).hashCode()
+            + address.hashCode()
+            + balance.hashCode()
+            + callValue.hashCode()
+            + caller.hashCode()
+            + coinbase.hashCode()
+            + msgData.hashCode()
+            + number.hashCode()
+            + origin.hashCode()
+            + prevHash.hashCode()
+            + deposit.hashCode()
+            + timestamp.hashCode()
+        ).hashCode();
     }
 
     @Override

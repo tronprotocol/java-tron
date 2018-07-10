@@ -50,7 +50,7 @@ public class VM {
         long dropConsume = 0;
 
         // Avoid overflows
-        if (newMemSize.compareTo(MAX_MEM_SIZE) == 1) {
+        if (newMemSize.compareTo(MAX_MEM_SIZE) > 0) {
             throw Program.Exception.gasOverflow(newMemSize, MAX_MEM_SIZE);
         }
 

@@ -81,6 +81,11 @@ public class Fp implements Field<Fp> {
     }
 
     @Override
+    public int hashCode() {
+        return v.hashCode();
+    }
+
+    @Override
     public String toString() {
         return v.toString();
     }

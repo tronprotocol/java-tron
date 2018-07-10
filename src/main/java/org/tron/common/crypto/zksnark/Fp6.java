@@ -176,13 +176,18 @@ class Fp6 implements Field<Fp6> {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Fp6)) return false;
+        if (!(o.getClass() == getClass())) return false;
 
         Fp6 fp6 = (Fp6) o;
 
         if (a != null ? !a.equals(fp6.a) : fp6.a != null) return false;
         if (b != null ? !b.equals(fp6.b) : fp6.b != null) return false;
         return !(c != null ? !c.equals(fp6.c) : fp6.c != null);
+    }
+
+    @Override
+    public int hashCode() {
+        return new Integer(a.hashCode() + b.hashCode() + c.hashCode()).hashCode();
     }
 
     static final Fp2[] FROBENIUS_COEFFS_B = {

@@ -17,6 +17,7 @@
  */
 package org.tron.common.crypto.zksnark;
 
+import com.googlecode.cqengine.query.simple.In;
 import java.math.BigInteger;
 
 /**
@@ -289,13 +290,18 @@ class Fp12 implements Field<Fp12> {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Fp12)) return false;
+        if (!(o.getClass() == getClass())) return false;
 
         Fp12 fp12 = (Fp12) o;
 
         if (a != null ? !a.equals(fp12.a) : fp12.a != null) return false;
         return !(b != null ? !b.equals(fp12.b) : fp12.b != null);
 
+    }
+
+    @Override
+    public int hashCode() {
+        return new Integer(a.hashCode() + b.hashCode()).hashCode();
     }
 
     @Override

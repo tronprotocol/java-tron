@@ -103,7 +103,7 @@ public class PrecompiledContracts {
             // gas charge for the execution:
             // minimum 1 and additional 1 for each 32 bytes word (round  up)
             if (data == null) return 15;
-            return 15 + (data.length + 31) / 32 * 3;
+            return 15L + (data.length + 31) / 32 * 3;
         }
 
         @Override
@@ -121,7 +121,7 @@ public class PrecompiledContracts {
             // gas charge for the execution:
             // minimum 50 and additional 50 for each 32 bytes word (round  up)
             if (data == null) return 60;
-            return 60 + (data.length + 31) / 32 * 12;
+            return 60L + (data.length + 31) / 32 * 12;
         }
 
         @Override
@@ -143,7 +143,7 @@ public class PrecompiledContracts {
             // gas charge for the execution:
             // minimum 50 and additional 50 for each 32 bytes word (round  up)
             if (data == null) return 600;
-            return 600 + (data.length + 31) / 32 * 120;
+            return 600L + (data.length + 31) / 32 * 120;
         }
 
         @Override
@@ -431,7 +431,7 @@ public class PrecompiledContracts {
 
             if (data == null) return 100000;
 
-            return 80000 * (data.length / PAIR_SIZE) + 100000;
+            return 80000L * (data.length / PAIR_SIZE) + 100000;
         }
 
         @Override
