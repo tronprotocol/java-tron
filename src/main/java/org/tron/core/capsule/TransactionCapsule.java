@@ -138,8 +138,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public void setResult(TransactionResultCapsule transactionResultCapsule) {
-    this.transaction = this.getInstance().toBuilder().addRet(transactionResultCapsule.getInstance())
-        .build();
+//    this.transaction = this.getInstance().toBuilder().addRet(transactionResultCapsule.getInstance()).build();
   }
 
   public void setReference(long blockNum, byte[] blockHash) {
@@ -164,6 +163,17 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return transaction.getRawData().getExpiration();
   }
 
+  public void setTimestamp() {
+    Transaction.raw rawData = this.transaction.getRawData().toBuilder()
+        .setTimestamp(System.currentTimeMillis())
+        .build();
+    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
+  }
+
+  public long getTimestamp() {
+    return transaction.getRawData().getTimestamp();
+  }
+
   @Deprecated
   public TransactionCapsule(AssetIssueContract assetIssueContract) {
     createTransaction(assetIssueContract, ContractType.AssetIssueContract);
@@ -173,7 +183,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(
         Transaction.Contract.newBuilder().setType(contractType).setParameter(
             Any.pack(message)).build());
-    logger.info("Transaction create succeeded！");
     transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
 
@@ -182,7 +191,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(
         Transaction.Contract.newBuilder().setType(contractType).setParameter(
             Any.pack(message)).build());
-    logger.info("Transaction create succeeded！");
     transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
 

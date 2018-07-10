@@ -15,15 +15,19 @@ import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
@@ -31,6 +35,7 @@ import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.services.RpcApiService;
+import org.tron.core.services.http.solidity.SolidityNodeHttpApiService;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
 
@@ -83,14 +88,32 @@ public class SolidityNode {
     DynamicProperties remoteDynamicProperties = databaseGrpcClient.getDynamicProperties();
     long remoteLastSolidityBlockNum = remoteDynamicProperties.getLastSolidityBlockNum();
     while (true) {
+//      try {
+//        Thread.sleep(10000);
+//      } catch (Exception e) {
+//
+//      }
       long lastSolidityBlockNum = dbManager.getDynamicPropertiesStore()
           .getLatestSolidifiedBlockNum();
-      logger.info("sync solidity block, lastSolidityBlockNum:{}, remoteLastSolidityBlockNum:{}", lastSolidityBlockNum, remoteLastSolidityBlockNum);
+      logger.info("sync solidity block, lastSolidityBlockNum:{}, remoteLastSolidityBlockNum:{}",
+          lastSolidityBlockNum, remoteLastSolidityBlockNum);
       if (lastSolidityBlockNum < remoteLastSolidityBlockNum) {
         Block block = databaseGrpcClient.getBlock(lastSolidityBlockNum + 1);
         try {
           BlockCapsule blockCapsule = new BlockCapsule(block);
           dbManager.pushBlock(blockCapsule);
+          for (TransactionCapsule trx : blockCapsule.getTransactions()) {
+            TransactionInfoCapsule ret;
+            try {
+              ret = dbManager.getTransactionHistoryStore().get(trx.getTransactionId().getBytes());
+            } catch (BadItemException ex) {
+              logger.warn("", ex);
+              continue;
+            }
+            ret.setBlockNumber(blockCapsule.getNum());
+            ret.setBlockTimeStamp(blockCapsule.getTimeStamp());
+            dbManager.getTransactionHistoryStore().put(trx.getTransactionId().getBytes(), ret);
+          }
           dbManager.getDynamicPropertiesStore()
               .saveLatestSolidifiedBlockNum(lastSolidityBlockNum + 1);
         } catch (AccountResourceInsufficientException e) {
@@ -113,6 +136,8 @@ public class SolidityNode {
           throw new BadBlockException("expiration exception");
         } catch (BadNumberBlockException e) {
           throw new BadBlockException("bad number exception");
+        } catch (NonCommonBlockException e) {
+          throw new BadBlockException("non common exception");
         }
 
       } else {
@@ -157,9 +182,13 @@ public class SolidityNode {
     }
     Application appT = ApplicationFactory.create(context);
     FullNode.shutdown(appT);
+
     //appT.init(cfgArgs);
     RpcApiService rpcApiService = context.getBean(RpcApiService.class);
     appT.addService(rpcApiService);
+    //http
+    SolidityNodeHttpApiService httpApiService = context.getBean(SolidityNodeHttpApiService.class);
+    appT.addService(httpApiService);
 
     appT.initServices(cfgArgs);
     appT.startServices();

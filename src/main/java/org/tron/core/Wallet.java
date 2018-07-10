@@ -32,18 +32,25 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountNetMessage;
+import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
+import org.tron.api.GrpcAPI.Node;
+import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.overlay.discover.node.NodeHandler;
+import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
+import org.tron.core.actuator.Actuator;
+import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -58,6 +65,7 @@ import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
@@ -71,6 +79,7 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.TransactionSign;
 
 
@@ -84,6 +93,8 @@ public class Wallet {
   private NodeImpl p2pNode;
   @Autowired
   private Manager dbManager;
+  @Autowired
+  private NodeManager nodeManager;
   private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_TESTNET;  //default testnet
   private static byte addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_TESTNET;
 
@@ -215,6 +226,32 @@ public class Wallet {
     return new TransactionCapsule(contract, accountStore).getInstance();
   }
 
+
+  public TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
+      ContractType contractType) throws ContractValidateException {
+    TransactionCapsule trx = new TransactionCapsule(message, contractType);
+    List<Actuator> actList = ActuatorFactory.createActuator(trx, dbManager);
+    for (Actuator act : actList) {
+      act.validate();
+    }
+    try {
+      BlockCapsule headBlock = null;
+      List<BlockCapsule> blockList = dbManager.getBlockStore().getBlockByLatestNum(1);
+      if (CollectionUtils.isEmpty(blockList)) {
+        throw new HeaderNotFound("latest block not found");
+      } else {
+        headBlock = blockList.get(0);
+      }
+      trx.setReference(headBlock.getNum(), headBlock.getBlockId().getBytes());
+      long expiration = headBlock.getTimeStamp() + Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME;
+      trx.setExpiration(expiration);
+      trx.setTimestamp();
+    } catch (HeaderNotFound headerNotFound) {
+      headerNotFound.printStackTrace();
+    }
+    return trx;
+  }
+
   /**
    * Broadcast a transaction.
    */
@@ -301,6 +338,16 @@ public class Wallet {
     TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
     trx.sign(privateKey);
     return trx;
+  }
+
+  public byte[] pass2Key(byte[] passPhrase) {
+    return Sha256Hash.hash(passPhrase);
+  }
+
+  public byte[] createAdresss(byte[] passPhrase) {
+    byte[] privateKey = pass2Key(passPhrase);
+    ECKey ecKey = ECKey.fromPrivate(privateKey);
+    return ecKey.getAddress();
   }
 
   public Block getNowBlock() {
@@ -490,5 +537,27 @@ public class Wallet {
       return proposalCapsule.getInstance();
     }
     return null;
+  }
+
+  public NodeList listNodes() {
+    List<NodeHandler> handlerList = nodeManager.dumpActiveNodes();
+
+    Map<String, NodeHandler> nodeHandlerMap = new HashMap<>();
+    for (NodeHandler handler : handlerList) {
+      String key = handler.getNode().getHexId() + handler.getNode().getHost();
+      nodeHandlerMap.put(key, handler);
+    }
+
+    NodeList.Builder nodeListBuilder = NodeList.newBuilder();
+
+    nodeHandlerMap.entrySet().stream()
+        .forEach(v -> {
+          org.tron.common.overlay.discover.node.Node node = v.getValue().getNode();
+          nodeListBuilder.addNodes(Node.newBuilder().setAddress(
+              Address.newBuilder()
+                  .setHost(ByteString.copyFrom(ByteArray.fromString(node.getHost())))
+                  .setPort(node.getPort())));
+        });
+    return nodeListBuilder.build();
   }
 }

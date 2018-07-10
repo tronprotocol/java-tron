@@ -4,11 +4,13 @@ import com.google.common.math.LongMath;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -84,10 +86,18 @@ public class WithdrawBalanceActuator extends AbstractActuator {
           "Account[" + readableOwnerAddress + "] not exists");
     }
 
+    String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
     if (!dbManager.getWitnessStore().has(ownerAddress)) {
-      String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
           "Account[" + readableOwnerAddress + "] is not a witnessAccount");
+    }
+
+    boolean isGP = Args.getInstance().getGenesisBlock().getWitnesses().stream().anyMatch(witness ->
+        Arrays.equals(ownerAddress, witness.getAddress()));
+    if (isGP) {
+      throw new ContractValidateException(
+          "Account[" + readableOwnerAddress
+              + "] is a guard representative and is not allowed to withdraw Balance");
     }
 
     long latestWithdrawTime = accountCapsule.getLatestWithdrawTime();

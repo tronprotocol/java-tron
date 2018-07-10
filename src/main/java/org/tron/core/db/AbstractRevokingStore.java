@@ -109,7 +109,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public synchronized void merge() throws RevokingStoreIllegalStateException {
+  public synchronized void merge() {
     if (activeDialog <= 0) {
       throw new RevokingStoreIllegalStateException("activeDialog has to be greater than 0");
     }
@@ -148,7 +148,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
         .filter(e -> {
           boolean has = prevState.oldValues.containsKey(e.getKey());
           if (has) {
-            prevState.removed.put(e.getKey(), e.getValue());
+            prevState.removed.put(e.getKey(), prevState.oldValues.get(e.getKey()));
             prevState.oldValues.remove(e.getKey());
           }
 
@@ -161,7 +161,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public synchronized void revoke() throws RevokingStoreIllegalStateException {
+  public synchronized void revoke() {
     if (disabled) {
       return;
     }
@@ -189,7 +189,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public synchronized void commit() throws RevokingStoreIllegalStateException {
+  public synchronized void commit() {
     if (activeDialog <= 0) {
       throw new RevokingStoreIllegalStateException("activeDialog has to be greater than 0");
     }
@@ -198,7 +198,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public synchronized void pop() throws RevokingStoreIllegalStateException {
+  public synchronized void pop() {
     if (activeDialog != 0) {
       throw new RevokingStoreIllegalStateException("activeDialog has to be equal 0");
     }
@@ -311,12 +311,12 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
       this.disableOnExit = disableOnExit;
     }
 
-    void commit() throws RevokingStoreIllegalStateException {
+    void commit() {
       applyRevoking = false;
       revokingDatabase.commit();
     }
 
-    void revoke() throws RevokingStoreIllegalStateException {
+    void revoke() {
       if (applyRevoking) {
         revokingDatabase.revoke();
       }
@@ -324,7 +324,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
       applyRevoking = false;
     }
 
-    void merge() throws RevokingStoreIllegalStateException {
+    void merge() {
       if (applyRevoking) {
         revokingDatabase.merge();
       }
@@ -332,7 +332,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
       applyRevoking = false;
     }
 
-    void copy(Dialog dialog) throws RevokingStoreIllegalStateException {
+    void copy(Dialog dialog) {
       if (this.equals(dialog)) {
         return;
       }
@@ -358,7 +358,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
     }
 
     @Override
-    public void close() throws RevokingStoreIllegalStateException {
+    public void close() {
       try {
         if (applyRevoking) {
           revokingDatabase.revoke();
