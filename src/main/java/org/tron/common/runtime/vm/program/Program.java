@@ -17,6 +17,7 @@
  */
 package org.tron.common.runtime.vm.program;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +42,8 @@ import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.exception.HeaderNotFound;
 import org.tron.protos.Protocol;
 
 import java.io.ByteArrayOutputStream;
@@ -706,11 +709,15 @@ public class Program {
                 new DataWord(this.invoke.getBlockStore().getBlockHashByNumber(index, getPrevHash().getData())).clone() :
                 DataWord.ZERO.clone();
         */
-        if (index < this.getNumber().longValue() && index >= Math.max(256, this.getNumber().intValue()) - 256) {
-            //this.invoke.getBlockStore().getBlockHashByNumber(index, getPrevHash().getData());
-            //return new DataWord().clone()
-            // not support
-            return DataWord.ZERO.clone();
+        if (index < this.getNumber().longValue() && index >= Math.max(256, this.getNumber().longValue()) - 256) {
+
+            List<BlockCapsule> blocks = this.invoke.getBlockStore().getBlockByLatestNum(1);
+            if (CollectionUtils.isNotEmpty(blocks)) {
+                BlockCapsule blockCapsule = blocks.get(0);
+                return new DataWord(blockCapsule.getBlockId().getBytes());
+            } else {
+                return DataWord.ZERO.clone();
+            }
         } else {
             return DataWord.ZERO.clone();
         }

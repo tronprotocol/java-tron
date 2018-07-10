@@ -18,6 +18,7 @@ package org.tron.core.capsule;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
@@ -93,6 +94,6 @@ public class CodeCapsule implements ProtoCapsule<byte[]> {
 
   @Override
   public String toString() {
-    return this.code.toString();
+    return Arrays.toString(this.code);
   }
 }

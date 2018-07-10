@@ -124,7 +124,8 @@ public class Type {
 
     @Override
     public String toString() {
-        return null;
+        return "Type{" +
+            "type=" + type +
+            '}';
     }
-
 }

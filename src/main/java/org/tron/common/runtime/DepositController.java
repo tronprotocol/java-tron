@@ -46,8 +46,9 @@ public class DepositController {
    */
   public Deposit rollback() {
     Deposit deposit = depositQueue.removeLast();
-    if (getLastDeposit() != null) {
-      getLastDeposit().setNextDeposit(null);
+    Deposit lastDeposit = getLastDeposit();
+    if (lastDeposit != null) {
+      lastDeposit.setNextDeposit(null);
     }
     return deposit;
   }
