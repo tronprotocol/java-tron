@@ -11,31 +11,31 @@ option java_outer_classname = "Protocol"; //Specify the class name of the genera
 option go_package = "github.com/tronprotocol/grpc-gateway/core";
 
 enum AccountType {
-  Normal = 0x00;
-  AssetIssue = 0x01;
-  Contract = 0x02;
+  Normal      = 0;
+  AssetIssue  = 1;
+  Contract    = 2;
 }
 
 // AccountId, (name, address) use name, (null, address) use address, (name, null) use name,
 message AccountId {
-  bytes name = 0x01;
-  bytes address = 0x02;
+  bytes name    = 1;
+  bytes address = 2;
 }
 
 // vote message
 message Vote {
   // the super rep address
-  bytes vote_address = 0x01;
+  bytes vote_address  = 1;
   // the vote num to this super rep.
-  int64 vote_count = 0x02;
+  int64 vote_count    = 2;
 }
 
 /* Account */
 message Account {
   /* frozen balance */
   message Frozen {
-    int64 frozen_balance = 0x01; // the frozen trx balance
-    int64 expire_time = 0x02; // the expire time
+    int64 frozen_balance    = 1; // the frozen trx balance
+    int64 expire_time       = 2; // the expire time
   }
   bytes account_name = 1;
   AccountType type = 2;
@@ -73,7 +73,7 @@ message Account {
   map<string, int64> free_asset_net_usage = 20;
   int64 latest_consume_time = 21;
   int64 latest_consume_free_time = 22;
-  bytes codeHash = 0x30;
+  bytes codeHash = 30;
 }
 
 //FIXME authority?
@@ -148,9 +148,9 @@ message Transaction {
       UnfreezeAssetContract = 14;
       UpdateAssetContract = 15;
       CustomContract = 20;
-      SmartContract = 0x30;
-      TriggerSmartContract = 0x31;
-      GetContract = 0x32;
+      SmartContract = 30;
+      TriggerSmartContract = 31;
+      GetContract = 32;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
