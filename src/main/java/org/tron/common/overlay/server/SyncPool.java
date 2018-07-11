@@ -51,8 +51,8 @@ public class SyncPool {
 
   public static final Logger logger = LoggerFactory.getLogger("SyncPool");
 
-  private static final double factor = 0.4;
-  private static final double activeFactor = 0.2;
+  private double factor = Args.getInstance().getConnectFactor();
+  private double activeFactor = Args.getInstance().getActiveConnectFactor();
 
   private final List<PeerConnection> activePeers = Collections
       .synchronizedList(new ArrayList<PeerConnection>());
@@ -84,6 +84,8 @@ public class SyncPool {
 
   private PeerClient peerClient;
 
+  private int cycleTimes = 0;
+
   public void init(PeerConnectionDelegate peerDel) {
     this.peerDel = peerDel;
 
@@ -101,7 +103,7 @@ public class SyncPool {
       } catch (Throwable t) {
         logger.error("Exception in sync worker", t);
       }
-    }, 30, 16, TimeUnit.SECONDS);
+    }, 30, 11, TimeUnit.SECONDS);
 
     logExecutor.scheduleWithFixedDelay(() -> {
       try {
@@ -111,7 +113,7 @@ public class SyncPool {
     }, 30, 10, TimeUnit.SECONDS);
   }
 
-  private void fillUp() {
+  private void fillUp() throws InterruptedException {
     int lackSize = Math.max((int) (maxActiveNodes * factor) - activePeers.size(),
         (int) (maxActiveNodes * activeFactor - activePeersCount.get()));
     if (lackSize <= 0) {
@@ -127,6 +129,11 @@ public class SyncPool {
       peerClient.connectAsync(n, false);
       nodeHandlerCache.put(n, System.currentTimeMillis());
     });
+    Thread.sleep(2000);
+    ++cycleTimes;
+    if (cycleTimes <= 5) {
+      fillUp();
+    }
   }
 
   // for test only
@@ -201,6 +208,15 @@ public class SyncPool {
 
   public boolean isCanConnect() {
     if (passivePeersCount.get() >= maxActiveNodes * (1 - activeFactor)) {
+      return false;
+    }
+    return true;
+  }
+
+  public boolean isCanActiveConnect() {
+    int lackSize = Math.max((int) (maxActiveNodes * factor) - activePeers.size(),
+        (int) (maxActiveNodes * activeFactor - activePeersCount.get()));
+    if (lackSize <= 0) {
       return false;
     }
     return true;

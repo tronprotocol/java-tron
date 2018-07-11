@@ -57,7 +57,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   private Manager manager;
 
   private  P2pMessageFactory messageFactory = new P2pMessageFactory();
-  
+
   @Autowired
   private SyncPool syncPool;
 
@@ -165,6 +165,10 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
     if (remoteId.length != 64) {
       sendHelloMsg(ctx, msg.getTimestamp());
+    } else {
+      if (!syncPool.isCanActiveConnect()) {
+        channel.disconnect(ReasonCode.TOO_MANY_PEERS);
+      }
     }
 
     syncPool.onConnect(channel);
