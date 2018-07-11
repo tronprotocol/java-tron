@@ -296,7 +296,7 @@ public class Wallet {
     } catch (ContractExeException e) {
       logger.info(e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
-          .setMessage(ByteString.copyFromUtf8("contract execute error"))
+          .setMessage(ByteString.copyFromUtf8("contract execute error :" + e.getMessage()))
           .build();
     } catch (AccountResourceInsufficientException e) {
       logger.info(e.getMessage());
@@ -326,7 +326,7 @@ public class Wallet {
     } catch (Exception e) {
       logger.info("exception caught" + e.getMessage());
       return builder.setResult(false).setCode(response_code.OTHER_ERROR)
-          .setMessage(ByteString.copyFromUtf8("other error"))
+          .setMessage(ByteString.copyFromUtf8("other error :" + e.getMessage()))
           .build();
     }
   }
