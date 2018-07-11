@@ -13,7 +13,6 @@ import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.WalletSolidity;
 import org.tron.core.services.http.JsonFormat;
-import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.core.services.http.Util;
 import org.tron.protos.Protocol.Transaction;
 
