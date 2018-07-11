@@ -111,7 +111,7 @@ public class SyncPool {
     }, 30, 10, TimeUnit.SECONDS);
   }
 
-  private void fillUp() throws InterruptedException {
+  private void fillUp() {
     int lackSize = Math.max((int) (maxActiveNodes * factor) - activePeers.size(),
         (int) (maxActiveNodes * activeFactor - activePeersCount.get()));
     if (lackSize <= 0) {
