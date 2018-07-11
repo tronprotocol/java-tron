@@ -368,7 +368,9 @@ service Wallet {
     };
   };
   //Warning: do not invoke this interface provided by others.
+
   rpc GenerateAddress (EmptyMessage) returns (AddressPrKeyPairMessage) {
+
     option (google.api.http) = {
       post: "/wallet/generateaddress"
       body: "*"
