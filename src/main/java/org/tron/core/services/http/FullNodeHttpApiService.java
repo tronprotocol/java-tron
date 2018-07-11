@@ -84,9 +84,13 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private EasyTransferServlet easyTransferServlet;
   @Autowired
+  private EasyTransferByPrivateServlet easyTransferByPrivateServlet;
+  @Autowired
   private CreateAddressServlet createAddressServlet;
   @Autowired
   private GenerateAddressServlet generateAddressServlet;
+  @Autowired
+  private ValidateAddressServlet validateAddressServlet;
 
   @Override
   public void init() {
@@ -142,7 +146,9 @@ public class FullNodeHttpApiService implements Service {
           .addServlet(new ServletHolder(getNextMaintenanceTimeServlet), "/getnextmaintenancetime");
       context.addServlet(new ServletHolder(createAddressServlet), "/createaddress");
       context.addServlet(new ServletHolder(easyTransferServlet), "/easytransfer");
+      context.addServlet(new ServletHolder(easyTransferByPrivateServlet), "/easytransferbyprivate");
       context.addServlet(new ServletHolder(generateAddressServlet), "/generateaddress");
+      context.addServlet(new ServletHolder(validateAddressServlet), "/validateaddress");
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());

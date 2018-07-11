@@ -716,7 +716,7 @@ public class Args {
     logger.info("Discover enable: {}", args.isNodeDiscoveryEnable());
     logger.info("Active node size: {}", args.getActiveNodes().size());
     logger.info("Passive node size: {}", args.getPassiveNodes().size());
-    logger.info("Seed node size: {}", args.getSeedNodes().size());
+    logger.info("Seed node size: {}", args.getSeedNode().getIpList().size());
     logger.info("Max connection: {}", args.getNodeMaxActiveNodes());
     logger.info("Max connection with same IP: {}", args.getNodeMaxActiveNodesWithSameIp());
     logger.info("************************ Backup config ************************");
