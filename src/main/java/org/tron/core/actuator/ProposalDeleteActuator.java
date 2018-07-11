@@ -30,16 +30,17 @@ public class ProposalDeleteActuator extends AbstractActuator {
     try {
       final ProposalDeleteContract proposalDeleteContract = this.contract
           .unpack(ProposalDeleteContract.class);
-      ProposalCapsule proposalCapsule = null;
-      try {
-        dbManager.getProposalStore().
-            get(ByteArray.fromLong(proposalDeleteContract.getProposalId()));
-      } catch (ItemNotFoundException ex) {
-      }
+      ProposalCapsule proposalCapsule = dbManager.getProposalStore().
+          get(ByteArray.fromLong(proposalDeleteContract.getProposalId()));
+
       proposalCapsule.setState(State.CANCELED);
       dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+      ret.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
+    } catch (ItemNotFoundException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
