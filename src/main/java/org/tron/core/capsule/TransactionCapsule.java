@@ -135,12 +135,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public void resetResult() {
-    //this.transaction = this.getInstance().toBuilder().clearRet().build();
+    this.transaction = this.getInstance().toBuilder().clearRet().build();
   }
 
   public void setResult(TransactionResultCapsule transactionResultCapsule) {
-    this.transaction = this.getInstance().toBuilder().addRet(transactionResultCapsule.getInstance())
-        .build();
+    //this.transaction = this.getInstance().toBuilder().addRet(transactionResultCapsule.getInstance())
+    //    .build();
   }
 
   public void setReference(long blockNum, byte[] blockHash) {
