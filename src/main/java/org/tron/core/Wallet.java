@@ -291,12 +291,12 @@ public class Wallet {
     } catch (ContractValidateException e) {
       logger.info(e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-          .setMessage(ByteString.copyFromUtf8("contract validate error"))
+          .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()))
           .build();
     } catch (ContractExeException e) {
       logger.info(e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
-          .setMessage(ByteString.copyFromUtf8("contract execute error"))
+          .setMessage(ByteString.copyFromUtf8("contract execute error : " + e.getMessage()))
           .build();
     } catch (AccountResourceInsufficientException e) {
       logger.info(e.getMessage());
@@ -326,7 +326,7 @@ public class Wallet {
     } catch (Exception e) {
       logger.info("exception caught" + e.getMessage());
       return builder.setResult(false).setCode(response_code.OTHER_ERROR)
-          .setMessage(ByteString.copyFromUtf8("other error"))
+          .setMessage(ByteString.copyFromUtf8("other error : " + e.getMessage()))
           .build();
     }
   }
@@ -338,7 +338,7 @@ public class Wallet {
     return trx;
   }
 
-  public byte[] pass2Key(byte[] passPhrase){
+  public byte[] pass2Key(byte[] passPhrase) {
     return Sha256Hash.hash(passPhrase);
   }
 
@@ -514,7 +514,8 @@ public class Wallet {
     return null;
   }
 
-  public NodeList listNodes(){
+
+  public NodeList listNodes() {
     List<NodeHandler> handlerList = nodeManager.dumpActiveNodes();
 
     Map<String, NodeHandler> nodeHandlerMap = new HashMap<>();
