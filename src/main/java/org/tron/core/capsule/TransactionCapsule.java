@@ -135,7 +135,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public void resetResult() {
-    this.transaction = this.getInstance().toBuilder().clearRet().build();
+    //this.transaction = this.getInstance().toBuilder().clearRet().build();
   }
 
   public void setResult(TransactionResultCapsule transactionResultCapsule) {
