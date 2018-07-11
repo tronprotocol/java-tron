@@ -60,7 +60,7 @@ public class SyncPool {
   private final AtomicInteger activePeersCount = new AtomicInteger(0);
 
   private Cache<NodeHandler, Long> nodeHandlerCache = CacheBuilder.newBuilder()
-      .maximumSize(1000).expireAfterWrite(120, TimeUnit.SECONDS).recordStats().build();
+      .maximumSize(1000).expireAfterWrite(180, TimeUnit.SECONDS).recordStats().build();
 
   @Autowired
   private NodeManager nodeManager;
@@ -84,8 +84,6 @@ public class SyncPool {
 
   private PeerClient peerClient;
 
-  private int cycleTimes = 0;
-
   public void init(PeerConnectionDelegate peerDel) {
     this.peerDel = peerDel;
 
@@ -103,7 +101,7 @@ public class SyncPool {
       } catch (Throwable t) {
         logger.error("Exception in sync worker", t);
       }
-    }, 30, 11, TimeUnit.SECONDS);
+    }, 30, 3600, TimeUnit.MILLISECONDS);
 
     logExecutor.scheduleWithFixedDelay(() -> {
       try {
@@ -129,11 +127,6 @@ public class SyncPool {
       peerClient.connectAsync(n, false);
       nodeHandlerCache.put(n, System.currentTimeMillis());
     });
-    Thread.sleep(2000);
-    ++cycleTimes;
-    if (cycleTimes <= 5) {
-      fillUp();
-    }
   }
 
   // for test only
@@ -208,15 +201,6 @@ public class SyncPool {
 
   public boolean isCanConnect() {
     if (passivePeersCount.get() >= maxActiveNodes * (1 - activeFactor)) {
-      return false;
-    }
-    return true;
-  }
-
-  public boolean isCanActiveConnect() {
-    int lackSize = Math.max((int) (maxActiveNodes * factor) - activePeers.size(),
-        (int) (maxActiveNodes * activeFactor - activePeersCount.get()));
-    if (lackSize <= 0) {
       return false;
     }
     return true;

@@ -165,10 +165,6 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
     if (remoteId.length != 64) {
       sendHelloMsg(ctx, msg.getTimestamp());
-    } else {
-      if (!syncPool.isCanActiveConnect()) {
-        channel.disconnect(ReasonCode.TOO_MANY_PEERS);
-      }
     }
 
     syncPool.onConnect(channel);
