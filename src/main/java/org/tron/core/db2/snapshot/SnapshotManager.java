@@ -1,13 +1,26 @@
 package org.tron.core.db2.snapshot;
 
+import com.google.common.collect.Streams;
+import com.google.common.primitives.Bytes;
+import com.google.common.primitives.Chars;
+import com.google.common.primitives.Ints;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.FileUtil;
+import org.tron.core.config.args.Args;
+import org.tron.core.db2.common.DB;
+import org.tron.core.db2.common.Key;
+import org.tron.core.db2.common.Value;
 import org.tron.core.db2.database.TronDatabase;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class SnapshotManager {
@@ -67,6 +80,8 @@ public class SnapshotManager {
   }
 
   public void flush() {
+    createCheck();
+
     dbs.forEach(db -> {
       Snapshot head = db.getHead();
       while (head.getPrevious().getPrevious().getPrevious() != null) {
@@ -76,6 +91,71 @@ public class SnapshotManager {
       head.getPrevious().getPrevious().merge(head.getPrevious());
       head.setPrevious(head.getPrevious().getPrevious());
     });
+
+    deleteCheck();
+  }
+
+  private void createCheck() {
+    LevelDbDataSourceImpl levelDbDataSource =
+        new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
+    levelDbDataSource.initDB();
+
+    Map<byte[], byte[]> batch = new HashMap<>();
+    for (TronDatabase db : dbs) {
+      Snapshot head = db.getHead();
+      while (head.getPrevious().getPrevious() != null) {
+        head = head.getPrevious();
+      }
+
+      SnapshotImpl snapshot = (SnapshotImpl) head;
+      DB<Key, Value> keyValueDB = snapshot.getDb();
+      String dbName = db.getDbName();
+      for (Map.Entry<Key, Value> e : keyValueDB) {
+        Key k = e.getKey();
+        Value v = e.getValue();
+        batch.put(Bytes.concat(simpleEncode(dbName), k.getBytes()),
+            v.getBytes() == null ? null : Bytes.concat(new byte[]{v.getOperator().getValue()}, v.getBytes()));
+      }
+    }
+    levelDbDataSource.updateByBatch(batch);
+    levelDbDataSource.closeDB();
+  }
+
+  private void deleteCheck() {
+    LevelDbDataSourceImpl levelDbDataSource =
+        new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
+
+    FileUtil.recursiveDelete(levelDbDataSource.getDbPath().toString());
+  }
+
+  private void check() {
+    LevelDbDataSourceImpl levelDbDataSource =
+        new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
+    levelDbDataSource.initDB();
+    if (!levelDbDataSource.allKeys().isEmpty()) {
+
+    }
+
+    levelDbDataSource.closeDB();
+    FileUtil.recursiveDelete(levelDbDataSource.getDbPath().toString());
+  }
+
+  private byte[] simpleEncode(String s) {
+    byte[] bytes = s.getBytes();
+    byte[] length = Ints.toByteArray(bytes.length);
+    byte[] r = new byte[4 + bytes.length];
+    System.arraycopy(length, 0, r, 0, 4);
+    System.arraycopy(bytes, 0, r, 4, bytes.length);
+    return r;
+  }
+
+  private String simpleDecode(byte[] bytes) {
+    byte[] lengthBytes = new byte[4];
+    System.arraycopy(bytes, 0, lengthBytes, 0, 4);
+    int length = Ints.fromByteArray(lengthBytes);
+    byte[] value = new byte[length];
+    System.arraycopy(bytes, 4, value, 0, length);
+    return new String(value);
   }
 
   public synchronized void revoke() {

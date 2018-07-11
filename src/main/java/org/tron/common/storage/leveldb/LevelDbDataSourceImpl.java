@@ -125,7 +125,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     return dbOptions;
   }
 
-  private Path getDbPath() {
+  public Path getDbPath() {
     return Paths.get(parentName, dataBaseName);
   }
 

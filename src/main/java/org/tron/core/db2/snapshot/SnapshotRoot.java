@@ -1,9 +1,14 @@
 package org.tron.core.db2.snapshot;
 
+import com.google.common.collect.Maps;
+import com.google.common.collect.Streams;
+import com.sun.corba.se.impl.encoding.WrapperInputStream;
+import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.LevelDB;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 
@@ -29,7 +34,12 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   // todo write batch into levelDB
   @Override
   public void merge(Snapshot from) {
-
+    LevelDB levelDB = (LevelDB) db;
+    SnapshotImpl snapshot = (SnapshotImpl) from;
+    Map<WrappedByteArray, WrappedByteArray> batch = Streams.stream(snapshot.db)
+        .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey().getBytes()), WrappedByteArray.of(e.getValue().getBytes())))
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    levelDB.flush(batch);
   }
 
   @Override

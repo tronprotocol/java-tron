@@ -7,9 +7,16 @@ import org.tron.core.db.common.WrappedByteArray;
 @EqualsAndHashCode(exclude = "operator")
 public class Value {
   public enum Operator {
-    CREATE,
-    MODIFY,
-    DELETE,
+    CREATE((byte) 0),
+    MODIFY((byte) 1),
+    DELETE((byte) 2);
+
+    @Getter
+    private byte value;
+
+    Operator(byte value) {
+      this.value = value;
+    }
   }
 
   @Getter

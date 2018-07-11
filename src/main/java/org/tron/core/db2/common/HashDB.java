@@ -3,6 +3,7 @@ package org.tron.core.db2.common;
 import org.tron.core.db.common.iterator.DBIterator;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 public class HashDB implements DB<Key, Value> {
@@ -24,7 +25,7 @@ public class HashDB implements DB<Key, Value> {
   }
 
   @Override
-  public DBIterator iterator() {
-    return null;
+  public Iterator<Map.Entry<Key,Value>> iterator() {
+    return db.entrySet().iterator();
   }
 }
