@@ -173,7 +173,7 @@ public class Runtime {
       this.program = new Program(null, code, programInvoke,
           new InternalTransaction(trx), config);
     }
-//transfer
+
   }
 
   /*
@@ -221,6 +221,13 @@ public class Runtime {
     deposit.createAccount(newContractAddress, Protocol.AccountType.Contract);
     deposit.createContract(newContractAddress, new ContractCapsule(trx));
     deposit.saveCode(newContractAddress, ProgramPrecompile.getCode(code));
+//
+//    // transfer from callerAddress to contractAddress according to callValue
+//    byte[] callerAddress = contract.getOwnerAddress().toByteArray();
+//    byte[] callValue = contract.getCallValue().toByteArray();
+//    long callValueLong = new BigInteger(Hex.toHexString(callValue),16).longValue();
+//    this.deposit.addBalance(callerAddress, - callValueLong);
+//    this.deposit.addBalance(newContractAddress, callValueLong);
   }
 
   public void go() {

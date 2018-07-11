@@ -222,6 +222,8 @@ public class VM {
                     gasLeft.sub(new DataWord(dropCost));
                     //adjustedCallGas = tronConfig.getCallGas(op, callGasWord, gasLeft);
                     //adjustedCallGas = new DataWord(tronConfig.getDropCost().getCALL());
+                    //TODO: remove below and recover above statment when config is ready
+                    adjustedCallGas = new DataWord();
                     dropCost += adjustedCallGas.longValueSafe();
                     break;
                 case CREATE:

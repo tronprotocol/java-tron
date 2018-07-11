@@ -964,11 +964,11 @@ public class Manager {
     }
 
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
-      TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
-      transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());
-      transactionInfoCapsule.setFee(runtime.getResult().getRet().getFee());
-      transactionInfoCapsule.setContractResult(runtime.getResult().getHReturn());
-      transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfoCapsule);
+    TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
+    transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());
+    transactionInfoCapsule.setFee(runtime.getResult().getRet().getFee());
+    transactionInfoCapsule.setContractResult(runtime.getResult().getHReturn());
+    transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfoCapsule);
 
     return true;
   }

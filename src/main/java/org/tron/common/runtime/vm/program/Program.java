@@ -53,6 +53,7 @@ import java.util.*;
 import static java.lang.StrictMath.min;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.ArrayUtils.*;
+import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.utils.MUtil.transfer;
 import static org.tron.common.utils.BIUtil.isPositive;
 import static org.tron.common.utils.BIUtil.toBI;
@@ -359,8 +360,8 @@ public class Program {
 
     public void suicide(DataWord obtainerAddress) {
 
-        byte[] owner = getOwnerAddress().getLast20Bytes();
-        byte[] obtainer = obtainerAddress.getLast20Bytes();
+        byte[] owner = convertToTronAddress(getOwnerAddress().getLast20Bytes());
+        byte[] obtainer = convertToTronAddress(obtainerAddress.getLast20Bytes());
         long balance = getStorage().getBalance(owner);
 
         if (logger.isInfoEnabled())
@@ -393,7 +394,7 @@ public class Program {
             return;
         }
 
-        byte[] senderAddress = this.getOwnerAddress().getLast20Bytes();
+        byte[] senderAddress = convertToTronAddress(this.getOwnerAddress().getLast20Bytes());
         long endowment = value.value().longValue();
         if (getStorage().getBalance(senderAddress) <  endowment) {
             stackPushZero();
@@ -510,7 +511,7 @@ public class Program {
             refundGas(refundGas, "remain gas from the internal call");
             if (logger.isInfoEnabled()) {
                 logger.info("The remaining gas is refunded, account: [{}], gas: [{}] ",
-                        Hex.toHexString(getOwnerAddress().getLast20Bytes()),
+                        Hex.toHexString(convertToTronAddress(getOwnerAddress().getLast20Bytes())),
                         refundGas);
             }
         }
@@ -536,8 +537,8 @@ public class Program {
         byte[] data = memoryChunk(msg.getInDataOffs().intValue(), msg.getInDataSize().intValue());
 
         // FETCH THE SAVED STORAGE
-        byte[] codeAddress = msg.getCodeAddress().getLast20Bytes();
-        byte[] senderAddress = getOwnerAddress().getLast20Bytes();
+        byte[] codeAddress = convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
+        byte[] senderAddress = convertToTronAddress(getOwnerAddress().getLast20Bytes());
         byte[] contextAddress = msg.getType().callIsStateless() ? senderAddress : codeAddress;
 
         if (logger.isInfoEnabled())
@@ -679,7 +680,7 @@ public class Program {
         //storageSave(word1.getData(), word2.getData());
         DataWord keyWord = word1.clone();
         DataWord valWord = word2.clone();
-        getStorage().addStorageValue(getOwnerAddress().getLast20Bytes(), keyWord, valWord);
+        getStorage().addStorageValue(convertToTronAddress(getOwnerAddress().getLast20Bytes()), keyWord, valWord);
     }
 
     /*
@@ -695,7 +696,7 @@ public class Program {
     }
 
     public byte[] getCodeAt(DataWord address) {
-        byte[] code = invoke.getDeposit().getCode(address.getLast20Bytes());
+        byte[] code = invoke.getDeposit().getCode(convertToTronAddress(address.getLast20Bytes()));
         return nullToEmpty(code);
     }
 
@@ -725,7 +726,7 @@ public class Program {
     }
 
     public DataWord getBalance(DataWord address) {
-        long balance = getStorage().getBalance(address.getLast20Bytes());
+        long balance = getStorage().getBalance(convertToTronAddress(address.getLast20Bytes()));
         return new DataWord(balance);
     }
 
@@ -780,7 +781,7 @@ public class Program {
     }
 
     public DataWord storageLoad(DataWord key) {
-        DataWord ret = getStorage().getStorageValue(getOwnerAddress().getLast20Bytes(), key.clone());
+        DataWord ret = getStorage().getStorageValue(convertToTronAddress(getOwnerAddress().getLast20Bytes()), key.clone());
         return ret == null ? null : ret.clone();
     }
 
@@ -1118,8 +1119,8 @@ public class Program {
         // Repository track = getStorage().startTracking();
         Deposit deposit = getStorage();
 
-        byte[] senderAddress = this.getOwnerAddress().getLast20Bytes();
-        byte[] codeAddress = msg.getCodeAddress().getLast20Bytes();
+        byte[] senderAddress = convertToTronAddress(this.getOwnerAddress().getLast20Bytes());
+        byte[] codeAddress = convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
         byte[] contextAddress = msg.getType().callIsStateless() ? senderAddress : codeAddress;
 
 
