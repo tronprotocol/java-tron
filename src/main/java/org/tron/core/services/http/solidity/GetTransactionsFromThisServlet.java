@@ -13,7 +13,6 @@ import org.tron.api.GrpcAPI.AccountPaginated;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.core.WalletSolidity;
 import org.tron.core.services.http.JsonFormat;
-import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.core.services.http.Util;
 
 @Component

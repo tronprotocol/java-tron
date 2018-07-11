@@ -4,16 +4,16 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
-import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Sha256Hash;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.services.http.JsonFormat.ParseException;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.TransactionList;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.AssetIssueContract;
@@ -65,7 +65,7 @@ public class Util {
     JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(block));
     jsonObject.put("blockID", blockID);
     if (!blockCapsule.getTransactions().isEmpty()) {
-      jsonObject.put("transactions", printTransationListToJSON(blockCapsule.getTransactions()));
+      jsonObject.put("transactions", printTransactionListToJSON(blockCapsule.getTransactions()));
     }
     return jsonObject;
   }
@@ -82,7 +82,7 @@ public class Util {
     return jsonObject.toJSONString();
   }
 
-  public static JSONArray printTransationListToJSON(List<TransactionCapsule> list) {
+  public static JSONArray printTransactionListToJSON(List<TransactionCapsule> list) {
     JSONArray transactions = new JSONArray();
     list.stream().forEach(transactionCapsule -> {
       transactions.add(printTransactionToJSON(transactionCapsule.getInstance()));
@@ -284,8 +284,8 @@ public class Util {
             any = Any.pack(witnessUpdateContractBuilder.build());
             break;
           case "ParticipateAssetIssueContract":
-            ParticipateAssetIssueContract.Builder participateAssetIssueContractBuilder = ParticipateAssetIssueContract
-                .newBuilder();
+            ParticipateAssetIssueContract.Builder participateAssetIssueContractBuilder =
+                ParticipateAssetIssueContract.newBuilder();
             JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
                 participateAssetIssueContractBuilder);
             any = Any.pack(participateAssetIssueContractBuilder.build());
