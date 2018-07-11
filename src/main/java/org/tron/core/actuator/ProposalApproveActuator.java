@@ -30,12 +30,9 @@ public class ProposalApproveActuator extends AbstractActuator {
     try {
       final ProposalApproveContract proposalApproveContract =
           this.contract.unpack(ProposalApproveContract.class);
-      ProposalCapsule proposalCapsule = null;
-      try {
-        dbManager.getProposalStore().
-            get(ByteArray.fromLong(proposalApproveContract.getProposalId()));
-      } catch (ItemNotFoundException ex) {
-      }
+      ProposalCapsule proposalCapsule = dbManager.getProposalStore().
+          get(ByteArray.fromLong(proposalApproveContract.getProposalId()));
+
       ByteString committeeAddress = proposalApproveContract.getOwnerAddress();
       if (proposalApproveContract.getIsAddApproval()) {
         proposalCapsule.addApproval(committeeAddress);
@@ -44,6 +41,10 @@ public class ProposalApproveActuator extends AbstractActuator {
       }
       dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
       ret.setStatus(fee, code.SUCESS);
+    } catch (ItemNotFoundException e) {
+      logger.debug(e.getMessage(), e);
+      ret.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
@@ -92,9 +93,9 @@ public class ProposalApproveActuator extends AbstractActuator {
     }
 
     long now = dbManager.getHeadBlockTimeStamp();
-    ProposalCapsule proposalCapsule = null;
+    ProposalCapsule proposalCapsule;
     try {
-      dbManager.getProposalStore().
+      proposalCapsule = dbManager.getProposalStore().
           get(ByteArray.fromLong(contract.getProposalId()));
     } catch (ItemNotFoundException ex) {
       throw new ContractValidateException("Proposal[" + contract.getProposalId() + "] not exists");

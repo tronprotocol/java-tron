@@ -40,7 +40,7 @@ public class WitnessCreateActuatorTest {
   private static final String ACCOUNT_NAME_SECOND = "ownerS";
   private static final String OWNER_ADDRESS_SECOND;
   private static final String URL = "https://tron.network";
-  private static final String OWNER_ADDRESS_INVALIDATE = "aaaa";
+  private static final String OWNER_ADDRESS_INVALID = "aaaa";
   private static final String OWNER_ADDRESS_NOACCOUNT;
   private static final String OWNER_ADDRESS_BALANCENOTSUFFIENT;
 
@@ -167,7 +167,7 @@ public class WitnessCreateActuatorTest {
   @Test
   public void InvalidAddress() {
     WitnessCreateActuator actuator =
-        new WitnessCreateActuator(getContract(OWNER_ADDRESS_INVALIDATE, URL), dbManager);
+        new WitnessCreateActuator(getContract(OWNER_ADDRESS_INVALID, URL), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();

@@ -1,5 +1,6 @@
 package org.tron.core.capsule;
 
+import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
@@ -89,9 +90,11 @@ public class ProposalCapsule implements ProtoCapsule<Proposal> {
   }
 
   public void removeApproval(ByteString address) {
-    List<ByteString> approvals = getApprovals();
+    List<ByteString> approvals = Lists.newArrayList();
+    approvals.addAll(getApprovals());
     approvals.remove(address);
     this.proposal = this.proposal.toBuilder()
+        .clearApprovals()
         .addAllApprovals(approvals)
         .build();
   }

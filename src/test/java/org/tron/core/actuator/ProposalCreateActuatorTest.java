@@ -43,7 +43,7 @@ public class ProposalCreateActuatorTest {
   private static final String ACCOUNT_NAME_SECOND = "ownerS";
   private static final String OWNER_ADDRESS_SECOND;
   private static final String URL = "https://tron.network";
-  private static final String OWNER_ADDRESS_INVALIDATE = "aaaa";
+  private static final String OWNER_ADDRESS_INVALID = "aaaa";
   private static final String OWNER_ADDRESS_NOACCOUNT;
   private static final String OWNER_ADDRESS_BALANCENOTSUFFIENT;
 
@@ -86,7 +86,7 @@ public class ProposalCreateActuatorTest {
    * create temp Capsule test need.
    */
   @Before
-  public void createCapsule() {
+  public void initTest() {
     WitnessCapsule ownerWitnessFirstCapsule =
         new WitnessCapsule(
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
@@ -127,7 +127,7 @@ public class ProposalCreateActuatorTest {
   }
 
   /**
-   * first createWitness,result is success.
+   * first createProposal,result is success.
    */
   @Test
   public void successProposalCreate() {
@@ -162,11 +162,11 @@ public class ProposalCreateActuatorTest {
    * use Invalid Address, result is failed, exception is "Invalid address".
    */
   @Test
-  public void InvalidAddress() {
+  public void invalidAddress() {
     HashMap<Long, Long> paras = new HashMap<>();
     paras.put(0L, 10000L);
     ProposalCreateActuator actuator =
-        new ProposalCreateActuator(getContract(OWNER_ADDRESS_INVALIDATE, paras), dbManager);
+        new ProposalCreateActuator(getContract(OWNER_ADDRESS_INVALID, paras), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -204,7 +204,7 @@ public class ProposalCreateActuatorTest {
   }
 
   /**
-   * use WitnessStore not exists Address,result is failed,exception is "account not exists".
+   * use WitnessStore not exists Address,result is failed,exception is "witness not exists".
    */
   @Test
   public void noWitness() {
@@ -216,7 +216,7 @@ public class ProposalCreateActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      fail("witness[+OWNER_ADDRESS_NOACCOUNT+] not exists");
+      fail("witness[+OWNER_ADDRESS_NOWITNESS+] not exists");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Witness[" + OWNER_ADDRESS_SECOND + "] not exists",
