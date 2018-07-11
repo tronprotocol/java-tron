@@ -89,6 +89,8 @@ public class FullNodeHttpApiService implements Service {
   private CreateAddressServlet createAddressServlet;
   @Autowired
   private GenerateAddressServlet generateAddressServlet;
+  @Autowired
+  private ValidateAddressServlet validateAddressServlet;
 
   @Override
   public void init() {
@@ -146,6 +148,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(easyTransferServlet), "/easytransfer");
       context.addServlet(new ServletHolder(easyTransferByPrivateServlet), "/easytransferbyprivate");
       context.addServlet(new ServletHolder(generateAddressServlet), "/generateaddress");
+      context.addServlet(new ServletHolder(validateAddressServlet), "/validateaddress");
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());
