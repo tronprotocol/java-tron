@@ -1,5 +1,6 @@
 package org.tron.core.db2.snapshot;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Chars;
@@ -21,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 public class SnapshotManager {
@@ -113,8 +115,7 @@ public class SnapshotManager {
       for (Map.Entry<Key, Value> e : keyValueDB) {
         Key k = e.getKey();
         Value v = e.getValue();
-        batch.put(Bytes.concat(simpleEncode(dbName), k.getBytes()),
-            v.getBytes() == null ? null : Bytes.concat(new byte[]{v.getOperator().getValue()}, v.getBytes()));
+        batch.put(Bytes.concat(simpleEncode(dbName), k.getBytes()), v.encode());
       }
     }
     levelDbDataSource.updateByBatch(batch);
@@ -133,7 +134,30 @@ public class SnapshotManager {
         new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
     levelDbDataSource.initDB();
     if (!levelDbDataSource.allKeys().isEmpty()) {
+      Map<String, TronDatabase> dbMap = dbs.stream()
+          .map(db -> Maps.immutableEntry(db.getDbName(), db))
+          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+      advance();
+      for (Map.Entry<byte[], byte[]> e : levelDbDataSource) {
+        byte[] key = e.getKey();
+        byte[] value = e.getValue();
+        String db = simpleDecode(key);
+        byte[] realKey = new byte[key.length - db.getBytes().length - 4];
+        System.arraycopy(key, db.getBytes().length + 4, realKey, 0, key.length - db.getBytes().length - 4);
 
+        byte[] realValue = value.length == 1 ? null : new byte[value.length - 1];
+        if (realValue != null) {
+          dbMap.get(db).getHead().put(realKey, realValue);
+        } else {
+          dbMap.get(db).getHead().remove(realKey);
+        }
+      }
+
+      dbs.forEach(db -> {
+        db.getHead().getPrevious().merge(db.getHead());
+        db.setHead(db.getHead().getPrevious());
+      });
+      retreat();
     }
 
     levelDbDataSource.closeDB();
