@@ -70,6 +70,12 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
         .build();
   }
 
+  public void setContractResult(byte[] ret) {
+    this.transactionInfo = this.transactionInfo.toBuilder()
+        .addContractResult(ByteString.copyFrom(ret))
+        .build();
+  }
+
   @Override
   public byte[] getData() {
     return this.transactionInfo.toByteArray();
