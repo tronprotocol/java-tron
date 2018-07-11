@@ -1,9 +1,7 @@
 package org.tron.core.db2.snapshot;
 
 import com.google.common.collect.Maps;
-import com.google.common.collect.Streams;
 import com.google.common.primitives.Bytes;
-import com.google.common.primitives.Chars;
 import com.google.common.primitives.Ints;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -14,10 +12,9 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
-import org.tron.core.db2.database.TronDatabase;
+import org.tron.core.db2.database.TronDatabaseWithCache;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,7 +23,7 @@ import java.util.stream.Collectors;
 
 @Component
 public class SnapshotManager {
-  private List<TronDatabase> dbs = new ArrayList<>();
+  private List<TronDatabaseWithCache> dbs = new ArrayList<>();
   @Getter
   private int size;
   private boolean disabled = true;
@@ -51,7 +48,7 @@ public class SnapshotManager {
     return new Session(this, disableOnExit);
   }
 
-  public void add(TronDatabase db) {
+  public void add(TronDatabaseWithCache db) {
     dbs.add(db);
   }
 
@@ -103,7 +100,7 @@ public class SnapshotManager {
     levelDbDataSource.initDB();
 
     Map<byte[], byte[]> batch = new HashMap<>();
-    for (TronDatabase db : dbs) {
+    for (TronDatabaseWithCache db : dbs) {
       Snapshot head = db.getHead();
       while (head.getPrevious().getPrevious() != null) {
         head = head.getPrevious();
@@ -129,12 +126,13 @@ public class SnapshotManager {
     FileUtil.recursiveDelete(levelDbDataSource.getDbPath().toString());
   }
 
+  // ensure run this method first after process start.
   private void check() {
     LevelDbDataSourceImpl levelDbDataSource =
         new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
     levelDbDataSource.initDB();
     if (!levelDbDataSource.allKeys().isEmpty()) {
-      Map<String, TronDatabase> dbMap = dbs.stream()
+      Map<String, TronDatabaseWithCache> dbMap = dbs.stream()
           .map(db -> Maps.immutableEntry(db.getDbName(), db))
           .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
       advance();
