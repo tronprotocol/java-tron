@@ -314,7 +314,7 @@ public class Args {
     INSTANCE.trustNodeAddr = "";
     INSTANCE.walletExtensionApi = false;
     INSTANCE.connectFactor = 0.3;
-    INSTANCE.activeConnectFactor = 0.2;
+    INSTANCE.activeConnectFactor = 0.1;
   }
 
   /**
@@ -525,7 +525,7 @@ public class Args {
         config.hasPath("node.connectFactor") ? config.getDouble("node.connectFactor") : 0.3;
 
     INSTANCE.activeConnectFactor = config.hasPath("node.activeConnectFactor") ?
-        config.getDouble("node.activeConnectFactor") : 0.2;
+        config.getDouble("node.activeConnectFactor") : 0.1;
 
     initBackupProperty(config);
 
