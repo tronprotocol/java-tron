@@ -257,6 +257,14 @@ public class Args {
   @Setter
   private List<String> backupMembers;
 
+  @Getter
+  @Setter
+  private double connectFactor;
+
+  @Getter
+  @Setter
+  private double activeConnectFactor;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -305,6 +313,8 @@ public class Args {
     INSTANCE.solidityNode = false;
     INSTANCE.trustNodeAddr = "";
     INSTANCE.walletExtensionApi = false;
+    INSTANCE.connectFactor = 0.3;
+    INSTANCE.activeConnectFactor = 0.2;
   }
 
   /**
@@ -510,6 +520,12 @@ public class Args {
 
     INSTANCE.walletExtensionApi =
         config.hasPath("node.walletExtensionApi") && config.getBoolean("node.walletExtensionApi");
+
+    INSTANCE.connectFactor =
+        config.hasPath("node.connectFactor") ? config.getDouble("node.connectFactor") : 0.3;
+
+    INSTANCE.activeConnectFactor = config.hasPath("node.activeConnectFactor") ?
+        config.getDouble("node.activeConnectFactor") : 0.2;
 
     initBackupProperty(config);
 
