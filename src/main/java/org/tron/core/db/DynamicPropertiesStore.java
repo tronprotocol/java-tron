@@ -50,6 +50,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] WITNESS_ALLOWANCE_FROZEN_TIME = "WITNESS_ALLOWANCE_FROZEN_TIME"
       .getBytes();
 
+  private static final byte[] MAINTENANCE_TIME_INTERVAL = "MAINTENANCE_TIME_INTERVAL".getBytes();
+
   private static final byte[] ACCOUNT_UPGRADE_COST = "ACCOUNT_UPGRADE_COST".getBytes();
 
   private static final byte[] WITNESS_PAY_PER_BLOCK = "WITNESS_PAY_PER_BLOCK".getBytes();
@@ -174,6 +176,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getWitnessStandbyAllowance();
     } catch (IllegalArgumentException e) {
       this.saveWitnessStandbyAllowance(115_200_000_000L);
+    }
+
+    try {
+      this.getMaintenanceTimeInterval();
+    } catch (IllegalArgumentException e) {
+      this.saveMaintenanceTimeInterval(21_600_000L); // 6 hours
     }
 
     try {
@@ -399,6 +407,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toInt)
         .orElseThrow(
             () -> new IllegalArgumentException("not found WITNESS_ALLOWANCE_FROZEN_TIME"));
+  }
+
+  public void saveMaintenanceTimeInterval(long timeInterval) {
+    logger.debug("MAINTENANCE_TIME_INTERVAL:" + timeInterval);
+    this.put(MAINTENANCE_TIME_INTERVAL,
+        new BytesCapsule(ByteArray.fromLong(timeInterval)));
+  }
+
+  public long getMaintenanceTimeInterval() {
+    return Optional.ofNullable(this.dbSource.getData(MAINTENANCE_TIME_INTERVAL))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found MAINTENANCE_TIME_INTERVAL"));
   }
 
   public void saveAccountUpgradeCost(long accountUpgradeCost) {
@@ -734,7 +755,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
 
   public void updateNextMaintenanceTime(long blockTime) {
-    long maintenanceTimeInterval = ChainConstant.MAINTENANCE_TIME_INTERVAL;
+    long maintenanceTimeInterval = getMaintenanceTimeInterval();
 
     long currentMaintenanceTime = getNextMaintenanceTime();
     long round = (blockTime - currentMaintenanceTime) / maintenanceTimeInterval;

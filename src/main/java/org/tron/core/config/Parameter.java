@@ -17,7 +17,6 @@ public interface Parameter {
     long WINDOW_SIZE_MS = 24 * 3600 * 1000L;
     long MS_PER_DAY = 24 * 3600 * 1000L;
 
-    long MAINTENANCE_TIME_INTERVAL = 21600000;
     long MAINTENANCE_SKIP_SLOTS = 2;
     int SINGLE_REPEAT = 1;
     int BLOCK_FILLED_SLOTS_NUMBER = 128;
@@ -57,6 +56,7 @@ public interface Parameter {
   }
 
   enum ChainParameters {
+    MAINTENANCE_TIME_INTERVAL,
     ACCOUNT_UPGRADE_COST,
     CREATE_ACCOUNT_FEE,
     TRANSACTION_FEE,
