@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
@@ -299,15 +300,15 @@ public class SnapshotManager {
 
     private static final SessionOptional INSTANCE = OptionalEnum.INSTANCE.getInstance();
 
-    private java.util.Optional<Session> value;
+    private Optional<Session> value;
 
     private SessionOptional() {
-      this.value = java.util.Optional.empty();
+      this.value = Optional.empty();
     }
 
     public synchronized SessionOptional setValue(Session value) {
       if (!this.value.isPresent()) {
-        this.value = java.util.Optional.of(value);
+        this.value = Optional.of(value);
       }
       return this;
     }
@@ -318,7 +319,7 @@ public class SnapshotManager {
 
     public synchronized void reset() {
       value.ifPresent(Session::destroy);
-      value = java.util.Optional.empty();
+      value = Optional.empty();
     }
 
     public static SessionOptional instance() {
