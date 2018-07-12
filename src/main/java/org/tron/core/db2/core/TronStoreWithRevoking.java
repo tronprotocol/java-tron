@@ -55,7 +55,6 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> extends Tron
       throw new ItemNotFoundException();
     }
     return of(value);
-
   }
 
   public boolean has(byte[] key) {

@@ -1,13 +1,23 @@
 package org.tron.core.db2.core;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.collect.Streams;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.SetUtils;
+import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.HashDB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
 
@@ -110,7 +120,23 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   //todo current cache need iterator
   @Override
   public Iterator<Map.Entry<byte[],byte[]>> iterator() {
-    return previous.iterator();
+    Set<WrappedByteArray> exists = new HashSet<>();
+    return iterator(exists);
+  }
+
+  private Iterator<Map.Entry<byte[],byte[]>> iterator(Set<WrappedByteArray> exists) {
+    exists.addAll(Streams.stream(db).map(e -> WrappedByteArray.of(e.getKey().getBytes())).collect(Collectors.toSet()));
+    if (previous.getClass() == SnapshotImpl.class) {
+      SnapshotImpl pre = (SnapshotImpl) previous;
+      return Iterators.concat(
+          Iterators.transform(db.iterator(), e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes())),
+          Iterators.filter(pre.iterator(exists), e -> !exists.contains(WrappedByteArray.of(e.getKey()))));
+    } else {
+      return Iterators.concat(
+          Iterators.transform(db.iterator(), e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes())),
+          previous.iterator()
+      );
+    }
   }
 
   @Override
