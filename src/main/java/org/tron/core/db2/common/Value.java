@@ -8,7 +8,7 @@ import org.tron.core.db.common.WrappedByteArray;
 import java.awt.image.ImageConsumer;
 
 @EqualsAndHashCode(exclude = "operator")
-public class Value implements Encoder, Decoder<Value> {
+public final class Value implements Encoder, Decoder<Value> {
 
   @Override
   public byte[] encode() {

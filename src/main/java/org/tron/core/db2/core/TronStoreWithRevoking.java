@@ -1,4 +1,4 @@
-package org.tron.core.db2.database;
+package org.tron.core.db2.core;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -7,11 +7,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.TronDatabase;
 import org.tron.core.db.common.iterator.AbstractIterator;
-import org.tron.core.db2.snapshot.Snapshot;
-import org.tron.core.db2.snapshot.SnapshotManager;
-import org.tron.core.db2.snapshot.SnapshotRoot;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 

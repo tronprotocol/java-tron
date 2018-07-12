@@ -1,8 +1,7 @@
-package org.tron.core.db2.snapshot;
+package org.tron.core.db2.core;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
-import com.sun.corba.se.impl.encoding.WrapperInputStream;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.LevelDB;
 

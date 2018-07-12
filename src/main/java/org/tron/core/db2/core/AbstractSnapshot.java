@@ -1,4 +1,4 @@
-package org.tron.core.db2.snapshot;
+package org.tron.core.db2.core;
 
 import lombok.Getter;
 import lombok.Setter;

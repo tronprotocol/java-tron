@@ -1,6 +1,4 @@
-package org.tron.core.db2.snapshot;
-
-import org.tron.core.db2.common.Value;
+package org.tron.core.db2.core;
 
 import java.util.Map;
 

@@ -1,20 +1,13 @@
-package org.tron.core.db2.snapshot;
+package org.tron.core.db2.core;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicates;
 import com.google.common.collect.Streams;
-import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.HashDB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
 

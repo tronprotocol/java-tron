@@ -1,4 +1,4 @@
-package org.tron.core.db2.snapshot;
+package org.tron.core.db2.core;
 
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Bytes;
@@ -12,7 +12,6 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
-import org.tron.core.db2.database.TronStoreWithRevoking;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 
 import java.util.ArrayList;
