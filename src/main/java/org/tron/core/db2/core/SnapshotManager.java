@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 public class SnapshotManager {
   private List<TronStoreWithRevoking> dbs = new ArrayList<>();
   @Getter
-  private int size;
+  private int size = 0;
   private boolean disabled = true;
   private int activeSession = 0;
 
