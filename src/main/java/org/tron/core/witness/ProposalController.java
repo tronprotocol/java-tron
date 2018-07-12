@@ -91,6 +91,10 @@ public class ProposalController {
     for (Map.Entry<Long, Long> entry : map.entrySet()) {
 
       switch (entry.getKey().intValue()) {
+        case (0): {
+          manager.getDynamicPropertiesStore().saveMaintenanceTimeInterval(entry.getValue());
+          break;
+        }
         case (1): {
           manager.getDynamicPropertiesStore().saveAccountUpgradeCost(entry.getValue());
           break;
@@ -101,6 +105,18 @@ public class ProposalController {
         }
         case (3): {
           manager.getDynamicPropertiesStore().saveTransactionFee(entry.getValue());
+          break;
+        }
+        case (4): {
+          manager.getDynamicPropertiesStore().saveAssetIssueFee(entry.getValue());
+          break;
+        }
+        case (5): {
+          manager.getDynamicPropertiesStore().saveWitnessPayPerBlock(entry.getValue());
+          break;
+        }
+        case (6): {
+          manager.getDynamicPropertiesStore().saveWitnessStandbyAllowance(entry.getValue());
           break;
         }
         default:
