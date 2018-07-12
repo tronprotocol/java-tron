@@ -125,18 +125,21 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   }
 
   private Iterator<Map.Entry<byte[],byte[]>> iterator(Set<WrappedByteArray> exists) {
-    exists.addAll(Streams.stream(db).map(e -> WrappedByteArray.of(e.getKey().getBytes())).collect(Collectors.toSet()));
+    Streams.stream(db)
+        .map(e -> WrappedByteArray.of(e.getKey().getBytes()))
+        .forEach(exists::add);
+
+    Iterator<Map.Entry<byte[],byte[]>> preIterator;
     if (previous.getClass() == SnapshotImpl.class) {
-      SnapshotImpl pre = (SnapshotImpl) previous;
-      return Iterators.concat(
-          Iterators.transform(db.iterator(), e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes())),
-          Iterators.filter(pre.iterator(exists), e -> !exists.contains(WrappedByteArray.of(e.getKey()))));
+      preIterator = Iterators.filter(((SnapshotImpl) previous).iterator(exists),
+          e -> !exists.contains(WrappedByteArray.of(e.getKey())));
     } else {
-      return Iterators.concat(
-          Iterators.transform(db.iterator(), e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes())),
-          previous.iterator()
-      );
+      preIterator = previous.iterator();
     }
+    return Iterators.concat(
+        Iterators.transform(db.iterator(), e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes())),
+        preIterator);
+
   }
 
   @Override
