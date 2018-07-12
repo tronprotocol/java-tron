@@ -73,7 +73,6 @@ public class SnapshotManager {
 
     dbs.forEach(db -> db.getHead().getPrevious().merge(db.getHead()));
     retreat();
-    --size;
     --activeSession;
   }
 
