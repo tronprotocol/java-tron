@@ -12,7 +12,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
-import org.tron.core.db2.database.TronDatabaseWithCache;
+import org.tron.core.db2.database.TronStoreWithRevoking;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 
 import java.util.ArrayList;
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 @Component
 public class SnapshotManager {
-  private List<TronDatabaseWithCache> dbs = new ArrayList<>();
+  private List<TronStoreWithRevoking> dbs = new ArrayList<>();
   @Getter
   private int size;
   private boolean disabled = true;
@@ -48,7 +48,7 @@ public class SnapshotManager {
     return new Session(this, disableOnExit);
   }
 
-  public void add(TronDatabaseWithCache db) {
+  public void add(TronStoreWithRevoking db) {
     dbs.add(db);
   }
 
@@ -100,7 +100,7 @@ public class SnapshotManager {
     levelDbDataSource.initDB();
 
     Map<byte[], byte[]> batch = new HashMap<>();
-    for (TronDatabaseWithCache db : dbs) {
+    for (TronStoreWithRevoking db : dbs) {
       Snapshot head = db.getHead();
       while (head.getPrevious().getPrevious() != null) {
         head = head.getPrevious();
@@ -132,7 +132,7 @@ public class SnapshotManager {
         new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
     levelDbDataSource.initDB();
     if (!levelDbDataSource.allKeys().isEmpty()) {
-      Map<String, TronDatabaseWithCache> dbMap = dbs.stream()
+      Map<String, TronStoreWithRevoking> dbMap = dbs.stream()
           .map(db -> Maps.immutableEntry(db.getDbName(), db))
           .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
       advance();
