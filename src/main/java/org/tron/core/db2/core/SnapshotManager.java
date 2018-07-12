@@ -127,7 +127,7 @@ public class SnapshotManager {
   }
 
   // ensure run this method first after process start.
-  private void check() {
+  public void check() {
     LevelDbDataSourceImpl levelDbDataSource =
         new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
     levelDbDataSource.initDB();
