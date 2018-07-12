@@ -76,6 +76,7 @@ public class SnapshotManager {
       db.setHead(db.getHead().getPrevious());
     });
     --size;
+    --activeSession;
   }
 
   public void flush() {
