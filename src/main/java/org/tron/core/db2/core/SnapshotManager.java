@@ -79,6 +79,55 @@ public class SnapshotManager {
     --activeSession;
   }
 
+  public synchronized void revoke() {
+    if (disabled) {
+      return;
+    }
+
+    if (activeSession <= 0) {
+      throw new RevokingStoreIllegalStateException("activeSession has to be greater than 0");
+    }
+
+    disabled = true;
+
+    try {
+      retreat();
+    } finally {
+      disabled = false;
+    }
+    --activeSession;
+  }
+
+  public synchronized void commit() {
+    if (activeSession <= 0) {
+      throw new RevokingStoreIllegalStateException("activeSession has to be greater than 0");
+    }
+
+    --activeSession;
+  }
+
+  public synchronized void pop() {
+    if (activeSession != 0) {
+      throw new RevokingStoreIllegalStateException("activeSession has to be equal 0");
+    }
+
+    disabled = true;
+
+    try {
+      retreat();
+    } finally {
+      disabled = false;
+    }
+  }
+
+  public synchronized void enable() {
+    disabled = false;
+  }
+
+  public synchronized void disable() {
+    disabled = true;
+  }
+
   public void flush() {
     createCheck();
 
@@ -179,55 +228,6 @@ public class SnapshotManager {
     byte[] value = new byte[length];
     System.arraycopy(bytes, 4, value, 0, length);
     return new String(value);
-  }
-
-  public synchronized void revoke() {
-    if (disabled) {
-      return;
-    }
-
-    if (activeSession <= 0) {
-      throw new RevokingStoreIllegalStateException("activeSession has to be greater than 0");
-    }
-
-    disabled = true;
-
-    try {
-      retreat();
-    } finally {
-      disabled = false;
-    }
-    --activeSession;
-  }
-
-  public synchronized void commit() {
-    if (activeSession <= 0) {
-      throw new RevokingStoreIllegalStateException("activeSession has to be greater than 0");
-    }
-
-    --activeSession;
-  }
-
-  public synchronized void pop() {
-    if (activeSession != 0) {
-      throw new RevokingStoreIllegalStateException("activeSession has to be equal 0");
-    }
-
-    disabled = true;
-
-    try {
-      retreat();
-    } finally {
-      disabled = false;
-    }
-  }
-
-  public synchronized void enable() {
-    disabled = false;
-  }
-
-  public synchronized void disable() {
-    disabled = true;
   }
 
   @Slf4j
