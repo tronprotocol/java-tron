@@ -111,8 +111,6 @@ dependencies {
     compile group: 'org.springframework', name: 'spring-context', version: '4.2.0.RELEASE'
     compile group: 'org.springframework', name: 'spring-tx', version: '4.2.0.RELEASE'
 
-    compile "org.apache.commons:commons-collections4:4.0"
-
     compile group: 'com.beust', name: 'jcommander', version: '1.72'
 
     compile group: 'junit', name: 'junit', version: '4.12'
@@ -138,10 +136,6 @@ dependencies {
     compile group: 'io.grpc', name: 'grpc-protobuf', version: '1.9.0'
     compile group: 'io.grpc', name: 'grpc-stub', version: '1.9.0'
     // end google grpc
-
-    compile group: 'io.scalecube', name: 'scalecube-services', version: '1.0.7'
-    compile group: 'io.scalecube', name: 'scalecube-cluster', version: '1.0.7'
-    compile group: 'io.scalecube', name: 'scalecube-transport', version: '1.0.7'
 
     compile group: 'com.carrotsearch', name: 'java-sizeof', version: '0.0.5'
 
