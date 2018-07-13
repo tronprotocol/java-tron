@@ -1,5 +1,6 @@
 package org.tron.common.storage;
 
+import static org.tron.common.crypto.Hash.sha3;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 
 import com.google.protobuf.ByteString;
@@ -138,7 +139,12 @@ public class DepositImpl implements Deposit{
         } else if (prevDeposit != null) {
             code = prevDeposit.getCode(codeHash);
         } else {
-            code = getCodeStore().get(codeHash).getData();
+            if (null == getCodeStore().get(codeHash)){
+                code = null;
+            }
+            else{
+                code = getCodeStore().get(codeHash).getData();
+            }
         }
 
         if (code != null) codeCache.put(key, Value.create(code));
