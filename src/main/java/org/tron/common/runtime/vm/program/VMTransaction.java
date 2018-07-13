@@ -17,6 +17,7 @@
  */
 package org.tron.common.runtime.vm.program;
 
+import com.google.protobuf.GeneratedMessageV3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.BigIntegers;
@@ -91,6 +92,14 @@ public class VMTransaction {
 
     public VMTransaction(Protocol.Transaction tx) {
         this.trx = tx;
+        //this.protoEncoded = rawData;
+        //parsed = false;
+    }
+
+    public VMTransaction(Protocol.Transaction tx , byte[]r, byte[]s,byte v) {
+        this.trx = tx;
+        TransactionCapsule txCap = new TransactionCapsule(tx);
+        this.signature = ECDSASignature.fromComponents(r, s, v);
         //this.protoEncoded = rawData;
         //parsed = false;
     }

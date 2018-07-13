@@ -60,6 +60,9 @@ public class InternalTransaction extends VMTransaction {
     public InternalTransaction(Transaction tx) {
         super(tx);
     }
+    public InternalTransaction(Transaction tx, byte[] r, byte[]s ,byte v) {
+        super(tx,r,s,v);
+    }
 
     public InternalTransaction(byte[] parentHash, int deep, int index,
                                byte[] sendAddress, byte[] receiveAddress, long value, byte[] data, String note) {
