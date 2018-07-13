@@ -355,6 +355,44 @@ public class ProposalApproveActuatorTest {
   }
 
   /**
+   * duplicate approval, result is failed, exception is "Proposal not exists".
+   */
+  @Test
+  public void duplicateApproval() {
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000100);
+    long id = 1;
+
+    ProposalApproveActuator actuator = new ProposalApproveActuator(
+        getContract(OWNER_ADDRESS_FIRST, id, true), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    ProposalCapsule proposalCapsule;
+    try {
+      proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
+    } catch (ItemNotFoundException e) {
+      Assert.assertFalse(e instanceof ItemNotFoundException);
+      return;
+    }
+    proposalCapsule
+        .addApproval(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)));
+    dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
+    String readableOwnerAddress = StringUtil.createReadableString(
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)));
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail("witness [" + readableOwnerAddress + "]has approved proposal[" + id
+          + "] before");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("witness [" + readableOwnerAddress + "]has approved "
+              + "proposal[" + id + "] before",
+          e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  /**
    * Proposal expired, result is failed, exception is "Proposal expired".
    */
   @Test
@@ -429,6 +467,15 @@ public class ProposalApproveActuatorTest {
     TransactionResultCapsule ret = new TransactionResultCapsule();
     String readableOwnerAddress = StringUtil.createReadableString(
         ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)));
+    ProposalCapsule proposalCapsule;
+    try {
+      proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
+      dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
+    } catch (ItemNotFoundException e) {
+      Assert.assertFalse(e instanceof ItemNotFoundException);
+      return;
+    }
+    Assert.assertEquals(proposalCapsule.getApprovals().size(), 0);
     try {
       actuator.validate();
       actuator.execute(ret);

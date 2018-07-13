@@ -113,7 +113,7 @@ public class ProposalApproveActuator extends AbstractActuator {
             "witness [" + readableOwnerAddress + "]has not approved proposal[" + contract
                 .getProposalId() + "] before");
       }
-    }else {
+    } else {
       if (proposalCapsule.getApprovals().contains(contract.getOwnerAddress())) {
         throw new ContractValidateException(
             "witness [" + readableOwnerAddress + "]has approved proposal[" + contract
