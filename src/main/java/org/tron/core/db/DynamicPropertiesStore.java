@@ -181,7 +181,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getMaintenanceTimeInterval();
     } catch (IllegalArgumentException e) {
-      this.saveMaintenanceTimeInterval(21_600_000L); // 6 hours
+      this.saveMaintenanceTimeInterval(Args.getInstance().getMaintenanceTimeInterval()); // 6 hours
     }
 
     try {
