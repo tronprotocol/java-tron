@@ -124,4 +124,21 @@ public class BlockCapsuleTest {
     Assert.assertEquals(1234L, blockCapsule0.getTimeStamp());
   }
 
+  @Test
+  public void testBlockHash() {
+    BlockCapsule blockCapsule0 = new BlockCapsule(1,
+            Sha256Hash.wrap(ByteString
+                    .copyFrom(ByteArray
+                            .fromHexString("9938a342238077182498b464ac0292229938a342238077182498b464ac029222"))),
+            1234,
+            ByteString.copyFrom("1234567".getBytes()));
+    System.out.println(blockCapsule0.getParentHash().toString());
+    BlockCapsule blockCapsule1 = new BlockCapsule(2,
+            Sha256Hash.wrap(ByteString
+                    .copyFrom(ByteArray
+                            .fromHexString(blockCapsule0.getParentHash().toString()))),
+            1234,
+            ByteString.copyFrom("1234567".getBytes()));
+    Sha256Hash hash = Sha256Hash.of(blockCapsule1.getData());
+  }
 }

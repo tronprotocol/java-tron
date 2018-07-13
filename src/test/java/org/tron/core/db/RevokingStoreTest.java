@@ -39,7 +39,7 @@ public class RevokingStoreTest {
     FileUtil.deleteDir(new File("output_revokingStore_test"));
   }
 
-  @Test
+  //@Test
   public synchronized void testUndo() throws RevokingStoreIllegalStateException {
     revokingDatabase.getStack().clear();
     TestRevokingTronStore tronDatabase = new TestRevokingTronStore(

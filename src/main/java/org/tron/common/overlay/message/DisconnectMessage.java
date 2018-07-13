@@ -9,7 +9,7 @@ public class DisconnectMessage extends P2pMessage {
   private Protocol.DisconnectMessage disconnectMessage;
 
   public DisconnectMessage(byte type, byte[] rawData) throws Exception{
-    super(type, rawData);
+    super(type, rawData);  //type声明为final的类变量
     this.disconnectMessage = Protocol.DisconnectMessage.parseFrom(this.data);
   }
 

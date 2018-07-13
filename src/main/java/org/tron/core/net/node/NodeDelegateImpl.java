@@ -55,6 +55,7 @@ public class NodeDelegateImpl implements NodeDelegate {
   public synchronized LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode)
       throws BadBlockException, UnLinkedBlockException, InterruptedException, NonCommonBlockException {
 
+    // syncMode 是否同步模式 True：采用同步模式处理收到的区块 False：采用广播模式处理收到的区块，此时返回交易信息
     if (block.getInstance().getSerializedSize() > BLOCK_SIZE + 100) {
       throw new BadBlockException("block size over limit");
     }
@@ -67,7 +68,7 @@ public class NodeDelegateImpl implements NodeDelegate {
     try {
       dbManager.preValidateTransactionSign(block);
       dbManager.pushBlock(block);
-      if (!syncMode) {
+      if (!syncMode) {  //广播模式
         List<TransactionCapsule> trx = null;
         trx = block.getTransactions();
         return trx.stream()
@@ -149,6 +150,8 @@ public class NodeDelegateImpl implements NodeDelegate {
   @Override
   public LinkedList<BlockId> getLostBlockIds(List<BlockId> blockChainSummary)
       throws StoreException {
+    //找到请求节点缺失的区块，从区块清单的最后一个找，查找本地节点和请求节点共同拥有的最高的块，
+    //返回本地节点最高块之后的所有块（但是不超过2000的limit）
     //todo: return the remain block count.
     //todo: return the blocks it should be have.
     if (dbManager.getHeadBlockNum() == 0) {
@@ -166,6 +169,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       return new LinkedList(Arrays.asList(dbManager.getGenesisBlockId()));
     } else {
       //todo: find a block we all know between the summary and my db.
+      //只是在主链中进行查找是否存在summary的块
       Collections.reverse(blockChainSummary);
       unForkedBlockId = blockChainSummary.stream()
           .filter(blockId -> containBlockInMainChain(blockId))
@@ -181,6 +185,7 @@ public class NodeDelegateImpl implements NodeDelegate {
     long len = Longs
         .min(dbManager.getHeadBlockNum(), unForkedBlockIdNum + NodeConstant.SYNC_FETCH_BATCH_NUM);
 
+    //返回至多2000个块id
     LinkedList<BlockId> blockIds = new LinkedList<>();
     for (long i = unForkedBlockIdNum; i <= len; i++) {
       BlockId id = dbManager.getBlockIdByNum(i);
@@ -192,40 +197,40 @@ public class NodeDelegateImpl implements NodeDelegate {
   @Override
   public Deque<BlockId> getBlockChainSummary(BlockId beginBlockId, Deque<BlockId> blockIdsToFetch)
       throws TronException {
-
+    //blockIdsToFetch：从节点将要抓取的区块
     Deque<BlockId> retSummary = new LinkedList<>();
     List<BlockId> blockIds = new ArrayList<>(blockIdsToFetch);
     long highBlkNum;
     long highNoForkBlkNum;
     long syncBeginNumber = dbManager.getSyncBeginNumber();
-    long lowBlkNum = syncBeginNumber < 0 ? 0 : syncBeginNumber;
+    long lowBlkNum = syncBeginNumber < 0 ? 0 : syncBeginNumber;  //lowBlkNum设置成syncBeginNumber  将固化块作为同步的起点
 
     LinkedList<BlockId> forkList = new LinkedList<>();
 
-    if (!beginBlockId.equals(getGenesisBlock().getBlockId())) {
-      if (containBlockInMainChain(beginBlockId)) {
+    if (!beginBlockId.equals(getGenesisBlock().getBlockId())) { //共有头块不是创世块
+      if (containBlockInMainChain(beginBlockId)) {  //共同块在主链
         highBlkNum = beginBlockId.getNum();
         if (highBlkNum == 0) {
           throw new TronException(
               "This block don't equal my genesis block hash, but it is in my DB, the block id is :"
                   + beginBlockId.getString());
         }
-        highNoForkBlkNum = highBlkNum;
-        if (beginBlockId.getNum() < lowBlkNum) {
+        highNoForkBlkNum = highBlkNum;  // 将未分叉的最高块也设置成为最高块
+        if (beginBlockId.getNum() < lowBlkNum) { //从其他节点同步了块，导致lowBlkNum高于共有块的高度
           lowBlkNum = beginBlockId.getNum();
         }
-      } else {
-        forkList = dbManager.getBlockChainHashesOnFork(beginBlockId);
+      } else {  // 本地主链没有包含共有块
+        forkList = dbManager.getBlockChainHashesOnFork(beginBlockId);  //共同块在分叉链上，查找分叉的区块链
         if (forkList.isEmpty()) {
           throw new UnLinkedBlockException(
               "We want to find forkList of this block: " + beginBlockId.getString()
                   + " ,but in KhasoDB we can not find it, It maybe a very old beginBlockId, we are sync once,"
                   + " we switch and pop it after that time. ");
         }
-        highNoForkBlkNum = forkList.peekLast().getNum();
-        forkList.pollLast();
-        Collections.reverse(forkList);
-        highBlkNum = highNoForkBlkNum + forkList.size();
+        highNoForkBlkNum = forkList.peekLast().getNum();  // 找到分叉链，设置未分叉的最高块
+        forkList.pollLast(); // 删除分叉链的最低块
+        Collections.reverse(forkList);  // 逆序
+        highBlkNum = highNoForkBlkNum + forkList.size();  // 设置最高块为没有分叉的块 + 分叉链的大小（已经删掉了分叉的那一块）
         if (highNoForkBlkNum < lowBlkNum) {
           throw new UnLinkedBlockException(
               "It is a too old block that we take it as a forked block long long ago"
@@ -233,10 +238,9 @@ public class NodeDelegateImpl implements NodeDelegate {
                   + "\n highNoForkBlkNum" + highNoForkBlkNum);
         }
       }
-    } else {
+    } else { // 共有块是创世块
       highBlkNum = dbManager.getHeadBlockNum();
       highNoForkBlkNum = highBlkNum;
-
     }
 
     if (!blockIds.isEmpty() && highBlkNum != blockIds.get(0).getNum() - 1) {
@@ -246,12 +250,13 @@ public class NodeDelegateImpl implements NodeDelegate {
     }
 
     long realHighBlkNum = highBlkNum + blockIds.size();
+
     do {
-      if (lowBlkNum <= highNoForkBlkNum) {
+      if (lowBlkNum <= highNoForkBlkNum) { //如果没有分叉，从主链上一直能找到区块
         retSummary.offer(dbManager.getBlockIdByNum(lowBlkNum));
-      } else if (lowBlkNum <= highBlkNum) {
+      } else if (lowBlkNum <= highBlkNum) { //如果有分叉，从highNoForkBlkNum这块之后，需要到分叉的区块上寻找
         retSummary.offer(forkList.get((int) (lowBlkNum - highNoForkBlkNum - 1)));
-      } else {
+      } else { //有一些区块还没有同步过来，但是已经放在了待从该节点同步的集合里，从集合中找出来
         retSummary.offer(blockIds.get((int) (lowBlkNum - highBlkNum - 1)));
       }
       lowBlkNum += (realHighBlkNum - lowBlkNum + 2) / 2;

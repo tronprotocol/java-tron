@@ -15,7 +15,7 @@ public class HelloMessage extends P2pMessage {
   Protocol.HelloMessage helloMessage;
 
   public HelloMessage(byte type, byte[] rawData) throws Exception {
-    super(type, rawData);
+    super(type, rawData);  //type声明为final的类变量
     this.helloMessage = Protocol.HelloMessage.parseFrom(rawData);
   }
 
@@ -54,7 +54,7 @@ public class HelloMessage extends P2pMessage {
 
     this.helloMessage = builder.build();
     this.type = MessageTypes.P2P_HELLO.asByte();
-    this.data = this.helloMessage.toByteArray();
+    this.data = this.helloMessage.toByteArray();  //可以直接调用super构造方法
   }
 
   public int getVersion() {

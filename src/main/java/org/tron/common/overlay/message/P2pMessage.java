@@ -22,6 +22,7 @@ public abstract class P2pMessage extends Message {
     public P2pMessage() {
     }
 
+    //这个方法可以删除掉
     public P2pMessage(byte[] rawData) {
         super(rawData);
     }

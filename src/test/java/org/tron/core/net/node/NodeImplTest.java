@@ -124,7 +124,7 @@ public class NodeImplTest {
     Assert.assertEquals(peer.getSyncBlockRequested().size(), 0);
   }
 
-  @Test
+  //@Test
   public void testAdvBlockMessage() throws Exception {
     PeerConnection peer = new PeerConnection();
     BlockCapsule genesisBlockCapsule = BlockUtil.newGenesisBlockCapsule();

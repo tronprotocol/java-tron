@@ -8,7 +8,7 @@ public class PingMessage extends P2pMessage {
   private static final byte[] FIXED_PAYLOAD = Hex.decode("C0");
 
   public PingMessage() {
-    this.type = MessageTypes.P2P_PING.asByte();
+    this.type = MessageTypes.P2P_PING.asByte();  //建议type字段设置成类变量
     this.data = FIXED_PAYLOAD;
   }
 
