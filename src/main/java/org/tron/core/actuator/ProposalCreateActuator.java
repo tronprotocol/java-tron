@@ -3,6 +3,7 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
@@ -94,13 +95,41 @@ public class ProposalCreateActuator extends AbstractActuator {
       throw new ContractValidateException("Witness[" + readableOwnerAddress + "] not exists");
     }
 
-    for (long idx : contract.getParametersMap().keySet()) {
-      if (!validParameters(idx)) {
+    for (Map.Entry<Long, Long> entry : contract.getParametersMap().entrySet()) {
+      if (!validKey(entry.getKey())) {
         throw new ContractValidateException("Bad chain parameter id");
       }
+      validateValue(entry);
     }
 
     return true;
+  }
+
+  private void validateValue(Map.Entry<Long, Long> entry) throws ContractValidateException {
+
+    switch (entry.getKey().intValue()) {
+      case (0): {
+        if (entry.getValue() < 3 * 27 * 1000 || entry.getValue() > 24 * 3600 * 1000) {
+          throw new ContractValidateException(
+              "Bad chain parameter value,valid range is [3 * 27s,24h]");
+        }
+        return;
+      }
+      case (1):
+      case (2):
+      case (3):
+      case (4):
+      case (5):
+      case (6): {
+        if (entry.getValue() < 0 || entry.getValue() > 100_000_000_000_000_000L) {
+          throw new ContractValidateException(
+              "Bad chain parameter value,valid range is [0,100_000_000_000_000_000L]");
+        }
+        return;
+      }
+      default:
+        break;
+    }
   }
 
   @Override
@@ -113,7 +142,7 @@ public class ProposalCreateActuator extends AbstractActuator {
     return 0;
   }
 
-  private boolean validParameters(long idx) {
+  private boolean validKey(long idx) {
     return idx >= 0 && idx < ChainParameters.values().length;
   }
 

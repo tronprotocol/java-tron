@@ -247,6 +247,22 @@ public class ProposalCreateActuatorTest {
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
+
+    paras = new HashMap<>();
+    paras.put(3L, 1 + 100_000_000_000_000_000L);
+    actuator =
+        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail("Bad chain parameter value,valid range is [0,100_000_000_000_000_000L]");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Bad chain parameter value,valid range is [0,100_000_000_000_000_000L]",
+          e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
   }
 
 }
