@@ -18,6 +18,7 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -52,6 +53,15 @@ public class AssetIssueActuator extends AbstractActuator {
       AssetIssueContract assetIssueContract = contract.unpack(AssetIssueContract.class);
       byte[] ownerAddress = assetIssueContract.getOwnerAddress().toByteArray();
       AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
+      String name = new String(assetIssueCapsule.getName().toByteArray(), Charset.forName("UTF-8"));
+      long order = 0;
+      byte[] key = name.getBytes();
+      while (this.dbManager.getAssetIssueStore().get(key) != null) {
+        order++;
+        String nameKey = name + order;
+        key = nameKey.getBytes();
+      }
+      assetIssueCapsule.setOrder(order);
       dbManager.getAssetIssueStore()
           .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
 

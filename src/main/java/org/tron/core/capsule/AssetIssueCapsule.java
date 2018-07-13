@@ -17,6 +17,7 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.nio.charset.Charset;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.protos.Contract.AssetIssueContract;
@@ -60,8 +61,24 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
     return this.assetIssueContract.getName();
   }
 
+  public void setOrder(long order) {
+    this.assetIssueContract = this.assetIssueContract.toBuilder()
+        .setOrder(order)
+        .build();
+  }
+
+  public long getOrder() {
+    return this.assetIssueContract.getOrder();
+  }
+
   public byte[] createDbKey() {
-    return getName().toByteArray();
+    long order = getOrder();
+    if (order == 0) {
+      return getName().toByteArray();
+    }
+    String name = new String(getName().toByteArray(), Charset.forName("UTF-8"));
+    String nameKey = name + order;
+    return nameKey.getBytes();
   }
 
   public int getNum() {
