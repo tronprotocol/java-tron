@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.RevokingDatabase;
+import org.tron.core.db.RevokingStore;
 import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
@@ -52,12 +54,12 @@ public class SnapshotManager {
     dbs.add(db);
   }
 
-  public void advance() {
+  private void advance() {
     dbs.forEach(db -> db.setHead(db.getHead().advance()));
     ++size;
   }
 
-  public void retreat() {
+  private void retreat() {
     dbs.forEach(db -> db.setHead(db.getHead().retreat()));
     --size;
   }
@@ -244,7 +246,7 @@ public class SnapshotManager {
       this.disableOnExit = disableOnExit;
     }
 
-    void commit() {
+    public void commit() {
       applySnapshot = false;
       snapshotManager.commit();
     }
@@ -257,7 +259,7 @@ public class SnapshotManager {
       applySnapshot = false;
     }
 
-    void merge() {
+    public void merge() {
       if (applySnapshot) {
         snapshotManager.merge();
       }
@@ -265,7 +267,7 @@ public class SnapshotManager {
       applySnapshot = false;
     }
 
-    public void destroy() {
+    private void destroy() {
       try {
         if (applySnapshot) {
           snapshotManager.revoke();
@@ -294,6 +296,7 @@ public class SnapshotManager {
     }
   }
 
+  @Component
   public static final class SessionOptional {
 
     private static final SessionOptional INSTANCE = OptionalEnum.INSTANCE.getInstance();

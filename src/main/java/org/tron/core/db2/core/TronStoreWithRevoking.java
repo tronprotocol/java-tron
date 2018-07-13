@@ -39,16 +39,19 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> extends Tron
     head.close();
   }
 
+  @Override
   public void put(byte[] key, T item) {
     head.put(key, item.getData());
   }
 
+  @Override
   public void delete(byte[] key) {
     head.remove(key);
   }
 
   protected abstract T of(byte[] value) throws BadItemException;
 
+  @Override
   public T get(byte[] key) throws ItemNotFoundException, BadItemException {
     byte[] value = head.get(key);
     if (ArrayUtils.isEmpty(value)) {
@@ -57,6 +60,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> extends Tron
     return of(value);
   }
 
+  @Override
   public boolean has(byte[] key) {
     return head.get(key) != null;
   }
