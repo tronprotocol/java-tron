@@ -1,5 +1,6 @@
 package org.tron.core.db;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.ArrayUtils;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.protos.Protocol.Proposal;
 
 @Component
 public class ProposalStore extends TronStoreWithRevoking<ProposalCapsule> {
@@ -45,6 +47,9 @@ public class ProposalStore extends TronStoreWithRevoking<ProposalCapsule> {
         .allValues()
         .stream()
         .map(bytes -> new ProposalCapsule(bytes))
+        .sorted(
+            (ProposalCapsule a, ProposalCapsule b) -> a.getCreateTime() <= b.getCreateTime() ?
+                1 : -1)
         .collect(Collectors.toList());
   }
 
