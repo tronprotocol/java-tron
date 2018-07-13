@@ -91,7 +91,6 @@ public class FreezeAndSendcoin {
   @Test(enabled = false,threadPoolSize = 500, invocationCount = 1000)
   public void freezeAndSendcoin() throws InterruptedException {
 
-
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     byte[] freezeAddress = ecKey1.getAddress();
     String testKeyForFreeze = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
