@@ -264,7 +264,7 @@ service Wallet {
       }
     };
   }
-  rpc DeployContract (SmartContract) returns (Transaction) {
+  rpc DeployContract (CreateSmartContract) returns (Transaction) {
     option (google.api.http) = {
       post: "/wallet/deploycontract"
       body: "*"

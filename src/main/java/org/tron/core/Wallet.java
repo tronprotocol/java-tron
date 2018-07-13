@@ -18,9 +18,7 @@
 
 package org.tron.core;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -84,11 +82,12 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
 import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.SmartContract;
+import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -193,7 +192,7 @@ public class Wallet {
 
   public static byte[] generateContractAddress(Transaction trx) {
 
-    SmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
+    CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
     TransactionCapsule trxCap = new TransactionCapsule(trx);
     byte[] txRawDataHash = trxCap.getTransactionId().getBytes();
@@ -572,7 +571,6 @@ public class Wallet {
     return trxCap.getInstance();
   }
 
-
   public Transaction triggerContract(TriggerSmartContract triggerSmartContract,
       TransactionCapsule trxCap) {
 
@@ -604,7 +602,7 @@ public class Wallet {
         ProgramResult result = runtime.getResult();
         TransactionResultCapsule ret = new TransactionResultCapsule();
         ret.setConstantResult(result.getHReturn());
-        ret.setStatus(0,code.SUCESS);
+        ret.setStatus(0, code.SUCESS);
         trxCap.setResult(ret);
         return trxCap.getInstance();
       }
@@ -625,16 +623,7 @@ public class Wallet {
 
     ContractCapsule contractCapsule = dbManager.getContractStore()
         .get(bytesMessage.getValue().toByteArray());
-    Transaction trx = contractCapsule.getInstance();
-    Any contract = trx.getRawData().getContract(0).getParameter();
-    if (contract.is(SmartContract.class)) {
-      try {
-        return contract.unpack(SmartContract.class);
-      } catch (InvalidProtocolBufferException e) {
-        return null;
-      }
-    }
-    return null;
+    return contractCapsule.getInstance();
   }
 
   private byte[] getSelector(byte[] data) {

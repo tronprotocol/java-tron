@@ -42,9 +42,10 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
-import org.tron.protos.Contract.SmartContract;
+import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
@@ -91,7 +92,7 @@ public class Runtime {
       case ContractType.TriggerSmartContract_VALUE:
         trxType = TRX_CONTRACT_CALL_TYPE;
         break;
-      case ContractType.SmartContract_VALUE:
+      case ContractType.CreateSmartContract_VALUE:
         trxType = TRX_CONTRACT_CREATION_TYPE;
         break;
       default:
@@ -113,7 +114,7 @@ public class Runtime {
       case Transaction.Contract.ContractType.TriggerSmartContract_VALUE:
         trxType = TRX_CONTRACT_CALL_TYPE;
         break;
-      case Transaction.Contract.ContractType.SmartContract_VALUE:
+      case Transaction.Contract.ContractType.CreateSmartContract_VALUE:
         trxType = TRX_CONTRACT_CREATION_TYPE;
         break;
       default:
@@ -199,10 +200,11 @@ public class Runtime {
   /*
    **/
   private void create() {
-    SmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
-    byte[] code = contract.getBytecode().toByteArray();
+    CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
+    SmartContract newSmartContract = contract.getNewContrect();
+    byte[] code = newSmartContract.getBytecode().toByteArray();
     byte[] contractAddress = Wallet.generateContractAddress(trx);
-    contract = contract.toBuilder().setContractAddress(ByteString.copyFrom(contractAddress)).build();
+    newSmartContract = newSmartContract.toBuilder().setContractAddress(ByteString.copyFrom(contractAddress)).build();
     // logger.info("new contract address is: " + Wallet.encode58Check(contractAddress));
 
     // Transaction.Contract trxContract = trx.getRawData().getContract(0).toBuilder().setParameter(Any.pack(contract)).build();
@@ -211,14 +213,14 @@ public class Runtime {
 
     // crate vm to constructor smart contract
     try {
-      byte[] ops = contract.getBytecode().toByteArray();
+      byte[] ops = newSmartContract.getBytecode().toByteArray();
       InternalTransaction internalTransaction = new InternalTransaction(trx,
           contract.getOwnerAddress().toByteArray(),
-          contract.getContractAddress().toByteArray(),
-          contract.getCallValue().size()==0 ? new Byte("0") : contract.getCallValue().toByteArray()[0]);
+          newSmartContract.getContractAddress().toByteArray(),
+          newSmartContract.getCallValue().size()==0 ? new Byte("0") : contract.getCallValue().toByteArray()[0]);
       ProgramInvoke programInvoke = programInvokeFactory
-              .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executerType, trx,
-                      block, deposit);
+          .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executerType, trx,
+              block, deposit);
       this.vm = new VM(config);
       this.program = new Program(ops, programInvoke, internalTransaction, config);
     } catch (Exception e) {
@@ -228,12 +230,12 @@ public class Runtime {
 
     program.getResult().setContractAddress(contractAddress);
     deposit.createAccount(contractAddress, Protocol.AccountType.Contract);
-    deposit.createContract(contractAddress, new ContractCapsule(trx));
+    deposit.createContract(contractAddress, new ContractCapsule(newSmartContract));
     deposit.saveCode(contractAddress, ProgramPrecompile.getCode(code));
 
     // transfer from callerAddress to contractAddress according to callValue
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
-    byte[] callValue = contract.getCallValue().toByteArray();
+    byte[] callValue = newSmartContract.getCallValue().toByteArray();
     if (null != callValue && callValue.length != 0) {
       long callValueLong = new BigInteger(Hex.toHexString(callValue), 16).longValue();
       this.deposit.addBalance(callerAddress, -callValueLong);
@@ -246,9 +248,7 @@ public class Runtime {
 
     try {
       if (vm != null) {
-//        if (config.vmOn()) {
         vm.play(program);
-//        }
 
         result = program.getResult();
         if (result.getException() != null || result.isRevert()) {

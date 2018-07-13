@@ -17,6 +17,9 @@
  */
 package org.tron.common.runtime.vm.program.invoke;
 
+import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE;
+import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -28,11 +31,10 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.protos.Contract;
+import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
-
-import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE;
-import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
 
 /**
  * @author Roman Mandeleil
@@ -41,127 +43,129 @@ import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX
 @Component("ProgramInvokeFactory")
 public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
 
-    private static final Logger logger = LoggerFactory.getLogger("VM");
+  private static final Logger logger = LoggerFactory.getLogger("VM");
 
-    // Invocation by the wire tx
-    @Override
-    public ProgramInvoke createProgramInvoke(InternalTransaction.TrxType trxType, InternalTransaction.ExecuterType executerType,
-                                             Transaction tx, Block block, Deposit deposit) {
-        byte[] contractAddress;
-        byte[] ownerAddress;
-        long balance;
-        byte[] data;
-        byte[] lastHash = null;
-        byte[] coinbase = null;
-        long timestamp = 0L;
-        long number = -1L;
+  // Invocation by the wire tx
+  @Override
+  public ProgramInvoke createProgramInvoke(InternalTransaction.TrxType trxType,
+      InternalTransaction.ExecuterType executerType,
+      Transaction tx, Block block, Deposit deposit) {
+    byte[] contractAddress;
+    byte[] ownerAddress;
+    long balance;
+    byte[] data;
+    byte[] lastHash = null;
+    byte[] coinbase = null;
+    long timestamp = 0L;
+    long number = -1L;
 
         if (trxType == TRX_CONTRACT_CREATION_TYPE) {
-            Contract.SmartContract contract = ContractCapsule.getSmartContractFromTransaction(tx);
+          CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(tx);
             contractAddress = Wallet.generateContractAddress(tx);
             ownerAddress = contract.getOwnerAddress().toByteArray();
             balance = deposit.getBalance(ownerAddress);
             data = ByteUtil.EMPTY_BYTE_ARRAY;
 
-            switch (executerType) {
-                case ET_NORMAL_TYPE:
-                    lastHash = block.getBlockHeader().getRawDataOrBuilder().getParentHash().toByteArray();
-                    coinbase = block.getBlockHeader().getRawDataOrBuilder().getWitnessAddress().toByteArray();
-                    timestamp = block.getBlockHeader().getRawDataOrBuilder().getTimestamp();
-                    number = block.getBlockHeader().getRawDataOrBuilder().getNumber();
-                    break;
-                case ET_PRE_TYPE:
-                    break;
-                default:
-                    return null;
-            }
+      switch (executerType) {
+        case ET_NORMAL_TYPE:
+          lastHash = block.getBlockHeader().getRawDataOrBuilder().getParentHash().toByteArray();
+          coinbase = block.getBlockHeader().getRawDataOrBuilder().getWitnessAddress().toByteArray();
+          timestamp = block.getBlockHeader().getRawDataOrBuilder().getTimestamp();
+          number = block.getBlockHeader().getRawDataOrBuilder().getNumber();
+          break;
+        case ET_PRE_TYPE:
+          break;
+        default:
+          return null;
+      }
 
+      return new ProgramInvokeImpl(contractAddress, ownerAddress, ownerAddress, balance, null, data,
+          lastHash, coinbase, timestamp, number, deposit);
 
-            return new ProgramInvokeImpl(contractAddress, ownerAddress, ownerAddress, balance, null, data,
-                    lastHash, coinbase, timestamp, number, deposit);
+    } else if (trxType == TRX_CONTRACT_CALL_TYPE) {
+      Contract.TriggerSmartContract contract = ContractCapsule
+          .getTriggerContractFromTransaction(tx);
+      /***         ADDRESS op       ***/
+      // YP: Get address of currently executing account.
+      // byte[] address = tx.isContractCreation() ? tx.getContractAddress() : tx.getReceiveAddress();
+      byte[] address = contract.getContractAddress().toByteArray();
 
-        } else if (trxType == TRX_CONTRACT_CALL_TYPE) {
-            Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(tx);
-            /***         ADDRESS op       ***/
-            // YP: Get address of currently executing account.
-            // byte[] address = tx.isContractCreation() ? tx.getContractAddress() : tx.getReceiveAddress();
-            byte[] address = contract.getContractAddress().toByteArray();
+      /***         ORIGIN op       ***/
+      // YP: This is the sender of original transaction; it is never a contract.
+      // byte[] origin = tx.getSender();
+      byte[] origin = contract.getOwnerAddress().toByteArray();
 
-            /***         ORIGIN op       ***/
-            // YP: This is the sender of original transaction; it is never a contract.
-            // byte[] origin = tx.getSender();
-            byte[] origin = contract.getOwnerAddress().toByteArray();
+      /***         CALLER op       ***/
+      // YP: This is the address of the account that is directly responsible for this execution.
+      //byte[] caller = tx.getSender();
+      byte[] caller = contract.getOwnerAddress().toByteArray();
 
-            /***         CALLER op       ***/
-            // YP: This is the address of the account that is directly responsible for this execution.
-            //byte[] caller = tx.getSender();
-            byte[] caller = contract.getOwnerAddress().toByteArray();
+      /***         BALANCE op       ***/
+      // byte[] balance = repository.getBalance(address).toByteArray();
+      balance = deposit.getBalance(caller);
 
-            /***         BALANCE op       ***/
-            // byte[] balance = repository.getBalance(address).toByteArray();
-            balance = deposit.getBalance(caller);
+      /***        CALLVALUE op      ***/
+      // byte[] callValue = nullToEmpty(tx.getValue());
+      byte[] callValue = contract.getCallValue().toByteArray();
 
-            /***        CALLVALUE op      ***/
-            // byte[] callValue = nullToEmpty(tx.getValue());
-            byte[] callValue = contract.getCallValue().toByteArray();
+      /***     CALLDATALOAD  op   ***/
+      /***     CALLDATACOPY  op   ***/
+      /***     CALLDATASIZE  op   ***/
+      // byte[] data = tx.isContractCreation() ? ByteUtil.EMPTY_BYTE_ARRAY : nullToEmpty(tx.getData());
+      data = contract.getData().toByteArray();
 
-            /***     CALLDATALOAD  op   ***/
-            /***     CALLDATACOPY  op   ***/
-            /***     CALLDATASIZE  op   ***/
-            // byte[] data = tx.isContractCreation() ? ByteUtil.EMPTY_BYTE_ARRAY : nullToEmpty(tx.getData());
-            data = contract.getData().toByteArray();
+      switch (executerType) {
+        case ET_CONSTANT_TYPE:
+          break;
+        case ET_PRE_TYPE:
+          break;
+        case ET_NORMAL_TYPE:
+          /***    PREVHASH  op  ***/
+          lastHash = block.getBlockHeader().getRawDataOrBuilder().getParentHash().toByteArray();
+          /***   COINBASE  op ***/
+          coinbase = block.getBlockHeader().getRawDataOrBuilder().getWitnessAddress().toByteArray();
+          /*** TIMESTAMP  op  ***/
+          timestamp = block.getBlockHeader().getRawDataOrBuilder().getTimestamp();
+          /*** NUMBER  op  ***/
+          number = block.getBlockHeader().getRawDataOrBuilder().getNumber();
+          break;
+        default:
+          break;
+      }
 
-            switch (executerType) {
-                case ET_CONSTANT_TYPE:
-                    break;
-                case ET_PRE_TYPE:
-                    break;
-                case ET_NORMAL_TYPE:
-                    /***    PREVHASH  op  ***/
-                    lastHash = block.getBlockHeader().getRawDataOrBuilder().getParentHash().toByteArray();
-                    /***   COINBASE  op ***/
-                    coinbase = block.getBlockHeader().getRawDataOrBuilder().getWitnessAddress().toByteArray();
-                    /*** TIMESTAMP  op  ***/
-                    timestamp = block.getBlockHeader().getRawDataOrBuilder().getTimestamp();
-                    /*** NUMBER  op  ***/
-                    number = block.getBlockHeader().getRawDataOrBuilder().getNumber();
-                    break;
-                default:
-                    break;
-            }
-
-            return new ProgramInvokeImpl(address, origin, caller, balance, callValue, data,
-                    lastHash, coinbase, timestamp, number, deposit);
-        } else {
-            return null;
-        }
-
+      return new ProgramInvokeImpl(address, origin, caller, balance, callValue, data,
+          lastHash, coinbase, timestamp, number, deposit);
+    } else {
+      return null;
     }
 
-    /**
-     * This invocation created for contract call contract
-     */
-    @Override
-    public ProgramInvoke createProgramInvoke(Program program, DataWord toAddress, DataWord callerAddress,
-                                             DataWord inValue, long balanceInt, byte[] dataIn,
-                                             Deposit deposit, boolean isStaticCall, boolean byTestingSuite) {
+  }
 
-        DataWord address = toAddress;
-        DataWord origin = program.getOriginAddress();
-        DataWord caller = callerAddress;
-        DataWord balance = new DataWord(balanceInt);
-        DataWord callValue = inValue;
+  /**
+   * This invocation created for contract call contract
+   */
+  @Override
+  public ProgramInvoke createProgramInvoke(Program program, DataWord toAddress,
+      DataWord callerAddress,
+      DataWord inValue, long balanceInt, byte[] dataIn,
+      Deposit deposit, boolean isStaticCall, boolean byTestingSuite) {
 
-        byte[] data = dataIn;
-        DataWord lastHash = program.getPrevHash();
-        DataWord coinbase = program.getCoinbase();
-        DataWord timestamp = program.getTimestamp();
-        DataWord number = program.getNumber();
-        DataWord difficulty = program.getDifficulty();
-        DataWord dropLimit = program.getDroplimit();
+    DataWord address = toAddress;
+    DataWord origin = program.getOriginAddress();
+    DataWord caller = callerAddress;
+    DataWord balance = new DataWord(balanceInt);
+    DataWord callValue = inValue;
 
-        return new ProgramInvokeImpl(address, origin, caller, balance, callValue,
-                data, lastHash, coinbase, timestamp, number, difficulty,
-                deposit, program.getCallDeep() + 1, isStaticCall, byTestingSuite);
-    }
+    byte[] data = dataIn;
+    DataWord lastHash = program.getPrevHash();
+    DataWord coinbase = program.getCoinbase();
+    DataWord timestamp = program.getTimestamp();
+    DataWord number = program.getNumber();
+    DataWord difficulty = program.getDifficulty();
+    DataWord dropLimit = program.getDroplimit();
+
+    return new ProgramInvokeImpl(address, origin, caller, balance, callValue,
+        data, lastHash, coinbase, timestamp, number, difficulty,
+        deposit, program.getCallDeep() + 1, isStaticCall, byTestingSuite);
+  }
 }
