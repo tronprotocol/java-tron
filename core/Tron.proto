@@ -196,6 +196,7 @@ message TransactionInfo {
   int64 blockNumber = 3;
   int64 blockTimeStamp = 4;
   repeated bytes contractResult = 5;
+  bytes contract_address = 6;
 }
 
 message Transactions {
