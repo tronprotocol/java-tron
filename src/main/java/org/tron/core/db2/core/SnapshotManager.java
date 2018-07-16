@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.AbstractRevokingStore;
+import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
@@ -22,18 +24,18 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
-public class SnapshotManager {
-  private List<TronStoreWithRevoking> dbs = new ArrayList<>();
+public class SnapshotManager implements RevokingDatabase {
+  private List<RevokingDBWithCachingNewValue> dbs = new ArrayList<>();
   @Getter
   private int size = 0;
   private boolean disabled = true;
   private int activeSession = 0;
 
-  public Session buildSession() {
+  public ISession buildSession() {
     return buildSession(false);
   }
 
-  public synchronized Session buildSession(boolean forceEnable) {
+  public synchronized ISession buildSession(boolean forceEnable) {
     if (disabled && !forceEnable) {
       return new Session(this);
     }
@@ -48,7 +50,7 @@ public class SnapshotManager {
     return new Session(this, disableOnExit);
   }
 
-  public void add(TronStoreWithRevoking db) {
+  public void add(RevokingDBWithCachingNewValue db) {
     dbs.add(db);
   }
 
@@ -121,8 +123,18 @@ public class SnapshotManager {
     disabled = false;
   }
 
+  @Override
+  public int size() {
+    return size;
+  }
+
   public synchronized void disable() {
     disabled = true;
+  }
+
+  @Override
+  public void shutdown() {
+    throw new UnsupportedOperationException();
   }
 
   public void flush() {
@@ -147,7 +159,7 @@ public class SnapshotManager {
     levelDbDataSource.initDB();
 
     Map<byte[], byte[]> batch = new HashMap<>();
-    for (TronStoreWithRevoking db : dbs) {
+    for (RevokingDBWithCachingNewValue db : dbs) {
       Snapshot head = db.getHead();
       while (head.getPrevious().getPrevious() != null) {
         head = head.getPrevious();
@@ -179,7 +191,7 @@ public class SnapshotManager {
         new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
     levelDbDataSource.initDB();
     if (!levelDbDataSource.allKeys().isEmpty()) {
-      Map<String, TronStoreWithRevoking> dbMap = dbs.stream()
+      Map<String, RevokingDBWithCachingNewValue> dbMap = dbs.stream()
           .map(db -> Maps.immutableEntry(db.getDbName(), db))
           .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
       advance();
@@ -229,8 +241,7 @@ public class SnapshotManager {
 
   @Slf4j
   @Getter // only for unit test
-  public static class Session implements AutoCloseable {
-
+  public static class Session  implements ISession {
     private SnapshotManager snapshotManager;
     private boolean applySnapshot = true;
     private boolean disableOnExit = false;
@@ -244,12 +255,14 @@ public class SnapshotManager {
       this.disableOnExit = disableOnExit;
     }
 
+    @Override
     public void commit() {
       applySnapshot = false;
       snapshotManager.commit();
     }
 
-    void revoke() {
+    @Override
+    public void revoke() {
       if (applySnapshot) {
         snapshotManager.revoke();
       }
@@ -257,6 +270,7 @@ public class SnapshotManager {
       applySnapshot = false;
     }
 
+    @Override
     public void merge() {
       if (applySnapshot) {
         snapshotManager.merge();
@@ -265,7 +279,8 @@ public class SnapshotManager {
       applySnapshot = false;
     }
 
-    private void destroy() {
+    @Override
+    public void destroy() {
       try {
         if (applySnapshot) {
           snapshotManager.revoke();
@@ -293,52 +308,4 @@ public class SnapshotManager {
       }
     }
   }
-
-  @Component
-  public static final class SessionOptional {
-
-    private static final SessionOptional INSTANCE = OptionalEnum.INSTANCE.getInstance();
-
-    private Optional<Session> value;
-
-    private SessionOptional() {
-      this.value = Optional.empty();
-    }
-
-    public synchronized SessionOptional setValue(Session value) {
-      if (!this.value.isPresent()) {
-        this.value = Optional.of(value);
-      }
-      return this;
-    }
-
-    public synchronized boolean valid() {
-      return value.isPresent();
-    }
-
-    public synchronized void reset() {
-      value.ifPresent(Session::destroy);
-      value = Optional.empty();
-    }
-
-    public static SessionOptional instance() {
-      return INSTANCE;
-    }
-
-    private enum OptionalEnum {
-      INSTANCE;
-
-      private SessionOptional instance;
-
-      OptionalEnum() {
-        instance = new SessionOptional();
-      }
-
-      private SessionOptional getInstance() {
-        return instance;
-      }
-    }
-
-  }
-
 }

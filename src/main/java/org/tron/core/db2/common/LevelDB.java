@@ -50,4 +50,8 @@ public class LevelDB implements DB<byte[], byte[]> {
   public void close() {
     db.closeDB();
   }
+
+  public void reset() {
+    db.resetDb();
+  }
 }

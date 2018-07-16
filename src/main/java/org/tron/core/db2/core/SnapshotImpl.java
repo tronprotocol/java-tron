@@ -117,7 +117,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
         });
   }
 
-  //todo current cache need iterator
+  //todo need to resolve levelDB'iterator close
   @Override
   public Iterator<Map.Entry<byte[],byte[]>> iterator() {
     Set<WrappedByteArray> exists = new HashSet<>();
@@ -146,5 +146,10 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   @Override
   public void close() {
     previous.close();
+  }
+
+  @Override
+  public void reset() {
+    previous.reset();
   }
 }

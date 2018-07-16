@@ -21,4 +21,6 @@ public interface Snapshot extends Iterable<Map.Entry<byte[], byte[]>> {
   void setPrevious(Snapshot previous);
 
   void close();
+
+  void reset();
 }

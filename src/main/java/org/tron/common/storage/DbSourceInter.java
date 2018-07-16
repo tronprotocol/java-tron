@@ -35,6 +35,8 @@ public interface DbSourceInter<V> extends BatchSourceInter<byte[], V> {
 
   void closeDB();
 
+  void resetDb();
+
   Set<byte[]> allKeys() throws RuntimeException;
 
   Set<byte[]> allValues() throws RuntimeException;

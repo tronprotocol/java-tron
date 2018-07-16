@@ -36,7 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.DialogOptional;
+import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Time;
@@ -57,6 +57,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.AbstractRevokingStore.Dialog;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
+import org.tron.core.db2.core.ISession;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
@@ -126,7 +127,7 @@ public class Manager {
   private RevokingDatabase revokingStore;
 
   @Getter
-  private DialogOptional dialog = DialogOptional.instance();
+  private SessionOptional dialog = SessionOptional.instance();
 
   @Getter
   @Setter
@@ -501,13 +502,13 @@ public class Manager {
     //validateFreq(trx);
     synchronized (this) {
       if (!dialog.valid()) {
-        dialog.setValue(revokingStore.buildDialog());
+        dialog.setValue(revokingStore.buildSession());
       }
 
-      try (RevokingStore.Dialog tmpDialog = revokingStore.buildDialog()) {
+      try (ISession tmpSession = revokingStore.buildSession()) {
         processTransaction(trx);
         pendingTransactions.add(trx);
-        tmpDialog.merge();
+        tmpSession.merge();
       }
     }
     return true;
@@ -614,9 +615,9 @@ public class Manager {
       for (KhaosBlock item : first) {
         Exception exception = null;
         // todo  process the exception carefully later
-        try (Dialog tmpDialog = revokingStore.buildDialog()) {
+        try (ISession tmpSession = revokingStore.buildSession()) {
           applyBlock(item.getBlk());
-          tmpDialog.commit();
+          tmpSession.commit();
         } catch (AccountResourceInsufficientException
             | ValidateSignatureException
             | ContractValidateException
@@ -646,9 +647,9 @@ public class Manager {
             Collections.reverse(second);
             for (KhaosBlock khaosBlock : second) {
               // todo  process the exception carefully later
-              try (Dialog tmpDialog = revokingStore.buildDialog()) {
+              try (ISession tmpSession = revokingStore.buildSession()) {
                 applyBlock(khaosBlock.getBlk());
-                tmpDialog.commit();
+                tmpSession.commit();
               } catch (AccountResourceInsufficientException
                   | ValidateSignatureException
                   | ContractValidateException
@@ -761,9 +762,9 @@ public class Manager {
 
           return;
         }
-        try (Dialog tmpDialog = revokingStore.buildDialog()) {
+        try (ISession tmpSession = revokingStore.buildSession()) {
           applyBlock(newBlock);
-          tmpDialog.commit();
+          tmpSession.commit();
         } catch (Throwable throwable) {
           logger.error(throwable.getMessage(), throwable);
           khaosDb.removeBlk(block.getBlockId());
@@ -968,7 +969,7 @@ public class Manager {
     final BlockCapsule blockCapsule =
         new BlockCapsule(number + 1, preHash, when, witnessCapsule.getAddress());
     dialog.reset();
-    dialog.setValue(revokingStore.buildDialog());
+    dialog.setValue(revokingStore.buildSession());
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext()) {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
@@ -984,10 +985,10 @@ public class Manager {
         continue;
       }
       // apply transaction
-      try (Dialog tmpDialog = revokingStore.buildDialog()) {
+      try (ISession tmpSeesion = revokingStore.buildSession()) {
         processTransaction(trx);
 //        trx.resetResult();
-        tmpDialog.merge();
+        tmpSeesion.merge();
         // push into block
         blockCapsule.addTransaction(trx);
         iterator.remove();

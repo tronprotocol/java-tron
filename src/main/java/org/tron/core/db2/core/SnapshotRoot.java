@@ -52,4 +52,9 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   public void close() {
     ((LevelDB) db).close();
   }
+
+  @Override
+  public void reset() {
+    ((LevelDB) db).reset();
+  }
 }

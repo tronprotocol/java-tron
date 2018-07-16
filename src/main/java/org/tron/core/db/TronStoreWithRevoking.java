@@ -1,24 +1,24 @@
 package org.tron.core.db;
 
 import java.util.Objects;
+
+import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.db.AbstractRevokingStore.RevokingTuple;
+import org.tron.core.db2.common.IRevokingDB;
+import org.tron.core.db2.core.RevokingDBWithCachingOldValue;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ItemNotFoundException;
 
 @Slf4j
 public abstract class TronStoreWithRevoking<T extends ProtoCapsule> extends TronDatabase<T> {
 
-  private RevokingDatabase revokingDatabase;
+  private IRevokingDB revokingDB;
 
   protected TronStoreWithRevoking(String dbName) {
-    this(dbName, RevokingStore.getInstance());
-  }
-
-  // only for unit test
-  protected TronStoreWithRevoking(String dbName, RevokingDatabase revokingDatabase) {
-    super(dbName);
-    this.revokingDatabase = revokingDatabase;
+    this.revokingDB = new RevokingDBWithCachingOldValue(dbName);
   }
 
   @Override
@@ -26,46 +26,35 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> extends Tron
     if (Objects.isNull(key) || Objects.isNull(item)) {
       return;
     }
-    //logger.info("Address is {}, " + item.getClass().getSimpleName() + " is {}", key, item);
-    byte[] value = dbSource.getData(key);
-    if (ArrayUtils.isNotEmpty(value)) {
-      onModify(key, value);
-    }
 
-    dbSource.putData(key, item.getData());
-
-    if (ArrayUtils.isEmpty(value)) {
-      onCreate(key);
-    }
+    revokingDB.put(key, item.getData());
   }
 
   @Override
   public void delete(byte[] key) {
-    onDelete(key);
-    dbSource.deleteData(key);
+    revokingDB.delete(key);
   }
 
-  /**
-   * This should be called just after an object is created
-   */
-  private void onCreate(byte[] key) {
-    revokingDatabase.onCreate(new RevokingTuple(dbSource, key), null);
+  @Override
+  public T get(byte[] key) throws InvalidProtocolBufferException, ItemNotFoundException, BadItemException {
+    byte[] value = revokingDB.get(key);
+    return of(value);
   }
 
-  /**
-   * This should be called just before an object is modified
-   */
-  private void onModify(byte[] key, byte[] value) {
-    revokingDatabase.onModify(new RevokingTuple(dbSource, key), value);
+  public abstract T of(byte[] key) throws BadItemException;
+
+  @Override
+  public boolean has(byte[] key) {
+    return revokingDB.has(key);
   }
 
-  /**
-   * This should be called just before an object is removed.
-   */
-  private void onDelete(byte[] key) {
-    byte[] value;
-    if (Objects.nonNull(value = dbSource.getData(key))) {
-      revokingDatabase.onRemove(new RevokingTuple(dbSource, key), value);
-    }
+  @Override
+  public void close() {
+    revokingDB.close();
+  }
+
+  @Override
+  public void reset() {
+    revokingDB.reset();
   }
 }

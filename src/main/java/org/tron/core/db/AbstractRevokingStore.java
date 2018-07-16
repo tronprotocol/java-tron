@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.SourceInter;
 import org.tron.common.utils.Utils;
+import org.tron.core.db2.core.ISession;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 
 @Slf4j
@@ -32,12 +33,12 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   private WriteOptions writeOptions = new WriteOptions().sync(true);
 
   @Override
-  public Dialog buildDialog() {
-    return buildDialog(false);
+  public ISession buildSession() {
+    return buildSession(false);
   }
 
   @Override
-  public synchronized Dialog buildDialog(boolean forceEnable) {
+  public synchronized ISession buildSession(boolean forceEnable) {
     if (disabled && !forceEnable) {
       return new Dialog(this);
     }
@@ -56,7 +57,6 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
     return new Dialog(this, disableOnExit);
   }
 
-  @Override
   public synchronized void onCreate(RevokingTuple tuple, byte[] value) {
     if (disabled) {
       return;
@@ -67,7 +67,6 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
     state.newIds.add(tuple);
   }
 
-  @Override
   public synchronized void onModify(RevokingTuple tuple, byte[] value) {
     if (disabled) {
       return;
@@ -82,7 +81,6 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
     state.oldValues.put(tuple, Utils.clone(value));
   }
 
-  @Override
   public synchronized void onRemove(RevokingTuple tuple, byte[] value) {
     if (disabled) {
       return;
@@ -221,15 +219,6 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public synchronized RevokingState head() {
-    if (stack.isEmpty()) {
-      return null;
-    }
-
-    return stack.peekLast();
-  }
-
-  @Override
   public synchronized void enable() {
     disabled = false;
   }
@@ -290,7 +279,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
 
   @Slf4j
   @Getter // only for unit test
-  public static class Dialog implements AutoCloseable {
+  public static class Dialog implements ISession {
 
     private RevokingDatabase revokingDatabase;
     private boolean applyRevoking = true;
@@ -311,12 +300,14 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
       this.disableOnExit = disableOnExit;
     }
 
-    void commit() {
+    @Override
+    public void commit() {
       applyRevoking = false;
       revokingDatabase.commit();
     }
 
-    void revoke() {
+    @Override
+    public void revoke() {
       if (applyRevoking) {
         revokingDatabase.revoke();
       }
@@ -324,7 +315,8 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
       applyRevoking = false;
     }
 
-    void merge() {
+    @Override
+    public void merge() {
       if (applyRevoking) {
         revokingDatabase.merge();
       }
@@ -344,6 +336,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
       dialog.applyRevoking = false;
     }
 
+    @Override
     public void destroy() {
       try {
         if (applyRevoking) {

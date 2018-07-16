@@ -12,7 +12,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.tron.common.utils.DialogOptional;
+import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.ProtoCapsule;
@@ -45,10 +45,10 @@ public class RevokingStoreTest {
     TestRevokingTronStore tronDatabase = new TestRevokingTronStore(
         "testrevokingtronstore-testUndo", revokingDatabase);
 
-    DialogOptional dialog = DialogOptional.instance().setValue(revokingDatabase.buildDialog());
+    SessionOptional dialog = SessionOptional.instance().setValue(revokingDatabase.buildSession());
     for (int i = 0; i < 10; i++) {
       TestProtoCapsule testProtoCapsule = new TestProtoCapsule(("undo" + i).getBytes());
-      try (Dialog tmpDialog = revokingDatabase.buildDialog()) {
+      try (Dialog tmpDialog = revokingDatabase.buildSession()) {
         tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
         Assert.assertFalse(tronDatabase.getDbSource().allKeys().isEmpty());
         Assert.assertEquals(revokingDatabase.getStack().size(), 2);
@@ -65,28 +65,28 @@ public class RevokingStoreTest {
     Assert.assertTrue(tronDatabase.getDbSource().allKeys().isEmpty());
     Assert.assertEquals(revokingDatabase.getActiveDialog(), 0);
 
-    dialog = DialogOptional.instance().setValue(revokingDatabase.buildDialog());
+    dialog = SessionOptional.instance().setValue(revokingDatabase.buildSession());
     revokingDatabase.disable();
     TestProtoCapsule testProtoCapsule = new TestProtoCapsule("del".getBytes());
     tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
     revokingDatabase.enable();
 
-    try (Dialog tmpDialog = revokingDatabase.buildDialog()) {
+    try (Dialog tmpDialog = revokingDatabase.buildSession()) {
       tronDatabase.put(testProtoCapsule.getData(), new TestProtoCapsule("del2".getBytes()));
       tmpDialog.merge();
     }
 
-    try (Dialog tmpDialog = revokingDatabase.buildDialog()) {
+    try (Dialog tmpDialog = revokingDatabase.buildSession()) {
       tronDatabase.put(testProtoCapsule.getData(), new TestProtoCapsule("del22".getBytes()));
       tmpDialog.merge();
     }
 
-    try (Dialog tmpDialog = revokingDatabase.buildDialog()) {
+    try (Dialog tmpDialog = revokingDatabase.buildSession()) {
       tronDatabase.put(testProtoCapsule.getData(), new TestProtoCapsule("del222".getBytes()));
       tmpDialog.merge();
     }
 
-    try (Dialog tmpDialog = revokingDatabase.buildDialog()) {
+    try (Dialog tmpDialog = revokingDatabase.buildSession()) {
       tronDatabase.delete(testProtoCapsule.getData());
       tmpDialog.merge();
     }
@@ -108,7 +108,7 @@ public class RevokingStoreTest {
 
     for (int i = 1; i < 11; i++) {
       TestProtoCapsule testProtoCapsule = new TestProtoCapsule(("pop" + i).getBytes());
-      try (Dialog tmpDialog = revokingDatabase.buildDialog()) {
+      try (Dialog tmpDialog = revokingDatabase.buildSession()) {
         tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
         Assert.assertFalse(tronDatabase.getDbSource().allKeys().isEmpty());
         Assert.assertEquals(revokingDatabase.getActiveDialog(), 1);
@@ -136,7 +136,7 @@ public class RevokingStoreTest {
 
     List<TestProtoCapsule> capsules = new ArrayList<>();
     for (int i = 1; i < 11; i++) {
-      revokingDatabase.buildDialog();
+      revokingDatabase.buildSession();
       TestProtoCapsule testProtoCapsule = new TestProtoCapsule(("test" + i).getBytes());
       capsules.add(testProtoCapsule);
       tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
