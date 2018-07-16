@@ -48,7 +48,7 @@ message Proposal {
 }
 
 message ChainParameters{
-  map<int64, int64> parameters = 1;
+  map<string, int64> parameters = 1;
 }
 
 // Account
