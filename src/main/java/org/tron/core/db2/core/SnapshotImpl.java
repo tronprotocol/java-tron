@@ -125,16 +125,17 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   }
 
   private Iterator<Map.Entry<byte[],byte[]>> iterator(Set<WrappedByteArray> exists) {
+    Set<WrappedByteArray> currentExists = new HashSet<>(exists);
     Streams.stream(db)
         .map(e -> WrappedByteArray.of(e.getKey().getBytes()))
-        .forEach(exists::add);
+        .forEach(currentExists::add);
 
     Iterator<Map.Entry<byte[],byte[]>> preIterator;
     if (previous.getClass() == SnapshotImpl.class) {
-      preIterator = Iterators.filter(((SnapshotImpl) previous).iterator(exists),
-          e -> !exists.contains(WrappedByteArray.of(e.getKey())));
+      preIterator = Iterators.filter(((SnapshotImpl) previous).iterator(currentExists),
+          e -> !currentExists.contains(WrappedByteArray.of(e.getKey())));
     } else {
-      preIterator = previous.iterator();
+      preIterator = Iterators.filter(previous.iterator(), e -> !currentExists.contains(WrappedByteArray.of(e.getKey())));
     }
     return Iterators.concat(
         Iterators.transform(db.iterator(), e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes())),

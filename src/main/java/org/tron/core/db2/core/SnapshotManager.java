@@ -9,8 +9,6 @@ import org.springframework.stereotype.Component;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.RevokingDatabase;
-import org.tron.core.db.RevokingStore;
 import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
@@ -128,7 +126,7 @@ public class SnapshotManager {
   }
 
   public void flush() {
-    createCheck();
+    createCheckPoint();
 
     dbs.forEach(db -> {
       Snapshot head = db.getHead();
@@ -140,10 +138,10 @@ public class SnapshotManager {
       head.setPrevious(head.getPrevious().getPrevious());
     });
 
-    deleteCheck();
+    deleteCheckPoint();
   }
 
-  private void createCheck() {
+  private void createCheckPoint() {
     LevelDbDataSourceImpl levelDbDataSource =
         new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
     levelDbDataSource.initDB();
@@ -168,7 +166,7 @@ public class SnapshotManager {
     levelDbDataSource.closeDB();
   }
 
-  private void deleteCheck() {
+  private void deleteCheckPoint() {
     LevelDbDataSourceImpl levelDbDataSource =
         new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
 
