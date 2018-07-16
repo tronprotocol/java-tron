@@ -5,8 +5,10 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Proposal.State;
@@ -147,7 +149,14 @@ public class ProposalCapsule implements ProtoCapsule<Proposal> {
     return this.proposal;
   }
 
-  public boolean hasMostApprovals() {
-    return this.proposal.getApprovalsCount() >= ChainConstant.MAX_ACTIVE_WITNESS_NUM * 7 / 10;
+  public boolean hasMostApprovals(List<ByteString> activeWitnesses) {
+    long count = this.proposal.getApprovalsList().stream()
+        .filter(witness -> activeWitnesses.contains(witness)).count();
+    if (count != this.proposal.getApprovalsCount()) {
+      List<ByteString> InvalidApprovalList = this.proposal.getApprovalsList().stream()
+          .filter(witness -> !activeWitnesses.contains(witness)).collect(Collectors.toList());
+      logger.info("InvalidApprovalList:" + StringUtil.getAddressStringList(InvalidApprovalList));
+    }
+    return count >= ChainConstant.MAX_ACTIVE_WITNESS_NUM * 7 / 10;
   }
 }

@@ -1,5 +1,7 @@
 package org.tron.core.witness;
 
+import com.google.protobuf.ByteString;
+import java.util.List;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
@@ -69,7 +71,8 @@ public class ProposalController {
 
   public void processProposal(ProposalCapsule proposalCapsule) {
 
-    if (proposalCapsule.hasMostApprovals()) {
+    List<ByteString> activeWitnesses = this.manager.getWitnessScheduleStore().getActiveWitnesses();
+    if (proposalCapsule.hasMostApprovals(activeWitnesses)) {
       logger.info(
           "Processing proposal,id:{},it has received most approvals ,begin to set dynamic parameter,{},and set  proposal state as DISAPPROVED",
           proposalCapsule.getID(), proposalCapsule.getParameters());

@@ -3,12 +3,14 @@ package org.tron.core.witness;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.testng.collections.Lists;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.ProposalCapsule;
@@ -161,6 +163,29 @@ public class ProposalControllerTest {
     Assert.assertEquals(State.DISAPPROVED, proposalCapsule3.getState());
 
   }
+
+  @Test
+  public void testHasMostApprovals() {
+    ProposalCapsule proposalCapsule = new ProposalCapsule(
+        Proposal.newBuilder().build());
+    proposalCapsule.setState(State.APPROVED);
+    proposalCapsule.setID(1);
+
+    List<ByteString> activeWitnesses = Lists.newArrayList();
+    activeWitnesses.add(ByteString.copyFrom(new byte[1]));
+    for (int i = 0; i < 18; i++) {
+      proposalCapsule.addApproval(ByteString.copyFrom(new byte[1]));
+    }
+
+    Assert.assertEquals(true, proposalCapsule.hasMostApprovals(activeWitnesses));
+
+    byte[] fakeValue = {0, 1};
+    activeWitnesses.clear();
+    activeWitnesses.add(ByteString.copyFrom(fakeValue));
+    Assert.assertEquals(false, proposalCapsule.hasMostApprovals(activeWitnesses));
+
+  }
+
 
 
 }
