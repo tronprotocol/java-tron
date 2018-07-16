@@ -249,24 +249,21 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   /**
    * asset balance enough
    */
-  public boolean assetBalanceEnough(ByteString name, long amount) {
+  public boolean assetBalanceEnough(byte[] key, long amount) {
     Map<String, Long> assetMap = this.account.getAssetMap();
-    String nameKey = ByteArray.toStr(name.toByteArray());
+    String nameKey = ByteArray.toStr(key);
     Long currentAmount = assetMap.get(nameKey);
 
-    if (amount > 0 && null != currentAmount && amount <= currentAmount) {
-      return true;
-    }
-    return false;
+    return amount > 0 && null != currentAmount && amount <= currentAmount;
   }
 
 
   /**
    * reduce asset amount.
    */
-  public boolean reduceAssetAmount(ByteString name, long amount) {
+  public boolean reduceAssetAmount(byte[] key, long amount) {
     Map<String, Long> assetMap = this.account.getAssetMap();
-    String nameKey = ByteArray.toStr(name.toByteArray());
+    String nameKey = ByteArray.toStr(key);
     Long currentAmount = assetMap.get(nameKey);
     if (amount > 0 && null != currentAmount && amount <= currentAmount) {
       this.account = this.account.toBuilder()
@@ -280,9 +277,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   /**
    * add asset amount.
    */
-  public boolean addAssetAmount(ByteString name, long amount) {
+  public boolean addAssetAmount(byte[] key, long amount) {
     Map<String, Long> assetMap = this.account.getAssetMap();
-    String nameKey = ByteArray.toStr(name.toByteArray());
+    String nameKey = ByteArray.toStr(key);
     Long currentAmount = assetMap.get(nameKey);
     if (currentAmount == null) {
       currentAmount = 0L;

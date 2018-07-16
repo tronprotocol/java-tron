@@ -122,7 +122,7 @@ public class TransferAssetActuatorTest {
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
     dbManager.getAssetIssueStore()
-        .put(assetIssueCapsule.getName().toByteArray(), assetIssueCapsule);
+        .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
   }
 
   public void createAsset(String assetName) {
@@ -146,7 +146,7 @@ public class TransferAssetActuatorTest {
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     dbManager.getAssetIssueStore()
-        .put(assetIssueCapsule.getName().toByteArray(), assetIssueCapsule);
+        .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
   }
 
   private Any getContract(long sendCoin) {
@@ -533,7 +533,7 @@ public class TransferAssetActuatorTest {
         .put(ownerAssetCapsule.getAddress().toByteArray(), ownerAssetCapsule);
     dbManager
         .getAssetIssueStore()
-        .put(assetIssueCapsule.getName().toByteArray(), assetIssueCapsule);
+        .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
     TransferAssetActuator actuator = new TransferAssetActuator(getContract(1, ownerASSET_NAME),
         dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();

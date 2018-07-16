@@ -53,7 +53,8 @@ public class AssetIssueActuator extends AbstractActuator {
       AssetIssueContract assetIssueContract = contract.unpack(AssetIssueContract.class);
       byte[] ownerAddress = assetIssueContract.getOwnerAddress().toByteArray();
       AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
-      String name = new String(assetIssueCapsule.getName().toByteArray(), Charset.forName("UTF-8"));
+      String name = new String(assetIssueCapsule.getName().toByteArray(),
+          Charset.forName("UTF-8")); // getName().toStringUtf8()
       long order = 0;
       byte[] key = name.getBytes();
       while (this.dbManager.getAssetIssueStore().get(key) != null) {
