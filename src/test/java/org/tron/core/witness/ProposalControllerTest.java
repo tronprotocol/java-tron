@@ -172,20 +172,32 @@ public class ProposalControllerTest {
     proposalCapsule.setID(1);
 
     List<ByteString> activeWitnesses = Lists.newArrayList();
-    activeWitnesses.add(ByteString.copyFrom(new byte[1]));
+    for (int i = 0; i < 27; i++) {
+      activeWitnesses.add(ByteString.copyFrom(new byte[]{(byte) i}));
+    }
     for (int i = 0; i < 18; i++) {
-      proposalCapsule.addApproval(ByteString.copyFrom(new byte[1]));
+      proposalCapsule.addApproval(ByteString.copyFrom(new byte[]{(byte) i}));
     }
 
     Assert.assertEquals(true, proposalCapsule.hasMostApprovals(activeWitnesses));
 
-    byte[] fakeValue = {0, 1};
+    proposalCapsule.clearApproval();
+    for (int i = 1; i < 18; i++) {
+      proposalCapsule.addApproval(ByteString.copyFrom(new byte[]{(byte) i}));
+    }
+
     activeWitnesses.clear();
-    activeWitnesses.add(ByteString.copyFrom(fakeValue));
-    Assert.assertEquals(false, proposalCapsule.hasMostApprovals(activeWitnesses));
+    for (int i = 0; i < 5; i++) {
+      activeWitnesses.add(ByteString.copyFrom(new byte[]{(byte) i}));
+    }
+    proposalCapsule.clearApproval();
+    for (int i = 0; i < 3; i++) {
+      proposalCapsule.addApproval(ByteString.copyFrom(new byte[]{(byte) i}));
+    }
+    Assert.assertEquals(true, proposalCapsule.hasMostApprovals(activeWitnesses));
+
 
   }
-
 
 
 }

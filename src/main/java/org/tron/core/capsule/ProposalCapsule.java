@@ -101,6 +101,10 @@ public class ProposalCapsule implements ProtoCapsule<Proposal> {
         .build();
   }
 
+  public void clearApproval() {
+    this.proposal = this.proposal.toBuilder().clearApprovals().build();
+  }
+
   public void addApproval(ByteString committeeAddress) {
     this.proposal = this.proposal.toBuilder()
         .addApprovals(committeeAddress)
@@ -157,7 +161,7 @@ public class ProposalCapsule implements ProtoCapsule<Proposal> {
           .filter(witness -> !activeWitnesses.contains(witness)).collect(Collectors.toList());
       logger.info("InvalidApprovalList:" + StringUtil.getAddressStringList(InvalidApprovalList));
     }
-    if (activeWitnesses.size() != ChainConstant.MAX_ACTIVE_WITNESS_NUM){
+    if (activeWitnesses.size() != ChainConstant.MAX_ACTIVE_WITNESS_NUM) {
       logger.info("activeWitnesses size = {}", activeWitnesses.size());
     }
     return count >= activeWitnesses.size() * 7 / 10;
