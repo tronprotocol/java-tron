@@ -501,7 +501,7 @@ public class Args {
 
     INSTANCE.proposalExpireTime =
         config.hasPath("block.proposalExpireTime") ? config
-            .getInt("block.proposalExpireTime") : 259200000;
+            .getInt("block.proposalExpireTime") : 259200000L;
 
     INSTANCE.tcpNettyWorkThreadNum = config.hasPath("node.tcpNettyWorkThreadNum") ? config
         .getInt("node.tcpNettyWorkThreadNum") : 0;

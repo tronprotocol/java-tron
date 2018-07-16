@@ -157,6 +157,9 @@ public class ProposalCapsule implements ProtoCapsule<Proposal> {
           .filter(witness -> !activeWitnesses.contains(witness)).collect(Collectors.toList());
       logger.info("InvalidApprovalList:" + StringUtil.getAddressStringList(InvalidApprovalList));
     }
-    return count >= ChainConstant.MAX_ACTIVE_WITNESS_NUM * 7 / 10;
+    if (activeWitnesses.size() != ChainConstant.MAX_ACTIVE_WITNESS_NUM){
+      logger.info("activeWitnesses size = {}", activeWitnesses.size());
+    }
+    return count >= activeWitnesses.size() * 7 / 10;
   }
 }
