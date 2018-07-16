@@ -139,7 +139,7 @@ public class AssetIssueActuatorTest {
     }
   }
 
-  @Test
+  //@Test
   public void repeatAssetIssue() {
     AssetIssueActuator actuator = new AssetIssueActuator(getContract(), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
