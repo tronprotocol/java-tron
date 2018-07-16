@@ -18,6 +18,7 @@ public class ProgramResult {
 
   private long dropUsed;
   private byte[] hReturn = EMPTY_BYTE_ARRAY;
+  private byte[] contractAddress = EMPTY_BYTE_ARRAY;
   private RuntimeException exception;
   private boolean revert;
 
@@ -51,6 +52,14 @@ public class ProgramResult {
 
   public void refundGas(long drops) {
     dropUsed -= drops;
+  }
+
+  public void setContractAddress(byte[] contractAddress) {
+    this.contractAddress = contractAddress;
+  }
+
+  public byte[] getContractAddress() {
+    return this.contractAddress;
   }
 
   public void setHReturn(byte[] hReturn) {

@@ -191,6 +191,21 @@ public class Wallet {
     return null;
   }
 
+  public static byte[] generateContractAddress(Transaction trx) {
+
+    SmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
+    byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
+    TransactionCapsule trxCap = new TransactionCapsule(trx);
+    byte[] txRawDataHash = trxCap.getTransactionId().getBytes();
+
+    byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
+    System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
+    System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
+
+    return Hash.sha3omit12(combined);
+
+  }
+
   public static byte[] decodeFromBase58Check(String addressBase58) {
     if (StringUtils.isEmpty(addressBase58)) {
       logger.warn("Warning: Address is empty !!");
@@ -550,10 +565,13 @@ public class Wallet {
     return nodeListBuilder.build();
   }
 
-  public Transaction deployContract(SmartContract smartContract) {
-    return new TransactionCapsule(smartContract, ContractType.SmartContract)
-        .getInstance();
+  public Transaction deployContract(SmartContract smartContract, TransactionCapsule trxCap) {
+
+    // do nothing, so can add some useful function later
+    return trxCap.getInstance();
+    // trxcap中contract para cacheUnpackValue有值
   }
+
 
   public Transaction triggerContract(TriggerSmartContract triggerSmartContract,
       TransactionCapsule trxCap) {
