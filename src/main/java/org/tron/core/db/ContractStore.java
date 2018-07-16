@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.protos.Contract.CreateSmartContract;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.SmartContract;
 
 @Slf4j

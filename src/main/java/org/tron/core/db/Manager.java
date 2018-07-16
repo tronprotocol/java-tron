@@ -945,23 +945,14 @@ public class Manager {
 
     DepositImpl deposit = DepositImpl.createRoot(this);
     Runtime runtime;
-    if (block != null) {
-      runtime = new Runtime(trxCap.getInstance(), block, deposit,
-          new ProgramInvokeFactoryImpl());
-      consumeBandwidth(trxCap, runtime.getResult().getRet());
-      runtime.execute();
-      runtime.go();
-      if (runtime.getResult().getException() != null) {
-        throw new RuntimeException("Runtime exe failed!");
-      }
-    } else {
-      runtime = new Runtime(trxCap.getInstance(), deposit, new ProgramInvokeFactoryImpl());
-      consumeBandwidth(trxCap, runtime.getResult().getRet());
-      runtime.execute();
-      runtime.go();
-      if (runtime.getResult().getException() != null) {
-        throw new RuntimeException("Runtime exe failed!");
-      }
+
+    runtime = new Runtime(trxCap.getInstance(), block, deposit,
+        new ProgramInvokeFactoryImpl());
+    consumeBandwidth(trxCap, runtime.getResult().getRet());
+    runtime.execute();
+    runtime.go();
+    if (runtime.getResult().getException() != null) {
+      throw new RuntimeException("Runtime exe failed!");
     }
 
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);

@@ -15,6 +15,7 @@ import java.util.List;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
@@ -82,10 +83,15 @@ public class Runtime {
   public Runtime(Transaction tx, Block block, Deposit deosit,
       ProgramInvokeFactory programInvokeFactory) {
     this.trx = tx;
-    this.block = block;
+    if (Objects.nonNull(block)) {
+      this.block = block;
+      this.executerType = ET_NORMAL_TYPE;
+    } else {
+      this.block = Block.newBuilder().build();
+      this.executerType = ET_PRE_TYPE;
+    }
     this.deposit = deosit;
     this.programInvokeFactory = programInvokeFactory;
-    this.executerType = ET_NORMAL_TYPE;
 
     Transaction.Contract.ContractType contractType = tx.getRawData().getContract(0).getType();
     switch (contractType.getNumber()) {
@@ -217,7 +223,7 @@ public class Runtime {
       InternalTransaction internalTransaction = new InternalTransaction(trx,
           contract.getOwnerAddress().toByteArray(),
           newSmartContract.getContractAddress().toByteArray(),
-          newSmartContract.getCallValue().size()==0 ? new Byte("0") : contract.getCallValue().toByteArray()[0]);
+          newSmartContract.getCallValue().size()==0 ? new Byte("0") : newSmartContract.getCallValue().toByteArray()[0]);
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executerType, trx,
               block, deposit);
