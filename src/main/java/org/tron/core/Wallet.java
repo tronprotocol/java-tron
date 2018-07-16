@@ -568,8 +568,8 @@ public class Wallet {
   public Transaction deployContract(SmartContract smartContract, TransactionCapsule trxCap) {
 
     // do nothing, so can add some useful function later
+    // trxcap contract para cacheUnpackValue has value
     return trxCap.getInstance();
-    // trxcap中contract para cacheUnpackValue有值
   }
 
 
