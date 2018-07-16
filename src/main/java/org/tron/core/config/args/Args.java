@@ -230,6 +230,10 @@ public class Args {
 
   @Getter
   @Setter
+  private long proposalExpireTime; // (ms)
+
+  @Getter
+  @Setter
   private int tcpNettyWorkThreadNum;
 
   @Getter
@@ -299,6 +303,7 @@ public class Args {
     INSTANCE.fullNodeHttpPort = 0;
     INSTANCE.solidityHttpPort = 0;
     INSTANCE.maintenanceTimeInterval = 0;
+    INSTANCE.proposalExpireTime = 0;
     INSTANCE.tcpNettyWorkThreadNum = 0;
     INSTANCE.udpNettyWorkThreadNum = 0;
     INSTANCE.p2pNodeId = "";
@@ -493,6 +498,11 @@ public class Args {
     INSTANCE.maintenanceTimeInterval =
         config.hasPath("block.maintenanceTimeInterval") ? config
             .getInt("block.maintenanceTimeInterval") : 21600000L;
+
+    INSTANCE.proposalExpireTime =
+        config.hasPath("block.proposalExpireTime") ? config
+            .getInt("block.proposalExpireTime") : 259200000;
+
     INSTANCE.tcpNettyWorkThreadNum = config.hasPath("node.tcpNettyWorkThreadNum") ? config
         .getInt("node.tcpNettyWorkThreadNum") : 0;
 
