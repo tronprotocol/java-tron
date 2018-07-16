@@ -766,7 +766,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void getAssetIssueByName(BytesMessage request,
-        StreamObserver<AssetIssueContract> responseObserver) {
+        StreamObserver<AssetIssueList> responseObserver) {
       ByteString asertName = request.getValue();
 
       if (asertName != null) {

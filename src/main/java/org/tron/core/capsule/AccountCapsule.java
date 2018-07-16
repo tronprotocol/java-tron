@@ -370,7 +370,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return getInstance().getAssetIssuedName();
   }
 
-  public void setAssetIssuedName(ByteString assetIssuedName) {
+  public void setAssetIssuedName(byte[] nameKey) {
+    ByteString assetIssuedName = ByteString.copyFrom(nameKey);
     this.account = this.account.toBuilder().setAssetIssuedName(assetIssuedName).build();
   }
 

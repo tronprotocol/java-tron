@@ -3,12 +3,9 @@ package stest.tron.wallet.assetissue;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.math.BigInteger;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -16,22 +13,16 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountNetMessage;
-import org.tron.api.GrpcAPI.NumberMessage;
-import org.tron.api.GrpcAPI.Return;
+import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.Contract;
 import org.tron.protos.Protocol.Account;
-import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
-import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
-import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 @Slf4j
 public class WalletTestAssetIssue007 {
@@ -142,8 +133,8 @@ public class WalletTestAssetIssue007 {
    //Assert.assertTrue(PublicMethed.waitProduceNextBlock(blockingStubFull));
     ByteString assetNameBs = ByteString.copyFrom(name.getBytes());
     GrpcAPI.BytesMessage request1 = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
-    Contract.AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request1);
-    logger.info(Long.toString(assetIssueByName.getStartTime()));
+    AssetIssueList assetIssueByName = blockingStubFull.getAssetIssueByName(request1);
+    logger.info(Long.toString(assetIssueByName.getAssetIssue(0).getStartTime()));
     logger.info(Long.toString(System.currentTimeMillis()));
     
     Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,name.getBytes(),

@@ -88,7 +88,7 @@ public class AssetIssueActuator extends AbstractActuator {
         remainSupply -= next.getFrozenAmount();
       }
 
-      accountCapsule.setAssetIssuedName(assetIssueContract.getName());
+      accountCapsule.setAssetIssuedName(assetIssueCapsule.createDbKey());
       accountCapsule.addAsset(ByteArray.toStr(assetIssueContract.getName().toByteArray()),
           remainSupply);
       accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
