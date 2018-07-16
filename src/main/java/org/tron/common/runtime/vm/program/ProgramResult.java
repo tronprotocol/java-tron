@@ -5,6 +5,7 @@ import static org.apache.commons.collections4.CollectionUtils.size;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -55,11 +56,11 @@ public class ProgramResult {
   }
 
   public void setContractAddress(byte[] contractAddress) {
-    this.contractAddress = contractAddress;
+    this.contractAddress = Arrays.copyOf(contractAddress, contractAddress.length);
   }
 
   public byte[] getContractAddress() {
-    return this.contractAddress;
+    return Arrays.copyOf(contractAddress, contractAddress.length);
   }
 
   public void setHReturn(byte[] hReturn) {
