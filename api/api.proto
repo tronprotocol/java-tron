@@ -325,6 +325,18 @@ service Wallet {
       };
    };
 
+  rpc GetChainParameters (EmptyMessage) returns (ChainParameters) {
+       option (google.api.http) = {
+         post: "/wallet/getchainparameters"
+         body: "*"
+         additional_bindings {
+           get: "/wallet/getchainparameters"
+         }
+       };
+    };
+
+
+
   rpc GetAssetIssueList (EmptyMessage) returns (AssetIssueList) {
     option (google.api.http) = {
         post: "/wallet/getassetissuelist"

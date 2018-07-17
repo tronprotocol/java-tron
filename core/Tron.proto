@@ -47,6 +47,10 @@ message Proposal {
   State state = 7;
 }
 
+message ChainParameters{
+  map<string, int64> parameters = 1;
+}
+
 // Account
 message Account {
   // frozen balance
