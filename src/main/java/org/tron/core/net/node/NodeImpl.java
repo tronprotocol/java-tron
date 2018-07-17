@@ -777,8 +777,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   /**
   * @Description: process the advertise block.
    * if the block been processed successfully, continue processed his child block if exsits.
-  * @Param: * @param peer the peer who advertise the block;
-  * @param block the block we receive by advertise mode;
+  * @Param:
+   * @param peer the peer who advertise the block;
+   * @param block the block we receive by advertise mode;
   * @return: void
   * @Author: shydesky@gmail.com
   * @Date: 2018/7/13
@@ -970,7 +971,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     //TODO: need a block older than revokingDB size exception. otherwise will be a dead loop here
     if (!peer.isNeedSyncFromPeer()
-        && CollectionUtils.isNotEmpty(summaryChainIds) //
+        && CollectionUtils.isNotEmpty(summaryChainIds)
         && !del.contain(Iterables.getLast(summaryChainIds), MessageTypes.BLOCK)
         && del.canChainRevoke(summaryChainIds.get(0).getNum())) {
       startSyncWithPeer(peer);
@@ -1035,6 +1036,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleChainInventoryMessage(PeerConnection peer, ChainInventoryMessage msg) {
+    //logger.info("on handle block chain inventory message");
     try {
       if (peer.getSyncChainRequested() != null) {
         //List<BlockId> blockIds = msg.getBlockIds();
