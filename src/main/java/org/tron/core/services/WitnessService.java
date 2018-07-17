@@ -80,7 +80,7 @@ public class WitnessService implements Service {
    */
   private Runnable scheduleProductionLoop =
       () -> {
-        if (localWitnessStateMap == null || localWitnessStateMap.keySet().size() == 0) {
+        if (localWitnessStateMap == null || localWitnessStateMap.keySet().isEmpty()) {
           logger.error("LocalWitnesses is null");
           return;
         }
