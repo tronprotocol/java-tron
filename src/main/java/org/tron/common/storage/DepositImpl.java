@@ -1,16 +1,27 @@
 package org.tron.common.storage;
 
+import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
+
 import com.google.protobuf.ByteString;
-import io.netty.handler.codec.http2.StreamBufferingEncoder.Http2ChannelClosedException;
-import java.math.BigInteger;
+import java.util.HashMap;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.core.Constant;
-import org.tron.core.capsule.*;
-import org.tron.core.db.*;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.StorageCapsule;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.db.AccountStore;
+import org.tron.core.db.AssetIssueStore;
+import org.tron.core.db.BlockStore;
+import org.tron.core.db.CodeStore;
+import org.tron.core.db.ContractStore;
+import org.tron.core.db.Manager;
+import org.tron.core.db.StorageStore;
+import org.tron.core.db.TransactionStore;
+import org.tron.core.db.VotesStore;
+import org.tron.core.db.WitnessStore;
 import org.tron.core.exception.BadItemException;
 import org.tron.protos.Protocol;
-
-import java.util.HashMap;
 
 /**
  * @author Guo Yonggang
@@ -128,7 +139,9 @@ public class DepositImpl implements Deposit{
     @Override
     public synchronized byte[] getCode(byte[] codeHash) {
         Key key = Key.create(codeHash);
-        if (codeCache.containsKey(key)) codeCache.get(key).getCode().getData();
+        if (codeCache.containsKey(key)) {
+            codeCache.get(key).getCode().getData();
+        }
 
         byte[] code;
         if (parent != null) {
@@ -136,10 +149,16 @@ public class DepositImpl implements Deposit{
         } else if (prevDeposit != null) {
             code = prevDeposit.getCode(codeHash);
         } else {
-            code = getCodeStore().get(codeHash).getData();
+            if (null == getCodeStore().get(codeHash)) {
+                code = null;
+            } else {
+                code = getCodeStore().get(codeHash).getData();
+            }
         }
 
-        if (code != null) codeCache.put(key, Value.create(code));
+        if (code != null) {
+            codeCache.put(key, Value.create(code));
+        }
         return code;
     }
 
@@ -171,13 +190,7 @@ public class DepositImpl implements Deposit{
 
     @Override
     public synchronized void addStorageValue(byte[] address, DataWord key, DataWord value) {
-        if (address.length == 20) {
-            byte [] newAddress = new byte [21];
-            byte[] temp = new byte[]{Constant.ADD_PRE_FIX_BYTE_MAINNET};
-            System.arraycopy(temp, 0, newAddress, 0, temp.length);
-            System.arraycopy(address, 0, newAddress, temp.length, address.length);
-            address = newAddress;
-        }
+        address = convertToTronAddress(address);
         if (getAccount(address) == null) return;
         Key addressKey = Key.create(address);
         if (storageCache.containsKey(addressKey)) {
@@ -209,13 +222,7 @@ public class DepositImpl implements Deposit{
 
     @Override
     public synchronized DataWord getStorageValue(byte[] address, DataWord key) {
-        if (address.length == 20) {
-            byte [] newAddress = new byte [21];
-            byte[] temp = new byte[]{Constant.ADD_PRE_FIX_BYTE_MAINNET};
-            System.arraycopy(temp, 0, newAddress, 0, temp.length);
-            System.arraycopy(address, 0, newAddress, temp.length, address.length);
-            address = newAddress;
-        }
+        address = convertToTronAddress(address);
         if (getAccount(address) == null) return null;
         Key addressKey = Key.create(address);
         if (storageCache.containsKey(addressKey)) {

@@ -91,6 +91,7 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.Protocol.TransactionSign;
 
 @Slf4j
@@ -188,6 +189,21 @@ public class Wallet {
       return decodeData;
     }
     return null;
+  }
+
+  public static byte[] generateContractAddress(Transaction trx) {
+
+    SmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
+    byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
+    TransactionCapsule trxCap = new TransactionCapsule(trx);
+    byte[] txRawDataHash = trxCap.getTransactionId().getBytes();
+
+    byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
+    System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
+    System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
+
+    return Hash.sha3omit12(combined);
+
   }
 
   public static byte[] decodeFromBase58Check(String addressBase58) {
@@ -549,13 +565,17 @@ public class Wallet {
     return nodeListBuilder.build();
   }
 
-  public Transaction deployContract(SmartContract smartContract) {
-    return new TransactionCapsule(smartContract, ContractType.SmartContract)
-        .getInstance();
+  public Transaction deployContract(SmartContract smartContract, TransactionCapsule trxCap) {
+
+    // do nothing, so can add some useful function later
+    // trxcap contract para cacheUnpackValue has value
+    return trxCap.getInstance();
   }
+
 
   public Transaction triggerContract(TriggerSmartContract triggerSmartContract,
       TransactionCapsule trxCap) {
+
     ContractStore contractStore = dbManager.getContractStore();
     byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
     SmartContract.ABI abi = contractStore.getABI(contractAddress);
@@ -584,6 +604,7 @@ public class Wallet {
         ProgramResult result = runtime.getResult();
         TransactionResultCapsule ret = new TransactionResultCapsule();
         ret.setConstantResult(result.getHReturn());
+        ret.setStatus(0,code.SUCESS);
         trxCap.setResult(ret);
         return trxCap.getInstance();
       }

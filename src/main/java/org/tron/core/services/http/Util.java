@@ -17,11 +17,12 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.DeployContract;
+import org.tron.protos.Contract.SmartContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.UpdateAssetContract;
@@ -141,10 +142,6 @@ public class Util {
                 .unpack(AssetIssueContract.class);
             contractJson = JSONObject.parseObject(JsonFormat.printToString(assetIssueContract));
             break;
-          case DeployContract:
-            DeployContract deployContract = contractParameter.unpack(DeployContract.class);
-            contractJson = JSONObject.parseObject(JsonFormat.printToString(deployContract));
-            break;
           case WitnessUpdateContract:
             WitnessUpdateContract witnessUpdateContract = contractParameter
                 .unpack(WitnessUpdateContract.class);
@@ -187,6 +184,14 @@ public class Util {
             UpdateAssetContract updateAssetContract = contractParameter
                 .unpack(UpdateAssetContract.class);
             contractJson = JSONObject.parseObject(JsonFormat.printToString(updateAssetContract));
+            break;
+          case SmartContract:
+            SmartContract deployContract = contractParameter.unpack(SmartContract.class);
+            contractJson = JSONObject.parseObject(JsonFormat.printToString(deployContract));
+            break;
+          case TriggerSmartContract:
+            TriggerSmartContract triggerSmartContract = contractParameter.unpack(TriggerSmartContract.class);
+            contractJson = JSONObject.parseObject(JsonFormat.printToString(triggerSmartContract));
             break;
           // todo add other contract
           default:
@@ -270,12 +275,6 @@ public class Util {
                 .merge(parameter.getJSONObject("value").toJSONString(), assetIssueContractBuilder);
             any = Any.pack(assetIssueContractBuilder.build());
             break;
-          case "DeployContract":
-            DeployContract.Builder deployContractBuilder = DeployContract.newBuilder();
-            JsonFormat
-                .merge(parameter.getJSONObject("value").toJSONString(), deployContractBuilder);
-            any = Any.pack(deployContractBuilder.build());
-            break;
           case "WitnessUpdateContract":
             WitnessUpdateContract.Builder witnessUpdateContractBuilder = WitnessUpdateContract
                 .newBuilder();
@@ -331,6 +330,18 @@ public class Util {
             JsonFormat
                 .merge(parameter.getJSONObject("value").toJSONString(), updateAssetContractBuilder);
             any = Any.pack(updateAssetContractBuilder.build());
+            break;
+          case "SmartContract":
+            SmartContract.Builder smartContractBuilder = SmartContract.newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(), smartContractBuilder);
+            any = Any.pack(smartContractBuilder.build());
+            break;
+          case "TriggerSmartContract":
+              TriggerSmartContract.Builder triggerSmartContractBuilder = TriggerSmartContract.newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(), triggerSmartContractBuilder);
+            any = Any.pack(triggerSmartContractBuilder.build());
             break;
           // todo add other contract
           default:

@@ -29,7 +29,7 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
-//import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
@@ -119,7 +119,7 @@ public class WalletTestTransfer003 {
         fromAddress,testKey002,blockingStubFull));
   }
 
-/*  @Test(enabled = true)
+  @Test(enabled = true)
   public void atestUseFeeOrNet() {
     Long feeNum = 0L;
     Long netNum = 0L;
@@ -208,7 +208,7 @@ public class WalletTestTransfer003 {
     final Long afterBalance = sendAccountInfo.getBalance();
     logger.info("after balance " + Long.toString(afterBalance));
     Assert.assertTrue(afterBalance + 1L + createUseFee == beforeBalance);
-  }*/
+  }
 
   @Test(enabled = true)
   public void ctestInvalidGetTransactionById() {
