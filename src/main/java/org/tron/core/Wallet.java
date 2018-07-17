@@ -413,7 +413,7 @@ public class Wallet {
     List<AssetIssueCapsule> assetIssueList = dbManager.getAssetIssueStore()
         .getAssetIssuesPaginated(offset, limit);
 
-    if(CollectionUtils.isEmpty(assetIssueList)) {
+    if (CollectionUtils.isEmpty(assetIssueList)) {
       return null;
     }
 
