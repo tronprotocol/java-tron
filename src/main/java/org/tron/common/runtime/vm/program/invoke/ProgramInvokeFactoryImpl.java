@@ -25,6 +25,7 @@ import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.storage.Deposit;
 import org.tron.common.utils.ByteUtil;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol.Block;
@@ -57,7 +58,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
 
         if (trxType == TRX_CONTRACT_CREATION_TYPE) {
             Contract.SmartContract contract = ContractCapsule.getSmartContractFromTransaction(tx);
-            contractAddress = contract.getContractAddress().toByteArray();
+            contractAddress = Wallet.generateContractAddress(tx);
             ownerAddress = contract.getOwnerAddress().toByteArray();
             balance = deposit.getBalance(ownerAddress);
             data = ByteUtil.EMPTY_BYTE_ARRAY;

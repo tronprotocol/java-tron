@@ -832,16 +832,19 @@ public class RpcApiService implements Service {
     @Override
     public void deployContract(org.tron.protos.Contract.SmartContract request,
         io.grpc.stub.StreamObserver<org.tron.protos.Protocol.Transaction> responseObserver) {
-      Transaction trx;
-      try {
-        trx = createTransactionCapsule(request, ContractType.SmartContract)
-            .getInstance(); //wallet.deployContract(request);
-      } catch (ContractValidateException e) {
-        trx = null;
-      }
 
+      TransactionCapsule trxCap;
+      try {
+        trxCap = createTransactionCapsule(request, ContractType.SmartContract);
+      } catch (ContractValidateException e) {
+        responseObserver.onNext(null);
+        responseObserver.onCompleted();
+        return;
+      }
+      Transaction trx = wallet.deployContract(request, trxCap);
       responseObserver.onNext(trx);
       responseObserver.onCompleted();
+
     }
 
     public void totalTransaction(EmptyMessage request,

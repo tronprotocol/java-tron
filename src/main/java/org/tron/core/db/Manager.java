@@ -968,6 +968,7 @@ public class Manager {
     transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());
     transactionInfoCapsule.setFee(runtime.getResult().getRet().getFee());
     transactionInfoCapsule.setContractResult(runtime.getResult().getHReturn());
+    transactionInfoCapsule.setContractAddress(runtime.getResult().getContractAddress());
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfoCapsule);
 
     return true;
