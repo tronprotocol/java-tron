@@ -802,8 +802,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   * @Description: "real" ProcessAdvBlock
    * If UnLinkedBlockException because of disorder, we store the block temporarily and
    * then we can processed this block again when his parent block if processed successfully
-  * @Param: * @param peer the peer who advertise the block;
-   * @param block the block we receive by advertise mode;
+  * @Param:
+   * @param peer the peer who advertise the block;
+   * @param block the block we receive by advertise mode;
   * @return: boolean
   * @Author: shydesky@gmail.com
   * @Date: 2018/7/13
