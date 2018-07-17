@@ -42,9 +42,9 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.Hash;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
-import org.tron.common.crypto.Hash;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.ProgramResult;
@@ -564,7 +564,8 @@ public class Wallet {
     return nodeListBuilder.build();
   }
 
-  public Transaction deployContract(SmartContract smartContract, TransactionCapsule trxCap) {
+  public Transaction deployContract(CreateSmartContract createSmartContract,
+      TransactionCapsule trxCap) {
 
     // do nothing, so can add some useful function later
     // trxcap contract para cacheUnpackValue has value

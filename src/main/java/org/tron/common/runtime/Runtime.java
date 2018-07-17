@@ -10,17 +10,13 @@ import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_PRECOMPILED_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_UNKNOWN_TYPE;
 
+import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.List;
-
-import com.google.protobuf.Any;
-import com.google.protobuf.ByteString;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.runtime.vm.VM;
@@ -32,12 +28,9 @@ import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
-import org.tron.common.utils.Sha256Hash;
-import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
-import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractExeException;
@@ -188,16 +181,17 @@ public class Runtime {
       InternalTransaction internalTransaction = new InternalTransaction(trx,
           contract.getOwnerAddress().toByteArray(),
           contract.getContractAddress().toByteArray(),
-          contract.getCallValue().size()==0 ? new Byte("0") : contract.getCallValue().toByteArray()[0]);
-      this.program = new Program(null, code, programInvoke,internalTransaction, config);
+          contract.getCallValue().size() == 0 ? new Byte("0")
+              : contract.getCallValue().toByteArray()[0]);
+      this.program = new Program(null, code, programInvoke, internalTransaction, config);
     }
 
-     //transfer from callerAddress to targetAddress according to callValue
+    //transfer from callerAddress to targetAddress according to callValue
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
     byte[] callValue = contract.getCallValue().toByteArray();
-    if (null != callValue && callValue.length != 0){
-      long callValueLong = new BigInteger(Hex.toHexString(callValue),16).longValue();
-      this.deposit.addBalance(callerAddress, - callValueLong);
+    if (null != callValue && callValue.length != 0) {
+      long callValueLong = new BigInteger(Hex.toHexString(callValue), 16).longValue();
+      this.deposit.addBalance(callerAddress, -callValueLong);
       this.deposit.addBalance(contractAddress, callValueLong);
     }
 
@@ -210,7 +204,8 @@ public class Runtime {
     SmartContract newSmartContract = contract.getNewContrect();
     byte[] code = newSmartContract.getBytecode().toByteArray();
     byte[] contractAddress = Wallet.generateContractAddress(trx);
-    newSmartContract = newSmartContract.toBuilder().setContractAddress(ByteString.copyFrom(contractAddress)).build();
+    newSmartContract = newSmartContract.toBuilder()
+        .setContractAddress(ByteString.copyFrom(contractAddress)).build();
     // logger.info("new contract address is: " + Wallet.encode58Check(contractAddress));
 
     // Transaction.Contract trxContract = trx.getRawData().getContract(0).toBuilder().setParameter(Any.pack(contract)).build();
@@ -223,7 +218,8 @@ public class Runtime {
       InternalTransaction internalTransaction = new InternalTransaction(trx,
           contract.getOwnerAddress().toByteArray(),
           newSmartContract.getContractAddress().toByteArray(),
-          newSmartContract.getCallValue().size()==0 ? new Byte("0") : newSmartContract.getCallValue().toByteArray()[0]);
+          newSmartContract.getCallValue().size() == 0 ? new Byte("0")
+              : newSmartContract.getCallValue().toByteArray()[0]);
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executerType, trx,
               block, deposit);

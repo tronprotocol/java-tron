@@ -33,7 +33,6 @@ import org.tron.core.capsule.ContractCapsule;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 
 /**
@@ -59,12 +58,12 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
     long timestamp = 0L;
     long number = -1L;
 
-        if (trxType == TRX_CONTRACT_CREATION_TYPE) {
-          CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(tx);
-            contractAddress = Wallet.generateContractAddress(tx);
-            ownerAddress = contract.getOwnerAddress().toByteArray();
-            balance = deposit.getBalance(ownerAddress);
-            data = ByteUtil.EMPTY_BYTE_ARRAY;
+    if (trxType == TRX_CONTRACT_CREATION_TYPE) {
+      CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(tx);
+      contractAddress = Wallet.generateContractAddress(tx);
+      ownerAddress = contract.getOwnerAddress().toByteArray();
+      balance = deposit.getBalance(ownerAddress);
+      data = ByteUtil.EMPTY_BYTE_ARRAY;
 
       switch (executerType) {
         case ET_NORMAL_TYPE:
