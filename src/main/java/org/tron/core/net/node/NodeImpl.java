@@ -1115,7 +1115,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           }
         }
 
-        if (msg.getRemainNum() == 0 && peer.getSyncBlockToFetch().size() == 0) {
+        if (msg.getRemainNum() == 0 && peer.getSyncBlockToFetch().isEmpty()) {
           peer.setNeedSyncFromPeer(false);
         }
 

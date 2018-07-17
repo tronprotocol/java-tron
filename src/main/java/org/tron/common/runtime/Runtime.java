@@ -181,7 +181,7 @@ public class Runtime {
       InternalTransaction internalTransaction = new InternalTransaction(trx,
           contract.getOwnerAddress().toByteArray(),
           contract.getContractAddress().toByteArray(),
-          contract.getCallValue().size()==0 ? new Byte("0") : contract.getCallValue().toByteArray()[0]);
+          contract.getCallValue().isEmpty() ? new Byte("0") : contract.getCallValue().toByteArray()[0]);
       this.program = new Program(null, code, programInvoke,internalTransaction, config);
     }
 
@@ -215,7 +215,7 @@ public class Runtime {
       InternalTransaction internalTransaction = new InternalTransaction(trx,
           contract.getOwnerAddress().toByteArray(),
           contract.getContractAddress().toByteArray(),
-          contract.getCallValue().size()==0 ? new Byte("0") : contract.getCallValue().toByteArray()[0]);
+          contract.getCallValue().isEmpty() ? new Byte("0") : contract.getCallValue().toByteArray()[0]);
       ProgramInvoke programInvoke = programInvokeFactory
               .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executerType, trx,
                       block, deposit);
