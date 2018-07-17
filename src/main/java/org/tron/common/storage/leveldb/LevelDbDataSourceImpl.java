@@ -354,11 +354,40 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
   }
 
+  private void updateByBatchInner(Map<byte[], byte[]> rows, WriteOptions options) throws Exception {
+    try (WriteBatch batch = database.createWriteBatch()) {
+      rows.forEach((key, value) -> {
+        if (value == null) {
+          batch.delete(key);
+        } else {
+          batch.put(key, value);
+        }
+      });
+      database.write(batch, options);
+    }
+  }
+
   @Override
   public void updateByBatch(Map<byte[], byte[]> rows) {
     resetDbLock.readLock().lock();
     try {
       updateByBatchInner(rows);
+    } catch (Exception e) {
+      try {
+        updateByBatchInner(rows);
+      } catch (Exception e1) {
+        throw new RuntimeException(e);
+      }
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
+  @Override
+  public void updateByBatch(Map<byte[], byte[]> rows, WriteOptions options) {
+    resetDbLock.readLock().lock();
+    try {
+      updateByBatchInner(rows, options);
     } catch (Exception e) {
       try {
         updateByBatchInner(rows);

@@ -44,7 +44,7 @@ public class LevelDB implements DB<byte[], byte[]> {
     Map<byte[], byte[]> rows = batch.entrySet().stream()
         .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    db.updateByBatch(rows);
+    db.updateByBatch(rows, writeOptions);
   }
 
   public void close() {
