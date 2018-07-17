@@ -502,12 +502,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         return;
       }
       filterActivePeer.stream()
-          .filter(peer -> peer.getAdvObjSpreadToUs().containsKey(hash)  //发给向我们广播过该清单的节点，有可能有多个节点广播过该清单
-              && sendPackage.getSize(peer) < MAX_TRX_PER_PEER)  //每个节点的交易数量不要超过限制
+          .filter(peer -> peer.getAdvObjSpreadToUs().containsKey(hash)
+              && sendPackage.getSize(peer) < MAX_TRX_PER_PEER)
           .sorted(Comparator.comparingInt(peer -> sendPackage.getSize(peer)))
           .findFirst().ifPresent(peer -> {
         sendPackage.add(idToFetch, peer);
-        peer.getAdvObjWeRequested().put(idToFetch.getItem(), now);  //记录我们向节点请求的数据
+        peer.getAdvObjWeRequested().put(idToFetch.getItem(), now);
         advObjToFetch.remove(hash);
       });
     });
@@ -538,7 +538,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
                     !peer.getAdvObjSpreadToUs().containsKey(idToSpread.getKey())
                         && !peer.getAdvObjWeSpread().containsKey(idToSpread.getKey()))
                 .forEach(idToSpread -> {
-                  peer.getAdvObjWeSpread().put(idToSpread.getKey(), Time.getCurrentMillis()); // 放到我们广播的数据集合中
+                  peer.getAdvObjWeSpread().put(idToSpread.getKey(), Time.getCurrentMillis());
                   sendPackage.add(idToSpread, peer);
                 }));
     sendPackage.sendInv();
@@ -674,7 +674,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleInventoryMessage(PeerConnection peer, InventoryMessage msg) {
     for (Sha256Hash id : msg.getHashList()) {
-      //交易信息数量较多
       if (msg.getInventoryType().equals(InventoryType.TRX) && TrxCache.getIfPresent(id) != null) {
         logger.info("{} {} from peer {} Already exist.", msg.getInventoryType(), id,
             peer.getNode().getHost());
