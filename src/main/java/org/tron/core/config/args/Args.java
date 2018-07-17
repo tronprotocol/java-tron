@@ -184,6 +184,14 @@ public class Args {
 
   @Getter
   @Setter
+  private int fullNodeHttpPort;
+
+  @Getter
+  @Setter
+  private int solidityHttpPort;
+
+  @Getter
+  @Setter
   @Parameter(names = {"--rpc-thread"}, description = "Num of gRPC thread")
   private int rpcThreadNum;
 
@@ -288,6 +296,8 @@ public class Args {
     //INSTANCE.syncNodeCount = 0;
     INSTANCE.nodeP2pVersion = 0;
     INSTANCE.rpcPort = 0;
+    INSTANCE.fullNodeHttpPort = 0;
+    INSTANCE.solidityHttpPort = 0;
     INSTANCE.maintenanceTimeInterval = 0;
     INSTANCE.tcpNettyWorkThreadNum = 0;
     INSTANCE.udpNettyWorkThreadNum = 0;
@@ -450,6 +460,12 @@ public class Args {
     INSTANCE.rpcPort =
         config.hasPath("node.rpc.port") ? config.getInt("node.rpc.port") : 50051;
 
+    INSTANCE.fullNodeHttpPort =
+        config.hasPath("node.http.fullNodePort") ? config.getInt("node.http.fullNodePort") : 8090;
+
+    INSTANCE.solidityHttpPort =
+        config.hasPath("node.http.solidityPort") ? config.getInt("node.http.solidityPort") : 8091;
+
     INSTANCE.rpcThreadNum =
         config.hasPath("node.rpc.thread") ? config.getInt("node.rpc.thread")
             : Runtime.getRuntime().availableProcessors() / 2;
@@ -496,6 +512,8 @@ public class Args {
         config.hasPath("node.walletExtensionApi") && config.getBoolean("node.walletExtensionApi");
 
     initBackupProperty(config);
+
+    logConfig();
   }
 
 
@@ -685,5 +703,26 @@ public class Args {
         ? config.getInt("node.backup.port") : 10001;
     INSTANCE.backupMembers = config.hasPath("node.backup.members")
         ? config.getStringList("node.backup.members") : new ArrayList<>();
+  }
+
+  private static void logConfig(){
+    Args args = getInstance();
+    logger.info("\n");
+    logger.info("************************ Net config ************************");
+    logger.info("P2P version: {}", args.getNodeP2pVersion());
+    logger.info("Bind IP: {}", args.getNodeDiscoveryBindIp());
+    logger.info("External IP: {}", args.getNodeExternalIp());
+    logger.info("Listen port: {}", args.getNodeListenPort());
+    logger.info("Discover enable: {}", args.isNodeDiscoveryEnable());
+    logger.info("Active node size: {}", args.getActiveNodes().size());
+    logger.info("Passive node size: {}", args.getPassiveNodes().size());
+    logger.info("Seed node size: {}", args.getSeedNode().getIpList().size());
+    logger.info("Max connection: {}", args.getNodeMaxActiveNodes());
+    logger.info("Max connection with same IP: {}", args.getNodeMaxActiveNodesWithSameIp());
+    logger.info("************************ Backup config ************************");
+    logger.info("Backup listen port: {}", args.getBackupPort());
+    logger.info("Backup member size: {}", args.getBackupMembers().size());
+    logger.info("Backup priority: {}", args.getBackupPriority());
+    logger.info("\n");
   }
 }

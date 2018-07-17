@@ -78,11 +78,9 @@ public class ChannelManager {
       return;
     }
     switch (reason){
-      case FORKED:
       case BAD_PROTOCOL:
       case BAD_BLOCK:
-      case INCOMPATIBLE_CHAIN:
-      case INCOMPATIBLE_PROTOCOL:
+      case BAD_TX:
         badPeers.put(channel.getInetAddress(), reason);
         break;
       default:

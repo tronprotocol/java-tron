@@ -251,8 +251,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
   });
 
-  private HashMap<Sha256Hash, Long> badAdvObj = new HashMap<>(); //TODO:need auto erase oldest obj
-
   //blocks we requested but not received
 
   private Cache<BlockId, Long> syncBlockIdWeRequested = CacheBuilder.newBuilder()
@@ -346,7 +344,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
    * @param msg msg to broadcast
    */
   public void broadcast(Message msg) {
-    //广播块消息或者交易消息
     InventoryType type;
     if (msg instanceof BlockMessage) {
       logger.info("Ready to broadcast block {}", ((BlockMessage) msg).getBlockId());
@@ -484,7 +481,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void consumerAdvObjToFetch() {
-    //向空闲的活跃节点进行数据抓取请求 组织请求消息
     Collection<PeerConnection> filterActivePeer = getActivePeer().stream()
         .filter(peer -> !peer.isBusy()).collect(Collectors.toList());
 
@@ -502,24 +498,23 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       Sha256Hash hash = idToFetch.getHash();
       if (idToFetch.getTime() < now - MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL) {
         logger.info("This obj is too late to fetch: " + idToFetch);
-        advObjToFetch.remove(hash);  //过期的inv数据就不再广播请求了。
+        advObjToFetch.remove(hash);
         return;
       }
       filterActivePeer.stream()
           .filter(peer -> peer.getAdvObjSpreadToUs().containsKey(hash)  //发给向我们广播过该清单的节点，有可能有多个节点广播过该清单
               && sendPackage.getSize(peer) < MAX_TRX_PER_PEER)  //每个节点的交易数量不要超过限制
           .sorted(Comparator.comparingInt(peer -> sendPackage.getSize(peer)))
-          .findFirst().ifPresent(peer -> { //多个节点发送过这个清单的话 只找其中一个请求数据
+          .findFirst().ifPresent(peer -> {
         sendPackage.add(idToFetch, peer);
         peer.getAdvObjWeRequested().put(idToFetch.getItem(), now);  //记录我们向节点请求的数据
-        advObjToFetch.remove(hash);  //移除要抓取的数据
+        advObjToFetch.remove(hash);
       });
     });
 
-    sendPackage.sendFetch();  //发送FETCH_INV_DATA消息
+    sendPackage.sendFetch();
   }
 
-  //广播Inventory消息
   private void consumerAdvObjToSpread() {
     if (advObjToSpread.isEmpty()) {
       try {
@@ -532,25 +527,24 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     InvToSend sendPackage = new InvToSend();
     HashMap<Sha256Hash, InventoryType> spread = new HashMap<>();
     synchronized (advObjToSpread) {
-      spread.putAll(advObjToSpread);  //广播到我的Inventory消息
+      spread.putAll(advObjToSpread);
       advObjToSpread.clear();
     }
     getActivePeer().stream()
-        .filter(peer -> !peer.isNeedSyncFromUs())  // 只向不需要从我们这里同步数据的节点广播
+        .filter(peer -> !peer.isNeedSyncFromUs())
         .forEach(peer ->
             spread.entrySet().stream()
                 .filter(idToSpread ->
-                    !peer.getAdvObjSpreadToUs().containsKey(idToSpread.getKey()) //我们之间没有交流过这个id
+                    !peer.getAdvObjSpreadToUs().containsKey(idToSpread.getKey())
                         && !peer.getAdvObjWeSpread().containsKey(idToSpread.getKey()))
                 .forEach(idToSpread -> {
                   peer.getAdvObjWeSpread().put(idToSpread.getKey(), Time.getCurrentMillis()); // 放到我们广播的数据集合中
-                  sendPackage.add(idToSpread, peer);  //广播给同一个peer同一类数据（区块或者交易）的多个id放到1条inventory消息中去
+                  sendPackage.add(idToSpread, peer);
                 }));
-    sendPackage.sendInv();  //INVENTORY消息
+    sendPackage.sendInv();
   }
 
   private synchronized void handleSyncBlock() {
-    //处理收到的区块 blockJustReceived存储收到的区块集合
     if (((ThreadPoolExecutor) handleBackLogBlocksPool).getActiveCount() > MAX_BLOCKS_IN_PROCESS) {
       logger.info("we're already processing too many blocks");
       return;
@@ -583,19 +577,19 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         synchronized (freshBlockId) {
           final boolean[] isFound = {false};
           getActivePeer().stream()
-              .filter( // 选出当前正要获取这个区块的节点，（保证按顺序处理）
+              .filter(
                   peer -> !peer.getSyncBlockToFetch().isEmpty() && peer.getSyncBlockToFetch().peek()
                       .equals(msg.getBlockId()))
               .forEach(peer -> {
                 peer.getSyncBlockToFetch().pop();
-                peer.getBlockInProc().add(msg.getBlockId()); //添加到节点的blockInProc集合 有序的
+                peer.getBlockInProc().add(msg.getBlockId());
                 isFound[0] = true;
               });
-          if (isFound[0]) { //确实有节点提出过抓取这个区块
+          if (isFound[0]) {
             blockWaitToProc.remove(msg);
             isBlockProc[0] = true;
             if (freshBlockId.contains(msg.getBlockId()) || processSyncBlock(
-                msg.getBlockCapsule())) {  //处理同步的块
+                msg.getBlockCapsule())) {
               finishProcessSyncBlock(msg.getBlockCapsule());
             }
           }
@@ -625,8 +619,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             + "unSyncNum: %d\n"
             + "blockWaitToProc: %d\n"
             + "blockJustReceived: %d\n"
-            + "syncBlockIdWeRequested: %d\n"
-            + "badAdvObj: %d\n",
+            + "syncBlockIdWeRequested: %d\n",
         del.getHeadBlockId().getNum(),
         advObjToSpread.size(),
         advObjToFetch.size(),
@@ -634,15 +627,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         getUnSyncNum(),
         blockWaitToProc.size(),
         blockJustReceived.size(),
-        syncBlockIdWeRequested.size(),
-        badAdvObj.size()
+        syncBlockIdWeRequested.size()
     ));
 
     logger.info(sb.toString());
   }
 
   public synchronized void disconnectInactive() {
-    //定时执行断开交互的任务 针对所有活跃节点
     //logger.debug("size of activePeer: " + getActivePeer().size());
     getActivePeer().forEach(peer -> {
       final boolean[] isDisconnected = {false};
@@ -682,8 +673,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
 
   private void onHandleInventoryMessage(PeerConnection peer, InventoryMessage msg) {
-    //收到广播的inventory消息 （区块或者交易）。
-    for (Sha256Hash id : msg.getHashList()) { // 遍历
+    for (Sha256Hash id : msg.getHashList()) {
       //交易信息数量较多
       if (msg.getInventoryType().equals(InventoryType.TRX) && TrxCache.getIfPresent(id) != null) {
         logger.info("{} {} from peer {} Already exist.", msg.getInventoryType(), id,
@@ -694,38 +684,36 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       final boolean[] requested = {false};
       getActivePeer().forEach(p -> {
         if (p.getAdvObjWeSpread().containsKey(id)) {
-          spreaded[0] = true;   // 我们向任意节点广播过这条消息
+          spreaded[0] = true;
         }
         if (p.getAdvObjWeRequested().containsKey(new Item(id, msg.getInventoryType()))) {
-          requested[0] = true;  // 我们向任意节点请求过这条消息
+          requested[0] = true;
         }
       });
 
-      if (!spreaded[0]  // 我们没有向任何节点广播过这个inv消息，并且广播给我的节点我们之间不需要相互同步
+      if (!spreaded[0]
           && !peer.isNeedSyncFromPeer()
           && !peer.isNeedSyncFromUs()) {
 
         //avoid TRX flood attack here.
         if (msg.getInventoryType().equals(InventoryType.TRX)
             && (peer.isAdvInvFull()
-            || isFlooded())) {  // 单个节点洪泛攻击或者全局洪泛攻击
+            || isFlooded())) {
           logger.warn("A peer is flooding us, stop handle inv, the peer is: " + peer);
           return;
         }
 
-        peer.getAdvObjSpreadToUs().put(id, System.currentTimeMillis());  //记录节点广播给我们的inv数据和时间戳
-        if (!requested[0]) {  //如果我们没有向任何节点请求过
-          if (!badAdvObj.containsKey(id)) {
-            PriorItem targetPriorItem = this.advObjToFetch.get(id); //查找是否是我们要请求的数据
+        peer.getAdvObjSpreadToUs().put(id, System.currentTimeMillis());
+        if (!requested[0]) {
+          PriorItem targetPriorItem = this.advObjToFetch.get(id);
 
-            if (targetPriorItem != null) {  //别的节点广播给过我们，刷新一下时间即可
-              //another peer tell this trx to us, refresh its time.
-              targetPriorItem.refreshTime();
-            } else { //第一次收到这个inv数据的广播  放到advObjToFetch等待去广播获取
-              fetchWaterLine.increase();
-              this.advObjToFetch.put(id, new PriorItem(new Item(id, msg.getInventoryType()),
-                  fetchSequenceCounter.incrementAndGet()));
-            }
+          if (targetPriorItem != null) {
+            //another peer tell this trx to us, refresh its time.
+            targetPriorItem.refreshTime();
+          } else {
+            fetchWaterLine.increase();
+            this.advObjToFetch.put(id, new PriorItem(new Item(id, msg.getInventoryType()),
+                fetchSequenceCounter.incrementAndGet()));
           }
         }
       }
@@ -751,40 +739,37 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleBlockMessage(PeerConnection peer, BlockMessage blkMsg) {
-    //收到了一个区块消息。检查收到的区块是否是我们向节点请求的区块，判断节点的同步标记（如果已经发送过断开节点连接的消息的话，标记为假，即不进行同步）
-    //如果同步标记为真，将区块从请求集合删掉，将blockmsg放入blockJustReceived集合中，等待处理区块的线程定时处理
     Map<Item, Long> advObjWeRequested = peer.getAdvObjWeRequested();
     Map<BlockId, Long> syncBlockRequested = peer.getSyncBlockRequested();
     BlockId blockId = blkMsg.getBlockId();
     Item item = new Item(blockId, InventoryType.BLOCK);
     boolean syncFlag = false;
-    if (syncBlockRequested.containsKey(blockId)) { // 我们向这个节点发送过同步这个块的请求
+    if (syncBlockRequested.containsKey(blockId)) {
       if (!peer.getSyncFlag()) {
         logger.info("Received a block {} from no need sync peer {}", blockId.getNum(),
             peer.getNode().getHost());
-        return;  //不需要从这个节点进行同步了，什么都不做返回。
+        return;
       }
       peer.getSyncBlockRequested().remove(blockId);
       synchronized (blockJustReceived) {
         blockJustReceived.put(blkMsg, peer);
       }
-      isHandleSyncBlockActive = true;  //打开处理区块的开关，等待执行器的处理。
-      syncFlag = true;  //是同步模式请求的这个块，就不要在广播模式再处理这个区块了
-      if (!peer.isBusy()) {  //节点空闲
+      isHandleSyncBlockActive = true;
+      syncFlag = true;
+      if (!peer.isBusy()) {
         if (peer.getUnfetchSyncNum() > 0
             && peer.getSyncBlockToFetch().size() <= NodeConstant.SYNC_FETCH_BATCH_NUM) {
-          syncNextBatchChainIds(peer); //尚且有remain的数据并且当前要处理的区块数量小于2000，开启与这个节点的下一次的区块链同步
+          syncNextBatchChainIds(peer);
         } else {
-          isFetchSyncActive = true;  //暂时不进行下一轮的区块链同步，而是开启区块抓取开关，尽快同步块
+          isFetchSyncActive = true;
         }
       }
     }
 
-    //是通过广播的方式发过来的Block消息，查看我们广播请求的块
-    if (advObjWeRequested.containsKey(item)) { //广播请求包含这个块
+    if (advObjWeRequested.containsKey(item)) {
       advObjWeRequested.remove(item);
-      if (!syncFlag) { //不是同步模式请求的这个块，而是广播模式请求的这个块，所以需要再广播出去
-        processAdvBlock(peer, blkMsg.getBlockCapsule()); //如果请求过，进行广播收块的处理
+      if (!syncFlag) {
+        processAdvBlock(peer, blkMsg.getBlockCapsule());
         startFetchItem();
       }
     }
@@ -827,22 +812,21 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     if (!freshBlockId.contains(block.getBlockId())) {
       try {
         LinkedList<Sha256Hash> trxIds = null;
-        trxIds = del.handleBlock(block, false); //广播模式处理收到的块
+        trxIds = del.handleBlock(block, false);
         freshBlockId.offer(block.getBlockId());
 
-        trxIds.forEach(trxId -> advObjToFetch.remove(trxId)); //移除掉区块中包含的交易的广播请求
+        trxIds.forEach(trxId -> advObjToFetch.remove(trxId));
 
         getActivePeer().stream()
             .filter(p -> p.getAdvObjSpreadToUs().containsKey(block.getBlockId()))
-            .forEach(p -> updateBlockWeBothHave(p, block));  //把收到的区块作为共有的头块 是否中间有缺失或者覆盖后块的问题？
+            .forEach(p -> updateBlockWeBothHave(p, block));
 
-        broadcast(new BlockMessage(block));  // 广播区块消息  生产advObjToSpread
+        broadcast(new BlockMessage(block));
         advBlockDisorder.remove(block.getParentHash());
         return true;
       } catch (BadBlockException e) {
         logger.error("We get a bad block {}, from {}, reason is {} ",
             block.getBlockId().getString(), peer.getNode().getHost(), e.getMessage());
-        badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
         disconnectPeer(peer, ReasonCode.BAD_BLOCK);
       } catch (UnLinkedBlockException e) {
         logger.error("We get a unlinked block {}, from {}, head is {}",
@@ -853,7 +837,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       } catch (NonCommonBlockException e) {
         logger.error("We get a block {} that do not have the most recent common ancestor with the main chain, from {}, reason is {} ",
             block.getBlockId().getString(), peer.getNode().getHost(), e.getMessage());
-        badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
         disconnectPeer(peer, ReasonCode.FORKED);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
@@ -868,17 +851,16 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     ReasonCode reason = null;
     try {
       try {
-        del.handleBlock(block, true);  //同步模式处理区块
+        del.handleBlock(block, true);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       }
-      freshBlockId.offer(block.getBlockId());  //添加入freshBlockId集合
+      freshBlockId.offer(block.getBlockId());
       logger.info("Success handle block {}", block.getBlockId().getString());
       isAccept = true;
     } catch (BadBlockException e) {
       logger.error("We get a bad block {}, reason is {} ", block.getBlockId().getString(),
           e.getMessage());
-      badAdvObj.put(block.getBlockId(), System.currentTimeMillis());
       reason = ReasonCode.BAD_BLOCK;
     } catch (UnLinkedBlockException e) {
       logger.error("We get a unlinked block {}, head is {}", block.getBlockId().getString(),
@@ -891,27 +873,26 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       reason = ReasonCode.FORKED;
     }
 
-    if (!isAccept) {  //这个区块有问题，没有被接受
+    if (!isAccept) {
       ReasonCode finalReason = reason;
       getActivePeer().stream()
           .filter(peer -> peer.getBlockInProc().contains(block.getBlockId())) // 待获取块集合包含这个区块的节点
-          .forEach(peer -> disconnectPeer(peer, finalReason));  // 断开
+          .forEach(peer -> disconnectPeer(peer, finalReason));
     }
     isHandleSyncBlockActive = true;
     return isAccept;
   }
 
   private void finishProcessSyncBlock(BlockCapsule block) {
-    // 完成处理同步区块
     getActivePeer().forEach(peer -> {
       if (peer.getSyncBlockToFetch().isEmpty()
           && peer.getBlockInProc().isEmpty()
           && !peer.isNeedSyncFromPeer()
-          && !peer.isNeedSyncFromUs()) { // 没有待获取的区块也没有处理中的区块，相互不需要同步
-        startSyncWithPeer(peer);  // 开始同步
-      } else if (peer.getBlockInProc().remove(block.getBlockId())) {  //这个块是节点正在处理的
-        updateBlockWeBothHave(peer, block);  //更新和这个节点的共同头块
-        if (peer.getSyncBlockToFetch().isEmpty()) { //send sync to let peer know we are sync.
+          && !peer.isNeedSyncFromUs()) {
+        startSyncWithPeer(peer);
+      } else if (peer.getBlockInProc().remove(block.getBlockId())) {
+        updateBlockWeBothHave(peer, block);
+        if (peer.getSyncBlockToFetch().isEmpty()) {
           syncNextBatchChainIds(peer);
         }
       }
@@ -927,7 +908,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleTransactionMessage(PeerConnection peer, TransactionMessage trxMsg) {
-    // 处理收到的交易信息
     try {
       Item item = new Item(trxMsg.getMessageId(), InventoryType.TRX);
       if (!peer.getAdvObjWeRequested().containsKey(item)) {
@@ -946,7 +926,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       logger.error(e.getMessage());
       banTraitorPeer(peer, ReasonCode.BAD_PROTOCOL);
     } catch (BadTransactionException e) {
-      badAdvObj.put(trxMsg.getMessageId(), System.currentTimeMillis());
       banTraitorPeer(peer, ReasonCode.BAD_TX);
     }
   }
@@ -959,53 +938,49 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {
-    //处理收到的请求同步区块链的消息。 首先获取到消息中的区块链清单，查找该节点缺失的区块。
     peer.setTronState(TronState.SYNCING);
     LinkedList<BlockId> blockIds = new LinkedList<>();
     List<BlockId> summaryChainIds = syncMsg.getBlockIds();
     long remainNum = 0;
 
     try {
-      blockIds = del.getLostBlockIds(summaryChainIds);  //查找节点缺失的区块
+      blockIds = del.getLostBlockIds(summaryChainIds);
     } catch (StoreException e) {
       logger.error(e.getMessage());
     }
 
-    if (blockIds.isEmpty()) { // 没找到缺失的块
-      //你发过来的summary不空，我却没有找到你缺失的，关键是你要的块序号居然比我的固化块还要低，所以你发过来的summary一定有问题
+    if (blockIds.isEmpty()) {
       if (CollectionUtils.isNotEmpty(summaryChainIds) && !del
           .canChainRevoke(summaryChainIds.get(0).getNum())) {
         logger.info("Node sync block fail, disconnect peer {}, no block {}", peer,
             summaryChainIds.get(0).getString());
-        peer.disconnect(ReasonCode.SYNC_FAIL);  //断开连接
+        peer.disconnect(ReasonCode.SYNC_FAIL);
         return;
       } else {
-        peer.setNeedSyncFromUs(false);  //如果没有找到缺失的块，因为我们是在主链进行查找的，所以你发过来的链可能在我这里不是主链，设置你不需要从我这里进行区块同步
+        peer.setNeedSyncFromUs(false);
       }
-    } else if (blockIds.size() == 1  // 只找到了一个缺失的块，并且缺失块是在你的summary清单的，或者缺失块就是创世块
+    } else if (blockIds.size() == 1
         && !summaryChainIds.isEmpty()
         && (summaryChainIds.contains(blockIds.peekFirst())
         || blockIds.peek().getNum() == 0)) {
-      peer.setNeedSyncFromUs(false);  //标记这个节点不需要从本节点同步
+      peer.setNeedSyncFromUs(false);
     } else {
-      peer.setNeedSyncFromUs(true);  //如果是找到了缺失块的其他情况，标记这个节点需要从本节点进行同步
+      peer.setNeedSyncFromUs(true);
       remainNum = del.getHeadBlockId().getNum() - blockIds.peekLast().getNum();  //计算剩余的区块数
     }
 
     //TODO: need a block older than revokingDB size exception. otherwise will be a dead loop here
-    //这一块儿逻辑？？
-    if (!peer.isNeedSyncFromPeer() //不需要从节点同步
+    if (!peer.isNeedSyncFromPeer()
         && CollectionUtils.isNotEmpty(summaryChainIds) //
         && !del.contain(Iterables.getLast(summaryChainIds), MessageTypes.BLOCK)
         && del.canChainRevoke(summaryChainIds.get(0).getNum())) {
       startSyncWithPeer(peer);
     }
 
-    peer.sendMessage(new ChainInventoryMessage(blockIds, remainNum));  //向节点发送区块链清单消息
+    peer.sendMessage(new ChainInventoryMessage(blockIds, remainNum));
   }
 
   private void onHandleFetchDataMessage(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) {
-    //处理请求数据抓取消息（有可能是块数据、有可能是交易数据）
     MessageTypes type = fetchInvDataMsg.getInvMessageType();
 
     BlockCapsule block = null;
@@ -1018,29 +993,25 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
       Message msg;
 
-      //查缓存
       if (type == MessageTypes.BLOCK) {
         msg = BlockCache.getIfPresent(hash);
       } else {
         msg = TrxCache.getIfPresent(hash);
       }
 
-      //查库
       if (msg == null) {
         msg = del.getData(hash, type);
       }
 
-      //没查到，回送消息
       if (msg == null) {
         logger.error("fetch message {} {} failed.", type, hash);
         peer.sendMessage(new ItemNotFound());
         return;
       }
 
-      //回送查到的数据项消息 块消息或者是交易消息
       if (type.equals(MessageTypes.BLOCK)) {
         block = ((BlockMessage) msg).getBlockCapsule();
-        peer.sendMessage(msg);  //发送数据块消息
+        peer.sendMessage(msg);
       } else {
         transactions.add(((TransactionMessage) msg).getTransactionCapsule().getInstance());
         size += ((TransactionMessage) msg).getTransactionCapsule().getInstance().getSerializedSize();
@@ -1053,9 +1024,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
 
     if (block != null) {
-      updateBlockWeBothHave(peer, block);  //更新和节点的共有头块信息
+      updateBlockWeBothHave(peer, block);
     }
-    if (transactions.size() > 0) { // 发送剩余的交易数据信息
+    if (transactions.size() > 0) {
       peer.sendMessage(new TransactionsMessage(transactions));
     }
   }
@@ -1065,17 +1036,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleChainInventoryMessage(PeerConnection peer, ChainInventoryMessage msg) {
-    //处理收到的区块清单消息。
-    //blockIdWeGet = msg.getBlockIds() peer发过来的区块清单
-    //remainNum = msg.getRemainNum()  peer发过来的剩余未发送的区块数量
     try {
-      //验证
-      if (peer.getSyncChainRequested() != null) {  //判断本地节点是否向peer发送了区块链同步请求。
+      if (peer.getSyncChainRequested() != null) {
         //List<BlockId> blockIds = msg.getBlockIds();
         Deque<BlockId> blockIdWeGet = new LinkedList<>(msg.getBlockIds());
 
         //check if the peer is a traitor
-        if (!blockIdWeGet.isEmpty()) {  //检验区块的顺序
+        if (!blockIdWeGet.isEmpty()) {
           long num = blockIdWeGet.peek().getNum();
           for (BlockId id : blockIdWeGet) {
             if (id.getNum() != num++) {
@@ -1115,12 +1082,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
         //here this peer's answer is legal
         peer.setSyncChainRequested(null);
-        if (msg.getRemainNum() == 0  //没有剩余区块需要同步
+        if (msg.getRemainNum() == 0
             && (blockIdWeGet.isEmpty() || (blockIdWeGet.size() == 1 && del
-            .containBlock(blockIdWeGet.peek()))) // 缺失的区块是我们已经有的了
-            && peer.getSyncBlockToFetch().isEmpty()  //没有需要获取的区块了
+            .containBlock(blockIdWeGet.peek())))
+            && peer.getSyncBlockToFetch().isEmpty()
             && peer.getUnfetchSyncNum() == 0) {
-          peer.setNeedSyncFromPeer(false);  //和这个节点没有剩余区块需要同步了，并且同步中的区块也没有了，标记不需要从该节点进行区块同步了
+          peer.setNeedSyncFromPeer(false);
           unSyncNum = getUnSyncNum();
           if (unSyncNum == 0) {
             del.syncToCli(0);
@@ -1131,10 +1098,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         }
 
         if (!blockIdWeGet.isEmpty() && peer.getSyncBlockToFetch().isEmpty()) {
-          //如果有缺失的区块并且从这个节点待抓取的区块是空的
           boolean isFound = false;
 
-          //判断是否从其他节点处进行着相同的区块同步。
           for (PeerConnection peerToCheck :
               getActivePeer()) {
             if (!peerToCheck.equals(peer)
@@ -1146,17 +1111,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             }
           }
 
-          //如果并没有从其他节点获得这些块isFound为false，说明我们很可能已经有了这些块了，那么就遍历查找一下，如果有
-          //就把已经有的移除掉。
-          if (!isFound) {//没有从其他节点处进行区块同步
+          if (!isFound) {
             while (!blockIdWeGet.isEmpty() && del.containBlock(blockIdWeGet.peek())) {
               updateBlockWeBothHave(peer, blockIdWeGet.peek());
-              blockIdWeGet.poll(); // 从缺失清单中移除，不再获取这个块
+              blockIdWeGet.poll();
             }
           }
         } else if (!blockIdWeGet.isEmpty()) {
-          // 目前有抓取中的区块。好的情况是抓取中的最后一个和缺失的第一个是相同的，
-          // 但不幸的是可能发生了切链，抓取中的区块和缺失的区块有对不上的甚至一个都对不上。
           while (!peer.getSyncBlockToFetch().isEmpty()) {
             if (!peer.getSyncBlockToFetch().peekLast().equals(blockIdWeGet.peekFirst())) {  //缺失块的集合至多只有第一个是和待抓取的区块集合是重复的
               peer.getSyncBlockToFetch().pollLast();
@@ -1165,30 +1126,29 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             }
           }
 
-          // 等待抓取的块都被移除了。 有可能之前已经是共有头块的数据现在也不是共有头块了，此时需要再更新一次共有头块，因此收到区块清单时候更新共有头块很重要
           if (peer.getSyncBlockToFetch().isEmpty() && del.containBlock(blockIdWeGet.peek())) {
             updateBlockWeBothHave(peer, blockIdWeGet.peek());
 
           }
           //poll the block we both have.
-          blockIdWeGet.poll();  //移除掉缺失块的第一个
+          blockIdWeGet.poll();
         }
 
         //sew it
-        peer.setUnfetchSyncNum(msg.getRemainNum());  //设置余块的数量
-        peer.getSyncBlockToFetch().addAll(blockIdWeGet); // 要把加工过的blockIdWeGet设置到tofetch集合
-        synchronized (freshBlockId) {  // 可能从其他节点处已经获得了区块，如有则不再次获得这个区块
+        peer.setUnfetchSyncNum(msg.getRemainNum());
+        peer.getSyncBlockToFetch().addAll(blockIdWeGet);
+        synchronized (freshBlockId) {
           while (!peer.getSyncBlockToFetch().isEmpty() && freshBlockId
               .contains(peer.getSyncBlockToFetch().peek())) {
             BlockId blockId = peer.getSyncBlockToFetch().pop();
-            updateBlockWeBothHave(peer, blockId);  //更新共有头块
+            updateBlockWeBothHave(peer, blockId);
             logger.info("Block {} from {} is processed", blockId.getString(),
                 peer.getNode().getHost());
           }
         }
 
         if (msg.getRemainNum() == 0 && peer.getSyncBlockToFetch().size() == 0) {
-          peer.setNeedSyncFromPeer(false);  //节点没有剩余块且没有获取中的区块，设置不从这个节点同步
+          peer.setNeedSyncFromPeer(false);
         }
 
         long newUnSyncNum = getUnSyncNum();
@@ -1197,22 +1157,20 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           del.syncToCli(unSyncNum);
         }
 
-        //优先进行区块的同步，再进行链的同步
         if (msg.getRemainNum() == 0) {
           if (!peer.getSyncBlockToFetch().isEmpty()) {
             //startFetchSyncBlock();
-            isFetchSyncActive = true;  //打开执行区块同步的开关
+            isFetchSyncActive = true;
           } else {
             //let peer know we are sync.
-            syncNextBatchChainIds(peer);  //本次要同步的区块已经结束，进行下一轮链同步 这里可能是通过发一个链同步消息来告知节点同步已经完成？
+            syncNextBatchChainIds(peer);
           }
-        } else { //有剩余区块
+        } else {
           if (peer.getSyncBlockToFetch().size() > NodeConstant.SYNC_FETCH_BATCH_NUM) {
-            //如果要同步的区块数量大于2000 开启执行区块同步的开关 先不进行区块清单的同步
             //one batch by one batch.
             //startFetchSyncBlock();
             isFetchSyncActive = true;
-          } else {//请求下一次的区块链同步
+          } else {
             syncNextBatchChainIds(peer);
           }
         }
@@ -1245,23 +1203,22 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private synchronized void startFetchSyncBlock() {
-    //向所有节点请求区块同步
     //TODO: check how many block is processing and decide if fetch more
     HashMap<PeerConnection, List<BlockId>> send = new HashMap<>();
     HashSet<BlockId> request = new HashSet<>();
 
     getActivePeer().stream()
-        .filter(peer -> peer.isNeedSyncFromPeer() && !peer.isBusy())  //过滤出需要进行同步的节点（有想要的区块数据且节点空闲）
+        .filter(peer -> peer.isNeedSyncFromPeer() && !peer.isBusy())
         .forEach(peer -> {
           if (!send.containsKey(peer)) { //TODO: Attention multi thread here
-            send.put(peer, new LinkedList<>());  //初始化send集合的key（key是peer，value是要同步的区块的list）
+            send.put(peer, new LinkedList<>());
           }
           for (BlockId blockId :
-              peer.getSyncBlockToFetch()) {  //把要同步的区块集合查出来，去掉已经发过请求的区块，或者在getSyncBlockToFetch这个方法里面获取到的重复的区块
+              peer.getSyncBlockToFetch()) {
             if (!request.contains(blockId) //TODO: clean processing block
                 && (syncBlockIdWeRequested.getIfPresent(blockId) == null)) {
               send.get(peer).add(blockId);
-              request.add(blockId);  //用做去重
+              request.add(blockId);
               //TODO: check max block num to fetch from one peer.
               if (send.get(peer).size()
                   > MAX_BLOCKS_SYNC_FROM_ONE_PEER) { //Max Blocks peer get one time  //限制单个节点每次请求的区块数量
@@ -1271,17 +1228,16 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           }
         });
 
-    //开始向每个节点发送FetchInvDataMessage的消息来获取block数据
     send.forEach((peer, blockIds) -> {
       //TODO: use collector
       blockIds.forEach(blockId -> {
-        syncBlockIdWeRequested.put(blockId, System.currentTimeMillis());  //把请求的区块放入全局syncBlockIdWeRequested这个集合
-        peer.getSyncBlockRequested().put(blockId, System.currentTimeMillis()); // 把请求的区块放入节点的请求集合
+        syncBlockIdWeRequested.put(blockId, System.currentTimeMillis());
+        peer.getSyncBlockRequested().put(blockId, System.currentTimeMillis());
       });
       List<Sha256Hash> ids = new LinkedList<>();
       ids.addAll(blockIds);
       if (!ids.isEmpty()) {
-        peer.sendMessage(new FetchInvDataMessage(ids, InventoryType.BLOCK)); //向节点发送抓块信息
+        peer.sendMessage(new FetchInvDataMessage(ids, InventoryType.BLOCK));
       }
     });
 
@@ -1318,7 +1274,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void syncNextBatchChainIds(PeerConnection peer) {
-    //进行下一轮的区块链同步
     if (peer.getSyncChainRequested() != null) {
       logger.info("Peer {} is in sync.", peer.getNode().getHost());
       return;

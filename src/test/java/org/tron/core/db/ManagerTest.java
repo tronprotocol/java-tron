@@ -312,6 +312,10 @@ public class ManagerTest {
         createTestBlockCapsule(
             num + 2, blockCapsule1.getBlockId().getByteString(), addressToProvateKeys);
 
+    logger.info("******block0:" + blockCapsule0);
+    logger.info("******block1:" + blockCapsule1);
+    logger.info("******block2:" + blockCapsule2);
+
     dbManager.pushBlock(blockCapsule0);
     dbManager.pushBlock(blockCapsule1);
     context.getBean(KhaosDatabase.class).removeBlk(dbManager.getBlockIdByNum(num));
@@ -323,12 +327,38 @@ public class ManagerTest {
       Assert.assertNotNull(dbManager.getBlockStore().get(blockCapsule0.getBlockId().getBytes()));
       Assert.assertEquals(blockCapsule0.getBlockId(),
           dbManager.getBlockStore().get(blockCapsule0.getBlockId().getBytes()).getBlockId());
+      Assert.assertEquals(blockCapsule0.getBlockId(),
+          dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
       exception = e;
     }
 
     if (exception == null) {
       throw new IllegalStateException();
     }
+
+    BlockCapsule blockCapsule3 =
+        createTestBlockCapsule(
+            dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1,
+            dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(), addressToProvateKeys);
+    logger.info("******block3:" + blockCapsule3);
+    dbManager.pushBlock(blockCapsule3);
+
+    Assert.assertEquals(blockCapsule3.getBlockId(),
+        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+    Assert.assertEquals(blockCapsule3.getBlockId(),
+        dbManager.getBlockStore().get(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes()).getBlockId());
+
+    BlockCapsule blockCapsule4 =
+        createTestBlockCapsule(
+            dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1,
+            blockCapsule3.getBlockId().getByteString(), addressToProvateKeys);
+    logger.info("******block4:" + blockCapsule4);
+    dbManager.pushBlock(blockCapsule4);
+
+    Assert.assertEquals(blockCapsule4.getBlockId(),
+        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+    Assert.assertEquals(blockCapsule4.getBlockId(),
+        dbManager.getBlockStore().get(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes()).getBlockId());
   }
 
   //@Test
@@ -380,6 +410,28 @@ public class ManagerTest {
     Assert.assertNotNull(dbManager.getBlockStore().get(blockCapsule0.getBlockId().getBytes()));
     Assert.assertEquals(blockCapsule0.getBlockId(),
         dbManager.getBlockStore().get(blockCapsule0.getBlockId().getBytes()).getBlockId());
+
+    BlockCapsule blockCapsule3 =
+        createTestBlockCapsule(
+            dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1,
+            blockCapsule0.getBlockId().getByteString(), addressToProvateKeys);
+    dbManager.pushBlock(blockCapsule3);
+
+    Assert.assertEquals(blockCapsule3.getBlockId(),
+        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+    Assert.assertEquals(blockCapsule3.getBlockId(),
+        dbManager.getBlockStore().get(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes()).getBlockId());
+
+    BlockCapsule blockCapsule4 =
+        createTestBlockCapsule(
+            dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1,
+            blockCapsule3.getBlockId().getByteString(), addressToProvateKeys);
+    dbManager.pushBlock(blockCapsule4);
+
+    Assert.assertEquals(blockCapsule4.getBlockId(),
+        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+    Assert.assertEquals(blockCapsule4.getBlockId(),
+        dbManager.getBlockStore().get(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes()).getBlockId());
   }
 
   private Map<ByteString, String> addTestWitnessAndAccount() {
