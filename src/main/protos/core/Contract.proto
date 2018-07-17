@@ -132,48 +132,9 @@ message UpdateAssetContract {
   int64 new_public_limit = 5;
 }
 
-message SmartContract {
-  message ABI {
-    message Entry {
-      enum EntryType {
-        UnknownEntryType = 0;
-        Constructor = 1;
-        Function = 2;
-        Event = 3;
-        Fallback = 4;
-      }
-      message Param {
-        bool indexed = 1;
-        bytes name = 2;
-        bytes type = 3;
-        // SolidityType type = 3;
-      }
-      enum StateMutabilityType {
-        UnknownMutabilityType = 0;
-        Pure = 1;
-        View = 2;
-        Nonpayable = 3;
-        Payable = 4;
-      }
-
-      bool anonymous = 1;
-      bool constant =2;
-      bytes name = 3;
-      repeated Param inputs = 4;
-      repeated Param outputs = 5;
-      EntryType type = 6;
-      bool payable = 7;
-      StateMutabilityType stateMutability = 8;
-    }
-
-    repeated Entry entrys = 1;
-  }
+message CreateSmartContract {
   bytes owner_address = 1;
-  bytes contract_address = 2;
-  ABI abi = 3;
-  bytes bytecode = 4;
-  bytes call_value = 5;
-  bytes data = 6;
+  SmartContract new_contrect = 2;
 }
 
 message TriggerSmartContract {
