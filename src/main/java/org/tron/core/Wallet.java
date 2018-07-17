@@ -413,7 +413,7 @@ public class Wallet {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     List<AssetIssueCapsule> assetIssueList = dbManager.getAssetIssueStore()
         .getAssetIssuesPaginated(offset, limit);
-    if (null == assetIssueList || assetIssueList.size() == 0) {
+    if (null == assetIssueList || assetIssueList.isEmpty()) {
       return null;
     }
     assetIssueList.forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
@@ -421,7 +421,7 @@ public class Wallet {
   }
 
   public AssetIssueList getAssetIssueByAccount(ByteString accountAddress) {
-    if (accountAddress == null || accountAddress.size() == 0) {
+    if (accountAddress == null || accountAddress.isEmpty()) {
       return null;
     }
     List<AssetIssueCapsule> assetIssueCapsuleList = dbManager.getAssetIssueStore()
@@ -436,7 +436,7 @@ public class Wallet {
   }
 
   public AccountNetMessage getAccountNet(ByteString accountAddress) {
-    if (accountAddress == null || accountAddress.size() == 0) {
+    if (accountAddress == null || accountAddress.isEmpty()) {
       return null;
     }
     AccountNetMessage.Builder builder = AccountNetMessage.newBuilder();
@@ -471,7 +471,7 @@ public class Wallet {
   }
 
   public AssetIssueContract getAssetIssueByName(ByteString assetName) {
-    if (assetName == null || assetName.size() == 0) {
+    if (assetName == null || assetName.isEmpty()) {
       return null;
     }
     List<AssetIssueCapsule> assetIssueCapsuleList = dbManager.getAssetIssueStore()
