@@ -32,4 +32,12 @@ public class AccountIndexStore extends TronStoreWithRevoking<BytesCapsule> {
     return null;
   }
 
+  @Override
+  public BytesCapsule get(byte[] key) {
+    byte[] value = revokingDB.getUnchecked(key);
+    if (ArrayUtils.isEmpty(value)) {
+      return null;
+    }
+    return new BytesCapsule(value);
+  }
 }

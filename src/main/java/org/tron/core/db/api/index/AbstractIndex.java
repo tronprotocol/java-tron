@@ -38,7 +38,7 @@ public abstract class AbstractIndex<E extends ProtoCapsule<T>, T> implements Ifa
 
   public AbstractIndex(TronDatabase<E> database) {
     this.database = database;
-    String dbName = database.getDbSource().getDBName();
+    String dbName = database.getDbName();
     File parentDir = Paths.get(
             Args.getInstance().getOutputDirectoryByDbName(dbName),
             Args.getInstance().getStorage().getIndexDirectory()

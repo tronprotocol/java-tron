@@ -2,18 +2,17 @@ package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.DatabaseConstants.ASSET_ISSUE_COUNT_LIMIT_MAX;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.stream.Collectors;
+
+import com.google.common.collect.Streams;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
-import org.tron.core.db.common.iterator.AssetIssueIterator;
 
 @Slf4j
 @Component
@@ -24,12 +23,18 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
     super(dbName);
   }
 
+
+  @Override
+  public AssetIssueCapsule get(byte[] key) {
+    return super.getUnchecked(key);
+  }
+
   /**
    * get all asset issues.
    */
   public List<AssetIssueCapsule> getAllAssetIssues() {
-    return dbSource.allKeys().stream()
-        .map(this::getUnchecked)
+    return Streams.stream(iterator())
+        .map(Entry::getValue)
         .collect(Collectors.toList());
   }
 
@@ -37,9 +42,15 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
     if (limit < 0 || offset < 0) {
       return null;
     }
-    List<AssetIssueCapsule> assetIssueList = dbSource.allKeys().stream()
-        .map(this::getUnchecked)
-        .collect(Collectors.toList());
+
+//    return Streams.stream(iterator())
+//        .map(Entry::getValue)
+//        .sorted(Comparator.comparing(a -> a.getName().toStringUtf8(), String::compareTo))
+//        .skip(offset)
+//        .limit(Math.min(limit, ASSET_ISSUE_COUNT_LIMIT_MAX))
+//        .collect(Collectors.toList());
+
+    List<AssetIssueCapsule> assetIssueList = getAllAssetIssues();
     if (assetIssueList.size() <= offset) {
       return null;
     }

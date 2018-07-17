@@ -27,6 +27,12 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     super(dbName);
   }
 
+  @Override
+  public AccountCapsule get(byte[] key) {
+    byte[] value = revokingDB.getUnchecked(key);
+    return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
+  }
+
   /**
    * Max TRX account.
    */

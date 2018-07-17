@@ -449,7 +449,7 @@ public class Manager {
         throw new TaposException(str);
 
       }
-    } catch (ItemNotFoundException | BadItemException e) {
+    } catch (ItemNotFoundException e) {
       String str = String.
           format("Tapos failed, block not found, ref block %s, %s , solid block %s head block %s",
               ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
@@ -882,7 +882,7 @@ public class Manager {
    * judge has blocks.
    */
   public boolean hasBlocks() {
-    return blockStore.dbSource.iterator().hasNext() || this.khaosDb.hasData();
+    return blockStore.iterator().hasNext() || this.khaosDb.hasData();
   }
 
   /**

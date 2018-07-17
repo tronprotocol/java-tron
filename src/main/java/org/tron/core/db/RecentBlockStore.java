@@ -16,4 +16,10 @@ public class RecentBlockStore extends TronStoreWithRevoking<BytesCapsule> {
     super(dbName);
   }
 
+  @Override
+  public BytesCapsule get(byte[] key) throws ItemNotFoundException {
+    byte[] value = revokingDB.get(key);
+
+    return new BytesCapsule(value);
+  }
 }

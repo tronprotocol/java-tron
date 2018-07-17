@@ -33,4 +33,13 @@ public class BlockIndexStore extends TronStoreWithRevoking<BytesCapsule> {
         num);
   }
 
+  @Override
+  public BytesCapsule get(byte[] key)
+      throws ItemNotFoundException {
+    byte[] value = revokingDB.getUnchecked(key);
+    if (ArrayUtils.isEmpty(value)) {
+      throw new ItemNotFoundException("number: " + Arrays.toString(key) + " is not found!");
+    }
+    return new BytesCapsule(value);
+  }
 }

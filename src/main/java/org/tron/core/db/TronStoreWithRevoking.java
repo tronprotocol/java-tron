@@ -2,8 +2,12 @@ package org.tron.core.db;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Objects;
 
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +23,7 @@ import org.tron.core.exception.ItemNotFoundException;
 @Slf4j
 public abstract class TronStoreWithRevoking<T extends ProtoCapsule> extends TronDatabase<T> {
 
-  private IRevokingDB revokingDB;
+  protected IRevokingDB revokingDB;
   private TypeToken<T> token;
 
   protected TronStoreWithRevoking(String dbName) {
@@ -28,6 +32,11 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> extends Tron
     } else {
       this.revokingDB = new RevokingDBWithCachingNewValue(dbName);
     }
+  }
+
+  // only for test
+  protected TronStoreWithRevoking(String dbName, RevokingDatabase revokingDatabase) {
+      this.revokingDB = new RevokingDBWithCachingOldValue(dbName, (RevokingStore) revokingDatabase);
   }
 
   @Override
@@ -88,4 +97,16 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> extends Tron
   public void reset() {
     revokingDB.reset();
   }
+
+  @Override
+  public Iterator<Map.Entry<byte[], T>> iterator() {
+    return Iterators.transform(revokingDB.iterator(), e -> {
+      try {
+        return Maps.immutableEntry(e.getKey(), of(e.getValue()));
+      } catch (BadItemException e1) {
+        throw new RuntimeException(e1);
+      }
+    });
+  }
+
 }

@@ -15,4 +15,9 @@ public class TransactionHistoryStore extends TronStoreWithRevoking<TransactionIn
     super(dbName);
   }
 
+  @Override
+  public TransactionInfoCapsule get(byte[] key) throws BadItemException {
+    byte[] value = revokingDB.getUnchecked(key);
+    return ArrayUtils.isEmpty(value) ? null : new TransactionInfoCapsule(value);
+  }
 }

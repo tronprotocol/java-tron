@@ -4,6 +4,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
@@ -17,17 +19,19 @@ import org.tron.core.exception.ItemNotFoundException;
 public abstract class TronDatabase<T> implements Iterable<Map.Entry<byte[], T>>, Quitable {
 
   protected LevelDbDataSourceImpl dbSource;
+  @Getter
+  private String dbName;
 
   @Autowired(required = false)
   protected IndexHelper indexHelper;
 
   protected TronDatabase(String dbName) {
+    this.dbName = dbName;
     dbSource = new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName);
     dbSource.initDB();
   }
 
   protected TronDatabase() {
-    throw new IllegalStateException("This constructor is not allowed");
   }
 
   public LevelDbDataSourceImpl getDbSource() {

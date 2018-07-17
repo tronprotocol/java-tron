@@ -11,6 +11,7 @@ import org.tron.core.exception.ItemNotFoundException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public class RevokingDBWithCachingOldValue implements IRevokingDB {
   private RevokingStore revokingDatabase;
@@ -111,5 +112,15 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
   @Override
   public Iterator<Map.Entry<byte[], byte[]>> iterator() {
     return dbSource.iterator();
+  }
+
+  @Override
+  public Set<byte[]> getlatestValues(long limit) {
+    return dbSource.getlatestValues(limit);
+  }
+
+  @Override
+  public Set<byte[]> getValuesNext(byte[] key, long limit) {
+    return dbSource.getValuesNext(key, limit);
   }
 }

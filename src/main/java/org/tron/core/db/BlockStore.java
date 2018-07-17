@@ -15,23 +15,17 @@
 
 package org.tron.core.db;
 
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.db.common.iterator.BlockIterator;
 import org.tron.core.exception.BadItemException;
-import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.exception.StoreException;
 
 @Slf4j
 @Component
@@ -44,7 +38,7 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
 
   public List<BlockCapsule> getLimitNumber(long startNumber, long limit) {
     BlockId startBlockId = new BlockId(Sha256Hash.ZERO_HASH, startNumber);
-    return dbSource.getValuesNext(startBlockId.getBytes(), limit)
+    return revokingDB.getValuesNext(startBlockId.getBytes(), limit)
         .stream().map(bytes -> {
           try {
             return new BlockCapsule(bytes);
@@ -59,7 +53,7 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
 
   public List<BlockCapsule> getBlockByLatestNum(long getNum) {
 
-    return dbSource.getlatestValues(getNum)
+    return revokingDB.getlatestValues(getNum)
         .stream().map(bytes -> {
           try {
             return new BlockCapsule(bytes);
