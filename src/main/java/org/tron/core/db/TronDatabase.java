@@ -56,6 +56,10 @@ public abstract class TronDatabase<T> implements Iterable<Map.Entry<byte[], T>>,
   public abstract T get(byte[] key)
       throws InvalidProtocolBufferException, ItemNotFoundException, BadItemException;
 
+  public T getUnchecked(byte[] key) {
+    return null;
+  }
+
   public abstract boolean has(byte[] key);
 
   public String getName() {

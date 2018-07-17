@@ -23,19 +23,6 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
   }
 
   @Override
-  public TransactionCapsule get(byte[] key) throws BadItemException {
-    byte[] value = dbSource.getData(key);
-    return ArrayUtils.isEmpty(value) ? null : new TransactionCapsule(value);
-  }
-
-  @Override
-  public boolean has(byte[] key) {
-    byte[] transaction = dbSource.getData(key);
-    logger.info("address is {}, transaction is {}", key, transaction);
-    return null != transaction;
-  }
-
-  @Override
   public void put(byte[] key, TransactionCapsule item) {
     super.put(key, item);
     if (Objects.nonNull(indexHelper)) {
@@ -48,11 +35,6 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
    */
   public long getTotalTransactions() {
     return dbSource.getTotal();
-  }
-
-  @Override
-  public Iterator<Entry<byte[], TransactionCapsule>> iterator() {
-    return new TransactionIterator(dbSource.iterator());
   }
 
   @Override

@@ -13,10 +13,12 @@ import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
@@ -120,27 +122,24 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   //todo need to resolve levelDB'iterator close
   @Override
   public Iterator<Map.Entry<byte[],byte[]>> iterator() {
-    Set<WrappedByteArray> exists = new HashSet<>();
-    return iterator(exists);
+    Snapshot snapshot = previous;
+    while(snapshot.getPrevious() != null) {
+      snapshot = snapshot.getPrevious();
+    }
+
+    Map<WrappedByteArray, WrappedByteArray> all = new HashMap<>();
+    collect(all);
+    return Iterators.concat(
+        Iterators.transform(all.entrySet().iterator(), e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes())),
+        Iterators.filter(snapshot.iterator(), e -> !all.containsKey(WrappedByteArray.of(e.getKey()))));
   }
 
-  private Iterator<Map.Entry<byte[],byte[]>> iterator(Set<WrappedByteArray> exists) {
-    Set<WrappedByteArray> currentExists = new HashSet<>(exists);
-    Streams.stream(db)
-        .map(e -> WrappedByteArray.of(e.getKey().getBytes()))
-        .forEach(currentExists::add);
-
-    Iterator<Map.Entry<byte[],byte[]>> preIterator;
+  private void collect(Map<WrappedByteArray, WrappedByteArray> all) {
     if (previous.getClass() == SnapshotImpl.class) {
-      preIterator = Iterators.filter(((SnapshotImpl) previous).iterator(currentExists),
-          e -> !currentExists.contains(WrappedByteArray.of(e.getKey())));
-    } else {
-      preIterator = Iterators.filter(previous.iterator(), e -> !currentExists.contains(WrappedByteArray.of(e.getKey())));
+      collect(all);
     }
-    return Iterators.concat(
-        Iterators.transform(db.iterator(), e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes())),
-        preIterator);
 
+    Streams.stream(db).forEach(e -> all.put(WrappedByteArray.of(e.getKey().getBytes()), WrappedByteArray.of(e.getValue().getBytes())));
   }
 
   @Override

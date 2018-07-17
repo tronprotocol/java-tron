@@ -298,22 +298,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   }
 
-  @Override
-  public BytesCapsule get(byte[] key) {
-    return null;
-  }
-
-  @Override
-  public boolean has(byte[] key) {
-    return false;
-  }
-
-  private static DynamicPropertiesStore instance;
-
-  public static void destroy() {
-    instance = null;
-  }
-
   public String intArrayToString(int[] a) {
     StringBuilder sb = new StringBuilder();
     for (int i : a) {
@@ -338,7 +322,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getMaintenanceTimeInterval() {
-    return Optional.ofNullable(this.dbSource.getData(MAINTENANCE_TIME_INTERVAL))
+    return Optional.ofNullable(getUnchecked(MAINTENANCE_TIME_INTERVAL))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found MAINTENANCE_TIME_INTERVAL"));
@@ -351,7 +336,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public double getVoteRewardRate() {
-    return Optional.ofNullable(this.dbSource.getData(VOTE_REWARD_RATE))
+    return Optional.ofNullable(getUnchecked(VOTE_REWARD_RATE))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toStr)
         .map(Double::parseDouble)
         .orElseThrow(
@@ -365,7 +351,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public int getSingleRepeat() {
-    return Optional.ofNullable(this.dbSource.getData(SINGLE_REPEAT))
+    return Optional.ofNullable(getUnchecked(SINGLE_REPEAT))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toInt)
         .orElseThrow(
             () -> new IllegalArgumentException("not found SINGLE_REPEAT"));
@@ -378,7 +365,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public int getBlockFilledSlotsIndex() {
-    return Optional.ofNullable(this.dbSource.getData(BLOCK_FILLED_SLOTS_INDEX))
+    return Optional.ofNullable(getUnchecked(BLOCK_FILLED_SLOTS_INDEX))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toInt)
         .orElseThrow(
             () -> new IllegalArgumentException("not found BLOCK_FILLED_SLOTS_INDEX"));
@@ -391,7 +379,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public int getMaxFrozenNumber() {
-    return Optional.ofNullable(this.dbSource.getData(MAX_FROZEN_NUMBER))
+    return Optional.ofNullable(getUnchecked(MAX_FROZEN_NUMBER))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toInt)
         .orElseThrow(
             () -> new IllegalArgumentException("not found MAX_FROZEN_NUMBER"));
@@ -404,7 +393,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public int getMaxFrozenTime() {
-    return Optional.ofNullable(this.dbSource.getData(MAX_FROZEN_TIME))
+    return Optional.ofNullable(getUnchecked(MAX_FROZEN_TIME))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toInt)
         .orElseThrow(
             () -> new IllegalArgumentException("not found MAX_FROZEN_TIME"));
@@ -417,7 +407,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public int getMinFrozenTime() {
-    return Optional.ofNullable(this.dbSource.getData(MIN_FROZEN_TIME))
+    return Optional.ofNullable(getUnchecked(MIN_FROZEN_TIME))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toInt)
         .orElseThrow(
             () -> new IllegalArgumentException("not found MIN_FROZEN_TIME"));
@@ -430,7 +421,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public int getMaxFrozenSupplyNumber() {
-    return Optional.ofNullable(this.dbSource.getData(MAX_FROZEN_SUPPLY_NUMBER))
+    return Optional.ofNullable(getUnchecked(MAX_FROZEN_SUPPLY_NUMBER))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toInt)
         .orElseThrow(
             () -> new IllegalArgumentException("not found MAX_FROZEN_SUPPLY_NUMBER"));
@@ -443,7 +435,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public int getMaxFrozenSupplyTime() {
-    return Optional.ofNullable(this.dbSource.getData(MAX_FROZEN_SUPPLY_TIME))
+    return Optional.ofNullable(getUnchecked(MAX_FROZEN_SUPPLY_TIME))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toInt)
         .orElseThrow(
             () -> new IllegalArgumentException("not found MAX_FROZEN_SUPPLY_TIME"));
@@ -456,7 +449,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public int getMinFrozenSupplyTime() {
-    return Optional.ofNullable(this.dbSource.getData(MIN_FROZEN_SUPPLY_TIME))
+    return Optional.ofNullable(getUnchecked(MIN_FROZEN_SUPPLY_TIME))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toInt)
         .orElseThrow(
             () -> new IllegalArgumentException("not found MIN_FROZEN_SUPPLY_TIME"));
@@ -469,7 +463,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public int getWitnessAllowanceFrozenTime() {
-    return Optional.ofNullable(this.dbSource.getData(WITNESS_ALLOWANCE_FROZEN_TIME))
+    return Optional.ofNullable(getUnchecked(WITNESS_ALLOWANCE_FROZEN_TIME))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toInt)
         .orElseThrow(
             () -> new IllegalArgumentException("not found WITNESS_ALLOWANCE_FROZEN_TIME"));
@@ -482,7 +477,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getAccountUpgradeCost() {
-    return Optional.ofNullable(this.dbSource.getData(ACCOUNT_UPGRADE_COST))
+    return Optional.ofNullable(getUnchecked(ACCOUNT_UPGRADE_COST))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found ACCOUNT_UPGRADE_COST"));
@@ -495,7 +491,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getNonExistentAccountTransferMin() {
-    return Optional.ofNullable(this.dbSource.getData(NON_EXISTENT_ACCOUNT_TRANSFER_MIN))
+    return Optional.ofNullable(getUnchecked(NON_EXISTENT_ACCOUNT_TRANSFER_MIN))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found NON_EXISTENT_ACCOUNT_TRANSFER_MIN"));
@@ -508,7 +505,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getPublicNetUsage() {
-    return Optional.ofNullable(this.dbSource.getData(PUBLIC_NET_USAGE))
+    return Optional.ofNullable(getUnchecked(PUBLIC_NET_USAGE))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found PUBLIC_NET_USAGE"));
@@ -520,7 +518,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getPublicNetLimit() {
-    return Optional.ofNullable(this.dbSource.getData(PUBLIC_NET_LIMIT))
+    return Optional.ofNullable(getUnchecked(PUBLIC_NET_LIMIT))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found PUBLIC_NET_LIMIT"));
@@ -532,7 +531,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getPublicNetTime() {
-    return Optional.ofNullable(this.dbSource.getData(PUBLIC_NET_TIME))
+    return Optional.ofNullable(getUnchecked(PUBLIC_NET_TIME))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found PUBLIC_NET_TIME"));
@@ -544,7 +544,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getFreeNetLimit() {
-    return Optional.ofNullable(this.dbSource.getData(FREE_NET_LIMIT))
+    return Optional.ofNullable(getUnchecked(FREE_NET_LIMIT))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found FREE_NET_LIMIT"));
@@ -556,7 +557,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getTotalNetWeight() {
-    return Optional.ofNullable(this.dbSource.getData(TOTAL_NET_WEIGHT))
+    return Optional.ofNullable(getUnchecked(TOTAL_NET_WEIGHT))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_NET_WEIGHT"));
@@ -568,7 +570,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getTotalNetLimit() {
-    return Optional.ofNullable(this.dbSource.getData(TOTAL_NET_LIMIT))
+    return Optional.ofNullable(getUnchecked(TOTAL_NET_LIMIT))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_NET_LIMIT"));
@@ -580,7 +583,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getBlockNetUsage() {
-    return Optional.ofNullable(this.dbSource.getData(BLOCK_NET_USAGE))
+    return Optional.ofNullable(getUnchecked(BLOCK_NET_USAGE))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found BLOCK_NET_USAGE"));
@@ -592,7 +596,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getCreateAccountFee() {
-    return Optional.ofNullable(this.dbSource.getData(CREATE_ACCOUNT_FEE))
+    return Optional.ofNullable(getUnchecked(CREATE_ACCOUNT_FEE))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found CREATE_ACCOUNT_FEE"));
@@ -605,7 +610,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getTransactionFee() {
-    return Optional.ofNullable(this.dbSource.getData(TRANSACTION_FEE))
+    return Optional.ofNullable(getUnchecked(TRANSACTION_FEE))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found TRANSACTION_FEE"));
@@ -617,7 +623,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getTotalTransactionCost() {
-    return Optional.ofNullable(this.dbSource.getData(TOTAL_TRANSACTION_COST))
+    return Optional.ofNullable(getUnchecked(TOTAL_TRANSACTION_COST))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_TRANSACTION_COST"));
@@ -629,7 +636,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getTotalCreateAccountCost() {
-    return Optional.ofNullable(this.dbSource.getData(TOTAL_CREATE_ACCOUNT_COST))
+    return Optional.ofNullable(getUnchecked(TOTAL_CREATE_ACCOUNT_COST))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_CREATE_ACCOUNT_COST"));
@@ -641,7 +649,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getTotalCreateWitnessCost() {
-    return Optional.ofNullable(this.dbSource.getData(TOTAL_CREATE_WITNESS_COST))
+    return Optional.ofNullable(getUnchecked(TOTAL_CREATE_WITNESS_COST))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_CREATE_WITNESS_COST"));
@@ -654,7 +663,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public int[] getBlockFilledSlots() {
-    return Optional.ofNullable(this.dbSource.getData(BLOCK_FILLED_SLOTS))
+    return Optional.ofNullable(getUnchecked(BLOCK_FILLED_SLOTS))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toStr)
         .map(this::stringToIntArray)
         .orElseThrow(
@@ -662,7 +672,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public int getBlockFilledSlotsNumber() {
-    return Optional.ofNullable(this.dbSource.getData(BLOCK_FILLED_SLOTS_NUMBER))
+    return Optional.ofNullable(getUnchecked(BLOCK_FILLED_SLOTS_NUMBER))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toInt)
         .orElseThrow(
             () -> new IllegalArgumentException("not found BLOCK_FILLED_SLOTS_NUMBER"));
@@ -675,7 +686,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public int getMaxVoteNumber() {
-    return Optional.ofNullable(this.dbSource.getData(MAX_VOTE_NUMBER))
+    return Optional.ofNullable(getUnchecked(MAX_VOTE_NUMBER))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toInt)
         .orElseThrow(
             () -> new IllegalArgumentException("not found MAX_VOTE_NUMBER"));
@@ -706,7 +718,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
 
   public long getLatestSolidifiedBlockNum() {
-    return Optional.ofNullable(this.dbSource.getData(LATEST_SOLIDIFIED_BLOCK_NUM))
+    return Optional.ofNullable(getUnchecked(LATEST_SOLIDIFIED_BLOCK_NUM))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found latest SOLIDIFIED_BLOCK_NUM timestamp"));
@@ -717,7 +730,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
    * get timestamp of creating global latest block.
    */
   public long getLatestBlockHeaderTimestamp() {
-    return Optional.ofNullable(this.dbSource.getData(LATEST_BLOCK_HEADER_TIMESTAMP))
+    return Optional.ofNullable(getUnchecked(LATEST_BLOCK_HEADER_TIMESTAMP))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(() -> new IllegalArgumentException("not found latest block header timestamp"));
   }
@@ -726,13 +740,15 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
    * get number of global latest block.
    */
   public long getLatestBlockHeaderNumber() {
-    return Optional.ofNullable(this.dbSource.getData(LATEST_BLOCK_HEADER_NUMBER))
+    return Optional.ofNullable(getUnchecked(LATEST_BLOCK_HEADER_NUMBER))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(() -> new IllegalArgumentException("not found latest block header number"));
   }
 
   public int getStateFlag() {
-    return Optional.ofNullable(this.dbSource.getData(STATE_FLAG))
+    return Optional.ofNullable(getUnchecked(STATE_FLAG))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toInt)
         .orElseThrow(() -> new IllegalArgumentException("not found maintenance flag"));
   }
@@ -743,7 +759,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public Sha256Hash getLatestBlockHeaderHash() {
 
-    byte[] blockHash = Optional.ofNullable(this.dbSource.getData(LATEST_BLOCK_HEADER_HASH))
+    byte[] blockHash = Optional.ofNullable(getUnchecked(LATEST_BLOCK_HEADER_HASH))
+        .map(BytesCapsule::getData)
         .orElseThrow(() -> new IllegalArgumentException("not found block hash"));
     return Sha256Hash.wrap(blockHash);
   }
@@ -779,7 +796,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
 
   public long getNextMaintenanceTime() {
-    return Optional.ofNullable(this.dbSource.getData(NEXT_MAINTENANCE_TIME))
+    return Optional.ofNullable(getUnchecked(NEXT_MAINTENANCE_TIME))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found NEXT_MAINTENANCE_TIME"));

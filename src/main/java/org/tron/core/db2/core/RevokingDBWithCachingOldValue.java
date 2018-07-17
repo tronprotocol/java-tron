@@ -1,5 +1,6 @@
 package org.tron.core.db2.core;
 
+import com.google.common.cache.CacheBuilder;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.config.args.Args;
@@ -69,7 +70,11 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
 
   @Override
   public byte[] getUnchecked(byte[] key) {
-    return new byte[0];
+    try {
+      return get(key);
+    } catch (ItemNotFoundException e) {
+      return null;
+    }
   }
 
   @Override

@@ -308,4 +308,5 @@ public class SnapshotManager implements RevokingDatabase {
       }
     }
   }
+
 }

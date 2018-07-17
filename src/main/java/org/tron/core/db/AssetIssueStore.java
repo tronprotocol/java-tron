@@ -24,37 +24,12 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
     super(dbName);
   }
 
-  @Override
-  public AssetIssueCapsule get(byte[] key) {
-    byte[] value = dbSource.getData(key);
-    return ArrayUtils.isEmpty(value) ? null : new AssetIssueCapsule(value);
-  }
-
-  /**
-   * isAssetIssusExist fun.
-   *
-   * @param key the address of Account
-   */
-  @Override
-  public boolean has(byte[] key) {
-    byte[] assetIssue = dbSource.getData(key);
-    return null != assetIssue;
-  }
-
-  @Override
-  public void put(byte[] key, AssetIssueCapsule item) {
-    super.put(key, item);
-    if (Objects.nonNull(indexHelper)) {
-      indexHelper.update(item.getInstance());
-    }
-  }
-
   /**
    * get all asset issues.
    */
   public List<AssetIssueCapsule> getAllAssetIssues() {
     return dbSource.allKeys().stream()
-        .map(this::get)
+        .map(this::getUnchecked)
         .collect(Collectors.toList());
   }
 
@@ -63,7 +38,7 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
       return null;
     }
     List<AssetIssueCapsule> assetIssueList = dbSource.allKeys().stream()
-        .map(this::get)
+        .map(this::getUnchecked)
         .collect(Collectors.toList());
     if (assetIssueList.size() <= offset) {
       return null;
@@ -77,23 +52,4 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
     return assetIssueList.subList((int)offset,(int)end);
   }
 
-  @Override
-  public Iterator<Entry<byte[], AssetIssueCapsule>> iterator() {
-    return new AssetIssueIterator(dbSource.iterator());
-  }
-
-  @Override
-  public void delete(byte[] key) {
-    deleteIndex(key);
-    super.delete(key);
-  }
-
-  private void deleteIndex(byte[] key) {
-    if (Objects.nonNull(indexHelper)) {
-      AssetIssueCapsule item = get(key);
-      if (Objects.nonNull(item)) {
-        indexHelper.remove(item.getInstance());
-      }
-    }
-  }
 }

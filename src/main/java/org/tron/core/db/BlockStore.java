@@ -37,28 +37,9 @@ import org.tron.core.exception.StoreException;
 @Component
 public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
 
-  private BlockCapsule head;
-
   @Autowired
   private BlockStore(@Value("block") String dbName) {
     super(dbName);
-  }
-
-  @Override
-  public void put(byte[] key, BlockCapsule item) {
-    super.put(key, item);
-    if (Objects.nonNull(indexHelper)) {
-      indexHelper.update(item.getInstance());
-    }
-  }
-
-  @Override
-  public BlockCapsule get(byte[] key) throws ItemNotFoundException, BadItemException {
-    byte[] value = dbSource.getData(key);
-    if (ArrayUtils.isEmpty(value)) {
-      throw new ItemNotFoundException();
-    }
-    return new BlockCapsule(value);
   }
 
   public List<BlockCapsule> getLimitNumber(long startNumber, long limit) {
@@ -89,34 +70,5 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
         })
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
-  }
-
-  @Override
-  public boolean has(byte[] key) {
-    byte[] block = dbSource.getData(key);
-    logger.info("address is {}, block is {}", key, block);
-    return null != block;
-  }
-
-  @Override
-  public Iterator<Entry<byte[], BlockCapsule>> iterator() {
-    return new BlockIterator(dbSource.iterator());
-  }
-
-  @Override
-  public void delete(byte[] key) {
-    deleteIndex(key);
-    super.delete(key);
-  }
-
-  private void deleteIndex(byte[] key) {
-    if (Objects.nonNull(indexHelper)) {
-      try {
-        BlockCapsule item = get(key);
-        indexHelper.remove(item.getInstance());
-      } catch (StoreException e) {
-        return;
-      }
-    }
   }
 }

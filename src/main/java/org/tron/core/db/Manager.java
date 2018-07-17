@@ -372,7 +372,7 @@ public class Manager {
                 accountCapsule = new AccountCapsule(ByteString.EMPTY,
                     address, AccountType.AssetIssue, 0L);
               } else {
-                accountCapsule = this.accountStore.get(keyAddress);
+                accountCapsule = this.accountStore.getUnchecked(keyAddress);
               }
               accountCapsule.setIsWitness(true);
               this.accountStore.put(keyAddress, accountCapsule);
@@ -390,7 +390,7 @@ public class Manager {
 
   public void adjustBalance(byte[] accountAddress, long amount)
       throws BalanceInsufficientException {
-    AccountCapsule account = getAccountStore().get(accountAddress);
+    AccountCapsule account = getAccountStore().getUnchecked(accountAddress);
     adjustBalance(account, amount);
   }
 
@@ -416,7 +416,7 @@ public class Manager {
 
   public void adjustAllowance(byte[] accountAddress, long amount)
       throws BalanceInsufficientException {
-    AccountCapsule account = getAccountStore().get(accountAddress);
+    AccountCapsule account = getAccountStore().getUnchecked(accountAddress);
     long allowance = account.getAllowance();
     if (amount == 0) {
       return;
@@ -449,7 +449,7 @@ public class Manager {
         throw new TaposException(str);
 
       }
-    } catch (ItemNotFoundException e) {
+    } catch (ItemNotFoundException | BadItemException e) {
       String str = String.
           format("Tapos failed, block not found, ref block %s, %s , solid block %s head block %s",
               ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
@@ -476,15 +476,10 @@ public class Manager {
   }
 
   void validateDup(TransactionCapsule transactionCapsule) throws DupTransactionException {
-    try {
-      if (getTransactionStore().get(transactionCapsule.getTransactionId().getBytes()) != null) {
+      if (getTransactionStore().getUnchecked(transactionCapsule.getTransactionId().getBytes()) != null) {
         logger.debug(ByteArray.toHexString(transactionCapsule.getTransactionId().getBytes()));
         throw new DupTransactionException("dup trans");
       }
-    } catch (BadItemException e) {
-      logger.debug(ByteArray.toHexString(transactionCapsule.getTransactionId().getBytes()));
-      throw new DupTransactionException("dup trans");
-    }
   }
 
   /**
@@ -528,7 +523,7 @@ public class Manager {
     for (Transaction.Contract contract : contracts) {
       if (contract.getType() == TransferContract || contract.getType() == TransferAssetContract) {
         byte[] address = TransactionCapsule.getOwner(contract);
-        AccountCapsule accountCapsule = this.getAccountStore().get(address);
+        AccountCapsule accountCapsule = this.getAccountStore().getUnchecked(address);
         if (accountCapsule == null) {
           throw new HighFreqException("account not exists");
         }
@@ -783,7 +778,7 @@ public class Manager {
     for (int i = 1; i < slot; ++i) {
       if (!witnessController.getScheduledWitness(i).equals(block.getWitnessAddress())) {
         WitnessCapsule w =
-            this.witnessStore.get(StringUtil.createDbKey(witnessController.getScheduledWitness(i)));
+            this.witnessStore.getUnchecked(StringUtil.createDbKey(witnessController.getScheduledWitness(i)));
         w.setTotalMissed(w.getTotalMissed() + 1);
         this.witnessStore.put(w.createDbKey(), w);
         logger.info(
@@ -1210,7 +1205,7 @@ public class Manager {
   public void updateSignedWitness(BlockCapsule block) {
     // TODO: add verification
     WitnessCapsule witnessCapsule =
-        witnessStore.get(
+        witnessStore.getUnchecked(
             block.getInstance().getBlockHeader().getRawData().getWitnessAddress().toByteArray());
     witnessCapsule.setTotalProduced(witnessCapsule.getTotalProduced() + 1);
     witnessCapsule.setLatestBlockNum(block.getNum());

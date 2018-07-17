@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.exception.BadItemException;
 
 @Component
 public class AccountIndexStore extends TronStoreWithRevoking<BytesCapsule> {
@@ -24,28 +25,11 @@ public class AccountIndexStore extends TronStoreWithRevoking<BytesCapsule> {
   }
 
   public byte[] get(ByteString name) {
-    BytesCapsule bytesCapsule = get(name.toByteArray());
+    BytesCapsule bytesCapsule = getUnchecked(name.toByteArray());
     if (Objects.nonNull(bytesCapsule)) {
       return bytesCapsule.getData();
     }
     return null;
   }
 
-  @Override
-  public BytesCapsule get(byte[] key) {
-    byte[] value = dbSource.getData(key);
-    if (ArrayUtils.isEmpty(value)) {
-      return null;
-    }
-    return new BytesCapsule(value);
-  }
-
-  @Override
-  public boolean has(byte[] key) {
-    byte[] value = dbSource.getData(key);
-    if (ArrayUtils.isEmpty(value)) {
-      return false;
-    }
-    return true;
-  }
 }

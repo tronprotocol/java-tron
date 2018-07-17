@@ -5,9 +5,7 @@ import lombok.Setter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.common.iterator.AbstractIterator;
 import org.tron.core.db2.common.IRevokingDB;
-import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 
 import java.util.Iterator;
@@ -22,7 +20,7 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
   @Autowired
   private SnapshotManager snapshotManager;
 
-  protected RevokingDBWithCachingNewValue(String dbName) {
+  public RevokingDBWithCachingNewValue(String dbName) {
     this.dbName = dbName;
     head = new SnapshotRoot(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName);
     snapshotManager.add(this);
@@ -66,9 +64,8 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
     try {
       return get(key);
     } catch (ItemNotFoundException e) {
+      return null;
     }
-
-    return null;
   }
 
   @Override

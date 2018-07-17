@@ -24,26 +24,6 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
     super(dbName);
   }
 
-  @Override
-  public WitnessCapsule get(byte[] key) {
-    byte[] value = dbSource.getData(key);
-    return ArrayUtils.isEmpty(value) ? null : new WitnessCapsule(value);
-  }
-
-  @Override
-  public boolean has(byte[] key) {
-    byte[] account = dbSource.getData(key);
-    return null != account;
-  }
-
-  @Override
-  public void put(byte[] key, WitnessCapsule item) {
-    super.put(key, item);
-    if (Objects.nonNull(indexHelper)) {
-      indexHelper.update(item.getInstance());
-    }
-  }
-
   /**
    * get all witnesses.
    */
@@ -55,23 +35,4 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
         .collect(Collectors.toList());
   }
 
-  @Override
-  public Iterator<Entry<byte[], WitnessCapsule>> iterator() {
-    return new WitnessIterator(dbSource.iterator());
-  }
-
-  @Override
-  public void delete(byte[] key) {
-    deleteIndex(key);
-    super.delete(key);
-  }
-
-  private void deleteIndex(byte[] key) {
-    if (Objects.nonNull(indexHelper)) {
-      WitnessCapsule item = get(key);
-      if (Objects.nonNull(item)) {
-        indexHelper.remove(item.getInstance());
-      }
-    }
-  }
 }
