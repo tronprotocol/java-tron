@@ -144,8 +144,6 @@ public class PeerConnection extends Channel {
   }
 
   public void cleanInvGarbage() {
-    //清理Inv数据垃圾箱
-    //120秒没有刷新的Inv数据会被清空
     long oldestTimestamp =
         Time.getCurrentMillis() - MAX_INVENTORY_SIZE_IN_MINUTES * 60 * 1000;
 

@@ -103,12 +103,12 @@ public class SyncPool {
       }
     }, 30, 16, TimeUnit.SECONDS);
 
-/*    logExecutor.scheduleWithFixedDelay(() -> {
+    logExecutor.scheduleWithFixedDelay(() -> {
       try {
         logActivePeers();
       } catch (Throwable t) {
       }
-    }, 30, 10, TimeUnit.SECONDS);*/
+    }, 30, 10, TimeUnit.SECONDS);
   }
 
   private void fillUp() {
