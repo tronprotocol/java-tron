@@ -279,6 +279,7 @@ public class WitnessController {
         }
       });
 
+
       sizeCount++;
       votesStore.delete(next.getKey());
     }
@@ -297,67 +298,71 @@ public class WitnessController {
 
     Map<ByteString, Long> countWitness = countVote(votesStore);
 
-    List<ByteString> currentWits = getActiveWitnesses();
+    //Only possible during the initialization phase
+    if (countWitness.size() == 0) {
+      logger.info("No vote, no change to witness.");
+    } else {
+      List<ByteString> currentWits = getActiveWitnesses();
 
-    List<ByteString> newWitnessAddressList = new ArrayList<>();
-    witnessStore.getAllWitnesses().forEach(witnessCapsule -> {
-      newWitnessAddressList.add(witnessCapsule.getAddress());
-    });
+      List<ByteString> newWitnessAddressList = new ArrayList<>();
+      witnessStore.getAllWitnesses().forEach(witnessCapsule -> {
+        newWitnessAddressList.add(witnessCapsule.getAddress());
+      });
 
-    countWitness.forEach((address, voteCount) -> {
-      final WitnessCapsule witnessCapsule = witnessStore
-          .get(StringUtil.createDbKey(address));
-      if (null == witnessCapsule) {
-        logger.warn("witnessCapsule is null.address is {}",
-            StringUtil.createReadableString(address));
-        return;
-      }
+      countWitness.forEach((address, voteCount) -> {
+        final WitnessCapsule witnessCapsule = witnessStore
+            .get(StringUtil.createDbKey(address));
+        if (null == witnessCapsule) {
+          logger.warn("witnessCapsule is null.address is {}",
+              StringUtil.createReadableString(address));
+          return;
+        }
 
-      AccountCapsule witnessAccountCapsule = accountStore
-          .get(StringUtil.createDbKey(address));
-      if (witnessAccountCapsule == null) {
-        logger.warn(
-            "witnessAccount[" + StringUtil.createReadableString(address) + "] not exists");
+        AccountCapsule witnessAccountCapsule = accountStore
+            .get(StringUtil.createDbKey(address));
+        if (witnessAccountCapsule == null) {
+          logger.warn(
+              "witnessAccount[" + StringUtil.createReadableString(address) + "] not exists");
+        } else {
+          witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
+          witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
+          logger.info("address is {}  ,countVote is {}", witnessCapsule.createReadableString(),
+              witnessCapsule.getVoteCount());
+        }
+      });
+
+      sortWitness(newWitnessAddressList);
+      if (newWitnessAddressList.size() > ChainConstant.MAX_ACTIVE_WITNESS_NUM) {
+        setActiveWitnesses(newWitnessAddressList.subList(0, ChainConstant.MAX_ACTIVE_WITNESS_NUM));
       } else {
-        witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
-        witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
-        logger.info("address is {}  ,countVote is {}", witnessCapsule.createReadableString(),
-            witnessCapsule.getVoteCount());
+        setActiveWitnesses(newWitnessAddressList);
       }
-    });
 
-    sortWitness(newWitnessAddressList);
-    if (newWitnessAddressList.size() > ChainConstant.MAX_ACTIVE_WITNESS_NUM) {
-      setActiveWitnesses(newWitnessAddressList.subList(0, ChainConstant.MAX_ACTIVE_WITNESS_NUM));
-    } else {
-      setActiveWitnesses(newWitnessAddressList);
+      if (newWitnessAddressList.size() > ChainConstant.WITNESS_STANDBY_LENGTH) {
+        payStandbyWitness(newWitnessAddressList.subList(0, ChainConstant.WITNESS_STANDBY_LENGTH));
+      } else {
+        payStandbyWitness(newWitnessAddressList);
+      }
+
+      List<ByteString> newWits = getActiveWitnesses();
+      if (witnessSetChanged(currentWits, newWits)) {
+        currentWits.forEach(address -> {
+          WitnessCapsule witnessCapsule = getWitnesseByAddress(address);
+          witnessCapsule.setIsJobs(false);
+          witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
+        });
+
+        newWits.forEach(address -> {
+          WitnessCapsule witnessCapsule = getWitnesseByAddress(address);
+          witnessCapsule.setIsJobs(true);
+          witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
+        });
+      }
+
+      logger.info(
+          "updateWitness,before:{} ", StringUtil.getAddressStringList(currentWits)
+              + ",\nafter:{} " + StringUtil.getAddressStringList(newWits));
     }
-
-    if (newWitnessAddressList.size() > ChainConstant.WITNESS_STANDBY_LENGTH) {
-      payStandbyWitness(newWitnessAddressList.subList(0, ChainConstant.WITNESS_STANDBY_LENGTH));
-    } else {
-      payStandbyWitness(newWitnessAddressList);
-    }
-
-    List<ByteString> newWits = getActiveWitnesses();
-    if (witnessSetChanged(currentWits, newWits)) {
-      currentWits.forEach(address -> {
-        WitnessCapsule witnessCapsule = getWitnesseByAddress(address);
-        witnessCapsule.setIsJobs(false);
-        witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
-      });
-
-      newWits.forEach(address -> {
-        WitnessCapsule witnessCapsule = getWitnesseByAddress(address);
-        witnessCapsule.setIsJobs(true);
-        witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
-      });
-    }
-
-    logger.info(
-        "updateWitness,before:{} ", StringUtil.getAddressStringList(currentWits)
-            + ",\nafter:{} " + StringUtil.getAddressStringList(newWits));
-
   }
 
   private static boolean witnessSetChanged(List<ByteString> list1, List<ByteString> list2) {
