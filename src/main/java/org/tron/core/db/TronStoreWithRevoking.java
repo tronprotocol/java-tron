@@ -24,7 +24,7 @@ import org.tron.core.exception.ItemNotFoundException;
 public abstract class TronStoreWithRevoking<T extends ProtoCapsule> extends TronDatabase<T> {
 
   protected IRevokingDB revokingDB;
-  private TypeToken<T> token;
+  private TypeToken<T> token = new TypeToken<T>(getClass()) {};
 
   protected TronStoreWithRevoking(String dbName) {
     if (true) {
