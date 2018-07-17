@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.AbstractRevokingStore;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.Key;
@@ -20,7 +19,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
@@ -134,7 +132,6 @@ public class SnapshotManager implements RevokingDatabase {
 
   @Override
   public void shutdown() {
-    throw new UnsupportedOperationException();
   }
 
   public void flush() {

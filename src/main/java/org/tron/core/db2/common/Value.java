@@ -2,10 +2,7 @@ package org.tron.core.db2.common;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import org.aspectj.org.eclipse.jdt.core.dom.PostfixExpression;
 import org.tron.core.db.common.WrappedByteArray;
-
-import java.awt.image.ImageConsumer;
 
 @EqualsAndHashCode(exclude = "operator")
 public final class Value implements Encoder, Decoder<Value> {

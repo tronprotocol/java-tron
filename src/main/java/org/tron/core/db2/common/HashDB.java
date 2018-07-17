@@ -1,7 +1,5 @@
 package org.tron.core.db2.common;
 
-import org.tron.core.db.common.iterator.DBIterator;
-
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;

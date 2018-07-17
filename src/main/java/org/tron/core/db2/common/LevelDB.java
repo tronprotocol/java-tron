@@ -1,9 +1,6 @@
 package org.tron.core.db2.common;
 
 import com.google.common.collect.Maps;
-import org.iq80.leveldb.DBException;
-import org.iq80.leveldb.Snapshot;
-import org.iq80.leveldb.WriteBatch;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.db.common.WrappedByteArray;
