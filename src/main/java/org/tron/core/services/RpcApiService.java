@@ -73,6 +73,7 @@ import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
@@ -908,6 +909,13 @@ public class RpcApiService implements Service {
     public void listProposals(EmptyMessage request,
         StreamObserver<ProposalList> responseObserver) {
       responseObserver.onNext(wallet.getProposalList());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getChainParameters(EmptyMessage request,
+        StreamObserver<Protocol.ChainParameters> responseObserver) {
+      responseObserver.onNext(wallet.getChainParameters());
       responseObserver.onCompleted();
     }
 
