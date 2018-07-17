@@ -413,9 +413,11 @@ public class Wallet {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     List<AssetIssueCapsule> assetIssueList = dbManager.getAssetIssueStore()
         .getAssetIssuesPaginated(offset, limit);
-    if (null == assetIssueList || assetIssueList.isEmpty()) {
+
+    if(CollectionUtils.isEmpty(assetIssueList)) {
       return null;
     }
+
     assetIssueList.forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
     return builder.build();
   }
