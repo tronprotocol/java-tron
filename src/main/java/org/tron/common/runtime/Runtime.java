@@ -181,8 +181,9 @@ public class Runtime {
       InternalTransaction internalTransaction = new InternalTransaction(trx,
           contract.getOwnerAddress().toByteArray(),
           contract.getContractAddress().toByteArray(),
-          contract.getCallValue().isEmpty() ? new Byte("0") : contract.getCallValue().toByteArray()[0]);
-      this.program = new Program(null, code, programInvoke,internalTransaction, config);
+          contract.getCallValue().isEmpty() ? new Byte("0")
+              : contract.getCallValue().toByteArray()[0]);
+      this.program = new Program(null, code, programInvoke, internalTransaction, config);
     }
 
     //transfer from callerAddress to targetAddress according to callValue
@@ -217,7 +218,8 @@ public class Runtime {
       InternalTransaction internalTransaction = new InternalTransaction(trx,
           contract.getOwnerAddress().toByteArray(),
           newSmartContract.getContractAddress().toByteArray(),
-          newSmartContract.getCallValue().isEmpty() ? new Byte("0") : newSmartContract.getCallValue().toByteArray()[0]);
+          newSmartContract.getCallValue().isEmpty() ? new Byte("0")
+              : newSmartContract.getCallValue().toByteArray()[0]);
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executerType, trx,
               block, deposit);
