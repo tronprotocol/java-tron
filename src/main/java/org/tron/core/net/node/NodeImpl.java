@@ -181,8 +181,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     void sendInv() {
       send.forEach((peer, ids) ->
-          ids.forEach((key, value) -> {  //区块和交易各发一条消息，所有的区块在一条消息，所有的交易在一条消息
-            if (key.equals(InventoryType.BLOCK)) { //block消息要进行一下排序
+          ids.forEach((key, value) -> {
+            if (key.equals(InventoryType.BLOCK)) {
               value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
             }
             peer.sendMessage(new InventoryMessage(value, key));
@@ -875,7 +875,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     if (!isAccept) {
       ReasonCode finalReason = reason;
       getActivePeer().stream()
-          .filter(peer -> peer.getBlockInProc().contains(block.getBlockId())) // 待获取块集合包含这个区块的节点
+          .filter(peer -> peer.getBlockInProc().contains(block.getBlockId()))
           .forEach(peer -> disconnectPeer(peer, finalReason));
     }
     isHandleSyncBlockActive = true;
@@ -965,7 +965,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       peer.setNeedSyncFromUs(false);
     } else {
       peer.setNeedSyncFromUs(true);
-      remainNum = del.getHeadBlockId().getNum() - blockIds.peekLast().getNum();  //计算剩余的区块数
+      remainNum = del.getHeadBlockId().getNum() - blockIds.peekLast().getNum();
     }
 
     //TODO: need a block older than revokingDB size exception. otherwise will be a dead loop here
@@ -1014,7 +1014,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       } else {
         transactions.add(((TransactionMessage) msg).getTransactionCapsule().getInstance());
         size += ((TransactionMessage) msg).getTransactionCapsule().getInstance().getSerializedSize();
-        if (transactions.size() % maxTrxsCnt == 0 || size > maxTrxsSize) {  //交易集合满了，发送一次交易数据信息
+        if (transactions.size() % maxTrxsCnt == 0 || size > maxTrxsSize) {
           peer.sendMessage(new TransactionsMessage(transactions));
           transactions = Lists.newArrayList();
           size = 0;
@@ -1118,7 +1118,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           }
         } else if (!blockIdWeGet.isEmpty()) {
           while (!peer.getSyncBlockToFetch().isEmpty()) {
-            if (!peer.getSyncBlockToFetch().peekLast().equals(blockIdWeGet.peekFirst())) {  //缺失块的集合至多只有第一个是和待抓取的区块集合是重复的
+            if (!peer.getSyncBlockToFetch().peekLast().equals(blockIdWeGet.peekFirst())) {
               peer.getSyncBlockToFetch().pollLast();
             } else {
               break;
@@ -1220,7 +1220,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
               request.add(blockId);
               //TODO: check max block num to fetch from one peer.
               if (send.get(peer).size()
-                  > MAX_BLOCKS_SYNC_FROM_ONE_PEER) { //Max Blocks peer get one time  //限制单个节点每次请求的区块数量
+                  > MAX_BLOCKS_SYNC_FROM_ONE_PEER) { //Max Blocks peer get one time
                 break;
               }
             }
