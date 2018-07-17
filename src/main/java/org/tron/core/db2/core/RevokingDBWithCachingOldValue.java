@@ -1,16 +1,13 @@
 package org.tron.core.db2.core;
 
-import com.google.common.cache.CacheBuilder;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.AbstractRevokingStore;
-import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.RevokingStore;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.exception.ItemNotFoundException;
 
-import javax.xml.crypto.Data;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
@@ -79,7 +76,7 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
 
   @Override
   public void close() {
-
+    dbSource.closeDB();
   }
 
   @Override
