@@ -90,7 +90,7 @@ message AssetIssueContract {
   int32 num = 8;
   int64 start_time = 9;
   int64 end_time = 10;
-  int64 order = 11;
+  int64 order = 11; // the order of tokens of the same name
   int32 vote_score = 16;
   bytes description = 20;
   bytes url = 21;
@@ -105,6 +105,7 @@ message ParticipateAssetIssueContract {
   bytes to_address = 2;
   bytes asset_name = 3; // the name of target asset
   int64 amount = 4; // the amount of drops
+  int64 order = 5; // the order of tokens of the same name
 }
 
 message FreezeBalanceContract {
