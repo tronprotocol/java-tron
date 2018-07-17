@@ -134,7 +134,7 @@ message UpdateAssetContract {
 
 message CreateSmartContract {
   bytes owner_address = 1;
-  SmartContract new_contrect = 2;
+  SmartContract new_contract = 2;
 }
 
 message TriggerSmartContract {
