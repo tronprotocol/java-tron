@@ -83,6 +83,7 @@ import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
+import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.SmartContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.TriggerSmartContract;
@@ -454,24 +455,18 @@ public class Wallet {
     return builder.build();
   }
 
-  public AssetIssueList getAssetIssueByName(ByteString assetName) {
+  public AssetIssueContract getAssetIssueByName(ByteString assetName) {
     if (assetName == null || assetName.size() == 0) {
       return null;
     }
-    AssetIssueList.Builder builder = AssetIssueList.newBuilder();
-    String name = assetName.toStringUtf8();
-
-    long order = 0;
-    byte[] key = name.getBytes();
-    AssetIssueCapsule assetIssueCapsule = this.dbManager.getAssetIssueStore().get(key);
-    while (assetIssueCapsule != null) {
-      builder.addAssetIssue(assetIssueCapsule.getInstance());
-      order++;
-      String nameKey = name + order;
-      key = nameKey.getBytes();
-      assetIssueCapsule = this.dbManager.getAssetIssueStore().get(key);
+    List<AssetIssueCapsule> assetIssueCapsuleList = dbManager.getAssetIssueStore()
+        .getAllAssetIssues();
+    for (AssetIssueCapsule assetIssueCapsule : assetIssueCapsuleList) {
+      if (assetName.equals(assetIssueCapsule.getName())) {
+        return assetIssueCapsule.getInstance();
+      }
     }
-    return builder.build();
+    return null;
   }
 
   public NumberMessage totalTransaction() {
