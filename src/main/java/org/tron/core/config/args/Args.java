@@ -34,6 +34,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
@@ -77,6 +78,9 @@ public class Args {
 
   @Parameter(names = {"--storage-db-directory"}, description = "Storage db directory")
   private String storageDbDirectory = "";
+
+  @Parameter(names = {"--storage-db-version"}, description = "Storage db version.(1 or 2)")
+  private String storageDbVersion = "";
 
   @Parameter(names = {"--storage-index-directory"}, description = "Storage index directory")
   private String storageIndexDirectory = "";
@@ -377,6 +381,11 @@ public class Args {
     }
 
     INSTANCE.storage = new Storage();
+    INSTANCE.storage.setDbVersion(Optional.ofNullable(INSTANCE.storageDbVersion)
+        .filter(StringUtils::isNotEmpty)
+        .map(Integer::valueOf)
+        .orElse(Storage.getDbVersionFromConfig(config)));
+
     INSTANCE.storage.setDbDirectory(Optional.ofNullable(INSTANCE.storageDbDirectory)
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getDbDirectoryFromConfig(config)));

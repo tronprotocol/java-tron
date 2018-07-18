@@ -14,6 +14,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.core.capsule.ProtoCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.AbstractRevokingStore.RevokingTuple;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.core.RevokingDBWithCachingNewValue;
@@ -28,10 +29,13 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> extends Tron
   private TypeToken<T> token = new TypeToken<T>(getClass()) {};
 
   protected TronStoreWithRevoking(String dbName) {
-    if (true) {
+    int dbVersion = Args.getInstance().getStorage().getDbVersion();
+    if (dbVersion == 1) {
       this.revokingDB = new RevokingDBWithCachingOldValue(dbName);
-    } else {
+    } else if (dbVersion == 2) {
       this.revokingDB = new RevokingDBWithCachingNewValue(dbName);
+    } else {
+      throw new RuntimeException("db version is error.");
     }
   }
 
