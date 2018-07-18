@@ -98,7 +98,7 @@ public class TransferAssetActuatorTest {
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
             ByteString.copyFromUtf8("owner"),
             AccountType.AssetIssue);
-    ownerCapsule.addAsset(ASSET_NAME, OWNER_ASSET_BALANCE);
+    ownerCapsule.addAsset(ASSET_NAME.getBytes(), OWNER_ASSET_BALANCE);
 
     AccountCapsule toAccountCapsule =
         new AccountCapsule(
@@ -128,7 +128,7 @@ public class TransferAssetActuatorTest {
   public void createAsset(String assetName) {
     AccountCapsule ownerCapsule = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
-    ownerCapsule.addAsset(assetName, OWNER_ASSET_BALANCE);
+    ownerCapsule.addAsset(assetName.getBytes(), OWNER_ASSET_BALANCE);
 
     AssetIssueContract assetIssueContract =
         AssetIssueContract.newBuilder()
@@ -403,7 +403,7 @@ public class TransferAssetActuatorTest {
   public void addOverflowTest() {
     // First, increase the to balance. Else can't complete this test case.
     AccountCapsule toAccount = dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
-    toAccount.addAsset(ASSET_NAME, Long.MAX_VALUE);
+    toAccount.addAsset(ASSET_NAME.getBytes(), Long.MAX_VALUE);
     dbManager.getAccountStore().put(ByteArray.fromHexString(TO_ADDRESS), toAccount);
     TransferAssetActuator actuator = new TransferAssetActuator(getContract(1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -514,7 +514,7 @@ public class TransferAssetActuatorTest {
             ByteString.copyFrom(ByteArray.fromHexString(ownerAsset_ADDRESS)),
             ByteString.copyFromUtf8("ownerAsset"),
             AccountType.AssetIssue);
-    ownerAssetCapsule.addAsset(ownerASSET_NAME, OWNER_ASSET_Test_BALANCE);
+    ownerAssetCapsule.addAsset(ownerASSET_NAME.getBytes(), OWNER_ASSET_Test_BALANCE);
     AssetIssueContract assetIssueTestContract =
         AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAsset_ADDRESS)))

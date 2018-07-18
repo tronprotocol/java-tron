@@ -299,15 +299,16 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   /**
    * add asset.
    */
-  public boolean addAsset(String key, Long value) {
+  public boolean addAsset(byte[] key, long value) {
     Map<String, Long> assetMap = this.account.getAssetMap();
+    String nameKey = ByteArray.toStr(key);
     if (!assetMap.isEmpty()) {
-      if (assetMap.containsKey(key)) {
+      if (assetMap.containsKey(nameKey)) {
         return false;
       }
     }
 
-    this.account = this.account.toBuilder().putAsset(key, value).build();
+    this.account = this.account.toBuilder().putAsset(nameKey, value).build();
 
     return true;
   }

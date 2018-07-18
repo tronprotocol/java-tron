@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -89,8 +88,7 @@ public class AssetIssueActuator extends AbstractActuator {
       }
 
       accountCapsule.setAssetIssuedName(assetIssueCapsule.createDbKey());
-      accountCapsule.addAsset(ByteArray.toStr(assetIssueContract.getName().toByteArray()),
-          remainSupply);
+      accountCapsule.addAsset(assetIssueCapsule.createDbKey(), remainSupply);
       accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
           .addAllFrozenSupply(frozenList).build());
 

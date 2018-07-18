@@ -94,12 +94,12 @@ public class AccountCapsuleTest {
     }
     String key = nameAdd;
     long value = 11L;
-    boolean addAsssetBoolean = accountCapsuleTest.addAsset(key, value);
+    boolean addAsssetBoolean = accountCapsuleTest.addAsset(key.getBytes(), value);
     Assert.assertFalse(addAsssetBoolean);
 
     String keyName = "TokenTest";
     long amountValue = 33L;
-    boolean addAsssetTrue = accountCapsuleTest.addAsset(keyName, amountValue);
+    boolean addAsssetTrue = accountCapsuleTest.addAsset(keyName.getBytes(), amountValue);
     Assert.assertTrue(addAsssetTrue);
   }
 

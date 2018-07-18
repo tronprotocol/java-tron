@@ -170,7 +170,7 @@ public class ParticipateAssetIssueActuatorTest {
         .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
     AccountCapsule toAccountCapsule = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(TO_ADDRESS));
-    toAccountCapsule.addAsset(ASSET_NAME, TOTAL_SUPPLY);
+    toAccountCapsule.addAsset(ASSET_NAME.getBytes(), TOTAL_SUPPLY);
     dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
   }
 
@@ -193,7 +193,7 @@ public class ParticipateAssetIssueActuatorTest {
         .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
     AccountCapsule toAccountCapsule = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(TO_ADDRESS));
-    toAccountCapsule.addAsset(assetName, TOTAL_SUPPLY);
+    toAccountCapsule.addAsset(assetName.getBytes(), TOTAL_SUPPLY);
     dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
   }
 
@@ -216,7 +216,7 @@ public class ParticipateAssetIssueActuatorTest {
         .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
     AccountCapsule toAccountCapsule = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(TO_ADDRESS));
-    toAccountCapsule.addAsset(ASSET_NAME, TOTAL_SUPPLY);
+    toAccountCapsule.addAsset(ASSET_NAME.getBytes(), TOTAL_SUPPLY);
     dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
   }
 
@@ -755,7 +755,7 @@ public class ParticipateAssetIssueActuatorTest {
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     // First, increase the owner asset balance. Else can't complete this test case.
     AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-    owner.addAsset(ASSET_NAME, Long.MAX_VALUE);
+    owner.addAsset(ASSET_NAME.getBytes(), Long.MAX_VALUE);
     dbManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(
         getContract(1L),
@@ -851,7 +851,7 @@ public class ParticipateAssetIssueActuatorTest {
 
     AccountCapsule toAccountCapsule = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(TO_ADDRESS));
-    toAccountCapsule.addAsset(ASSET_NAME, TOTAL_SUPPLY);
+    toAccountCapsule.addAsset(ASSET_NAME.getBytes(), TOTAL_SUPPLY);
     dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
     AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
     owner.setBalance(100000000000000L);
