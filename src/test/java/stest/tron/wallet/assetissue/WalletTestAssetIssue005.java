@@ -15,7 +15,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
@@ -29,6 +28,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
+import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
@@ -105,12 +105,12 @@ public class WalletTestAssetIssue005 {
     //Get asset issue by name success.
     ByteString assetNameBs = ByteString.copyFrom(name.getBytes());
     GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
-    AssetIssueList assetIssueByName = blockingStubFull.getAssetIssueByName(request);
+    Contract.AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request);
 
-    Assert.assertFalse(assetIssueByName.getAssetIssue(0).getUrl().isEmpty());
-    Assert.assertFalse(assetIssueByName.getAssetIssue(0).getDescription().isEmpty());
-    Assert.assertTrue(assetIssueByName.getAssetIssue(0).getTotalSupply() > 0);
-    Assert.assertTrue(assetIssueByName.getAssetIssue(0).getTrxNum() > 0);
+    Assert.assertFalse(assetIssueByName.getUrl().isEmpty());
+    Assert.assertFalse(assetIssueByName.getDescription().isEmpty());
+    Assert.assertTrue(assetIssueByName.getTotalSupply() > 0);
+    Assert.assertTrue(assetIssueByName.getTrxNum() > 0);
 
     //Get asset issue by name failed when the name is not correct.There is no exception.
     String wrongName = name + "_wrong";
@@ -118,10 +118,10 @@ public class WalletTestAssetIssue005 {
     request = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
     assetIssueByName = blockingStubFull.getAssetIssueByName(request);
 
-    Assert.assertFalse(assetIssueByName.getAssetIssue(0).getTotalSupply() > 0);
-    Assert.assertFalse(assetIssueByName.getAssetIssue(0).getTrxNum() > 0);
-    Assert.assertTrue(assetIssueByName.getAssetIssue(0).getUrl().isEmpty());
-    Assert.assertTrue(assetIssueByName.getAssetIssue(0).getDescription().isEmpty());
+    Assert.assertFalse(assetIssueByName.getTotalSupply() > 0);
+    Assert.assertFalse(assetIssueByName.getTrxNum() > 0);
+    Assert.assertTrue(assetIssueByName.getUrl().isEmpty());
+    Assert.assertTrue(assetIssueByName.getDescription().isEmpty());
 
     //Get asset issue by name failed when the name is null, There is no exception.
     wrongName = "";
@@ -129,10 +129,10 @@ public class WalletTestAssetIssue005 {
     request = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
     assetIssueByName = blockingStubFull.getAssetIssueByName(request);
 
-    Assert.assertFalse(assetIssueByName.getAssetIssue(0).getTotalSupply() > 0);
-    Assert.assertFalse(assetIssueByName.getAssetIssue(0).getTrxNum() > 0);
-    Assert.assertTrue(assetIssueByName.getAssetIssue(0).getUrl().isEmpty());
-    Assert.assertTrue(assetIssueByName.getAssetIssue(0).getDescription().isEmpty());
+    Assert.assertFalse(assetIssueByName.getTotalSupply() > 0);
+    Assert.assertFalse(assetIssueByName.getTrxNum() > 0);
+    Assert.assertTrue(assetIssueByName.getUrl().isEmpty());
+    Assert.assertTrue(assetIssueByName.getDescription().isEmpty());
 
   }
 

@@ -13,12 +13,13 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountNetMessage;
-import org.tron.api.GrpcAPI.AssetIssueList;
+import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
+import org.tron.protos.Contract;
 import org.tron.protos.Protocol.Account;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
@@ -115,12 +116,10 @@ public class WalletTestAssetIssue016 {
 
     ByteString assetNameBs = ByteString.copyFrom(name.getBytes());
     GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
-    AssetIssueList assetIssueByName = blockingStubFull.getAssetIssueByName(request);
-    Assert
-        .assertTrue(assetIssueByName.getAssetIssue(0).getFreeAssetNetLimit() == freeAssetNetLimit);
-    Assert.assertTrue(
-        assetIssueByName.getAssetIssue(0).getPublicFreeAssetNetLimit() == publicFreeAssetNetLimit);
-    Assert.assertTrue(assetIssueByName.getAssetIssue(0).getPublicLatestFreeNetTime() == 0);
+    Contract.AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request);
+    Assert.assertTrue(assetIssueByName.getFreeAssetNetLimit() == freeAssetNetLimit);
+    Assert.assertTrue(assetIssueByName.getPublicFreeAssetNetLimit() == publicFreeAssetNetLimit);
+    Assert.assertTrue(assetIssueByName.getPublicLatestFreeNetTime() == 0);
     assetIssueInfo.hashCode();
     assetIssueInfo.getSerializedSize();
     assetIssueInfo.equals(assetIssueInfo);
@@ -132,8 +131,8 @@ public class WalletTestAssetIssue016 {
         transferAssetAddress,transferAssetCreateKey,blockingStubFull);
 
     assetIssueByName = blockingStubFull.getAssetIssueByName(request);
-    Assert.assertTrue(assetIssueByName.getAssetIssue(0).getPublicLatestFreeNetTime() == 0);
-    Assert.assertTrue(assetIssueByName.getAssetIssue(0).getPublicFreeAssetNetUsage() == 0);
+    Assert.assertTrue(assetIssueByName.getPublicLatestFreeNetTime() == 0);
+    Assert.assertTrue(assetIssueByName.getPublicFreeAssetNetUsage() == 0);
 
     Assert.assertTrue(PublicMethed.freezeBalance(asset016Address,3000000L,
         3,testKeyForAssetIssue016,blockingStubFull));
@@ -141,8 +140,8 @@ public class WalletTestAssetIssue016 {
         transferAssetAddress,transferAssetCreateKey,blockingStubFull);
 
     assetIssueByName = blockingStubFull.getAssetIssueByName(request);
-    Assert.assertTrue(assetIssueByName.getAssetIssue(0).getPublicLatestFreeNetTime() > 0);
-    Assert.assertTrue(assetIssueByName.getAssetIssue(0).getPublicFreeAssetNetUsage() > 150);
+    Assert.assertTrue(assetIssueByName.getPublicLatestFreeNetTime() > 0);
+    Assert.assertTrue(assetIssueByName.getPublicFreeAssetNetUsage() > 150);
 
 
   }

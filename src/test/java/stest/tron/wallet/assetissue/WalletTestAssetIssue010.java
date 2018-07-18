@@ -15,7 +15,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
@@ -29,6 +28,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
+import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
@@ -131,17 +131,13 @@ public class WalletTestAssetIssue010 {
     //Query the description and url,freeAssetNetLimit and publicFreeAssetNetLimit
     ByteString assetNameBs = ByteString.copyFrom(name.getBytes());
     GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
-    AssetIssueList assetIssueByName = blockingStubFull.getAssetIssueByName(request);
+    Contract.AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request);
 
     Assert.assertTrue(
-        ByteArray.toStr(assetIssueByName.getAssetIssue(0).getDescription().toByteArray())
-            .equals(description));
-    Assert.assertTrue(
-        ByteArray.toStr(assetIssueByName.getAssetIssue(0).getUrl().toByteArray()).equals(url));
-    Assert
-        .assertTrue(assetIssueByName.getAssetIssue(0).getFreeAssetNetLimit() == freeAssetNetLimit);
-    Assert.assertTrue(
-        assetIssueByName.getAssetIssue(0).getPublicFreeAssetNetLimit() == publicFreeAssetNetLimit);
+        ByteArray.toStr(assetIssueByName.getDescription().toByteArray()).equals(description));
+    Assert.assertTrue(ByteArray.toStr(assetIssueByName.getUrl().toByteArray()).equals(url));
+    Assert.assertTrue(assetIssueByName.getFreeAssetNetLimit() == freeAssetNetLimit);
+    Assert.assertTrue(assetIssueByName.getPublicFreeAssetNetLimit() == publicFreeAssetNetLimit);
 
     //Test update asset issue
     Assert.assertTrue(PublicMethed
@@ -156,15 +152,11 @@ public class WalletTestAssetIssue010 {
     assetIssueByName = blockingStubFull.getAssetIssueByName(request);
 
     Assert.assertTrue(
-        ByteArray.toStr(assetIssueByName.getAssetIssue(0).getDescription().toByteArray())
-            .equals(updateDescription));
-    Assert.assertTrue(ByteArray.toStr(assetIssueByName.getAssetIssue(0).getUrl().toByteArray())
-        .equals(updateUrl));
-    Assert.assertTrue(
-        assetIssueByName.getAssetIssue(0).getFreeAssetNetLimit() == updateFreeAssetNetLimit);
+        ByteArray.toStr(assetIssueByName.getDescription().toByteArray()).equals(updateDescription));
+    Assert.assertTrue(ByteArray.toStr(assetIssueByName.getUrl().toByteArray()).equals(updateUrl));
+    Assert.assertTrue(assetIssueByName.getFreeAssetNetLimit() == updateFreeAssetNetLimit);
     Assert
-        .assertTrue(assetIssueByName.getAssetIssue(0).getPublicFreeAssetNetLimit()
-            == updatePublicFreeAssetNetLimit);
+        .assertTrue(assetIssueByName.getPublicFreeAssetNetLimit() == updatePublicFreeAssetNetLimit);
   }
 
   @Test(enabled = true)

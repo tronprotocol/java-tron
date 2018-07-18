@@ -106,7 +106,7 @@ public class WalletGrpcClient {
     return Optional.empty();
   }
 
-  public AssetIssueList getAssetIssueByName(String assetName) {
+  public AssetIssueContract getAssetIssueByName(String assetName) {
     ByteString assetNameBs = ByteString.copyFrom(assetName.getBytes());
     BytesMessage request = BytesMessage.newBuilder().setValue(assetNameBs).build();
     return walletBlockingStub.getAssetIssueByName(request);
