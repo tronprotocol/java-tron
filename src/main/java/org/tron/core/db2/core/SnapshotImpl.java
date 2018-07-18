@@ -128,7 +128,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
 
   void collect(Map<WrappedByteArray, WrappedByteArray> all) {
     if (previous.getClass() == SnapshotImpl.class) {
-      collect(all);
+      ((SnapshotImpl) previous).collect(all);
     }
 
     Streams.stream(db).forEach(e -> all.put(WrappedByteArray.of(e.getKey().getBytes()), WrappedByteArray.of(e.getValue().getBytes())));
