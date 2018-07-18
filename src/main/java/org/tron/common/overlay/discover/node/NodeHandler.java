@@ -81,6 +81,7 @@ public class NodeHandler {
     NonActive
   }
 
+  private Node sourceNode;
   private Node node;
   private State state;
   private NodeManager nodeManager;
@@ -99,6 +100,14 @@ public class NodeHandler {
 
   public InetSocketAddress getInetSocketAddress() {
     return new InetSocketAddress(node.getHost(), node.getPort());
+  }
+
+  public void setSourceNode(Node sourceNode) {
+    this.sourceNode = sourceNode;
+  }
+
+  public Node getSourceNode() {
+    return sourceNode;
   }
 
   public Node getNode() {
@@ -129,7 +138,11 @@ public class NodeHandler {
   public void changeState(State newState) {
     State oldState = state;
     if (newState == State.Discovered) {
-      sendPing();
+      if (sourceNode != null && sourceNode.getPort() != node.getPort()){
+        changeState(State.Dead);
+      }else {
+        sendPing();
+      }
     }
     if (!node.isDiscoveryNode()) {
       if (newState == State.Alive) {
@@ -195,7 +208,7 @@ public class NodeHandler {
       getNodeStatistics().discoverMessageLatency
           .add((double) System.currentTimeMillis() - pingSent);
       getNodeStatistics().lastPongReplyTime.set(System.currentTimeMillis());
-      node.setId(msg.getNodeId());
+      node.setId(msg.getFrom().getId());
       if (msg.getVersion() != Args.getInstance().getNodeP2pVersion()) {
         changeState(State.NonActive);
       } else {
@@ -225,7 +238,6 @@ public class NodeHandler {
   }
 
   public void handleTimedOut() {
-    logger.debug("ping timeout {}", node);
     waitForPong = false;
     if (--pingTrials > 0) {
       sendPing();

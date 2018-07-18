@@ -19,6 +19,7 @@
 package org.tron.core;
 
 import com.google.protobuf.ByteString;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,9 +42,14 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.Hash;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.vm.program.ProgramResult;
+import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
+import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -53,10 +59,13 @@ import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BandwidthProcessor;
+import org.tron.core.db.ContractStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.PendingManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
@@ -73,13 +82,16 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.Protocol.TransactionSign;
-
 
 @Slf4j
 @Component
@@ -176,6 +188,21 @@ public class Wallet {
       return decodeData;
     }
     return null;
+  }
+
+  public static byte[] generateContractAddress(Transaction trx) {
+
+    CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
+    byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
+    TransactionCapsule trxCap = new TransactionCapsule(trx);
+    byte[] txRawDataHash = trxCap.getTransactionId().getBytes();
+
+    byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
+    System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
+    System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
+
+    return Hash.sha3omit12(combined);
+
   }
 
   public static byte[] decodeFromBase58Check(String addressBase58) {
@@ -385,15 +412,17 @@ public class Wallet {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     List<AssetIssueCapsule> assetIssueList = dbManager.getAssetIssueStore()
         .getAssetIssuesPaginated(offset, limit);
-    if (null == assetIssueList || assetIssueList.size() == 0) {
+
+    if (CollectionUtils.isEmpty(assetIssueList)) {
       return null;
     }
+
     assetIssueList.forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
     return builder.build();
   }
 
   public AssetIssueList getAssetIssueByAccount(ByteString accountAddress) {
-    if (accountAddress == null || accountAddress.size() == 0) {
+    if (accountAddress == null || accountAddress.isEmpty()) {
       return null;
     }
     List<AssetIssueCapsule> assetIssueCapsuleList = dbManager.getAssetIssueStore()
@@ -408,7 +437,7 @@ public class Wallet {
   }
 
   public AccountNetMessage getAccountNet(ByteString accountAddress) {
-    if (accountAddress == null || accountAddress.size() == 0) {
+    if (accountAddress == null || accountAddress.isEmpty()) {
       return null;
     }
     AccountNetMessage.Builder builder = AccountNetMessage.newBuilder();
@@ -443,7 +472,7 @@ public class Wallet {
   }
 
   public AssetIssueContract getAssetIssueByName(ByteString assetName) {
-    if (assetName == null || assetName.size() == 0) {
+    if (assetName == null || assetName.isEmpty()) {
       return null;
     }
     List<AssetIssueCapsule> assetIssueCapsuleList = dbManager.getAssetIssueStore()
@@ -536,4 +565,117 @@ public class Wallet {
         });
     return nodeListBuilder.build();
   }
+
+  public Transaction deployContract(CreateSmartContract createSmartContract,
+      TransactionCapsule trxCap) {
+
+    // do nothing, so can add some useful function later
+    // trxcap contract para cacheUnpackValue has value
+    return trxCap.getInstance();
+  }
+
+  public Transaction triggerContract(TriggerSmartContract triggerSmartContract,
+      TransactionCapsule trxCap) {
+
+    ContractStore contractStore = dbManager.getContractStore();
+    byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
+    SmartContract.ABI abi = contractStore.getABI(contractAddress);
+    if (abi == null) {
+      return null;
+    }
+
+    try {
+      byte[] selector = getSelector(triggerSmartContract.getData().toByteArray());
+      if (selector == null) {
+        return null;
+      }
+
+      if (!isConstant(abi, selector)) {
+        return trxCap.getInstance();
+      } else {
+        DepositImpl deposit = DepositImpl.createRoot(dbManager);
+        Runtime runtime = new Runtime(trxCap.getInstance(), deposit,
+            new ProgramInvokeFactoryImpl());
+        runtime.execute();
+        runtime.go();
+        if (runtime.getResult().getException() != null) {
+          throw new RuntimeException("Runtime exe failed!");
+        }
+
+        ProgramResult result = runtime.getResult();
+        TransactionResultCapsule ret = new TransactionResultCapsule();
+        ret.setConstantResult(result.getHReturn());
+        ret.setStatus(0, code.SUCESS);
+        trxCap.setResult(ret);
+        return trxCap.getInstance();
+      }
+    } catch (Exception e) {
+      logger.error(e.getMessage());
+      return null;
+    }
+  }
+
+  public SmartContract getContract(GrpcAPI.BytesMessage bytesMessage) {
+    byte[] address = bytesMessage.getValue().toByteArray();
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    if (accountCapsule == null) {
+      logger.error(
+          "Get contract failed, the account is not exist or the account does not have code hash!");
+      return null;
+    }
+
+    ContractCapsule contractCapsule = dbManager.getContractStore()
+        .get(bytesMessage.getValue().toByteArray());
+    return contractCapsule.getInstance();
+  }
+
+  private byte[] getSelector(byte[] data) {
+    if (data == null ||
+        data.length < 4) {
+      return null;
+    }
+
+    byte[] ret = new byte[4];
+    System.arraycopy(data, 0, ret, 0, 4);
+    return ret;
+  }
+
+  private boolean isConstant(SmartContract.ABI abi, byte[] selector) throws Exception {
+    if (selector == null || selector.length != 4) {
+      throw new Exception("Selector's length or selector itself is invalid");
+    }
+
+    for (int i = 0; i < abi.getEntrysCount(); i++) {
+      SmartContract.ABI.Entry entry = abi.getEntrys(i);
+      if (entry.getType() != SmartContract.ABI.Entry.EntryType.Function) {
+        continue;
+      }
+
+      int inputCount = entry.getInputsCount();
+      StringBuffer sb = new StringBuffer();
+      sb.append(entry.getName().toStringUtf8());
+      sb.append("(");
+      for (int k = 0; k < inputCount; k++) {
+        SmartContract.ABI.Entry.Param param = entry.getInputs(k);
+        sb.append(param.getType().toStringUtf8());
+        if (k + 1 < inputCount) {
+          sb.append(",");
+        }
+      }
+      sb.append(")");
+
+      byte[] funcSelector = new byte[4];
+      System.arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0, 4);
+      if (Arrays.equals(funcSelector, selector)) {
+        if (entry.getConstant() == true) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
+
+    throw new Exception("There is no the selector!");
+  }
+
 }

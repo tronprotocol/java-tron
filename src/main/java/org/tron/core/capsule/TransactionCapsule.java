@@ -16,7 +16,6 @@
 package org.tron.core.capsule;
 
 import static org.tron.protos.Contract.AssetIssueContract;
-import static org.tron.protos.Contract.DeployContract;
 import static org.tron.protos.Contract.VoteAssetContract;
 import static org.tron.protos.Contract.VoteWitnessContract;
 import static org.tron.protos.Contract.WitnessCreateContract;
@@ -39,6 +38,7 @@ import org.tron.core.Wallet;
 import org.tron.core.db.AccountStore;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
@@ -58,6 +58,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   private Transaction transaction;
   @Setter
   private boolean isVerified = false;
+
   /**
    * constructor TransactionCapsule.
    */
@@ -68,7 +69,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   /**
    * get account from bytes data.
    */
-  public TransactionCapsule(byte[] data) throws BadItemException{
+  public TransactionCapsule(byte[] data) throws BadItemException {
     try {
       this.transaction = Transaction.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
@@ -134,11 +135,14 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public void resetResult() {
-    this.transaction = this.getInstance().toBuilder().clearRet().build();
+    if (this.getInstance().getRetCount() > 0) {
+      this.transaction = this.getInstance().toBuilder().clearRet().build();
+    }
   }
 
   public void setResult(TransactionResultCapsule transactionResultCapsule) {
-//    this.transaction = this.getInstance().toBuilder().addRet(transactionResultCapsule.getInstance()).build();
+    this.transaction = this.getInstance().toBuilder().addRet(transactionResultCapsule.getInstance())
+        .build();
   }
 
   public void setReference(long blockNum, byte[] blockHash) {
@@ -264,9 +268,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case AssetIssueContract:
           owner = contractParameter.unpack(AssetIssueContract.class).getOwnerAddress();
           break;
-        case DeployContract:
-          owner = contractParameter.unpack(DeployContract.class).getOwnerAddress();
-          break;
         case WitnessUpdateContract:
           owner = contractParameter.unpack(WitnessUpdateContract.class).getOwnerAddress();
           break;
@@ -287,6 +288,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           break;
         case WithdrawBalanceContract:
           owner = contractParameter.unpack(WithdrawBalanceContract.class).getOwnerAddress();
+          break;
+        case CreateSmartContract:
+          owner = contractParameter.unpack(Contract.CreateSmartContract.class).getOwnerAddress();
+          break;
+        case TriggerSmartContract:
+          owner = contractParameter.unpack(Contract.TriggerSmartContract.class).getOwnerAddress();
           break;
         case UpdateAssetContract:
           owner = contractParameter.unpack(UpdateAssetContract.class).getOwnerAddress();
