@@ -201,7 +201,7 @@ public class Runtime {
    **/
   private void create() {
     CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
-    SmartContract newSmartContract = contract.getNewContrect();
+    SmartContract newSmartContract = contract.getNewContract();
     byte[] code = newSmartContract.getBytecode().toByteArray();
     byte[] contractAddress = Wallet.generateContractAddress(trx);
     newSmartContract = newSmartContract.toBuilder()
