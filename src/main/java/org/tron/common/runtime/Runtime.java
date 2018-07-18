@@ -172,11 +172,7 @@ public class Runtime {
           .createProgramInvoke(TRX_CONTRACT_CALL_TYPE, executerType, trx,
               block, deposit);
       this.vm = new VM(config);
-      //InternalTransaction internalTransaction = new InternalTransaction(trx);
-      InternalTransaction internalTransaction = new InternalTransaction(trx,
-          contract.getOwnerAddress().toByteArray(),
-          contract.getContractAddress().toByteArray(),
-          contract.getCallValue().size()==0 ? new Byte("0") : contract.getCallValue().toByteArray()[0]);
+      InternalTransaction internalTransaction = new InternalTransaction(trx);
       this.program = new Program(null, code, programInvoke,internalTransaction, config);
     }
 
@@ -222,10 +218,7 @@ public class Runtime {
     // crate vm to constructor smart contract
     try {
       byte[] ops = contract.getBytecode().toByteArray();
-      InternalTransaction internalTransaction = new InternalTransaction(trx,
-          contract.getOwnerAddress().toByteArray(),
-          contract.getContractAddress().toByteArray(),
-          contract.getCallValue().size()==0 ? new Byte("0") : contract.getCallValue().toByteArray()[0]);
+      InternalTransaction internalTransaction = new InternalTransaction(trx);
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executerType, trx,
               block, deposit);
