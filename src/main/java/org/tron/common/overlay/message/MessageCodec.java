@@ -3,17 +3,12 @@ package org.tron.common.overlay.message;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
-import java.io.IOException;
 import java.util.List;
-import org.apache.commons.lang3.ArrayUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.server.Channel;
+import org.tron.common.overlay.server.TcpFlowStats;
 import org.tron.core.exception.P2pException;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TronMessageFactory;
@@ -26,14 +21,19 @@ public class MessageCodec extends ByteToMessageDecoder {
   private P2pMessageFactory p2pMessageFactory = new P2pMessageFactory();
   private TronMessageFactory tronMessageFactory = new TronMessageFactory();
 
+  @Autowired
+  private TcpFlowStats tcpFlowStats;
+
   @Override
   protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> out) throws Exception {
-    byte[] encoded = new byte[buffer.readableBytes()];
+    int length = buffer.readableBytes();
+    byte[] encoded = new byte[length];
     buffer.readBytes(encoded);
     try {
       Message msg = createMessage(encoded);
       channel.getNodeStatistics().tronInMessage.add();
       out.add(msg);
+      tcpFlowStats.statsPeerFlow(ctx, length);
     } catch (Exception e) {
       channel.processException(e);
     }
