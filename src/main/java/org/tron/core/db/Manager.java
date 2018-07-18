@@ -78,8 +78,8 @@ import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.witness.WitnessController;
-import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
@@ -615,7 +615,8 @@ public class Manager {
           khaosDb.getBranch(
               newHead.getBlockId(), getDynamicPropertiesStore().getLatestBlockHeaderHash());
     } catch (NonCommonBlockException e) {
-      logger.info("there is not the most recent common ancestor, need to remove all blocks in the fork chain.");
+      logger.info(
+          "there is not the most recent common ancestor, need to remove all blocks in the fork chain.");
       BlockCapsule tmp = newHead;
       while (tmp != null) {
         khaosDb.removeBlk(tmp.getBlockId());
@@ -918,7 +919,7 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public boolean processTransaction(final TransactionCapsule trxCap, Protocol.Block block)
+  public boolean processTransaction(final TransactionCapsule trxCap, Block block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException,
       DupTransactionException, TaposException {
@@ -944,23 +945,14 @@ public class Manager {
 
     DepositImpl deposit = DepositImpl.createRoot(this);
     Runtime runtime;
-    if (block != null) {
-      runtime = new Runtime(trxCap.getInstance(), block, deposit,
-          new ProgramInvokeFactoryImpl());
-      consumeBandwidth(trxCap, runtime.getResult().getRet());
-      runtime.execute();
-      runtime.go();
-      if (runtime.getResult().getException() != null) {
-        throw new RuntimeException("Runtime exe failed!");
-      }
-    } else {
-      runtime = new Runtime(trxCap.getInstance(), deposit, new ProgramInvokeFactoryImpl());
-      consumeBandwidth(trxCap, runtime.getResult().getRet());
-      runtime.execute();
-      runtime.go();
-      if (runtime.getResult().getException() != null) {
-        throw new RuntimeException("Runtime exe failed!");
-      }
+
+    runtime = new Runtime(trxCap.getInstance(), block, deposit,
+        new ProgramInvokeFactoryImpl());
+    consumeBandwidth(trxCap, runtime.getResult().getRet());
+    runtime.execute();
+    runtime.go();
+    if (runtime.getResult().getException() != null) {
+      throw new RuntimeException("Runtime exe failed!");
     }
 
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);

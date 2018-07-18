@@ -4,20 +4,20 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
-import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Sha256Hash;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.services.http.JsonFormat.ParseException;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.TransactionList;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.SmartContract;
+import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
@@ -32,6 +32,7 @@ import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Contract.WitnessUpdateContract;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 
 
@@ -185,12 +186,14 @@ public class Util {
                 .unpack(UpdateAssetContract.class);
             contractJson = JSONObject.parseObject(JsonFormat.printToString(updateAssetContract));
             break;
-          case SmartContract:
-            SmartContract deployContract = contractParameter.unpack(SmartContract.class);
+          case CreateSmartContract:
+            CreateSmartContract deployContract = contractParameter
+                .unpack(CreateSmartContract.class);
             contractJson = JSONObject.parseObject(JsonFormat.printToString(deployContract));
             break;
           case TriggerSmartContract:
-            TriggerSmartContract triggerSmartContract = contractParameter.unpack(TriggerSmartContract.class);
+            TriggerSmartContract triggerSmartContract = contractParameter
+                .unpack(TriggerSmartContract.class);
             contractJson = JSONObject.parseObject(JsonFormat.printToString(triggerSmartContract));
             break;
           // todo add other contract
@@ -338,9 +341,11 @@ public class Util {
             any = Any.pack(smartContractBuilder.build());
             break;
           case "TriggerSmartContract":
-              TriggerSmartContract.Builder triggerSmartContractBuilder = TriggerSmartContract.newBuilder();
+            TriggerSmartContract.Builder triggerSmartContractBuilder = TriggerSmartContract
+                .newBuilder();
             JsonFormat
-                .merge(parameter.getJSONObject("value").toJSONString(), triggerSmartContractBuilder);
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    triggerSmartContractBuilder);
             any = Any.pack(triggerSmartContractBuilder.build());
             break;
           // todo add other contract

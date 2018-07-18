@@ -67,7 +67,7 @@ public class UdpTest {
 
     Assert.assertTrue(!nodeManager.hasNodeHandler(peer1));
     Assert.assertTrue(!nodeManager.hasNodeHandler(peer2));
-    Assert.assertTrue(nodeManager.getTable().getAllNodes().size() == 0);
+    Assert.assertTrue(nodeManager.getTable().getAllNodes().isEmpty());
 
     PingMessage pingMessage = new PingMessage(from, nodeManager.getPublicHomeNode());
 
