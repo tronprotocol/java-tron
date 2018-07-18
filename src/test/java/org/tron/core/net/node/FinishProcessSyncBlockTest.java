@@ -77,8 +77,7 @@ public class FinishProcessSyncBlockTest {
         Assert.assertEquals(peer.getBlockInProc().isEmpty(), true);
     }
 
-
-    //根据父块生成一个区块
+    // generate ong block by parent block
     private BlockCapsule generateOneBlockCapsule(BlockCapsule parentCapsule) {
         ByteString witnessAddress = ByteString.copyFrom(
                 ECKey.fromPrivate(
