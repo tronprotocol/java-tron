@@ -181,7 +181,7 @@ public class AssetIssueActuatorTest {
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
       AccountCapsule ownerSecond =
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS_SECOND));
-      String nameKey = NAME + "-1";
+      String nameKey = NAME + "_1";
       AssetIssueCapsule assetIssueCapsule =
           dbManager.getAssetIssueStore().get(ByteArray.fromString(nameKey));
       Assert.assertNotNull(assetIssueCapsule);
