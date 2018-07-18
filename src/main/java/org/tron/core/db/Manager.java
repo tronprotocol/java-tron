@@ -35,14 +35,15 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
+import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Time;
 import org.tron.core.Constant;
-import org.tron.core.actuator.Actuator;
-import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -79,6 +80,7 @@ import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
@@ -112,7 +114,12 @@ public class Manager {
   private VotesStore votesStore;
   @Autowired
   private TransactionHistoryStore transactionHistoryStore;
-
+  @Autowired
+  private CodeStore codeStore;
+  @Autowired
+  private ContractStore contractStore;
+  @Autowired
+  private StorageStore storageStore;
 
   // for network
   @Autowired
@@ -169,6 +176,18 @@ public class Manager {
 
   public void setWitnessScheduleStore(final WitnessScheduleStore witnessScheduleStore) {
     this.witnessScheduleStore = witnessScheduleStore;
+  }
+
+  public StorageStore getStorageStore() {
+    return storageStore;
+  }
+
+  public CodeStore getCodeStore() {
+    return codeStore;
+  }
+
+  public ContractStore getContractStore() {
+    return contractStore;
   }
 
   public VotesStore getVotesStore() {
@@ -283,6 +302,10 @@ public class Manager {
       System.exit(1);
     }
     revokingStore.enable();
+
+//    this.codeStore = CodeStore.create("code");
+//    this.contractStore = ContractStore.create("contract");
+//    this.storageStore = StorageStore.create("storage");
 
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
@@ -501,7 +524,7 @@ public class Manager {
       }
 
       try (ISession tmpSession = revokingStore.buildSession()) {
-        processTransaction(trx);
+        processTransaction(trx, null);
         pendingTransactions.add(trx);
         tmpSession.merge();
       }
@@ -556,7 +579,8 @@ public class Manager {
   public void eraseBlock() {
     dialog.reset();
     try {
-      BlockCapsule oldHeadBlock = getBlockById(getDynamicPropertiesStore().getLatestBlockHeaderHash());
+      BlockCapsule oldHeadBlock = getBlockById(
+          getDynamicPropertiesStore().getLatestBlockHeaderHash());
       logger.info("begin to erase block:" + oldHeadBlock);
       khaosDb.pop();
       revokingStore.pop();
@@ -587,7 +611,8 @@ public class Manager {
           khaosDb.getBranch(
               newHead.getBlockId(), getDynamicPropertiesStore().getLatestBlockHeaderHash());
     } catch (NonCommonBlockException e) {
-      logger.info("there is not the most recent common ancestor, need to remove all blocks in the fork chain.");
+      logger.info(
+          "there is not the most recent common ancestor, need to remove all blocks in the fork chain.");
       BlockCapsule tmp = newHead;
       while (tmp != null) {
         khaosDb.removeBlk(tmp.getBlockId());
@@ -627,7 +652,8 @@ public class Manager {
           throw e;
         } finally {
           if (exception != null) {
-            logger.warn("switch back because exception thrown while switching forks. " + exception.getMessage(),
+            logger.warn("switch back because exception thrown while switching forks. " + exception
+                    .getMessage(),
                 exception);
             first.forEach(khaosBlock -> khaosDb.removeBlk(khaosBlock.getBlk().getBlockId()));
             khaosDb.setHead(binaryTree.getValue().peekFirst());
@@ -813,7 +839,8 @@ public class Manager {
   /**
    * Get the fork branch.
    */
-  public LinkedList<BlockId> getBlockChainHashesOnFork(final BlockId forkBlockHash) throws NonCommonBlockException {
+  public LinkedList<BlockId> getBlockChainHashesOnFork(final BlockId forkBlockHash)
+      throws NonCommonBlockException {
     final Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> branch =
         this.khaosDb.getBranch(
             getDynamicPropertiesStore().getLatestBlockHeaderHash(), forkBlockHash);
@@ -888,7 +915,7 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public boolean processTransaction(final TransactionCapsule trxCap)
+  public boolean processTransaction(final TransactionCapsule trxCap, Block block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException,
       DupTransactionException, TaposException {
@@ -910,26 +937,31 @@ public class Manager {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
-    TransactionResultCapsule ret = new TransactionResultCapsule();
+    /**  VM execute  **/
 
-    consumeBandwidth(trxCap, ret);
+    DepositImpl deposit = DepositImpl.createRoot(this);
+    Runtime runtime;
 
-    for (Actuator act : actuatorList) {
-      act.validate();
-      act.execute(ret);
+    runtime = new Runtime(trxCap.getInstance(), block, deposit,
+        new ProgramInvokeFactoryImpl());
+    consumeBandwidth(trxCap, runtime.getResult().getRet());
+    runtime.execute();
+    runtime.go();
+    if (runtime.getResult().getException() != null) {
+      throw new RuntimeException("Runtime exe failed!");
     }
-    trxCap.setResult(ret);
 
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
-    if (Args.getInstance().isSolidityNode()) {
-      TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
-      transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());
-      transactionInfoCapsule.setFee(ret.getFee());
-      transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfoCapsule);
-    }
+    TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
+    transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());
+    transactionInfoCapsule.setFee(runtime.getResult().getRet().getFee());
+    transactionInfoCapsule.setContractResult(runtime.getResult().getHReturn());
+    transactionInfoCapsule.setContractAddress(runtime.getResult().getContractAddress());
+    transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfoCapsule);
+
     return true;
   }
+
 
   /**
    * Get the block id from the number.
@@ -981,7 +1013,7 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
-        processTransaction(trx);
+        processTransaction(trx, null);
 //        trx.resetResult();
         tmpSeesion.merge();
         // push into block
@@ -1102,7 +1134,7 @@ public class Manager {
       if (block.generatedByMyself) {
         transactionCapsule.setVerified(true);
       }
-      processTransaction(transactionCapsule);
+      processTransaction(transactionCapsule, block.getInstance());
     }
 
     boolean needMaint = needMaintenance(block.getTimeStamp());
@@ -1283,6 +1315,9 @@ public class Manager {
     closeOneStore(dynamicPropertiesStore);
     closeOneStore(transactionStore);
     closeOneStore(utxoStore);
+    closeOneStore(codeStore);
+    closeOneStore(contractStore);
+    closeOneStore(storageStore);
     System.err.println("******** end to close db ********");
   }
 

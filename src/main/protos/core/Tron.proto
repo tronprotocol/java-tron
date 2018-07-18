@@ -30,16 +30,13 @@ message Vote {
   int64 vote_count = 2;
 }
 
-// Account
+/* Account */
 message Account {
-  // frozen balance
+  /* frozen balance */
   message Frozen {
-    // the frozen trx balance
-    int64 frozen_balance = 1;
-    // the expire time
-    int64 expire_time = 2;
+    int64 frozen_balance = 1; // the frozen trx balance
+    int64 expire_time = 2; // the expire time
   }
-
   bytes account_name = 1;
   AccountType type = 2;
   // the create address
@@ -56,13 +53,13 @@ message Account {
   // bandwidth, get from frozen
   int64 net_usage = 8;
   // this account create time
-  int64 create_time = 9;
+  int64 create_time = 0x09;
   // this last operation time, including transfer, voting and so on. //FIXME fix grammar
   int64 latest_opration_time = 10;
   // witness block producing allowance
-  int64 allowance = 11;
+  int64 allowance = 0x0B;
   // last withdraw time
-  int64 latest_withdraw_time = 12;
+  int64 latest_withdraw_time = 0x0C;
   // not used so far
   bytes code = 13;
   bool is_witness = 14;
@@ -76,6 +73,7 @@ message Account {
   map<string, int64> free_asset_net_usage = 20;
   int64 latest_consume_time = 21;
   int64 latest_consume_free_time = 22;
+  bytes codeHash = 30;
 }
 
 //FIXME authority?
@@ -101,7 +99,6 @@ message Witness {
   int64 latestSlotNum = 8;
   bool isJobs = 9;
 }
-
 
 // Vote Change
 message Votes {
@@ -142,7 +139,6 @@ message Transaction {
       VoteWitnessContract = 4;
       WitnessCreateContract = 5;
       AssetIssueContract = 6;
-      DeployContract = 7;
       WitnessUpdateContract = 8;
       ParticipateAssetIssueContract = 9;
       AccountUpdateContract = 10;
@@ -152,6 +148,9 @@ message Transaction {
       UnfreezeAssetContract = 14;
       UpdateAssetContract = 15;
       CustomContract = 20;
+      CreateSmartContract = 30;
+      TriggerSmartContract = 31;
+      GetContract = 32;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
@@ -167,6 +166,7 @@ message Transaction {
     }
     int64 fee = 1;
     code ret = 2;
+    bytes constant_result = 3;
   }
 
   message raw {
@@ -191,10 +191,12 @@ message Transaction {
 }
 
 message TransactionInfo {
- bytes id = 1;
- int64 fee = 2;
- int64 blockNumber = 3;
- int64 blockTimeStamp = 4;
+  bytes id = 1;
+  int64 fee = 2;
+  int64 blockNumber = 3;
+  int64 blockTimeStamp = 4;
+  repeated bytes contractResult = 5;
+  bytes contract_address = 6;
 }
 
 message Transactions {
@@ -323,4 +325,54 @@ message HelloMessage {
   BlockId genesisBlockId = 4;
   BlockId solidBlockId = 5;
   BlockId headBlockId = 6;
+}
+
+message StorageItem {
+  bytes contract_address = 1;
+  map<string, bytes> items = 2;
+}
+
+
+message SmartContract {
+  message ABI {
+    message Entry {
+      enum EntryType {
+        UnknownEntryType = 0;
+        Constructor = 1;
+        Function = 2;
+        Event = 3;
+        Fallback = 4;
+      }
+      message Param {
+        bool indexed = 1;
+        bytes name = 2;
+        bytes type = 3;
+        // SolidityType type = 3;
+      }
+      enum StateMutabilityType {
+        UnknownMutabilityType = 0;
+        Pure = 1;
+        View = 2;
+        Nonpayable = 3;
+        Payable = 4;
+      }
+
+      bool anonymous = 1;
+      bool constant = 2;
+      bytes name = 3;
+      repeated Param inputs = 4;
+      repeated Param outputs = 5;
+      EntryType type = 6;
+      bool payable = 7;
+      StateMutabilityType stateMutability = 8;
+    }
+
+    repeated Entry entrys = 1;
+  }
+  bytes origin_address = 1;
+  bytes contract_address = 2;
+  ABI abi = 3;
+  bytes bytecode = 4;
+  bytes call_value = 5;
+  bytes data = 6;
 }

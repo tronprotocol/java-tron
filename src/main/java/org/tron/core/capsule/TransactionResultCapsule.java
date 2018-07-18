@@ -1,5 +1,6 @@
 package org.tron.core.capsule;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.exception.BadItemException;
@@ -47,6 +48,15 @@ public class TransactionResultCapsule implements ProtoCapsule<Transaction.Result
 
   public void setFee(long fee) {
     this.transactionResult = this.transactionResult.toBuilder().setFee(fee).build();
+  }
+
+  public byte[] getConstantResult() {
+    return transactionResult.getConstantResult().toByteArray();
+  }
+
+  public void setConstantResult(byte[] constantResult) {
+    this.transactionResult = this.transactionResult.toBuilder()
+        .setConstantResult(ByteString.copyFrom(constantResult)).build();
   }
 
   public void addFee(long fee) {

@@ -28,6 +28,7 @@ import org.tron.core.Wallet;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
@@ -50,14 +51,16 @@ public class MainNetVoteOrFreezeOrCreate {
       "56244EE6B33C14C46704DFB67ED5D2BBCBED952EE46F1FD88A50C32C8C5C64CE";
   //Default
   private final String defaultKey =
-      "8DFBB4513AECF779A0803C7CEBF2CDCC51585121FAB1E086465C4E0B40724AF1";
-
+      //Mainet
+      //"8DFBB4513AECF779A0803C7CEBF2CDCC51585121FAB1E086465C4E0B40724AF1";
+      //Beta Env
+      "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey001);
   private final byte[] toAddress   = PublicMethed.getFinalAddress(testKey002);
   private final byte[] defaultAddress = PublicMethed.getFinalAddress(defaultKey);
 
 
-  private final Long sendAmount = 1050000000L;
+  private final Long sendAmount = 1026000000L;
   private Long start;
   private Long end;
   private Long beforeToBalance;
@@ -101,11 +104,11 @@ public class MainNetVoteOrFreezeOrCreate {
   }
 
   //@Test(enabled = true)
-  @Test(enabled = false,threadPoolSize = 50, invocationCount = 300000)
+  @Test(enabled = false,threadPoolSize = 2, invocationCount = 2)
   public void freezeAndSendcoin() throws InterruptedException {
     Random rand = new Random();
     Integer randNum = 0;
-    randNum= rand.nextInt(9000);
+    randNum= rand.nextInt(1000);
     try {
       Thread.sleep(randNum);
     } catch (InterruptedException e) {
@@ -115,87 +118,64 @@ public class MainNetVoteOrFreezeOrCreate {
         .listWitnesses(GrpcAPI.EmptyMessage.newBuilder().build());
     Optional<WitnessList> result = Optional.ofNullable(witnesslist);
     Integer i = 0;
-    while (i < 30) {
-      ret = true;
-      Integer waitTime = 9000;
+    while (i++ < 3) {
+      ret = false;
+      Integer waitTime = 10;
       ECKey ecKey1 = new ECKey(Utils.getRandom());
       byte[] accountAddress = ecKey1.getAddress();
       String testKeyAccount = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
       logger.info(Base58.encode58Check(accountAddress));
       logger.info(testKeyAccount);
-      name = "mainNetAsset_" + Long.toString(System.currentTimeMillis());
-      totalSupply = System.currentTimeMillis();
-      start = System.currentTimeMillis() + 2000;
-      end = System.currentTimeMillis() + 1000000000;
+      Integer tryTimes = 0;
 
-      ret = PublicMethed
-          .createAccount(defaultAddress, accountAddress, defaultKey, blockingStubFull);
-      if (ret == false) {
-        continue;
-      }
-      try {
-        Thread.sleep(waitTime);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
+      while (!ret) {
+        ret = PublicMethed
+            .createAccount(defaultAddress, accountAddress, defaultKey, blockingStubFull);
+        logger.info("createAccount");
+
+        if (tryTimes++ == 10) {
+          break;
+        }
       }
 
-      ret = PublicMethed
-          .sendcoin(accountAddress, sendAmount, defaultAddress, defaultKey, blockingStubFull);
-      if (ret == false) {
-        continue;
+      ret = false;
+      while (!ret) {
+        ret = PublicMethed
+            .sendcoin(accountAddress, sendAmount, defaultAddress, defaultKey, blockingStubFull);
+        logger.info("sendcoin");
       }
-      try {
-        Thread.sleep(waitTime);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
+      ret = false;
+      while (!ret) {
+        name = "mainNetAsset_" + Long.toString(System.currentTimeMillis());
+        totalSupply = System.currentTimeMillis();
+        start = System.currentTimeMillis() + 2000;
+        end = System.currentTimeMillis() + 1000000000;
+        ret = PublicMethed.createAssetIssue(accountAddress, name, totalSupply, 1, 1, start, end,
+            1, description, url, 3000L, 3000L, 1L, 1L,
+            testKeyAccount, blockingStubFull);
+        logger.info("createAssetIssue");
       }
-
-      ret = PublicMethed.createAssetIssue(accountAddress, name, totalSupply, 1, 1, start, end,
-          1, description, url, 3000L, 3000L, 1L, 1L,
-          testKeyAccount, blockingStubFull);
-      if (ret == false) {
-        continue;
+      ret = false;
+      while (!ret) {
+        ret = freezeBalance(accountAddress, 1000000L, 3, testKeyAccount,
+            blockingStubFull);
+        logger.info("freezeBalance");
       }
-      try {
-        Thread.sleep(waitTime);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-
-      ret = PublicMethed.freezeBalance(accountAddress, 5000000L, 3, testKeyAccount,
-          blockingStubFull);
-      if (ret == false) {
-        continue;
-      }
-      try {
-        Thread.sleep(waitTime);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-
-      ret = PublicMethed
-          .transferAsset(toAddress, name.getBytes(), 10L, accountAddress, testKeyAccount,
-              blockingStubFull);
-      if (ret == false) {
-        continue;
-      }
-      try {
-        Thread.sleep(waitTime);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-      String voteStr = Base58
-          .encode58Check(result.get().getWitnesses(i % 27).getAddress().toByteArray());
-      HashMap<String, String> smallVoteMap = new HashMap<String, String>();
-      smallVoteMap.put(voteStr, "3");
-      ret = voteWitness(smallVoteMap, accountAddress, testKeyAccount);
-      if (ret == false) {
-        continue;
-      }
-      try {
-        Thread.sleep(waitTime);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
+/*      ret = false;
+      while (!ret) {
+        ret = PublicMethed
+            .transferAsset(toAddress, name.getBytes(), 10L, accountAddress, testKeyAccount,
+                blockingStubFull);
+        logger.info("transferAsset");
+      }*/
+      ret = false;
+      while (!ret) {
+        String voteStr = Base58
+            .encode58Check(result.get().getWitnesses(i % 5).getAddress().toByteArray());
+        HashMap<String, String> smallVoteMap = new HashMap<String, String>();
+        smallVoteMap.put(voteStr, "1");
+        ret = voteWitness(smallVoteMap, accountAddress, testKeyAccount);
+        logger.info("voteWitness");
       }
     }
   }
@@ -236,7 +216,7 @@ public class MainNetVoteOrFreezeOrCreate {
       Contract.VoteWitnessContract.Vote.Builder voteBuilder = Contract.VoteWitnessContract.Vote
           .newBuilder();
       byte[] address = WalletClient.decodeFromBase58Check(addressBase58);
-      logger.info("address ====== " + ByteArray.toHexString(address));
+      logger.info("address = " + ByteArray.toHexString(address));
       if (address == null) {
         continue;
       }
@@ -261,11 +241,11 @@ public class MainNetVoteOrFreezeOrCreate {
       //logger.info(response.getCode().toString());
       return false;
     }
-    try {
+/*    try {
       Thread.sleep(5000);
     } catch (InterruptedException e) {
       e.printStackTrace();
-    }
+    }*/
     return true;
   }
 
@@ -314,6 +294,47 @@ public class MainNetVoteOrFreezeOrCreate {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, ecKey);
   }
-}
 
+  public static Boolean freezeBalance(byte[] addRess, long freezeBalance, long freezeDuration,
+      String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    byte[] address = addRess;
+    long frozenBalance = freezeBalance;
+    long frozenDuration = freezeDuration;
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+    Protocol.Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI
+        .EmptyMessage.newBuilder().build());
+    final Long beforeBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+    Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
+    ByteString byteAddreess = ByteString.copyFrom(address);
+
+    builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
+        .setFrozenDuration(frozenDuration);
+
+    Contract.FreezeBalanceContract contract = builder.build();
+    Protocol.Transaction transaction = blockingStubFull.freezeBalance(contract);
+
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      logger.info("transaction = null");
+      return false;
+    }
+
+    transaction = TransactionUtils.setTimestamp(transaction);
+    transaction = TransactionUtils.sign(transaction, ecKey);
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+
+    if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      return false;
+    }
+    return true;
+  }
+}
 

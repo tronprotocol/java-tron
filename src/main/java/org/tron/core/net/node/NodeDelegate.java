@@ -15,7 +15,6 @@ import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.net.message.MessageTypes;
-import sun.security.krb5.internal.crypto.Nonce;
 
 public interface NodeDelegate {
 

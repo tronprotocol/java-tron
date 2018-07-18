@@ -230,7 +230,7 @@ public class WitnessController {
 //    long num = manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
 //    long time = manager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
 //
-//    if (num != 0 && num % getActiveWitnesses().size() == 0) {
+//    if (num != 0 && num % getActiveWitnesses().isEmpty()) {
 //      logger.info("updateWitnessSchedule number:{},HeadBlockTimeStamp:{}", num, time);
 //      setCurrentShuffledWitnesses(new RandomGenerator<ByteString>()
 //          .shuffle(getActiveWitnesses(), time));
@@ -300,7 +300,7 @@ public class WitnessController {
     Map<ByteString, Long> countWitness = countVote(votesStore);
 
     //Only possible during the initialization phase
-    if (countWitness.size() == 0) {
+    if (countWitness.isEmpty()) {
       logger.info("No vote, no change to witness.");
     } else {
       List<ByteString> currentWits = getActiveWitnesses();

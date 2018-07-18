@@ -28,6 +28,7 @@ import org.tron.api.GrpcAPI.BlockLimit;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.BlockReference;
 import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.EasyTransferByPrivateMessage;
 import org.tron.api.GrpcAPI.EasyTransferMessage;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.EmptyMessage;
@@ -72,6 +73,7 @@ import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
@@ -300,7 +302,8 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void generateAddress(EmptyMessage request, StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver){
+    public void generateAddress(EmptyMessage request,
+        StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
       ECKey ecKey = new ECKey(Utils.getRandom());
       byte[] priKey = ecKey.getPrivKeyBytes();
       byte[] address = ecKey.getAddress();
@@ -388,9 +391,12 @@ public class RpcApiService implements Service {
     private TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
         ContractType contractType) throws ContractValidateException {
       TransactionCapsule trx = new TransactionCapsule(message, contractType);
-      List<Actuator> actList = ActuatorFactory.createActuator(trx, dbManager);
-      for (Actuator act : actList) {
-        act.validate();
+      if (contractType != ContractType.CreateSmartContract
+          && contractType != ContractType.TriggerSmartContract) {
+        List<Actuator> actList = ActuatorFactory.createActuator(trx, dbManager);
+        for (Actuator act : actList) {
+          act.validate();
+        }
       }
       try {
         BlockCapsule headBlock = null;
@@ -427,16 +433,14 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
-    @Override
-    public void easyTransfer(EasyTransferMessage req,
-        StreamObserver<EasyTransferResponse> responseObserver) {
-      byte[] privateKey = wallet.pass2Key(req.getPassPhrase().toByteArray());
+    private EasyTransferResponse easyTransfer(byte[] privateKey, ByteString toAddress,
+        long amount) {
       ECKey ecKey = ECKey.fromPrivate(privateKey);
       byte[] owner = ecKey.getAddress();
       TransferContract.Builder builder = TransferContract.newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(owner));
-      builder.setToAddress(req.getToAddress());
-      builder.setAmount(req.getAmount());
+      builder.setToAddress(toAddress);
+      builder.setAmount(amount);
 
       TransactionCapsule transactionCapsule = null;
       GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
@@ -448,16 +452,31 @@ public class RpcApiService implements Service {
         returnBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getMessage()));
         responseBuild.setResult(returnBuilder.build());
-        responseObserver.onNext(responseBuild.build());
-        responseObserver.onCompleted();
-        return;
+        return responseBuild.build();
       }
 
       transactionCapsule.sign(privateKey);
       GrpcAPI.Return retur = wallet.broadcastTransaction(transactionCapsule.getInstance());
       responseBuild.setTransaction(transactionCapsule.getInstance());
       responseBuild.setResult(retur);
-      responseObserver.onNext(responseBuild.build());
+      return responseBuild.build();
+    }
+
+    @Override
+    public void easyTransfer(EasyTransferMessage req,
+        StreamObserver<EasyTransferResponse> responseObserver) {
+      byte[] privateKey = wallet.pass2Key(req.getPassPhrase().toByteArray());
+      EasyTransferResponse response = easyTransfer(privateKey, req.getToAddress(), req.getAmount());
+      responseObserver.onNext(response);
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void easyTransferByPrivate(EasyTransferByPrivateMessage req,
+        StreamObserver<EasyTransferResponse> responseObserver) {
+      byte[] privateKey = req.getPrivateKey().toByteArray();
+      EasyTransferResponse response = easyTransfer(privateKey, req.getToAddress(), req.getAmount());
+      responseObserver.onNext(response);
       responseObserver.onCompleted();
     }
 
@@ -812,6 +831,22 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void deployContract(org.tron.protos.Contract.CreateSmartContract request,
+        io.grpc.stub.StreamObserver<org.tron.protos.Protocol.Transaction> responseObserver) {
+
+      TransactionCapsule trxCap;
+      try {
+        trxCap = createTransactionCapsule(request, ContractType.CreateSmartContract);
+      } catch (ContractValidateException e) {
+        responseObserver.onNext(null);
+        responseObserver.onCompleted();
+        return;
+      }
+      Transaction trx = wallet.deployContract(request, trxCap);
+      responseObserver.onNext(trx);
+      responseObserver.onCompleted();
+    }
+
     public void totalTransaction(EmptyMessage request,
         StreamObserver<NumberMessage> responseObserver) {
       responseObserver.onNext(wallet.totalTransaction());
@@ -833,6 +868,23 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void triggerContract(Contract.TriggerSmartContract request,
+        StreamObserver<Transaction> responseObserver) {
+      TransactionCapsule trxCap;
+      try {
+        trxCap = createTransactionCapsule(request,
+            ContractType.TriggerSmartContract);//wallet.triggerContract(request);
+      } catch (ContractValidateException e) {
+        responseObserver.onNext(null);
+        responseObserver.onCompleted();
+        return;
+      }
+
+      Transaction trx = wallet.triggerContract(request, trxCap);
+      responseObserver.onNext(trx);
+      responseObserver.onCompleted();
+    }
+
     public void getPaginatedAssetIssueList(PaginatedMessage request,
         StreamObserver<AssetIssueList> responseObserver) {
       responseObserver.onNext(wallet.getAssetIssueList(request.getOffset(), request.getLimit()));
@@ -840,6 +892,13 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getContract(BytesMessage request,
+        StreamObserver<Protocol.SmartContract> responseObserver) {
+      Protocol.SmartContract contract = wallet.getContract(request);
+      responseObserver.onNext(contract);
+      responseObserver.onCompleted();
+    }
+
     public void listWitnesses(EmptyMessage request,
         StreamObserver<WitnessList> responseObserver) {
       responseObserver.onNext(wallet.getWitnessList());
@@ -847,7 +906,8 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void generateAddress(EmptyMessage request, StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver){
+    public void generateAddress(EmptyMessage request,
+        StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
       ECKey ecKey = new ECKey(Utils.getRandom());
       byte[] priKey = ecKey.getPrivKeyBytes();
       byte[] address = ecKey.getAddress();
@@ -859,7 +919,22 @@ public class RpcApiService implements Service {
       responseObserver.onNext(builder.build());
       responseObserver.onCompleted();
     }
+
+    @Override
+    public void getTransactionInfoById(BytesMessage request,
+        StreamObserver<TransactionInfo> responseObserver) {
+      ByteString id = request.getValue();
+      if (null != id) {
+        TransactionInfo reply = walletSolidity.getTransactionInfoById(id);
+
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
   }
+
 
   @Override
   public void stop() {

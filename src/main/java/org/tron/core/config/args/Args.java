@@ -257,6 +257,14 @@ public class Args {
   @Setter
   private List<String> backupMembers;
 
+  @Getter
+  @Setter
+  private double connectFactor;
+
+  @Getter
+  @Setter
+  private double activeConnectFactor;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -305,6 +313,8 @@ public class Args {
     INSTANCE.solidityNode = false;
     INSTANCE.trustNodeAddr = "";
     INSTANCE.walletExtensionApi = false;
+    INSTANCE.connectFactor = 0.3;
+    INSTANCE.activeConnectFactor = 0.1;
   }
 
   /**
@@ -511,6 +521,12 @@ public class Args {
     INSTANCE.walletExtensionApi =
         config.hasPath("node.walletExtensionApi") && config.getBoolean("node.walletExtensionApi");
 
+    INSTANCE.connectFactor =
+        config.hasPath("node.connectFactor") ? config.getDouble("node.connectFactor") : 0.3;
+
+    INSTANCE.activeConnectFactor = config.hasPath("node.activeConnectFactor") ?
+        config.getDouble("node.activeConnectFactor") : 0.1;
+
     initBackupProperty(config);
 
     logConfig();
@@ -716,7 +732,7 @@ public class Args {
     logger.info("Discover enable: {}", args.isNodeDiscoveryEnable());
     logger.info("Active node size: {}", args.getActiveNodes().size());
     logger.info("Passive node size: {}", args.getPassiveNodes().size());
-    logger.info("Seed node size: {}", args.getSeedNodes().size());
+    logger.info("Seed node size: {}", args.getSeedNode().getIpList().size());
     logger.info("Max connection: {}", args.getNodeMaxActiveNodes());
     logger.info("Max connection with same IP: {}", args.getNodeMaxActiveNodesWithSameIp());
     logger.info("************************ Backup config ************************");
