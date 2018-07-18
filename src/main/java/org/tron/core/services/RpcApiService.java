@@ -73,6 +73,7 @@ import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
@@ -390,7 +391,7 @@ public class RpcApiService implements Service {
     private TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
         ContractType contractType) throws ContractValidateException {
       TransactionCapsule trx = new TransactionCapsule(message, contractType);
-      if (contractType != ContractType.SmartContract
+      if (contractType != ContractType.CreateSmartContract
           && contractType != ContractType.TriggerSmartContract) {
         List<Actuator> actList = ActuatorFactory.createActuator(trx, dbManager);
         for (Actuator act : actList) {
@@ -830,16 +831,18 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void deployContract(org.tron.protos.Contract.SmartContract request,
+    public void deployContract(org.tron.protos.Contract.CreateSmartContract request,
         io.grpc.stub.StreamObserver<org.tron.protos.Protocol.Transaction> responseObserver) {
-      Transaction trx;
-      try {
-        trx = createTransactionCapsule(request, ContractType.SmartContract)
-            .getInstance(); //wallet.deployContract(request);
-      } catch (ContractValidateException e) {
-        trx = null;
-      }
 
+      TransactionCapsule trxCap;
+      try {
+        trxCap = createTransactionCapsule(request, ContractType.CreateSmartContract);
+      } catch (ContractValidateException e) {
+        responseObserver.onNext(null);
+        responseObserver.onCompleted();
+        return;
+      }
+      Transaction trx = wallet.deployContract(request, trxCap);
       responseObserver.onNext(trx);
       responseObserver.onCompleted();
     }
@@ -890,8 +893,8 @@ public class RpcApiService implements Service {
 
     @Override
     public void getContract(BytesMessage request,
-        StreamObserver<Contract.SmartContract> responseObserver) {
-      Contract.SmartContract contract = wallet.getContract(request);
+        StreamObserver<Protocol.SmartContract> responseObserver) {
+      Protocol.SmartContract contract = wallet.getContract(request);
       responseObserver.onNext(contract);
       responseObserver.onCompleted();
     }

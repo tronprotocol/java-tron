@@ -11,31 +11,31 @@ option java_outer_classname = "Protocol"; //Specify the class name of the genera
 option go_package = "github.com/tronprotocol/grpc-gateway/core";
 
 enum AccountType {
-  Normal      = 0;
-  AssetIssue  = 1;
-  Contract    = 2;
+  Normal = 0;
+  AssetIssue = 1;
+  Contract = 2;
 }
 
 // AccountId, (name, address) use name, (null, address) use address, (name, null) use name,
 message AccountId {
-  bytes name    = 1;
+  bytes name = 1;
   bytes address = 2;
 }
 
 // vote message
 message Vote {
   // the super rep address
-  bytes vote_address  = 1;
+  bytes vote_address = 1;
   // the vote num to this super rep.
-  int64 vote_count    = 2;
+  int64 vote_count = 2;
 }
 
 /* Account */
 message Account {
   /* frozen balance */
   message Frozen {
-    int64 frozen_balance    = 1; // the frozen trx balance
-    int64 expire_time       = 2; // the expire time
+    int64 frozen_balance = 1; // the frozen trx balance
+    int64 expire_time = 2; // the expire time
   }
   bytes account_name = 1;
   AccountType type = 2;
@@ -148,7 +148,7 @@ message Transaction {
       UnfreezeAssetContract = 14;
       UpdateAssetContract = 15;
       CustomContract = 20;
-      SmartContract = 30;
+      CreateSmartContract = 30;
       TriggerSmartContract = 31;
       GetContract = 32;
     }
@@ -196,6 +196,7 @@ message TransactionInfo {
   int64 blockNumber = 3;
   int64 blockTimeStamp = 4;
   repeated bytes contractResult = 5;
+  bytes contract_address = 6;
 }
 
 message Transactions {
@@ -331,3 +332,47 @@ message StorageItem {
   map<string, bytes> items = 2;
 }
 
+
+message SmartContract {
+  message ABI {
+    message Entry {
+      enum EntryType {
+        UnknownEntryType = 0;
+        Constructor = 1;
+        Function = 2;
+        Event = 3;
+        Fallback = 4;
+      }
+      message Param {
+        bool indexed = 1;
+        bytes name = 2;
+        bytes type = 3;
+        // SolidityType type = 3;
+      }
+      enum StateMutabilityType {
+        UnknownMutabilityType = 0;
+        Pure = 1;
+        View = 2;
+        Nonpayable = 3;
+        Payable = 4;
+      }
+
+      bool anonymous = 1;
+      bool constant = 2;
+      bytes name = 3;
+      repeated Param inputs = 4;
+      repeated Param outputs = 5;
+      EntryType type = 6;
+      bool payable = 7;
+      StateMutabilityType stateMutability = 8;
+    }
+
+    repeated Entry entrys = 1;
+  }
+  bytes origin_address = 1;
+  bytes contract_address = 2;
+  ABI abi = 3;
+  bytes bytecode = 4;
+  bytes call_value = 5;
+  bytes data = 6;
+}

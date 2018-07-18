@@ -16,41 +16,39 @@
 package org.tron.core.capsule;
 
 import com.google.protobuf.Any;
-import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.protos.Contract.SmartContract;
+import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
+import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
-public class ContractCapsule implements ProtoCapsule<Transaction> {
+public class ContractCapsule implements ProtoCapsule<SmartContract> {
 
-  private Transaction transaction;
+  private SmartContract smartContract;
 
   /**
    * constructor TransactionCapsule.
    */
-  public ContractCapsule(Transaction trx) {
-    this.transaction = trx;
+  public ContractCapsule(SmartContract smartContract) {
+    this.smartContract = smartContract;
   }
 
   public ContractCapsule(byte[] data) {
     try {
-      this.transaction = Transaction.parseFrom(data);
+      this.smartContract = SmartContract.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
       // logger.debug(e.getMessage());
     }
   }
 
-  public static SmartContract getSmartContractFromTransaction(Transaction trx) {
+  public static CreateSmartContract getSmartContractFromTransaction(Transaction trx) {
     try {
       Any any = trx.getRawData().getContract(0).getParameter();
-      SmartContract smartContract = any.unpack(SmartContract.class);
-      return smartContract;
+      CreateSmartContract createSmartContract = any.unpack(CreateSmartContract.class);
+      return createSmartContract;
     } catch (InvalidProtocolBufferException e) {
       return null;
     }
@@ -67,60 +65,27 @@ public class ContractCapsule implements ProtoCapsule<Transaction> {
   }
 
   public Sha256Hash getHash() {
-    byte[] transBytes = this.transaction.toByteArray();
+    byte[] transBytes = this.smartContract.toByteArray();
     return Sha256Hash.of(transBytes);
   }
 
-  public Sha256Hash getRawHash() {
-    return Sha256Hash.of(this.transaction.getRawData().toByteArray());
-  }
-
   public Sha256Hash getCodeHash() {
-    try {
-      Any any = transaction.getRawData().getContract(0).getParameter();
-      SmartContract smartContract = any.unpack(SmartContract.class);
-      byte[] bytecode = smartContract.getBytecode().toByteArray();
-      return Sha256Hash.of(bytecode);
-    } catch (InvalidProtocolBufferException e) {
-      return null;
-    }
-  }
-  
-  public void sign(byte[] privateKey) {
-    ECKey ecKey = ECKey.fromPrivate(privateKey);
-    ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
-    ByteString sig = ByteString.copyFrom(signature.toBase64().getBytes());
-    this.transaction = this.transaction.toBuilder().addSignature(sig).build();
-  }
-
-  public static String getBase64FromByteString(ByteString sign) {
-    byte[] r = sign.substring(0, 32).toByteArray();
-    byte[] s = sign.substring(32, 64).toByteArray();
-    byte v = sign.byteAt(64);
-    if (v < 27) {
-      v += 27; //revId -> v
-    }
-    ECDSASignature signature = ECDSASignature.fromComponents(r, s, v);
-    return signature.toBase64();
-  }
-
-
-  public Sha256Hash getContractId() {
-    return Sha256Hash.of(this.transaction.toByteArray());
+    byte[] bytecode = smartContract.getBytecode().toByteArray();
+    return Sha256Hash.of(bytecode);
   }
 
   @Override
   public byte[] getData() {
-    return this.transaction.toByteArray();
+    return this.smartContract.toByteArray();
   }
 
   @Override
-  public Transaction getInstance() {
-    return this.transaction;
+  public SmartContract getInstance() {
+    return this.smartContract;
   }
 
   @Override
   public String toString() {
-    return this.transaction.toString();
+    return this.smartContract.toString();
   }
 }
