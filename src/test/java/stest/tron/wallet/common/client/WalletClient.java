@@ -93,7 +93,7 @@ public class WalletClient {
 
         String  fullNodepathname = "";
 
-        if (1 == itype){
+        if (1000 == itype){
             fullNodepathname = "checkfullnode.ip.list";
         }
         else
@@ -107,7 +107,7 @@ public class WalletClient {
             solidityNode = config.getStringList("soliditynode.ip.list").get(0);
         }
         if(config.hasPath(fullNodepathname)){
-            fullNode = config.getStringList(fullNodepathname).get(0);
+            fullNode = config.getStringList(fullNodepathname).get(itype);
         }
         if (config.hasPath("net.type") && "mainnet".equalsIgnoreCase(config.getString("net.type"))) {
             WalletClient.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
