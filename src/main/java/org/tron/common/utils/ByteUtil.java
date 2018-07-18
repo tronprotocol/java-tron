@@ -30,6 +30,8 @@ import java.util.Set;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
+import com.google.common.primitives.Bytes;
+import com.google.common.primitives.UnsignedBytes;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.core.db.ByteArrayWrapper;
 
@@ -727,7 +729,7 @@ public class ByteUtil {
     return compare(bytes1, bytes2) > 0;
   }
 
-  public static boolean greaterOrEqual(byte[] bytes1, byte[] bytes2) {
+  public static boolean greaterOrEquals(byte[] bytes1, byte[] bytes2) {
     return compare(bytes1, bytes2) >= 0;
   }
 
@@ -735,7 +737,7 @@ public class ByteUtil {
     return compare(bytes1, bytes2) < 0;
   }
 
-  public static boolean lessOrEqual(byte[] bytes1, byte[] bytes2) {
+  public static boolean lessOrEquals(byte[] bytes1, byte[] bytes2) {
     return compare(bytes1, bytes2) <= 0;
   }
 
@@ -750,7 +752,7 @@ public class ByteUtil {
     Preconditions.checkArgument(bytes1.length == bytes2.length);
     int length = bytes1.length;
     for (int i = 0; i < length; ++i) {
-      int ret = Byte.compare(bytes1[i], bytes2[i]);
+      int ret = UnsignedBytes.compare(bytes1[i], bytes2[i]);
       if (ret != 0) {
         return ret;
       }

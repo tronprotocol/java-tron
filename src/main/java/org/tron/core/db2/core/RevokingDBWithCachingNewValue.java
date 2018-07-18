@@ -142,7 +142,7 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
     levelDBMap.putAll(collection);
 
     return levelDBMap.entrySet().stream()
-        .filter(e -> ByteUtil.greaterOrEqual(e.getKey().getBytes(), key))
+        .filter(e -> ByteUtil.greaterOrEquals(e.getKey().getBytes(), key))
         .limit(limit)
         .map(Map.Entry::getValue)
         .map(WrappedByteArray::getBytes)
