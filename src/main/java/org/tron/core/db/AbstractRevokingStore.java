@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.SourceInter;
 import org.tron.common.utils.Utils;
+import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 
@@ -56,6 +57,9 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
     ++activeDialog;
     return new Dialog(this, disableOnExit);
   }
+
+  @Override
+  public void add(IRevokingDB revokingDB) {}
 
   public synchronized void onCreate(RevokingTuple tuple, byte[] value) {
     if (disabled) {
@@ -239,6 +243,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
     return stack.size();
   }
 
+  @Override
   public void setMaxSize(int maxSize) {
     this.maxSize.set(maxSize);
   }

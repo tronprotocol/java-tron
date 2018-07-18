@@ -2,7 +2,7 @@ package org.tron.core.db;
 
 public class RevokingStore extends AbstractRevokingStore {
 
-  private RevokingStore() {
+  public RevokingStore() {
   }
 
   public static RevokingStore getInstance() {

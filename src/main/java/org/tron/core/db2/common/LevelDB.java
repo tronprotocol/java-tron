@@ -20,6 +20,7 @@ public class LevelDB implements DB<byte[], byte[]> {
 
   public LevelDB(String parentName, String name) {
     db = new LevelDbDataSourceImpl(parentName, name);
+    db.initDB();
   }
 
   @Override

@@ -23,13 +23,10 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
   private Snapshot head;
   @Getter
   private String dbName;
-  @Autowired
-  private SnapshotManager snapshotManager;
 
   public RevokingDBWithCachingNewValue(String dbName) {
     this.dbName = dbName;
     head = new SnapshotRoot(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName);
-    snapshotManager.add(this);
   }
 
   /**

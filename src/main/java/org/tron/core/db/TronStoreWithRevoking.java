@@ -13,20 +13,26 @@ import com.google.common.reflect.TypeToken;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.AbstractRevokingStore.RevokingTuple;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.core.RevokingDBWithCachingNewValue;
 import org.tron.core.db2.core.RevokingDBWithCachingOldValue;
+import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+
+import javax.annotation.PostConstruct;
 
 @Slf4j
 public abstract class TronStoreWithRevoking<T extends ProtoCapsule> extends TronDatabase<T> {
 
   protected IRevokingDB revokingDB;
   private TypeToken<T> token = new TypeToken<T>(getClass()) {};
+  @Autowired
+  private RevokingDatabase revokingDatabase;
 
   protected TronStoreWithRevoking(String dbName) {
     int dbVersion = Args.getInstance().getStorage().getDbVersion();
@@ -37,6 +43,11 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> extends Tron
     } else {
       throw new RuntimeException("db version is error.");
     }
+  }
+
+  @PostConstruct
+  private void init() {
+    revokingDatabase.add(revokingDB);
   }
 
   // only for test

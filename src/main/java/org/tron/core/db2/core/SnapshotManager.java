@@ -11,6 +11,7 @@ import org.tron.common.utils.FileUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db2.common.DB;
+import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
@@ -21,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Component
 public class SnapshotManager implements RevokingDatabase {
   private List<RevokingDBWithCachingNewValue> dbs = new ArrayList<>();
   @Getter
@@ -48,8 +48,9 @@ public class SnapshotManager implements RevokingDatabase {
     return new Session(this, disableOnExit);
   }
 
-  public void add(RevokingDBWithCachingNewValue db) {
-    dbs.add(db);
+  @Override
+  public void add(IRevokingDB db) {
+    dbs.add((RevokingDBWithCachingNewValue) db);
   }
 
   private void advance() {
@@ -124,6 +125,11 @@ public class SnapshotManager implements RevokingDatabase {
   @Override
   public int size() {
     return size;
+  }
+
+  @Override
+  public void setMaxSize(int maxSize) {
+
   }
 
   public synchronized void disable() {

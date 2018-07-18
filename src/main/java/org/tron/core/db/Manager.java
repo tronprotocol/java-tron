@@ -33,6 +33,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.Runtime;
@@ -131,6 +132,7 @@ public class Manager {
 
 
   private BlockCapsule genesisBlock;
+  @Autowired
   private RevokingDatabase revokingStore;
 
   @Getter
@@ -277,7 +279,6 @@ public class Manager {
 
   @PostConstruct
   public void init() {
-    revokingStore = RevokingStore.getInstance();
     revokingStore.disable();
     this.setWitnessController(WitnessController.createInstance(this));
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
@@ -823,13 +824,9 @@ public class Manager {
 
     this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(block.getNum());
     this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(block.getTimeStamp());
-
-    ((AbstractRevokingStore) revokingStore)
-        .setMaxSize(
-            (int)
-                (dynamicPropertiesStore.getLatestBlockHeaderNumber()
-                    - dynamicPropertiesStore.getLatestSolidifiedBlockNum()
-                    + 1));
+    revokingStore.setMaxSize((int) (dynamicPropertiesStore.getLatestBlockHeaderNumber()
+        - dynamicPropertiesStore.getLatestSolidifiedBlockNum()
+        + 1));
     khaosDb.setMaxSize((int)
         (dynamicPropertiesStore.getLatestBlockHeaderNumber()
             - dynamicPropertiesStore.getLatestSolidifiedBlockNum()
