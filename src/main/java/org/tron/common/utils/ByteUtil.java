@@ -743,6 +743,7 @@ public class ByteUtil {
     return compare(bytes1, bytes2) == 0;
   }
 
+  // lexicographical order
   private static int compare(byte[] bytes1, byte[] bytes2) {
     Preconditions.checkNotNull(bytes1);
     Preconditions.checkNotNull(bytes2);
