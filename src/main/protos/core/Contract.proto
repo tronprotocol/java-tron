@@ -105,7 +105,6 @@ message ParticipateAssetIssueContract {
   bytes to_address = 2;
   bytes asset_name = 3; // the namekey of target asset, include name and order
   int64 amount = 4; // the amount of drops
-  int64 order = 5; // the order of tokens of the same name
 }
 
 message FreezeBalanceContract {
