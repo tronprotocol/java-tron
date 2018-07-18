@@ -8,6 +8,7 @@ import java.util.Objects;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Streams;
 import com.google.common.reflect.TypeToken;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +37,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> extends Tron
 
   // only for test
   protected TronStoreWithRevoking(String dbName, RevokingDatabase revokingDatabase) {
-      this.revokingDB = new RevokingDBWithCachingOldValue(dbName, (RevokingStore) revokingDatabase);
+      this.revokingDB = new RevokingDBWithCachingOldValue(dbName, (AbstractRevokingStore) revokingDatabase);
   }
 
   @Override
@@ -61,9 +62,6 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> extends Tron
   @Override
   public T getUnchecked(byte[] key) {
     byte[] value = revokingDB.getUnchecked(key);
-    if (value == null) {
-      return null;
-    }
 
     try {
       return of(value);
@@ -107,6 +105,10 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> extends Tron
         throw new RuntimeException(e1);
       }
     });
+  }
+
+  public long size() {
+    return Streams.stream(revokingDB.iterator()).count();
   }
 
 }

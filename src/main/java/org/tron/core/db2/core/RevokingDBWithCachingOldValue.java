@@ -14,7 +14,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public class RevokingDBWithCachingOldValue implements IRevokingDB {
-  private RevokingStore revokingDatabase;
+  private AbstractRevokingStore revokingDatabase;
   private LevelDbDataSourceImpl dbSource;
 
   public RevokingDBWithCachingOldValue(String dbName) {
@@ -22,7 +22,7 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
   }
 
   // only for unit test
-  public RevokingDBWithCachingOldValue(String dbName, RevokingStore revokingDatabase) {
+  public RevokingDBWithCachingOldValue(String dbName, AbstractRevokingStore revokingDatabase) {
     dbSource = new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName);
     dbSource.initDB();
     this.revokingDatabase = revokingDatabase;
