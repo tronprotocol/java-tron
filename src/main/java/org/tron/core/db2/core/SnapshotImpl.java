@@ -126,7 +126,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
         Iterators.filter(snapshot.iterator(), e -> !all.containsKey(WrappedByteArray.of(e.getKey()))));
   }
 
-  private void collect(Map<WrappedByteArray, WrappedByteArray> all) {
+  void collect(Map<WrappedByteArray, WrappedByteArray> all) {
     if (previous.getClass() == SnapshotImpl.class) {
       collect(all);
     }

@@ -28,6 +28,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicates;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.core.db.ByteArrayWrapper;
 
@@ -720,5 +722,42 @@ public class ByteUtil {
   public static byte[] parseWord(byte[] input, int offset, int idx) {
     return parseBytes(input, offset + 32 * idx, 32);
   }
+
+  public static boolean greater(byte[] bytes1, byte[] bytes2) {
+    return compare(bytes1, bytes2) > 0;
+  }
+
+  public static boolean greaterOrEqual(byte[] bytes1, byte[] bytes2) {
+    return compare(bytes1, bytes2) >= 0;
+  }
+
+  public static boolean less(byte[] bytes1, byte[] bytes2) {
+    return compare(bytes1, bytes2) < 0;
+  }
+
+  public static boolean lessOrEqual(byte[] bytes1, byte[] bytes2) {
+    return compare(bytes1, bytes2) <= 0;
+  }
+
+  public static boolean equal(byte[] bytes1, byte[] bytes2) {
+    return compare(bytes1, bytes2) == 0;
+  }
+
+  private static int compare(byte[] bytes1, byte[] bytes2) {
+    Preconditions.checkNotNull(bytes1);
+    Preconditions.checkNotNull(bytes2);
+    Preconditions.checkArgument(bytes1.length == bytes2.length);
+    int length = bytes1.length;
+    for (int i = 0; i < length; ++i) {
+      int ret = Byte.compare(bytes1[i], bytes2[i]);
+      if (ret != 0) {
+        return ret;
+      }
+    }
+
+    return 0;
+  }
+
+
 
 }

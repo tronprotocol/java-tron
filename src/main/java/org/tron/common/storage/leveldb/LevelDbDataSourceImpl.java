@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -292,6 +294,26 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
       long i = 0;
       for (iterator.seek(key); iterator.hasNext() && i++ < limit; iterator.next()) {
         result.add(iterator.peekNext().getValue());
+      }
+      return result;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
+  public Map<byte[], byte[]> getNext(byte[] key, long limit) {
+    if (limit <= 0) {
+      return Collections.emptyMap();
+    }
+    resetDbLock.readLock().lock();
+    try (DBIterator iterator = database.iterator()) {
+      Map<byte[], byte[]> result = new HashMap<>();
+      long i = 0;
+      for (iterator.seek(key); iterator.hasNext() && i++ < limit; iterator.next()) {
+        Entry<byte[], byte[]> entry = iterator.peekNext();
+        result.put(entry.getKey(), entry.getValue());
       }
       return result;
     } catch (IOException e) {
