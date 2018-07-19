@@ -11,7 +11,6 @@ import javax.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tron.common.overlay.server.Channel.TronState;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.ReasonCode;
@@ -19,9 +18,7 @@ import org.tron.protos.Protocol.ReasonCode;
 @Slf4j
 @Service
 public class PeerConnectionCheckService {
-
-  public static final int HANDSHAKE_WAITING_TIME = 60000;
-
+  
   private double disconnectNumberFactor = Args.getInstance().getDisconnectNumberFactor();
   private double maxConnectNumberFactor = Args.getInstance().getMaxConnectNumberFactor();
 
@@ -31,14 +28,12 @@ public class PeerConnectionCheckService {
   @Autowired
   private TcpFlowStats tcpFlowStats;
 
-  private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(2,
+  private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1,
       r -> new Thread(r, "check-peer-connect"));
 
   @PostConstruct
   public void check() {
     logger.info("start the PeerConnectionCheckService");
-    scheduledExecutorService
-        .scheduleWithFixedDelay(new CheckHandshakeTask(), 60, 60, TimeUnit.SECONDS);
     scheduledExecutorService
         .scheduleWithFixedDelay(new CheckDataTransferTask(), 5, 5, TimeUnit.MINUTES);
   }
@@ -46,23 +41,6 @@ public class PeerConnectionCheckService {
   @PreDestroy
   public void destroy() {
     scheduledExecutorService.shutdown();
-  }
-
-  private class CheckHandshakeTask implements Runnable {
-
-    @Override
-    public void run() {
-      List<PeerConnection> peerConnectionList = pool.getActivePeers();
-      for (PeerConnection peerConnection : peerConnectionList) {
-        if (peerConnection.getStartTime() + HANDSHAKE_WAITING_TIME < System.currentTimeMillis()
-            && peerConnection.getTronState() == TronState.INIT && !peerConnection.isActive()) {
-          //if 60s not handshake,disconnect the peer
-          logger.error("{} handshake timeout ,timeout time  is {}", peerConnection.getInetAddress(),
-              HANDSHAKE_WAITING_TIME);
-          peerConnection.disconnect(ReasonCode.TIME_OUT);
-        }
-      }
-    }
   }
 
   private class CheckDataTransferTask implements Runnable {
