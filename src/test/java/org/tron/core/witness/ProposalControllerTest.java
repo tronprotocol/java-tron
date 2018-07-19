@@ -2,11 +2,13 @@ package org.tron.core.witness;
 
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -18,6 +20,7 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
+import org.tron.core.db.WitnessScheduleStore;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Proposal.State;
 
@@ -91,7 +94,7 @@ public class ProposalControllerTest {
     proposalCapsule.setState(State.PENDING);
     dbManager.getProposalStore().put(key, proposalCapsule);
     for (int i = 0; i < 17; i++) {
-      proposalCapsule.addApproval(ByteString.copyFrom(new byte[1]));
+      proposalCapsule.addApproval(ByteString.copyFrom(new byte[i]));
     }
 
     proposalController.processProposal(proposalCapsule);
@@ -104,7 +107,7 @@ public class ProposalControllerTest {
 
     proposalCapsule.setState(State.PENDING);
     dbManager.getProposalStore().put(key, proposalCapsule);
-    proposalCapsule.addApproval(ByteString.copyFrom(new byte[1]));
+    proposalCapsule.addApproval(ByteString.copyFrom(new byte[17]));
 
     proposalController.processProposal(proposalCapsule);
 

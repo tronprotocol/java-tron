@@ -121,7 +121,7 @@ public class ProposalApproveActuatorTest {
     dbManager.getProposalStore().delete(ByteArray.fromLong(1));
     dbManager.getProposalStore().delete(ByteArray.fromLong(2));
     HashMap<Long, Long> paras = new HashMap<>();
-    paras.put(0L, 10000L);
+    paras.put(0L, 6 * 27 * 1000L);
     ProposalCreateActuator actuator =
         new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -138,6 +138,7 @@ public class ProposalApproveActuatorTest {
       Assert.assertEquals(proposalCapsule.getExpirationTime(),
           261200000); // 2000000 + 3 * 4 * 21600000
     } catch (ContractValidateException e) {
+      logger.info(e.getMessage());
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
