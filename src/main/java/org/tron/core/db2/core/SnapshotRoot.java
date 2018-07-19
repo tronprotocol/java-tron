@@ -42,6 +42,11 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   }
 
   @Override
+  public Snapshot getRoot() {
+    return this;
+  }
+
+  @Override
   public Iterator<Map.Entry<byte[],byte[]>> iterator() {
     return db.iterator();
   }

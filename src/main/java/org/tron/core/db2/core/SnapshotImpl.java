@@ -111,19 +111,19 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
         });
   }
 
+  @Override
+  public Snapshot getRoot() {
+    return previous.getRoot();
+  }
+
   //todo need to resolve levelDB'iterator close
   @Override
   public Iterator<Map.Entry<byte[],byte[]>> iterator() {
-    Snapshot snapshot = previous;
-    while(snapshot.getPrevious() != null) {
-      snapshot = snapshot.getPrevious();
-    }
-
     Map<WrappedByteArray, WrappedByteArray> all = new HashMap<>();
     collect(all);
     return Iterators.concat(
         Iterators.transform(all.entrySet().iterator(), e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes())),
-        Iterators.filter(snapshot.iterator(), e -> !all.containsKey(WrappedByteArray.of(e.getKey()))));
+        Iterators.filter(getRoot().iterator(), e -> !all.containsKey(WrappedByteArray.of(e.getKey()))));
   }
 
   void collect(Map<WrappedByteArray, WrappedByteArray> all) {

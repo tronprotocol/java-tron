@@ -94,6 +94,7 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
     return head.iterator();
   }
 
+  //for blockstore
   @Override
   public Set<byte[]> getlatestValues(long limit) {
     if (limit <= 0) {
@@ -103,7 +104,7 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
     Set<byte[]> result = new HashSet<>();
     Snapshot snapshot = head;
     long tmp = limit;
-    for (; tmp > 0 && snapshot.getPrevious() != null; --tmp) {
+    for (; tmp > 0 && snapshot.getPrevious() != null; --tmp, snapshot = snapshot.getPrevious()) {
       Streams.stream(((SnapshotImpl) snapshot).db)
           .map(Map.Entry::getValue)
           .map(Value::getBytes)
@@ -117,7 +118,7 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
     return result;
   }
 
-  //todo
+  //for blockstore
   @Override
   public Set<byte[]> getValuesNext(byte[] key, long limit) {
     if (limit <= 0) {
@@ -129,13 +130,8 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
       ((SnapshotImpl) head).collect(collection);
     }
 
-    Snapshot snapshot = head;
-    while(snapshot.getPrevious() != null) {
-      snapshot = snapshot.getPrevious();
-    }
-
     Map<WrappedByteArray, WrappedByteArray> levelDBMap = new HashMap<>();
-    ((LevelDB) ((SnapshotRoot) snapshot).db).getDb().getNext(key, limit).entrySet().stream()
+    ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getNext(key, limit).entrySet().stream()
         .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
         .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
 
