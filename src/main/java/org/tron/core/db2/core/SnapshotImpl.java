@@ -112,6 +112,11 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   }
 
   @Override
+  public Snapshot retreat() {
+    return previous;
+  }
+
+  @Override
   public Snapshot getRoot() {
     return previous.getRoot();
   }

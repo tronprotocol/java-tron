@@ -42,6 +42,11 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   }
 
   @Override
+  public Snapshot retreat() {
+    return this;
+  }
+
+  @Override
   public Snapshot getRoot() {
     return this;
   }

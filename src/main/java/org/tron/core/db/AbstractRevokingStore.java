@@ -61,6 +61,9 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   @Override
   public void add(IRevokingDB revokingDB) {}
 
+  @Override
+  public void solidify() {}
+
   public synchronized void onCreate(RevokingTuple tuple, byte[] value) {
     if (disabled) {
       return;

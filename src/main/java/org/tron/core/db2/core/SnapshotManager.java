@@ -53,6 +53,11 @@ public class SnapshotManager implements RevokingDatabase {
     dbs.add((RevokingDBWithCachingNewValue) db);
   }
 
+  @Override
+  public void solidify() {
+    flush();
+  }
+
   private void advance() {
     dbs.forEach(db -> db.setHead(db.getHead().advance()));
     ++size;
@@ -145,7 +150,17 @@ public class SnapshotManager implements RevokingDatabase {
 
     dbs.forEach(db -> {
       Snapshot head = db.getHead();
-      while (head.getPrevious().getPrevious().getPrevious() != null) {
+      if (head.getPrevious() == null) {
+        return;
+      }
+
+      if (head.getPrevious().getClass() == SnapshotRoot.class) {
+        head.getPrevious().merge(head);
+        db.setHead(head.getPrevious());
+        return;
+      }
+
+      while (head.getPrevious().getPrevious().getClass() == SnapshotImpl.class) {
         head = head.getPrevious();
       }
 
@@ -153,6 +168,7 @@ public class SnapshotManager implements RevokingDatabase {
       head.setPrevious(head.getPrevious().getPrevious());
     });
 
+    --size;
     deleteCheckPoint();
   }
 

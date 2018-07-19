@@ -10,6 +10,7 @@ import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db.common.iterator.DBIterator;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -46,7 +47,7 @@ public class LevelDB implements DB<byte[], byte[]> {
   public void flush(Map<WrappedByteArray, WrappedByteArray> batch) {
     Map<byte[], byte[]> rows = batch.entrySet().stream()
         .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll);
     db.updateByBatch(rows, writeOptions);
   }
 

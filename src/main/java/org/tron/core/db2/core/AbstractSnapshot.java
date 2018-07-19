@@ -16,8 +16,4 @@ public abstract class AbstractSnapshot<K, V> implements Snapshot {
     return new SnapshotImpl(this);
   }
 
-  @Override
-  public Snapshot retreat() {
-    return previous;
-  }
 }

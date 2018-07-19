@@ -1191,6 +1191,7 @@ public class Manager {
       return;
     }
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
+    revokingStore.solidify();
     logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
   }
 
