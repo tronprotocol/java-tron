@@ -132,6 +132,22 @@ message UpdateAssetContract {
   int64 new_public_limit = 5;
 }
 
+message ProposalCreateContract {
+  bytes owner_address = 1;
+  map<int64, int64> parameters = 2;
+}
+
+message ProposalApproveContract {
+  bytes owner_address = 1;
+  int64 proposal_id = 2;
+  bool is_add_approval = 3; // add or remove approval
+}
+
+message ProposalDeleteContract {
+  bytes owner_address = 1;
+  int64 proposal_id = 2;
+}
+
 message CreateSmartContract {
   bytes owner_address = 1;
   SmartContract new_contract = 2;
