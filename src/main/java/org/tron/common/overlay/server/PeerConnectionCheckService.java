@@ -11,6 +11,7 @@ import javax.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.tron.common.overlay.discover.node.NodeStatistics;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.ReasonCode;
@@ -25,10 +26,7 @@ public class PeerConnectionCheckService {
 
   @Autowired
   private SyncPool pool;
-
-  @Autowired
-  private TcpFlowStats tcpFlowStats;
-
+  
   @Autowired
   private ChannelManager channelManager;
 
@@ -54,15 +52,16 @@ public class PeerConnectionCheckService {
       List<PeerConnection> peerConnectionList = pool.getActivePeers();
       List<Channel> willDisconnectPeerList = new ArrayList<>();
       for (PeerConnection peerConnection : peerConnectionList) {
-        if (!tcpFlowStats.peerIsHaveDataTransfer(peerConnection)
+        NodeStatistics nodeStatistics = peerConnection.getNodeStatistics();
+        if (!nodeStatistics.nodeIsHaveDataTransfer()
             && System.currentTimeMillis() - peerConnection.getStartTime() >= CHECK_TIME
             && !channelManager.getTrustPeers().containsKey(peerConnection.getInetAddress())
-            && !peerConnection.getNodeStatistics().isPredefined()) {
+            && !nodeStatistics.isPredefined()) {
           //&& !peerConnection.isActive()
           //if xxx minutes not have data transfer,disconnect the peer,exclude trust peer and active peer
           willDisconnectPeerList.add(peerConnection);
         }
-        tcpFlowStats.resetPeerFlow(peerConnection);
+        nodeStatistics.resetTcpFlow();
       }
       if (!willDisconnectPeerList.isEmpty() && peerConnectionList.size()
           > Args.getInstance().getNodeMaxActiveNodes() * maxConnectNumberFactor) {
@@ -71,7 +70,6 @@ public class PeerConnectionCheckService {
           logger.error("{} not have data transfer, disconnect the peer",
               willDisconnectPeerList.get(i).getInetAddress());
           willDisconnectPeerList.get(i).disconnect(ReasonCode.TOO_MANY_PEERS);
-          tcpFlowStats.resetPeerFlow(willDisconnectPeerList.get(i));
         }
       }
     }
