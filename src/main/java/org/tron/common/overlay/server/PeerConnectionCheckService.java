@@ -7,6 +7,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,11 @@ public class PeerConnectionCheckService {
         .scheduleWithFixedDelay(new CheckHandshakeTask(), 60, 60, TimeUnit.SECONDS);
     scheduledExecutorService
         .scheduleWithFixedDelay(new CheckDataTransferTask(), 5, 5, TimeUnit.MINUTES);
+  }
+
+  @PreDestroy
+  public void destroy() {
+    scheduledExecutorService.shutdown();
   }
 
   private class CheckHandshakeTask implements Runnable {

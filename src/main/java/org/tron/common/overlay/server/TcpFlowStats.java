@@ -12,6 +12,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -30,6 +31,11 @@ public class TcpFlowStats {
     executor = Executors.newSingleThreadScheduledExecutor(
         new ThreadFactoryBuilder().setNameFormat("TcpFlowStats-%d").build());
     executor.scheduleAtFixedRate(new LogTask(), 10, 10, TimeUnit.SECONDS);
+  }
+
+  @PreDestroy
+  public void destroy() {
+    executor.shutdown();
   }
 
   private class LogTask implements Runnable {
