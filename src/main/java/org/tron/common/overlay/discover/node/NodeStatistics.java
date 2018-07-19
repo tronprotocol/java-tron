@@ -219,6 +219,10 @@ public class NodeStatistics {
     this.isPredefined = isPredefined;
   }
 
+  public boolean isPredefined() {
+    return isPredefined;
+  }
+
   public void setPersistedReputation(int persistedReputation) {
     this.persistedReputation = persistedReputation;
   }

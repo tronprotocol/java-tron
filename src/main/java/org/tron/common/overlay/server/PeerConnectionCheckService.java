@@ -18,7 +18,8 @@ import org.tron.protos.Protocol.ReasonCode;
 @Slf4j
 @Service
 public class PeerConnectionCheckService {
-  
+
+  public static final long CHECK_TIME = 5 * 60 * 1000L;
   private double disconnectNumberFactor = Args.getInstance().getDisconnectNumberFactor();
   private double maxConnectNumberFactor = Args.getInstance().getMaxConnectNumberFactor();
 
@@ -27,6 +28,9 @@ public class PeerConnectionCheckService {
 
   @Autowired
   private TcpFlowStats tcpFlowStats;
+
+  @Autowired
+  private ChannelManager channelManager;
 
   private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1,
       r -> new Thread(r, "check-peer-connect"));
@@ -50,9 +54,12 @@ public class PeerConnectionCheckService {
       List<PeerConnection> peerConnectionList = pool.getActivePeers();
       List<Channel> willDisconnectPeerList = new ArrayList<>();
       for (PeerConnection peerConnection : peerConnectionList) {
-        if (!tcpFlowStats.peerIsHaveDataTransfer(peerConnection)) {
+        if (!tcpFlowStats.peerIsHaveDataTransfer(peerConnection)
+            && System.currentTimeMillis() - peerConnection.getStartTime() >= CHECK_TIME
+            && !channelManager.getTrustPeers().containsKey(peerConnection.getInetAddress())
+            && !peerConnection.getNodeStatistics().isPredefined()) {
           //&& !peerConnection.isActive()
-          //if xxx minutes not have data transfer,disconnect the peer
+          //if xxx minutes not have data transfer,disconnect the peer,exclude trust peer and active peer
           willDisconnectPeerList.add(peerConnection);
         }
         tcpFlowStats.resetPeerFlow(peerConnection);
