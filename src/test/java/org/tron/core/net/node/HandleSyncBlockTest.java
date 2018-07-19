@@ -163,7 +163,7 @@ public class HandleSyncBlockTest {
             Constant.TEST_CONF
         );
         Args cfgArgs = Args.getInstance();
-        cfgArgs.setNodeListenPort(17891);
+        cfgArgs.setNodeListenPort(17893);
         cfgArgs.setNodeDiscoveryEnable(false);
         cfgArgs.getSeedNode().getIpList().clear();
         cfgArgs.setNeedSyncCheck(false);
@@ -220,7 +220,7 @@ public class HandleSyncBlockTest {
       ReflectUtils.setFieldValue(node, "isFetchActive", false);
 
       Node node = new Node(
-          "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:17891");
+          "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:17893");
       new Thread(new Runnable() {
         @Override
         public void run() {

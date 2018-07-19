@@ -49,7 +49,7 @@ import org.spongycastle.asn1.x9.X9ECParameters;
 import org.spongycastle.asn1.x9.X9IntegerConverter;
 import org.spongycastle.crypto.agreement.ECDHBasicAgreement;
 import org.spongycastle.crypto.digests.SHA256Digest;
-import org.spongycastle.crypto.engines.AESFastEngine;
+import org.spongycastle.crypto.engines.AESEngine;
 import org.spongycastle.crypto.modes.SICBlockCipher;
 import org.spongycastle.crypto.params.ECDomainParameters;
 import org.spongycastle.crypto.params.ECPrivateKeyParameters;
@@ -772,7 +772,7 @@ public class ECKey implements Serializable {
   /**
    * Gets the address form of the public key.
    *
-   * @return 20-byte address
+   * @return 21-byte address
    */
   public byte[] getAddress() {
     if (pubKeyHash == null) {
@@ -970,7 +970,7 @@ public class ECKey implements Serializable {
           "key as an AES key");
     }
 
-    AESFastEngine engine = new AESFastEngine();
+    AESEngine engine = new AESEngine();
     SICBlockCipher ctrEngine = new SICBlockCipher(engine);
 
     KeyParameter key = new KeyParameter(BigIntegers.asUnsignedByteArray((

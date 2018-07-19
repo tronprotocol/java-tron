@@ -59,7 +59,7 @@ public class ActuatorFactory {
         return new AssetIssueActuator(contract.getParameter(), manager);
       case UnfreezeAssetContract:
         return new UnfreezeAssetActuator(contract.getParameter(), manager);
-      case DeployContract:
+      case CreateSmartContract:
         break;
       case WitnessUpdateContract:
         return new WitnessUpdateActuator(contract.getParameter(), manager);
