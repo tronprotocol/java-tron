@@ -39,6 +39,7 @@ import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
@@ -60,16 +61,18 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.config.Parameter.ChainParameters;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.ContractStore;
+import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.PendingManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
-import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
@@ -85,8 +88,10 @@ import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.TriggerSmartContract;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -401,6 +406,35 @@ public class Wallet {
     return builder.build();
   }
 
+  public ProposalList getProposalList() {
+    ProposalList.Builder builder = ProposalList.newBuilder();
+    List<ProposalCapsule> proposalCapsuleList = dbManager.getProposalStore().getAllProposals();
+    proposalCapsuleList
+        .forEach(proposalCapsule -> builder.addProposals(proposalCapsule.getInstance()));
+    return builder.build();
+  }
+
+  public Protocol.ChainParameters getChainParameters() {
+    Protocol.ChainParameters.Builder builder = Protocol.ChainParameters.newBuilder();
+    DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
+
+    builder.putParameters(ChainParameters.MAINTENANCE_TIME_INTERVAL.name(),
+        dynamicPropertiesStore.getMaintenanceTimeInterval());
+    builder.putParameters(ChainParameters.ACCOUNT_UPGRADE_COST.name(),
+        dynamicPropertiesStore.getAccountUpgradeCost());
+    builder.putParameters(ChainParameters.CREATE_ACCOUNT_FEE.name(),
+        dynamicPropertiesStore.getCreateAccountFee());
+    builder.putParameters(ChainParameters.TRANSACTION_FEE.name(),
+        dynamicPropertiesStore.getTransactionFee());
+    builder.putParameters(ChainParameters.ASSET_ISSUE_FEE.name(),
+        dynamicPropertiesStore.getAssetIssueFee());
+    builder.putParameters(ChainParameters.WITNESS_PAY_PER_BLOCK.name(),
+        dynamicPropertiesStore.getWitnessPayPerBlock());
+    builder.putParameters(ChainParameters.WITNESS_STANDBY_ALLOWANCE.name(),
+        dynamicPropertiesStore.getWitnessStandbyAllowance());
+    return builder.build();
+  }
+
   public AssetIssueList getAssetIssueList() {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     dbManager.getAssetIssueStore().getAllAssetIssues()
@@ -534,11 +568,26 @@ public class Wallet {
     try {
       transactionCapsule = dbManager.getTransactionStore()
           .get(transactionId.toByteArray());
-
-    } catch (BadItemException e) {
+    } catch (StoreException e) {
     }
     if (transactionCapsule != null) {
       return transactionCapsule.getInstance();
+    }
+    return null;
+  }
+
+  public Proposal getProposalById(ByteString proposalId) {
+    if (Objects.isNull(proposalId)) {
+      return null;
+    }
+    ProposalCapsule proposalCapsule = null;
+    try {
+      proposalCapsule = dbManager.getProposalStore()
+          .get(proposalId.toByteArray());
+    } catch (StoreException e) {
+    }
+    if (proposalCapsule != null) {
+      return proposalCapsule.getInstance();
     }
     return null;
   }

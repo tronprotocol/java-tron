@@ -172,6 +172,36 @@ service Wallet {
     };
   }
 
+  rpc ProposalCreate (ProposalCreateContract) returns (Transaction) {
+    option (google.api.http) = {
+      post: "/wallet/proposalcreate"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/proposalcreate"
+      }
+    };
+  }
+
+  rpc ProposalApprove (ProposalApproveContract) returns (Transaction) {
+    option (google.api.http) = {
+      post: "/wallet/proposalapprove"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/proposalapprove"
+      }
+    };
+  }
+
+  rpc ProposalDelete (ProposalDeleteContract) returns (Transaction) {
+    option (google.api.http) = {
+      post: "/wallet/proposaldelete"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/proposaldelete"
+      }
+    };
+  }
+
   rpc ListNodes (EmptyMessage) returns (NodeList) {
     option (google.api.http) = {
       post: "/wallet/listnodes"
@@ -291,6 +321,39 @@ service Wallet {
       }
     };
   };
+
+  rpc ListProposals (EmptyMessage) returns (ProposalList) {
+    option (google.api.http) = {
+      post: "/wallet/listproposals"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/listproposals"
+      }
+    };
+  };
+
+  rpc GetProposalById (BytesMessage) returns (Proposal) {
+      option (google.api.http) = {
+        post: "/wallet/getproposalbyid"
+        body: "*"
+        additional_bindings {
+          get: "/wallet/getproposalbyid"
+        }
+      };
+   };
+
+  rpc GetChainParameters (EmptyMessage) returns (ChainParameters) {
+       option (google.api.http) = {
+         post: "/wallet/getchainparameters"
+         body: "*"
+         additional_bindings {
+           get: "/wallet/getchainparameters"
+         }
+       };
+    };
+
+
+
   rpc GetAssetIssueList (EmptyMessage) returns (AssetIssueList) {
     option (google.api.http) = {
         post: "/wallet/getassetissuelist"
@@ -338,12 +401,12 @@ service Wallet {
     };
   };
   //Warning: do not invoke this interface provided by others.
-  rpc CreateAdresss (BytesMessage) returns (BytesMessage) {
+  rpc CreateAddress (BytesMessage) returns (BytesMessage) {
     option (google.api.http) = {
-      post: "/wallet/createadresss"
+      post: "/wallet/createaddress"
       body: "*"
       additional_bindings {
-        get: "/wallet/createadresss"
+        get: "/wallet/createaddress"
       }
     };
   };
@@ -457,6 +520,7 @@ service WalletSolidity {
       }
     };
   }
+
   rpc GetTransactionInfoById (BytesMessage) returns (TransactionInfo) {
     option (google.api.http) = {
       post: "/walletsolidity/gettransactioninfobyid"
@@ -549,6 +613,9 @@ service Network {
 
 message WitnessList {
   repeated Witness witnesses = 1;
+}
+message ProposalList {
+  repeated Proposal proposals = 1;
 }
 message AssetIssueList {
   repeated AssetIssueContract assetIssue = 1;

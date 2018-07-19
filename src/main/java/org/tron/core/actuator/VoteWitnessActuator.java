@@ -12,6 +12,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
+import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.VotesStore;
@@ -77,10 +78,10 @@ public class VoteWitnessActuator extends AbstractActuator {
       throw new ContractValidateException(
           "VoteNumber must more than 0");
     }
-    if (contract.getVotesCount() > dbManager.getDynamicPropertiesStore().getMaxVoteNumber()) {
+    int maxVoteNumber = ChainConstant.MAX_VOTE_NUMBER;
+    if (contract.getVotesCount() > maxVoteNumber) {
       throw new ContractValidateException(
-          "VoteNumber more than maxVoteNumber " + dbManager.getDynamicPropertiesStore()
-              .getMaxVoteNumber());
+          "VoteNumber more than maxVoteNumber " + maxVoteNumber);
     }
     try {
       Iterator<Vote> iterator = contract.getVotesList().iterator();
