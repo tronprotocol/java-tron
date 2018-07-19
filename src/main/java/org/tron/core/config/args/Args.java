@@ -265,6 +265,14 @@ public class Args {
   @Setter
   private double activeConnectFactor;
 
+  @Getter
+  @Setter
+  private double disconnectNumberFactor;
+
+  @Getter
+  @Setter
+  private double maxConnectNumberFactor;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -315,6 +323,8 @@ public class Args {
     INSTANCE.walletExtensionApi = false;
     INSTANCE.connectFactor = 0.3;
     INSTANCE.activeConnectFactor = 0.1;
+    INSTANCE.disconnectNumberFactor = 0.3;
+    INSTANCE.maxConnectNumberFactor = 0.8;
   }
 
   /**
@@ -526,6 +536,12 @@ public class Args {
 
     INSTANCE.activeConnectFactor = config.hasPath("node.activeConnectFactor") ?
         config.getDouble("node.activeConnectFactor") : 0.1;
+
+    INSTANCE.disconnectNumberFactor = config.hasPath("node.disconnectNumberFactor") ?
+        config.getDouble("node.disconnectNumberFactor") : 0.3;
+
+    INSTANCE.maxConnectNumberFactor = config.hasPath("node.maxConnectNumberFactor") ?
+        config.getDouble("node.maxConnectNumberFactor") : 0.8;
 
     initBackupProperty(config);
 

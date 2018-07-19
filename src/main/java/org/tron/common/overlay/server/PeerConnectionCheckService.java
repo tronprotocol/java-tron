@@ -22,8 +22,8 @@ public class PeerConnectionCheckService {
 
   public static final int HANDSHAKE_WAITING_TIME = 60000;
 
-  private static final double disconnectNumberFactor = 0.3;
-  private static final double maxConnectNumberFactor = 0.8;
+  private double disconnectNumberFactor = Args.getInstance().getDisconnectNumberFactor();
+  private double maxConnectNumberFactor = Args.getInstance().getMaxConnectNumberFactor();
 
   @Autowired
   private SyncPool pool;
