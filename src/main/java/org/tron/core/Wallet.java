@@ -459,14 +459,9 @@ public class Wallet {
     if (assetName == null || assetName.size() == 0) {
       return null;
     }
-    List<AssetIssueCapsule> assetIssueCapsuleList = dbManager.getAssetIssueStore()
-        .getAllAssetIssues();
-    for (AssetIssueCapsule assetIssueCapsule : assetIssueCapsuleList) {
-      if (assetName.equals(assetIssueCapsule.getName())) {
-        return assetIssueCapsule.getInstance();
-      }
-    }
-    return null;
+    AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
+        .get(assetName.toByteArray());
+    return assetIssueCapsule != null ? assetIssueCapsule.getInstance() : null;
   }
 
   public NumberMessage totalTransaction() {
@@ -586,7 +581,7 @@ public class Wallet {
         ProgramResult result = runtime.getResult();
         TransactionResultCapsule ret = new TransactionResultCapsule();
         ret.setConstantResult(result.getHReturn());
-        ret.setStatus(0,code.SUCESS);
+        ret.setStatus(0, code.SUCESS);
         trxCap.setResult(ret);
         return trxCap.getInstance();
       }
