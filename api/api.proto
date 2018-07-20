@@ -61,6 +61,17 @@ service Wallet {
     };
   };
 
+
+  rpc SetAccountId (SetAccountIdContract) returns (Transaction) {
+    option (google.api.http) = {
+      post: "/wallet/setaccountid"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/setaccountid"
+      }
+    };
+  };
+
   rpc VoteWitnessAccount (VoteWitnessContract) returns (Transaction) {
     option (google.api.http) = {
       post: "/wallet/votewitnessaccount"
