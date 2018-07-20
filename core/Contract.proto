@@ -29,9 +29,15 @@ message AccountCreateContract {
   AccountType type = 3;
 }
 
-// update account name if the account has no name.
+// Update account name. Account name is not unique now.
 message AccountUpdateContract {
   bytes account_name = 1;
+  bytes owner_address = 2;
+}
+
+// Set account id if the account has no id. Account id is unique and case insensitive.
+message SetAccountIdContract {
+  bytes account_id = 1;
   bytes owner_address = 2;
 }
 
