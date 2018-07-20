@@ -94,6 +94,7 @@ message Account {
   map<string, int64> free_asset_net_usage = 20;
   int64 latest_consume_time = 21;
   int64 latest_consume_free_time = 22;
+  bytes account_id = 23;
   bytes codeHash = 30;
 }
 
