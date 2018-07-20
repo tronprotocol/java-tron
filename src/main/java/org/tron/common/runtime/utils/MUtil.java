@@ -1,6 +1,8 @@
 package org.tron.common.runtime.utils;
 
+import java.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.crypto.Hash;
 import org.tron.common.storage.Deposit;
 import org.tron.core.Constant;
 
@@ -31,5 +33,10 @@ public class MUtil {
             address = newAddress;
         }
         return address;
+    }
+
+    public static String get4BytesSha3HexString(String data){
+        return Hex.toHexString(Arrays.copyOf(Hash.sha3(data.getBytes()),4));
+
     }
 }

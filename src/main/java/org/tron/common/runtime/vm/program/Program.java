@@ -1145,7 +1145,10 @@ public class Program {
             this.stackPushZero();
              // deposit.rollback();
         } else {
-
+            contract.callerAddress = convertToTronAddress(getCallerAddress().getLast20Bytes());
+            // this is the depositImpl, not storage as above
+            contract.deposit = this.invoke.getDeposit();
+            contract.result = this.result;
             Pair<Boolean, byte[]> out = contract.execute(data);
 
             if (out.getLeft()) { // success

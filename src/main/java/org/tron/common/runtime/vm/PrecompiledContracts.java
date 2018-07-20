@@ -17,15 +17,29 @@
  */
 package org.tron.common.runtime.vm;
 
+import com.google.common.primitives.Longs;
+import com.google.protobuf.ByteString;
+import java.util.List;
 import org.apache.commons.lang3.tuple.Pair;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.Hash;
 import org.tron.common.crypto.zksnark.*;
+import org.tron.common.runtime.utils.MUtil;
+import org.tron.common.runtime.vm.program.ProgramResult;
+import org.tron.common.storage.Deposit;
 import org.tron.common.utils.BIUtil;
 
 import java.math.BigInteger;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.actuator.Actuator;
+import org.tron.core.actuator.ActuatorFactory;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.protos.Contract;
+import org.tron.protos.Contract.VoteWitnessContract;
 
+import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.utils.BIUtil.addSafely;
 import static org.tron.common.utils.BIUtil.isLessThan;
 import static org.tron.common.utils.BIUtil.isZero;
@@ -45,6 +59,7 @@ public class PrecompiledContracts {
     private static final BN128Addition altBN128Add = new BN128Addition();
     private static final BN128Multiplication altBN128Mul = new BN128Multiplication();
     private static final BN128Pairing altBN128Pairing = new BN128Pairing();
+    private static final VoteVMContract voteContract = new VoteVMContract();
 
     private static final DataWord ecRecoverAddr =       new DataWord("0000000000000000000000000000000000000000000000000000000000000001");
     private static final DataWord sha256Addr =          new DataWord("0000000000000000000000000000000000000000000000000000000000000002");
@@ -54,6 +69,8 @@ public class PrecompiledContracts {
     private static final DataWord altBN128AddAddr =     new DataWord("0000000000000000000000000000000000000000000000000000000000000006");
     private static final DataWord altBN128MulAddr =     new DataWord("0000000000000000000000000000000000000000000000000000000000000007");
     private static final DataWord altBN128PairingAddr = new DataWord("0000000000000000000000000000000000000000000000000000000000000008");
+    private static final DataWord voteContractAddr =    new DataWord("0000000000000000000000000000000000000000000000000000000000010001");
+
 
     public static PrecompiledContract getContractForAddress(DataWord address) {
 
@@ -62,6 +79,7 @@ public class PrecompiledContracts {
         if (address.equals(sha256Addr)) return sha256;
         if (address.equals(ripempd160Addr)) return ripempd160;
         if (address.equals(identityAddr)) return identity;
+        if (address.equals(voteContractAddr)) return voteContract;
 
         /*
         // Byzantium precompiles
@@ -90,6 +108,12 @@ public class PrecompiledContracts {
         public abstract long getGasForData(byte[] data);
 
         public abstract Pair<Boolean, byte[]> execute(byte[] data);
+
+        public byte[] callerAddress;
+
+        public Deposit deposit;
+
+        public ProgramResult result;
     }
 
     public static class Identity extends PrecompiledContract {
@@ -489,5 +513,80 @@ public class PrecompiledContracts {
 
             return Pair.of(p1, p2);
         }
+    }
+
+    /**
+     * Computes pairing check. <br/>
+     * See {@link PairingCheck} for details.<br/>
+     * <br/>
+     *
+     * Input data[]: <br/>
+     * an array of points (a1, b1, ... , ak, bk), <br/>
+     * where "ai" is a point of {@link BN128Fp} curve and encoded as two 32-byte left-padded integers (x; y) <br/>
+     * "bi" is a point of {@link BN128G2} curve and encoded as four 32-byte left-padded integers {@code (ai + b; ci + d)},
+     * each coordinate of the point is a big-endian {@link Fp2} number, so {@code b} precedes {@code a} in the encoding:
+     * {@code (b, a; d, c)} <br/>
+     * thus each pair (ai, bi) has 192 bytes length, if 192 is not a multiple of {@code data.length} then execution fails <br/>
+     * the number of pairs is derived from input length by dividing it by 192 (the length of a pair) <br/>
+     * <br/>
+     *
+     * output: <br/>
+     * pairing product which is either 0 or 1, encoded as 32-byte left-padded integer <br/>
+     *
+     */
+    public static class VoteVMContract extends PrecompiledContract {
+        public static final String VOTESTRING = MUtil.get4BytesSha3HexString("vote(address,uint256)");
+
+
+        @Override
+        // TODO: Please re-implement this function after Tron cost is well designed.
+        public long getGasForData(byte[] data) { return 0; }
+
+        @Override
+        public Pair<Boolean, byte[]> execute(byte[] data) {
+
+            if (data == null)
+                data = EMPTY_BYTE_ARRAY;
+            byte[] methodHash =new byte[4];
+            System.arraycopy(data,0, methodHash,0,4);
+
+            // vote method
+            String method = Hex.toHexString(methodHash);
+
+            if(method.equalsIgnoreCase(VOTESTRING)){
+                byte[] witnessAddress = new byte[32];
+                System.arraycopy(data, 4, witnessAddress, 0, 32);
+                byte[] value = new byte[8];
+                System.arraycopy(data, 4 + 32  + 16 + 8, value, 0, 8);
+
+                Contract.VoteWitnessContract.Builder builder = Contract.VoteWitnessContract.newBuilder();
+                builder.setOwnerAddress(ByteString.copyFrom(this.callerAddress));
+                long count = Longs.fromByteArray(value);
+                Contract.VoteWitnessContract.Vote.Builder voteBuilder = Contract.VoteWitnessContract.Vote
+                    .newBuilder();
+                byte[] witnessAddress20= new byte[20];
+                System.arraycopy(witnessAddress,12,witnessAddress20,0,20);
+                voteBuilder.setVoteAddress(ByteString.copyFrom(convertToTronAddress(witnessAddress20)));
+                voteBuilder.setVoteCount(count);
+                builder.addVotes(voteBuilder.build());
+                VoteWitnessContract contract = builder.build();
+
+                final List<Actuator> actuatorList = ActuatorFactory
+                    .createActuator(new TransactionCapsule(contract), deposit.getDbManager());
+                try {
+                    actuatorList.get(0).validate();
+                    actuatorList.get(0).execute(result.getRet());
+                    this.deposit.syncCacheFromAccountStore(ByteString.copyFrom(this.callerAddress).toByteArray());
+                    this.deposit.syncCacheFromVotesStore(ByteString.copyFrom(this.callerAddress).toByteArray());
+                } catch (ContractExeException e) {
+                    e.printStackTrace();
+                } catch (ContractValidateException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            return Pair.of(true, new DataWord(0).getData());
+        }
+
     }
 }
