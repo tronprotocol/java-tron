@@ -33,7 +33,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.Runtime;
@@ -57,7 +56,6 @@ import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
-import org.tron.core.db.AbstractRevokingStore.Dialog;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.exception.AccountResourceInsufficientException;
@@ -132,11 +130,12 @@ public class Manager {
 
 
   private BlockCapsule genesisBlock;
+  @Getter
   @Autowired
   private RevokingDatabase revokingStore;
 
   @Getter
-  private SessionOptional dialog = SessionOptional.instance();
+  private SessionOptional session = SessionOptional.instance();
 
   @Getter
   @Setter
@@ -520,8 +519,8 @@ public class Manager {
 
     //validateFreq(trx);
     synchronized (this) {
-      if (!dialog.valid()) {
-        dialog.setValue(revokingStore.buildSession());
+      if (!session.valid()) {
+        session.setValue(revokingStore.buildSession());
       }
 
       try (ISession tmpSession = revokingStore.buildSession()) {
@@ -578,7 +577,7 @@ public class Manager {
    * when switch fork need erase blocks on fork branch.
    */
   public void eraseBlock() {
-    dialog.reset();
+    session.reset();
     try {
       BlockCapsule oldHeadBlock = getBlockById(
           getDynamicPropertiesStore().getLatestBlockHeaderHash());
@@ -992,8 +991,8 @@ public class Manager {
 
     final BlockCapsule blockCapsule =
         new BlockCapsule(number + 1, preHash, when, witnessCapsule.getAddress());
-    dialog.reset();
-    dialog.setValue(revokingStore.buildSession());
+    session.reset();
+    session.setValue(revokingStore.buildSession());
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext()) {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
@@ -1043,7 +1042,7 @@ public class Manager {
       }
     }
 
-    dialog.reset();
+    session.reset();
 
     if (postponedTrxCount > 0) {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
@@ -1191,7 +1190,6 @@ public class Manager {
       return;
     }
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
-    revokingStore.solidify();
     logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
   }
 

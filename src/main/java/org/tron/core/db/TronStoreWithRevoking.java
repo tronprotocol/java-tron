@@ -85,11 +85,11 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> extends Tron
     }
   }
 
-  public T of(byte[] key) throws BadItemException {
+  public T of(byte[] value) throws BadItemException {
     try {
       Constructor constructor = token.getRawType().getConstructor(byte[].class);
       @SuppressWarnings("unchecked")
-      T t = (T) constructor.newInstance((Object) key);
+      T t = (T) constructor.newInstance((Object) value);
       return t;
     } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
       throw new BadItemException(e.getMessage());

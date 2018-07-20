@@ -5,7 +5,6 @@ import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.config.args.Args;
@@ -20,12 +19,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class SnapshotManager implements RevokingDatabase {
+  private static final int DEFAULT_STACK_MAX_SIZE = 256;
+
   private List<RevokingDBWithCachingNewValue> dbs = new ArrayList<>();
   @Getter
   private int size = 0;
+  private AtomicInteger maxSize = new AtomicInteger(DEFAULT_STACK_MAX_SIZE);
+
   private boolean disabled = true;
   private int activeSession = 0;
 
@@ -43,6 +47,10 @@ public class SnapshotManager implements RevokingDatabase {
       disabled = false;
     }
 
+    while (size > maxSize.get()) {
+      flush();
+    }
+
     advance();
     ++activeSession;
     return new Session(this, disableOnExit);
@@ -51,11 +59,6 @@ public class SnapshotManager implements RevokingDatabase {
   @Override
   public void add(IRevokingDB db) {
     dbs.add((RevokingDBWithCachingNewValue) db);
-  }
-
-  @Override
-  public void solidify() {
-    flush();
   }
 
   private void advance() {
@@ -134,7 +137,11 @@ public class SnapshotManager implements RevokingDatabase {
 
   @Override
   public void setMaxSize(int maxSize) {
+    this.maxSize.set(maxSize);
+  }
 
+  public int getMaxSize() {
+    return maxSize.get();
   }
 
   public synchronized void disable() {
@@ -143,6 +150,9 @@ public class SnapshotManager implements RevokingDatabase {
 
   @Override
   public void shutdown() {
+    System.err.println("******** begin to pop revokingDb ********");
+    System.err.println("******** before revokingDb size:" + size);
+    System.err.println("******** end to pop revokingDb ********");
   }
 
   public void flush() {

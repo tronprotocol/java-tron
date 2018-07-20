@@ -2,9 +2,6 @@ package org.tron.core.db2.common;
 
 import com.google.common.collect.Maps;
 import lombok.Getter;
-import org.iq80.leveldb.DBException;
-import org.iq80.leveldb.Snapshot;
-import org.iq80.leveldb.WriteBatch;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.db.common.WrappedByteArray;
@@ -12,7 +9,6 @@ import org.tron.core.db.common.iterator.DBIterator;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class LevelDB implements DB<byte[], byte[]> {
   @Getter

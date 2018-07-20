@@ -15,8 +15,6 @@ public interface RevokingDatabase {
 
   void add(IRevokingDB revokingDB);
 
-  void solidify();
-
   void merge() throws RevokingStoreIllegalStateException;
 
   void revoke() throws RevokingStoreIllegalStateException;

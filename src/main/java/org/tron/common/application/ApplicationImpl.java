@@ -124,7 +124,7 @@ public class ApplicationImpl implements Application {
   }
 
   private void closeRevokingStore() {
-    RevokingStore.getInstance().shutdown();
+    dbManager.getRevokingStore().shutdown();
   }
 
   private void closeAllStore() {
