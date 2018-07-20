@@ -58,7 +58,7 @@ public class AssetIssueActuator extends AbstractActuator {
       byte[] key = name.getBytes();
       while (this.dbManager.getAssetIssueStore().get(key) != null) {
         order++;
-        String nameKey = name + order;
+        String nameKey = AssetIssueCapsule.createDbKeyString(name, order);
         key = nameKey.getBytes();
       }
       assetIssueCapsule.setOrder(order);
@@ -138,7 +138,8 @@ public class AssetIssueActuator extends AbstractActuator {
     if (!TransactionUtil.validAssetName(assetIssueContract.getName().toByteArray())) {
       throw new ContractValidateException("Invalid assetName");
     }
-    if ((!assetIssueContract.getAbbr().isEmpty()) && !TransactionUtil.validAssetName(assetIssueContract.getAbbr().toByteArray())) {
+    if ((!assetIssueContract.getAbbr().isEmpty()) && !TransactionUtil
+        .validAssetName(assetIssueContract.getAbbr().toByteArray())) {
       throw new ContractValidateException("Invalid abbreviation for token");
     }
     if (!TransactionUtil.validUrl(assetIssueContract.getUrl().toByteArray())) {

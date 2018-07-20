@@ -77,8 +77,12 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
       return getName().toByteArray();
     }
     String name = new String(getName().toByteArray(), Charset.forName("UTF-8"));
-    String nameKey = name + "_" + order;
+    String nameKey = createDbKeyString(name, order);
     return nameKey.getBytes();
+  }
+
+  public static String createDbKeyString(String name, long order) {
+    return name + "_" + order;
   }
 
   public int getNum() {
