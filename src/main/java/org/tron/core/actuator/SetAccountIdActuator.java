@@ -13,34 +13,34 @@ import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract.AccountUpdateContract;
+import org.tron.protos.Contract.SetAccountIdContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
-public class UpdateAccountActuator extends AbstractActuator {
+public class SetAccountIdActuator extends AbstractActuator {
 
-  UpdateAccountActuator(Any contract, Manager dbManager) {
+  SetAccountIdActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
   }
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
-    final AccountUpdateContract accountUpdateContract;
+    final SetAccountIdContract setAccountIdContract;
     final long fee = calcFee();
     try {
-      accountUpdateContract = contract.unpack(AccountUpdateContract.class);
+      setAccountIdContract = contract.unpack(SetAccountIdContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
 
-    byte[] ownerAddress = accountUpdateContract.getOwnerAddress().toByteArray();
+    byte[] ownerAddress = setAccountIdContract.getOwnerAddress().toByteArray();
     AccountStore accountStore = dbManager.getAccountStore();
     AccountIndexStore accountIndexStore = dbManager.getAccountIndexStore();
     AccountCapsule account = accountStore.get(ownerAddress);
 
-    account.setAccountName(accountUpdateContract.getAccountName().toByteArray());
+    account.setAccountId(setAccountIdContract.getAccountId().toByteArray());
     accountStore.put(ownerAddress, account);
     accountIndexStore.put(account);
     ret.setStatus(fee, code.SUCESS);
@@ -56,22 +56,22 @@ public class UpdateAccountActuator extends AbstractActuator {
     if (this.dbManager == null) {
       throw new ContractValidateException("No dbManager!");
     }
-    if (!this.contract.is(AccountUpdateContract.class)) {
+    if (!this.contract.is(SetAccountIdContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [AccountUpdateContract],real type[" + contract
+          "contract type error,expected type [SetAccountIdContract],real type[" + contract
               .getClass() + "]");
     }
-    final AccountUpdateContract accountUpdateContract;
+    final SetAccountIdContract setAccountIdContract;
     try {
-      accountUpdateContract = contract.unpack(AccountUpdateContract.class);
+      setAccountIdContract = contract.unpack(SetAccountIdContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
-    byte[] ownerAddress = accountUpdateContract.getOwnerAddress().toByteArray();
-    byte[] accountName = accountUpdateContract.getAccountName().toByteArray();
-    if (!TransactionUtil.validAccountName(accountName)) {
-      throw new ContractValidateException("Invalid accountName");
+    byte[] ownerAddress = setAccountIdContract.getOwnerAddress().toByteArray();
+    byte[] accountId = setAccountIdContract.getAccountId().toByteArray();
+    if (!TransactionUtil.validAccountName(accountId)) {
+      throw new ContractValidateException("Invalid accountId");
     }
     if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
@@ -81,19 +81,20 @@ public class UpdateAccountActuator extends AbstractActuator {
     if (account == null) {
       throw new ContractValidateException("Account has not existed");
     }
-    if (account.getAccountName() != null && !account.getAccountName().isEmpty()) {
-      throw new ContractValidateException("This account name already exist");
+    if (account.getAccountId() != null && !account.getAccountId().isEmpty()) {
+      throw new ContractValidateException("This account id already set");
     }
-//    if (dbManager.getAccountIndexStore().has(accountName)) {
-//      throw new ContractValidateException("This name has existed");
-//    }
+    // todo: add id index
+    if (dbManager.getAccountIndexStore().has(accountId)) {
+      throw new ContractValidateException("This id has existed");
+    }
 
     return true;
   }
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(AccountUpdateContract.class).getOwnerAddress();
+    return contract.unpack(SetAccountIdContract.class).getOwnerAddress();
   }
 
   @Override
