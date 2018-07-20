@@ -52,18 +52,29 @@ public class TransactionUtil {
 
   public static boolean validAccountName(byte[] accountName) {
     if (ArrayUtils.isEmpty(accountName)) {
+      return true;   //description can empty
+    }
+    if (accountName.length > 200) {
+      return false;
+    }
+    // other rules.
+    return true;
+  }
+
+  public static boolean validAccountId(byte[] accountId) {
+    if (ArrayUtils.isEmpty(accountId)) {
       return false;
     }
 
-    if (accountName.length < 8) {
+    if (accountId.length < 8) {
       return false;
     }
 
-    if (accountName.length > 32) {
+    if (accountId.length > 32) {
       return false;
     }
     // b must read able.
-    for (byte b : accountName) {
+    for (byte b : accountId) {
       if (b < 0x21) {
         return false; // 0x21 = '!'
       }

@@ -81,12 +81,6 @@ public class UpdateAccountActuator extends AbstractActuator {
     if (account == null) {
       throw new ContractValidateException("Account has not existed");
     }
-    if (account.getAccountName() != null && !account.getAccountName().isEmpty()) {
-      throw new ContractValidateException("This account name already exist");
-    }
-//    if (dbManager.getAccountIndexStore().has(accountName)) {
-//      throw new ContractValidateException("This name has existed");
-//    }
 
     return true;
   }

@@ -70,7 +70,7 @@ public class SetAccountIdActuator extends AbstractActuator {
     }
     byte[] ownerAddress = setAccountIdContract.getOwnerAddress().toByteArray();
     byte[] accountId = setAccountIdContract.getAccountId().toByteArray();
-    if (!TransactionUtil.validAccountName(accountId)) {
+    if (!TransactionUtil.validAccountId(accountId)) {
       throw new ContractValidateException("Invalid accountId");
     }
     if (!Wallet.addressValid(ownerAddress)) {
