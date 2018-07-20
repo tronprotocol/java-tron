@@ -160,7 +160,7 @@ public class Program {
             //data = config.recordInternalTransactionsData() ? data : null;
             //result = getResult().addInternalTransaction(transaction.getHash(), getCallDeep(),
             //        getGasPrice(), gasLimit, senderAddress, receiveAddress, value.toByteArray(), data, note);
-            result = getResult().addInternalTransaction(transaction.getSignature().toByteArray(), getCallDeep(),
+            result = getResult().addInternalTransaction(transaction.getHash(), getCallDeep(),
                     senderAddress, receiveAddress, value, data, note);
         }
 

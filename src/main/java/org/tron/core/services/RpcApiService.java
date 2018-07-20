@@ -36,6 +36,7 @@ import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.PaginatedMessage;
+import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.WitnessList;
@@ -77,6 +78,7 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
+import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.TransactionInfo;
@@ -424,7 +426,7 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void createAdresss(BytesMessage req,
+    public void createAddress(BytesMessage req,
         StreamObserver<BytesMessage> responseObserver) {
       byte[] address = wallet.createAdresss(req.getValue().toByteArray());
       BytesMessage.Builder builder = BytesMessage.newBuilder();
@@ -673,6 +675,49 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void proposalCreate(Contract.ProposalCreateContract request,
+        StreamObserver<Transaction> responseObserver) {
+      try {
+        responseObserver.onNext(
+            createTransactionCapsule(request, ContractType.ProposalCreateContract).getInstance());
+      } catch (ContractValidateException e) {
+        responseObserver
+            .onNext(null);
+        logger.debug("ContractValidateException: {}", e.getMessage());
+      }
+      responseObserver.onCompleted();
+    }
+
+
+    @Override
+    public void proposalApprove(Contract.ProposalApproveContract request,
+        StreamObserver<Transaction> responseObserver) {
+      try {
+        responseObserver.onNext(
+            createTransactionCapsule(request, ContractType.ProposalApproveContract).getInstance());
+      } catch (ContractValidateException e) {
+        responseObserver
+            .onNext(null);
+        logger.debug("ContractValidateException: {}", e.getMessage());
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void proposalDelete(Contract.ProposalDeleteContract request,
+        StreamObserver<Transaction> responseObserver) {
+      try {
+        responseObserver.onNext(
+            createTransactionCapsule(request, ContractType.ProposalDeleteContract).getInstance());
+      } catch (ContractValidateException e) {
+        responseObserver
+            .onNext(null);
+        logger.debug("ContractValidateException: {}", e.getMessage());
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getNowBlock(EmptyMessage request, StreamObserver<Block> responseObserver) {
       responseObserver.onNext(wallet.getNowBlock());
       responseObserver.onCompleted();
@@ -791,6 +836,19 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getProposalById(BytesMessage request,
+        StreamObserver<Proposal> responseObserver) {
+      ByteString proposalId = request.getValue();
+
+      if (Objects.nonNull(proposalId)) {
+        responseObserver.onNext(wallet.getProposalById(proposalId));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getBlockByLimitNext(BlockLimit request,
         StreamObserver<BlockList> responseObserver) {
       long startNum = request.getStartNum();
@@ -902,6 +960,20 @@ public class RpcApiService implements Service {
     public void listWitnesses(EmptyMessage request,
         StreamObserver<WitnessList> responseObserver) {
       responseObserver.onNext(wallet.getWitnessList());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void listProposals(EmptyMessage request,
+        StreamObserver<ProposalList> responseObserver) {
+      responseObserver.onNext(wallet.getProposalList());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getChainParameters(EmptyMessage request,
+        StreamObserver<Protocol.ChainParameters> responseObserver) {
+      responseObserver.onNext(wallet.getChainParameters());
       responseObserver.onCompleted();
     }
 

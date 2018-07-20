@@ -9,7 +9,6 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.utils.TransactionUtil;
-import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.AssetIssueStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
@@ -110,11 +109,12 @@ public class UpdateAssetActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid description");
     }
 
-    if (newLimit < 0 || newLimit >= ChainConstant.ONE_DAY_NET_LIMIT) {
+    if (newLimit < 0 || newLimit >= dbManager.getDynamicPropertiesStore().getOneDayNetLimit()) {
       throw new ContractValidateException("Invalid FreeAssetNetLimit");
     }
 
-    if (newPublicLimit < 0 || newPublicLimit >= ChainConstant.ONE_DAY_NET_LIMIT) {
+    if (newPublicLimit < 0 || newPublicLimit >=
+        dbManager.getDynamicPropertiesStore().getOneDayNetLimit()) {
       throw new ContractValidateException("Invalid PublicFreeAssetNetLimit");
     }
 

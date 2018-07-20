@@ -214,9 +214,10 @@ public class VM {
                     BigInteger out = memNeeded(stack.get(stack.size() - opOff - 2), stack.get(stack.size() - opOff - 3)); // out offset+size
                     dropCost += calcMemDrop(dropCosts, oldMemSize, in.max(out), 0);
 
-                    if (dropCost > program.getDroplimit().longValueSafe()) {
-                        throw Program.Exception.notEnoughOpGas(op, callGasWord, program.getDroplimit());
-                    }
+                    //TODO: recover this or give similar logic when tron cost mechanism is ready.
+//                    if (dropCost > program.getDroplimit().longValueSafe()) {
+//                        throw Program.Exception.notEnoughOpGas(op, callGasWord, program.getDroplimit());
+//                    }
 
                     DataWord gasLeft = program.getDroplimit().clone();
                     gasLeft.sub(new DataWord(dropCost));
@@ -260,7 +261,8 @@ public class VM {
             }
 
             //DEBUG System.out.println(" OP IS " + op.name() + " GASCOST IS " + gasCost + " NUM IS " + op.asInt());
-            program.spendDrop(dropCost, op.name());
+            //TODO: recover this or give similar logic when tron cost mechanism is ready.
+            //program.spendDrop(dropCost, op.name());
 
 
             // Execute operation
