@@ -55,6 +55,7 @@ message ChainParameters{
   }
 }
 
+
 /* Account */
 message Account {
   /* frozen balance */
