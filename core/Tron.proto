@@ -48,7 +48,7 @@ message Proposal {
 }
 
 message ChainParameters{
-  repeated ChainParameter = 1;
+  repeated ChainParameter chainParameter= 1;
   message ChainParameter {
     string key = 1;
     int64 value = 2;
