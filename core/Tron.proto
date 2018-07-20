@@ -48,7 +48,11 @@ message Proposal {
 }
 
 message ChainParameters{
-  map<string, int64> parameters = 1;
+  repeated ChainParameter = 1;
+  message ChainParameter {
+    string key = 1;
+    int64 value = 2;
+  }
 }
 
 /* Account */
