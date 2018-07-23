@@ -112,9 +112,9 @@ public class TransferAssetActuator extends AbstractActuator {
     if (!Wallet.addressValid(toAddress)) {
       throw new ContractValidateException("Invalid toAddress");
     }
-    if (!TransactionUtil.validAssetName(assetName)) {
-      throw new ContractValidateException("Invalid assetName");
-    }
+//    if (!TransactionUtil.validAssetName(assetName)) {
+//      throw new ContractValidateException("Invalid assetName");
+//    }
     if (amount <= 0) {
       throw new ContractValidateException("Amount must greater than 0.");
     }
