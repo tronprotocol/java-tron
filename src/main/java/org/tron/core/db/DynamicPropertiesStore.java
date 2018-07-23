@@ -9,6 +9,7 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BytesCapsule;
@@ -761,6 +762,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     byte[] blockHash = Optional.ofNullable(getUnchecked(LATEST_BLOCK_HEADER_HASH))
         .map(BytesCapsule::getData)
         .orElseThrow(() -> new IllegalArgumentException("not found block hash"));
+    logger.info("****hash:" + Sha256Hash.wrap(revokingDB.getUnchecked(LATEST_BLOCK_HEADER_HASH))
+        + ", " + Sha256Hash.wrap(blockHash)
+        + ", " + Sha256Hash.wrap(getUnchecked(LATEST_BLOCK_HEADER_HASH).getData())
+    );
     return Sha256Hash.wrap(blockHash);
   }
 
@@ -786,6 +791,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void saveLatestBlockHeaderHash(ByteString h) {
     logger.info("update latest block header id = {}", ByteArray.toHexString(h.toByteArray()));
     this.put(LATEST_BLOCK_HEADER_HASH, new BytesCapsule(h.toByteArray()));
+    if (revokingDB.getUnchecked(LATEST_BLOCK_HEADER_HASH).length == 32) {
+      logger.info("save****hash:" + getLatestBlockHeaderHash()
+          + ", " + Sha256Hash.wrap(getUnchecked(LATEST_BLOCK_HEADER_HASH).getData())
+          + ", " + ByteArray.toHexString(h.toByteArray())
+          + ", " + Sha256Hash.wrap(h.toByteArray()));
+    }
   }
 
   public void saveStateFlag(int n) {

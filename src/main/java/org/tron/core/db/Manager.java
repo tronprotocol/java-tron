@@ -702,6 +702,11 @@ public class Manager {
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
       TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException {
+    logger.info("********* revoking size:" + revokingStore.size()
+        + ", khaos size:" + khaosDb.getMiniStore().getNumKblkMap().size()
+        + ", dy num:" + dynamicPropertiesStore.getLatestBlockHeaderNumber()
+        + ", so num:" + dynamicPropertiesStore.getLatestSolidifiedBlockNum()
+    );
 
     try (PendingManager pm = new PendingManager(this)) {
 
