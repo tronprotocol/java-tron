@@ -440,7 +440,7 @@ public class DepositImpl implements Deposit{
                 if (deposit != null) {
                     deposit.putVotes(key, value);
                 } else {
-                    getStorageStore().put(key.getData(), value.getStorage());
+                    getVotesStore().put(key.getData(), value.getVotes());
                 }
             }
         }));

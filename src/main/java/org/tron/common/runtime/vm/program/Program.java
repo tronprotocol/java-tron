@@ -1145,7 +1145,8 @@ public class Program {
             this.stackPushZero();
              // deposit.rollback();
         } else {
-            contract.callerAddress = convertToTronAddress(getCallerAddress().getLast20Bytes());
+            // Delegate or not. if is delegated, we will use msg sender, otherwise use contract address
+            contract.callerAddress = convertToTronAddress(msg.getType().callIsDelegate() ? getCallerAddress().getLast20Bytes() : getOwnerAddress().getLast20Bytes());
             // this is the depositImpl, not storage as above
             contract.deposit = this.invoke.getDeposit();
             contract.result = this.result;
