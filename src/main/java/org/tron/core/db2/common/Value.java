@@ -4,6 +4,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.tron.core.db.common.WrappedByteArray;
 
+import java.util.Arrays;
+
 @EqualsAndHashCode(exclude = "operator")
 public final class Value implements Encoder, Decoder<Value> {
 
@@ -66,10 +68,20 @@ public final class Value implements Encoder, Decoder<Value> {
   }
 
   public static Value of(Operator operator, byte[] data) {
-    return new Value(operator, WrappedByteArray.of(data));
+    byte[] value = null;
+    if (data != null) {
+      value = Arrays.copyOf(data, data.length);
+    }
+
+    return new Value(operator, WrappedByteArray.of(value));
   }
 
   public byte[] getBytes() {
-    return data.getBytes();
+    byte[] value = data.getBytes();
+    if (value == null) {
+      return null;
+    }
+
+    return Arrays.copyOf(value, value.length);
   }
 }

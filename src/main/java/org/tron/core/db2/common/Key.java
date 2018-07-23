@@ -3,6 +3,8 @@ package org.tron.core.db2.common;
 import lombok.EqualsAndHashCode;
 import org.tron.core.db.common.WrappedByteArray;
 
+import java.util.Arrays;
+
 @EqualsAndHashCode
 public final class Key {
 
@@ -13,10 +15,19 @@ public final class Key {
   }
 
   public static Key of(byte[] bytes) {
-    return new Key(WrappedByteArray.of(bytes));
+    byte[] key = null;
+    if (bytes != null) {
+      key = Arrays.copyOf(bytes, bytes.length);
+    }
+    return new Key(WrappedByteArray.of(key));
   }
 
   public byte[] getBytes() {
-    return data.getBytes();
+    byte[] key = data.getBytes();
+    if (key == null) {
+      return null;
+    }
+
+    return Arrays.copyOf(key, key.length);
   }
 }

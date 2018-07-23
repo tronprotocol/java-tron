@@ -16,6 +16,7 @@ import org.tron.core.db2.common.Value;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -260,11 +261,9 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   private String simpleDecode(byte[] bytes) {
-    byte[] lengthBytes = new byte[4];
-    System.arraycopy(bytes, 0, lengthBytes, 0, 4);
+    byte[] lengthBytes = Arrays.copyOf(bytes, 4);
     int length = Ints.fromByteArray(lengthBytes);
-    byte[] value = new byte[length];
-    System.arraycopy(bytes, 4, value, 0, length);
+    byte[] value = Arrays.copyOfRange(bytes, 4, 4 + length);
     return new String(value);
   }
 
