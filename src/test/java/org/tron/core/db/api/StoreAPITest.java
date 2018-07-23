@@ -156,7 +156,7 @@ public class StoreAPITest {
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
     dbManager
         .getAssetIssueStore()
-        .put(assetIssueCapsule.getName().toByteArray(), assetIssueCapsule);
+        .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
   }
 
   private static AssetIssueContract getBuildAssetIssueContract(

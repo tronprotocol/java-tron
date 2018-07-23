@@ -82,7 +82,7 @@ public class UnfreezeAssetActuatorTest {
             StringUtil.hexString2ByteString(OWNER_ADDRESS),
             AccountType.Normal,
             initBalance);
-    ownerCapsule.setAssetIssuedName(ByteString.copyFromUtf8(assetName));
+    ownerCapsule.setAssetIssuedName(assetName.getBytes());
     dbManager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
   }
 
