@@ -21,10 +21,8 @@ import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.util.List;
 import org.apache.commons.lang3.tuple.Pair;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.zksnark.*;
-import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.storage.Deposit;
 import org.tron.common.utils.BIUtil;
@@ -109,11 +107,35 @@ public class PrecompiledContracts {
 
         public abstract Pair<Boolean, byte[]> execute(byte[] data);
 
-        public static byte[] callerAddress;
+        private byte[] callerAddress;
 
-        public static Deposit deposit;
+        public void setCallerAddress(byte[] callerAddress) {
+            this.callerAddress = callerAddress;
+        }
 
-        public static ProgramResult result;
+        public void setDeposit(Deposit deposit) {
+            this.deposit = deposit;
+        }
+
+        public void setResult(ProgramResult result) {
+            this.result = result;
+        }
+
+        private Deposit deposit;
+
+        private ProgramResult result;
+
+        public byte[] getCallerAddress() {
+            return callerAddress;
+        }
+
+        public Deposit getDeposit() {
+            return deposit;
+        }
+
+        public ProgramResult getResult() {
+            return result;
+        }
     }
 
     public static class Identity extends PrecompiledContract {
@@ -527,7 +549,6 @@ public class PrecompiledContracts {
      *
      */
     public static class VoteWitnessNative extends PrecompiledContract {
-
         @Override
         // TODO: Please re-implement this function after Tron cost is well designed.
         public long getGasForData(byte[] data) { return 0; }
@@ -543,7 +564,7 @@ public class PrecompiledContracts {
             System.arraycopy(data, 32 + 16 + 8, value, 0, 8);
 
             Contract.VoteWitnessContract.Builder builder = Contract.VoteWitnessContract.newBuilder();
-            builder.setOwnerAddress(ByteString.copyFrom(callerAddress));
+            builder.setOwnerAddress(ByteString.copyFrom(getCallerAddress()));
             long count = Longs.fromByteArray(value);
             Contract.VoteWitnessContract.Vote.Builder voteBuilder = Contract.VoteWitnessContract.Vote
                     .newBuilder();
@@ -555,12 +576,12 @@ public class PrecompiledContracts {
             VoteWitnessContract contract = builder.build();
 
             final List<Actuator> actuatorList = ActuatorFactory
-                .createActuator(new TransactionCapsule(contract), deposit.getDbManager());
+                .createActuator(new TransactionCapsule(contract), getDeposit().getDbManager());
             try {
                 actuatorList.get(0).validate();
-                actuatorList.get(0).execute(result.getRet());
-                this.deposit.syncCacheFromAccountStore(ByteString.copyFrom(callerAddress).toByteArray());
-                this.deposit.syncCacheFromVotesStore(ByteString.copyFrom(callerAddress).toByteArray());
+                actuatorList.get(0).execute(getResult().getRet());
+                getDeposit().syncCacheFromAccountStore(ByteString.copyFrom(getCallerAddress()).toByteArray());
+                getDeposit().syncCacheFromVotesStore(ByteString.copyFrom(getCallerAddress()).toByteArray());
             } catch (ContractExeException e) {
                 e.printStackTrace();
             } catch (ContractValidateException e) {
