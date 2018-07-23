@@ -109,11 +109,11 @@ public class PrecompiledContracts {
 
         public abstract Pair<Boolean, byte[]> execute(byte[] data);
 
-        public byte[] callerAddress;
+        public static byte[] callerAddress;
 
-        public Deposit deposit;
+        public static Deposit deposit;
 
-        public ProgramResult result;
+        public static ProgramResult result;
     }
 
     public static class Identity extends PrecompiledContract {
