@@ -52,7 +52,7 @@ public class TransactionUtil {
 
   public static boolean validAccountName(byte[] accountName) {
     if (ArrayUtils.isEmpty(accountName)) {
-      return true;   //description can empty
+      return true;   //accountname can empty
     }
     if (accountName.length > 200) {
       return false;
