@@ -59,8 +59,8 @@ public class TransferAssetActuatorTest {
   private static final String ownerAsset_ADDRESS;
   private static final String ownerASSET_NAME = "trxtest";
   private static final long OWNER_ASSET_Test_BALANCE = 99999;
-  private static final String OWNER_ADDRESS_INVALIDATE = "cccc";
-  private static final String TO_ADDRESS_INVALIDATE = "dddd";
+  private static final String OWNER_ADDRESS_INVALID = "cccc";
+  private static final String TO_ADDRESS_INVALID = "dddd";
   private static final long TOTAL_SUPPLY = 10L;
   private static final int TRX_NUM = 10;
   private static final int NUM = 1;
@@ -458,7 +458,7 @@ public class TransferAssetActuatorTest {
    */
   public void invalidOwnerAddress() {
     TransferAssetActuator actuator = new TransferAssetActuator(
-        getContract(100L, OWNER_ADDRESS_INVALIDATE, TO_ADDRESS), dbManager);
+        getContract(100L, OWNER_ADDRESS_INVALID, TO_ADDRESS), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -484,7 +484,7 @@ public class TransferAssetActuatorTest {
    */
   public void invalidToAddress() {
     TransferAssetActuator actuator = new TransferAssetActuator(
-        getContract(100L, OWNER_ADDRESS, TO_ADDRESS_INVALIDATE), dbManager);
+        getContract(100L, OWNER_ADDRESS, TO_ADDRESS_INVALID), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();

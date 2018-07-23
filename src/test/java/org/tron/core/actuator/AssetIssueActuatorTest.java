@@ -23,7 +23,6 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
-import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
@@ -82,13 +81,13 @@ public class AssetIssueActuatorTest {
             ByteString.copyFromUtf8("owner"),
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
             AccountType.Normal,
-            ChainConstant.ASSET_ISSUE_FEE);
+            dbManager.getDynamicPropertiesStore().getAssetIssueFee());
     AccountCapsule ownerSecondCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8("ownerSecond"),
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)),
             AccountType.Normal,
-            ChainConstant.ASSET_ISSUE_FEE);
+            dbManager.getDynamicPropertiesStore().getAssetIssueFee());
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     dbManager.getAccountStore().put(
         ownerSecondCapsule.getAddress().toByteArray(), ownerSecondCapsule);
@@ -139,7 +138,7 @@ public class AssetIssueActuatorTest {
 
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance + ChainConstant.ASSET_ISSUE_FEE);
+          blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(), TOTAL_SUPPLY);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -191,7 +190,7 @@ public class AssetIssueActuatorTest {
           ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)));
       Assert.assertEquals(ownerSecond.getBalance(), 0);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance + ChainConstant.ASSET_ISSUE_FEE);
+          blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(ownerSecond.getAssetMap().get(nameKey).longValue(), TOTAL_SUPPLY);
     } catch (ContractValidateException e) {
       logger.info(e.getMessage());
@@ -239,7 +238,8 @@ public class AssetIssueActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule =
           dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
-      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(owner.getBalance(),
+          dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
@@ -284,7 +284,8 @@ public class AssetIssueActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule =
           dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
-      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(owner.getBalance(),
+          dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
@@ -329,7 +330,8 @@ public class AssetIssueActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule =
           dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
-      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(owner.getBalance(),
+          dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
@@ -374,7 +376,8 @@ public class AssetIssueActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule =
           dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
-      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(owner.getBalance(),
+          dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
@@ -419,7 +422,8 @@ public class AssetIssueActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule =
           dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
-      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(owner.getBalance(),
+          dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
@@ -464,7 +468,8 @@ public class AssetIssueActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule =
           dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
-      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(owner.getBalance(),
+          dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
@@ -509,7 +514,8 @@ public class AssetIssueActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule =
           dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
-      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(owner.getBalance(),
+          dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
@@ -545,7 +551,8 @@ public class AssetIssueActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule =
           dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
-      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(owner.getBalance(),
+          dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
@@ -581,7 +588,8 @@ public class AssetIssueActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule =
           dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
-      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(owner.getBalance(),
+          dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
@@ -617,7 +625,8 @@ public class AssetIssueActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule =
           dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
-      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(owner.getBalance(),
+          dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
@@ -654,7 +663,7 @@ public class AssetIssueActuatorTest {
 
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance + ChainConstant.ASSET_ISSUE_FEE);
+          blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(owner.getAssetMap().get("testname0123456789abcdefghijgklm").longValue(),
           TOTAL_SUPPLY);
     } catch (ContractValidateException e) {
@@ -692,7 +701,7 @@ public class AssetIssueActuatorTest {
 
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance + ChainConstant.ASSET_ISSUE_FEE);
+          blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(owner.getAssetMap().get("0").longValue(), TOTAL_SUPPLY);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -736,7 +745,8 @@ public class AssetIssueActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule =
           dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
-      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(owner.getBalance(),
+          dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
@@ -773,7 +783,8 @@ public class AssetIssueActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule =
           dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
-      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(owner.getBalance(),
+          dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
@@ -809,7 +820,7 @@ public class AssetIssueActuatorTest {
       Assert.assertNotNull(assetIssueCapsule);
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance + ChainConstant.ASSET_ISSUE_FEE);
+          blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(),
           TOTAL_SUPPLY);
     } catch (ContractValidateException e) {
@@ -847,7 +858,7 @@ public class AssetIssueActuatorTest {
 
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance + ChainConstant.ASSET_ISSUE_FEE);
+          blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(), TOTAL_SUPPLY);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -884,7 +895,7 @@ public class AssetIssueActuatorTest {
 
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance + ChainConstant.ASSET_ISSUE_FEE);
+          blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(), TOTAL_SUPPLY);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -929,7 +940,8 @@ public class AssetIssueActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule =
           dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
-      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(owner.getBalance(),
+          dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
@@ -966,7 +978,7 @@ public class AssetIssueActuatorTest {
 
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance + ChainConstant.ASSET_ISSUE_FEE);
+          blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(),
           TOTAL_SUPPLY);
     } catch (ContractValidateException e) {
@@ -1004,7 +1016,7 @@ public class AssetIssueActuatorTest {
 
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance + ChainConstant.ASSET_ISSUE_FEE);
+          blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(), TOTAL_SUPPLY);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -1041,7 +1053,7 @@ public class AssetIssueActuatorTest {
 
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance + ChainConstant.ASSET_ISSUE_FEE);
+          blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(), TOTAL_SUPPLY);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -1089,7 +1101,8 @@ public class AssetIssueActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule =
           dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
-      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(owner.getBalance(),
+          dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
@@ -1131,7 +1144,8 @@ public class AssetIssueActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule =
           dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
-      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(owner.getBalance(),
+          dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
@@ -1179,7 +1193,8 @@ public class AssetIssueActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule =
           dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
-      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(owner.getBalance(),
+          dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
@@ -1223,7 +1238,8 @@ public class AssetIssueActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule =
           dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
-      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(owner.getBalance(),
+          dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
@@ -1268,7 +1284,8 @@ public class AssetIssueActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule =
           dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
-      Assert.assertEquals(owner.getBalance(), ChainConstant.ASSET_ISSUE_FEE);
+      Assert.assertEquals(owner.getBalance(),
+          dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance);
       Assert.assertNull(assetIssueCapsule);

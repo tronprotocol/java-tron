@@ -30,13 +30,13 @@ import org.tron.protos.Protocol.Transaction;
  */
 public interface ProgramInvokeFactory {
 
-    ProgramInvoke createProgramInvoke(InternalTransaction.TrxType trxType,
-        InternalTransaction.ExecuterType executerType,
-        Transaction tx, Block block, Deposit deposit);
+  ProgramInvoke createProgramInvoke(InternalTransaction.TrxType trxType,
+      InternalTransaction.ExecuterType executerType,
+      Transaction tx, Block block, Deposit deposit);
 
-    ProgramInvoke createProgramInvoke(Program program, DataWord toAddress, DataWord callerAddress,
-        DataWord inValue,
-        long balanceInt, byte[] dataIn, Deposit deposit, boolean staticCall, boolean byTestingSuite);
+  ProgramInvoke createProgramInvoke(Program program, DataWord toAddress, DataWord callerAddress,
+      DataWord inValue,
+      long balanceInt, byte[] dataIn, Deposit deposit, boolean staticCall, boolean byTestingSuite);
 
 
 }

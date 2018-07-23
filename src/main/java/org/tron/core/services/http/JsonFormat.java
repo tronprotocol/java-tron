@@ -1338,7 +1338,7 @@ public class JsonFormat {
     try {
       return ByteString.copyFrom(ByteArray.fromHexString(input.toString()));
     } catch (Exception e) {
-      throw new InvalidEscapeSequence("invalidate hex String");
+      throw new InvalidEscapeSequence("INVALID hex String");
     }
   }
 

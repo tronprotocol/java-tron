@@ -43,6 +43,9 @@ import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
+import org.tron.protos.Contract.ProposalApproveContract;
+import org.tron.protos.Contract.ProposalCreateContract;
+import org.tron.protos.Contract.ProposalDeleteContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
@@ -289,14 +292,23 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case WithdrawBalanceContract:
           owner = contractParameter.unpack(WithdrawBalanceContract.class).getOwnerAddress();
           break;
-        case SmartContract:
-          owner = contractParameter.unpack(Contract.SmartContract.class).getOwnerAddress();
+        case CreateSmartContract:
+          owner = contractParameter.unpack(Contract.CreateSmartContract.class).getOwnerAddress();
           break;
         case TriggerSmartContract:
           owner = contractParameter.unpack(Contract.TriggerSmartContract.class).getOwnerAddress();
           break;
         case UpdateAssetContract:
           owner = contractParameter.unpack(UpdateAssetContract.class).getOwnerAddress();
+          break;
+        case ProposalCreateContract:
+          owner = contractParameter.unpack(ProposalCreateContract.class).getOwnerAddress();
+          break;
+        case ProposalApproveContract:
+          owner = contractParameter.unpack(ProposalApproveContract.class).getOwnerAddress();
+          break;
+        case ProposalDeleteContract:
+          owner = contractParameter.unpack(ProposalDeleteContract.class).getOwnerAddress();
           break;
         // todo add other contract
         default:

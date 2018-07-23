@@ -18,6 +18,7 @@
 package org.tron.common.runtime.vm.program;
 
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteUtil;
 import org.tron.protos.Protocol.Transaction;
@@ -114,56 +115,56 @@ public class InternalTransaction extends VMTransaction {
         return parentHash;
     }
 
-    @Override
-    public byte[] getEncoded() {
-        if (protoEncoded == null) {
-            /*
-            this.protoEncoded = RLP.encodeList(
-                    RLP.encodeElement(isEmptyNonce ? null : nonce),
-                    RLP.encodeElement(this.parentHash),
-                    RLP.encodeElement(getSender()),
-                    RLP.encodeElement(getReceiveAddress()),
-                    RLP.encodeElement(getValue()),
-                    RLP.encodeElement(getGasPrice()),
-                    RLP.encodeElement(getGasLimit()),
-                    RLP.encodeElement(getData()),
-                    RLP.encodeString(this.note),
-                    encodeInt(this.deep),
-                    encodeInt(this.index),
-                    encodeInt(this.rejected ? 1 : 0)
-            );
-            */
-        }
-
-        return protoEncoded;
-    }
+//    @Override
+//    public byte[] getEncoded() {
+//        if (protoEncoded == null) {
+//            /*
+//            this.protoEncoded = RLP.encodeList(
+//                    RLP.encodeElement(isEmptyNonce ? null : nonce),
+//                    RLP.encodeElement(this.parentHash),
+//                    RLP.encodeElement(getSender()),
+//                    RLP.encodeElement(getReceiveAddress()),
+//                    RLP.encodeElement(getValue()),
+//                    RLP.encodeElement(getGasPrice()),
+//                    RLP.encodeElement(getGasLimit()),
+//                    RLP.encodeElement(getData()),
+//                    RLP.encodeString(this.note),
+//                    encodeInt(this.deep),
+//                    encodeInt(this.index),
+//                    encodeInt(this.rejected ? 1 : 0)
+//            );
+//            */
+//        }
+//
+//        return protoEncoded;
+//    }
 
     @Override
     public byte[] getEncodedRaw() {
         return getEncoded();
     }
 
-    @Override
-    public synchronized void protoParse() {
-        if (parsed) return;
-        /*
-        RLPList decodedTxList = RLP.decode2(rlpEncoded);
-        RLPList transaction = (RLPList) decodedTxList.get(0);
-
-        this.parentHash = transaction.get(1).getRLPData();
-        this.sendAddress = transaction.get(2).getRLPData();
-        setReceiveAddress(transaction.get(3).getRLPData());
-        setValue(transaction.get(4).getRLPData());
-        setGasPrice(transaction.get(5).getRLPData());
-        setGasLimit(transaction.get(6).getRLPData());
-        setData(transaction.get(7).getRLPData());
-        this.note = new String(transaction.get(8).getRLPData());
-        this.deep = decodeInt(transaction.get(9).getRLPData());
-        this.index = decodeInt(transaction.get(10).getRLPData());
-        this.rejected = decodeInt(transaction.get(11).getRLPData()) == 1;
-        */
-        this.parsed = true;
-    }
+//    @Override
+//    public synchronized void protoParse() {
+//        if (parsed) return;
+//        /*
+//        RLPList decodedTxList = RLP.decode2(rlpEncoded);
+//        RLPList transaction = (RLPList) decodedTxList.get(0);
+//
+//        this.parentHash = transaction.get(1).getRLPData();
+//        this.sendAddress = transaction.get(2).getRLPData();
+//        setReceiveAddress(transaction.get(3).getRLPData());
+//        setValue(transaction.get(4).getRLPData());
+//        setGasPrice(transaction.get(5).getRLPData());
+//        setGasLimit(transaction.get(6).getRLPData());
+//        setData(transaction.get(7).getRLPData());
+//        this.note = new String(transaction.get(8).getRLPData());
+//        this.deep = decodeInt(transaction.get(9).getRLPData());
+//        this.index = decodeInt(transaction.get(10).getRLPData());
+//        this.rejected = decodeInt(transaction.get(11).getRLPData()) == 1;
+//        */
+//        this.parsed = true;
+//    }
 
 
     private static byte[] intToBytes(int value) {

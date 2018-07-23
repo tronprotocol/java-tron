@@ -17,7 +17,6 @@ import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
-import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.Manager;
@@ -94,7 +93,7 @@ public class BandwidthTest {
             ByteString.copyFromUtf8("asset"),
             ByteString.copyFrom(ByteArray.fromHexString(ASSET_ADDRESS)),
             AccountType.AssetIssue,
-            ChainConstant.ASSET_ISSUE_FEE);
+            dbManager.getDynamicPropertiesStore().getAssetIssueFee());
 
     dbManager.getAccountStore().reset();
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);

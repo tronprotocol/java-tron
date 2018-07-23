@@ -35,7 +35,7 @@ public class UpdateAccountActuatorTest {
   private static final String ACCOUNT_NAME_1 = "ownerTest1";
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_1;
-  private static final String OWNER_ADDRESS_INVALIDATE = "aaaa";
+  private static final String OWNER_ADDRESS_INVALID = "aaaa";
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -114,7 +114,7 @@ public class UpdateAccountActuatorTest {
   public void invalidAddress() {
     TransactionResultCapsule ret = new TransactionResultCapsule();
     UpdateAccountActuator actuator = new UpdateAccountActuator(
-        getContract(ACCOUNT_NAME, OWNER_ADDRESS_INVALIDATE), dbManager);
+        getContract(ACCOUNT_NAME, OWNER_ADDRESS_INVALID), dbManager);
     try {
       actuator.validate();
       actuator.execute(ret);

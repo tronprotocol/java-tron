@@ -28,7 +28,6 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.utils.TransactionUtil;
-import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -192,12 +191,14 @@ public class AssetIssueActuator extends AbstractActuator {
     }
 
     if (assetIssueContract.getFreeAssetNetLimit() < 0
-        || assetIssueContract.getFreeAssetNetLimit() >= ChainConstant.ONE_DAY_NET_LIMIT) {
+        || assetIssueContract.getFreeAssetNetLimit() >=
+        dbManager.getDynamicPropertiesStore().getOneDayNetLimit()) {
       throw new ContractValidateException("Invalid FreeAssetNetLimit");
     }
 
     if (assetIssueContract.getPublicFreeAssetNetLimit() < 0
-        || assetIssueContract.getPublicFreeAssetNetLimit() >= ChainConstant.ONE_DAY_NET_LIMIT) {
+        || assetIssueContract.getPublicFreeAssetNetLimit() >=
+        dbManager.getDynamicPropertiesStore().getOneDayNetLimit()) {
       throw new ContractValidateException("Invalid PublicFreeAssetNetLimit");
     }
 
@@ -246,7 +247,7 @@ public class AssetIssueActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    return ChainConstant.ASSET_ISSUE_FEE;
+    return dbManager.getDynamicPropertiesStore().getAssetIssueFee();
   }
 
   public long calcUsage() {

@@ -22,12 +22,11 @@ import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.protos.Contract.SmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
+import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 
 /**
- *
  * Created by Guo Yonggang on 04.14.2018
  */
 @Slf4j

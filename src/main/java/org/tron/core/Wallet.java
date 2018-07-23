@@ -18,9 +18,7 @@
 
 package org.tron.core;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -41,6 +39,7 @@ import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
@@ -62,16 +61,18 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.config.Parameter.ChainParameters;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.ContractStore;
+import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.PendingManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
-import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
@@ -84,11 +85,14 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
 import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.SmartContract;
+import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.TriggerSmartContract;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.Proposal;
+import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -189,6 +193,21 @@ public class Wallet {
       return decodeData;
     }
     return null;
+  }
+
+  public static byte[] generateContractAddress(Transaction trx) {
+
+    CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
+    byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
+    TransactionCapsule trxCap = new TransactionCapsule(trx);
+    byte[] txRawDataHash = trxCap.getTransactionId().getBytes();
+
+    byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
+    System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
+    System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
+
+    return Hash.sha3omit12(combined);
+
   }
 
   public static byte[] decodeFromBase58Check(String addressBase58) {
@@ -387,6 +406,35 @@ public class Wallet {
     return builder.build();
   }
 
+  public ProposalList getProposalList() {
+    ProposalList.Builder builder = ProposalList.newBuilder();
+    List<ProposalCapsule> proposalCapsuleList = dbManager.getProposalStore().getAllProposals();
+    proposalCapsuleList
+        .forEach(proposalCapsule -> builder.addProposals(proposalCapsule.getInstance()));
+    return builder.build();
+  }
+
+  public Protocol.ChainParameters getChainParameters() {
+    Protocol.ChainParameters.Builder builder = Protocol.ChainParameters.newBuilder();
+    DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
+
+    builder.putParameters(ChainParameters.MAINTENANCE_TIME_INTERVAL.name(),
+        dynamicPropertiesStore.getMaintenanceTimeInterval());
+    builder.putParameters(ChainParameters.ACCOUNT_UPGRADE_COST.name(),
+        dynamicPropertiesStore.getAccountUpgradeCost());
+    builder.putParameters(ChainParameters.CREATE_ACCOUNT_FEE.name(),
+        dynamicPropertiesStore.getCreateAccountFee());
+    builder.putParameters(ChainParameters.TRANSACTION_FEE.name(),
+        dynamicPropertiesStore.getTransactionFee());
+    builder.putParameters(ChainParameters.ASSET_ISSUE_FEE.name(),
+        dynamicPropertiesStore.getAssetIssueFee());
+    builder.putParameters(ChainParameters.WITNESS_PAY_PER_BLOCK.name(),
+        dynamicPropertiesStore.getWitnessPayPerBlock());
+    builder.putParameters(ChainParameters.WITNESS_STANDBY_ALLOWANCE.name(),
+        dynamicPropertiesStore.getWitnessStandbyAllowance());
+    return builder.build();
+  }
+
   public AssetIssueList getAssetIssueList() {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     dbManager.getAssetIssueStore().getAllAssetIssues()
@@ -398,15 +446,17 @@ public class Wallet {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     List<AssetIssueCapsule> assetIssueList = dbManager.getAssetIssueStore()
         .getAssetIssuesPaginated(offset, limit);
-    if (null == assetIssueList || assetIssueList.size() == 0) {
+
+    if (CollectionUtils.isEmpty(assetIssueList)) {
       return null;
     }
+
     assetIssueList.forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
     return builder.build();
   }
 
   public AssetIssueList getAssetIssueByAccount(ByteString accountAddress) {
-    if (accountAddress == null || accountAddress.size() == 0) {
+    if (accountAddress == null || accountAddress.isEmpty()) {
       return null;
     }
     List<AssetIssueCapsule> assetIssueCapsuleList = dbManager.getAssetIssueStore()
@@ -421,7 +471,7 @@ public class Wallet {
   }
 
   public AccountNetMessage getAccountNet(ByteString accountAddress) {
-    if (accountAddress == null || accountAddress.size() == 0) {
+    if (accountAddress == null || accountAddress.isEmpty()) {
       return null;
     }
     AccountNetMessage.Builder builder = AccountNetMessage.newBuilder();
@@ -456,7 +506,7 @@ public class Wallet {
   }
 
   public AssetIssueContract getAssetIssueByName(ByteString assetName) {
-    if (assetName == null || assetName.size() == 0) {
+    if (assetName == null || assetName.isEmpty()) {
       return null;
     }
     AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
@@ -513,11 +563,26 @@ public class Wallet {
     try {
       transactionCapsule = dbManager.getTransactionStore()
           .get(transactionId.toByteArray());
-
-    } catch (BadItemException e) {
+    } catch (StoreException e) {
     }
     if (transactionCapsule != null) {
       return transactionCapsule.getInstance();
+    }
+    return null;
+  }
+
+  public Proposal getProposalById(ByteString proposalId) {
+    if (Objects.isNull(proposalId)) {
+      return null;
+    }
+    ProposalCapsule proposalCapsule = null;
+    try {
+      proposalCapsule = dbManager.getProposalStore()
+          .get(proposalId.toByteArray());
+    } catch (StoreException e) {
+    }
+    if (proposalCapsule != null) {
+      return proposalCapsule.getInstance();
     }
     return null;
   }
@@ -545,9 +610,12 @@ public class Wallet {
     return nodeListBuilder.build();
   }
 
-  public Transaction deployContract(SmartContract smartContract) {
-    return new TransactionCapsule(smartContract, ContractType.SmartContract)
-        .getInstance();
+  public Transaction deployContract(CreateSmartContract createSmartContract,
+      TransactionCapsule trxCap) {
+
+    // do nothing, so can add some useful function later
+    // trxcap contract para cacheUnpackValue has value
+    return trxCap.getInstance();
   }
 
   public Transaction triggerContract(TriggerSmartContract triggerSmartContract,
@@ -602,16 +670,7 @@ public class Wallet {
 
     ContractCapsule contractCapsule = dbManager.getContractStore()
         .get(bytesMessage.getValue().toByteArray());
-    Transaction trx = contractCapsule.getInstance();
-    Any contract = trx.getRawData().getContract(0).getParameter();
-    if (contract.is(SmartContract.class)) {
-      try {
-        return contract.unpack(SmartContract.class);
-      } catch (InvalidProtocolBufferException e) {
-        return null;
-      }
-    }
-    return null;
+    return contractCapsule.getInstance();
   }
 
   private byte[] getSelector(byte[] data) {
