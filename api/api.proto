@@ -709,3 +709,14 @@ message AddressPrKeyPairMessage {
   string address = 1;
   string privateKey = 2;
 }
+
+message TransactionExtention {
+  Transaction transaction = 1;
+  bytes txid = 2;   //transaction id =  sha256(transaction.rowdata)
+  Return result = 3;
+}
+
+message BlockExtention {
+  Block block = 1;
+  bytes blockid = 2;
+}
