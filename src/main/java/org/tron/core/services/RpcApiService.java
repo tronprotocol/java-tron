@@ -395,6 +395,18 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getAccountById(Account req, StreamObserver<Account> responseObserver) {
+      ByteString accountId = req.getAccountId();
+      if (accountId != null) {
+        Account reply = wallet.getAccountById(req);
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void createTransaction(TransferContract request,
         StreamObserver<Transaction> responseObserver) {
       try {

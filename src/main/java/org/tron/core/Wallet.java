@@ -244,6 +244,9 @@ public class Wallet {
     AccountStore accountStore = dbManager.getAccountStore();
     AccountIdIndexStore accountIdIndexStore = dbManager.getAccountIdIndexStore();//to be replaced by AccountIdIndexStore
     byte[] address = accountIdIndexStore.get(account.getAccountId());
+    if (address == null) {
+      return null;
+    }
     AccountCapsule accountCapsule = accountStore.get(address);
     if (accountCapsule == null) {
       return null;
