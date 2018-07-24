@@ -37,12 +37,12 @@ public class UpdateAccountActuator extends AbstractActuator {
 
     byte[] ownerAddress = accountUpdateContract.getOwnerAddress().toByteArray();
     AccountStore accountStore = dbManager.getAccountStore();
-    AccountIndexStore accountIndexStore = dbManager.getAccountIndexStore();
+//    AccountIndexStore accountIndexStore = dbManager.getAccountIndexStore();
     AccountCapsule account = accountStore.get(ownerAddress);
 
     account.setAccountName(accountUpdateContract.getAccountName().toByteArray());
     accountStore.put(ownerAddress, account);
-    accountIndexStore.put(account);
+//    accountIndexStore.put(account);
     ret.setStatus(fee, code.SUCESS);
 
     return true;
