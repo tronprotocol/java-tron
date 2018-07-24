@@ -232,7 +232,7 @@ public class Manager {
     }
   }
 
-  public BlockId getHeadBlockId() {
+  public synchronized BlockId getHeadBlockId() {
     return new BlockId(
         getDynamicPropertiesStore().getLatestBlockHeaderHash(),
         getDynamicPropertiesStore().getLatestBlockHeaderNumber());
@@ -707,8 +707,7 @@ public class Manager {
         + ", dy num:" + dynamicPropertiesStore.getLatestBlockHeaderNumber()
         + ", so num:" + dynamicPropertiesStore.getLatestSolidifiedBlockNum()
     );
-
-    try (PendingManager pm = new PendingManager(this)) {
+  try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
         if (!block.validateSignature()) {
