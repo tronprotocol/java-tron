@@ -177,13 +177,8 @@ public class Runtime {
           .createProgramInvoke(TRX_CONTRACT_CALL_TYPE, executerType, trx,
               block, deposit);
       this.vm = new VM(config);
-      //InternalTransaction internalTransaction = new InternalTransaction(trx);
-      InternalTransaction internalTransaction = new InternalTransaction(trx,
-          contract.getOwnerAddress().toByteArray(),
-          contract.getContractAddress().toByteArray(),
-          contract.getCallValue().isEmpty() ? new Byte("0")
-              : contract.getCallValue().toByteArray()[0]);
-      this.program = new Program(null, code, programInvoke, internalTransaction, config);
+      InternalTransaction internalTransaction = new InternalTransaction(trx);
+      this.program = new Program(null, code, programInvoke,internalTransaction, config);
     }
 
     //transfer from callerAddress to targetAddress according to callValue
@@ -201,7 +196,7 @@ public class Runtime {
    **/
   private void create() {
     CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
-    SmartContract newSmartContract = contract.getNewContrect();
+    SmartContract newSmartContract = contract.getNewContract();
     byte[] code = newSmartContract.getBytecode().toByteArray();
     byte[] contractAddress = Wallet.generateContractAddress(trx);
     newSmartContract = newSmartContract.toBuilder()
@@ -215,11 +210,7 @@ public class Runtime {
     // crate vm to constructor smart contract
     try {
       byte[] ops = newSmartContract.getBytecode().toByteArray();
-      InternalTransaction internalTransaction = new InternalTransaction(trx,
-          contract.getOwnerAddress().toByteArray(),
-          newSmartContract.getContractAddress().toByteArray(),
-          newSmartContract.getCallValue().isEmpty() ? new Byte("0")
-              : newSmartContract.getCallValue().toByteArray()[0]);
+      InternalTransaction internalTransaction = new InternalTransaction(trx);
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executerType, trx,
               block, deposit);

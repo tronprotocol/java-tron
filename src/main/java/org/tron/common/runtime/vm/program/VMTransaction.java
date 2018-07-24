@@ -17,6 +17,7 @@
  */
 package org.tron.common.runtime.vm.program;
 
+import com.google.common.primitives.Longs;
 import com.google.protobuf.GeneratedMessageV3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +36,7 @@ import org.tron.protos.Protocol;
 import java.math.BigInteger;
 import java.security.SignatureException;
 import java.util.Arrays;
+import org.tron.protos.Protocol.Transaction;
 
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 
@@ -92,17 +94,11 @@ public class VMTransaction {
 
     public VMTransaction(Protocol.Transaction tx) {
         this.trx = tx;
-        //this.protoEncoded = rawData;
-        //parsed = false;
+        TransactionCapsule trxCap = new TransactionCapsule(tx);
+        this.protoEncoded = trxCap.getData();
+        parsed = false;
     }
 
-    public VMTransaction(Protocol.Transaction tx , byte[]r, byte[]s,byte v) {
-        this.trx = tx;
-        TransactionCapsule txCap = new TransactionCapsule(tx);
-        this.signature = ECDSASignature.fromComponents(r, s, v);
-        //this.protoEncoded = rawData;
-        //parsed = false;
-    }
 
     public VMTransaction(byte[] receiveAddress, long value, byte[] data,
                          Integer chainId) {
@@ -204,10 +200,12 @@ public class VMTransaction {
 
             ///
 
-
+            //use protoEncoded directly and it should never be null
+            this.hash = Hash.sha3(protoEncoded);
+            this.parsed = true;
             TransactionCapsule transaction = new TransactionCapsule(protoEncoded);
         } catch (Exception e) {
-            throw new RuntimeException("Error on parsing RLP", e);
+            throw new RuntimeException("Error on parsing proto", e);
         }
     }
 
@@ -414,7 +412,12 @@ public class VMTransaction {
 
     public byte[] getEncoded() {
 
-        if (protoEncoded != null) return protoEncoded;
+        if (protoEncoded != null) {
+            if(null == this.hash){
+                this.hash = Hash.sha3(protoEncoded);
+            }
+            return protoEncoded;
+        }
         /*
         byte[] gasPrice = RLP.encodeElement(this.gasPrice);
         byte[] gasLimit = RLP.encodeElement(this.gasLimit);
@@ -447,6 +450,15 @@ public class VMTransaction {
 
         this.hash = this.getHash();
         */
+
+        byte[] value = Longs.toByteArray(this.value);
+        byte[] raw = new byte[this.receiveAddress.length  + this.data.length + value.length];
+        System.arraycopy(this.receiveAddress,0, raw,0,this.receiveAddress.length);
+        System.arraycopy(this.data,0, raw,this.receiveAddress.length,this.data.length);
+        System.arraycopy(value,0, raw,this.data.length,value.length);
+        this.protoEncoded = raw;
+        this.hash = Hash.sha3(protoEncoded);
+
         return protoEncoded;
     }
 

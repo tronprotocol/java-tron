@@ -55,7 +55,10 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
       return null;
     }
     assetIssueList.sort((o1, o2) -> {
-      return o1.getName().toStringUtf8().compareTo(o2.getName().toStringUtf8());
+      if (o1.getName() != o2.getName()) {
+        return o1.getName().toStringUtf8().compareTo(o2.getName().toStringUtf8());
+      }
+      return Long.compare(o1.getOrder(), o2.getOrder());
     });
     limit = limit > ASSET_ISSUE_COUNT_LIMIT_MAX ? ASSET_ISSUE_COUNT_LIMIT_MAX : limit;
     long end = offset + limit;

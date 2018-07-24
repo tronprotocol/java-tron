@@ -160,7 +160,7 @@ public class Program {
             //data = config.recordInternalTransactionsData() ? data : null;
             //result = getResult().addInternalTransaction(transaction.getHash(), getCallDeep(),
             //        getGasPrice(), gasLimit, senderAddress, receiveAddress, value.toByteArray(), data, note);
-            result = getResult().addInternalTransaction(transaction.getSignature().toByteArray(), getCallDeep(),
+            result = getResult().addInternalTransaction(transaction.getHash(), getCallDeep(),
                     senderAddress, receiveAddress, value, data, note);
         }
 
@@ -1145,7 +1145,12 @@ public class Program {
             this.stackPushZero();
              // deposit.rollback();
         } else {
-
+            // Delegate or not. if is delegated, we will use msg sender, otherwise use contract address
+            contract.setCallerAddress(convertToTronAddress(msg.getType().callIsDelegate() ?
+                getCallerAddress().getLast20Bytes() : getOwnerAddress().getLast20Bytes()));
+            // this is the depositImpl, not storage as above
+            contract.setDeposit(this.invoke.getDeposit());
+            contract.setResult(this.result);
             Pair<Boolean, byte[]> out = contract.execute(data);
 
             if (out.getLeft()) { // success

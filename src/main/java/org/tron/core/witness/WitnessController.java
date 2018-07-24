@@ -194,7 +194,7 @@ public class WitnessController {
     }
 
     int numberActiveWitness = this.getActiveWitnesses().size();
-    int singleRepeat = this.manager.getDynamicPropertiesStore().getSingleRepeat();
+    int singleRepeat = ChainConstant.SINGLE_REPEAT;
     if (numberActiveWitness <= 0) {
       throw new RuntimeException("Active Witnesses is null.");
     }
@@ -403,7 +403,7 @@ public class WitnessController {
 
   private void payStandbyWitness(List<ByteString> list) {
     long voteSum = 0;
-    long totalPay = ChainConstant.WITNESS_STANDBY_ALLOWANCE;
+    long totalPay = manager.getDynamicPropertiesStore().getWitnessStandbyAllowance();
     for (ByteString b : list) {
       voteSum += getWitnesseByAddress(b).getVoteCount();
     }

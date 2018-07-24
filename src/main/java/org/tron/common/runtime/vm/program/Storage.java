@@ -172,6 +172,9 @@ public class Storage implements Deposit, ProgramListenerAware {
     }
 
     @Override
+    public void putVotes(Key key, Value value) { deposit.putVotes(key, value); }
+
+    @Override
     public void setParent(Deposit deposit) {
         this.deposit.setParent(deposit);
     }
@@ -190,6 +193,14 @@ public class Storage implements Deposit, ProgramListenerAware {
     public TransactionCapsule getTransaction(byte[] trxHash) {
         return this.deposit.getTransaction(trxHash);
     }
+
+    @Override
+    // Do nothing
+    public void syncCacheFromAccountStore(byte[] address){ }
+
+    @Override
+    // Do nothing
+    public void syncCacheFromVotesStore(byte[] address) { }
 
     @Override
     public BlockCapsule getBlock(byte[] blockHash) {

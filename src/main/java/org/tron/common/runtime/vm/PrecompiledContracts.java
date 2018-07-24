@@ -17,15 +17,27 @@
  */
 package org.tron.common.runtime.vm;
 
+import com.google.common.primitives.Longs;
+import com.google.protobuf.ByteString;
+import java.util.List;
 import org.apache.commons.lang3.tuple.Pair;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.Hash;
 import org.tron.common.crypto.zksnark.*;
+import org.tron.common.runtime.vm.program.ProgramResult;
+import org.tron.common.storage.Deposit;
 import org.tron.common.utils.BIUtil;
 
 import java.math.BigInteger;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.actuator.Actuator;
+import org.tron.core.actuator.ActuatorFactory;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.protos.Contract;
+import org.tron.protos.Contract.VoteWitnessContract;
 
+import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.utils.BIUtil.addSafely;
 import static org.tron.common.utils.BIUtil.isLessThan;
 import static org.tron.common.utils.BIUtil.isZero;
@@ -45,6 +57,7 @@ public class PrecompiledContracts {
     private static final BN128Addition altBN128Add = new BN128Addition();
     private static final BN128Multiplication altBN128Mul = new BN128Multiplication();
     private static final BN128Pairing altBN128Pairing = new BN128Pairing();
+    private static final VoteWitnessNative voteContract = new VoteWitnessNative();
 
     private static final DataWord ecRecoverAddr =       new DataWord("0000000000000000000000000000000000000000000000000000000000000001");
     private static final DataWord sha256Addr =          new DataWord("0000000000000000000000000000000000000000000000000000000000000002");
@@ -54,6 +67,8 @@ public class PrecompiledContracts {
     private static final DataWord altBN128AddAddr =     new DataWord("0000000000000000000000000000000000000000000000000000000000000006");
     private static final DataWord altBN128MulAddr =     new DataWord("0000000000000000000000000000000000000000000000000000000000000007");
     private static final DataWord altBN128PairingAddr = new DataWord("0000000000000000000000000000000000000000000000000000000000000008");
+    private static final DataWord voteContractAddr =    new DataWord("0000000000000000000000000000000000000000000000000000000000010001");
+
 
     public static PrecompiledContract getContractForAddress(DataWord address) {
 
@@ -62,6 +77,7 @@ public class PrecompiledContracts {
         if (address.equals(sha256Addr)) return sha256;
         if (address.equals(ripempd160Addr)) return ripempd160;
         if (address.equals(identityAddr)) return identity;
+        if (address.equals(voteContractAddr)) return voteContract;
 
         /*
         // Byzantium precompiles
@@ -90,6 +106,36 @@ public class PrecompiledContracts {
         public abstract long getGasForData(byte[] data);
 
         public abstract Pair<Boolean, byte[]> execute(byte[] data);
+
+        private byte[] callerAddress;
+
+        public void setCallerAddress(byte[] callerAddress) {
+            this.callerAddress = callerAddress.clone();
+        }
+
+        public void setDeposit(Deposit deposit) {
+            this.deposit = deposit;
+        }
+
+        public void setResult(ProgramResult result) {
+            this.result = result;
+        }
+
+        private Deposit deposit;
+
+        private ProgramResult result;
+
+        public byte[] getCallerAddress() {
+            return callerAddress.clone();
+        }
+
+        public Deposit getDeposit() {
+            return deposit;
+        }
+
+        public ProgramResult getResult() {
+            return result;
+        }
     }
 
     public static class Identity extends PrecompiledContract {
@@ -489,5 +535,61 @@ public class PrecompiledContracts {
 
             return Pair.of(p1, p2);
         }
+    }
+
+    /**
+     * Native function for voting witness. <br/>
+     * <br/>
+     *
+     * Input data[]: <br/>
+     * witness address, voteCount
+     *
+     * output: <br/>
+     * voteCount <br/>
+     *
+     */
+    public static class VoteWitnessNative extends PrecompiledContract {
+        @Override
+        // TODO: Please re-implement this function after Tron cost is well designed.
+        public long getGasForData(byte[] data) { return 0; }
+
+        @Override
+        public Pair<Boolean, byte[]> execute(byte[] data) {
+
+            if (data == null)
+                data = EMPTY_BYTE_ARRAY;
+            byte[] witnessAddress = new byte[32];
+            System.arraycopy(data, 0, witnessAddress, 0, 32);
+            byte[] value = new byte[8];
+            System.arraycopy(data, 32 + 16 + 8, value, 0, 8);
+
+            Contract.VoteWitnessContract.Builder builder = Contract.VoteWitnessContract.newBuilder();
+            builder.setOwnerAddress(ByteString.copyFrom(getCallerAddress()));
+            long count = Longs.fromByteArray(value);
+            Contract.VoteWitnessContract.Vote.Builder voteBuilder = Contract.VoteWitnessContract.Vote
+                    .newBuilder();
+            byte[] witnessAddress20= new byte[20];
+            System.arraycopy(witnessAddress,12,witnessAddress20,0,20);
+            voteBuilder.setVoteAddress(ByteString.copyFrom(convertToTronAddress(witnessAddress20)));
+            voteBuilder.setVoteCount(count);
+            builder.addVotes(voteBuilder.build());
+            VoteWitnessContract contract = builder.build();
+
+            final List<Actuator> actuatorList = ActuatorFactory
+                .createActuator(new TransactionCapsule(contract), getDeposit().getDbManager());
+            try {
+                actuatorList.get(0).validate();
+                actuatorList.get(0).execute(getResult().getRet());
+                getDeposit().syncCacheFromAccountStore(ByteString.copyFrom(getCallerAddress()).toByteArray());
+                getDeposit().syncCacheFromVotesStore(ByteString.copyFrom(getCallerAddress()).toByteArray());
+            } catch (ContractExeException e) {
+                e.printStackTrace();
+            } catch (ContractValidateException e) {
+                e.printStackTrace();
+            }
+
+            return Pair.of(true, new DataWord(count).getData());
+        }
+
     }
 }
