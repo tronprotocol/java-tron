@@ -110,7 +110,7 @@ public class PrecompiledContracts {
         private byte[] callerAddress;
 
         public void setCallerAddress(byte[] callerAddress) {
-            this.callerAddress = callerAddress;
+            this.callerAddress = callerAddress.clone();
         }
 
         public void setDeposit(Deposit deposit) {
@@ -126,7 +126,7 @@ public class PrecompiledContracts {
         private ProgramResult result;
 
         public byte[] getCallerAddress() {
-            return callerAddress;
+            return callerAddress.clone();
         }
 
         public Deposit getDeposit() {
