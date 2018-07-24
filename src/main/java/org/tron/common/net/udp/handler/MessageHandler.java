@@ -26,7 +26,6 @@ import io.netty.channel.socket.nio.NioDatagramChannel;
 import java.net.InetSocketAddress;
 import java.util.function.Consumer;
 import org.slf4j.LoggerFactory;
-import org.tron.common.overlay.discover.node.NodeManager;
 
 
 public class MessageHandler extends SimpleChannelInboundHandler<UdpEvent>

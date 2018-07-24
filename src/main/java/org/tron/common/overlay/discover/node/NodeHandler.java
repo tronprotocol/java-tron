@@ -236,6 +236,9 @@ public class NodeHandler {
   }
 
   public void handleFindNode(FindNodeMessage msg) {
+    if(msg.getFrom().getHost().equals("127.0.0.1")){
+      System.out.println("me");
+    }
     getNodeStatistics().discoverInFind.add();
     List<Node> closest = nodeManager.getTable().getClosestNodes(msg.getTargetId());
     sendNeighbours(closest);
