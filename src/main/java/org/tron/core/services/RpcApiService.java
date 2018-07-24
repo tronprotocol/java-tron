@@ -2,6 +2,7 @@ package org.tron.core.services;
 
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Message;
 import io.grpc.Server;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
@@ -37,7 +38,9 @@ import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.GrpcAPI.ProposalList;
+import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletExtensionGrpc;
@@ -390,6 +393,29 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
+    private void createTransactionExtention(Message request, ContractType contractType,
+        StreamObserver<TransactionExtention> responseObserver) {
+      TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
+      Return.Builder retBuilder = Return.newBuilder();
+      try {
+        TransactionCapsule trx = createTransactionCapsule(request, contractType);
+        trxExtBuilder.setTransaction(trx.getInstance());
+        trxExtBuilder.setTxid(trx.getTransactionId().getByteString());
+        retBuilder.setResult(true).setCode(response_code.SUCCESS);
+      } catch (ContractValidateException e) {
+        retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
+            .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()));
+        logger.debug("ContractValidateException: {}", e.getMessage());
+      } catch (Exception e) {
+        retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+        logger.info("exception caught" + e.getMessage());
+      }
+      trxExtBuilder.setResult(retBuilder);
+      responseObserver.onNext(trxExtBuilder.build());
+      responseObserver.onCompleted();
+    }
+
     private TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
         ContractType contractType) throws ContractValidateException {
       TransactionCapsule trx = new TransactionCapsule(message, contractType);
@@ -676,45 +702,21 @@ public class RpcApiService implements Service {
 
     @Override
     public void proposalCreate(Contract.ProposalCreateContract request,
-        StreamObserver<Transaction> responseObserver) {
-      try {
-        responseObserver.onNext(
-            createTransactionCapsule(request, ContractType.ProposalCreateContract).getInstance());
-      } catch (ContractValidateException e) {
-        responseObserver
-            .onNext(null);
-        logger.debug("ContractValidateException: {}", e.getMessage());
-      }
-      responseObserver.onCompleted();
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.ProposalCreateContract, responseObserver);
     }
 
 
     @Override
     public void proposalApprove(Contract.ProposalApproveContract request,
-        StreamObserver<Transaction> responseObserver) {
-      try {
-        responseObserver.onNext(
-            createTransactionCapsule(request, ContractType.ProposalApproveContract).getInstance());
-      } catch (ContractValidateException e) {
-        responseObserver
-            .onNext(null);
-        logger.debug("ContractValidateException: {}", e.getMessage());
-      }
-      responseObserver.onCompleted();
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.ProposalApproveContract, responseObserver);
     }
 
     @Override
     public void proposalDelete(Contract.ProposalDeleteContract request,
-        StreamObserver<Transaction> responseObserver) {
-      try {
-        responseObserver.onNext(
-            createTransactionCapsule(request, ContractType.ProposalDeleteContract).getInstance());
-      } catch (ContractValidateException e) {
-        responseObserver
-            .onNext(null);
-        logger.debug("ContractValidateException: {}", e.getMessage());
-      }
-      responseObserver.onCompleted();
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.ProposalDeleteContract, responseObserver);
     }
 
     @Override
@@ -890,19 +892,8 @@ public class RpcApiService implements Service {
 
     @Override
     public void deployContract(org.tron.protos.Contract.CreateSmartContract request,
-        io.grpc.stub.StreamObserver<org.tron.protos.Protocol.Transaction> responseObserver) {
-
-      TransactionCapsule trxCap;
-      try {
-        trxCap = createTransactionCapsule(request, ContractType.CreateSmartContract);
-      } catch (ContractValidateException e) {
-        responseObserver.onNext(null);
-        responseObserver.onCompleted();
-        return;
-      }
-      Transaction trx = wallet.deployContract(request, trxCap);
-      responseObserver.onNext(trx);
-      responseObserver.onCompleted();
+        io.grpc.stub.StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.CreateSmartContract, responseObserver);
     }
 
     public void totalTransaction(EmptyMessage request,
@@ -927,20 +918,8 @@ public class RpcApiService implements Service {
 
     @Override
     public void triggerContract(Contract.TriggerSmartContract request,
-        StreamObserver<Transaction> responseObserver) {
-      TransactionCapsule trxCap;
-      try {
-        trxCap = createTransactionCapsule(request,
-            ContractType.TriggerSmartContract);//wallet.triggerContract(request);
-      } catch (ContractValidateException e) {
-        responseObserver.onNext(null);
-        responseObserver.onCompleted();
-        return;
-      }
-
-      Transaction trx = wallet.triggerContract(request, trxCap);
-      responseObserver.onNext(trx);
-      responseObserver.onCompleted();
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.TriggerSmartContract, responseObserver);
     }
 
     public void getPaginatedAssetIssueList(PaginatedMessage request,
