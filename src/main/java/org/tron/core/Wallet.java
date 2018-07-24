@@ -66,7 +66,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainParameters;
-import org.tron.core.db.AccountIndexStore;
+import org.tron.core.db.AccountIdIndexStore;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.ContractStore;
@@ -242,8 +242,8 @@ public class Wallet {
 
   public Account getAccountById(Account account) {
     AccountStore accountStore = dbManager.getAccountStore();
-    AccountIndexStore accountIndexStore = dbManager.getAccountIndexStore();//to be replaced by AccountIdIndexStore
-    byte[] address = accountIndexStore.get(account.getAccountId());
+    AccountIdIndexStore accountIdIndexStore = dbManager.getAccountIdIndexStore();//to be replaced by AccountIdIndexStore
+    byte[] address = accountIdIndexStore.get(account.getAccountId());
     AccountCapsule accountCapsule = accountStore.get(address);
     if (accountCapsule == null) {
       return null;

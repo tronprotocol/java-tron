@@ -16,11 +16,11 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol.AccountType;
 
-public class AccountIndexStoreTest {
+public class AccountIdIndexStoreTest {
 
   private static String dbPath = "output_AccountIndexStore_test";
   private static AnnotationConfigApplicationContext context;
-  private static AccountIndexStore accountIndexStore;
+  private static AccountIdIndexStore accountIdIndexStore;
   private static final byte[] ACCOUNT_ADDRESS_ONE = randomBytes(16);
   private static final byte[] ACCOUNT_ADDRESS_TWO = randomBytes(16);
   private static final byte[] ACCOUNT_ADDRESS_THREE = randomBytes(16);
@@ -50,7 +50,7 @@ public class AccountIndexStoreTest {
 
   @BeforeClass
   public static void init() {
-    accountIndexStore = context.getBean(AccountIndexStore.class);
+    accountIdIndexStore = context.getBean(AccountIdIndexStore.class);
     accountCapsule1 = new AccountCapsule(ByteString.copyFrom(ACCOUNT_ADDRESS_ONE),
         ByteString.copyFrom(ACCOUNT_NAME_ONE), AccountType.Normal);
     accountCapsule2 = new AccountCapsule(ByteString.copyFrom(ACCOUNT_ADDRESS_TWO),
@@ -59,38 +59,38 @@ public class AccountIndexStoreTest {
         ByteString.copyFrom(ACCOUNT_NAME_THREE), AccountType.Normal);
     accountCapsule4 = new AccountCapsule(ByteString.copyFrom(ACCOUNT_ADDRESS_FOUR),
         ByteString.copyFrom(ACCOUNT_NAME_FOUR), AccountType.Normal);
-    accountIndexStore.put(accountCapsule1);
-    accountIndexStore.put(accountCapsule2);
-    accountIndexStore.put(accountCapsule3);
-    accountIndexStore.put(accountCapsule4);
+    accountIdIndexStore.put(accountCapsule1);
+    accountIdIndexStore.put(accountCapsule2);
+    accountIdIndexStore.put(accountCapsule3);
+    accountIdIndexStore.put(accountCapsule4);
   }
 
   @Test
   public void putAndGet() {
-    byte[] address = accountIndexStore.get(ByteString.copyFrom(ACCOUNT_NAME_ONE));
+    byte[] address = accountIdIndexStore.get(ByteString.copyFrom(ACCOUNT_NAME_ONE));
     Assert.assertArrayEquals("putAndGet1", address, ACCOUNT_ADDRESS_ONE);
-    address = accountIndexStore.get(ByteString.copyFrom(ACCOUNT_NAME_TWO));
+    address = accountIdIndexStore.get(ByteString.copyFrom(ACCOUNT_NAME_TWO));
     Assert.assertArrayEquals("putAndGet2", address, ACCOUNT_ADDRESS_TWO);
-    address = accountIndexStore.get(ByteString.copyFrom(ACCOUNT_NAME_THREE));
+    address = accountIdIndexStore.get(ByteString.copyFrom(ACCOUNT_NAME_THREE));
     Assert.assertArrayEquals("putAndGet3", address, ACCOUNT_ADDRESS_THREE);
-    address = accountIndexStore.get(ByteString.copyFrom(ACCOUNT_NAME_FOUR));
+    address = accountIdIndexStore.get(ByteString.copyFrom(ACCOUNT_NAME_FOUR));
     Assert.assertArrayEquals("putAndGet4", address, ACCOUNT_ADDRESS_FOUR);
-    address = accountIndexStore.get(ByteString.copyFrom(ACCOUNT_NAME_FIVE));
+    address = accountIdIndexStore.get(ByteString.copyFrom(ACCOUNT_NAME_FIVE));
     Assert.assertNull("putAndGet4", address);
 
   }
 
   @Test
   public void putAndHas() {
-    Boolean result = accountIndexStore.has(ACCOUNT_NAME_ONE);
+    Boolean result = accountIdIndexStore.has(ACCOUNT_NAME_ONE);
     Assert.assertTrue("putAndGet1", result);
-    result = accountIndexStore.has(ACCOUNT_NAME_TWO);
+    result = accountIdIndexStore.has(ACCOUNT_NAME_TWO);
     Assert.assertTrue("putAndGet2", result);
-    result = accountIndexStore.has(ACCOUNT_NAME_THREE);
+    result = accountIdIndexStore.has(ACCOUNT_NAME_THREE);
     Assert.assertTrue("putAndGet3", result);
-    result = accountIndexStore.has(ACCOUNT_NAME_FOUR);
+    result = accountIdIndexStore.has(ACCOUNT_NAME_FOUR);
     Assert.assertTrue("putAndGet4", result);
-    result = accountIndexStore.has(ACCOUNT_NAME_FIVE);
+    result = accountIdIndexStore.has(ACCOUNT_NAME_FIVE);
     Assert.assertFalse("putAndGet4", result);
   }
 

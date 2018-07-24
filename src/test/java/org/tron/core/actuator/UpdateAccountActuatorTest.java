@@ -64,8 +64,8 @@ public class UpdateAccountActuatorTest {
             AccountType.Normal);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_1));
-    dbManager.getAccountIndexStore().delete(ACCOUNT_NAME.getBytes());
-    dbManager.getAccountIndexStore().delete(ACCOUNT_NAME_1.getBytes());
+    dbManager.getAccountIdIndexStore().delete(ACCOUNT_NAME.getBytes());
+    dbManager.getAccountIdIndexStore().delete(ACCOUNT_NAME_1.getBytes());
   }
 
   private Any getContract(String name, String address) {

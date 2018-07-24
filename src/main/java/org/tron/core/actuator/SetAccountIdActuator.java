@@ -8,7 +8,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.utils.TransactionUtil;
-import org.tron.core.db.AccountIndexStore;
+import org.tron.core.db.AccountIdIndexStore;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
@@ -37,12 +37,12 @@ public class SetAccountIdActuator extends AbstractActuator {
 
     byte[] ownerAddress = setAccountIdContract.getOwnerAddress().toByteArray();
     AccountStore accountStore = dbManager.getAccountStore();
-    AccountIndexStore accountIndexStore = dbManager.getAccountIndexStore();
+    AccountIdIndexStore accountIdIndexStore = dbManager.getAccountIdIndexStore();
     AccountCapsule account = accountStore.get(ownerAddress);
 
     account.setAccountId(setAccountIdContract.getAccountId().toByteArray());
     accountStore.put(ownerAddress, account);
-    accountIndexStore.put(account);
+    accountIdIndexStore.put(account);
     ret.setStatus(fee, code.SUCESS);
 
     return true;
@@ -84,8 +84,7 @@ public class SetAccountIdActuator extends AbstractActuator {
     if (account.getAccountId() != null && !account.getAccountId().isEmpty()) {
       throw new ContractValidateException("This account id already set");
     }
-    // todo: add id index
-    if (dbManager.getAccountIndexStore().has(accountId)) {
+    if (dbManager.getAccountIdIndexStore().has(accountId)) {
       throw new ContractValidateException("This id has existed");
     }
 
