@@ -8,6 +8,7 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
 import org.tron.core.services.http.FullNodeHttpApiService;
@@ -33,6 +34,8 @@ public class FullNode {
     AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(beanFactory);
     context.register(DefaultConfig.class);
     context.refresh();
+    SnapshotManager snapshotManager = context.getBean(SnapshotManager.class);
+    snapshotManager.check();
     Application appT = ApplicationFactory.create(context);
     shutdown(appT);
     //appT.init(cfgArgs);

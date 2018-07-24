@@ -33,6 +33,7 @@ public class SnapshotManager implements RevokingDatabase {
 
   private boolean disabled = true;
   private int activeSession = 0;
+  private boolean unChecked = true;
 
   public ISession buildSession() {
     return buildSession(false);
@@ -157,6 +158,10 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   public void flush() {
+    if (unChecked) {
+      return;
+    }
+
     createCheckPoint();
 
     dbs.forEach(db -> {
@@ -249,6 +254,7 @@ public class SnapshotManager implements RevokingDatabase {
 
     levelDbDataSource.closeDB();
     FileUtil.recursiveDelete(levelDbDataSource.getDbPath().toString());
+    unChecked = false;
   }
 
   private byte[] simpleEncode(String s) {
