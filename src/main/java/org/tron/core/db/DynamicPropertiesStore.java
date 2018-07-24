@@ -450,7 +450,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getWitnessStandbyAllowance() {
-    return Optional.ofNullable(this.dbSource.getData(WITNESS_STANDBY_ALLOWANCE))
+    return Optional.ofNullable(getUnchecked(WITNESS_STANDBY_ALLOWANCE))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found WITNESS_STANDBY_ALLOWANCE"));
@@ -462,7 +463,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getOneDayNetLimit() {
-    return Optional.ofNullable(this.dbSource.getData(ONE_DAY_NET_LIMIT))
+    return Optional.ofNullable(getUnchecked(ONE_DAY_NET_LIMIT))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found ONE_DAY_NET_LIMIT"));
@@ -580,7 +582,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getAssetIssueFee() {
-    return Optional.ofNullable(this.dbSource.getData(ASSET_ISSUE_FEE))
+    return Optional.ofNullable(getUnchecked(ASSET_ISSUE_FEE))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found ASSET_ISSUE_FEE"));
@@ -675,7 +678,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getLatestProposalNum() {
-    return Optional.ofNullable(this.dbSource.getData(LATEST_PROPOSAL_NUM))
+    return Optional.ofNullable(getUnchecked(LATEST_PROPOSAL_NUM))
+        .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found latest PROPOSAL_NUM"));
