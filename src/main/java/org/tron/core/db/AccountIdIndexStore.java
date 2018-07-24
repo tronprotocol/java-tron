@@ -26,13 +26,13 @@ public class AccountIdIndexStore extends TronStoreWithRevoking<BytesCapsule> {
 }
 
 //
-//  public byte[] get(ByteString name) {
-//    BytesCapsule bytesCapsule = get(name.toByteArray());
-//    if (Objects.nonNull(bytesCapsule)) {
-//      return bytesCapsule.getData();
-//    }
-//    return null;
-//  }
+  public byte[] get(ByteString name) {
+    BytesCapsule bytesCapsule = get(name.toByteArray());
+    if (Objects.nonNull(bytesCapsule)) {
+      return bytesCapsule.getData();
+    }
+    return null;
+  }
 
   @Override
   public BytesCapsule get(byte[] key) {

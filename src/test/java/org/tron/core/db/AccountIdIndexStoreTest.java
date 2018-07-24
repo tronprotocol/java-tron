@@ -51,18 +51,22 @@ public class AccountIdIndexStoreTest {
   @BeforeClass
   public static void init() {
     accountIdIndexStore = context.getBean(AccountIdIndexStore.class);
-    accountCapsule1 = new AccountCapsule(ByteString.copyFrom(ACCOUNT_ADDRESS_ONE),
-        ByteString.copyFrom(ACCOUNT_NAME_ONE), AccountType.Normal);
-    accountCapsule2 = new AccountCapsule(ByteString.copyFrom(ACCOUNT_ADDRESS_TWO),
-        ByteString.copyFrom(ACCOUNT_NAME_TWO), AccountType.Normal);
-    accountCapsule3 = new AccountCapsule(ByteString.copyFrom(ACCOUNT_ADDRESS_THREE),
-        ByteString.copyFrom(ACCOUNT_NAME_THREE), AccountType.Normal);
-    accountCapsule4 = new AccountCapsule(ByteString.copyFrom(ACCOUNT_ADDRESS_FOUR),
-        ByteString.copyFrom(ACCOUNT_NAME_FOUR), AccountType.Normal);
-    accountIdIndexStore.put(accountCapsule1);
-    accountIdIndexStore.put(accountCapsule2);
-    accountIdIndexStore.put(accountCapsule3);
-    accountIdIndexStore.put(accountCapsule4);
+//    accountCapsule1 = new AccountCapsule(ByteString.copyFrom(ACCOUNT_ADDRESS_ONE),
+//        ByteString.copyFrom(ACCOUNT_NAME_ONE), AccountType.Normal);
+//    accountCapsule1.setAccountId(ByteString.copyFrom(ACCOUNT_NAME_ONE).toByteArray());
+//    accountCapsule2 = new AccountCapsule(ByteString.copyFrom(ACCOUNT_ADDRESS_TWO),
+//        ByteString.copyFrom(ACCOUNT_NAME_TWO), AccountType.Normal);
+//    accountCapsule2.setAccountId(ByteString.copyFrom(ACCOUNT_NAME_TWO).toByteArray());
+//    accountCapsule3 = new AccountCapsule(ByteString.copyFrom(ACCOUNT_ADDRESS_THREE),
+//        ByteString.copyFrom(ACCOUNT_NAME_THREE), AccountType.Normal);
+//    accountCapsule3.setAccountId(ByteString.copyFrom(ACCOUNT_NAME_THREE).toByteArray());
+//    accountCapsule4 = new AccountCapsule(ByteString.copyFrom(ACCOUNT_ADDRESS_FOUR),
+//        ByteString.copyFrom(ACCOUNT_NAME_FOUR), AccountType.Normal);
+//    accountCapsule4.setAccountId(ByteString.copyFrom(ACCOUNT_NAME_FOUR).toByteArray());
+//    accountIdIndexStore.put(accountCapsule1);
+//    accountIdIndexStore.put(accountCapsule2);
+//    accountIdIndexStore.put(accountCapsule3);
+//    accountIdIndexStore.put(accountCapsule4);
   }
 
   @Test
@@ -92,6 +96,36 @@ public class AccountIdIndexStoreTest {
     Assert.assertTrue("putAndGet4", result);
     result = accountIdIndexStore.has(ACCOUNT_NAME_FIVE);
     Assert.assertFalse("putAndGet4", result);
+  }
+
+
+  @Test
+  public void testCaseInsensitive() {
+    byte[] ACCOUNT_NAME = "aABbCcDd_ssd1234".getBytes();
+    byte[] ACCOUNT_ADDRESS = randomBytes(16);
+
+    AccountCapsule accountCapsule = new AccountCapsule(ByteString.copyFrom(ACCOUNT_ADDRESS),
+        ByteString.copyFrom(ACCOUNT_NAME), AccountType.Normal);
+    accountCapsule.setAccountId(ByteString.copyFrom(ACCOUNT_NAME).toByteArray());
+    accountIdIndexStore.put(accountCapsule);
+
+    Boolean result = accountIdIndexStore.has(ACCOUNT_NAME);
+    Assert.assertTrue("fail", result);
+
+    byte[] lowerCase = ByteString
+        .copyFromUtf8(ByteString.copyFrom(ACCOUNT_NAME).toStringUtf8().toLowerCase())
+        .toByteArray();
+    result = accountIdIndexStore.has(lowerCase);
+    Assert.assertTrue("lowerCase fail", result);
+
+    byte[] upperCase = ByteString
+        .copyFromUtf8(ByteString.copyFrom(ACCOUNT_NAME).toStringUtf8().toUpperCase())
+        .toByteArray();
+    result = accountIdIndexStore.has(upperCase);
+    Assert.assertTrue("upperCase fail", result);
+
+    Assert.assertNotNull("getLowerCase fail", accountIdIndexStore.get(upperCase));
+
   }
 
   public static byte[] randomBytes(int length) {
