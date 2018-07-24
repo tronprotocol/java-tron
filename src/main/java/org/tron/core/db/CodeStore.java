@@ -1,5 +1,6 @@
 package org.tron.core.db;
 
+import com.google.common.collect.Streams;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,18 +20,11 @@ public class CodeStore extends TronStoreWithRevoking<CodeCapsule> {
 
   @Override
   public CodeCapsule get(byte[] key) {
-    byte[] value = dbSource.getData(key);
-    return ArrayUtils.isEmpty(value) ? null : new CodeCapsule(value);
-  }
-
-  @Override
-  public boolean has(byte[] key) {
-    byte[] code = dbSource.getData(key);
-    return null != code;
+    return getUnchecked(key);
   }
 
   public long getTotalCodes() {
-    return dbSource.getTotal();
+    return Streams.stream(revokingDB.iterator()).count();
   }
 
   private static CodeStore instance;
@@ -44,6 +38,6 @@ public class CodeStore extends TronStoreWithRevoking<CodeCapsule> {
   }
 
   public byte[] findCodeByHash(byte[] hash) {
-    return dbSource.getData(hash);
+    return revokingDB.getUnchecked(hash);
   }
 }

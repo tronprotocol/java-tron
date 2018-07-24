@@ -1,5 +1,6 @@
 package org.tron.core.db;
 
+import com.google.common.collect.Streams;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,22 +19,14 @@ public class StorageStore extends TronStoreWithRevoking<StorageCapsule> {
 
   @Override
   public StorageCapsule get(byte[] key) {
-    byte[] value = dbSource.getData(key);
-    return ArrayUtils.isEmpty(value) ? null : new StorageCapsule(value);
-  }
-
-
-  @Override
-  public boolean has(byte[] key) {
-    byte[] transaction = dbSource.getData(key);
-    return null != transaction;
+    return getUnchecked(key);
   }
 
   /**
    * get total storages.
    */
   public long getTotalStorages() {
-    return dbSource.getTotal();
+    return Streams.stream(revokingDB.iterator()).count();
   }
 
   private static StorageStore instance;
@@ -50,7 +43,7 @@ public class StorageStore extends TronStoreWithRevoking<StorageCapsule> {
    * find a storage  by it's key.
    */
   public byte[] findStorageByKey(byte[] key) {
-    return dbSource.getData(key);
+    return revokingDB.getUnchecked(key);
   }
 
 }
