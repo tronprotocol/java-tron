@@ -762,10 +762,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     byte[] blockHash = Optional.ofNullable(getUnchecked(LATEST_BLOCK_HEADER_HASH))
         .map(BytesCapsule::getData)
         .orElseThrow(() -> new IllegalArgumentException("not found block hash"));
-    logger.info("****hash:" + Sha256Hash.wrap(revokingDB.getUnchecked(LATEST_BLOCK_HEADER_HASH))
-        + ", " + Sha256Hash.wrap(blockHash)
-        + ", " + Sha256Hash.wrap(getUnchecked(LATEST_BLOCK_HEADER_HASH).getData())
-    );
     return Sha256Hash.wrap(blockHash);
   }
 
@@ -792,10 +788,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     logger.info("update latest block header id = {}", ByteArray.toHexString(h.toByteArray()));
     this.put(LATEST_BLOCK_HEADER_HASH, new BytesCapsule(h.toByteArray()));
     if (revokingDB.getUnchecked(LATEST_BLOCK_HEADER_HASH).length == 32) {
-      logger.info("save****hash:" + getLatestBlockHeaderHash()
-          + ", " + Sha256Hash.wrap(getUnchecked(LATEST_BLOCK_HEADER_HASH).getData())
-          + ", " + ByteArray.toHexString(h.toByteArray())
-          + ", " + Sha256Hash.wrap(h.toByteArray()));
     }
   }
 
