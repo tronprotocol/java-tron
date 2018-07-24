@@ -238,6 +238,25 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getAccountById(Account request, StreamObserver<Account> responseObserver) {
+      ByteString id = request.getAccountId();
+      if (id != null) {
+        Account reply = wallet.getAccountById(request);
+        if (reply == null) {
+          responseObserver.onNext(null);
+        } else {
+          AccountCapsule accountCapsule = new AccountCapsule(reply);
+          BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+          processor.updateUsage(accountCapsule);
+          responseObserver.onNext(accountCapsule.getInstance());
+        }
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void listWitnesses(EmptyMessage request, StreamObserver<WitnessList> responseObserver) {
       responseObserver.onNext(wallet.getWitnessList());
       responseObserver.onCompleted();
