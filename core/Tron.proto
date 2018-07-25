@@ -119,6 +119,8 @@ message Account {
   }
   AccountResource resource = 24;
 
+  AccountResource account_resource = 30;
+
 }
 
 message authority {
