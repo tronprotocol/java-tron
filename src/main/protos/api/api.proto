@@ -238,13 +238,13 @@ service Wallet {
   rpc UpdateAsset2 (UpdateAssetContract) returns (TransactionExtention) {
   }
 
-  rpc ProposalCreate (ProposalCreateContract) returns (TransactionExtention) {
+  rpc ProposalCreate (ProposalCreateContract) returns (Transaction) {
   }
 
-  rpc ProposalApprove (ProposalApproveContract) returns (TransactionExtention) {
+  rpc ProposalApprove (ProposalApproveContract) returns (Transaction) {
   }
 
-  rpc ProposalDelete (ProposalDeleteContract) returns (TransactionExtention) {
+  rpc ProposalDelete (ProposalDeleteContract) returns (Transaction) {
   }
 
   rpc BuyStorage (BuyStorageContract) returns (TransactionExtention) {
@@ -284,7 +284,7 @@ service Wallet {
         }
       };
   };
-  rpc GetAccountResource (Account) returns (AccountNetMessage) {
+  rpc GetAccountResource (Account) returns (AccountResourceMessage) {
   };
   rpc GetAssetIssueByName (BytesMessage) returns (AssetIssueContract) {
     option (google.api.http) = {
@@ -366,13 +366,13 @@ service Wallet {
     };
   }
 
-  rpc DeployContract (CreateSmartContract) returns (TransactionExtention) {
+  rpc DeployContract (CreateSmartContract) returns (Transaction) {
   }
 
   rpc GetContract (BytesMessage) returns (SmartContract) {
   }
 
-  rpc TriggerContract (TriggerSmartContract) returns (TransactionExtention) {
+  rpc TriggerContract (TriggerSmartContract) returns (Transaction) {
   }
 
   rpc ListWitnesses (EmptyMessage) returns (WitnessList) {
