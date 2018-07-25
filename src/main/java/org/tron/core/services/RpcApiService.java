@@ -393,6 +393,12 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
+    @Override
+    public void createTransaction2(TransferContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.TransferContract, responseObserver);
+    }
+
     private void createTransactionExtention(Message request, ContractType contractType,
         StreamObserver<TransactionExtention> responseObserver) {
       TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
@@ -437,6 +443,7 @@ public class RpcApiService implements Service {
         trx.setReference(headBlock.getNum(), headBlock.getBlockId().getBytes());
         long expiration = headBlock.getTimeStamp() + Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME;
         trx.setExpiration(expiration);
+        trx.setTimestamp();
       } catch (HeaderNotFound headerNotFound) {
         headerNotFound.printStackTrace();
       }
@@ -530,6 +537,12 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void createAssetIssue2(AssetIssueContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.AssetIssueContract, responseObserver);
+    }
+
+    @Override
     public void unfreezeAsset(UnfreezeAssetContract request,
         StreamObserver<Transaction> responseObserver) {
       try {
@@ -540,6 +553,12 @@ public class RpcApiService implements Service {
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
+    }
+
+    @Override
+    public void unfreezeAsset2(UnfreezeAssetContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.UnfreezeAssetContract, responseObserver);
     }
 
     //refactor、test later
@@ -585,6 +604,12 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void voteWitnessAccount2(VoteWitnessContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.VoteWitnessContract, responseObserver);
+    }
+
+    @Override
     public void createWitness(WitnessCreateContract request,
         StreamObserver<Transaction> responseObserver) {
       try {
@@ -596,6 +621,12 @@ public class RpcApiService implements Service {
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
+    }
+
+    @Override
+    public void createWitness2(WitnessCreateContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.WitnessCreateContract, responseObserver);
     }
 
     @Override
@@ -612,6 +643,11 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
+    @Override
+    public void createAccount2(AccountCreateContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.AccountCreateContract, responseObserver);
+    }
 
     @Override
     public void updateWitness(Contract.WitnessUpdateContract request,
@@ -628,6 +664,12 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void updateWitness2(Contract.WitnessUpdateContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.WitnessUpdateContract, responseObserver);
+    }
+
+    @Override
     public void updateAccount(Contract.AccountUpdateContract request,
         StreamObserver<Transaction> responseObserver) {
       try {
@@ -639,6 +681,12 @@ public class RpcApiService implements Service {
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
+    }
+
+    @Override
+    public void updateAccount2(Contract.AccountUpdateContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.AccountUpdateContract, responseObserver);
     }
 
     @Override
@@ -657,6 +705,12 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void updateAsset2(Contract.UpdateAssetContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.UpdateAssetContract, responseObserver);
+    }
+
+    @Override
     public void freezeBalance(Contract.FreezeBalanceContract request,
         StreamObserver<Transaction> responseObserver) {
       try {
@@ -668,6 +722,12 @@ public class RpcApiService implements Service {
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
+    }
+
+    @Override
+    public void freezeBalance2(Contract.FreezeBalanceContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.FreezeBalanceContract, responseObserver);
     }
 
     @Override
@@ -686,6 +746,12 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void unfreezeBalance2(Contract.UnfreezeBalanceContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.UnfreezeBalanceContract, responseObserver);
+    }
+
+    @Override
     public void withdrawBalance(Contract.WithdrawBalanceContract request,
         StreamObserver<Transaction> responseObserver) {
       try {
@@ -698,6 +764,12 @@ public class RpcApiService implements Service {
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
+    }
+
+    @Override
+    public void withdrawBalance2(Contract.WithdrawBalanceContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.WithdrawBalanceContract, responseObserver);
     }
 
     @Override
@@ -772,6 +844,12 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void transferAsset2(TransferAssetContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.TransferAssetContract, responseObserver);
+    }
+
+    @Override
     public void participateAssetIssue(ParticipateAssetIssueContract request,
         StreamObserver<Transaction> responseObserver) {
       try {
@@ -784,6 +862,12 @@ public class RpcApiService implements Service {
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
+    }
+
+    @Override
+    public void participateAssetIssue2(ParticipateAssetIssueContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.ParticipateAssetIssueContract, responseObserver);
     }
 
     @Override
