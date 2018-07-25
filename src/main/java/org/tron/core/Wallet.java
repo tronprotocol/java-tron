@@ -564,6 +564,7 @@ public class Wallet {
     long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
     long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
+    long cpuLimit = 0;//todo
     long totalCpuLimit = dbManager.getDynamicPropertiesStore().getTotalCpuLimit();
     long totalCpuWeight = dbManager.getDynamicPropertiesStore().getTotalCpuWeight();
 
@@ -579,6 +580,10 @@ public class Wallet {
         .setNetLimit(netLimit)
         .setTotalNetLimit(totalNetLimit)
         .setTotalNetWeight(totalNetWeight)
+        .setCpuLimit(cpuLimit)
+        .setCpuUsed(accountCapsule.getCpuUsage())
+        .setTotalCpuLimit(totalCpuLimit)
+        .setTotalCpuWeight(totalCpuWeight)
         .putAllAssetNetUsed(accountCapsule.getAllFreeAssetNetUsage())
         .putAllAssetNetLimit(assetNetLimitMap);
     return builder.build();

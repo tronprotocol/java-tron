@@ -246,7 +246,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getTotalCpuLimit();
     } catch (IllegalArgumentException e) {
-      this.saveTotalCpuLimit(86400_000_000L);//24h = 24 * 3600 * 1000 * 1000 us
+      this.saveTotalCpuLimit(32400_000_000L);
     }
 
     try {

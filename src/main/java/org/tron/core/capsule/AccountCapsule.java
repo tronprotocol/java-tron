@@ -439,6 +439,16 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .setNetUsage(netUsage).build();
   }
 
+  public long getCpuUsage() {
+    return this.account.getAccountResource().getCpuUsage();
+  }
+
+  public void setCpuUsage(long cpuUsage) {
+    this.account = this.account.toBuilder()
+        .setAccountResource(
+            this.account.getAccountResource().toBuilder().setCpuUsage(cpuUsage).build()).build();
+  }
+
   public long getFreeNetUsage() {
     return this.account.getFreeNetUsage();
   }
