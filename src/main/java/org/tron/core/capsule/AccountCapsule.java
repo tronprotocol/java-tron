@@ -253,24 +253,21 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   /**
    * asset balance enough
    */
-  public boolean assetBalanceEnough(ByteString name, long amount) {
+  public boolean assetBalanceEnough(byte[] key, long amount) {
     Map<String, Long> assetMap = this.account.getAssetMap();
-    String nameKey = ByteArray.toStr(name.toByteArray());
+    String nameKey = ByteArray.toStr(key);
     Long currentAmount = assetMap.get(nameKey);
 
-    if (amount > 0 && null != currentAmount && amount <= currentAmount) {
-      return true;
-    }
-    return false;
+    return amount > 0 && null != currentAmount && amount <= currentAmount;
   }
 
 
   /**
    * reduce asset amount.
    */
-  public boolean reduceAssetAmount(ByteString name, long amount) {
+  public boolean reduceAssetAmount(byte[] key, long amount) {
     Map<String, Long> assetMap = this.account.getAssetMap();
-    String nameKey = ByteArray.toStr(name.toByteArray());
+    String nameKey = ByteArray.toStr(key);
     Long currentAmount = assetMap.get(nameKey);
     if (amount > 0 && null != currentAmount && amount <= currentAmount) {
       this.account = this.account.toBuilder()
@@ -284,9 +281,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   /**
    * add asset amount.
    */
-  public boolean addAssetAmount(ByteString name, long amount) {
+  public boolean addAssetAmount(byte[] key, long amount) {
     Map<String, Long> assetMap = this.account.getAssetMap();
-    String nameKey = ByteArray.toStr(name.toByteArray());
+    String nameKey = ByteArray.toStr(key);
     Long currentAmount = assetMap.get(nameKey);
     if (currentAmount == null) {
       currentAmount = 0L;
@@ -313,15 +310,16 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   /**
    * add asset.
    */
-  public boolean addAsset(String key, Long value) {
+  public boolean addAsset(byte[] key, long value) {
     Map<String, Long> assetMap = this.account.getAssetMap();
+    String nameKey = ByteArray.toStr(key);
     if (!assetMap.isEmpty()) {
-      if (assetMap.containsKey(key)) {
+      if (assetMap.containsKey(nameKey)) {
         return false;
       }
     }
 
-    this.account = this.account.toBuilder().putAsset(key, value).build();
+    this.account = this.account.toBuilder().putAsset(nameKey, value).build();
 
     return true;
   }
@@ -384,7 +382,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return getInstance().getAssetIssuedName();
   }
 
-  public void setAssetIssuedName(ByteString assetIssuedName) {
+  public void setAssetIssuedName(byte[] nameKey) {
+    ByteString assetIssuedName = ByteString.copyFrom(nameKey);
     this.account = this.account.toBuilder().setAssetIssuedName(assetIssuedName).build();
   }
 
@@ -429,14 +428,6 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = this.account.toBuilder()
         .setLatestWithdrawTime(latestWithdrawTime)
         .build();
-  }
-
-  public void setCodeHash(byte[] codeHash) {
-    this.account =  this.account.toBuilder().setCodeHash(ByteString.copyFrom(codeHash)).build();
-  }
-
-  public byte[] getCodeHash() {
-    return this.account.getCodeHash().toByteArray();
   }
 
   public long getNetUsage() {

@@ -18,11 +18,11 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -51,6 +51,16 @@ public class AssetIssueActuator extends AbstractActuator {
       AssetIssueContract assetIssueContract = contract.unpack(AssetIssueContract.class);
       byte[] ownerAddress = assetIssueContract.getOwnerAddress().toByteArray();
       AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
+      String name = new String(assetIssueCapsule.getName().toByteArray(),
+          Charset.forName("UTF-8")); // getName().toStringUtf8()
+      long order = 0;
+      byte[] key = name.getBytes();
+      while (this.dbManager.getAssetIssueStore().get(key) != null) {
+        order++;
+        String nameKey = AssetIssueCapsule.createDbKeyString(name, order);
+        key = nameKey.getBytes();
+      }
+      assetIssueCapsule.setOrder(order);
       dbManager.getAssetIssueStore()
           .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
 
@@ -76,9 +86,8 @@ public class AssetIssueActuator extends AbstractActuator {
         remainSupply -= next.getFrozenAmount();
       }
 
-      accountCapsule.setAssetIssuedName(assetIssueContract.getName());
-      accountCapsule.addAsset(ByteArray.toStr(assetIssueContract.getName().toByteArray()),
-          remainSupply);
+      accountCapsule.setAssetIssuedName(assetIssueCapsule.createDbKey());
+      accountCapsule.addAsset(assetIssueCapsule.createDbKey(), remainSupply);
       accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
           .addAllFrozenSupply(frozenList).build());
 
@@ -128,8 +137,8 @@ public class AssetIssueActuator extends AbstractActuator {
     if (!TransactionUtil.validAssetName(assetIssueContract.getName().toByteArray())) {
       throw new ContractValidateException("Invalid assetName");
     }
-    if ((!assetIssueContract.getAbbr().isEmpty())
-        && !TransactionUtil.validAssetName(assetIssueContract.getAbbr().toByteArray())) {
+    if ((!assetIssueContract.getAbbr().isEmpty()) && !TransactionUtil
+        .validAssetName(assetIssueContract.getAbbr().toByteArray())) {
       throw new ContractValidateException("Invalid abbreviation for token");
     }
     if (!TransactionUtil.validUrl(assetIssueContract.getUrl().toByteArray())) {
@@ -153,10 +162,12 @@ public class AssetIssueActuator extends AbstractActuator {
       throw new ContractValidateException("Start time should be greater than HeadBlockTime");
     }
 
+    /*
     if (this.dbManager.getAssetIssueStore().get(assetIssueContract.getName().toByteArray())
         != null) {
       throw new ContractValidateException("Token exists");
     }
+    */
 
     if (assetIssueContract.getTotalSupply() <= 0) {
       throw new ContractValidateException("TotalSupply must greater than 0!");
