@@ -60,6 +60,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] ONE_DAY_NET_LIMIT = "ONE_DAY_NET_LIMIT".getBytes();
 
+  private static final byte[] ONE_DAY_CPU_LIMIT = "ONE_DAY_CPU_LIMIT".getBytes();
+
+  //public free bandwidth
   private static final byte[] PUBLIC_NET_USAGE = "PUBLIC_NET_USAGE".getBytes();
 
   private static final byte[] PUBLIC_NET_LIMIT = "PUBLIC_NET_LIMIT".getBytes();
@@ -200,6 +203,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getOneDayNetLimit();
     } catch (IllegalArgumentException e) {
       this.saveOneDayNetLimit(57_600_000_000L);
+    }
+
+    try {
+      this.getOneDayCpuLimit();
+    } catch (IllegalArgumentException e) {
+      this.saveOneDayCpuLimit(86400_000_000L); //24h = 24 * 3600 * 1000 * 1000 us
     }
 
     try {
@@ -471,6 +480,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found ONE_DAY_NET_LIMIT"));
+  }
+
+  public void saveOneDayCpuLimit(long oneDayCpuLimit) {
+    this.put(ONE_DAY_CPU_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(oneDayCpuLimit)));
+  }
+
+  public long getOneDayCpuLimit() {
+    return Optional.ofNullable(this.dbSource.getData(ONE_DAY_CPU_LIMIT))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ONE_DAY_CPU_LIMIT"));
   }
 
   public void savePublicNetUsage(long publicNetUsage) {
