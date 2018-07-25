@@ -1,12 +1,12 @@
 package org.tron.core.db;
 
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.config.Parameter.ChainConstant;
 
 public class StorageMarket {
 
   private Manager dbManager;
   private long supply = 1_000_000_000_000_000L;
-  private double millisecondPerYear = 31_536_000_000.0;
 
   public StorageMarket(Manager manager) {
     this.dbManager = manager;
@@ -55,7 +55,9 @@ public class StorageMarket {
 
   public long payTax(long duration, long limit) {
     // todo: Support for change by the committee
-    double feeRate = duration / millisecondPerYear * 0.1;
+    double ratePerYear = dbManager.getDynamicPropertiesStore().getStorageExchangeTaxRate() / 100.0;
+    double millisecondPerYear = (double) ChainConstant.MS_PER_YEAR;
+    double feeRate = duration / millisecondPerYear * ratePerYear;
     long storageTax = (long) (limit * feeRate);
 
     long tax = exchange(storageTax, false);

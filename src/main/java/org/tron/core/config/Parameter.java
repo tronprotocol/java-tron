@@ -16,6 +16,7 @@ public interface Parameter {
     long PRECISION = 1000_000;
     long WINDOW_SIZE_MS = 24 * 3600 * 1000L;
     long MS_PER_DAY = 24 * 3600 * 1000L;
+    long MS_PER_YEAR = 365 * 24 * 3600 * 1000L;
 
     long MAINTENANCE_SKIP_SLOTS = 2;
     int SINGLE_REPEAT = 1;
