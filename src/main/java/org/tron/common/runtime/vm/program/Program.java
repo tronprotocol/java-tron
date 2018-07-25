@@ -17,16 +17,40 @@
  */
 package org.tron.common.runtime.vm.program;
 
+import static java.lang.StrictMath.min;
+import static java.lang.String.format;
+import static org.apache.commons.lang3.ArrayUtils.EMPTY_BYTE_ARRAY;
+import static org.apache.commons.lang3.ArrayUtils.getLength;
+import static org.apache.commons.lang3.ArrayUtils.isEmpty;
+import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
+import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
+import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
+import static org.tron.common.runtime.utils.MUtil.transfer;
+import static org.tron.common.utils.BIUtil.isPositive;
+import static org.tron.common.utils.BIUtil.toBI;
+
+import java.io.ByteArrayOutputStream;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableSet;
+import java.util.TreeSet;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.config.DefaultConfig;
 import org.tron.common.runtime.config.SystemProperties;
-import org.tron.common.runtime.vm.*;
+import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.vm.DropCost;
+import org.tron.common.runtime.vm.MessageCall;
+import org.tron.common.runtime.vm.OpCode;
+import org.tron.common.runtime.vm.PrecompiledContracts;
+import org.tron.common.runtime.vm.VM;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
@@ -43,20 +67,8 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.exception.HeaderNotFound;
+import org.tron.core.exception.ContractExeException;
 import org.tron.protos.Protocol;
-
-import java.io.ByteArrayOutputStream;
-import java.math.BigInteger;
-import java.util.*;
-
-import static java.lang.StrictMath.min;
-import static java.lang.String.format;
-import static org.apache.commons.lang3.ArrayUtils.*;
-import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
-import static org.tron.common.runtime.utils.MUtil.transfer;
-import static org.tron.common.utils.BIUtil.isPositive;
-import static org.tron.common.utils.BIUtil.toBI;
 
 /**
  * @author Roman Mandeleil
@@ -358,7 +370,8 @@ public class Program {
     }
 
 
-    public void suicide(DataWord obtainerAddress) {
+    public void suicide(DataWord obtainerAddress)
+        throws ContractExeException {
 
         byte[] owner = convertToTronAddress(getOwnerAddress().getLast20Bytes());
         byte[] obtainer = convertToTronAddress(obtainerAddress.getLast20Bytes());
@@ -386,7 +399,8 @@ public class Program {
     }
 
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-    public void createContract(DataWord value, DataWord memStart, DataWord memSize) {
+    public void createContract(DataWord value, DataWord memStart, DataWord memSize)
+        throws ContractExeException {
         returnDataBuffer = null; // reset return buffer right before the call
 
         if (getCallDeep() == MAX_DEPTH) {
@@ -525,7 +539,8 @@ public class Program {
      *
      * @param msg is the message call object
      */
-    public void callToAddress(MessageCall msg) {
+    public void callToAddress(MessageCall msg)
+        throws ContractExeException {
         returnDataBuffer = null; // reset return buffer right before the call
 
         if (getCallDeep() == MAX_DEPTH) {
@@ -1107,7 +1122,9 @@ public class Program {
         return ret;
     }
 
-    public void callToPrecompiledAddress(MessageCall msg, PrecompiledContracts.PrecompiledContract contract) {
+    public void callToPrecompiledAddress(MessageCall msg,
+        PrecompiledContracts.PrecompiledContract contract)
+        throws ContractExeException {
         returnDataBuffer = null; // reset return buffer right before the call
 
         if (getCallDeep() == MAX_DEPTH) {
@@ -1193,6 +1210,14 @@ public class Program {
     }
 
     @SuppressWarnings("serial")
+    public static class OutOfResourceException extends BytecodeExecutionException {
+
+        public OutOfResourceException(String message, Object... args) {
+            super(format(message, args));
+        }
+    }
+
+    @SuppressWarnings("serial")
     public static class IllegalOperationException extends BytecodeExecutionException {
 
         public IllegalOperationException(String message, Object... args) {
@@ -1240,6 +1265,13 @@ public class Program {
         public static OutOfGasException notEnoughOpGas(OpCode op, DataWord opGas, DataWord programGas) {
             return notEnoughOpGas(op, opGas.longValue(), programGas.longValue());
         }
+
+
+        public static OutOfResourceException notEnoughCPU(OpCode op) {
+            return new OutOfResourceException(
+                "Not enough CPU resource when '%s' operation executing", op);
+        }
+
 
         public static OutOfGasException notEnoughOpGas(OpCode op, BigInteger opGas, BigInteger programGas) {
             return notEnoughOpGas(op, opGas.longValue(), programGas.longValue());

@@ -960,12 +960,14 @@ public class Manager {
     runtime = new Runtime(trxCap.getInstance(), block, deposit,
         new ProgramInvokeFactoryImpl());
     consumeBandwidth(trxCap, runtime.getResult().getRet());
+    runtime.init();
     runtime.execute();
     runtime.go();
     if (runtime.getResult().getException() != null) {
       throw new RuntimeException("Runtime exe failed!");
     }
 
+    // todo 一个账户只能一个合约账户
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
     transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());

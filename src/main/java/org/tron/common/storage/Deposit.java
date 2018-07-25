@@ -1,8 +1,13 @@
 package org.tron.common.storage;
 
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.core.capsule.*;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.StorageCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.ContractExeException;
 import org.tron.protos.Protocol;
 
 /**
@@ -35,7 +40,7 @@ public interface Deposit {
 
     long getBalance(byte[] address);
 
-    long addBalance(byte[] address, long value);
+    long addBalance(byte[] address, long value) throws ContractExeException;
 
 
     Deposit newDepositChild();

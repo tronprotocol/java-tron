@@ -645,6 +645,7 @@ public class Wallet {
         DepositImpl deposit = DepositImpl.createRoot(dbManager);
         Runtime runtime = new Runtime(trxCap.getInstance(), deposit,
             new ProgramInvokeFactoryImpl());
+        runtime.init();
         runtime.execute();
         runtime.go();
         if (runtime.getResult().getException() != null) {

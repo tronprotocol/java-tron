@@ -397,4 +397,5 @@ message SmartContract {
   bytes bytecode = 4;
   bytes call_value = 5;
   bytes data = 6;
+  bytes owner_resource_usage_percent = 7;
 }

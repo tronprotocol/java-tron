@@ -29,7 +29,10 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     /* TRANSACTION  env*/
     private final DataWord address;
     private final DataWord origin, caller, balance, callValue;
-    byte[] msgData;
+    private byte[] msgData;
+
+    private DataWord cpu;
+    private long cpuLong;
 
      /* BLOCK  env **/
     private final DataWord prevHash, coinbase, timestamp, number;
@@ -39,7 +42,6 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     private boolean byTestingSuite = false;
     private int callDeep = 0;
     private boolean isStaticCall = false;
-    private DataWord dropLimit;
 
     public ProgramInvokeImpl(DataWord address, DataWord origin, DataWord caller, DataWord balance, DataWord callValue, byte[] msgData,
                              DataWord lastHash, DataWord coinbase, DataWord timestamp, DataWord number, DataWord difficulty,
@@ -62,21 +64,31 @@ public class ProgramInvokeImpl implements ProgramInvoke {
         this.isStaticCall = isStaticCall;
         this.byTestingSuite = byTestingSuite;
 
-        this.dropLimit = balance.clone();
+        // this.dropLimit = balance.clone();
     }
 
     public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
                              byte[] callValue, byte[] msgData,
-                             byte[] lastHash, byte[] coinbase, long timestamp, long number,
-                             Deposit deposit, boolean byTestingSuite) {
+        byte[] lastHash, byte[] coinbase, long timestamp, long number, Deposit deposit,
+        byte[] dropLimit, boolean byTestingSuite) {
         this(address, origin, caller, balance, callValue, msgData, lastHash, coinbase,
-                timestamp, number, deposit);
+            timestamp, number, deposit, dropLimit);
         this.byTestingSuite = byTestingSuite;
     }
 
     public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
-                             byte[] callValue, byte[] msgData, byte[] lastHash, byte[] coinbase,
-                             long timestamp, long number, Deposit deposit) {
+        byte[] callValue, byte[] msgData, byte[] lastHash, byte[] coinbase, long timestamp,
+        long number, Deposit deposit, byte[] dropLimit,
+        byte[] ownerResourceUsagePercent) {
+        this(address, origin, caller, balance, callValue, msgData, lastHash, coinbase,
+            timestamp, number, deposit, dropLimit);
+        // this.ownerResourceUsagePercent = new DataWord(ownerResourceUsagePercent);
+    }
+
+
+    public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
+        byte[] callValue, byte[] msgData, byte[] lastHash, byte[] coinbase, long timestamp,
+        long number, Deposit deposit, byte[] dropLimit) {
 
         // Transaction env
         this.address = new DataWord(address);
@@ -92,7 +104,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
         this.timestamp = new DataWord(timestamp);
         this.number = new DataWord(number);
         this.deposit = deposit;
-        this.dropLimit = new DataWord(balance);
+        // this.dropLimit = new DataWord(dropLimit);
     }
 
     /*           ADDRESS op         */
@@ -200,12 +212,14 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     /*     GASLIMIT op    */
     @Override
     public DataWord getDroplimit() {
-        return dropLimit; //gaslimit;
+        return cpu;
+        // todo modify today
     }
 
     @Override
     public long getDroplimitLong() {
-        return dropLimit.longValue();
+        return cpuLong;
+        // todo modify today
     }
 
 
@@ -263,7 +277,9 @@ public class ProgramInvokeImpl implements ProgramInvoke {
         //if (difficulty != null ? !difficulty.equals(that.difficulty) : that.difficulty != null) return false;
         //if (gas != null ? !gas.equals(that.gas) : that.gas != null) return false;
         //if (gasPrice != null ? !gasPrice.equals(that.gasPrice) : that.gasPrice != null) return false;
-        //if (gaslimit != null ? !gaslimit.equals(that.gaslimit) : that.gaslimit != null) return false;
+        //if (dropLimit != null ? !dropLimit.equals(that.dropLimit) : that.dropLimit != null) {
+        //    return false;
+        // }
         if (!Arrays.equals(msgData, that.msgData)) return false;
         if (number != null ? !number.equals(that.number) : that.number != null) return false;
         if (origin != null ? !origin.equals(that.origin) : that.origin != null) return false;

@@ -5,6 +5,7 @@ import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -21,6 +22,7 @@ import org.tron.core.db.TransactionStore;
 import org.tron.core.db.VotesStore;
 import org.tron.core.db.WitnessStore;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ContractExeException;
 import org.tron.protos.Protocol;
 
 /**
@@ -253,12 +255,24 @@ public class DepositImpl implements Deposit{
     }
 
     @Override
-    public synchronized long addBalance(byte[] address, long value) {
+    public synchronized long addBalance(byte[] address, long value)
+        throws ContractExeException {
         AccountCapsule accountCapsule = getAccount(address);
         if (accountCapsule == null) {
             accountCapsule = createAccount(address, Protocol.AccountType.Normal);
         }
-        accountCapsule.setBalance(accountCapsule.getBalance() + value);
+
+        long balance = accountCapsule.getBalance();
+        if (value == 0) {
+            return balance;
+        }
+
+        if (value < 0 && balance < -value) {
+            throw new ContractExeException(
+                StringUtil.createReadableString(accountCapsule.createDbKey())
+                    + " insufficient balance");
+        }
+        accountCapsule.setBalance(Math.addExact(balance, value));
         Key key = Key.create(address);
         Value V = Value.create(accountCapsule.getData(),
                 Type.VALUE_TYPE_DIRTY | accounCache.get(key).getType().getType());

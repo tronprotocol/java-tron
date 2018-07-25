@@ -58,6 +58,7 @@ public class Runtime {
   private Deposit deposit;
   private ProgramInvokeFactory programInvokeFactory = null;
   private String runtimeError;
+  private boolean readyToExecute = false;
 
   PrecompiledContracts.PrecompiledContract precompiledContract = null;
   private ProgramResult result = new ProgramResult();
@@ -146,6 +147,76 @@ public class Runtime {
     }
   }
 
+  /**
+   */
+  public void init() {
+
+    switch (trxType) {
+      case TRX_PRECOMPILED_TYPE:
+        break;
+      case TRX_CONTRACT_CREATION_TYPE:
+        initForCreate();
+        break;
+      case TRX_CONTRACT_CALL_TYPE:
+        initForCall();
+        break;
+      default:
+        break;
+    }
+  }
+
+  public void initForCall() {
+
+    // Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
+  }
+
+  public void initForCreate() {
+
+    CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
+    SmartContract smartContract = contract.getNewContract();
+
+    // if (Args.getInstance().isWitness())
+    if (null != block) {
+
+      long blockStartTimestamp = block.getBlockHeader().getRawDataOrBuilder().getTimestamp();
+      // DateTime.now().getMillis() - when
+      // ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5 * ChainConstant.BLOCK_PRODUCED_TIME_OU / 100
+
+      // [1] check this trx cpu time limit  exceed the block time limit or not
+      BigInteger curBlockCPULimit = BigInteger.valueOf(1125000);
+
+      // get current block elapsed time
+      BigInteger curBlockHaveElapsedCPU = BigInteger.valueOf(10000);
+
+      BigInteger trxCPULimit = new BigInteger(1, contract.getCpuLimitInTrx().toByteArray());
+
+      boolean cumulativeCPUReached =
+          trxCPULimit.add(curBlockHaveElapsedCPU).compareTo(curBlockCPULimit) > 0;
+
+      if (cumulativeCPUReached) {
+        logger.error("cumulative CPU Reached");
+        return;
+      }
+    }
+
+    // [2] check the account balance
+//    BigInteger txGasCost = toBI(tx.getGasPrice()).multiply(txGasLimit);
+//    BigInteger totalCost = toBI(tx.getValue()).add(txGasCost);
+//    BigInteger senderBalance = track.getBalance(tx.getSender());
+//
+//    if (!isCovers(senderBalance, totalCost)) {
+//
+//      execError(
+//          String.format("Not enough cash: Require: %s, Sender cash: %s", totalCost, senderBalance));
+//
+//      return;
+//    }
+
+    readyToExecute = true;
+
+  }
+
+
   public void execute() throws ContractValidateException, ContractExeException {
     switch (trxType) {
       case TRX_PRECOMPILED_TYPE:
@@ -162,7 +233,8 @@ public class Runtime {
     }
   }
 
-  private void call() {
+  private void call()
+      throws ContractExeException {
     Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
     if (contract == null) {
       return;
@@ -194,9 +266,10 @@ public class Runtime {
 
   /*
    **/
-  private void create() {
+  private void create()
+      throws ContractExeException {
     CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
-    SmartContract newSmartContract = contract.getNewContrect();
+    SmartContract newSmartContract = contract.getNewContract();
     byte[] code = newSmartContract.getBytecode().toByteArray();
     byte[] contractAddress = Wallet.generateContractAddress(trx);
     newSmartContract = newSmartContract.toBuilder()

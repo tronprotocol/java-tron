@@ -1,5 +1,14 @@
 package org.tron.common.runtime.vm;
 
+import static org.tron.common.crypto.Hash.sha3;
+import static org.tron.common.runtime.vm.OpCode.CALL;
+import static org.tron.common.runtime.vm.OpCode.PUSH1;
+import static org.tron.common.runtime.vm.OpCode.REVERT;
+import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
+
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
@@ -7,14 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.Stack;
-
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.tron.common.crypto.Hash.sha3;
-import static org.tron.common.runtime.vm.OpCode.*;
-import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
+import org.tron.core.exception.ContractExeException;
 
 public class VM {
 
@@ -72,7 +74,8 @@ public class VM {
         return dropConsume;
     }
 
-    public void step(Program program) {
+    public void step(Program program)
+        throws ContractExeException {
         if (vmTrace) {
             program.saveOpTrace();
         }
@@ -261,8 +264,7 @@ public class VM {
             }
 
             //DEBUG System.out.println(" OP IS " + op.name() + " GASCOST IS " + gasCost + " NUM IS " + op.asInt());
-            //TODO: recover this or give similar logic when tron cost mechanism is ready.
-            //program.spendDrop(dropCost, op.name());
+            program.spendDrop(dropCost, op.name());
 
 
             // Execute operation
@@ -1205,7 +1207,8 @@ public class VM {
         }
     }
 
-    public void play(Program program) {
+    public void play(Program program)
+        throws ContractExeException {
         try {
             if (program.byTestingSuite()) return;
 
