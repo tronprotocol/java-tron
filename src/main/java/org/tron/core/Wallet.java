@@ -581,7 +581,7 @@ public class Wallet {
         .setTotalNetLimit(totalNetLimit)
         .setTotalNetWeight(totalNetWeight)
         .setCpuLimit(cpuLimit)
-        .setCpuUsed(accountCapsule.getCpuUsage())
+        .setCpuUsed(accountCapsule.getAccountResource().getCpuUsage())
         .setTotalCpuLimit(totalCpuLimit)
         .setTotalCpuWeight(totalCpuWeight)
         .putAllAssetNetUsed(accountCapsule.getAllFreeAssetNetUsage())

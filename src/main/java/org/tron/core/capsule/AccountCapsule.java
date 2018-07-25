@@ -26,6 +26,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Vote;
@@ -439,8 +440,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .setNetUsage(netUsage).build();
   }
 
-  public long getCpuUsage() {
-    return this.account.getAccountResource().getCpuUsage();
+  public AccountResource getAccountResource() {
+    return this.account.getAccountResource();
   }
 
   public void setCpuUsage(long cpuUsage) {
