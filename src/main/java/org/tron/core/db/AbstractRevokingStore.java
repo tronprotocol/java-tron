@@ -1,5 +1,7 @@
 package org.tron.core.db;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -9,6 +11,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
+import com.google.common.collect.Maps;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -16,10 +21,18 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.SourceInter;
+import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Utils;
+import org.tron.core.config.args.Args;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.core.ISession;
+import org.tron.core.db2.core.RevokingDBWithCachingNewValue;
+import org.tron.core.db2.core.RevokingDBWithCachingOldValue;
+import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
+
+import static org.tron.core.db2.core.SnapshotManager.simpleDecode;
 
 @Slf4j
 @Getter // only for unit test
@@ -32,6 +45,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   private int activeDialog = 0;
   private AtomicInteger maxSize = new AtomicInteger(DEFAULT_STACK_MAX_SIZE);
   private WriteOptions writeOptions = new WriteOptions().sync(true);
+  private List<LevelDbDataSourceImpl> dbs = new ArrayList<>();
 
   @Override
   public ISession buildSession() {
@@ -59,7 +73,39 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public void add(IRevokingDB revokingDB) {}
+  public void check() {
+    LevelDbDataSourceImpl check =
+        new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
+    check.initDB();
+
+    if (!check.allKeys().isEmpty()) {
+      Map<String, LevelDbDataSourceImpl> dbMap = dbs.stream()
+          .map(db -> Maps.immutableEntry(db.getDBName(), db))
+          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+      for (Map.Entry<byte[], byte[]> e : check) {
+        byte[] key = e.getKey();
+        byte[] value = e.getValue();
+        String db = simpleDecode(key);
+        byte[] realKey = Arrays.copyOfRange(key, db.getBytes().length + 4, key.length);
+
+        byte[] realValue = value.length == 1 ? null : Arrays.copyOfRange(value, 1, value.length);
+        if (realValue != null) {
+          dbMap.get(db).putData(realKey, realValue, new WriteOptions().sync(true));
+        } else {
+          dbMap.get(db).deleteData(realKey, new WriteOptions().sync(true));
+        }
+      }
+    }
+
+    check.closeDB();
+    FileUtil.recursiveDelete(check.getDbPath().toString());
+  }
+
+  @Override
+  public void add(IRevokingDB revokingDB) {
+    dbs.add(((RevokingDBWithCachingOldValue) revokingDB).getDbSource());
+  }
 
   public synchronized void onCreate(RevokingTuple tuple, byte[] value) {
     if (disabled) {

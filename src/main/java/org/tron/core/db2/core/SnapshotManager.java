@@ -15,6 +15,7 @@ import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -221,7 +222,14 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   // ensure run this method first after process start.
+  @Override
   public void check() {
+    for (RevokingDBWithCachingNewValue db : dbs) {
+      if (db.getHead().getClass() != SnapshotRoot.class) {
+        throw new IllegalStateException("first check.");
+      }
+    }
+
     LevelDbDataSourceImpl levelDbDataSource =
         new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
     levelDbDataSource.initDB();
@@ -234,10 +242,9 @@ public class SnapshotManager implements RevokingDatabase {
         byte[] key = e.getKey();
         byte[] value = e.getValue();
         String db = simpleDecode(key);
-        byte[] realKey = new byte[key.length - db.getBytes().length - 4];
-        System.arraycopy(key, db.getBytes().length + 4, realKey, 0, key.length - db.getBytes().length - 4);
+        byte[] realKey = Arrays.copyOfRange(key, db.getBytes().length + 4, key.length);
 
-        byte[] realValue = value.length == 1 ? null : new byte[value.length - 1];
+        byte[] realValue = value.length == 1 ? null : Arrays.copyOfRange(value, 1, value.length);
         if (realValue != null) {
           dbMap.get(db).getHead().put(realKey, realValue);
         } else {
@@ -246,7 +253,7 @@ public class SnapshotManager implements RevokingDatabase {
       }
 
       dbs.forEach(db -> {
-        db.getHead().getPrevious().merge(db.getHead());
+        db.getHead().getRoot().merge(db.getHead());
         db.setHead(db.getHead().getPrevious());
       });
       retreat();
@@ -266,7 +273,7 @@ public class SnapshotManager implements RevokingDatabase {
     return r;
   }
 
-  private String simpleDecode(byte[] bytes) {
+  public static String simpleDecode(byte[] bytes) {
     byte[] lengthBytes = Arrays.copyOf(bytes, 4);
     int length = Ints.fromByteArray(lengthBytes);
     byte[] value = Arrays.copyOfRange(bytes, 4, 4 + length);

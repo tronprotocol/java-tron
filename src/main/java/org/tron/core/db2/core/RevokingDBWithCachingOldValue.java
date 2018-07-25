@@ -1,5 +1,6 @@
 package org.tron.core.db2.core;
 
+import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.config.args.Args;
@@ -15,6 +16,7 @@ import java.util.Set;
 
 public class RevokingDBWithCachingOldValue implements IRevokingDB {
   private AbstractRevokingStore revokingDatabase;
+  @Getter
   private LevelDbDataSourceImpl dbSource;
 
   public RevokingDBWithCachingOldValue(String dbName) {

@@ -27,6 +27,8 @@ public interface RevokingDatabase {
 
   int size();
 
+  void check();
+
   void setMaxSize(int maxSize);
 
   void disable();
