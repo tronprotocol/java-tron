@@ -7,9 +7,8 @@ import org.tron.core.db.common.WrappedByteArray;
 import java.util.Arrays;
 
 @EqualsAndHashCode(exclude = "operator")
-public final class Value implements Encoder, Decoder<Value> {
+public final class Value {
 
-  @Override
   public byte[] encode() {
     if (data.getBytes() == null) {
       return new byte[]{operator.getValue()};
@@ -21,13 +20,11 @@ public final class Value implements Encoder, Decoder<Value> {
     return r;
   }
 
-  @Override
-  public Value decode(byte[] bytes) {
+  public static Value decode(byte[] bytes) {
     Operator operator = Operator.valueOf(bytes[0]);
     byte[] value = null;
     if (bytes.length > 1) {
-      value = new byte[bytes.length - 1];
-      System.arraycopy(bytes, 1, value, 0, bytes.length - 1);
+      value = Arrays.copyOfRange(bytes, 1, bytes.length);
     }
     return Value.of(operator, value);
   }

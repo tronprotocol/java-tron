@@ -73,7 +73,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public void check() {
+  public synchronized void check() {
     LevelDbDataSourceImpl check =
         new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
     check.initDB();

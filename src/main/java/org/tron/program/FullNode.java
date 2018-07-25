@@ -34,8 +34,6 @@ public class FullNode {
     AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(beanFactory);
     context.register(DefaultConfig.class);
     context.refresh();
-    RevokingDatabase revokingDatabase = context.getBean(RevokingDatabase.class);
-    revokingDatabase.check();
     Application appT = ApplicationFactory.create(context);
     shutdown(appT);
     //appT.init(cfgArgs);

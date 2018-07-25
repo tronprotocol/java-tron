@@ -5,10 +5,14 @@ import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.map.HashedMap;
+import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.RevokingDatabase;
+import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.Key;
@@ -24,6 +28,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class SnapshotManager implements RevokingDatabase {
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
 
@@ -35,6 +40,7 @@ public class SnapshotManager implements RevokingDatabase {
   private boolean disabled = true;
   private int activeSession = 0;
   private boolean unChecked = true;
+  private WriteOptions writeOptions = new WriteOptions().sync(true);
 
   public ISession buildSession() {
     return buildSession(false);
@@ -193,8 +199,7 @@ public class SnapshotManager implements RevokingDatabase {
     LevelDbDataSourceImpl levelDbDataSource =
         new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
     levelDbDataSource.initDB();
-
-    Map<byte[], byte[]> batch = new HashMap<>();
+    Map<WrappedByteArray, WrappedByteArray> batch = new HashMap<>();
     for (RevokingDBWithCachingNewValue db : dbs) {
       Snapshot head = db.getHead();
       while (head.getPrevious().getPrevious() != null) {
@@ -207,10 +212,13 @@ public class SnapshotManager implements RevokingDatabase {
       for (Map.Entry<Key, Value> e : keyValueDB) {
         Key k = e.getKey();
         Value v = e.getValue();
-        batch.put(Bytes.concat(simpleEncode(dbName), k.getBytes()), v.encode());
+        batch.put(WrappedByteArray.of(Bytes.concat(simpleEncode(dbName), k.getBytes())), WrappedByteArray.of(v.encode()));
       }
     }
-    levelDbDataSource.updateByBatch(batch);
+
+    levelDbDataSource.updateByBatch(batch.entrySet().stream()
+        .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
+        .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll), writeOptions);
     levelDbDataSource.closeDB();
   }
 
