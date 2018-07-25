@@ -21,6 +21,17 @@ service Wallet {
       }
     };
   };
+
+  rpc GetAccountById (Account) returns (Account) {
+    option (google.api.http) = {
+      post: "/wallet/getaccountbyid"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/getaccountbyid"
+      }
+    };
+  };
+
   //Please use CreateTransaction2 instead of this function.
   rpc CreateTransaction (TransferContract) returns (Transaction) {
     option (google.api.http) = {
@@ -54,9 +65,22 @@ service Wallet {
       }
     };
   };
+
+
+  rpc SetAccountId (SetAccountIdContract) returns (Transaction) {
+    option (google.api.http) = {
+      post: "/wallet/setaccountid"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/setaccountid"
+      }
+    };
+  };
+
   //Use this function instead of UpdateAccount.
   rpc UpdateAccount2 (AccountUpdateContract) returns (TransactionExtention) {
   };
+
   //Please use VoteWitnessAccount2 instead of this function.
   rpc VoteWitnessAccount (VoteWitnessContract) returns (Transaction) {
     option (google.api.http) = {
@@ -496,6 +520,16 @@ service WalletSolidity {
       }
     };
   };
+  rpc GetAccountById (Account) returns (Account) {
+    option (google.api.http) = {
+      post: "/walletsolidity/getaccountbyid"
+      body: "*"
+      additional_bindings {
+        get: "/walletsolidity/getaccountbyid"
+      }
+    };
+  };
+
   rpc ListWitnesses (EmptyMessage) returns (WitnessList) {
     option (google.api.http) = {
       post: "/walletsolidity/listwitnesses"
