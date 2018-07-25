@@ -39,6 +39,5 @@ public class MUtil {
 
     public static String get4BytesSha3HexString(String data){
         return Hex.toHexString(Arrays.copyOf(Hash.sha3(data.getBytes()),4));
-
     }
 }
