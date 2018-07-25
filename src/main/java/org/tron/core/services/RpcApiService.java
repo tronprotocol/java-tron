@@ -459,6 +459,26 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getTransactionSign2(TransactionSign req,
+        StreamObserver<TransactionExtention> responseObserver) {
+      TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
+      Return.Builder retBuilder = Return.newBuilder();
+      try {
+        TransactionCapsule trx = wallet.getTransactionSign(req);
+        trxExtBuilder.setTransaction(trx.getInstance());
+        trxExtBuilder.setTxid(trx.getTransactionId().getByteString());
+        retBuilder.setResult(true).setCode(response_code.SUCCESS);
+      } catch (Exception e) {
+        retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+        logger.info("exception caught" + e.getMessage());
+      }
+      trxExtBuilder.setResult(retBuilder);
+      responseObserver.onNext(trxExtBuilder.build());
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void createAddress(BytesMessage req,
         StreamObserver<BytesMessage> responseObserver) {
       byte[] address = wallet.createAdresss(req.getValue().toByteArray());
@@ -470,30 +490,33 @@ public class RpcApiService implements Service {
 
     private EasyTransferResponse easyTransfer(byte[] privateKey, ByteString toAddress,
         long amount) {
-      ECKey ecKey = ECKey.fromPrivate(privateKey);
-      byte[] owner = ecKey.getAddress();
-      TransferContract.Builder builder = TransferContract.newBuilder();
-      builder.setOwnerAddress(ByteString.copyFrom(owner));
-      builder.setToAddress(toAddress);
-      builder.setAmount(amount);
-
-      TransactionCapsule transactionCapsule = null;
+      TransactionCapsule transactionCapsule;
       GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
       EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
       try {
+        ECKey ecKey = ECKey.fromPrivate(privateKey);
+        byte[] owner = ecKey.getAddress();
+        TransferContract.Builder builder = TransferContract.newBuilder();
+        builder.setOwnerAddress(ByteString.copyFrom(owner));
+        builder.setToAddress(toAddress);
+        builder.setAmount(amount);
         transactionCapsule = createTransactionCapsule(builder.build(),
             ContractType.TransferContract);
+        transactionCapsule.sign(privateKey);
+        GrpcAPI.Return retur = wallet.broadcastTransaction(transactionCapsule.getInstance());
+        responseBuild.setTransaction(transactionCapsule.getInstance());
+        responseBuild.setTxid(transactionCapsule.getTransactionId().getByteString());
+        responseBuild.setResult(retur);
       } catch (ContractValidateException e) {
         returnBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getMessage()));
         responseBuild.setResult(returnBuilder.build());
-        return responseBuild.build();
+      } catch (Exception e) {
+        returnBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+        responseBuild.setResult(returnBuilder.build());
       }
 
-      transactionCapsule.sign(privateKey);
-      GrpcAPI.Return retur = wallet.broadcastTransaction(transactionCapsule.getInstance());
-      responseBuild.setTransaction(transactionCapsule.getInstance());
-      responseBuild.setResult(retur);
       return responseBuild.build();
     }
 
@@ -867,7 +890,8 @@ public class RpcApiService implements Service {
     @Override
     public void participateAssetIssue2(ParticipateAssetIssueContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.ParticipateAssetIssueContract, responseObserver);
+      createTransactionExtention(request, ContractType.ParticipateAssetIssueContract,
+          responseObserver);
     }
 
     @Override
