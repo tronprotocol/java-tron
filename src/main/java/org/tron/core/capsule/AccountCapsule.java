@@ -167,6 +167,10 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account.getAccountName();
   }
 
+  public ByteString getAccountId() {
+    return this.account.getAccountId();
+  }
+
   public long getBalance() {
     return this.account.getBalance();
   }
@@ -294,6 +298,13 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    */
   public void setAccountName(byte[] name) {
     this.account = this.account.toBuilder().setAccountName(ByteString.copyFrom(name)).build();
+  }
+
+  /**
+   * set account id
+   */
+  public void setAccountId(byte[] id) {
+    this.account = this.account.toBuilder().setAccountId(ByteString.copyFrom(id)).build();
   }
 
   /**
