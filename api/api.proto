@@ -43,7 +43,7 @@ service Wallet {
     };
   };
   //Use this function instead of CreateTransaction.
-  rpc CreateTransaction2 (TransferContract) returns (TransactionExtention) {
+  rpc CreateTransaction2 (TransferContract) returns (TransactionExtension) {
   };
 
   rpc BroadcastTransaction (Transaction) returns (Return) {
@@ -78,7 +78,7 @@ service Wallet {
   };
 
   //Use this function instead of UpdateAccount.
-  rpc UpdateAccount2 (AccountUpdateContract) returns (TransactionExtention) {
+  rpc UpdateAccount2 (AccountUpdateContract) returns (TransactionExtension) {
   };
 
   //Please use VoteWitnessAccount2 instead of this function.
@@ -92,7 +92,7 @@ service Wallet {
     };
   };
   //Use this function instead of VoteWitnessAccount.
-  rpc VoteWitnessAccount2 (VoteWitnessContract) returns (TransactionExtention) {
+  rpc VoteWitnessAccount2 (VoteWitnessContract) returns (TransactionExtension) {
   };
   //Please use CreateAssetIssue2 instead of this function.
   rpc CreateAssetIssue (AssetIssueContract) returns (Transaction) {
@@ -105,7 +105,7 @@ service Wallet {
     };
   };
   //Use this function instead of CreateAssetIssue.
-  rpc CreateAssetIssue2 (AssetIssueContract) returns (TransactionExtention) {
+  rpc CreateAssetIssue2 (AssetIssueContract) returns (TransactionExtension) {
   };
   //Please use UpdateWitness2 instead of this function.
   rpc UpdateWitness (WitnessUpdateContract) returns (Transaction) {
@@ -118,7 +118,7 @@ service Wallet {
     };
   };
   //Use this function instead of UpdateWitness.
-  rpc UpdateWitness2 (WitnessUpdateContract) returns (TransactionExtention) {
+  rpc UpdateWitness2 (WitnessUpdateContract) returns (TransactionExtension) {
   };
   //Please use CreateAccount2 instead of this function.
   rpc CreateAccount (AccountCreateContract) returns (Transaction) {
@@ -131,7 +131,7 @@ service Wallet {
     };
   };
   //Use this function instead of CreateAccount.
-  rpc CreateAccount2 (AccountCreateContract) returns (TransactionExtention) {
+  rpc CreateAccount2 (AccountCreateContract) returns (TransactionExtension) {
   }
   //Please use CreateWitness2 instead of this function.
   rpc CreateWitness (WitnessCreateContract) returns (Transaction) {
@@ -144,7 +144,7 @@ service Wallet {
     };
   };
   //Use this function instead of CreateWitness.
-  rpc CreateWitness2 (WitnessCreateContract) returns (TransactionExtention) {
+  rpc CreateWitness2 (WitnessCreateContract) returns (TransactionExtension) {
   }
   //Please use TransferAsset2 instead of this function.
   rpc TransferAsset (TransferAssetContract) returns (Transaction) {
@@ -157,7 +157,7 @@ service Wallet {
     };
   }
   //Use this function instead of TransferAsset.
-  rpc TransferAsset2 (TransferAssetContract) returns (TransactionExtention) {
+  rpc TransferAsset2 (TransferAssetContract) returns (TransactionExtension) {
   }
   //Please use ParticipateAssetIssue2 instead of this function.
   rpc ParticipateAssetIssue (ParticipateAssetIssueContract) returns (Transaction) {
@@ -170,7 +170,7 @@ service Wallet {
     };
   }
   //Use this function instead of ParticipateAssetIssue.
-  rpc ParticipateAssetIssue2 (ParticipateAssetIssueContract) returns (TransactionExtention) {
+  rpc ParticipateAssetIssue2 (ParticipateAssetIssueContract) returns (TransactionExtension) {
   }
   //Please use FreezeBalance2 instead of this function.
   rpc FreezeBalance (FreezeBalanceContract) returns (Transaction) {
@@ -183,7 +183,7 @@ service Wallet {
     };
   }
   //Use this function instead of FreezeBalance.
-  rpc FreezeBalance2 (FreezeBalanceContract) returns (TransactionExtention) {
+  rpc FreezeBalance2 (FreezeBalanceContract) returns (TransactionExtension) {
   }
   //Please use UnfreezeBalance2 instead of this function.
   rpc UnfreezeBalance (UnfreezeBalanceContract) returns (Transaction) {
@@ -196,7 +196,7 @@ service Wallet {
     };
   }
   //Use this function instead of UnfreezeBalance.
-  rpc UnfreezeBalance2 (UnfreezeBalanceContract) returns (TransactionExtention) {
+  rpc UnfreezeBalance2 (UnfreezeBalanceContract) returns (TransactionExtension) {
   }
   //Please use UnfreezeAsset2 instead of this function.
   rpc UnfreezeAsset (UnfreezeAssetContract) returns (Transaction) {
@@ -209,7 +209,7 @@ service Wallet {
     };
   }
   //Use this function instead of UnfreezeAsset.
-  rpc UnfreezeAsset2 (UnfreezeAssetContract) returns (TransactionExtention) {
+  rpc UnfreezeAsset2 (UnfreezeAssetContract) returns (TransactionExtension) {
   }
   //Please use WithdrawBalance2 instead of this function.
   rpc WithdrawBalance (WithdrawBalanceContract) returns (Transaction) {
@@ -222,7 +222,7 @@ service Wallet {
     };
   }
   //Use this function instead of WithdrawBalance.
-  rpc WithdrawBalance2 (WithdrawBalanceContract) returns (TransactionExtention) {
+  rpc WithdrawBalance2 (WithdrawBalanceContract) returns (TransactionExtension) {
   }
   //Please use UpdateAsset2 instead of this function.
   rpc UpdateAsset (UpdateAssetContract) returns (Transaction) {
@@ -235,25 +235,25 @@ service Wallet {
     };
   }
   //Use this function instead of UpdateAsset.
-  rpc UpdateAsset2 (UpdateAssetContract) returns (TransactionExtention) {
+  rpc UpdateAsset2 (UpdateAssetContract) returns (TransactionExtension) {
   }
 
-  rpc ProposalCreate (ProposalCreateContract) returns (TransactionExtention) {
+  rpc ProposalCreate (ProposalCreateContract) returns (TransactionExtension) {
   }
 
-  rpc ProposalApprove (ProposalApproveContract) returns (TransactionExtention) {
+  rpc ProposalApprove (ProposalApproveContract) returns (TransactionExtension) {
   }
 
-  rpc ProposalDelete (ProposalDeleteContract) returns (TransactionExtention) {
+  rpc ProposalDelete (ProposalDeleteContract) returns (TransactionExtension) {
   }
 
-  rpc BuyStorage (BuyStorageContract) returns (TransactionExtention) {
+  rpc BuyStorage (BuyStorageContract) returns (TransactionExtension) {
   }
 
-  rpc BuyStorageBytes (BuyStorageBytesContract) returns (TransactionExtention) {
+  rpc BuyStorageBytes (BuyStorageBytesContract) returns (TransactionExtension) {
   }
 
-  rpc SellStorage (SellStorageContract) returns (TransactionExtention) {
+  rpc SellStorage (SellStorageContract) returns (TransactionExtension) {
   }
 
   rpc ListNodes (EmptyMessage) returns (NodeList) {
@@ -366,13 +366,13 @@ service Wallet {
     };
   }
 
-  rpc DeployContract (CreateSmartContract) returns (TransactionExtention) {
+  rpc DeployContract (CreateSmartContract) returns (TransactionExtension) {
   }
 
   rpc GetContract (BytesMessage) returns (SmartContract) {
   }
 
-  rpc TriggerContract (TriggerSmartContract) returns (TransactionExtention) {
+  rpc TriggerContract (TriggerSmartContract) returns (TransactionExtension) {
   }
 
   rpc ListWitnesses (EmptyMessage) returns (WitnessList) {
@@ -464,7 +464,7 @@ service Wallet {
   };
   //Warning: do not invoke this interface provided by others.
   //Use this function instead of GetTransactionSign.
-  rpc GetTransactionSign2 (TransactionSign) returns (TransactionExtention) {
+  rpc GetTransactionSign2 (TransactionSign) returns (TransactionExtension) {
   };
   //Warning: do not invoke this interface provided by others.
   rpc CreateAddress (BytesMessage) returns (BytesMessage) {
@@ -820,22 +820,22 @@ message AddressPrKeyPairMessage {
   string privateKey = 2;
 }
 
-message TransactionExtention {
+message TransactionExtension {
   Transaction transaction = 1;
   bytes txid = 2;   //transaction id =  sha256(transaction.rowdata)
   Return result = 3;
 }
 
-message BlockExtention {
-  repeated TransactionExtention transactions = 1;
+message BlockExtension {
+  repeated TransactionExtension transactions = 1;
   BlockHeader block_header = 2;
   bytes blockid = 3;
 }
 
 message BlockListExtention {
-  repeated BlockExtention block = 1;
+  repeated BlockExtension block = 1;
 }
 
 message TransactionListExtention {
-  repeated TransactionExtention transaction = 1;
+  repeated TransactionExtension transaction = 1;
 }
