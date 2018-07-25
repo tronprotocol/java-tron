@@ -787,6 +787,9 @@ message AccountResourceMessage {
   int64 CpuLimit = 14;
   int64 TotalCpuLimit = 15;
   int64 TotalCpuWeight = 16;
+
+  int64 storageUsed = 21;
+  int64 storageLimit = 22;
 }
 
 message PaginatedMessage {
