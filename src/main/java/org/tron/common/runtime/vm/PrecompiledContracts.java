@@ -688,6 +688,13 @@ public class PrecompiledContracts {
     }
   }
 
+  /**
+   * Native function to freeze caller account balance. <br/> <br/>
+   *
+   * Input data[]: <br/> freeze balance amount, freeze duration
+   *
+   * output: <br/> isSuccess <br/>
+   */
   public static class FreezeBalanceNative extends PrecompiledContract {
 
     @Override
@@ -737,10 +744,17 @@ public class PrecompiledContracts {
         logger.debug("ContractValidateException when calling freezeBalance in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
-      return Pair.of(true, new DataWord().getData());
+      return Pair.of(true, new DataWord(1).getData());
     }
   }
 
+  /**
+   * Native function to unfreeze caller account balance. <br/> <br/>
+   *
+   * Input data[]: <br/> null
+   *
+   * output: <br/> isSuccess <br/>
+   */
   public static class UnfreezeBalanceNative extends PrecompiledContract {
 
     @Override
@@ -780,10 +794,17 @@ public class PrecompiledContracts {
         logger.debug("ContractValidateException when calling unfreezeBalance in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
-      return Pair.of(true, new DataWord().getData());
+      return Pair.of(true, new DataWord(1).getData());
     }
   }
 
+  /**
+   * Native function for witnesses to withdraw their reward . <br/> <br/>
+   *
+   * Input data[]: <br/> null
+   *
+   * output: <br/> isSuccess <br/>
+   */
   public static class WithdrawBalanceNative extends PrecompiledContract {
 
     @Override
@@ -822,10 +843,17 @@ public class PrecompiledContracts {
         logger.debug("ContractValidateException when calling withdrawBalanceNative in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
-      return Pair.of(true, new DataWord().getData());
+      return Pair.of(true, new DataWord(1).getData());
     }
   }
 
+  /**
+   * Native function for witnesses to approve a proposal . <br/> <br/>
+   *
+   * Input data[]: <br/> proposalId, isApprove
+   *
+   * output: <br/> isSuccess <br/>
+   */
   public static class ProposalApproveNative extends PrecompiledContract {
 
     @Override
@@ -871,15 +899,17 @@ public class PrecompiledContracts {
         logger.debug("ContractValidateException when calling proposalApproveNative in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
-      return Pair.of(true, new DataWord().getData());
+      return Pair.of(true, new DataWord(1).getData());
     }
   }
 
   /**
-   * create a proposal. <br/> <br/>
+   * Native function for a witness to create a proposal. <br/> <br/>
    *
    * Input data[]: <br/> an array of key,value (key1, value1, key2, value2... , keyn, valuen),
    * <br/>
+   *
+   * Output: <br/> proposalId <br/>
    */
   public static class ProposalCreateNative extends PrecompiledContract {
 
@@ -915,6 +945,7 @@ public class PrecompiledContracts {
 
       ProposalCreateContract contract = builder.build();
 
+      long id = 0 ;
       TransactionCapsule trx = new TransactionCapsule(contract,
           ContractType.ProposalCreateContract);
 
@@ -923,6 +954,7 @@ public class PrecompiledContracts {
       try {
         actuatorList.get(0).validate();
         actuatorList.get(0).execute(getResult().getRet());
+        id = getDeposit().getDbManager().getDynamicPropertiesStore().getLatestProposalNum();
       } catch (ContractExeException e) {
         logger.debug("ContractExeException when calling proposalCreateNative in vm");
         logger.debug("ContractExeException: {}", e.getMessage());
@@ -930,10 +962,18 @@ public class PrecompiledContracts {
         logger.debug("ContractValidateException when calling proposalCreateNative in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
-      return Pair.of(true, new DataWord().getData());
+      return Pair.of(true, new DataWord(id).getData());
     }
   }
 
+  /**
+   * Native function for a witness to delete a proposal. <br/> <br/>
+   *
+   * Input data[]: <br/> ProposalId
+   * <br/>
+   *
+   * Output: <br/> isSuccess <br/>
+   */
   public static class ProposalDeleteNative extends PrecompiledContract {
 
     @Override
@@ -970,7 +1010,7 @@ public class PrecompiledContracts {
         logger.debug("ContractValidateException when calling proposalDeleteContract in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
-      return Pair.of(true, new DataWord().getData());
+      return Pair.of(true, new DataWord(1).getData());
     }
   }
 }
