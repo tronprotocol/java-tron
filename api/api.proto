@@ -21,6 +21,7 @@ service Wallet {
       }
     };
   };
+
   rpc GetAccountById (Account) returns (Account) {
     option (google.api.http) = {
       post: "/wallet/getaccountbyid"
@@ -40,6 +41,9 @@ service Wallet {
       }
     };
   };
+  //Use this function instead of CreateTransaction.
+  rpc CreateTransaction2 (TransferContract) returns (TransactionExtention) {
+  };
 
   rpc BroadcastTransaction (Transaction) returns (Return) {
     option (google.api.http) = {
@@ -50,7 +54,7 @@ service Wallet {
       }
     };
   };
-
+  //Please use UpdateAccount2 instead of this function.
   rpc UpdateAccount (AccountUpdateContract) returns (Transaction) {
     option (google.api.http) = {
       post: "/wallet/updateaccount"
@@ -81,7 +85,10 @@ service Wallet {
       }
     };
   };
-
+  //Use this function instead of VoteWitnessAccount.
+  rpc VoteWitnessAccount2 (VoteWitnessContract) returns (TransactionExtention) {
+  };
+  //Please use CreateAssetIssue2 instead of this function.
   rpc CreateAssetIssue (AssetIssueContract) returns (Transaction) {
     option (google.api.http) = {
       post: "/wallet/createassetissue"
@@ -91,7 +98,10 @@ service Wallet {
       }
     };
   };
-
+  //Use this function instead of CreateAssetIssue.
+  rpc CreateAssetIssue2 (AssetIssueContract) returns (TransactionExtention) {
+  };
+  //Please use UpdateWitness2 instead of this function.
   rpc UpdateWitness (WitnessUpdateContract) returns (Transaction) {
     option (google.api.http) = {
       post: "/wallet/updatewitness"
@@ -101,7 +111,10 @@ service Wallet {
       }
     };
   };
-
+  //Use this function instead of UpdateWitness.
+  rpc UpdateWitness2 (WitnessUpdateContract) returns (TransactionExtention) {
+  };
+  //Please use CreateAccount2 instead of this function.
   rpc CreateAccount (AccountCreateContract) returns (Transaction) {
     option (google.api.http) = {
       post: "/wallet/createaccount"
@@ -111,7 +124,10 @@ service Wallet {
       }
     };
   };
-
+  //Use this function instead of CreateAccount.
+  rpc CreateAccount2 (AccountCreateContract) returns (TransactionExtention) {
+  }
+  //Please use CreateWitness2 instead of this function.
   rpc CreateWitness (WitnessCreateContract) returns (Transaction) {
     option (google.api.http) = {
       post: "/wallet/createwitness"
@@ -121,7 +137,10 @@ service Wallet {
       }
     };
   };
-
+  //Use this function instead of CreateWitness.
+  rpc CreateWitness2 (WitnessCreateContract) returns (TransactionExtention) {
+  }
+  //Please use TransferAsset2 instead of this function.
   rpc TransferAsset (TransferAssetContract) returns (Transaction) {
     option (google.api.http) = {
       post: "/wallet/transferasset"
@@ -131,7 +150,10 @@ service Wallet {
       }
     };
   }
-
+  //Use this function instead of TransferAsset.
+  rpc TransferAsset2 (TransferAssetContract) returns (TransactionExtention) {
+  }
+  //Please use ParticipateAssetIssue2 instead of this function.
   rpc ParticipateAssetIssue (ParticipateAssetIssueContract) returns (Transaction) {
     option (google.api.http) = {
       post: "/wallet/participateassetissue"
@@ -141,7 +163,10 @@ service Wallet {
       }
     };
   }
-
+  //Use this function instead of ParticipateAssetIssue.
+  rpc ParticipateAssetIssue2 (ParticipateAssetIssueContract) returns (TransactionExtention) {
+  }
+  //Please use FreezeBalance2 instead of this function.
   rpc FreezeBalance (FreezeBalanceContract) returns (Transaction) {
     option (google.api.http) = {
       post: "/wallet/freezebalance"
@@ -151,7 +176,10 @@ service Wallet {
       }
     };
   }
-
+  //Use this function instead of FreezeBalance.
+  rpc FreezeBalance2 (FreezeBalanceContract) returns (TransactionExtention) {
+  }
+  //Please use UnfreezeBalance2 instead of this function.
   rpc UnfreezeBalance (UnfreezeBalanceContract) returns (Transaction) {
     option (google.api.http) = {
       post: "/wallet/unfreezebalance"
@@ -161,7 +189,10 @@ service Wallet {
       }
     };
   }
-
+  //Use this function instead of UnfreezeBalance.
+  rpc UnfreezeBalance2 (UnfreezeBalanceContract) returns (TransactionExtention) {
+  }
+  //Please use UnfreezeAsset2 instead of this function.
   rpc UnfreezeAsset (UnfreezeAssetContract) returns (Transaction) {
     option (google.api.http) = {
       post: "/wallet/unfreezeasset"
@@ -171,7 +202,10 @@ service Wallet {
       }
     };
   }
-
+  //Use this function instead of UnfreezeAsset.
+  rpc UnfreezeAsset2 (UnfreezeAssetContract) returns (TransactionExtention) {
+  }
+  //Please use WithdrawBalance2 instead of this function.
   rpc WithdrawBalance (WithdrawBalanceContract) returns (Transaction) {
     option (google.api.http) = {
       post: "/wallet/withdrawbalance"
@@ -181,7 +215,10 @@ service Wallet {
       }
     };
   }
-
+  //Use this function instead of WithdrawBalance.
+  rpc WithdrawBalance2 (WithdrawBalanceContract) returns (TransactionExtention) {
+  }
+  //Please use UpdateAsset2 instead of this function.
   rpc UpdateAsset (UpdateAssetContract) returns (Transaction) {
     option (google.api.http) = {
       post: "/wallet/updateasset"
@@ -191,35 +228,17 @@ service Wallet {
       }
     };
   }
-
-  rpc ProposalCreate (ProposalCreateContract) returns (Transaction) {
-    option (google.api.http) = {
-      post: "/wallet/proposalcreate"
-      body: "*"
-      additional_bindings {
-        get: "/wallet/proposalcreate"
-      }
-    };
+  //Use this function instead of UpdateAsset.
+  rpc UpdateAsset2 (UpdateAssetContract) returns (TransactionExtention) {
   }
 
-  rpc ProposalApprove (ProposalApproveContract) returns (Transaction) {
-    option (google.api.http) = {
-      post: "/wallet/proposalapprove"
-      body: "*"
-      additional_bindings {
-        get: "/wallet/proposalapprove"
-      }
-    };
+  rpc ProposalCreate (ProposalCreateContract) returns (TransactionExtention) {
   }
 
-  rpc ProposalDelete (ProposalDeleteContract) returns (Transaction) {
-    option (google.api.http) = {
-      post: "/wallet/proposaldelete"
-      body: "*"
-      additional_bindings {
-        get: "/wallet/proposaldelete"
-      }
-    };
+  rpc ProposalApprove (ProposalApproveContract) returns (TransactionExtention) {
+  }
+
+  rpc ProposalDelete (ProposalDeleteContract) returns (TransactionExtention) {
   }
 
   rpc ListNodes (EmptyMessage) returns (NodeList) {
@@ -259,6 +278,7 @@ service Wallet {
       }
     };
   }
+  //Please use GetNowBlock2 instead of this function.
   rpc GetNowBlock (EmptyMessage) returns (Block) {
     option (google.api.http) = {
       post: "/wallet/getnowblock"
@@ -268,6 +288,10 @@ service Wallet {
       }
     };
   }
+  //Use this function instead of GetNowBlock.
+  rpc GetNowBlock2 (EmptyMessage) returns (BlockExtention) {
+  }
+  //Please use GetBlockByNum2 instead of this function.
   rpc GetBlockByNum (NumberMessage) returns (Block) {
     option (google.api.http) = {
       post: "/wallet/getblockbynum"
@@ -277,7 +301,9 @@ service Wallet {
       }
     };
   }
-
+  //Use this function instead of GetBlockByNum.
+  rpc GetBlockByNum2 (NumberMessage) returns (BlockExtention) {
+  }
   rpc GetBlockById (BytesMessage) returns (Block) {
     option (google.api.http) = {
       post: "/wallet/getblockbyid"
@@ -287,6 +313,7 @@ service Wallet {
       }
     };
   }
+  //Please use GetBlockByLimitNext2 instead of this function.
   rpc GetBlockByLimitNext (BlockLimit) returns (BlockList) {
     option (google.api.http) = {
       post: "/wallet/getblockbylimitnext"
@@ -296,14 +323,21 @@ service Wallet {
       }
     };
   }
+  //Use this function instead of GetBlockByLimitNext.
+  rpc GetBlockByLimitNext2 (BlockLimit) returns (BlockListExtention) {
+  }
+  //Please use GetBlockByLatestNum2 instead of this function.
   rpc GetBlockByLatestNum (NumberMessage) returns (BlockList) {
-    option (google.api.http) = {
+       option (google.api.http) = {
       post: "/wallet/getblockbylatestnum"
       body: "*"
       additional_bindings {
         get: "/wallet/getblockbylatestnum"
       }
     };
+  }
+  //Use this function instead of GetBlockByLatestNum.
+  rpc GetBlockByLatestNum2 (NumberMessage) returns (BlockListExtention) {
   }
   rpc GetTransactionById (BytesMessage) returns (Transaction) {
     option (google.api.http) = {
@@ -314,24 +348,16 @@ service Wallet {
       }
     };
   }
-  rpc DeployContract (CreateSmartContract) returns (Transaction) {
-    option (google.api.http) = {
-      post: "/wallet/deploycontract"
-      body: "*"
-    };
+
+  rpc DeployContract (CreateSmartContract) returns (TransactionExtention) {
   }
+
   rpc GetContract (BytesMessage) returns (SmartContract) {
-    option (google.api.http) = {
-      post: "/wallet/getcontract"
-      body: "*"
-    };
   }
-  rpc TriggerContract (TriggerSmartContract) returns (Transaction) {
-    option (google.api.http) = {
-      post: "/wallet/triggercontract"
-      body: "*"
-    };
+
+  rpc TriggerContract (TriggerSmartContract) returns (TransactionExtention) {
   }
+
   rpc ListWitnesses (EmptyMessage) returns (WitnessList) {
     option (google.api.http) = {
       post: "/wallet/listwitnesses"
@@ -372,8 +398,6 @@ service Wallet {
        };
     };
 
-
-
   rpc GetAssetIssueList (EmptyMessage) returns (AssetIssueList) {
     option (google.api.http) = {
         post: "/wallet/getassetissuelist"
@@ -411,6 +435,7 @@ service Wallet {
     };
   }
   //Warning: do not invoke this interface provided by others.
+  //Please use GetTransactionSign2 instead of this function.
   rpc GetTransactionSign (TransactionSign) returns (Transaction) {
     option (google.api.http) = {
       post: "/wallet/gettransactionsign"
@@ -419,6 +444,10 @@ service Wallet {
         get: "/wallet/gettransactionsign"
       }
     };
+  };
+  //Warning: do not invoke this interface provided by others.
+  //Use this function instead of GetTransactionSign.
+  rpc GetTransactionSign2 (TransactionSign) returns (TransactionExtention) {
   };
   //Warning: do not invoke this interface provided by others.
   rpc CreateAddress (BytesMessage) returns (BytesMessage) {
@@ -451,7 +480,6 @@ service Wallet {
     };
   };
   //Warning: do not invoke this interface provided by others.
-
   rpc GenerateAddress (EmptyMessage) returns (AddressPrKeyPairMessage) {
 
     option (google.api.http) = {
@@ -523,6 +551,7 @@ service WalletSolidity {
         }
       };
   }
+  //Please use GetNowBlock2 instead of this function.
   rpc GetNowBlock (EmptyMessage) returns (Block) {
     option (google.api.http) = {
       post: "/walletsolidity/getnowblock"
@@ -532,6 +561,10 @@ service WalletSolidity {
       }
     };
   }
+  //Use this function instead of GetNowBlock.
+  rpc GetNowBlock2 (EmptyMessage) returns (BlockExtention) {
+  }
+  //Please use GetBlockByNum2 instead of this function.
   rpc GetBlockByNum (NumberMessage) returns (Block) {
     option (google.api.http) = {
       post: "/walletsolidity/getblockbynum"
@@ -540,6 +573,9 @@ service WalletSolidity {
         get: "/walletsolidity/getblockbynum"
       }
     };
+  }
+  //Use this function instead of GetBlockByNum.
+  rpc GetBlockByNum2 (NumberMessage) returns (BlockExtention) {
   }
   rpc GetTransactionById (BytesMessage) returns (Transaction) {
     option (google.api.http) = {
@@ -572,7 +608,7 @@ service WalletSolidity {
 };
 
 service WalletExtension {
-
+  //Please use GetTransactionsFromThis2 instead of this function.
   rpc GetTransactionsFromThis (AccountPaginated) returns (TransactionList) {
     option (google.api.http) = {
       post: "/walletextension/gettransactionsfromthis"
@@ -582,6 +618,10 @@ service WalletExtension {
       }
     };
   }
+  //Use this function instead of GetTransactionsFromThis.
+  rpc GetTransactionsFromThis2 (AccountPaginated) returns (TransactionListExtention) {
+  }
+  //Please use GetTransactionsToThis2 instead of this function.
   rpc GetTransactionsToThis (AccountPaginated) returns (TransactionList) {
     option (google.api.http) = {
       post: "/walletextension/gettransactionstothis"
@@ -590,6 +630,9 @@ service WalletExtension {
         get: "/walletextension/gettransactionstothis"
       }
     };
+  }
+  //Use this function instead of GetTransactionsToThis.
+  rpc GetTransactionsToThis2 (AccountPaginated) returns (TransactionListExtention) {
   }
 };
 
@@ -733,9 +776,30 @@ message EasyTransferByPrivateMessage {
 message EasyTransferResponse {
   Transaction transaction = 1;
   Return result = 2;
+  bytes txid = 3;   //transaction id =  sha256(transaction.rowdata)
 }
 
 message AddressPrKeyPairMessage {
   string address = 1;
   string privateKey = 2;
+}
+
+message TransactionExtention {
+  Transaction transaction = 1;
+  bytes txid = 2;   //transaction id =  sha256(transaction.rowdata)
+  Return result = 3;
+}
+
+message BlockExtention {
+  repeated TransactionExtention transactions = 1;
+  BlockHeader block_header = 2;
+  bytes blockid = 3;
+}
+
+message BlockListExtention {
+  repeated BlockExtention block = 1;
+}
+
+message TransactionListExtention {
+  repeated TransactionExtention transaction = 1;
 }
