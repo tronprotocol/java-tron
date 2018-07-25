@@ -120,6 +120,8 @@ message Account {
 
   }
 
+  AccountResource account_resource = 30;
+
 }
 
 message authority {
