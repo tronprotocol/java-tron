@@ -88,9 +88,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] TOTAL_STORAGE_FEE = "TOTAL_STORAGE_FEE".getBytes();
 
-  private static final byte[] TOTAL_STORAGE_LIMIT = "TOTAL_STORAGE_LIMIT".getBytes();
-
-  private static final byte[] TOTAL_STORAGE_USED = "TOTAL_STORAGE_USED".getBytes();
+  private static final byte[] TOTAL_STORAGE_RESERVED = "TOTAL_STORAGE_RESERVED".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -289,15 +287,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getTotalStorageLimit();
+      this.getTotalStorageReserved();
     } catch (IllegalArgumentException e) {
-      this.saveTotalStorageLimit(128L * 1024 * 1024 * 1024);
-    }
-
-    try {
-      this.getTotalStorageUsed();
-    } catch (IllegalArgumentException e) {
-      this.saveTotalStorageUsed(0);
+      this.saveTotalStorageReserved(128L * 1024 * 1024 * 1024);
     }
 
     try {
@@ -674,28 +666,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found TOTAL_STORAGE_FEE"));
   }
 
-  public void saveTotalStorageLimit(long bytes) {
-    this.put(TOTAL_STORAGE_LIMIT,
+  public void saveTotalStorageReserved(long bytes) {
+    this.put(TOTAL_STORAGE_RESERVED,
         new BytesCapsule(ByteArray.fromLong(bytes)));
   }
 
-  public long getTotalStorageLimit() {
-    return Optional.ofNullable(this.dbSource.getData(TOTAL_STORAGE_LIMIT))
+  public long getTotalStorageReserved() {
+    return Optional.ofNullable(this.dbSource.getData(TOTAL_STORAGE_RESERVED))
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found TOTAL_STORAGE_LIMIT"));
-  }
-
-  public void saveTotalStorageUsed(long bytes) {
-    this.put(TOTAL_STORAGE_USED,
-        new BytesCapsule(ByteArray.fromLong(bytes)));
-  }
-
-  public long getTotalStorageUsed() {
-    return Optional.ofNullable(this.dbSource.getData(TOTAL_STORAGE_USED))
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException("not found TOTAL_STORAGE_USED"));
+            () -> new IllegalArgumentException("not found TOTAL_STORAGE_RESERVED"));
   }
 
   public void saveBlockFilledSlots(int[] blockFilledSlots) {
