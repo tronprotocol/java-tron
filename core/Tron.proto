@@ -108,7 +108,7 @@ message Account {
     // cpu resource, get from frozen
     int64 cpu_usage = 1;
     // the frozen balance for cpu
-    int64 Frozen frozen_balance_for_cpu = 2;
+    Frozen frozen_balance_for_cpu = 2;
     int64 latest_consume_time_for_cpu = 3;
 
     // storage resource, get from market
