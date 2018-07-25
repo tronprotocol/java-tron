@@ -1,9 +1,12 @@
 package org.tron.core.db;
 
+import org.tron.core.capsule.AccountCapsule;
+
 public class StorageMarket {
 
   private Manager dbManager;
   private long supply = 1_000_000_000_000_000L;
+  private double millisecondPerYear = 31_536_000_000.0;
 
   public StorageMarket(Manager manager) {
     this.dbManager = manager;
@@ -48,6 +51,76 @@ public class StorageMarket {
   public long exchange(long from, boolean isBuy) {
     long relay = exchange_to_supply(isBuy, from);
     return exchange_from_supply(isBuy, relay);
+  }
+
+  public long payTax(long duration, long limit) {
+    // todo: Support for change by the committee
+    double feeRate = duration / millisecondPerYear * 0.1;
+    long storageTax = (long) (limit * feeRate);
+
+    long tax = exchange(storageTax, false);
+
+    long newTotalTax = dbManager.getDynamicPropertiesStore().getTotalStorageTax() + tax;
+    long newTotalPool = dbManager.getDynamicPropertiesStore().getTotalStoragePool() - tax;
+    long newTotalReserved = dbManager.getDynamicPropertiesStore().getTotalStorageReserved()
+        + storageTax;
+    dbManager.getDynamicPropertiesStore().saveTotalStorageTax(newTotalTax);
+    dbManager.getDynamicPropertiesStore().saveTotalStoragePool(newTotalPool);
+    dbManager.getDynamicPropertiesStore().saveTotalStorageReserved(newTotalReserved);
+
+    return storageTax;
+  }
+
+  public void buyStorage(AccountCapsule accountCapsule, long quant) {
+    long now = dbManager.getHeadBlockTimeStamp();
+
+    long latestExchangeStorageTime = accountCapsule.getLatestExchangeStorageTime();
+    long currentStorageLimit = accountCapsule.getStorageLimit();
+
+    long duration = latestExchangeStorageTime - now;
+    long storageTax = payTax(duration, currentStorageLimit);
+
+    long newBalance = accountCapsule.getBalance() - quant;
+
+    long storageBought = exchange(quant, true);
+    long newStorageLimit = currentStorageLimit - storageTax + storageBought;
+
+    accountCapsule.setStorageLimit(newStorageLimit);
+    accountCapsule.setBalance(newBalance);
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+
+    long newTotalPool = dbManager.getDynamicPropertiesStore().getTotalStoragePool() + quant;
+    long newTotalReserved = dbManager.getDynamicPropertiesStore().getTotalStorageReserved()
+        - storageBought;
+    dbManager.getDynamicPropertiesStore().saveTotalStorageTax(newTotalPool);
+    dbManager.getDynamicPropertiesStore().saveTotalStoragePool(newTotalReserved);
+
+  }
+
+  public void sellStorage(AccountCapsule accountCapsule, long bytes) {
+    long now = dbManager.getHeadBlockTimeStamp();
+
+    long latestExchangeStorageTime = accountCapsule.getLatestExchangeStorageTime();
+    long currentStorageLimit = accountCapsule.getStorageLimit();
+
+    long duration = latestExchangeStorageTime - now;
+    long storageTax = payTax(duration, currentStorageLimit);
+
+    long quant = exchange(bytes, false);
+    long newBalance = accountCapsule.getBalance() + quant;
+
+    long newStorageLimit = currentStorageLimit - storageTax - bytes;
+
+    accountCapsule.setStorageLimit(newStorageLimit);
+    accountCapsule.setBalance(newBalance);
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+
+    long newTotalPool = dbManager.getDynamicPropertiesStore().getTotalStoragePool() - quant;
+    long newTotalReserved = dbManager.getDynamicPropertiesStore().getTotalStorageReserved()
+        + bytes;
+    dbManager.getDynamicPropertiesStore().saveTotalStorageTax(newTotalPool);
+    dbManager.getDynamicPropertiesStore().saveTotalStoragePool(newTotalReserved);
+
   }
 
 }

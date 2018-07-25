@@ -26,6 +26,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Vote;
@@ -459,6 +460,45 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   public void putFreeAssetNetUsage(String s, long freeAssetNetUsage) {
     this.account = this.account.toBuilder()
         .putFreeAssetNetUsage(s, freeAssetNetUsage).build();
+  }
+
+  public long getStorageLimit() {
+    return this.account.getAccountResource().getStorageLimit();
+  }
+
+  public void setStorageLimit(long limit) {
+    AccountResource accountResource = this.account.getAccountResource();
+    accountResource = accountResource.toBuilder().setStorageLimit(limit).build();
+
+    this.account = this.account.toBuilder()
+        .setAccountResource(accountResource)
+        .build();
+  }
+
+  public long getStorageUsage() {
+    return this.account.getAccountResource().getStorageUsage();
+  }
+
+  public void setStorageUsage(long usage) {
+    AccountResource accountResource = this.account.getAccountResource();
+    accountResource = accountResource.toBuilder().setStorageUsage(usage).build();
+
+    this.account = this.account.toBuilder()
+        .setAccountResource(accountResource)
+        .build();
+  }
+
+  public long getLatestExchangeStorageTime() {
+    return this.account.getAccountResource().getLatestExchangeStorageTime();
+  }
+
+  public void setLatestExchangeStorageTime(long time) {
+    AccountResource accountResource = this.account.getAccountResource();
+    accountResource = accountResource.toBuilder().setLatestExchangeStorageTime(time).build();
+
+    this.account = this.account.toBuilder()
+        .setAccountResource(accountResource)
+        .build();
   }
 
 }

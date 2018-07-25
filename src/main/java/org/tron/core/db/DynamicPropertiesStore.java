@@ -86,7 +86,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] TOTAL_STORAGE_POOL = "TOTAL_STORAGE_POOL".getBytes();
 
-  private static final byte[] TOTAL_STORAGE_FEE = "TOTAL_STORAGE_FEE".getBytes();
+  private static final byte[] TOTAL_STORAGE_TAX = "TOTAL_STORAGE_TAX".getBytes();
 
   private static final byte[] TOTAL_STORAGE_RESERVED = "TOTAL_STORAGE_RESERVED".getBytes();
 
@@ -281,9 +281,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getTotalStorageFee();
+      this.getTotalStorageTax();
     } catch (IllegalArgumentException e) {
-      this.saveTotalStorageFee(0);
+      this.saveTotalStorageTax(0);
     }
 
     try {
@@ -654,16 +654,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found TOTAL_STORAGE_POOL"));
   }
 
-  public void saveTotalStorageFee(long trx) {
-    this.put(TOTAL_STORAGE_FEE,
+  public void saveTotalStorageTax(long trx) {
+    this.put(TOTAL_STORAGE_TAX,
         new BytesCapsule(ByteArray.fromLong(trx)));
   }
 
-  public long getTotalStorageFee() {
-    return Optional.ofNullable(this.dbSource.getData(TOTAL_STORAGE_FEE))
+  public long getTotalStorageTax() {
+    return Optional.ofNullable(this.dbSource.getData(TOTAL_STORAGE_TAX))
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found TOTAL_STORAGE_FEE"));
+            () -> new IllegalArgumentException("not found TOTAL_STORAGE_TAX"));
   }
 
   public void saveTotalStorageReserved(long bytes) {
