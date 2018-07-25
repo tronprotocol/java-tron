@@ -84,6 +84,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] TOTAL_CREATE_WITNESS_COST = "TOTAL_CREATE_WITNESS_FEE".getBytes();
 
+  private static final byte[] TOTAL_STORAGE_POOL = "TOTAL_STORAGE_POOL".getBytes();
+
+  private static final byte[] TOTAL_STORAGE_FEE = "TOTAL_STORAGE_FEE".getBytes();
+
+  private static final byte[] TOTAL_STORAGE_LIMIT = "TOTAL_STORAGE_LIMIT".getBytes();
+
+  private static final byte[] TOTAL_STORAGE_USED = "TOTAL_STORAGE_USED".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -266,6 +274,30 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getTotalCreateAccountCost();
     } catch (IllegalArgumentException e) {
       this.saveTotalCreateAccountFee(0L);
+    }
+
+    try {
+      this.getTotalStoragePool();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalStoragePool(100_000_000_000000L);
+    }
+
+    try {
+      this.getTotalStorageFee();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalStorageFee(0);
+    }
+
+    try {
+      this.getTotalStorageLimit();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalStorageLimit(128L * 1024 * 1024 * 1024);
+    }
+
+    try {
+      this.getTotalStorageUsed();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalStorageUsed(0);
     }
 
     try {
@@ -616,6 +648,54 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_CREATE_WITNESS_COST"));
+  }
+
+  public void saveTotalStoragePool(long trx) {
+    this.put(TOTAL_STORAGE_POOL,
+        new BytesCapsule(ByteArray.fromLong(trx)));
+  }
+
+  public long getTotalStoragePool() {
+    return Optional.ofNullable(this.dbSource.getData(TOTAL_STORAGE_POOL))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_STORAGE_POOL"));
+  }
+
+  public void saveTotalStorageFee(long trx) {
+    this.put(TOTAL_STORAGE_FEE,
+        new BytesCapsule(ByteArray.fromLong(trx)));
+  }
+
+  public long getTotalStorageFee() {
+    return Optional.ofNullable(this.dbSource.getData(TOTAL_STORAGE_FEE))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_STORAGE_FEE"));
+  }
+
+  public void saveTotalStorageLimit(long bytes) {
+    this.put(TOTAL_STORAGE_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(bytes)));
+  }
+
+  public long getTotalStorageLimit() {
+    return Optional.ofNullable(this.dbSource.getData(TOTAL_STORAGE_LIMIT))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_STORAGE_LIMIT"));
+  }
+
+  public void saveTotalStorageUsed(long bytes) {
+    this.put(TOTAL_STORAGE_USED,
+        new BytesCapsule(ByteArray.fromLong(bytes)));
+  }
+
+  public long getTotalStorageUsed() {
+    return Optional.ofNullable(this.dbSource.getData(TOTAL_STORAGE_USED))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_STORAGE_USED"));
   }
 
   public void saveBlockFilledSlots(int[] blockFilledSlots) {
