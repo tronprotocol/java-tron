@@ -93,18 +93,6 @@ public class BandwidthProcessor extends ResourceProcessor {
     }
   }
 
-  private boolean consumeFee(AccountCapsule accountCapsule, long fee) {
-    try {
-      long latestOperationTime = dbManager.getHeadBlockTimeStamp();
-      accountCapsule.setLatestOperationTime(latestOperationTime);
-      dbManager.adjustBalance(accountCapsule, -fee);
-      dbManager.adjustBalance(this.dbManager.getAccountStore().getBlackhole().createDbKey(), +fee);
-      return true;
-    } catch (BalanceInsufficientException e) {
-      return false;
-    }
-  }
-
   private boolean useTransactionFee(AccountCapsule accountCapsule, long bytes,
       TransactionResultCapsule ret) {
     long fee = dbManager.getDynamicPropertiesStore().getTransactionFee() * bytes;

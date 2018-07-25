@@ -95,17 +95,6 @@ public class CpuProcessor extends ResourceProcessor {
     }
   }
 
-  private boolean consumeFee(AccountCapsule accountCapsule, long fee) {
-    try {
-      long latestOperationTime = dbManager.getHeadBlockTimeStamp();
-      accountCapsule.setLatestOperationTime(latestOperationTime);
-      dbManager.adjustBalance(accountCapsule, -fee);
-      dbManager.adjustBalance(this.dbManager.getAccountStore().getBlackhole().createDbKey(), +fee);
-      return true;
-    } catch (BalanceInsufficientException e) {
-      return false;
-    }
-  }
 
   private boolean useContractCreatorCpu(Contract contract, long cpuTime, long now) {
 

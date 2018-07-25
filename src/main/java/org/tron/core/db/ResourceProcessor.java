@@ -5,6 +5,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.exception.AccountResourceInsufficientException;
+import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
 
 abstract class ResourceProcessor {
@@ -50,4 +51,15 @@ abstract class ResourceProcessor {
     return usage * windowSize / precision;
   }
 
+  protected boolean consumeFee(AccountCapsule accountCapsule, long fee) {
+    try {
+      long latestOperationTime = dbManager.getHeadBlockTimeStamp();
+      accountCapsule.setLatestOperationTime(latestOperationTime);
+      dbManager.adjustBalance(accountCapsule, -fee);
+      dbManager.adjustBalance(this.dbManager.getAccountStore().getBlackhole().createDbKey(), +fee);
+      return true;
+    } catch (BalanceInsufficientException e) {
+      return false;
+    }
+  }
 }
