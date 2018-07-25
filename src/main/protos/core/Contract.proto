@@ -117,6 +117,12 @@ message FreezeBalanceContract {
   bytes owner_address = 1;
   int64 frozen_balance = 2;
   int64 frozen_duration = 3;
+
+  enum ResourceCode {
+    BANDWIDTH = 0x00;
+    CPU = 0x01;
+  }
+  ResourceCode resource = 10;
 }
 
 message UnfreezeBalanceContract {
