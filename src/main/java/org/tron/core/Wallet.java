@@ -33,6 +33,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountNetMessage;
+import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
@@ -528,6 +529,43 @@ public class Wallet {
     long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
     long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
+
+    Map<String, Long> assetNetLimitMap = new HashMap<>();
+    accountCapsule.getAllFreeAssetNetUsage().keySet().forEach(asset -> {
+      byte[] key = ByteArray.fromString(asset);
+      assetNetLimitMap.put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
+    });
+
+    builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
+        .setFreeNetLimit(freeNetLimit)
+        .setNetUsed(accountCapsule.getNetUsage())
+        .setNetLimit(netLimit)
+        .setTotalNetLimit(totalNetLimit)
+        .setTotalNetWeight(totalNetWeight)
+        .putAllAssetNetUsed(accountCapsule.getAllFreeAssetNetUsage())
+        .putAllAssetNetLimit(assetNetLimitMap);
+    return builder.build();
+  }
+
+  public AccountResourceMessage getAccountResource(ByteString accountAddress) {
+    if (accountAddress == null || accountAddress.isEmpty()) {
+      return null;
+    }
+    AccountResourceMessage.Builder builder = AccountResourceMessage.newBuilder();
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(accountAddress.toByteArray());
+    if (accountCapsule == null) {
+      return null;
+    }
+
+    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+    processor.updateUsage(accountCapsule);
+
+    long netLimit = processor.calculateGlobalNetLimit(accountCapsule.getFrozenBalance());
+    long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
+    long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
+    long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
+    long totalCpuLimit = dbManager.getDynamicPropertiesStore().getTotalCpuLimit();
+    long totalCpuWeight = dbManager.getDynamicPropertiesStore().getTotalCpuWeight();
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
     accountCapsule.getAllFreeAssetNetUsage().keySet().forEach(asset -> {

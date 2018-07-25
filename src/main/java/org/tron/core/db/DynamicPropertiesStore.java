@@ -60,8 +60,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] ONE_DAY_NET_LIMIT = "ONE_DAY_NET_LIMIT".getBytes();
 
-  private static final byte[] ONE_DAY_CPU_LIMIT = "ONE_DAY_CPU_LIMIT".getBytes();
-
   //public free bandwidth
   private static final byte[] PUBLIC_NET_USAGE = "PUBLIC_NET_USAGE".getBytes();
 
@@ -72,8 +70,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] FREE_NET_LIMIT = "FREE_NET_LIMIT".getBytes();
 
   private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
-
+  //ONE_DAY_NET_LIMIT - PUBLIC_NET_LIMIT
   private static final byte[] TOTAL_NET_LIMIT = "TOTAL_NET_LIMIT".getBytes();
+
+  private static final byte[] TOTAL_CPU_WEIGHT = "TOTAL_CPU_WEIGHT".getBytes();
+
+  private static final byte[] TOTAL_CPU_LIMIT = "TOTAL_CPU_LIMIT".getBytes();
 
   private static final byte[] CREATE_ACCOUNT_FEE = "CREATE_ACCOUNT_FEE".getBytes();
 
@@ -206,12 +208,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getOneDayCpuLimit();
-    } catch (IllegalArgumentException e) {
-      this.saveOneDayCpuLimit(86400_000_000L); //24h = 24 * 3600 * 1000 * 1000 us
-    }
-
-    try {
       this.getPublicNetLimit();
     } catch (IllegalArgumentException e) {
       this.savePublicNetLimit(14_400_000_000L);
@@ -239,6 +235,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getTotalNetLimit();
     } catch (IllegalArgumentException e) {
       this.saveTotalNetLimit(43_200_000_000L);
+    }
+
+    try {
+      this.getTotalCpuWeight();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalCpuWeight(0L);
+    }
+
+    try {
+      this.getTotalCpuLimit();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalCpuLimit(86400_000_000L);//24h = 24 * 3600 * 1000 * 1000 us
     }
 
     try {
@@ -482,18 +490,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found ONE_DAY_NET_LIMIT"));
   }
 
-  public void saveOneDayCpuLimit(long oneDayCpuLimit) {
-    this.put(ONE_DAY_CPU_LIMIT,
-        new BytesCapsule(ByteArray.fromLong(oneDayCpuLimit)));
-  }
-
-  public long getOneDayCpuLimit() {
-    return Optional.ofNullable(this.dbSource.getData(ONE_DAY_CPU_LIMIT))
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException("not found ONE_DAY_CPU_LIMIT"));
-  }
-
   public void savePublicNetUsage(long publicNetUsage) {
     this.put(PUBLIC_NET_USAGE,
         new BytesCapsule(ByteArray.fromLong(publicNetUsage)));
@@ -554,6 +550,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found TOTAL_NET_WEIGHT"));
   }
 
+  public void saveTotalCpuWeight(long totalCpuWeight) {
+    this.put(TOTAL_CPU_WEIGHT,
+        new BytesCapsule(ByteArray.fromLong(totalCpuWeight)));
+  }
+
+  public long getTotalCpuWeight() {
+    return Optional.ofNullable(this.dbSource.getData(TOTAL_CPU_WEIGHT))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_CPU_WEIGHT"));
+  }
+
+
   public void saveTotalNetLimit(long totalNetLimit) {
     this.put(TOTAL_NET_LIMIT,
         new BytesCapsule(ByteArray.fromLong(totalNetLimit)));
@@ -564,6 +573,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_NET_LIMIT"));
+  }
+
+  public void saveTotalCpuLimit(long totalCpuLimit) {
+    this.put(TOTAL_CPU_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(totalCpuLimit)));
+  }
+
+  public long getTotalCpuLimit() {
+    return Optional.ofNullable(this.dbSource.getData(TOTAL_CPU_LIMIT))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_CPU_LIMIT"));
   }
 
   public void saveCreateAccountFee(long fee) {
