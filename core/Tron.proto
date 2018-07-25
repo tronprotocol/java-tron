@@ -106,7 +106,6 @@ message Account {
   bytes account_id = 23;
 
   message AccountResource{
-
     // cpu resource, get from frozen
     int64 cpu_usage = 1;
     // the frozen balance for cpu
@@ -117,9 +116,7 @@ message Account {
     int64 storage_limit = 6;
     int64 storage_usage = 7;
     int64 latest_exchange_storage_time = 8;
-
   }
-
   AccountResource account_resource = 30;
 
 }
@@ -198,6 +195,9 @@ message Transaction {
       ProposalDeleteContract = 18;
       SetAccountIdContract = 19;
       CustomContract = 20;
+      BuyStorageContract = 21;
+      BuyStorageBytesContract = 22;
+      SellStorageContract = 23;
       CreateSmartContract = 30;
       TriggerSmartContract = 31;
       GetContract = 32;

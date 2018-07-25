@@ -166,3 +166,18 @@ message TriggerSmartContract {
   bytes call_value = 3;
   bytes data = 4;
 }
+
+message BuyStorageContract {
+  bytes owner_address = 1;
+  int64 quant = 2; // trx quantity for buy storage (sun)
+}
+
+message BuyStorageBytesContract {
+  bytes owner_address = 1;
+  int64 storage_bytes = 2;
+}
+
+message SellStorageContract {
+  bytes owner_address = 1;
+  int64 storage_bytes = 2;
+}

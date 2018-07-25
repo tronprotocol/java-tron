@@ -247,6 +247,15 @@ service Wallet {
   rpc ProposalDelete (ProposalDeleteContract) returns (TransactionExtention) {
   }
 
+  rpc BuyStorage (BuyStorageContract) returns (TransactionExtention) {
+  }
+
+  rpc BuyStorageBytes (BuyStorageBytesContract) returns (TransactionExtention) {
+  }
+
+  rpc SellStorage (SellStorageContract) returns (TransactionExtention) {
+  }
+
   rpc ListNodes (EmptyMessage) returns (NodeList) {
     option (google.api.http) = {
       post: "/wallet/listnodes"
@@ -778,6 +787,9 @@ message AccountResourceMessage {
   int64 CpuLimit = 14;
   int64 TotalCpuLimit = 15;
   int64 TotalCpuWeight = 16;
+
+  int64 storageUsed = 21;
+  int64 storageLimit = 22;
 }
 
 message PaginatedMessage {
