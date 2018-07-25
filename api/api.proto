@@ -306,7 +306,7 @@ service Wallet {
     };
   }
   //Use this function instead of GetNowBlock.
-  rpc GetNowBlock2 (EmptyMessage) returns (BlockExtention) {
+  rpc GetNowBlock2 (EmptyMessage) returns (BlockExtension) {
   }
   //Please use GetBlockByNum2 instead of this function.
   rpc GetBlockByNum (NumberMessage) returns (Block) {
@@ -319,7 +319,7 @@ service Wallet {
     };
   }
   //Use this function instead of GetBlockByNum.
-  rpc GetBlockByNum2 (NumberMessage) returns (BlockExtention) {
+  rpc GetBlockByNum2 (NumberMessage) returns (BlockExtension) {
   }
   rpc GetBlockById (BytesMessage) returns (Block) {
     option (google.api.http) = {
@@ -341,7 +341,7 @@ service Wallet {
     };
   }
   //Use this function instead of GetBlockByLimitNext.
-  rpc GetBlockByLimitNext2 (BlockLimit) returns (BlockListExtention) {
+  rpc GetBlockByLimitNext2 (BlockLimit) returns (BlockListExtension) {
   }
   //Please use GetBlockByLatestNum2 instead of this function.
   rpc GetBlockByLatestNum (NumberMessage) returns (BlockList) {
@@ -354,7 +354,7 @@ service Wallet {
     };
   }
   //Use this function instead of GetBlockByLatestNum.
-  rpc GetBlockByLatestNum2 (NumberMessage) returns (BlockListExtention) {
+  rpc GetBlockByLatestNum2 (NumberMessage) returns (BlockListExtension) {
   }
   rpc GetTransactionById (BytesMessage) returns (Transaction) {
     option (google.api.http) = {
@@ -579,7 +579,7 @@ service WalletSolidity {
     };
   }
   //Use this function instead of GetNowBlock.
-  rpc GetNowBlock2 (EmptyMessage) returns (BlockExtention) {
+  rpc GetNowBlock2 (EmptyMessage) returns (BlockExtension) {
   }
   //Please use GetBlockByNum2 instead of this function.
   rpc GetBlockByNum (NumberMessage) returns (Block) {
@@ -592,7 +592,7 @@ service WalletSolidity {
     };
   }
   //Use this function instead of GetBlockByNum.
-  rpc GetBlockByNum2 (NumberMessage) returns (BlockExtention) {
+  rpc GetBlockByNum2 (NumberMessage) returns (BlockExtension) {
   }
   rpc GetTransactionById (BytesMessage) returns (Transaction) {
     option (google.api.http) = {
@@ -636,7 +636,7 @@ service WalletExtension {
     };
   }
   //Use this function instead of GetTransactionsFromThis.
-  rpc GetTransactionsFromThis2 (AccountPaginated) returns (TransactionListExtention) {
+  rpc GetTransactionsFromThis2 (AccountPaginated) returns (TransactionListExtension) {
   }
   //Please use GetTransactionsToThis2 instead of this function.
   rpc GetTransactionsToThis (AccountPaginated) returns (TransactionList) {
@@ -649,7 +649,7 @@ service WalletExtension {
     };
   }
   //Use this function instead of GetTransactionsToThis.
-  rpc GetTransactionsToThis2 (AccountPaginated) returns (TransactionListExtention) {
+  rpc GetTransactionsToThis2 (AccountPaginated) returns (TransactionListExtension) {
   }
 };
 
@@ -832,10 +832,10 @@ message BlockExtension {
   bytes blockid = 3;
 }
 
-message BlockListExtention {
+message BlockListExtension {
   repeated BlockExtension block = 1;
 }
 
-message TransactionListExtention {
+message TransactionListExtension {
   repeated TransactionExtension transaction = 1;
 }
