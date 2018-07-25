@@ -51,22 +51,22 @@ public class AccountIdIndexStoreTest {
   @BeforeClass
   public static void init() {
     accountIdIndexStore = context.getBean(AccountIdIndexStore.class);
-//    accountCapsule1 = new AccountCapsule(ByteString.copyFrom(ACCOUNT_ADDRESS_ONE),
-//        ByteString.copyFrom(ACCOUNT_NAME_ONE), AccountType.Normal);
-//    accountCapsule1.setAccountId(ByteString.copyFrom(ACCOUNT_NAME_ONE).toByteArray());
-//    accountCapsule2 = new AccountCapsule(ByteString.copyFrom(ACCOUNT_ADDRESS_TWO),
-//        ByteString.copyFrom(ACCOUNT_NAME_TWO), AccountType.Normal);
-//    accountCapsule2.setAccountId(ByteString.copyFrom(ACCOUNT_NAME_TWO).toByteArray());
-//    accountCapsule3 = new AccountCapsule(ByteString.copyFrom(ACCOUNT_ADDRESS_THREE),
-//        ByteString.copyFrom(ACCOUNT_NAME_THREE), AccountType.Normal);
-//    accountCapsule3.setAccountId(ByteString.copyFrom(ACCOUNT_NAME_THREE).toByteArray());
-//    accountCapsule4 = new AccountCapsule(ByteString.copyFrom(ACCOUNT_ADDRESS_FOUR),
-//        ByteString.copyFrom(ACCOUNT_NAME_FOUR), AccountType.Normal);
-//    accountCapsule4.setAccountId(ByteString.copyFrom(ACCOUNT_NAME_FOUR).toByteArray());
-//    accountIdIndexStore.put(accountCapsule1);
-//    accountIdIndexStore.put(accountCapsule2);
-//    accountIdIndexStore.put(accountCapsule3);
-//    accountIdIndexStore.put(accountCapsule4);
+    accountCapsule1 = new AccountCapsule(ByteString.copyFrom(ACCOUNT_ADDRESS_ONE),
+        ByteString.copyFrom(ACCOUNT_NAME_ONE), AccountType.Normal);
+    accountCapsule1.setAccountId(ByteString.copyFrom(ACCOUNT_NAME_ONE).toByteArray());
+    accountCapsule2 = new AccountCapsule(ByteString.copyFrom(ACCOUNT_ADDRESS_TWO),
+        ByteString.copyFrom(ACCOUNT_NAME_TWO), AccountType.Normal);
+    accountCapsule2.setAccountId(ByteString.copyFrom(ACCOUNT_NAME_TWO).toByteArray());
+    accountCapsule3 = new AccountCapsule(ByteString.copyFrom(ACCOUNT_ADDRESS_THREE),
+        ByteString.copyFrom(ACCOUNT_NAME_THREE), AccountType.Normal);
+    accountCapsule3.setAccountId(ByteString.copyFrom(ACCOUNT_NAME_THREE).toByteArray());
+    accountCapsule4 = new AccountCapsule(ByteString.copyFrom(ACCOUNT_ADDRESS_FOUR),
+        ByteString.copyFrom(ACCOUNT_NAME_FOUR), AccountType.Normal);
+    accountCapsule4.setAccountId(ByteString.copyFrom(ACCOUNT_NAME_FOUR).toByteArray());
+    accountIdIndexStore.put(accountCapsule1);
+    accountIdIndexStore.put(accountCapsule2);
+    accountIdIndexStore.put(accountCapsule3);
+    accountIdIndexStore.put(accountCapsule4);
   }
 
   @Test
