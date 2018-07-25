@@ -31,8 +31,9 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     private final DataWord origin, caller, balance, callValue;
     private byte[] msgData;
 
-    private DataWord cpu;
-    private long cpuLong;
+  private long thisTxCPULimitInUs;
+  private long vmStartInUs;
+  private long vmShouldEndInUs;
 
      /* BLOCK  env **/
     private final DataWord prevHash, coinbase, timestamp, number;
