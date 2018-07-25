@@ -444,6 +444,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account.getAccountResource();
   }
 
+  public long getCpuFrozenBalance() {
+    return this.account.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance();
+  }
+
+  public long getCpuUsage() {
+    return this.account.getAccountResource().getCpuUsage();
+  }
+
   public void setCpuUsage(long cpuUsage) {
     this.account = this.account.toBuilder()
         .setAccountResource(

@@ -21,50 +21,19 @@ import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Transaction.Contract;
 
 @Slf4j
-public class BandwidthProcessor {
-
-  private Manager dbManager;
-  private long precision;
-  private long windowSize;
+public class BandwidthProcessor extends ResourceProcessor {
 
   public BandwidthProcessor(Manager manager) {
-    this.dbManager = manager;
-    this.precision = ChainConstant.PRECISION;
-    this.windowSize = ChainConstant.WINDOW_SIZE_MS / ChainConstant.BLOCK_PRODUCED_INTERVAL;
+    super(manager);
   }
 
-  private long divideCeil(long numerator, long denominator) {
-    return (numerator / denominator) + ((numerator % denominator) > 0 ? 1 : 0);
-  }
-
-  private long increase(long lastUsage, long usage, long lastTime, long now) {
-    long averageLastUsage = divideCeil(lastUsage * precision, windowSize);
-    long averageUsage = divideCeil(usage * precision, windowSize);
-
-    if (lastTime != now) {
-      assert now > lastTime;
-      if (lastTime + windowSize > now) {
-        long delta = now - lastTime;
-        double decay = (windowSize - delta) / (double) windowSize;
-        averageLastUsage = Math.round(averageLastUsage * decay);
-      } else {
-        averageLastUsage = 0;
-      }
-    }
-    averageLastUsage += averageUsage;
-    return getUsage(averageLastUsage);
-  }
-
-  private long getUsage(long usage) {
-    return usage * windowSize / precision;
-  }
-
+  @Override
   public void updateUsage(AccountCapsule accountCapsule) {
     long now = dbManager.getWitnessController().getHeadSlot();
     updateUsage(accountCapsule, now);
   }
 
-  public void updateUsage(AccountCapsule accountCapsule, long now) {
+  private void updateUsage(AccountCapsule accountCapsule, long now) {
     long oldNetUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
     accountCapsule.setNetUsage(increase(oldNetUsage, 0, latestConsumeTime, now));
@@ -80,7 +49,8 @@ public class BandwidthProcessor {
     });
   }
 
-  public void consumeBandwidth(TransactionCapsule trx, TransactionResultCapsule ret)
+  @Override
+  public void consume(TransactionCapsule trx, TransactionResultCapsule ret)
       throws ContractValidateException, AccountResourceInsufficientException {
     List<Contract> contracts =
         trx.getInstance().getRawData().getContractList();

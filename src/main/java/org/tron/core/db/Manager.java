@@ -551,7 +551,7 @@ public class Manager {
   public void consumeBandwidth(TransactionCapsule trx, TransactionResultCapsule ret)
       throws ContractValidateException, AccountResourceInsufficientException {
     BandwidthProcessor processor = new BandwidthProcessor(this);
-    processor.consumeBandwidth(trx, ret);
+    processor.consume(trx, ret);
   }
 
   @Deprecated
