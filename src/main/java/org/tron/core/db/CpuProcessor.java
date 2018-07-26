@@ -67,7 +67,7 @@ public class CpuProcessor extends ResourceProcessor {
         continue;
       }
 
-      long feeLimit = getFeeLimit();
+      long feeLimit = getUserFeeLimit();
       long fee = calculateFee(userCpuTime);
       if (fee > feeLimit) {
         throw new AccountResourceInsufficientException(
@@ -84,6 +84,10 @@ public class CpuProcessor extends ResourceProcessor {
     }
   }
 
+  private long calculateFee(long userCpuTime) {
+    return userCpuTime * 30;// 30 sun / macrisecond
+  }
+
 
   private boolean useFee(AccountCapsule accountCapsule, long fee,
       TransactionResultCapsule ret) {
@@ -95,10 +99,10 @@ public class CpuProcessor extends ResourceProcessor {
     }
   }
 
-
   private boolean useContractCreatorCpu(Contract contract, long cpuTime, long now) {
 
-    AccountCapsule accountCapsule = contract.getRelatedAccountCapsule();//ContractCreator
+    AccountCapsule accountCapsule = dbManager
+        .getAccountStore().get(contract.getResourceRelatedAccount());
 
     long cpuUsage = accountCapsule.getCpuUsage();
     long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForCpu();
