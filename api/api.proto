@@ -307,12 +307,13 @@ service Wallet {
       }
     };
   }
-
-  rpc GetTransactionCountByBlockNum (NumberMessage) returns (NumberMessage) {
-  }
   //Use this function instead of GetBlockByNum.
   rpc GetBlockByNum2 (NumberMessage) returns (BlockExtention) {
   }
+
+  rpc GetTransactionCountByBlockNum (NumberMessage) returns (NumberMessage) {
+  }
+
   rpc GetBlockById (BytesMessage) returns (Block) {
     option (google.api.http) = {
       post: "/wallet/getblockbyid"
@@ -586,6 +587,10 @@ service WalletSolidity {
   //Use this function instead of GetBlockByNum.
   rpc GetBlockByNum2 (NumberMessage) returns (BlockExtention) {
   }
+
+  rpc GetTransactionCountByBlockNum (NumberMessage) returns (NumberMessage) {
+  }
+
   rpc GetTransactionById (BytesMessage) returns (Transaction) {
     option (google.api.http) = {
       post: "/walletsolidity/gettransactionbyid"
