@@ -25,6 +25,7 @@ import org.tron.api.GrpcAPI.AccountPaginated;
 import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AddressPrKeyPairMessage;
 import org.tron.api.GrpcAPI.AssetIssueList;
+import org.tron.api.GrpcAPI.BlockExtention;
 import org.tron.api.GrpcAPI.BlockLimit;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.BlockReference;
@@ -42,6 +43,7 @@ import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionList;
+import org.tron.api.GrpcAPI.TransactionListExtention;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc.WalletImplBase;
@@ -51,6 +53,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.core.Constant;
@@ -159,6 +162,33 @@ public class RpcApiService implements Service {
     }));
   }
 
+  private TransactionExtention transaction2Extention(Transaction transaction) {
+    if (transaction == null) {
+      return null;
+    }
+    TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
+    Return.Builder retBuilder = Return.newBuilder();
+    trxExtBuilder.setTransaction(transaction);
+    trxExtBuilder.setTxid(Sha256Hash.of(transaction.getRawData().toByteArray()).getByteString());
+    retBuilder.setResult(true).setCode(response_code.SUCCESS);
+    trxExtBuilder.setResult(retBuilder);
+    return trxExtBuilder.build();
+  }
+
+  private BlockExtention block2Extention(Block block) {
+    if (block == null) {
+      return null;
+    }
+    BlockExtention.Builder builder = BlockExtention.newBuilder();
+    BlockCapsule blockCapsule = new BlockCapsule(block);
+    builder.setBlockHeader(block.getBlockHeader());
+    builder.setBlockid(ByteString.copyFrom(blockCapsule.getBlockId().getBytes()));
+    for (int i = 0; i < block.getTransactionsCount(); i++) {
+      Transaction transaction = block.getTransactions(i);
+      builder.addTransactions(transaction2Extention(transaction));
+    }
+    return builder.build();
+  }
 
   /**
    * DatabaseApi.
@@ -267,11 +297,31 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getNowBlock2(EmptyMessage request,
+        StreamObserver<BlockExtention> responseObserver) {
+      responseObserver.onNext(block2Extention(wallet.getNowBlock()));
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getBlockByNum(NumberMessage request, StreamObserver<Block> responseObserver) {
       long num = request.getNum();
       if (num >= 0) {
         Block reply = wallet.getBlockByNum(num);
         responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getBlockByNum2(NumberMessage request,
+        StreamObserver<BlockExtention> responseObserver) {
+      long num = request.getNum();
+      if (num >= 0) {
+        Block reply = wallet.getBlockByNum(num);
+        responseObserver.onNext(block2Extention(reply));
       } else {
         responseObserver.onNext(null);
       }
@@ -327,9 +377,20 @@ public class RpcApiService implements Service {
    */
   private class WalletExtensionApi extends WalletExtensionGrpc.WalletExtensionImplBase {
 
+    private TransactionListExtention transactionList2Extention(TransactionList transactionList) {
+      if (transactionList == null) {
+        return null;
+      }
+      TransactionListExtention.Builder builder = TransactionListExtention.newBuilder();
+      for (Transaction transaction : transactionList.getTransactionList()) {
+        builder.addTransaction(transaction2Extention(transaction));
+      }
+      return builder.build();
+    }
+
     @Override
     public void getTransactionsFromThis(AccountPaginated request,
-        StreamObserver<GrpcAPI.TransactionList> responseObserver) {
+        StreamObserver<TransactionList> responseObserver) {
       ByteString thisAddress = request.getAccount().getAddress();
       long offset = request.getOffset();
       long limit = request.getLimit();
@@ -344,8 +405,24 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getTransactionsFromThis2(AccountPaginated request,
+        StreamObserver<TransactionListExtention> responseObserver) {
+      ByteString thisAddress = request.getAccount().getAddress();
+      long offset = request.getOffset();
+      long limit = request.getLimit();
+      if (null != thisAddress && offset >= 0 && limit >= 0) {
+        TransactionList reply = walletSolidity
+            .getTransactionsFromThis(thisAddress, offset, limit);
+        responseObserver.onNext(transactionList2Extention(reply));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getTransactionsToThis(AccountPaginated request,
-        StreamObserver<GrpcAPI.TransactionList> responseObserver) {
+        StreamObserver<TransactionList> responseObserver) {
       ByteString toAddress = request.getAccount().getAddress();
       long offset = request.getOffset();
       long limit = request.getLimit();
@@ -359,6 +436,21 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
+    @Override
+    public void getTransactionsToThis2(AccountPaginated request,
+        StreamObserver<TransactionListExtention> responseObserver) {
+      ByteString toAddress = request.getAccount().getAddress();
+      long offset = request.getOffset();
+      long limit = request.getLimit();
+      if (null != toAddress && offset >= 0 && limit >= 0) {
+        TransactionList reply = walletSolidity
+            .getTransactionsToThis(toAddress, offset, limit);
+        responseObserver.onNext(transactionList2Extention(reply));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
   }
 
   /**
@@ -821,8 +913,24 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getNowBlock2(EmptyMessage request,
+        StreamObserver<BlockExtention> responseObserver) {
+      Block block = wallet.getNowBlock();
+      responseObserver.onNext(block2Extention(block));
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getBlockByNum(NumberMessage request, StreamObserver<Block> responseObserver) {
       responseObserver.onNext(wallet.getBlockByNum(request.getNum()));
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getBlockByNum2(NumberMessage request,
+        StreamObserver<BlockExtention> responseObserver) {
+      Block block = wallet.getBlockByNum(request.getNum());
+      responseObserver.onNext(block2Extention(block));
       responseObserver.onCompleted();
     }
 
