@@ -329,6 +329,20 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getTransactionCountByBlockNum(NumberMessage request, StreamObserver<NumberMessage> responseObserver) {
+      Block block = null;
+      try {
+        block = dbManager.getBlockByNum(request.getNum()).getInstance();
+      } catch (StoreException e) {
+        logger.error(e.getMessage());
+      }
+      NumberMessage.Builder builder = NumberMessage.newBuilder();
+      builder.setNum(block.getTransactionsCount());
+      responseObserver.onNext(builder.build());
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getTransactionById(BytesMessage request,
         StreamObserver<Transaction> responseObserver) {
       ByteString id = request.getValue();
@@ -931,6 +945,20 @@ public class RpcApiService implements Service {
         StreamObserver<BlockExtention> responseObserver) {
       Block block = wallet.getBlockByNum(request.getNum());
       responseObserver.onNext(block2Extention(block));
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getTransactionCountByBlockNum(NumberMessage request, StreamObserver<NumberMessage> responseObserver) {
+      Block block = null;
+      try {
+        block = dbManager.getBlockByNum(request.getNum()).getInstance();
+      } catch (StoreException e) {
+        logger.error(e.getMessage());
+      }
+      NumberMessage.Builder builder = NumberMessage.newBuilder();
+      builder.setNum(block.getTransactionsCount());
+      responseObserver.onNext(builder.build());
       responseObserver.onCompleted();
     }
 
