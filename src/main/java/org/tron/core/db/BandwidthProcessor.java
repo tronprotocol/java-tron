@@ -88,8 +88,10 @@ public class BandwidthProcessor extends ResourceProcessor {
         continue;
       }
 
+      long fee = dbManager.getDynamicPropertiesStore().getTransactionFee() * bytes;
       throw new AccountResourceInsufficientException(
-          "Account Insufficient bandwidth and balance to create new account");
+          "Account Insufficient bandwidth[" + bytes + "] and balance["
+              + fee + "] to create new account");
     }
   }
 

@@ -62,8 +62,9 @@ public class CpuProcessor extends ResourceProcessor {
 //      int creatorRatio = contract.getUserCpuComsumeRatio();
       int creatorRatio = 50;
 
-      if (!useContractCreatorCpu(contract, cpuTime * creatorRatio / 100, now)) {
-        throw new ContractValidateException("creator has not enough cpu");
+      long creatorCpuTime = cpuTime * creatorRatio / 100;
+      if (!useContractCreatorCpu(contract, creatorCpuTime, now)) {
+        throw new ContractValidateException("creator has not enough cpu[" + creatorCpuTime + "]");
       }
 
       long userCpuTime = cpuTime * (100 - creatorRatio) / 100;
@@ -77,7 +78,8 @@ public class CpuProcessor extends ResourceProcessor {
       long fee = calculateFee(userCpuTime);
       if (fee > feeLimit) {
         throw new AccountResourceInsufficientException(
-            "Account has Insufficient Cpu and feeLimit is not engouht to trigger this contract");
+            "Account has Insufficient Cpu[" + userCpuTime + "] and feeLimit[" + feeLimit
+                + "] is not enough to trigger this contract");
       }
 
       //2.The creator of this have sufficient resources
@@ -86,7 +88,8 @@ public class CpuProcessor extends ResourceProcessor {
       }
 
       throw new AccountResourceInsufficientException(
-          "Account Insufficient Cpu and balance to trigger this contract");
+          "Account has insufficient Cpu[" + userCpuTime + "] and balance[" + fee
+              + "] to trigger this contract");
     }
   }
 
