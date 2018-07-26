@@ -55,7 +55,6 @@ message ChainParameters{
   }
 }
 
-
 /* Account */
 message Account {
   /* frozen balance */
@@ -100,6 +99,7 @@ message Account {
   int64 latest_consume_time = 21;
   int64 latest_consume_free_time = 22;
   bytes account_id = 23;
+  bytes codeHash = 30;
 }
 
 message authority {
