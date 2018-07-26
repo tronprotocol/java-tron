@@ -444,6 +444,22 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account.getAccountResource();
   }
 
+
+  public void setFrozenForCpu(long newFrozenBalanceForCpu, long time) {
+    Frozen newFrozenForCpu = Frozen.newBuilder()
+        .setFrozenBalance(newFrozenBalanceForCpu)
+        .setExpireTime(time)
+        .build();
+
+    AccountResource newAccountResource = getAccountResource().toBuilder()
+        .setFrozenBalanceForCpu(newFrozenForCpu).build();
+
+    this.account = this.account.toBuilder()
+        .setAccountResource(newAccountResource)
+        .build();
+  }
+
+
   public long getCpuFrozenBalance() {
     return this.account.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance();
   }
@@ -461,7 +477,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   public void setLatestConsumeTimeForCpu(long latest_time) {
     this.account = this.account.toBuilder()
         .setAccountResource(
-            this.account.getAccountResource().toBuilder().setLatestConsumeTimeForCpu(latest_time).build()).build();
+            this.account.getAccountResource().toBuilder().setLatestConsumeTimeForCpu(latest_time)
+                .build()).build();
   }
 
   public long getFreeNetUsage() {

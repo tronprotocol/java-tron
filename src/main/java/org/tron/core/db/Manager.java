@@ -554,6 +554,12 @@ public class Manager {
     processor.consume(trx, ret);
   }
 
+  public void consumeCpu(TransactionCapsule trx, TransactionResultCapsule ret)
+      throws ContractValidateException, AccountResourceInsufficientException {
+    CpuProcessor processor = new CpuProcessor(this);
+    processor.consume(trx, ret);
+  }
+
   @Deprecated
   private void validateFreq(TransactionCapsule trx) throws HighFreqException {
     List<org.tron.protos.Protocol.Transaction.Contract> contracts =

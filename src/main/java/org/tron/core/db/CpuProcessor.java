@@ -7,7 +7,6 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.AccountResourceInsufficientException;
-import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -63,13 +62,16 @@ public class CpuProcessor extends ResourceProcessor {
       int creatorRatio = 50;
 
       long creatorCpuTime = cpuTime * creatorRatio / 100;
-      if (!useContractCreatorCpu(contract, creatorCpuTime, now)) {
+      AccountCapsule contractProvider = dbManager.getAccountStore()
+          .get(contract.getProvider().toByteArray());
+
+      if (!useCpu(contractProvider, creatorCpuTime, now)) {
         throw new ContractValidateException("creator has not enough cpu[" + creatorCpuTime + "]");
       }
 
       long userCpuTime = cpuTime * (100 - creatorRatio) / 100;
       //1.The creator and the use of this have sufficient resources
-      if (useAccountCpu(accountCapsule, userCpuTime, now)) {
+      if (useCpu(accountCapsule, userCpuTime, now)) {
         continue;
       }
 
@@ -108,37 +110,7 @@ public class CpuProcessor extends ResourceProcessor {
     }
   }
 
-  private boolean useContractCreatorCpu(Contract contract, long cpuTime, long now) {
-
-    //todo
-//    AccountCapsule accountCapsule = dbManager.getAccountStore().get(contract.getResourceRelatedAccount());
-    AccountCapsule accountCapsule = dbManager.getAccountStore()
-        .get(contract.getProvider().toByteArray());
-
-    long cpuUsage = accountCapsule.getCpuUsage();
-    long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForCpu();
-    long cpuLimit = calculateGlobalCpuLimit(accountCapsule.getCpuFrozenBalance());
-//    long totalCpuLimitInConfig = contract.getContractResource().getCpuTotalLimit();//total contract
-
-    long newCpuUsage = increase(cpuUsage, 0, latestConsumeTime, now);
-
-    if (cpuTime > (cpuLimit - newCpuUsage)) {
-      logger.debug("ContractCreator's cpu is running out. ");
-      return false;
-    }
-
-    latestConsumeTime = now;
-    long latestOperationTime = dbManager.getHeadBlockTimeStamp();
-    newCpuUsage = increase(newCpuUsage, cpuTime, latestConsumeTime, now);
-    accountCapsule.setCpuUsage(newCpuUsage);
-    accountCapsule.setLatestOperationTime(latestOperationTime);
-    accountCapsule.setLatestConsumeTimeForCpu(latestConsumeTime);
-
-    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-    return true;
-  }
-
-  private boolean useAccountCpu(AccountCapsule accountCapsule, long cpuTime, long now) {
+  public boolean useCpu(AccountCapsule accountCapsule, long cpuTime, long now) {
 
     long cpuUsage = accountCapsule.getCpuUsage();
     long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForCpu();
@@ -148,7 +120,6 @@ public class CpuProcessor extends ResourceProcessor {
     long newCpuUsage = increase(cpuUsage, 0, latestConsumeTime, now);
 
     if (cpuTime > (cpuLimit - newCpuUsage)) {
-      logger.debug("User's cpu is running out. now use fee");
       return false;
     }
 
