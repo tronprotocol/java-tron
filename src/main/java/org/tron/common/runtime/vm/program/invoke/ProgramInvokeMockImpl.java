@@ -244,4 +244,9 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
     public int getCallDeep() {
         return 0;
     }
+
+    @Override
+    public long getVmShouldEndInUs() {
+        return 1;
+    }
 }

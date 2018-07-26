@@ -428,6 +428,7 @@ public class Program {
         DataWord gasLimit = new DataWord(DropCost.getInstance().getCREATE());
 
         // [2] CREATE THE CONTRACT ADDRESS
+        // todo modify
         // byte[] newAddress = HashUtil.calcNewAddr(getOwnerAddress().getLast20Bytes() nonce);
         byte[] privKey = Sha256Hash.hash(getOwnerAddress().getData());
         ECKey ecKey = ECKey.fromPrivate(privKey);
@@ -461,12 +462,14 @@ public class Program {
             newBalance = deposit.addBalance(newAddress, endowment);
         }
 
+        checkCPULimit("Create Contract");
 
         // [5] COOK THE INVOKE AND EXECUTE
         InternalTransaction internalTx = addInternalTx(getDroplimit(), senderAddress, null, endowment, programCode, "create");
+        long vmStartInUs = System.nanoTime() / 1000;
         ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
                 this, new DataWord(newAddress), getOwnerAddress(), value,
-                newBalance, null, deposit, false, byTestingSuite());
+            newBalance, null, deposit, false, byTestingSuite(), vmStartInUs, getVmShouldEndInUs());
 
         ProgramResult result = ProgramResult.createEmpty();
 
@@ -481,11 +484,13 @@ public class Program {
             getResult().merge(result);
         }
 
+
         // 4. CREATE THE CONTRACT OUT OF RETURN
         byte[] code = result.getHReturn();
 
         //long storageCost = getLength(code) * getBlockchainConfig().getGasCost().getCREATE_DATA();
         long storageCost = getLength(code) * DropCost.getInstance().getCREATE_DATA();
+        // todo storage cost
         long afterSpend = programInvoke.getDroplimit().longValue() - storageCost - result.getDropUsed();
         if (getLength(code) > DefaultConfig.getMaxCodeLength()) {
             result.setException(Exception.notEnoughSpendingGas("Contract size too large: " + getLength(result.getHReturn()),
@@ -529,6 +534,7 @@ public class Program {
                         refundGas);
             }
         }
+        checkCPULimit("Created Contract");
     }
 
     /**
@@ -593,13 +599,17 @@ public class Program {
         // CREATE CALL INTERNAL TRANSACTION
         InternalTransaction internalTx = addInternalTx( getDroplimit(), senderAddress, contextAddress, endowment, data, "call");
 
+        checkCPULimit("Created Contract");
+
         ProgramResult result = null;
         if (isNotEmpty(programCode)) {
+            long vmStartInUs = System.nanoTime() / 1000;
             ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
                     this, new DataWord(contextAddress),
                     msg.getType().callIsDelegate() ? getCallerAddress() : getOwnerAddress(),
                     msg.getType().callIsDelegate() ? getCallValue() : msg.getEndowment(),
-                    contextBalance, data, deposit,msg.getType().callIsStatic() || isStaticCall(), byTestingSuite());
+                contextBalance, data, deposit, msg.getType().callIsStatic() || isStaticCall(),
+                byTestingSuite(), vmStartInUs, getVmShouldEndInUs());
 
             VM vm = new VM(config);
             Program program = new Program(null, programCode, programInvoke, internalTx, config);
@@ -664,6 +674,7 @@ public class Program {
         } else {
             refundGas(msg.getGas().longValue(), "remaining gas from the internal call");
         }
+        checkCPULimit("Created Contract");
     }
 
     public void spendDrop(long dropValue, String cause) {
@@ -671,6 +682,14 @@ public class Program {
             throw Exception.notEnoughSpendingGas(cause, dropValue, this);
         }
         getResult().spendDrop(dropValue);
+    }
+
+    public void checkCPULimit(String opName) {
+
+        long vmNowInUs = System.nanoTime() / 1000;
+        if (vmNowInUs > getVmShouldEndInUs()) {
+            throw Exception.notEnoughCPU(opName);
+        }
     }
 
     public void spendAllGas() {
@@ -763,6 +782,10 @@ public class Program {
 
     public DataWord getDroplimit() {
         return new DataWord(invoke.getDroplimitLong() - getResult().getDropUsed());
+    }
+
+    public long getVmShouldEndInUs() {
+        return invoke.getVmShouldEndInUs();
     }
 
     public DataWord getCallValue() {
@@ -1267,9 +1290,9 @@ public class Program {
         }
 
 
-        public static OutOfResourceException notEnoughCPU(OpCode op) {
+        public static OutOfResourceException notEnoughCPU(String opName) {
             return new OutOfResourceException(
-                "Not enough CPU resource when '%s' operation executing", op);
+                "Not enough CPU resource when '%s' operation executing", opName);
         }
 
 

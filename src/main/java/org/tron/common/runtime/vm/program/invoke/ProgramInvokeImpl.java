@@ -31,7 +31,6 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     private final DataWord origin, caller, balance, callValue;
     private byte[] msgData;
 
-  private long thisTxCPULimitInUs;
   private long vmStartInUs;
   private long vmShouldEndInUs;
 
@@ -46,26 +45,28 @@ public class ProgramInvokeImpl implements ProgramInvoke {
 
     public ProgramInvokeImpl(DataWord address, DataWord origin, DataWord caller, DataWord balance, DataWord callValue, byte[] msgData,
                              DataWord lastHash, DataWord coinbase, DataWord timestamp, DataWord number, DataWord difficulty,
-                             Deposit deposit, int callDeep, boolean isStaticCall, boolean byTestingSuite) {
-        this.address = address;
-        this.origin = origin;
-        this.caller = caller;
-        this.balance = balance;
-        this.callValue = callValue;
-        this.msgData = msgData;
+        Deposit deposit, int callDeep, boolean isStaticCall, boolean byTestingSuite,
+        long vmStartInUs, long vmShouldEndInUs) {
+      this.address = address;
+      this.origin = origin;
+      this.caller = caller;
+      this.balance = balance;
+      this.callValue = callValue;
+      this.msgData = msgData;
 
-        // last Block env
-        this.prevHash = lastHash;
-        this.coinbase = coinbase;
-        this.timestamp = timestamp;
-        this.number = number;
+      // last Block env
+      this.prevHash = lastHash;
+      this.coinbase = coinbase;
+      this.timestamp = timestamp;
+      this.number = number;
 
-        this.deposit = deposit;
-        this.byTransaction = false;
-        this.isStaticCall = isStaticCall;
-        this.byTestingSuite = byTestingSuite;
+      this.deposit = deposit;
+      this.byTransaction = false;
+      this.isStaticCall = isStaticCall;
+      this.byTestingSuite = byTestingSuite;
+      this.vmStartInUs = vmStartInUs;
+      this.vmShouldEndInUs = vmShouldEndInUs;
 
-        // this.dropLimit = balance.clone();
     }
 
     public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
@@ -89,7 +90,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
 
     public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
         byte[] callValue, byte[] msgData, byte[] lastHash, byte[] coinbase, long timestamp,
-        long number, Deposit deposit, byte[] dropLimit) {
+        long number, Deposit deposit, long vmStartInUs, long vmShouldEndInUs) {
 
         // Transaction env
         this.address = new DataWord(address);
@@ -105,7 +106,11 @@ public class ProgramInvokeImpl implements ProgramInvoke {
         this.timestamp = new DataWord(timestamp);
         this.number = new DataWord(number);
         this.deposit = deposit;
-        // this.dropLimit = new DataWord(dropLimit);
+
+      // calc should end time
+      this.vmStartInUs = vmStartInUs;
+      this.vmShouldEndInUs = vmShouldEndInUs;
+
     }
 
     /*           ADDRESS op         */
@@ -223,8 +228,11 @@ public class ProgramInvokeImpl implements ProgramInvoke {
         // todo modify today
     }
 
+  public long getVmShouldEndInUs() {
+    return vmShouldEndInUs;
+  }
 
-    /*  Storage */
+  /*  Storage */
     /*
     public Map<DataWord, DataWord> getStorage() {
         return storage;
