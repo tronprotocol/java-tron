@@ -66,6 +66,8 @@ public class FreezeBalanceActuator extends AbstractActuator {
               .build()
           );
         }
+        dbManager.getDynamicPropertiesStore()
+            .addTotalNetWeight(freezeBalanceContract.getFrozenBalance() / 1000_000L);
         break;
       case CPU:
         long currentFrozenBalanceForCpu = accountCapsule.getAccountResource().getFrozenBalanceForCpu()
@@ -84,13 +86,13 @@ public class FreezeBalanceActuator extends AbstractActuator {
             .setAccountResource(newAccountResource)
             .setBalance(newBalance)
             .build());
-
+        dbManager.getDynamicPropertiesStore()
+            .addTotalCpuWeight(freezeBalanceContract.getFrozenBalance() / 1000_000L);
         break;
     }
 
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-    dbManager.getDynamicPropertiesStore()
-        .addTotalNetWeight(freezeBalanceContract.getFrozenBalance() / 1000_000L);
+
 
     ret.setStatus(fee, code.SUCESS);
 
