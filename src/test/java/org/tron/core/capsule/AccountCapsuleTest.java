@@ -9,11 +9,12 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
-import org.tron.protos.Protocol.Vote;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Vote;
 
 public class AccountCapsuleTest {
 
@@ -71,7 +72,7 @@ public class AccountCapsuleTest {
     String nameAdd = "TokenX";
     long amountAdd = 222L;
     boolean addBoolean = accountCapsuleTest
-        .addAssetAmount(ByteString.copyFromUtf8(nameAdd), amountAdd);
+        .addAssetAmount(nameAdd.getBytes(), amountAdd);
 
     Assert.assertTrue(addBoolean);
 
@@ -83,7 +84,7 @@ public class AccountCapsuleTest {
     long amountReduce = 22L;
 
     boolean reduceBoolean = accountCapsuleTest
-        .reduceAssetAmount(ByteString.copyFromUtf8("TokenX"), amountReduce);
+        .reduceAssetAmount(ByteArray.fromString("TokenX"), amountReduce);
     Assert.assertTrue(reduceBoolean);
 
     Map<String, Long> assetMapAfter = accountCapsuleTest.getAssetMap();
@@ -93,12 +94,12 @@ public class AccountCapsuleTest {
     }
     String key = nameAdd;
     long value = 11L;
-    boolean addAsssetBoolean = accountCapsuleTest.addAsset(key, value);
+    boolean addAsssetBoolean = accountCapsuleTest.addAsset(key.getBytes(), value);
     Assert.assertFalse(addAsssetBoolean);
 
     String keyName = "TokenTest";
     long amountValue = 33L;
-    boolean addAsssetTrue = accountCapsuleTest.addAsset(keyName, amountValue);
+    boolean addAsssetTrue = accountCapsuleTest.addAsset(keyName.getBytes(), amountValue);
     Assert.assertTrue(addAsssetTrue);
   }
 

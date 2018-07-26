@@ -238,6 +238,25 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getAccountById(Account request, StreamObserver<Account> responseObserver) {
+      ByteString id = request.getAccountId();
+      if (id != null) {
+        Account reply = wallet.getAccountById(request);
+        if (reply == null) {
+          responseObserver.onNext(null);
+        } else {
+          AccountCapsule accountCapsule = new AccountCapsule(reply);
+          BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+          processor.updateUsage(accountCapsule);
+          responseObserver.onNext(accountCapsule.getInstance());
+        }
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void listWitnesses(EmptyMessage request, StreamObserver<WitnessList> responseObserver) {
       responseObserver.onNext(wallet.getWitnessList());
       responseObserver.onCompleted();
@@ -368,6 +387,18 @@ public class RpcApiService implements Service {
       ByteString addressBs = req.getAddress();
       if (addressBs != null) {
         Account reply = wallet.getAccount(req);
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getAccountById(Account req, StreamObserver<Account> responseObserver) {
+      ByteString accountId = req.getAccountId();
+      if (accountId != null) {
+        Account reply = wallet.getAccountById(req);
         responseObserver.onNext(reply);
       } else {
         responseObserver.onNext(null);
@@ -607,6 +638,20 @@ public class RpcApiService implements Service {
       try {
         responseObserver.onNext(
             createTransactionCapsule(request, ContractType.AccountUpdateContract).getInstance());
+      } catch (ContractValidateException e) {
+        responseObserver
+            .onNext(null);
+        logger.debug("ContractValidateException: {}", e.getMessage());
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void setAccountId(Contract.SetAccountIdContract request,
+        StreamObserver<Transaction> responseObserver) {
+      try {
+        responseObserver.onNext(
+            createTransactionCapsule(request, ContractType.SetAccountIdContract).getInstance());
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);

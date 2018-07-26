@@ -359,6 +359,11 @@ public class DepositImpl implements Deposit{
         storageCache.put(key, value);
     }
 
+    @Override
+    public void putVotes(Key key, Value value) {
+        votesCache.put(key, value);
+    }
+
     private void commitAccountCache(Deposit deposit) {
         accounCache.forEach((key, value) -> {
             if (value.getType().isCreate() || value.getType().isDirty()) {
@@ -443,6 +448,46 @@ public class DepositImpl implements Deposit{
         }));
     }
 
+    private void commitVoteCache(Deposit deposit) {
+        votesCache.forEach(((key, value) -> {
+            if (value.getType().isDirty() || value.getType().isCreate()) {
+                if (deposit != null) {
+                    deposit.putVotes(key, value);
+                } else {
+                    getVotesStore().put(key.getData(), value.getVotes());
+                }
+            }
+        }));
+    }
+
+    @Override
+    public void syncCacheFromAccountStore(byte[] address){
+        Key key = Key.create(address);
+        int type;
+        if (null == accounCache.get(key)){
+            type = Type.VALUE_TYPE_DIRTY;
+        }
+        else {
+            type = Type.VALUE_TYPE_DIRTY | accounCache.get(key).getType().getType();
+        }
+        Value V = Value.create(getAccountStore().get(address).getData(),type);
+        accounCache.put(key,V);
+    }
+
+    @Override
+    public void syncCacheFromVotesStore(byte[] address) {
+        Key key = Key.create(address);
+        int type;
+        if (null == votesCache.get(key)){
+            type = Type.VALUE_TYPE_DIRTY;
+        }
+        else {
+            type = Type.VALUE_TYPE_DIRTY | votesCache.get(key).getType().getType();
+        }
+        Value V = Value.create(getVotesStore().get(address).getData(), type);
+        votesCache.put(key,V);
+    }
+
     @Override
     public synchronized void commit() {
         Deposit deposit = null;
@@ -459,6 +504,7 @@ public class DepositImpl implements Deposit{
         commitCodeCache(deposit);
         commitContractCache(deposit);
         commitStorageCache(deposit);
+        commitVoteCache(deposit);
 
     }
 
