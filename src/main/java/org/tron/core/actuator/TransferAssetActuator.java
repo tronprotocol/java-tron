@@ -25,7 +25,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -57,7 +56,7 @@ public class TransferAssetActuator extends AbstractActuator {
             dbManager.getHeadBlockTimeStamp());
         dbManager.getAccountStore().put(toAddress, toAccountCapsule);
 
-        fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountInSystemContract();
+        fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
       }
       ByteString assetName = transferAssetContract.getAssetName();
       long amount = transferAssetContract.getAmount();
@@ -167,7 +166,7 @@ public class TransferAssetActuator extends AbstractActuator {
         }
       }
     } else {
-      fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountInSystemContract();
+      fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
       if (ownerAccount.getBalance() < fee) {
         throw new ContractValidateException(
             "Validate TransferAssetActuator error, insufficient fee.");

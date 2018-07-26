@@ -40,7 +40,7 @@ public class TransferActuator extends AbstractActuator {
             dbManager.getHeadBlockTimeStamp());
         dbManager.getAccountStore().put(toAddress, toAccount);
 
-        fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountInSystemContract();
+        fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
       }
       dbManager.adjustBalance(ownerAddress, -fee);
       ret.setStatus(fee, code.SUCESS);
@@ -106,21 +106,21 @@ public class TransferActuator extends AbstractActuator {
 
     long balance = ownerAccount.getBalance();
 
-    if (ownerAccount.getBalance() < fee) {
-      throw new ContractValidateException("Validate TransferContract error, insufficient fee.");
-    }
-
     if (amount <= 0) {
       throw new ContractValidateException("Amount must greater than 0.");
     }
 
     try {
-      if (balance < Math.addExact(amount, fee)) {
-        throw new ContractValidateException("balance is not sufficient.");
+
+      AccountCapsule toAccount = dbManager.getAccountStore().get(toAddress);
+      if (toAccount == null) {
+        fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
       }
 
-      AccountCapsule toAccount = dbManager.getAccountStore()
-          .get(transferContract.getToAddress().toByteArray());
+      if (balance < Math.addExact(amount, fee)) {
+        throw new ContractValidateException("Validate TransferContract error, balance is not sufficient.");
+      }
+
       if (toAccount != null) {
         long toAddressBalance = Math.addExact(toAccount.getBalance(), amount);
       }
@@ -129,13 +129,7 @@ public class TransferActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
 
-    AccountCapsule toAccount = dbManager.getAccountStore().get(toAddress);
-    if (toAccount == null) {
-      fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountInSystemContract();
-      if (ownerAccount.getBalance() < fee) {
-        throw new ContractValidateException("Validate TransferContract error, insufficient fee.");
-      }
-    }
+
 
     return true;
   }

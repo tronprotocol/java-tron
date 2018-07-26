@@ -80,10 +80,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   //abandon
   private static final byte[] CREATE_ACCOUNT_FEE = "CREATE_ACCOUNT_FEE".getBytes();
 
-  private static final byte[] CREATE_NEW_ACCOUNT_IN_SYSTEM_CONTRACT = "CREATE_NEW_ACCOUNT_IN_SYSTEM_CONTRACT"
+  private static final byte[] CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT = "CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT"
       .getBytes();
 
-  private static final byte[] CREATE_NEW_ACCOUNT_BANDWIDTH_RATE = "CREATE_NEW_ACCOUNT_IN_SYSTEM_CONTRACT"
+  private static final byte[] CREATE_NEW_ACCOUNT_BANDWIDTH_RATE = "CREATE_NEW_ACCOUNT_BANDWIDTH_RATE"
       .getBytes();
 
   private static final byte[] TRANSACTION_FEE = "TRANSACTION_FEE".getBytes(); // 1 byte
@@ -263,15 +263,15 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getCreateAccountFee();
+      this.getCreateNewAccountFeeInSystemContract();
     } catch (IllegalArgumentException e) {
-      this.saveCreateNewAccountInSystemContract(0L); //changed by committee later
+      this.saveCreateNewAccountFeeInSystemContract(10000L); //changed by committee later
     }
 
     try {
       this.getCreateNewAccountBandwidthRate();
     } catch (IllegalArgumentException e) {
-      this.saveCreateNewAccountBandwidthRate(1L); //changed by committee later
+      this.saveCreateNewAccountBandwidthRate(0L); //changed by committee later
     }
 
     try {
@@ -619,16 +619,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
 
-  public void saveCreateNewAccountInSystemContract(long fee) {
-    this.put(CREATE_NEW_ACCOUNT_IN_SYSTEM_CONTRACT,
+  public void saveCreateNewAccountFeeInSystemContract(long fee) {
+    this.put(CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT,
         new BytesCapsule(ByteArray.fromLong(fee)));
   }
 
-  public long getCreateNewAccountInSystemContract() {
-    return Optional.ofNullable(this.dbSource.getData(CREATE_NEW_ACCOUNT_IN_SYSTEM_CONTRACT))
+  public long getCreateNewAccountFeeInSystemContract() {
+    return Optional.ofNullable(this.dbSource.getData(CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT))
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found CREATE_NEW_ACCOUNT_IN_SYSTEM_CONTRACT"));
+            () -> new IllegalArgumentException("not found CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT"));
   }
 
   public void saveCreateNewAccountBandwidthRate(long rate) {
@@ -640,7 +640,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return Optional.ofNullable(this.dbSource.getData(CREATE_NEW_ACCOUNT_BANDWIDTH_RATE))
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found CREATE_NEW_ACCOUNT_BANDWIDTH_RATE"));
+            () -> new IllegalArgumentException("not found CREATE_NsEW_ACCOUNT_BANDWIDTH_RATE2"));
   }
 
   public void saveTransactionFee(long fee) {

@@ -19,7 +19,6 @@
 package org.tron.core;
 
 import com.google.protobuf.ByteString;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -449,42 +448,42 @@ public class Wallet {
     builder.addChainParameter(builder1
         .setKey(ChainParameters.ACCOUNT_UPGRADE_COST.name())
         .setValue(
-            dynamicPropertiesStore.getMaintenanceTimeInterval())
+            dynamicPropertiesStore.getAccountUpgradeCost())
         .build());
     builder.addChainParameter(builder1
         .setKey(ChainParameters.CREATE_ACCOUNT_FEE.name())
         .setValue(
-            dynamicPropertiesStore.getMaintenanceTimeInterval())
+            dynamicPropertiesStore.getCreateAccountFee())
         .build());
     builder.addChainParameter(builder1
         .setKey(ChainParameters.TRANSACTION_FEE.name())
         .setValue(
-            dynamicPropertiesStore.getMaintenanceTimeInterval())
+            dynamicPropertiesStore.getTransactionFee())
         .build());
     builder.addChainParameter(builder1
         .setKey(ChainParameters.ASSET_ISSUE_FEE.name())
         .setValue(
-            dynamicPropertiesStore.getMaintenanceTimeInterval())
+            dynamicPropertiesStore.getAssetIssueFee())
         .build());
     builder.addChainParameter(builder1
         .setKey(ChainParameters.WITNESS_PAY_PER_BLOCK.name())
         .setValue(
-            dynamicPropertiesStore.getMaintenanceTimeInterval())
+            dynamicPropertiesStore.getWitnessPayPerBlock())
         .build());
     builder.addChainParameter(builder1
         .setKey(ChainParameters.WITNESS_STANDBY_ALLOWANCE.name())
         .setValue(
-            dynamicPropertiesStore.getMaintenanceTimeInterval())
+            dynamicPropertiesStore.getWitnessStandbyAllowance())
         .build());
     builder.addChainParameter(builder1
-        .setKey(ChainParameters.CREATE_NEW_ACCOUNT_IN_SYSTEM_CONTRACT.name())
+        .setKey(ChainParameters.CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT.name())
         .setValue(
-            dynamicPropertiesStore.getMaintenanceTimeInterval())
+            dynamicPropertiesStore.getCreateNewAccountFeeInSystemContract())
         .build());
     builder.addChainParameter(builder1
         .setKey(ChainParameters.CREATE_NEW_ACCOUNT_BANDWIDTH_RATE.name())
         .setValue(
-            dynamicPropertiesStore.getMaintenanceTimeInterval())
+            dynamicPropertiesStore.getCreateNewAccountBandwidthRate())
         .build());
 
     return builder.build();

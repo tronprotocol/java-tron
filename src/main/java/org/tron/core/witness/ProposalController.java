@@ -123,7 +123,7 @@ public class ProposalController {
           break;
         }
         case (7): {
-          manager.getDynamicPropertiesStore().saveCreateNewAccountInSystemContract(entry.getValue());
+          manager.getDynamicPropertiesStore().saveCreateNewAccountFeeInSystemContract(entry.getValue());
           break;
         }
         case (8): {
