@@ -351,14 +351,14 @@ public class RpcApiService implements Service {
     @Override
     public void getTransactionCountByBlockNum(NumberMessage request,
         StreamObserver<NumberMessage> responseObserver) {
-      Block block = null;
+      NumberMessage.Builder builder = NumberMessage.newBuilder();
       try {
-        block = dbManager.getBlockByNum(request.getNum()).getInstance();
+        Block block = dbManager.getBlockByNum(request.getNum()).getInstance();
+        builder.setNum(block.getTransactionsCount());
       } catch (StoreException e) {
         logger.error(e.getMessage());
+        builder.setNum(0);
       }
-      NumberMessage.Builder builder = NumberMessage.newBuilder();
-      builder.setNum(block.getTransactionsCount());
       responseObserver.onNext(builder.build());
       responseObserver.onCompleted();
     }
@@ -1009,14 +1009,14 @@ public class RpcApiService implements Service {
     @Override
     public void getTransactionCountByBlockNum(NumberMessage request,
         StreamObserver<NumberMessage> responseObserver) {
-      Block block = null;
+      NumberMessage.Builder builder = NumberMessage.newBuilder();
       try {
-        block = dbManager.getBlockByNum(request.getNum()).getInstance();
+        Block block = dbManager.getBlockByNum(request.getNum()).getInstance();
+        builder.setNum(block.getTransactionsCount());
       } catch (StoreException e) {
         logger.error(e.getMessage());
+        builder.setNum(0);
       }
-      NumberMessage.Builder builder = NumberMessage.newBuilder();
-      builder.setNum(block.getTransactionsCount());
       responseObserver.onNext(builder.build());
       responseObserver.onCompleted();
     }
