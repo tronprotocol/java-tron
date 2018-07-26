@@ -777,20 +777,6 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void buyStorageBytes(Contract.BuyStorageBytesContract request,
-        StreamObserver<Transaction> responseObserver) {
-      try {
-        responseObserver.onNext(
-            createTransactionCapsule(request, ContractType.BuyStorageBytesContract).getInstance());
-      } catch (ContractValidateException e) {
-        responseObserver
-            .onNext(null);
-        logger.debug("ContractValidateException: {}", e.getMessage());
-      }
-      responseObserver.onCompleted();
-    }
-
-    @Override
     public void sellStorage(Contract.SellStorageContract request,
         StreamObserver<Transaction> responseObserver) {
       try {

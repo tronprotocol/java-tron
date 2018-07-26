@@ -87,8 +87,17 @@ public class SellStorageActuator extends AbstractActuator {
       throw new ContractValidateException("bytes must be positive");
     }
 
-    if (bytes > accountCapsule.getStorageLimit()) {
-      throw new ContractValidateException("bytes must be less than accountStorageLimit");
+    long now = dbManager.getHeadBlockTimeStamp();
+
+    long latestExchangeStorageTime = accountCapsule.getLatestExchangeStorageTime();
+    long currentStorageLimit = accountCapsule.getStorageLimit();
+    long currentUnusedStorage = currentStorageLimit - accountCapsule.getStorageUsage();
+
+    long duration = now - latestExchangeStorageTime;
+    long storageTax = storageMarket.calculateTax(duration, currentStorageLimit);
+
+    if (bytes > (currentUnusedStorage - storageTax)) {
+      throw new ContractValidateException("bytes must be less than currentUnusedStorage minus tax");
     }
 
     return true;

@@ -41,7 +41,6 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
-import org.tron.protos.Contract.BuyStorageBytesContract;
 import org.tron.protos.Contract.BuyStorageContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
@@ -319,9 +318,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           break;
         case BuyStorageContract:
           owner = contractParameter.unpack(BuyStorageContract.class).getOwnerAddress();
-          break;
-        case BuyStorageBytesContract:
-          owner = contractParameter.unpack(BuyStorageBytesContract.class).getOwnerAddress();
           break;
         case SellStorageContract:
           owner = contractParameter.unpack(SellStorageContract.class).getOwnerAddress();
