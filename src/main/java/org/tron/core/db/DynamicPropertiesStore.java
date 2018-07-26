@@ -291,7 +291,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getTotalStorageReserved();
     } catch (IllegalArgumentException e) {
-      this.saveTotalStorageReserved(128L * 1024 * 1024 * 1024);
+      this.saveTotalStorageReserved(128L * 1024 * 1024 * 1024); // 137438953472 bytes
     }
 
     try {

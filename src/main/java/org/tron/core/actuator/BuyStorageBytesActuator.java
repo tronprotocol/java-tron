@@ -40,7 +40,7 @@ public class BuyStorageBytesActuator extends AbstractActuator {
     AccountCapsule accountCapsule = dbManager.getAccountStore()
         .get(buyStorageBytesContract.getOwnerAddress().toByteArray());
     long bytes = buyStorageBytesContract.getStorageBytes();
-    long quant = storageMarket.exchange(bytes, true);
+    long quant = storageMarket.exchange(bytes, false);
 
     storageMarket.buyStorage(accountCapsule, quant);
 
