@@ -146,7 +146,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
         if (frozenBalanceForCpu.getFrozenBalance() <= 0) {
           throw new ContractValidateException("no frozenBalance");
         }
-        if (frozenBalanceForCpu.getExpireTime() <= now) {
+        if (frozenBalanceForCpu.getExpireTime() > now) {
           throw new ContractValidateException("It's not time to unfreeze.");
         }
 

@@ -60,7 +60,7 @@ public class BandwidthProcessor extends ResourceProcessor {
       logger.debug("trxId {},bandwidth cost :{}", trx.getTransactionId(), bytes);
       byte[] address = TransactionCapsule.getOwner(contract);
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
-      if (accountCapsule == null) {
+        if (accountCapsule == null) {
         throw new ContractValidateException("account not exists");
       }
       long now = dbManager.getWitnessController().getHeadSlot();
@@ -135,7 +135,7 @@ public class BandwidthProcessor extends ResourceProcessor {
     if (bytes * createNewAccountBandwidthRatio <= (netLimit - newNetUsage)) {
       latestConsumeTime = now;
       long latestOperationTime = dbManager.getHeadBlockTimeStamp();
-      newNetUsage = increase(newNetUsage, bytes, latestConsumeTime, now);
+      newNetUsage = increase(newNetUsage, bytes * createNewAccountBandwidthRatio, latestConsumeTime, now);
       accountCapsule.setLatestConsumeTime(latestConsumeTime);
       accountCapsule.setLatestOperationTime(latestOperationTime);
       accountCapsule.setNetUsage(newNetUsage);
