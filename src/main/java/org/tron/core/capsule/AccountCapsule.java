@@ -458,6 +458,12 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
             this.account.getAccountResource().toBuilder().setCpuUsage(cpuUsage).build()).build();
   }
 
+  public void setLatestConsumeTimeForCpu(long latest_time) {
+    this.account = this.account.toBuilder()
+        .setAccountResource(
+            this.account.getAccountResource().toBuilder().setLatestConsumeTimeForCpu(latest_time).build()).build();
+  }
+
   public long getFreeNetUsage() {
     return this.account.getFreeNetUsage();
   }

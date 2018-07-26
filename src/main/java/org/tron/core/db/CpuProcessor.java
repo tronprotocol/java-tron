@@ -59,7 +59,7 @@ public class CpuProcessor extends ResourceProcessor {
       long now = dbManager.getWitnessController().getHeadSlot();
 
       //todo
-//      int creatorRatio = contract.getUserCpuComsumeRatio();
+//      int creatorRatio = contract.getUserCpuConsumeRatio();
       int creatorRatio = 50;
 
       long creatorCpuTime = cpuTime * creatorRatio / 100;
@@ -73,8 +73,8 @@ public class CpuProcessor extends ResourceProcessor {
         continue;
       }
 
-//      long feeLimit = getUserFeeLimit();
-      long feeLimit = 1000;//sun
+//     todo  long feeLimit = getUserFeeLimit();
+      long feeLimit = 1000000;//sun
       long fee = calculateFee(userCpuTime);
       if (fee > feeLimit) {
         throw new AccountResourceInsufficientException(
@@ -94,7 +94,7 @@ public class CpuProcessor extends ResourceProcessor {
   }
 
   private long calculateFee(long userCpuTime) {
-    return userCpuTime * 30;// 30 sun / macrisecond
+    return userCpuTime * 30;// 30 sun / macrisecond, move to dynamicStore later
   }
 
 
@@ -130,9 +130,9 @@ public class CpuProcessor extends ResourceProcessor {
     latestConsumeTime = now;
     long latestOperationTime = dbManager.getHeadBlockTimeStamp();
     newCpuUsage = increase(newCpuUsage, cpuTime, latestConsumeTime, now);
-    accountCapsule.setNetUsage(newCpuUsage);
+    accountCapsule.setCpuUsage(newCpuUsage);
     accountCapsule.setLatestOperationTime(latestOperationTime);
-    accountCapsule.setLatestConsumeTime(latestConsumeTime);
+    accountCapsule.setLatestConsumeTimeForCpu(latestConsumeTime);
 
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     return true;
@@ -155,9 +155,9 @@ public class CpuProcessor extends ResourceProcessor {
     latestConsumeTime = now;
     long latestOperationTime = dbManager.getHeadBlockTimeStamp();
     newCpuUsage = increase(newCpuUsage, cpuTime, latestConsumeTime, now);
-    accountCapsule.setNetUsage(newCpuUsage);
+    accountCapsule.setCpuUsage(newCpuUsage);
     accountCapsule.setLatestOperationTime(latestOperationTime);
-    accountCapsule.setLatestConsumeTime(latestConsumeTime);
+    accountCapsule.setLatestConsumeTimeForCpu(latestConsumeTime);
 
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     return true;
