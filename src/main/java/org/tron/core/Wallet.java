@@ -19,6 +19,7 @@
 package org.tron.core;
 
 import com.google.protobuf.ByteString;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -243,7 +244,8 @@ public class Wallet {
 
   public Account getAccountById(Account account) {
     AccountStore accountStore = dbManager.getAccountStore();
-    AccountIdIndexStore accountIdIndexStore = dbManager.getAccountIdIndexStore();//to be replaced by AccountIdIndexStore
+    AccountIdIndexStore accountIdIndexStore = dbManager
+        .getAccountIdIndexStore();//to be replaced by AccountIdIndexStore
     byte[] address = accountIdIndexStore.get(account.getAccountId());
     if (address == null) {
       return null;
@@ -256,7 +258,6 @@ public class Wallet {
     processor.updateUsage(accountCapsule);
     return accountCapsule.getInstance();
   }
-
 
   /**
    * Create a transaction.
@@ -439,6 +440,7 @@ public class Wallet {
 
     Protocol.ChainParameters.ChainParameter.Builder builder1
         = Protocol.ChainParameters.ChainParameter.newBuilder();
+
     builder.addChainParameter(builder1
         .setKey(ChainParameters.MAINTENANCE_TIME_INTERVAL.name())
         .setValue(
@@ -474,6 +476,17 @@ public class Wallet {
         .setValue(
             dynamicPropertiesStore.getMaintenanceTimeInterval())
         .build());
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.CREATE_NEW_ACCOUNT_IN_SYSTEM_CONTRACT.name())
+        .setValue(
+            dynamicPropertiesStore.getMaintenanceTimeInterval())
+        .build());
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.CREATE_NEW_ACCOUNT_BANDWIDTH_RATE.name())
+        .setValue(
+            dynamicPropertiesStore.getMaintenanceTimeInterval())
+        .build());
+
     return builder.build();
   }
 

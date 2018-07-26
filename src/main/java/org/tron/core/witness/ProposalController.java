@@ -122,6 +122,14 @@ public class ProposalController {
           manager.getDynamicPropertiesStore().saveWitnessStandbyAllowance(entry.getValue());
           break;
         }
+        case (7): {
+          manager.getDynamicPropertiesStore().saveCreateNewAccountInSystemContract(entry.getValue());
+          break;
+        }
+        case (8): {
+          manager.getDynamicPropertiesStore().saveCreateNewAccountBandwidthRate(entry.getValue());
+          break;
+        }
         default:
           break;
       }
