@@ -68,6 +68,7 @@ import org.tron.common.utils.Utils;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.TronException;
 import org.tron.protos.Protocol;
 
 /**
@@ -400,7 +401,7 @@ public class Program {
 
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     public void createContract(DataWord value, DataWord memStart, DataWord memSize)
-        throws ContractExeException {
+        throws ContractExeException, OutOfResourceException {
         returnDataBuffer = null; // reset return buffer right before the call
 
         if (getCallDeep() == MAX_DEPTH) {
@@ -491,7 +492,7 @@ public class Program {
         //long storageCost = getLength(code) * getBlockchainConfig().getGasCost().getCREATE_DATA();
         long storageCost = getLength(code) * DropCost.getInstance().getCREATE_DATA();
         // todo storage cost
-        long afterSpend = programInvoke.getDroplimit().longValue() - storageCost - result.getDropUsed();
+        // long afterSpend = programInvoke.getDroplimit().longValue() - storageCost - result.getDropUsed();
         if (getLength(code) > DefaultConfig.getMaxCodeLength()) {
             result.setException(Exception.notEnoughSpendingGas("Contract size too large: " + getLength(result.getHReturn()),
                     storageCost, this));
@@ -546,7 +547,7 @@ public class Program {
      * @param msg is the message call object
      */
     public void callToAddress(MessageCall msg)
-        throws ContractExeException {
+        throws ContractExeException, OutOfResourceException {
         returnDataBuffer = null; // reset return buffer right before the call
 
         if (getCallDeep() == MAX_DEPTH) {
@@ -678,13 +679,13 @@ public class Program {
     }
 
     public void spendDrop(long dropValue, String cause) {
-        if (getDroplimitLong() < dropValue) {
-            throw Exception.notEnoughSpendingGas(cause, dropValue, this);
-        }
+//        if (getDroplimitLong() < dropValue) {
+//            throw Exception.notEnoughSpendingGas(cause, dropValue, this);
+//        }
         getResult().spendDrop(dropValue);
     }
 
-    public void checkCPULimit(String opName) {
+    public void checkCPULimit(String opName) throws OutOfResourceException {
 
         long vmNowInUs = System.nanoTime() / 1000;
         if (vmNowInUs > getVmShouldEndInUs()) {
@@ -1238,7 +1239,7 @@ public class Program {
     }
 
     @SuppressWarnings("serial")
-    public static class OutOfResourceException extends BytecodeExecutionException {
+    public static class OutOfResourceException extends TronException {
 
         public OutOfResourceException(String message, Object... args) {
             super(format(message, args));

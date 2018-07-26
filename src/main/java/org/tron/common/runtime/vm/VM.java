@@ -15,6 +15,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.program.Program;
+import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
 import org.tron.common.runtime.vm.program.Stack;
 import org.tron.core.exception.ContractExeException;
 
@@ -75,10 +76,10 @@ public class VM {
     }
 
     public void step(Program program)
-        throws ContractExeException {
-        if (vmTrace) {
-            program.saveOpTrace();
-        }
+        throws ContractExeException, OutOfResourceException {
+      if (vmTrace) {
+        program.saveOpTrace();
+      }
 
       try {
         OpCode op = OpCode.code(program.getCurrentOp());
@@ -1304,19 +1305,18 @@ public class VM {
             */
         vmCounter++;
       } catch (RuntimeException e) {
-        // todo catch cpu limit exceed throw
-            logger.warn("VM halted: [{}]", e);
-            program.spendAllGas();
-            program.resetFutureRefund();
-            program.stop();
-            throw e;
-        } finally {
-            program.fullTrace();
-        }
+        logger.warn("VM halted: [{}]", e);
+        program.spendAllGas();
+        program.resetFutureRefund();
+        program.stop();
+        throw e;
+      } finally {
+        program.fullTrace();
+      }
     }
 
     public void play(Program program)
-        throws ContractExeException {
+        throws ContractExeException, OutOfResourceException {
         try {
             if (program.byTestingSuite()) return;
 

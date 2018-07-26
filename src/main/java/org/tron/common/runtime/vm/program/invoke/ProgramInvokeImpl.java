@@ -72,21 +72,11 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
                              byte[] callValue, byte[] msgData,
         byte[] lastHash, byte[] coinbase, long timestamp, long number, Deposit deposit,
-        byte[] dropLimit, boolean byTestingSuite) {
+        long vmStartInUs, long vmShouldEndInUs, boolean byTestingSuite) {
         this(address, origin, caller, balance, callValue, msgData, lastHash, coinbase,
-            timestamp, number, deposit, dropLimit);
+            timestamp, number, deposit, vmStartInUs, vmShouldEndInUs);
         this.byTestingSuite = byTestingSuite;
     }
-
-    public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
-        byte[] callValue, byte[] msgData, byte[] lastHash, byte[] coinbase, long timestamp,
-        long number, Deposit deposit, byte[] dropLimit,
-        byte[] ownerResourceUsagePercent) {
-        this(address, origin, caller, balance, callValue, msgData, lastHash, coinbase,
-            timestamp, number, deposit, dropLimit);
-        // this.ownerResourceUsagePercent = new DataWord(ownerResourceUsagePercent);
-    }
-
 
     public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
         byte[] callValue, byte[] msgData, byte[] lastHash, byte[] coinbase, long timestamp,
@@ -218,14 +208,12 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     /*     GASLIMIT op    */
     @Override
     public DataWord getDroplimit() {
-        return cpu;
-        // todo modify today
+      return DataWord.ZERO;
     }
 
     @Override
     public long getDroplimitLong() {
-        return cpuLong;
-        // todo modify today
+      return 0;
     }
 
   public long getVmShouldEndInUs() {
