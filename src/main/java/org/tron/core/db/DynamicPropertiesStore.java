@@ -77,7 +77,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] TOTAL_CPU_LIMIT = "TOTAL_CPU_LIMIT".getBytes();
 
+  //abandon
   private static final byte[] CREATE_ACCOUNT_FEE = "CREATE_ACCOUNT_FEE".getBytes();
+
+  private static final byte[] CREATE_NEW_ACCOUNT_IN_SYSTEM_CONTRACT = "CREATE_NEW_ACCOUNT_IN_SYSTEM_CONTRACT"
+      .getBytes();
+
+  private static final byte[] CREATE_NEW_ACCOUNT_BANDWIDTH_RATE = "CREATE_NEW_ACCOUNT_IN_SYSTEM_CONTRACT"
+      .getBytes();
 
   private static final byte[] TRANSACTION_FEE = "TRANSACTION_FEE".getBytes(); // 1 byte
 
@@ -253,6 +260,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getCreateAccountFee();
     } catch (IllegalArgumentException e) {
       this.saveCreateAccountFee(100_000L); // 0.1TRX
+    }
+
+    try {
+      this.getCreateAccountFee();
+    } catch (IllegalArgumentException e) {
+      this.saveCreateNewAccountInSystemContract(0L); //changed by committee later
+    }
+
+    try {
+      this.getCreateNewAccountBandwidthRate();
+    } catch (IllegalArgumentException e) {
+      this.saveCreateNewAccountBandwidthRate(1L); //changed by committee later
     }
 
     try {
@@ -599,6 +618,30 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found CREATE_ACCOUNT_FEE"));
   }
 
+
+  public void saveCreateNewAccountInSystemContract(long fee) {
+    this.put(CREATE_NEW_ACCOUNT_IN_SYSTEM_CONTRACT,
+        new BytesCapsule(ByteArray.fromLong(fee)));
+  }
+
+  public long getCreateNewAccountInSystemContract() {
+    return Optional.ofNullable(this.dbSource.getData(CREATE_NEW_ACCOUNT_IN_SYSTEM_CONTRACT))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found CREATE_NEW_ACCOUNT_IN_SYSTEM_CONTRACT"));
+  }
+
+  public void saveCreateNewAccountBandwidthRate(long rate) {
+    this.put(CREATE_NEW_ACCOUNT_BANDWIDTH_RATE,
+        new BytesCapsule(ByteArray.fromLong(rate)));
+  }
+
+  public long getCreateNewAccountBandwidthRate() {
+    return Optional.ofNullable(this.dbSource.getData(CREATE_NEW_ACCOUNT_BANDWIDTH_RATE))
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found CREATE_NEW_ACCOUNT_BANDWIDTH_RATE"));
+  }
 
   public void saveTransactionFee(long fee) {
     this.put(TRANSACTION_FEE,

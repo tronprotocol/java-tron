@@ -120,13 +120,17 @@ public class BandwidthProcessor extends ResourceProcessor {
 
   public boolean consumeBandwidthForCreateNewAccount(AccountCapsule accountCapsule, long bytes,
       long now) {
+
+    long createNewAccountBandwidthRatio = dbManager.getDynamicPropertiesStore()
+        .getCreateNewAccountBandwidthRate();
+
     long netUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
     long netLimit = calculateGlobalNetLimit(accountCapsule.getFrozenBalance());
 
     long newNetUsage = increase(netUsage, 0, latestConsumeTime, now);
 
-    if (bytes <= (netLimit - newNetUsage)) {
+    if (bytes * createNewAccountBandwidthRatio <= (netLimit - newNetUsage)) {
       latestConsumeTime = now;
       long latestOperationTime = dbManager.getHeadBlockTimeStamp();
       newNetUsage = increase(newNetUsage, bytes, latestConsumeTime, now);

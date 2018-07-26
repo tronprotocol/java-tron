@@ -43,10 +43,13 @@ public class CpuProcessor extends ResourceProcessor {
 
     for (Contract contract : contracts) {
 
-      if (contract.isPrecompiled()) {
-        continue;
-      }
-      long cpuTime = trx.getReceipt().getCpuTime();
+      //todo
+//      if (contract.isPrecompiled()) {
+//        continue;
+//      }
+      //todo
+//      long cpuTime = trx.getReceipt().getCpuTime();
+      long cpuTime = 100L;
       logger.debug("trxId {},cpu cost :{}", trx.getTransactionId(), cpuTime);
       byte[] address = TransactionCapsule.getOwner(contract);
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
@@ -55,7 +58,9 @@ public class CpuProcessor extends ResourceProcessor {
       }
       long now = dbManager.getWitnessController().getHeadSlot();
 
-      int creatorRatio = contract.getUserCpuComsumeRatio();
+      //todo
+//      int creatorRatio = contract.getUserCpuComsumeRatio();
+      int creatorRatio = 50;
 
       if (!useContractCreatorCpu(contract, cpuTime * creatorRatio / 100, now)) {
         throw new ContractValidateException("creator has not enough cpu");
@@ -67,7 +72,8 @@ public class CpuProcessor extends ResourceProcessor {
         continue;
       }
 
-      long feeLimit = getUserFeeLimit();
+//      long feeLimit = getUserFeeLimit();
+      long feeLimit = 1000;//sun
       long fee = calculateFee(userCpuTime);
       if (fee > feeLimit) {
         throw new AccountResourceInsufficientException(
@@ -101,8 +107,10 @@ public class CpuProcessor extends ResourceProcessor {
 
   private boolean useContractCreatorCpu(Contract contract, long cpuTime, long now) {
 
-    AccountCapsule accountCapsule = dbManager
-        .getAccountStore().get(contract.getResourceRelatedAccount());
+    //todo
+//    AccountCapsule accountCapsule = dbManager.getAccountStore().get(contract.getResourceRelatedAccount());
+    AccountCapsule accountCapsule = dbManager.getAccountStore()
+        .get(contract.getProvider().toByteArray());
 
     long cpuUsage = accountCapsule.getCpuUsage();
     long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForCpu();

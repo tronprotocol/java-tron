@@ -39,6 +39,8 @@ public class TransferActuator extends AbstractActuator {
         toAccount = new AccountCapsule(ByteString.copyFrom(toAddress), AccountType.Normal,
             dbManager.getHeadBlockTimeStamp());
         dbManager.getAccountStore().put(toAddress, toAccount);
+
+        fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountInSystemContract();
       }
       dbManager.adjustBalance(ownerAddress, -fee);
       ret.setStatus(fee, code.SUCESS);
@@ -73,7 +75,7 @@ public class TransferActuator extends AbstractActuator {
           "contract type error,expected type [TransferContract],real type[" + contract
               .getClass() + "]");
     }
-    final long fee = calcFee();
+    long fee = calcFee();
     final TransferContract transferContract;
     try {
       transferContract = contract.unpack(TransferContract.class);
@@ -126,6 +128,15 @@ public class TransferActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
+
+    AccountCapsule toAccount = dbManager.getAccountStore().get(toAddress);
+    if (toAccount == null) {
+      fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountInSystemContract();
+      if (ownerAccount.getBalance() < fee) {
+        throw new ContractValidateException("Validate TransferContract error, insufficient fee.");
+      }
+    }
+
     return true;
   }
 

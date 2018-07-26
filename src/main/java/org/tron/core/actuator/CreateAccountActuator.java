@@ -76,6 +76,12 @@ public class CreateAccountActuator extends AbstractActuator {
           "Account[" + readableOwnerAddress + "] not exists");
     }
 
+    final long fee = calcFee();
+    if (accountCapsule.getBalance() < fee) {
+      throw new ContractValidateException(
+          "Validate CreateAccountActuator error, insufficient fee.");
+    }
+
     byte[] accountAddress = contract.getAccountAddress().toByteArray();
     if (!Wallet.addressValid(accountAddress)) {
       throw new ContractValidateException("Invalid account address");
@@ -99,6 +105,6 @@ public class CreateAccountActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    return 0;
+    return dbManager.getDynamicPropertiesStore().getCreateNewAccountInSystemContract();
   }
 }
