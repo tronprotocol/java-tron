@@ -79,6 +79,8 @@ public class ActuatorFactory {
         return new ProposalApproveActuator(contract.getParameter(), manager);
       case ProposalDeleteContract:
         return new ProposalDeleteActuator(contract.getParameter(), manager);
+      case SetAccountIdContract:
+        return new SetAccountIdActuator(contract.getParameter(), manager);
       default:
 
     }

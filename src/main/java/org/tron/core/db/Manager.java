@@ -105,7 +105,7 @@ public class Manager {
   @Autowired
   private BlockIndexStore blockIndexStore;
   @Autowired
-  private AccountIndexStore accountIndexStore;
+  private AccountIdIndexStore accountIdIndexStore;
   @Autowired
   private WitnessScheduleStore witnessScheduleStore;
   @Autowired
@@ -386,7 +386,7 @@ public class Manager {
                       account.getAccountType(),
                       account.getBalance());
               this.accountStore.put(account.getAddress(), accountCapsule);
-              this.accountIndexStore.put(accountCapsule);
+              this.accountIdIndexStore.put(accountCapsule);
             });
   }
 
@@ -1306,12 +1306,12 @@ public class Manager {
     this.blockIndexStore = indexStore;
   }
 
-  public AccountIndexStore getAccountIndexStore() {
-    return this.accountIndexStore;
+  public AccountIdIndexStore getAccountIdIndexStore() {
+    return this.accountIdIndexStore;
   }
 
-  public void setAccountIndexStore(AccountIndexStore indexStore) {
-    this.accountIndexStore = indexStore;
+  public void setAccountIdIndexStore(AccountIdIndexStore indexStore) {
+    this.accountIdIndexStore = indexStore;
   }
 
   public void closeAllStore() {
@@ -1319,7 +1319,7 @@ public class Manager {
     closeOneStore(accountStore);
     closeOneStore(blockStore);
     closeOneStore(blockIndexStore);
-    closeOneStore(accountIndexStore);
+    closeOneStore(accountIdIndexStore);
     closeOneStore(witnessStore);
     closeOneStore(witnessScheduleStore);
     closeOneStore(assetIssueStore);
