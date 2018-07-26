@@ -357,7 +357,7 @@ public class RpcApiService implements Service {
         builder.setNum(block.getTransactionsCount());
       } catch (StoreException e) {
         logger.error(e.getMessage());
-        builder.setNum(0);
+        builder.setNum(-1);
       }
       responseObserver.onNext(builder.build());
       responseObserver.onCompleted();
@@ -1015,7 +1015,7 @@ public class RpcApiService implements Service {
         builder.setNum(block.getTransactionsCount());
       } catch (StoreException e) {
         logger.error(e.getMessage());
-        builder.setNum(0);
+        builder.setNum(-1);
       }
       responseObserver.onNext(builder.build());
       responseObserver.onCompleted();
