@@ -65,11 +65,9 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.Parameter.ChainParameters;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.ContractStore;
-import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.PendingManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
@@ -416,22 +414,22 @@ public class Wallet {
 
   public Protocol.ChainParameters getChainParameters() {
     Protocol.ChainParameters.Builder builder = Protocol.ChainParameters.newBuilder();
-    DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
-
-    builder.putParameters(ChainParameters.MAINTENANCE_TIME_INTERVAL.name(),
-        dynamicPropertiesStore.getMaintenanceTimeInterval());
-    builder.putParameters(ChainParameters.ACCOUNT_UPGRADE_COST.name(),
-        dynamicPropertiesStore.getAccountUpgradeCost());
-    builder.putParameters(ChainParameters.CREATE_ACCOUNT_FEE.name(),
-        dynamicPropertiesStore.getCreateAccountFee());
-    builder.putParameters(ChainParameters.TRANSACTION_FEE.name(),
-        dynamicPropertiesStore.getTransactionFee());
-    builder.putParameters(ChainParameters.ASSET_ISSUE_FEE.name(),
-        dynamicPropertiesStore.getAssetIssueFee());
-    builder.putParameters(ChainParameters.WITNESS_PAY_PER_BLOCK.name(),
-        dynamicPropertiesStore.getWitnessPayPerBlock());
-    builder.putParameters(ChainParameters.WITNESS_STANDBY_ALLOWANCE.name(),
-        dynamicPropertiesStore.getWitnessStandbyAllowance());
+//    DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
+//
+//    builder.putParameters(ChainParameters.MAINTENANCE_TIME_INTERVAL.name(),
+//        dynamicPropertiesStore.getMaintenanceTimeInterval());
+//    builder.putParameters(ChainParameters.ACCOUNT_UPGRADE_COST.name(),
+//        dynamicPropertiesStore.getAccountUpgradeCost());
+//    builder.putParameters(ChainParameters.CREATE_ACCOUNT_FEE.name(),
+//        dynamicPropertiesStore.getCreateAccountFee());
+//    builder.putParameters(ChainParameters.TRANSACTION_FEE.name(),
+//        dynamicPropertiesStore.getTransactionFee());
+//    builder.putParameters(ChainParameters.ASSET_ISSUE_FEE.name(),
+//        dynamicPropertiesStore.getAssetIssueFee());
+//    builder.putParameters(ChainParameters.WITNESS_PAY_PER_BLOCK.name(),
+//        dynamicPropertiesStore.getWitnessPayPerBlock());
+//    builder.putParameters(ChainParameters.WITNESS_STANDBY_ALLOWANCE.name(),
+//        dynamicPropertiesStore.getWitnessStandbyAllowance());
     return builder.build();
   }
 

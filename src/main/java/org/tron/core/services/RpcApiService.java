@@ -28,6 +28,7 @@ import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockExtention;
 import org.tron.api.GrpcAPI.BlockLimit;
 import org.tron.api.GrpcAPI.BlockList;
+import org.tron.api.GrpcAPI.BlockListExtention;
 import org.tron.api.GrpcAPI.BlockReference;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.EasyTransferByPrivateMessage;
@@ -329,7 +330,8 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getTransactionCountByBlockNum(NumberMessage request, StreamObserver<NumberMessage> responseObserver) {
+    public void getTransactionCountByBlockNum(NumberMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
       Block block = null;
       try {
         block = dbManager.getBlockByNum(request.getNum()).getInstance();
@@ -471,6 +473,17 @@ public class RpcApiService implements Service {
    * WalletApi.
    */
   private class WalletApi extends WalletImplBase {
+
+    private BlockListExtention blocklist2Extention(BlockList blockList) {
+      if (blockList == null) {
+        return null;
+      }
+      BlockListExtention.Builder builder = BlockListExtention.newBuilder();
+      for (Block block : blockList.getBlockList()) {
+        builder.addBlock(block2Extention(block));
+      }
+      return builder.build();
+    }
 
     @Override
     public void getAccount(Account req, StreamObserver<Account> responseObserver) {
@@ -949,7 +962,8 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getTransactionCountByBlockNum(NumberMessage request, StreamObserver<NumberMessage> responseObserver) {
+    public void getTransactionCountByBlockNum(NumberMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
       Block block = null;
       try {
         block = dbManager.getBlockByNum(request.getNum()).getInstance();
@@ -1109,12 +1123,39 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getBlockByLimitNext2(BlockLimit request,
+        StreamObserver<BlockListExtention> responseObserver) {
+      long startNum = request.getStartNum();
+      long endNum = request.getEndNum();
+
+      if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
+        responseObserver.onNext(blocklist2Extention(wallet.getBlocksByLimitNext(startNum, endNum - startNum)));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getBlockByLatestNum(NumberMessage request,
         StreamObserver<BlockList> responseObserver) {
       long getNum = request.getNum();
 
       if (getNum > 0 && getNum < BLOCK_LIMIT_NUM) {
         responseObserver.onNext(wallet.getBlockByLatestNum(getNum));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getBlockByLatestNum2(NumberMessage request,
+        StreamObserver<BlockListExtention> responseObserver) {
+      long getNum = request.getNum();
+
+      if (getNum > 0 && getNum < BLOCK_LIMIT_NUM) {
+        responseObserver.onNext(blocklist2Extention(wallet.getBlockByLatestNum(getNum)));
       } else {
         responseObserver.onNext(null);
       }
