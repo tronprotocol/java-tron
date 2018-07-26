@@ -4,14 +4,13 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.HashDB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
-
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
 public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
 

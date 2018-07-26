@@ -1,5 +1,9 @@
 package org.tron.core.db2.core;
 
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
@@ -8,11 +12,6 @@ import org.tron.core.db.AbstractRevokingStore;
 import org.tron.core.db.RevokingStore;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.exception.ItemNotFoundException;
-
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 
 public class RevokingDBWithCachingOldValue implements IRevokingDB {
   private AbstractRevokingStore revokingDatabase;

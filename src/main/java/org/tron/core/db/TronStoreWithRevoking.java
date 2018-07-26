@@ -1,38 +1,39 @@
 package org.tron.core.db;
 
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Streams;
+import com.google.common.reflect.TypeToken;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
-
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Streams;
-import com.google.common.reflect.TypeToken;
-import com.google.protobuf.InvalidProtocolBufferException;
+import javax.annotation.PostConstruct;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.AbstractRevokingStore.RevokingTuple;
+import org.tron.core.db.api.IndexHelper;
 import org.tron.core.db2.common.IRevokingDB;
+import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.RevokingDBWithCachingNewValue;
 import org.tron.core.db2.core.RevokingDBWithCachingOldValue;
-import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 
-import javax.annotation.PostConstruct;
-
 @Slf4j
-public abstract class TronStoreWithRevoking<T extends ProtoCapsule> extends TronDatabase<T> {
+public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements ITronChainBase<T> {
 
   protected IRevokingDB revokingDB;
   private TypeToken<T> token = new TypeToken<T>(getClass()) {};
   @Autowired
   private RevokingDatabase revokingDatabase;
+  @Autowired(required = false)
+  protected IndexHelper indexHelper;
+  @Getter
+  private String dbName;
 
   protected TronStoreWithRevoking(String dbName) {
     int dbVersion = Args.getInstance().getStorage().getDbVersion();
@@ -99,6 +100,11 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> extends Tron
   @Override
   public boolean has(byte[] key) {
     return revokingDB.has(key);
+  }
+
+  @Override
+  public String getName() {
+    return getClass().getSimpleName();
   }
 
   @Override

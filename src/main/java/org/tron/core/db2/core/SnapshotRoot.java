@@ -2,12 +2,11 @@ package org.tron.core.db2.core;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
-import org.tron.core.db.common.WrappedByteArray;
-import org.tron.core.db2.common.LevelDB;
-
 import java.util.Iterator;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.tron.core.db.common.WrappedByteArray;
+import org.tron.core.db2.common.LevelDB;
 
 public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 

@@ -57,6 +57,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db2.core.ISession;
+import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
@@ -1331,7 +1332,7 @@ public class Manager {
     System.err.println("******** end to close db ********");
   }
 
-  private void closeOneStore(TronDatabase database) {
+  private void closeOneStore(ITronChainBase database) {
     System.err.println("******** begin to close " + database.getName() + " ********");
     try {
       database.close();
