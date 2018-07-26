@@ -79,7 +79,7 @@ public class BandwidthTest {
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
             AccountType.Normal,
             0L);
-    ownerCapsule.addAsset(ASSET_NAME, 100L);
+    ownerCapsule.addAsset(ASSET_NAME.getBytes(), 100L);
 
     AccountCapsule toAccountCapsule =
         new AccountCapsule(

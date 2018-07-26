@@ -133,6 +133,6 @@ public class IndexHelper {
   }
 
   private byte[] getKey(AssetIssueContract a) {
-    return new AssetIssueCapsule(a).getName().toByteArray();
+    return new AssetIssueCapsule(a).createDbKey();
   }
 }

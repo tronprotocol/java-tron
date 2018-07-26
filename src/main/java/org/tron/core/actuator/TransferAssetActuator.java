@@ -60,12 +60,12 @@ public class TransferAssetActuator extends AbstractActuator {
       long amount = transferAssetContract.getAmount();
 
       AccountCapsule ownerAccountCapsule = accountStore.get(ownerAddress);
-      if (!ownerAccountCapsule.reduceAssetAmount(assetName, amount)) {
+      if (!ownerAccountCapsule.reduceAssetAmount(assetName.toByteArray(), amount)) {
         throw new ContractExeException("reduceAssetAmount failed !");
       }
       accountStore.put(ownerAddress, ownerAccountCapsule);
 
-      toAccountCapsule.addAssetAmount(assetName, amount);
+      toAccountCapsule.addAssetAmount(assetName.toByteArray(), amount);
       accountStore.put(toAddress, toAccountCapsule);
 
       ret.setStatus(fee, code.SUCESS);
@@ -112,9 +112,9 @@ public class TransferAssetActuator extends AbstractActuator {
     if (!Wallet.addressValid(toAddress)) {
       throw new ContractValidateException("Invalid toAddress");
     }
-    if (!TransactionUtil.validAssetName(assetName)) {
-      throw new ContractValidateException("Invalid assetName");
-    }
+//    if (!TransactionUtil.validAssetName(assetName)) {
+//      throw new ContractValidateException("Invalid assetName");
+//    }
     if (amount <= 0) {
       throw new ContractValidateException("Amount must greater than 0.");
     }

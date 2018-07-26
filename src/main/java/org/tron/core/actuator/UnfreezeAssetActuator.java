@@ -47,7 +47,8 @@ public class UnfreezeAssetActuator extends AbstractActuator {
         }
       }
 
-      accountCapsule.addAssetAmount(accountCapsule.getAssetIssuedName(), unfreezeAsset);
+      accountCapsule
+          .addAssetAmount(accountCapsule.getAssetIssuedName().toByteArray(), unfreezeAsset);
       accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
           .clearFrozenSupply().addAllFrozenSupply(frozenList).build());
       dbManager.getAccountStore().put(ownerAddress, accountCapsule);

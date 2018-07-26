@@ -26,13 +26,13 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
-public class UpdateAccountActuatorTest {
+public class SetAccountIdActuatorTest {
 
   private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
-  private static final String dbPath = "output_updateaccount_test";
-  private static final String ACCOUNT_NAME = "ownerTest";
-  private static final String ACCOUNT_NAME_1 = "ownerTest1";
+  private static final String dbPath = "output_setaccountid_test";
+  private static final String ACCOUNT_NAME = "ownertest";
+  private static final String ACCOUNT_NAME_1 = "ownertest1";
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_1;
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
@@ -62,7 +62,7 @@ public class UpdateAccountActuatorTest {
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
             ByteString.EMPTY,
             AccountType.Normal);
-    dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+    dbManager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
     dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_1));
     dbManager.getAccountIdIndexStore().delete(ACCOUNT_NAME.getBytes());
     dbManager.getAccountIdIndexStore().delete(ACCOUNT_NAME_1.getBytes());
@@ -70,16 +70,16 @@ public class UpdateAccountActuatorTest {
 
   private Any getContract(String name, String address) {
     return Any.pack(
-        Contract.AccountUpdateContract.newBuilder()
-            .setAccountName(ByteString.copyFromUtf8(name))
+        Contract.SetAccountIdContract.newBuilder()
+            .setAccountId(ByteString.copyFromUtf8(name))
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
             .build());
   }
 
   private Any getContract(ByteString name, String address) {
     return Any.pack(
-        Contract.AccountUpdateContract.newBuilder()
-            .setAccountName(name)
+        Contract.SetAccountIdContract.newBuilder()
+            .setAccountId(name)
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
             .build());
   }
@@ -88,12 +88,12 @@ public class UpdateAccountActuatorTest {
    * Unit test.
    */
   /**
-   * Update account when all right.
+   * set account id when all right.
    */
   @Test
-  public void rightUpdateAccount() {
+  public void rightSetAccountId() {
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    UpdateAccountActuator actuator = new UpdateAccountActuator(
+    SetAccountIdActuator actuator = new SetAccountIdActuator(
         getContract(ACCOUNT_NAME, OWNER_ADDRESS), dbManager);
     try {
       actuator.validate();
@@ -101,9 +101,10 @@ public class UpdateAccountActuatorTest {
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
-      Assert.assertEquals(ACCOUNT_NAME, accountCapsule.getAccountName().toStringUtf8());
+      Assert.assertEquals(ACCOUNT_NAME, accountCapsule.getAccountId().toStringUtf8());
       Assert.assertTrue(true);
     } catch (ContractValidateException e) {
+      logger.info(e.getMessage());
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -113,7 +114,7 @@ public class UpdateAccountActuatorTest {
   @Test
   public void invalidAddress() {
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    UpdateAccountActuator actuator = new UpdateAccountActuator(
+    SetAccountIdActuator actuator = new SetAccountIdActuator(
         getContract(ACCOUNT_NAME, OWNER_ADDRESS_INVALID), dbManager);
     try {
       actuator.validate();
@@ -128,9 +129,9 @@ public class UpdateAccountActuatorTest {
   }
 
   @Test
-  public void noExitAccount() {
+  public void noExistAccount() {
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    UpdateAccountActuator actuator = new UpdateAccountActuator(
+    SetAccountIdActuator actuator = new SetAccountIdActuator(
         getContract(ACCOUNT_NAME, OWNER_ADDRESS_1), dbManager);
     try {
       actuator.validate();
@@ -144,15 +145,12 @@ public class UpdateAccountActuatorTest {
     }
   }
 
-  //@Test
-  /*
-   * Can update name only one time.
-   */
+  @Test
   public void twiceUpdateAccount() {
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    UpdateAccountActuator actuator = new UpdateAccountActuator(
+    SetAccountIdActuator actuator = new SetAccountIdActuator(
         getContract(ACCOUNT_NAME, OWNER_ADDRESS), dbManager);
-    UpdateAccountActuator actuator1 = new UpdateAccountActuator(
+    SetAccountIdActuator actuator1 = new SetAccountIdActuator(
         getContract(ACCOUNT_NAME_1, OWNER_ADDRESS), dbManager);
     try {
       actuator.validate();
@@ -160,7 +158,7 @@ public class UpdateAccountActuatorTest {
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
-      Assert.assertEquals(ACCOUNT_NAME, accountCapsule.getAccountName().toStringUtf8());
+      Assert.assertEquals(ACCOUNT_NAME, accountCapsule.getAccountId().toStringUtf8());
       Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -174,21 +172,21 @@ public class UpdateAccountActuatorTest {
       Assert.assertFalse(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("This account name already exist", e.getMessage());
+      Assert.assertEquals("This account id already set", e.getMessage());
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
-      Assert.assertEquals(ACCOUNT_NAME, accountCapsule.getAccountName().toStringUtf8());
+      Assert.assertEquals(ACCOUNT_NAME, accountCapsule.getAccountId().toStringUtf8());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 
-  //@Test
+  @Test
   public void nameAlreadyUsed() {
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    UpdateAccountActuator actuator = new UpdateAccountActuator(
+    SetAccountIdActuator actuator = new SetAccountIdActuator(
         getContract(ACCOUNT_NAME, OWNER_ADDRESS), dbManager);
-    UpdateAccountActuator actuator1 = new UpdateAccountActuator(
+    SetAccountIdActuator actuator1 = new SetAccountIdActuator(
         getContract(ACCOUNT_NAME, OWNER_ADDRESS_1), dbManager);
     try {
       actuator.validate();
@@ -196,9 +194,10 @@ public class UpdateAccountActuatorTest {
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
-      Assert.assertEquals(ACCOUNT_NAME, accountCapsule.getAccountName().toStringUtf8());
+      Assert.assertEquals(ACCOUNT_NAME, accountCapsule.getAccountId().toStringUtf8());
       Assert.assertTrue(true);
     } catch (ContractValidateException e) {
+      logger.info(e.getMessage());
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -217,10 +216,10 @@ public class UpdateAccountActuatorTest {
       Assert.assertFalse(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("This name has existed", e.getMessage());
+      Assert.assertEquals("This id has existed", e.getMessage());
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
-      Assert.assertEquals(ACCOUNT_NAME, accountCapsule.getAccountName().toStringUtf8());
+      Assert.assertEquals(ACCOUNT_NAME, accountCapsule.getAccountId().toStringUtf8());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -234,7 +233,7 @@ public class UpdateAccountActuatorTest {
     TransactionResultCapsule ret = new TransactionResultCapsule();
     //Just OK 32 bytes is OK
     try {
-      UpdateAccountActuator actuator = new UpdateAccountActuator(
+      SetAccountIdActuator actuator = new SetAccountIdActuator(
           getContract("testname0123456789abcdefghijgklm", OWNER_ADDRESS), dbManager);
       actuator.validate();
       actuator.execute(ret);
@@ -242,50 +241,62 @@ public class UpdateAccountActuatorTest {
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertEquals("testname0123456789abcdefghijgklm",
-          accountCapsule.getAccountName().toStringUtf8());
+          accountCapsule.getAccountId().toStringUtf8());
       Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
+
     //8 bytes is OK
     AccountCapsule accountCapsule = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
-    accountCapsule.setAccountName(ByteString.EMPTY.toByteArray());
+    accountCapsule.setAccountId(ByteString.EMPTY.toByteArray());
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     try {
-      UpdateAccountActuator actuator = new UpdateAccountActuator(
-          getContract("testname", OWNER_ADDRESS), dbManager);
+      SetAccountIdActuator actuator = new SetAccountIdActuator(
+          getContract("test1111", OWNER_ADDRESS), dbManager);
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
       accountCapsule = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
-      Assert.assertEquals("testname",
-          accountCapsule.getAccountName().toStringUtf8());
+      Assert.assertEquals("test1111",
+          accountCapsule.getAccountId().toStringUtf8());
       Assert.assertTrue(true);
     } catch (ContractValidateException e) {
+      logger.info(e.getMessage());
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
+
     //Empty name
+    accountCapsule = dbManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    accountCapsule.setAccountId(ByteString.EMPTY.toByteArray());
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     try {
-      UpdateAccountActuator actuator = new UpdateAccountActuator(
+      SetAccountIdActuator actuator = new SetAccountIdActuator(
           getContract(ByteString.EMPTY, OWNER_ADDRESS), dbManager);
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalid accountName", e.getMessage());
+      Assert.assertEquals("Invalid accountId", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
+
     //Too long name 33 bytes
+    accountCapsule = dbManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    accountCapsule.setAccountId(ByteString.EMPTY.toByteArray());
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     try {
-      UpdateAccountActuator actuator = new UpdateAccountActuator(
+      SetAccountIdActuator actuator = new SetAccountIdActuator(
           getContract("testname0123456789abcdefghijgklmo0123456789abcdefghijgk"
               + "lmo0123456789abcdefghijgklmo0123456789abcdefghijgklmo0123456789abcdefghijgklmo"
               + "0123456789abcdefghijgklmo0123456789abcdefghijgklmo0123456789abcdefghijgklmo"
@@ -295,51 +306,65 @@ public class UpdateAccountActuatorTest {
       Assert.assertFalse(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalid accountName", e.getMessage());
+      Assert.assertEquals("Invalid accountId", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
-//    //Too short name 7 bytes
-//    try {
-//      UpdateAccountActuator actuator = new UpdateAccountActuator(
-//          getContract("testnam", OWNER_ADDRESS), dbManager);
-//      actuator.validate();
-//      actuator.execute(ret);
-//      Assert.assertFalse(true);
-//    } catch (ContractValidateException e) {
-//      Assert.assertTrue(e instanceof ContractValidateException);
-//      Assert.assertEquals("Invalid accountName", e.getMessage());
-//    } catch (ContractExeException e) {
-//      Assert.assertFalse(e instanceof ContractExeException);
-//    }
-//
-//    //Can't contain space
-//    try {
-//      UpdateAccountActuator actuator = new UpdateAccountActuator(
-//          getContract("t e", OWNER_ADDRESS), dbManager);
-//      actuator.validate();
-//      actuator.execute(ret);
-//      Assert.assertFalse(true);
-//    } catch (ContractValidateException e) {
-//      Assert.assertTrue(e instanceof ContractValidateException);
-//      Assert.assertEquals("Invalid accountName", e.getMessage());
-//    } catch (ContractExeException e) {
-//      Assert.assertFalse(e instanceof ContractExeException);
-//    }
-//    //Can't contain chinese characters
-//    try {
-//      UpdateAccountActuator actuator = new UpdateAccountActuator(
-//          getContract(ByteString.copyFrom(ByteArray.fromHexString("E6B58BE8AF95"))
-//              , OWNER_ADDRESS), dbManager);
-//      actuator.validate();
-//      actuator.execute(ret);
-//      Assert.assertFalse(true);
-//    } catch (ContractValidateException e) {
-//      Assert.assertTrue(e instanceof ContractValidateException);
-//      Assert.assertEquals("Invalid accountName", e.getMessage());
-//    } catch (ContractExeException e) {
-//      Assert.assertFalse(e instanceof ContractExeException);
-//    }
+
+    //Too short name 7 bytes
+    accountCapsule = dbManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    accountCapsule.setAccountId(ByteString.EMPTY.toByteArray());
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    try {
+      SetAccountIdActuator actuator = new SetAccountIdActuator(
+          getContract("testnam", OWNER_ADDRESS), dbManager);
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertFalse(true);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Invalid accountId", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+
+    //Can't contain space
+    accountCapsule = dbManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    accountCapsule.setAccountId(ByteString.EMPTY.toByteArray());
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    try {
+      SetAccountIdActuator actuator = new SetAccountIdActuator(
+          getContract("t e", OWNER_ADDRESS), dbManager);
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertFalse(true);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Invalid accountId", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+
+    //Can't contain chinese characters
+    accountCapsule = dbManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    accountCapsule.setAccountId(ByteString.EMPTY.toByteArray());
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    try {
+      SetAccountIdActuator actuator = new SetAccountIdActuator(
+          getContract(ByteString.copyFrom(ByteArray.fromHexString("E6B58BE8AF95"))
+              , OWNER_ADDRESS), dbManager);
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertFalse(true);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Invalid accountId", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
   }
 
   /**

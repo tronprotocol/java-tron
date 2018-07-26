@@ -21,6 +21,15 @@ service Wallet {
       }
     };
   };
+  rpc GetAccountById (Account) returns (Account) {
+    option (google.api.http) = {
+      post: "/wallet/getaccountbyid"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/getaccountbyid"
+      }
+    };
+  };
 
   rpc CreateTransaction (TransferContract) returns (Transaction) {
     option (google.api.http) = {
@@ -48,6 +57,17 @@ service Wallet {
       body: "*"
       additional_bindings {
         get: "/wallet/updateaccount"
+      }
+    };
+  };
+
+
+  rpc SetAccountId (SetAccountIdContract) returns (Transaction) {
+    option (google.api.http) = {
+      post: "/wallet/setaccountid"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/setaccountid"
       }
     };
   };
@@ -466,6 +486,16 @@ service WalletSolidity {
       }
     };
   };
+  rpc GetAccountById (Account) returns (Account) {
+    option (google.api.http) = {
+      post: "/walletsolidity/getaccountbyid"
+      body: "*"
+      additional_bindings {
+        get: "/walletsolidity/getaccountbyid"
+      }
+    };
+  };
+
   rpc ListWitnesses (EmptyMessage) returns (WitnessList) {
     option (google.api.http) = {
       post: "/walletsolidity/listwitnesses"
