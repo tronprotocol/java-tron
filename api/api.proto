@@ -307,6 +307,9 @@ service Wallet {
       }
     };
   }
+
+  rpc GetTransactionCountByBlockNum (NumberMessage) returns (NumberMessage) {
+  }
   //Use this function instead of GetBlockByNum.
   rpc GetBlockByNum2 (NumberMessage) returns (BlockExtention) {
   }
