@@ -261,22 +261,4 @@ public class NodeStatistics {
 
   }
 
-  public static void main(String[] args) {
-
-    int [] a = new int[2];
-    a[1] = 1;
-    a[1]++;
-    System.out.println((0-1 + 60) % 60);
-    DateTime dateTime = new DateTime();
-    try{
-      for (int i = 0; i < 10; i++){
-        Thread.sleep(1000);
-        System.out.println(new DateTime().getSecondOfMinute());
-        System.out.println(System.currentTimeMillis() / 1000);
-      }
-    }catch (Exception e){
-
-    }
-  }
-
 }
