@@ -27,7 +27,7 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
-public class BandwidthTest {
+public class BandwidthProcessorTest {
 
   private static Manager dbManager;
   private static final String dbPath = "bandwidth_test";
