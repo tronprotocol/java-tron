@@ -775,7 +775,7 @@ public class VM {
                 }
                 break;
                 case GASPRICE: {
-                    DataWord gasPrice = program.getDropPrice();
+                    DataWord gasPrice = new DataWord(0);
 
                     if (logger.isInfoEnabled())
                         hint = "price: " + gasPrice.toString();
@@ -842,7 +842,7 @@ public class VM {
                 }
                 break;
                 case GASLIMIT: {
-                    DataWord droplimit = program.getDroplimit();
+                    DataWord droplimit = new DataWord(0);
 
                     if (logger.isInfoEnabled())
                         hint = "gaslimit: " + droplimit;
@@ -1016,7 +1016,7 @@ public class VM {
                 }
                 break;
                 case GAS: {
-                    DataWord gas = program.getDroplimit();
+                    DataWord gas = new DataWord(0);
 
                     if (logger.isInfoEnabled())
                         hint = "" + gas;
