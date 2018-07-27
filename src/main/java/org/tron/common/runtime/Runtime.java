@@ -190,7 +190,7 @@ public class Runtime {
 
   public boolean curCPULimitReachedBlockCPULimit() {
 
-    if (null != block) {
+    if (executerType == ET_NORMAL_TYPE) {
       BigInteger blockCPULeftInUs = getBlockCPULeftInUs();
       BigInteger oneTxCPULimitInUs = BigInteger
           .valueOf(Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
@@ -218,7 +218,7 @@ public class Runtime {
 
   private long getAccountCPULimitInUs(AccountCapsule... accountCapsules) {
 
-    return 1000;
+    return 100000;
 
   }
 
@@ -257,11 +257,12 @@ public class Runtime {
     } else {
 
       AccountCapsule sender = this.deposit.getAccount(contract.getOwnerAddress().toByteArray());
-      // todo modify tomorrow
-      AccountCapsule creator = this.deposit.getAccount(contract.getOwnerAddress().toByteArray());
+      AccountCapsule creator = this.deposit.getAccount(
+          this.deposit.getContract(contractAddress).getInstance()
+              .getOriginAddress().toByteArray());
       long thisTxCPULimitInUs;
       long accountCPULimitInUs = getAccountCPULimitInUs(sender, creator);
-      if (null != block) {
+      if (executerType == ET_NORMAL_TYPE) {
         long blockCPULeftInUs = getBlockCPULeftInUs().longValue();
         thisTxCPULimitInUs = min(accountCPULimitInUs, blockCPULeftInUs,
             Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
@@ -269,6 +270,7 @@ public class Runtime {
         thisTxCPULimitInUs = min(accountCPULimitInUs,
             Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
       }
+
       long vmStartInUs = System.nanoTime() / 1000;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
@@ -280,7 +282,7 @@ public class Runtime {
       this.program = new Program(null, code, programInvoke,internalTransaction, config);
     }
 
-    // todo: if falied, this call value how to solve??
+    program.getResult().setContractAddress(contractAddress);
     //transfer from callerAddress to targetAddress according to callValue
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
     byte[] callValue = contract.getCallValue().toByteArray();
@@ -304,14 +306,14 @@ public class Runtime {
     newSmartContract = newSmartContract.toBuilder()
         .setContractAddress(ByteString.copyFrom(contractAddress)).build();
 
-    // crate vm to constructor smart contract
+    // create vm to constructor smart contract
     try {
 
       AccountCapsule creator = this.deposit
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
       long thisTxCPULimitInUs;
       long accountCPULimitInUs = getAccountCPULimitInUs(creator);
-      if (null != block) {
+      if (executerType == ET_NORMAL_TYPE) {
         long blockCPULeftInUs = getBlockCPULeftInUs().longValue();
         thisTxCPULimitInUs = min(accountCPULimitInUs, blockCPULeftInUs,
             Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
@@ -319,6 +321,7 @@ public class Runtime {
         thisTxCPULimitInUs = min(accountCPULimitInUs,
             Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
       }
+
       long vmStartInUs = System.nanoTime() / 1000;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
@@ -337,6 +340,7 @@ public class Runtime {
     program.getResult().setContractAddress(contractAddress);
     deposit.createAccount(contractAddress, Protocol.AccountType.Contract);
 
+    // todo 一个账户只能一个合约账户
     // todo insure one owner just have one contract
     // todo add contract name later
     // todo check the new contract address haven't exist

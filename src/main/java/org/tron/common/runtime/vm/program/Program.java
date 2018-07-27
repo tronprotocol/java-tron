@@ -463,14 +463,15 @@ public class Program {
             newBalance = deposit.addBalance(newAddress, endowment);
         }
 
-        checkCPULimit("Create Contract");
+        checkCPULimit("BEFORE CREATE");
 
         // [5] COOK THE INVOKE AND EXECUTE
         InternalTransaction internalTx = addInternalTx(getDroplimit(), senderAddress, null, endowment, programCode, "create");
         long vmStartInUs = System.nanoTime() / 1000;
         ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
                 this, new DataWord(newAddress), getOwnerAddress(), value,
-            newBalance, null, deposit, false, byTestingSuite(), vmStartInUs, getVmShouldEndInUs());
+            newBalance, null, deposit, false, byTestingSuite(), vmStartInUs,
+            getVmShouldEndInUs());
 
         ProgramResult result = ProgramResult.createEmpty();
 
@@ -485,13 +486,13 @@ public class Program {
             getResult().merge(result);
         }
 
-
+        checkCPULimit("AFTER CREATE");
         // 4. CREATE THE CONTRACT OUT OF RETURN
         byte[] code = result.getHReturn();
 
         //long storageCost = getLength(code) * getBlockchainConfig().getGasCost().getCREATE_DATA();
         long storageCost = getLength(code) * DropCost.getInstance().getCREATE_DATA();
-        // todo storage cost
+        // todo storage cost?
         // long afterSpend = programInvoke.getDroplimit().longValue() - storageCost - result.getDropUsed();
         if (getLength(code) > DefaultConfig.getMaxCodeLength()) {
             result.setException(Exception.notEnoughSpendingGas("Contract size too large: " + getLength(result.getHReturn()),
@@ -535,7 +536,6 @@ public class Program {
                         refundGas);
             }
         }
-        checkCPULimit("Created Contract");
     }
 
     /**
@@ -600,7 +600,7 @@ public class Program {
         // CREATE CALL INTERNAL TRANSACTION
         InternalTransaction internalTx = addInternalTx( getDroplimit(), senderAddress, contextAddress, endowment, data, "call");
 
-        checkCPULimit("Created Contract");
+        checkCPULimit("BEFORE CALL");
 
         ProgramResult result = null;
         if (isNotEmpty(programCode)) {
@@ -650,6 +650,8 @@ public class Program {
             deposit.commit();
             stackPushOne();
         }
+        checkCPULimit("AFTER CALL");
+
 
         // 3. APPLY RESULTS: result.getHReturn() into out_memory allocated
         if (result != null) {
@@ -675,7 +677,7 @@ public class Program {
         } else {
             refundGas(msg.getGas().longValue(), "remaining gas from the internal call");
         }
-        checkCPULimit("Created Contract");
+
     }
 
     public void spendDrop(long dropValue, String cause) {

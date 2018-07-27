@@ -247,6 +247,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
 
     @Override
     public long getVmShouldEndInUs() {
-        return 1;
+        return 0;
+        // modity later
     }
 }

@@ -48,6 +48,6 @@ public class Constant {
 
   // config for smart contract
   public static final long MEM_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT = 32 * 1024 * 1024; // 32MB
-  public static final long CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT = 5000; // 5 ms = 5000 us
+  public static final long CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT = 100000; // 100 ms = 100000 us
   public static final long STORAGE_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT = 32 * 1024 * 1024; // 32MB
 }

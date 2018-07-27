@@ -75,7 +75,7 @@ public class VM {
         return dropConsume;
     }
 
-    public void step(Program program)
+  public void step(Program program)
         throws ContractExeException, OutOfResourceException {
       if (vmTrace) {
         program.saveOpTrace();
@@ -256,9 +256,9 @@ public class VM {
             BigInteger dataSize = stack.get(stack.size() - 2).value();
             BigInteger dataCost = dataSize
                 .multiply(BigInteger.valueOf(dropCosts.getLOG_DATA_GAS()));
-            if (program.getDroplimit().value().compareTo(dataCost) < 0) {
-              throw Program.Exception.notEnoughOpGas(op, dataCost, program.getDroplimit().value());
-            }
+//            if (program.getDroplimit().value().compareTo(dataCost) < 0) {
+//              throw Program.Exception.notEnoughOpGas(op, dataCost, program.getDroplimit().value());
+//            }
 
             dropCost = dropCosts.getLOG_GAS() +
                 dropCosts.getLOG_TOPIC_GAS() * nTopics +
@@ -278,7 +278,9 @@ public class VM {
 
         // DEBUG System.out.println(" OP IS " + op.name() + " GASCOST IS " + gasCost + " NUM IS " + op.asInt());
         // program.spendDrop(dropCost, op.name());
+
         program.checkCPULimit(op.name());
+        // logger.info("after opName: {}, {}", op.name(), System.nanoTime() / 1000 - lastTime);
 
         // Execute operation
         switch (op) {
@@ -1319,9 +1321,8 @@ public class VM {
         throws ContractExeException, OutOfResourceException {
         try {
             if (program.byTestingSuite()) return;
-
             while (!program.isStopped()) {
-                this.step(program);
+              this.step(program);
             }
 
         } catch (RuntimeException e) {

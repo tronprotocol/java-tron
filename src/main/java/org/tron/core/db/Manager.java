@@ -966,8 +966,7 @@ public class Manager {
     if (runtime.getResult().getException() != null) {
       throw new RuntimeException("Runtime exe failed!");
     }
-
-    // todo 一个账户只能一个合约账户
+    
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
     transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());
