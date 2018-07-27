@@ -247,6 +247,12 @@ service Wallet {
   rpc ProposalDelete (ProposalDeleteContract) returns (TransactionExtention) {
   }
 
+  rpc BuyStorage (BuyStorageContract) returns (Transaction) {
+  }
+
+  rpc SellStorage (SellStorageContract) returns (Transaction) {
+  }
+
   rpc ListNodes (EmptyMessage) returns (NodeList) {
     option (google.api.http) = {
       post: "/wallet/listnodes"
@@ -274,6 +280,8 @@ service Wallet {
           get: "/wallet/getaccountnet"
         }
       };
+  };
+  rpc GetAccountResource (Account) returns (AccountResourceMessage) {
   };
   rpc GetAssetIssueByName (BytesMessage) returns (AssetIssueContract) {
     option (google.api.http) = {
@@ -338,7 +346,7 @@ service Wallet {
   }
   //Please use GetBlockByLatestNum2 instead of this function.
   rpc GetBlockByLatestNum (NumberMessage) returns (BlockList) {
-       option (google.api.http) = {
+    option (google.api.http) = {
       post: "/wallet/getblockbylatestnum"
       body: "*"
       additional_bindings {
@@ -389,24 +397,24 @@ service Wallet {
   };
 
   rpc GetProposalById (BytesMessage) returns (Proposal) {
-      option (google.api.http) = {
+    option (google.api.http) = {
         post: "/wallet/getproposalbyid"
         body: "*"
         additional_bindings {
           get: "/wallet/getproposalbyid"
         }
       };
-   };
+  };
 
   rpc GetChainParameters (EmptyMessage) returns (ChainParameters) {
-       option (google.api.http) = {
+    option (google.api.http) = {
          post: "/wallet/getchainparameters"
          body: "*"
          additional_bindings {
            get: "/wallet/getchainparameters"
          }
        };
-    };
+  };
 
   rpc GetAssetIssueList (EmptyMessage) returns (AssetIssueList) {
     option (google.api.http) = {
@@ -759,6 +767,7 @@ message TimePaginatedMessage {
   int64 offset = 2;
   int64 limit = 3;
 }
+//deprecated
 message AccountNetMessage {
   int64 freeNetUsed = 1;
   int64 freeNetLimit = 2;
@@ -768,6 +777,24 @@ message AccountNetMessage {
   map<string, int64> assetNetLimit = 6;
   int64 TotalNetLimit = 7;
   int64 TotalNetWeight = 8;
+}
+message AccountResourceMessage {
+  int64 freeNetUsed = 1;
+  int64 freeNetLimit = 2;
+  int64 NetUsed = 3;
+  int64 NetLimit = 4;
+  map<string, int64> assetNetUsed = 5;
+  map<string, int64> assetNetLimit = 6;
+  int64 TotalNetLimit = 7;
+  int64 TotalNetWeight = 8;
+
+  int64 CpuUsed = 13;
+  int64 CpuLimit = 14;
+  int64 TotalCpuLimit = 15;
+  int64 TotalCpuWeight = 16;
+
+  int64 storageUsed = 21;
+  int64 storageLimit = 22;
 }
 
 message PaginatedMessage {
