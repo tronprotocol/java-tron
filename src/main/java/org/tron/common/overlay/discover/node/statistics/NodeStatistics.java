@@ -16,11 +16,14 @@
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.common.overlay.discover.node;
+package org.tron.common.overlay.discover.node.statistics;
 
 import static java.lang.Math.min;
 
+import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
+import org.joda.time.DateTime;
+import org.tron.common.overlay.discover.node.Node;
 import org.tron.protos.Protocol.ReasonCode;
 
 public class NodeStatistics {
@@ -29,27 +32,6 @@ public class NodeStatistics {
   public final static long TOO_MANY_PEERS_PENALIZE_TIMEOUT = 60 * 1000L;
   private static final long CLEAR_CYCLE_TIME = 60 * 60 * 1000L;
 
-  public class StatHandler {
-
-    private AtomicLong count = new AtomicLong(0);
-
-    public void add() {
-      count.incrementAndGet();
-    }
-
-    public void add(long delta) {
-      count.addAndGet(delta);
-    }
-
-    public long get() {
-      return count.get();
-    }
-
-    public String toString() {
-      return count.toString();
-    }
-  }
-
   private boolean isPredefined = false;
 
   private int persistedReputation = 0;
@@ -57,23 +39,25 @@ public class NodeStatistics {
   private int disconnectTimes = 0;
 
   // discovery stat
-  public final StatHandler discoverOutPing = new StatHandler();
-  public final StatHandler discoverInPong = new StatHandler();
-  public final StatHandler discoverOutPong = new StatHandler();
-  public final StatHandler discoverInPing = new StatHandler();
-  public final StatHandler discoverInFind = new StatHandler();
-  public final StatHandler discoverOutFind = new StatHandler();
-  public final StatHandler discoverInNeighbours = new StatHandler();
-  public final StatHandler discoverOutNeighbours = new StatHandler();
+  public final MessageCountStatistics discoverInPing = new MessageCountStatistics();
+  public final MessageCountStatistics discoverOutPing = new MessageCountStatistics();
+  public final MessageCountStatistics discoverInPong = new MessageCountStatistics();
+  public final MessageCountStatistics discoverOutPong = new MessageCountStatistics();
+  public final MessageCountStatistics discoverInFind = new MessageCountStatistics();
+  public final MessageCountStatistics discoverOutFind = new MessageCountStatistics();
+  public final MessageCountStatistics discoverInNeighbours = new MessageCountStatistics();
+  public final MessageCountStatistics discoverOutNeighbours = new MessageCountStatistics();
+
   public final SimpleStatter discoverMessageLatency;
   public final AtomicLong lastPongReplyTime = new AtomicLong(0l); // in milliseconds
 
   //  stat
-  public final StatHandler p2pOutHello = new StatHandler();
-  public final StatHandler p2pInHello = new StatHandler();
-  public final StatHandler p2pHandShake = new StatHandler();
-  public final StatHandler tronOutMessage = new StatHandler();
-  public final StatHandler tronInMessage = new StatHandler();
+  public final MessageCountStatistics p2pInHello = new MessageCountStatistics();
+  public final MessageCountStatistics p2pOutHello = new MessageCountStatistics();
+  public final MessageCountStatistics tronInMessage = new MessageCountStatistics();
+  public final MessageCountStatistics tronOutMessage = new MessageCountStatistics();
+
+  public final MessageCountStatistics p2pHandShake = new MessageCountStatistics();
 
   private ReasonCode tronLastRemoteDisconnectReason = null;
   private ReasonCode tronLastLocalDisconnectReason = null;
@@ -89,16 +73,16 @@ public class NodeStatistics {
     int discoverReput = 0;
 
     discoverReput +=
-        min(discoverInPong.get(), 1) * (discoverOutPing.get() == discoverInPong.get() ? 50 : 1);
+        min(discoverInPong.getTotalCount(), 1) * (discoverOutPing.getTotalCount() == discoverInPong.getTotalCount() ? 50 : 1);
 
     discoverReput +=
-        min(discoverInNeighbours.get(), 1) * (discoverOutFind.get() == discoverInNeighbours.get() ? 50 : 1);
+        min(discoverInNeighbours.getTotalCount(), 1) * (discoverOutFind.getTotalCount() == discoverInNeighbours.getTotalCount() ? 50 : 1);
 
     discoverReput += (int)discoverMessageLatency.getAvrg() == 0 ? 0 : 1000 / discoverMessageLatency.getAvrg();
 
     int reput = 0;
-    reput += p2pHandShake.get() > 0 ? 20 : 0;
-    reput += min(tronInMessage.get(), 10) * 3;
+    reput += p2pHandShake.getTotalCount() > 0 ? 20 : 0;
+    reput += min(tronInMessage.getTotalCount(), 10) * 3;
 
     if (wasDisconnected()) {
       if (tronLastLocalDisconnectReason == null && tronLastRemoteDisconnectReason == null) {
@@ -275,6 +259,24 @@ public class NodeStatistics {
       return name;
     }
 
+  }
+
+  public static void main(String[] args) {
+
+    int [] a = new int[2];
+    a[1] = 1;
+    a[1]++;
+    System.out.println((0-1 + 60) % 60);
+    DateTime dateTime = new DateTime();
+    try{
+      for (int i = 0; i < 10; i++){
+        Thread.sleep(1000);
+        System.out.println(new DateTime().getSecondOfMinute());
+        System.out.println(System.currentTimeMillis() / 1000);
+      }
+    }catch (Exception e){
+
+    }
   }
 
 }

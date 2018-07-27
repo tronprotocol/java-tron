@@ -17,6 +17,8 @@
  */
 package org.tron.common.overlay.discover.node;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -31,6 +33,7 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import org.slf4j.LoggerFactory;
@@ -45,15 +48,20 @@ import org.tron.common.net.udp.message.discover.PingMessage;
 import org.tron.common.net.udp.message.discover.PongMessage;
 import org.tron.common.overlay.discover.DiscoverListener;
 import org.tron.common.overlay.discover.node.NodeHandler.State;
+import org.tron.common.overlay.discover.node.statistics.NodeStatistics;
 import org.tron.common.overlay.discover.table.NodeTable;
 import org.tron.common.utils.CollectionUtils;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.protos.Protocol.ReasonCode;
 
 @Component
 public class NodeManager implements EventHandler {
 
   private static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeManager");
+
+  private Cache<NodeHandler, Long> badNodes = CacheBuilder.newBuilder().maximumSize(10000)
+      .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
 
   private Args args = Args.getInstance();
 
@@ -226,12 +234,16 @@ public class NodeManager implements EventHandler {
     InetSocketAddress sender = udpEvent.getAddress();
 
     Node n = new Node(m.getFrom().getId(), sender.getHostString(), sender.getPort());
-
     if (inboundOnlyFromKnownNodes && !hasNodeHandler(n)) {
-      logger.debug("Inbound packet from unknown peer {}.", sender.getAddress());
+      logger.warn("Receive packet from unknown node {}.", sender.getAddress());
       return;
     }
+
     NodeHandler nodeHandler = getNodeHandler(n);
+    if (badNodes.getIfPresent(nodeHandler) != null){
+      logger.warn("Receive packet from bad node {}.", sender.getAddress());
+      return;
+    }
 
     switch (m.getType()) {
       case DISCOVER_PING:
@@ -247,6 +259,7 @@ public class NodeManager implements EventHandler {
         nodeHandler.handleNeighbours((NeighborsMessage) m);
         break;
     }
+    calculateMsgCount(nodeHandler);
   }
 
   public void sendOutbound(UdpEvent udpEvent) {
@@ -367,6 +380,17 @@ public class NodeManager implements EventHandler {
           discoveredNodes.remove(handler);
         }
       }
+    }
+  }
+  private void calculateMsgCount(NodeHandler nodeHandler){
+    int interval = 10;
+    int maxCount = 10;
+    NodeStatistics statistics = nodeHandler.getNodeStatistics();
+    int count = statistics.discoverInPing.getCount(interval) + statistics.discoverInPong.getCount(interval)
+        + statistics.discoverInFind.getCount(interval) + statistics.discoverInNeighbours.getCount(interval);
+    if (count > maxCount){
+      logger.warn("Attack node {} found.", nodeHandler);
+      badNodes.put(nodeHandler, System.currentTimeMillis());
     }
   }
 
