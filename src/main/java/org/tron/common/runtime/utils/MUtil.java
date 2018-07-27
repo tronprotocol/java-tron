@@ -1,8 +1,12 @@
 package org.tron.common.runtime.utils;
 
+import java.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.crypto.Hash;
 import org.tron.common.storage.Deposit;
 import org.tron.core.Constant;
+import org.tron.core.Wallet;
+import org.tron.core.config.args.Args;
 
 /**
  * @author Guo Yonggang
@@ -25,11 +29,15 @@ public class MUtil {
     public static byte[] convertToTronAddress(byte[] address){
         if (address.length == 20) {
             byte [] newAddress = new byte [21];
-            byte[] temp = new byte[]{Constant.ADD_PRE_FIX_BYTE_MAINNET};
+            byte[] temp = new byte[]{Wallet.getAddressPreFixByte()};
             System.arraycopy(temp, 0, newAddress, 0, temp.length);
             System.arraycopy(address, 0, newAddress, temp.length, address.length);
             address = newAddress;
         }
         return address;
+    }
+
+    public static String get4BytesSha3HexString(String data){
+        return Hex.toHexString(Arrays.copyOf(Hash.sha3(data.getBytes()),4));
     }
 }

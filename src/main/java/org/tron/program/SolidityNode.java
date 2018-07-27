@@ -88,6 +88,7 @@ public class SolidityNode {
     DynamicProperties remoteDynamicProperties = databaseGrpcClient.getDynamicProperties();
     long remoteLastSolidityBlockNum = remoteDynamicProperties.getLastSolidityBlockNum();
     while (true) {
+
 //      try {
 //        Thread.sleep(10000);
 //      } catch (Exception e) {

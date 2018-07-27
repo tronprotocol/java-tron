@@ -29,9 +29,15 @@ message AccountCreateContract {
   AccountType type = 3;
 }
 
-// update account name if the account has no name.
+// Update account name. Account name is not unique now.
 message AccountUpdateContract {
   bytes account_name = 1;
+  bytes owner_address = 2;
+}
+
+// Set account id if the account has no id. Account id is unique and case insensitive.
+message SetAccountIdContract {
+  bytes account_id = 1;
   bytes owner_address = 2;
 }
 
@@ -90,6 +96,7 @@ message AssetIssueContract {
   int32 num = 8;
   int64 start_time = 9;
   int64 end_time = 10;
+  int64 order = 11; // the order of tokens of the same name
   int32 vote_score = 16;
   bytes description = 20;
   bytes url = 21;
@@ -102,18 +109,28 @@ message AssetIssueContract {
 message ParticipateAssetIssueContract {
   bytes owner_address = 1;
   bytes to_address = 2;
-  bytes asset_name = 3; // the name of target asset
+  bytes asset_name = 3; // the namekey of target asset, include name and order
   int64 amount = 4; // the amount of drops
+}
+
+
+enum ResourceCode {
+  BANDWIDTH = 0x00;
+  CPU = 0x01;
 }
 
 message FreezeBalanceContract {
   bytes owner_address = 1;
   int64 frozen_balance = 2;
   int64 frozen_duration = 3;
+
+  ResourceCode resource = 10;
 }
 
 message UnfreezeBalanceContract {
   bytes owner_address = 1;
+
+  ResourceCode resource = 10;
 }
 
 message UnfreezeAssetContract {
@@ -132,9 +149,27 @@ message UpdateAssetContract {
   int64 new_public_limit = 5;
 }
 
+message ProposalCreateContract {
+  bytes owner_address = 1;
+  map<int64, int64> parameters = 2;
+}
+
+message ProposalApproveContract {
+  bytes owner_address = 1;
+  int64 proposal_id = 2;
+  bool is_add_approval = 3; // add or remove approval
+}
+
+message ProposalDeleteContract {
+  bytes owner_address = 1;
+  int64 proposal_id = 2;
+}
+
 message CreateSmartContract {
   bytes owner_address = 1;
-  SmartContract new_contrect = 2;
+  SmartContract new_contract = 2;
+  bytes cpu_limit_in_trx = 3;
+  bytes storage_limit_in_trx = 4;
 }
 
 message TriggerSmartContract {
@@ -142,4 +177,16 @@ message TriggerSmartContract {
   bytes contract_address = 2;
   bytes call_value = 3;
   bytes data = 4;
+  bytes cpu_limit_in_trx = 5;
+  bytes storage_limit_in_trx = 6;
+}
+
+message BuyStorageContract {
+  bytes owner_address = 1;
+  int64 quant = 2; // trx quantity for buy storage (sun)
+}
+
+message SellStorageContract {
+  bytes owner_address = 1;
+  int64 storage_bytes = 2;
 }

@@ -41,8 +41,14 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
+import org.tron.protos.Contract.BuyStorageContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
+import org.tron.protos.Contract.ProposalApproveContract;
+import org.tron.protos.Contract.ProposalCreateContract;
+import org.tron.protos.Contract.ProposalDeleteContract;
+import org.tron.protos.Contract.SellStorageContract;
+import org.tron.protos.Contract.SetAccountIdContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
@@ -297,6 +303,24 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           break;
         case UpdateAssetContract:
           owner = contractParameter.unpack(UpdateAssetContract.class).getOwnerAddress();
+          break;
+        case ProposalCreateContract:
+          owner = contractParameter.unpack(ProposalCreateContract.class).getOwnerAddress();
+          break;
+        case ProposalApproveContract:
+          owner = contractParameter.unpack(ProposalApproveContract.class).getOwnerAddress();
+          break;
+        case ProposalDeleteContract:
+          owner = contractParameter.unpack(ProposalDeleteContract.class).getOwnerAddress();
+          break;
+        case SetAccountIdContract:
+          owner = contractParameter.unpack(SetAccountIdContract.class).getOwnerAddress();
+          break;
+        case BuyStorageContract:
+          owner = contractParameter.unpack(BuyStorageContract.class).getOwnerAddress();
+          break;
+        case SellStorageContract:
+          owner = contractParameter.unpack(SellStorageContract.class).getOwnerAddress();
           break;
         // todo add other contract
         default:
