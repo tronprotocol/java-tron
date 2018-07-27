@@ -318,7 +318,7 @@ public class TransferActuatorTest {
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AccountCapsule toAccount = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(TO_ADDRESS));
-      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE - 1_000_000L - 100_000L);
+      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE - 1_000_000L);
       Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
       noExitAccount = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(To_ACCOUNT_INVALID));

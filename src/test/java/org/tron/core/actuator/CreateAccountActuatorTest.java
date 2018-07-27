@@ -64,11 +64,9 @@ public class CreateAccountActuatorTest {
   public void createCapsule() {
     AccountCapsule ownerCapsule =
         new AccountCapsule(
-            ByteString.copyFromUtf8(ACCOUNT_NAME_SECOND),
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)),
-            AccountType.AssetIssue,
-            1_000_000_000L
-        );
+            ByteString.copyFromUtf8(ACCOUNT_NAME_SECOND),
+            AccountType.AssetIssue);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
   }
