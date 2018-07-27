@@ -25,307 +25,354 @@ import org.tron.core.db.BlockStore;
 
 public class ProgramInvokeImpl implements ProgramInvoke {
 
-    // private BlockStore blockStore;
-    /* TRANSACTION  env*/
-    private final DataWord address;
-    private final DataWord origin, caller, balance, callValue;
-    private byte[] msgData;
+  // private BlockStore blockStore;
+  /* TRANSACTION  env*/
+  private final DataWord address;
+  private final DataWord origin, caller, balance, callValue;
+  private byte[] msgData;
 
   private long thisTxCPULimitInUs;
   private long vmStartInUs;
   private long vmShouldEndInUs;
 
-     /* BLOCK  env **/
-    private final DataWord prevHash, coinbase, timestamp, number;
+  /* BLOCK  env **/
+  private final DataWord prevHash, coinbase, timestamp, number;
 
-    private Deposit deposit = null;
-    private boolean byTransaction = true;
-    private boolean byTestingSuite = false;
-    private int callDeep = 0;
-    private boolean isStaticCall = false;
+  private Deposit deposit = null;
+  private boolean byTransaction = true;
+  private boolean byTestingSuite = false;
+  private int callDeep = 0;
+  private boolean isStaticCall = false;
 
-    public ProgramInvokeImpl(DataWord address, DataWord origin, DataWord caller, DataWord balance, DataWord callValue, byte[] msgData,
-                             DataWord lastHash, DataWord coinbase, DataWord timestamp, DataWord number, DataWord difficulty,
-                             Deposit deposit, int callDeep, boolean isStaticCall, boolean byTestingSuite) {
-        this.address = address;
-        this.origin = origin;
-        this.caller = caller;
-        this.balance = balance;
-        this.callValue = callValue;
-        this.msgData = msgData;
+  public ProgramInvokeImpl(DataWord address, DataWord origin, DataWord caller, DataWord balance,
+      DataWord callValue, byte[] msgData,
+      DataWord lastHash, DataWord coinbase, DataWord timestamp, DataWord number,
+      DataWord difficulty,
+      Deposit deposit, int callDeep, boolean isStaticCall, boolean byTestingSuite) {
+    this.address = address;
+    this.origin = origin;
+    this.caller = caller;
+    this.balance = balance;
+    this.callValue = callValue;
+    this.msgData = msgData;
 
-        // last Block env
-        this.prevHash = lastHash;
-        this.coinbase = coinbase;
-        this.timestamp = timestamp;
-        this.number = number;
+    // last Block env
+    this.prevHash = lastHash;
+    this.coinbase = coinbase;
+    this.timestamp = timestamp;
+    this.number = number;
 
-        this.deposit = deposit;
-        this.byTransaction = false;
-        this.isStaticCall = isStaticCall;
-        this.byTestingSuite = byTestingSuite;
+    this.deposit = deposit;
+    this.byTransaction = false;
+    this.isStaticCall = isStaticCall;
+    this.byTestingSuite = byTestingSuite;
 
-        // this.dropLimit = balance.clone();
+    // this.dropLimit = balance.clone();
+  }
+
+  public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
+      byte[] callValue, byte[] msgData,
+      byte[] lastHash, byte[] coinbase, long timestamp, long number, Deposit deposit,
+      byte[] dropLimit, boolean byTestingSuite) {
+    this(address, origin, caller, balance, callValue, msgData, lastHash, coinbase,
+        timestamp, number, deposit, dropLimit);
+    this.byTestingSuite = byTestingSuite;
+  }
+
+  public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
+      byte[] callValue, byte[] msgData, byte[] lastHash, byte[] coinbase, long timestamp,
+      long number, Deposit deposit, byte[] dropLimit,
+      byte[] ownerResourceUsagePercent) {
+    this(address, origin, caller, balance, callValue, msgData, lastHash, coinbase,
+        timestamp, number, deposit, dropLimit);
+    // this.ownerResourceUsagePercent = new DataWord(ownerResourceUsagePercent);
+  }
+
+
+  public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
+      byte[] callValue, byte[] msgData, byte[] lastHash, byte[] coinbase, long timestamp,
+      long number, Deposit deposit, byte[] dropLimit) {
+
+    // Transaction env
+    this.address = new DataWord(address);
+    this.origin = new DataWord(origin);
+    this.caller = new DataWord(caller);
+    this.balance = new DataWord(balance);
+    this.callValue = new DataWord(callValue);
+    this.msgData = msgData;
+
+    // last Block env
+    this.prevHash = new DataWord(lastHash);
+    this.coinbase = new DataWord(coinbase);
+    this.timestamp = new DataWord(timestamp);
+    this.number = new DataWord(number);
+    this.deposit = deposit;
+    // this.dropLimit = new DataWord(dropLimit);
+  }
+
+  /*           ADDRESS op         */
+  public DataWord getOwnerAddress() {
+    return address;
+  }
+
+  /*           BALANCE op         */
+  public DataWord getBalance() {
+    return balance;
+  }
+
+  /*           ORIGIN op         */
+  public DataWord getOriginAddress() {
+    return origin;
+  }
+
+  /*           CALLER op         */
+  public DataWord getCallerAddress() {
+    return caller;
+  }
+
+  /*          CALLVALUE op    */
+  public DataWord getCallValue() {
+    return callValue;
+  }
+
+  /*****************/
+  /***  msg data ***/
+  /*****************/
+  /* NOTE: In the protocol there is no restriction on the maximum message data,
+   * However msgData here is a byte[] and this can't hold more than 2^32-1
+   */
+  private static BigInteger MAX_MSG_DATA = BigInteger.valueOf(Integer.MAX_VALUE);
+
+  /*     CALLDATALOAD  op   */
+  public DataWord getDataValue(DataWord indexData) {
+
+    BigInteger tempIndex = indexData.value();
+    int index = tempIndex.intValue(); // possible overflow is caught below
+    int size = 32; // maximum datavalue size
+
+    if (msgData == null || index >= msgData.length
+        || tempIndex.compareTo(MAX_MSG_DATA) > 0) {
+      return new DataWord();
+    }
+    if (index + size > msgData.length) {
+      size = msgData.length - index;
     }
 
-    public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
-                             byte[] callValue, byte[] msgData,
-        byte[] lastHash, byte[] coinbase, long timestamp, long number, Deposit deposit,
-        byte[] dropLimit, boolean byTestingSuite) {
-        this(address, origin, caller, balance, callValue, msgData, lastHash, coinbase,
-            timestamp, number, deposit, dropLimit);
-        this.byTestingSuite = byTestingSuite;
+    byte[] data = new byte[32];
+    System.arraycopy(msgData, index, data, 0, size);
+    return new DataWord(data);
+  }
+
+  /*  CALLDATASIZE */
+  public DataWord getDataSize() {
+
+    if (msgData == null || msgData.length == 0) {
+      return DataWord.ZERO;
+    }
+    int size = msgData.length;
+    return new DataWord(size);
+  }
+
+  /*  CALLDATACOPY */
+  public byte[] getDataCopy(DataWord offsetData, DataWord lengthData) {
+
+    int offset = offsetData.intValueSafe();
+    int length = lengthData.intValueSafe();
+
+    byte[] data = new byte[length];
+
+    if (msgData == null) {
+      return data;
+    }
+    if (offset > msgData.length) {
+      return data;
+    }
+    if (offset + length > msgData.length) {
+      length = msgData.length - offset;
     }
 
-    public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
-        byte[] callValue, byte[] msgData, byte[] lastHash, byte[] coinbase, long timestamp,
-        long number, Deposit deposit, byte[] dropLimit,
-        byte[] ownerResourceUsagePercent) {
-        this(address, origin, caller, balance, callValue, msgData, lastHash, coinbase,
-            timestamp, number, deposit, dropLimit);
-        // this.ownerResourceUsagePercent = new DataWord(ownerResourceUsagePercent);
-    }
+    System.arraycopy(msgData, offset, data, 0, length);
+
+    return data;
+  }
 
 
-    public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
-        byte[] callValue, byte[] msgData, byte[] lastHash, byte[] coinbase, long timestamp,
-        long number, Deposit deposit, byte[] dropLimit) {
+  /*     PREVHASH op    */
+  public DataWord getPrevHash() {
+    return prevHash;
+  }
 
-        // Transaction env
-        this.address = new DataWord(address);
-        this.origin = new DataWord(origin);
-        this.caller = new DataWord(caller);
-        this.balance = new DataWord(balance);
-        this.callValue = new DataWord(callValue);
-        this.msgData = msgData;
+  /*     COINBASE op    */
+  public DataWord getCoinbase() {
+    return coinbase;
+  }
 
-        // last Block env
-        this.prevHash = new DataWord(lastHash);
-        this.coinbase = new DataWord(coinbase);
-        this.timestamp = new DataWord(timestamp);
-        this.number = new DataWord(number);
-        this.deposit = deposit;
-        // this.dropLimit = new DataWord(dropLimit);
-    }
+  /*     TIMESTAMP op    */
+  public DataWord getTimestamp() {
+    return timestamp;
+  }
 
-    /*           ADDRESS op         */
-    public DataWord getOwnerAddress() {
-        return address;
-    }
+  /*     NUMBER op    */
+  public DataWord getNumber() {
+    return number;
+  }
 
-    /*           BALANCE op         */
-    public DataWord getBalance() {
-        return balance;
-    }
+  /*     DIFFICULTY op    */
+  public DataWord getDifficulty() {
+    return null; //difficulty;
+  }
 
-    /*           ORIGIN op         */
-    public DataWord getOriginAddress() {
-        return origin;
-    }
+  /*     GASLIMIT op    */
+  @Override
+  public DataWord getDroplimit() {
+    return null;
+    // todo modify today
+  }
 
-    /*           CALLER op         */
-    public DataWord getCallerAddress() {
-        return caller;
-    }
-
-    /*          CALLVALUE op    */
-    public DataWord getCallValue() {
-        return callValue;
-    }
-
-    /*****************/
-    /***  msg data ***/
-    /*****************/
-    /* NOTE: In the protocol there is no restriction on the maximum message data,
-     * However msgData here is a byte[] and this can't hold more than 2^32-1
-     */
-    private static BigInteger MAX_MSG_DATA = BigInteger.valueOf(Integer.MAX_VALUE);
-
-    /*     CALLDATALOAD  op   */
-    public DataWord getDataValue(DataWord indexData) {
-
-        BigInteger tempIndex = indexData.value();
-        int index = tempIndex.intValue(); // possible overflow is caught below
-        int size = 32; // maximum datavalue size
-
-        if (msgData == null || index >= msgData.length
-                || tempIndex.compareTo(MAX_MSG_DATA) > 0)
-            return new DataWord();
-        if (index + size > msgData.length)
-            size = msgData.length - index;
-
-        byte[] data = new byte[32];
-        System.arraycopy(msgData, index, data, 0, size);
-        return new DataWord(data);
-    }
-
-    /*  CALLDATASIZE */
-    public DataWord getDataSize() {
-
-        if (msgData == null || msgData.length == 0) return DataWord.ZERO;
-        int size = msgData.length;
-        return new DataWord(size);
-    }
-
-    /*  CALLDATACOPY */
-    public byte[] getDataCopy(DataWord offsetData, DataWord lengthData) {
-
-        int offset = offsetData.intValueSafe();
-        int length = lengthData.intValueSafe();
-
-        byte[] data = new byte[length];
-
-        if (msgData == null) return data;
-        if (offset > msgData.length) return data;
-        if (offset + length > msgData.length) length = msgData.length - offset;
-
-        System.arraycopy(msgData, offset, data, 0, length);
-
-        return data;
-    }
+  @Override
+  public long getDroplimitLong() {
+    return 0;
+    // todo modify today
+  }
 
 
-    /*     PREVHASH op    */
-    public DataWord getPrevHash() {
-        return prevHash;
-    }
-
-    /*     COINBASE op    */
-    public DataWord getCoinbase() {
-        return coinbase;
-    }
-
-    /*     TIMESTAMP op    */
-    public DataWord getTimestamp() {
-        return timestamp;
-    }
-
-    /*     NUMBER op    */
-    public DataWord getNumber() {
-        return number;
-    }
-
-    /*     DIFFICULTY op    */
-    public DataWord getDifficulty() {
-        return null; //difficulty;
-    }
-
-    /*     GASLIMIT op    */
-    @Override
-    public DataWord getDroplimit() {
-        return cpu;
-        // todo modify today
-    }
-
-    @Override
-    public long getDroplimitLong() {
-        return cpuLong;
-        // todo modify today
-    }
-
-
-    /*  Storage */
+  /*  Storage */
     /*
     public Map<DataWord, DataWord> getStorage() {
         return storage;
     }
     */
 
-    public Deposit getDeposit() {
-        return deposit;
+  public Deposit getDeposit() {
+    return deposit;
+  }
+
+  @Override
+  public BlockStore getBlockStore() {
+    return null;
+    //return deposit.getBlockStore();
+  }
+
+  @Override
+  public boolean byTransaction() {
+    return byTransaction;
+  }
+
+  @Override
+  public boolean isStaticCall() {
+    return isStaticCall;
+  }
+
+  @Override
+  public long getVmStartInUs() {
+    return vmStartInUs;
+  }
+
+  @Override
+  public boolean byTestingSuite() {
+    return byTestingSuite;
+  }
+
+  @Override
+  public int getCallDeep() {
+    return this.callDeep;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
     }
 
-    @Override
-    public BlockStore getBlockStore() {
-        return null;
-        //return deposit.getBlockStore();
+    ProgramInvokeImpl that = (ProgramInvokeImpl) o;
+
+    if (byTestingSuite != that.byTestingSuite) {
+      return false;
+    }
+    if (byTransaction != that.byTransaction) {
+      return false;
+    }
+    if (address != null ? !address.equals(that.address) : that.address != null) {
+      return false;
+    }
+    if (balance != null ? !balance.equals(that.balance) : that.balance != null) {
+      return false;
+    }
+    if (callValue != null ? !callValue.equals(that.callValue) : that.callValue != null) {
+      return false;
+    }
+    if (caller != null ? !caller.equals(that.caller) : that.caller != null) {
+      return false;
+    }
+    if (coinbase != null ? !coinbase.equals(that.coinbase) : that.coinbase != null) {
+      return false;
+    }
+    //if (difficulty != null ? !difficulty.equals(that.difficulty) : that.difficulty != null) return false;
+    //if (gas != null ? !gas.equals(that.gas) : that.gas != null) return false;
+    //if (gasPrice != null ? !gasPrice.equals(that.gasPrice) : that.gasPrice != null) return false;
+    //if (dropLimit != null ? !dropLimit.equals(that.dropLimit) : that.dropLimit != null) {
+    //    return false;
+    // }
+    if (!Arrays.equals(msgData, that.msgData)) {
+      return false;
+    }
+    if (number != null ? !number.equals(that.number) : that.number != null) {
+      return false;
+    }
+    if (origin != null ? !origin.equals(that.origin) : that.origin != null) {
+      return false;
+    }
+    if (prevHash != null ? !prevHash.equals(that.prevHash) : that.prevHash != null) {
+      return false;
+    }
+    if (deposit != null ? !deposit.equals(that.deposit) : that.deposit != null) {
+      return false;
+    }
+    //if (storage != null ? !storage.equals(that.storage) : that.storage != null) return false;
+    if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) {
+      return false;
     }
 
-    @Override
-    public boolean byTransaction() {
-        return byTransaction;
-    }
+    return true;
+  }
 
-    @Override
-    public boolean isStaticCall() {
-        return isStaticCall;
-    }
+  @Override
+  public int hashCode() {
+    return new Integer(new Boolean(byTestingSuite).hashCode()
+        + new Boolean(byTransaction).hashCode()
+        + address.hashCode()
+        + balance.hashCode()
+        + callValue.hashCode()
+        + caller.hashCode()
+        + coinbase.hashCode()
+        + Arrays.hashCode(msgData)
+        + number.hashCode()
+        + origin.hashCode()
+        + prevHash.hashCode()
+        + deposit.hashCode()
+        + timestamp.hashCode()
+    ).hashCode();
+  }
 
-    @Override
-    public boolean byTestingSuite() {
-        return byTestingSuite;
-    }
-
-    @Override
-    public int getCallDeep() {
-        return this.callDeep;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        ProgramInvokeImpl that = (ProgramInvokeImpl) o;
-
-        if (byTestingSuite != that.byTestingSuite) return false;
-        if (byTransaction != that.byTransaction) return false;
-        if (address != null ? !address.equals(that.address) : that.address != null) return false;
-        if (balance != null ? !balance.equals(that.balance) : that.balance != null) return false;
-        if (callValue != null ? !callValue.equals(that.callValue) : that.callValue != null) return false;
-        if (caller != null ? !caller.equals(that.caller) : that.caller != null) return false;
-        if (coinbase != null ? !coinbase.equals(that.coinbase) : that.coinbase != null) return false;
-        //if (difficulty != null ? !difficulty.equals(that.difficulty) : that.difficulty != null) return false;
-        //if (gas != null ? !gas.equals(that.gas) : that.gas != null) return false;
-        //if (gasPrice != null ? !gasPrice.equals(that.gasPrice) : that.gasPrice != null) return false;
-        //if (dropLimit != null ? !dropLimit.equals(that.dropLimit) : that.dropLimit != null) {
-        //    return false;
-        // }
-        if (!Arrays.equals(msgData, that.msgData)) return false;
-        if (number != null ? !number.equals(that.number) : that.number != null) return false;
-        if (origin != null ? !origin.equals(that.origin) : that.origin != null) return false;
-        if (prevHash != null ? !prevHash.equals(that.prevHash) : that.prevHash != null) return false;
-        if (deposit != null ? !deposit.equals(that.deposit) : that.deposit != null) return false;
-        //if (storage != null ? !storage.equals(that.storage) : that.storage != null) return false;
-        if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) return false;
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        return new Integer(new Boolean(byTestingSuite).hashCode()
-            + new Boolean(byTransaction).hashCode()
-            + address.hashCode()
-            + balance.hashCode()
-            + callValue.hashCode()
-            + caller.hashCode()
-            + coinbase.hashCode()
-            + Arrays.hashCode(msgData)
-            + number.hashCode()
-            + origin.hashCode()
-            + prevHash.hashCode()
-            + deposit.hashCode()
-            + timestamp.hashCode()
-        ).hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "ProgramInvokeImpl{" +
-                "address=" + address +
-                ", origin=" + origin +
-                ", caller=" + caller +
-                ", balance=" + balance +
-                ", callValue=" + callValue +
-                ", msgData=" + Arrays.toString(msgData) +
-                ", prevHash=" + prevHash +
-                ", coinbase=" + coinbase +
-                ", timestamp=" + timestamp +
-                ", number=" + number +
-                ", byTransaction=" + byTransaction +
-                ", byTestingSuite=" + byTestingSuite +
-                ", callDeep=" + callDeep +
-                '}';
-    }
+  @Override
+  public String toString() {
+    return "ProgramInvokeImpl{" +
+        "address=" + address +
+        ", origin=" + origin +
+        ", caller=" + caller +
+        ", balance=" + balance +
+        ", callValue=" + callValue +
+        ", msgData=" + Arrays.toString(msgData) +
+        ", prevHash=" + prevHash +
+        ", coinbase=" + coinbase +
+        ", timestamp=" + timestamp +
+        ", number=" + number +
+        ", byTransaction=" + byTransaction +
+        ", byTestingSuite=" + byTestingSuite +
+        ", callDeep=" + callDeep +
+        '}';
+  }
 }

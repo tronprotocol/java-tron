@@ -93,6 +93,7 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -126,6 +127,14 @@ public class Wallet {
   public Wallet(final ECKey ecKey) {
     this.ecKey = ecKey;
     logger.info("wallet address: {}", ByteArray.toHexString(this.ecKey.getAddress()));
+  }
+
+  public static boolean isConstant(ABI abi, TriggerSmartContract triggerSmartContract) {
+    try {
+      return isConstant(abi, getSelector(triggerSmartContract.getData().toByteArray()));
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   public byte[] getAddress() {
@@ -628,7 +637,7 @@ public class Wallet {
 
     ContractStore contractStore = dbManager.getContractStore();
     byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
-    SmartContract.ABI abi = contractStore.getABI(contractAddress);
+    ABI abi = contractStore.getABI(contractAddress);
     if (abi == null) {
       return null;
     }
@@ -679,7 +688,7 @@ public class Wallet {
     return contractCapsule.getInstance();
   }
 
-  private byte[] getSelector(byte[] data) {
+  private static byte[] getSelector(byte[] data) {
     if (data == null ||
         data.length < 4) {
       return null;
@@ -690,14 +699,14 @@ public class Wallet {
     return ret;
   }
 
-  private boolean isConstant(SmartContract.ABI abi, byte[] selector) throws Exception {
+  private static boolean isConstant(SmartContract.ABI abi, byte[] selector) throws Exception {
     if (selector == null || selector.length != 4) {
       throw new Exception("Selector's length or selector itself is invalid");
     }
 
     for (int i = 0; i < abi.getEntrysCount(); i++) {
-      SmartContract.ABI.Entry entry = abi.getEntrys(i);
-      if (entry.getType() != SmartContract.ABI.Entry.EntryType.Function) {
+      ABI.Entry entry = abi.getEntrys(i);
+      if (entry.getType() != ABI.Entry.EntryType.Function) {
         continue;
       }
 
@@ -706,7 +715,7 @@ public class Wallet {
       sb.append(entry.getName().toStringUtf8());
       sb.append("(");
       for (int k = 0; k < inputCount; k++) {
-        SmartContract.ABI.Entry.Param param = entry.getInputs(k);
+        ABI.Entry.Param param = entry.getInputs(k);
         sb.append(param.getType().toStringUtf8());
         if (k + 1 < inputCount) {
           sb.append(",");
