@@ -71,6 +71,7 @@ import org.tron.core.db.AccountIdIndexStore;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.ContractStore;
+import org.tron.core.db.CpuProcessor;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.PendingManager;
@@ -243,8 +244,7 @@ public class Wallet {
 
   public Account getAccountById(Account account) {
     AccountStore accountStore = dbManager.getAccountStore();
-    AccountIdIndexStore accountIdIndexStore = dbManager
-        .getAccountIdIndexStore();//to be replaced by AccountIdIndexStore
+    AccountIdIndexStore accountIdIndexStore = dbManager.getAccountIdIndexStore();
     byte[] address = accountIdIndexStore.get(account.getAccountId());
     if (address == null) {
       return null;
@@ -572,13 +572,19 @@ public class Wallet {
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
 
+    CpuProcessor cpuProcessor = new CpuProcessor(dbManager);
+    cpuProcessor.updateUsage(accountCapsule);
+
     long netLimit = processor.calculateGlobalNetLimit(accountCapsule.getFrozenBalance());
     long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
     long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
-    long cpuLimit = 0;//todo
+    long cpuLimit = cpuProcessor.calculateGlobalCpuLimit(accountCapsule.getFrozenBalance());
     long totalCpuLimit = dbManager.getDynamicPropertiesStore().getTotalCpuLimit();
     long totalCpuWeight = dbManager.getDynamicPropertiesStore().getTotalCpuWeight();
+
+    long storageLimit = accountCapsule.getAccountResource().getStorageLimit();
+    long storageUsage = accountCapsule.getAccountResource().getStorageUsage();
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
     accountCapsule.getAllFreeAssetNetUsage().keySet().forEach(asset -> {
@@ -596,6 +602,8 @@ public class Wallet {
         .setCpuUsed(accountCapsule.getAccountResource().getCpuUsage())
         .setTotalCpuLimit(totalCpuLimit)
         .setTotalCpuWeight(totalCpuWeight)
+        .setStorageLimit(storageLimit)
+        .setStorageUsed(storageUsage)
         .putAllAssetNetUsed(accountCapsule.getAllFreeAssetNetUsage())
         .putAllAssetNetLimit(assetNetLimitMap);
     return builder.build();
