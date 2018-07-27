@@ -318,6 +318,10 @@ service Wallet {
   //Use this function instead of GetBlockByNum.
   rpc GetBlockByNum2 (NumberMessage) returns (BlockExtention) {
   }
+
+  rpc GetTransactionCountByBlockNum (NumberMessage) returns (NumberMessage) {
+  }
+
   rpc GetBlockById (BytesMessage) returns (Block) {
     option (google.api.http) = {
       post: "/wallet/getblockbyid"
@@ -342,7 +346,7 @@ service Wallet {
   }
   //Please use GetBlockByLatestNum2 instead of this function.
   rpc GetBlockByLatestNum (NumberMessage) returns (BlockList) {
-       option (google.api.http) = {
+    option (google.api.http) = {
       post: "/wallet/getblockbylatestnum"
       body: "*"
       additional_bindings {
@@ -393,24 +397,24 @@ service Wallet {
   };
 
   rpc GetProposalById (BytesMessage) returns (Proposal) {
-      option (google.api.http) = {
+    option (google.api.http) = {
         post: "/wallet/getproposalbyid"
         body: "*"
         additional_bindings {
           get: "/wallet/getproposalbyid"
         }
       };
-   };
+  };
 
   rpc GetChainParameters (EmptyMessage) returns (ChainParameters) {
-       option (google.api.http) = {
+    option (google.api.http) = {
          post: "/wallet/getchainparameters"
          body: "*"
          additional_bindings {
            get: "/wallet/getchainparameters"
          }
        };
-    };
+  };
 
   rpc GetAssetIssueList (EmptyMessage) returns (AssetIssueList) {
     option (google.api.http) = {
@@ -591,6 +595,10 @@ service WalletSolidity {
   //Use this function instead of GetBlockByNum.
   rpc GetBlockByNum2 (NumberMessage) returns (BlockExtention) {
   }
+
+  rpc GetTransactionCountByBlockNum (NumberMessage) returns (NumberMessage) {
+  }
+
   rpc GetTransactionById (BytesMessage) returns (Transaction) {
     option (google.api.http) = {
       post: "/walletsolidity/gettransactionbyid"
