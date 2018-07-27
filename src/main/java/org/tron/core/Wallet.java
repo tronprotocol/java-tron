@@ -66,6 +66,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainParameters;
+import org.tron.core.db.AccountIdIndexStore;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.ContractStore;
@@ -248,6 +249,23 @@ public class Wallet {
     return accountCapsule.getInstance();
   }
 
+  public Account getAccountById(Account account) {
+    AccountStore accountStore = dbManager.getAccountStore();
+    AccountIdIndexStore accountIdIndexStore = dbManager.getAccountIdIndexStore();//to be replaced by AccountIdIndexStore
+    byte[] address = accountIdIndexStore.get(account.getAccountId());
+    if (address == null) {
+      return null;
+    }
+    AccountCapsule accountCapsule = accountStore.get(address);
+    if (accountCapsule == null) {
+      return null;
+    }
+    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+    processor.updateUsage(accountCapsule);
+    return accountCapsule.getInstance();
+  }
+
+
   /**
    * Create a transaction.
    */
@@ -427,20 +445,43 @@ public class Wallet {
     Protocol.ChainParameters.Builder builder = Protocol.ChainParameters.newBuilder();
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
 
-    builder.putParameters(ChainParameters.MAINTENANCE_TIME_INTERVAL.name(),
-        dynamicPropertiesStore.getMaintenanceTimeInterval());
-    builder.putParameters(ChainParameters.ACCOUNT_UPGRADE_COST.name(),
-        dynamicPropertiesStore.getAccountUpgradeCost());
-    builder.putParameters(ChainParameters.CREATE_ACCOUNT_FEE.name(),
-        dynamicPropertiesStore.getCreateAccountFee());
-    builder.putParameters(ChainParameters.TRANSACTION_FEE.name(),
-        dynamicPropertiesStore.getTransactionFee());
-    builder.putParameters(ChainParameters.ASSET_ISSUE_FEE.name(),
-        dynamicPropertiesStore.getAssetIssueFee());
-    builder.putParameters(ChainParameters.WITNESS_PAY_PER_BLOCK.name(),
-        dynamicPropertiesStore.getWitnessPayPerBlock());
-    builder.putParameters(ChainParameters.WITNESS_STANDBY_ALLOWANCE.name(),
-        dynamicPropertiesStore.getWitnessStandbyAllowance());
+    Protocol.ChainParameters.ChainParameter.Builder builder1
+        = Protocol.ChainParameters.ChainParameter.newBuilder();
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.MAINTENANCE_TIME_INTERVAL.name())
+        .setValue(
+            dynamicPropertiesStore.getMaintenanceTimeInterval())
+        .build());
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.ACCOUNT_UPGRADE_COST.name())
+        .setValue(
+            dynamicPropertiesStore.getMaintenanceTimeInterval())
+        .build());
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.CREATE_ACCOUNT_FEE.name())
+        .setValue(
+            dynamicPropertiesStore.getMaintenanceTimeInterval())
+        .build());
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.TRANSACTION_FEE.name())
+        .setValue(
+            dynamicPropertiesStore.getMaintenanceTimeInterval())
+        .build());
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.ASSET_ISSUE_FEE.name())
+        .setValue(
+            dynamicPropertiesStore.getMaintenanceTimeInterval())
+        .build());
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.WITNESS_PAY_PER_BLOCK.name())
+        .setValue(
+            dynamicPropertiesStore.getMaintenanceTimeInterval())
+        .build());
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.WITNESS_STANDBY_ALLOWANCE.name())
+        .setValue(
+            dynamicPropertiesStore.getMaintenanceTimeInterval())
+        .build());
     return builder.build();
   }
 
@@ -518,14 +559,9 @@ public class Wallet {
     if (assetName == null || assetName.isEmpty()) {
       return null;
     }
-    List<AssetIssueCapsule> assetIssueCapsuleList = dbManager.getAssetIssueStore()
-        .getAllAssetIssues();
-    for (AssetIssueCapsule assetIssueCapsule : assetIssueCapsuleList) {
-      if (assetName.equals(assetIssueCapsule.getName())) {
-        return assetIssueCapsule.getInstance();
-      }
-    }
-    return null;
+    AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
+        .get(assetName.toByteArray());
+    return assetIssueCapsule != null ? assetIssueCapsule.getInstance() : null;
   }
 
   public NumberMessage totalTransaction() {

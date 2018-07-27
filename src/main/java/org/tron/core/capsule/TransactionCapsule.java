@@ -46,6 +46,7 @@ import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.ProposalApproveContract;
 import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Contract.ProposalDeleteContract;
+import org.tron.protos.Contract.SetAccountIdContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
@@ -309,6 +310,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           break;
         case ProposalDeleteContract:
           owner = contractParameter.unpack(ProposalDeleteContract.class).getOwnerAddress();
+          break;
+        case SetAccountIdContract:
+          owner = contractParameter.unpack(SetAccountIdContract.class).getOwnerAddress();
           break;
         // todo add other contract
         default:

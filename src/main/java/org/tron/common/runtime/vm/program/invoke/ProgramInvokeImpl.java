@@ -19,9 +19,12 @@ package org.tron.common.runtime.vm.program.invoke;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.storage.Deposit;
 import org.tron.core.db.BlockStore;
+
+@Slf4j
 
 public class ProgramInvokeImpl implements ProgramInvoke {
 
@@ -31,7 +34,6 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   private final DataWord origin, caller, balance, callValue;
   private byte[] msgData;
 
-  private long thisTxCPULimitInUs;
   private long vmStartInUs;
   private long vmShouldEndInUs;
 
@@ -48,7 +50,8 @@ public class ProgramInvokeImpl implements ProgramInvoke {
       DataWord callValue, byte[] msgData,
       DataWord lastHash, DataWord coinbase, DataWord timestamp, DataWord number,
       DataWord difficulty,
-      Deposit deposit, int callDeep, boolean isStaticCall, boolean byTestingSuite) {
+      Deposit deposit, int callDeep, boolean isStaticCall, boolean byTestingSuite,
+      long vmStartInUs, long vmShouldEndInUs) {
     this.address = address;
     this.origin = origin;
     this.caller = caller;
@@ -66,32 +69,23 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     this.byTransaction = false;
     this.isStaticCall = isStaticCall;
     this.byTestingSuite = byTestingSuite;
+    this.vmStartInUs = vmStartInUs;
+    this.vmShouldEndInUs = vmShouldEndInUs;
 
-    // this.dropLimit = balance.clone();
   }
 
   public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
       byte[] callValue, byte[] msgData,
       byte[] lastHash, byte[] coinbase, long timestamp, long number, Deposit deposit,
-      byte[] dropLimit, boolean byTestingSuite) {
+      long vmStartInUs, long vmShouldEndInUs, boolean byTestingSuite) {
     this(address, origin, caller, balance, callValue, msgData, lastHash, coinbase,
-        timestamp, number, deposit, dropLimit);
+        timestamp, number, deposit, vmStartInUs, vmShouldEndInUs);
     this.byTestingSuite = byTestingSuite;
   }
 
   public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
       byte[] callValue, byte[] msgData, byte[] lastHash, byte[] coinbase, long timestamp,
-      long number, Deposit deposit, byte[] dropLimit,
-      byte[] ownerResourceUsagePercent) {
-    this(address, origin, caller, balance, callValue, msgData, lastHash, coinbase,
-        timestamp, number, deposit, dropLimit);
-    // this.ownerResourceUsagePercent = new DataWord(ownerResourceUsagePercent);
-  }
-
-
-  public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
-      byte[] callValue, byte[] msgData, byte[] lastHash, byte[] coinbase, long timestamp,
-      long number, Deposit deposit, byte[] dropLimit) {
+      long number, Deposit deposit, long vmStartInUs, long vmShouldEndInUs) {
 
     // Transaction env
     this.address = new DataWord(address);
@@ -107,7 +101,13 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     this.timestamp = new DataWord(timestamp);
     this.number = new DataWord(number);
     this.deposit = deposit;
-    // this.dropLimit = new DataWord(dropLimit);
+
+    // calc should end time
+    this.vmStartInUs = vmStartInUs;
+    this.vmShouldEndInUs = vmShouldEndInUs;
+    // logger.info("vmStartInUs: {}", vmStartInUs);
+    // logger.info("vmShouldEndInUs: {}", vmShouldEndInUs);
+
   }
 
   /*           ADDRESS op         */
@@ -225,16 +225,17 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   /*     GASLIMIT op    */
   @Override
   public DataWord getDroplimit() {
-    return null;
-    // todo modify today
+    return DataWord.ZERO;
   }
 
   @Override
   public long getDroplimitLong() {
     return 0;
-    // todo modify today
   }
 
+  public long getVmShouldEndInUs() {
+    return vmShouldEndInUs;
+  }
 
   /*  Storage */
     /*
@@ -264,14 +265,14 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   }
 
   @Override
+  public boolean byTestingSuite() {
+    return byTestingSuite;
+  }
+  @Override
   public long getVmStartInUs() {
     return vmStartInUs;
   }
 
-  @Override
-  public boolean byTestingSuite() {
-    return byTestingSuite;
-  }
 
   @Override
   public int getCallDeep() {

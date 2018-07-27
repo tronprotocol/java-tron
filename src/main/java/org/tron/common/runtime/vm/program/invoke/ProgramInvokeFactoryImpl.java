@@ -48,12 +48,11 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
   @Override
   public ProgramInvoke createProgramInvoke(InternalTransaction.TrxType trxType,
       InternalTransaction.ExecuterType executerType,
-      Transaction tx, Block block, Deposit deposit) {
+      Transaction tx, Block block, Deposit deposit, long vmStartInUs, long vmShouldEndInUs) {
     byte[] contractAddress;
     byte[] ownerAddress;
     long balance;
     byte[] data;
-    byte[] dropLimit = null;
     byte[] lastHash = null;
     byte[] coinbase = null;
     long timestamp = 0L;
@@ -65,8 +64,6 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
       ownerAddress = contract.getOwnerAddress().toByteArray();
       balance = deposit.getBalance(ownerAddress);
       data = ByteUtil.EMPTY_BYTE_ARRAY;
-      byte[] ownerResourceUsagePercent = contract.getNewContract().getOwnerResourceUsagePercent()
-          .toByteArray();
 
       switch (executerType) {
         case ET_NORMAL_TYPE:
@@ -82,7 +79,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
       }
 
       return new ProgramInvokeImpl(contractAddress, ownerAddress, ownerAddress, balance, null, data,
-          lastHash, coinbase, timestamp, number, deposit, dropLimit, ownerResourceUsagePercent);
+          lastHash, coinbase, timestamp, number, deposit, vmStartInUs, vmShouldEndInUs);
 
     } else if (trxType == TRX_CONTRACT_CALL_TYPE) {
       Contract.TriggerSmartContract contract = ContractCapsule
@@ -137,7 +134,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
       }
 
       return new ProgramInvokeImpl(address, origin, caller, balance, callValue, data,
-          lastHash, coinbase, timestamp, number, deposit, dropLimit);
+          lastHash, coinbase, timestamp, number, deposit, vmStartInUs, vmShouldEndInUs);
     } else {
       return null;
     }
@@ -151,7 +148,8 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
   public ProgramInvoke createProgramInvoke(Program program, DataWord toAddress,
       DataWord callerAddress,
       DataWord inValue, long balanceInt, byte[] dataIn,
-      Deposit deposit, boolean isStaticCall, boolean byTestingSuite) {
+      Deposit deposit, boolean isStaticCall, boolean byTestingSuite, long vmStartInUs,
+      long vmShouldEndInUs) {
 
     DataWord address = toAddress;
     DataWord origin = program.getOriginAddress();
@@ -165,10 +163,11 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
     DataWord timestamp = program.getTimestamp();
     DataWord number = program.getNumber();
     DataWord difficulty = program.getDifficulty();
-    DataWord dropLimit = program.getDroplimit();
 
     return new ProgramInvokeImpl(address, origin, caller, balance, callValue,
         data, lastHash, coinbase, timestamp, number, difficulty,
-        deposit, program.getCallDeep() + 1, isStaticCall, byTestingSuite);
+        deposit, program.getCallDeep() + 1, isStaticCall, byTestingSuite, vmStartInUs,
+        vmShouldEndInUs);
   }
+
 }

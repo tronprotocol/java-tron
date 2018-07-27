@@ -104,7 +104,7 @@ public class Manager {
   @Autowired
   private BlockIndexStore blockIndexStore;
   @Autowired
-  private AccountIndexStore accountIndexStore;
+  private AccountIdIndexStore accountIdIndexStore;
   @Autowired
   private WitnessScheduleStore witnessScheduleStore;
   @Autowired
@@ -383,7 +383,7 @@ public class Manager {
                       account.getAccountType(),
                       account.getBalance());
               this.accountStore.put(account.getAddress(), accountCapsule);
-              this.accountIndexStore.put(accountCapsule);
+              this.accountIdIndexStore.put(accountCapsule);
             });
   }
 
@@ -966,6 +966,7 @@ public class Manager {
     if (runtime.getResult().getException() != null) {
       throw new RuntimeException("Runtime exe failed!");
     }
+
 // todo judge result in runtime same as block,trx,recipt
     // todo 一个账户只能一个合约账户
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
@@ -1315,12 +1316,12 @@ public class Manager {
     this.blockIndexStore = indexStore;
   }
 
-  public AccountIndexStore getAccountIndexStore() {
-    return this.accountIndexStore;
+  public AccountIdIndexStore getAccountIdIndexStore() {
+    return this.accountIdIndexStore;
   }
 
-  public void setAccountIndexStore(AccountIndexStore indexStore) {
-    this.accountIndexStore = indexStore;
+  public void setAccountIdIndexStore(AccountIdIndexStore indexStore) {
+    this.accountIdIndexStore = indexStore;
   }
 
   public void closeAllStore() {
@@ -1328,7 +1329,7 @@ public class Manager {
     closeOneStore(accountStore);
     closeOneStore(blockStore);
     closeOneStore(blockIndexStore);
-    closeOneStore(accountIndexStore);
+    closeOneStore(accountIdIndexStore);
     closeOneStore(witnessStore);
     closeOneStore(witnessScheduleStore);
     closeOneStore(assetIssueStore);

@@ -39,6 +39,7 @@ public class AssetIssueActuatorTest {
   private static Manager dbManager;
   private static final String dbPath = "output_assetIssue_test";
   private static final String OWNER_ADDRESS;
+  private static final String OWNER_ADDRESS_SECOND;
   private static final String NAME = "trx-my";
   private static final long TOTAL_SUPPLY = 10000L;
   private static final int TRX_NUM = 10000;
@@ -54,6 +55,8 @@ public class AssetIssueActuatorTest {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
+    OWNER_ADDRESS_SECOND =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
   }
 
   /**
@@ -79,7 +82,15 @@ public class AssetIssueActuatorTest {
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
             AccountType.Normal,
             dbManager.getDynamicPropertiesStore().getAssetIssueFee());
+    AccountCapsule ownerSecondCapsule =
+        new AccountCapsule(
+            ByteString.copyFromUtf8("ownerSecond"),
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)),
+            AccountType.Normal,
+            dbManager.getDynamicPropertiesStore().getAssetIssueFee());
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+    dbManager.getAccountStore().put(
+        ownerSecondCapsule.getAddress().toByteArray(), ownerSecondCapsule);
 
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(24 * 3600 * 1000);
 
@@ -140,31 +151,51 @@ public class AssetIssueActuatorTest {
 
   @Test
   public void repeatAssetIssue() {
-    AssetIssueActuator actuator = new AssetIssueActuator(getContract(), dbManager);
+    long nowTime = new Date().getTime();
+    Any contract = Any.pack(
+        Contract.AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)))
+            .setName(ByteString.copyFromUtf8(NAME))
+            .setTotalSupply(TOTAL_SUPPLY)
+            .setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime)
+            .setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .build());
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager); // second asset
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
+      // put first assetissue
       dbManager
           .getAssetIssueStore()
           .put(
               ByteArray.fromString(NAME),
               new AssetIssueCapsule(getContract().unpack(Contract.AssetIssueContract.class)));
+      // execute second assetissue
       actuator.validate();
       actuator.execute(ret);
-      Assert.assertTrue(false);
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertTrue("Token exists".equals(e.getMessage()));
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      AccountCapsule ownerSecond =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS_SECOND));
+      String nameKey = NAME + "_1";
       AssetIssueCapsule assetIssueCapsule =
-          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
-      Assert.assertEquals(owner.getBalance(),
-          dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance);
+          dbManager.getAssetIssueStore().get(ByteArray.fromString(nameKey));
       Assert.assertNotNull(assetIssueCapsule);
-      Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
+      String dbKey = new String(assetIssueCapsule.createDbKey());
+      Assert.assertEquals(dbKey, nameKey);
+      Assert.assertEquals(assetIssueCapsule.getOwnerAddress(),
+          ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)));
+      Assert.assertEquals(ownerSecond.getBalance(), 0);
+      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
+          blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
+      Assert.assertEquals(ownerSecond.getAssetMap().get(nameKey).longValue(), TOTAL_SUPPLY);
+    } catch (ContractValidateException e) {
+      logger.info(e.getMessage());
+      Assert.assertFalse(e instanceof ContractValidateException);
+
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } catch (InvalidProtocolBufferException e) {

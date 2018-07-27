@@ -69,5 +69,7 @@ public interface ProgramInvoke {
 
   boolean isStaticCall();
 
+  long getVmShouldEndInUs();
+
   long getVmStartInUs();
 }

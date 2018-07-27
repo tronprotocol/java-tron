@@ -71,6 +71,12 @@ public interface Deposit {
 
     void putStorage(Key key, Value value);
 
+    void putVotes(Key key, Value value);
+
+    void syncCacheFromAccountStore(byte[] address);
+
+    void syncCacheFromVotesStore(byte[] address);
+
     TransactionCapsule getTransaction(byte[] trxHash);
 
     BlockCapsule getBlock(byte[] blockHash);

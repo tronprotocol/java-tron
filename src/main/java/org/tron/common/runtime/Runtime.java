@@ -1,5 +1,6 @@
 package org.tron.common.runtime;
 
+import static com.google.common.primitives.Longs.min;
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.tron.common.runtime.vm.program.InternalTransaction.ExecuterType.ET_CONSTANT_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.ExecuterType.ET_NORMAL_TYPE;
@@ -14,6 +15,7 @@ import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
@@ -28,12 +30,14 @@ import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
@@ -156,66 +160,76 @@ public class Runtime {
 
     switch (trxType) {
       case TRX_PRECOMPILED_TYPE:
+        readyToExecute = true;
         break;
       case TRX_CONTRACT_CREATION_TYPE:
-        initForCreate();
-        break;
       case TRX_CONTRACT_CALL_TYPE:
-        initForCall();
+        if (!curCPULimitReachedBlockCPULimit()) {
+          readyToExecute = true;
+        }
         break;
       default:
         break;
     }
   }
 
-  public void initForCall() {
 
-    // Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
+  public BigInteger getBlockCPULeftInUs() {
+
+    // insure block is not null
+    BigInteger curBlockHaveElapsedCPUInUs =
+        BigInteger.valueOf(
+            1000 * (DateTime.now().getMillis() - block.getBlockHeader().getRawDataOrBuilder()
+                .getTimestamp())); // us
+    BigInteger curBlockCPULimitInUs = BigInteger.valueOf((long)
+        (1000 * ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5
+            * ChainConstant.BLOCK_PRODUCED_TIME_OUT
+            / 100)); // us
+
+    return curBlockCPULimitInUs.subtract(curBlockHaveElapsedCPUInUs);
+
   }
 
-  public void initForCreate() {
+  public boolean curCPULimitReachedBlockCPULimit() {
 
-    CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
-    SmartContract smartContract = contract.getNewContract();
-
-    if (null != block) {
-
-      long blockStartTimestamp = block.getBlockHeader().getRawDataOrBuilder().getTimestamp();
-
-      BigInteger curBlockCPULimit = BigInteger.valueOf(1125000);
-
-      BigInteger curBlockHaveElapsedCPU = BigInteger.valueOf(10000);
-
-      BigInteger trxCPULimit = new BigInteger(1, contract.getCpuLimitInTrx().toByteArray());
+    if (executerType == ET_NORMAL_TYPE) {
+      BigInteger blockCPULeftInUs = getBlockCPULeftInUs();
+      BigInteger oneTxCPULimitInUs = BigInteger
+          .valueOf(Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
 
       boolean cumulativeCPUReached =
-          trxCPULimit.add(curBlockHaveElapsedCPU).compareTo(curBlockCPULimit) > 0;
+          oneTxCPULimitInUs.compareTo(blockCPULeftInUs) > 0;
 
       if (cumulativeCPUReached) {
         logger.error("cumulative CPU Reached");
-        return;
+        return true;
       }
     }
+    return false;
 
-    // [2] check the account balance
-//    BigInteger txGasCost = toBI(tx.getGasPrice()).multiply(txGasLimit);
-//    BigInteger totalCost = toBI(tx.getValue()).add(txGasCost);
-//    BigInteger senderBalance = track.getBalance(tx.getSender());
-//
-//    if (!isCovers(senderBalance, totalCost)) {
-//
-//      execError(
-//          String.format("Not enough cash: Require: %s, Sender cash: %s", totalCost, senderBalance));
-//
-//      return;
-//    }
+  }
 
-    readyToExecute = true;
+//  private long getAccountCPULimitInUs(List<AccountCapsule> accountCapsules) {
+//    long ret = 0;
+//    accountCapsules.forEach(accountCapsule ->
+//        ret += getAccountCPULimit(accountCapsule));
+//
+//    return ret;
+//
+//  }
+
+  private long getAccountCPULimitInUs(AccountCapsule... accountCapsules) {
+
+    return 100000;
 
   }
 
 
   public void execute() throws ContractValidateException, ContractExeException {
+
+    if (!readyToExecute) {
+      return;
+    }
     switch (trxType) {
       case TRX_PRECOMPILED_TYPE:
         precompiled();
@@ -243,15 +257,35 @@ public class Runtime {
     if (isEmpty(code)) {
 
     } else {
+
+      AccountCapsule sender = this.deposit.getAccount(contract.getOwnerAddress().toByteArray());
+      AccountCapsule creator = this.deposit.getAccount(
+          this.deposit.getContract(contractAddress).getInstance()
+              .getOriginAddress().toByteArray());
+      long thisTxCPULimitInUs;
+      long accountCPULimitInUs = getAccountCPULimitInUs(sender, creator);
+      if (executerType == ET_NORMAL_TYPE) {
+        long blockCPULeftInUs = getBlockCPULeftInUs().longValue();
+        thisTxCPULimitInUs = min(accountCPULimitInUs, blockCPULeftInUs,
+            Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
+      } else {
+        thisTxCPULimitInUs = min(accountCPULimitInUs,
+            Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
+      }
+
+      long vmStartInUs = System.nanoTime() / 1000;
+      long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
+
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CALL_TYPE, executerType, trx,
-              block, deposit);
+              block, deposit, vmStartInUs, vmShouldEndInUs);
       this.vm = new VM(config);
       InternalTransaction internalTransaction = new InternalTransaction(trx);
-      this.program = new Program(null, code, programInvoke, internalTransaction, config);
+      this.program = new Program(null, code, programInvoke,internalTransaction, config);
     }
 
     program.getResult().setContractAddress(contractAddress);
+    //transfer from callerAddress to targetAddress according to callValue
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
     byte[] callValue = contract.getCallValue().toByteArray();
     if (null != callValue && callValue.length != 0) {
@@ -268,28 +302,53 @@ public class Runtime {
       throws ContractExeException {
     CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
     SmartContract newSmartContract = contract.getNewContract();
+
     byte[] code = newSmartContract.getBytecode().toByteArray();
     byte[] contractAddress = Wallet.generateContractAddress(trx);
     newSmartContract = newSmartContract.toBuilder()
         .setContractAddress(ByteString.copyFrom(contractAddress)).build();
-    // logger.info("new contract address is: " + Wallet.encode58Check(contractAddress));
 
-    // Transaction.Contract trxContract = trx.getRawData().getContract(0).toBuilder().setParameter(Any.pack(contract)).build();
-    // Transaction.raw.Builder transactionBuilder = trx.getRawData().toBuilder().clearContract().addContract(trxContract);
-    // trx = trx.toBuilder().setRawData(transactionBuilder.build()).build();
+    // create vm to constructor smart contract
+    try {
 
-    // crate vm to constructor smart contract
+      AccountCapsule creator = this.deposit
+          .getAccount(newSmartContract.getOriginAddress().toByteArray());
+      long thisTxCPULimitInUs;
+      long accountCPULimitInUs = getAccountCPULimitInUs(creator);
+      if (executerType == ET_NORMAL_TYPE) {
+        long blockCPULeftInUs = getBlockCPULeftInUs().longValue();
+        thisTxCPULimitInUs = min(accountCPULimitInUs, blockCPULeftInUs,
+            Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
+      } else {
+        thisTxCPULimitInUs = min(accountCPULimitInUs,
+            Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
+      }
 
-    byte[] ops = newSmartContract.getBytecode().toByteArray();
-    InternalTransaction internalTransaction = new InternalTransaction(trx);
-    ProgramInvoke programInvoke = programInvokeFactory
-        .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executerType, trx,
-            block, deposit);
-    this.vm = new VM(config);
-    this.program = new Program(ops, programInvoke, internalTransaction, config);
+      long vmStartInUs = System.nanoTime() / 1000;
+      long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
+
+      byte[] ops = newSmartContract.getBytecode().toByteArray();
+      InternalTransaction internalTransaction = new InternalTransaction(trx);
+      ProgramInvoke programInvoke = programInvokeFactory
+          .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executerType, trx,
+              block, deposit, vmStartInUs, vmShouldEndInUs);
+      this.vm = new VM(config);
+      this.program = new Program(ops, programInvoke, internalTransaction, config);
+    } catch (Exception e) {
+      logger.error(e.getMessage());
+      return;
+    }
 
     program.getResult().setContractAddress(contractAddress);
     deposit.createAccount(contractAddress, Protocol.AccountType.Contract);
+
+    // todo 一个账户只能一个合约账户
+    // todo insure one owner just have one contract
+    // todo add contract name later
+    // todo check the new contract address haven't exist
+    // todo code the revert of cpu/storage exceed
+    // todo run below code, cpu limit is ok, but storage??
+
     deposit.createContract(contractAddress, new ContractCapsule(newSmartContract));
     deposit.saveCode(contractAddress, ProgramPrecompile.getCode(code));
 
@@ -305,6 +364,10 @@ public class Runtime {
   }
 
   public void go() {
+
+    if (!readyToExecute) {
+      return;
+    }
 
     try {
       if (vm != null) {
