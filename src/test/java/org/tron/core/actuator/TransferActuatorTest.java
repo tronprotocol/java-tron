@@ -182,7 +182,9 @@ public class TransferActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertTrue("balance is not sufficient.".equals(e.getMessage()));
+      logger.info(e.getMessage());
+      Assert.assertTrue(
+          "Validate TransferContract error, balance is not sufficient.".equals(e.getMessage()));
       AccountCapsule owner = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AccountCapsule toAccount = dbManager.getAccountStore()
@@ -316,7 +318,7 @@ public class TransferActuatorTest {
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AccountCapsule toAccount = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(TO_ADDRESS));
-      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE - 1_000_000L);
+      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE - 1_000_000L - 100_000L);
       Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
       noExitAccount = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(To_ACCOUNT_INVALID));
@@ -425,7 +427,8 @@ public class TransferActuatorTest {
       fail("Validate TransferContract error, insufficient fee.");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Validate TransferContract error, insufficient fee.", e.getMessage());
+      Assert.assertEquals("Validate TransferContract error, balance is not sufficient.",
+          e.getMessage());
       AccountCapsule owner = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AccountCapsule toAccount = dbManager.getAccountStore()

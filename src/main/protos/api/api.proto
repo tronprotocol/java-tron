@@ -238,13 +238,13 @@ service Wallet {
   rpc UpdateAsset2 (UpdateAssetContract) returns (TransactionExtention) {
   }
 
-  rpc ProposalCreate (ProposalCreateContract) returns (Transaction) {
+  rpc ProposalCreate (ProposalCreateContract) returns (TransactionExtention) {
   }
 
-  rpc ProposalApprove (ProposalApproveContract) returns (Transaction) {
+  rpc ProposalApprove (ProposalApproveContract) returns (TransactionExtention) {
   }
 
-  rpc ProposalDelete (ProposalDeleteContract) returns (Transaction) {
+  rpc ProposalDelete (ProposalDeleteContract) returns (TransactionExtention) {
   }
 
   rpc BuyStorage (BuyStorageContract) returns (Transaction) {
@@ -367,13 +367,13 @@ service Wallet {
     };
   }
 
-  rpc DeployContract (CreateSmartContract) returns (Transaction) {
+  rpc DeployContract (CreateSmartContract) returns (TransactionExtention) {
   }
 
   rpc GetContract (BytesMessage) returns (SmartContract) {
   }
 
-  rpc TriggerContract (TriggerSmartContract) returns (Transaction) {
+  rpc TriggerContract (TriggerSmartContract) returns (TransactionExtention) {
   }
 
   rpc ListWitnesses (EmptyMessage) returns (WitnessList) {
