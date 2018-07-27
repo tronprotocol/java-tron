@@ -268,6 +268,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   public boolean byTestingSuite() {
     return byTestingSuite;
   }
+
   @Override
   public long getVmStartInUs() {
     return vmStartInUs;

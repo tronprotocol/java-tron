@@ -281,7 +281,7 @@ public class Runtime {
               block, deposit, vmStartInUs, vmShouldEndInUs);
       this.vm = new VM(config);
       InternalTransaction internalTransaction = new InternalTransaction(trx);
-      this.program = new Program(null, code, programInvoke,internalTransaction, config);
+      this.program = new Program(null, code, programInvoke, internalTransaction, config);
     }
 
     program.getResult().setContractAddress(contractAddress);
