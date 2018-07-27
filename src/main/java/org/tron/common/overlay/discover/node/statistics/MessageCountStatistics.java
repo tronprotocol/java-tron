@@ -36,7 +36,7 @@ public class MessageCountStatistics {
 
   public int getCount(int interval){
     if (interval > SIZE){
-      logger.warn("Param second({}) is gt SIZE({})", interval, SIZE);
+      logger.warn("Param interval({}) is gt SIZE({})", interval, SIZE);
       return 0;
     }
     update();

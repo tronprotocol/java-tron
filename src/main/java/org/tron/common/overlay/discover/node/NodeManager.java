@@ -60,7 +60,7 @@ public class NodeManager implements EventHandler {
 
   private static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeManager");
 
-  private Cache<NodeHandler, Long> badNodes = CacheBuilder.newBuilder().maximumSize(10000)
+  private Cache<InetSocketAddress, NodeHandler> badNodes = CacheBuilder.newBuilder().maximumSize(10000)
       .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
 
   private Args args = Args.getInstance();
@@ -240,7 +240,7 @@ public class NodeManager implements EventHandler {
     }
 
     NodeHandler nodeHandler = getNodeHandler(n);
-    if (badNodes.getIfPresent(nodeHandler) != null){
+    if (badNodes.getIfPresent(nodeHandler.getInetSocketAddress()) != null){
       logger.warn("Receive packet from bad node {}.", sender.getAddress());
       return;
     }
@@ -382,6 +382,7 @@ public class NodeManager implements EventHandler {
       }
     }
   }
+
   private void calculateMsgCount(NodeHandler nodeHandler){
     int interval = 10;
     int maxCount = 10;
@@ -389,8 +390,9 @@ public class NodeManager implements EventHandler {
     int count = statistics.discoverInPing.getCount(interval) + statistics.discoverInPong.getCount(interval)
         + statistics.discoverInFind.getCount(interval) + statistics.discoverInNeighbours.getCount(interval);
     if (count > maxCount){
-      logger.warn("Attack node {} found.", nodeHandler);
-      badNodes.put(nodeHandler, System.currentTimeMillis());
+      logger.warn("UDP attack found: {}.", nodeHandler);
+      badNodes.put(nodeHandler.getInetSocketAddress(), nodeHandler);
+      table.dropNode(nodeHandler.getNode());
     }
   }
 
