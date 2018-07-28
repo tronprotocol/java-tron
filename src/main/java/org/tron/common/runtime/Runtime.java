@@ -1,5 +1,6 @@
 package org.tron.common.runtime;
 
+import static com.google.common.primitives.Longs.max;
 import static com.google.common.primitives.Longs.min;
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.tron.common.runtime.vm.program.InternalTransaction.ExecuterType.ET_CONSTANT_TYPE;
@@ -40,11 +41,13 @@ import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
+import org.tron.core.db.CpuProcessor;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.CreateSmartContract;
+import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.SmartContract;
@@ -211,29 +214,42 @@ public class Runtime {
     return false;
   }
 
-//  private long getAccountCPULimitInUs(List<AccountCapsule> accountCapsules) {
-//    long ret = 0;
-//    accountCapsules.forEach(accountCapsule ->
-//        ret += getAccountCPULimit(accountCapsule));
-//
-//    return ret;
-//
-//  }
-
   private long getAccountCPULimitInUs(AccountCapsule creator,
-      SmartContract smartContract) {
+      CreateSmartContract contract) {
 
-    smartContract.getConsumeUserResourcePercent();
+    CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
+    long cpuFromFrozen = cpuProcessor.calculateGlobalCpuLimit(
+        creator.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance());
+    logger.info("cpuFromFrozen: {}", cpuFromFrozen);
 
-    return 100000;
+    long cpuFromTRX = Constant.CPU_IN_US_PER_TRX * contract.getCpuLimitInTrx();
+
+    return max(cpuFromFrozen, cpuFromTRX); // us
 
   }
 
   private long getAccountCPULimitInUs(AccountCapsule creator, AccountCapsule sender,
-      SmartContract smartContract) {
+      TriggerSmartContract contract) {
 
-    return 100000;
+    CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
+    SmartContract smartContract = this.deposit
+        .getContract(contract.getContractAddress().toByteArray()).getInstance();
+    long consumeUserResourcePercent = smartContract.getConsumeUserResourcePercent();
 
+    long senderCpuFromTrx = Constant.CPU_IN_US_PER_TRX * contract.getCpuLimitInTrx();
+    long senderCpuFromFrozen = cpuProcessor.calculateGlobalCpuLimit(
+        sender.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance());
+    long creatorCpuFromFrozen = cpuProcessor.calculateGlobalCpuLimit(
+        creator.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance());
+    long senderCpuMax = max(senderCpuFromTrx, senderCpuFromFrozen);
+    if (consumeUserResourcePercent >= 1.0) {
+      return senderCpuMax;
+    } else if (consumeUserResourcePercent <= 0.0) {
+      return creatorCpuFromFrozen;
+    } else {
+      return max(min(creatorCpuFromFrozen / (1 - consumeUserResourcePercent),
+          senderCpuMax / consumeUserResourcePercent), consumeUserResourcePercent);
+    }
   }
 
   public void execute() throws ContractValidateException, ContractExeException {
@@ -274,11 +290,8 @@ public class Runtime {
           this.deposit.getContract(contractAddress).getInstance()
               .getOriginAddress().toByteArray());
 
-      SmartContract smartContract = this.deposit
-          .getContract(contract.getContractAddress().toByteArray()).getInstance();
-
       long thisTxCPULimitInUs;
-      long accountCPULimitInUs = getAccountCPULimitInUs(creator, sender, smartContract);
+      long accountCPULimitInUs = getAccountCPULimitInUs(creator, sender, contract);
       if (executerType == ET_NORMAL_TYPE) {
         long blockCPULeftInUs = getBlockCPULeftInUs().longValue();
         thisTxCPULimitInUs = min(accountCPULimitInUs, blockCPULeftInUs,
@@ -345,7 +358,7 @@ public class Runtime {
       AccountCapsule creator = this.deposit
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
       long thisTxCPULimitInUs;
-      long accountCPULimitInUs = getAccountCPULimitInUs(creator, newSmartContract);
+      long accountCPULimitInUs = getAccountCPULimitInUs(creator, contract);
       if (executerType == ET_NORMAL_TYPE) {
         long blockCPULeftInUs = getBlockCPULeftInUs().longValue();
         thisTxCPULimitInUs = min(accountCPULimitInUs, blockCPULeftInUs,
