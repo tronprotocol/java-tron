@@ -376,6 +376,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           return 0;
       }
     } catch (Exception ex) {
+      logger.error(ex.getMessage());
       ex.printStackTrace();
       return 0;
     }

@@ -72,7 +72,7 @@ public class Runtime {
   private String runtimeError;
   private boolean readyToExecute = false;
 
-  CpuProcessor cpuProcessor = null;
+  private CpuProcessor cpuProcessor = null;
   PrecompiledContracts.PrecompiledContract precompiledContract = null;
   private ProgramResult result = new ProgramResult();
 
