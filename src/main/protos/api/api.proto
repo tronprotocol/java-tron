@@ -247,10 +247,10 @@ service Wallet {
   rpc ProposalDelete (ProposalDeleteContract) returns (TransactionExtention) {
   }
 
-  rpc BuyStorage (BuyStorageContract) returns (Transaction) {
+  rpc BuyStorage (BuyStorageContract) returns (TransactionExtention) {
   }
 
-  rpc SellStorage (SellStorageContract) returns (Transaction) {
+  rpc SellStorage (SellStorageContract) returns (TransactionExtention) {
   }
 
   rpc ListNodes (EmptyMessage) returns (NodeList) {

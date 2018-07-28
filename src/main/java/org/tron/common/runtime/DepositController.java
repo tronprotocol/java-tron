@@ -62,6 +62,7 @@ public class DepositController {
       throws ContractValidateException, ContractExeException {
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
     Runtime runtime = new Runtime(trxCap.getInstance(), deposit, programInvokeFactory);
+    runtime.init();
     runtime.execute();
     runtime.go();
     ProgramResult programResult = runtime.getResult();
@@ -91,6 +92,7 @@ public class DepositController {
       Deposit trxDeposit = currentDeposit.newDepositChild();
       Runtime runtime = new Runtime(trxCap.getInstance(), block.getInstance(), trxDeposit,
           programInvokeFactory);
+      runtime.init();
       runtime.execute();
       runtime.go();
 
@@ -132,6 +134,7 @@ public class DepositController {
       throws ContractValidateException, ContractExeException {
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
     Runtime runtime = new Runtime(trxCap.getInstance(), programInvokeFactory, deposit);
+    runtime.init();
     runtime.execute();
     runtime.go();
     ProgramResult programResult = runtime.getResult();

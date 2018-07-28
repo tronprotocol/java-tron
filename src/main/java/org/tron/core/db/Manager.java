@@ -106,6 +106,8 @@ public class Manager {
   @Autowired
   private AccountIdIndexStore accountIdIndexStore;
   @Autowired
+  private AccountContractIndexStore accountContractIndexStore;
+  @Autowired
   private WitnessScheduleStore witnessScheduleStore;
   @Autowired
   private RecentBlockStore recentBlockStore;
@@ -278,6 +280,11 @@ public class Manager {
 
   public void clearAndWriteNeighbours(Set<Node> nodes) {
     this.peersStore.put("neighbours".getBytes(), nodes);
+  }
+
+
+  public AccountContractIndexStore getAccountContractIndexStore() {
+    return accountContractIndexStore;
   }
 
   public Set<Node> readNeighbours() {
@@ -969,6 +976,8 @@ public class Manager {
         new ProgramInvokeFactoryImpl());
     consumeBandwidth(trxCap, runtime.getResult().getRet());
 
+    runtime.init();
+        
     //exec
     trace.exec(runtime);
 
@@ -982,7 +991,8 @@ public class Manager {
     if (runtime.getResult().getException() != null) {
       throw new RuntimeException("Runtime exe failed!");
     }
-
+    // todo judge result in runtime same as block,trx,recipt
+    // todo 一个账户只能一个合约账户
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
     transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());

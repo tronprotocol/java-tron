@@ -87,6 +87,10 @@ public class BuyStorageActuator extends AbstractActuator {
       throw new ContractValidateException("quantity must be positive");
     }
 
+    if (quant < 1000_000L) {
+      throw new ContractValidateException("quantity must be larger than 1TRX");
+    }
+
     if (quant > accountCapsule.getBalance()) {
       throw new ContractValidateException("quantity must be less than accountBalance");
     }

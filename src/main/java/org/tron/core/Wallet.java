@@ -71,6 +71,7 @@ import org.tron.core.db.AccountIdIndexStore;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.ContractStore;
+import org.tron.core.db.CpuProcessor;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.PendingManager;
@@ -95,6 +96,7 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.SmartContract.ABI.Entry.StateMutabilityType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -129,6 +131,14 @@ public class Wallet {
   public Wallet(final ECKey ecKey) {
     this.ecKey = ecKey;
     logger.info("wallet address: {}", ByteArray.toHexString(this.ecKey.getAddress()));
+  }
+
+  public static boolean isConstant(ABI abi, TriggerSmartContract triggerSmartContract) {
+    try {
+      return isConstant(abi, getSelector(triggerSmartContract.getData().toByteArray()));
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   public byte[] getAddress() {
@@ -244,8 +254,7 @@ public class Wallet {
 
   public Account getAccountById(Account account) {
     AccountStore accountStore = dbManager.getAccountStore();
-    AccountIdIndexStore accountIdIndexStore = dbManager
-        .getAccountIdIndexStore();//to be replaced by AccountIdIndexStore
+    AccountIdIndexStore accountIdIndexStore = dbManager.getAccountIdIndexStore();
     byte[] address = accountIdIndexStore.get(account.getAccountId());
     if (address == null) {
       return null;
@@ -489,13 +498,13 @@ public class Wallet {
 
     return builder.build();
   }
-
   public AssetIssueList getAssetIssueList() {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     dbManager.getAssetIssueStore().getAllAssetIssues()
         .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
     return builder.build();
   }
+
 
   public AssetIssueList getAssetIssueList(long offset, long limit) {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
@@ -573,13 +582,19 @@ public class Wallet {
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
 
+    CpuProcessor cpuProcessor = new CpuProcessor(dbManager);
+    cpuProcessor.updateUsage(accountCapsule);
+
     long netLimit = processor.calculateGlobalNetLimit(accountCapsule.getFrozenBalance());
     long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
     long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
-    long cpuLimit = 0;//todo
+    long cpuLimit = cpuProcessor.calculateGlobalCpuLimit(accountCapsule.getCpuFrozenBalance());
     long totalCpuLimit = dbManager.getDynamicPropertiesStore().getTotalCpuLimit();
     long totalCpuWeight = dbManager.getDynamicPropertiesStore().getTotalCpuWeight();
+
+    long storageLimit = accountCapsule.getAccountResource().getStorageLimit();
+    long storageUsage = accountCapsule.getAccountResource().getStorageUsage();
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
     accountCapsule.getAllFreeAssetNetUsage().keySet().forEach(asset -> {
@@ -597,6 +612,8 @@ public class Wallet {
         .setCpuUsed(accountCapsule.getAccountResource().getCpuUsage())
         .setTotalCpuLimit(totalCpuLimit)
         .setTotalCpuWeight(totalCpuWeight)
+        .setStorageLimit(storageLimit)
+        .setStorageUsed(storageUsage)
         .putAllAssetNetUsed(accountCapsule.getAllFreeAssetNetUsage())
         .putAllAssetNetLimit(assetNetLimitMap);
     return builder.build();
@@ -770,7 +787,7 @@ public class Wallet {
     return contractCapsule.getInstance();
   }
 
-  private byte[] getSelector(byte[] data) {
+  private static byte[] getSelector(byte[] data) {
     if (data == null ||
         data.length < 4) {
       return null;
@@ -781,14 +798,14 @@ public class Wallet {
     return ret;
   }
 
-  private boolean isConstant(SmartContract.ABI abi, byte[] selector) throws Exception {
+  private static boolean isConstant(SmartContract.ABI abi, byte[] selector) throws Exception {
     if (selector == null || selector.length != 4) {
       throw new Exception("Selector's length or selector itself is invalid");
     }
 
     for (int i = 0; i < abi.getEntrysCount(); i++) {
-      SmartContract.ABI.Entry entry = abi.getEntrys(i);
-      if (entry.getType() != SmartContract.ABI.Entry.EntryType.Function) {
+      ABI.Entry entry = abi.getEntrys(i);
+      if (entry.getType() != ABI.Entry.EntryType.Function) {
         continue;
       }
 
@@ -797,7 +814,7 @@ public class Wallet {
       sb.append(entry.getName().toStringUtf8());
       sb.append("(");
       for (int k = 0; k < inputCount; k++) {
-        SmartContract.ABI.Entry.Param param = entry.getInputs(k);
+        ABI.Entry.Param param = entry.getInputs(k);
         sb.append(param.getType().toStringUtf8());
         if (k + 1 < inputCount) {
           sb.append(",");
@@ -808,7 +825,8 @@ public class Wallet {
       byte[] funcSelector = new byte[4];
       System.arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0, 4);
       if (Arrays.equals(funcSelector, selector)) {
-        if (entry.getConstant() == true||entry.getStateMutability().equals(StateMutabilityType.View)) {
+        if (entry.getConstant() == true || entry.getStateMutability()
+            .equals(StateMutabilityType.View)) {
           return true;
         } else {
           return false;
