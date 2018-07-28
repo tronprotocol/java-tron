@@ -73,10 +73,12 @@ message Account {
   // the other asset owned by this account
   map<string, int64> asset = 6;
   // latest asset operation time
+
   // the frozen balance
   repeated Frozen frozen = 7;
   // bandwidth, get from frozen
   int64 net_usage = 8;
+
   // this account create time
   int64 create_time = 0x09;
   // this last operation time, including transfer, voting and so on. //FIXME fix grammar
@@ -94,11 +96,28 @@ message Account {
   // asset_issued_name
   bytes asset_issued_name = 17;
   map<string, int64> latest_asset_operation_time = 18;
+
   int64 free_net_usage = 19;
   map<string, int64> free_asset_net_usage = 20;
   int64 latest_consume_time = 21;
   int64 latest_consume_free_time = 22;
+
   bytes account_id = 23;
+
+  message AccountResource{
+    // cpu resource, get from frozen
+    int64 cpu_usage = 1;
+    // the frozen balance for cpu
+    Frozen frozen_balance_for_cpu = 2;
+    int64 latest_consume_time_for_cpu = 3;
+
+    // storage resource, get from market
+    int64 storage_limit = 6;
+    int64 storage_usage = 7;
+    int64 latest_exchange_storage_time = 8;
+  }
+  AccountResource account_resource = 26;
+
   bytes codeHash = 30;
 }
 
@@ -152,6 +171,14 @@ message TXOutputs {
   repeated TXOutput outputs = 1;
 }
 
+message ResourceReceipt {
+  int64 cpu_usage = 1;
+  int64 cpu_fee = 2;
+  int64 net_usage = 3;
+  int64 net_fee = 4;
+  int64 storage_delta = 5;
+  int64 storage_fee = 6;
+}
 
 message Transaction {
   message Contract {
@@ -176,6 +203,8 @@ message Transaction {
       ProposalDeleteContract = 18;
       SetAccountIdContract = 19;
       CustomContract = 20;
+      BuyStorageContract = 21;
+      SellStorageContract = 23;
       CreateSmartContract = 30;
       TriggerSmartContract = 31;
       GetContract = 32;
@@ -195,6 +224,7 @@ message Transaction {
     int64 fee = 1;
     code ret = 2;
     bytes constant_result = 3;
+    ResourceReceipt receipt = 4;
   }
 
   message raw {
@@ -210,6 +240,9 @@ message Transaction {
     // scripts not used
     bytes scripts = 12;
     int64 timestamp = 14;
+    int64 max_cpu_usage = 15;
+    int64 max_net_usage = 16;
+    int64 max_storage = 17;
   }
 
   raw raw_data = 1;
@@ -225,6 +258,8 @@ message TransactionInfo {
   int64 blockTimeStamp = 4;
   repeated bytes contractResult = 5;
   bytes contract_address = 6;
+  Transaction.Result result = 7;
+  repeated bytes log = 8;
 }
 
 message Transactions {

@@ -386,7 +386,8 @@ public class TransferAssetActuatorTest {
       actuator.execute(ret);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("To account is not exit!", e.getMessage());
+      Assert
+          .assertEquals("Validate TransferAssetActuator error, insufficient fee.", e.getMessage());
       AccountCapsule owner = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert

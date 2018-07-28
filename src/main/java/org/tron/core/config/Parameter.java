@@ -16,6 +16,7 @@ public interface Parameter {
     long PRECISION = 1000_000;
     long WINDOW_SIZE_MS = 24 * 3600 * 1000L;
     long MS_PER_DAY = 24 * 3600 * 1000L;
+    long MS_PER_YEAR = 365 * 24 * 3600 * 1000L;
 
     long MAINTENANCE_SKIP_SLOTS = 2;
     int SINGLE_REPEAT = 1;
@@ -63,6 +64,8 @@ public interface Parameter {
     ASSET_ISSUE_FEE, //drop
     WITNESS_PAY_PER_BLOCK, //drop
     WITNESS_STANDBY_ALLOWANCE, //drop
+    CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT, //drop
+    CREATE_NEW_ACCOUNT_BANDWIDTH_RATE, // 1 ~
 //    ONE_DAY_NET_LIMIT,
 //    MAX_FROZEN_TIME,
 //    MIN_FROZEN_TIME,

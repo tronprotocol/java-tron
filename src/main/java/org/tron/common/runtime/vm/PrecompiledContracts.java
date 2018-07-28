@@ -31,11 +31,14 @@ import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.zksnark.BN128;
 import org.tron.common.crypto.zksnark.BN128Fp;
@@ -46,8 +49,11 @@ import org.tron.common.crypto.zksnark.PairingCheck;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.storage.Deposit;
 import org.tron.common.utils.BIUtil;
+
+import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.TransactionCapsule;
@@ -87,6 +93,8 @@ public class PrecompiledContracts {
   private static final ProposalApproveNative proposalApprove = new ProposalApproveNative();
   private static final ProposalCreateNative proposalCreate = new ProposalCreateNative();
   private static final ProposalDeleteNative proposalDelete = new ProposalDeleteNative();
+  private static final ConvertFromTronBytesAddressNative convertFromTronBytesAddress = new ConvertFromTronBytesAddressNative();
+  private static final ConvertFromTronBase58AddressNative convertFromTronBase58Address = new ConvertFromTronBase58AddressNative();
 
 
   private static final DataWord ecRecoverAddr = new DataWord(
@@ -119,6 +127,10 @@ public class PrecompiledContracts {
       "0000000000000000000000000000000000000000000000000000000000010006");
   private static final DataWord proposalDeleteAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010007");
+  private static final DataWord convertFromTronBytesAddressAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000000010008");
+  private static final DataWord convertFromTronBase58AddressAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000000010009");
 
   public static PrecompiledContract getContractForAddress(DataWord address) {
 
@@ -158,6 +170,13 @@ public class PrecompiledContracts {
     if (address.equals(proposalDeleteAddr)) {
       return proposalDelete;
     }
+    if (address.equals(convertFromTronBytesAddressAddr)) {
+      return convertFromTronBytesAddress;
+    }
+    if (address.equals(convertFromTronBase58AddressAddr)) {
+      return convertFromTronBase58Address;
+    }
+
 
         /*
         // Byzantium precompiles
@@ -1018,6 +1037,64 @@ public class PrecompiledContracts {
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
       return Pair.of(true, new DataWord(1).getData());
+    }
+  }
+
+  /**
+   * Native function for converting bytes32 tron address to solidity address type value. <br/> <br/>
+   *
+   * Input data[]: <br/> bytes32 tron address
+   * <br/>
+   *
+   * Output: <br/> Solidity address <br/>
+   */
+  public static class ConvertFromTronBytesAddressNative extends PrecompiledContract {
+
+    @Override
+    // TODO: Please re-implement this function after Tron cost is well designed.
+    public long getGasForData(byte[] data) {
+      return 0;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+
+      if (data == null) {
+        data = EMPTY_BYTE_ARRAY;
+      }
+      DataWord address = new DataWord(data);
+      return Pair.of(true, new DataWord(address.getLast20Bytes()).getData());
+    }
+  }
+
+  /**
+   * Native function for converting Base58String tron address to solidity address type value. <br/> <br/>
+   *
+   * Input data[]: <br/> Base58String tron address
+   * <br/>
+   *
+   * Output: <br/> Solidity address <br/>
+   */
+  public static class ConvertFromTronBase58AddressNative extends PrecompiledContract {
+
+    @Override
+    // TODO: Please re-implement this function after Tron cost is well designed.
+    public long getGasForData(byte[] data) {
+      return 0;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+
+      if (data == null) {
+        data = EMPTY_BYTE_ARRAY;
+      }
+
+      String addressBase58 = new String(data);
+      byte[] resultBytes = Wallet.decodeFromBase58Check(addressBase58);
+      String hexString = Hex.toHexString(resultBytes);
+
+      return Pair.of(true, new DataWord(hexString).getData());
     }
   }
 }
