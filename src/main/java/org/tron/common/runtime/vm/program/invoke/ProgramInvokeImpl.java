@@ -57,7 +57,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     this.caller = caller;
     this.balance = balance;
     this.callValue = callValue;
-    this.msgData = msgData;
+    this.msgData = Arrays.copyOf(msgData, msgData.length);
 
     // last Block env
     this.prevHash = lastHash;
@@ -93,7 +93,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     this.caller = new DataWord(caller);
     this.balance = new DataWord(balance);
     this.callValue = new DataWord(callValue);
-    this.msgData = msgData;
+    this.msgData = Arrays.copyOf(msgData, msgData.length);
 
     // last Block env
     this.prevHash = new DataWord(lastHash);

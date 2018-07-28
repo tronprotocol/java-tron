@@ -243,7 +243,7 @@ public class VMTransaction {
 
   public byte[] getHash() {
     if (!isEmpty(hash)) {
-      return hash;
+      return Arrays.copyOf(hash, hash.length);
     }
 
     protoParse();
@@ -411,7 +411,7 @@ public class VMTransaction {
   public byte[] getEncodedRaw() {
     protoParse();
     if (protoRaw != null) {
-      return protoRaw;
+      return Arrays.copyOf(protoRaw, protoRaw.length);
     }
 
     return this.protoEncoded.clone();
