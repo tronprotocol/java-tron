@@ -217,12 +217,21 @@ public class Runtime {
 //
 //  }
 
-  private long getAccountCPULimitInUs(AccountCapsule... accountCapsules) {
+  private long getAccountCPULimitInUs(AccountCapsule creator,
+      SmartContract smartContract) {
+
+    smartContract.getConsumeUserResourcePercent();
 
     return 100000;
 
   }
 
+  private long getAccountCPULimitInUs(AccountCapsule creator, AccountCapsule sender,
+      SmartContract smartContract) {
+
+    return 100000;
+
+  }
 
   public void execute() throws ContractValidateException, ContractExeException {
 
@@ -261,8 +270,12 @@ public class Runtime {
       AccountCapsule creator = this.deposit.getAccount(
           this.deposit.getContract(contractAddress).getInstance()
               .getOriginAddress().toByteArray());
+
+      SmartContract smartContract = this.deposit
+          .getContract(contract.getContractAddress().toByteArray()).getInstance();
+
       long thisTxCPULimitInUs;
-      long accountCPULimitInUs = getAccountCPULimitInUs(sender, creator);
+      long accountCPULimitInUs = getAccountCPULimitInUs(creator, sender, smartContract);
       if (executerType == ET_NORMAL_TYPE) {
         long blockCPULeftInUs = getBlockCPULeftInUs().longValue();
         thisTxCPULimitInUs = min(accountCPULimitInUs, blockCPULeftInUs,
@@ -329,7 +342,7 @@ public class Runtime {
       AccountCapsule creator = this.deposit
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
       long thisTxCPULimitInUs;
-      long accountCPULimitInUs = getAccountCPULimitInUs(creator);
+      long accountCPULimitInUs = getAccountCPULimitInUs(creator, newSmartContract);
       if (executerType == ET_NORMAL_TYPE) {
         long blockCPULeftInUs = getBlockCPULeftInUs().longValue();
         thisTxCPULimitInUs = min(accountCPULimitInUs, blockCPULeftInUs,

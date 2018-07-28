@@ -158,11 +158,9 @@ message ProposalDeleteContract {
 message CreateSmartContract {
   bytes owner_address = 1;
   SmartContract new_contract = 2;
-  bytes cpu_limit_in_trx = 3;
-  bytes storage_limit_in_trx = 4;
-  bytes user_resource_usage_percent = 5;
-  bytes contract_name = 6;
-  bytes consume_user_resource_percent = 7;
+  int64 cpu_limit_in_trx = 3;
+  int64 storage_limit_in_trx = 4;
+  bytes contract_name = 5;
 }
 
 message TriggerSmartContract {
@@ -170,6 +168,6 @@ message TriggerSmartContract {
   bytes contract_address = 2;
   bytes call_value = 3;
   bytes data = 4;
-  bytes cpu_limit_in_trx = 5;
-  bytes storage_limit_in_trx = 6;
+  int64 cpu_limit_in_trx = 5;
+  int64 storage_limit_in_trx = 6;
 }

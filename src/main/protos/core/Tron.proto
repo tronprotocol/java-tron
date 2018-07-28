@@ -403,4 +403,5 @@ message SmartContract {
   bytes bytecode = 4;
   bytes call_value = 5;
   bytes data = 6;
+  int64 consume_user_resource_percent = 7;
 }
