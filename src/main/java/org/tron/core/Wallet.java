@@ -495,6 +495,7 @@ public class Wallet {
     return builder.build();
   }
 
+
   public AssetIssueList getAssetIssueList(long offset, long limit) {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     List<AssetIssueCapsule> assetIssueList = dbManager.getAssetIssueStore()
