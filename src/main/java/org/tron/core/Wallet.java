@@ -488,7 +488,6 @@ public class Wallet {
 
     return builder.build();
   }
-
   public AssetIssueList getAssetIssueList() {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     dbManager.getAssetIssueStore().getAllAssetIssues()
