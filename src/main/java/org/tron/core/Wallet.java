@@ -579,7 +579,7 @@ public class Wallet {
     long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
     long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
-    long cpuLimit = cpuProcessor.calculateGlobalCpuLimit(accountCapsule.getFrozenBalance());
+    long cpuLimit = cpuProcessor.calculateGlobalCpuLimit(accountCapsule.getCpuFrozenBalance());
     long totalCpuLimit = dbManager.getDynamicPropertiesStore().getTotalCpuLimit();
     long totalCpuWeight = dbManager.getDynamicPropertiesStore().getTotalCpuWeight();
 
