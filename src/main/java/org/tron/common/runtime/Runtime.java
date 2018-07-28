@@ -321,12 +321,6 @@ public class Runtime {
 
         vm.play(program);
 
-        long consumedStorageSize =
-            deposit.getBeforeRunStorageSize() - deposit.computeAfterRunStorageSize();
-        if (consumedStorageSize > 10000) {
-          throw Program.Exception.notEnoughStorage();
-        }
-
         result = program.getResult();
         if (result.getException() != null || result.isRevert()) {
           result.getDeleteAccounts().clear();
@@ -340,6 +334,13 @@ public class Runtime {
           }
         } else {
           // touchedAccounts.addAll(result.getTouchedAccounts());
+          // check storage useage
+          long useedStorageSize =
+              deposit.getBeforeRunStorageSize() - deposit.computeAfterRunStorageSize();
+          if (useedStorageSize > 1000000) {
+            result.setException(Program.Exception.notEnoughStorage());
+            throw result.getException();
+          }
           if (executerType == ET_NORMAL_TYPE) {
             deposit.commit();
           }
@@ -350,11 +351,7 @@ public class Runtime {
           deposit.commit();
         }
       }
-      long consumedStorageSize =
-          deposit.getBeforeRunStorageSize() - deposit.computeAfterRunStorageSize();
-      if (consumedStorageSize > 10000) {
-        throw Program.Exception.notEnoughStorage();
-      }
+
     } catch (Exception e) {
       logger.error(e.getMessage());
       runtimeError = e.getMessage();

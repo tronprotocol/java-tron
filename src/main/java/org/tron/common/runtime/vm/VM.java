@@ -287,8 +287,8 @@ public class VM {
                             dropCosts.getLOG_TOPIC_GAS() * nTopics +
                             dropCosts.getLOG_DATA_GAS() * stack.get(stack.size() - 2).longValue() +
                             calcMemDrop(dropCosts, oldMemSize, memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0);
-                  checkMemorySize(op,
-                      memNeeded(stack.peek(), stack.get(stack.size() - 2)));
+                    checkMemorySize(op,
+                        memNeeded(stack.peek(), stack.get(stack.size() - 2)));
                     break;
                 case EXP:
 
