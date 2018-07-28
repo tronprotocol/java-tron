@@ -440,5 +440,4 @@ message SmartContract {
   bytes data = 6;
   int64 consume_user_resource_percent = 7;
   bytes name = 8;
-
 }
