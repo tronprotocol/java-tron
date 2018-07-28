@@ -437,5 +437,7 @@ message SmartContract {
   ABI abi = 3;
   bytes bytecode = 4;
   bytes call_value = 5;
-  bytes data = 6;
+  bytes name = 6;
+  bytes data = 7;
+
 }
