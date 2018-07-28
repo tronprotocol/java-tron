@@ -4,6 +4,7 @@ import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -35,6 +36,9 @@ public class DepositImpl implements Deposit{
     private Deposit parent = null;
     private Deposit prevDeposit = null;
     private Deposit nextDeposit = null;
+
+    private long beforeRunStorageSize = 0;
+
 
     private HashMap<Key, Value> accounCache = new HashMap<>();
     private HashMap<Key, Value> transactionCache = new HashMap<>();
@@ -177,15 +181,16 @@ public class DepositImpl implements Deposit{
         Key key = Key.create(address);
         if (storageCache.containsKey(key)) return storageCache.get(key).getStorage();
 
+        // first access the storageCapsule
         StorageCapsule storageCapsule;
-        if (parent != null) {
+        if (this.parent != null) {
             storageCapsule = parent.getStorage(address);
         } else if (prevDeposit != null) {
             storageCapsule = prevDeposit.getStorage(address);
         } else {
             storageCapsule = getStorageStore().get(address);
         }
-
+        this.beforeRunStorageSize += storageCapsule.getInstance().getSerializedSize();
         if (storageCapsule != null) storageCache.put(key, Value.create(storageCapsule.getData(), Type.VALUE_TYPE_NORMAL));
         return storageCapsule;
     }
@@ -197,6 +202,7 @@ public class DepositImpl implements Deposit{
         Key addressKey = Key.create(address);
         if (storageCache.containsKey(addressKey)) {
             StorageCapsule storageCapsule = storageCache.get(addressKey).getStorage();
+
             if (storageCapsule != null) {
                 storageCapsule.put(key, value);
                 Value V = Value.create(storageCapsule.getData(),
@@ -323,6 +329,22 @@ public class DepositImpl implements Deposit{
         if (ret != null) blockCache.put(key, Value.create(ret.getData()));
         return ret;
     }
+
+    @Override
+    public long computeAfterRunStorageSize() {
+        AtomicLong afterRunStorageSize = new AtomicLong();
+        storageCache.forEach(((key, value) -> {
+            afterRunStorageSize.addAndGet(value.getStorage().getInstance().getSerializedSize());
+        }));
+        return afterRunStorageSize.get();
+    }
+
+    @Override
+    public long getBeforeRunStorageSize() {
+        return beforeRunStorageSize;
+    }
+
+
 
     @Override
     public void putAccount(Key key, Value value) {

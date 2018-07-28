@@ -74,4 +74,9 @@ public interface Deposit {
     TransactionCapsule getTransaction(byte[] trxHash);
 
     BlockCapsule getBlock(byte[] blockHash);
+
+    long computeAfterRunStorageSize();
+
+    long getBeforeRunStorageSize();
+    
 }

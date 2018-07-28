@@ -201,4 +201,14 @@ public class Storage implements Deposit, ProgramListenerAware {
     public BlockCapsule getBlock(byte[] blockHash) {
         return this.deposit.getBlock(blockHash);
     }
+
+    @Override
+    public long computeAfterRunStorageSize() {
+        return this.deposit.computeAfterRunStorageSize();
+    }
+
+    @Override
+    public long getBeforeRunStorageSize() {
+        return this.deposit.getBeforeRunStorageSize();
+    }
 }

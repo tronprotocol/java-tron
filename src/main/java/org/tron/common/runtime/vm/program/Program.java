@@ -1218,6 +1218,23 @@ public class Program {
     }
 
     @SuppressWarnings("serial")
+    public static class OutOfMemoryException extends BytecodeExecutionException {
+
+        public OutOfMemoryException(String message, Object... args) {
+            super(format(message, args));
+        }
+    }
+
+    @SuppressWarnings("serial")
+    public static class OutOfStorageException extends BytecodeExecutionException {
+
+        public OutOfStorageException(String message, Object... args) {
+            super(format(message, args));
+        }
+    }
+
+
+    @SuppressWarnings("serial")
     public static class IllegalOperationException extends BytecodeExecutionException {
 
         public IllegalOperationException(String message, Object... args) {
@@ -1270,6 +1287,14 @@ public class Program {
         public static OutOfResourceException notEnoughCPU(OpCode op) {
             return new OutOfResourceException(
                 "Not enough CPU resource when '%s' operation executing", op);
+        }
+
+        public static OutOfMemoryException memoryOverflow(OpCode op) {
+            return new OutOfMemoryException("Out of Memory when '%s' operation executing", op);
+        }
+
+        public static OutOfStorageException notEnoughStorage() {
+            return new OutOfStorageException("Not enough Storage resource");
         }
 
 

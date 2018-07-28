@@ -190,6 +190,9 @@ public class Runtime {
 
       BigInteger trxCPULimit = new BigInteger(1, contract.getCpuLimitInTrx().toByteArray());
 
+      // TODO get from account
+      BigInteger increasedStorageLimit = BigInteger.valueOf(10000000);
+
       boolean cumulativeCPUReached =
           trxCPULimit.add(curBlockHaveElapsedCPU).compareTo(curBlockCPULimit) > 0;
 
@@ -290,6 +293,7 @@ public class Runtime {
       this.vm = new VM(config);
       this.program = new Program(ops, programInvoke, internalTransaction, config);
     } catch (Exception e) {
+      // TODO throw exception
       logger.error(e.getMessage());
       return;
     }
@@ -314,7 +318,14 @@ public class Runtime {
 
     try {
       if (vm != null) {
+
         vm.play(program);
+
+        long consumedStorageSize =
+            deposit.getBeforeRunStorageSize() - deposit.computeAfterRunStorageSize();
+        if (consumedStorageSize > 10000) {
+          throw Program.Exception.notEnoughStorage();
+        }
 
         result = program.getResult();
         if (result.getException() != null || result.isRevert()) {
@@ -339,6 +350,11 @@ public class Runtime {
           deposit.commit();
         }
       }
+      long consumedStorageSize =
+          deposit.getBeforeRunStorageSize() - deposit.computeAfterRunStorageSize();
+      if (consumedStorageSize > 10000) {
+        throw Program.Exception.notEnoughStorage();
+      }
     } catch (Exception e) {
       logger.error(e.getMessage());
       runtimeError = e.getMessage();
@@ -346,7 +362,6 @@ public class Runtime {
   }
 
   public RuntimeSummary finalization() {
-
     return null;
   }
 

@@ -29,6 +29,9 @@ public class VM {
     // used to reduce expensive BigInt arithmetic
     private static BigInteger MAX_MEM_SIZE = BigInteger.valueOf(Integer.MAX_VALUE);
 
+    // 3MB
+    private static BigInteger MEM_LIMIT = BigInteger.valueOf(3 * 1024 * 1024);
+
 
     /* Keeps track of the number of steps performed in this VM */
     private int vmCounter = 0;
@@ -48,12 +51,24 @@ public class VM {
         // dumpBlock = config.dumpBlock();
     }
 
-    private long calcMemDrop(DropCost dropCosts, long oldMemSize, BigInteger newMemSize, long copySize) {
+    private void checkMemorySize(OpCode op, BigInteger newMemSize) {
+        if (newMemSize.compareTo(MEM_LIMIT) > 0) {
+            throw Program.Exception.memoryOverflow(op);
+        }
+    }
+
+
+    private long calcMemDrop(DropCost dropCosts, long oldMemSize, BigInteger newMemSize,
+        long copySize) {
         long dropConsume = 0;
 
         // Avoid overflows
         if (newMemSize.compareTo(MAX_MEM_SIZE) > 0) {
+//            throw VMMemoryOverflowException();
+
             throw Program.Exception.gasOverflow(newMemSize, MAX_MEM_SIZE);
+//
+//            throw Program.Exception.memoryOverflow()
         }
 
         // memory drop consume calc
@@ -73,6 +88,7 @@ public class VM {
         }
         return dropConsume;
     }
+
 
     public void step(Program program)
         throws ContractExeException {
@@ -135,7 +151,7 @@ public class VM {
                     if (oldValue == null && !newValue.isZero())
                         dropCost = dropCosts.getSET_SSTORE();
                     else if (oldValue != null && newValue.isZero()) {
-                        // todo: GASREFUND counter policy
+                        // todo: GASREFUND counter policyz
 
                         // refund step cost policy.
                         program.futureRefundGas(dropCosts.getREFUND_SSTORE());
@@ -152,43 +168,58 @@ public class VM {
 
                 // These all operate on memory and therefore potentially expand it:
                 case MSTORE:
-                    dropCost += calcMemDrop(dropCosts, oldMemSize, memNeeded(stack.peek(), new DataWord(32)), 0);
+//                    dropCost += calcMemDrop(dropCosts, oldMemSize, memNeeded(stack.peek(), new DataWord(32)), 0);
+                    checkMemorySize(op, memNeeded(stack.peek(), new DataWord(32)));
                     break;
                 case MSTORE8:
-                    dropCost += calcMemDrop(dropCosts, oldMemSize, memNeeded(stack.peek(), new DataWord(1)), 0);
+                    checkMemorySize(op, memNeeded(stack.peek(), new DataWord(32)));
+
+//                    dropCost += calcMemDrop(dropCosts, oldMemSize, memNeeded(stack.peek(), new DataWord(1)), 0);
                     break;
                 case MLOAD:
-                    dropCost += calcMemDrop(dropCosts, oldMemSize, memNeeded(stack.peek(), new DataWord(32)), 0);
+                    checkMemorySize(op, memNeeded(stack.peek(), new DataWord(32)));
+//                    dropCost += calcMemDrop(dropCosts, oldMemSize, memNeeded(stack.peek(), new DataWord(32)), 0);
+
                     break;
                 case RETURN:
                 case REVERT:
-                    dropCost = dropCosts.getSTOP() + calcMemDrop(dropCosts, oldMemSize,
-                            memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0);
+//                    dropCost = dropCosts.getSTOP() + calcMemDrop(dropCosts, oldMemSize,
+//                            memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0);
+
+                    checkMemorySize(op, memNeeded(stack.peek(), new DataWord(32)));
+
                     break;
                 case SHA3:
-                    dropCost = dropCosts.getSHA3() + calcMemDrop(dropCosts, oldMemSize, memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0);
+//                    dropCost = dropCosts.getSHA3() + calcMemDrop(dropCosts, oldMemSize, memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0);
+                    checkMemorySize(op, memNeeded(stack.peek(), stack.get(stack.size() - 2)));
+
                     DataWord size = stack.get(stack.size() - 2);
                     long chunkUsed = (size.longValueSafe() + 31) / 32;
                     dropCost += chunkUsed * dropCosts.getSHA3_WORD();
                     break;
                 case CALLDATACOPY:
                 case RETURNDATACOPY:
-                    dropCost += calcMemDrop(dropCosts, oldMemSize,
-                            memNeeded(stack.peek(), stack.get(stack.size() - 3)),
-                            stack.get(stack.size() - 3).longValueSafe());
+//                    dropCost += calcMemDrop(dropCosts, oldMemSize,
+//                        memNeeded(stack.peek(), stack.get(stack.size() - 3)),
+//                            stack.get(stack.size() - 3).longValueSafe());
+                    checkMemorySize(op, memNeeded(stack.peek(), stack.get(stack.size() - 3)));
                     break;
                 case CODECOPY:
-                    dropCost += calcMemDrop(dropCosts, oldMemSize,
-                            memNeeded(stack.peek(), stack.get(stack.size() - 3)),
-                            stack.get(stack.size() - 3).longValueSafe());
+//                    dropCost += calcMemDrop(dropCosts, oldMemSize,
+//                            memNeeded(stack.peek(), stack.get(stack.size() - 3)),
+//                            stack.get(stack.size() - 3).longValueSafe());
+                    checkMemorySize(op, memNeeded(stack.peek(), stack.get(stack.size() - 3)));
                     break;
                 case EXTCODESIZE:
                     dropCost = dropCosts.getEXT_CODE_SIZE();
                     break;
                 case EXTCODECOPY:
-                    dropCost = dropCosts.getEXT_CODE_COPY() + calcMemDrop(dropCosts, oldMemSize,
-                            memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 4)),
-                            stack.get(stack.size() - 4).longValueSafe());
+//                    dropCost = dropCosts.getEXT_CODE_COPY() + calcMemDrop(dropCosts, oldMemSize,
+//                            memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 4)),
+//                            stack.get(stack.size() - 4).longValueSafe());
+
+                    checkMemorySize(op,
+                        memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 4)));
                     break;
                 case CALL:
                 case CALLCODE:
@@ -215,7 +246,8 @@ public class VM {
                     int opOff = op.callHasValue() ? 4 : 3;
                     BigInteger in = memNeeded(stack.get(stack.size() - opOff), stack.get(stack.size() - opOff - 1)); // in offset+size
                     BigInteger out = memNeeded(stack.get(stack.size() - opOff - 2), stack.get(stack.size() - opOff - 3)); // out offset+size
-                    dropCost += calcMemDrop(dropCosts, oldMemSize, in.max(out), 0);
+                    //    dropCost += calcMemDrop(dropCosts, oldMemSize, in.max(out), 0);
+                    checkMemorySize(op, in.max(out));
 
                     //TODO: recover this or give similar logic when tron cost mechanism is ready.
 //                    if (dropCost > program.getDroplimit().longValueSafe()) {
@@ -231,8 +263,11 @@ public class VM {
                     dropCost += adjustedCallGas.longValueSafe();
                     break;
                 case CREATE:
-                    dropCost = dropCosts.getCREATE() + calcMemDrop(dropCosts, oldMemSize,
-                            memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 3)), 0);
+//                    dropCost = dropCosts.getCREATE() + calcMemDrop(dropCosts, oldMemSize,
+//                            memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 3)), 0);
+
+                    checkMemorySize(op,
+                        memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 3)));
                     break;
                 case LOG0:
                 case LOG1:
@@ -252,6 +287,8 @@ public class VM {
                             dropCosts.getLOG_TOPIC_GAS() * nTopics +
                             dropCosts.getLOG_DATA_GAS() * stack.get(stack.size() - 2).longValue() +
                             calcMemDrop(dropCosts, oldMemSize, memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0);
+                    checkMemorySize(op,
+                        memNeeded(stack.peek(), stack.get(stack.size() - 2)));
                     break;
                 case EXP:
 
