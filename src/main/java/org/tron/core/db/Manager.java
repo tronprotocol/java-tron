@@ -958,16 +958,25 @@ public class Manager {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    /**  VM execute  **/
+    TransactionTrace trace = new TransactionTrace(trxCap);
+    trace.init();
+
 
     DepositImpl deposit = DepositImpl.createRoot(this);
     Runtime runtime;
 
-    runtime = new Runtime(trxCap.getInstance(), block, deposit,
+    runtime = new Runtime(trace, block, deposit,
         new ProgramInvokeFactoryImpl());
     consumeBandwidth(trxCap, runtime.getResult().getRet());
-    runtime.execute();
-    runtime.go();
+
+    //exec
+    trace.exec(runtime);
+
+    //check SR's bill and ours.
+    if(block != null) {
+      trace.checkBill();
+    }
+
     if (runtime.getResult().getException() != null) {
       throw new RuntimeException("Runtime exe failed!");
     }

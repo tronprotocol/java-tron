@@ -13,6 +13,11 @@ public class ReceiptCapsule {
     this.receiptAddress = receiptAddress;
   }
 
+  public ReceiptCapsule(Sha256Hash receiptAddress) {
+    receipt = ResourceReceipt.newBuilder().build();
+    this.receiptAddress = receiptAddress;
+  }
+
   public void setCpuUsage(long usage) {
     receipt.toBuilder().setCpuFee(usage);
   }
@@ -33,7 +38,7 @@ public class ReceiptCapsule {
     //TODO: pay storage bill
   }
 
-  private void buyStorage(long storage) {
+  public void buyStorage(long storage) {
     //TODO: buy the min storage
   }
 }
