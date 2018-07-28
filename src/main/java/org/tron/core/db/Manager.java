@@ -106,6 +106,8 @@ public class Manager {
   @Autowired
   private AccountIdIndexStore accountIdIndexStore;
   @Autowired
+  private AccountContractIndexStore accountContractIndexStore;
+  @Autowired
   private WitnessScheduleStore witnessScheduleStore;
   @Autowired
   private RecentBlockStore recentBlockStore;
@@ -278,6 +280,11 @@ public class Manager {
 
   public void clearAndWriteNeighbours(Set<Node> nodes) {
     this.peersStore.put("neighbours".getBytes(), nodes);
+  }
+
+
+  public AccountContractIndexStore getAccountContractIndexStore() {
+    return accountContractIndexStore;
   }
 
   public Set<Node> readNeighbours() {
@@ -966,7 +973,7 @@ public class Manager {
     if (runtime.getResult().getException() != null) {
       throw new RuntimeException("Runtime exe failed!");
     }
-    
+
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
     transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());

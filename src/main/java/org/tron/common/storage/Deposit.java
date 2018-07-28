@@ -1,8 +1,10 @@
 package org.tron.common.storage;
 
+import com.google.protobuf.ByteString;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.StorageCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -20,9 +22,13 @@ public interface Deposit {
 
     AccountCapsule createAccount(byte[] address, Protocol.AccountType type);
 
+    AccountCapsule createAccount(byte[] address, ByteString accountName, Protocol.AccountType type);
+
     AccountCapsule getAccount(byte[] address);
 
     void createContract(byte[] address, ContractCapsule contractCapsule);
+
+    void createContractByNormalAccountIndex(byte[] address, BytesCapsule contractAddress);
 
     ContractCapsule getContract(byte[] address);
 
@@ -69,6 +75,8 @@ public interface Deposit {
 
     void putContract(Key key, Value value);
 
+    void putContractByNormalAccountIndex(Key key, Value value);
+
     void putStorage(Key key, Value value);
 
     void putVotes(Key key, Value value);
@@ -80,4 +88,6 @@ public interface Deposit {
     TransactionCapsule getTransaction(byte[] trxHash);
 
     BlockCapsule getBlock(byte[] blockHash);
+
+    BytesCapsule getContractByNormalAccount(byte[] address);
 }
