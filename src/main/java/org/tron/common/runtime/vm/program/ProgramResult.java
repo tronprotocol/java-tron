@@ -205,4 +205,20 @@ public class ProgramResult {
     result.setHReturn(EMPTY_BYTE_ARRAY);
     return result;
   }
+
+  public long getOwnerCpuUsed() {
+    return ownerCpuUsed;
+  }
+
+  public long getSenderCpuUsed() {
+    return senderCpuUsed;
+  }
+
+  public long getOwnerStorageUsed() {
+    return ownerStorageUsed;
+  }
+
+  public long getSenderStorageUsed() {
+    return senderStorageUsed;
+  }
 }

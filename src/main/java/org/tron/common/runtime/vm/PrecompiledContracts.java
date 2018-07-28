@@ -18,23 +18,35 @@
 
 package org.tron.common.runtime.vm;
 
+import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
+import static org.tron.common.utils.BIUtil.addSafely;
+import static org.tron.common.utils.BIUtil.isLessThan;
+import static org.tron.common.utils.BIUtil.isZero;
+import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
+import static org.tron.common.utils.ByteUtil.bytesToBigInteger;
+import static org.tron.common.utils.ByteUtil.numberOfLeadingZeros;
+import static org.tron.common.utils.ByteUtil.parseBytes;
+import static org.tron.common.utils.ByteUtil.parseWord;
+import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
+
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.zksnark.*;
+import org.tron.common.crypto.zksnark.BN128;
+import org.tron.common.crypto.zksnark.BN128Fp;
+import org.tron.common.crypto.zksnark.BN128G1;
+import org.tron.common.crypto.zksnark.BN128G2;
+import org.tron.common.crypto.zksnark.Fp;
+import org.tron.common.crypto.zksnark.PairingCheck;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.storage.Deposit;
 import org.tron.common.utils.BIUtil;
-
-import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
@@ -53,12 +65,6 @@ import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-
-import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
-import static org.tron.common.utils.BIUtil.addSafely;
-import static org.tron.common.utils.BIUtil.isLessThan;
-import static org.tron.common.utils.BIUtil.isZero;
-import static org.tron.common.utils.ByteUtil.*;
 
 /**
  * @author Roman Mandeleil
@@ -562,11 +568,10 @@ public class PrecompiledContracts {
    * Input data[]: <br/> an array of points (a1, b1, ... , ak, bk), <br/> where "ai" is a point of
    * {@link BN128Fp} curve and encoded as two 32-byte left-padded integers (x; y) <br/> "bi" is a
    * point of {@link BN128G2} curve and encoded as four 32-byte left-padded integers {@code (ai + b;
-   * ci + d)}, each coordinate of the point is a big-endian {@link Fp2} number, so {@code b}
-   * precedes {@code a} in the encoding: {@code (b, a; d, c)} <br/> thus each pair (ai, bi) has 192
-   * bytes length, if 192 is not a multiple of {@code data.length} then execution fails <br/> the
-   * number of pairs is derived from input length by dividing it by 192 (the length of a pair) <br/>
-   * <br/>
+   * ci + d)}, each coordinate of the point is a big-endian {@link } number, so {@code b} precedes
+   * {@code a} in the encoding: {@code (b, a; d, c)} <br/> thus each pair (ai, bi) has 192 bytes
+   * length, if 192 is not a multiple of {@code data.length} then execution fails <br/> the number
+   * of pairs is derived from input length by dividing it by 192 (the length of a pair) <br/> <br/>
    *
    * output: <br/> pairing product which is either 0 or 1, encoded as 32-byte left-padded integer
    * <br/>
@@ -963,7 +968,7 @@ public class PrecompiledContracts {
 
       ProposalCreateContract contract = builder.build();
 
-      long id = 0 ;
+      long id = 0;
       TransactionCapsule trx = new TransactionCapsule(contract,
           ContractType.ProposalCreateContract);
 
@@ -987,8 +992,7 @@ public class PrecompiledContracts {
   /**
    * Native function for a witness to delete a proposal. <br/> <br/>
    *
-   * Input data[]: <br/> ProposalId
-   * <br/>
+   * Input data[]: <br/> ProposalId <br/>
    *
    * Output: <br/> isSuccess <br/>
    */
@@ -1033,10 +1037,10 @@ public class PrecompiledContracts {
   }
 
   /**
-   * Native function for converting bytes32 tron address to solidity address type value. <br/> <br/>
-   *
-   * Input data[]: <br/> bytes32 tron address
+   * Native function for converting bytes32 tron address to solidity address type value. <br/>
    * <br/>
+   *
+   * Input data[]: <br/> bytes32 tron address <br/>
    *
    * Output: <br/> Solidity address <br/>
    */
@@ -1060,10 +1064,10 @@ public class PrecompiledContracts {
   }
 
   /**
-   * Native function for converting Base58String tron address to solidity address type value. <br/> <br/>
-   *
-   * Input data[]: <br/> Base58String tron address
+   * Native function for converting Base58String tron address to solidity address type value. <br/>
    * <br/>
+   *
+   * Input data[]: <br/> Base58String tron address <br/>
    *
    * Output: <br/> Solidity address <br/>
    */
