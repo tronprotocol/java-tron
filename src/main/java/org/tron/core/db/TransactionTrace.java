@@ -22,10 +22,17 @@ public class TransactionTrace {
     receipt = new ReceiptCapsule(Sha256Hash.ZERO_HASH);
   }
 
+  //pre transaction check
   public void init() {
     //TODO: check
-    receipt.payCpuBill();
+//    receipt.payCpuBill();
     checkStorage();
+  }
+
+  //set bill
+  public void setBill(long cpuUseage, long storageDelta) {
+    receipt.setCpuUsage(cpuUseage);
+    receipt.setStorageDelta(storageDelta);
   }
 
   private void checkStorage() {
@@ -40,6 +47,9 @@ public class TransactionTrace {
   }
 
   public void finalize() {
+    //TODO: if SR package this this trx, use their receipt
+    //ReceiptCapsule witReceipt = trx.getInstance().getRet(0).getReceipt()
+    receipt.payCpuBill();
     receipt.payStorageBill();
     //TODO: pay bill
   }

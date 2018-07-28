@@ -977,6 +977,8 @@ public class Manager {
       trace.checkBill();
     }
 
+    trace.finalize();
+
     if (runtime.getResult().getException() != null) {
       throw new RuntimeException("Runtime exe failed!");
     }
