@@ -1216,7 +1216,8 @@ public class RpcApiService implements Service {
       long endNum = request.getEndNum();
 
       if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
-        responseObserver.onNext(blocklist2Extention(wallet.getBlocksByLimitNext(startNum, endNum - startNum)));
+        responseObserver
+            .onNext(blocklist2Extention(wallet.getBlocksByLimitNext(startNum, endNum - startNum)));
       } else {
         responseObserver.onNext(null);
       }
@@ -1291,7 +1292,32 @@ public class RpcApiService implements Service {
     @Override
     public void triggerContract(Contract.TriggerSmartContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.TriggerSmartContract, responseObserver);
+      TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
+      Return.Builder retBuilder = Return.newBuilder();
+      Transaction trx = Transaction.newBuilder().build();
+      try {
+        TransactionCapsule trxCap = createTransactionCapsule(request,
+            ContractType.TriggerSmartContract);
+        trx = wallet.triggerContract(request, trxCap);
+        trxExtBuilder.setTransaction(trx);
+        trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
+        retBuilder.setResult(true).setCode(response_code.SUCCESS);
+      } catch (ContractValidateException e) {
+        retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
+            .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()));
+        logger.debug("ContractValidateException: {}", e.getMessage());
+        return;
+      } catch (Exception e) {
+        retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+        logger.info("exception caught" + e.getMessage());
+        return;
+      } finally {
+        trxExtBuilder.setResult(retBuilder);
+        trxExtBuilder.setTransaction(trx);
+        responseObserver.onNext(trxExtBuilder.build());
+        responseObserver.onCompleted();
+      }
     }
 
     public void getPaginatedAssetIssueList(PaginatedMessage request,
