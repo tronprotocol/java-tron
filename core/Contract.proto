@@ -19,7 +19,7 @@ message TransferContract {
 
 
 message DeployContract {
-  bytes address = 1;
+  bytes address = 2;
   bytes script = 2;
 }
 
