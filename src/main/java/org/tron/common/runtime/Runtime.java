@@ -495,10 +495,8 @@ public class Runtime {
 
   private void spendStorageUsage(long storageUsage, AccountCapsule origin, AccountCapsule caller) {
 
-    this.cpuProcessor.useCpu(origin, storageUsage * (100 - 36) / 100,
-        deposit.getDbManager().getHeadBlockTimeStamp());
-    this.cpuProcessor
-        .useCpu(caller, storageUsage * 36 / 100, deposit.getDbManager().getHeadBlockTimeStamp());
+    origin.setStorageUsage(storageUsage * (100 - 36) / 100);
+    caller.setStorageUsage(storageUsage * 36 / 100);
   }
 
   private boolean isCallConstant() {
