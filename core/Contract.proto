@@ -173,6 +173,10 @@ message CreateSmartContract {
   bytes user_resource_usage_percent = 5;
   bytes contract_name = 6;
   bytes consume_user_resource_percent = 7;
+  int64 max_cpu_usage = 15;
+  int64 max_net_usage = 16;
+  int64 max_storage = 17;
+
 }
 
 message TriggerSmartContract {
@@ -182,6 +186,9 @@ message TriggerSmartContract {
   bytes data = 4;
   bytes cpu_limit_in_trx = 5;
   bytes storage_limit_in_trx = 6;
+  int64 max_cpu_usage = 7;
+  int64 max_net_usage = 8;
+  int64 max_storage = 9;
 }
 
 message BuyStorageContract {
