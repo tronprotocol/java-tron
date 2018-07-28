@@ -4,9 +4,9 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.protos.Protocol.ResourceReceipt;
 
 public class ReceiptCapsule {
-  ResourceReceipt receipt;
+  private ResourceReceipt receipt;
 
-  Sha256Hash receiptAddress;
+  private Sha256Hash receiptAddress;
 
   public ReceiptCapsule(ResourceReceipt data, Sha256Hash receiptAddress) {
     receipt = data;
