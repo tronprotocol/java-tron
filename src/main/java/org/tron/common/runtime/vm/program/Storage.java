@@ -24,8 +24,13 @@ import org.tron.common.runtime.vm.program.listener.ProgramListenerAware;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.Key;
 import org.tron.common.storage.Value;
-import org.tron.core.capsule.*;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.StorageCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.ContractExeException;
 import org.tron.protos.Protocol;
 
 public class Storage implements Deposit, ProgramListenerAware {
@@ -107,7 +112,8 @@ public class Storage implements Deposit, ProgramListenerAware {
     }
 
     @Override
-    public long addBalance(byte[] addr, long value) {
+    public long addBalance(byte[] addr, long value)
+        throws ContractExeException {
         return deposit.addBalance(addr, value);
     }
 
@@ -205,5 +211,15 @@ public class Storage implements Deposit, ProgramListenerAware {
     @Override
     public BlockCapsule getBlock(byte[] blockHash) {
         return this.deposit.getBlock(blockHash);
+    }
+
+    @Override
+    public long computeAfterRunStorageSize() {
+        return this.deposit.computeAfterRunStorageSize();
+    }
+
+    @Override
+    public long getBeforeRunStorageSize() {
+        return this.deposit.getBeforeRunStorageSize();
     }
 }

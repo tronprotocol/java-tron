@@ -91,6 +91,7 @@ public class DepositController {
       Deposit trxDeposit = currentDeposit.newDepositChild();
       Runtime runtime = new Runtime(trxCap.getInstance(), block.getInstance(), trxDeposit,
           programInvokeFactory);
+      runtime.init();
       runtime.execute();
       runtime.go();
 

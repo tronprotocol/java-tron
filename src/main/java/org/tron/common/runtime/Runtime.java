@@ -58,6 +58,7 @@ public class Runtime {
   private Deposit deposit;
   private ProgramInvokeFactory programInvokeFactory = null;
   private String runtimeError;
+  private boolean readyToExecute = false;
 
   PrecompiledContracts.PrecompiledContract precompiledContract = null;
   private ProgramResult result = new ProgramResult();
@@ -146,6 +147,79 @@ public class Runtime {
     }
   }
 
+  /**
+   */
+  public void init() {
+
+    switch (trxType) {
+      case TRX_PRECOMPILED_TYPE:
+        break;
+      case TRX_CONTRACT_CREATION_TYPE:
+        initForCreate();
+        break;
+      case TRX_CONTRACT_CALL_TYPE:
+        initForCall();
+        break;
+      default:
+        break;
+    }
+  }
+
+  public void initForCall() {
+
+    // Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
+  }
+
+  public void initForCreate() {
+
+    CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
+    SmartContract smartContract = contract.getNewContract();
+
+    // if (Args.getInstance().isWitness())
+    if (null != block) {
+
+      long blockStartTimestamp = block.getBlockHeader().getRawDataOrBuilder().getTimestamp();
+      // DateTime.now().getMillis() - when
+      // ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5 * ChainConstant.BLOCK_PRODUCED_TIME_OU / 100
+
+      // [1] check this trx cpu time limit  exceed the block time limit or not
+      BigInteger curBlockCPULimit = BigInteger.valueOf(1125000);
+
+      // get current block elapsed time
+      BigInteger curBlockHaveElapsedCPU = BigInteger.valueOf(10000);
+
+      BigInteger trxCPULimit = new BigInteger(1, contract.getCpuLimitInTrx().toByteArray());
+
+      // TODO get from account
+      BigInteger increasedStorageLimit = BigInteger.valueOf(10000000);
+
+      boolean cumulativeCPUReached =
+          trxCPULimit.add(curBlockHaveElapsedCPU).compareTo(curBlockCPULimit) > 0;
+
+      if (cumulativeCPUReached) {
+        logger.error("cumulative CPU Reached");
+        return;
+      }
+    }
+
+    // [2] check the account balance
+//    BigInteger txGasCost = toBI(tx.getGasPrice()).multiply(txGasLimit);
+//    BigInteger totalCost = toBI(tx.getValue()).add(txGasCost);
+//    BigInteger senderBalance = track.getBalance(tx.getSender());
+//
+//    if (!isCovers(senderBalance, totalCost)) {
+//
+//      execError(
+//          String.format("Not enough cash: Require: %s, Sender cash: %s", totalCost, senderBalance));
+//
+//      return;
+//    }
+
+    readyToExecute = true;
+
+  }
+
+
   public void execute() throws ContractValidateException, ContractExeException {
     switch (trxType) {
       case TRX_PRECOMPILED_TYPE:
@@ -162,7 +236,8 @@ public class Runtime {
     }
   }
 
-  private void call() {
+  private void call()
+      throws ContractExeException {
     Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
     if (contract == null) {
       return;
@@ -194,7 +269,8 @@ public class Runtime {
 
   /*
    **/
-  private void create() {
+  private void create()
+      throws ContractExeException {
     CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
     SmartContract newSmartContract = contract.getNewContract();
     byte[] code = newSmartContract.getBytecode().toByteArray();
@@ -217,6 +293,7 @@ public class Runtime {
       this.vm = new VM(config);
       this.program = new Program(ops, programInvoke, internalTransaction, config);
     } catch (Exception e) {
+      // TODO throw exception
       logger.error(e.getMessage());
       return;
     }
@@ -241,6 +318,7 @@ public class Runtime {
 
     try {
       if (vm != null) {
+
         vm.play(program);
 
         result = program.getResult();
@@ -256,6 +334,13 @@ public class Runtime {
           }
         } else {
           // touchedAccounts.addAll(result.getTouchedAccounts());
+          // check storage useage
+          long useedStorageSize =
+              deposit.getBeforeRunStorageSize() - deposit.computeAfterRunStorageSize();
+          if (useedStorageSize > 1000000) {
+            result.setException(Program.Exception.notEnoughStorage());
+            throw result.getException();
+          }
           if (executerType == ET_NORMAL_TYPE) {
             deposit.commit();
           }
@@ -266,6 +351,7 @@ public class Runtime {
           deposit.commit();
         }
       }
+
     } catch (Exception e) {
       logger.error(e.getMessage());
       runtimeError = e.getMessage();
@@ -273,7 +359,6 @@ public class Runtime {
   }
 
   public RuntimeSummary finalization() {
-
     return null;
   }
 

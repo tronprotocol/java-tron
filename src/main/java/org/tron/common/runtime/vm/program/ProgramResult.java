@@ -17,7 +17,13 @@ import org.tron.core.capsule.TransactionResultCapsule;
 
 public class ProgramResult {
 
+  private long ownerCpuUsed;
+  private long senderCpuUsed;
+  private long ownerStorageUsed;
+  private long senderStorageUsed;
+
   private long dropUsed;
+
   private byte[] hReturn = EMPTY_BYTE_ARRAY;
   private byte[] contractAddress = EMPTY_BYTE_ARRAY;
   private RuntimeException exception;
