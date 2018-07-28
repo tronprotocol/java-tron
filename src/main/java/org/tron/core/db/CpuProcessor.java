@@ -96,7 +96,7 @@ public class CpuProcessor extends ResourceProcessor {
   }
 
   private long calculateFee(long userCpuTime) {
-    return userCpuTime * 30;// 30 sun / macrisecond, move to dynamicStore later
+    return userCpuTime * 30;// 30 sun / macroSecond, move to dynamicStore later
   }
 
 
