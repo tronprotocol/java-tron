@@ -35,6 +35,7 @@ import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
@@ -205,8 +206,8 @@ public class Runtime {
         return true;
       }
     }
-    return false;
 
+    return false;
   }
 
 //  private long getAccountCPULimitInUs(List<AccountCapsule> accountCapsules) {
@@ -305,6 +306,22 @@ public class Runtime {
 
     byte[] code = newSmartContract.getBytecode().toByteArray();
     byte[] contractAddress = Wallet.generateContractAddress(trx);
+    byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
+
+    // insure one owner just have one contract
+    if (this.deposit.getContractByNormalAccount(ownerAddress) != null) {
+      logger.error("Trying to create second contract with one account: address: " + Wallet
+          .encode58Check(ownerAddress));
+      return;
+    }
+
+    // insure the new contract address haven't exist
+    if (deposit.getAccount(contractAddress) != null) {
+      logger.error("Trying to create a contract with existing contract address: " + Wallet
+          .encode58Check(contractAddress));
+      return;
+    }
+
     newSmartContract = newSmartContract.toBuilder()
         .setContractAddress(ByteString.copyFrom(contractAddress)).build();
 
@@ -340,17 +357,22 @@ public class Runtime {
     }
 
     program.getResult().setContractAddress(contractAddress);
-    deposit.createAccount(contractAddress, Protocol.AccountType.Contract);
 
-    // todo 一个账户只能一个合约账户
-    // todo insure one owner just have one contract
-    // todo add contract name later
-    // todo check the new contract address haven't exist
-    // todo code the revert of cpu/storage exceed
-    // todo run below code, cpu limit is ok, but storage??
+    //
+//    final Account account = new Account();
+//    account.setAccountName(asset.get("accountName").unwrapped().toString());
+//    account.setAccountType(asset.get("accountType").unwrapped().toString());
+//    account.setAddress(Wallet.decodeFromBase58Check(asset.get("address").unwrapped().toString()));
+//    account.setBalance(asset.get("balance").unwrapped().toString());
+//    return account;
+    //
+
+    deposit.createAccount(contractAddress, ByteString.copyFromUtf8("jack"),
+        Protocol.AccountType.Contract);
 
     deposit.createContract(contractAddress, new ContractCapsule(newSmartContract));
     deposit.saveCode(contractAddress, ProgramPrecompile.getCode(code));
+    deposit.createContractByNormalAccountIndex(ownerAddress, new BytesCapsule(contractAddress));
 
     // transfer from callerAddress to contractAddress according to callValue
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();

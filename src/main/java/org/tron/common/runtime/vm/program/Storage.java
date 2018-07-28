@@ -17,6 +17,7 @@
  */
 package org.tron.common.runtime.vm.program;
 
+import com.google.protobuf.ByteString;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
 import org.tron.common.runtime.vm.program.listener.ProgramListener;
@@ -26,6 +27,7 @@ import org.tron.common.storage.Key;
 import org.tron.common.storage.Value;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.StorageCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -60,8 +62,26 @@ public class Storage implements Deposit, ProgramListenerAware {
   }
 
   @Override
+  public AccountCapsule createAccount(byte[] address, ByteString accountName,
+      Protocol.AccountType type) {
+    return deposit.createAccount(address, accountName, type);
+  }
+
+
+  @Override
   public AccountCapsule getAccount(byte[] addr) {
     return deposit.getAccount(addr);
+  }
+
+  @Override
+  public BytesCapsule getContractByNormalAccount(byte[] address) {
+    return deposit.getContractByNormalAccount(address);
+  }
+
+  @Override
+  public void createContractByNormalAccountIndex(byte[] address,
+      BytesCapsule contractAddress) {
+    deposit.createContractByNormalAccountIndex(address, contractAddress);
   }
 
   @Override
@@ -172,6 +192,11 @@ public class Storage implements Deposit, ProgramListenerAware {
   @Override
   public void putContract(Key key, Value value) {
     deposit.putContract(key, value);
+  }
+
+  @Override
+  public void putContractByNormalAccountIndex(Key key, Value value) {
+    deposit.putContractByNormalAccountIndex(key, value);
   }
 
   @Override
