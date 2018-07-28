@@ -1439,6 +1439,6 @@ public class Program {
 
   public long getVmStartInUs() {
     return this.invoke.getVmStartInUs();
-    }
-
   }
+
+}
