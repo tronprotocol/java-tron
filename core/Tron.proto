@@ -422,7 +422,7 @@ message SmartContract {
 
       bool anonymous = 1;
       bool constant = 2;
-      bytes name = 3;
+      bytes name = 3;run
       repeated Param inputs = 4;
       repeated Param outputs = 5;
       EntryType type = 6;
