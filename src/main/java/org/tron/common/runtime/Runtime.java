@@ -40,6 +40,7 @@ import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
+import org.tron.core.db.CpuProcessor;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
@@ -69,6 +70,7 @@ public class Runtime {
   private String runtimeError;
   private boolean readyToExecute = false;
 
+  CpuProcessor cpuProcessor = null;
   PrecompiledContracts.PrecompiledContract precompiledContract = null;
   private ProgramResult result = new ProgramResult();
 
@@ -95,6 +97,7 @@ public class Runtime {
     }
     this.deposit = deosit;
     this.programInvokeFactory = programInvokeFactory;
+    this.cpuProcessor = new CpuProcessor(deposit.getDbManager());
 
     Transaction.Contract.ContractType contractType = tx.getRawData().getContract(0).getType();
     switch (contractType.getNumber()) {
@@ -441,6 +444,7 @@ public class Runtime {
   }
 
   private void spendUsage(boolean spandStorage) {
+    cpuProcessor = new CpuProcessor(deposit.getDbManager());
     long cpuUsage, storageUsage;
     storageUsage = 0;
     long now = System.nanoTime() / 1000;
@@ -465,98 +469,20 @@ public class Runtime {
   }
 
   private void spendCpuUsage(long cpuUsage, AccountCapsule origin, AccountCapsule caller) {
-    //TODO get origin cpu
-    long originCpu;
-    originCpu = getCpuByAccount(origin);
 
-    //TODO get caller cpu
-    long callerCpu;
-    callerCpu = getCpuByAccount(caller);
-    //TODO get caller cpulimit（trx）
-    long callerCpuLimit;
-    callerCpuLimit = 0;
-    cpuUsage = getCpuUsageLess(cpuUsage, origin, originCpu);
-    if (cpuUsage <= 0) {
-      return;
-    }
-    cpuUsage = getCpuUsageLess(cpuUsage, caller, callerCpu);
-    if (cpuUsage <= 0) {
-      return;
-    }
-    long overCpu = getCpuByLimit(callerCpuLimit);
-    cpuUsage = getCpuUsageLess(cpuUsage, caller, overCpu);
-    if (cpuUsage <= 0) {
-      return;
-    }
-  }
+    this.cpuProcessor.useCpu(origin, cpuUsage * (100 - 36) / 100,
+        deposit.getDbManager().getHeadBlockTimeStamp());
+    this.cpuProcessor
+        .useCpu(caller, cpuUsage * 36 / 100, deposit.getDbManager().getHeadBlockTimeStamp());
 
-  private long getCpuUsageLess(long cpuUsage, AccountCapsule origin, long cpu) {
-    if (cpuUsage <= cpu) {
-      //todo origin add cpu -cpuUsage
-    } else {
-      //todo origin add cpu -cpu
-    }
-    deposit.getDbManager().getAccountStore().put(origin.getAddress().toByteArray(), origin);
-    return cpuUsage - cpu;
-  }
-
-  private long getCpuByLimit(long callerCpuLimit) {
-
-    // TODO conversion limit(trx) to cpu
-    return 0;
   }
 
   private void spendStorageUsage(long storageUsage, AccountCapsule origin, AccountCapsule caller) {
-    //TODO get origin  storage
-    long orginStorage;
-    orginStorage = getStorageByAccount(origin);
 
-    //TODO get caller  storage
-    long callerStorage;
-    callerStorage = getStorageByAccount(caller);
-    //TODO get caller storagelimit（trx）
-    long callerStorageLimit;
-    callerStorageLimit = 0;
-    //storage 大于 1+2+3  不执行commit result 设置Error 正常退出 processesTransaction
-    storageUsage = getStorageUsageLess(storageUsage, origin, orginStorage);
-    if (storageUsage <= 0) {
-      return;
-    }
-    storageUsage = getStorageUsageLess(storageUsage, caller, callerStorage);
-    if (storageUsage <= 0) {
-      return;
-    }
-    long overStorage = getStorageByLimit(callerStorageLimit);
-    storageUsage = getStorageUsageLess(storageUsage, caller, overStorage);
-    if (storageUsage <= 0) {
-      return;
-    }
-  }
-
-  private long getStorageByLimit(long callerCpuLimit) {
-
-    // TODO conversion limit(trx) to cpu
-    return 0;
-  }
-
-  private long getStorageUsageLess(long storageUsage, AccountCapsule origin, long storage) {
-    if (storageUsage <= storage) {
-      //todo origin add storage -storageUsage
-    } else {
-      //todo origin add storage -storage
-    }
-    deposit.getDbManager().getAccountStore().put(origin.getAddress().toByteArray(), origin);
-    return storageUsage - storage;
-  }
-
-  private long getStorageByAccount(AccountCapsule origin) {
-    // TODO get Storage by account
-    return 0;
-  }
-
-  private long getCpuByAccount(AccountCapsule origin) {
-    // TODO get cpu by account
-    return 0;
+    this.cpuProcessor.useCpu(origin, storageUsage * (100 - 36) / 100,
+        deposit.getDbManager().getHeadBlockTimeStamp());
+    this.cpuProcessor
+        .useCpu(caller, storageUsage * 36 / 100, deposit.getDbManager().getHeadBlockTimeStamp());
   }
 
   private boolean isCallConstant() {
