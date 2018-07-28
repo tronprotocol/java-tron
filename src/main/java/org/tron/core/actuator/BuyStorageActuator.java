@@ -87,7 +87,7 @@ public class BuyStorageActuator extends AbstractActuator {
       throw new ContractValidateException("quantity must be positive");
     }
 
-    if (quant <= 1000_000L) {
+    if (quant < 1000_000L) {
       throw new ContractValidateException("quantity must be larger than 1TRX");
     }
 
