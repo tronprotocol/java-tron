@@ -31,11 +31,9 @@ import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
@@ -49,8 +47,6 @@ import org.tron.common.crypto.zksnark.PairingCheck;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.storage.Deposit;
 import org.tron.common.utils.BIUtil;
-
-import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
@@ -1041,10 +1037,10 @@ public class PrecompiledContracts {
   }
 
   /**
-   * Native function for converting bytes32 tron address to solidity address type value. <br/> <br/>
-   *
-   * Input data[]: <br/> bytes32 tron address
+   * Native function for converting bytes32 tron address to solidity address type value. <br/>
    * <br/>
+   *
+   * Input data[]: <br/> bytes32 tron address <br/>
    *
    * Output: <br/> Solidity address <br/>
    */
@@ -1068,10 +1064,10 @@ public class PrecompiledContracts {
   }
 
   /**
-   * Native function for converting Base58String tron address to solidity address type value. <br/> <br/>
-   *
-   * Input data[]: <br/> Base58String tron address
+   * Native function for converting Base58String tron address to solidity address type value. <br/>
    * <br/>
+   *
+   * Input data[]: <br/> Base58String tron address <br/>
    *
    * Output: <br/> Solidity address <br/>
    */
