@@ -204,6 +204,9 @@ public class Runtime {
       BigInteger oneTxCPULimitInUs = BigInteger
           .valueOf(Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
 
+      // TODO get from account
+      BigInteger increasedStorageLimit = BigInteger.valueOf(10000000);
+
       boolean cumulativeCPUReached =
           oneTxCPULimitInUs.compareTo(blockCPULeftInUs) > 0;
 
@@ -433,6 +436,14 @@ public class Runtime {
           }
         } else {
 
+          // touchedAccounts.addAll(result.getTouchedAccounts());
+          // check storage useage
+          long useedStorageSize =
+              deposit.getBeforeRunStorageSize() - deposit.computeAfterRunStorageSize();
+          if (useedStorageSize > 1000000) {
+            result.setException(Program.Exception.notEnoughStorage());
+            throw result.getException();
+          }
           if (executerType == ET_NORMAL_TYPE) {
             deposit.commit();
           }
@@ -510,7 +521,6 @@ public class Runtime {
   }
 
   public RuntimeSummary finalization() {
-
     return null;
   }
 
