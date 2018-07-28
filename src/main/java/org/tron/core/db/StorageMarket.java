@@ -110,6 +110,7 @@ public class StorageMarket {
     long newStorageLimit = currentStorageLimit - storageTax + storageBought;
     logger.info("storageBought: " + storageBought + "  newStorageLimit: " + newStorageLimit);
 
+    accountCapsule.setLatestExchangeStorageTime(now);
     accountCapsule.setStorageLimit(newStorageLimit);
     accountCapsule.setBalance(newBalance);
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -139,6 +140,7 @@ public class StorageMarket {
     long newStorageLimit = currentStorageLimit - storageTax - bytes;
     logger.info("quant: " + quant + "  newStorageLimit: " + newStorageLimit);
 
+    accountCapsule.setLatestExchangeStorageTime(now);
     accountCapsule.setStorageLimit(newStorageLimit);
     accountCapsule.setBalance(newBalance);
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);

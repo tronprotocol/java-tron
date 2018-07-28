@@ -248,6 +248,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     for (int i = 0; i < account.getFrozenCount(); ++i) {
       tp += account.getFrozen(i).getFrozenBalance();
     }
+
+    tp += account.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance();
     return tp;
   }
 

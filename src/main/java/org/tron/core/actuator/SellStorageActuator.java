@@ -39,6 +39,8 @@ public class SellStorageActuator extends AbstractActuator {
 
     AccountCapsule accountCapsule = dbManager.getAccountStore()
         .get(sellStorageContract.getOwnerAddress().toByteArray());
+
+
     long bytes = sellStorageContract.getStorageBytes();
 
     storageMarket.sellStorage(accountCapsule, bytes);

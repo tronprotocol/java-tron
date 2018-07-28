@@ -981,30 +981,14 @@ public class RpcApiService implements Service {
 
     @Override
     public void buyStorage(Contract.BuyStorageContract request,
-        StreamObserver<Transaction> responseObserver) {
-      try {
-        responseObserver.onNext(
-            createTransactionCapsule(request, ContractType.BuyStorageContract).getInstance());
-      } catch (ContractValidateException e) {
-        responseObserver
-            .onNext(null);
-        logger.debug("ContractValidateException: {}", e.getMessage());
-      }
-      responseObserver.onCompleted();
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.BuyStorageContract, responseObserver);
     }
 
     @Override
     public void sellStorage(Contract.SellStorageContract request,
-        StreamObserver<Transaction> responseObserver) {
-      try {
-        responseObserver.onNext(
-            createTransactionCapsule(request, ContractType.SellStorageContract).getInstance());
-      } catch (ContractValidateException e) {
-        responseObserver
-            .onNext(null);
-        logger.debug("ContractValidateException: {}", e.getMessage());
-      }
-      responseObserver.onCompleted();
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.SellStorageContract, responseObserver);
     }
 
     @Override
