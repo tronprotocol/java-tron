@@ -40,6 +40,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.db.TransactionTrace;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.CpuProcessor;
 import org.tron.core.exception.ContractExeException;
@@ -83,13 +84,18 @@ public class Runtime {
   private InternalTransaction.TrxType trxType = TRX_UNKNOWN_TYPE;
   private InternalTransaction.ExecuterType executerType = ET_UNKNOWN_TYPE;
 
+  //tx trace
+  private TransactionTrace trace;
+
 
   /**
    * For block's trx run
    */
-  public Runtime(Transaction tx, Block block, Deposit deosit,
+  public Runtime(TransactionTrace trace, Block block, Deposit deosit,
       ProgramInvokeFactory programInvokeFactory) {
-    this.trx = tx;
+    this.trace = trace;
+    this.trx = trace.getTrx().getInstance();
+
     if (Objects.nonNull(block)) {
       this.block = block;
       this.executerType = ET_NORMAL_TYPE;
@@ -101,7 +107,7 @@ public class Runtime {
     this.programInvokeFactory = programInvokeFactory;
     this.cpuProcessor = new CpuProcessor(deposit.getDbManager());
 
-    Transaction.Contract.ContractType contractType = tx.getRawData().getContract(0).getType();
+    Transaction.Contract.ContractType contractType = this.trx.getRawData().getContract(0).getType();
     switch (contractType.getNumber()) {
       case ContractType.TriggerSmartContract_VALUE:
         trxType = TRX_CONTRACT_CALL_TYPE;
@@ -111,7 +117,6 @@ public class Runtime {
         break;
       default:
         trxType = TRX_PRECOMPILED_TYPE;
-
     }
   }
 
