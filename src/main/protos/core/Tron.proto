@@ -47,8 +47,8 @@ message Proposal {
   State state = 7;
 }
 
-message ChainParameters{
-  repeated ChainParameter chainParameter= 1;
+message ChainParameters {
+  repeated ChainParameter chainParameter = 1;
   message ChainParameter {
     string key = 1;
     int64 value = 2;
@@ -104,7 +104,7 @@ message Account {
 
   bytes account_id = 23;
 
-  message AccountResource{
+  message AccountResource {
     // cpu resource, get from frozen
     int64 cpu_usage = 1;
     // the frozen balance for cpu

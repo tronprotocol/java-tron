@@ -37,29 +37,29 @@ import org.tron.protos.Protocol;
 
 public class Storage implements Deposit, ProgramListenerAware {
 
-    private  Deposit deposit;
-    private final DataWord address;  // contract address
-    private ProgramListener programListener;
+  private Deposit deposit;
+  private final DataWord address;  // contract address
+  private ProgramListener programListener;
 
-    public Storage(ProgramInvoke programInvoke) {
-        this.address = programInvoke.getOwnerAddress(); // contract address
-        this.deposit = programInvoke.getDeposit();
-    }
+  public Storage(ProgramInvoke programInvoke) {
+    this.address = programInvoke.getOwnerAddress(); // contract address
+    this.deposit = programInvoke.getDeposit();
+  }
 
-    @Override
-    public Manager getDbManager() {
-        return deposit.getDbManager();
-    }
+  @Override
+  public Manager getDbManager() {
+    return deposit.getDbManager();
+  }
 
-    @Override
-    public void setProgramListener(ProgramListener listener) {
-        this.programListener = listener;
-    }
+  @Override
+  public void setProgramListener(ProgramListener listener) {
+    this.programListener = listener;
+  }
 
-    @Override
-    public AccountCapsule createAccount(byte[] addr, Protocol.AccountType type) {
-        return deposit.createAccount(addr, type);
-    }
+  @Override
+  public AccountCapsule createAccount(byte[] addr, Protocol.AccountType type) {
+    return deposit.createAccount(addr, type);
+  }
 
   @Override
   public AccountCapsule createAccount(byte[] address, ByteString accountName,
@@ -89,20 +89,20 @@ public class Storage implements Deposit, ProgramListenerAware {
     deposit.createContract(codeHash, contractCapsule);
   }
 
-    @Override
-    public ContractCapsule getContract(byte[] codeHash) {
-        return deposit.getContract(codeHash);
-    }
+  @Override
+  public ContractCapsule getContract(byte[] codeHash) {
+    return deposit.getContract(codeHash);
+  }
 
-    @Override
-    public void saveCode(byte[] addr, byte[] code) {
-        deposit.saveCode(addr, code);
-    }
+  @Override
+  public void saveCode(byte[] addr, byte[] code) {
+    deposit.saveCode(addr, code);
+  }
 
-    @Override
-    public byte[] getCode(byte[] addr) {
-        return deposit.getCode(addr);
-    }
+  @Override
+  public byte[] getCode(byte[] addr) {
+    return deposit.getCode(addr);
+  }
 
     /*
     @Override
@@ -119,80 +119,80 @@ public class Storage implements Deposit, ProgramListenerAware {
     deposit.addStorageValue(addr, key, value);
   }
 
-    private boolean canListenTrace(byte[] address) {
-        return (programListener != null) && this.address.equals(new DataWord(address));
-    }
+  private boolean canListenTrace(byte[] address) {
+    return (programListener != null) && this.address.equals(new DataWord(address));
+  }
 
-    @Override
-    public DataWord getStorageValue(byte[] addr, DataWord key) {
-        return deposit.getStorageValue(addr, key);
-    }
+  @Override
+  public DataWord getStorageValue(byte[] addr, DataWord key) {
+    return deposit.getStorageValue(addr, key);
+  }
 
-    @Override
-    public long getBalance(byte[] addr) {
-        return deposit.getBalance(addr);
-    }
+  @Override
+  public long getBalance(byte[] addr) {
+    return deposit.getBalance(addr);
+  }
 
-    @Override
-    public long addBalance(byte[] addr, long value)
-        throws ContractExeException {
-        return deposit.addBalance(addr, value);
-    }
+  @Override
+  public long addBalance(byte[] addr, long value)
+      throws ContractExeException {
+    return deposit.addBalance(addr, value);
+  }
 
-    @Override
-    public Deposit newDepositChild() {
-        return deposit.newDepositChild();
-    }
+  @Override
+  public Deposit newDepositChild() {
+    return deposit.newDepositChild();
+  }
 
-    @Override
-    public Deposit newDepositNext() {
-        return deposit.newDepositNext();
-    }
+  @Override
+  public Deposit newDepositNext() {
+    return deposit.newDepositNext();
+  }
 
-    @Override
-    public void flush() {
-        deposit.flush();
-    }
+  @Override
+  public void flush() {
+    deposit.flush();
+  }
 
-    @Override
-    public void commit() {
-        deposit.commit();
-    }
+  @Override
+  public void commit() {
+    deposit.commit();
+  }
 
-    @Override
-    public StorageCapsule getStorage(byte[] address) {
-        return deposit.getStorage(address);
-    }
+  @Override
+  public StorageCapsule getStorage(byte[] address) {
+    return deposit.getStorage(address);
+  }
 
-    @Override
-    public void putAccount(Key key, Value value) {
-        deposit.putAccount(key, value);
-    }
+  @Override
+  public void putAccount(Key key, Value value) {
+    deposit.putAccount(key, value);
+  }
 
-    @Override
-    public void putTransaction(Key key, Value value) {
-        deposit.putTransaction(key, value);
-    }
+  @Override
+  public void putTransaction(Key key, Value value) {
+    deposit.putTransaction(key, value);
+  }
 
-    @Override
-    public void putBlock(Key key, Value value) {
-        deposit.putBlock(key, value);
-    }
+  @Override
+  public void putBlock(Key key, Value value) {
+    deposit.putBlock(key, value);
+  }
 
-    @Override
-    public void putWitness(Key key, Value value) {
-        deposit.putWitness(key, value);
-    }
+  @Override
+  public void putWitness(Key key, Value value) {
+    deposit.putWitness(key, value);
+  }
 
-    @Override
-    public void putCode(Key key, Value value) {
-        deposit.putCode(key, value);
-    }
+  @Override
+  public void putCode(Key key, Value value) {
+    deposit.putCode(key, value);
+  }
 
-    @Override
-    public void putContract(Key key, Value value) {
-        deposit.putContract(key, value);
-    }
+  @Override
+  public void putContract(Key key, Value value) {
+    deposit.putContract(key, value);
+  }
 
   @Override
   public void putContractByNormalAccountIndex(Key key, Value value) {
@@ -204,49 +204,53 @@ public class Storage implements Deposit, ProgramListenerAware {
     deposit.putStorage(key, value);
   }
 
-    @Override
-    public void putVotes(Key key, Value value) { deposit.putVotes(key, value); }
+  @Override
+  public void putVotes(Key key, Value value) {
+    deposit.putVotes(key, value);
+  }
 
-    @Override
-    public void setParent(Deposit deposit) {
-        this.deposit.setParent(deposit);
-    }
+  @Override
+  public void setParent(Deposit deposit) {
+    this.deposit.setParent(deposit);
+  }
 
-    @Override
-    public void setPrevDeposit(Deposit deposit) {
-        this.deposit.setPrevDeposit(deposit);
-    }
+  @Override
+  public void setPrevDeposit(Deposit deposit) {
+    this.deposit.setPrevDeposit(deposit);
+  }
 
-    @Override
-    public void setNextDeposit(Deposit deposit) {
-        this.deposit.setNextDeposit(deposit);
-    }
+  @Override
+  public void setNextDeposit(Deposit deposit) {
+    this.deposit.setNextDeposit(deposit);
+  }
 
-    @Override
-    public TransactionCapsule getTransaction(byte[] trxHash) {
-        return this.deposit.getTransaction(trxHash);
-    }
+  @Override
+  public TransactionCapsule getTransaction(byte[] trxHash) {
+    return this.deposit.getTransaction(trxHash);
+  }
 
-    @Override
-    // Do nothing
-    public void syncCacheFromAccountStore(byte[] address){ }
+  @Override
+  // Do nothing
+  public void syncCacheFromAccountStore(byte[] address) {
+  }
 
-    @Override
-    // Do nothing
-    public void syncCacheFromVotesStore(byte[] address) { }
+  @Override
+  // Do nothing
+  public void syncCacheFromVotesStore(byte[] address) {
+  }
 
-    @Override
-    public BlockCapsule getBlock(byte[] blockHash) {
-        return this.deposit.getBlock(blockHash);
-    }
+  @Override
+  public BlockCapsule getBlock(byte[] blockHash) {
+    return this.deposit.getBlock(blockHash);
+  }
 
-    @Override
-    public long computeAfterRunStorageSize() {
-        return this.deposit.computeAfterRunStorageSize();
-    }
+  @Override
+  public long computeAfterRunStorageSize() {
+    return this.deposit.computeAfterRunStorageSize();
+  }
 
-    @Override
-    public long getBeforeRunStorageSize() {
-        return this.deposit.getBeforeRunStorageSize();
-    }
+  @Override
+  public long getBeforeRunStorageSize() {
+    return this.deposit.getBeforeRunStorageSize();
+  }
 }
