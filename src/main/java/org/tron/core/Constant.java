@@ -32,7 +32,7 @@ public class Constant {
 
   //config for junit test
   public static final String TEST_CONF = "config-test.conf";
-  
+
   public static final String DATABASE_DIR = "storage.directory";
 
   public static final byte ADD_PRE_FIX_BYTE_MAINNET = (byte) 0x41;   //41 + address
@@ -47,7 +47,7 @@ public class Constant {
   public static final long TRANSACTION_DEFAULT_EXPIRATION_TIME = 60 * 1_000L; //60 seconds
 
   // config for smart contract
-  public static final long MEM_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT = 32 * 1024 * 1024; // 32MB
+  public static final long MEM_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT = 32 * 1024 * 1024L; // 32MB
   public static final long CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT = 100000; // 100 ms = 100000 us
-  public static final long STORAGE_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT = 32 * 1024 * 1024; // 32MB
+  public static final long STORAGE_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT = 32 * 1024 * 1024L; // 32MB
 }

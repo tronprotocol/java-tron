@@ -24,6 +24,7 @@ import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.runtime.vm.VM;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.Program;
+import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
 import org.tron.common.runtime.vm.program.ProgramPrecompile;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
@@ -41,11 +42,13 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.TronException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
@@ -407,6 +410,10 @@ public class Runtime {
         vm.play(program);
 
         result = program.getResult();
+        if (isCallConstant()) {
+          return;
+        }
+
         if (result.getException() != null || result.isRevert()) {
           result.getDeleteAccounts().clear();
           result.getLogInfoList().clear();
@@ -418,7 +425,7 @@ public class Runtime {
             runtimeError = "REVERT opcode executed";
           }
         } else {
-          // touchedAccounts.addAll(result.getTouchedAccounts());
+
           if (executerType == ET_NORMAL_TYPE) {
             deposit.commit();
           }
@@ -429,10 +436,23 @@ public class Runtime {
           deposit.commit();
         }
       }
-    } catch (Exception e) {
+    } catch (OutOfResourceException e) {
+      logger.error(e.getMessage());
+      runtimeError = e.getMessage();
+    } catch (TronException e) {
       logger.error(e.getMessage());
       runtimeError = e.getMessage();
     }
+  }
+
+  private boolean isCallConstant() {
+    if (TRX_CONTRACT_CALL_TYPE.equals(trxType)) {
+      ABI abi = deposit.getContract(result.getContractAddress()).getInstance().getAbi();
+      if (Wallet.isConstant(abi, ContractCapsule.getTriggerContractFromTransaction(trx))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public RuntimeSummary finalization() {
@@ -445,5 +465,3 @@ public class Runtime {
   }
 
 }
-
-

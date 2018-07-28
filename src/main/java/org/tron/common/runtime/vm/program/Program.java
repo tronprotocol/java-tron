@@ -1414,5 +1414,8 @@ public class Program {
     this.memory.write(0, data, data.length, false);
   }
 
+  public long getVmStartInUs() {
+    return this.invoke.getVmStartInUs();
+  }
 
 }

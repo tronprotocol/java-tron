@@ -21,50 +21,19 @@ import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Transaction.Contract;
 
 @Slf4j
-public class BandwidthProcessor {
-
-  private Manager dbManager;
-  private long precision;
-  private long windowSize;
+public class BandwidthProcessor extends ResourceProcessor {
 
   public BandwidthProcessor(Manager manager) {
-    this.dbManager = manager;
-    this.precision = ChainConstant.PRECISION;
-    this.windowSize = ChainConstant.WINDOW_SIZE_MS / ChainConstant.BLOCK_PRODUCED_INTERVAL;
+    super(manager);
   }
 
-  private long divideCeil(long numerator, long denominator) {
-    return (numerator / denominator) + ((numerator % denominator) > 0 ? 1 : 0);
-  }
-
-  private long increase(long lastUsage, long usage, long lastTime, long now) {
-    long averageLastUsage = divideCeil(lastUsage * precision, windowSize);
-    long averageUsage = divideCeil(usage * precision, windowSize);
-
-    if (lastTime != now) {
-      assert now > lastTime;
-      if (lastTime + windowSize > now) {
-        long delta = now - lastTime;
-        double decay = (windowSize - delta) / (double) windowSize;
-        averageLastUsage = Math.round(averageLastUsage * decay);
-      } else {
-        averageLastUsage = 0;
-      }
-    }
-    averageLastUsage += averageUsage;
-    return getUsage(averageLastUsage);
-  }
-
-  private long getUsage(long usage) {
-    return usage * windowSize / precision;
-  }
-
+  @Override
   public void updateUsage(AccountCapsule accountCapsule) {
     long now = dbManager.getWitnessController().getHeadSlot();
     updateUsage(accountCapsule, now);
   }
 
-  public void updateUsage(AccountCapsule accountCapsule, long now) {
+  private void updateUsage(AccountCapsule accountCapsule, long now) {
     long oldNetUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
     accountCapsule.setNetUsage(increase(oldNetUsage, 0, latestConsumeTime, now));
@@ -80,7 +49,8 @@ public class BandwidthProcessor {
     });
   }
 
-  public void consumeBandwidth(TransactionCapsule trx, TransactionResultCapsule ret)
+  @Override
+  public void consume(TransactionCapsule trx, TransactionResultCapsule ret)
       throws ContractValidateException, AccountResourceInsufficientException {
     List<Contract> contracts =
         trx.getInstance().getRawData().getContractList();
@@ -90,7 +60,7 @@ public class BandwidthProcessor {
       logger.debug("trxId {},bandwidth cost :{}", trx.getTransactionId(), bytes);
       byte[] address = TransactionCapsule.getOwner(contract);
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
-      if (accountCapsule == null) {
+        if (accountCapsule == null) {
         throw new ContractValidateException("account not exists");
       }
       long now = dbManager.getWitnessController().getHeadSlot();
@@ -118,20 +88,10 @@ public class BandwidthProcessor {
         continue;
       }
 
+      long fee = dbManager.getDynamicPropertiesStore().getTransactionFee() * bytes;
       throw new AccountResourceInsufficientException(
-          "Account Insufficient bandwidth and balance to create new account");
-    }
-  }
-
-  private boolean consumeFee(AccountCapsule accountCapsule, long fee) {
-    try {
-      long latestOperationTime = dbManager.getHeadBlockTimeStamp();
-      accountCapsule.setLatestOperationTime(latestOperationTime);
-      dbManager.adjustBalance(accountCapsule, -fee);
-      dbManager.adjustBalance(this.dbManager.getAccountStore().getBlackhole().createDbKey(), +fee);
-      return true;
-    } catch (BalanceInsufficientException e) {
-      return false;
+          "Account Insufficient bandwidth[" + bytes + "] and balance["
+              + fee + "] to create new account");
     }
   }
 
@@ -162,16 +122,20 @@ public class BandwidthProcessor {
 
   public boolean consumeBandwidthForCreateNewAccount(AccountCapsule accountCapsule, long bytes,
       long now) {
+
+    long createNewAccountBandwidthRatio = dbManager.getDynamicPropertiesStore()
+        .getCreateNewAccountBandwidthRate();
+
     long netUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
     long netLimit = calculateGlobalNetLimit(accountCapsule.getFrozenBalance());
 
     long newNetUsage = increase(netUsage, 0, latestConsumeTime, now);
 
-    if (bytes <= (netLimit - newNetUsage)) {
+    if (bytes * createNewAccountBandwidthRatio <= (netLimit - newNetUsage)) {
       latestConsumeTime = now;
       long latestOperationTime = dbManager.getHeadBlockTimeStamp();
-      newNetUsage = increase(newNetUsage, bytes, latestConsumeTime, now);
+      newNetUsage = increase(newNetUsage, bytes * createNewAccountBandwidthRatio, latestConsumeTime, now);
       accountCapsule.setLatestConsumeTime(latestConsumeTime);
       accountCapsule.setLatestOperationTime(latestOperationTime);
       accountCapsule.setNetUsage(newNetUsage);

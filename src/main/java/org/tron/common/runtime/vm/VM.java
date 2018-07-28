@@ -830,7 +830,7 @@ public class VM {
         }
         break;
         case GASPRICE: {
-          DataWord gasPrice = program.getDropPrice();
+          DataWord gasPrice = new DataWord(0);
 
           if (logger.isInfoEnabled()) {
             hint = "price: " + gasPrice.toString();
@@ -903,7 +903,7 @@ public class VM {
         }
         break;
         case GASLIMIT: {
-          DataWord droplimit = program.getDroplimit();
+          DataWord droplimit = new DataWord(0);
 
           if (logger.isInfoEnabled()) {
             hint = "gaslimit: " + droplimit;
@@ -1056,9 +1056,8 @@ public class VM {
           DataWord value = program.stackPop();
 
           if (logger.isInfoEnabled()) {
-            hint =
-                "[" + program.getOwnerAddress().toPrefixString() + "] key: " + addr + " value: "
-                    + value;
+            hint = "[" + program.getOwnerAddress().toPrefixString() + "] key: " + addr + " value: "
+                + value;
           }
 
           program.storageSave(addr, value);
@@ -1120,7 +1119,7 @@ public class VM {
         }
         break;
         case GAS: {
-          DataWord gas = program.getDroplimit();
+          DataWord gas = new DataWord(0);
 
           if (logger.isInfoEnabled()) {
             hint = "" + gas;
@@ -1318,12 +1317,13 @@ public class VM {
     }
   }
 
-  public void play(Program program)
-      throws ContractExeException, OutOfResourceException {
+  public void play(Program program) throws ContractExeException, OutOfResourceException {
+
     try {
       if (program.byTestingSuite()) {
         return;
       }
+
       while (!program.isStopped()) {
         this.step(program);
       }
