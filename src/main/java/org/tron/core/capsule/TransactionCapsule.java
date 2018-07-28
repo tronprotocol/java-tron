@@ -330,7 +330,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       }
       return owner.toByteArray();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());
       return null;
     }
   }
@@ -357,7 +357,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       }
       return to.toByteArray();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());
       return null;
     }
   }
@@ -377,7 +377,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       }
     } catch (Exception ex) {
       logger.error(ex.getMessage());
-      ex.printStackTrace();
       return 0;
     }
   }
