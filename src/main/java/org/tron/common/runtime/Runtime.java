@@ -385,16 +385,7 @@ public class Runtime {
 
     program.getResult().setContractAddress(contractAddress);
 
-    //
-//    final Account account = new Account();
-//    account.setAccountName(asset.get("accountName").unwrapped().toString());
-//    account.setAccountType(asset.get("accountType").unwrapped().toString());
-//    account.setAddress(Wallet.decodeFromBase58Check(asset.get("address").unwrapped().toString()));
-//    account.setBalance(asset.get("balance").unwrapped().toString());
-//    return account;
-    //
-
-    deposit.createAccount(contractAddress, ByteString.copyFromUtf8("jack"),
+    deposit.createAccount(contractAddress, newSmartContract.getName(),
         Protocol.AccountType.Contract);
 
     deposit.createContract(contractAddress, new ContractCapsule(newSmartContract));
