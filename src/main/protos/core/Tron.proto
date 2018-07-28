@@ -439,5 +439,4 @@ message SmartContract {
   bytes call_value = 5;
   bytes name = 6;
   bytes data = 7;
-
 }

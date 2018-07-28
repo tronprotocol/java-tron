@@ -53,6 +53,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
     byte[] ownerAddress;
     long balance;
     byte[] data;
+    byte[] dropLimit = null;
     byte[] lastHash = null;
     byte[] coinbase = null;
     long timestamp = 0L;
@@ -64,6 +65,8 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
       ownerAddress = contract.getOwnerAddress().toByteArray();
       balance = deposit.getBalance(ownerAddress);
       data = ByteUtil.EMPTY_BYTE_ARRAY;
+      byte[] ownerResourceUsagePercent = contract.getNewContract().getOwnerResourceUsagePercent()
+          .toByteArray();
 
       switch (executerType) {
         case ET_NORMAL_TYPE:
@@ -79,7 +82,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
       }
 
       return new ProgramInvokeImpl(contractAddress, ownerAddress, ownerAddress, balance, null, data,
-          lastHash, coinbase, timestamp, number, deposit);
+          lastHash, coinbase, timestamp, number, deposit, dropLimit, ownerResourceUsagePercent);
 
     } else if (trxType == TRX_CONTRACT_CALL_TYPE) {
       Contract.TriggerSmartContract contract = ContractCapsule
@@ -113,6 +116,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
       // byte[] data = tx.isContractCreation() ? ByteUtil.EMPTY_BYTE_ARRAY : nullToEmpty(tx.getData());
       data = contract.getData().toByteArray();
 
+      // dropLimit = contract.getTrxCpuLimitInUs().toByteArray();
       switch (executerType) {
         case ET_CONSTANT_TYPE:
           break;
@@ -133,7 +137,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
       }
 
       return new ProgramInvokeImpl(address, origin, caller, balance, callValue, data,
-          lastHash, coinbase, timestamp, number, deposit);
+          lastHash, coinbase, timestamp, number, deposit, dropLimit);
     } else {
       return null;
     }
