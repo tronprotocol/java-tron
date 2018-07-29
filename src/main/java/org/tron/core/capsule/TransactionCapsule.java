@@ -24,12 +24,14 @@ import static org.tron.protos.Contract.WitnessUpdateContract;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.math.BigInteger;
 import java.security.SignatureException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
@@ -378,6 +380,51 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     } catch (Exception ex) {
       logger.error(ex.getMessage());
       return 0;
+    }
+  }
+
+  // todo mv this static function to capsule util
+  public static long getStorageLimitInTrx(Transaction.Contract contract) {
+    int cpuForTrx;
+    try {
+      Any contractParameter = contract.getParameter();
+      switch (contract.getType()) {
+        case TriggerSmartContract:
+          return contractParameter.unpack(TriggerSmartContract.class).getStorageLimitInTrx();
+        case CreateSmartContract:
+          return contractParameter.unpack(CreateSmartContract.class).getStorageLimitInTrx();
+        default:
+          return 0;
+      }
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
+      return 0;
+    }
+  }
+
+  // todo mv this static function to capsule util
+  public static long getCallValue(Transaction.Contract contract) {
+    int cpuForTrx;
+    try {
+      Any contractParameter = contract.getParameter();
+      byte[] callValue;
+      switch (contract.getType()) {
+        case TriggerSmartContract:
+          callValue = contractParameter.unpack(TriggerSmartContract.class).getCallValue()
+              .toByteArray();
+          return new BigInteger(Hex.toHexString(callValue), 16).longValue();
+
+        case CreateSmartContract:
+          callValue = contractParameter.unpack(CreateSmartContract.class).getNewContract()
+              .getCallValue()
+              .toByteArray();
+          return new BigInteger(Hex.toHexString(callValue), 16).longValue();
+        default:
+          return 0L;
+      }
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
+      return 0L;
     }
   }
 

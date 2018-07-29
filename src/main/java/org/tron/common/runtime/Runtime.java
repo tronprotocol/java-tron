@@ -461,7 +461,7 @@ public class Runtime {
 
   }
 
-  public void go() {
+  public void go() throws ContractExeException {
 
     if (!readyToExecute) {
       return;
@@ -507,32 +507,34 @@ public class Runtime {
         }
       }
     } catch (OutOfResourceException e) {
-      logger.error(e.getMessage());
-      runtimeError = e.getMessage();
-    } catch (TronException e) {
       spendUsage(0);
       logger.error(e.getMessage());
       runtimeError = e.getMessage();
+    } catch (TronException e) {
+      logger.error(e.getMessage());
+      runtimeError = e.getMessage();
     }
-    //todo catch over resource exception
-//    catch (Exception e) {
-//      logger.error(e.getMessage());
-//      runtimeError = e.getMessage()
-//  }
-
   }
 
-  private void spendUsage(long useedStorageSize) {
+  private void spendUsage(long useedStorageSize) throws ContractExeException {
+
     cpuProcessor = new CpuProcessor(deposit.getDbManager());
     long cpuUsage, storageUsage;
     storageUsage = useedStorageSize;
     long now = System.nanoTime() / 1000;
     cpuUsage = now - program.getVmStartInUs();
     if (executerType == ET_NORMAL_TYPE) {
-      /*
-       * trx.getCpuRecipt
-       *
-       * */
+      //
+      //
+
+      if (!judgCpu(cpuUsage, trace.getTrx().getInstance().getRet(0).getReceipt().getCpuUsage())) {
+        throw new ContractExeException("judg fee Cpu result failed !");
+      }
+      cpuUsage = trace.getTrx().getInstance().getRet(0).getReceipt().getCpuUsage();
+      this.trace.setBill(cpuUsage, useedStorageSize);
+
+      //
+      //
     }
     ContractCapsule contract = deposit.getContract(result.getContractAddress());
     ByteString originAddress = contract.getInstance().getOriginAddress();
@@ -541,10 +543,25 @@ public class Runtime {
     byte[] callerAddressBytes = TransactionCapsule.getOwner(trx.getRawData().getContract(0));
     AccountCapsule caller = deposit.getAccount(callerAddressBytes);
 
-    spendCpuUsage(cpuUsage, origin, caller, contract.getInstance().getConsumeUserResourcePercent());
+    long consumeUserResourcePercent = contract.getInstance().getConsumeUserResourcePercent();
+    consumeUserResourcePercent = Long
+        .max(consumeUserResourcePercent, Constant.MIN_CONSUME_USER_RESOURCE_PERCENT);
+    consumeUserResourcePercent = Long
+        .min(consumeUserResourcePercent, Constant.MAX_CONSUME_USER_RESOURCE_PERCENT);
 
-    spendStorageUsage(storageUsage, origin, caller,
-        contract.getInstance().getConsumeUserResourcePercent());
+    spendCpuUsage(cpuUsage, origin, caller, consumeUserResourcePercent);
+
+    spendStorageUsage(storageUsage, origin, caller, consumeUserResourcePercent);
+  }
+
+  private boolean judgCpu(long cpuUsage, long WitnessCpuUsage) {
+    if (WitnessCpuUsage > cpuUsage * (100 + Constant.ACCORD_RANGE_PERCENT) / 100) {
+      return false;
+    }
+    if (WitnessCpuUsage < cpuUsage * (100 - Constant.ACCORD_RANGE_PERCENT) / 100) {
+      return false;
+    }
+    return true;
   }
 
   private void spendCpuUsage(long cpuUsage, AccountCapsule origin, AccountCapsule caller,
@@ -553,32 +570,32 @@ public class Runtime {
     if (cpuUsage <= 0) {
       return;
     }
-
+    long callerUsage = cpuUsage;
     long originUsage =
         cpuUsage * (Constant.MAX_CONSUME_USER_RESOURCE_PERCENT - consumeUserResourcePercent)
             / Constant.MAX_CONSUME_USER_RESOURCE_PERCENT;
-    this.cpuProcessor.useCpu(origin, originUsage, deposit.getDbManager().getHeadBlockTimeStamp());
-    long callerUsage =
-        cpuUsage * consumeUserResourcePercent / Constant.MAX_CONSUME_USER_RESOURCE_PERCENT;
+    if (this.cpuProcessor
+        .useCpu(origin, originUsage, deposit.getDbManager().getHeadBlockTimeStamp())) {
+      callerUsage =
+          cpuUsage * consumeUserResourcePercent / Constant.MAX_CONSUME_USER_RESOURCE_PERCENT;
+    }
+
     this.cpuProcessor.useCpu(caller, callerUsage, deposit.getDbManager().getHeadBlockTimeStamp());
 
   }
 
   private void spendStorageUsage(long storageUsage, AccountCapsule origin, AccountCapsule caller,
       long consumeUserResourcePercent) {
-    
+
     if (storageUsage <= 0) {
       return;
     }
 
-    consumeUserResourcePercent = Long
-        .max(consumeUserResourcePercent, Constant.MIN_CONSUME_USER_RESOURCE_PERCENT);
-    consumeUserResourcePercent = Long
-        .min(consumeUserResourcePercent, Constant.MAX_CONSUME_USER_RESOURCE_PERCENT);
     long originUsage =
         storageUsage * (Constant.MAX_CONSUME_USER_RESOURCE_PERCENT - consumeUserResourcePercent)
             / Constant.MAX_CONSUME_USER_RESOURCE_PERCENT;
     origin.addStorageUsage(originUsage);
+
     long callerUsage =
         storageUsage * consumeUserResourcePercent / Constant.MAX_CONSUME_USER_RESOURCE_PERCENT;
     caller.addStorageUsage(callerUsage);

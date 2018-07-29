@@ -4,6 +4,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.protos.Protocol.ResourceReceipt;
 
 public class ReceiptCapsule {
+
   private ResourceReceipt receipt;
 
   private Sha256Hash receiptAddress;
@@ -19,7 +20,11 @@ public class ReceiptCapsule {
   }
 
   public void setCpuUsage(long usage) {
-    receipt.toBuilder().setCpuFee(usage);
+    receipt.toBuilder().setCpuUsage(usage);
+  }
+
+  public long getCpuUsage() {
+    return receipt.toBuilder().getCpuUsage();
   }
 
   public void calculateCpuFee() {
@@ -27,15 +32,25 @@ public class ReceiptCapsule {
   }
 
   public void setStorageDelta(long delta) {
-    receipt.toBuilder().setCpuFee(delta);
+    receipt.toBuilder().setStorageDelta(delta);
+  }
+
+  public long getStorageDelta() {
+    return receipt.toBuilder().getStorageDelta();
   }
 
   public void payCpuBill() {
     //TODO: pay cpu bill
+    if (0 == receipt.getCpuUsage()) {
+      return;
+    }
   }
 
   public void payStorageBill() {
     //TODO: pay storage bill
+    if (0 == receipt.getSerializedSize()) {
+      return;
+    }
   }
 
   public void buyStorage(long storage) {

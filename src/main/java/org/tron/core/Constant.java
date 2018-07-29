@@ -53,5 +53,6 @@ public class Constant {
   public static final long CPU_IN_US_PER_TRX = 1000000 / 30; // 1 us <-> 30 SUN <-> 30 * 10^-6 TRX
   public static final long MAX_CONSUME_USER_RESOURCE_PERCENT = 100L; // 1 us <-> 30 SUN <-> 30 * 10^-6 TRX
   public static final long MIN_CONSUME_USER_RESOURCE_PERCENT = 0L; // 1 us <-> 30 SUN <-> 30 * 10^-6 TRX
+  public static final long ACCORD_RANGE_PERCENT = 0L; // 1 us <-> 30 SUN <-> 30 * 10^-6 TRX
 
 }

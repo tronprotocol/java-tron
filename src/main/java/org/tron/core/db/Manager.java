@@ -958,9 +958,8 @@ public class Manager {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    TransactionTrace trace = new TransactionTrace(trxCap);
+    TransactionTrace trace = new TransactionTrace(trxCap, this);
     trace.init();
-
 
     DepositImpl deposit = DepositImpl.createRoot(this);
     Runtime runtime;
@@ -968,12 +967,12 @@ public class Manager {
     runtime = new Runtime(trace, block, deposit,
         new ProgramInvokeFactoryImpl());
     consumeBandwidth(trxCap, runtime.getResult().getRet());
-    
+
     //exec
     trace.exec(runtime);
 
     //check SR's bill and ours.
-    if(block != null) {
+    if (block != null) {
       trace.checkBill();
     }
 
