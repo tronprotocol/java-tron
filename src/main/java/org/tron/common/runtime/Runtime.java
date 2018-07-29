@@ -475,7 +475,6 @@ public class Runtime {
         if (isCallConstant()) {
           return;
         }
-        spendUsage(true);
 
         if (result.getException() != null || result.isRevert()) {
           result.getDeleteAccounts().clear();
@@ -500,8 +499,8 @@ public class Runtime {
           if (executerType == ET_NORMAL_TYPE) {
             deposit.commit();
           }
+          spendUsage(useedStorageSize);
         }
-
       } else {
         if (executerType == ET_NORMAL_TYPE) {
           deposit.commit();
@@ -511,7 +510,7 @@ public class Runtime {
       logger.error(e.getMessage());
       runtimeError = e.getMessage();
     } catch (TronException e) {
-      spendUsage(false);
+      spendUsage(0);
       logger.error(e.getMessage());
       runtimeError = e.getMessage();
     }
@@ -523,10 +522,10 @@ public class Runtime {
 
   }
 
-  private void spendUsage(boolean spandStorage) {
+  private void spendUsage(long useedStorageSize) {
     cpuProcessor = new CpuProcessor(deposit.getDbManager());
     long cpuUsage, storageUsage;
-    storageUsage = 0;
+    storageUsage = useedStorageSize;
     long now = System.nanoTime() / 1000;
     cpuUsage = now - program.getVmStartInUs();
     if (executerType == ET_NORMAL_TYPE) {
@@ -542,25 +541,47 @@ public class Runtime {
     byte[] callerAddressBytes = TransactionCapsule.getOwner(trx.getRawData().getContract(0));
     AccountCapsule caller = deposit.getAccount(callerAddressBytes);
 
-    spendCpuUsage(cpuUsage, origin, caller);
-    if (spandStorage) {
-      spendStorageUsage(storageUsage, origin, caller);
+    spendCpuUsage(cpuUsage, origin, caller, contract.getInstance().getConsumeUserResourcePercent());
+
+    spendStorageUsage(storageUsage, origin, caller,
+        contract.getInstance().getConsumeUserResourcePercent());
+  }
+
+  private void spendCpuUsage(long cpuUsage, AccountCapsule origin, AccountCapsule caller,
+      long consumeUserResourcePercent) {
+
+    if (cpuUsage <= 0) {
+      return;
     }
+
+    long originUsage =
+        cpuUsage * (Constant.MAX_CONSUME_USER_RESOURCE_PERCENT - consumeUserResourcePercent)
+            / Constant.MAX_CONSUME_USER_RESOURCE_PERCENT;
+    this.cpuProcessor.useCpu(origin, originUsage, deposit.getDbManager().getHeadBlockTimeStamp());
+    long callerUsage =
+        cpuUsage * consumeUserResourcePercent / Constant.MAX_CONSUME_USER_RESOURCE_PERCENT;
+    this.cpuProcessor.useCpu(caller, callerUsage, deposit.getDbManager().getHeadBlockTimeStamp());
+
   }
 
-  private void spendCpuUsage(long cpuUsage, AccountCapsule origin, AccountCapsule caller) {
+  private void spendStorageUsage(long storageUsage, AccountCapsule origin, AccountCapsule caller,
+      long consumeUserResourcePercent) {
+    
+    if (storageUsage <= 0) {
+      return;
+    }
 
-    this.cpuProcessor.useCpu(origin, cpuUsage * (100 - 36) / 100,
-        deposit.getDbManager().getHeadBlockTimeStamp());
-    this.cpuProcessor
-        .useCpu(caller, cpuUsage * 36 / 100, deposit.getDbManager().getHeadBlockTimeStamp());
-
-  }
-
-  private void spendStorageUsage(long storageUsage, AccountCapsule origin, AccountCapsule caller) {
-
-    origin.setStorageUsage(storageUsage * (100 - 36) / 100);
-    caller.setStorageUsage(storageUsage * 36 / 100);
+    consumeUserResourcePercent = Long
+        .max(consumeUserResourcePercent, Constant.MIN_CONSUME_USER_RESOURCE_PERCENT);
+    consumeUserResourcePercent = Long
+        .min(consumeUserResourcePercent, Constant.MAX_CONSUME_USER_RESOURCE_PERCENT);
+    long originUsage =
+        storageUsage * (Constant.MAX_CONSUME_USER_RESOURCE_PERCENT - consumeUserResourcePercent)
+            / Constant.MAX_CONSUME_USER_RESOURCE_PERCENT;
+    origin.addStorageUsage(originUsage);
+    long callerUsage =
+        storageUsage * consumeUserResourcePercent / Constant.MAX_CONSUME_USER_RESOURCE_PERCENT;
+    caller.addStorageUsage(callerUsage);
   }
 
   private boolean isCallConstant() {

@@ -544,4 +544,16 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
+  public void addStorageUsage(long storageUsage) {
+    if (storageUsage <= 0) {
+      return;
+    }
+    AccountResource accountResource = this.account.getAccountResource();
+    accountResource = accountResource.toBuilder()
+        .setStorageUsage(accountResource.getStorageUsage() + storageUsage).build();
+
+    this.account = this.account.toBuilder()
+        .setAccountResource(accountResource)
+        .build();
+  }
 }
