@@ -276,9 +276,10 @@ public class DepositImpl implements Deposit {
     } else {
       storageCapsule = getStorageStore().get(address);
     }
-    this.beforeRunStorageSize += storageCapsule.getInstance().getSerializedSize();
+
     if (storageCapsule != null) {
       storageCache.put(key, Value.create(storageCapsule.getData(), Type.VALUE_TYPE_NORMAL));
+      this.beforeRunStorageSize += storageCapsule.getInstance().getSerializedSize();
     }
     return storageCapsule;
   }

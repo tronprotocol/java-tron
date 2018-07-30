@@ -297,7 +297,7 @@ public class VM {
       // DEBUG System.out.println(" OP IS " + op.name() + " GASCOST IS " + gasCost + " NUM IS " + op.asInt());
       // program.spendDrop(dropCost, op.name());
 
-      // program.checkCPULimit(op.name());
+      program.checkCPULimit(op.name());
       // logger.info("after opName: {}, {}", op.name(), System.nanoTime() / 1000 - lastTime);
 
       // Execute operation

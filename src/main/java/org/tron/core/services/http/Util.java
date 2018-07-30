@@ -67,7 +67,7 @@ public class Util {
     JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(block));
     jsonObject.put("blockID", blockID);
     if (!blockCapsule.getTransactions().isEmpty()) {
-      jsonObject.put("transactions", printTransationListToJSON(blockCapsule.getTransactions()));
+      jsonObject.put("transactions", printTransactionListToJSON(blockCapsule.getTransactions()));
     }
     return jsonObject;
   }
@@ -84,7 +84,7 @@ public class Util {
     return jsonObject.toJSONString();
   }
 
-  public static JSONArray printTransationListToJSON(List<TransactionCapsule> list) {
+  public static JSONArray printTransactionListToJSON(List<TransactionCapsule> list) {
     JSONArray transactions = new JSONArray();
     list.stream().forEach(transactionCapsule -> {
       transactions.add(printTransactionToJSON(transactionCapsule.getInstance()));
@@ -286,8 +286,8 @@ public class Util {
             any = Any.pack(witnessUpdateContractBuilder.build());
             break;
           case "ParticipateAssetIssueContract":
-            ParticipateAssetIssueContract.Builder participateAssetIssueContractBuilder = ParticipateAssetIssueContract
-                .newBuilder();
+            ParticipateAssetIssueContract.Builder participateAssetIssueContractBuilder =
+                ParticipateAssetIssueContract.newBuilder();
             JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
                 participateAssetIssueContractBuilder);
             any = Any.pack(participateAssetIssueContractBuilder.build());
