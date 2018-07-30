@@ -230,6 +230,10 @@ public class Args {
 
   @Getter
   @Setter
+  private long proposalExpireTime; // (ms)
+
+  @Getter
+  @Setter
   private int tcpNettyWorkThreadNum;
 
   @Getter
@@ -256,6 +260,14 @@ public class Args {
   @Getter
   @Setter
   private List<String> backupMembers;
+
+  @Getter
+  @Setter
+  private double connectFactor;
+
+  @Getter
+  @Setter
+  private double activeConnectFactor;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -299,12 +311,15 @@ public class Args {
     INSTANCE.fullNodeHttpPort = 0;
     INSTANCE.solidityHttpPort = 0;
     INSTANCE.maintenanceTimeInterval = 0;
+    INSTANCE.proposalExpireTime = 0;
     INSTANCE.tcpNettyWorkThreadNum = 0;
     INSTANCE.udpNettyWorkThreadNum = 0;
     INSTANCE.p2pNodeId = "";
     INSTANCE.solidityNode = false;
     INSTANCE.trustNodeAddr = "";
     INSTANCE.walletExtensionApi = false;
+    INSTANCE.connectFactor = 0.3;
+    INSTANCE.activeConnectFactor = 0.1;
   }
 
   /**
@@ -494,6 +509,10 @@ public class Args {
         config.hasPath("block.maintenanceTimeInterval") ? config
             .getInt("block.maintenanceTimeInterval") : 21600000L;
 
+    INSTANCE.proposalExpireTime =
+        config.hasPath("block.proposalExpireTime") ? config
+            .getInt("block.proposalExpireTime") : 259200000L;
+
     INSTANCE.tcpNettyWorkThreadNum = config.hasPath("node.tcpNettyWorkThreadNum") ? config
         .getInt("node.tcpNettyWorkThreadNum") : 0;
 
@@ -510,6 +529,12 @@ public class Args {
 
     INSTANCE.walletExtensionApi =
         config.hasPath("node.walletExtensionApi") && config.getBoolean("node.walletExtensionApi");
+
+    INSTANCE.connectFactor =
+        config.hasPath("node.connectFactor") ? config.getDouble("node.connectFactor") : 0.3;
+
+    INSTANCE.activeConnectFactor = config.hasPath("node.activeConnectFactor") ?
+        config.getDouble("node.activeConnectFactor") : 0.1;
 
     initBackupProperty(config);
 

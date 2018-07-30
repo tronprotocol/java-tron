@@ -38,8 +38,8 @@ public class WithdrawBalanceActuatorTest {
   private static final String dbPath = "output_withdraw_balance_test";
   private static AnnotationConfigApplicationContext context;
   private static final String OWNER_ADDRESS;
-  private static final String OWNER_ADDRESS_INVALIDATE = "aaaa";
-  private static final String OWNER_ACCOUNT_INVALIDATE;
+  private static final String OWNER_ADDRESS_INVALID = "aaaa";
+  private static final String OWNER_ACCOUNT_INVALID;
   private static final long initBalance = 10_000_000_000L;
   private static final long allowance = 32_000_000L;
 
@@ -47,7 +47,7 @@ public class WithdrawBalanceActuatorTest {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
-    OWNER_ACCOUNT_INVALIDATE =
+    OWNER_ACCOUNT_INVALID =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";
   }
 
@@ -141,7 +141,7 @@ public class WithdrawBalanceActuatorTest {
   @Test
   public void invalidOwnerAddress() {
     WithdrawBalanceActuator actuator = new WithdrawBalanceActuator(
-        getContract(OWNER_ADDRESS_INVALIDATE), dbManager);
+        getContract(OWNER_ADDRESS_INVALID), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -163,7 +163,7 @@ public class WithdrawBalanceActuatorTest {
   @Test
   public void invalidOwnerAccount() {
     WithdrawBalanceActuator actuator = new WithdrawBalanceActuator(
-        getContract(OWNER_ACCOUNT_INVALIDATE), dbManager);
+        getContract(OWNER_ACCOUNT_INVALID), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -172,7 +172,7 @@ public class WithdrawBalanceActuatorTest {
       fail("cannot run here.");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Account[" + OWNER_ACCOUNT_INVALIDATE + "] not exists",
+      Assert.assertEquals("Account[" + OWNER_ACCOUNT_INVALID + "] not exists",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);

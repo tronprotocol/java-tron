@@ -19,6 +19,7 @@
 package org.tron.core;
 
 import com.google.protobuf.ByteString;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,18 +33,25 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountNetMessage;
+import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.Hash;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.vm.program.ProgramResult;
+import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
+import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -53,14 +61,21 @@ import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.config.Parameter.ChainParameters;
+import org.tron.core.db.AccountIdIndexStore;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BandwidthProcessor;
+import org.tron.core.db.ContractStore;
+import org.tron.core.db.CpuProcessor;
+import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.PendingManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
-import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
@@ -73,13 +88,20 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.TriggerSmartContract;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.Proposal;
+import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.Protocol.SmartContract.ABI;
+import org.tron.protos.Protocol.SmartContract.ABI.Entry.StateMutabilityType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.Protocol.TransactionSign;
-
 
 @Slf4j
 @Component
@@ -109,6 +131,14 @@ public class Wallet {
   public Wallet(final ECKey ecKey) {
     this.ecKey = ecKey;
     logger.info("wallet address: {}", ByteArray.toHexString(this.ecKey.getAddress()));
+  }
+
+  public static boolean isConstant(ABI abi, TriggerSmartContract triggerSmartContract) {
+    try {
+      return isConstant(abi, getSelector(triggerSmartContract.getData().toByteArray()));
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   public byte[] getAddress() {
@@ -178,6 +208,21 @@ public class Wallet {
     return null;
   }
 
+  public static byte[] generateContractAddress(Transaction trx) {
+
+    CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
+    byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
+    TransactionCapsule trxCap = new TransactionCapsule(trx);
+    byte[] txRawDataHash = trxCap.getTransactionId().getBytes();
+
+    byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
+    System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
+    System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
+
+    return Hash.sha3omit12(combined);
+
+  }
+
   public static byte[] decodeFromBase58Check(String addressBase58) {
     if (StringUtils.isEmpty(addressBase58)) {
       logger.warn("Warning: Address is empty !!");
@@ -199,6 +244,22 @@ public class Wallet {
   public Account getAccount(Account account) {
     AccountStore accountStore = dbManager.getAccountStore();
     AccountCapsule accountCapsule = accountStore.get(account.getAddress().toByteArray());
+    if (accountCapsule == null) {
+      return null;
+    }
+    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+    processor.updateUsage(accountCapsule);
+    return accountCapsule.getInstance();
+  }
+
+  public Account getAccountById(Account account) {
+    AccountStore accountStore = dbManager.getAccountStore();
+    AccountIdIndexStore accountIdIndexStore = dbManager.getAccountIdIndexStore();
+    byte[] address = accountIdIndexStore.get(account.getAccountId());
+    if (address == null) {
+      return null;
+    }
+    AccountCapsule accountCapsule = accountStore.get(address);
     if (accountCapsule == null) {
       return null;
     }
@@ -374,6 +435,69 @@ public class Wallet {
     return builder.build();
   }
 
+  public ProposalList getProposalList() {
+    ProposalList.Builder builder = ProposalList.newBuilder();
+    List<ProposalCapsule> proposalCapsuleList = dbManager.getProposalStore().getAllProposals();
+    proposalCapsuleList
+        .forEach(proposalCapsule -> builder.addProposals(proposalCapsule.getInstance()));
+    return builder.build();
+  }
+
+  public Protocol.ChainParameters getChainParameters() {
+    Protocol.ChainParameters.Builder builder = Protocol.ChainParameters.newBuilder();
+    DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
+
+    Protocol.ChainParameters.ChainParameter.Builder builder1
+        = Protocol.ChainParameters.ChainParameter.newBuilder();
+
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.MAINTENANCE_TIME_INTERVAL.name())
+        .setValue(
+            dynamicPropertiesStore.getMaintenanceTimeInterval())
+        .build());
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.ACCOUNT_UPGRADE_COST.name())
+        .setValue(
+            dynamicPropertiesStore.getAccountUpgradeCost())
+        .build());
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.CREATE_ACCOUNT_FEE.name())
+        .setValue(
+            dynamicPropertiesStore.getCreateAccountFee())
+        .build());
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.TRANSACTION_FEE.name())
+        .setValue(
+            dynamicPropertiesStore.getTransactionFee())
+        .build());
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.ASSET_ISSUE_FEE.name())
+        .setValue(
+            dynamicPropertiesStore.getAssetIssueFee())
+        .build());
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.WITNESS_PAY_PER_BLOCK.name())
+        .setValue(
+            dynamicPropertiesStore.getWitnessPayPerBlock())
+        .build());
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.WITNESS_STANDBY_ALLOWANCE.name())
+        .setValue(
+            dynamicPropertiesStore.getWitnessStandbyAllowance())
+        .build());
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT.name())
+        .setValue(
+            dynamicPropertiesStore.getCreateNewAccountFeeInSystemContract())
+        .build());
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.CREATE_NEW_ACCOUNT_BANDWIDTH_RATE.name())
+        .setValue(
+            dynamicPropertiesStore.getCreateNewAccountBandwidthRate())
+        .build());
+
+    return builder.build();
+  }
   public AssetIssueList getAssetIssueList() {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     dbManager.getAssetIssueStore().getAllAssetIssues()
@@ -381,19 +505,22 @@ public class Wallet {
     return builder.build();
   }
 
+
   public AssetIssueList getAssetIssueList(long offset, long limit) {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     List<AssetIssueCapsule> assetIssueList = dbManager.getAssetIssueStore()
         .getAssetIssuesPaginated(offset, limit);
-    if (null == assetIssueList || assetIssueList.size() == 0) {
+
+    if (CollectionUtils.isEmpty(assetIssueList)) {
       return null;
     }
+
     assetIssueList.forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
     return builder.build();
   }
 
   public AssetIssueList getAssetIssueByAccount(ByteString accountAddress) {
-    if (accountAddress == null || accountAddress.size() == 0) {
+    if (accountAddress == null || accountAddress.isEmpty()) {
       return null;
     }
     List<AssetIssueCapsule> assetIssueCapsuleList = dbManager.getAssetIssueStore()
@@ -408,7 +535,7 @@ public class Wallet {
   }
 
   public AccountNetMessage getAccountNet(ByteString accountAddress) {
-    if (accountAddress == null || accountAddress.size() == 0) {
+    if (accountAddress == null || accountAddress.isEmpty()) {
       return null;
     }
     AccountNetMessage.Builder builder = AccountNetMessage.newBuilder();
@@ -442,18 +569,63 @@ public class Wallet {
     return builder.build();
   }
 
-  public AssetIssueContract getAssetIssueByName(ByteString assetName) {
-    if (assetName == null || assetName.size() == 0) {
+  public AccountResourceMessage getAccountResource(ByteString accountAddress) {
+    if (accountAddress == null || accountAddress.isEmpty()) {
       return null;
     }
-    List<AssetIssueCapsule> assetIssueCapsuleList = dbManager.getAssetIssueStore()
-        .getAllAssetIssues();
-    for (AssetIssueCapsule assetIssueCapsule : assetIssueCapsuleList) {
-      if (assetName.equals(assetIssueCapsule.getName())) {
-        return assetIssueCapsule.getInstance();
-      }
+    AccountResourceMessage.Builder builder = AccountResourceMessage.newBuilder();
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(accountAddress.toByteArray());
+    if (accountCapsule == null) {
+      return null;
     }
-    return null;
+
+    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+    processor.updateUsage(accountCapsule);
+
+    CpuProcessor cpuProcessor = new CpuProcessor(dbManager);
+    cpuProcessor.updateUsage(accountCapsule);
+
+    long netLimit = processor.calculateGlobalNetLimit(accountCapsule.getFrozenBalance());
+    long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
+    long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
+    long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
+    long cpuLimit = cpuProcessor.calculateGlobalCpuLimit(accountCapsule.getCpuFrozenBalance());
+    long totalCpuLimit = dbManager.getDynamicPropertiesStore().getTotalCpuLimit();
+    long totalCpuWeight = dbManager.getDynamicPropertiesStore().getTotalCpuWeight();
+
+    long storageLimit = accountCapsule.getAccountResource().getStorageLimit();
+    long storageUsage = accountCapsule.getAccountResource().getStorageUsage();
+
+    Map<String, Long> assetNetLimitMap = new HashMap<>();
+    accountCapsule.getAllFreeAssetNetUsage().keySet().forEach(asset -> {
+      byte[] key = ByteArray.fromString(asset);
+      assetNetLimitMap.put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
+    });
+
+    builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
+        .setFreeNetLimit(freeNetLimit)
+        .setNetUsed(accountCapsule.getNetUsage())
+        .setNetLimit(netLimit)
+        .setTotalNetLimit(totalNetLimit)
+        .setTotalNetWeight(totalNetWeight)
+        .setCpuLimit(cpuLimit)
+        .setCpuUsed(accountCapsule.getAccountResource().getCpuUsage())
+        .setTotalCpuLimit(totalCpuLimit)
+        .setTotalCpuWeight(totalCpuWeight)
+        .setStorageLimit(storageLimit)
+        .setStorageUsed(storageUsage)
+        .putAllAssetNetUsed(accountCapsule.getAllFreeAssetNetUsage())
+        .putAllAssetNetLimit(assetNetLimitMap);
+    return builder.build();
+  }
+
+  public AssetIssueContract getAssetIssueByName(ByteString assetName) {
+    if (assetName == null || assetName.isEmpty()) {
+      return null;
+    }
+    AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
+        .get(assetName.toByteArray());
+    return assetIssueCapsule != null ? assetIssueCapsule.getInstance() : null;
   }
 
   public NumberMessage totalTransaction() {
@@ -505,11 +677,26 @@ public class Wallet {
     try {
       transactionCapsule = dbManager.getTransactionStore()
           .get(transactionId.toByteArray());
-
-    } catch (BadItemException e) {
+    } catch (StoreException e) {
     }
     if (transactionCapsule != null) {
       return transactionCapsule.getInstance();
+    }
+    return null;
+  }
+
+  public Proposal getProposalById(ByteString proposalId) {
+    if (Objects.isNull(proposalId)) {
+      return null;
+    }
+    ProposalCapsule proposalCapsule = null;
+    try {
+      proposalCapsule = dbManager.getProposalStore()
+          .get(proposalId.toByteArray());
+    } catch (StoreException e) {
+    }
+    if (proposalCapsule != null) {
+      return proposalCapsule.getInstance();
     }
     return null;
   }
@@ -536,4 +723,119 @@ public class Wallet {
         });
     return nodeListBuilder.build();
   }
+
+  public Transaction deployContract(CreateSmartContract createSmartContract,
+      TransactionCapsule trxCap) {
+
+    // do nothing, so can add some useful function later
+    // trxcap contract para cacheUnpackValue has value
+    return trxCap.getInstance();
+  }
+
+  public Transaction triggerContract(TriggerSmartContract triggerSmartContract,
+      TransactionCapsule trxCap) {
+
+    ContractStore contractStore = dbManager.getContractStore();
+    byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
+    SmartContract.ABI abi = contractStore.getABI(contractAddress);
+    if (abi == null) {
+      return null;
+    }
+
+    try {
+      byte[] selector = getSelector(triggerSmartContract.getData().toByteArray());
+      if (selector == null) {
+        return null;
+      }
+
+      if (!isConstant(abi, selector)) {
+        return trxCap.getInstance();
+      } else {
+        DepositImpl deposit = DepositImpl.createRoot(dbManager);
+        Runtime runtime = new Runtime(trxCap.getInstance(), deposit,
+            new ProgramInvokeFactoryImpl());
+        runtime.init();
+        runtime.execute();
+        runtime.go();
+        if (runtime.getResult().getException() != null) {
+          throw new RuntimeException("Runtime exe failed!");
+        }
+
+        ProgramResult result = runtime.getResult();
+        TransactionResultCapsule ret = new TransactionResultCapsule();
+        ret.setConstantResult(result.getHReturn());
+        ret.setStatus(0, code.SUCESS);
+        trxCap.setResult(ret);
+        return trxCap.getInstance();
+      }
+    } catch (Exception e) {
+      logger.error(e.getMessage());
+      return null;
+    }
+  }
+
+  public SmartContract getContract(GrpcAPI.BytesMessage bytesMessage) {
+    byte[] address = bytesMessage.getValue().toByteArray();
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    if (accountCapsule == null) {
+      logger.error(
+          "Get contract failed, the account is not exist or the account does not have code hash!");
+      return null;
+    }
+
+    ContractCapsule contractCapsule = dbManager.getContractStore()
+        .get(bytesMessage.getValue().toByteArray());
+    return contractCapsule.getInstance();
+  }
+
+  private static byte[] getSelector(byte[] data) {
+    if (data == null ||
+        data.length < 4) {
+      return null;
+    }
+
+    byte[] ret = new byte[4];
+    System.arraycopy(data, 0, ret, 0, 4);
+    return ret;
+  }
+
+  private static boolean isConstant(SmartContract.ABI abi, byte[] selector) throws Exception {
+    if (selector == null || selector.length != 4) {
+      throw new Exception("Selector's length or selector itself is invalid");
+    }
+
+    for (int i = 0; i < abi.getEntrysCount(); i++) {
+      ABI.Entry entry = abi.getEntrys(i);
+      if (entry.getType() != ABI.Entry.EntryType.Function) {
+        continue;
+      }
+
+      int inputCount = entry.getInputsCount();
+      StringBuffer sb = new StringBuffer();
+      sb.append(entry.getName().toStringUtf8());
+      sb.append("(");
+      for (int k = 0; k < inputCount; k++) {
+        ABI.Entry.Param param = entry.getInputs(k);
+        sb.append(param.getType().toStringUtf8());
+        if (k + 1 < inputCount) {
+          sb.append(",");
+        }
+      }
+      sb.append(")");
+
+      byte[] funcSelector = new byte[4];
+      System.arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0, 4);
+      if (Arrays.equals(funcSelector, selector)) {
+        if (entry.getConstant() == true || entry.getStateMutability()
+            .equals(StateMutabilityType.View)) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
+
+    throw new Exception("There is no the selector!");
+  }
+
 }

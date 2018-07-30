@@ -80,7 +80,7 @@ public class WitnessService implements Service {
    */
   private Runnable scheduleProductionLoop =
       () -> {
-        if (localWitnessStateMap == null || localWitnessStateMap.keySet().size() == 0) {
+        if (localWitnessStateMap == null || localWitnessStateMap.keySet().isEmpty()) {
           logger.error("LocalWitnesses is null");
           return;
         }
@@ -226,9 +226,9 @@ public class WitnessService implements Service {
         return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
       }
       if (DateTime.now().getMillis() - now
-          > ChainConstant.BLOCK_PRODUCED_INTERVAL * ChainConstant.BLOCK_PRODUCED_TIME_OUT) {
+          > ChainConstant.BLOCK_PRODUCED_INTERVAL * ChainConstant.BLOCK_PRODUCED_TIME_OUT / 100) {
         logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}",
-            ChainConstant.BLOCK_PRODUCED_INTERVAL * ChainConstant.BLOCK_PRODUCED_TIME_OUT,
+            ChainConstant.BLOCK_PRODUCED_INTERVAL * ChainConstant.BLOCK_PRODUCED_TIME_OUT / 100,
             new DateTime(now), DateTime.now());
         return BlockProductionCondition.TIME_OUT;
       }

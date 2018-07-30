@@ -57,7 +57,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   private Manager manager;
 
   private  P2pMessageFactory messageFactory = new P2pMessageFactory();
-  
+
   @Autowired
   private SyncPool syncPool;
 
