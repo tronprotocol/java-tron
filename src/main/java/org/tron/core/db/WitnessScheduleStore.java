@@ -26,16 +26,6 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule> {
     super(dbName);
   }
 
-  @Override
-  public BytesCapsule get(byte[] key) {
-    return null;
-  }
-
-  @Override
-  public boolean has(byte[] key) {
-    return false;
-  }
-
   private void saveData(byte[] species, List<ByteString> witnessesAddressList) {
     byte[] ba = new byte[witnessesAddressList.size() * ADDRESS_BYTE_ARRAY_LENGTH];
     int i = 0;
@@ -44,13 +34,14 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule> {
           ba, i * ADDRESS_BYTE_ARRAY_LENGTH, ADDRESS_BYTE_ARRAY_LENGTH);
       i++;
     }
-    ;
+
     this.put(species, new BytesCapsule(ba));
   }
 
   private List<ByteString> getData(byte[] species) {
     List<ByteString> witnessesAddressList = new ArrayList<>();
-    return Optional.ofNullable(this.dbSource.getData(species))
+    return Optional.ofNullable(getUnchecked(species))
+        .map(BytesCapsule::getData)
         .map(ba -> {
           int len = ba.length / ADDRESS_BYTE_ARRAY_LENGTH;
           for (int i = 0; i < len; ++i) {

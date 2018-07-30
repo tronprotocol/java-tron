@@ -20,10 +20,9 @@ public class AccountIdIndexStore extends TronStoreWithRevoking<BytesCapsule> {
 
   public void put(AccountCapsule accountCapsule) {
     byte[] lowerCaseAccountId = getLowerCaseAccountId(accountCapsule.getAccountId().toByteArray());
-    put(lowerCaseAccountId, new BytesCapsule(accountCapsule.getAddress().toByteArray()));
-}
+    super.put(lowerCaseAccountId, new BytesCapsule(accountCapsule.getAddress().toByteArray()));
+  }
 
-//
   public byte[] get(ByteString name) {
     BytesCapsule bytesCapsule = get(name.toByteArray());
     if (Objects.nonNull(bytesCapsule)) {
@@ -35,7 +34,7 @@ public class AccountIdIndexStore extends TronStoreWithRevoking<BytesCapsule> {
   @Override
   public BytesCapsule get(byte[] key) {
     byte[] lowerCaseKey = getLowerCaseAccountId(key);
-    byte[] value = dbSource.getData(lowerCaseKey);
+    byte[] value = revokingDB.getUnchecked(lowerCaseKey);
     if (ArrayUtils.isEmpty(value)) {
       return null;
     }
@@ -45,11 +44,8 @@ public class AccountIdIndexStore extends TronStoreWithRevoking<BytesCapsule> {
   @Override
   public boolean has(byte[] key) {
     byte[] lowerCaseKey = getLowerCaseAccountId(key);
-    byte[] value = dbSource.getData(lowerCaseKey);
-    if (ArrayUtils.isEmpty(value)) {
-      return false;
-    }
-    return true;
+    byte[] value = revokingDB.getUnchecked(lowerCaseKey);
+    return !ArrayUtils.isEmpty(value);
   }
 
   private static byte[] getLowerCaseAccountId(byte[] bsAccountId) {

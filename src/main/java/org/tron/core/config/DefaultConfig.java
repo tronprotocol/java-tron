@@ -2,13 +2,17 @@ package org.tron.core.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowire;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.RevokingDatabase;
+import org.tron.core.db.RevokingStore;
 import org.tron.core.db.api.IndexHelper;
+import org.tron.core.db2.core.SnapshotManager;
 
 @Configuration
 @Import(CommonConfig.class)
@@ -32,6 +36,18 @@ public class DefaultConfig {
       return null;
     }
     return new IndexHelper();
+  }
+
+  @Bean
+  public RevokingDatabase revokingDatabase() {
+    int dbVersion = Args.getInstance().getStorage().getDbVersion();
+    if (dbVersion == 1) {
+      return RevokingStore.getInstance();
+    } else if (dbVersion == 2) {
+      return new SnapshotManager();
+    } else {
+      throw new RuntimeException("db version is error.");
+    }
   }
 
 }
