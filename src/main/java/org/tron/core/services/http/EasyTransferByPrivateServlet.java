@@ -16,8 +16,6 @@ import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.common.crypto.ECKey;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.exception.ContractValidateException;
-import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 

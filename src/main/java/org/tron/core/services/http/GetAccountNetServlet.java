@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.AccountNetMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
-import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Protocol.Account;
 
 
