@@ -14,6 +14,7 @@ import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX
 
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import org.joda.time.DateTime;
@@ -40,9 +41,9 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.db.TransactionTrace;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.CpuProcessor;
+import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
@@ -225,14 +226,14 @@ public class Runtime {
   }
 
   private long getAccountCPULimitInUs(AccountCapsule creator,
-      CreateSmartContract contract) {
+      long cpuLimitInTrx) {
 
     CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
     long cpuFromFrozen = cpuProcessor.calculateGlobalCpuLimit(
         creator.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance());
     logger.info("cpuFromFrozen: {}", cpuFromFrozen);
 
-    long cpuFromTRX = Constant.CPU_IN_US_PER_TRX * contract.getCpuLimitInTrx();
+    long cpuFromTRX = Constant.CPU_IN_US_PER_TRX * cpuLimitInTrx;
 
     return max(cpuFromFrozen, cpuFromTRX); // us
 
@@ -241,10 +242,14 @@ public class Runtime {
   private long getAccountCPULimitInUs(AccountCapsule creator, AccountCapsule sender,
       TriggerSmartContract contract) {
 
+    if (Arrays.equals(creator.getAddress().toByteArray(), sender.getAddress().toByteArray())) {
+      return getAccountCPULimitInUs(creator, contract.getCpuLimitInTrx());
+    }
+
     CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
     SmartContract smartContract = this.deposit
         .getContract(contract.getContractAddress().toByteArray()).getInstance();
-    long consumeUserResourcePercent = smartContract.getConsumeUserResourcePercent();
+    double consumeUserResourcePercent = smartContract.getConsumeUserResourcePercent() * 1.0 / 100;
 
     long senderCpuFromTrx = Constant.CPU_IN_US_PER_TRX * contract.getCpuLimitInTrx();
     long senderCpuFromFrozen = cpuProcessor.calculateGlobalCpuLimit(
@@ -252,13 +257,23 @@ public class Runtime {
     long creatorCpuFromFrozen = cpuProcessor.calculateGlobalCpuLimit(
         creator.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance());
     long senderCpuMax = max(senderCpuFromTrx, senderCpuFromFrozen);
+
     if (consumeUserResourcePercent >= 1.0) {
-      return senderCpuMax;
-    } else if (consumeUserResourcePercent <= 0.0) {
+      consumeUserResourcePercent = 1.0;
+    }
+    if (consumeUserResourcePercent <= 0.0) {
+      consumeUserResourcePercent = 0.0;
+    }
+
+    if (consumeUserResourcePercent <= 0.0) {
       return creatorCpuFromFrozen;
+    }
+
+    if (creatorCpuFromFrozen * consumeUserResourcePercent
+        >= (1 - consumeUserResourcePercent) * senderCpuMax) {
+      return (long) (senderCpuMax / consumeUserResourcePercent);
     } else {
-      return max(min(creatorCpuFromFrozen / (1 - consumeUserResourcePercent),
-          senderCpuMax / consumeUserResourcePercent), consumeUserResourcePercent);
+      return senderCpuMax + creatorCpuFromFrozen;
     }
   }
 
@@ -368,7 +383,7 @@ public class Runtime {
       AccountCapsule creator = this.deposit
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
       long thisTxCPULimitInUs;
-      long accountCPULimitInUs = getAccountCPULimitInUs(creator, contract);
+      long accountCPULimitInUs = getAccountCPULimitInUs(creator, contract.getCpuLimitInTrx());
       if (executerType == ET_NORMAL_TYPE) {
         long blockCPULeftInUs = getBlockCPULeftInUs().longValue();
         thisTxCPULimitInUs = min(accountCPULimitInUs, blockCPULeftInUs,

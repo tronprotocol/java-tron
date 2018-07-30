@@ -975,9 +975,7 @@ public class Manager {
     runtime = new Runtime(trace, block, deposit,
         new ProgramInvokeFactoryImpl());
     consumeBandwidth(trxCap, runtime.getResult().getRet());
-
-    runtime.init();
-        
+    
     //exec
     trace.exec(runtime);
 

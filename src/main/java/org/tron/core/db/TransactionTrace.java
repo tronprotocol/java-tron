@@ -42,6 +42,7 @@ public class TransactionTrace {
 
   public void exec(Runtime runtime) throws ContractExeException, ContractValidateException {
     /**  VM execute  **/
+    runtime.init();
     runtime.execute();
     runtime.go();
   }
