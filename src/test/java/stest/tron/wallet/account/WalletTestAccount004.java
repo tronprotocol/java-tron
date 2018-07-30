@@ -107,10 +107,10 @@ public class WalletTestAccount004 {
     Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 1000000L, 3L, testKey002,blockingStubFull));
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testUnFreezeBalance() {
     //Unfreeze failed when there is no freeze balance.
-    Assert.assertFalse(unFreezeBalance(noFrozenAddress, noFrozenBalanceTestKey));
+    unFreezeBalance(noFrozenAddress, noFrozenBalanceTestKey);
     logger.info("Test unfreezebalance");
 
   }

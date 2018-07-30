@@ -265,6 +265,21 @@ public class GrpcClient {
         }
     }*/
 
+    public Optional<AssetIssueList> getAssetIssueList(long offset, long limit) {
+        PaginatedMessage.Builder pageMessageBuilder = PaginatedMessage.newBuilder();
+        pageMessageBuilder.setOffset(offset);
+        pageMessageBuilder.setLimit(limit);
+        if (blockingStubSolidity != null) {
+            AssetIssueList assetIssueList = blockingStubSolidity.
+                getPaginatedAssetIssueList(pageMessageBuilder.build());
+            return Optional.ofNullable(assetIssueList);
+        } else {
+            AssetIssueList assetIssueList = blockingStubFull
+                .getPaginatedAssetIssueList(pageMessageBuilder.build());
+            return Optional.ofNullable(assetIssueList);
+        }
+    }
+
     public Optional<Block> getBlockById(String blockID){
         ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(blockID));
         BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();

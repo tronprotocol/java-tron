@@ -39,6 +39,8 @@ public class TransferActuator extends AbstractActuator {
         toAccount = new AccountCapsule(ByteString.copyFrom(toAddress), AccountType.Normal,
             dbManager.getHeadBlockTimeStamp());
         dbManager.getAccountStore().put(toAddress, toAccount);
+
+        fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
       }
       dbManager.adjustBalance(ownerAddress, -fee);
       ret.setStatus(fee, code.SUCESS);
@@ -73,7 +75,7 @@ public class TransferActuator extends AbstractActuator {
           "contract type error,expected type [TransferContract],real type[" + contract
               .getClass() + "]");
     }
-    final long fee = calcFee();
+    long fee = calcFee();
     final TransferContract transferContract;
     try {
       transferContract = contract.unpack(TransferContract.class);
@@ -104,21 +106,21 @@ public class TransferActuator extends AbstractActuator {
 
     long balance = ownerAccount.getBalance();
 
-    if (ownerAccount.getBalance() < fee) {
-      throw new ContractValidateException("Validate TransferContract error, insufficient fee.");
-    }
-
     if (amount <= 0) {
       throw new ContractValidateException("Amount must greater than 0.");
     }
 
     try {
-      if (balance < Math.addExact(amount, fee)) {
-        throw new ContractValidateException("balance is not sufficient.");
+
+      AccountCapsule toAccount = dbManager.getAccountStore().get(toAddress);
+      if (toAccount == null) {
+        fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
       }
 
-      AccountCapsule toAccount = dbManager.getAccountStore()
-          .get(transferContract.getToAddress().toByteArray());
+      if (balance < Math.addExact(amount, fee)) {
+        throw new ContractValidateException("Validate TransferContract error, balance is not sufficient.");
+      }
+
       if (toAccount != null) {
         long toAddressBalance = Math.addExact(toAccount.getBalance(), amount);
       }
@@ -126,6 +128,9 @@ public class TransferActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
+
+
+
     return true;
   }
 
