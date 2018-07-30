@@ -57,6 +57,12 @@ public class WalletTestAccount003 {
   private static final long now = System.currentTimeMillis();
   private static final String name = "testAssetIssue_" + Long.toString(now);
   private static final long TotalSupply = now;
+  String mostLongNamePlusOneChar = "1RFGHUJKIUYyujhgtrfghytrfertHJUYTGBNMJIUY"
+      + "RFGHUJKIUYyujhgtrfghytrfertHJUYTGBNMJIUYRFGHUJKIUYyujhgtrfghytrfertHJUYTGBNMJIUY"
+      + "RFGHUJKIUYyujhgtrfghytrfertHJUYTGBNMJIUY";
+  String mostLongName = "RFGHUJKIUYyujhgtrfghytrfertHJUYTGBNMJIUY"
+      + "RFGHUJKIUYyujhgtrfghytrfertHJUYTGBNMJIUYRFGHUJKIUYyujhgtrfghytrfertHJUYTGBNMJIUY"
+      + "RFGHUJKIUYyujhgtrfghytrfertHJUYTGBNMJIUY";
   String description = "just-test";
   String url = "https://github.com/tronprotocol/wallet-cli/";
 
@@ -83,7 +89,7 @@ public class WalletTestAccount003 {
 
   @BeforeClass
   public void beforeClass() {
-    logger.info(ByteArray.toHexString(ecKey.getPrivKeyBytes()));
+    PublicMethed.printAddress(lowBalTest);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
@@ -120,13 +126,13 @@ public class WalletTestAccount003 {
     }
   }
 
-  @Test
+  @Test(enabled = false)
   public void testUpdateAccount() {
     Account tryToUpdateAccount = queryAccount(lowBalTest, blockingStubFull);
     if (tryToUpdateAccount.getAccountName().isEmpty()) {
-      Assert.assertFalse(updateAccount(lowBalAddress, "1short1".getBytes(), lowBalTest));
-      Assert.assertFalse(
-          updateAccount(lowBalAddress, "verylongnamehas33char111111111111".getBytes(),
+      //Assert.assertFalse(updateAccount(lowBalAddress, "".getBytes(), lowBalTest));
+      Assert.assertTrue(
+          updateAccount(lowBalAddress, mostLongNamePlusOneChar.getBytes(),
               lowBalTest));
       Assert.assertFalse(updateAccount(lowBalAddress, "test Name".getBytes(), lowBalTest));
       Assert.assertFalse(updateAccount(lowBalAddress, "中文非法名字".getBytes(), lowBalTest));
@@ -136,7 +142,7 @@ public class WalletTestAccount003 {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }*/
-      Assert.assertTrue(updateAccount(lowBalAddress, Long.toString(now).getBytes(), lowBalTest));
+      Assert.assertTrue(updateAccount(lowBalAddress, mostLongName.getBytes(), lowBalTest));
       tryToUpdateAccount = queryAccount(lowBalTest, blockingStubFull);
       Assert.assertFalse(tryToUpdateAccount.getAccountName().isEmpty());
       Assert.assertFalse(updateAccount(lowBalAddress, "secondUpdateName".getBytes(), lowBalTest));
@@ -147,7 +153,7 @@ public class WalletTestAccount003 {
     }
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testNoBalanceCreateAssetIssue() {
     Account lowaccount = queryAccount(lowBalTest, blockingStubFull);
     if (lowaccount.getBalance() > 0) {
