@@ -231,7 +231,6 @@ public class Runtime {
     CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
     long cpuFromFrozen = cpuProcessor.calculateGlobalCpuLimit(
         creator.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance());
-    logger.info("cpuFromFrozen: {}", cpuFromFrozen);
 
     long cpuFromTRX = Constant.CPU_IN_US_PER_TRX * cpuLimitInTrx;
 
