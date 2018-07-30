@@ -190,6 +190,12 @@ public class ProgramResult {
     futureRefund = 0;
   }
 
+  public void reset() {
+    getDeleteAccounts().clear();
+    getLogInfoList().clear();
+    resetFutureRefund();
+  }
+
   public void merge(ProgramResult another) {
     addInternalTransactions(another.getInternalTransactions());
     if (another.getException() == null && !another.isRevert()) {
@@ -206,19 +212,4 @@ public class ProgramResult {
     return result;
   }
 
-  public long getOwnerCpuUsed() {
-    return ownerCpuUsed;
-  }
-
-  public long getSenderCpuUsed() {
-    return senderCpuUsed;
-  }
-
-  public long getOwnerStorageUsed() {
-    return ownerStorageUsed;
-  }
-
-  public long getSenderStorageUsed() {
-    return senderStorageUsed;
-  }
 }
