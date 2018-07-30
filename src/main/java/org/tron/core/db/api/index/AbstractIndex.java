@@ -36,8 +36,8 @@ public abstract class AbstractIndex<E extends ProtoCapsule<T>, T> implements Ifa
     this.database = database;
     String dbName = database.getDbName();
     File parentDir = Paths.get(
-            Args.getInstance().getOutputDirectoryByDbName(dbName),
-            Args.getInstance().getStorage().getIndexDirectory()
+        Args.getInstance().getOutputDirectoryByDbName(dbName),
+        Args.getInstance().getStorage().getIndexDirectory()
     ).toFile();
     if (!parentDir.exists()) {
       parentDir.mkdirs();
