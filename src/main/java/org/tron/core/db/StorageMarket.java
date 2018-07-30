@@ -93,6 +93,42 @@ public class StorageMarket {
     return storageTax;
   }
 
+  public long tryBuyStorage(AccountCapsule accountCapsule, long quant) {
+    long now = dbManager.getHeadBlockTimeStamp();
+
+    long latestExchangeStorageTime = accountCapsule.getLatestExchangeStorageTime();
+    long currentStorageLimit = accountCapsule.getStorageLimit();
+    long currentUnusedStorage = currentStorageLimit - accountCapsule.getStorageUsage();
+
+    long duration = now - latestExchangeStorageTime;
+    long storageTax = payTax(duration, currentUnusedStorage);
+
+    long storageBought = exchange(quant, true);
+    long newStorageLimit = currentStorageLimit - storageTax + storageBought;
+    logger.info(
+        "storageBought: " + storageBought + "storageTax:" + storageTax + ",newStorageLimit: "
+            + newStorageLimit);
+    return storageBought - storageTax;
+  }
+
+  public long trySellStorage(AccountCapsule accountCapsule, long bytes) {
+    long now = dbManager.getHeadBlockTimeStamp();
+
+    long latestExchangeStorageTime = accountCapsule.getLatestExchangeStorageTime();
+    long currentStorageLimit = accountCapsule.getStorageLimit();
+    long currentUnusedStorage = currentStorageLimit - accountCapsule.getStorageUsage();
+
+    long duration = now - latestExchangeStorageTime;
+    long storageTax = payTax(duration, currentUnusedStorage);
+
+    long quant = exchange(bytes, false);
+
+    long newStorageLimit = currentStorageLimit - storageTax - bytes;
+    logger.info("quant: " + quant + "  newStorageLimit: " + newStorageLimit);
+    return quant;
+  }
+
+
   public void buyStorage(AccountCapsule accountCapsule, long quant) {
     long now = dbManager.getHeadBlockTimeStamp();
 
@@ -108,7 +144,9 @@ public class StorageMarket {
 
     long storageBought = exchange(quant, true);
     long newStorageLimit = currentStorageLimit - storageTax + storageBought;
-    logger.info("storageBought: " + storageBought + "  newStorageLimit: " + newStorageLimit);
+    logger.info(
+        "storageBought: " + storageBought + "storageTax:" + storageTax + "  newStorageLimit: "
+            + newStorageLimit);
 
     accountCapsule.setLatestExchangeStorageTime(now);
     accountCapsule.setStorageLimit(newStorageLimit);
