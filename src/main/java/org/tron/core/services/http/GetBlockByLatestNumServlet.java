@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.core.Wallet;
-import org.tron.core.services.http.JsonFormat.ParseException;
 
 @Component
 @Slf4j

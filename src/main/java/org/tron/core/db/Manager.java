@@ -106,6 +106,8 @@ public class Manager {
   @Autowired
   private AccountIdIndexStore accountIdIndexStore;
   @Autowired
+  private AccountContractIndexStore accountContractIndexStore;
+  @Autowired
   private WitnessScheduleStore witnessScheduleStore;
   @Autowired
   private RecentBlockStore recentBlockStore;
@@ -278,6 +280,11 @@ public class Manager {
 
   public void clearAndWriteNeighbours(Set<Node> nodes) {
     this.peersStore.put("neighbours".getBytes(), nodes);
+  }
+
+
+  public AccountContractIndexStore getAccountContractIndexStore() {
+    return accountContractIndexStore;
   }
 
   public Set<Node> readNeighbours() {
@@ -551,7 +558,13 @@ public class Manager {
   public void consumeBandwidth(TransactionCapsule trx, TransactionResultCapsule ret)
       throws ContractValidateException, AccountResourceInsufficientException {
     BandwidthProcessor processor = new BandwidthProcessor(this);
-    processor.consumeBandwidth(trx, ret);
+    processor.consume(trx, ret);
+  }
+
+  public void consumeCpu(TransactionCapsule trx, TransactionResultCapsule ret)
+      throws ContractValidateException, AccountResourceInsufficientException {
+    CpuProcessor processor = new CpuProcessor(this);
+    processor.consume(trx, ret);
   }
 
   @Deprecated
@@ -952,20 +965,34 @@ public class Manager {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    /**  VM execute  **/
+    TransactionTrace trace = new TransactionTrace(trxCap);
+    trace.init();
+
 
     DepositImpl deposit = DepositImpl.createRoot(this);
     Runtime runtime;
 
-    runtime = new Runtime(trxCap.getInstance(), block, deposit,
+    runtime = new Runtime(trace, block, deposit,
         new ProgramInvokeFactoryImpl());
     consumeBandwidth(trxCap, runtime.getResult().getRet());
-    runtime.execute();
-    runtime.go();
+
+    runtime.init();
+        
+    //exec
+    trace.exec(runtime);
+
+    //check SR's bill and ours.
+    if(block != null) {
+      trace.checkBill();
+    }
+
+    trace.finalize();
+
     if (runtime.getResult().getException() != null) {
       throw new RuntimeException("Runtime exe failed!");
     }
-
+    // todo judge result in runtime same as block,trx,recipt
+    // todo 一个账户只能一个合约账户
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
     transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());

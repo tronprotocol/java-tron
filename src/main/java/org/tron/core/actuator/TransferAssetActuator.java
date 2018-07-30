@@ -25,9 +25,9 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.TransferAssetContract;
@@ -55,9 +55,13 @@ public class TransferAssetActuator extends AbstractActuator {
         toAccountCapsule = new AccountCapsule(ByteString.copyFrom(toAddress), AccountType.Normal,
             dbManager.getHeadBlockTimeStamp());
         dbManager.getAccountStore().put(toAddress, toAccountCapsule);
+
+        fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
       }
       ByteString assetName = transferAssetContract.getAssetName();
       long amount = transferAssetContract.getAmount();
+
+      dbManager.adjustBalance(ownerAddress, -fee);
 
       AccountCapsule ownerAccountCapsule = accountStore.get(ownerAddress);
       if (!ownerAccountCapsule.reduceAssetAmount(assetName.toByteArray(), amount)) {
@@ -69,6 +73,10 @@ public class TransferAssetActuator extends AbstractActuator {
       accountStore.put(toAddress, toAccountCapsule);
 
       ret.setStatus(fee, code.SUCESS);
+    } catch (BalanceInsufficientException e) {
+      logger.debug(e.getMessage(), e);
+      ret.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
     } catch (InvalidProtocolBufferException e) {
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -101,6 +109,7 @@ public class TransferAssetActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
 
+    long fee = calcFee();
     byte[] ownerAddress = transferAssetContract.getOwnerAddress().toByteArray();
     byte[] toAddress = transferAssetContract.getToAddress().toByteArray();
     byte[] assetName = transferAssetContract.getAssetName().toByteArray();
@@ -155,6 +164,12 @@ public class TransferAssetActuator extends AbstractActuator {
           logger.debug(e.getMessage(), e);
           throw new ContractValidateException(e.getMessage());
         }
+      }
+    } else {
+      fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
+      if (ownerAccount.getBalance() < fee) {
+        throw new ContractValidateException(
+            "Validate TransferAssetActuator error, insufficient fee.");
       }
     }
 

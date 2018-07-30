@@ -3,7 +3,6 @@ package org.tron.core.services.http.solidity;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.stream.Collectors;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -14,7 +13,6 @@ import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.WalletSolidity;
 import org.tron.core.services.http.JsonFormat;
-import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Protocol.TransactionInfo;
 
 

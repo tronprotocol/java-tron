@@ -13,7 +13,6 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.Manager;
-import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Protocol.Account;
 
 

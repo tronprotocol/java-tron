@@ -18,6 +18,17 @@
 
 package org.tron.common.runtime.vm;
 
+import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
+import static org.tron.common.utils.BIUtil.addSafely;
+import static org.tron.common.utils.BIUtil.isLessThan;
+import static org.tron.common.utils.BIUtil.isZero;
+import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
+import static org.tron.common.utils.ByteUtil.bytesToBigInteger;
+import static org.tron.common.utils.ByteUtil.numberOfLeadingZeros;
+import static org.tron.common.utils.ByteUtil.parseBytes;
+import static org.tron.common.utils.ByteUtil.parseWord;
+import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
+
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
@@ -25,14 +36,20 @@ import java.util.HashMap;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.zksnark.*;
+import org.tron.common.crypto.zksnark.BN128;
+import org.tron.common.crypto.zksnark.BN128Fp;
+import org.tron.common.crypto.zksnark.BN128G1;
+import org.tron.common.crypto.zksnark.BN128G2;
+import org.tron.common.crypto.zksnark.Fp;
+import org.tron.common.crypto.zksnark.PairingCheck;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.storage.Deposit;
 import org.tron.common.utils.BIUtil;
-
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.TransactionCapsule;
@@ -48,12 +65,6 @@ import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-
-import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
-import static org.tron.common.utils.BIUtil.addSafely;
-import static org.tron.common.utils.BIUtil.isLessThan;
-import static org.tron.common.utils.BIUtil.isZero;
-import static org.tron.common.utils.ByteUtil.*;
 
 /**
  * @author Roman Mandeleil
@@ -78,6 +89,8 @@ public class PrecompiledContracts {
   private static final ProposalApproveNative proposalApprove = new ProposalApproveNative();
   private static final ProposalCreateNative proposalCreate = new ProposalCreateNative();
   private static final ProposalDeleteNative proposalDelete = new ProposalDeleteNative();
+  private static final ConvertFromTronBytesAddressNative convertFromTronBytesAddress = new ConvertFromTronBytesAddressNative();
+  private static final ConvertFromTronBase58AddressNative convertFromTronBase58Address = new ConvertFromTronBase58AddressNative();
 
 
   private static final DataWord ecRecoverAddr = new DataWord(
@@ -110,6 +123,10 @@ public class PrecompiledContracts {
       "0000000000000000000000000000000000000000000000000000000000010006");
   private static final DataWord proposalDeleteAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010007");
+  private static final DataWord convertFromTronBytesAddressAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000000010008");
+  private static final DataWord convertFromTronBase58AddressAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000000010009");
 
   public static PrecompiledContract getContractForAddress(DataWord address) {
 
@@ -149,6 +166,13 @@ public class PrecompiledContracts {
     if (address.equals(proposalDeleteAddr)) {
       return proposalDelete;
     }
+    if (address.equals(convertFromTronBytesAddressAddr)) {
+      return convertFromTronBytesAddress;
+    }
+    if (address.equals(convertFromTronBase58AddressAddr)) {
+      return convertFromTronBase58Address;
+    }
+
 
         /*
         // Byzantium precompiles
@@ -544,11 +568,10 @@ public class PrecompiledContracts {
    * Input data[]: <br/> an array of points (a1, b1, ... , ak, bk), <br/> where "ai" is a point of
    * {@link BN128Fp} curve and encoded as two 32-byte left-padded integers (x; y) <br/> "bi" is a
    * point of {@link BN128G2} curve and encoded as four 32-byte left-padded integers {@code (ai + b;
-   * ci + d)}, each coordinate of the point is a big-endian {@link Fp2} number, so {@code b}
-   * precedes {@code a} in the encoding: {@code (b, a; d, c)} <br/> thus each pair (ai, bi) has 192
-   * bytes length, if 192 is not a multiple of {@code data.length} then execution fails <br/> the
-   * number of pairs is derived from input length by dividing it by 192 (the length of a pair) <br/>
-   * <br/>
+   * ci + d)}, each coordinate of the point is a big-endian {@link } number, so {@code b} precedes
+   * {@code a} in the encoding: {@code (b, a; d, c)} <br/> thus each pair (ai, bi) has 192 bytes
+   * length, if 192 is not a multiple of {@code data.length} then execution fails <br/> the number
+   * of pairs is derived from input length by dividing it by 192 (the length of a pair) <br/> <br/>
    *
    * output: <br/> pairing product which is either 0 or 1, encoded as 32-byte left-padded integer
    * <br/>
@@ -688,6 +711,13 @@ public class PrecompiledContracts {
     }
   }
 
+  /**
+   * Native function to freeze caller account balance. <br/> <br/>
+   *
+   * Input data[]: <br/> freeze balance amount, freeze duration
+   *
+   * output: <br/> isSuccess <br/>
+   */
   public static class FreezeBalanceNative extends PrecompiledContract {
 
     @Override
@@ -737,10 +767,17 @@ public class PrecompiledContracts {
         logger.debug("ContractValidateException when calling freezeBalance in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
-      return Pair.of(true, new DataWord().getData());
+      return Pair.of(true, new DataWord(1).getData());
     }
   }
 
+  /**
+   * Native function to unfreeze caller account balance. <br/> <br/>
+   *
+   * Input data[]: <br/> null
+   *
+   * output: <br/> isSuccess <br/>
+   */
   public static class UnfreezeBalanceNative extends PrecompiledContract {
 
     @Override
@@ -780,10 +817,17 @@ public class PrecompiledContracts {
         logger.debug("ContractValidateException when calling unfreezeBalance in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
-      return Pair.of(true, new DataWord().getData());
+      return Pair.of(true, new DataWord(1).getData());
     }
   }
 
+  /**
+   * Native function for witnesses to withdraw their reward . <br/> <br/>
+   *
+   * Input data[]: <br/> null
+   *
+   * output: <br/> isSuccess <br/>
+   */
   public static class WithdrawBalanceNative extends PrecompiledContract {
 
     @Override
@@ -822,10 +866,17 @@ public class PrecompiledContracts {
         logger.debug("ContractValidateException when calling withdrawBalanceNative in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
-      return Pair.of(true, new DataWord().getData());
+      return Pair.of(true, new DataWord(1).getData());
     }
   }
 
+  /**
+   * Native function for witnesses to approve a proposal . <br/> <br/>
+   *
+   * Input data[]: <br/> proposalId, isApprove
+   *
+   * output: <br/> isSuccess <br/>
+   */
   public static class ProposalApproveNative extends PrecompiledContract {
 
     @Override
@@ -871,15 +922,17 @@ public class PrecompiledContracts {
         logger.debug("ContractValidateException when calling proposalApproveNative in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
-      return Pair.of(true, new DataWord().getData());
+      return Pair.of(true, new DataWord(1).getData());
     }
   }
 
   /**
-   * create a proposal. <br/> <br/>
+   * Native function for a witness to create a proposal. <br/> <br/>
    *
    * Input data[]: <br/> an array of key,value (key1, value1, key2, value2... , keyn, valuen),
    * <br/>
+   *
+   * Output: <br/> proposalId <br/>
    */
   public static class ProposalCreateNative extends PrecompiledContract {
 
@@ -915,6 +968,7 @@ public class PrecompiledContracts {
 
       ProposalCreateContract contract = builder.build();
 
+      long id = 0;
       TransactionCapsule trx = new TransactionCapsule(contract,
           ContractType.ProposalCreateContract);
 
@@ -923,6 +977,7 @@ public class PrecompiledContracts {
       try {
         actuatorList.get(0).validate();
         actuatorList.get(0).execute(getResult().getRet());
+        id = getDeposit().getDbManager().getDynamicPropertiesStore().getLatestProposalNum();
       } catch (ContractExeException e) {
         logger.debug("ContractExeException when calling proposalCreateNative in vm");
         logger.debug("ContractExeException: {}", e.getMessage());
@@ -930,10 +985,17 @@ public class PrecompiledContracts {
         logger.debug("ContractValidateException when calling proposalCreateNative in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
-      return Pair.of(true, new DataWord().getData());
+      return Pair.of(true, new DataWord(id).getData());
     }
   }
 
+  /**
+   * Native function for a witness to delete a proposal. <br/> <br/>
+   *
+   * Input data[]: <br/> ProposalId <br/>
+   *
+   * Output: <br/> isSuccess <br/>
+   */
   public static class ProposalDeleteNative extends PrecompiledContract {
 
     @Override
@@ -970,7 +1032,65 @@ public class PrecompiledContracts {
         logger.debug("ContractValidateException when calling proposalDeleteContract in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
-      return Pair.of(true, new DataWord().getData());
+      return Pair.of(true, new DataWord(1).getData());
+    }
+  }
+
+  /**
+   * Native function for converting bytes32 tron address to solidity address type value. <br/>
+   * <br/>
+   *
+   * Input data[]: <br/> bytes32 tron address <br/>
+   *
+   * Output: <br/> Solidity address <br/>
+   */
+  public static class ConvertFromTronBytesAddressNative extends PrecompiledContract {
+
+    @Override
+    // TODO: Please re-implement this function after Tron cost is well designed.
+    public long getGasForData(byte[] data) {
+      return 0;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+
+      if (data == null) {
+        data = EMPTY_BYTE_ARRAY;
+      }
+      DataWord address = new DataWord(data);
+      return Pair.of(true, new DataWord(address.getLast20Bytes()).getData());
+    }
+  }
+
+  /**
+   * Native function for converting Base58String tron address to solidity address type value. <br/>
+   * <br/>
+   *
+   * Input data[]: <br/> Base58String tron address <br/>
+   *
+   * Output: <br/> Solidity address <br/>
+   */
+  public static class ConvertFromTronBase58AddressNative extends PrecompiledContract {
+
+    @Override
+    // TODO: Please re-implement this function after Tron cost is well designed.
+    public long getGasForData(byte[] data) {
+      return 0;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+
+      if (data == null) {
+        data = EMPTY_BYTE_ARRAY;
+      }
+
+      String addressBase58 = new String(data);
+      byte[] resultBytes = Wallet.decodeFromBase58Check(addressBase58);
+      String hexString = Hex.toHexString(resultBytes);
+
+      return Pair.of(true, new DataWord(hexString).getData());
     }
   }
 }
