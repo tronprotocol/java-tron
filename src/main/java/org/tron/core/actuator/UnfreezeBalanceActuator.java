@@ -1,5 +1,7 @@
 package org.tron.core.actuator;
 
+import static org.tron.protos.Contract.ResourceCode.BANDWIDTH;
+
 import com.google.common.collect.Lists;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -16,6 +18,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
+import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -42,21 +45,40 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
     long oldBalance = accountCapsule.getBalance();
     long unfreezeBalance = 0L;
-    List<Frozen> frozenList = Lists.newArrayList();
-    frozenList.addAll(accountCapsule.getFrozenList());
-    Iterator<Frozen> iterator = frozenList.iterator();
-    long now = dbManager.getHeadBlockTimeStamp();
-    while (iterator.hasNext()) {
-      Frozen next = iterator.next();
-      if (next.getExpireTime() <= now) {
-        unfreezeBalance += next.getFrozenBalance();
-        iterator.remove();
-      }
-    }
+    switch (unfreezeBalanceContract.getResource()) {
+      case BANDWIDTH:
 
-    accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-        .setBalance(oldBalance + unfreezeBalance)
-        .clearFrozen().addAllFrozen(frozenList).build());
+        List<Frozen> frozenList = Lists.newArrayList();
+        frozenList.addAll(accountCapsule.getFrozenList());
+        Iterator<Frozen> iterator = frozenList.iterator();
+        long now = dbManager.getHeadBlockTimeStamp();
+        while (iterator.hasNext()) {
+          Frozen next = iterator.next();
+          if (next.getExpireTime() <= now) {
+            unfreezeBalance += next.getFrozenBalance();
+            iterator.remove();
+          }
+        }
+
+        accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+            .setBalance(oldBalance + unfreezeBalance)
+            .clearFrozen().addAllFrozen(frozenList).build());
+
+        dbManager.getDynamicPropertiesStore().addTotalNetWeight(-unfreezeBalance / 1000_000L);
+        break;
+      case CPU:
+        unfreezeBalance = accountCapsule.getAccountResource().getFrozenBalanceForCpu()
+            .getFrozenBalance();
+
+        AccountResource newAccountResource = accountCapsule.getAccountResource().toBuilder()
+            .clearFrozenBalanceForCpu().build();
+        accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+            .setBalance(oldBalance + unfreezeBalance)
+            .setAccountResource(newAccountResource).build());
+
+        dbManager.getDynamicPropertiesStore().addTotalCpuWeight(-unfreezeBalance / 1000_000L);
+        break;
+    }
 
     VotesCapsule votesCapsule;
     if (!dbManager.getVotesStore().has(ownerAddress)) {
@@ -70,7 +92,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
     dbManager.getVotesStore().put(ownerAddress, votesCapsule);
-    dbManager.getDynamicPropertiesStore().addTotalNetWeight(-unfreezeBalance / 1000_000L);
+
 
     ret.setStatus(fee, code.SUCESS);
 
@@ -108,15 +130,34 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       throw new ContractValidateException(
           "Account[" + readableOwnerAddress + "] not exists");
     }
-    if (accountCapsule.getFrozenCount() <= 0) {
-      throw new ContractValidateException("no frozenBalance");
-    }
 
     long now = dbManager.getHeadBlockTimeStamp();
-    long allowedUnfreezeCount = accountCapsule.getFrozenList().stream()
-        .filter(frozen -> frozen.getExpireTime() <= now).count();
-    if (allowedUnfreezeCount <= 0) {
-      throw new ContractValidateException("It's not time to unfreeze.");
+
+    switch (unfreezeBalanceContract.getResource()) {
+      case BANDWIDTH:
+        if (accountCapsule.getFrozenCount() <= 0) {
+          throw new ContractValidateException("no frozenBalance");
+        }
+
+        long allowedUnfreezeCount = accountCapsule.getFrozenList().stream()
+            .filter(frozen -> frozen.getExpireTime() <= now).count();
+        if (allowedUnfreezeCount <= 0) {
+          throw new ContractValidateException("It's not time to unfreeze.");
+        }
+        break;
+      case CPU:
+        Frozen frozenBalanceForCpu = accountCapsule.getAccountResource().getFrozenBalanceForCpu();
+        if (frozenBalanceForCpu.getFrozenBalance() <= 0) {
+          throw new ContractValidateException("no frozenBalance");
+        }
+        if (frozenBalanceForCpu.getExpireTime() > now) {
+          throw new ContractValidateException("It's not time to unfreeze.");
+        }
+
+        break;
+      default:
+        throw new ContractValidateException(
+            "ResourceCode error.valid ResourceCode[BANDWIDTH、CPU]");
     }
 
     return true;

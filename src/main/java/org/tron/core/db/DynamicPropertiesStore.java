@@ -61,6 +61,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] ONE_DAY_NET_LIMIT = "ONE_DAY_NET_LIMIT".getBytes();
 
+  //public free bandwidth
   private static final byte[] PUBLIC_NET_USAGE = "PUBLIC_NET_USAGE".getBytes();
 
   private static final byte[] PUBLIC_NET_LIMIT = "PUBLIC_NET_LIMIT".getBytes();
@@ -70,10 +71,21 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] FREE_NET_LIMIT = "FREE_NET_LIMIT".getBytes();
 
   private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
-
+  //ONE_DAY_NET_LIMIT - PUBLIC_NET_LIMIT
   private static final byte[] TOTAL_NET_LIMIT = "TOTAL_NET_LIMIT".getBytes();
 
+  private static final byte[] TOTAL_CPU_WEIGHT = "TOTAL_CPU_WEIGHT".getBytes();
+
+  private static final byte[] TOTAL_CPU_LIMIT = "TOTAL_CPU_LIMIT".getBytes();
+
+  //abandon
   private static final byte[] CREATE_ACCOUNT_FEE = "CREATE_ACCOUNT_FEE".getBytes();
+
+  private static final byte[] CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT = "CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT"
+      .getBytes();
+
+  private static final byte[] CREATE_NEW_ACCOUNT_BANDWIDTH_RATE = "CREATE_NEW_ACCOUNT_BANDWIDTH_RATE"
+      .getBytes();
 
   private static final byte[] TRANSACTION_FEE = "TRANSACTION_FEE".getBytes(); // 1 byte
 
@@ -84,6 +96,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] TOTAL_CREATE_ACCOUNT_COST = "TOTAL_CREATE_ACCOUNT_COST".getBytes();
 
   private static final byte[] TOTAL_CREATE_WITNESS_COST = "TOTAL_CREATE_WITNESS_FEE".getBytes();
+
+  private static final byte[] TOTAL_STORAGE_POOL = "TOTAL_STORAGE_POOL".getBytes();
+
+  private static final byte[] TOTAL_STORAGE_TAX = "TOTAL_STORAGE_TAX".getBytes();
+
+  private static final byte[] TOTAL_STORAGE_RESERVED = "TOTAL_STORAGE_RESERVED".getBytes();
+
+  private static final byte[] STORAGE_EXCHANGE_TAX_RATE = "STORAGE_EXCHANGE_TAX_RATE".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -234,9 +254,33 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getTotalCpuWeight();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalCpuWeight(0L);
+    }
+
+    try {
+      this.getTotalCpuLimit();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalCpuLimit(32400_000_000L);
+    }
+
+    try {
       this.getCreateAccountFee();
     } catch (IllegalArgumentException e) {
       this.saveCreateAccountFee(100_000L); // 0.1TRX
+    }
+
+    try {
+      this.getCreateNewAccountFeeInSystemContract();
+    } catch (IllegalArgumentException e) {
+      this.saveCreateNewAccountFeeInSystemContract(0L); //changed by committee later
+    }
+
+    try {
+      this.getCreateNewAccountBandwidthRate();
+    } catch (IllegalArgumentException e) {
+      this.saveCreateNewAccountBandwidthRate(1L); //changed by committee later
     }
 
     try {
@@ -267,6 +311,30 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getTotalCreateAccountCost();
     } catch (IllegalArgumentException e) {
       this.saveTotalCreateAccountFee(0L);
+    }
+
+    try {
+      this.getTotalStoragePool();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalStoragePool(100_000_000_000000L);
+    }
+
+    try {
+      this.getTotalStorageTax();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalStorageTax(0);
+    }
+
+    try {
+      this.getTotalStorageReserved();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalStorageReserved(128L * 1024 * 1024 * 1024); // 137438953472 bytes
+    }
+
+    try {
+      this.getStorageExchangeTaxRate();
+    } catch (IllegalArgumentException e) {
+      this.saveStorageExchangeTaxRate(10);
     }
 
     try {
@@ -535,6 +603,20 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found TOTAL_NET_WEIGHT"));
   }
 
+  public void saveTotalCpuWeight(long totalCpuWeight) {
+    this.put(TOTAL_CPU_WEIGHT,
+        new BytesCapsule(ByteArray.fromLong(totalCpuWeight)));
+  }
+
+  public long getTotalCpuWeight() {
+    return Optional.ofNullable(getUnchecked(TOTAL_CPU_WEIGHT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_CPU_WEIGHT"));
+  }
+
+
   public void saveTotalNetLimit(long totalNetLimit) {
     this.put(TOTAL_NET_LIMIT,
         new BytesCapsule(ByteArray.fromLong(totalNetLimit)));
@@ -548,6 +630,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found TOTAL_NET_LIMIT"));
   }
 
+  public void saveTotalCpuLimit(long totalCpuLimit) {
+    this.put(TOTAL_CPU_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(totalCpuLimit)));
+  }
+
+  public long getTotalCpuLimit() {
+    return Optional.ofNullable(getUnchecked(TOTAL_CPU_LIMIT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_CPU_LIMIT"));
+  }
 
   public void saveCreateAccountFee(long fee) {
     this.put(CREATE_ACCOUNT_FEE,
@@ -562,6 +656,32 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found CREATE_ACCOUNT_FEE"));
   }
 
+
+  public void saveCreateNewAccountFeeInSystemContract(long fee) {
+    this.put(CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT,
+        new BytesCapsule(ByteArray.fromLong(fee)));
+  }
+
+  public long getCreateNewAccountFeeInSystemContract() {
+    return Optional.ofNullable(getUnchecked(CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT"));
+  }
+
+  public void saveCreateNewAccountBandwidthRate(long rate) {
+    this.put(CREATE_NEW_ACCOUNT_BANDWIDTH_RATE,
+        new BytesCapsule(ByteArray.fromLong(rate)));
+  }
+
+  public long getCreateNewAccountBandwidthRate() {
+    return Optional.ofNullable(getUnchecked(CREATE_NEW_ACCOUNT_BANDWIDTH_RATE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found CREATE_NsEW_ACCOUNT_BANDWIDTH_RATE2"));
+  }
 
   public void saveTransactionFee(long fee) {
     this.put(TRANSACTION_FEE,
@@ -626,6 +746,58 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_CREATE_WITNESS_COST"));
+  }
+
+  public void saveTotalStoragePool(long trx) {
+    this.put(TOTAL_STORAGE_POOL,
+        new BytesCapsule(ByteArray.fromLong(trx)));
+  }
+
+  public long getTotalStoragePool() {
+    return Optional.ofNullable(getUnchecked(TOTAL_STORAGE_POOL))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_STORAGE_POOL"));
+  }
+
+  public void saveTotalStorageTax(long trx) {
+    this.put(TOTAL_STORAGE_TAX,
+        new BytesCapsule(ByteArray.fromLong(trx)));
+  }
+
+  public long getTotalStorageTax() {
+    return Optional.ofNullable(getUnchecked(TOTAL_STORAGE_TAX))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_STORAGE_TAX"));
+  }
+
+  public void saveTotalStorageReserved(long bytes) {
+    this.put(TOTAL_STORAGE_RESERVED,
+        new BytesCapsule(ByteArray.fromLong(bytes)));
+  }
+
+  public long getTotalStorageReserved() {
+    return Optional.ofNullable(getUnchecked(TOTAL_STORAGE_RESERVED))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_STORAGE_RESERVED"));
+  }
+
+  public void saveStorageExchangeTaxRate(long rate) {
+    this.put(STORAGE_EXCHANGE_TAX_RATE,
+        new BytesCapsule(ByteArray.fromLong(rate)));
+  }
+
+  public long getStorageExchangeTaxRate() {
+    return Optional.ofNullable(getUnchecked(STORAGE_EXCHANGE_TAX_RATE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found STORAGE_EXCHANGE_TAX_RATE"));
   }
 
   public void saveBlockFilledSlots(int[] blockFilledSlots) {
@@ -793,6 +965,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     long totalNetWeight = getTotalNetWeight();
     totalNetWeight += amount;
     saveTotalNetWeight(totalNetWeight);
+  }
+
+  //The unit is trx
+  public void addTotalCpuWeight(long amount) {
+    long totalCpuWeight = getTotalCpuWeight();
+    totalCpuWeight += amount;
+    saveTotalCpuWeight(totalCpuWeight);
   }
 
   public void addTotalCreateAccountCost(long fee) {

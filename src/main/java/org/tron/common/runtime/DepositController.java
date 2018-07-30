@@ -15,6 +15,7 @@ import org.tron.common.storage.Value;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 
@@ -62,6 +63,7 @@ public class DepositController {
       throws ContractValidateException, ContractExeException {
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
     Runtime runtime = new Runtime(trxCap.getInstance(), deposit, programInvokeFactory);
+    runtime.init();
     runtime.execute();
     runtime.go();
     ProgramResult programResult = runtime.getResult();
@@ -89,8 +91,9 @@ public class DepositController {
     depositQueue.put(currentDeposit);
     for (TransactionCapsule trxCap : block.getTransactions()) {
       Deposit trxDeposit = currentDeposit.newDepositChild();
-      Runtime runtime = new Runtime(trxCap.getInstance(), block.getInstance(), trxDeposit,
+      Runtime runtime = new Runtime(new TransactionTrace(trxCap), block.getInstance(), trxDeposit,
           programInvokeFactory);
+      runtime.init();
       runtime.execute();
       runtime.go();
 
@@ -132,6 +135,7 @@ public class DepositController {
       throws ContractValidateException, ContractExeException {
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
     Runtime runtime = new Runtime(trxCap.getInstance(), programInvokeFactory, deposit);
+    runtime.init();
     runtime.execute();
     runtime.go();
     ProgramResult programResult = runtime.getResult();

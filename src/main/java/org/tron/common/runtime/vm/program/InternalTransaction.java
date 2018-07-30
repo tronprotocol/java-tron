@@ -17,103 +17,103 @@
  */
 package org.tron.common.runtime.vm.program;
 
-import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.Hash;
-import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.utils.ByteUtil;
-import org.tron.protos.Protocol.Transaction;
-
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
 import static org.tron.common.utils.ByteUtil.toHexString;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.utils.ByteUtil;
+import org.tron.protos.Protocol.Transaction;
 
 //import org.tron.common.utils.RLP;
 
 public class InternalTransaction extends VMTransaction {
 
-    private byte[] parentHash;
-    private int deep;
-    private int index;
-    private boolean rejected = false;
-    private String note;
+  private byte[] parentHash;
+  private int deep;
+  private int index;
+  private boolean rejected = false;
+  private String note;
 
-    public enum TrxType {
-        TRX_PRECOMPILED_TYPE,
-        TRX_CONTRACT_CREATION_TYPE,
-        TRX_CONTRACT_CALL_TYPE,
-        TRX_UNKNOWN_TYPE,
-    };
+  public enum TrxType {
+    TRX_PRECOMPILED_TYPE,
+    TRX_CONTRACT_CREATION_TYPE,
+    TRX_CONTRACT_CALL_TYPE,
+    TRX_UNKNOWN_TYPE,
+  }
 
-    public enum ExecuterType {
-        ET_PRE_TYPE,
-        ET_NORMAL_TYPE,
-        ET_CONSTANT_TYPE,
-        ET_UNKNOWN_TYPE,
-    }
+  ;
 
-    public InternalTransaction(byte[] rawData) {
-        super(rawData);
-    }
+  public enum ExecuterType {
+    ET_PRE_TYPE,
+    ET_NORMAL_TYPE,
+    ET_CONSTANT_TYPE,
+    ET_UNKNOWN_TYPE,
+  }
 
-    public InternalTransaction(Transaction tx) {
-        super(tx);
-    }
+  public InternalTransaction(byte[] rawData) {
+    super(rawData);
+  }
 
-    public InternalTransaction(byte[] parentHash, int deep, int index,
-                               byte[] sendAddress, byte[] receiveAddress, long value, byte[] data, String note) {
+  public InternalTransaction(Transaction tx) {
+    super(tx);
+  }
 
-        super(receiveAddress, value, nullToEmpty(data));
+  public InternalTransaction(byte[] parentHash, int deep, int index,
+      byte[] sendAddress, byte[] receiveAddress, long value, byte[] data, String note) {
 
-        this.parentHash = parentHash;
-        this.deep = deep;
-        this.index = index;
-        this.sendAddress = nullToEmpty(sendAddress);
-        this.note = note;
-        this.parsed = true;
-    }
+    super(receiveAddress, value, nullToEmpty(data));
 
-    private static byte[] getData(DataWord gasPrice) {
-        return (gasPrice == null) ? ByteUtil.EMPTY_BYTE_ARRAY : gasPrice.getData();
-    }
+    this.parentHash = parentHash;
+    this.deep = deep;
+    this.index = index;
+    this.sendAddress = nullToEmpty(sendAddress);
+    this.note = note;
+    this.parsed = true;
+  }
 
-    public void reject() {
-        this.rejected = true;
-    }
+  private static byte[] getData(DataWord gasPrice) {
+    return (gasPrice == null) ? ByteUtil.EMPTY_BYTE_ARRAY : gasPrice.getData();
+  }
+
+  public void reject() {
+    this.rejected = true;
+  }
 
 
-    public int getDeep() {
-        protoParse();
-        return deep;
-    }
+  public int getDeep() {
+    protoParse();
+    return deep;
+  }
 
-    public int getIndex() {
-        protoParse();
-        return index;
-    }
+  public int getIndex() {
+    protoParse();
+    return index;
+  }
 
-    public boolean isRejected() {
-        protoParse();
-        return rejected;
-    }
+  public boolean isRejected() {
+    protoParse();
+    return rejected;
+  }
 
-    public String getNote() {
-        protoParse();
-        return note;
-    }
+  public String getNote() {
+    protoParse();
+    return note;
+  }
 
-    @Override
-    public byte[] getSender() {
-        protoParse();
-        return sendAddress;
-    }
+  @Override
+  public byte[] getSender() {
+    protoParse();
+    return sendAddress;
+  }
 
-    public byte[] getParentHash() {
-        protoParse();
-        return parentHash;
-    }
+  public byte[] getParentHash() {
+    protoParse();
+    return parentHash;
+  }
 
 //    @Override
 //    public byte[] getEncoded() {
@@ -139,10 +139,10 @@ public class InternalTransaction extends VMTransaction {
 //        return protoEncoded;
 //    }
 
-    @Override
-    public byte[] getEncodedRaw() {
-        return getEncoded();
-    }
+  @Override
+  public byte[] getEncodedRaw() {
+    return getEncoded();
+  }
 
 //    @Override
 //    public synchronized void protoParse() {
@@ -167,16 +167,16 @@ public class InternalTransaction extends VMTransaction {
 //    }
 
 
-    private static byte[] intToBytes(int value) {
-        return ByteBuffer.allocate(Integer.SIZE / Byte.SIZE)
-                .order(ByteOrder.LITTLE_ENDIAN)
-                .putInt(value)
-                .array();
-    }
+  private static byte[] intToBytes(int value) {
+    return ByteBuffer.allocate(Integer.SIZE / Byte.SIZE)
+        .order(ByteOrder.LITTLE_ENDIAN)
+        .putInt(value)
+        .array();
+  }
 
-    private static int bytesToInt(byte[] bytes) {
-        return isEmpty(bytes) ? 0 : ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).getInt();
-    }
+  private static int bytesToInt(byte[] bytes) {
+    return isEmpty(bytes) ? 0 : ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).getInt();
+  }
 
     /*
     private static byte[] encodeInt(int value) {
@@ -184,33 +184,33 @@ public class InternalTransaction extends VMTransaction {
     }
     */
 
-    private static int decodeInt(byte[] encoded) {
-        return bytesToInt(encoded);
-    }
+  private static int decodeInt(byte[] encoded) {
+    return bytesToInt(encoded);
+  }
 
-    @Override
-    public ECKey getKey() {
-        throw new UnsupportedOperationException("Cannot sign internal transaction.");
-    }
+  @Override
+  public ECKey getKey() {
+    throw new UnsupportedOperationException("Cannot sign internal transaction.");
+  }
 
-    @Override
-    public void sign(byte[] privKeyBytes) throws ECKey.MissingPrivateKeyException {
-        throw new UnsupportedOperationException("Cannot sign internal transaction.");
-    }
+  @Override
+  public void sign(byte[] privKeyBytes) throws ECKey.MissingPrivateKeyException {
+    throw new UnsupportedOperationException("Cannot sign internal transaction.");
+  }
 
-    @Override
-    public String toString() {
-        return "TransactionData [" +
-                "  parentHash=" + toHexString(getParentHash()) +
-                ", hash=" + toHexString(getHash()) +
-                ", sendAddress=" + toHexString(getSender()) +
-                ", receiveAddress=" + toHexString(getReceiveAddress()) +
-                ", value=" + getValue() +
-                ", data=" + toHexString(getData()) +
-                ", note=" + getNote() +
-                ", deep=" + getDeep() +
-                ", index=" + getIndex() +
-                ", rejected=" + isRejected() +
-                "]";
-    }
+  @Override
+  public String toString() {
+    return "TransactionData [" +
+        "  parentHash=" + toHexString(getParentHash()) +
+        ", hash=" + toHexString(getHash()) +
+        ", sendAddress=" + toHexString(getSender()) +
+        ", receiveAddress=" + toHexString(getReceiveAddress()) +
+        ", value=" + getValue() +
+        ", data=" + toHexString(getData()) +
+        ", note=" + getNote() +
+        ", deep=" + getDeep() +
+        ", index=" + getIndex() +
+        ", rejected=" + isRejected() +
+        "]";
+  }
 }

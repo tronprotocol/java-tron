@@ -9,6 +9,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.AccountCreateContract;
@@ -31,8 +32,14 @@ public class CreateAccountActuator extends AbstractActuator {
           dbManager.getHeadBlockTimeStamp());
       dbManager.getAccountStore()
           .put(accountCreateContract.getAccountAddress().toByteArray(), accountCapsule);
+
+      dbManager.adjustBalance(accountCreateContract.getOwnerAddress().toByteArray(), -fee);
       ret.setStatus(fee, code.SUCESS);
-    } catch (InvalidProtocolBufferException e) {
+    } catch (BalanceInsufficientException e) {
+      logger.debug(e.getMessage(), e);
+      ret.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
+    }catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -76,6 +83,12 @@ public class CreateAccountActuator extends AbstractActuator {
           "Account[" + readableOwnerAddress + "] not exists");
     }
 
+    final long fee = calcFee();
+    if (accountCapsule.getBalance() < fee) {
+      throw new ContractValidateException(
+          "Validate CreateAccountActuator error, insufficient fee.");
+    }
+
     byte[] accountAddress = contract.getAccountAddress().toByteArray();
     if (!Wallet.addressValid(accountAddress)) {
       throw new ContractValidateException("Invalid account address");
@@ -99,6 +112,6 @@ public class CreateAccountActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    return 0;
+    return dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
   }
 }

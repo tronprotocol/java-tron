@@ -48,7 +48,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
   @Override
   public ProgramInvoke createProgramInvoke(InternalTransaction.TrxType trxType,
       InternalTransaction.ExecuterType executerType,
-      Transaction tx, Block block, Deposit deposit) {
+      Transaction tx, Block block, Deposit deposit, long vmStartInUs, long vmShouldEndInUs) {
     byte[] contractAddress;
     byte[] ownerAddress;
     long balance;
@@ -79,7 +79,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
       }
 
       return new ProgramInvokeImpl(contractAddress, ownerAddress, ownerAddress, balance, null, data,
-          lastHash, coinbase, timestamp, number, deposit);
+          lastHash, coinbase, timestamp, number, deposit, vmStartInUs, vmShouldEndInUs);
 
     } else if (trxType == TRX_CONTRACT_CALL_TYPE) {
       Contract.TriggerSmartContract contract = ContractCapsule
@@ -113,6 +113,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
       // byte[] data = tx.isContractCreation() ? ByteUtil.EMPTY_BYTE_ARRAY : nullToEmpty(tx.getData());
       data = contract.getData().toByteArray();
 
+      // dropLimit = contract.getTrxCpuLimitInUs().toByteArray();
       switch (executerType) {
         case ET_CONSTANT_TYPE:
           break;
@@ -133,7 +134,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
       }
 
       return new ProgramInvokeImpl(address, origin, caller, balance, callValue, data,
-          lastHash, coinbase, timestamp, number, deposit);
+          lastHash, coinbase, timestamp, number, deposit, vmStartInUs, vmShouldEndInUs);
     } else {
       return null;
     }
@@ -147,7 +148,8 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
   public ProgramInvoke createProgramInvoke(Program program, DataWord toAddress,
       DataWord callerAddress,
       DataWord inValue, long balanceInt, byte[] dataIn,
-      Deposit deposit, boolean isStaticCall, boolean byTestingSuite) {
+      Deposit deposit, boolean isStaticCall, boolean byTestingSuite, long vmStartInUs,
+      long vmShouldEndInUs) {
 
     DataWord address = toAddress;
     DataWord origin = program.getOriginAddress();
@@ -161,10 +163,11 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
     DataWord timestamp = program.getTimestamp();
     DataWord number = program.getNumber();
     DataWord difficulty = program.getDifficulty();
-    DataWord dropLimit = program.getDroplimit();
 
     return new ProgramInvokeImpl(address, origin, caller, balance, callValue,
         data, lastHash, coinbase, timestamp, number, difficulty,
-        deposit, program.getCallDeep() + 1, isStaticCall, byTestingSuite);
+        deposit, program.getCallDeep() + 1, isStaticCall, byTestingSuite, vmStartInUs,
+        vmShouldEndInUs);
   }
+
 }
