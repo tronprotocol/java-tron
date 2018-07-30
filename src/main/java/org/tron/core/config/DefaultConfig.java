@@ -42,7 +42,7 @@ public class DefaultConfig {
   public RevokingDatabase revokingDatabase() {
     int dbVersion = Args.getInstance().getStorage().getDbVersion();
     if (dbVersion == 1) {
-      return new RevokingStore();
+      return RevokingStore.getInstance();
     } else if (dbVersion == 2) {
       return new SnapshotManager();
     } else {

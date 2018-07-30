@@ -300,7 +300,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
 
   public synchronized void shutdown() {
     System.err.println("******** begin to pop revokingDb ********");
-    System.err.println("******** before revokingDb size:" + RevokingStore.getInstance().size());
+    System.err.println("******** before revokingDb size:" + size());
     try {
       disable();
       boolean exit = false;
