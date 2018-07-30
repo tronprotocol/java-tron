@@ -59,7 +59,7 @@ public class ActuatorFactory {
         return new AssetIssueActuator(contract.getParameter(), manager);
       case UnfreezeAssetContract:
         return new UnfreezeAssetActuator(contract.getParameter(), manager);
-      case DeployContract:
+      case CreateSmartContract:
         break;
       case WitnessUpdateContract:
         return new WitnessUpdateActuator(contract.getParameter(), manager);
@@ -73,6 +73,18 @@ public class ActuatorFactory {
         return new WithdrawBalanceActuator(contract.getParameter(), manager);
       case UpdateAssetContract:
         return new UpdateAssetActuator(contract.getParameter(), manager);
+      case ProposalCreateContract:
+        return new ProposalCreateActuator(contract.getParameter(), manager);
+      case ProposalApproveContract:
+        return new ProposalApproveActuator(contract.getParameter(), manager);
+      case ProposalDeleteContract:
+        return new ProposalDeleteActuator(contract.getParameter(), manager);
+      case SetAccountIdContract:
+        return new SetAccountIdActuator(contract.getParameter(), manager);
+      case BuyStorageContract:
+        return new BuyStorageActuator(contract.getParameter(), manager);
+      case SellStorageContract:
+        return new SellStorageActuator(contract.getParameter(), manager);
       default:
 
     }

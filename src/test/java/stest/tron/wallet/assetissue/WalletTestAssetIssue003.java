@@ -177,7 +177,7 @@ public class WalletTestAssetIssue003 {
       Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 10000000L, 3, testKey002,
           blockingStubFull));
       //Create success
-      start = System.currentTimeMillis() + 3000;
+      start = System.currentTimeMillis() + 6000;
       end = System.currentTimeMillis() + 1000000000;
       Assert.assertTrue(PublicMethed.createAssetIssue(fromAddress, name, totalSupply, 1, 10,
           start, end, 2, description, url,10000L,10000L,

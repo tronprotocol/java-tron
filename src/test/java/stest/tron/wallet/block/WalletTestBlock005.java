@@ -58,7 +58,7 @@ public class WalletTestBlock005 {
     Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
     Assert.assertFalse(currentBlockNum < 0);
     while (currentBlockNum <= 5) {
-      logger.info("Now has very little block, Please wait");
+      logger.info("Now the block num is " + Long.toString(currentBlockNum) + " Please wait");
       currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
       currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
     }
@@ -84,7 +84,7 @@ public class WalletTestBlock005 {
     Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
     Assert.assertFalse(currentBlockNum < 0);
     while (currentBlockNum <= 5) {
-      logger.info("Now has very little block, Please wait");
+      logger.info("Now the block num is " + Long.toString(currentBlockNum) + " Please wait");
       currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
       currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
     }

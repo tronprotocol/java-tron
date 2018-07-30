@@ -193,7 +193,7 @@ public class WitnessController {
     }
 
     int numberActiveWitness = this.getActiveWitnesses().size();
-    int singleRepeat = this.manager.getDynamicPropertiesStore().getSingleRepeat();
+    int singleRepeat = ChainConstant.SINGLE_REPEAT;
     if (numberActiveWitness <= 0) {
       throw new RuntimeException("Active Witnesses is null.");
     }
@@ -229,7 +229,7 @@ public class WitnessController {
 //    long num = manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
 //    long time = manager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
 //
-//    if (num != 0 && num % getActiveWitnesses().size() == 0) {
+//    if (num != 0 && num % getActiveWitnesses().isEmpty()) {
 //      logger.info("updateWitnessSchedule number:{},HeadBlockTimeStamp:{}", num, time);
 //      setCurrentShuffledWitnesses(new RandomGenerator<ByteString>()
 //          .shuffle(getActiveWitnesses(), time));
@@ -299,7 +299,7 @@ public class WitnessController {
     Map<ByteString, Long> countWitness = countVote(votesStore);
 
     //Only possible during the initialization phase
-    if (countWitness.size() == 0) {
+    if (countWitness.isEmpty()) {
       logger.info("No vote, no change to witness.");
     } else {
       List<ByteString> currentWits = getActiveWitnesses();
@@ -402,7 +402,7 @@ public class WitnessController {
 
   private void payStandbyWitness(List<ByteString> list) {
     long voteSum = 0;
-    long totalPay = ChainConstant.WITNESS_STANDBY_ALLOWANCE;
+    long totalPay = manager.getDynamicPropertiesStore().getWitnessStandbyAllowance();
     for (ByteString b : list) {
       voteSum += getWitnesseByAddress(b).getVoteCount();
     }

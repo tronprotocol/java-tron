@@ -1,7 +1,6 @@
 package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
-import static org.tron.core.config.Parameter.ChainConstant.WITNESS_PAY_PER_BLOCK;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
@@ -35,14 +34,15 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
+import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DialogOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Time;
 import org.tron.core.Constant;
-import org.tron.core.actuator.Actuator;
-import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -76,8 +76,10 @@ import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
@@ -102,7 +104,9 @@ public class Manager {
   @Autowired
   private BlockIndexStore blockIndexStore;
   @Autowired
-  private AccountIndexStore accountIndexStore;
+  private AccountIdIndexStore accountIdIndexStore;
+  @Autowired
+  private AccountContractIndexStore accountContractIndexStore;
   @Autowired
   private WitnessScheduleStore witnessScheduleStore;
   @Autowired
@@ -110,8 +114,15 @@ public class Manager {
   @Autowired
   private VotesStore votesStore;
   @Autowired
+  private ProposalStore proposalStore;
+  @Autowired
   private TransactionHistoryStore transactionHistoryStore;
-
+  @Autowired
+  private CodeStore codeStore;
+  @Autowired
+  private ContractStore contractStore;
+  @Autowired
+  private StorageStore storageStore;
 
   // for network
   @Autowired
@@ -139,6 +150,10 @@ public class Manager {
   @Getter
   @Setter
   private WitnessController witnessController;
+
+  @Getter
+  @Setter
+  private ProposalController proposalController;
 
   private ExecutorService validateSignService;
 
@@ -170,8 +185,24 @@ public class Manager {
     this.witnessScheduleStore = witnessScheduleStore;
   }
 
+  public StorageStore getStorageStore() {
+    return storageStore;
+  }
+
+  public CodeStore getCodeStore() {
+    return codeStore;
+  }
+
+  public ContractStore getContractStore() {
+    return contractStore;
+  }
+
   public VotesStore getVotesStore() {
     return this.votesStore;
+  }
+
+  public ProposalStore getProposalStore() {
+    return this.proposalStore;
   }
 
   public List<TransactionCapsule> getPendingTransactions() {
@@ -251,6 +282,11 @@ public class Manager {
     this.peersStore.put("neighbours".getBytes(), nodes);
   }
 
+
+  public AccountContractIndexStore getAccountContractIndexStore() {
+    return accountContractIndexStore;
+  }
+
   public Set<Node> readNeighbours() {
     return this.peersStore.get("neighbours".getBytes());
   }
@@ -260,6 +296,7 @@ public class Manager {
     revokingStore = RevokingStore.getInstance();
     revokingStore.disable();
     this.setWitnessController(WitnessController.createInstance(this));
+    this.setProposalController(ProposalController.createInstance(this));
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
     this.initGenesis();
     try {
@@ -282,6 +319,10 @@ public class Manager {
       System.exit(1);
     }
     revokingStore.enable();
+
+//    this.codeStore = CodeStore.create("code");
+//    this.contractStore = ContractStore.create("contract");
+//    this.storageStore = StorageStore.create("storage");
 
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
@@ -349,7 +390,7 @@ public class Manager {
                       account.getAccountType(),
                       account.getBalance());
               this.accountStore.put(account.getAddress(), accountCapsule);
-              this.accountIndexStore.put(accountCapsule);
+              this.accountIdIndexStore.put(accountCapsule);
             });
   }
 
@@ -505,7 +546,7 @@ public class Manager {
       }
 
       try (RevokingStore.Dialog tmpDialog = revokingStore.buildDialog()) {
-        processTransaction(trx);
+        processTransaction(trx, null);
         pendingTransactions.add(trx);
         tmpDialog.merge();
       }
@@ -517,7 +558,13 @@ public class Manager {
   public void consumeBandwidth(TransactionCapsule trx, TransactionResultCapsule ret)
       throws ContractValidateException, AccountResourceInsufficientException {
     BandwidthProcessor processor = new BandwidthProcessor(this);
-    processor.consumeBandwidth(trx, ret);
+    processor.consume(trx, ret);
+  }
+
+  public void consumeCpu(TransactionCapsule trx, TransactionResultCapsule ret)
+      throws ContractValidateException, AccountResourceInsufficientException {
+    CpuProcessor processor = new CpuProcessor(this);
+    processor.consume(trx, ret);
   }
 
   @Deprecated
@@ -560,7 +607,8 @@ public class Manager {
   public void eraseBlock() {
     dialog.reset();
     try {
-      BlockCapsule oldHeadBlock = getBlockById(getDynamicPropertiesStore().getLatestBlockHeaderHash());
+      BlockCapsule oldHeadBlock = getBlockById(
+          getDynamicPropertiesStore().getLatestBlockHeaderHash());
       logger.info("begin to erase block:" + oldHeadBlock);
       khaosDb.pop();
       revokingStore.pop();
@@ -591,7 +639,8 @@ public class Manager {
           khaosDb.getBranch(
               newHead.getBlockId(), getDynamicPropertiesStore().getLatestBlockHeaderHash());
     } catch (NonCommonBlockException e) {
-      logger.info("there is not the most recent common ancestor, need to remove all blocks in the fork chain.");
+      logger.info(
+          "there is not the most recent common ancestor, need to remove all blocks in the fork chain.");
       BlockCapsule tmp = newHead;
       while (tmp != null) {
         khaosDb.removeBlk(tmp.getBlockId());
@@ -631,7 +680,8 @@ public class Manager {
           throw e;
         } finally {
           if (exception != null) {
-            logger.warn("switch back because exception thrown while switching forks. " + exception.getMessage(),
+            logger.warn("switch back because exception thrown while switching forks. " + exception
+                    .getMessage(),
                 exception);
             first.forEach(khaosBlock -> khaosDb.removeBlk(khaosBlock.getBlk().getBlockId()));
             khaosDb.setHead(binaryTree.getValue().peekFirst());
@@ -817,7 +867,8 @@ public class Manager {
   /**
    * Get the fork branch.
    */
-  public LinkedList<BlockId> getBlockChainHashesOnFork(final BlockId forkBlockHash) throws NonCommonBlockException {
+  public LinkedList<BlockId> getBlockChainHashesOnFork(final BlockId forkBlockHash)
+      throws NonCommonBlockException {
     final Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> branch =
         this.khaosDb.getBranch(
             getDynamicPropertiesStore().getLatestBlockHeaderHash(), forkBlockHash);
@@ -892,7 +943,7 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public boolean processTransaction(final TransactionCapsule trxCap)
+  public boolean processTransaction(final TransactionCapsule trxCap, Block block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException,
       DupTransactionException, TaposException {
@@ -914,26 +965,45 @@ public class Manager {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    final List<Actuator> actuatorList = ActuatorFactory.createActuator(trxCap, this);
-    TransactionResultCapsule ret = new TransactionResultCapsule();
+    TransactionTrace trace = new TransactionTrace(trxCap);
+    trace.init();
 
-    consumeBandwidth(trxCap, ret);
 
-    for (Actuator act : actuatorList) {
-      act.validate();
-      act.execute(ret);
+    DepositImpl deposit = DepositImpl.createRoot(this);
+    Runtime runtime;
+
+    runtime = new Runtime(trace, block, deposit,
+        new ProgramInvokeFactoryImpl());
+    consumeBandwidth(trxCap, runtime.getResult().getRet());
+
+    runtime.init();
+        
+    //exec
+    trace.exec(runtime);
+
+    //check SR's bill and ours.
+    if(block != null) {
+      trace.checkBill();
     }
-    trxCap.setResult(ret);
 
+    trace.finalize();
+
+    if (runtime.getResult().getException() != null) {
+      throw new RuntimeException("Runtime exe failed!");
+    }
+    // todo judge result in runtime same as block,trx,recipt
+    // todo 一个账户只能一个合约账户
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
-    if (Args.getInstance().isSolidityNode()) {
-      TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
-      transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());
-      transactionInfoCapsule.setFee(ret.getFee());
-      transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfoCapsule);
-    }
+    TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
+    transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());
+    transactionInfoCapsule.setFee(runtime.getResult().getRet().getFee());
+    transactionInfoCapsule.setContractResult(runtime.getResult().getHReturn());
+    transactionInfoCapsule.setContractAddress(runtime.getResult().getContractAddress());
+    transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfoCapsule);
+
     return true;
   }
+
 
   /**
    * Get the block id from the number.
@@ -973,7 +1043,8 @@ public class Manager {
     while (iterator.hasNext()) {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
       if (DateTime.now().getMillis() - when
-          > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5 * ChainConstant.BLOCK_PRODUCED_TIME_OUT) {
+          > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5 * ChainConstant.BLOCK_PRODUCED_TIME_OUT
+          / 100) {
         logger.warn("Processing transaction time exceeds the 50% producing time。");
         break;
       }
@@ -985,7 +1056,7 @@ public class Manager {
       }
       // apply transaction
       try (Dialog tmpDialog = revokingStore.buildDialog()) {
-        processTransaction(trx);
+        processTransaction(trx, null);
 //        trx.resetResult();
         tmpDialog.merge();
         // push into block
@@ -1106,7 +1177,7 @@ public class Manager {
       if (block.generatedByMyself) {
         transactionCapsule.setVerified(true);
       }
-      processTransaction(transactionCapsule);
+      processTransaction(transactionCapsule, block.getInstance());
     }
 
     boolean needMaint = needMaintenance(block.getTimeStamp());
@@ -1151,7 +1222,7 @@ public class Manager {
             .collect(Collectors.toList());
 
     long size = witnessController.getActiveWitnesses().size();
-    int solidifiedPosition = (int) (size * (1 - SOLIDIFIED_THRESHOLD));
+    int solidifiedPosition = (int) (size * (1 - SOLIDIFIED_THRESHOLD * 1.0 / 100));
     if (solidifiedPosition < 0) {
       logger.warn(
           "updateLatestSolidifiedBlock error, solidifiedPosition:{},wits.size:{}",
@@ -1198,6 +1269,7 @@ public class Manager {
    * Perform maintenance.
    */
   private void processMaintenance(BlockCapsule block) {
+    proposalController.processProposals();
     witnessController.updateWitness();
     this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
   }
@@ -1226,7 +1298,8 @@ public class Manager {
     this.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
 
     try {
-      adjustAllowance(witnessCapsule.getAddress().toByteArray(), WITNESS_PAY_PER_BLOCK);
+      adjustAllowance(witnessCapsule.getAddress().toByteArray(),
+          getDynamicPropertiesStore().getWitnessPayPerBlock());
     } catch (BalanceInsufficientException e) {
       logger.warn(e.getMessage(), e);
     }
@@ -1267,12 +1340,12 @@ public class Manager {
     this.blockIndexStore = indexStore;
   }
 
-  public AccountIndexStore getAccountIndexStore() {
-    return this.accountIndexStore;
+  public AccountIdIndexStore getAccountIdIndexStore() {
+    return this.accountIdIndexStore;
   }
 
-  public void setAccountIndexStore(AccountIndexStore indexStore) {
-    this.accountIndexStore = indexStore;
+  public void setAccountIdIndexStore(AccountIdIndexStore indexStore) {
+    this.accountIdIndexStore = indexStore;
   }
 
   public void closeAllStore() {
@@ -1280,13 +1353,16 @@ public class Manager {
     closeOneStore(accountStore);
     closeOneStore(blockStore);
     closeOneStore(blockIndexStore);
-    closeOneStore(accountIndexStore);
+    closeOneStore(accountIdIndexStore);
     closeOneStore(witnessStore);
     closeOneStore(witnessScheduleStore);
     closeOneStore(assetIssueStore);
     closeOneStore(dynamicPropertiesStore);
     closeOneStore(transactionStore);
     closeOneStore(utxoStore);
+    closeOneStore(codeStore);
+    closeOneStore(contractStore);
+    closeOneStore(storageStore);
     System.err.println("******** end to close db ********");
   }
 
