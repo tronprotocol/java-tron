@@ -7,8 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.ContractCapsule;
-import org.tron.protos.Contract.CreateSmartContract;
-import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.SmartContract;
 
 @Slf4j
@@ -55,7 +53,12 @@ public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
    * @return
    */
   public SmartContract.ABI getABI(byte[] contractAddress) {
-    ContractCapsule contractCapsule = getUnchecked(contractAddress);
+    byte[] value = revokingDB.getUnchecked(contractAddress);
+    if (ArrayUtils.isEmpty(value)) {
+      return null;
+    }
+
+    ContractCapsule contractCapsule = new ContractCapsule(value);
     SmartContract smartContract = contractCapsule.getInstance();
     if (smartContract == null) {
       return null;
