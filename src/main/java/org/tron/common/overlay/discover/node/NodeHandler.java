@@ -20,6 +20,7 @@ package org.tron.common.overlay.discover.node;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
@@ -29,6 +30,7 @@ import org.tron.common.net.udp.message.discover.FindNodeMessage;
 import org.tron.common.net.udp.message.discover.NeighborsMessage;
 import org.tron.common.net.udp.message.discover.PingMessage;
 import org.tron.common.net.udp.message.discover.PongMessage;
+import org.tron.common.overlay.discover.node.statistics.NodeStatistics;
 import org.tron.core.config.args.Args;
 
 /**
@@ -87,6 +89,7 @@ public class NodeHandler {
   private NodeManager nodeManager;
   private NodeStatistics nodeStatistics;
   private NodeHandler replaceCandidate;
+  private InetSocketAddress inetSocketAddress;
   private volatile boolean waitForPong = false;
   private volatile boolean waitForNeighbors = false;
   private volatile int pingTrials = 3;
@@ -95,11 +98,12 @@ public class NodeHandler {
   public NodeHandler(Node node, NodeManager nodeManager) {
     this.node = node;
     this.nodeManager = nodeManager;
+    this.inetSocketAddress = new InetSocketAddress(node.getHost(), node.getPort());
     changeState(State.Discovered);
   }
 
   public InetSocketAddress getInetSocketAddress() {
-    return new InetSocketAddress(node.getHost(), node.getPort());
+    return inetSocketAddress;
   }
 
   public void setSourceNode(Node sourceNode) {
@@ -302,5 +306,5 @@ public class NodeHandler {
     return "NodeHandler[state: " + state + ", node: " + node.getHost() + ":" + node.getPort()
         + ", id=" + (node.getId().length > 0 ? Hex.toHexString(node.getId(), 0, 4) : "empty") + "]";
   }
-  
+
 }
