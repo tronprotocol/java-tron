@@ -18,10 +18,6 @@ script:
 skip_build:
 - README.md：
 - LICENSE
-deploy:
-  provider: script
-  script: bash deploy.sh
-  on:
-    branch: develop
+
 
 
