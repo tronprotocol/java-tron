@@ -20,7 +20,7 @@ public class AccountIdIndexStore extends TronStoreWithRevoking<BytesCapsule> {
 
   public void put(AccountCapsule accountCapsule) {
     byte[] lowerCaseAccountId = getLowerCaseAccountId(accountCapsule.getAccountId().toByteArray());
-    put(lowerCaseAccountId, new BytesCapsule(accountCapsule.getAddress().toByteArray()));
+    super.put(lowerCaseAccountId, new BytesCapsule(accountCapsule.getAddress().toByteArray()));
   }
 
   public byte[] get(ByteString name) {

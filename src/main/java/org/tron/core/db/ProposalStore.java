@@ -1,11 +1,9 @@
 package org.tron.core.db;
 
+import com.google.common.collect.Streams;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import com.google.common.collect.Streams;
-import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -33,8 +31,8 @@ public class ProposalStore extends TronStoreWithRevoking<ProposalCapsule> {
     return Streams.stream(iterator())
         .map(Map.Entry::getValue)
         .sorted(
-            (ProposalCapsule a, ProposalCapsule b) -> a.getCreateTime() <= b.getCreateTime() ?
-                1 : -1)
+            (ProposalCapsule a, ProposalCapsule b) -> a.getCreateTime() <= b.getCreateTime() ? 1
+                : -1)
         .collect(Collectors.toList());
   }
 }

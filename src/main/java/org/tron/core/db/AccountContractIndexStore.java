@@ -25,7 +25,7 @@ public class AccountContractIndexStore extends TronStoreWithRevoking<BytesCapsul
   }
 
   public void put(BytesCapsule normalAccountAddress, BytesCapsule contractAddress) {
-    put(normalAccountAddress.getData(), contractAddress);
+    super.put(normalAccountAddress.getData(), contractAddress);
   }
 
   @Override
