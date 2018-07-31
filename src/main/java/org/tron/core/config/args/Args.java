@@ -280,6 +280,10 @@ public class Args {
   @Setter
   private double maxConnectNumberFactor;
 
+  @Getter
+  @Setter
+  private long receiveTcpMinDataLength;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -333,6 +337,7 @@ public class Args {
     INSTANCE.activeConnectFactor = 0.1;
     INSTANCE.disconnectNumberFactor = 0.4;
     INSTANCE.maxConnectNumberFactor = 0.8;
+    INSTANCE.receiveTcpMinDataLength = 2048;
   }
 
   /**
@@ -558,6 +563,8 @@ public class Args {
         config.getDouble("node.disconnectNumberFactor") : 0.4;
     INSTANCE.maxConnectNumberFactor = config.hasPath("node.maxConnectNumberFactor") ?
         config.getDouble("node.maxConnectNumberFactor") : 0.8;
+    INSTANCE.receiveTcpMinDataLength = config.hasPath("node.receiveTcpMinDataLength") ?
+        config.getLong("node.receiveTcpMinDataLength") : 2048;
 
     initBackupProperty(config);
 

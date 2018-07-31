@@ -22,6 +22,7 @@ import static java.lang.Math.min;
 
 import java.util.concurrent.atomic.AtomicLong;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol.ReasonCode;
 
 public class NodeStatistics {
@@ -29,7 +30,7 @@ public class NodeStatistics {
   public final static int REPUTATION_PREDEFINED = 100000;
   public final static long TOO_MANY_PEERS_PENALIZE_TIMEOUT = 60 * 1000L;
   private static final long CLEAR_CYCLE_TIME = 60 * 60 * 1000L;
-  private static final long MIN_DATA_LENGTH = 2048L;
+  private final long MIN_DATA_LENGTH = Args.getInstance().getReceiveTcpMinDataLength();
 
   private boolean isPredefined = false;
 
