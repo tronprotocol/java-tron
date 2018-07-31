@@ -268,7 +268,7 @@ public class Runtime {
   private long getAccountCPULimitInUs(AccountCapsule creator, AccountCapsule sender,
       TriggerSmartContract contract, long maxCpuInUsBySender) {
 
-    long senderCpuLimit = getAccountCPULimitInUs(sender, contract.getLimitInTrx(),
+    long senderCpuLimit = getAccountCPULimitInUs(sender, 0,
         maxCpuInUsBySender);
     if (Arrays.equals(creator.getAddress().toByteArray(), sender.getAddress().toByteArray())) {
       return senderCpuLimit;
@@ -358,7 +358,7 @@ public class Runtime {
       long thisTxCPULimitInUs;
       //long maxCpuInUsByCreator = trx.getRawData().getMaxCpuUsage();
       long maxCpuInUsByCreator = 100;
-      long accountCPULimitInUs = getAccountCPULimitInUs(creator, contract.getLimitInTrx(),
+      long accountCPULimitInUs = getAccountCPULimitInUs(creator, 0,
           maxCpuInUsByCreator);
       if (executerType == ET_NORMAL_TYPE) {
         long blockCPULeftInUs = getBlockCPULeftInUs().longValue();
