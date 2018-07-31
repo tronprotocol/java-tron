@@ -225,37 +225,62 @@ public class Runtime {
     return false;
   }
 
-  private long getAccountCPULimitInUs(AccountCapsule creator,
-      long cpuLimitInTrx) {
+  private long getAccountCPULimitInUs(AccountCapsule account,
+      long limitInTrx, long maxCpuInUsByAccount) {
 
     CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
     long cpuFromFrozen = cpuProcessor.calculateGlobalCpuLimit(
-        creator.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance());
+        account.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance());
 
-    long cpuFromTRX = Constant.CPU_IN_US_PER_TRX * cpuLimitInTrx;
+    long cpuFromTRX = Constant.CPU_IN_US_PER_TRX * limitInTrx;
 
-    return max(cpuFromFrozen, cpuFromTRX); // us
+    return min(maxCpuInUsByAccount, max(cpuFromFrozen, cpuFromTRX)); // us
 
   }
 
-  private long getAccountCPULimitInUs(AccountCapsule creator, AccountCapsule sender,
-      TriggerSmartContract contract) {
+  // todo maybe move to another place
+  private boolean checkAccountInputLimitAndMaxWithinBalance(long maxCpuUsage, long maxStorageUsage,
+      long value,
+      long balance, long limitInTrx, long cpuInUsFromFreeze, long boughtStorage,
+      long oneStorageByTrx,
+      long oneCpuByTrx) {
+    if (balance < limitInTrx + value) {
+      logger.error("beyond");
+      return false;
+    }
+    long CpuInUsFromTrx = limitInTrx * oneCpuByTrx;
+    long cpuNeedTrx = 0;
+    if (CpuInUsFromTrx > cpuInUsFromFreeze) {
+      // prior to use freeze, so not include "="
+      cpuNeedTrx = (long) (maxCpuUsage * 1.0 / oneCpuByTrx);
+    } else {
+      cpuNeedTrx = 0;
+    }
+    long storageNeedTrx = max((long) ((maxStorageUsage - boughtStorage) * 1.0 / oneStorageByTrx),
+        0);
+    if (limitInTrx < cpuNeedTrx + storageNeedTrx) {
+      logger.error("beyond");
+      return false;
+    }
+    return true;
+  }
 
+  private long getAccountCPULimitInUs(AccountCapsule creator, AccountCapsule sender,
+      TriggerSmartContract contract, long maxCpuInUsBySender) {
+
+    long senderCpuLimit = getAccountCPULimitInUs(sender, contract.getLimitInTrx(),
+        maxCpuInUsBySender);
     if (Arrays.equals(creator.getAddress().toByteArray(), sender.getAddress().toByteArray())) {
-      return getAccountCPULimitInUs(creator, contract.getCpuLimitInTrx());
+      return senderCpuLimit;
     }
 
     CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
+    long creatorCpuFromFrozen = cpuProcessor.calculateGlobalCpuLimit(
+        creator.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance());
+
     SmartContract smartContract = this.deposit
         .getContract(contract.getContractAddress().toByteArray()).getInstance();
     double consumeUserResourcePercent = smartContract.getConsumeUserResourcePercent() * 1.0 / 100;
-
-    long senderCpuFromTrx = Constant.CPU_IN_US_PER_TRX * contract.getCpuLimitInTrx();
-    long senderCpuFromFrozen = cpuProcessor.calculateGlobalCpuLimit(
-        sender.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance());
-    long creatorCpuFromFrozen = cpuProcessor.calculateGlobalCpuLimit(
-        creator.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance());
-    long senderCpuMax = max(senderCpuFromTrx, senderCpuFromFrozen);
 
     if (consumeUserResourcePercent >= 1.0) {
       consumeUserResourcePercent = 1.0;
@@ -269,10 +294,10 @@ public class Runtime {
     }
 
     if (creatorCpuFromFrozen * consumeUserResourcePercent
-        >= (1 - consumeUserResourcePercent) * senderCpuMax) {
-      return (long) (senderCpuMax / consumeUserResourcePercent);
+        >= (1 - consumeUserResourcePercent) * senderCpuLimit) {
+      return (long) (senderCpuLimit / consumeUserResourcePercent);
     } else {
-      return senderCpuMax + creatorCpuFromFrozen;
+      return senderCpuLimit + creatorCpuFromFrozen;
     }
   }
 
@@ -294,58 +319,6 @@ public class Runtime {
       default:
         break;
     }
-  }
-
-  private void call()
-      throws ContractExeException {
-    Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
-    if (contract == null) {
-      return;
-    }
-
-    byte[] contractAddress = contract.getContractAddress().toByteArray();
-    byte[] code = this.deposit.getCode(contractAddress);
-    if (isEmpty(code)) {
-
-    } else {
-
-      AccountCapsule sender = this.deposit.getAccount(contract.getOwnerAddress().toByteArray());
-      AccountCapsule creator = this.deposit.getAccount(
-          this.deposit.getContract(contractAddress).getInstance()
-              .getOriginAddress().toByteArray());
-
-      long thisTxCPULimitInUs;
-      long accountCPULimitInUs = getAccountCPULimitInUs(creator, sender, contract);
-      if (executerType == ET_NORMAL_TYPE) {
-        long blockCPULeftInUs = getBlockCPULeftInUs().longValue();
-        thisTxCPULimitInUs = min(accountCPULimitInUs, blockCPULeftInUs,
-            Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
-      } else {
-        thisTxCPULimitInUs = min(accountCPULimitInUs,
-            Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
-      }
-
-      long vmStartInUs = System.nanoTime() / 1000;
-      long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
-
-      ProgramInvoke programInvoke = programInvokeFactory
-          .createProgramInvoke(TRX_CONTRACT_CALL_TYPE, executerType, trx,
-              block, deposit, vmStartInUs, vmShouldEndInUs);
-      this.vm = new VM(config);
-      InternalTransaction internalTransaction = new InternalTransaction(trx);
-      this.program = new Program(null, code, programInvoke, internalTransaction, config);
-    }
-
-    program.getResult().setContractAddress(contractAddress);
-    //transfer from callerAddress to targetAddress according to callValue
-    byte[] callerAddress = contract.getOwnerAddress().toByteArray();
-    byte[] callValue = contract.getCallValue().toByteArray();
-    if (null != callValue && callValue.length != 0) {
-      long callValueLong = new BigInteger(Hex.toHexString(callValue), 16).longValue();
-      this.deposit.addBalance(callerAddress, -callValueLong);
-      this.deposit.addBalance(contractAddress, callValueLong);
-    }
-
   }
 
   /*
@@ -379,10 +352,13 @@ public class Runtime {
     // create vm to constructor smart contract
     try {
 
+      // todo use default value for cpu max and storage max
       AccountCapsule creator = this.deposit
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
       long thisTxCPULimitInUs;
-      long accountCPULimitInUs = getAccountCPULimitInUs(creator, contract.getCpuLimitInTrx());
+      long maxCpuInUsByCreator = contract.getMaxCpuUsage();
+      long accountCPULimitInUs = getAccountCPULimitInUs(creator, contract.getLimitInTrx(),
+          maxCpuInUsByCreator);
       if (executerType == ET_NORMAL_TYPE) {
         long blockCPULeftInUs = getBlockCPULeftInUs().longValue();
         thisTxCPULimitInUs = min(accountCPULimitInUs, blockCPULeftInUs,
@@ -419,6 +395,64 @@ public class Runtime {
     // transfer from callerAddress to contractAddress according to callValue
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
     byte[] callValue = newSmartContract.getCallValue().toByteArray();
+    if (null != callValue && callValue.length != 0) {
+      long callValueLong = new BigInteger(Hex.toHexString(callValue), 16).longValue();
+      this.deposit.addBalance(callerAddress, -callValueLong);
+      this.deposit.addBalance(contractAddress, callValueLong);
+    }
+
+  }
+
+  /**
+   * **
+   */
+  private void call()
+      throws ContractExeException {
+    Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
+    if (contract == null) {
+      return;
+    }
+
+    byte[] contractAddress = contract.getContractAddress().toByteArray();
+    byte[] code = this.deposit.getCode(contractAddress);
+    if (isEmpty(code)) {
+
+    } else {
+
+      AccountCapsule sender = this.deposit.getAccount(contract.getOwnerAddress().toByteArray());
+      AccountCapsule creator = this.deposit.getAccount(
+          this.deposit.getContract(contractAddress).getInstance()
+              .getOriginAddress().toByteArray());
+
+      // todo use default value for cpu max and storage max
+      long thisTxCPULimitInUs;
+      long maxCpuInUsBySender = contract.getMaxCpuUsage();
+      long accountCPULimitInUs = getAccountCPULimitInUs(creator, sender, contract,
+          maxCpuInUsBySender);
+      if (executerType == ET_NORMAL_TYPE) {
+        long blockCPULeftInUs = getBlockCPULeftInUs().longValue();
+        thisTxCPULimitInUs = min(accountCPULimitInUs, blockCPULeftInUs,
+            Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
+      } else {
+        thisTxCPULimitInUs = min(accountCPULimitInUs,
+            Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
+      }
+
+      long vmStartInUs = System.nanoTime() / 1000;
+      long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
+
+      ProgramInvoke programInvoke = programInvokeFactory
+          .createProgramInvoke(TRX_CONTRACT_CALL_TYPE, executerType, trx,
+              block, deposit, vmStartInUs, vmShouldEndInUs);
+      this.vm = new VM(config);
+      InternalTransaction internalTransaction = new InternalTransaction(trx);
+      this.program = new Program(null, code, programInvoke, internalTransaction, config);
+    }
+
+    program.getResult().setContractAddress(contractAddress);
+    //transfer from callerAddress to targetAddress according to callValue
+    byte[] callerAddress = contract.getOwnerAddress().toByteArray();
+    byte[] callValue = contract.getCallValue().toByteArray();
     if (null != callValue && callValue.length != 0) {
       long callValueLong = new BigInteger(Hex.toHexString(callValue), 16).longValue();
       this.deposit.addBalance(callerAddress, -callValueLong);

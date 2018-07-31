@@ -369,9 +369,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       Any contractParameter = contract.getParameter();
       switch (contract.getType()) {
         case TriggerSmartContract:
-          return contractParameter.unpack(TriggerSmartContract.class).getCpuLimitInTrx();
+          return contractParameter.unpack(TriggerSmartContract.class).getLimitInTrx();
         case CreateSmartContract:
-          return contractParameter.unpack(CreateSmartContract.class).getCpuLimitInTrx();
+          return contractParameter.unpack(CreateSmartContract.class).getLimitInTrx();
         default:
           return 0;
       }
