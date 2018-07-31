@@ -54,13 +54,11 @@ public class TransactionTrace {
   //set bill
   public void setCpuBill(long cpuUseage, long cpuFee) {
     receipt.setCpuUsage(cpuUseage);
-    receipt.setCpuFee(cpuFee);
   }
 
   //set bill
   public void setStorageBill(long storageDelta, long storageFee) {
     receipt.setStorageDelta(storageDelta);
-    receipt.setStorageFee(storageFee);
   }
 
   //set bill
@@ -98,43 +96,43 @@ public class TransactionTrace {
     ReceiptCapsule srReceipt = new ReceiptCapsule(this.trx.getInstance().getRet(0).getReceipt(),
         this.trx.getTransactionId());
 
-    if ((this.receipt.getStorageFee() != srReceipt.getStorageFee())
-        || (this.receipt.getStorageDelta() != srReceipt.getStorageDelta())) {
-      throw new ReceiptException(
-          "Check bill exception, storage delta or fee not equal, current storage delta: "
-              + this.receipt.getStorageDelta()
-              + ", target storage delta: "
-              + srReceipt.getStorageDelta()
-              + ", current storage fee: "
-              + this.receipt.getStorageFee()
-              + ", target storage fee: "
-              + srReceipt.getStorageFee());
-    }
+//    if ((this.receipt.getStorageFee() != srReceipt.getStorageFee())
+//        || (this.receipt.getStorageDelta() != srReceipt.getStorageDelta())) {
+//      throw new ReceiptException(
+//          "Check bill exception, storage delta or fee not equal, current storage delta: "
+//              + this.receipt.getStorageDelta()
+//              + ", target storage delta: "
+//              + srReceipt.getStorageDelta()
+//              + ", current storage fee: "
+//              + this.receipt.getStorageFee()
+//              + ", target storage fee: "
+//              + srReceipt.getStorageFee());
+//    }
 
-    long adjustedCpuFee = Math.abs(this.receipt.getCpuFee() - this.receipt.getCpuFee());
-    long adjustedCpuUsage = Math.abs(this.receipt.getCpuUsage() - this.receipt.getCpuUsage());
-
-    double cpuFeePercent = adjustedCpuFee * 1.0 / srReceipt.getCpuFee() * 100;
-    double cpuUsagePercent = adjustedCpuUsage * 1.0 / srReceipt.getCpuUsage()  * 100;
-
-    double percentRange = 30;
-    if ((cpuFeePercent > percentRange) || (cpuUsagePercent > percentRange)) {
-      throw new ReceiptException(
-          "Check bill exception, cpu usage or fee not equal(percent <="
-              + percentRange
-              + "%), current cpu usage: "
-              + this.receipt.getCpuUsage()
-              + ", target cpu usage: "
-              + srReceipt.getCpuUsage()
-              + ", current cpu fee: "
-              + this.receipt.getCpuFee()
-              + ", target cpu fee: "
-              + srReceipt.getCpuFee()
-              + ", cpu usage percent: "
-              + cpuUsagePercent
-              + "%, cpu fee percent: "
-              + cpuFeePercent + "%");
-    }
+//    long adjustedCpuFee = Math.abs(this.receipt.getCpuFee() - this.receipt.getCpuFee());
+//    long adjustedCpuUsage = Math.abs(this.receipt.getCpuUsage() - this.receipt.getCpuUsage());
+//
+//    double cpuFeePercent = adjustedCpuFee * 1.0 / srReceipt.getCpuFee() * 100;
+//    double cpuUsagePercent = adjustedCpuUsage * 1.0 / srReceipt.getCpuUsage()  * 100;
+//
+//    double percentRange = 30;
+//    if ((cpuFeePercent > percentRange) || (cpuUsagePercent > percentRange)) {
+//      throw new ReceiptException(
+//          "Check bill exception, cpu usage or fee not equal(percent <="
+//              + percentRange
+//              + "%), current cpu usage: "
+//              + this.receipt.getCpuUsage()
+//              + ", target cpu usage: "
+//              + srReceipt.getCpuUsage()
+//              + ", current cpu fee: "
+//              + this.receipt.getCpuFee()
+//              + ", target cpu fee: "
+//              + srReceipt.getCpuFee()
+//              + ", cpu usage percent: "
+//              + cpuUsagePercent
+//              + "%, cpu fee percent: "
+//              + cpuFeePercent + "%");
+//    }
 
     this.receipt.setReceipt(ReceiptCapsule.copyReceipt(srReceipt));
   }

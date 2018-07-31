@@ -5,11 +5,12 @@ import java.util.List;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.AccountResourceInsufficientException;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.ReceiptException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
@@ -65,6 +66,8 @@ public class PendingManager implements AutoCloseable {
             logger.debug("pending manager: tapos exception", e);
           } catch (TooBigTransactionException e) {
             logger.debug("too big transaction");
+          } catch (ReceiptException e) {
+            logger.info("Receipt exception," + e.getMessage());
           } catch (TransactionExpirationException e) {
             logger.debug("expiration transaction");
           }

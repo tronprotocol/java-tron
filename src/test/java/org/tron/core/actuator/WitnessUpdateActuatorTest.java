@@ -68,10 +68,10 @@ public class WitnessUpdateActuatorTest {
   public void createCapsule() {
     // address in accountStore and witnessStore
     AccountCapsule accountCapsule =
-            new AccountCapsule(
-                    ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
-                    ByteString.copyFromUtf8(OWNER_ADDRESS_ACCOUNT_NAME),
-                    Protocol.AccountType.Normal);
+        new AccountCapsule(
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+            ByteString.copyFromUtf8(OWNER_ADDRESS_ACCOUNT_NAME),
+            Protocol.AccountType.Normal);
     dbManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS), accountCapsule);
     WitnessCapsule ownerCapsule = new WitnessCapsule(
         ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), 10_000_000L, URL);
@@ -79,11 +79,12 @@ public class WitnessUpdateActuatorTest {
 
     // address exist in accountStore, but is not witness
     AccountCapsule accountNotWitnessCapsule =
-            new AccountCapsule(
-                    ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_NOT_WITNESS)),
-                    ByteString.copyFromUtf8(OWNER_ADDRESS_NOT_WITNESS_ACCOUNT_NAME),
-                    Protocol.AccountType.Normal);
-    dbManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS_NOT_WITNESS), accountNotWitnessCapsule);
+        new AccountCapsule(
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_NOT_WITNESS)),
+            ByteString.copyFromUtf8(OWNER_ADDRESS_NOT_WITNESS_ACCOUNT_NAME),
+            Protocol.AccountType.Normal);
+    dbManager.getAccountStore()
+        .put(ByteArray.fromHexString(OWNER_ADDRESS_NOT_WITNESS), accountNotWitnessCapsule);
     dbManager.getWitnessStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_NOT_WITNESS));
 
     // address does not exist in accountStore
@@ -117,7 +118,7 @@ public class WitnessUpdateActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCCESS);
       WitnessCapsule witnessCapsule = dbManager.getWitnessStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertNotNull(witnessCapsule);
@@ -191,7 +192,7 @@ public class WitnessUpdateActuatorTest {
           dbManager);
       actuator.validate();
       actuator.execute(ret);
-      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCCESS);
       WitnessCapsule witnessCapsule = dbManager.getWitnessStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertNotNull(witnessCapsule);
@@ -208,7 +209,7 @@ public class WitnessUpdateActuatorTest {
           getContract(OWNER_ADDRESS, url256Bytes), dbManager);
       actuator.validate();
       actuator.execute(ret);
-      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCCESS);
       WitnessCapsule witnessCapsule = dbManager.getWitnessStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertNotNull(witnessCapsule);
@@ -221,8 +222,8 @@ public class WitnessUpdateActuatorTest {
   }
 
   /**
-   * use AccountStore not exists Address createWitness,result is failed,exception is
-   * "Witness does not exist"
+   * use AccountStore not exists Address createWitness,result is failed,exception is "Witness does
+   * not exist"
    */
   @Test
   public void notExistWitness() {
@@ -247,7 +248,7 @@ public class WitnessUpdateActuatorTest {
   @Test
   public void notExistAccount() {
     WitnessUpdateActuator actuator = new WitnessUpdateActuator(
-            getContract(OWNER_ADDRESS_NOTEXIST, URL), dbManager);
+        getContract(OWNER_ADDRESS_NOTEXIST, URL), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
