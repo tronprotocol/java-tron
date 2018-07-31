@@ -25,7 +25,6 @@ import org.tron.common.storage.Deposit;
 import org.tron.core.db.BlockStore;
 
 @Slf4j
-
 public class ProgramInvokeImpl implements ProgramInvoke {
 
   // private BlockStore blockStore;
