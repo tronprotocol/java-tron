@@ -173,11 +173,8 @@ message TXOutputs {
 
 message ResourceReceipt {
   int64 cpu_usage = 1;
-  int64 cpu_fee = 2;
-  int64 net_usage = 3;
-  int64 net_fee = 4;
-  int64 storage_delta = 5;
-  int64 storage_fee = 6;
+  int64 net_usage = 2;
+  int64 storage_delta = 3;
 }
 
 message Transaction {
@@ -218,7 +215,7 @@ message Transaction {
 
   message Result {
     enum code {
-      SUCESS = 0;
+      SUCCESS = 0;
       FAILED = 1;
     }
     int64 fee = 1;
@@ -240,9 +237,10 @@ message Transaction {
     // scripts not used
     bytes scripts = 12;
     int64 timestamp = 14;
-    int64 max_cpu_usage = 15;
-    int64 max_net_usage = 16;
-    int64 max_storage_usage = 17;
+    int64 cpu_usage_limit = 15;
+    int64 net_usage_limit = 16;
+    int64 storage_usage_limit = 17;
+    int64 fee_limit = 18;
   }
 
   raw raw_data = 1;
