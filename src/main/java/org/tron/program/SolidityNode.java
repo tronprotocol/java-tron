@@ -20,7 +20,6 @@ import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
@@ -177,8 +176,6 @@ public class SolidityNode {
     cfgArgs.setSolidityNode(true);
 
     ApplicationContext context = new AnnotationConfigApplicationContext(DefaultConfig.class);
-    SnapshotManager snapshotManager = context.getBean(SnapshotManager.class);
-    snapshotManager.check();
 
     if (cfgArgs.isHelp()) {
       logger.info("Here is the help message.");
