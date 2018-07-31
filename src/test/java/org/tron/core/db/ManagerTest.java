@@ -219,7 +219,7 @@ public class ManagerTest {
       DupTransactionException, BadBlockException,
       TaposException, BadNumberBlockException, NonCommonBlockException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
-    long size = dbManager.getBlockStore().dbSource.allKeys().size();
+    long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
     byte[] privateKey = ByteArray.fromHexString(key);
@@ -259,7 +259,7 @@ public class ManagerTest {
         dbManager.getBlockStore().get(blockCapsule2.getBlockId().getBytes()).getParentHash(),
         blockCapsule1.getBlockId());
 
-    Assert.assertEquals(dbManager.getBlockStore().dbSource.allKeys().size(), size + 3);
+    Assert.assertEquals(dbManager.getBlockStore().size(), size + 3);
 
     Assert.assertEquals(
         dbManager.getBlockIdByNum(dbManager.getHead().getNum() - 1), blockCapsule1.getBlockId());
@@ -283,7 +283,7 @@ public class ManagerTest {
       DupTransactionException, BadBlockException,
       TaposException, BadNumberBlockException, NonCommonBlockException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
-    long size = dbManager.getBlockStore().dbSource.allKeys().size();
+    long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
     byte[] privateKey = ByteArray.fromHexString(key);
@@ -370,7 +370,7 @@ public class ManagerTest {
       DupTransactionException, BadBlockException,
       TaposException, BadNumberBlockException, NonCommonBlockException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
-    long size = dbManager.getBlockStore().dbSource.allKeys().size();
+    long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
     byte[] privateKey = ByteArray.fromHexString(key);

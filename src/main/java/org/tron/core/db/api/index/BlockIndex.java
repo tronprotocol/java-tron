@@ -7,14 +7,13 @@ import com.googlecode.cqengine.persistence.disk.DiskPersistence;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.db.TronDatabase;
 import org.tron.core.db.common.WrappedByteArray;
+import org.tron.core.db2.core.ITronChainBase;
 import org.tron.protos.Protocol.Block;
 
 import javax.annotation.PostConstruct;
@@ -38,7 +37,7 @@ public class BlockIndex extends AbstractIndex<BlockCapsule, Block> {
 
   @Autowired
   public BlockIndex(
-      @Qualifier("blockStore") final TronDatabase<BlockCapsule> database) {
+      @Qualifier("blockStore") final ITronChainBase<BlockCapsule> database) {
     super(database);
   }
 

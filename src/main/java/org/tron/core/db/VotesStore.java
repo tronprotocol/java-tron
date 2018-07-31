@@ -16,27 +16,7 @@ public class VotesStore extends TronStoreWithRevoking<VotesCapsule> {
 
   @Override
   public VotesCapsule get(byte[] key) {
-    byte[] value = dbSource.getData(key);
+    byte[] value = revokingDB.getUnchecked(key);
     return ArrayUtils.isEmpty(value) ? null : new VotesCapsule(value);
-  }
-
-  /**
-   * isVoterExist fun.
-   *
-   * @param key the address of Voter Account
-   */
-  @Override
-  public boolean has(byte[] key) {
-    byte[] account = dbSource.getData(key);
-    return null != account;
-  }
-
-  @Override
-  public void put(byte[] key, VotesCapsule item) {
-    super.put(key, item);
-  }
-
-  public org.tron.core.db.common.iterator.DBIterator getIterator() {
-    return dbSource.iterator();
   }
 }

@@ -17,22 +17,9 @@ public class RecentBlockStore extends TronStoreWithRevoking<BytesCapsule> {
   }
 
   @Override
-  public void put(byte[] key, BytesCapsule item) {
-    super.put(key, item);
-  }
-
-  @Override
   public BytesCapsule get(byte[] key) throws ItemNotFoundException {
-    byte[] value = dbSource.getData(key);
-    if (ArrayUtils.isEmpty(value)) {
-      throw new ItemNotFoundException();
-    }
-    return new BytesCapsule(value);
-  }
+    byte[] value = revokingDB.get(key);
 
-  @Override
-  public boolean has(byte[] key) {
-    byte[] value = dbSource.getData(key);
-    return null != value;
+    return new BytesCapsule(value);
   }
 }

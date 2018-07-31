@@ -48,7 +48,7 @@ public class VotesStoreTest {
     VotesCapsule votesCapsule = new VotesCapsule(ByteString.copyFromUtf8("100000000x"), oldVotes);
     this.votesStore.put(votesCapsule.createDbKey(), votesCapsule);
 
-    Assert.assertTrue("votesStore is empyt", votesStore.getIterator().hasNext());
+    Assert.assertTrue("votesStore is empyt", votesStore.iterator().hasNext());
     Assert.assertTrue(votesStore.has(votesCapsule.createDbKey()));
     VotesCapsule votesSource = this.votesStore
         .get(ByteString.copyFromUtf8("100000000x").toByteArray());
