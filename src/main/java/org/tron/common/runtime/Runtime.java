@@ -238,33 +238,6 @@ public class Runtime {
 
   }
 
-  // todo maybe move to another place
-  private boolean checkAccountInputLimitAndMaxWithinBalance(long maxCpuUsage, long maxStorageUsage,
-      long value,
-      long balance, long limitInTrx, long cpuInUsFromFreeze, long boughtStorage,
-      long oneStorageByTrx,
-      long oneCpuByTrx) {
-    if (balance < limitInTrx + value) {
-      logger.error("beyond");
-      return false;
-    }
-    long CpuInUsFromTrx = limitInTrx * oneCpuByTrx;
-    long cpuNeedTrx = 0;
-    if (CpuInUsFromTrx > cpuInUsFromFreeze) {
-      // prior to use freeze, so not include "="
-      cpuNeedTrx = (long) (maxCpuUsage * 1.0 / oneCpuByTrx);
-    } else {
-      cpuNeedTrx = 0;
-    }
-    long storageNeedTrx = max((long) ((maxStorageUsage - boughtStorage) * 1.0 / oneStorageByTrx),
-        0);
-    if (limitInTrx < cpuNeedTrx + storageNeedTrx) {
-      logger.error("beyond");
-      return false;
-    }
-    return true;
-  }
-
   private long getAccountCPULimitInUs(AccountCapsule creator, AccountCapsule sender,
       TriggerSmartContract contract, long maxCpuInUsBySender) {
 
