@@ -23,6 +23,5 @@ deploy:
   script: bash deploy.sh
   on:
     branch: develop
-after_deploy:
-- "./gradlew stest"
+
 

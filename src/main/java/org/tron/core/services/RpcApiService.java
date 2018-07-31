@@ -22,6 +22,7 @@ import org.tron.api.DatabaseGrpc.DatabaseImplBase;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountNetMessage;
 import org.tron.api.GrpcAPI.AccountPaginated;
+import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AddressPrKeyPairMessage;
 import org.tron.api.GrpcAPI.AssetIssueList;
@@ -64,6 +65,7 @@ import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
@@ -75,6 +77,7 @@ import org.tron.core.exception.StoreException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
@@ -582,6 +585,26 @@ public class RpcApiService implements Service {
           act.validate();
         }
       }
+
+      if (contractType == ContractType.CreateSmartContract) {
+        // insure one owner just have one contract
+        CreateSmartContract contract = ContractCapsule
+            .getSmartContractFromTransaction(trx.getInstance());
+        byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
+        if (dbManager.getAccountContractIndexStore().get(ownerAddress) != null) {
+          throw new ContractValidateException(
+              "Trying to create second contract with one account: address: " + Wallet
+                  .encode58Check(ownerAddress));
+        }
+
+//        // insure the new contract address haven't exist
+//        if (deposit.getAccount(contractAddress) != null) {
+//          logger.error("Trying to create a contract with existing contract address: " + Wallet
+//              .encode58Check(contractAddress));
+//          return;
+//        }
+      }
+
       try {
         BlockCapsule headBlock = null;
         List<BlockCapsule> blockList = dbManager.getBlockStore().getBlockByLatestNum(1);
@@ -979,6 +1002,18 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void buyStorage(Contract.BuyStorageContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.BuyStorageContract, responseObserver);
+    }
+
+    @Override
+    public void sellStorage(Contract.SellStorageContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.SellStorageContract, responseObserver);
+    }
+
+    @Override
     public void getNowBlock(EmptyMessage request, StreamObserver<Block> responseObserver) {
       responseObserver.onNext(wallet.getNowBlock());
       responseObserver.onCompleted();
@@ -1116,6 +1151,19 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getAccountResource(Account request,
+        StreamObserver<AccountResourceMessage> responseObserver) {
+      ByteString fromBs = request.getAddress();
+
+      if (fromBs != null) {
+        responseObserver.onNext(wallet.getAccountResource(fromBs));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getAssetIssueByName(BytesMessage request,
         StreamObserver<AssetIssueContract> responseObserver) {
       ByteString asertName = request.getValue();
@@ -1174,7 +1222,8 @@ public class RpcApiService implements Service {
       long endNum = request.getEndNum();
 
       if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
-        responseObserver.onNext(blocklist2Extention(wallet.getBlocksByLimitNext(startNum, endNum - startNum)));
+        responseObserver
+            .onNext(blocklist2Extention(wallet.getBlocksByLimitNext(startNum, endNum - startNum)));
       } else {
         responseObserver.onNext(null);
       }
@@ -1249,7 +1298,32 @@ public class RpcApiService implements Service {
     @Override
     public void triggerContract(Contract.TriggerSmartContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.TriggerSmartContract, responseObserver);
+      TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
+      Return.Builder retBuilder = Return.newBuilder();
+      Transaction trx = Transaction.newBuilder().build();
+      try {
+        TransactionCapsule trxCap = createTransactionCapsule(request,
+            ContractType.TriggerSmartContract);
+        trx = wallet.triggerContract(request, trxCap);
+        trxExtBuilder.setTransaction(trx);
+        trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
+        retBuilder.setResult(true).setCode(response_code.SUCCESS);
+      } catch (ContractValidateException e) {
+        retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
+            .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()));
+        logger.debug("ContractValidateException: {}", e.getMessage());
+        return;
+      } catch (Exception e) {
+        retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+        logger.info("exception caught" + e.getMessage());
+        return;
+      } finally {
+        trxExtBuilder.setResult(retBuilder);
+        trxExtBuilder.setTransaction(trx);
+        responseObserver.onNext(trxExtBuilder.build());
+        responseObserver.onCompleted();
+      }
     }
 
     public void getPaginatedAssetIssueList(PaginatedMessage request,

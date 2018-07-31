@@ -17,7 +17,13 @@ import org.tron.core.capsule.TransactionResultCapsule;
 
 public class ProgramResult {
 
+  private long ownerCpuUsed;
+  private long senderCpuUsed;
+  private long ownerStorageUsed;
+  private long senderStorageUsed;
+
   private long dropUsed;
+
   private byte[] hReturn = EMPTY_BYTE_ARRAY;
   private byte[] contractAddress = EMPTY_BYTE_ARRAY;
   private RuntimeException exception;
@@ -184,6 +190,12 @@ public class ProgramResult {
     futureRefund = 0;
   }
 
+  public void reset() {
+    getDeleteAccounts().clear();
+    getLogInfoList().clear();
+    resetFutureRefund();
+  }
+
   public void merge(ProgramResult another) {
     addInternalTransactions(another.getInternalTransactions());
     if (another.getException() == null && !another.isRevert()) {
@@ -199,4 +211,5 @@ public class ProgramResult {
     result.setHReturn(EMPTY_BYTE_ARRAY);
     return result;
   }
+
 }

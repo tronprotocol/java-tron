@@ -82,7 +82,7 @@ public class WalletTestWitness001 {
     searchBlockingStubFull = WalletGrpc.newBlockingStub(searchChannelFull);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testVoteWitness() {
     Base58.encode58Check(fromAddress);
     logger.info(Base58.encode58Check(fromAddress));

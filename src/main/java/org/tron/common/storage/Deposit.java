@@ -1,8 +1,15 @@
 package org.tron.common.storage;
 
+import com.google.protobuf.ByteString;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.core.capsule.*;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.StorageCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.ContractExeException;
 import org.tron.protos.Protocol;
 
 /**
@@ -11,68 +18,81 @@ import org.tron.protos.Protocol;
  */
 public interface Deposit {
 
-    Manager getDbManager();
+  Manager getDbManager();
 
-    AccountCapsule createAccount(byte[] address, Protocol.AccountType type);
+  AccountCapsule createAccount(byte[] address, Protocol.AccountType type);
 
-    AccountCapsule getAccount(byte[] address);
+  AccountCapsule createAccount(byte[] address, ByteString accountName, Protocol.AccountType type);
 
-    void createContract(byte[] address, ContractCapsule contractCapsule);
+  AccountCapsule getAccount(byte[] address);
 
-    ContractCapsule getContract(byte[] address);
+  void createContract(byte[] address, ContractCapsule contractCapsule);
 
-    void saveCode(byte[] codeHash, byte[] code);
+  void createContractByNormalAccountIndex(byte[] address, BytesCapsule contractAddress);
 
-    byte[] getCode(byte[] codeHash);
+  ContractCapsule getContract(byte[] address);
 
-    //byte[] getCodeHash(byte[] address);
+  void saveCode(byte[] codeHash, byte[] code);
 
-    void addStorageValue(byte[] address, DataWord key, DataWord value);
+  byte[] getCode(byte[] codeHash);
 
-    DataWord getStorageValue(byte[] address, DataWord key);
+  //byte[] getCodeHash(byte[] address);
 
-    StorageCapsule getStorage(byte[] address);
+  void addStorageValue(byte[] address, DataWord key, DataWord value);
 
-    long getBalance(byte[] address);
+  DataWord getStorageValue(byte[] address, DataWord key);
 
-    long addBalance(byte[] address, long value);
+  StorageCapsule getStorage(byte[] address);
+
+  long getBalance(byte[] address);
+
+  long addBalance(byte[] address, long value) throws ContractExeException;
 
 
-    Deposit newDepositChild();
+  Deposit newDepositChild();
 
-    Deposit newDepositNext();
+  Deposit newDepositNext();
 
-    void setParent(Deposit deposit);
+  void setParent(Deposit deposit);
 
-    void setPrevDeposit(Deposit deposit);
+  void setPrevDeposit(Deposit deposit);
 
-    void setNextDeposit(Deposit deposit);
+  void setNextDeposit(Deposit deposit);
 
-    void flush();
+  void flush();
 
-    void commit();
+  void commit();
 
-    void putAccount(Key key, Value value);
+  void putAccount(Key key, Value value);
 
-    void putTransaction(Key key, Value value);
+  void putTransaction(Key key, Value value);
 
-    void putBlock(Key key, Value value);
+  void putBlock(Key key, Value value);
 
-    void putWitness(Key key, Value value);
+  void putWitness(Key key, Value value);
 
-    void putCode(Key key, Value value);
+  void putCode(Key key, Value value);
 
-    void putContract(Key key, Value value);
+  void putContract(Key key, Value value);
 
-    void putStorage(Key key, Value value);
+  void putContractByNormalAccountIndex(Key key, Value value);
 
-    void putVotes(Key key, Value value);
+  void putStorage(Key key, Value value);
 
-    void syncCacheFromAccountStore(byte[] address);
+  void putVotes(Key key, Value value);
 
-    void syncCacheFromVotesStore(byte[] address);
+  void syncCacheFromAccountStore(byte[] address);
 
-    TransactionCapsule getTransaction(byte[] trxHash);
+  void syncCacheFromVotesStore(byte[] address);
 
-    BlockCapsule getBlock(byte[] blockHash);
+  TransactionCapsule getTransaction(byte[] trxHash);
+
+  BlockCapsule getBlock(byte[] blockHash);
+
+  BytesCapsule getContractByNormalAccount(byte[] address);
+
+  long computeAfterRunStorageSize();
+
+  long getBeforeRunStorageSize();
+
 }
