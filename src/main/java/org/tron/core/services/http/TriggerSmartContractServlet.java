@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -25,21 +26,24 @@ public class TriggerSmartContractServlet extends HttpServlet {
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+    TriggerSmartContract.Builder build = TriggerSmartContract.newBuilder();
     try {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
-      TriggerSmartContract.Builder build = TriggerSmartContract.newBuilder();
       JsonFormat.merge(contract, build);
-      Transaction tx = wallet
-          .createTransactionCapsule(build.build(), ContractType.TriggerSmartContract).getInstance();
-      response.getWriter().println(Util.printTransaction(tx));
+
+      TransactionCapsule trxCap = wallet
+          .createTransactionCapsule(build.build(), ContractType.TriggerSmartContract);
+      Transaction trx = wallet.triggerContract(build.build(), trxCap);
+      response.getWriter().println(Util.printTransaction(trx));
+
     } catch (Exception e) {
-      logger.debug("Exception: {}", e.getMessage());
       try {
         response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
+      } catch (IOException e1) {
+        e1.printStackTrace();
       }
     }
+
   }
 }

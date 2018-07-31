@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BytesMessage;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.SmartContract;
 
@@ -48,13 +47,9 @@ public class GetContractServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build);
-      byte[] address = wallet.createAdresss(build.getValue().toByteArray());
-      String base58check = Wallet.encode58Check(address);
-      String hexString = ByteArray.toHexString(address);
-      JSONObject jsonAddress = new JSONObject();
-      jsonAddress.put("base58checkAddress", base58check);
-      jsonAddress.put("value", hexString);
-      response.getWriter().println(jsonAddress.toJSONString());
+      SmartContract smartContract = wallet.getContract(build.build());
+      JSONObject jsonSmartContract = JSONObject.parseObject(JsonFormat.printToString(smartContract));
+      response.getWriter().println(jsonSmartContract.toJSONString());
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

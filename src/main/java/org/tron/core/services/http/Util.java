@@ -41,7 +41,7 @@ public class Util {
 
   public static String printErrorMsg(Exception e) {
     JSONObject jsonObject = new JSONObject();
-    jsonObject.put("Error", e.getMessage());
+    jsonObject.put("Error", e.getClass() + " : " + e.getMessage());
     return jsonObject.toJSONString();
   }
 
