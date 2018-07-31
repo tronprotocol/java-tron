@@ -49,7 +49,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
         .setLatestWithdrawTime(now)
         .build());
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-    ret.setStatus(fee, code.SUCESS);
+    ret.setStatus(fee, code.SUCCESS);
 
     return true;
   }
