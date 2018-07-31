@@ -126,7 +126,7 @@ public class WalletTestAccount003 {
     }
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testUpdateAccount() {
     Account tryToUpdateAccount = queryAccount(lowBalTest, blockingStubFull);
     if (tryToUpdateAccount.getAccountName().isEmpty()) {
@@ -139,11 +139,11 @@ public class WalletTestAccount003 {
       Assert.assertTrue(updateAccount(lowBalAddress, mostLongName.getBytes(), lowBalTest));
       tryToUpdateAccount = queryAccount(lowBalTest, blockingStubFull);
       Assert.assertFalse(tryToUpdateAccount.getAccountName().isEmpty());
-      Assert.assertFalse(updateAccount(lowBalAddress, "secondUpdateName".getBytes(), lowBalTest));
+      Assert.assertTrue(updateAccount(lowBalAddress, "secondUpdateName".getBytes(), lowBalTest));
     }
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testNoBalanceCreateAssetIssue() {
     Account lowaccount = queryAccount(lowBalTest, blockingStubFull);
     if (lowaccount.getBalance() > 0) {
@@ -161,19 +161,19 @@ public class WalletTestAccount003 {
     logger.info("nobalancecreateassetissue");
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testNoBalanceTransferTrx() {
     //Send Coin failed when there is no enough balance.
     Assert.assertFalse(sendCoin(toAddress, 100000000000000000L, lowBalAddress, lowBalTest));
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testNoBalanceCreateWitness() {
     //Apply to be super witness failed when no enough balance.
     Assert.assertFalse(createWitness(lowBalAddress, fromAddress, lowBalTest));
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testNoFreezeBalanceToUnfreezeBalance() {
     //Unfreeze account failed when no freeze balance
     Account noFreezeAccount = queryAccount(lowBalTest, blockingStubFull);
