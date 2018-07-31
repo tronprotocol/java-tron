@@ -383,24 +383,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
   }
 
-  // todo mv this static function to capsule util
-  public static long getStorageLimitInTrx(Transaction.Contract contract) {
-    int cpuForTrx;
-    try {
-      Any contractParameter = contract.getParameter();
-      switch (contract.getType()) {
-        case TriggerSmartContract:
-          return contractParameter.unpack(TriggerSmartContract.class).getStorageLimitInTrx();
-        case CreateSmartContract:
-          return contractParameter.unpack(CreateSmartContract.class).getStorageLimitInTrx();
-        default:
-          return 0;
-      }
-    } catch (Exception ex) {
-      logger.error(ex.getMessage());
-      return 0;
-    }
-  }
 
   // todo mv this static function to capsule util
   public static long getCallValue(Transaction.Contract contract) {
