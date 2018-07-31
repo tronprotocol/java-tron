@@ -169,9 +169,6 @@ message CreateSmartContract {
   bytes owner_address = 1;
   SmartContract new_contract = 2;
   int64 limit_in_trx = 3;
-  int64 max_cpu_usage = 15;
-  int64 max_net_usage = 16;
-  int64 max_storage = 17;
 }
 
 message TriggerSmartContract {
@@ -180,9 +177,6 @@ message TriggerSmartContract {
   bytes call_value = 3;
   bytes data = 4;
   int64 limit_in_trx = 5;
-  int64 max_cpu_usage = 17;
-  int64 max_net_usage = 18;
-  int64 max_storage = 19;
 }
 
 message BuyStorageContract {
