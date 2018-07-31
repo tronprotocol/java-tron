@@ -501,22 +501,7 @@ public class Runtime {
 
     cpuUsage = trace.getTrx().getInstance().getRet(0).getReceipt().getCpuUsage();
 
-    ContractCapsule contract = deposit.getContract(result.getContractAddress());
-    ByteString originAddress = contract.getInstance().getOriginAddress();
-    AccountCapsule origin = deposit.getAccount(originAddress.toByteArray());
-
-    byte[] callerAddressBytes = TransactionCapsule.getOwner(trx.getRawData().getContract(0));
-    AccountCapsule caller = deposit.getAccount(callerAddressBytes);
-
-    long consumeUserResourcePercent = contract.getInstance().getConsumeUserResourcePercent();
-    consumeUserResourcePercent = Long
-        .max(consumeUserResourcePercent, Constant.MIN_CONSUME_USER_RESOURCE_PERCENT);
-    consumeUserResourcePercent = Long
-        .min(consumeUserResourcePercent, Constant.MAX_CONSUME_USER_RESOURCE_PERCENT);
     trace.setBill(cpuUsage, storageUsage);
-    //spendCpuUsage(cpuUsage, origin, caller, consumeUserResourcePercent);
-
-    //spendStorageUsage(storageUsage, origin, caller, consumeUserResourcePercent);
 
   }
 
