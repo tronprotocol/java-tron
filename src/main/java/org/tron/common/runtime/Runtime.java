@@ -356,7 +356,7 @@ public class Runtime {
       AccountCapsule creator = this.deposit
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
       long thisTxCPULimitInUs;
-      long maxCpuInUsByCreator = contract.getMaxCpuUsage();
+      long maxCpuInUsByCreator = trx.getRawData().getMaxCpuUsage();
       long accountCPULimitInUs = getAccountCPULimitInUs(creator, contract.getLimitInTrx(),
           maxCpuInUsByCreator);
       if (executerType == ET_NORMAL_TYPE) {
@@ -426,7 +426,7 @@ public class Runtime {
 
       // todo use default value for cpu max and storage max
       long thisTxCPULimitInUs;
-      long maxCpuInUsBySender = contract.getMaxCpuUsage();
+      long maxCpuInUsBySender = trx.getRawData().getMaxCpuUsage();
       long accountCPULimitInUs = getAccountCPULimitInUs(creator, sender, contract,
           maxCpuInUsBySender);
       if (executerType == ET_NORMAL_TYPE) {

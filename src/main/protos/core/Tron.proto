@@ -242,7 +242,7 @@ message Transaction {
     int64 timestamp = 14;
     int64 max_cpu_usage = 15;
     int64 max_net_usage = 16;
-    int64 max_storage = 17;
+    int64 max_storage_usage = 17;
   }
 
   raw raw_data = 1;
