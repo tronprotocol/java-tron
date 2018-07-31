@@ -20,9 +20,7 @@ package org.tron.common.overlay.discover.node.statistics;
 
 import static java.lang.Math.min;
 
-import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
-import org.joda.time.DateTime;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -31,6 +29,7 @@ public class NodeStatistics {
   public final static int REPUTATION_PREDEFINED = 100000;
   public final static long TOO_MANY_PEERS_PENALIZE_TIMEOUT = 60 * 1000L;
   private static final long CLEAR_CYCLE_TIME = 60 * 60 * 1000L;
+  private static final long MIN_DATA_LENGTH = 2048L;
 
   private boolean isPredefined = false;
 
@@ -63,6 +62,9 @@ public class NodeStatistics {
   private ReasonCode tronLastLocalDisconnectReason = null;
   private long lastDisconnectedTime = 0;
   private long firstDisconnectedTime = 0;
+
+  //tcp flow stat
+  public final MessageCountStatistics tcpFlow = new MessageCountStatistics();
 
 
   public NodeStatistics(Node node) {
@@ -203,6 +205,10 @@ public class NodeStatistics {
     this.isPredefined = isPredefined;
   }
 
+  public boolean isPredefined() {
+    return isPredefined;
+  }
+
   public void setPersistedReputation(int persistedReputation) {
     this.persistedReputation = persistedReputation;
   }
@@ -219,7 +225,8 @@ public class NodeStatistics {
         ", tron: " + tronInMessage + "/" + tronOutMessage + " " +
         (wasDisconnected() ? "X " + disconnectTimes : "") +
         (tronLastLocalDisconnectReason != null ? ("<=" + tronLastLocalDisconnectReason) : " ") +
-        (tronLastRemoteDisconnectReason != null ? ("=>" + tronLastRemoteDisconnectReason) : " ");
+        (tronLastRemoteDisconnectReason != null ? ("=>" + tronLastRemoteDisconnectReason) : " ") +
+        ", tcp flow: " + tcpFlow.getTotalCount();
   }
 
   public class SimpleStatter {
@@ -259,6 +266,14 @@ public class NodeStatistics {
       return name;
     }
 
+  }
+
+  public boolean nodeIsHaveDataTransfer() {
+    return tcpFlow.getTotalCount() > MIN_DATA_LENGTH;
+  }
+
+  public void resetTcpFlow() {
+    tcpFlow.reset();
   }
 
 }

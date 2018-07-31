@@ -107,6 +107,8 @@ public class Channel {
 
     isActive = remoteId != null && !remoteId.isEmpty();
 
+    startTime = System.currentTimeMillis();
+
     //TODO: use config here
     pipeline.addLast("readTimeoutHandler", new ReadTimeoutHandler(60, TimeUnit.SECONDS));
     pipeline.addLast(stats.tcp);
