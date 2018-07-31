@@ -20,11 +20,19 @@ public class ReceiptCapsule {
   }
 
   public void setCpuUsage(long usage) {
-    receipt.toBuilder().setCpuUsage(usage);
+    receipt = receipt.toBuilder().setCpuUsage(usage).build();
   }
 
   public long getCpuUsage() {
-    return receipt.toBuilder().getCpuUsage();
+    return receipt.getCpuUsage();
+  }
+
+  public void setCpuFee(long fee) {
+    receipt = receipt.toBuilder().setCpuFee(fee).build();
+  }
+
+  public long getCpuFee() {
+    return receipt.getCpuFee();
   }
 
   public void calculateCpuFee() {
@@ -32,11 +40,35 @@ public class ReceiptCapsule {
   }
 
   public void setStorageDelta(long delta) {
-    receipt.toBuilder().setStorageDelta(delta);
+    receipt = receipt.toBuilder().setStorageDelta(delta).build();
   }
 
   public long getStorageDelta() {
-    return receipt.toBuilder().getStorageDelta();
+    return receipt.getStorageDelta();
+  }
+
+  public void setStorageFee(long fee) {
+    receipt = receipt.toBuilder().setStorageFee(fee).build();
+  }
+
+  public long getStorageFee() {
+    return receipt.getStorageFee();
+  }
+
+  public void setNetUsage(long usage) {
+    receipt = receipt.toBuilder().setNetUsage(usage).build();
+  }
+
+  public long getNetUsage() {
+    return receipt.getNetUsage();
+  }
+
+  public void setNetFee(long fee) {
+    receipt = receipt.toBuilder().setNetFee(fee).build();
+  }
+
+  public long getNetFee() {
+    return receipt.getNetFee();
   }
 
   public void payCpuBill() {

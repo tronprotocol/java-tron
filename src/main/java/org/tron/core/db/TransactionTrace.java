@@ -51,9 +51,21 @@ public class TransactionTrace {
   }
 
   //set bill
-  public void setBill(long cpuUseage, long storageDelta) {
+  public void setCpuBill(long cpuUseage, long cpuFee) {
     receipt.setCpuUsage(cpuUseage);
+    receipt.setCpuFee(cpuFee);
+  }
+
+  //set bill
+  public void setStorageBill(long storageDelta, long storageFee) {
     receipt.setStorageDelta(storageDelta);
+    receipt.setStorageFee(storageFee);
+  }
+
+  //set bill
+  public void setNetBill(long netUsage, long netFee) {
+    receipt.setNetUsage(netUsage);
+    receipt.setNetUsage(netFee);
   }
 
   private void checkStorage() {
@@ -72,9 +84,6 @@ public class TransactionTrace {
     //TODO: if SR package this this trx, use their receipt
     ReceiptCapsule witReceipt = new ReceiptCapsule(trx.getInstance().getRet(0).getReceipt(),
         trx.getTransactionId());
-    if (0 == witReceipt.getCpuUsage() && 0 == witReceipt.getStorageDelta()) {
-      return;
-    }
     //TODO calculatedly pay cpu pay storage
     receipt.payCpuBill();
     receipt.payStorageBill();

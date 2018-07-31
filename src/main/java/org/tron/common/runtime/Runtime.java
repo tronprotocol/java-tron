@@ -461,7 +461,7 @@ public class Runtime {
 
   }
 
-  public void go() throws ContractExeException {
+  public void go() {
 
     if (!readyToExecute) {
       return;
@@ -516,26 +516,17 @@ public class Runtime {
     }
   }
 
-  private void spendUsage(long useedStorageSize) throws ContractExeException {
+  private void spendUsage(long useedStorageSize) {
 
     cpuProcessor = new CpuProcessor(deposit.getDbManager());
     long cpuUsage, storageUsage;
     storageUsage = useedStorageSize;
     long now = System.nanoTime() / 1000;
     cpuUsage = now - program.getVmStartInUs();
-    if (executerType == ET_NORMAL_TYPE) {
-      //
-      //
 
-      if (!judgCpu(cpuUsage, trace.getTrx().getInstance().getRet(0).getReceipt().getCpuUsage())) {
-        throw new ContractExeException("judg fee Cpu result failed !");
-      }
-      cpuUsage = trace.getTrx().getInstance().getRet(0).getReceipt().getCpuUsage();
-      this.trace.setBill(cpuUsage, useedStorageSize);
+    cpuUsage = trace.getTrx().getInstance().getRet(0).getReceipt().getCpuUsage();
+    this.trace.setCpuBill(cpuUsage, useedStorageSize);
 
-      //
-      //
-    }
     ContractCapsule contract = deposit.getContract(result.getContractAddress());
     ByteString originAddress = contract.getInstance().getOriginAddress();
     AccountCapsule origin = deposit.getAccount(originAddress.toByteArray());
@@ -552,16 +543,7 @@ public class Runtime {
     spendCpuUsage(cpuUsage, origin, caller, consumeUserResourcePercent);
 
     spendStorageUsage(storageUsage, origin, caller, consumeUserResourcePercent);
-  }
 
-  private boolean judgCpu(long cpuUsage, long WitnessCpuUsage) {
-    if (WitnessCpuUsage > cpuUsage * (100 + Constant.ACCORD_RANGE_PERCENT) / 100) {
-      return false;
-    }
-    if (WitnessCpuUsage < cpuUsage * (100 - Constant.ACCORD_RANGE_PERCENT) / 100) {
-      return false;
-    }
-    return true;
   }
 
   private void spendCpuUsage(long cpuUsage, AccountCapsule origin, AccountCapsule caller,
@@ -574,13 +556,8 @@ public class Runtime {
     long originUsage =
         cpuUsage * (Constant.MAX_CONSUME_USER_RESOURCE_PERCENT - consumeUserResourcePercent)
             / Constant.MAX_CONSUME_USER_RESOURCE_PERCENT;
-    if (this.cpuProcessor
-        .useCpu(origin, originUsage, deposit.getDbManager().getHeadBlockTimeStamp())) {
-      callerUsage =
-          cpuUsage * consumeUserResourcePercent / Constant.MAX_CONSUME_USER_RESOURCE_PERCENT;
-    }
-
-    this.cpuProcessor.useCpu(caller, callerUsage, deposit.getDbManager().getHeadBlockTimeStamp());
+    originUsage = max(callerUsage, origin.getCpuUsage());
+    callerUsage = cpuUsage - originUsage;
 
   }
 
