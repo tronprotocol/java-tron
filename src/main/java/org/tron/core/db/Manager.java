@@ -962,7 +962,7 @@ public class Manager {
     }
 
     TransactionTrace trace = new TransactionTrace(trxCap, this);
-    trace.init();
+
 
     DepositImpl deposit = DepositImpl.createRoot(this);
     Runtime runtime;
@@ -971,6 +971,8 @@ public class Manager {
         new ProgramInvokeFactoryImpl());
     consumeBandwidth(trxCap, runtime.getResult().getRet());
 
+    // init
+    trace.init();
     //exec
     trace.exec(runtime);
 
@@ -985,7 +987,7 @@ public class Manager {
       throw new RuntimeException("Runtime exe failed!");
     }
     // todo judge result in runtime same as block,trx,recipt
-    // todo 一个账户只能一个合约账户
+
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
     transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());
