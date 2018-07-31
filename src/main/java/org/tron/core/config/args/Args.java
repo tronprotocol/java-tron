@@ -34,7 +34,6 @@ import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
@@ -273,6 +272,18 @@ public class Args {
   @Setter
   private double activeConnectFactor;
 
+  @Getter
+  @Setter
+  private double disconnectNumberFactor;
+
+  @Getter
+  @Setter
+  private double maxConnectNumberFactor;
+
+  @Getter
+  @Setter
+  private long receiveTcpMinDataLength;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -324,6 +335,9 @@ public class Args {
     INSTANCE.walletExtensionApi = false;
     INSTANCE.connectFactor = 0.3;
     INSTANCE.activeConnectFactor = 0.1;
+    INSTANCE.disconnectNumberFactor = 0.4;
+    INSTANCE.maxConnectNumberFactor = 0.8;
+    INSTANCE.receiveTcpMinDataLength = 2048;
   }
 
   /**
@@ -544,6 +558,13 @@ public class Args {
 
     INSTANCE.activeConnectFactor = config.hasPath("node.activeConnectFactor") ?
         config.getDouble("node.activeConnectFactor") : 0.1;
+
+    INSTANCE.disconnectNumberFactor = config.hasPath("node.disconnectNumberFactor") ?
+        config.getDouble("node.disconnectNumberFactor") : 0.4;
+    INSTANCE.maxConnectNumberFactor = config.hasPath("node.maxConnectNumberFactor") ?
+        config.getDouble("node.maxConnectNumberFactor") : 0.8;
+    INSTANCE.receiveTcpMinDataLength = config.hasPath("node.receiveTcpMinDataLength") ?
+        config.getLong("node.receiveTcpMinDataLength") : 2048;
 
     initBackupProperty(config);
 
