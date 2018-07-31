@@ -961,7 +961,7 @@ public class Manager {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    TransactionTrace trace = new TransactionTrace(trxCap);
+    TransactionTrace trace = new TransactionTrace(trxCap, this);
 
 
     DepositImpl deposit = DepositImpl.createRoot(this);

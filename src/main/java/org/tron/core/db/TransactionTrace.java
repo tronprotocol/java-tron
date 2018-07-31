@@ -81,7 +81,7 @@ public class TransactionTrace {
       value = new BigInteger(
           Hex.toHexString(smartContract.getCallValue().toByteArray()), 16).longValue();
       senderAddress = contract.getOwnerAddress().toByteArray();
-      limitInTrx = contract.getLimitInTrx();
+      limitInTrx = trx.getInstance().getRawData().getFeeLimit();
     } else if (TRX_CONTRACT_CALL_TYPE == trxType) {
       TriggerSmartContract contract = ContractCapsule
           .getTriggerContractFromTransaction(trx.getInstance());
@@ -90,7 +90,7 @@ public class TransactionTrace {
       value = new BigInteger(
           Hex.toHexString(contract.getCallValue().toByteArray()), 16).longValue();
       senderAddress = contract.getOwnerAddress().toByteArray();
-      limitInTrx = contract.getLimitInTrx();
+      limitInTrx = trx.getInstance().getRawData().getFeeLimit();
     } else {
       return;
     }
