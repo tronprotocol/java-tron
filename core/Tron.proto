@@ -408,8 +408,8 @@ message SmartContract {
       }
       message Param {
         bool indexed = 1;
-        bytes name = 2;
-        bytes type = 3;
+        string name = 2;
+        string type = 3;
         // SolidityType type = 3;
       }
       enum StateMutabilityType {
@@ -422,7 +422,7 @@ message SmartContract {
 
       bool anonymous = 1;
       bool constant = 2;
-      bytes name = 3;
+      string name = 3;
       repeated Param inputs = 4;
       repeated Param outputs = 5;
       EntryType type = 6;
@@ -436,8 +436,9 @@ message SmartContract {
   bytes contract_address = 2;
   ABI abi = 3;
   bytes bytecode = 4;
-  bytes call_value = 5;
+  int64 call_value = 5;
   bytes data = 6;
   int64 consume_user_resource_percent = 7;
-  bytes name = 8;
+  string name = 8;
+
 }
