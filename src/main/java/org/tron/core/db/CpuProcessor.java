@@ -145,6 +145,21 @@ public class CpuProcessor extends ResourceProcessor {
     assert totalCpuWeight > 0;
     return (long) (cpuWeight * ((double) totalCpuLimit / totalCpuWeight));
   }
+
+  public long getAccountLeftCpuInUsFromFreeze(AccountCapsule accountCapsule) {
+
+    long now = dbManager.getWitnessController().getHeadSlot();
+
+    long cpuUsage = accountCapsule.getCpuUsage();
+    long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForCpu();
+    long cpuLimit = calculateGlobalCpuLimit(
+        accountCapsule.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance());
+
+    long newCpuUsage = increase(cpuUsage, 0, latestConsumeTime, now);
+
+    return cpuLimit - newCpuUsage; // us
+  }
+
 }
 
 

@@ -11,7 +11,6 @@ import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
-import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -85,10 +84,9 @@ public class TransactionTrace {
     }
     long balance = 0;
 
-    AccountCapsule account = new AccountCapsule();
     long cpuInUsFromFreeze = 0;
     long boughtStorageInByte = 0;
-    long oneStorageBytePriceByTrx = 0;
+    long oneStorageBytePriceByTrx = 1;
     checkAccountInputLimitAndMaxWithinBalance(maxCpuUsageInUs, maxStorageUsageInByte, value,
         balance, limitInTrx, cpuInUsFromFreeze, boughtStorageInByte, oneStorageBytePriceByTrx,
         Constant.CPU_IN_US_PER_TRX);
