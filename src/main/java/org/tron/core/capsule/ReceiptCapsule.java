@@ -10,13 +10,25 @@ public class ReceiptCapsule {
   private Sha256Hash receiptAddress;
 
   public ReceiptCapsule(ResourceReceipt data, Sha256Hash receiptAddress) {
-    receipt = data;
+    this.receipt = data;
     this.receiptAddress = receiptAddress;
   }
 
   public ReceiptCapsule(Sha256Hash receiptAddress) {
-    receipt = ResourceReceipt.newBuilder().build();
+    this.receipt = ResourceReceipt.newBuilder().build();
     this.receiptAddress = receiptAddress;
+  }
+
+  public void setReceipt(ResourceReceipt receipt) {
+    this.receipt = receipt;
+  }
+
+  public ResourceReceipt getReceipt() {
+    return this.receipt;
+  }
+
+  public Sha256Hash getReceiptAddress() {
+    return this.receiptAddress;
   }
 
   public void setCpuUsage(long usage) {
@@ -27,12 +39,30 @@ public class ReceiptCapsule {
     return receipt.getCpuUsage();
   }
 
-  public void setCpuFee(long fee) {
-    receipt = receipt.toBuilder().setCpuFee(fee).build();
+
+
+  public void setCpuFee(long cpuFee) {
+    this.receipt = this.receipt.toBuilder().setCpuFee(cpuFee).build();
   }
 
   public long getCpuFee() {
-    return receipt.getCpuFee();
+    return this.receipt.getCpuFee();
+  }
+
+  public void setNetUsage(long netUsage) {
+    this.receipt = this.receipt.toBuilder().setNetUsage(netUsage).build();
+  }
+
+  public long getNetUsage() {
+    return this.receipt.getNetUsage();
+  }
+
+  public void setNetFee(long netFee) {
+    this.receipt = this.receipt.toBuilder().setNetFee(netFee).build();
+  }
+
+  public long getNetFee() {
+    return this.receipt.getNetFee();
   }
 
   public void calculateCpuFee() {
@@ -41,6 +71,7 @@ public class ReceiptCapsule {
 
   public void setStorageDelta(long delta) {
     receipt = receipt.toBuilder().setStorageDelta(delta).build();
+    this.receipt = this.receipt.toBuilder().setStorageDelta(delta).build();
   }
 
   public long getStorageDelta() {
@@ -55,21 +86,6 @@ public class ReceiptCapsule {
     return receipt.getStorageFee();
   }
 
-  public void setNetUsage(long usage) {
-    receipt = receipt.toBuilder().setNetUsage(usage).build();
-  }
-
-  public long getNetUsage() {
-    return receipt.getNetUsage();
-  }
-
-  public void setNetFee(long fee) {
-    receipt = receipt.toBuilder().setNetFee(fee).build();
-  }
-
-  public long getNetFee() {
-    return receipt.getNetFee();
-  }
 
   public void payCpuBill() {
     //TODO: pay cpu bill
@@ -87,5 +103,9 @@ public class ReceiptCapsule {
 
   public void buyStorage(long storage) {
     //TODO: buy the min storage
+  }
+
+  public static ResourceReceipt copyReceipt(ReceiptCapsule origin) {
+    return origin.getReceipt().toBuilder().build();
   }
 }

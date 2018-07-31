@@ -71,6 +71,7 @@ import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
+import org.tron.core.exception.ReceiptException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
@@ -532,7 +533,7 @@ public class Manager {
   public boolean pushTransactions(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, DupTransactionException, TaposException,
-      TooBigTransactionException, TransactionExpirationException {
+      TooBigTransactionException, TransactionExpirationException, ReceiptException {
 
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
@@ -621,7 +622,7 @@ public class Manager {
   private void applyBlock(BlockCapsule block) throws ContractValidateException,
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
-      TaposException, ValidateScheduleException {
+      TaposException, ValidateScheduleException, ReceiptException {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
@@ -631,7 +632,7 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       ValidateScheduleException, AccountResourceInsufficientException, TaposException,
       TooBigTransactionException, DupTransactionException, TransactionExpirationException,
-      NonCommonBlockException {
+      NonCommonBlockException, ReceiptException {
     Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
     try {
       binaryTree =
@@ -728,7 +729,7 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
       TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException,
-      BadNumberBlockException, BadBlockException, NonCommonBlockException {
+      BadNumberBlockException, BadBlockException, NonCommonBlockException, ReceiptException {
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
@@ -941,7 +942,7 @@ public class Manager {
   public boolean processTransaction(final TransactionCapsule trxCap, Block block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException,
-      DupTransactionException, TaposException {
+      DupTransactionException, TaposException, ReceiptException {
 
     if (trxCap == null) {
       return false;
@@ -1014,7 +1015,7 @@ public class Manager {
   public synchronized BlockCapsule generateBlock(
       final WitnessCapsule witnessCapsule, final long when, final byte[] privateKey)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException {
+      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, ReceiptException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
@@ -1157,7 +1158,7 @@ public class Manager {
   public void processBlock(BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
-      DupTransactionException, TransactionExpirationException, ValidateScheduleException {
+      DupTransactionException, TransactionExpirationException, ValidateScheduleException, ReceiptException {
     // todo set revoking db max size.
 
     // checkWitness
