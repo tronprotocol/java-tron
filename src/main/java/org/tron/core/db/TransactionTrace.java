@@ -70,37 +70,31 @@ public class TransactionTrace {
     long maxCpuUsageInUs = trx.getInstance().getRawData().getMaxCpuUsage();
     long maxStorageUsageInByte = trx.getInstance().getRawData().getMaxStorageUsage();
     long value;
-    long limitInTrx;
-    byte[] senderAddress;
+    long limitInDrop = trx.getInstance().getRawData().getFeeLimit(); // in drop
     if (TRX_CONTRACT_CREATION_TYPE == trxType) {
       CreateSmartContract contract = ContractCapsule
           .getSmartContractFromTransaction(trx.getInstance());
       SmartContract smartContract = contract.getNewContract();
-
       // todo modify later
       value = new BigInteger(
           Hex.toHexString(smartContract.getCallValue().toByteArray()), 16).longValue();
-      senderAddress = contract.getOwnerAddress().toByteArray();
-      limitInTrx = trx.getInstance().getRawData().getFeeLimit();
     } else if (TRX_CONTRACT_CALL_TYPE == trxType) {
       TriggerSmartContract contract = ContractCapsule
           .getTriggerContractFromTransaction(trx.getInstance());
-
       // todo modify later
       value = new BigInteger(
           Hex.toHexString(contract.getCallValue().toByteArray()), 16).longValue();
-      senderAddress = contract.getOwnerAddress().toByteArray();
-      limitInTrx = trx.getInstance().getRawData().getFeeLimit();
     } else {
       return;
     }
-    long balance = 0;
+    long balance = owner.getBalance();
 
-    long cpuInUsFromFreeze = 0;
+    CpuProcessor cpuProcessor = new CpuProcessor(this.dbManager);
+    long cpuInUsFromFreeze = cpuProcessor.getAccountLeftCpuInUsFromFreeze(owner);
     long boughtStorageInByte = 0;
     long oneStorageBytePriceByTrx = 1;
     checkAccountInputLimitAndMaxWithinBalance(maxCpuUsageInUs, maxStorageUsageInByte, value,
-        balance, limitInTrx, cpuInUsFromFreeze, boughtStorageInByte, oneStorageBytePriceByTrx,
+        balance, limitInDrop, cpuInUsFromFreeze, boughtStorageInByte, oneStorageBytePriceByTrx,
         Constant.CPU_IN_US_PER_TRX);
   }
 
