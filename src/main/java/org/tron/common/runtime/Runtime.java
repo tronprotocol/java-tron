@@ -527,7 +527,6 @@ public class Runtime {
     cpuUsage = now - program.getVmStartInUs();
 
     cpuUsage = trace.getTrx().getInstance().getRet(0).getReceipt().getCpuUsage();
-    this.trace.setCpuBill(cpuUsage, useedStorageSize);
 
     ContractCapsule contract = deposit.getContract(result.getContractAddress());
     ByteString originAddress = contract.getInstance().getOriginAddress();
@@ -541,10 +540,10 @@ public class Runtime {
         .max(consumeUserResourcePercent, Constant.MIN_CONSUME_USER_RESOURCE_PERCENT);
     consumeUserResourcePercent = Long
         .min(consumeUserResourcePercent, Constant.MAX_CONSUME_USER_RESOURCE_PERCENT);
+    trace.setBill(cpuUsage, storageUsage);
+    //spendCpuUsage(cpuUsage, origin, caller, consumeUserResourcePercent);
 
-    spendCpuUsage(cpuUsage, origin, caller, consumeUserResourcePercent);
-
-    spendStorageUsage(storageUsage, origin, caller, consumeUserResourcePercent);
+    //spendStorageUsage(storageUsage, origin, caller, consumeUserResourcePercent);
 
   }
 
