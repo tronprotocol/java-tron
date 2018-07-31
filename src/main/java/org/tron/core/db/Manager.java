@@ -519,10 +519,11 @@ public class Manager {
   }
 
   void validateDup(TransactionCapsule transactionCapsule) throws DupTransactionException {
-      if (getTransactionStore().getUnchecked(transactionCapsule.getTransactionId().getBytes()) != null) {
-        logger.debug(ByteArray.toHexString(transactionCapsule.getTransactionId().getBytes()));
-        throw new DupTransactionException("dup trans");
-      }
+    if (getTransactionStore().getUnchecked(transactionCapsule.getTransactionId().getBytes())
+        != null) {
+      logger.debug(ByteArray.toHexString(transactionCapsule.getTransactionId().getBytes()));
+      throw new DupTransactionException("dup trans");
+    }
   }
 
   /**
@@ -728,7 +729,7 @@ public class Manager {
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
       TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException {
-  try (PendingManager pm = new PendingManager(this)) {
+    try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
         if (!block.validateSignature()) {
@@ -829,7 +830,8 @@ public class Manager {
     for (int i = 1; i < slot; ++i) {
       if (!witnessController.getScheduledWitness(i).equals(block.getWitnessAddress())) {
         WitnessCapsule w =
-            this.witnessStore.getUnchecked(StringUtil.createDbKey(witnessController.getScheduledWitness(i)));
+            this.witnessStore
+                .getUnchecked(StringUtil.createDbKey(witnessController.getScheduledWitness(i)));
         w.setTotalMissed(w.getTotalMissed() + 1);
         this.witnessStore.put(w.createDbKey(), w);
         logger.info(
