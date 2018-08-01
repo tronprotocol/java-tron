@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import com.alibaba.fastjson.JSONObject;
 import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
@@ -30,6 +31,16 @@ public class DeployContractServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       CreateSmartContract.Builder build = CreateSmartContract.newBuilder();
       JsonFormat.merge(contract, build);
+      JSONObject jsonObject = JSONObject.parseObject(contract);
+      byte[] ownerAddress = jsonObject.getBytes("owner_address");
+      long storageLimit = jsonObject.getLongValue("storage_limit");
+      long dropLimit = jsonObject.getLongValue("drop_limit");
+      long cpuLimit = jsonObject.getLongValue("cpu_limit");
+      long bandwidthLimit = jsonObject.getLongValue("bandwidth_limit");
+      long callValue = jsonObject.getLongValue("call_value");
+      String contractName = jsonObject.getString("contract_name");
+      byte[] byteCode = jsonObject.getBytes("bytecode");
+      String abi = jsonObject.getString("abi");
       Transaction tx = wallet
           .createTransactionCapsule(build.build(), ContractType.CreateSmartContract).getInstance();
       response.getWriter().println(Util.printTransaction(tx));
