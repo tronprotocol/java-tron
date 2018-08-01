@@ -494,48 +494,45 @@ public class Runtime {
   private void spendUsage(long useedStorageSize) {
 
     cpuProcessor = new CpuProcessor(deposit.getDbManager());
-    long cpuUsage, storageUsage;
-    storageUsage = useedStorageSize;
+
     long now = System.nanoTime() / 1000;
-    cpuUsage = now - program.getVmStartInUs();
+    long cpuUsage = now - program.getVmStartInUs();
 
-    cpuUsage = trace.getTrx().getInstance().getRet(0).getReceipt().getCpuUsage();
-
-    trace.setBill(cpuUsage, storageUsage);
+    trace.setBill(cpuUsage, useedStorageSize);
 
   }
 
-  private void spendCpuUsage(long cpuUsage, AccountCapsule origin, AccountCapsule caller,
-      long consumeUserResourcePercent) {
+//  private void spendCpuUsage(long cpuUsage, AccountCapsule origin, AccountCapsule caller,
+//      long consumeUserResourcePercent) {
+//
+//    if (cpuUsage <= 0) {
+//      return;
+//    }
+//    long callerUsage = cpuUsage;
+//    long originUsage =
+//        cpuUsage * (Constant.MAX_CONSUME_USER_RESOURCE_PERCENT - consumeUserResourcePercent)
+//            / Constant.MAX_CONSUME_USER_RESOURCE_PERCENT;
+//    originUsage = max(callerUsage, origin.getCpuUsage());
+//    callerUsage = cpuUsage - originUsage;
+//
+//  }
 
-    if (cpuUsage <= 0) {
-      return;
-    }
-    long callerUsage = cpuUsage;
-    long originUsage =
-        cpuUsage * (Constant.MAX_CONSUME_USER_RESOURCE_PERCENT - consumeUserResourcePercent)
-            / Constant.MAX_CONSUME_USER_RESOURCE_PERCENT;
-    originUsage = max(callerUsage, origin.getCpuUsage());
-    callerUsage = cpuUsage - originUsage;
-
-  }
-
-  private void spendStorageUsage(long storageUsage, AccountCapsule origin, AccountCapsule caller,
-      long consumeUserResourcePercent) {
-
-    if (storageUsage <= 0) {
-      return;
-    }
-
-    long originUsage =
-        storageUsage * (Constant.MAX_CONSUME_USER_RESOURCE_PERCENT - consumeUserResourcePercent)
-            / Constant.MAX_CONSUME_USER_RESOURCE_PERCENT;
-    origin.addStorageUsage(originUsage);
-
-    long callerUsage =
-        storageUsage * consumeUserResourcePercent / Constant.MAX_CONSUME_USER_RESOURCE_PERCENT;
-    caller.addStorageUsage(callerUsage);
-  }
+//  private void spendStorageUsage(long storageUsage, AccountCapsule origin, AccountCapsule caller,
+//      long consumeUserResourcePercent) {
+//
+//    if (storageUsage <= 0) {
+//      return;
+//    }
+//
+//    long originUsage =
+//        storageUsage * (Constant.MAX_CONSUME_USER_RESOURCE_PERCENT - consumeUserResourcePercent)
+//            / Constant.MAX_CONSUME_USER_RESOURCE_PERCENT;
+//    origin.addStorageUsage(originUsage);
+//
+//    long callerUsage =
+//        storageUsage * consumeUserResourcePercent / Constant.MAX_CONSUME_USER_RESOURCE_PERCENT;
+//    caller.addStorageUsage(callerUsage);
+//  }
 
   private boolean isCallConstant() {
     if (TRX_CONTRACT_CALL_TYPE.equals(trxType)) {
