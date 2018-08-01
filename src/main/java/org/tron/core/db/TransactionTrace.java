@@ -152,20 +152,11 @@ public class TransactionTrace {
   }
 
   //set bill
-  public void setCpuBill(long cpuUseage, long cpuFee) {
+  public void setBill(long cpuUseage, long storageUseage) {
     receipt.setCpuUsage(cpuUseage);
+    receipt.setStorageDelta(storageUseage);
   }
 
-  //set bill
-  public void setStorageBill(long storageDelta, long storageFee) {
-    receipt.setStorageDelta(storageDelta);
-  }
-
-  //set bill
-  public void setNetBill(long netUsage, long netFee) {
-    receipt.setNetUsage(netUsage);
-    receipt.setNetUsage(netFee);
-  }
 
   private void checkStorage() {
     //TODO if not enough buy some storage auto
