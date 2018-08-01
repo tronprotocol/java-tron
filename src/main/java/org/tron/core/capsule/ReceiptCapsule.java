@@ -88,15 +88,16 @@ public class ReceiptCapsule {
    * @param storageMarket Storage market.
    */
   public void payStorageBill(AccountCapsule account, StorageMarket storageMarket) {
-    if (0 == receipt.getSerializedSize()) {
+    if (0 == receipt.getStorageDelta()) {
       return;
     }
 
-    if (account.getStorageUsage() >= receipt.getStorageDelta()) {
-      account.setStorageUsage(account.getStorageUsage() - receipt.getStorageDelta());
+    if (account.getStorageLeft() >= receipt.getStorageDelta()) {
+      account.setStorageUsage(account.getStorageUsage() + receipt.getStorageDelta());
     } else {
-      storageMarket.buyStorage(account, receipt.getStorageDelta() - account.getStorageUsage());
-      account.setStorageUsage(account.getStorageUsage() - receipt.getStorageDelta());
+      long needStorage = receipt.getStorageDelta() - account.getStorageLeft();
+      storageMarket.buyStorage(account, needStorage);
+      account.setStorageUsage(account.getStorageUsage() + needStorage);
     }
   }
 

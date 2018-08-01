@@ -139,8 +139,8 @@ public class TransactionTraceTest {
         .setAddress(ownerAddress)
         .setAccountResource(
             AccountResource.newBuilder()
-                .setCpuUsage(10)
-                .setStorageUsage(1000)
+                .setCpuUsage(this.cpuUsage)
+                .setStorageUsage(this.storageUsage)
                 .build()
         )
         .build();
@@ -154,8 +154,8 @@ public class TransactionTraceTest {
             Result.newBuilder()
                 .setReceipt(
                     ResourceReceipt.newBuilder()
-                        .setCpuUsage(this.cpuUsage)
-                        .setStorageDelta(this.storageUsage)
+                        .setCpuUsage(10)
+                        .setStorageDelta(1000)
                         .build())
                 .build())
         .setRawData(
