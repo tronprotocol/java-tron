@@ -43,10 +43,10 @@ import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.CpuProcessor;
+import org.tron.core.db.StorageMarket;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.TronException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
@@ -75,6 +75,7 @@ public class Runtime {
   private boolean readyToExecute = false;
 
   private CpuProcessor cpuProcessor = null;
+  private StorageMarket storageMarket = null;
   PrecompiledContracts.PrecompiledContract precompiledContract = null;
   private ProgramResult result = new ProgramResult();
 
@@ -107,6 +108,7 @@ public class Runtime {
     this.deposit = deosit;
     this.programInvokeFactory = programInvokeFactory;
     this.cpuProcessor = new CpuProcessor(deposit.getDbManager());
+    this.storageMarket = new StorageMarket(deposit.getDbManager());
 
     Transaction.Contract.ContractType contractType = this.trx.getRawData().getContract(0).getType();
     switch (contractType.getNumber()) {
@@ -473,14 +475,14 @@ public class Runtime {
           // check storage useage
           long useedStorageSize =
               deposit.getBeforeRunStorageSize() - deposit.computeAfterRunStorageSize();
-          if (useedStorageSize > 1000000) {
+          if (useedStorageSize > trx.getRawData().getMaxStorageUsage()) {
             result.setException(Program.Exception.notEnoughStorage());
             throw result.getException();
           }
+          spendUsage(useedStorageSize);
           if (executerType == ET_NORMAL_TYPE) {
             deposit.commit();
           }
-          spendUsage(useedStorageSize);
         }
       } else {
         if (executerType == ET_NORMAL_TYPE) {
@@ -491,7 +493,7 @@ public class Runtime {
       spendUsage(0);
       logger.error(e.getMessage());
       runtimeError = e.getMessage();
-    } catch (TronException e) {
+    } catch (Exception e) {
       logger.error(e.getMessage());
       runtimeError = e.getMessage();
     }
@@ -500,47 +502,30 @@ public class Runtime {
   private void spendUsage(long useedStorageSize) {
 
     cpuProcessor = new CpuProcessor(deposit.getDbManager());
-    long cpuUsage, storageUsage;
-    storageUsage = useedStorageSize;
+
     long now = System.nanoTime() / 1000;
-    cpuUsage = now - program.getVmStartInUs();
+    long cpuUsage = now - program.getVmStartInUs();
 
-    cpuUsage = trace.getTrx().getInstance().getRet(0).getReceipt().getCpuUsage();
-
-    trace.setBill(cpuUsage, storageUsage);
-
-  }
-
-  private void spendCpuUsage(long cpuUsage, AccountCapsule origin, AccountCapsule caller,
-      long consumeUserResourcePercent) {
-
-    if (cpuUsage <= 0) {
+//    ContractCapsule contract = deposit.getContract(result.getContractAddress());
+//    ByteString originAddress = contract.getInstance().getOriginAddress();
+//    AccountCapsule origin = deposit.getAccount(originAddress.toByteArray());
+    if (useedStorageSize <= 0) {
+      trace.setBill(cpuUsage, useedStorageSize);
       return;
     }
-    long callerUsage = cpuUsage;
-    long originUsage =
-        cpuUsage * (Constant.MAX_CONSUME_USER_RESOURCE_PERCENT - consumeUserResourcePercent)
-            / Constant.MAX_CONSUME_USER_RESOURCE_PERCENT;
-    originUsage = max(callerUsage, origin.getCpuUsage());
-    callerUsage = cpuUsage - originUsage;
-
-  }
-
-  private void spendStorageUsage(long storageUsage, AccountCapsule origin, AccountCapsule caller,
-      long consumeUserResourcePercent) {
-
-    if (storageUsage <= 0) {
-      return;
+    byte[] callerAddressBytes = TransactionCapsule.getOwner(trx.getRawData().getContract(0));
+    AccountCapsule caller = deposit.getAccount(callerAddressBytes);
+    long storageFee = trx.getRawData().getFeeLimit();
+    long cpuFee = (cpuUsage - cpuProcessor.getAccountLeftCpuInUsFromFreeze(caller))
+        * Constant.DROP_PER_CPU_US;
+    if (cpuFee > 0) {
+      storageFee -= cpuFee;
     }
-
-    long originUsage =
-        storageUsage * (Constant.MAX_CONSUME_USER_RESOURCE_PERCENT - consumeUserResourcePercent)
-            / Constant.MAX_CONSUME_USER_RESOURCE_PERCENT;
-    origin.addStorageUsage(originUsage);
-
-    long callerUsage =
-        storageUsage * consumeUserResourcePercent / Constant.MAX_CONSUME_USER_RESOURCE_PERCENT;
-    caller.addStorageUsage(callerUsage);
+    long tryBuyStorage = storageMarket.tryBuyStorage(caller, storageFee);
+    if (tryBuyStorage + caller.getStorageLeft() < useedStorageSize) {
+      throw Program.Exception.notEnoughStorage();
+    }
+    trace.setBill(cpuUsage, useedStorageSize);
   }
 
   private boolean isCallConstant() {
