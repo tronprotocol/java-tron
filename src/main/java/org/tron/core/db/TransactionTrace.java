@@ -194,7 +194,7 @@ public class TransactionTrace {
               + srReceipt.getStorageDelta());
     }
 
-    long adjustedCpuUsage = Math.abs(this.receipt.getCpuUsage() - this.receipt.getCpuUsage());
+    long adjustedCpuUsage = Math.abs(this.receipt.getCpuUsage() - srReceipt.getCpuUsage());
 
     double cpuUsagePercent = adjustedCpuUsage * 1.0 / srReceipt.getCpuUsage()  * 100;
 
