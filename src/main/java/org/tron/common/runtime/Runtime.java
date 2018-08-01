@@ -42,7 +42,6 @@ import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.CpuProcessor;
-import org.tron.core.db.TransactionTrace;
 import org.tron.core.db.StorageMarket;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
@@ -434,11 +433,10 @@ public class Runtime {
     program.getResult().setContractAddress(contractAddress);
     //transfer from callerAddress to targetAddress according to callValue
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
-    byte[] callValue = contract.getCallValue().toByteArray();
-    if (null != callValue && callValue.length != 0) {
-      long callValueLong = new BigInteger(Hex.toHexString(callValue), 16).longValue();
-      this.deposit.addBalance(callerAddress, -callValueLong);
-      this.deposit.addBalance(contractAddress, callValueLong);
+    long callValue = contract.getCallValue();
+    if (0 != callValue) {
+      this.deposit.addBalance(callerAddress, -callValue);
+      this.deposit.addBalance(contractAddress, callValue);
     }
 
   }

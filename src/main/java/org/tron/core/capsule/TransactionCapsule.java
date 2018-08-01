@@ -24,14 +24,12 @@ import static org.tron.protos.Contract.WitnessUpdateContract;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.math.BigInteger;
 import java.security.SignatureException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
@@ -44,6 +42,7 @@ import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.BuyStorageContract;
+import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.ProposalApproveContract;
@@ -53,6 +52,7 @@ import org.tron.protos.Contract.SellStorageContract;
 import org.tron.protos.Contract.SetAccountIdContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.UpdateAssetContract;
@@ -367,18 +367,14 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     int cpuForTrx;
     try {
       Any contractParameter = contract.getParameter();
-      byte[] callValue;
+      long callValue;
       switch (contract.getType()) {
         case TriggerSmartContract:
-          callValue = contractParameter.unpack(TriggerSmartContract.class).getCallValue()
-              .toByteArray();
-          return new BigInteger(Hex.toHexString(callValue), 16).longValue();
+          return contractParameter.unpack(TriggerSmartContract.class).getCallValue();
 
         case CreateSmartContract:
-          callValue = contractParameter.unpack(CreateSmartContract.class).getNewContract()
-              .getCallValue()
-              .toByteArray();
-          return new BigInteger(Hex.toHexString(callValue), 16).longValue();
+          return contractParameter.unpack(CreateSmartContract.class).getNewContract()
+              .getCallValue();
         default:
           return 0L;
       }

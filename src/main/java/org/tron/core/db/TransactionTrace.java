@@ -4,8 +4,6 @@ import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_PRECOMPILED_TYPE;
 
-import java.math.BigInteger;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.utils.Sha256Hash;
@@ -81,14 +79,12 @@ public class TransactionTrace {
           .getSmartContractFromTransaction(trx.getInstance());
       SmartContract smartContract = contract.getNewContract();
       // todo modify later
-      value = new BigInteger(
-          Hex.toHexString(smartContract.getCallValue().toByteArray()), 16).longValue();
+      value = smartContract.getCallValue();
     } else if (TRX_CONTRACT_CALL_TYPE == trxType) {
       TriggerSmartContract contract = ContractCapsule
           .getTriggerContractFromTransaction(trx.getInstance());
       // todo modify later
-      value = new BigInteger(
-          Hex.toHexString(contract.getCallValue().toByteArray()), 16).longValue();
+      value = contract.getCallValue();
     } else {
       return;
     }
