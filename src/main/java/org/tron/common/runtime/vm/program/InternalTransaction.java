@@ -152,7 +152,7 @@ public class InternalTransaction {
     parsed = true;
   }
 
-  private byte[] getReceiveAddress() {
+  public byte[] getReceiveAddress() {
     protoParse();
     return receiveAddress;
   }
