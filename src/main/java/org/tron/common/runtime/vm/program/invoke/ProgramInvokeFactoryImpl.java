@@ -78,7 +78,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
           return null;
       }
 
-      return new ProgramInvokeImpl(contractAddress, ownerAddress, ownerAddress, balance, null, data,
+      return new ProgramInvokeImpl(contractAddress, ownerAddress, ownerAddress, balance, 0, data,
           lastHash, coinbase, timestamp, number, deposit, vmStartInUs, vmShouldEndInUs);
 
     } else if (trxType == TRX_CONTRACT_CALL_TYPE) {
@@ -105,7 +105,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
 
       /***        CALLVALUE op      ***/
       // byte[] callValue = nullToEmpty(tx.getValue());
-      byte[] callValue = contract.getCallValue().toByteArray();
+      long callValue = contract.getCallValue();
 
       /***     CALLDATALOAD  op   ***/
       /***     CALLDATACOPY  op   ***/

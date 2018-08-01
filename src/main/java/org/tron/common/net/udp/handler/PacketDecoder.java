@@ -29,7 +29,7 @@ public class PacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
 
   private static final org.slf4j.Logger logger = LoggerFactory.getLogger("PacketDecoder");
 
-  private int maxSize = 2048;
+  private final int maxSize = 2048;
 
   @Override
   public void decode(ChannelHandlerContext ctx, DatagramPacket packet, List<Object> out) throws Exception {

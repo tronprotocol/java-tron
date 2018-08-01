@@ -733,40 +733,40 @@ public class PrecompiledContracts {
         data = EMPTY_BYTE_ARRAY;
       }
 
-      byte[] frozenBalance = new byte[32];
-      System.arraycopy(data, 0, frozenBalance, 0, 32);
-      byte[] frozenDuration = new byte[32];
-      System.arraycopy(data, 32, frozenDuration, 0, 32);
-
-      if (getDeposit().getDbManager().getAccountStore().get(getCallerAddress()).getType()
-          == AccountType.Contract) {
-        logger.debug("caller can't be a contract");
-        // TODO: or exception here.
-        return Pair.of(false, null);
-      }
-
-      Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
-      ByteString byteAddress = ByteString.copyFrom(getCallerAddress());
-      builder.setOwnerAddress(byteAddress).setFrozenBalance(ByteArray.toLong(frozenBalance))
-          .setFrozenDuration(ByteArray.toLong(frozenDuration));
-      FreezeBalanceContract contract = builder.build();
-
-      TransactionCapsule trx = new TransactionCapsule(contract, ContractType.FreezeBalanceContract);
-
-      final List<Actuator> actuatorList = ActuatorFactory
-          .createActuator(trx, getDeposit().getDbManager());
-      try {
-        actuatorList.get(0).validate();
-        actuatorList.get(0).execute(getResult().getRet());
-        getDeposit()
-            .syncCacheFromAccountStore(ByteString.copyFrom(getCallerAddress()).toByteArray());
-      } catch (ContractExeException e) {
-        logger.debug("ContractExeException when calling freezeBalance in vm");
-        logger.debug("ContractExeException: {}", e.getMessage());
-      } catch (ContractValidateException e) {
-        logger.debug("ContractValidateException when calling freezeBalance in vm");
-        logger.debug("ContractValidateException: {}", e.getMessage());
-      }
+//      byte[] frozenBalance = new byte[32];
+//      System.arraycopy(data, 0, frozenBalance, 0, 32);
+//      byte[] frozenDuration = new byte[32];
+//      System.arraycopy(data, 32, frozenDuration, 0, 32);
+//
+//      if (getDeposit().getDbManager().getAccountStore().get(getCallerAddress()).getType()
+//          == AccountType.Contract) {
+//        logger.debug("caller can't be a contract");
+//        // TODO: or exception here.
+//        return Pair.of(false, null);
+//      }
+//
+//      Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
+//      ByteString byteAddress = ByteString.copyFrom(getCallerAddress());
+//      builder.setOwnerAddress(byteAddress).setFrozenBalance(ByteArray.toLong(frozenBalance))
+//          .setFrozenDuration(ByteArray.toLong(frozenDuration));
+//      FreezeBalanceContract contract = builder.build();
+//
+//      TransactionCapsule trx = new TransactionCapsule(contract, ContractType.FreezeBalanceContract);
+//
+//      final List<Actuator> actuatorList = ActuatorFactory
+//          .createActuator(trx, getDeposit().getDbManager());
+//      try {
+//        actuatorList.get(0).validate();
+//        actuatorList.get(0).execute(getResult().getRet());
+//        getDeposit()
+//            .syncCacheFromAccountStore(ByteString.copyFrom(getCallerAddress()).toByteArray());
+//      } catch (ContractExeException e) {
+//        logger.debug("ContractExeException when calling freezeBalance in vm");
+//        logger.debug("ContractExeException: {}", e.getMessage());
+//      } catch (ContractValidateException e) {
+//        logger.debug("ContractValidateException when calling freezeBalance in vm");
+//        logger.debug("ContractValidateException: {}", e.getMessage());
+//      }
       return Pair.of(true, new DataWord(1).getData());
     }
   }
@@ -793,30 +793,37 @@ public class PrecompiledContracts {
         data = EMPTY_BYTE_ARRAY;
       }
 
-      Contract.UnfreezeBalanceContract.Builder builder = Contract.UnfreezeBalanceContract
-          .newBuilder();
-      ByteString byteAddress = ByteString.copyFrom(getCallerAddress());
-      builder.setOwnerAddress(byteAddress);
-      UnfreezeBalanceContract contract = builder.build();
-
-      TransactionCapsule trx = new TransactionCapsule(contract,
-          ContractType.UnfreezeBalanceContract);
-
-      final List<Actuator> actuatorList = ActuatorFactory
-          .createActuator(trx, getDeposit().getDbManager());
-      try {
-        actuatorList.get(0).validate();
-        actuatorList.get(0).execute(getResult().getRet());
-        getDeposit()
-            .syncCacheFromAccountStore(ByteString.copyFrom(getCallerAddress()).toByteArray());
-        getDeposit().syncCacheFromVotesStore(ByteString.copyFrom(getCallerAddress()).toByteArray());
-      } catch (ContractExeException e) {
-        logger.debug("ContractExeException when calling unfreezeBalance in vm");
-        logger.debug("ContractExeException: {}", e.getMessage());
-      } catch (ContractValidateException e) {
-        logger.debug("ContractValidateException when calling unfreezeBalance in vm");
-        logger.debug("ContractValidateException: {}", e.getMessage());
-      }
+//      if (getDeposit().getDbManager().getAccountStore().get(getCallerAddress()).getType()
+//          == AccountType.Contract) {
+//        logger.debug("caller can't be a contract");
+//        // TODO: or exception here.
+//        return Pair.of(false, null);
+//      }
+//
+//      Contract.UnfreezeBalanceContract.Builder builder = Contract.UnfreezeBalanceContract
+//          .newBuilder();
+//      ByteString byteAddress = ByteString.copyFrom(getCallerAddress());
+//      builder.setOwnerAddress(byteAddress);
+//      UnfreezeBalanceContract contract = builder.build();
+//
+//      TransactionCapsule trx = new TransactionCapsule(contract,
+//          ContractType.UnfreezeBalanceContract);
+//
+//      final List<Actuator> actuatorList = ActuatorFactory
+//          .createActuator(trx, getDeposit().getDbManager());
+//      try {
+//        actuatorList.get(0).validate();
+//        actuatorList.get(0).execute(getResult().getRet());
+//        getDeposit()
+//            .syncCacheFromAccountStore(ByteString.copyFrom(getCallerAddress()).toByteArray());
+//        getDeposit().syncCacheFromVotesStore(ByteString.copyFrom(getCallerAddress()).toByteArray());
+//      } catch (ContractExeException e) {
+//        logger.debug("ContractExeException when calling unfreezeBalance in vm");
+//        logger.debug("ContractExeException: {}", e.getMessage());
+//      } catch (ContractValidateException e) {
+//        logger.debug("ContractValidateException when calling unfreezeBalance in vm");
+//        logger.debug("ContractValidateException: {}", e.getMessage());
+//      }
       return Pair.of(true, new DataWord(1).getData());
     }
   }

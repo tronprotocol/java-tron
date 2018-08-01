@@ -71,6 +71,26 @@ public class StorageMarket {
     return storageTax;
   }
 
+
+  public long tryPayTax(long duration, long limit) {
+    long storageTax = calculateTax(duration, limit);
+    long tax = exchange(storageTax, false);
+    logger.info("tax: " + tax);
+
+    long newTotalTax = dbManager.getDynamicPropertiesStore().getTotalStorageTax() + tax;
+    long newTotalPool = dbManager.getDynamicPropertiesStore().getTotalStoragePool() - tax;
+    long newTotalReserved = dbManager.getDynamicPropertiesStore().getTotalStorageReserved()
+        + storageTax;
+    logger.info("reserved: " + dbManager.getDynamicPropertiesStore().getTotalStorageReserved());
+    boolean eq = dbManager.getDynamicPropertiesStore().getTotalStorageReserved()
+        == 128L * 1024 * 1024 * 1024;
+    logger.info("reserved == 128GB: " + eq);
+    logger.info("newTotalTax: " + newTotalTax + "  newTotalPool: " + newTotalPool
+        + "  newTotalReserved: " + newTotalReserved);
+
+    return storageTax;
+  }
+
   public long payTax(long duration, long limit) {
     long storageTax = calculateTax(duration, limit);
     long tax = exchange(storageTax, false);
@@ -93,6 +113,42 @@ public class StorageMarket {
     return storageTax;
   }
 
+  public long tryBuyStorage(AccountCapsule accountCapsule, long quant) {
+    long now = dbManager.getHeadBlockTimeStamp();
+
+    long latestExchangeStorageTime = accountCapsule.getLatestExchangeStorageTime();
+    long currentStorageLimit = accountCapsule.getStorageLimit();
+    long currentUnusedStorage = currentStorageLimit - accountCapsule.getStorageUsage();
+
+    long duration = now - latestExchangeStorageTime;
+    long storageTax = tryPayTax(duration, currentUnusedStorage);
+
+    long storageBought = exchange(quant, true);
+    long newStorageLimit = currentStorageLimit - storageTax + storageBought;
+    logger.info(
+        "storageBought: " + storageBought + "storageTax:" + storageTax + ",newStorageLimit: "
+            + newStorageLimit);
+    return storageBought - storageTax;
+  }
+
+  public long trySellStorage(AccountCapsule accountCapsule, long bytes) {
+    long now = dbManager.getHeadBlockTimeStamp();
+
+    long latestExchangeStorageTime = accountCapsule.getLatestExchangeStorageTime();
+    long currentStorageLimit = accountCapsule.getStorageLimit();
+    long currentUnusedStorage = currentStorageLimit - accountCapsule.getStorageUsage();
+
+    long duration = now - latestExchangeStorageTime;
+    long storageTax = tryPayTax(duration, currentUnusedStorage);
+
+    long quant = exchange(bytes, false);
+
+    long newStorageLimit = currentStorageLimit - storageTax - bytes;
+    logger.info("quant: " + quant + "  newStorageLimit: " + newStorageLimit);
+    return quant;
+  }
+
+
   public void buyStorage(AccountCapsule accountCapsule, long quant) {
     long now = dbManager.getHeadBlockTimeStamp();
 
@@ -108,7 +164,9 @@ public class StorageMarket {
 
     long storageBought = exchange(quant, true);
     long newStorageLimit = currentStorageLimit - storageTax + storageBought;
-    logger.info("storageBought: " + storageBought + "  newStorageLimit: " + newStorageLimit);
+    logger.info(
+        "storageBought: " + storageBought + "storageTax:" + storageTax + "  newStorageLimit: "
+            + newStorageLimit);
 
     accountCapsule.setLatestExchangeStorageTime(now);
     accountCapsule.setStorageLimit(newStorageLimit);

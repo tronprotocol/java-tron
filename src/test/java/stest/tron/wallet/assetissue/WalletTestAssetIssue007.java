@@ -51,7 +51,7 @@ public class WalletTestAssetIssue007 {
   private static final long totalSupply = now;
   private static final long sendAmount = 10000000000L;
   private static final long netCostMeasure = 200L;
-  private static final Integer trxNum = 2;
+  private static final Integer trxNum = 1;
   private static final Integer icoNum = 1;
 
   Long freeAssetNetLimit = 10000L;
@@ -117,9 +117,11 @@ public class WalletTestAssetIssue007 {
     }
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testParticipateAssetIssueUseParticipaterBandwidth() {
     logger.info(name);
+    Assert.assertTrue(PublicMethed.waitProduceNextBlock(blockingStubFull));
+    Assert.assertTrue(PublicMethed.waitProduceNextBlock(blockingStubFull));
     //When no balance, participate an asset issue
     Assert.assertFalse(PublicMethed.participateAssetIssue(asset007Address, name.getBytes(),
         1L, participateAssetAddress, participateAssetCreateKey,blockingStubFull));
@@ -139,7 +141,6 @@ public class WalletTestAssetIssue007 {
     Assert.assertTrue(participateAccountBeforeNetUsed == 0);
 
     //Participate an assetIssue, then query the net information.
-   //Assert.assertTrue(PublicMethed.waitProduceNextBlock(blockingStubFull));
     ByteString assetNameBs = ByteString.copyFrom(name.getBytes());
     GrpcAPI.BytesMessage request1 = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
     Contract.AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request1);
@@ -180,7 +181,7 @@ public class WalletTestAssetIssue007 {
     participateInfo = PublicMethed.queryAccount(participateAssetCreateKey,blockingStubFull);
     final Long afterBalance = participateInfo.getBalance();
 
-    Assert.assertTrue(beforeBalance  - trxNum*1*icoNum  > afterBalance);
+    Assert.assertTrue(beforeBalance  - trxNum*1*icoNum  >= afterBalance);
 
 
 
