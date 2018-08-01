@@ -34,12 +34,12 @@ public class CreateAccountActuator extends AbstractActuator {
           .put(accountCreateContract.getAccountAddress().toByteArray(), accountCapsule);
 
       dbManager.adjustBalance(accountCreateContract.getOwnerAddress().toByteArray(), -fee);
-      ret.setStatus(fee, code.SUCESS);
+      ret.setStatus(fee, code.SUCCESS);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
-    }catch (InvalidProtocolBufferException e) {
+    } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());

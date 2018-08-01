@@ -38,7 +38,7 @@ public class TransactionMessage extends TronMessage {
   }
 
   public TransactionCapsule getTransactionCapsule() {
-    this.transactionCapsule.resetResult();
+    //this.transactionCapsule.resetResult();
     return this.transactionCapsule;
   }
 }

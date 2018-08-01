@@ -89,6 +89,35 @@ public class WalletTestAccount010 {
     Assert.assertTrue(account010Resource.getStorageLimit() > 0);
   }
 
+  @Test(enabled = true)
+  public void testSellStorage() {
+    AccountResourceMessage account010Resource = PublicMethed.getAccountResource(account010Address,
+        blockingStubFull);
+    Long storageLimit = account010Resource.getStorageLimit();
+    Account account001Info = PublicMethed.queryAccount(account010Key,blockingStubFull);
+    Assert.assertTrue(account001Info.getBalance() == 0);
+    //When there is no enough storage,sell failed.
+    Assert.assertFalse(PublicMethed.sellStorage(storageLimit + 1,account010Address,account010Key,
+        blockingStubFull));
+    //Can not sell 0 storage
+    Assert.assertFalse(PublicMethed.sellStorage(0,account010Address,account010Key,
+        blockingStubFull));
+    //Sell all storage.
+    Assert.assertTrue(PublicMethed.sellStorage(storageLimit,account010Address,account010Key,
+        blockingStubFull));
+    account010Resource = PublicMethed.getAccountResource(account010Address,
+        blockingStubFull);
+    storageLimit = account010Resource.getStorageLimit();
+    Assert.assertTrue(storageLimit == 0);
+    account001Info = PublicMethed.queryAccount(account010Key,blockingStubFull);
+    Assert.assertTrue(account001Info.getBalance() > 0);
+
+
+
+  }
+
+
+
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {

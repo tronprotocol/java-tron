@@ -35,7 +35,7 @@ public class ProposalDeleteActuator extends AbstractActuator {
 
       proposalCapsule.setState(State.CANCELED);
       dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
-      ret.setStatus(fee, code.SUCESS);
+      ret.setStatus(fee, code.SUCCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
@@ -92,7 +92,7 @@ public class ProposalDeleteActuator extends AbstractActuator {
     }
 
     long now = dbManager.getHeadBlockTimeStamp();
-    if (!proposalCapsule.getProposalAddress().equals(contract.getOwnerAddress()) ) {
+    if (!proposalCapsule.getProposalAddress().equals(contract.getOwnerAddress())) {
       throw new ContractValidateException("Proposal[" + contract.getProposalId() + "] "
           + "is not proposed by " + readableOwnerAddress);
     }
