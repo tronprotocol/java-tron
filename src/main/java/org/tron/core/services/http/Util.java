@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.TransactionList;
+import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -102,6 +103,18 @@ public class Util {
     return printTransactionToJSON(transaction).toJSONString();
   }
 
+  public static byte[] generateContractAddress(Transaction trx, byte[] ownerAddress) {
+    // get tx hash
+    byte[] txRawDataHash = Sha256Hash.of(trx.getRawData().toByteArray()).getBytes();
+
+    // combine
+    byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
+    System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
+    System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
+
+    return Hash.sha3omit12(combined);
+  }
+
   public static JSONObject printTransactionToJSON(Transaction transaction) {
     JSONObject jsonTransaction = JSONObject.parseObject(JsonFormat.printToString(transaction));
     JSONArray contracts = new JSONArray();
@@ -190,6 +203,9 @@ public class Util {
             CreateSmartContract deployContract = contractParameter
                 .unpack(CreateSmartContract.class);
             contractJson = JSONObject.parseObject(JsonFormat.printToString(deployContract));
+            byte[] ownerAddress = deployContract.getOwnerAddress().toByteArray();
+            byte[] contractAddress = generateContractAddress(transaction, ownerAddress);
+            jsonTransaction.put("contract_address", ByteArray.toHexString(contractAddress));
             break;
           case TriggerSmartContract:
             TriggerSmartContract triggerSmartContract = contractParameter
@@ -347,6 +363,14 @@ public class Util {
                 .merge(parameter.getJSONObject("value").toJSONString(),
                     triggerSmartContractBuilder);
             any = Any.pack(triggerSmartContractBuilder.build());
+            break;
+          case "CreateSmartContract":
+            CreateSmartContract.Builder CreateSmartContractBuilder = CreateSmartContract
+                .newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    CreateSmartContractBuilder);
+            any = Any.pack(CreateSmartContractBuilder.build());
             break;
           // todo add other contract
           default:

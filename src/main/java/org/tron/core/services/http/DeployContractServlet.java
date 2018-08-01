@@ -1,16 +1,22 @@
 package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
+import com.google.common.base.Strings;
+import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.protos.Contract.CreateSmartContract;
+import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
@@ -30,20 +36,54 @@ public class DeployContractServlet extends HttpServlet {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       CreateSmartContract.Builder build = CreateSmartContract.newBuilder();
-      JsonFormat.merge(contract, build);
       JSONObject jsonObject = JSONObject.parseObject(contract);
-      byte[] ownerAddress = jsonObject.getBytes("owner_address");
+      byte[] ownerAddress = ByteArray.fromHexString(jsonObject.getString("owner_address"));
+      build.setOwnerAddress(ByteString.copyFrom(ownerAddress));
+
+      String abi = jsonObject.getString("abi");
+      StringBuffer abiSB = new StringBuffer("{");
+      abiSB.append("\"entrys\":");
+      abiSB.append(abi);
+      abiSB.append("}");
+      ABI.Builder abiBuilder = ABI.newBuilder();
+      JsonFormat.merge(abiSB.toString(), abiBuilder);
+
       long storageLimit = jsonObject.getLongValue("storage_limit");
       long dropLimit = jsonObject.getLongValue("drop_limit");
       long cpuLimit = jsonObject.getLongValue("cpu_limit");
       long bandwidthLimit = jsonObject.getLongValue("bandwidth_limit");
-      long callValue = jsonObject.getLongValue("call_value");
-      String contractName = jsonObject.getString("contract_name");
-      byte[] byteCode = jsonObject.getBytes("bytecode");
-      String abi = jsonObject.getString("abi");
+
+      SmartContract.Builder smartBuilder = SmartContract.newBuilder();
+      smartBuilder.setAbi(abiBuilder)
+          .setCallValue(jsonObject.getLongValue("call_value"))
+          .setConsumeUserResourcePercent(jsonObject.getLongValue("consume_user_resource_percent"));
+      if (!ArrayUtils.isEmpty(ownerAddress)){
+        smartBuilder.setOriginAddress(ByteString.copyFrom(ownerAddress));
+      }
+
+      byte[] byteCode = ByteArray.fromHexString(jsonObject.getString("bytecode"));
+      if (!ArrayUtils.isEmpty(byteCode)){
+        smartBuilder.setData(ByteString.copyFrom(byteCode));
+      }
+      byte[] data = ByteArray.fromHexString(jsonObject.getString("data"));
+      if (!ArrayUtils.isEmpty(data)){
+        smartBuilder.setData(ByteString.copyFrom(data));
+      }
+      String name = jsonObject.getString("name");
+      if (!Strings.isNullOrEmpty(name)){
+        smartBuilder.setName(name);
+      }
+
+      build.setNewContract(smartBuilder);
       Transaction tx = wallet
           .createTransactionCapsule(build.build(), ContractType.CreateSmartContract).getInstance();
-      response.getWriter().println(Util.printTransaction(tx));
+      Transaction.Builder txBuilder = tx.toBuilder();
+      Transaction.raw.Builder rawBuilder = tx.getRawData().toBuilder();
+      rawBuilder.setMaxCpuUsage(cpuLimit);
+      rawBuilder.setMaxNetUsage(bandwidthLimit);
+      rawBuilder.setMaxStorageUsage(storageLimit);
+      txBuilder.setRawData(rawBuilder);
+      response.getWriter().println(Util.printTransaction(txBuilder.build()));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {
