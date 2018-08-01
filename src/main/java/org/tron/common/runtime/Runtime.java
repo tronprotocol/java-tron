@@ -3,10 +3,10 @@ package org.tron.common.runtime;
 import static com.google.common.primitives.Longs.max;
 import static com.google.common.primitives.Longs.min;
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
-import static org.tron.common.runtime.vm.program.InternalTransaction.ExecuterType.ET_CONSTANT_TYPE;
-import static org.tron.common.runtime.vm.program.InternalTransaction.ExecuterType.ET_NORMAL_TYPE;
-import static org.tron.common.runtime.vm.program.InternalTransaction.ExecuterType.ET_PRE_TYPE;
-import static org.tron.common.runtime.vm.program.InternalTransaction.ExecuterType.ET_UNKNOWN_TYPE;
+import static org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType.ET_CONSTANT_TYPE;
+import static org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType.ET_NORMAL_TYPE;
+import static org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType.ET_PRE_TYPE;
+import static org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType.ET_UNKNOWN_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_PRECOMPILED_TYPE;
@@ -23,6 +23,7 @@ import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.runtime.vm.VM;
 import org.tron.common.runtime.vm.program.InternalTransaction;
+import org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
 import org.tron.common.runtime.vm.program.ProgramPrecompile;
@@ -81,7 +82,7 @@ public class Runtime {
   private Program program = null;
 
   private InternalTransaction.TrxType trxType = TRX_UNKNOWN_TYPE;
-  private InternalTransaction.ExecuterType executerType = ET_UNKNOWN_TYPE;
+  private ExecutorType executorType = ET_UNKNOWN_TYPE;
 
   //tx trace
   private TransactionTrace trace;
@@ -97,10 +98,10 @@ public class Runtime {
 
     if (Objects.nonNull(block)) {
       this.block = block;
-      this.executerType = ET_NORMAL_TYPE;
+      this.executorType = ET_NORMAL_TYPE;
     } else {
       this.block = Block.newBuilder().build();
-      this.executerType = ET_PRE_TYPE;
+      this.executorType = ET_PRE_TYPE;
     }
     this.deposit = deosit;
     this.programInvokeFactory = programInvokeFactory;
@@ -126,7 +127,7 @@ public class Runtime {
     this.trx = tx;
     this.deposit = deposit;
     this.programInvokeFactory = programInvokeFactory;
-    this.executerType = ET_PRE_TYPE;
+    this.executorType = ET_PRE_TYPE;
     Transaction.Contract.ContractType contractType = tx.getRawData().getContract(0).getType();
     switch (contractType.getNumber()) {
       case Transaction.Contract.ContractType.TriggerSmartContract_VALUE:
@@ -148,7 +149,7 @@ public class Runtime {
     trx = tx;
     this.deposit = deposit;
     this.programInvokeFactory = programInvokeFactory;
-    executerType = ET_CONSTANT_TYPE;
+    executorType = ET_CONSTANT_TYPE;
     trxType = TRX_CONTRACT_CALL_TYPE;
 
   }
@@ -203,7 +204,7 @@ public class Runtime {
 
   public boolean curCPULimitReachedBlockCPULimit() {
 
-    if (executerType == ET_NORMAL_TYPE) {
+    if (executorType == ET_NORMAL_TYPE) {
       BigInteger blockCPULeftInUs = getBlockCPULeftInUs();
       BigInteger oneTxCPULimitInUs = BigInteger
           .valueOf(Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
@@ -301,7 +302,7 @@ public class Runtime {
 
       long thisTxCPULimitInUs;
       long accountCPULimitInUs = getAccountCPULimitInUs(creator, sender, contract);
-      if (executerType == ET_NORMAL_TYPE) {
+      if (executorType == ET_NORMAL_TYPE) {
         long blockCPULeftInUs = getBlockCPULeftInUs().longValue();
         thisTxCPULimitInUs = min(accountCPULimitInUs, blockCPULeftInUs,
             Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
@@ -314,7 +315,7 @@ public class Runtime {
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
       ProgramInvoke programInvoke = programInvokeFactory
-          .createProgramInvoke(TRX_CONTRACT_CALL_TYPE, executerType, trx,
+          .createProgramInvoke(TRX_CONTRACT_CALL_TYPE, executorType, trx,
               block, deposit, vmStartInUs, vmShouldEndInUs);
       this.vm = new VM(config);
       InternalTransaction internalTransaction = new InternalTransaction(trx);
@@ -368,7 +369,7 @@ public class Runtime {
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
       long thisTxCPULimitInUs;
       long accountCPULimitInUs = getAccountCPULimitInUs(creator, contract);
-      if (executerType == ET_NORMAL_TYPE) {
+      if (executorType == ET_NORMAL_TYPE) {
         long blockCPULeftInUs = getBlockCPULeftInUs().longValue();
         thisTxCPULimitInUs = min(accountCPULimitInUs, blockCPULeftInUs,
             Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
@@ -383,7 +384,7 @@ public class Runtime {
       byte[] ops = newSmartContract.getBytecode().toByteArray();
       InternalTransaction internalTransaction = new InternalTransaction(trx);
       ProgramInvoke programInvoke = programInvokeFactory
-          .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executerType, trx,
+          .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executorType, trx,
               block, deposit, vmStartInUs, vmShouldEndInUs);
       this.vm = new VM(config);
       this.program = new Program(ops, programInvoke, internalTransaction, config);
@@ -447,13 +448,13 @@ public class Runtime {
             result.setException(Program.Exception.notEnoughStorage());
             throw result.getException();
           }
-          if (executerType == ET_NORMAL_TYPE) {
+          if (executorType == ET_NORMAL_TYPE) {
             deposit.commit();
           }
         }
 
       } else {
-        if (executerType == ET_NORMAL_TYPE) {
+        if (executorType == ET_NORMAL_TYPE) {
           deposit.commit();
         }
       }
@@ -479,7 +480,7 @@ public class Runtime {
     storageUsage = 0;
     long now = System.nanoTime() / 1000;
     cpuUsage = now - program.getVmStartInUs();
-    if (executerType == ET_NORMAL_TYPE) {
+    if (executorType == ET_NORMAL_TYPE) {
       /*
        * trx.getCpuRecipt
        *
