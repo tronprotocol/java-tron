@@ -1,6 +1,8 @@
 package org.tron.core.capsule;
 
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.db.CpuProcessor;
+import org.tron.core.db.StorageMarket;
 import org.tron.protos.Protocol.ResourceReceipt;
 
 public class ReceiptCapsule {
@@ -60,17 +62,39 @@ public class ReceiptCapsule {
     return receipt.getStorageDelta();
   }
 
-  public void payCpuBill() {
-    //TODO: pay cpu bill
+  /**
+   * payCpuBill pay receipt cpu bill by cpu processor.
+   * @param account Smart contract caller.
+   * @param cpuProcessor  CPU processor.
+   * @param now Witness slot time.
+   */
+  public void payCpuBill(AccountCapsule account, CpuProcessor cpuProcessor, long now) {
     if (0 == receipt.getCpuUsage()) {
       return;
     }
+
+    if (cpuProcessor.getAccountLeftCpuInUsFromFreeze(account) >= receipt.getCpuUsage()) {
+      cpuProcessor.useCpu(account, receipt.getCpuUsage(), now);
+    } else {
+      account.setBalance(account.getBalance() - receipt.getCpuUsage() * 30);
+    }
   }
 
-  public void payStorageBill() {
-    //TODO: pay storage bill
+  /**
+   * payStorageBill pay receipt storage bill by storage market.
+   * @param account Smart contract caller.
+   * @param storageMarket Storage market.
+   */
+  public void payStorageBill(AccountCapsule account, StorageMarket storageMarket) {
     if (0 == receipt.getSerializedSize()) {
       return;
+    }
+
+    if (account.getStorageUsage() >= receipt.getStorageDelta()) {
+      account.setStorageUsage(account.getStorageUsage() - receipt.getStorageDelta());
+    } else {
+      storageMarket.buyStorage(account, receipt.getStorageDelta() - account.getStorageUsage());
+      account.setStorageUsage(account.getStorageUsage() - receipt.getStorageDelta());
     }
   }
 
