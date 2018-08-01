@@ -105,8 +105,8 @@ public class UnfreezeAssetActuatorTest {
         .setExpireTime(now)
         .build();
     Frozen newFrozen1 = Frozen.newBuilder()
-        .setFrozenBalance(frozenBalance+1)
-        .setExpireTime(now+600000)
+        .setFrozenBalance(frozenBalance + 1)
+        .setExpireTime(now + 600000)
         .build();
     account = account.toBuilder().addFrozenSupply(newFrozen0).addFrozenSupply(newFrozen1).build();
     AccountCapsule accountCapsule = new AccountCapsule(account);
@@ -117,7 +117,7 @@ public class UnfreezeAssetActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCCESS);
       AccountCapsule owner = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertEquals(owner.getAssetMap().get(assetName).longValue(), frozenBalance);

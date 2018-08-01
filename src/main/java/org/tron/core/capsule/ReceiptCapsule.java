@@ -1,25 +1,53 @@
 package org.tron.core.capsule;
 
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.Constant;
+import org.tron.core.db.CpuProcessor;
+import org.tron.core.db.StorageMarket;
 import org.tron.protos.Protocol.ResourceReceipt;
 
 public class ReceiptCapsule {
+
   private ResourceReceipt receipt;
 
   private Sha256Hash receiptAddress;
 
   public ReceiptCapsule(ResourceReceipt data, Sha256Hash receiptAddress) {
-    receipt = data;
+    this.receipt = data;
     this.receiptAddress = receiptAddress;
   }
 
   public ReceiptCapsule(Sha256Hash receiptAddress) {
-    receipt = ResourceReceipt.newBuilder().build();
+    this.receipt = ResourceReceipt.newBuilder().build();
     this.receiptAddress = receiptAddress;
   }
 
+  public void setReceipt(ResourceReceipt receipt) {
+    this.receipt = receipt;
+  }
+
+  public ResourceReceipt getReceipt() {
+    return this.receipt;
+  }
+
+  public Sha256Hash getReceiptAddress() {
+    return this.receiptAddress;
+  }
+
   public void setCpuUsage(long usage) {
-    receipt.toBuilder().setCpuFee(usage);
+    receipt = receipt.toBuilder().setCpuUsage(usage).build();
+  }
+
+  public long getCpuUsage() {
+    return receipt.getCpuUsage();
+  }
+
+  public void setNetUsage(long netUsage) {
+    this.receipt = this.receipt.toBuilder().setNetUsage(netUsage).build();
+  }
+
+  public long getNetUsage() {
+    return this.receipt.getNetUsage();
   }
 
   public void calculateCpuFee() {
@@ -27,18 +55,56 @@ public class ReceiptCapsule {
   }
 
   public void setStorageDelta(long delta) {
-    receipt.toBuilder().setCpuFee(delta);
+    this.receipt = this.receipt.toBuilder().setStorageDelta(delta).build();
   }
 
-  public void payCpuBill() {
-    //TODO: pay cpu bill
+  public long getStorageDelta() {
+    return receipt.getStorageDelta();
   }
 
-  public void payStorageBill() {
-    //TODO: pay storage bill
+  /**
+   * payCpuBill pay receipt cpu bill by cpu processor.
+   *
+   * @param account Smart contract caller.
+   * @param cpuProcessor CPU processor.
+   * @param now Witness slot time.
+   */
+  public void payCpuBill(AccountCapsule account, CpuProcessor cpuProcessor, long now) {
+    if (0 == receipt.getCpuUsage()) {
+      return;
+    }
+
+    if (cpuProcessor.getAccountLeftCpuInUsFromFreeze(account) >= receipt.getCpuUsage()) {
+      cpuProcessor.useCpu(account, receipt.getCpuUsage(), now);
+    } else {
+      account.setBalance(account.getBalance() - receipt.getCpuUsage() * Constant.DROP_PER_CPU_US);
+    }
+  }
+
+  /**
+   * payStorageBill pay receipt storage bill by storage market.
+   *
+   * @param account Smart contract caller.
+   * @param storageMarket Storage market.
+   */
+  public void payStorageBill(AccountCapsule account, StorageMarket storageMarket) {
+    if (0 == receipt.getSerializedSize()) {
+      return;
+    }
+
+    if (account.getStorageUsage() >= receipt.getStorageDelta()) {
+      account.setStorageUsage(account.getStorageUsage() - receipt.getStorageDelta());
+    } else {
+      storageMarket.buyStorage(account, receipt.getStorageDelta() - account.getStorageUsage());
+      account.setStorageUsage(account.getStorageUsage() - receipt.getStorageDelta());
+    }
   }
 
   public void buyStorage(long storage) {
     //TODO: buy the min storage
+  }
+
+  public static ResourceReceipt copyReceipt(ReceiptCapsule origin) {
+    return origin.getReceipt().toBuilder().build();
   }
 }

@@ -1,7 +1,5 @@
 package org.tron.core.actuator;
 
-import static org.tron.protos.Contract.ResourceCode.BANDWIDTH;
-
 import com.google.common.collect.Lists;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -93,8 +91,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
     dbManager.getVotesStore().put(ownerAddress, votesCapsule);
 
-
-    ret.setStatus(fee, code.SUCESS);
+    ret.setStatus(fee, code.SUCCESS);
 
     return true;
   }

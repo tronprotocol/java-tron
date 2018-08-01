@@ -25,7 +25,6 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -76,7 +75,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       //write to db
       dbManager.getAccountStore().put(ownerAddress, ownerAccount);
       dbManager.getAccountStore().put(toAddress, toAccount);
-      ret.setStatus(fee, Protocol.Transaction.Result.code.SUCESS);
+      ret.setStatus(fee, Protocol.Transaction.Result.code.SUCCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
