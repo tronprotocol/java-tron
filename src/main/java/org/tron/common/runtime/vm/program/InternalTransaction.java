@@ -35,7 +35,7 @@ import org.tron.protos.Protocol.Transaction;
 
 public class InternalTransaction {
 
-  public Transaction transaction;
+  private Transaction transaction;
   private byte[] hash;
   private byte[] parentHash;
   /* the amount of trx to transfer (calculated as sun) */
@@ -101,6 +101,13 @@ public class InternalTransaction {
     this.parsed = true;
   }
 
+  public Transaction getTransaction() {
+    return transaction;
+  }
+
+  public void setTransaction(Transaction transaction) {
+    this.transaction = transaction;
+  }
 
   public void reject() {
     this.rejected = true;
@@ -144,7 +151,7 @@ public class InternalTransaction {
 
   public byte[] getData() {
     protoParse();
-    return data;
+    return data.clone();
   }
 
   protected void setValue(long value) {
@@ -154,7 +161,7 @@ public class InternalTransaction {
 
   public byte[] getReceiveAddress() {
     protoParse();
-    return receiveAddress;
+    return receiveAddress.clone();
   }
 
   private void protoParse() {
@@ -186,7 +193,7 @@ public class InternalTransaction {
       if (null == this.hash) {
         this.hash = Hash.sha3(protoEncoded);
       }
-      return protoEncoded;
+      return protoEncoded.clone();
     }
 
     byte[] valueByte = Longs.toByteArray(this.value);
@@ -197,7 +204,7 @@ public class InternalTransaction {
     this.protoEncoded = raw;
     this.hash = Hash.sha3(protoEncoded);
 
-    return protoEncoded;
+    return protoEncoded.clone();
   }
 
   @Override
