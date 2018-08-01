@@ -82,6 +82,7 @@ public class DeployContractServlet extends HttpServlet {
       rawBuilder.setMaxCpuUsage(cpuLimit);
       rawBuilder.setMaxNetUsage(bandwidthLimit);
       rawBuilder.setMaxStorageUsage(storageLimit);
+      rawBuilder.setFeeLimit(dropLimit);
       txBuilder.setRawData(rawBuilder);
       response.getWriter().println(Util.printTransaction(txBuilder.build()));
     } catch (Exception e) {

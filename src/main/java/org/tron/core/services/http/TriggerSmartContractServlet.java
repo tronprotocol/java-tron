@@ -65,6 +65,7 @@ public class TriggerSmartContractServlet extends HttpServlet {
       rawBuilder.setMaxCpuUsage(cpuLimit);
       rawBuilder.setMaxNetUsage(bandwidthLimit);
       rawBuilder.setMaxStorageUsage(storageLimit);
+      rawBuilder.setFeeLimit(dropLimit);
       txBuilder.setRawData(rawBuilder);
 
       Transaction trx = wallet.triggerContract(build.build(), new TransactionCapsule(txBuilder.build()));
