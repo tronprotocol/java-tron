@@ -365,7 +365,7 @@ public class SellStorageActuatorTest {
       Assert.fail("cannot run here.");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("bytes must be less than currentUnusedStorage minus tax",
+      Assert.assertEquals("bytes must be less than currentUnusedStorage[2694881440] minus tax[269488144]",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);

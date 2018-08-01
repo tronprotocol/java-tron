@@ -40,7 +40,6 @@ public class SellStorageActuator extends AbstractActuator {
     AccountCapsule accountCapsule = dbManager.getAccountStore()
         .get(sellStorageContract.getOwnerAddress().toByteArray());
 
-
     long bytes = sellStorageContract.getStorageBytes();
 
     storageMarket.sellStorage(accountCapsule, bytes);
@@ -99,7 +98,15 @@ public class SellStorageActuator extends AbstractActuator {
     long storageTax = storageMarket.calculateTax(duration, currentStorageLimit);
 
     if (bytes > (currentUnusedStorage - storageTax)) {
-      throw new ContractValidateException("bytes must be less than currentUnusedStorage minus tax");
+      throw new ContractValidateException(
+          "bytes must be less than currentUnusedStorage[" + currentUnusedStorage + "] minus tax["
+              + storageTax + "]");
+    }
+
+    long quantity = storageMarket.trySellStorage(accountCapsule, bytes);
+    if (quantity <= 1_000_000L) {
+      throw new ContractValidateException(
+          "quantity must be larger than 1TRX,current quantity[" + quantity + "]");
     }
 
     return true;
