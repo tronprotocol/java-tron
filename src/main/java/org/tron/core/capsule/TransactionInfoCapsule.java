@@ -78,8 +78,14 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
 
   public void setContractAddress(byte[] contractAddress) {
     this.transactionInfo = this.transactionInfo.toBuilder()
-            .setContractAddress(ByteString.copyFrom(contractAddress))
-            .build();
+        .setContractAddress(ByteString.copyFrom(contractAddress))
+        .build();
+  }
+
+  public void setResult(TransactionResultCapsule result) {
+    this.transactionInfo = this.transactionInfo.toBuilder()
+        .setResult(result.getInstance())
+        .build();
   }
 
   @Override
