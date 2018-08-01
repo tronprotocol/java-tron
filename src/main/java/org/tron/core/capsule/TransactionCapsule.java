@@ -42,7 +42,6 @@ import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.BuyStorageContract;
-import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.ProposalApproveContract;
@@ -52,7 +51,6 @@ import org.tron.protos.Contract.SellStorageContract;
 import org.tron.protos.Contract.SetAccountIdContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.UpdateAssetContract;
@@ -369,9 +367,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       Any contractParameter = contract.getParameter();
       switch (contract.getType()) {
         case TriggerSmartContract:
-          return contractParameter.unpack(TriggerSmartContract.class).getCpuLimitInTrx();
+          return 0;
         case CreateSmartContract:
-          return contractParameter.unpack(CreateSmartContract.class).getCpuLimitInTrx();
+          return 0;
         default:
           return 0;
       }

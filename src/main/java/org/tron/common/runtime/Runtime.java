@@ -231,9 +231,9 @@ public class Runtime {
         creator.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance());
     logger.info("cpuFromFrozen: {}", cpuFromFrozen);
 
-    long cpuFromTRX = Constant.CPU_IN_US_PER_TRX * contract.getCpuLimitInTrx();
+//    long cpuFromTRX = Constant.CPU_IN_US_PER_TRX * contract.getCpuLimitInTrx();
 
-    return max(cpuFromFrozen, cpuFromTRX); // us
+    return 0; // us
 
   }
 
@@ -245,7 +245,7 @@ public class Runtime {
         .getContract(contract.getContractAddress().toByteArray()).getInstance();
     long consumeUserResourcePercent = smartContract.getConsumeUserResourcePercent();
 
-    long senderCpuFromTrx = Constant.CPU_IN_US_PER_TRX * contract.getCpuLimitInTrx();
+    long senderCpuFromTrx = Constant.CPU_IN_US_PER_TRX * 0;
     long senderCpuFromFrozen = cpuProcessor.calculateGlobalCpuLimit(
         sender.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance());
     long creatorCpuFromFrozen = cpuProcessor.calculateGlobalCpuLimit(

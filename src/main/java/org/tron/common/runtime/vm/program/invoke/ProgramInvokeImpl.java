@@ -74,7 +74,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   }
 
   public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
-      byte[] callValue, byte[] msgData,
+      long callValue, byte[] msgData,
       byte[] lastHash, byte[] coinbase, long timestamp, long number, Deposit deposit,
       long vmStartInUs, long vmShouldEndInUs, boolean byTestingSuite) {
     this(address, origin, caller, balance, callValue, msgData, lastHash, coinbase,
@@ -83,7 +83,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   }
 
   public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
-      byte[] callValue, byte[] msgData, byte[] lastHash, byte[] coinbase, long timestamp,
+      long callValue, byte[] msgData, byte[] lastHash, byte[] coinbase, long timestamp,
       long number, Deposit deposit, long vmStartInUs, long vmShouldEndInUs) {
 
     // Transaction env
