@@ -50,7 +50,7 @@ public class Constant {
   public static final long MEM_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT = 32 * 1024 * 1024L; // 32MB
   public static final long CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT = 100000; // 100 ms = 100000 us
   public static final long STORAGE_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT = 32 * 1024 * 1024L; // 32MB
-  public static final long CPU_IN_US_PER_TRX = 1000000 / 30; // 1 us <-> 30 SUN <-> 30 * 10^-6 TRX
+  public static final long DROP_PER_CPU_US = 30; // 1 us = 30 DROP = 30 * 10^-6 TRX
   public static final long MAX_CONSUME_USER_RESOURCE_PERCENT = 100L;
   public static final long MIN_CONSUME_USER_RESOURCE_PERCENT = 0L;
   public static final long ACCORD_RANGE_PERCENT = 0L;
