@@ -523,7 +523,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public long getStorageLeft() {
-    return getStorageUsage() - getStorageUsage();
+    return getStorageLimit() - getStorageUsage();
   }
 
   public void setStorageUsage(long usage) {

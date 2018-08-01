@@ -55,7 +55,6 @@ public class ReceiptCapsule {
   }
 
   public void setStorageDelta(long delta) {
-    receipt = receipt.toBuilder().setStorageDelta(delta).build();
     this.receipt = this.receipt.toBuilder().setStorageDelta(delta).build();
   }
 
@@ -65,8 +64,9 @@ public class ReceiptCapsule {
 
   /**
    * payCpuBill pay receipt cpu bill by cpu processor.
+   *
    * @param account Smart contract caller.
-   * @param cpuProcessor  CPU processor.
+   * @param cpuProcessor CPU processor.
    * @param now Witness slot time.
    */
   public void payCpuBill(AccountCapsule account, CpuProcessor cpuProcessor, long now) {
@@ -83,6 +83,7 @@ public class ReceiptCapsule {
 
   /**
    * payStorageBill pay receipt storage bill by storage market.
+   *
    * @param account Smart contract caller.
    * @param storageMarket Storage market.
    */

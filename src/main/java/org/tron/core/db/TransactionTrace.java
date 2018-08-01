@@ -34,7 +34,7 @@ public class TransactionTrace {
 
   private StorageMarket storageMarket;
 
-  AccountCapsule owner;
+  private AccountCapsule owner;
 
   private InternalTransaction.TrxType trxType;
 
