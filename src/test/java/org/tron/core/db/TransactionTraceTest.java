@@ -27,13 +27,17 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ReceiptException;
 import org.tron.protos.Contract.TriggerSmartContract;
+import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.ResourceReceipt;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -48,6 +52,8 @@ public class TransactionTraceTest {
   private static String indexDirectory = "index_TransactionTrace_test";
   private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
+
+  private static ByteString ownerAddress = ByteString.copyFrom(ByteArray.fromInt(1));
 
   private long cpuUsage;
   private long storageUsage;
@@ -125,6 +131,54 @@ public class TransactionTraceTest {
     } catch (ReceiptException e) {
       e.printStackTrace();
     }
+  }
+
+  @Test
+  public void testPay() {
+    Account account = Account.newBuilder()
+        .setAddress(ownerAddress)
+        .setAccountResource(
+            AccountResource.newBuilder()
+                .setCpuUsage(10)
+                .setStorageUsage(1000)
+                .build()
+        )
+        .build();
+
+    AccountCapsule accountCapsule = new AccountCapsule(account);
+
+    dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
+
+    Transaction transaction = Transaction.newBuilder()
+        .addRet(
+            Result.newBuilder()
+                .setReceipt(
+                    ResourceReceipt.newBuilder()
+                        .setCpuUsage(this.cpuUsage)
+                        .setStorageDelta(this.storageUsage)
+                        .build())
+                .build())
+        .setRawData(
+            raw.newBuilder()
+                .addContract(
+                    Contract.newBuilder()
+                        .setParameter(Any.pack(
+                            TriggerSmartContract.newBuilder()
+                                .setOwnerAddress(ownerAddress)
+                                .build()))
+                        .setType(ContractType.TriggerSmartContract)
+                        .build())
+                .build()
+        )
+        .build();
+
+    TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
+
+    TransactionTrace transactionTrace = new TransactionTrace(transactionCapsule, dbManager);
+
+    transactionTrace.setBill(this.cpuUsage, this.storageUsage);
+
+    transactionTrace.pay();
   }
 
   /**
