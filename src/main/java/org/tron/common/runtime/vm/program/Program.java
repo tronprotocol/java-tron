@@ -1373,6 +1373,7 @@ public class Program {
           "Not enough CPU resource when '%s' operation executing", op);
     }
 
+
     public static OutOfMemoryException memoryOverflow(OpCode op) {
       return new OutOfMemoryException("Out of Memory when '%s' operation executing", op);
     }
