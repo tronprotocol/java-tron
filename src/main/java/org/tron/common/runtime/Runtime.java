@@ -19,7 +19,6 @@ import java.util.Objects;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.runtime.vm.VM;
@@ -40,9 +39,9 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.db.TransactionTrace;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.CpuProcessor;
+import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
@@ -232,9 +231,9 @@ public class Runtime {
         creator.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance());
     logger.info("cpuFromFrozen: {}", cpuFromFrozen);
 
-    long cpuFromTRX = Constant.CPU_IN_US_PER_TRX * contract.getCpuLimitInTrx();
+//    long cpuFromTRX = Constant.CPU_IN_US_PER_TRX * contract.getCpuLimitInTrx();
 
-    return max(cpuFromFrozen, cpuFromTRX); // us
+    return 0; // us
 
   }
 
@@ -246,7 +245,7 @@ public class Runtime {
         .getContract(contract.getContractAddress().toByteArray()).getInstance();
     long consumeUserResourcePercent = smartContract.getConsumeUserResourcePercent();
 
-    long senderCpuFromTrx = Constant.CPU_IN_US_PER_TRX * contract.getCpuLimitInTrx();
+    long senderCpuFromTrx = Constant.CPU_IN_US_PER_TRX * 0;
     long senderCpuFromFrozen = cpuProcessor.calculateGlobalCpuLimit(
         sender.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance());
     long creatorCpuFromFrozen = cpuProcessor.calculateGlobalCpuLimit(
@@ -325,12 +324,12 @@ public class Runtime {
     program.getResult().setContractAddress(contractAddress);
     //transfer from callerAddress to targetAddress according to callValue
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
-    byte[] callValue = contract.getCallValue().toByteArray();
-    if (null != callValue && callValue.length != 0) {
-      long callValueLong = new BigInteger(Hex.toHexString(callValue), 16).longValue();
-      this.deposit.addBalance(callerAddress, -callValueLong);
-      this.deposit.addBalance(contractAddress, callValueLong);
+    long callValue = contract.getCallValue();
+    if (callValue != 0) {
+      this.deposit.addBalance(callerAddress, -callValue);
+      this.deposit.addBalance(contractAddress, callValue);
     }
+
 
   }
 
@@ -404,11 +403,10 @@ public class Runtime {
 
     // transfer from callerAddress to contractAddress according to callValue
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
-    byte[] callValue = newSmartContract.getCallValue().toByteArray();
-    if (null != callValue && callValue.length != 0) {
-      long callValueLong = new BigInteger(Hex.toHexString(callValue), 16).longValue();
-      this.deposit.addBalance(callerAddress, -callValueLong);
-      this.deposit.addBalance(contractAddress, callValueLong);
+    long callValue = newSmartContract.getCallValue();
+    if (callValue != 0) {
+      this.deposit.addBalance(callerAddress, -callValue);
+      this.deposit.addBalance(contractAddress, callValue);
     }
 
   }
@@ -443,9 +441,9 @@ public class Runtime {
 
           // touchedAccounts.addAll(result.getTouchedAccounts());
           // check storage useage
-          long useedStorageSize =
+          long usedStorageSize =
               deposit.getBeforeRunStorageSize() - deposit.computeAfterRunStorageSize();
-          if (useedStorageSize > 1000000) {
+          if (usedStorageSize > 1000000) {
             result.setException(Program.Exception.notEnoughStorage());
             throw result.getException();
           }

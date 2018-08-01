@@ -1,6 +1,5 @@
 package org.tron.common.storage;
 
-import com.google.protobuf.ByteString;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -22,7 +21,7 @@ public interface Deposit {
 
   AccountCapsule createAccount(byte[] address, Protocol.AccountType type);
 
-  AccountCapsule createAccount(byte[] address, ByteString accountName, Protocol.AccountType type);
+  AccountCapsule createAccount(byte[] address, String accountName, Protocol.AccountType type);
 
   AccountCapsule getAccount(byte[] address);
 
