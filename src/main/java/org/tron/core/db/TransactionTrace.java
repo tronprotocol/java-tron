@@ -95,33 +95,33 @@ public class TransactionTrace {
     long oneStorageBytePriceByTrx = 1;
     checkAccountInputLimitAndMaxWithinBalance(maxCpuUsageInUs, maxStorageUsageInByte, value,
         balance, limitInDrop, cpuInUsFromFreeze, boughtStorageInByte, oneStorageBytePriceByTrx,
-        Constant.CPU_IN_US_PER_TRX);
+        Constant.DROP_PER_CPU_US);
   }
 
   private boolean checkAccountInputLimitAndMaxWithinBalance(long maxCpuUsageInUs,
       long maxStorageUsageInByte,
-      long value, long balance, long limitInTrx, long cpuInUsFromFreeze,
+      long value, long balance, long limitInDrop, long cpuInUsFromFreeze,
       long boughtStorageInByte,
-      long oneStorageBytePriceByTrx, long cpuInUsPerTrx) {
+      long oneStorageBytePriceByTrx, long dropPerCpuUs) {
 
-    if (balance < limitInTrx + value) {
+    if (balance < Math.addExact(limitInDrop, value)) {
       // throw
       return false;
     }
-    long CpuInUsFromTrx = limitInTrx * cpuInUsPerTrx;
-    long cpuNeedTrx;
-    if (CpuInUsFromTrx > cpuInUsFromFreeze) {
+    long CpuInUsFromDrop = (long) (limitInDrop * 1.0 / dropPerCpuUs);
+    long cpuNeedDrop;
+    if (CpuInUsFromDrop > cpuInUsFromFreeze) {
       // prior to use freeze, so not include "="
-      cpuNeedTrx = (long) (maxCpuUsageInUs * 1.0 / cpuInUsPerTrx);
+      cpuNeedDrop = maxCpuUsageInUs * dropPerCpuUs;
     } else {
-      cpuNeedTrx = 0;
+      cpuNeedDrop = 0;
     }
 
     long storageNeedTrx = max(
         (long) ((maxStorageUsageInByte - boughtStorageInByte) * 1.0 / oneStorageBytePriceByTrx),
         0);
 
-    if (limitInTrx < cpuNeedTrx + storageNeedTrx) {
+    if (limitInDrop < Math.addExact(cpuNeedDrop, storageNeedTrx)) {
       // throw
       return false;
     }

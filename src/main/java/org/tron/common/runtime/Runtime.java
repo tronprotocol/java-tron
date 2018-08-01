@@ -226,30 +226,28 @@ public class Runtime {
   }
 
   private long getAccountCPULimitInUs(AccountCapsule account,
-      long limitInTrx, long maxCpuInUsByAccount) {
+      long limitInDrop, long maxCpuInUsByAccount) {
 
     CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
-    long cpuFromFrozen = cpuProcessor.calculateGlobalCpuLimit(
-        account.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance());
+    long cpuInUsFromFreeze = cpuProcessor.getAccountLeftCpuInUsFromFreeze(account);
 
-    long cpuFromTRX = Constant.CPU_IN_US_PER_TRX * limitInTrx;
+    long cpuInUsFromDrop = (long) (limitInDrop * 1.0 / Constant.DROP_PER_CPU_US);
 
-    return min(maxCpuInUsByAccount, max(cpuFromFrozen, cpuFromTRX)); // us
+    return min(maxCpuInUsByAccount, max(cpuInUsFromFreeze, cpuInUsFromDrop)); // us
 
   }
 
   private long getAccountCPULimitInUs(AccountCapsule creator, AccountCapsule sender,
-      TriggerSmartContract contract, long maxCpuInUsBySender) {
+      TriggerSmartContract contract, long maxCpuInUsBySender, long limitInDrop) {
 
-    long senderCpuLimit = getAccountCPULimitInUs(sender, 0,
+    long senderCpuLimit = getAccountCPULimitInUs(sender, limitInDrop,
         maxCpuInUsBySender);
     if (Arrays.equals(creator.getAddress().toByteArray(), sender.getAddress().toByteArray())) {
       return senderCpuLimit;
     }
 
     CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
-    long creatorCpuFromFrozen = cpuProcessor.calculateGlobalCpuLimit(
-        creator.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance());
+    long creatorCpuFromFrozen = cpuProcessor.getAccountLeftCpuInUsFromFreeze(creator);
 
     SmartContract smartContract = this.deposit
         .getContract(contract.getContractAddress().toByteArray()).getInstance();
@@ -329,9 +327,9 @@ public class Runtime {
       AccountCapsule creator = this.deposit
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
       long thisTxCPULimitInUs;
-      //long maxCpuInUsByCreator = trx.getRawData().getMaxCpuUsage();
-      long maxCpuInUsByCreator = 100;
-      long accountCPULimitInUs = getAccountCPULimitInUs(creator, 0,
+      long maxCpuInUsByCreator = trx.getRawData().getMaxCpuUsage();
+      long limitInDrop = trx.getRawData().getFeeLimit();
+      long accountCPULimitInUs = getAccountCPULimitInUs(creator, limitInDrop,
           maxCpuInUsByCreator);
       if (executerType == ET_NORMAL_TYPE) {
         long blockCPULeftInUs = getBlockCPULeftInUs().longValue();
@@ -400,10 +398,10 @@ public class Runtime {
 
       // todo use default value for cpu max and storage max
       long thisTxCPULimitInUs;
-//      long maxCpuInUsBySender = trx.getRawData().getMaxCpuUsage();
-      long maxCpuInUsBySender = 100;
+      long maxCpuInUsBySender = trx.getRawData().getMaxCpuUsage();
+      long limitInDrop = trx.getRawData().getFeeLimit();
       long accountCPULimitInUs = getAccountCPULimitInUs(creator, sender, contract,
-          maxCpuInUsBySender);
+          maxCpuInUsBySender, limitInDrop);
       if (executerType == ET_NORMAL_TYPE) {
         long blockCPULeftInUs = getBlockCPULeftInUs().longValue();
         thisTxCPULimitInUs = min(accountCPULimitInUs, blockCPULeftInUs,
