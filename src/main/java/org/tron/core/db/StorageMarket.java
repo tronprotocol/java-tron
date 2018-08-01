@@ -212,4 +212,8 @@ public class StorageMarket {
 
   }
 
+  public long getAccountLeftStorageInByteFromBought(AccountCapsule accountCapsule) {
+
+    return accountCapsule.getStorageLimit() - accountCapsule.getStorageUsage();
+  }
 }

@@ -19,6 +19,7 @@ package org.tron.common.runtime.vm.program.invoke;
 
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.InternalTransaction;
+import org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.storage.Deposit;
 import org.tron.protos.Protocol.Block;
@@ -31,7 +32,7 @@ import org.tron.protos.Protocol.Transaction;
 public interface ProgramInvokeFactory {
 
   ProgramInvoke createProgramInvoke(InternalTransaction.TrxType trxType,
-      InternalTransaction.ExecuterType executerType,
+      ExecutorType executorType,
       Transaction tx, Block block, Deposit deposit, long vmStartInUs, long vmShouldEndInUs);
 
   ProgramInvoke createProgramInvoke(Program program, DataWord toAddress, DataWord callerAddress,

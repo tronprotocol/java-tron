@@ -42,6 +42,7 @@ import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.BuyStorageContract;
+import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.ProposalApproveContract;
@@ -51,6 +52,7 @@ import org.tron.protos.Contract.SellStorageContract;
 import org.tron.protos.Contract.SetAccountIdContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.UpdateAssetContract;
@@ -361,23 +363,25 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   // todo mv this static function to capsule util
-  public static long getCpuLimitInTrx(Transaction.Contract contract) {
-//    int cpuForTrx;
-//    try {
-////      Any contractParameter = contract.getParameter();
-////      switch (contract.getType()) {
-////        case TriggerSmartContract:
-////          return 0;
-////        case CreateSmartContract:
-////          return 0;
-////        default:
-////          return 0;
-////      }
-//    } catch (Exception ex) {
-//      logger.error(ex.getMessage());
-//      return 0;
-//    }
-    return 0;
+  public static long getCallValue(Transaction.Contract contract) {
+    int cpuForTrx;
+    try {
+      Any contractParameter = contract.getParameter();
+      long callValue;
+      switch (contract.getType()) {
+        case TriggerSmartContract:
+          return contractParameter.unpack(TriggerSmartContract.class).getCallValue();
+
+        case CreateSmartContract:
+          return contractParameter.unpack(CreateSmartContract.class).getNewContract()
+              .getCallValue();
+        default:
+          return 0L;
+      }
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
+      return 0L;
+    }
   }
 
   public static String getBase64FromByteString(ByteString sign) {

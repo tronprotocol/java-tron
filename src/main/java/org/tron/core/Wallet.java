@@ -521,6 +521,7 @@ public class Wallet {
 
     return builder.build();
   }
+
   public AssetIssueList getAssetIssueList() {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     dbManager.getAssetIssueStore().getAllAssetIssues()
@@ -787,7 +788,7 @@ public class Wallet {
         ProgramResult result = runtime.getResult();
         TransactionResultCapsule ret = new TransactionResultCapsule();
         ret.setConstantResult(result.getHReturn());
-        ret.setStatus(0, code.SUCESS);
+        ret.setStatus(0, code.SUCCESS);
         trxCap.setResult(ret);
         return trxCap.getInstance();
       }

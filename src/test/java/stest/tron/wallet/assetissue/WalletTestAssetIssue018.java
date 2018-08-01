@@ -91,8 +91,6 @@ public class WalletTestAssetIssue018 {
 
   @Test(enabled = true)
   public void testSameAssetissueName() {
-    Long start = System.currentTimeMillis() + 10000;
-    Long end = System.currentTimeMillis() + 1000000000;
     logger.info(name);
     logger.info("total supply is " + Long.toString(totalSupply));
     //send coin to the new account
@@ -104,12 +102,18 @@ public class WalletTestAssetIssue018 {
         testKey002,blockingStubFull));
 
     //Create 3 the same name token.
+    Long start = System.currentTimeMillis() + 3000;
+    Long end = System.currentTimeMillis() + 1000000000;
     Assert.assertTrue(PublicMethed.createAssetIssue(assetAccount1Address,
         name, totalSupply, 1, 1, start, end, 1, description, url,
         2000L,2000L, 1L,1L,assetAccount1Key,blockingStubFull));
+    start = System.currentTimeMillis() + 3000;
+    end = System.currentTimeMillis() + 1000000000;
     Assert.assertTrue(PublicMethed.createAssetIssue(assetAccount2Address,
         name, totalSupply + 1, 2, 2, start, end, 2, description, url,
         3000L,3000L, 2L,2L,assetAccount2Key,blockingStubFull));
+    start = System.currentTimeMillis() + 3000;
+    end = System.currentTimeMillis() + 1000000000;
     Assert.assertTrue(PublicMethed.createAssetIssue(assetAccount3Address,
         name, totalSupply + 2, 3, 3, start, end, 3, description, url,
         4000L,4000L, 3L,2L,assetAccount3Key,blockingStubFull));
