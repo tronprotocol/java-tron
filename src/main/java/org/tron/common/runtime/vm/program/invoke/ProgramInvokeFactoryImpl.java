@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.InternalTransaction;
+import org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.storage.Deposit;
 import org.tron.common.utils.ByteUtil;
@@ -47,7 +48,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
   // Invocation by the wire tx
   @Override
   public ProgramInvoke createProgramInvoke(InternalTransaction.TrxType trxType,
-      InternalTransaction.ExecuterType executerType,
+      ExecutorType executorType,
       Transaction tx, Block block, Deposit deposit, long vmStartInUs, long vmShouldEndInUs) {
     byte[] contractAddress;
     byte[] ownerAddress;
@@ -65,7 +66,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
       balance = deposit.getBalance(ownerAddress);
       data = ByteUtil.EMPTY_BYTE_ARRAY;
 
-      switch (executerType) {
+      switch (executorType) {
         case ET_NORMAL_TYPE:
           lastHash = block.getBlockHeader().getRawDataOrBuilder().getParentHash().toByteArray();
           coinbase = block.getBlockHeader().getRawDataOrBuilder().getWitnessAddress().toByteArray();
@@ -114,7 +115,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
       data = contract.getData().toByteArray();
 
       // dropLimit = contract.getTrxCpuLimitInUs().toByteArray();
-      switch (executerType) {
+      switch (executorType) {
         case ET_CONSTANT_TYPE:
           break;
         case ET_PRE_TYPE:

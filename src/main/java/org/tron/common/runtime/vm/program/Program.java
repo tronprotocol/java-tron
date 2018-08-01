@@ -614,7 +614,7 @@ public class Program {
     InternalTransaction internalTx = addInternalTx(getDroplimit(), senderAddress, contextAddress,
         endowment, data, "call");
 
-    checkCPULimit("BEFORE CALL");
+    //checkCPULimit("BEFORE CALL");
 
     ProgramResult result = null;
     if (isNotEmpty(programCode)) {
@@ -664,7 +664,7 @@ public class Program {
       deposit.commit();
       stackPushOne();
     }
-    checkCPULimit("AFTER CALL");
+    //checkCPULimit("AFTER CALL");
 
     // 3. APPLY RESULTS: result.getHReturn() into out_memory allocated
     if (result != null) {
