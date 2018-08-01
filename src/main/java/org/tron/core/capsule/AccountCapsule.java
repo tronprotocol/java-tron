@@ -522,6 +522,10 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account.getAccountResource().getStorageUsage();
   }
 
+  public long getStorageLeft() {
+    return getStorageUsage() - getStorageUsage();
+  }
+
   public void setStorageUsage(long usage) {
     AccountResource accountResource = this.account.getAccountResource();
     accountResource = accountResource.toBuilder().setStorageUsage(usage).build();

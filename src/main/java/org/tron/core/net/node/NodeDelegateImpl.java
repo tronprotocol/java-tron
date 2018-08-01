@@ -35,6 +35,7 @@ import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateScheduleException;
@@ -100,6 +101,8 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("Receipt exception," + e.getMessage());
     } catch (BadNumberBlockException e) {
       throw new BadBlockException("bad number exception," + e.getMessage());
+    } catch (TransactionTraceException e) {
+      throw new BadBlockException("TransactionTrace Exception," + e.getMessage());
     }
 
   }
@@ -147,7 +150,11 @@ public class NodeDelegateImpl implements NodeDelegate {
     } catch (TransactionExpirationException e) {
       logger.info("expiration transaction" + e.getMessage());
       return false;
+    } catch (TransactionTraceException e) {
+      logger.info("TransactionTrace Exception" + e.getMessage());
+      return false;
     }
+
     return true;
   }
 

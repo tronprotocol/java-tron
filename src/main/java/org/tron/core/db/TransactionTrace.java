@@ -1,6 +1,5 @@
 package org.tron.core.db;
 
-import static com.google.common.primitives.Longs.max;
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_PRECOMPILED_TYPE;
@@ -18,6 +17,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptException;
+import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.SmartContract;
@@ -59,7 +59,6 @@ public class TransactionTrace {
         trxType = TRX_PRECOMPILED_TYPE;
     }
 
-
     //TODO: set bill owner
     receipt = new ReceiptCapsule(Sha256Hash.ZERO_HASH);
     this.dbManager = dbManager;
@@ -71,7 +70,7 @@ public class TransactionTrace {
     this.storageMarket = new StorageMarket(this.dbManager);
   }
 
-  private void checkForSmartContract() {
+  private void checkForSmartContract() throws TransactionTraceException {
 
     long maxCpuUsageInUs = trx.getInstance().getRawData().getMaxCpuUsage();
     long maxStorageUsageInByte = trx.getInstance().getRawData().getMaxStorageUsage();
@@ -97,46 +96,36 @@ public class TransactionTrace {
 
     CpuProcessor cpuProcessor = new CpuProcessor(this.dbManager);
     long cpuInUsFromFreeze = cpuProcessor.getAccountLeftCpuInUsFromFreeze(owner);
-    long boughtStorageInByte = 0;
-    long oneStorageBytePriceByTrx = 1;
-    checkAccountInputLimitAndMaxWithinBalance(maxCpuUsageInUs, maxStorageUsageInByte, value,
-        balance, limitInDrop, cpuInUsFromFreeze, boughtStorageInByte, oneStorageBytePriceByTrx,
-        Constant.CPU_IN_US_PER_TRX);
+
+    checkAccountInputLimitAndMaxWithinBalance(maxCpuUsageInUs, value,
+        balance, limitInDrop, cpuInUsFromFreeze, Constant.DROP_PER_CPU_US);
   }
 
-  private boolean checkAccountInputLimitAndMaxWithinBalance(long maxCpuUsageInUs,
-      long maxStorageUsageInByte,
-      long value, long balance, long limitInTrx, long cpuInUsFromFreeze,
-      long boughtStorageInByte,
-      long oneStorageBytePriceByTrx, long cpuInUsPerTrx) {
+  private boolean checkAccountInputLimitAndMaxWithinBalance(long maxCpuUsageInUs, long value,
+      long balance, long limitInDrop, long cpuInUsFromFreeze, long dropPerCpuUs)
+      throws TransactionTraceException {
 
-    if (balance < limitInTrx + value) {
-      // throw
-      return false;
+    if (balance < Math.addExact(limitInDrop, value)) {
+      throw new TransactionTraceException("balance < limitInDrop + value");
     }
-    long CpuInUsFromTrx = limitInTrx * cpuInUsPerTrx;
-    long cpuNeedTrx;
-    if (CpuInUsFromTrx > cpuInUsFromFreeze) {
+    long CpuInUsFromDrop = Math.floorDiv(limitInDrop, dropPerCpuUs);
+    long cpuNeedDrop;
+    if (CpuInUsFromDrop > cpuInUsFromFreeze) {
       // prior to use freeze, so not include "="
-      cpuNeedTrx = (long) (maxCpuUsageInUs * 1.0 / cpuInUsPerTrx);
+      cpuNeedDrop = maxCpuUsageInUs * dropPerCpuUs;
     } else {
-      cpuNeedTrx = 0;
+      cpuNeedDrop = 0;
     }
 
-    long storageNeedTrx = max(
-        (long) ((maxStorageUsageInByte - boughtStorageInByte) * 1.0 / oneStorageBytePriceByTrx),
-        0);
-
-    if (limitInTrx < cpuNeedTrx + storageNeedTrx) {
-      // throw
-      return false;
+    if (limitInDrop < cpuNeedDrop) {
+      throw new TransactionTraceException("limitInDrop < cpuNeedDrop");
     }
 
     return true;
   }
 
   //pre transaction check
-  public void init() throws ContractValidateException {
+  public void init() throws TransactionTraceException {
 
     switch (trxType) {
       case TRX_PRECOMPILED_TYPE:
@@ -196,7 +185,7 @@ public class TransactionTrace {
 
     long adjustedCpuUsage = Math.abs(this.receipt.getCpuUsage() - srReceipt.getCpuUsage());
 
-    double cpuUsagePercent = adjustedCpuUsage * 1.0 / srReceipt.getCpuUsage()  * 100;
+    double cpuUsagePercent = adjustedCpuUsage * 1.0 / srReceipt.getCpuUsage() * 100;
 
     double percentRange = 30;
     if (cpuUsagePercent > percentRange) {
