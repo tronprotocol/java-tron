@@ -1,6 +1,5 @@
 package org.tron.core.db;
 
-import static com.google.common.primitives.Longs.max;
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_PRECOMPILED_TYPE;
@@ -34,6 +33,8 @@ public class TransactionTrace {
 
   AccountCapsule owner;
 
+  private StorageMarket storageMarket;
+
   private InternalTransaction.TrxType trxType;
 
   public TransactionCapsule getTrx() {
@@ -55,20 +56,18 @@ public class TransactionTrace {
         trxType = TRX_PRECOMPILED_TYPE;
     }
 
-
     //TODO: set bill owner
     receipt = new ReceiptCapsule(Sha256Hash.ZERO_HASH);
     this.dbManager = dbManager;
     this.owner = dbManager.getAccountStore()
         .get(TransactionCapsule.getOwner(trx.getInstance().getRawData().getContract(0)));
     this.receipt = new ReceiptCapsule(Sha256Hash.ZERO_HASH);
-
+    this.storageMarket = new StorageMarket(dbManager);
   }
 
   private void checkForSmartContract() {
 
     long maxCpuUsageInUs = trx.getInstance().getRawData().getMaxCpuUsage();
-    long maxStorageUsageInByte = trx.getInstance().getRawData().getMaxStorageUsage();
     long value;
     long limitInDrop = trx.getInstance().getRawData().getFeeLimit(); // in drop
     if (TRX_CONTRACT_CREATION_TYPE == trxType) {
@@ -91,24 +90,19 @@ public class TransactionTrace {
 
     CpuProcessor cpuProcessor = new CpuProcessor(this.dbManager);
     long cpuInUsFromFreeze = cpuProcessor.getAccountLeftCpuInUsFromFreeze(owner);
-    long boughtStorageInByte = 0;
-    long oneStorageBytePriceByTrx = 1;
-    checkAccountInputLimitAndMaxWithinBalance(maxCpuUsageInUs, maxStorageUsageInByte, value,
-        balance, limitInDrop, cpuInUsFromFreeze, boughtStorageInByte, oneStorageBytePriceByTrx,
-        Constant.DROP_PER_CPU_US);
+
+    checkAccountInputLimitAndMaxWithinBalance(maxCpuUsageInUs, value,
+        balance, limitInDrop, cpuInUsFromFreeze, Constant.DROP_PER_CPU_US);
   }
 
-  private boolean checkAccountInputLimitAndMaxWithinBalance(long maxCpuUsageInUs,
-      long maxStorageUsageInByte,
-      long value, long balance, long limitInDrop, long cpuInUsFromFreeze,
-      long boughtStorageInByte,
-      long oneStorageBytePriceByTrx, long dropPerCpuUs) {
+  private boolean checkAccountInputLimitAndMaxWithinBalance(long maxCpuUsageInUs, long value,
+      long balance, long limitInDrop, long cpuInUsFromFreeze, long dropPerCpuUs) {
 
     if (balance < Math.addExact(limitInDrop, value)) {
       // throw
       return false;
     }
-    long CpuInUsFromDrop = (long) (limitInDrop * 1.0 / dropPerCpuUs);
+    long CpuInUsFromDrop = Math.floorDiv(limitInDrop, dropPerCpuUs);
     long cpuNeedDrop;
     if (CpuInUsFromDrop > cpuInUsFromFreeze) {
       // prior to use freeze, so not include "="
@@ -117,11 +111,7 @@ public class TransactionTrace {
       cpuNeedDrop = 0;
     }
 
-    long storageNeedTrx = max(
-        (long) ((maxStorageUsageInByte - boughtStorageInByte) * 1.0 / oneStorageBytePriceByTrx),
-        0);
-
-    if (limitInDrop < Math.addExact(cpuNeedDrop, storageNeedTrx)) {
+    if (limitInDrop < cpuNeedDrop) {
       // throw
       return false;
     }
