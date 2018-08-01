@@ -173,11 +173,8 @@ message TXOutputs {
 
 message ResourceReceipt {
   int64 cpu_usage = 1;
-  int64 cpu_fee = 2;
-  int64 net_usage = 3;
-  int64 net_fee = 4;
-  int64 storage_delta = 5;
-  int64 storage_fee = 6;
+  int64 net_usage = 2;
+  int64 storage_delta = 3;
 }
 
 message Transaction {

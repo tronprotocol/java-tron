@@ -84,6 +84,7 @@ import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Result;
 
 @Slf4j
 @Component
@@ -987,7 +988,9 @@ public class Manager {
       throw new RuntimeException("Runtime exe failed!");
     }
     // todo judge result in runtime same as block,trx,recipt
-
+    TransactionResultCapsule resultCapsule = new TransactionResultCapsule(
+        Result.newBuilder().setReceipt(trace.getReceipt().getReceipt()).build());
+    trxCap.setResult(resultCapsule);
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
     transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());

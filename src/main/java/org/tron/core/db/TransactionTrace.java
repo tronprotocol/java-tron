@@ -199,4 +199,7 @@ public class TransactionTrace {
     this.receipt.setReceipt(ReceiptCapsule.copyReceipt(srReceipt));
   }
 
+  public ReceiptCapsule getReceipt() {
+    return receipt;
+  }
 }
