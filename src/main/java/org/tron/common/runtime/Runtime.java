@@ -231,13 +231,21 @@ public class Runtime {
     CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
     long cpuInUsFromFreeze = cpuProcessor.getAccountLeftCpuInUsFromFreeze(account);
 
-    long cpuInUsFromDrop = (long) (limitInDrop * 1.0 / Constant.DROP_PER_CPU_US);
+    long cpuInUsFromDrop = Math.floorDiv(limitInDrop, Constant.DROP_PER_CPU_US);
 
     return min(maxCpuInUsByAccount, max(cpuInUsFromFreeze, cpuInUsFromDrop)); // us
 
   }
 
   private long getAccountCPULimitInUs(AccountCapsule creator, AccountCapsule sender,
+      TriggerSmartContract contract, long maxCpuInUsBySender, long limitInDrop) {
+
+    long senderCpuLimit = getAccountCPULimitInUs(sender, limitInDrop,
+        maxCpuInUsBySender);
+    return senderCpuLimit;
+  }
+
+  private long getAccountCPULimitInUsByPercent(AccountCapsule creator, AccountCapsule sender,
       TriggerSmartContract contract, long maxCpuInUsBySender, long limitInDrop) {
 
     long senderCpuLimit = getAccountCPULimitInUs(sender, limitInDrop,
@@ -268,7 +276,7 @@ public class Runtime {
         >= (1 - consumeUserResourcePercent) * senderCpuLimit) {
       return (long) (senderCpuLimit / consumeUserResourcePercent);
     } else {
-      return senderCpuLimit + creatorCpuFromFrozen;
+      return Math.addExact(senderCpuLimit, creatorCpuFromFrozen);
     }
   }
 

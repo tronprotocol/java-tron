@@ -38,6 +38,7 @@ import org.tron.core.exception.ReceiptException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
@@ -88,7 +89,7 @@ public class ManagerTest {
   @Test
   public void setBlockReference()
       throws ContractExeException, UnLinkedBlockException, ValidateScheduleException, BadBlockException,
-      ContractValidateException, ValidateSignatureException, BadItemException, ItemNotFoundException, AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException, BadNumberBlockException, NonCommonBlockException, ReceiptException {
+      ContractValidateException, ValidateSignatureException, BadItemException, ItemNotFoundException, AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException, BadNumberBlockException, NonCommonBlockException, ReceiptException, TransactionTraceException {
 
     BlockCapsule blockCapsule =
         new BlockCapsule(
@@ -216,7 +217,7 @@ public class ManagerTest {
       ItemNotFoundException, HeaderNotFound, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException,
       DupTransactionException, BadBlockException,
-      TaposException, BadNumberBlockException, NonCommonBlockException {
+      TaposException, BadNumberBlockException, NonCommonBlockException, TransactionTraceException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
@@ -280,7 +281,7 @@ public class ManagerTest {
       ItemNotFoundException, HeaderNotFound, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException,
       DupTransactionException, BadBlockException,
-      TaposException, BadNumberBlockException, NonCommonBlockException {
+      TaposException, BadNumberBlockException, NonCommonBlockException, TransactionTraceException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
@@ -372,7 +373,7 @@ public class ManagerTest {
       ItemNotFoundException, HeaderNotFound, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException,
       DupTransactionException, BadBlockException,
-      TaposException, BadNumberBlockException, NonCommonBlockException {
+      TaposException, BadNumberBlockException, NonCommonBlockException, TransactionTraceException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");

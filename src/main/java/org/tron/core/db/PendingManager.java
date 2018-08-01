@@ -14,6 +14,7 @@ import org.tron.core.exception.ReceiptException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.ValidateSignatureException;
 
 @Slf4j
@@ -70,6 +71,8 @@ public class PendingManager implements AutoCloseable {
             logger.info("Receipt exception," + e.getMessage());
           } catch (TransactionExpirationException e) {
             logger.debug("expiration transaction");
+          } catch (TransactionTraceException e) {
+            logger.debug("transactionTrace transaction");
           }
         });
   }

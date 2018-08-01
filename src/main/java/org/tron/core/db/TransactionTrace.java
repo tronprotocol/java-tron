@@ -17,6 +17,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptException;
+import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.SmartContract;
@@ -69,7 +70,7 @@ public class TransactionTrace {
     this.storageMarket = new StorageMarket(this.dbManager);
   }
 
-  private void checkForSmartContract() {
+  private void checkForSmartContract() throws TransactionTraceException {
 
     long maxCpuUsageInUs = trx.getInstance().getRawData().getMaxCpuUsage();
     long maxStorageUsageInByte = trx.getInstance().getRawData().getMaxStorageUsage();
@@ -101,11 +102,11 @@ public class TransactionTrace {
   }
 
   private boolean checkAccountInputLimitAndMaxWithinBalance(long maxCpuUsageInUs, long value,
-      long balance, long limitInDrop, long cpuInUsFromFreeze, long dropPerCpuUs) {
+      long balance, long limitInDrop, long cpuInUsFromFreeze, long dropPerCpuUs)
+      throws TransactionTraceException {
 
     if (balance < Math.addExact(limitInDrop, value)) {
-      // throw
-      return false;
+      throw new TransactionTraceException("balance < limitInDrop + value");
     }
     long CpuInUsFromDrop = Math.floorDiv(limitInDrop, dropPerCpuUs);
     long cpuNeedDrop;
@@ -117,15 +118,14 @@ public class TransactionTrace {
     }
 
     if (limitInDrop < cpuNeedDrop) {
-      // throw
-      return false;
+      throw new TransactionTraceException("limitInDrop < cpuNeedDrop");
     }
 
     return true;
   }
 
   //pre transaction check
-  public void init() throws ContractValidateException {
+  public void init() throws TransactionTraceException {
 
     switch (trxType) {
       case TRX_PRECOMPILED_TYPE:
