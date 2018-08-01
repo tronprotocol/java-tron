@@ -1,6 +1,7 @@
 package org.tron.core.capsule;
 
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.Constant;
 import org.tron.core.db.CpuProcessor;
 import org.tron.core.db.StorageMarket;
 import org.tron.protos.Protocol.ResourceReceipt;
@@ -76,7 +77,7 @@ public class ReceiptCapsule {
     if (cpuProcessor.getAccountLeftCpuInUsFromFreeze(account) >= receipt.getCpuUsage()) {
       cpuProcessor.useCpu(account, receipt.getCpuUsage(), now);
     } else {
-      account.setBalance(account.getBalance() - receipt.getCpuUsage() * 30);
+      account.setBalance(account.getBalance() - receipt.getCpuUsage() * Constant.DROP_PER_CPU_US);
     }
   }
 
