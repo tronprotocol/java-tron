@@ -655,7 +655,7 @@ public class DepositImpl implements Deposit {
     commitContractCache(deposit);
     commitStorageCache(deposit);
     commitVoteCache(deposit);
-
+    commitAccountContractIndex(deposit);
   }
 
   @Override
