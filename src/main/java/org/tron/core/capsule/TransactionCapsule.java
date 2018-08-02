@@ -451,15 +451,15 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         trx.getInstance().getRawData().getContractList();
     long resultBytesSize = 0;
     for(Transaction.Contract contract: contracts){
-      if (contract.getType() != ContractType.CreateSmartContract &&
-          contract.getType() != ContractType.TriggerSmartContract){
-        // code bytes + fee bytes
-        resultBytesSize += 8;
-      }
-      else{
+//      if (contract.getType() != ContractType.CreateSmartContract &&
+//          contract.getType() != ContractType.TriggerSmartContract){
+//        // code bytes + fee bytes
+//        resultBytesSize += 8;
+//      }
+//      else{
         // code bytes + fee bytes + receipt bytes
         resultBytesSize += 28;
-      }
+//      }
     }
     return resultBytesSize;
   }
