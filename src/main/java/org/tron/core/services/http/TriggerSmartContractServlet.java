@@ -11,10 +11,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.api.GrpcAPI.Return;
+import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -41,8 +45,12 @@ public class TriggerSmartContractServlet extends HttpServlet {
     return result;
   }
 
-  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+  protected void doPost(HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
     TriggerSmartContract.Builder build = TriggerSmartContract.newBuilder();
+    TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
+    Return.Builder retBuilder = Return.newBuilder();
+
     try {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
@@ -58,26 +66,30 @@ public class TriggerSmartContractServlet extends HttpServlet {
       long cpuLimit = jsonObject.getLongValue("cpu_limit");
       long bandwidthLimit = jsonObject.getLongValue("bandwidth_limit");
 
-      Transaction tx = wallet
-          .createTransactionCapsule(build.build(), ContractType.TriggerSmartContract).getInstance();
-      Transaction.Builder txBuilder = tx.toBuilder();
-      Transaction.raw.Builder rawBuilder = tx.getRawData().toBuilder();
+      TransactionCapsule trxCap = wallet
+          .createTransactionCapsule(build.build(), ContractType.TriggerSmartContract);
+
+      Transaction.Builder txBuilder = trxCap.getInstance().toBuilder();
+      Transaction.raw.Builder rawBuilder = trxCap.getInstance().getRawData().toBuilder();
       rawBuilder.setMaxCpuUsage(cpuLimit);
       rawBuilder.setMaxNetUsage(bandwidthLimit);
       rawBuilder.setMaxStorageUsage(storageLimit);
       rawBuilder.setFeeLimit(dropLimit);
       txBuilder.setRawData(rawBuilder);
 
-      Transaction trx = wallet.triggerContract(build.build(), new TransactionCapsule(txBuilder.build()));
-      response.getWriter().println(Util.printTransaction(trx));
-
+      Transaction trx = wallet
+          .triggerContract(build.build(), new TransactionCapsule(txBuilder.build()), trxExtBuilder);
+      trxExtBuilder.setTransaction(trx);
+      trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
+      retBuilder.setResult(true).setCode(response_code.SUCCESS);
+    } catch (ContractValidateException e) {
+      retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
+          .setMessage(ByteString.copyFromUtf8(e.getMessage()));
     } catch (Exception e) {
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException e1) {
-        e1.printStackTrace();
-      }
+      retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+          .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
     }
-
+    trxExtBuilder.setResult(retBuilder);
+    response.getWriter().println(Util.printTransactionExtention(trxExtBuilder.build()));
   }
 }

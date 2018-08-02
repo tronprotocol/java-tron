@@ -8,6 +8,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
+import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
@@ -101,6 +102,15 @@ public class Util {
 
   public static String printTransaction(Transaction transaction) {
     return printTransactionToJSON(transaction).toJSONString();
+  }
+
+  public static String printTransactionExtention(TransactionExtention transactionExtention) {
+    String string = JsonFormat.printToString(transactionExtention);
+    JSONObject jsonObject = JSONObject.parseObject(string);
+    if (transactionExtention.getTransaction() != null) {
+      jsonObject.put("transaction", printTransactionToJSON(transactionExtention.getTransaction()));
+    }
+    return jsonObject.toJSONString();
   }
 
   public static byte[] generateContractAddress(Transaction trx, byte[] ownerAddress) {
