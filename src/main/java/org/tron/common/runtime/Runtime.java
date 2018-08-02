@@ -418,7 +418,9 @@ public class Runtime {
         thisTxCPULimitInUs = min(accountCPULimitInUs,
             Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
       }
-
+      if (isCallConstant(contractAddress)) {
+        thisTxCPULimitInUs = 100000;
+      }
       long vmStartInUs = System.nanoTime() / 1000;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
@@ -529,6 +531,16 @@ public class Runtime {
   private boolean isCallConstant() {
     if (TRX_CONTRACT_CALL_TYPE.equals(trxType)) {
       ABI abi = deposit.getContract(result.getContractAddress()).getInstance().getAbi();
+      if (Wallet.isConstant(abi, ContractCapsule.getTriggerContractFromTransaction(trx))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean isCallConstant(byte[] address) {
+    if (TRX_CONTRACT_CALL_TYPE.equals(trxType)) {
+      ABI abi = deposit.getContract(address).getInstance().getAbi();
       if (Wallet.isConstant(abi, ContractCapsule.getTriggerContractFromTransaction(trx))) {
         return true;
       }
