@@ -454,11 +454,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       if (contract.getType() != ContractType.CreateSmartContract &&
           contract.getType() != ContractType.TriggerSmartContract){
         // code bytes + fee bytes
-        resultBytesSize += 7;
+        resultBytesSize += 8;
       }
       else{
         // code bytes + fee bytes + receipt bytes
-        resultBytesSize += 24;
+        resultBytesSize += 28;
       }
     }
     return resultBytesSize;
