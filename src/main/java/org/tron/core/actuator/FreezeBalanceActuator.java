@@ -12,7 +12,6 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.FreezeBalanceContract;
-import org.tron.protos.Contract.ResourceCode;
 import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -70,9 +69,11 @@ public class FreezeBalanceActuator extends AbstractActuator {
             .addTotalNetWeight(freezeBalanceContract.getFrozenBalance() / 1000_000L);
         break;
       case CPU:
-        long currentFrozenBalanceForCpu = accountCapsule.getAccountResource().getFrozenBalanceForCpu()
+        long currentFrozenBalanceForCpu = accountCapsule.getAccountResource()
+            .getFrozenBalanceForCpu()
             .getFrozenBalance();
-        long newFrozenBalanceForCpu = freezeBalanceContract.getFrozenBalance() + currentFrozenBalanceForCpu;
+        long newFrozenBalanceForCpu =
+            freezeBalanceContract.getFrozenBalance() + currentFrozenBalanceForCpu;
 
         Frozen newFrozenForCpu = Frozen.newBuilder()
             .setFrozenBalance(newFrozenBalanceForCpu)
@@ -93,8 +94,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-
-    ret.setStatus(fee, code.SUCESS);
+    ret.setStatus(fee, code.SUCCESS);
 
     return true;
   }
@@ -164,14 +164,14 @@ public class FreezeBalanceActuator extends AbstractActuator {
               + "and more than " + minFrozenTime + " days");
     }
 
-
     switch (freezeBalanceContract.getResource()) {
       case BANDWIDTH:
         break;
       case CPU:
         break;
-      default: throw new ContractValidateException(
-          "ResourceCode error,valid ResourceCode[BANDWIDTH、CPU]");
+      default:
+        throw new ContractValidateException(
+            "ResourceCode error,valid ResourceCode[BANDWIDTH、CPU]");
     }
 
     return true;

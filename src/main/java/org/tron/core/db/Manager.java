@@ -71,9 +71,11 @@ import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
+import org.tron.core.exception.ReceiptException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
@@ -82,6 +84,7 @@ import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Result;
 
 @Slf4j
 @Component
@@ -519,10 +522,11 @@ public class Manager {
   }
 
   void validateDup(TransactionCapsule transactionCapsule) throws DupTransactionException {
-      if (getTransactionStore().getUnchecked(transactionCapsule.getTransactionId().getBytes()) != null) {
-        logger.debug(ByteArray.toHexString(transactionCapsule.getTransactionId().getBytes()));
-        throw new DupTransactionException("dup trans");
-      }
+    if (getTransactionStore().getUnchecked(transactionCapsule.getTransactionId().getBytes())
+        != null) {
+      logger.debug(ByteArray.toHexString(transactionCapsule.getTransactionId().getBytes()));
+      throw new DupTransactionException("dup trans");
+    }
   }
 
   /**
@@ -531,7 +535,7 @@ public class Manager {
   public boolean pushTransactions(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, DupTransactionException, TaposException,
-      TooBigTransactionException, TransactionExpirationException {
+      TooBigTransactionException, TransactionExpirationException, ReceiptException, TransactionTraceException {
 
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
@@ -619,8 +623,8 @@ public class Manager {
 
   private void applyBlock(BlockCapsule block) throws ContractValidateException,
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
-      TransactionExpirationException, TooBigTransactionException, DupTransactionException,
-      TaposException, ValidateScheduleException {
+      TransactionExpirationException, TooBigTransactionException, DupTransactionException, ReceiptException,
+      TaposException, ValidateScheduleException, TransactionTraceException {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
@@ -630,7 +634,7 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       ValidateScheduleException, AccountResourceInsufficientException, TaposException,
       TooBigTransactionException, DupTransactionException, TransactionExpirationException,
-      NonCommonBlockException {
+      NonCommonBlockException, ReceiptException, TransactionTraceException {
     Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
     try {
       binaryTree =
@@ -671,6 +675,8 @@ public class Manager {
             | TaposException
             | DupTransactionException
             | TransactionExpirationException
+            | TransactionTraceException
+            | ReceiptException
             | TooBigTransactionException
             | ValidateScheduleException e) {
           logger.warn(e.getMessage(), e);
@@ -727,8 +733,8 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
       TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException,
-      BadNumberBlockException, BadBlockException, NonCommonBlockException {
-  try (PendingManager pm = new PendingManager(this)) {
+      BadNumberBlockException, BadBlockException, NonCommonBlockException, ReceiptException, TransactionTraceException {
+    try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
         if (!block.validateSignature()) {
@@ -829,7 +835,8 @@ public class Manager {
     for (int i = 1; i < slot; ++i) {
       if (!witnessController.getScheduledWitness(i).equals(block.getWitnessAddress())) {
         WitnessCapsule w =
-            this.witnessStore.getUnchecked(StringUtil.createDbKey(witnessController.getScheduledWitness(i)));
+            this.witnessStore
+                .getUnchecked(StringUtil.createDbKey(witnessController.getScheduledWitness(i)));
         w.setTotalMissed(w.getTotalMissed() + 1);
         this.witnessStore.put(w.createDbKey(), w);
         logger.info(
@@ -937,9 +944,9 @@ public class Manager {
    * Process transaction.
    */
   public boolean processTransaction(final TransactionCapsule trxCap, Block block)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException,
+      throws ValidateSignatureException, ContractValidateException, ContractExeException, ReceiptException,
       AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException,
-      DupTransactionException, TaposException {
+      DupTransactionException, TaposException, TransactionTraceException {
 
     if (trxCap == null) {
       return false;
@@ -958,38 +965,39 @@ public class Manager {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    TransactionTrace trace = new TransactionTrace(trxCap);
-    trace.init();
-
+    TransactionTrace trace = new TransactionTrace(trxCap, this);
 
     DepositImpl deposit = DepositImpl.createRoot(this);
     Runtime runtime = new Runtime(trace, block, deposit,
         new ProgramInvokeFactoryImpl());
     consumeBandwidth(trxCap, runtime.getResult().getRet());
 
-    runtime.init();
-        
+    // init
+    trace.init();
     //exec
     trace.exec(runtime);
 
     //check SR's bill and ours.
-    if(block != null) {
+    if (block != null) {
       trace.checkBill();
     }
 
-    trace.finalize();
+    trace.pay();
 
     if (runtime.getResult().getException() != null) {
       throw new RuntimeException("Runtime exe failed!");
     }
-    // todo judge result in runtime same as block, trx, recept
-    // todo 一个账户只能一个合约账户
+    // todo judge result in runtime same as block,trx,recipt
+    TransactionResultCapsule resultCapsule = new TransactionResultCapsule(
+        Result.newBuilder().setReceipt(trace.getReceipt().getReceipt()).build());
+    trxCap.setResult(resultCapsule);
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
     transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());
     transactionInfoCapsule.setFee(runtime.getResult().getRet().getFee());
     transactionInfoCapsule.setContractResult(runtime.getResult().getHReturn());
     transactionInfoCapsule.setContractAddress(runtime.getResult().getContractAddress());
+    transactionInfoCapsule.setResult(resultCapsule);
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfoCapsule);
 
     return true;
@@ -1013,7 +1021,7 @@ public class Manager {
   public synchronized BlockCapsule generateBlock(
       final WitnessCapsule witnessCapsule, final long when, final byte[] privateKey)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException {
+      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, ReceiptException, TransactionTraceException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
@@ -1156,7 +1164,7 @@ public class Manager {
   public void processBlock(BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
-      DupTransactionException, TransactionExpirationException, ValidateScheduleException {
+      DupTransactionException, TransactionExpirationException, ValidateScheduleException, ReceiptException, TransactionTraceException {
     // todo set revoking db max size.
 
     // checkWitness
