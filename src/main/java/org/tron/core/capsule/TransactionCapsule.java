@@ -464,8 +464,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return resultBytesSize;
   }
 
-  public long getEstimatedTransactionSize(TransactionCapsule trx){
-    return trx.getSerializedSize() + getTransactionResultEstimatedSize(trx);
+  public long getEstimatedTransactionSize(){
+    return this.transaction.getSerializedSize() + getTransactionResultEstimatedSize(this);
   }
 
   @Override

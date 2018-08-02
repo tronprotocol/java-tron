@@ -57,7 +57,7 @@ public class BandwidthProcessor extends ResourceProcessor {
         trx.getInstance().getRawData().getContractList();
 
     for (Contract contract : contracts) {
-      long bytes = trx.getEstimatedTransactionSize(trx);
+      long bytes = trx.getEstimatedTransactionSize();
       logger.debug("trxId {},bandwidth cost :{}", trx.getTransactionId(), bytes);
       byte[] address = TransactionCapsule.getOwner(contract);
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
