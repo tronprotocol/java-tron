@@ -988,16 +988,19 @@ public class Manager {
       throw new RuntimeException("Runtime exe failed!");
     }
     // todo judge result in runtime same as block,trx,recipt
-    TransactionResultCapsule resultCapsule = new TransactionResultCapsule(
-        Result.newBuilder().setReceipt(trace.getReceipt().getReceipt()).build());
-    trxCap.setResult(resultCapsule);
+
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
     transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());
     transactionInfoCapsule.setFee(runtime.getResult().getRet().getFee());
     transactionInfoCapsule.setContractResult(runtime.getResult().getHReturn());
     transactionInfoCapsule.setContractAddress(runtime.getResult().getContractAddress());
-    transactionInfoCapsule.setResult(resultCapsule);
+    if (block != null) {
+      TransactionResultCapsule resultCapsule = new TransactionResultCapsule(
+          Result.newBuilder().setReceipt(trace.getReceipt().getReceipt()).build());
+      trxCap.setResult(resultCapsule);
+      transactionInfoCapsule.setResult(resultCapsule);
+    }
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfoCapsule);
 
     return true;
