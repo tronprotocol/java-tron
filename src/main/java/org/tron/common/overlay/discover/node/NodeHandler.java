@@ -98,6 +98,7 @@ public class NodeHandler {
     this.node = node;
     this.nodeManager = nodeManager;
     this.inetSocketAddress = new InetSocketAddress(node.getHost(), node.getPort());
+    this.nodeStatistics = new NodeStatistics(node);
     changeState(State.Discovered);
   }
 
@@ -126,9 +127,6 @@ public class NodeHandler {
   }
 
   public NodeStatistics getNodeStatistics() {
-    if (nodeStatistics == null) {
-      nodeStatistics = new NodeStatistics(node);
-    }
     return nodeStatistics;
   }
 

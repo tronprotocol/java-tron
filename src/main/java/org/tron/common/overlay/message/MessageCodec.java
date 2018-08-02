@@ -26,7 +26,6 @@ public class MessageCodec extends ByteToMessageDecoder {
     buffer.readBytes(encoded);
     try {
       Message msg = createMessage(encoded);
-      channel.getNodeStatistics().tronInMessage.add();
       channel.getNodeStatistics().tcpFlow.add(length);
       out.add(msg);
     } catch (Exception e) {

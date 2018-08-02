@@ -388,12 +388,14 @@ public class NodeManager implements EventHandler {
     int interval = 10;
     int maxCount = 10;
     MessageStatistics statistics = nodeHandler.getNodeStatistics().messageStatistics;
-    int count = statistics.discoverInPing.getCount(interval)
-              + statistics.discoverInPong.getCount(interval)
-              + statistics.discoverInFindNode.getCount(interval)
-              + statistics.discoverInNeighbours.getCount(interval);
+    int pingCount = statistics.discoverInPing.getCount(interval);
+    int pongCount = statistics.discoverInPong.getCount(interval);
+    int findNodeCount = statistics.discoverInFindNode.getCount(interval);
+    int neighboursCount = statistics.discoverInNeighbours.getCount(interval);
+    int count = pingCount + pongCount + findNodeCount + neighboursCount;
     if (count > maxCount){
-      logger.warn("UDP attack found: {} with count({})", nodeHandler, count);
+      logger.warn("UDP attack found: {} with total count({}), ping({}), pong({}), findNode({}), neighbours({})",
+          nodeHandler, count, pingCount, pongCount, findNodeCount, neighboursCount);
       badNodes.put(nodeHandler.getInetSocketAddress(), nodeHandler);
       table.dropNode(nodeHandler.getNode());
     }

@@ -82,5 +82,6 @@ public class MessageHandler extends SimpleChannelInboundHandler<UdpEvent>
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
     logger.info("exception caught, {} {}", ctx.channel().remoteAddress(), cause.getMessage());
     ctx.close();
+    cause.printStackTrace();
   }
 }

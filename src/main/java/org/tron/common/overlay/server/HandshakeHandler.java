@@ -37,6 +37,7 @@ import org.tron.common.overlay.message.P2pMessage;
 import org.tron.common.overlay.message.P2pMessageFactory;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -119,7 +120,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     HelloMessage message = new HelloMessage(nodeManager.getPublicHomeNode(), time,
             manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId());
     ctx.writeAndFlush(message.getSendData());
-    channel.getNodeStatistics().p2pOutHello.add();
+    channel.getNodeStatistics().messageStatistics.addTcpInMessage(MessageTypes.P2P_HELLO);
     logger.info("Handshake Send to {}, {} ", ctx.channel().remoteAddress(), message);
   }
 
@@ -156,7 +157,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
     ((PeerConnection)channel).setHelloMessage(msg);
 
-    channel.getNodeStatistics().p2pInHello.add();
+    channel.getNodeStatistics().messageStatistics.addTcpOutMessage(MessageTypes.P2P_HELLO);
 
     channel.publicHandshakeFinished(ctx, msg);
     if (!channelManager.processPeer(channel)) {
