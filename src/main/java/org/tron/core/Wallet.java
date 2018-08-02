@@ -19,6 +19,7 @@
 package org.tron.core;
 
 import com.google.protobuf.ByteString;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +43,7 @@ import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
@@ -734,7 +736,7 @@ public class Wallet {
   }
 
   public Transaction triggerContract(TriggerSmartContract triggerSmartContract,
-      TransactionCapsule trxCap) {
+      TransactionCapsule trxCap, TransactionExtention.Builder builder) {
 
     ContractStore contractStore = dbManager.getContractStore();
     byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
@@ -764,7 +766,8 @@ public class Wallet {
 
         ProgramResult result = runtime.getResult();
         TransactionResultCapsule ret = new TransactionResultCapsule();
-        ret.setConstantResult(result.getHReturn());
+        builder.addConstantResult(ByteString.copyFrom(result.getHReturn()));
+        //ret.setConstantResult(result.getHReturn());
         ret.setStatus(0, code.SUCCESS);
         trxCap.setResult(ret);
         return trxCap.getInstance();
