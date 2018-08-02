@@ -30,10 +30,12 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
+import org.tron.core.exception.ReceiptException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateScheduleException;
@@ -95,8 +97,12 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("TooBigTransaction exception," + e.getMessage());
     } catch (TransactionExpirationException e) {
       throw new BadBlockException("Expiration exception," + e.getMessage());
+    } catch (ReceiptException e) {
+      throw new BadBlockException("Receipt exception," + e.getMessage());
     } catch (BadNumberBlockException e) {
       throw new BadBlockException("bad number exception," + e.getMessage());
+    } catch (TransactionTraceException e) {
+      throw new BadBlockException("TransactionTrace Exception," + e.getMessage());
     }
 
   }
@@ -113,7 +119,7 @@ public class NodeDelegateImpl implements NodeDelegate {
     }
     try {
       dbManager.pushTransactions(trx);
-    } catch (ContractSizeNotEqualToOneException e){
+    } catch (ContractSizeNotEqualToOneException e) {
       logger.info("Contract validate failed" + e.getMessage());
       throw new BadTransactionException();
     } catch (ContractValidateException e) {
@@ -136,13 +142,19 @@ public class NodeDelegateImpl implements NodeDelegate {
     } catch (TaposException e) {
       logger.info("tapos error" + e.getMessage());
       return false;
+    } catch (ReceiptException e) {
+      logger.info("Receipt exception," + e.getMessage());
     } catch (TooBigTransactionException e) {
       logger.info("too big transaction" + e.getMessage());
       return false;
     } catch (TransactionExpirationException e) {
       logger.info("expiration transaction" + e.getMessage());
       return false;
+    } catch (TransactionTraceException e) {
+      logger.info("TransactionTrace Exception" + e.getMessage());
+      return false;
     }
+
     return true;
   }
 

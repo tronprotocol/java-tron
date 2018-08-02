@@ -36,7 +36,7 @@ public class VoteWitnessActuator extends AbstractActuator {
     try {
       VoteWitnessContract voteContract = contract.unpack(VoteWitnessContract.class);
       countVoteAccount(voteContract);
-      ret.setStatus(fee, code.SUCESS);
+      ret.setStatus(fee, code.SUCCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
@@ -140,7 +140,8 @@ public class VoteWitnessActuator extends AbstractActuator {
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
 
     if (!votesStore.has(ownerAddress)) {
-      votesCapsule = new VotesCapsule(voteContract.getOwnerAddress(), accountCapsule.getVotesList());
+      votesCapsule = new VotesCapsule(voteContract.getOwnerAddress(),
+          accountCapsule.getVotesList());
     } else {
       votesCapsule = votesStore.get(ownerAddress);
     }

@@ -498,6 +498,7 @@ public class Wallet {
 
     return builder.build();
   }
+
   public AssetIssueList getAssetIssueList() {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     dbManager.getAssetIssueStore().getAllAssetIssues()
@@ -764,7 +765,7 @@ public class Wallet {
         ProgramResult result = runtime.getResult();
         TransactionResultCapsule ret = new TransactionResultCapsule();
         ret.setConstantResult(result.getHReturn());
-        ret.setStatus(0, code.SUCESS);
+        ret.setStatus(0, code.SUCCESS);
         trxCap.setResult(ret);
         return trxCap.getInstance();
       }
@@ -812,11 +813,11 @@ public class Wallet {
 
       int inputCount = entry.getInputsCount();
       StringBuffer sb = new StringBuffer();
-      sb.append(entry.getName().toStringUtf8());
+      sb.append(entry.getName());
       sb.append("(");
       for (int k = 0; k < inputCount; k++) {
         ABI.Entry.Param param = entry.getInputs(k);
-        sb.append(param.getType().toStringUtf8());
+        sb.append(param.getType());
         if (k + 1 < inputCount) {
           sb.append(",");
         }

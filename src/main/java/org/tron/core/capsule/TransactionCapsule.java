@@ -363,21 +363,24 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   // todo mv this static function to capsule util
-  public static long getCpuLimitInTrx(Transaction.Contract contract) {
+  public static long getCallValue(Transaction.Contract contract) {
     int cpuForTrx;
     try {
       Any contractParameter = contract.getParameter();
+      long callValue;
       switch (contract.getType()) {
         case TriggerSmartContract:
-          return contractParameter.unpack(TriggerSmartContract.class).getCpuLimitInTrx();
+          return contractParameter.unpack(TriggerSmartContract.class).getCallValue();
+
         case CreateSmartContract:
-          return contractParameter.unpack(CreateSmartContract.class).getCpuLimitInTrx();
+          return contractParameter.unpack(CreateSmartContract.class).getNewContract()
+              .getCallValue();
         default:
-          return 0;
+          return 0L;
       }
     } catch (Exception ex) {
       logger.error(ex.getMessage());
-      return 0;
+      return 0L;
     }
   }
 

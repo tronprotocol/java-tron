@@ -17,7 +17,6 @@
  */
 package org.tron.common.runtime.vm.program;
 
-import com.google.protobuf.ByteString;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
 import org.tron.common.runtime.vm.program.listener.ProgramListener;
@@ -34,6 +33,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.AccountType;
 
 public class Storage implements Deposit, ProgramListenerAware {
 
@@ -62,8 +62,7 @@ public class Storage implements Deposit, ProgramListenerAware {
   }
 
   @Override
-  public AccountCapsule createAccount(byte[] address, ByteString accountName,
-      Protocol.AccountType type) {
+  public AccountCapsule createAccount(byte[] address, String accountName, AccountType type) {
     return deposit.createAccount(address, accountName, type);
   }
 

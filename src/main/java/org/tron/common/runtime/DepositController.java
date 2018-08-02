@@ -91,7 +91,8 @@ public class DepositController {
     depositQueue.put(currentDeposit);
     for (TransactionCapsule trxCap : block.getTransactions()) {
       Deposit trxDeposit = currentDeposit.newDepositChild();
-      Runtime runtime = new Runtime(new TransactionTrace(trxCap), block.getInstance(), trxDeposit,
+      Runtime runtime = new Runtime(new TransactionTrace(trxCap, trxDeposit.getDbManager()),
+          block.getInstance(), trxDeposit,
           programInvokeFactory);
       runtime.init();
       runtime.execute();

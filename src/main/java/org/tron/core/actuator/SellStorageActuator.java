@@ -44,7 +44,7 @@ public class SellStorageActuator extends AbstractActuator {
 
     storageMarket.sellStorage(accountCapsule, bytes);
 
-    ret.setStatus(fee, code.SUCESS);
+    ret.setStatus(fee, code.SUCCESS);
 
     return true;
   }

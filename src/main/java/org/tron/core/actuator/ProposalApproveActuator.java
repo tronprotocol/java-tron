@@ -40,7 +40,7 @@ public class ProposalApproveActuator extends AbstractActuator {
         proposalCapsule.removeApproval(committeeAddress);
       }
       dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
-      ret.setStatus(fee, code.SUCESS);
+      ret.setStatus(fee, code.SUCCESS);
     } catch (ItemNotFoundException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);

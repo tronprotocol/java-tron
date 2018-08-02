@@ -48,7 +48,7 @@ public class UpdateAssetActuator extends AbstractActuator {
       assetIssueCapsule.setDescription(newDescription);
       assetIssueStore.put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
 
-      ret.setStatus(fee, code.SUCESS);
+      ret.setStatus(fee, code.SUCCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);

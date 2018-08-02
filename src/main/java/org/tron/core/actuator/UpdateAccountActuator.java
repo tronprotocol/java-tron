@@ -42,7 +42,7 @@ public class UpdateAccountActuator extends AbstractActuator {
     account.setAccountName(accountUpdateContract.getAccountName().toByteArray());
     accountStore.put(ownerAddress, account);
 //    accountIndexStore.put(account);
-    ret.setStatus(fee, code.SUCESS);
+    ret.setStatus(fee, code.SUCCESS);
 
     return true;
   }

@@ -27,6 +27,7 @@ import org.tron.core.db.WitnessStore;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.AccountType;
 
 /**
  * @author Guo Yonggang
@@ -127,15 +128,27 @@ public class DepositImpl implements Deposit {
   }
 
   @Override
-  public synchronized AccountCapsule createAccount(byte[] address, ByteString accountName,
-      Protocol.AccountType type) {
+  public AccountCapsule createAccount(byte[] address, String accountName, AccountType type) {
     Key key = new Key(address);
-    AccountCapsule account = new AccountCapsule(ByteString.copyFrom(address), accountName,
+    AccountCapsule account = new AccountCapsule(ByteString.copyFrom(address),
+        ByteString.copyFromUtf8(accountName),
         type);
 
     accounCache.put(key, new Value(account.getData(), Type.VALUE_TYPE_CREATE));
     return account;
+//    return null;
   }
+
+//  @Override
+//  public synchronized AccountCapsule createAccount(byte[] address, ByteString accountName,
+//      Protocol.AccountType type) {
+//    Key key = new Key(address);
+//    AccountCapsule account = new AccountCapsule(ByteString.copyFrom(address), accountName,
+//        type);
+//
+//    accounCache.put(key, new Value(account.getData(), Type.VALUE_TYPE_CREATE));
+//    return account;
+//  }
 
   @Override
   public synchronized AccountCapsule getAccount(byte[] address) {

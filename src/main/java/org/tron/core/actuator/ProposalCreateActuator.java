@@ -51,7 +51,7 @@ public class ProposalCreateActuator extends AbstractActuator {
       dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
       dbManager.getDynamicPropertiesStore().saveLatestProposalNum(id);
 
-      ret.setStatus(fee, code.SUCESS);
+      ret.setStatus(fee, code.SUCCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);

@@ -43,7 +43,7 @@ public class TransferActuator extends AbstractActuator {
         fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
       }
       dbManager.adjustBalance(ownerAddress, -fee);
-      ret.setStatus(fee, code.SUCESS);
+      ret.setStatus(fee, code.SUCCESS);
       dbManager.adjustBalance(ownerAddress, -amount);
       dbManager.adjustBalance(toAddress, amount);
     } catch (BalanceInsufficientException e) {
@@ -118,7 +118,8 @@ public class TransferActuator extends AbstractActuator {
       }
 
       if (balance < Math.addExact(amount, fee)) {
-        throw new ContractValidateException("Validate TransferContract error, balance is not sufficient.");
+        throw new ContractValidateException(
+            "Validate TransferContract error, balance is not sufficient.");
       }
 
       if (toAccount != null) {
@@ -128,8 +129,6 @@ public class TransferActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
-
-
 
     return true;
   }
