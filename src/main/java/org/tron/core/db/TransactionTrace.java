@@ -34,8 +34,6 @@ public class TransactionTrace {
 
   private StorageMarket storageMarket;
 
-  private AccountCapsule owner;
-
   private InternalTransaction.TrxType trxType;
 
   public TransactionCapsule getTrx() {
@@ -60,8 +58,6 @@ public class TransactionTrace {
     //TODO: set bill owner
     receipt = new ReceiptCapsule(Sha256Hash.ZERO_HASH);
     this.dbManager = dbManager;
-    this.owner = dbManager.getAccountStore()
-        .get(TransactionCapsule.getOwner(trx.getInstance().getRawData().getContract(0)));
     this.receipt = new ReceiptCapsule(Sha256Hash.ZERO_HASH);
 
     this.cpuProcessor = new CpuProcessor(this.dbManager);
@@ -88,6 +84,8 @@ public class TransactionTrace {
     } else {
       return;
     }
+    AccountCapsule owner = dbManager.getAccountStore()
+        .get(TransactionCapsule.getOwner(trx.getInstance().getRawData().getContract(0)));
     long balance = owner.getBalance();
 
     CpuProcessor cpuProcessor = new CpuProcessor(this.dbManager);
@@ -159,9 +157,11 @@ public class TransactionTrace {
    * pay actually bill(include CPU and storage).
    */
   public void pay() {
-    receipt.payCpuBill(owner, cpuProcessor, dbManager.getWitnessController().getHeadSlot());
-    receipt.payStorageBill(owner, storageMarket);
-    dbManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
+    AccountCapsule accountCapsule = dbManager.getAccountStore()
+        .get(TransactionCapsule.getOwner(trx.getInstance().getRawData().getContract(0)));
+    receipt.payCpuBill(accountCapsule, cpuProcessor, dbManager.getWitnessController().getHeadSlot());
+    receipt.payStorageBill(accountCapsule, storageMarket);
+    dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
   }
 
   /**
