@@ -1024,7 +1024,7 @@ public class Manager {
   public synchronized BlockCapsule generateBlock(
       final WitnessCapsule witnessCapsule, final long when, final byte[] privateKey)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, ReceiptException, TransactionTraceException {
+      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, TransactionTraceException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
@@ -1088,6 +1088,9 @@ public class Manager {
       } catch (ValidateSignatureException e) {
         logger.info("contract not processed during ValidateSignatureException");
         logger.debug(e.getMessage(), e);
+      } catch (ReceiptException e) {
+        logger.info("receipt exception: {}", e.getMessage());
+        logger.debug(e.getMessage(), e);
       }
     }
 
@@ -1120,6 +1123,9 @@ public class Manager {
       logger.info("block exception");
     } catch (NonCommonBlockException e) {
       logger.info("non common exception");
+    } catch (ReceiptException e) {
+      logger.info("receipt exception: {}", e.getMessage());
+      logger.debug(e.getMessage(), e);
     }
 
     return null;
