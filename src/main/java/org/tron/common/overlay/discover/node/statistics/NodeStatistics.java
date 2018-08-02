@@ -33,39 +33,20 @@ public class NodeStatistics {
   private final long MIN_DATA_LENGTH = Args.getInstance().getReceiveTcpMinDataLength();
 
   private boolean isPredefined = false;
-
   private int persistedReputation = 0;
-
   private int disconnectTimes = 0;
-
-  // discovery stat
-  public final MessageCountStatistics discoverInPing = new MessageCountStatistics();
-  public final MessageCountStatistics discoverOutPing = new MessageCountStatistics();
-  public final MessageCountStatistics discoverInPong = new MessageCountStatistics();
-  public final MessageCountStatistics discoverOutPong = new MessageCountStatistics();
-  public final MessageCountStatistics discoverInFind = new MessageCountStatistics();
-  public final MessageCountStatistics discoverOutFind = new MessageCountStatistics();
-  public final MessageCountStatistics discoverInNeighbours = new MessageCountStatistics();
-  public final MessageCountStatistics discoverOutNeighbours = new MessageCountStatistics();
-
-  public final SimpleStatter discoverMessageLatency;
-  public final AtomicLong lastPongReplyTime = new AtomicLong(0l); // in milliseconds
-
-  //  stat
-  public final MessageCountStatistics p2pInHello = new MessageCountStatistics();
-  public final MessageCountStatistics p2pOutHello = new MessageCountStatistics();
-  public final MessageCountStatistics tronInMessage = new MessageCountStatistics();
-  public final MessageCountStatistics tronOutMessage = new MessageCountStatistics();
-
-  public final MessageCountStatistics p2pHandShake = new MessageCountStatistics();
-
   private ReasonCode tronLastRemoteDisconnectReason = null;
   private ReasonCode tronLastLocalDisconnectReason = null;
   private long lastDisconnectedTime = 0;
   private long firstDisconnectedTime = 0;
 
-  //tcp flow stat
-  public final MessageCountStatistics tcpFlow = new MessageCountStatistics();
+  public final MessageStatistics messageStatistics = new MessageStatistics();
+  public final MessageCount p2pHandShake = new MessageCount();
+  public final MessageCount tcpFlow = new MessageCount();
+
+  public final SimpleStatter discoverMessageLatency;
+  public final AtomicLong lastPongReplyTime = new AtomicLong(0l); // in milliseconds
+
 
 
   public NodeStatistics(Node node) {
@@ -76,16 +57,18 @@ public class NodeStatistics {
     int discoverReput = 0;
 
     discoverReput +=
-        min(discoverInPong.getTotalCount(), 1) * (discoverOutPing.getTotalCount() == discoverInPong.getTotalCount() ? 50 : 1);
+        min(messageStatistics.discoverInPong.getTotalCount(), 1) * (
+            messageStatistics.discoverOutPing.getTotalCount() == messageStatistics.discoverInPong.getTotalCount() ? 50 : 1);
 
     discoverReput +=
-        min(discoverInNeighbours.getTotalCount(), 1) * (discoverOutFind.getTotalCount() == discoverInNeighbours.getTotalCount() ? 50 : 1);
+        min(messageStatistics.discoverInNeighbours.getTotalCount(), 1) * (
+            messageStatistics.discoverOutFindNode.getTotalCount() == messageStatistics.discoverInNeighbours.getTotalCount() ? 50 : 1);
 
     discoverReput += (int)discoverMessageLatency.getAvrg() == 0 ? 0 : 1000 / discoverMessageLatency.getAvrg();
 
     int reput = 0;
     reput += p2pHandShake.getTotalCount() > 0 ? 20 : 0;
-    reput += min(tronInMessage.getTotalCount(), 10) * 3;
+    reput += min(messageStatistics.tronInMessage.getTotalCount(), 10) * 3;
 
     if (wasDisconnected()) {
       if (tronLastLocalDisconnectReason == null && tronLastRemoteDisconnectReason == null) {
@@ -217,13 +200,13 @@ public class NodeStatistics {
   @Override
   public String toString() {
     return "NodeStat[reput: " + getReputation() + "(" + persistedReputation + "), discover: " +
-        discoverInPong + "/" + discoverOutPing + " " +
-        discoverOutPong + "/" + discoverInPing + " " +
-        discoverInNeighbours + "/" + discoverOutFind + " " +
-        discoverOutNeighbours + "/" + discoverInFind + " " +
+        messageStatistics.discoverInPong + "/" + messageStatistics.discoverOutPing + " " +
+        messageStatistics.discoverOutPong + "/" + messageStatistics.discoverInPing + " " +
+        messageStatistics.discoverInNeighbours + "/" + messageStatistics.discoverOutFindNode + " " +
+        messageStatistics.discoverOutNeighbours + "/" + messageStatistics.discoverInFindNode + " " +
         ((int) discoverMessageLatency.getAvrg()) + "ms" +
-        ", p2p: " + p2pHandShake + "/" + p2pInHello + "/" + p2pOutHello + " " +
-        ", tron: " + tronInMessage + "/" + tronOutMessage + " " +
+        ", p2p: " + p2pHandShake + "/" + messageStatistics.p2pInHello + "/" + messageStatistics.p2pOutHello + " " +
+        ", tron: " + messageStatistics.tronInMessage + "/" + messageStatistics.tronOutMessage + " " +
         (wasDisconnected() ? "X " + disconnectTimes : "") +
         (tronLastLocalDisconnectReason != null ? ("<=" + tronLastLocalDisconnectReason) : " ") +
         (tronLastRemoteDisconnectReason != null ? ("=>" + tronLastRemoteDisconnectReason) : " ") +
