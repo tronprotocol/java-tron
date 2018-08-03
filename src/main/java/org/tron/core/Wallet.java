@@ -291,10 +291,33 @@ public class Wallet {
   public TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
       ContractType contractType) throws ContractValidateException {
     TransactionCapsule trx = new TransactionCapsule(message, contractType);
-    List<Actuator> actList = ActuatorFactory.createActuator(trx, dbManager);
-    for (Actuator act : actList) {
-      act.validate();
+    if (contractType != ContractType.CreateSmartContract
+        && contractType != ContractType.TriggerSmartContract) {
+      List<Actuator> actList = ActuatorFactory.createActuator(trx, dbManager);
+      for (Actuator act : actList) {
+        act.validate();
+      }
     }
+
+    if (contractType == ContractType.CreateSmartContract) {
+      // insure one owner just have one contract
+      CreateSmartContract contract = ContractCapsule
+          .getSmartContractFromTransaction(trx.getInstance());
+      byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
+      if (dbManager.getAccountContractIndexStore().get(ownerAddress) != null) {
+        throw new ContractValidateException(
+            "Trying to create second contract with one account: address: " + Wallet
+                .encode58Check(ownerAddress));
+      }
+
+//        // insure the new contract address haven't exist
+//        if (deposit.getAccount(contractAddress) != null) {
+//          logger.error("Trying to create a contract with existing contract address: " + Wallet
+//              .encode58Check(contractAddress));
+//          return;
+//        }
+    }
+
     try {
       BlockCapsule headBlock = null;
       List<BlockCapsule> blockList = dbManager.getBlockStore().getBlockByLatestNum(1);
