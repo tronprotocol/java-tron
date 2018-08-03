@@ -31,14 +31,18 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ReceiptException;
+import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.AccountResource;
+import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.ResourceReceipt;
+import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -54,6 +58,7 @@ public class TransactionTraceTest {
   private static Manager dbManager;
 
   private static ByteString ownerAddress = ByteString.copyFrom(ByteArray.fromInt(1));
+  private static ByteString contractAddress = ByteString.copyFrom(ByteArray.fromInt(2));
 
   private long cpuUsage;
   private long storageUsage;
@@ -139,10 +144,17 @@ public class TransactionTraceTest {
   public void testPay() {
     Account account = Account.newBuilder()
         .setAddress(ownerAddress)
+        .setBalance(1000000)
         .setAccountResource(
             AccountResource.newBuilder()
                 .setCpuUsage(this.cpuUsage)
+                .setFrozenBalanceForCpu(
+                    Frozen.newBuilder()
+                        .setExpireTime(100000)
+                        .setFrozenBalance(100000)
+                        .build())
                 .setStorageUsage(this.storageUsage)
+                .setStorageLimit(3000)
                 .build()
         )
         .build();
@@ -150,6 +162,21 @@ public class TransactionTraceTest {
     AccountCapsule accountCapsule = new AccountCapsule(account);
 
     dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
+
+    TriggerSmartContract contract = TriggerSmartContract.newBuilder()
+        .setContractAddress(contractAddress)
+        .setOwnerAddress(ownerAddress)
+        .build();
+
+    SmartContract smartContract = SmartContract.newBuilder()
+        .setOriginAddress(ownerAddress)
+        .setContractAddress(contractAddress)
+        .build();
+
+    CreateSmartContract createSmartContract = CreateSmartContract.newBuilder()
+        .setOwnerAddress(ownerAddress)
+        .setNewContract(smartContract)
+        .build();
 
     Transaction transaction = Transaction.newBuilder()
         .addRet(
@@ -164,15 +191,14 @@ public class TransactionTraceTest {
             raw.newBuilder()
                 .addContract(
                     Contract.newBuilder()
-                        .setParameter(Any.pack(
-                            TriggerSmartContract.newBuilder()
-                                .setOwnerAddress(ownerAddress)
-                                .build()))
+                        .setParameter(Any.pack(contract))
                         .setType(ContractType.TriggerSmartContract)
                         .build())
                 .build()
         )
         .build();
+
+    dbManager.getContractStore().put(contractAddress.toByteArray(), new ContractCapsule(smartContract));
 
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
 
@@ -181,6 +207,8 @@ public class TransactionTraceTest {
     transactionTrace.setBill(this.cpuUsage, this.storageUsage);
 
     transactionTrace.pay();
+
+    AccountCapsule accountCapsule1 = dbManager.getAccountStore().get(ownerAddress.toByteArray());
   }
 
   /**

@@ -4,8 +4,10 @@ import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_PRECOMPILED_TYPE;
 
+import com.google.protobuf.ByteString;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.InternalTransaction;
+import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
@@ -157,14 +159,33 @@ public class TransactionTrace {
    * pay actually bill(include CPU and storage).
    */
   public void pay() {
-    AccountCapsule accountCapsule = dbManager.getAccountStore()
-        .get(TransactionCapsule.getOwner(trx.getInstance().getRawData().getContract(0)));
+    byte[] originAccount;
+    byte[] callerAccount;
+
+    switch (trxType) {
+      case TRX_CONTRACT_CREATION_TYPE:
+        callerAccount = TransactionCapsule.getOwner(trx.getInstance().getRawData().getContract(0));
+        originAccount = callerAccount;
+        break;
+      case TRX_CONTRACT_CALL_TYPE:
+        TriggerSmartContract callContract = ContractCapsule
+            .getTriggerContractFromTransaction(trx.getInstance());
+        callerAccount = callContract.getOwnerAddress().toByteArray();
+
+        ContractCapsule contract = dbManager.getContractStore().get(callContract.getContractAddress().toByteArray());
+        originAccount = contract.getInstance().getOriginAddress().toByteArray();
+        break;
+      default:
+        return;
+    }
+
+    // originAccount Percent = 30%
+    int percent = 30;
 
     receipt
-        .payCpuBill(accountCapsule, cpuProcessor, dbManager.getWitnessController().getHeadSlot());
+        .payCpuBill(dbManager, originAccount, callerAccount, percent, cpuProcessor, dbManager.getWitnessController().getHeadSlot());
 
-    receipt.payStorageBill(accountCapsule, storageMarket);
-    dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
+    receipt.payStorageBill(dbManager, originAccount, callerAccount, percent, storageMarket);
   }
 
   /**
@@ -200,7 +221,8 @@ public class TransactionTrace {
                   + ", target cpu usage: "
                   + srReceipt.getCpuUsage()
                   + ", cpu usage percent: "
-                  + cpuUsagePercent);
+                  + cpuUsagePercent
+                  + "%");
         }
         this.receipt.setReceipt(ReceiptCapsule.copyReceipt(srReceipt));
       }
