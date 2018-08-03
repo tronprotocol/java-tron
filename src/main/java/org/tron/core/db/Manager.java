@@ -35,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
@@ -85,6 +86,7 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Result;
+import org.tron.protos.Protocol.TransactionInfo.Log;
 
 @Slf4j
 @Component
@@ -995,6 +997,8 @@ public class Manager {
     transactionInfoCapsule.setFee(runtime.getResult().getRet().getFee());
     transactionInfoCapsule.setContractResult(runtime.getResult().getHReturn());
     transactionInfoCapsule.setContractAddress(runtime.getResult().getContractAddress());
+    List<Log> logList = getLogsByLogInfoList(runtime.getResult().getLogInfoList());
+    transactionInfoCapsule.addAllLog(logList);
     if (block != null) {
       TransactionResultCapsule resultCapsule = new TransactionResultCapsule(
           Result.newBuilder().setReceipt(trace.getReceipt().getReceipt()).build());
@@ -1004,6 +1008,20 @@ public class Manager {
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfoCapsule);
 
     return true;
+  }
+
+  private List<Log> getLogsByLogInfoList(List<LogInfo> logInfos) {
+    List<Log> logList = Lists.newArrayList();
+    logInfos.forEach(logInfo -> {
+      List<ByteString> topics = Lists.newArrayList();
+      logInfo.getTopics().forEach(topic -> {
+        topics.add(ByteString.copyFrom(topic.getData()));
+      });
+      ByteString address = ByteString.copyFrom(logInfo.getAddress());
+      ByteString data = ByteString.copyFrom(logInfo.getData());
+      logList.add(Log.newBuilder().setAddress(address).addAllTopics(topics).setData(data).build());
+    });
+    return logList;
   }
 
 
