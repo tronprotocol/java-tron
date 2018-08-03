@@ -159,7 +159,10 @@ public class TransactionTrace {
   public void pay() {
     AccountCapsule accountCapsule = dbManager.getAccountStore()
         .get(TransactionCapsule.getOwner(trx.getInstance().getRawData().getContract(0)));
-    receipt.payCpuBill(accountCapsule, cpuProcessor, dbManager.getWitnessController().getHeadSlot());
+
+    receipt
+        .payCpuBill(accountCapsule, cpuProcessor, dbManager.getWitnessController().getHeadSlot());
+
     receipt.payStorageBill(accountCapsule, storageMarket);
     dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
   }
@@ -169,35 +172,39 @@ public class TransactionTrace {
    */
   public void checkBill() throws ReceiptException {
     if (trxType == TRX_CONTRACT_CREATION_TYPE || trxType == TRX_CONTRACT_CALL_TYPE) {
-      ReceiptCapsule srReceipt = new ReceiptCapsule(this.trx.getInstance().getRet(0).getReceipt(),
-          this.trx.getTransactionId());
 
-      if (this.receipt.getStorageDelta() != srReceipt.getStorageDelta()) {
-        throw new ReceiptException(
-            "Check bill exception, storage delta or fee not equal, current storage delta: "
-                + this.receipt.getStorageDelta()
-                + ", target storage delta: "
-                + srReceipt.getStorageDelta());
+      long adjustedCpuUsage = this.receipt.getCpuUsage();
+      double cpuUsagePercent = 0;
+      if (this.trx.getInstance().getRetCount() > 0) {
+        ReceiptCapsule srReceipt = new ReceiptCapsule(this.trx.getInstance().getRet(0).getReceipt(),
+            this.trx.getTransactionId());
+        if (this.receipt.getStorageDelta() != srReceipt.getStorageDelta()) {
+          throw new ReceiptException(
+              "Check bill exception, storage delta or fee not equal, current storage delta: "
+                  + this.receipt.getStorageDelta()
+                  + ", target storage delta: "
+                  + srReceipt.getStorageDelta());
+        }
+
+        adjustedCpuUsage = Math.abs(this.receipt.getCpuUsage() - srReceipt.getCpuUsage());
+
+        cpuUsagePercent = adjustedCpuUsage * 1.0 / srReceipt.getCpuUsage() * 100;
+
+        double percentRange = 30;
+        if (cpuUsagePercent > percentRange) {
+          throw new ReceiptException(
+              "Check bill exception, cpu usage or fee not equal(percent <="
+                  + percentRange
+                  + "%), current cpu usage: "
+                  + this.receipt.getCpuUsage()
+                  + ", target cpu usage: "
+                  + srReceipt.getCpuUsage()
+                  + ", cpu usage percent: "
+                  + cpuUsagePercent);
+        }
+        this.receipt.setReceipt(ReceiptCapsule.copyReceipt(srReceipt));
       }
 
-      long adjustedCpuUsage = Math.abs(this.receipt.getCpuUsage() - srReceipt.getCpuUsage());
-
-      double cpuUsagePercent = adjustedCpuUsage * 1.0 / srReceipt.getCpuUsage() * 100;
-
-      double percentRange = 30;
-      if (cpuUsagePercent > percentRange) {
-        throw new ReceiptException(
-            "Check bill exception, cpu usage or fee not equal(percent <="
-                + percentRange
-                + "%), current cpu usage: "
-                + this.receipt.getCpuUsage()
-                + ", target cpu usage: "
-                + srReceipt.getCpuUsage()
-                + ", cpu usage percent: "
-                + cpuUsagePercent);
-      }
-
-      this.receipt.setReceipt(ReceiptCapsule.copyReceipt(srReceipt));
     }
   }
 

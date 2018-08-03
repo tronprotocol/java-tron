@@ -35,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
@@ -85,6 +86,9 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Result;
+
+import org.tron.protos.Protocol.TransactionInfo.Log;
+
 
 @Slf4j
 @Component
@@ -988,19 +992,40 @@ public class Manager {
       throw new RuntimeException("Runtime exe failed!");
     }
     // todo judge result in runtime same as block,trx,recipt
-    TransactionResultCapsule resultCapsule = new TransactionResultCapsule(
-        Result.newBuilder().setReceipt(trace.getReceipt().getReceipt()).build());
-    trxCap.setResult(resultCapsule);
+
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
     transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());
     transactionInfoCapsule.setFee(runtime.getResult().getRet().getFee());
     transactionInfoCapsule.setContractResult(runtime.getResult().getHReturn());
     transactionInfoCapsule.setContractAddress(runtime.getResult().getContractAddress());
-    transactionInfoCapsule.setResult(resultCapsule);
+
+    List<Log> logList = getLogsByLogInfoList(runtime.getResult().getLogInfoList());
+    transactionInfoCapsule.addAllLog(logList);
+    if (block != null) {
+      TransactionResultCapsule resultCapsule = new TransactionResultCapsule(
+          Result.newBuilder().setReceipt(trace.getReceipt().getReceipt()).build());
+      trxCap.setResult(resultCapsule);
+      transactionInfoCapsule.setResult(resultCapsule);
+    }
+
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfoCapsule);
 
     return true;
+  }
+
+  private List<Log> getLogsByLogInfoList(List<LogInfo> logInfos) {
+    List<Log> logList = Lists.newArrayList();
+    logInfos.forEach(logInfo -> {
+      List<ByteString> topics = Lists.newArrayList();
+      logInfo.getTopics().forEach(topic -> {
+        topics.add(ByteString.copyFrom(topic.getData()));
+      });
+      ByteString address = ByteString.copyFrom(logInfo.getAddress());
+      ByteString data = ByteString.copyFrom(logInfo.getData());
+      logList.add(Log.newBuilder().setAddress(address).addAllTopics(topics).setData(data).build());
+    });
+    return logList;
   }
 
 
@@ -1021,7 +1046,9 @@ public class Manager {
   public synchronized BlockCapsule generateBlock(
       final WitnessCapsule witnessCapsule, final long when, final byte[] privateKey)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, ReceiptException, TransactionTraceException {
+
+      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, TransactionTraceException {
+
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
@@ -1085,6 +1112,9 @@ public class Manager {
       } catch (ValidateSignatureException e) {
         logger.info("contract not processed during ValidateSignatureException");
         logger.debug(e.getMessage(), e);
+      } catch (ReceiptException e) {
+        logger.info("receipt exception: {}", e.getMessage());
+        logger.debug(e.getMessage(), e);
       }
     }
 
@@ -1117,6 +1147,9 @@ public class Manager {
       logger.info("block exception");
     } catch (NonCommonBlockException e) {
       logger.info("non common exception");
+    } catch (ReceiptException e) {
+      logger.info("receipt exception: {}", e.getMessage());
+      logger.debug(e.getMessage(), e);
     }
 
     return null;

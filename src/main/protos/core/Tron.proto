@@ -220,7 +220,6 @@ message Transaction {
     }
     int64 fee = 1;
     code ret = 2;
-    bytes constant_result = 3;
     ResourceReceipt receipt = 4;
   }
 
@@ -250,6 +249,11 @@ message Transaction {
 }
 
 message TransactionInfo {
+  message Log {
+    bytes address = 1;
+    repeated bytes topics = 2;
+    bytes data = 3;
+  }
   bytes id = 1;
   int64 fee = 2;
   int64 blockNumber = 3;
@@ -257,7 +261,7 @@ message TransactionInfo {
   repeated bytes contractResult = 5;
   bytes contract_address = 6;
   Transaction.Result result = 7;
-  repeated bytes log = 8;
+  repeated Log log = 8;
 }
 
 message Transactions {

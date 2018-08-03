@@ -50,15 +50,6 @@ public class TransactionResultCapsule implements ProtoCapsule<Transaction.Result
     this.transactionResult = this.transactionResult.toBuilder().setFee(fee).build();
   }
 
-  public byte[] getConstantResult() {
-    return transactionResult.getConstantResult().toByteArray();
-  }
-
-  public void setConstantResult(byte[] constantResult) {
-    this.transactionResult = this.transactionResult.toBuilder()
-        .setConstantResult(ByteString.copyFrom(constantResult)).build();
-  }
-
   public void addFee(long fee) {
     this.transactionResult = this.transactionResult.toBuilder()
         .setFee(this.transactionResult.getFee() + fee).build();
