@@ -35,7 +35,7 @@ public class WitnessUpdateActuator extends AbstractActuator {
       final WitnessUpdateContract witnessUpdateContract = this.contract
           .unpack(WitnessUpdateContract.class);
       this.updateWitness(witnessUpdateContract);
-      ret.setStatus(fee, code.SUCCESS);
+      ret.setStatus(fee, code.SUCESS);
     } catch (final InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);

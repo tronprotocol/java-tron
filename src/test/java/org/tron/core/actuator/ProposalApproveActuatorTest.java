@@ -129,7 +129,7 @@ public class ProposalApproveActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.assertEquals(ret.getInstance().getRet(), code.SUCCESS);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
       ProposalCapsule proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
       Assert.assertNotNull(proposalCapsule);
       Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestProposalNum(), 1);
@@ -187,7 +187,7 @@ public class ProposalApproveActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.assertEquals(ret.getInstance().getRet(), code.SUCCESS);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
       try {
         proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
       } catch (ItemNotFoundException e) {
@@ -217,7 +217,7 @@ public class ProposalApproveActuatorTest {
     try {
       actuator2.validate();
       actuator2.execute(ret2);
-      Assert.assertEquals(ret.getInstance().getRet(), code.SUCCESS);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
       try {
         proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
       } catch (ItemNotFoundException e) {

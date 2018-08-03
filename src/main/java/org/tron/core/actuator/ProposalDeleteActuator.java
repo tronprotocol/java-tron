@@ -35,7 +35,7 @@ public class ProposalDeleteActuator extends AbstractActuator {
 
       proposalCapsule.setState(State.CANCELED);
       dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
-      ret.setStatus(fee, code.SUCCESS);
+      ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);

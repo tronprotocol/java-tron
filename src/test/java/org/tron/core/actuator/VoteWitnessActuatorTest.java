@@ -154,7 +154,7 @@ public class VoteWitnessActuatorTest {
       Assert.assertArrayEquals(ByteArray.fromHexString(WITNESS_ADDRESS),
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS)).getVotesList()
               .get(0).getVoteAddress().toByteArray());
-      Assert.assertEquals(ret.getInstance().getRet(), code.SUCCESS);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
       witnessController.updateWitness();
       WitnessCapsule witnessCapsule = witnessController
           .getWitnesseByAddress(StringUtil.hexString2ByteString(WITNESS_ADDRESS));
@@ -514,7 +514,7 @@ public class VoteWitnessActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS)).getVotesList()
               .get(0).getVoteAddress().toByteArray());
 
-      Assert.assertEquals(ret.getInstance().getRet(), code.SUCCESS);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
       witnessController.updateWitness();
       WitnessCapsule witnessCapsule = witnessController
           .getWitnesseByAddress(StringUtil.hexString2ByteString(WITNESS_ADDRESS));

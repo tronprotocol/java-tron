@@ -85,8 +85,6 @@ import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.Transaction.Result;
-
 import org.tron.protos.Protocol.TransactionInfo.Log;
 
 
@@ -989,7 +987,8 @@ public class Manager {
     trace.pay();
 
     if (runtime.getResult().getException() != null) {
-      throw new RuntimeException("Runtime exe failed :" + runtime.getResult().getException().getMessage());
+      throw new RuntimeException(
+          "Runtime exe failed :" + runtime.getResult().getException().getMessage());
     }
     // todo judge result in runtime same as block,trx,recipt
 
@@ -1002,12 +1001,13 @@ public class Manager {
 
     List<Log> logList = getLogsByLogInfoList(runtime.getResult().getLogInfoList());
     transactionInfoCapsule.addAllLog(logList);
-    if (block != null) {
-      TransactionResultCapsule resultCapsule = new TransactionResultCapsule(
-          Result.newBuilder().setReceipt(trace.getReceipt().getReceipt()).build());
-      trxCap.setResult(resultCapsule);
-      transactionInfoCapsule.setResult(resultCapsule);
-    }
+    //todo set receipt to info
+//    if (block != null) {
+//      TransactionResultCapsule resultCapsule = new TransactionResultCapsule(
+//          Result.newBuilder().setReceipt(trace.getReceipt().getReceipt()).build());
+//      trxCap.setResult(resultCapsule);
+//      transactionInfoCapsule.setResult(resultCapsule);
+//    }
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfoCapsule);
 
@@ -1048,7 +1048,6 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
 
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, TransactionTraceException {
-
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();

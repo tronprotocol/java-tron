@@ -37,6 +37,7 @@ import stest.tron.wallet.common.client.WalletClient;
 
 
 public class PublicMethed {
+
   Wallet wallet = new Wallet();
   //Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
 
@@ -497,7 +498,7 @@ public class PublicMethed {
     return true;
   }
 
-  public static AccountNetMessage getAccountNet(byte[] address,WalletGrpc.WalletBlockingStub
+  public static AccountNetMessage getAccountNet(byte[] address, WalletGrpc.WalletBlockingStub
       blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ByteString addressBs = ByteString.copyFrom(address);
@@ -533,7 +534,7 @@ public class PublicMethed {
     return walletClient.getAddress();
   }
 
-  public static boolean createAccount(byte[] ownerAddress,byte[] newAddress,String priKey,
+  public static boolean createAccount(byte[] ownerAddress, byte[] newAddress, String priKey,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
@@ -610,7 +611,7 @@ public class PublicMethed {
     }
   }
 
-  public static boolean approveProposal(byte[] ownerAddress, String priKey,long id,
+  public static boolean approveProposal(byte[] ownerAddress, String priKey, long id,
       boolean isAddApproval, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
@@ -656,7 +657,7 @@ public class PublicMethed {
     }
   }
 
-  public static boolean deleteProposal(byte[] ownerAddress, String priKey,long id,
+  public static boolean deleteProposal(byte[] ownerAddress, String priKey, long id,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
@@ -710,7 +711,7 @@ public class PublicMethed {
 
   }
 
-  public static boolean setAccountId(byte[] accountIdBytes,byte[] ownerAddress, String priKey,
+  public static boolean setAccountId(byte[] accountIdBytes, byte[] ownerAddress, String priKey,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
@@ -791,7 +792,7 @@ public class PublicMethed {
     return blockingStubFull.getAccountResource(request);
   }
 
-  public static boolean buyStorage(long quantity,byte[] address,
+  public static boolean buyStorage(long quantity, byte[] address,
       String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
@@ -803,7 +804,7 @@ public class PublicMethed {
     }
     final ECKey ecKey = temKey;
 
-    Contract. BuyStorageContract.Builder builder = Contract.BuyStorageContract.newBuilder();
+    Contract.BuyStorageContract.Builder builder = Contract.BuyStorageContract.newBuilder();
     ByteString byteAddress = ByteString.copyFrom(address);
     builder.setOwnerAddress(byteAddress).setQuant(quantity);
     Contract.BuyStorageContract contract = builder.build();
@@ -834,7 +835,7 @@ public class PublicMethed {
     }
   }
 
-  public static boolean sellStorage(long quantity,byte[] address,
+  public static boolean sellStorage(long quantity, byte[] address,
       String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
@@ -846,7 +847,7 @@ public class PublicMethed {
     }
     final ECKey ecKey = temKey;
 
-    Contract. SellStorageContract.Builder builder = Contract.SellStorageContract.newBuilder();
+    Contract.SellStorageContract.Builder builder = Contract.SellStorageContract.newBuilder();
     ByteString byteAddress = ByteString.copyFrom(address);
     builder.setOwnerAddress(byteAddress).setStorageBytes(quantity);
     Contract.SellStorageContract contract = builder.build();
@@ -930,12 +931,12 @@ public class PublicMethed {
       final Transaction.Builder transBuilder = Transaction.newBuilder();
       Transaction.raw.Builder rawBuilder = transactionExtention.getTransaction().getRawData()
           .toBuilder();
-      if (maxCpuLimit != null) {
-        rawBuilder.setMaxCpuUsage(maxCpuLimit);
-      }
-      if (maxStorageLimit != null) {
-        rawBuilder.setMaxStorageUsage(maxStorageLimit);
-      }
+//      if (maxCpuLimit != null) {
+//        rawBuilder.setMaxCpuUsage(maxCpuLimit);
+//      }
+//      if (maxStorageLimit != null) {
+//        rawBuilder.setMaxStorageUsage(maxStorageLimit);
+//      }
       if (maxFeeLimit != null) {
         rawBuilder.setFeeLimit(maxFeeLimit);
       }
@@ -974,7 +975,7 @@ public class PublicMethed {
     System.out.println(
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
     transaction = signTransaction(ecKey, transaction);
-    contractAddress = generateContractAddress(transaction,owner);
+    contractAddress = generateContractAddress(transaction, owner);
     System.out.println(
         "Your smart contract address will be: " + WalletClient.encode58Check(contractAddress));
 
@@ -1033,7 +1034,7 @@ public class PublicMethed {
         logger.error("No type!");
         return null;
       }
-      if (! type.equalsIgnoreCase("fallback") && null == inputs) {
+      if (!type.equalsIgnoreCase("fallback") && null == inputs) {
         logger.error("No inputs!");
         return null;
       }
@@ -1128,7 +1129,7 @@ public class PublicMethed {
     }
   }
 
-  public static byte[] generateContractAddress(Transaction trx,byte[] owneraddress) {
+  public static byte[] generateContractAddress(Transaction trx, byte[] owneraddress) {
 
     // get owner address
     // this address should be as same as the onweraddress in trx, DONNOT modify it
@@ -1146,7 +1147,7 @@ public class PublicMethed {
 
   }
 
-  public static SmartContract getContract(byte[] address,WalletGrpc
+  public static SmartContract getContract(byte[] address, WalletGrpc
       .WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ByteString byteString = ByteString.copyFrom(address);

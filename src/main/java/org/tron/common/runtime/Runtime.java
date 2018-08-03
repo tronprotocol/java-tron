@@ -341,7 +341,8 @@ public class Runtime {
       AccountCapsule creator = this.deposit
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
       long thisTxCPULimitInUs;
-      long maxCpuInUsByCreator = trx.getRawData().getMaxCpuUsage();
+      //todo remove maxCpuInUsBySender
+      long maxCpuInUsByCreator = 100000;
       long limitInDrop = trx.getRawData().getFeeLimit();
       long accountCPULimitInUs = getAccountCPULimitInUs(creator, limitInDrop,
           maxCpuInUsByCreator);
@@ -411,7 +412,8 @@ public class Runtime {
 
       // todo use default value for cpu max and storage max
       long thisTxCPULimitInUs;
-      long maxCpuInUsBySender = trx.getRawData().getMaxCpuUsage();
+      //todo remove maxCpuInUsBySender
+      long maxCpuInUsBySender = 100000;
       long limitInDrop = trx.getRawData().getFeeLimit();
       long accountCPULimitInUs = getAccountCPULimitInUs(creator, sender, contract,
           maxCpuInUsBySender, limitInDrop);
@@ -479,11 +481,7 @@ public class Runtime {
           // touchedAccounts.addAll(result.getTouchedAccounts());
           // check storage useage
           long usedStorageSize =
-              deposit.getBeforeRunStorageSize() - deposit.computeAfterRunStorageSize();
-          if (usedStorageSize > trx.getRawData().getMaxStorageUsage()) {
-            result.setException(Program.Exception.notEnoughStorage());
-            throw result.getException();
-          }
+              deposit.computeAfterRunStorageSize() - deposit.getBeforeRunStorageSize();
           spendUsage(usedStorageSize);
           if (executorType == ET_NORMAL_TYPE) {
             deposit.commit();
@@ -516,7 +514,7 @@ public class Runtime {
 //    ByteString originAddress = contract.getInstance().getOriginAddress();
 //    AccountCapsule origin = deposit.getAccount(originAddress.toByteArray());
     if (useedStorageSize <= 0) {
-      trace.setBill(cpuUsage, useedStorageSize);
+      trace.setBill(cpuUsage, 0);
       return;
     }
     byte[] callerAddressBytes = TransactionCapsule.getOwner(trx.getRawData().getContract(0));
