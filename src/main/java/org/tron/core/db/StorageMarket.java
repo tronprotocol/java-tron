@@ -36,6 +36,28 @@ public class StorageMarket {
     return out;
   }
 
+  private long exchange_to_supply2(boolean isTRX, long quant) {
+    logger.info("isTRX: " + isTRX);
+    long balance = isTRX ? dbManager.getDynamicPropertiesStore().getTotalStoragePool() :
+        dbManager.getDynamicPropertiesStore().getTotalStorageReserved();
+    logger.info("balance: " + balance);
+    long newBalance = balance - quant;
+    logger.info("balance - quant: " + (balance - quant));
+
+//    if (isTRX) {
+//      dbManager.getDynamicPropertiesStore().saveTotalStoragePool(newBalance);
+//    } else {
+//      dbManager.getDynamicPropertiesStore().saveTotalStorageReserved(newBalance);
+//    }
+
+    double issuedSupply = -supply * (1.0 - Math.pow(1.0 + (double) quant / newBalance, 0.0005));
+    logger.info("issuedSupply: " + issuedSupply);
+    long out = (long) issuedSupply;
+    supply += out;
+
+    return out;
+  }
+
   private long exchange_from_supply(boolean isTRX, long supplyQuant) {
     long balance = isTRX ? dbManager.getDynamicPropertiesStore().getTotalStoragePool() :
         dbManager.getDynamicPropertiesStore().getTotalStorageReserved();
@@ -47,11 +69,10 @@ public class StorageMarket {
     long out = (long) exchangeBalance;
     long newBalance = balance - out;
 
-//    if (isTRX) {
-//      dbManager.getDynamicPropertiesStore().saveTotalStoragePool(newBalance);
-//    } else {
-//      dbManager.getDynamicPropertiesStore().saveTotalStorageReserved(newBalance);
-//    }
+    if (isTRX) {
+      out = Math.round(exchangeBalance / 100000) * 100000;
+      logger.info("---out: " + out);
+    }
 
     return out;
   }
@@ -113,12 +134,46 @@ public class StorageMarket {
     return storageTax;
   }
 
+  public long tryBuyStorageBytes(long storageBought) {
+    long relay = exchange_to_supply2(false, storageBought);
+    return exchange_from_supply(true, relay);
+  }
+
   public long tryBuyStorage(long quant) {
     return exchange(quant, true);
   }
 
   public long trySellStorage(long bytes) {
     return exchange(bytes, false);
+  }
+
+  public void buyStorageBytes(AccountCapsule accountCapsule, long storageBought) {
+    long now = dbManager.getHeadBlockTimeStamp();
+    long currentStorageLimit = accountCapsule.getStorageLimit();
+
+    long relay = exchange_to_supply2(false, storageBought);
+    long quant = exchange_from_supply(true, relay);
+
+    long newBalance = accountCapsule.getBalance() - quant;
+    logger.info("newBalance： " + newBalance);
+
+    long newStorageLimit = currentStorageLimit + storageBought;
+    logger.info(
+        "storageBought: " + storageBought + "  newStorageLimit: "
+            + newStorageLimit);
+
+    accountCapsule.setLatestExchangeStorageTime(now);
+    accountCapsule.setStorageLimit(newStorageLimit);
+    accountCapsule.setBalance(newBalance);
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+
+    long newTotalPool = dbManager.getDynamicPropertiesStore().getTotalStoragePool() + quant;
+    long newTotalReserved = dbManager.getDynamicPropertiesStore().getTotalStorageReserved()
+        - storageBought;
+    logger.info("newTotalPool: " + newTotalPool + "  newTotalReserved: " + newTotalReserved);
+    dbManager.getDynamicPropertiesStore().saveTotalStoragePool(newTotalPool);
+    dbManager.getDynamicPropertiesStore().saveTotalStorageReserved(newTotalReserved);
+
   }
 
 
