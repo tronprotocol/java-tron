@@ -107,6 +107,7 @@ dependencies {
     compile "com.cedarsoftware:java-util:1.8.0"
 
     compile "org.apache.commons:commons-lang3:3.4"
+    compile group: 'org.apache.commons', name: 'commons-math3', version: '3.0'
 
     compile group: 'org.springframework', name: 'spring-context', version: '4.2.0.RELEASE'
     compile group: 'org.springframework', name: 'spring-tx', version: '4.2.0.RELEASE'
