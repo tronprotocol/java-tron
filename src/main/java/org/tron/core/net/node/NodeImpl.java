@@ -777,6 +777,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         logger.error("We get a block {} that do not have the most recent common ancestor with the main chain, from {}, reason is {} ",
             block.getBlockId().getString(), peer.getNode().getHost(), e.getMessage());
         disconnectPeer(peer, ReasonCode.FORKED);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       }
 
       // logger.error("Fail to process adv block {} from {}", block.getBlockId().getString(),
