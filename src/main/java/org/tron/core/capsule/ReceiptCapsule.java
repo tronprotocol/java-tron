@@ -66,7 +66,13 @@ public class ReceiptCapsule {
   /**
    * payCpuBill pay receipt cpu bill by cpu processor.
    */
-  public void payCpuBill(Manager manager, byte[] origin, byte[] caller, int percent, CpuProcessor cpuProcessor, long now) {
+  public void payCpuBill(
+      Manager manager,
+      byte[] origin,
+      byte[] caller,
+      int percent,
+      CpuProcessor cpuProcessor,
+      long now) {
     if (0 == receipt.getCpuUsage()) {
       return;
     }
@@ -78,7 +84,12 @@ public class ReceiptCapsule {
     payCpuBill(manager, caller, callerUsage, cpuProcessor, now);
   }
 
-  private void payCpuBill(Manager manager, byte[] account, long usage, CpuProcessor cpuProcessor, long now) {
+  private void payCpuBill(
+      Manager manager,
+      byte[] account,
+      long usage,
+      CpuProcessor cpuProcessor,
+      long now) {
     AccountCapsule accountCapsule = manager.getAccountStore().get(account);
 
     if (cpuProcessor.getAccountLeftCpuInUsFromFreeze(accountCapsule) >= usage) {
@@ -93,7 +104,12 @@ public class ReceiptCapsule {
   /**
    * payStorageBill pay receipt storage bill by storage market.
    */
-  public void payStorageBill(Manager manager, byte[] origin, byte[] caller, int percent, StorageMarket storageMarket) {
+  public void payStorageBill(
+      Manager manager,
+      byte[] origin,
+      byte[] caller,
+      int percent,
+      StorageMarket storageMarket) {
     if (0 == receipt.getStorageDelta()) {
       return;
     }
@@ -105,7 +121,11 @@ public class ReceiptCapsule {
     payStorageBill(manager, caller, callerDelta, storageMarket);
   }
 
-  private void payStorageBill(Manager manager, byte[] account, long delta, StorageMarket storageMarket) {
+  private void payStorageBill(
+      Manager manager,
+      byte[] account,
+      long delta,
+      StorageMarket storageMarket) {
     AccountCapsule accountCapsule = manager.getAccountStore().get(account);
 
     if (accountCapsule.getStorageLeft() >= delta) {

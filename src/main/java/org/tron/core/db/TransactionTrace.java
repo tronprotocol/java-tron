@@ -172,7 +172,8 @@ public class TransactionTrace {
             .getTriggerContractFromTransaction(trx.getInstance());
         callerAccount = callContract.getOwnerAddress().toByteArray();
 
-        ContractCapsule contract = dbManager.getContractStore().get(callContract.getContractAddress().toByteArray());
+        ContractCapsule contract =
+            dbManager.getContractStore().get(callContract.getContractAddress().toByteArray());
         originAccount = contract.getInstance().getOriginAddress().toByteArray();
         break;
       default:
@@ -182,8 +183,13 @@ public class TransactionTrace {
     // originAccount Percent = 30%
     int percent = 30;
 
-    receipt
-        .payCpuBill(dbManager, originAccount, callerAccount, percent, cpuProcessor, dbManager.getWitnessController().getHeadSlot());
+    receipt.payCpuBill(
+        dbManager,
+        originAccount,
+        callerAccount,
+        percent,
+        cpuProcessor,
+        dbManager.getWitnessController().getHeadSlot());
 
     receipt.payStorageBill(dbManager, originAccount, callerAccount, percent, storageMarket);
   }
