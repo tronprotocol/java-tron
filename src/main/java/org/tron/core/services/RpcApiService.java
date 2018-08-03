@@ -65,6 +65,7 @@ import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
@@ -77,6 +78,7 @@ import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.ConsumeUserResourcePercentContract;
+import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
@@ -585,8 +587,16 @@ public class RpcApiService implements Service {
         }
       }
 
-//      if (contractType == ContractType.CreateSmartContract) {
-//
+      if (contractType == ContractType.CreateSmartContract) {
+
+        CreateSmartContract contract = ContractCapsule
+            .getSmartContractFromTransaction(trx.getInstance());
+        long percent = contract.getNewContract().getConsumeUserResourcePercent();
+        if (percent < 0 || percent > 100) {
+          throw new ContractValidateException("percent must be >= 0 and <= 100");
+        }
+
+
 //        // insure one owner just have one contract
 //        CreateSmartContract contract = ContractCapsule
 //            .getSmartContractFromTransaction(trx.getInstance());
@@ -596,14 +606,14 @@ public class RpcApiService implements Service {
 //              "Trying to create second contract with one account: address: " + Wallet
 //                  .encode58Check(ownerAddress));
 //        }
-//
-////        // insure the new contract address haven't exist
-////        if (deposit.getAccount(contractAddress) != null) {
-////          logger.error("Trying to create a contract with existing contract address: " + Wallet
-////              .encode58Check(contractAddress));
-////          return;
-////        }
-//      }
+
+//        // insure the new contract address haven't exist
+//        if (deposit.getAccount(contractAddress) != null) {
+//          logger.error("Trying to create a contract with existing contract address: " + Wallet
+//              .encode58Check(contractAddress));
+//          return;
+//        }
+      }
 
       try {
         BlockCapsule headBlock = null;
@@ -806,7 +816,7 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void updateConsumeUserResourcePercent(ConsumeUserResourcePercentContract request,
+    public void modifyContractPercent(ConsumeUserResourcePercentContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.ConsumeUserResourcePercentContract,
           responseObserver);

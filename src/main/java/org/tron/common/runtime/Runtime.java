@@ -313,6 +313,10 @@ public class Runtime {
     byte[] contractAddress = Wallet.generateContractAddress(trx);
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
 
+    long percent = contract.getNewContract().getConsumeUserResourcePercent();
+    if (percent < 0 || percent > 100) {
+      throw new ContractExeException("percent must be >= 0 and <= 100");
+    }
     // insure one owner just have one contract
 //    if (this.deposit.getContractByNormalAccount(ownerAddress) != null) {
 //      logger.error("Trying to create second contract with one account: address: " + Wallet
