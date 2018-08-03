@@ -42,6 +42,7 @@ import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.BuyStorageContract;
+import org.tron.protos.Contract.ConsumeUserResourcePercentContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
@@ -324,6 +325,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case SellStorageContract:
           owner = contractParameter.unpack(SellStorageContract.class).getOwnerAddress();
           break;
+        case ConsumeUserResourcePercentContract:
+          owner = contractParameter.unpack(ConsumeUserResourcePercentContract.class)
+              .getOwnerAddress();
+          break;
         // todo add other contract
         default:
           return null;
@@ -441,31 +446,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   public long getSerializedSize() {
     return this.transaction.getSerializedSize();
-  }
-
-  public long getTransactionResultEstimatedSize(TransactionCapsule trx){
-    if(trx.getInstance().getRetCount() == trx.getInstance().getRawData().getContractCount()){
-      return 0;
-    }
-    List<Transaction.Contract> contracts =
-        trx.getInstance().getRawData().getContractList();
-    long resultBytesSize = 0;
-    for(Transaction.Contract contract: contracts){
-//      if (contract.getType() != ContractType.CreateSmartContract &&
-//          contract.getType() != ContractType.TriggerSmartContract){
-//        // code bytes + fee bytes
-//        resultBytesSize += 8;
-//      }
-//      else{
-        // code bytes + fee bytes + receipt bytes
-        resultBytesSize += 28;
-//      }
-    }
-    return resultBytesSize;
-  }
-
-  public long getEstimatedTransactionSize(){
-    return this.transaction.getSerializedSize() + getTransactionResultEstimatedSize(this);
   }
 
   @Override

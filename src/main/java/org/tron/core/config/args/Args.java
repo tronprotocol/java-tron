@@ -66,6 +66,11 @@ public class Args {
   private boolean witness = false;
 
   @Getter
+  @Setter
+  @Parameter(names = {"--debug"})
+  private boolean debug = false;
+
+  @Getter
   @Parameter(description = "--seed-nodes")
   private List<String> seedNodes = new ArrayList<>();
 

@@ -17,6 +17,7 @@ import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
 import org.tron.common.runtime.vm.program.Stack;
+import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractExeException;
 
 public class VM {
@@ -297,7 +298,9 @@ public class VM {
       // DEBUG System.out.println(" OP IS " + op.name() + " GASCOST IS " + gasCost + " NUM IS " + op.asInt());
       // program.spendDrop(dropCost, op.name());
 
-      program.checkCPULimit(op.name());
+      if (!Args.getInstance().isDebug()) {
+        program.checkCPULimit(op.name());
+      }
       // logger.info("after opName: {}, {}", op.name(), System.nanoTime() / 1000 - lastTime);
 
       // Execute operation
