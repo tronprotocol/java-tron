@@ -2,9 +2,11 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.exception.BadItemException;
 import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.Protocol.TransactionInfo.Log;
 
 @Slf4j
 public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
@@ -79,6 +81,12 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
   public void setContractAddress(byte[] contractAddress) {
     this.transactionInfo = this.transactionInfo.toBuilder()
         .setContractAddress(ByteString.copyFrom(contractAddress))
+        .build();
+  }
+
+  public void addAllLog(List<Log> logs) {
+    this.transactionInfo = this.transactionInfo.toBuilder()
+        .addAllLog(logs)
         .build();
   }
 
