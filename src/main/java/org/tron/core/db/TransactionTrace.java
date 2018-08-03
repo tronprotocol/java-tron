@@ -181,7 +181,7 @@ public class TransactionTrace {
     }
 
     // originAccount Percent = 30%
-    int percent = 30;
+    int percent = 0;
 
     receipt.payCpuBill(
         dbManager,
