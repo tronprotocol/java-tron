@@ -31,7 +31,7 @@ public class WitnessCreateActuator extends AbstractActuator {
       final WitnessCreateContract witnessCreateContract = this.contract
           .unpack(WitnessCreateContract.class);
       this.createWitness(witnessCreateContract);
-      ret.setStatus(fee, code.SUCCESS);
+      ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);

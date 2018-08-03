@@ -75,7 +75,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       //write to db
       dbManager.getAccountStore().put(ownerAddress, ownerAccount);
       dbManager.getAccountStore().put(toAddress, toAccount);
-      ret.setStatus(fee, Protocol.Transaction.Result.code.SUCCESS);
+      ret.setStatus(fee, Protocol.Transaction.Result.code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);

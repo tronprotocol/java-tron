@@ -91,12 +91,12 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
         .build();
   }
 
-
-  public void setResult(TransactionResultCapsule result) {
-    this.transactionInfo = this.transactionInfo.toBuilder()
-        .setResult(result.getInstance())
-        .build();
-  }
+//todo set receipt
+//  public void setResult(TransactionResultCapsule result) {
+//    this.transactionInfo = this.transactionInfo.toBuilder()
+//        .setResult(result.getInstance())
+//        .build();
+//  }
 
   @Override
   public byte[] getData() {

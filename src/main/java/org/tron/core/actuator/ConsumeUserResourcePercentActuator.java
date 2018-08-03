@@ -38,7 +38,7 @@ public class ConsumeUserResourcePercentActuator extends AbstractActuator {
           deployedContract.getInstance().toBuilder().setConsumeUserResourcePercent(newPercent)
               .build()));
 
-      ret.setStatus(fee, code.SUCCESS);
+      ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
