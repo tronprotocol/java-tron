@@ -527,7 +527,7 @@ public class Runtime {
     if (cpuFee > 0) {
       storageFee -= cpuFee;
     }
-    long tryBuyStorage = storageMarket.tryBuyStorage(caller, storageFee);
+    long tryBuyStorage = storageMarket.tryBuyStorage(storageFee);
     if (tryBuyStorage + caller.getStorageLeft() < useedStorageSize) {
       throw Program.Exception.notEnoughStorage();
     }
