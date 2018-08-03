@@ -57,20 +57,20 @@ public class DeployContractServlet extends HttpServlet {
       smartBuilder.setAbi(abiBuilder)
           .setCallValue(jsonObject.getLongValue("call_value"))
           .setConsumeUserResourcePercent(jsonObject.getLongValue("consume_user_resource_percent"));
-      if (!ArrayUtils.isEmpty(ownerAddress)){
+      if (!ArrayUtils.isEmpty(ownerAddress)) {
         smartBuilder.setOriginAddress(ByteString.copyFrom(ownerAddress));
       }
 
       byte[] byteCode = ByteArray.fromHexString(jsonObject.getString("bytecode"));
-      if (!ArrayUtils.isEmpty(byteCode)){
+      if (!ArrayUtils.isEmpty(byteCode)) {
         smartBuilder.setBytecode(ByteString.copyFrom(byteCode));
       }
       byte[] data = ByteArray.fromHexString(jsonObject.getString("data"));
-      if (!ArrayUtils.isEmpty(data)){
+      if (!ArrayUtils.isEmpty(data)) {
         smartBuilder.setData(ByteString.copyFrom(data));
       }
       String name = jsonObject.getString("name");
-      if (!Strings.isNullOrEmpty(name)){
+      if (!Strings.isNullOrEmpty(name)) {
         smartBuilder.setName(name);
       }
 
@@ -79,9 +79,6 @@ public class DeployContractServlet extends HttpServlet {
           .createTransactionCapsule(build.build(), ContractType.CreateSmartContract).getInstance();
       Transaction.Builder txBuilder = tx.toBuilder();
       Transaction.raw.Builder rawBuilder = tx.getRawData().toBuilder();
-      rawBuilder.setMaxCpuUsage(cpuLimit);
-      rawBuilder.setMaxNetUsage(bandwidthLimit);
-      rawBuilder.setMaxStorageUsage(storageLimit);
       rawBuilder.setFeeLimit(dropLimit);
       txBuilder.setRawData(rawBuilder);
       response.getWriter().println(Util.printTransaction(txBuilder.build()));

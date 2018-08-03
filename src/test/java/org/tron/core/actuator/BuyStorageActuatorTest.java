@@ -166,6 +166,7 @@ public class BuyStorageActuatorTest {
       actuator2.validate();
       actuator2.execute(ret2);
       Assert.assertEquals(ret2.getInstance().getRet(), code.SUCCESS);
+
       owner =
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertEquals(owner.getBalance(), initBalance - 2 * quant

@@ -72,9 +72,6 @@ public class TriggerSmartContractServlet extends HttpServlet {
 
       Transaction.Builder txBuilder = trxCap.getInstance().toBuilder();
       Transaction.raw.Builder rawBuilder = trxCap.getInstance().getRawData().toBuilder();
-      rawBuilder.setMaxCpuUsage(cpuLimit);
-      rawBuilder.setMaxNetUsage(bandwidthLimit);
-      rawBuilder.setMaxStorageUsage(storageLimit);
       rawBuilder.setFeeLimit(dropLimit);
       txBuilder.setRawData(rawBuilder);
 
