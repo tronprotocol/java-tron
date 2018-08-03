@@ -77,6 +77,7 @@ import org.tron.core.exception.StoreException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.ConsumeUserResourcePercentContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
@@ -587,15 +588,24 @@ public class RpcApiService implements Service {
       }
 
       if (contractType == ContractType.CreateSmartContract) {
-        // insure one owner just have one contract
+
         CreateSmartContract contract = ContractCapsule
             .getSmartContractFromTransaction(trx.getInstance());
-        byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
-        if (dbManager.getAccountContractIndexStore().get(ownerAddress) != null) {
-          throw new ContractValidateException(
-              "Trying to create second contract with one account: address: " + Wallet
-                  .encode58Check(ownerAddress));
+        long percent = contract.getNewContract().getConsumeUserResourcePercent();
+        if (percent < 0 || percent > 100) {
+          throw new ContractValidateException("percent must be >= 0 and <= 100");
         }
+
+
+//        // insure one owner just have one contract
+//        CreateSmartContract contract = ContractCapsule
+//            .getSmartContractFromTransaction(trx.getInstance());
+//        byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
+//        if (dbManager.getAccountContractIndexStore().get(ownerAddress) != null) {
+//          throw new ContractValidateException(
+//              "Trying to create second contract with one account: address: " + Wallet
+//                  .encode58Check(ownerAddress));
+//        }
 
 //        // insure the new contract address haven't exist
 //        if (deposit.getAccount(contractAddress) != null) {
@@ -803,6 +813,13 @@ public class RpcApiService implements Service {
     public void voteWitnessAccount2(VoteWitnessContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.VoteWitnessContract, responseObserver);
+    }
+
+    @Override
+    public void modifyContractPercent(ConsumeUserResourcePercentContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.ConsumeUserResourcePercentContract,
+          responseObserver);
     }
 
     @Override

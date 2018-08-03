@@ -8,7 +8,6 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.RevokingDatabase;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
 import org.tron.core.services.http.FullNodeHttpApiService;
@@ -27,6 +26,12 @@ public class FullNode {
     if (cfgArgs.isHelp()) {
       logger.info("Here is the help message.");
       return;
+    }
+
+    if (Args.getInstance().isDebug()) {
+      System.out.println("in debug mode, it won't check cpu time");
+    } else {
+      System.out.println("not in debug mode, it will check cpu time");
     }
 
     DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();

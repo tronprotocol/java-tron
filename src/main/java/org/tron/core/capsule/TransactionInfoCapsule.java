@@ -84,11 +84,13 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
         .build();
   }
 
+
   public void addAllLog(List<Log> logs) {
     this.transactionInfo = this.transactionInfo.toBuilder()
         .addAllLog(logs)
         .build();
   }
+
 
   public void setResult(TransactionResultCapsule result) {
     this.transactionInfo = this.transactionInfo.toBuilder()

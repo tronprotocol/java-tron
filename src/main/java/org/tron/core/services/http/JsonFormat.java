@@ -49,6 +49,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
 
 
@@ -625,6 +626,12 @@ public class JsonFormat {
           }
         } else {
           String id = tokenizer.consumeIdentifier();
+          if (StringUtils.isAllLowerCase(id)){
+            char b = id.charAt(0);
+            b = (char)(b  + 'A' - 'a');
+            String s = id.substring(1);
+            id = b + s;
+          }
           value = enumType.findValueByName(id);
           if (value == null) {
             throw tokenizer.parseExceptionPreviousToken("Enum type \""

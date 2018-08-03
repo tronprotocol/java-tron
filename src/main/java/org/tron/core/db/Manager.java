@@ -86,7 +86,9 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Result;
+
 import org.tron.protos.Protocol.TransactionInfo.Log;
+
 
 @Slf4j
 @Component
@@ -987,7 +989,7 @@ public class Manager {
     trace.pay();
 
     if (runtime.getResult().getException() != null) {
-      throw new RuntimeException("Runtime exe failed!");
+      throw new RuntimeException("Runtime exe failed :" + runtime.getResult().getException().getMessage());
     }
     // todo judge result in runtime same as block,trx,recipt
 
@@ -997,6 +999,7 @@ public class Manager {
     transactionInfoCapsule.setFee(runtime.getResult().getRet().getFee());
     transactionInfoCapsule.setContractResult(runtime.getResult().getHReturn());
     transactionInfoCapsule.setContractAddress(runtime.getResult().getContractAddress());
+
     List<Log> logList = getLogsByLogInfoList(runtime.getResult().getLogInfoList());
     transactionInfoCapsule.addAllLog(logList);
     if (block != null) {
@@ -1005,6 +1008,7 @@ public class Manager {
       trxCap.setResult(resultCapsule);
       transactionInfoCapsule.setResult(resultCapsule);
     }
+
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfoCapsule);
 
     return true;
@@ -1042,7 +1046,9 @@ public class Manager {
   public synchronized BlockCapsule generateBlock(
       final WitnessCapsule witnessCapsule, final long when, final byte[] privateKey)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
+
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, TransactionTraceException {
+
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();

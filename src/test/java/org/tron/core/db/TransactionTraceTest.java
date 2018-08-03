@@ -83,7 +83,9 @@ public class TransactionTraceTest {
   @Parameters
   public static Collection resourceUsage() {
     return Arrays.asList(new Object[][] {
+
         {0, 0}, {6, 1000}, {7, 1000}, {10, 999}, {13, 1000}, {14, 1000}, {20, 1000}, {10, 1000}, {10, 1001}
+
     });
   }
 

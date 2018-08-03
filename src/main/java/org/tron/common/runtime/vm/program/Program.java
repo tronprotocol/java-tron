@@ -67,6 +67,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractExeException;
 import org.tron.protos.Protocol;
 
@@ -469,7 +470,10 @@ public class Program {
       newBalance = deposit.addBalance(newAddress, endowment);
     }
 
-    checkCPULimit("BEFORE CREATE");
+    if (!Args.getInstance().isDebug()) {
+      checkCPULimit("BEFORE CREATE");
+    }
+
 
     // [5] COOK THE INVOKE AND EXECUTE
     InternalTransaction internalTx = addInternalTx(getDroplimit(), senderAddress, null, endowment,
@@ -495,7 +499,10 @@ public class Program {
       getResult().merge(result);
     }
 
-    checkCPULimit("AFTER CREATE");
+    if (!Args.getInstance().isDebug()) {
+      checkCPULimit("AFTER CREATE");
+    }
+
     // 4. CREATE THE CONTRACT OUT OF RETURN
     byte[] code = result.getHReturn();
 
@@ -614,7 +621,9 @@ public class Program {
     InternalTransaction internalTx = addInternalTx(getDroplimit(), senderAddress, contextAddress,
         endowment, data, "call");
 
-    //checkCPULimit("BEFORE CALL");
+    if (!Args.getInstance().isDebug()) {
+      checkCPULimit("BEFORE CALL");
+    }
 
     ProgramResult result = null;
     if (isNotEmpty(programCode)) {
@@ -665,7 +674,10 @@ public class Program {
       deposit.commit();
       stackPushOne();
     }
-    //checkCPULimit("AFTER CALL");
+
+    if (!Args.getInstance().isDebug()) {
+      checkCPULimit("BEFORE CALL");
+    }
 
     // 3. APPLY RESULTS: result.getHReturn() into out_memory allocated
     if (result != null) {
