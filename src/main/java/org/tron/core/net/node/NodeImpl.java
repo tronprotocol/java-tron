@@ -789,7 +789,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     boolean isAccept = false;
     ReasonCode reason = null;
     try {
-      del.handleBlock(block, true);
+      try {
+        del.handleBlock(block, true);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
       freshBlockId.offer(block.getBlockId());
       logger.info("Success handle block {}", block.getBlockId().getString());
       isAccept = true;
