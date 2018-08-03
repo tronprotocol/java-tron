@@ -205,6 +205,7 @@ message Transaction {
       CreateSmartContract = 30;
       TriggerSmartContract = 31;
       GetContract = 32;
+      ConsumeUserResourcePercentContract = 33;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;

@@ -314,11 +314,11 @@ public class Runtime {
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
 
     // insure one owner just have one contract
-    if (this.deposit.getContractByNormalAccount(ownerAddress) != null) {
-      logger.error("Trying to create second contract with one account: address: " + Wallet
-          .encode58Check(ownerAddress));
-      return;
-    }
+//    if (this.deposit.getContractByNormalAccount(ownerAddress) != null) {
+//      logger.error("Trying to create second contract with one account: address: " + Wallet
+//          .encode58Check(ownerAddress));
+//      return;
+//    }
 
     // insure the new contract address haven't exist
     if (deposit.getAccount(contractAddress) != null) {
