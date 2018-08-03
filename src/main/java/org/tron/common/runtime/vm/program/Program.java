@@ -665,9 +665,10 @@ public class Program {
 
       if (byTestingSuite()) {
         logger.info("Testing run, skipping storage diff listener");
-      } else if (Arrays.equals(transaction.getReceiveAddress(), internalTx.getReceiveAddress())) {
-        storageDiffListener.merge(program.getStorageDiff());
       }
+//      else if (Arrays.equals(transaction.getReceiveAddress(), internalTx.getReceiveAddress())) {
+//        storageDiffListener.merge(program.getStorageDiff());
+//      }
     } else {
       // 4. THE FLAG OF SUCCESS IS ONE PUSHED INTO THE STACK
       deposit.commit();
@@ -875,7 +876,7 @@ public class Program {
   }
 
   public DataWord getDifficulty() {
-    return null; //invoke.getDifficulty().clone();
+    return new DataWord(0); //invoke.getDifficulty().clone();
   }
 
   public boolean isStaticCall() {

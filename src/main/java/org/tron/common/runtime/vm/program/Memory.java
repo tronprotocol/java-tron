@@ -121,8 +121,7 @@ public class Memory implements ProgramListenerAware {
       return;
     }
 
-    final int newSize = address + size;
-
+    final int newSize = Math.addExact(address,size);
     int toAllocate = newSize - internalSize();
     if (toAllocate > 0) {
       addChunks((int) ceil((double) toAllocate / CHUNK_SIZE));
@@ -131,7 +130,7 @@ public class Memory implements ProgramListenerAware {
     toAllocate = newSize - softSize;
     if (toAllocate > 0) {
       toAllocate = (int) ceil((double) toAllocate / WORD_SIZE) * WORD_SIZE;
-      softSize += toAllocate;
+      softSize = Math.addExact(softSize , toAllocate );
 
       if (programListener != null) {
         programListener.onMemoryExtend(toAllocate);
