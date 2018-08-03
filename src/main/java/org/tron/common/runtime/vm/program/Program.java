@@ -864,7 +864,7 @@ public class Program {
   }
 
   public DataWord getDifficulty() {
-    return null; //invoke.getDifficulty().clone();
+    return new DataWord(0); //invoke.getDifficulty().clone();
   }
 
   public boolean isStaticCall() {
