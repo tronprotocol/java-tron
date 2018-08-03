@@ -25,7 +25,6 @@ import static org.tron.common.utils.ByteUtil.oneByteToHexString;
 
 import java.util.LinkedList;
 import java.util.List;
-import org.apache.commons.math3.util.ArithmeticUtils;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.listener.ProgramListener;
 import org.tron.common.runtime.vm.program.listener.ProgramListenerAware;
@@ -122,7 +121,7 @@ public class Memory implements ProgramListenerAware {
       return;
     }
 
-    final int newSize = ArithmeticUtils.addAndCheck(address,size);
+    final int newSize = Math.addExact(address,size);
     int toAllocate = newSize - internalSize();
     if (toAllocate > 0) {
       addChunks((int) ceil((double) toAllocate / CHUNK_SIZE));
@@ -131,7 +130,7 @@ public class Memory implements ProgramListenerAware {
     toAllocate = newSize - softSize;
     if (toAllocate > 0) {
       toAllocate = (int) ceil((double) toAllocate / WORD_SIZE) * WORD_SIZE;
-      softSize = ArithmeticUtils.addAndCheck(softSize , toAllocate );
+      softSize = Math.addExact(softSize , toAllocate );
 
       if (programListener != null) {
         programListener.onMemoryExtend(toAllocate);
