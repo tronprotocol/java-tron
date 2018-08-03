@@ -474,7 +474,7 @@ public class Runtime {
           // touchedAccounts.addAll(result.getTouchedAccounts());
           // check storage useage
           long usedStorageSize =
-              deposit.getBeforeRunStorageSize() - deposit.computeAfterRunStorageSize();
+              deposit.computeAfterRunStorageSize()-deposit.getBeforeRunStorageSize();
           if (usedStorageSize > trx.getRawData().getMaxStorageUsage()) {
             result.setException(Program.Exception.notEnoughStorage());
             throw result.getException();
@@ -511,7 +511,7 @@ public class Runtime {
 //    ByteString originAddress = contract.getInstance().getOriginAddress();
 //    AccountCapsule origin = deposit.getAccount(originAddress.toByteArray());
     if (useedStorageSize <= 0) {
-      trace.setBill(cpuUsage, useedStorageSize);
+      trace.setBill(cpuUsage, 0);
       return;
     }
     byte[] callerAddressBytes = TransactionCapsule.getOwner(trx.getRawData().getContract(0));
