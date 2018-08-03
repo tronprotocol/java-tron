@@ -985,7 +985,7 @@ public class Manager {
     trace.pay();
 
     if (runtime.getResult().getException() != null) {
-      throw new RuntimeException("Runtime exe failed!");
+      throw new RuntimeException("Runtime exe failed :" + runtime.getResult().getException().getMessage());
     }
     // todo judge result in runtime same as block,trx,recipt
 
