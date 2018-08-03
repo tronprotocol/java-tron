@@ -91,6 +91,11 @@ service Wallet {
       }
     };
   };
+
+  //modify the consume_user_resource_percent
+  rpc modifyContractPercent (ConsumeUserResourcePercentContract) returns (TransactionExtention) {
+  };
+
   //Use this function instead of VoteWitnessAccount.
   rpc VoteWitnessAccount2 (VoteWitnessContract) returns (TransactionExtention) {
   };
@@ -831,7 +836,8 @@ message AddressPrKeyPairMessage {
 message TransactionExtention {
   Transaction transaction = 1;
   bytes txid = 2;   //transaction id =  sha256(transaction.rowdata)
-  Return result = 3;
+  repeated bytes constant_result = 3;
+  Return result = 4;
 }
 
 message BlockExtention {
