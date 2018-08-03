@@ -812,7 +812,7 @@ public class PublicMethed {
       return false;
     }
     Return ret = transactionExtention.getResult();
-    if (ret.getResult()) {
+    if (!ret.getResult()) {
       System.out.println("Code = " + ret.getCode());
       System.out.println("Message = " + ret.getMessage().toStringUtf8());
       return false;
@@ -915,7 +915,7 @@ public class PublicMethed {
 
     TransactionExtention transactionExtention = blockingStubFull
         .deployContract(contractDeployContract);
-    if (transactionExtention == null || transactionExtention.getResult().getResult()) {
+    if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
       System.out.println("RPC create trx failed!");
       if (transactionExtention != null) {
         System.out.println("Code = " + transactionExtention.getResult().getCode());
@@ -961,7 +961,7 @@ public class PublicMethed {
       return null;
     }
     Return ret = transactionExtention.getResult();
-    if (ret.getResult()) {
+    if (!ret.getResult()) {
       System.out.println("Code = " + ret.getCode());
       System.out.println("Message = " + ret.getMessage().toStringUtf8());
       return null;
@@ -1152,7 +1152,7 @@ public class PublicMethed {
     ByteString byteString = ByteString.copyFrom(address);
     BytesMessage bytesMessage = BytesMessage.newBuilder().setValue(byteString).build();
     Integer i = 0;
-    while (blockingStubFull.getContract(bytesMessage).getAbi() == null && i++ < 5) {
+    while (blockingStubFull.getContract(bytesMessage).getAbi().toString() != "" && i++ < 9) {
       try {
         Thread.sleep(3000);
       } catch (InterruptedException e) {
