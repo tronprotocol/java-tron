@@ -82,6 +82,12 @@ public class ConsumeUserResourcePercentActuator extends AbstractActuator {
           "Account[" + readableOwnerAddress + "] not exists");
     }
 
+    long newPercent = contract.getConsumeUserResourcePercent();
+    if (newPercent > 100 || newPercent < 0) {
+      throw new ContractValidateException(
+          "percent not in [0, 100]");
+    }
+
     byte[] contractAddress = contract.getContractAddress().toByteArray();
     ContractCapsule deployedContract = dbManager.getContractStore().get(contractAddress);
 
