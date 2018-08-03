@@ -85,6 +85,11 @@ public class ConsumeUserResourcePercentActuator extends AbstractActuator {
     byte[] contractAddress = contract.getContractAddress().toByteArray();
     ContractCapsule deployedContract = dbManager.getContractStore().get(contractAddress);
 
+    if (deployedContract == null) {
+      throw new ContractValidateException(
+          "Contract not exists");
+    }
+
     byte[] deployedContractOwnerAddress = deployedContract.getInstance().getOriginAddress()
         .toByteArray();
 
