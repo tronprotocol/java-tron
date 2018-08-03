@@ -159,8 +159,10 @@ public class TransactionTrace {
   public void pay() {
     AccountCapsule accountCapsule = dbManager.getAccountStore()
         .get(TransactionCapsule.getOwner(trx.getInstance().getRawData().getContract(0)));
+
     receipt
         .payCpuBill(accountCapsule, cpuProcessor, dbManager.getWitnessController().getHeadSlot());
+
     receipt.payStorageBill(accountCapsule, storageMarket);
     dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
   }
@@ -170,6 +172,7 @@ public class TransactionTrace {
    */
   public void checkBill() throws ReceiptException {
     if (trxType == TRX_CONTRACT_CREATION_TYPE || trxType == TRX_CONTRACT_CALL_TYPE) {
+
       long adjustedCpuUsage = this.receipt.getCpuUsage();
       double cpuUsagePercent = 0;
       if (this.trx.getInstance().getRetCount() > 0) {
@@ -201,6 +204,7 @@ public class TransactionTrace {
         }
         this.receipt.setReceipt(ReceiptCapsule.copyReceipt(srReceipt));
       }
+
     }
   }
 

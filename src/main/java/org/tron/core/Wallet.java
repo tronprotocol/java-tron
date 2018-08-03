@@ -789,6 +789,7 @@ public class Wallet {
 
         ProgramResult result = runtime.getResult();
         TransactionResultCapsule ret = new TransactionResultCapsule();
+
         builder.addConstantResult(ByteString.copyFrom(result.getHReturn()));
         //ret.setConstantResult(result.getHReturn());
         ret.setStatus(0, code.SUCCESS);

@@ -419,6 +419,7 @@ public class Runtime {
         thisTxCPULimitInUs = min(accountCPULimitInUs,
             Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
       }
+
       if (isCallConstant(contractAddress)) {
         thisTxCPULimitInUs = 100000;
       }
