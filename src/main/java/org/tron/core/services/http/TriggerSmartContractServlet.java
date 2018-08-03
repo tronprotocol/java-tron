@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -38,7 +39,7 @@ public class TriggerSmartContractServlet extends HttpServlet {
     byte[] selector = new byte[4];
     System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector, 0, 4);
     System.out.println(methodSign + ":" + Hex.toHexString(selector));
-    if (params.length() == 0) {
+    if (StringUtils.isEmpty(params)) {
       return Hex.toHexString(selector);
     }
     String result = Hex.toHexString(selector) + params;

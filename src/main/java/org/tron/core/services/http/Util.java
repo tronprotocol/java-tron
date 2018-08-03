@@ -107,7 +107,7 @@ public class Util {
   public static String printTransactionExtention(TransactionExtention transactionExtention) {
     String string = JsonFormat.printToString(transactionExtention);
     JSONObject jsonObject = JSONObject.parseObject(string);
-    if (transactionExtention.getTransaction() != null) {
+    if (transactionExtention.getResult().getResult()) {
       jsonObject.put("transaction", printTransactionToJSON(transactionExtention.getTransaction()));
     }
     return jsonObject.toJSONString();
