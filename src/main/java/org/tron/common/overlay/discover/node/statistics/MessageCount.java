@@ -3,7 +3,7 @@ package org.tron.common.overlay.discover.node.statistics;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class MessageCountStatistics {
+public class MessageCount {
 
   private static int SIZE = 60;
 
@@ -61,8 +61,4 @@ public class MessageCountStatistics {
     totalCount = 0;
   }
 
-  @Override
-  public String toString() {
-    return String.valueOf(totalCount);
-  }
 }

@@ -20,7 +20,6 @@ package org.tron.common.overlay.discover.node;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
@@ -99,6 +98,7 @@ public class NodeHandler {
     this.node = node;
     this.nodeManager = nodeManager;
     this.inetSocketAddress = new InetSocketAddress(node.getHost(), node.getPort());
+    this.nodeStatistics = new NodeStatistics(node);
     changeState(State.Discovered);
   }
 
@@ -127,9 +127,6 @@ public class NodeHandler {
   }
 
   public NodeStatistics getNodeStatistics() {
-    if (nodeStatistics == null) {
-      nodeStatistics = new NodeStatistics(node);
-    }
     return nodeStatistics;
   }
 
@@ -194,7 +191,6 @@ public class NodeHandler {
   }
 
   public void handlePing(PingMessage msg) {
-    getNodeStatistics().discoverInPing.add();
     if (!nodeManager.getTable().getNode().equals(node)) {
       sendPong();
     }
@@ -208,7 +204,6 @@ public class NodeHandler {
   public void handlePong(PongMessage msg) {
     if (waitForPong) {
       waitForPong = false;
-      getNodeStatistics().discoverInPong.add();
       getNodeStatistics().discoverMessageLatency
           .add((double) System.currentTimeMillis() - pingSent);
       getNodeStatistics().lastPongReplyTime.set(System.currentTimeMillis());
@@ -227,7 +222,6 @@ public class NodeHandler {
       return;
     }
     waitForNeighbors = false;
-    getNodeStatistics().discoverInNeighbours.add();
     for (Node n : msg.getNodes()) {
       if (!nodeManager.getPublicHomeNode().getHexId().equals(n.getHexId())) {
         nodeManager.getNodeHandler(n);
@@ -236,7 +230,6 @@ public class NodeHandler {
   }
 
   public void handleFindNode(FindNodeMessage msg) {
-    getNodeStatistics().discoverInFind.add();
     List<Node> closest = nodeManager.getTable().getClosestNodes(msg.getTargetId());
     sendNeighbours(closest);
   }
@@ -261,7 +254,6 @@ public class NodeHandler {
     waitForPong = true;
     pingSent = System.currentTimeMillis();
     sendMessage(ping);
-    getNodeStatistics().discoverOutPing.add();
 
     if (nodeManager.getPongTimer().isShutdown()) {
       return;
@@ -281,24 +273,22 @@ public class NodeHandler {
   public void sendPong() {
     Message pong = new PongMessage(nodeManager.getPublicHomeNode());
     sendMessage(pong);
-    getNodeStatistics().discoverOutPong.add();
   }
 
   public void sendNeighbours(List<Node> neighbours) {
     Message neighbors = new NeighborsMessage(nodeManager.getPublicHomeNode(), neighbours);
     sendMessage(neighbors);
-    getNodeStatistics().discoverOutNeighbours.add();
   }
 
   public void sendFindNode(byte[] target) {
     waitForNeighbors = true;
     Message findNode = new FindNodeMessage(nodeManager.getPublicHomeNode(), target);
     sendMessage(findNode);
-    getNodeStatistics().discoverOutFind.add();
   }
 
   private void sendMessage(Message msg) {
     nodeManager.sendOutbound(new UdpEvent(msg, getInetSocketAddress()));
+    nodeStatistics.messageStatistics.addUdpOutMessage(msg.getType());
   }
 
   @Override

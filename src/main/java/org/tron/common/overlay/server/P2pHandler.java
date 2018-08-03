@@ -26,11 +26,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.discover.node.statistics.MessageStatistics;
+import org.tron.common.overlay.discover.node.statistics.NodeStatistics;
 import org.tron.common.overlay.message.DisconnectMessage;
 import org.tron.common.overlay.message.P2pMessage;
+import org.tron.protos.Protocol.ReasonCode;
 
+@Slf4j
 @Component
 @Scope("prototype")
 public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
@@ -65,12 +70,26 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
   public void channelRead0(final ChannelHandlerContext ctx, P2pMessage msg) throws InterruptedException {
 
     msgQueue.receivedMessage(msg);
-
+    MessageStatistics messageStatistics = channel.getNodeStatistics().messageStatistics;
     switch (msg.getType()) {
       case P2P_PING:
+        int count = messageStatistics.p2pInPing.getCount(10);
+        if (count > 3){
+          logger.warn("TCP attack found: {} with ping count({})", ctx.channel().remoteAddress(), count);
+          channel.disconnect(ReasonCode.BAD_PROTOCOL);
+          return;
+        }
         msgQueue.sendMessage(PONG_MESSAGE);
         break;
       case P2P_PONG:
+        if (messageStatistics.p2pInPong.getTotalCount() > messageStatistics.p2pOutPing.getTotalCount()){
+          logger.warn("TCP attack found: {} with ping count({}), pong count({})",
+              ctx.channel().remoteAddress(),
+              messageStatistics.p2pOutPing.getTotalCount(),
+              messageStatistics.p2pInPong.getTotalCount());
+          channel.disconnect(ReasonCode.BAD_PROTOCOL);
+          return;
+        }
         hasPing = false;
         channel.getNodeStatistics().lastPongReplyTime.set(System.currentTimeMillis());
         channel.getPeerStats().pong(sendPingTime);
