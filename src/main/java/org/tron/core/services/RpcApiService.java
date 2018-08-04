@@ -1024,6 +1024,12 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void buyStorageBytes(Contract.BuyStorageBytesContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.BuyStorageBytesContract, responseObserver);
+    }
+
+    @Override
     public void sellStorage(Contract.SellStorageContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.SellStorageContract, responseObserver);
