@@ -979,11 +979,6 @@ public class Manager {
     //exec
     trace.exec(runtime);
 
-    //check SR's bill and ours.
-    if (block != null) {
-      trace.checkBill();
-    }
-
     trace.pay();
 
     if (runtime.getResult().getException() != null) {

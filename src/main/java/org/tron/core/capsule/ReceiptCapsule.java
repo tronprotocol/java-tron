@@ -132,7 +132,7 @@ public class ReceiptCapsule {
       accountCapsule.setStorageUsage(accountCapsule.getStorageUsage() + delta);
     } else {
       long needStorage = delta - accountCapsule.getStorageLeft();
-      storageMarket.buyStorage(accountCapsule, needStorage);
+      storageMarket.buyStorageBytes(accountCapsule, needStorage);
       accountCapsule.setStorageUsage(accountCapsule.getStorageUsage() + needStorage);
     }
 
