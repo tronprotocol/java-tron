@@ -477,9 +477,6 @@ public class Runtime {
             runtimeError = "REVERT opcode executed";
           }
         } else {
-
-          // touchedAccounts.addAll(result.getTouchedAccounts());
-          // check storage useage
           long usedStorageSize =
               deposit.computeAfterRunStorageSize() - deposit.getBeforeRunStorageSize();
           spendUsage(usedStorageSize);
@@ -507,6 +504,7 @@ public class Runtime {
 
     cpuProcessor = new CpuProcessor(deposit.getDbManager());
 
+    //todo program.getCpuUsage()
     long now = System.nanoTime() / 1000;
     long cpuUsage = now - program.getVmStartInUs();
 
