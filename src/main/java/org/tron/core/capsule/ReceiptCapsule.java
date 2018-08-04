@@ -3,6 +3,7 @@ package org.tron.core.capsule;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.db.CpuProcessor;
+import org.tron.core.db.Manager;
 import org.tron.core.db.StorageMarket;
 import org.tron.protos.Protocol.ResourceReceipt;
 
@@ -64,41 +65,78 @@ public class ReceiptCapsule {
 
   /**
    * payCpuBill pay receipt cpu bill by cpu processor.
-   *
-   * @param account Smart contract caller.
-   * @param cpuProcessor CPU processor.
-   * @param now Witness slot time.
    */
-  public void payCpuBill(AccountCapsule account, CpuProcessor cpuProcessor, long now) {
+  public void payCpuBill(
+      Manager manager,
+      byte[] origin,
+      byte[] caller,
+      int percent,
+      CpuProcessor cpuProcessor,
+      long now) {
     if (0 == receipt.getCpuUsage()) {
       return;
     }
 
-    if (cpuProcessor.getAccountLeftCpuInUsFromFreeze(account) >= receipt.getCpuUsage()) {
-      cpuProcessor.useCpu(account, receipt.getCpuUsage(), now);
+    long originUsage = receipt.getCpuUsage() * percent / 100;
+    long callerUsage = receipt.getCpuUsage() - originUsage;
+
+    payCpuBill(manager, origin, originUsage, cpuProcessor, now);
+    payCpuBill(manager, caller, callerUsage, cpuProcessor, now);
+  }
+
+  private void payCpuBill(
+      Manager manager,
+      byte[] account,
+      long usage,
+      CpuProcessor cpuProcessor,
+      long now) {
+    AccountCapsule accountCapsule = manager.getAccountStore().get(account);
+
+    if (cpuProcessor.getAccountLeftCpuInUsFromFreeze(accountCapsule) >= usage) {
+      cpuProcessor.useCpu(accountCapsule, usage, now);
     } else {
-      account.setBalance(account.getBalance() - receipt.getCpuUsage() * Constant.DROP_PER_CPU_US);
+      accountCapsule.setBalance(accountCapsule.getBalance() - usage * Constant.DROP_PER_CPU_US);
     }
+
+    manager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
   }
 
   /**
    * payStorageBill pay receipt storage bill by storage market.
-   *
-   * @param account Smart contract caller.
-   * @param storageMarket Storage market.
    */
-  public void payStorageBill(AccountCapsule account, StorageMarket storageMarket) {
+  public void payStorageBill(
+      Manager manager,
+      byte[] origin,
+      byte[] caller,
+      int percent,
+      StorageMarket storageMarket) {
     if (0 == receipt.getStorageDelta()) {
       return;
     }
 
-    if (account.getStorageLeft() >= receipt.getStorageDelta()) {
-      account.setStorageUsage(account.getStorageUsage() + receipt.getStorageDelta());
+    long originDelta = receipt.getStorageDelta() * percent / 100;
+    long callerDelta = receipt.getStorageDelta() - originDelta;
+
+    payStorageBill(manager, origin, originDelta, storageMarket);
+    payStorageBill(manager, caller, callerDelta, storageMarket);
+  }
+
+  private void payStorageBill(
+      Manager manager,
+      byte[] account,
+      long delta,
+      StorageMarket storageMarket) {
+    AccountCapsule accountCapsule = manager.getAccountStore().get(account);
+
+    if (accountCapsule.getStorageLeft() >= delta) {
+      accountCapsule.setStorageUsage(accountCapsule.getStorageUsage() + delta);
     } else {
-      long needStorage = receipt.getStorageDelta() - account.getStorageLeft();
-      storageMarket.buyStorage(account, needStorage);
-      account.setStorageUsage(account.getStorageUsage() + needStorage);
+      long needStorage = delta - accountCapsule.getStorageLeft();
+      storageMarket.buyStorage(accountCapsule, needStorage);
+      accountCapsule.setStorageUsage(accountCapsule.getStorageUsage() + needStorage);
     }
+
+    manager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
   }
 
   public void buyStorage(long storage) {

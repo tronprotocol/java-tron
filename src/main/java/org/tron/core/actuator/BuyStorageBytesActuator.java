@@ -12,15 +12,15 @@ import org.tron.core.db.Manager;
 import org.tron.core.db.StorageMarket;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract.SellStorageContract;
+import org.tron.protos.Contract.BuyStorageBytesContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
-public class SellStorageActuator extends AbstractActuator {
+public class BuyStorageBytesActuator extends AbstractActuator {
 
   private StorageMarket storageMarket;
 
-  SellStorageActuator(Any contract, Manager dbManager) {
+  BuyStorageBytesActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
     storageMarket = new StorageMarket(dbManager);
   }
@@ -28,9 +28,9 @@ public class SellStorageActuator extends AbstractActuator {
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
-    final SellStorageContract sellStorageContract;
+    final BuyStorageBytesContract BuyStorageBytesContract;
     try {
-      sellStorageContract = contract.unpack(SellStorageContract.class);
+      BuyStorageBytesContract = contract.unpack(BuyStorageBytesContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
@@ -38,11 +38,10 @@ public class SellStorageActuator extends AbstractActuator {
     }
 
     AccountCapsule accountCapsule = dbManager.getAccountStore()
-        .get(sellStorageContract.getOwnerAddress().toByteArray());
+        .get(BuyStorageBytesContract.getOwnerAddress().toByteArray());
+    long bytes = BuyStorageBytesContract.getBytes();
 
-    long bytes = sellStorageContract.getStorageBytes();
-
-    storageMarket.sellStorage(accountCapsule, bytes);
+    storageMarket.buyStorageBytes(accountCapsule, bytes);
 
     ret.setStatus(fee, code.SUCESS);
 
@@ -58,20 +57,20 @@ public class SellStorageActuator extends AbstractActuator {
     if (this.dbManager == null) {
       throw new ContractValidateException("No dbManager!");
     }
-    if (!contract.is(SellStorageContract.class)) {
+    if (!contract.is(BuyStorageBytesContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [SellStorageContract],real type[" + contract
+          "contract type error,expected type [BuyStorageBytesContract],real type[" + contract
               .getClass() + "]");
     }
 
-    final SellStorageContract sellStorageContract;
+    final BuyStorageBytesContract BuyStorageBytesContract;
     try {
-      sellStorageContract = this.contract.unpack(SellStorageContract.class);
+      BuyStorageBytesContract = this.contract.unpack(BuyStorageBytesContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
-    byte[] ownerAddress = sellStorageContract.getOwnerAddress().toByteArray();
+    byte[] ownerAddress = BuyStorageBytesContract.getOwnerAddress().toByteArray();
     if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
@@ -83,31 +82,37 @@ public class SellStorageActuator extends AbstractActuator {
           "Account[" + readableOwnerAddress + "] not exists");
     }
 
-    long bytes = sellStorageContract.getStorageBytes();
-    if (bytes <= 0) {
+    long bytes = BuyStorageBytesContract.getBytes();
+    if (bytes < 0) {
       throw new ContractValidateException("bytes must be positive");
     }
 
-    long currentStorageLimit = accountCapsule.getStorageLimit();
-    long currentUnusedStorage = currentStorageLimit - accountCapsule.getStorageUsage();
-
-    if (bytes > currentUnusedStorage) {
+    if (bytes < 1L) {
       throw new ContractValidateException(
-          "bytes must be less than currentUnusedStorage[" + currentUnusedStorage + "]");
+          "bytes must be larger than 1, current storage_bytes[" + bytes + "]");
     }
 
-    long quantity = storageMarket.trySellStorage(bytes);
-    if (quantity <= 1_000_000L) {
-      throw new ContractValidateException(
-          "quantity must be larger than 1TRX,current quantity[" + quantity + "]");
+    long quant = storageMarket.tryBuyStorageBytes(bytes);
+
+    if (quant < 1_000_000L) {
+      throw new ContractValidateException("quantity must be larger than 1TRX");
     }
+
+    if (quant > accountCapsule.getBalance()) {
+      throw new ContractValidateException("quantity must be less than accountBalance");
+    }
+
+//    long storageBytes = storageMarket.exchange(quant, true);
+//    if (storageBytes > dbManager.getDynamicPropertiesStore().getTotalStorageReserved()) {
+//      throw new ContractValidateException("storage is not enough");
+//    }
 
     return true;
   }
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(SellStorageContract.class).getOwnerAddress();
+    return contract.unpack(BuyStorageBytesContract.class).getOwnerAddress();
   }
 
   @Override

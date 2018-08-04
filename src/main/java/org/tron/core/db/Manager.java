@@ -35,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
@@ -84,7 +85,8 @@ import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.Transaction.Result;
+import org.tron.protos.Protocol.TransactionInfo.Log;
+
 
 @Slf4j
 @Component
@@ -985,7 +987,8 @@ public class Manager {
     trace.pay();
 
     if (runtime.getResult().getException() != null) {
-      throw new RuntimeException("Runtime exe failed!");
+      throw new RuntimeException(
+          "Runtime exe failed :" + runtime.getResult().getException().getMessage());
     }
     // todo judge result in runtime same as block,trx,recipt
 
@@ -995,15 +998,34 @@ public class Manager {
     transactionInfoCapsule.setFee(runtime.getResult().getRet().getFee());
     transactionInfoCapsule.setContractResult(runtime.getResult().getHReturn());
     transactionInfoCapsule.setContractAddress(runtime.getResult().getContractAddress());
-    if (block != null) {
-      TransactionResultCapsule resultCapsule = new TransactionResultCapsule(
-          Result.newBuilder().setReceipt(trace.getReceipt().getReceipt()).build());
-      trxCap.setResult(resultCapsule);
-      transactionInfoCapsule.setResult(resultCapsule);
-    }
+
+    List<Log> logList = getLogsByLogInfoList(runtime.getResult().getLogInfoList());
+    transactionInfoCapsule.addAllLog(logList);
+    //todo set receipt to info
+//    if (block != null) {
+//      TransactionResultCapsule resultCapsule = new TransactionResultCapsule(
+//          Result.newBuilder().setReceipt(trace.getReceipt().getReceipt()).build());
+//      trxCap.setResult(resultCapsule);
+//      transactionInfoCapsule.setResult(resultCapsule);
+//    }
+
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfoCapsule);
 
     return true;
+  }
+
+  private List<Log> getLogsByLogInfoList(List<LogInfo> logInfos) {
+    List<Log> logList = Lists.newArrayList();
+    logInfos.forEach(logInfo -> {
+      List<ByteString> topics = Lists.newArrayList();
+      logInfo.getTopics().forEach(topic -> {
+        topics.add(ByteString.copyFrom(topic.getData()));
+      });
+      ByteString address = ByteString.copyFrom(logInfo.getAddress());
+      ByteString data = ByteString.copyFrom(logInfo.getData());
+      logList.add(Log.newBuilder().setAddress(address).addAllTopics(topics).setData(data).build());
+    });
+    return logList;
   }
 
 
@@ -1024,6 +1046,7 @@ public class Manager {
   public synchronized BlockCapsule generateBlock(
       final WitnessCapsule witnessCapsule, final long when, final byte[] privateKey)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
+
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, TransactionTraceException {
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();

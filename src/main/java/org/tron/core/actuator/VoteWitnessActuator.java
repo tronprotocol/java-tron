@@ -36,7 +36,7 @@ public class VoteWitnessActuator extends AbstractActuator {
     try {
       VoteWitnessContract voteContract = contract.unpack(VoteWitnessContract.class);
       countVoteAccount(voteContract);
-      ret.setStatus(fee, code.SUCCESS);
+      ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);

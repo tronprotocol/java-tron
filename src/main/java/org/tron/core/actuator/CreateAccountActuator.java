@@ -34,7 +34,7 @@ public class CreateAccountActuator extends AbstractActuator {
           .put(accountCreateContract.getAccountAddress().toByteArray(), accountCapsule);
 
       dbManager.adjustBalance(accountCreateContract.getOwnerAddress().toByteArray(), -fee);
-      ret.setStatus(fee, code.SUCCESS);
+      ret.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);

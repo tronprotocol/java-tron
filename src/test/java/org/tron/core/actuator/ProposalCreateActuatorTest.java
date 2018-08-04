@@ -140,7 +140,7 @@ public class ProposalCreateActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.assertEquals(ret.getInstance().getRet(), code.SUCCESS);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
       long id = 1;
       ProposalCapsule proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
       Assert.assertNotNull(proposalCapsule);

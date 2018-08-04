@@ -15,7 +15,6 @@
 
 package org.tron.core.db;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.Arrays;
@@ -31,22 +30,18 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.exception.ReceiptException;
+import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.AccountResource;
-import org.tron.protos.Protocol.ResourceReceipt;
-import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.Transaction.Contract;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-import org.tron.protos.Protocol.Transaction.Result;
-import org.tron.protos.Protocol.Transaction.raw;
+import org.tron.protos.Protocol.Account.Frozen;
+import org.tron.protos.Protocol.SmartContract;
 
 @RunWith(Parameterized.class)
 public class TransactionTraceTest {
+
   private static String dbPath = "output_TransactionTrace_test";
   private static String dbDirectory = "db_TransactionTrace_test";
   private static String indexDirectory = "index_TransactionTrace_test";
@@ -54,6 +49,7 @@ public class TransactionTraceTest {
   private static Manager dbManager;
 
   private static ByteString ownerAddress = ByteString.copyFrom(ByteArray.fromInt(1));
+  private static ByteString contractAddress = ByteString.copyFrom(ByteArray.fromInt(2));
 
   private long cpuUsage;
   private long storageUsage;
@@ -78,12 +74,22 @@ public class TransactionTraceTest {
 
   /**
    * resourceUsage prepare data for testing.
-   * @return
    */
   @Parameters
   public static Collection resourceUsage() {
-    return Arrays.asList(new Object[][] {
-        {0, 0}, {6, 1000}, {7, 1000}, {10, 999}, {13, 1000}, {14, 1000}, {20, 1000}, {10, 1000}, {10, 1001}
+    return Arrays.asList(new Object[][]{
+
+        {0, 0},
+        {6, 1000},
+        {7, 1000},
+        {10, 999},
+        {13, 1000},
+        {14, 1000},
+        {20, 1000},
+        {10, 1000},
+        {10, 1001}
+
+
     });
   }
 
@@ -97,50 +103,57 @@ public class TransactionTraceTest {
 
   @Test
   public void testCheckBill() {
-    Transaction transaction = Transaction.newBuilder()
-        .addRet(
-            Result.newBuilder()
-                .setReceipt(
-                    ResourceReceipt.newBuilder()
-                        .setCpuUsage(10)
-                        .setStorageDelta(1000)
-                        .build())
-                .build())
-        .setRawData(
-            raw.newBuilder()
-                .addContract(
-                    Contract.newBuilder()
-                        .setParameter(Any.pack(
-                            TriggerSmartContract.newBuilder()
-                                .setOwnerAddress(ByteString.EMPTY)
-                                .build()))
-                        .setType(ContractType.TriggerSmartContract)
-                        .build())
-                .build()
-        )
-        .build();
-
-    TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
-
-    TransactionTrace transactionTrace = new TransactionTrace(transactionCapsule, dbManager);
-
-    transactionTrace.setBill(this.cpuUsage, this.storageUsage);
-
-    try {
-      transactionTrace.checkBill();
-    } catch (ReceiptException e) {
-      e.printStackTrace();
-    }
+//    Transaction transaction = Transaction.newBuilder()
+//        .addRet(
+//            Result.newBuilder()
+//                .setReceipt(
+//                    ResourceReceipt.newBuilder()
+//                        .setCpuUsage(10)
+//                        .setStorageDelta(1000)
+//                        .build())
+//                .build())
+//        .setRawData(
+//            raw.newBuilder()
+//                .addContract(
+//                    Contract.newBuilder()
+//                        .setParameter(Any.pack(
+//                            TriggerSmartContract.newBuilder()
+//                                .setOwnerAddress(ByteString.EMPTY)
+//                                .build()))
+//                        .setType(ContractType.TriggerSmartContract)
+//                        .build())
+//                .build()
+//        )
+//        .build();
+//
+//    TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
+//
+//    TransactionTrace transactionTrace = new TransactionTrace(transactionCapsule, dbManager);
+//
+//    transactionTrace.setBill(this.cpuUsage, this.storageUsage);
+//
+//    try {
+//      transactionTrace.checkBill();
+//    } catch (ReceiptException e) {
+//      e.printStackTrace();
+//    }
   }
 
   @Test
   public void testPay() {
     Account account = Account.newBuilder()
         .setAddress(ownerAddress)
+        .setBalance(1000000)
         .setAccountResource(
             AccountResource.newBuilder()
                 .setCpuUsage(this.cpuUsage)
+                .setFrozenBalanceForCpu(
+                    Frozen.newBuilder()
+                        .setExpireTime(100000)
+                        .setFrozenBalance(100000)
+                        .build())
                 .setStorageUsage(this.storageUsage)
+                .setStorageLimit(3000)
                 .build()
         )
         .build();
@@ -149,36 +162,54 @@ public class TransactionTraceTest {
 
     dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
 
-    Transaction transaction = Transaction.newBuilder()
-        .addRet(
-            Result.newBuilder()
-                .setReceipt(
-                    ResourceReceipt.newBuilder()
-                        .setCpuUsage(10)
-                        .setStorageDelta(1000)
-                        .build())
-                .build())
-        .setRawData(
-            raw.newBuilder()
-                .addContract(
-                    Contract.newBuilder()
-                        .setParameter(Any.pack(
-                            TriggerSmartContract.newBuilder()
-                                .setOwnerAddress(ownerAddress)
-                                .build()))
-                        .setType(ContractType.TriggerSmartContract)
-                        .build())
-                .build()
-        )
+    TriggerSmartContract contract = TriggerSmartContract.newBuilder()
+        .setContractAddress(contractAddress)
+        .setOwnerAddress(ownerAddress)
         .build();
 
-    TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
+    SmartContract smartContract = SmartContract.newBuilder()
+        .setOriginAddress(ownerAddress)
+        .setContractAddress(contractAddress)
+        .build();
 
-    TransactionTrace transactionTrace = new TransactionTrace(transactionCapsule, dbManager);
+    CreateSmartContract createSmartContract = CreateSmartContract.newBuilder()
+        .setOwnerAddress(ownerAddress)
+        .setNewContract(smartContract)
+        .build();
 
-    transactionTrace.setBill(this.cpuUsage, this.storageUsage);
-
-    transactionTrace.pay();
+//    Transaction transaction = Transaction.newBuilder()
+//        .addRet(
+//            Result.newBuilder()
+//                .setReceipt(
+//                    ResourceReceipt.newBuilder()
+//                        .setCpuUsage(10)
+//                        .setStorageDelta(1000)
+//                        .build())
+//                .build())
+//        .setRawData(
+//            raw.newBuilder()
+//                .addContract(
+//                    Contract.newBuilder()
+//                        .setParameter(Any.pack(contract))
+//                        .setType(ContractType.TriggerSmartContract)
+//                        .build())
+//                .build()
+//        )
+//        .build();
+//
+//    dbManager.getContractStore().put(
+//        contractAddress.toByteArray(),
+//        new ContractCapsule(smartContract));
+//
+//    TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
+//
+//    TransactionTrace transactionTrace = new TransactionTrace(transactionCapsule, dbManager);
+//
+//    transactionTrace.setBill(this.cpuUsage, this.storageUsage);
+//
+//    transactionTrace.pay();
+//
+//    AccountCapsule accountCapsule1 = dbManager.getAccountStore().get(ownerAddress.toByteArray());
   }
 
   /**

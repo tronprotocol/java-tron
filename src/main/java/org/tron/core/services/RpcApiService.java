@@ -596,7 +596,6 @@ public class RpcApiService implements Service {
           throw new ContractValidateException("percent must be >= 0 and <= 100");
         }
 
-
 //        // insure one owner just have one contract
 //        CreateSmartContract contract = ContractCapsule
 //            .getSmartContractFromTransaction(trx.getInstance());
@@ -1025,6 +1024,12 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void buyStorageBytes(Contract.BuyStorageBytesContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.BuyStorageBytesContract, responseObserver);
+    }
+
+    @Override
     public void sellStorage(Contract.SellStorageContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.SellStorageContract, responseObserver);
@@ -1321,7 +1326,7 @@ public class RpcApiService implements Service {
       try {
         TransactionCapsule trxCap = createTransactionCapsule(request,
             ContractType.TriggerSmartContract);
-        trx = wallet.triggerContract(request, trxCap,trxExtBuilder);
+        trx = wallet.triggerContract(request, trxCap, trxExtBuilder);
         trxExtBuilder.setTransaction(trx);
         trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
         retBuilder.setResult(true).setCode(response_code.SUCCESS);
