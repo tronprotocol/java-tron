@@ -173,8 +173,8 @@ message TXOutputs {
 
 message ResourceReceipt {
   enum code {
-      SUCCESS = 0;
-      FAILED = 1;
+    SUCCESS = 0;
+    FAILED = 1;
   }
   int64 cpu_usage = 1;
   int64 cpu_fee = 2;
@@ -208,6 +208,7 @@ message Transaction {
       SetAccountIdContract = 19;
       CustomContract = 20;
       BuyStorageContract = 21;
+      BuyStorageBytesContract = 22;
       SellStorageContract = 23;
       CreateSmartContract = 30;
       TriggerSmartContract = 31;
