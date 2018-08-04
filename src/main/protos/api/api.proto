@@ -93,7 +93,7 @@ service Wallet {
   };
 
   //modify the consume_user_resource_percent
-  rpc modifyContractPercent (ConsumeUserResourcePercentContract) returns (TransactionExtention) {
+  rpc UpdateSetting (UpdateSettingContract) returns (TransactionExtention) {
   };
 
   //Use this function instead of VoteWitnessAccount.
@@ -253,6 +253,9 @@ service Wallet {
   }
 
   rpc BuyStorage (BuyStorageContract) returns (TransactionExtention) {
+  }
+
+  rpc BuyStorageBytes (BuyStorageBytesContract) returns (TransactionExtention) {
   }
 
   rpc SellStorage (SellStorageContract) returns (TransactionExtention) {

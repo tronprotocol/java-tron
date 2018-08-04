@@ -72,7 +72,7 @@ message VoteWitnessContract {
   bool support = 3;
 }
 
-message ConsumeUserResourcePercentContract {
+message UpdateSettingContract {
   bytes owner_address = 1;
   bytes contract_address = 2;
   int64 consume_user_resource_percent = 3;
@@ -186,6 +186,11 @@ message TriggerSmartContract {
 message BuyStorageContract {
   bytes owner_address = 1;
   int64 quant = 2; // trx quantity for buy storage (sun)
+}
+
+message BuyStorageBytesContract {
+  bytes owner_address = 1;
+  int64 bytes = 2; // storage bytes for buy
 }
 
 message SellStorageContract {
