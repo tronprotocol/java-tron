@@ -52,6 +52,3 @@ src/main/resources/META-INF/
 output*
 nodeId.properties
 Wallet
-
-# conf
-config-local-tjchern.conf
