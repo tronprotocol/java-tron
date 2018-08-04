@@ -77,12 +77,12 @@ import org.tron.core.exception.StoreException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.ConsumeUserResourcePercentContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
+import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocol;
@@ -815,9 +815,9 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void modifyContractPercent(ConsumeUserResourcePercentContract request,
+    public void updateSetting(UpdateSettingContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.ConsumeUserResourcePercentContract,
+      createTransactionExtention(request, ContractType.UpdateSettingContract,
           responseObserver);
     }
 

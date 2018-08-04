@@ -14,13 +14,13 @@ import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract.ConsumeUserResourcePercentContract;
+import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
-public class ConsumeUserResourcePercentActuator extends AbstractActuator {
+public class UpdateSettingContractActuator extends AbstractActuator {
 
-  ConsumeUserResourcePercentActuator(Any contract, Manager dbManager) {
+  UpdateSettingContractActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
   }
 
@@ -28,10 +28,10 @@ public class ConsumeUserResourcePercentActuator extends AbstractActuator {
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
     try {
-      ConsumeUserResourcePercentContract curpContract = contract
-          .unpack(ConsumeUserResourcePercentContract.class);
-      long newPercent = curpContract.getConsumeUserResourcePercent();
-      byte[] contractAddress = curpContract.getContractAddress().toByteArray();
+      UpdateSettingContract usContract = contract
+          .unpack(UpdateSettingContract.class);
+      long newPercent = usContract.getConsumeUserResourcePercent();
+      byte[] contractAddress = usContract.getContractAddress().toByteArray();
       ContractCapsule deployedContract = dbManager.getContractStore().get(contractAddress);
 
       dbManager.getContractStore().put(contractAddress, new ContractCapsule(
@@ -55,15 +55,15 @@ public class ConsumeUserResourcePercentActuator extends AbstractActuator {
     if (this.dbManager == null) {
       throw new ContractValidateException("No dbManager!");
     }
-    if (!this.contract.is(ConsumeUserResourcePercentContract.class)) {
+    if (!this.contract.is(UpdateSettingContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [ConsumeUserResourcePercentContract],real type["
+          "contract type error,expected type [UpdateSettingContract],real type["
               + contract
               .getClass() + "]");
     }
-    final ConsumeUserResourcePercentContract contract;
+    final UpdateSettingContract contract;
     try {
-      contract = this.contract.unpack(ConsumeUserResourcePercentContract.class);
+      contract = this.contract.unpack(UpdateSettingContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -109,7 +109,7 @@ public class ConsumeUserResourcePercentActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(ConsumeUserResourcePercentContract.class).getOwnerAddress();
+    return contract.unpack(UpdateSettingContract.class).getOwnerAddress();
   }
 
   @Override
