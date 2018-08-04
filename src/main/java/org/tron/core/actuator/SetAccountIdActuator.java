@@ -43,7 +43,7 @@ public class SetAccountIdActuator extends AbstractActuator {
     account.setAccountId(setAccountIdContract.getAccountId().toByteArray());
     accountStore.put(ownerAddress, account);
     accountIdIndexStore.put(account);
-    ret.setStatus(fee, code.SUCCESS);
+    ret.setStatus(fee, code.SUCESS);
 
     return true;
   }

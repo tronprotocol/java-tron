@@ -94,7 +94,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ret.setStatus(fee, code.SUCCESS);
+    ret.setStatus(fee, code.SUCESS);
 
     return true;
   }

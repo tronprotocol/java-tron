@@ -791,7 +791,7 @@ public class Wallet {
 
         builder.addConstantResult(ByteString.copyFrom(result.getHReturn()));
         //ret.setConstantResult(result.getHReturn());
-        ret.setStatus(0, code.SUCCESS);
+        ret.setStatus(0, code.SUCESS);
         trxCap.setResult(ret);
         return trxCap.getInstance();
       }

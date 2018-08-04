@@ -173,8 +173,8 @@ message TXOutputs {
 
 message ResourceReceipt {
   enum code {
-      SUCCESS = 0;
-      FAILED = 1;
+    SUCCESS = 0;
+    FAILED = 1;
   }
   int64 cpu_usage = 1;
   int64 cpu_fee = 2;
@@ -224,7 +224,7 @@ message Transaction {
 
   message Result {
     enum code {
-      SUCCESS = 0;
+      SUCESS = 0;
       FAILED = 1;
     }
     int64 fee = 1;

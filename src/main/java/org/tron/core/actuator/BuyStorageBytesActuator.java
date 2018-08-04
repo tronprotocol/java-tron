@@ -43,7 +43,7 @@ public class BuyStorageBytesActuator extends AbstractActuator {
 
     storageMarket.buyStorageBytes(accountCapsule, bytes);
 
-    ret.setStatus(fee, code.SUCCESS);
+    ret.setStatus(fee, code.SUCESS);
 
     return true;
   }
