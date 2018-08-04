@@ -470,9 +470,7 @@ public class Program {
       newBalance = deposit.addBalance(newAddress, endowment);
     }
 
-    if (!Args.getInstance().isDebug()) {
-      checkCPULimit("BEFORE CREATE");
-    }
+    checkCPULimit("BEFORE CREATE");
 
 
     // [5] COOK THE INVOKE AND EXECUTE
@@ -499,9 +497,7 @@ public class Program {
       getResult().merge(result);
     }
 
-    if (!Args.getInstance().isDebug()) {
-      checkCPULimit("AFTER CREATE");
-    }
+    checkCPULimit("AFTER CREATE");
 
     // 4. CREATE THE CONTRACT OUT OF RETURN
     byte[] code = result.getHReturn();
@@ -621,9 +617,7 @@ public class Program {
     InternalTransaction internalTx = addInternalTx(getDroplimit(), senderAddress, contextAddress,
         endowment, data, "call");
 
-    if (!Args.getInstance().isDebug()) {
-      checkCPULimit("BEFORE CALL");
-    }
+    checkCPULimit("BEFORE CALL");
 
     ProgramResult result = null;
     if (isNotEmpty(programCode)) {
@@ -675,9 +669,7 @@ public class Program {
       stackPushOne();
     }
 
-    if (!Args.getInstance().isDebug()) {
-      checkCPULimit("BEFORE CALL");
-    }
+    checkCPULimit("BEFORE CALL");
 
     // 3. APPLY RESULTS: result.getHReturn() into out_memory allocated
     if (result != null) {
@@ -716,9 +708,11 @@ public class Program {
 
   public void checkCPULimit(String opName) throws OutOfResourceException {
 
-    long vmNowInUs = System.nanoTime() / 1000;
-    if (vmNowInUs > getVmShouldEndInUs()) {
-      throw Exception.notEnoughCPU(opName);
+    if (!Args.getInstance().isDebug()) {
+      long vmNowInUs = System.nanoTime() / 1000;
+      if (vmNowInUs > getVmShouldEndInUs()) {
+        throw Exception.notEnoughCPU(opName);
+      }
     }
   }
 
