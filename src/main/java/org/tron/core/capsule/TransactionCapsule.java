@@ -43,7 +43,6 @@ import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.BuyStorageBytesContract;
 import org.tron.protos.Contract.BuyStorageContract;
-import org.tron.protos.Contract.ConsumeUserResourcePercentContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
@@ -58,6 +57,7 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.UpdateAssetContract;
+import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -329,8 +329,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case SellStorageContract:
           owner = contractParameter.unpack(SellStorageContract.class).getOwnerAddress();
           break;
-        case ConsumeUserResourcePercentContract:
-          owner = contractParameter.unpack(ConsumeUserResourcePercentContract.class)
+        case UpdateSettingContract:
+          owner = contractParameter.unpack(UpdateSettingContract.class)
               .getOwnerAddress();
           break;
         // todo add other contract

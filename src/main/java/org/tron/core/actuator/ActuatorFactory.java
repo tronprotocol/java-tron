@@ -87,8 +87,8 @@ public class ActuatorFactory {
         return new BuyStorageBytesActuator(contract.getParameter(), manager);
       case SellStorageContract:
         return new SellStorageActuator(contract.getParameter(), manager);
-      case ConsumeUserResourcePercentContract:
-        return new ConsumeUserResourcePercentActuator(contract.getParameter(), manager);
+      case UpdateSettingContract:
+        return new UpdateSettingContractActuator(contract.getParameter(), manager);
       default:
 
     }
