@@ -179,16 +179,17 @@ public class TransactionTrace {
 
     // originAccount Percent = 30%
     int percent = 0;
-
+    AccountCapsule origin = dbManager.getAccountStore().get(originAccount);
+    AccountCapsule caller = dbManager.getAccountStore().get(callerAccount);
     receipt.payCpuBill(
         dbManager,
-        originAccount,
-        callerAccount,
+        origin,
+        caller,
         percent,
         cpuProcessor,
         dbManager.getWitnessController().getHeadSlot());
 
-    receipt.payStorageBill(dbManager, originAccount, callerAccount, percent, storageMarket);
+    receipt.payStorageBill(dbManager, origin, caller, percent, storageMarket);
   }
 
   public ReceiptCapsule getReceipt() {
