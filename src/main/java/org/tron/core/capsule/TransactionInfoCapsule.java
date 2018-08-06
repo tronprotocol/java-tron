@@ -84,6 +84,12 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
         .build();
   }
 
+  public void setReceipt(ReceiptCapsule receipt) {
+    this.transactionInfo = this.transactionInfo.toBuilder()
+        .setReceipt(receipt.getReceipt())
+        .build();
+  }
+
 
   public void addAllLog(List<Log> logs) {
     this.transactionInfo = this.transactionInfo.toBuilder()

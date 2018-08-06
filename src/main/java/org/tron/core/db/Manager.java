@@ -998,13 +998,7 @@ public class Manager {
 
     List<Log> logList = getLogsByLogInfoList(runtime.getResult().getLogInfoList());
     transactionInfoCapsule.addAllLog(logList);
-    //todo set receipt to info
-//    if (block != null) {
-//      TransactionResultCapsule resultCapsule = new TransactionResultCapsule(
-//          Result.newBuilder().setReceipt(trace.getReceipt().getReceipt()).build());
-//      trxCap.setResult(resultCapsule);
-//      transactionInfoCapsule.setResult(resultCapsule);
-//    }
+    transactionInfoCapsule.setReceipt(trace.getReceipt());
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfoCapsule);
 
