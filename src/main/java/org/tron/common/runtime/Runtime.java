@@ -445,16 +445,16 @@ public class Runtime {
           this.deposit.getContract(contractAddress).getInstance()
               .getOriginAddress().toByteArray());
 
-      // if (isCallConstant(contractAddress)) {
-      //   thisTxCPULimitInUs = 100000;
-      // }
-
       long thisTxCPULimitInUs = Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT;
       long vmStartInUs = System.nanoTime() / 1000;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
       long feeLimit = trx.getRawData().getFeeLimit();
       long gasLimit = getGasLimit(creator, caller, contract, feeLimit);
+
+      if (isCallConstant(contractAddress)) {
+        gasLimit = Constant.MAX_GAS_IN_TX;
+      }
 
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CALL_TYPE, executorType, trx,
