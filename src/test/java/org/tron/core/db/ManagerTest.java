@@ -231,25 +231,30 @@ public class ManagerTest {
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
 
+
     long num = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     BlockCapsule blockCapsule0 =
         createTestBlockCapsule(
+            1533529947843L,
             num + 1,
             dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
             addressToProvateKeys);
 
     BlockCapsule blockCapsule1 =
         createTestBlockCapsule(
+            1533529947843L,
             num + 1,
             dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
             addressToProvateKeys);
 
-    BlockCapsule blockCapsule2 =
-        createTestBlockCapsule(
-            num + 2, blockCapsule1.getBlockId().getByteString(), addressToProvateKeys);
-
     dbManager.pushBlock(blockCapsule0);
     dbManager.pushBlock(blockCapsule1);
+
+    BlockCapsule blockCapsule2 =
+        createTestBlockCapsule(
+            1533529947843L +3,
+            num + 2, blockCapsule1.getBlockId().getByteString(), addressToProvateKeys);
+
     dbManager.pushBlock(blockCapsule2);
 
     Assert.assertNotNull(dbManager.getBlockStore().get(blockCapsule1.getBlockId().getBytes()));
@@ -464,10 +469,13 @@ public class ManagerTest {
             })
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
-
   private BlockCapsule createTestBlockCapsule(
       long number, ByteString hash, Map<ByteString, String> addressToProvateKeys) {
     long time = System.currentTimeMillis();
+    return createTestBlockCapsule(time,number,hash,addressToProvateKeys);
+  }
+  private BlockCapsule createTestBlockCapsule(long time ,
+      long number, ByteString hash, Map<ByteString, String> addressToProvateKeys) {
     WitnessController witnessController = dbManager.getWitnessController();
     ByteString witnessAddress =
         witnessController.getScheduledWitness(witnessController.getSlotAtTime(time));
