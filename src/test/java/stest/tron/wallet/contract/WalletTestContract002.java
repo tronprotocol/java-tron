@@ -154,7 +154,7 @@ public class WalletTestContract002 {
     cpuUsage = accountResource.getCpuUsed();
     storageUsage = accountResource.getStorageUsed();
     Assert.assertTrue(cpuUsage > 0);
-    //Assert.assertTrue(storageUsage > 0);
+    Assert.assertTrue(storageUsage > 0);
 
     logger.info("after cpu limit is " + Long.toString(cpuLimit));
     logger.info("after cpu usage is " + Long.toString(cpuUsage));
@@ -162,11 +162,11 @@ public class WalletTestContract002 {
     logger.info("after storage usaged is " + Long.toString(storageUsage));
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void getContractWithInvaildAddress() {
     byte[] contractAddress = contract002Address;
-    //SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
-    //Assert.assertTrue(smartContract.getAbi() == null);
+    SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
+    Assert.assertTrue(smartContract.getAbi() == null);
 
 
 
