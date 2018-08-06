@@ -474,7 +474,6 @@ public class Program {
       checkCPULimit("BEFORE CREATE");
     }
 
-
     // [5] COOK THE INVOKE AND EXECUTE
     InternalTransaction internalTx = addInternalTx(getDroplimit(), senderAddress, null, endowment,
         programCode, "create");
@@ -1393,6 +1392,10 @@ public class Program {
 
     public static OutOfStorageException notEnoughStorage() {
       return new OutOfStorageException("Not enough Storage resource");
+    }
+
+    public static OutOfStorageException outOfFeeLmit() {
+      return new OutOfStorageException("out of fee limit resource");
     }
 
 

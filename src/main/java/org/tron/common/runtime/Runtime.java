@@ -515,16 +515,20 @@ public class Runtime {
       trace.setBill(cpuUsage, 0);
       return;
     }
+    if (cpuUsage * Constant.DROP_PER_CPU_US + storageMarket.tryBuyStorageBytes(useedStorageSize)
+        > trx.getRawData().getFeeLimit()) {
+      throw Program.Exception.outOfFeeLmit();
+    }
     byte[] callerAddressBytes = TransactionCapsule.getOwner(trx.getRawData().getContract(0));
     AccountCapsule caller = deposit.getAccount(callerAddressBytes);
-    long storageFee = trx.getRawData().getFeeLimit();
-    long cpuFee = (cpuUsage - cpuProcessor.getAccountLeftCpuInUsFromFreeze(caller))
-        * Constant.DROP_PER_CPU_US;
-    if (cpuFee > 0) {
-      storageFee -= cpuFee;
+    long cpuFee = Math.min((cpuUsage - cpuProcessor.getAccountLeftCpuInUsFromFreeze(caller))
+        * Constant.DROP_PER_CPU_US, 0);
+    long storageForFee = useedStorageSize - caller.getStorageLeft();
+    long storageFee = 0;
+    if (storageForFee > 0) {
+      storageFee = storageMarket.tryBuyStorageBytes(storageForFee);
     }
-    long tryBuyStorage = storageMarket.tryBuyStorageBytes(storageFee);
-    if (tryBuyStorage + caller.getStorageLeft() < useedStorageSize) {
+    if (storageFee + cpuFee > caller.getBalance()) {
       throw Program.Exception.notEnoughStorage();
     }
     trace.setBill(cpuUsage, useedStorageSize);
