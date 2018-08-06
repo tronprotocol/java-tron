@@ -70,7 +70,7 @@ public class ReceiptCapsule {
       Manager manager,
       AccountCapsule origin,
       AccountCapsule caller,
-      int percent,
+      long percent,
       CpuProcessor cpuProcessor,
       long now) {
     if (0 == receipt.getCpuUsage()) {
@@ -108,7 +108,7 @@ public class ReceiptCapsule {
       Manager manager,
       AccountCapsule origin,
       AccountCapsule caller,
-      int percent,
+      long percent,
       StorageMarket storageMarket) {
     if (0 == receipt.getStorageDelta()) {
       return;
@@ -132,7 +132,7 @@ public class ReceiptCapsule {
       account.setStorageUsage(account.getStorageUsage() + delta);
     } else {
       long needStorage = delta - account.getStorageLeft();
-      storageMarket.buyStorageBytes(account, needStorage);
+      account = storageMarket.buyStorageBytes(account, needStorage);
       account.setStorageUsage(account.getStorageUsage() + needStorage);
     }
 

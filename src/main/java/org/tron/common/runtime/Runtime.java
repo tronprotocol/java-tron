@@ -26,6 +26,7 @@ import org.tron.common.runtime.vm.VM;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.vm.program.Program;
+import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
 import org.tron.common.runtime.vm.program.ProgramPrecompile;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
@@ -46,6 +47,7 @@ import org.tron.core.db.StorageMarket;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.OutOfSlotTimeException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
@@ -473,7 +475,7 @@ public class Runtime {
 
   }
 
-  public void go() {
+  public void go() throws OutOfSlotTimeException {
     if (!readyToExecute) {
       return;
     }
@@ -513,16 +515,10 @@ public class Runtime {
           deposit.commit();
         }
       }
-    }
-    // catch (TVMTimeOutException e) {
-    //   // todo: finalize
-    //   spendUsage(0);
-    //   logger.error(e.getMessage());
-    //   runtimeError = e.getMessage();
-    // } catch (TVMGasOutException e) {
-    //   // todo: finalize
-    // }
-    catch (RuntimeException e) {
+    } catch (OutOfResourceException e) {
+      logger.error(e.getMessage());
+      throw new OutOfSlotTimeException(e.getMessage());
+    } catch (Exception e) {
       logger.error(e.getMessage());
       runtimeError = e.getMessage();
     }
@@ -532,9 +528,7 @@ public class Runtime {
 
     cpuProcessor = new CpuProcessor(deposit.getDbManager());
 
-    //todo program.getCpuUsage()
-    long now = System.nanoTime() / 1000;
-    long cpuUsage = now - program.getVmStartInUs();
+    long cpuUsage = result.getGasUsed();
 
 //    ContractCapsule contract = deposit.getContract(result.getContractAddress());
 //    ByteString originAddress = contract.getInstance().getOriginAddress();

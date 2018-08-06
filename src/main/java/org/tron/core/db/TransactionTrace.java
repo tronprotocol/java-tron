@@ -14,6 +14,7 @@ import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.OutOfSlotTimeException;
 import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
@@ -145,7 +146,8 @@ public class TransactionTrace {
     receipt.buyStorage(0);
   }
 
-  public void exec(Runtime runtime) throws ContractExeException, ContractValidateException {
+  public void exec(Runtime runtime)
+      throws ContractExeException, ContractValidateException, OutOfSlotTimeException {
     /**  VM execute  **/
     runtime.init();
     runtime.execute();
@@ -158,7 +160,7 @@ public class TransactionTrace {
   public void pay() {
     byte[] originAccount;
     byte[] callerAccount;
-
+    long percent = 0;
     switch (trxType) {
       case TRX_CONTRACT_CREATION_TYPE:
         callerAccount = TransactionCapsule.getOwner(trx.getInstance().getRawData().getContract(0));
@@ -172,13 +174,13 @@ public class TransactionTrace {
         ContractCapsule contract =
             dbManager.getContractStore().get(callContract.getContractAddress().toByteArray());
         originAccount = contract.getInstance().getOriginAddress().toByteArray();
+        percent = (100 - contract.getConsumeUserResourcePercent());
         break;
       default:
         return;
     }
 
     // originAccount Percent = 30%
-    int percent = 0;
     AccountCapsule origin = dbManager.getAccountStore().get(originAccount);
     AccountCapsule caller = dbManager.getAccountStore().get(callerAccount);
     receipt.payCpuBill(
