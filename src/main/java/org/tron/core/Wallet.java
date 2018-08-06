@@ -777,8 +777,16 @@ public class Wallet {
         return trxCap.getInstance();
       } else {
         DepositImpl deposit = DepositImpl.createRoot(dbManager);
-        Runtime runtime = new Runtime(trxCap.getInstance(), deposit,
-            new ProgramInvokeFactoryImpl());
+
+        Block headBlock ;
+        List<BlockCapsule> blockCapsuleList = dbManager.getBlockStore().getBlockByLatestNum(1);
+        if (CollectionUtils.isEmpty(blockCapsuleList)) {
+          throw new HeaderNotFound("latest block not found");
+        } else {
+          headBlock = blockCapsuleList.get(0).getInstance();
+        }
+
+        Runtime runtime = new Runtime(trxCap.getInstance(), headBlock, deposit, new ProgramInvokeFactoryImpl());
         runtime.init();
         runtime.execute();
         runtime.go();
