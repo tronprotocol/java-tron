@@ -18,6 +18,7 @@ import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
 import org.tron.common.runtime.vm.program.Stack;
 import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
 
 public class VM {
 
@@ -91,7 +92,7 @@ public class VM {
   }
 
   public void step(Program program)
-      throws ContractExeException, OutOfResourceException {
+      throws ContractExeException, OutOfResourceException, ContractValidateException {
     if (vmTrace) {
       program.saveOpTrace();
     }
@@ -1335,7 +1336,7 @@ public class VM {
   }
 
   public void play(Program program)
-      throws ContractExeException {
+      throws ContractExeException, ContractValidateException {
     try {
       if (program.byTestingSuite()) {
         return;
