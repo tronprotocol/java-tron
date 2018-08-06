@@ -1153,7 +1153,7 @@ public class PublicMethed {
     ByteString byteString = ByteString.copyFrom(address);
     BytesMessage bytesMessage = BytesMessage.newBuilder().setValue(byteString).build();
     Integer i = 0;
-    while (blockingStubFull.getContract(bytesMessage).getAbi().toString() != "" && i++ < 9) {
+    while (blockingStubFull.getContract(bytesMessage).getName().isEmpty() && i++ < 9) {
       try {
         Thread.sleep(3000);
       } catch (InterruptedException e) {
