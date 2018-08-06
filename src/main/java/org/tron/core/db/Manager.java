@@ -987,7 +987,6 @@ public class Manager {
       throw new RuntimeException(
           "Runtime exe failed :" + runtime.getResult().getException().getMessage());
     }
-    // todo judge result in runtime same as block,trx,recipt
 
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();

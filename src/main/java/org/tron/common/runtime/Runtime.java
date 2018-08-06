@@ -504,7 +504,9 @@ public class Runtime {
         } else {
           long usedStorageSize =
               deposit.computeAfterRunStorageSize() - deposit.getBeforeRunStorageSize();
-          spendUsage(usedStorageSize);
+          if (!spendUsage(usedStorageSize)) {
+            throw Program.Exception.notEnoughStorage();
+          }
           if (executorType == ET_NORMAL_TYPE) {
             deposit.commit();
           }
@@ -524,47 +526,54 @@ public class Runtime {
     }
   }
 
-  private void spendUsage(long useedStorageSize) {
-
-    cpuProcessor = new CpuProcessor(deposit.getDbManager());
+  private boolean spendUsage(long useedStorageSize) {
 
     long cpuUsage = result.getGasUsed();
 
-//    ContractCapsule contract = deposit.getContract(result.getContractAddress());
-//    ByteString originAddress = contract.getInstance().getOriginAddress();
-//    AccountCapsule origin = deposit.getAccount(originAddress.toByteArray());
+    ContractCapsule contract = deposit.getContract(result.getContractAddress());
+    ByteString originAddress = contract.getInstance().getOriginAddress();
+    AccountCapsule origin = deposit.getAccount(originAddress.toByteArray());
+    long originResourcePercent = 100 - contract.getConsumeUserResourcePercent();
+    originResourcePercent = min(originResourcePercent, 100);
+    originResourcePercent = max(originResourcePercent, 0);
+    long originCpuUsage = cpuUsage * 100 / originResourcePercent;
+    originCpuUsage = min(originCpuUsage, cpuProcessor.getAccountLeftCpuInUsFromFreeze(origin));
+    long callerCpuUsage = cpuUsage - originCpuUsage;
+
     if (useedStorageSize <= 0) {
-      trace.setBill(cpuUsage, 0);
-      return;
+      trace.setBill(callerCpuUsage, 0);
+      return true;
     }
+    long originStorageUsage = useedStorageSize * 100 / originResourcePercent;
+    originStorageUsage = min(originCpuUsage, origin.getStorageLeft());
+    long callerStorageUsage = originStorageUsage - originStorageUsage;
+
     byte[] callerAddressBytes = TransactionCapsule.getOwner(trx.getRawData().getContract(0));
     AccountCapsule caller = deposit.getAccount(callerAddressBytes);
     long storageFee = trx.getRawData().getFeeLimit();
-    long cpuFee = (cpuUsage - cpuProcessor.getAccountLeftCpuInUsFromFreeze(caller))
+    long cpuFee = (callerCpuUsage - cpuProcessor.getAccountLeftCpuInUsFromFreeze(caller))
         * Constant.SUN_PER_GAS;
     if (cpuFee > 0) {
       storageFee -= cpuFee;
     }
     long tryBuyStorage = storageMarket.tryBuyStorageBytes(storageFee);
-    if (tryBuyStorage + caller.getStorageLeft() < useedStorageSize) {
-      throw Program.Exception.notEnoughStorage();
+    if (tryBuyStorage + caller.getStorageLeft() < callerStorageUsage) {
+      trace.setBill(callerCpuUsage, 0);
+      return false;
     }
-    trace.setBill(cpuUsage, useedStorageSize);
+    trace.setBill(callerCpuUsage, callerStorageUsage);
+    return true;
+  }
+
+  private void spendStorageUsage(long useedStorageSize) {
+  }
+
+  private void spendCpuUsage() {
   }
 
   private boolean isCallConstant() {
     if (TRX_CONTRACT_CALL_TYPE.equals(trxType)) {
       ABI abi = deposit.getContract(result.getContractAddress()).getInstance().getAbi();
-      if (Wallet.isConstant(abi, ContractCapsule.getTriggerContractFromTransaction(trx))) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private boolean isCallConstant(byte[] address) {
-    if (TRX_CONTRACT_CALL_TYPE.equals(trxType)) {
-      ABI abi = deposit.getContract(address).getInstance().getAbi();
       if (Wallet.isConstant(abi, ContractCapsule.getTriggerContractFromTransaction(trx))) {
         return true;
       }
