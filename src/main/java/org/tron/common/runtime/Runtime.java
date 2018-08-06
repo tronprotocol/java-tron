@@ -127,6 +127,7 @@ public class Runtime {
   /**
    * For pre trx run
    */
+  @Deprecated
   public Runtime(Transaction tx, DepositImpl deposit, ProgramInvokeFactory programInvokeFactory) {
     this.trx = tx;
     this.deposit = deposit;
@@ -149,6 +150,7 @@ public class Runtime {
   /**
    * For constant trx
    */
+  @Deprecated
   public Runtime(Transaction tx, ProgramInvokeFactory programInvokeFactory, Deposit deposit) {
     trx = tx;
     this.deposit = deposit;
@@ -156,6 +158,29 @@ public class Runtime {
     executorType = ET_CONSTANT_TYPE;
     trxType = TRX_CONTRACT_CALL_TYPE;
 
+  }
+
+
+  /**
+   * For constant trx with latest block.
+   */
+  public Runtime(Transaction tx, Block block, DepositImpl deposit, ProgramInvokeFactory programInvokeFactory) {
+    this.trx = tx;
+    this.deposit = deposit;
+    this.programInvokeFactory = programInvokeFactory;
+    this.executorType = ET_PRE_TYPE;
+    this.block = block;
+    Transaction.Contract.ContractType contractType = tx.getRawData().getContract(0).getType();
+    switch (contractType.getNumber()) {
+      case Transaction.Contract.ContractType.TriggerSmartContract_VALUE:
+        trxType = TRX_CONTRACT_CALL_TYPE;
+        break;
+      case Transaction.Contract.ContractType.CreateSmartContract_VALUE:
+        trxType = TRX_CONTRACT_CREATION_TYPE;
+        break;
+      default:
+        trxType = TRX_PRECOMPILED_TYPE;
+    }
   }
 
 
