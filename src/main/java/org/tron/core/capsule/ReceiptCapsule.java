@@ -95,7 +95,7 @@ public class ReceiptCapsule {
     if (cpuProcessor.getAccountLeftCpuInUsFromFreeze(accountCapsule) >= usage) {
       cpuProcessor.useCpu(accountCapsule, usage, now);
     } else {
-      accountCapsule.setBalance(accountCapsule.getBalance() - usage * Constant.DROP_PER_CPU_US);
+      accountCapsule.setBalance(accountCapsule.getBalance() - usage * Constant.SUN_PER_GAS);
     }
 
     manager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);

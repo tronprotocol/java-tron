@@ -26,7 +26,6 @@ import org.tron.common.runtime.vm.VM;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.vm.program.Program;
-import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
 import org.tron.common.runtime.vm.program.ProgramPrecompile;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
@@ -179,11 +178,13 @@ public class Runtime {
         break;
       case TRX_CONTRACT_CREATION_TYPE:
       case TRX_CONTRACT_CALL_TYPE:
-        if (!curCPULimitReachedBlockCPULimit()) {
-          readyToExecute = true;
-        }
+        // if (!curCPULimitReachedBlockCPULimit()) {
+        //   readyToExecute = true;
+        // }
+        readyToExecute = true;
         break;
       default:
+        readyToExecute = true;
         break;
     }
   }
@@ -194,7 +195,7 @@ public class Runtime {
     // insure block is not null
     BigInteger curBlockHaveElapsedCPUInUs =
         BigInteger.valueOf(
-            1000 * (DateTime.now().getMillis() - block.getBlockHeader().getRawDataOrBuilder()
+            1000 * (DateTime.now().getMillis() - block.getBlockHeader().getRawData()
                 .getTimestamp())); // us
     BigInteger curBlockCPULimitInUs = BigInteger.valueOf((long)
         (1000 * ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5
@@ -233,7 +234,7 @@ public class Runtime {
     CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
     long cpuInUsFromFreeze = cpuProcessor.getAccountLeftCpuInUsFromFreeze(account);
 
-    long cpuInUsFromDrop = Math.floorDiv(limitInDrop, Constant.DROP_PER_CPU_US);
+    long cpuInUsFromDrop = Math.floorDiv(limitInDrop, Constant.SUN_PER_GAS);
 
     return min(maxCpuInUsByAccount, max(cpuInUsFromFreeze, cpuInUsFromDrop)); // us
 
@@ -318,11 +319,11 @@ public class Runtime {
       throw new ContractExeException("percent must be >= 0 and <= 100");
     }
     // insure one owner just have one contract
-//    if (this.deposit.getContractByNormalAccount(ownerAddress) != null) {
-//      logger.error("Trying to create second contract with one account: address: " + Wallet
-//          .encode58Check(ownerAddress));
-//      return;
-//    }
+    // if (this.deposit.getContractByNormalAccount(ownerAddress) != null) {
+    //   logger.error("Trying to create second contract with one account: address: " + Wallet
+    //       .encode58Check(ownerAddress));
+    //   return;
+    // }
 
     // insure the new contract address haven't exist
     if (deposit.getAccount(contractAddress) != null) {
@@ -337,32 +338,30 @@ public class Runtime {
     // create vm to constructor smart contract
     try {
 
-      // todo use default value for cpu max and storage max
       AccountCapsule creator = this.deposit
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
-      long thisTxCPULimitInUs;
-      //todo remove maxCpuInUsBySender
-      long maxCpuInUsByCreator = 100000;
-      long limitInDrop = trx.getRawData().getFeeLimit();
-      long accountCPULimitInUs = getAccountCPULimitInUs(creator, limitInDrop,
-          maxCpuInUsByCreator);
-      if (executorType == ET_NORMAL_TYPE) {
-        long blockCPULeftInUs = getBlockCPULeftInUs().longValue();
-        thisTxCPULimitInUs = min(accountCPULimitInUs, blockCPULeftInUs,
-            Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
-      } else {
-        thisTxCPULimitInUs = min(accountCPULimitInUs,
-            Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
-      }
+      // if (executorType == ET_NORMAL_TYPE) {
+      //   long blockCPULeftInUs = getBlockCPULeftInUs().longValue();
+      //   thisTxCPULimitInUs = min(blockCPULeftInUs,
+      //       Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
+      // } else {
+      //   thisTxCPULimitInUs = Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT;
+      // }
 
+      long thisTxCPULimitInUs = Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT;
       long vmStartInUs = System.nanoTime() / 1000;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
+      long feeLimit = trx.getRawData().getFeeLimit();
+      // Attention: drop is like the gas in ethereum, not the unit of trx
+      long gasLimit = getGasLimit(creator, feeLimit);
       byte[] ops = newSmartContract.getBytecode().toByteArray();
       InternalTransaction internalTransaction = new InternalTransaction(trx);
+
+      // todo: callvalue should pass into this function
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executorType, trx,
-              block, deposit, vmStartInUs, vmShouldEndInUs);
+              block, deposit, vmStartInUs, vmShouldEndInUs, gasLimit);
       this.vm = new VM(config);
       this.program = new Program(ops, programInvoke, internalTransaction, config);
     } catch (Exception e) {
@@ -389,11 +388,19 @@ public class Runtime {
 
   }
 
+  private long getGasLimit(AccountCapsule account, long feeLimit) {
+    CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
+    // will change the name from us to gas
+    long cpuGasFromFreeze = cpuProcessor.getAccountLeftCpuInUsFromFreeze(account);
+    long cpuGasFromBalance = Math.floorDiv(account.getBalance(), Constant.SUN_PER_GAS);
+    long cpuGasFromFeeLimit = Math.floorDiv(feeLimit, Constant.SUN_PER_GAS);
+    return min(Math.addExact(cpuGasFromFreeze, cpuGasFromBalance), cpuGasFromFeeLimit);
+  }
+
   /**
    * **
    */
-  private void call()
-      throws ContractExeException {
+  private void call() {
     Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
     if (contract == null) {
       return;
@@ -410,31 +417,21 @@ public class Runtime {
           this.deposit.getContract(contractAddress).getInstance()
               .getOriginAddress().toByteArray());
 
-      // todo use default value for cpu max and storage max
-      long thisTxCPULimitInUs;
-      //todo remove maxCpuInUsBySender
-      long maxCpuInUsBySender = 100000;
-      long limitInDrop = trx.getRawData().getFeeLimit();
-      long accountCPULimitInUs = getAccountCPULimitInUs(creator, sender, contract,
-          maxCpuInUsBySender, limitInDrop);
-      if (executorType == ET_NORMAL_TYPE) {
-        long blockCPULeftInUs = getBlockCPULeftInUs().longValue();
-        thisTxCPULimitInUs = min(accountCPULimitInUs, blockCPULeftInUs,
-            Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
-      } else {
-        thisTxCPULimitInUs = min(accountCPULimitInUs,
-            Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
-      }
+      // if (isCallConstant(contractAddress)) {
+      //   thisTxCPULimitInUs = 100000;
+      // }
 
-      if (isCallConstant(contractAddress)) {
-        thisTxCPULimitInUs = 100000;
-      }
+      long thisTxCPULimitInUs = Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT;
       long vmStartInUs = System.nanoTime() / 1000;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
+      long feeLimit = trx.getRawData().getFeeLimit();
+      // Attention: drop is like the gas in ethereum, not the unit of trx
+      long gasLimit = getGasLimit(sender, feeLimit);
+
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CALL_TYPE, executorType, trx,
-              block, deposit, vmStartInUs, vmShouldEndInUs);
+              block, deposit, vmStartInUs, vmShouldEndInUs, gasLimit);
       this.vm = new VM(config);
       InternalTransaction internalTransaction = new InternalTransaction(trx);
       this.program = new Program(null, code, programInvoke, internalTransaction, config);
@@ -452,7 +449,6 @@ public class Runtime {
   }
 
   public void go() {
-
     if (!readyToExecute) {
       return;
     }
@@ -465,6 +461,8 @@ public class Runtime {
         if (isCallConstant()) {
           return;
         }
+
+        // todo: consume bandwidth for successful creating contract
 
         if (result.getException() != null || result.isRevert()) {
           result.getDeleteAccounts().clear();
@@ -490,11 +488,16 @@ public class Runtime {
           deposit.commit();
         }
       }
-    } catch (OutOfResourceException e) {
-      spendUsage(0);
-      logger.error(e.getMessage());
-      runtimeError = e.getMessage();
-    } catch (Exception e) {
+    }
+    // catch (TVMTimeOutException e) {
+    //   // todo: finalize
+    //   spendUsage(0);
+    //   logger.error(e.getMessage());
+    //   runtimeError = e.getMessage();
+    // } catch (TVMGasOutException e) {
+    //   // todo: finalize
+    // }
+    catch (RuntimeException e) {
       logger.error(e.getMessage());
       runtimeError = e.getMessage();
     }
@@ -519,7 +522,7 @@ public class Runtime {
     AccountCapsule caller = deposit.getAccount(callerAddressBytes);
     long storageFee = trx.getRawData().getFeeLimit();
     long cpuFee = (cpuUsage - cpuProcessor.getAccountLeftCpuInUsFromFreeze(caller))
-        * Constant.DROP_PER_CPU_US;
+        * Constant.SUN_PER_GAS;
     if (cpuFee > 0) {
       storageFee -= cpuFee;
     }

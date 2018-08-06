@@ -25,7 +25,6 @@ import org.tron.core.db.TransactionStore;
 import org.tron.core.db.VotesStore;
 import org.tron.core.db.WitnessStore;
 import org.tron.core.exception.BadItemException;
-import org.tron.core.exception.ContractExeException;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 
@@ -367,8 +366,7 @@ public class DepositImpl implements Deposit {
   }
 
   @Override
-  public synchronized long addBalance(byte[] address, long value)
-      throws ContractExeException {
+  public synchronized long addBalance(byte[] address, long value) {
     AccountCapsule accountCapsule = getAccount(address);
     if (accountCapsule == null) {
       accountCapsule = createAccount(address, Protocol.AccountType.Normal);
@@ -380,7 +378,7 @@ public class DepositImpl implements Deposit {
     }
 
     if (value < 0 && balance < -value) {
-      throw new ContractExeException(
+      throw new RuntimeException(
           StringUtil.createReadableString(accountCapsule.createDbKey())
               + " insufficient balance");
     }

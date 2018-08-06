@@ -91,7 +91,7 @@ public class TransactionTrace {
     long cpuInUsFromFreeze = cpuProcessor.getAccountLeftCpuInUsFromFreeze(owner);
 
     checkAccountInputLimitAndMaxWithinBalance(maxCpuUsageInUs, value,
-        balance, limitInDrop, cpuInUsFromFreeze, Constant.DROP_PER_CPU_US);
+        balance, limitInDrop, cpuInUsFromFreeze, Constant.SUN_PER_GAS);
   }
 
   private boolean checkAccountInputLimitAndMaxWithinBalance(long maxCpuUsageInUs, long value,
@@ -125,7 +125,7 @@ public class TransactionTrace {
         break;
       case TRX_CONTRACT_CREATION_TYPE:
       case TRX_CONTRACT_CALL_TYPE:
-        checkForSmartContract();
+        // checkForSmartContract();
         break;
       default:
         break;

@@ -8,7 +8,6 @@ import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.StorageCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.ContractExeException;
 import org.tron.protos.Protocol;
 
 /**
@@ -45,7 +44,7 @@ public interface Deposit {
 
   long getBalance(byte[] address);
 
-  long addBalance(byte[] address, long value) throws ContractExeException;
+  long addBalance(byte[] address, long value);
 
 
   Deposit newDepositChild();

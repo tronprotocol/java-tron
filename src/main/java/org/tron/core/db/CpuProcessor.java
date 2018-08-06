@@ -146,6 +146,7 @@ public class CpuProcessor extends ResourceProcessor {
     return (long) (cpuWeight * ((double) totalCpuLimit / totalCpuWeight));
   }
 
+  // todo: will change the name from us to gas
   public long getAccountLeftCpuInUsFromFreeze(AccountCapsule accountCapsule) {
 
     long now = dbManager.getWitnessController().getHeadSlot();
