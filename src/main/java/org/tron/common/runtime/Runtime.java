@@ -495,7 +495,7 @@ public class Runtime {
           result.getDeleteAccounts().clear();
           result.getLogInfoList().clear();
           result.resetFutureRefund();
-
+          spendUsage(0);
           if (result.getException() != null) {
             throw result.getException();
           } else {
@@ -519,6 +519,7 @@ public class Runtime {
       }
     } catch (OutOfResourceException e) {
       logger.error(e.getMessage());
+      runtimeError = e.getMessage();
       throw new OutOfSlotTimeException(e.getMessage());
     } catch (Exception e) {
       logger.error(e.getMessage());
@@ -536,7 +537,7 @@ public class Runtime {
     long originResourcePercent = 100 - contract.getConsumeUserResourcePercent();
     originResourcePercent = min(originResourcePercent, 100);
     originResourcePercent = max(originResourcePercent, 0);
-    long originCpuUsage = cpuUsage * 100 / originResourcePercent;
+    long originCpuUsage = cpuUsage * originResourcePercent / 100;
     originCpuUsage = min(originCpuUsage, cpuProcessor.getAccountLeftCpuInUsFromFreeze(origin));
     long callerCpuUsage = cpuUsage - originCpuUsage;
 
@@ -544,7 +545,7 @@ public class Runtime {
       trace.setBill(callerCpuUsage, 0);
       return true;
     }
-    long originStorageUsage = useedStorageSize * 100 / originResourcePercent;
+    long originStorageUsage = useedStorageSize * originResourcePercent / 100;
     originStorageUsage = min(originCpuUsage, origin.getStorageLeft());
     long callerStorageUsage = originStorageUsage - originStorageUsage;
 
