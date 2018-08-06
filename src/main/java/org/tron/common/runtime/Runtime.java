@@ -581,6 +581,16 @@ public class Runtime {
     return false;
   }
 
+  private boolean isCallConstant(byte[] address) {
+    if (TRX_CONTRACT_CALL_TYPE.equals(trxType)) {
+      ABI abi = deposit.getContract(address).getInstance().getAbi();
+      if (Wallet.isConstant(abi, ContractCapsule.getTriggerContractFromTransaction(trx))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public RuntimeSummary finalization() {
     return null;
   }
