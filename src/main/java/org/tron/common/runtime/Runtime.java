@@ -240,14 +240,6 @@ public class Runtime {
 
   }
 
-  private long getAccountCPULimitInUs(AccountCapsule creator, AccountCapsule sender,
-      TriggerSmartContract contract, long maxCpuInUsBySender, long limitInDrop) {
-
-    long senderCpuLimit = getAccountCPULimitInUs(sender, limitInDrop,
-        maxCpuInUsBySender);
-    return senderCpuLimit;
-  }
-
   private long getAccountCPULimitInUsByPercent(AccountCapsule creator, AccountCapsule sender,
       TriggerSmartContract contract, long maxCpuInUsBySender, long limitInDrop) {
 
@@ -303,6 +295,50 @@ public class Runtime {
     }
   }
 
+  private long getGasLimit(AccountCapsule account, long feeLimit) {
+    CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
+    // will change the name from us to gas
+    long cpuGasFromFreeze = cpuProcessor.getAccountLeftCpuInUsFromFreeze(account);
+    long cpuGasFromBalance = Math.floorDiv(account.getBalance(), Constant.SUN_PER_GAS);
+    long cpuGasFromFeeLimit = Math.floorDiv(feeLimit, Constant.SUN_PER_GAS);
+    return min(Math.addExact(cpuGasFromFreeze, cpuGasFromBalance), cpuGasFromFeeLimit);
+  }
+
+  private long getGasLimit(AccountCapsule creator, AccountCapsule caller,
+      TriggerSmartContract contract, long feeLimit) {
+
+    long callerGasLimit = getGasLimit(caller, feeLimit);
+    if (Arrays.equals(creator.getAddress().toByteArray(), caller.getAddress().toByteArray())) {
+      return callerGasLimit;
+    }
+
+    CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
+    // creatorCpuGasFromFreeze
+    long creatorGasLimit = cpuProcessor.getAccountLeftCpuInUsFromFreeze(creator);
+
+    SmartContract smartContract = this.deposit
+        .getContract(contract.getContractAddress().toByteArray()).getInstance();
+    long consumeUserResourcePercent = smartContract.getConsumeUserResourcePercent();
+
+    if (consumeUserResourcePercent >= 100) {
+      consumeUserResourcePercent = 100;
+    }
+    if (consumeUserResourcePercent <= 0) {
+      consumeUserResourcePercent = 0;
+    }
+
+    if (consumeUserResourcePercent <= 0) {
+      return creatorGasLimit;
+    }
+
+    if (creatorGasLimit * consumeUserResourcePercent
+        >= (100 - consumeUserResourcePercent) * callerGasLimit) {
+      return 100 * Math.floorDiv(callerGasLimit, consumeUserResourcePercent);
+    } else {
+      return Math.addExact(callerGasLimit, creatorGasLimit);
+    }
+  }
+
   /*
    **/
   private void create()
@@ -353,7 +389,6 @@ public class Runtime {
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
       long feeLimit = trx.getRawData().getFeeLimit();
-      // Attention: drop is like the gas in ethereum, not the unit of trx
       long gasLimit = getGasLimit(creator, feeLimit);
       byte[] ops = newSmartContract.getBytecode().toByteArray();
       InternalTransaction internalTransaction = new InternalTransaction(trx);
@@ -388,15 +423,6 @@ public class Runtime {
 
   }
 
-  private long getGasLimit(AccountCapsule account, long feeLimit) {
-    CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
-    // will change the name from us to gas
-    long cpuGasFromFreeze = cpuProcessor.getAccountLeftCpuInUsFromFreeze(account);
-    long cpuGasFromBalance = Math.floorDiv(account.getBalance(), Constant.SUN_PER_GAS);
-    long cpuGasFromFeeLimit = Math.floorDiv(feeLimit, Constant.SUN_PER_GAS);
-    return min(Math.addExact(cpuGasFromFreeze, cpuGasFromBalance), cpuGasFromFeeLimit);
-  }
-
   /**
    * **
    */
@@ -412,7 +438,7 @@ public class Runtime {
 
     } else {
 
-      AccountCapsule sender = this.deposit.getAccount(contract.getOwnerAddress().toByteArray());
+      AccountCapsule caller = this.deposit.getAccount(contract.getOwnerAddress().toByteArray());
       AccountCapsule creator = this.deposit.getAccount(
           this.deposit.getContract(contractAddress).getInstance()
               .getOriginAddress().toByteArray());
@@ -426,8 +452,7 @@ public class Runtime {
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
       long feeLimit = trx.getRawData().getFeeLimit();
-      // Attention: drop is like the gas in ethereum, not the unit of trx
-      long gasLimit = getGasLimit(sender, feeLimit);
+      long gasLimit = getGasLimit(creator, caller, contract, feeLimit);
 
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CALL_TYPE, executorType, trx,
