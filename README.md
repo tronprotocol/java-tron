@@ -43,7 +43,7 @@
   <a href="#links">Links</a> •
   <a href="http://wiki.tron.network">Wiki</a> •
   <a href="CONTRIBUTING.md">Contributing</a> •
-  <a href="#community">Community</a>
+  <a href="http://community.tron.network">Community</a>
 </p>
 
 ## What's TRON?
