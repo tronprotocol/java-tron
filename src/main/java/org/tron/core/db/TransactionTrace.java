@@ -174,7 +174,8 @@ public class TransactionTrace {
         ContractCapsule contract =
             dbManager.getContractStore().get(callContract.getContractAddress().toByteArray());
         originAccount = contract.getInstance().getOriginAddress().toByteArray();
-        percent = (100 - contract.getConsumeUserResourcePercent());
+        percent = Math.max(100 - contract.getConsumeUserResourcePercent(), 0);
+        percent = Math.min(percent, 100);
         break;
       default:
         return;
