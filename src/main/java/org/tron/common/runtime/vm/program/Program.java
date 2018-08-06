@@ -26,6 +26,7 @@ import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.utils.MUtil.transfer;
+import static org.tron.common.runtime.utils.MUtil.transferValidate;
 import static org.tron.common.utils.BIUtil.isPositive;
 import static org.tron.common.utils.BIUtil.toBI;
 
@@ -65,10 +66,13 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
+import org.tron.core.actuator.ActuatorFactory;
+import org.tron.core.actuator.TransferActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol;
 
 /**
@@ -377,7 +381,7 @@ public class Program {
 
 
   public void suicide(DataWord obtainerAddress)
-      throws ContractExeException {
+      throws ContractExeException, ContractValidateException {
 
     byte[] owner = convertToTronAddress(getOwnerAddress().getLast20Bytes());
     byte[] obtainer = convertToTronAddress(obtainerAddress.getLast20Bytes());
@@ -407,7 +411,7 @@ public class Program {
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   public void createContract(DataWord value, DataWord memStart, DataWord memSize)
-      throws ContractExeException {
+      throws ContractExeException, ContractValidateException {
     returnDataBuffer = null; // reset return buffer right before the call
 
     if (getCallDeep() == MAX_DEPTH) {
@@ -466,6 +470,7 @@ public class Program {
     // [4] TRANSFER THE BALANCE
     long newBalance = 0L;
     if (!byTestingSuite()) {
+      transferValidate(deposit,senderAddress,newAddress,endowment);
       deposit.addBalance(senderAddress, -endowment);
       newBalance = deposit.addBalance(newAddress, endowment);
     }
@@ -561,7 +566,7 @@ public class Program {
    * @param msg is the message call object
    */
   public void callToAddress(MessageCall msg)
-      throws ContractExeException, OutOfResourceException {
+      throws ContractExeException, OutOfResourceException, ContractValidateException {
     returnDataBuffer = null; // reset return buffer right before the call
 
     if (getCallDeep() == MAX_DEPTH) {
@@ -609,6 +614,7 @@ public class Program {
           msg.getGas().getNoLeadZeroesData(),
           msg.getEndowment().getNoLeadZeroesData());
     } else {
+      transferValidate(deposit,senderAddress,contextAddress,endowment);
       deposit.addBalance(senderAddress, -endowment);
       contextBalance = deposit.addBalance(contextAddress, endowment);
     }
@@ -1202,7 +1208,7 @@ public class Program {
 
   public void callToPrecompiledAddress(MessageCall msg,
       PrecompiledContracts.PrecompiledContract contract)
-      throws ContractExeException {
+      throws ContractExeException, ContractValidateException {
     returnDataBuffer = null; // reset return buffer right before the call
 
     if (getCallDeep() == MAX_DEPTH) {

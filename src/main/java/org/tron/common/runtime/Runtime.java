@@ -3,6 +3,7 @@ package org.tron.common.runtime;
 import static com.google.common.primitives.Longs.max;
 import static com.google.common.primitives.Longs.min;
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
+import static org.tron.common.runtime.utils.MUtil.transfer;
 import static org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType.ET_CONSTANT_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType.ET_NORMAL_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType.ET_PRE_TYPE;
@@ -305,7 +306,7 @@ public class Runtime {
   /*
    **/
   private void create()
-      throws ContractExeException {
+      throws ContractExeException, ContractValidateException {
     CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
     SmartContract newSmartContract = contract.getNewContract();
 
@@ -383,8 +384,7 @@ public class Runtime {
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
     long callValue = newSmartContract.getCallValue();
     if (callValue != 0) {
-      this.deposit.addBalance(callerAddress, -callValue);
-      this.deposit.addBalance(contractAddress, callValue);
+      transfer(this.deposit,callerAddress,callerAddress,callValue);
     }
 
   }
@@ -393,7 +393,7 @@ public class Runtime {
    * **
    */
   private void call()
-      throws ContractExeException {
+      throws ContractExeException, ContractValidateException {
     Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
     if (contract == null) {
       return;
@@ -445,8 +445,7 @@ public class Runtime {
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
     long callValue = contract.getCallValue();
     if (0 != callValue) {
-      this.deposit.addBalance(callerAddress, -callValue);
-      this.deposit.addBalance(contractAddress, callValue);
+      transfer(this.deposit,callerAddress,contractAddress,callValue);
     }
 
   }
