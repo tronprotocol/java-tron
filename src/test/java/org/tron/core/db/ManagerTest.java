@@ -303,19 +303,17 @@ public class ManagerTest {
     long num = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     BlockCapsule blockCapsule0 =
         createTestBlockCapsule(
-            1533529947843L + 3000,
+            1533529947843L + 3000 ,
             num + 1,
             dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
             addressToProvateKeys);
 
     BlockCapsule blockCapsule1 =
         createTestBlockCapsule(
-            1533529947843L + 3000,
+            1533529947843L + 3001  ,
             num + 1,
             dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
             addressToProvateKeys);
-
-
 
     logger.info("******block0:" + blockCapsule0);
     logger.info("******block1:" + blockCapsule1);
@@ -347,7 +345,7 @@ public class ManagerTest {
     }
 
     BlockCapsule blockCapsule3 =
-        createTestBlockCapsule(
+        createTestBlockCapsule(1533529947843L + 9000,
             dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1,
             dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(), addressToProvateKeys);
     logger.info("******block3:" + blockCapsule3);
@@ -359,7 +357,7 @@ public class ManagerTest {
         dbManager.getBlockStore().get(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes()).getBlockId());
 
     BlockCapsule blockCapsule4 =
-        createTestBlockCapsule(
+        createTestBlockCapsule(1533529947843L + 12000,
             dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1,
             blockCapsule3.getBlockId().getByteString(), addressToProvateKeys);
     logger.info("******block4:" + blockCapsule4);
