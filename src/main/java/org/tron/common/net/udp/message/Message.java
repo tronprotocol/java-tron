@@ -6,8 +6,11 @@ import org.tron.common.net.udp.message.discover.FindNodeMessage;
 import org.tron.common.net.udp.message.discover.NeighborsMessage;
 import org.tron.common.net.udp.message.discover.PingMessage;
 import org.tron.common.net.udp.message.discover.PongMessage;
+import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.exception.P2pException;
+import org.tron.protos.Discover.Endpoint;
 
 public abstract class Message {
 
@@ -35,7 +38,7 @@ public abstract class Message {
     return Sha256Hash.of(getData());
   }
 
-  public abstract byte[] getNodeId();
+  public abstract Node getFrom();
 
   @Override
   public String toString() {
@@ -50,6 +53,12 @@ public abstract class Message {
   @Override
   public int hashCode() {
     return getMessageId().hashCode();
+  }
+
+  public static Node getNode(Endpoint endpoint){
+    Node node = new Node(endpoint.getNodeId().toByteArray(),
+        ByteArray.toStr(endpoint.getAddress().toByteArray()), endpoint.getPort());
+    return node;
   }
 
   public static Message parse(byte[] encode) throws Exception {

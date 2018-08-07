@@ -7,12 +7,11 @@ import com.googlecode.cqengine.persistence.disk.DiskPersistence;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AssetIssueCapsule;
-import org.tron.core.db.TronDatabase;
 import org.tron.core.db.common.WrappedByteArray;
+import org.tron.core.db2.core.ITronChainBase;
 import org.tron.protos.Contract.AssetIssueContract;
 
 import javax.annotation.PostConstruct;
@@ -30,7 +29,7 @@ public class AssetIssueIndex extends AbstractIndex<AssetIssueCapsule, AssetIssue
 
   @Autowired
   public AssetIssueIndex(
-      @Qualifier("assetIssueStore") final TronDatabase<AssetIssueCapsule> database) {
+      @Qualifier("assetIssueStore") final ITronChainBase<AssetIssueCapsule> database) {
     super(database);
   }
 

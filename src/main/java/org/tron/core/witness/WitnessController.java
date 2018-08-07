@@ -5,6 +5,7 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -202,7 +203,7 @@ public class WitnessController {
     }
 
     int numberActiveWitness = this.getActiveWitnesses().size();
-    int singleRepeat = this.manager.getDynamicPropertiesStore().getSingleRepeat();
+    int singleRepeat = ChainConstant.SINGLE_REPEAT;
     if (numberActiveWitness <= 0) {
       throw new RuntimeException("Active Witnesses is null.");
     }
@@ -238,7 +239,7 @@ public class WitnessController {
 //    long num = manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
 //    long time = manager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
 //
-//    if (num != 0 && num % getActiveWitnesses().size() == 0) {
+//    if (num != 0 && num % getActiveWitnesses().isEmpty()) {
 //      logger.info("updateWitnessSchedule number:{},HeadBlockTimeStamp:{}", num, time);
 //      setCurrentShuffledWitnesses(new RandomGenerator<ByteString>()
 //          .shuffle(getActiveWitnesses(), time));
@@ -251,12 +252,12 @@ public class WitnessController {
 
   private Map<ByteString, Long> countVote(VotesStore votesStore) {
     final Map<ByteString, Long> countWitness = Maps.newHashMap();
-    org.tron.core.db.common.iterator.DBIterator dbIterator = votesStore.getIterator();
+    Iterator<Map.Entry<byte[], VotesCapsule>> dbIterator = votesStore.iterator();
 
     long sizeCount = 0;
     while (dbIterator.hasNext()) {
-      Entry<byte[], byte[]> next = dbIterator.next();
-      VotesCapsule votes = new VotesCapsule(next.getValue());
+      Entry<byte[], VotesCapsule> next = dbIterator.next();
+      VotesCapsule votes = next.getValue();
 
 //      logger.info("there is account ,account address is {}",
 //          account.createReadableString());
@@ -308,7 +309,7 @@ public class WitnessController {
     Map<ByteString, Long> countWitness = countVote(votesStore);
 
     //Only possible during the initialization phase
-    if (countWitness.size() == 0) {
+    if (countWitness.isEmpty()) {
       logger.info("No vote, no change to witness.");
     } else {
       List<ByteString> currentWits = getActiveWitnesses();
@@ -411,7 +412,7 @@ public class WitnessController {
 
   private void payStandbyWitness(List<ByteString> list) {
     long voteSum = 0;
-    long totalPay = ChainConstant.WITNESS_STANDBY_ALLOWANCE;
+    long totalPay = manager.getDynamicPropertiesStore().getWitnessStandbyAllowance();
     for (ByteString b : list) {
       voteSum += getWitnesseByAddress(b).getVoteCount();
     }

@@ -80,6 +80,7 @@ public class KhaosDatabase extends TronDatabase {
     // private HashMap<Sha256Hash, KhaosBlock> parentHashKblkMap = new HashMap<>();
     private int maxCapcity = 1024;
 
+    @Getter
     private LinkedHashMap<Long, ArrayList<KhaosBlock>> numKblkMap =
         new LinkedHashMap<Long, ArrayList<KhaosBlock>>() {
 
