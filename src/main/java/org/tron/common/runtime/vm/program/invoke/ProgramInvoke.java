@@ -53,10 +53,6 @@ public interface ProgramInvoke {
 
   DataWord getDifficulty();
 
-  DataWord getDroplimit();
-
-  long getDroplimitLong();
-
   boolean byTransaction();
 
   boolean byTestingSuite();
@@ -72,4 +68,6 @@ public interface ProgramInvoke {
   long getVmShouldEndInUs();
 
   long getVmStartInUs();
+
+  long getGasLimit();
 }

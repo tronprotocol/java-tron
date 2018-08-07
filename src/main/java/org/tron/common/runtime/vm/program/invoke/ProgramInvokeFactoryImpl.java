@@ -48,8 +48,8 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
   // Invocation by the wire tx
   @Override
   public ProgramInvoke createProgramInvoke(InternalTransaction.TrxType trxType,
-      ExecutorType executorType,
-      Transaction tx, Block block, Deposit deposit, long vmStartInUs, long vmShouldEndInUs) {
+      ExecutorType executorType, Transaction tx, Block block, Deposit deposit, long vmStartInUs,
+      long vmShouldEndInUs, long gasLimit) {
     byte[] contractAddress;
     byte[] ownerAddress;
     long balance;
@@ -81,7 +81,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
       }
 
       return new ProgramInvokeImpl(contractAddress, ownerAddress, ownerAddress, balance, 0, data,
-          lastHash, coinbase, timestamp, number, deposit, vmStartInUs, vmShouldEndInUs);
+          lastHash, coinbase, timestamp, number, deposit, vmStartInUs, vmShouldEndInUs, gasLimit);
 
     } else if (trxType == TRX_CONTRACT_CALL_TYPE) {
       Contract.TriggerSmartContract contract = ContractCapsule
@@ -137,7 +137,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
       }
 
       return new ProgramInvokeImpl(address, origin, caller, balance, callValue, data,
-          lastHash, coinbase, timestamp, number, deposit, vmStartInUs, vmShouldEndInUs);
+          lastHash, coinbase, timestamp, number, deposit, vmStartInUs, vmShouldEndInUs, gasLimit);
     } else {
       return null;
     }
@@ -152,7 +152,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
       DataWord callerAddress,
       DataWord inValue, long balanceInt, byte[] dataIn,
       Deposit deposit, boolean isStaticCall, boolean byTestingSuite, long vmStartInUs,
-      long vmShouldEndInUs) {
+      long vmShouldEndInUs, long gasLimit) {
 
     DataWord address = toAddress;
     DataWord origin = program.getOriginAddress();
@@ -170,7 +170,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
     return new ProgramInvokeImpl(address, origin, caller, balance, callValue,
         data, lastHash, coinbase, timestamp, number, difficulty,
         deposit, program.getCallDeep() + 1, isStaticCall, byTestingSuite, vmStartInUs,
-        vmShouldEndInUs);
+        vmShouldEndInUs, gasLimit);
   }
 
 }
