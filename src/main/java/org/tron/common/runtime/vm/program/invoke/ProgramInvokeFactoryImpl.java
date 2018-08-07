@@ -68,12 +68,13 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
 
       switch (executorType) {
         case ET_NORMAL_TYPE:
-          lastHash = block.getBlockHeader().getRawDataOrBuilder().getParentHash().toByteArray();
-          coinbase = block.getBlockHeader().getRawDataOrBuilder().getWitnessAddress().toByteArray();
-          timestamp = block.getBlockHeader().getRawDataOrBuilder().getTimestamp();
-          number = block.getBlockHeader().getRawDataOrBuilder().getNumber();
-          break;
         case ET_PRE_TYPE:
+          if (null != block) {
+            lastHash = block.getBlockHeader().getRawDataOrBuilder().getParentHash().toByteArray();
+            coinbase = block.getBlockHeader().getRawDataOrBuilder().getWitnessAddress().toByteArray();
+            timestamp = block.getBlockHeader().getRawDataOrBuilder().getTimestamp();
+            number = block.getBlockHeader().getRawDataOrBuilder().getNumber();
+          }
           break;
         default:
           return null;
@@ -119,16 +120,17 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
         case ET_CONSTANT_TYPE:
           break;
         case ET_PRE_TYPE:
-          break;
         case ET_NORMAL_TYPE:
-          /***    PREVHASH  op  ***/
-          lastHash = block.getBlockHeader().getRawDataOrBuilder().getParentHash().toByteArray();
-          /***   COINBASE  op ***/
-          coinbase = block.getBlockHeader().getRawDataOrBuilder().getWitnessAddress().toByteArray();
-          /*** TIMESTAMP  op  ***/
-          timestamp = block.getBlockHeader().getRawDataOrBuilder().getTimestamp();
-          /*** NUMBER  op  ***/
-          number = block.getBlockHeader().getRawDataOrBuilder().getNumber();
+          if (null != block) {
+            /***    PREVHASH  op  ***/
+            lastHash = block.getBlockHeader().getRawDataOrBuilder().getParentHash().toByteArray();
+            /***   COINBASE  op ***/
+            coinbase = block.getBlockHeader().getRawDataOrBuilder().getWitnessAddress().toByteArray();
+            /*** TIMESTAMP  op  ***/
+            timestamp = block.getBlockHeader().getRawDataOrBuilder().getTimestamp();
+            /*** NUMBER  op  ***/
+            number = block.getBlockHeader().getRawDataOrBuilder().getNumber();
+          }
           break;
         default:
           break;

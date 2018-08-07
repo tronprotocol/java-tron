@@ -16,6 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.Stack;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
 
 public class VM {
 
@@ -90,7 +92,8 @@ public class VM {
     return gasCost;
   }
 
-  public void step(Program program) {
+  public void step(Program program)
+      throws ContractValidateException {
     if (vmTrace) {
       program.saveOpTrace();
     }
@@ -1332,7 +1335,8 @@ public class VM {
     }
   }
 
-  public void play(Program program) {
+  public void play(Program program)
+      throws ContractValidateException {
     try {
       if (program.byTestingSuite()) {
         return;

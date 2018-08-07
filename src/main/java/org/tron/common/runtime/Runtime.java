@@ -3,6 +3,7 @@ package org.tron.common.runtime;
 import static com.google.common.primitives.Longs.max;
 import static com.google.common.primitives.Longs.min;
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
+import static org.tron.common.runtime.utils.MUtil.transfer;
 import static org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType.ET_CONSTANT_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType.ET_NORMAL_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType.ET_PRE_TYPE;
@@ -127,6 +128,7 @@ public class Runtime {
   /**
    * For pre trx run
    */
+  @Deprecated
   public Runtime(Transaction tx, DepositImpl deposit, ProgramInvokeFactory programInvokeFactory) {
     this.trx = tx;
     this.deposit = deposit;
@@ -149,6 +151,7 @@ public class Runtime {
   /**
    * For constant trx
    */
+  @Deprecated
   public Runtime(Transaction tx, ProgramInvokeFactory programInvokeFactory, Deposit deposit) {
     trx = tx;
     this.deposit = deposit;
@@ -156,6 +159,29 @@ public class Runtime {
     executorType = ET_CONSTANT_TYPE;
     trxType = TRX_CONTRACT_CALL_TYPE;
 
+  }
+
+
+  /**
+   * For constant trx with latest block.
+   */
+  public Runtime(Transaction tx, Block block, DepositImpl deposit, ProgramInvokeFactory programInvokeFactory) {
+    this.trx = tx;
+    this.deposit = deposit;
+    this.programInvokeFactory = programInvokeFactory;
+    this.executorType = ET_PRE_TYPE;
+    this.block = block;
+    Transaction.Contract.ContractType contractType = tx.getRawData().getContract(0).getType();
+    switch (contractType.getNumber()) {
+      case Transaction.Contract.ContractType.TriggerSmartContract_VALUE:
+        trxType = TRX_CONTRACT_CALL_TYPE;
+        break;
+      case Transaction.Contract.ContractType.CreateSmartContract_VALUE:
+        trxType = TRX_CONTRACT_CREATION_TYPE;
+        break;
+      default:
+        trxType = TRX_PRECOMPILED_TYPE;
+    }
   }
 
 
@@ -344,7 +370,7 @@ public class Runtime {
   /*
    **/
   private void create()
-      throws ContractExeException {
+      throws ContractExeException, ContractValidateException {
     CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
     SmartContract newSmartContract = contract.getNewContract();
 
@@ -419,8 +445,7 @@ public class Runtime {
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
     long callValue = newSmartContract.getCallValue();
     if (callValue != 0) {
-      this.deposit.addBalance(callerAddress, -callValue);
-      this.deposit.addBalance(contractAddress, callValue);
+      transfer(this.deposit,callerAddress,callerAddress,callValue);
     }
 
   }
@@ -428,7 +453,8 @@ public class Runtime {
   /**
    * **
    */
-  private void call() {
+  private void call()
+      throws ContractValidateException {
     Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
     if (contract == null) {
       return;
@@ -469,8 +495,7 @@ public class Runtime {
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
     long callValue = contract.getCallValue();
     if (0 != callValue) {
-      this.deposit.addBalance(callerAddress, -callValue);
-      this.deposit.addBalance(contractAddress, callValue);
+      transfer(this.deposit,callerAddress,contractAddress,callValue);
     }
 
   }

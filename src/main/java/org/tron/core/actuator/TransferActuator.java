@@ -5,6 +5,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.storage.Deposit;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -142,4 +143,5 @@ public class TransferActuator extends AbstractActuator {
   public long calcFee() {
     return ChainConstant.TRANSFER_FEE;
   }
+
 }
