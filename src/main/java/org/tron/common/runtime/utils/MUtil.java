@@ -8,6 +8,7 @@ import org.tron.common.storage.Deposit;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
+import org.tron.core.actuator.TransferActuator;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -23,7 +24,10 @@ public class MUtil {
 
   public static void transfer(Deposit deposit, byte[] fromAddress, byte[] toAddress, long amount)
       throws ContractValidateException {
-    transferValidate(deposit, fromAddress, toAddress, amount);
+    if (!TransferActuator.validate(deposit, fromAddress, toAddress, amount)){
+      throw new RuntimeException(
+          Hex.toHexString(fromAddress).toUpperCase() + " transfer to" +Hex.toHexString(toAddress).toUpperCase() +" validation fail!");
+    }
     if (deposit.getBalance(fromAddress) < amount) {
       throw new RuntimeException(
           Hex.toHexString(fromAddress).toUpperCase() + " not enough balance!");
@@ -35,19 +39,6 @@ public class MUtil {
     deposit.addBalance(fromAddress, -amount);
   }
 
-  public static void transferValidate(Deposit deposit, byte[] fromAddress, byte[] toAddress,
-      long amount)
-      throws ContractValidateException {
-    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
-    builder.setAmount(amount);
-    builder.setOwnerAddress(ByteString.copyFrom(fromAddress));
-    builder.setToAddress(ByteString.copyFrom(toAddress));
-    TransferContract contract = builder.build();
-    TransactionCapsule trx = new TransactionCapsule(contract,
-        ContractType.TransferContract);
-    Actuator actuator = ActuatorFactory.createActuator(trx, deposit.getDbManager()).get(0);
-    actuator.validate();
-  }
 
   public static void burn(Deposit deposit, byte[] address, long amount) {
     if (deposit.getBalance(address) < amount) {
