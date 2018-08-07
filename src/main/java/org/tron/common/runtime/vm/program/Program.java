@@ -1420,13 +1420,14 @@ public class Program {
 
   public DataWord getCallGas(OpCode op, DataWord requestedGas, DataWord availableGas) {
 
-    if (requestedGas.compareTo(availableGas) > 0) {
-      throw new Program.OutOfGasException(
-          "Not enough gas for '%s' operation executing: opGas[%d], programGas[%d]", op.name(),
-          requestedGas, availableGas);
-    }
-
-    return requestedGas.clone();
+    // if (requestedGas.compareTo(availableGas) > 0) {
+    //   throw new Program.OutOfGasException(
+    //       "Not enough gas for '%s' operation executing: opGas[%d], programGas[%d]", op.name(),
+    //       requestedGas, availableGas);
+    // }
+    //
+    // return requestedGas.clone();
+    return requestedGas.compareTo(availableGas) > 0 ? availableGas : requestedGas;
   }
 
   public DataWord getCreateGas(DataWord availableGas) {

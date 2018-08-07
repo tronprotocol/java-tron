@@ -220,7 +220,10 @@ public class VM {
           // here, contract call an other contract, or a library, and so on
           // todo: check the callvalue here
           gasCost = gasCosts.getCALL();
+
           DataWord callGasWord = stack.get(stack.size() - 1);
+          // DataWord callGasWord = new DataWord(1000000);
+
           DataWord callAddressWord = stack.get(stack.size() - 2);
           DataWord value = op.callHasValue() ?
               stack.get(stack.size() - 3) : DataWord.ZERO;
@@ -248,6 +251,7 @@ public class VM {
           }
           DataWord getGasLimitLeft = program.getGasLimitLeft().clone();
           getGasLimitLeft.sub(new DataWord(gasCost));
+
           adjustedCallGas = program.getCallGas(op, callGasWord, getGasLimitLeft);
           gasCost += adjustedCallGas.longValueSafe();
           break;
@@ -1128,8 +1132,7 @@ public class VM {
         }
         break;
         case GAS: {
-          DataWord gas = new DataWord(0);
-
+          DataWord gas = program.getGasLimitLeft();
           if (logger.isInfoEnabled()) {
             hint = "" + gas;
           }
