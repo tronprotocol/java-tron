@@ -240,7 +240,7 @@ public class Runtime {
     if (executorType == ET_NORMAL_TYPE) {
       BigInteger blockCPULeftInUs = getBlockCPULeftInUs();
       BigInteger oneTxCPULimitInUs = BigInteger
-          .valueOf(Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
+          .valueOf(Constant.MAX_CPU_TIME_OF_ONE_TX);
 
       // TODO get from account
       BigInteger increasedStorageLimit = BigInteger.valueOf(10000000);
@@ -413,7 +413,12 @@ public class Runtime {
       //   thisTxCPULimitInUs = Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT;
       // }
 
-      long thisTxCPULimitInUs = Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT;
+      long thisTxCPULimitInUs;
+      if (ET_NORMAL_TYPE == executorType) {
+        thisTxCPULimitInUs = Constant.MAX_CPU_TIME_OF_ONE_TX_WHEN_VERIFY_BLOCK;
+      } else {
+        thisTxCPULimitInUs = Constant.MAX_CPU_TIME_OF_ONE_TX;
+      }
       long vmStartInUs = System.nanoTime() / 1000;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
@@ -472,7 +477,13 @@ public class Runtime {
           this.deposit.getContract(contractAddress).getInstance()
               .getOriginAddress().toByteArray());
 
-      long thisTxCPULimitInUs = Constant.CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT;
+      long thisTxCPULimitInUs;
+      if (ET_NORMAL_TYPE == executorType) {
+        thisTxCPULimitInUs = Constant.MAX_CPU_TIME_OF_ONE_TX_WHEN_VERIFY_BLOCK;
+      } else {
+        thisTxCPULimitInUs = Constant.MAX_CPU_TIME_OF_ONE_TX;
+      }
+
       long vmStartInUs = System.nanoTime() / 1000;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
