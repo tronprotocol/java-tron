@@ -983,11 +983,6 @@ public class Manager {
 
     trace.pay();
 
-    if (runtime.getResult().getException() != null) {
-      throw new RuntimeException(
-          "Runtime exe failed :" + runtime.getResult().getException().getMessage());
-    }
-
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
     transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());
@@ -1105,7 +1100,8 @@ public class Manager {
         logger.info("receipt exception: {}", e.getMessage());
         logger.debug(e.getMessage(), e);
       } catch (OutOfSlotTimeException e) {
-        e.printStackTrace();
+        logger.info("OutOfSlotTime exception: {}", e.getMessage());
+        logger.debug(e.getMessage(), e);
       }
     }
 
