@@ -613,7 +613,7 @@ public class Program {
       getResult().addCallCreate(data, contextAddress,
           msg.getGas().getNoLeadZeroesData(),
           msg.getEndowment().getNoLeadZeroesData());
-    } else {
+    } else if(null != senderAddress && null != codeAddress && senderAddress != codeAddress) {
       transferValidate(deposit,senderAddress,contextAddress,endowment);
       deposit.addBalance(senderAddress, -endowment);
       contextBalance = deposit.addBalance(contextAddress, endowment);
@@ -1236,7 +1236,9 @@ public class Program {
         msg.getInDataSize().intValue());
 
     // Charge for endowment - is not reversible by rollback
-    transfer(deposit, senderAddress, contextAddress, msg.getEndowment().value().longValue());
+    if(null != senderAddress && null != contextAddress && senderAddress != contextAddress) {
+      transfer(deposit, senderAddress, contextAddress, msg.getEndowment().value().longValue());
+    }
 
     long requiredGas = contract.getGasForData(data);
     if (requiredGas > msg.getGas().longValue()) {
