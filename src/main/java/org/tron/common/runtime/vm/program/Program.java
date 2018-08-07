@@ -37,8 +37,10 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
+import java.util.Objects;
 import java.util.TreeSet;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -613,7 +615,7 @@ public class Program {
       getResult().addCallCreate(data, contextAddress,
           msg.getGas().getNoLeadZeroesData(),
           msg.getEndowment().getNoLeadZeroesData());
-    } else if(null != senderAddress && null != codeAddress && senderAddress != codeAddress) {
+    } else if(!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress) && senderAddress != contextAddress) {
       transferValidate(deposit,senderAddress,contextAddress,endowment);
       deposit.addBalance(senderAddress, -endowment);
       contextBalance = deposit.addBalance(contextAddress, endowment);
@@ -1236,7 +1238,7 @@ public class Program {
         msg.getInDataSize().intValue());
 
     // Charge for endowment - is not reversible by rollback
-    if(null != senderAddress && null != contextAddress && senderAddress != contextAddress) {
+    if(!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress) && senderAddress != contextAddress) {
       transfer(deposit, senderAddress, contextAddress, msg.getEndowment().value().longValue());
     }
 
