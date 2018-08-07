@@ -149,7 +149,11 @@ public class NodeStatistics {
         tronLastLocalDisconnectReason == ReasonCode.UNLINKABLE ||
         tronLastRemoteDisconnectReason == ReasonCode.UNLINKABLE ||
         tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_CHAIN ||
-        tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_CHAIN) {
+        tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_CHAIN ||
+        tronLastRemoteDisconnectReason == ReasonCode.SYNC_FAIL ||
+        tronLastLocalDisconnectReason == ReasonCode.SYNC_FAIL ||
+        tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_VERSION ||
+        tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_VERSION) {
       persistedReputation = 0;
       return true;
     }
