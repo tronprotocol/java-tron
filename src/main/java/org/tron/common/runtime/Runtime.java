@@ -200,22 +200,22 @@ public class Runtime {
   /**
    */
   public void init() {
-
-    switch (trxType) {
-      case TRX_PRECOMPILED_TYPE:
-        readyToExecute = true;
-        break;
-      case TRX_CONTRACT_CREATION_TYPE:
-      case TRX_CONTRACT_CALL_TYPE:
-        // if (!curCPULimitReachedBlockCPULimit()) {
-        //   readyToExecute = true;
-        // }
-        readyToExecute = true;
-        break;
-      default:
-        readyToExecute = true;
-        break;
-    }
+    readyToExecute = true;
+    // switch (trxType) {
+    //   case TRX_PRECOMPILED_TYPE:
+    //     readyToExecute = true;
+    //     break;
+    //   case TRX_CONTRACT_CREATION_TYPE:
+    //   case TRX_CONTRACT_CALL_TYPE:
+    //     // if (!curCPULimitReachedBlockCPULimit()) {
+    //     //   readyToExecute = true;
+    //     // }
+    //     readyToExecute = true;
+    //     break;
+    //   default:
+    //     readyToExecute = true;
+    //     break;
+    // }
   }
 
 
@@ -594,19 +594,13 @@ public class Runtime {
     if (cpuFee > 0) {
       storageFee -= cpuFee;
     }
-    long tryBuyStorage = storageMarket.tryBuyStorageBytes(storageFee);
+    long tryBuyStorage = storageMarket.tryBuyStorage(storageFee);
     if (tryBuyStorage + caller.getStorageLeft() < callerStorageUsage) {
       trace.setBill(callerCpuUsage, 0);
       return false;
     }
     trace.setBill(callerCpuUsage, callerStorageUsage);
     return true;
-  }
-
-  private void spendStorageUsage(long useedStorageSize) {
-  }
-
-  private void spendCpuUsage() {
   }
 
   private boolean isCallConstant() {
