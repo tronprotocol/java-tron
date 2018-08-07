@@ -48,7 +48,8 @@ public class Constant {
 
   // config for smart contract
   public static final long MEM_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT = 32 * 1024 * 1024L; // 32MB
-  public static final long CPU_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT = 100000; // 100 ms = 100000 us
+  public static final long MAX_CPU_TIME_OF_ONE_TX_WHEN_VERIFY_BLOCK = 500000; // 500 ms = 500000 us
+  public static final long MAX_CPU_TIME_OF_ONE_TX = 100000; // 100 ms = 100000 us
   public static final long STORAGE_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT = 32 * 1024 * 1024L; // 32MB
   public static final long SUN_PER_GAS = 30; // 1 us = 30 DROP = 30 * 10^-6 TRX
   public static final long MAX_GAS_IN_TX = 3000000; // ref: 1 us = 1 gas
