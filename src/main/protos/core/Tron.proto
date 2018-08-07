@@ -61,6 +61,7 @@ message Account {
   message Frozen {
     int64 frozen_balance = 1; // the frozen trx balance
     int64 expire_time = 2; // the expire time
+    bytes to_address = 3; // resources are delegated to this address
   }
   bytes account_name = 1;
   AccountType type = 2;
@@ -108,7 +109,7 @@ message Account {
     // cpu resource, get from frozen
     int64 cpu_usage = 1;
     // the frozen balance for cpu
-    Frozen frozen_balance_for_cpu = 2;
+    repeated Frozen frozen_balance_for_cpu = 2;
     int64 latest_consume_time_for_cpu = 3;
 
     // storage resource, get from market
