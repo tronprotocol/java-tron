@@ -277,6 +277,7 @@ public class ManagerTest {
     Assert.assertEquals(
         dbManager.getHead().getBlockId(),
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+
   }
 
   @Test
