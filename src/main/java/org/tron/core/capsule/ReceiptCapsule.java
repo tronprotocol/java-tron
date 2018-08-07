@@ -68,9 +68,9 @@ public class ReceiptCapsule {
    */
   public void payCpuBill(
       Manager manager,
-      byte[] origin,
-      byte[] caller,
-      int percent,
+      AccountCapsule origin,
+      AccountCapsule caller,
+      long percent,
       CpuProcessor cpuProcessor,
       long now) {
     if (0 == receipt.getCpuUsage()) {
@@ -78,6 +78,7 @@ public class ReceiptCapsule {
     }
 
     long originUsage = receipt.getCpuUsage() * percent / 100;
+    originUsage = Math.min(originUsage, cpuProcessor.getAccountLeftCpuInUsFromFreeze(caller));
     long callerUsage = receipt.getCpuUsage() - originUsage;
 
     payCpuBill(manager, origin, originUsage, cpuProcessor, now);
@@ -86,19 +87,18 @@ public class ReceiptCapsule {
 
   private void payCpuBill(
       Manager manager,
-      byte[] account,
+      AccountCapsule account,
       long usage,
       CpuProcessor cpuProcessor,
       long now) {
-    AccountCapsule accountCapsule = manager.getAccountStore().get(account);
 
-    if (cpuProcessor.getAccountLeftCpuInUsFromFreeze(accountCapsule) >= usage) {
-      cpuProcessor.useCpu(accountCapsule, usage, now);
+    if (cpuProcessor.getAccountLeftCpuInUsFromFreeze(account) >= usage) {
+      cpuProcessor.useCpu(account, usage, now);
     } else {
-      accountCapsule.setBalance(accountCapsule.getBalance() - usage * Constant.DROP_PER_CPU_US);
+      account.setBalance(account.getBalance() - usage * Constant.SUN_PER_GAS);
     }
 
-    manager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
+    manager.getAccountStore().put(account.getAddress().toByteArray(), account);
   }
 
   /**
@@ -106,15 +106,16 @@ public class ReceiptCapsule {
    */
   public void payStorageBill(
       Manager manager,
-      byte[] origin,
-      byte[] caller,
-      int percent,
+      AccountCapsule origin,
+      AccountCapsule caller,
+      long percent,
       StorageMarket storageMarket) {
     if (0 == receipt.getStorageDelta()) {
       return;
     }
 
     long originDelta = receipt.getStorageDelta() * percent / 100;
+    originDelta = Math.min(originDelta, origin.getStorageLeft());
     long callerDelta = receipt.getStorageDelta() - originDelta;
 
     payStorageBill(manager, origin, originDelta, storageMarket);
@@ -123,20 +124,19 @@ public class ReceiptCapsule {
 
   private void payStorageBill(
       Manager manager,
-      byte[] account,
+      AccountCapsule account,
       long delta,
       StorageMarket storageMarket) {
-    AccountCapsule accountCapsule = manager.getAccountStore().get(account);
 
-    if (accountCapsule.getStorageLeft() >= delta) {
-      accountCapsule.setStorageUsage(accountCapsule.getStorageUsage() + delta);
+    if (account.getStorageLeft() >= delta) {
+      account.setStorageUsage(account.getStorageUsage() + delta);
     } else {
-      long needStorage = delta - accountCapsule.getStorageLeft();
-      storageMarket.buyStorage(accountCapsule, needStorage);
-      accountCapsule.setStorageUsage(accountCapsule.getStorageUsage() + needStorage);
+      long needStorage = delta - account.getStorageLeft();
+      account = storageMarket.buyStorageBytes(account, needStorage);
+      account.setStorageUsage(account.getStorageUsage() + needStorage);
     }
 
-    manager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
+    manager.getAccountStore().put(account.getAddress().toByteArray(), account);
   }
 
   public void buyStorage(long storage) {

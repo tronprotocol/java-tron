@@ -136,9 +136,7 @@ public class NodeStatistics {
       firstDisconnectedTime = 0;
     }
 
-    if (tronLastLocalDisconnectReason == ReasonCode.NULL_IDENTITY ||
-        tronLastRemoteDisconnectReason == ReasonCode.NULL_IDENTITY ||
-        tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
+    if (tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
         tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
         tronLastLocalDisconnectReason == ReasonCode.BAD_PROTOCOL ||
         tronLastRemoteDisconnectReason == ReasonCode.BAD_PROTOCOL ||
@@ -150,12 +148,12 @@ public class NodeStatistics {
         tronLastRemoteDisconnectReason == ReasonCode.FORKED ||
         tronLastLocalDisconnectReason == ReasonCode.UNLINKABLE ||
         tronLastRemoteDisconnectReason == ReasonCode.UNLINKABLE ||
-        tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_VERSION ||
-        tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_VERSION ||
         tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_CHAIN ||
         tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_CHAIN ||
         tronLastRemoteDisconnectReason == ReasonCode.SYNC_FAIL ||
-        tronLastLocalDisconnectReason == ReasonCode.SYNC_FAIL) {
+        tronLastLocalDisconnectReason == ReasonCode.SYNC_FAIL ||
+        tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_VERSION ||
+        tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_VERSION) {
       persistedReputation = 0;
       return true;
     }

@@ -56,14 +56,11 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
-import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ProposalApproveContract;
 import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Contract.ProposalDeleteContract;
-import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
-import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 /**
@@ -666,7 +663,7 @@ public class PrecompiledContracts {
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
     public long getGasForData(byte[] data) {
-      return 0;
+      return 200;
     }
 
     @Override
@@ -723,7 +720,7 @@ public class PrecompiledContracts {
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
     public long getGasForData(byte[] data) {
-      return 0;
+      return 200;
     }
 
     @Override
@@ -783,7 +780,7 @@ public class PrecompiledContracts {
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
     public long getGasForData(byte[] data) {
-      return 0;
+      return 200;
     }
 
     @Override
@@ -840,7 +837,7 @@ public class PrecompiledContracts {
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
     public long getGasForData(byte[] data) {
-      return 0;
+      return 200;
     }
 
     @Override
@@ -889,7 +886,7 @@ public class PrecompiledContracts {
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
     public long getGasForData(byte[] data) {
-      return 0;
+      return 200;
     }
 
     @Override
@@ -946,7 +943,7 @@ public class PrecompiledContracts {
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
     public long getGasForData(byte[] data) {
-      return 0;
+      return 200;
     }
 
     @Override
@@ -1008,7 +1005,7 @@ public class PrecompiledContracts {
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
     public long getGasForData(byte[] data) {
-      return 0;
+      return 200;
     }
 
     @Override
@@ -1056,7 +1053,7 @@ public class PrecompiledContracts {
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
     public long getGasForData(byte[] data) {
-      return 0;
+      return 200;
     }
 
     @Override
@@ -1083,7 +1080,7 @@ public class PrecompiledContracts {
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
     public long getGasForData(byte[] data) {
-      return 0;
+      return 200;
     }
 
     @Override

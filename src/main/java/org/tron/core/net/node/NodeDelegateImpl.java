@@ -30,6 +30,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
+import org.tron.core.exception.OutOfSlotTimeException;
 import org.tron.core.exception.ReceiptException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
@@ -103,6 +104,8 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("bad number exception," + e.getMessage());
     } catch (TransactionTraceException e) {
       throw new BadBlockException("TransactionTrace Exception," + e.getMessage());
+    } catch (OutOfSlotTimeException e) {
+      throw new BadBlockException("TransactionTrace Exception," + e.getMessage());
     }
 
   }
@@ -152,6 +155,9 @@ public class NodeDelegateImpl implements NodeDelegate {
       return false;
     } catch (TransactionTraceException e) {
       logger.info("TransactionTrace Exception" + e.getMessage());
+      return false;
+    } catch (OutOfSlotTimeException e) {
+      logger.info("OutOfSlotTimeException Exception" + e.getMessage());
       return false;
     }
 

@@ -18,6 +18,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.OutOfSlotTimeException;
 
 /**
  * Deposit controller : process pre transaction , block, query contract and etc..
@@ -60,7 +61,7 @@ public class DepositController {
    * The trx may be invalid due to check with not newest data.
    */
   public int preProcessTransaction(TransactionCapsule trxCap)
-      throws ContractValidateException, ContractExeException {
+      throws ContractValidateException, ContractExeException, OutOfSlotTimeException {
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
     Runtime runtime = new Runtime(trxCap.getInstance(), deposit, programInvokeFactory);
     runtime.init();
@@ -79,7 +80,7 @@ public class DepositController {
    * @return
    */
   public int processBlock(BlockCapsule block)
-      throws ContractValidateException, ContractExeException {
+      throws ContractValidateException, ContractExeException, OutOfSlotTimeException {
     Deposit lastDeposit = getLastDeposit();
     Deposit currentDeposit;
     if (lastDeposit == null) {
@@ -133,7 +134,7 @@ public class DepositController {
    * @return
    */
   public ProgramResult processConstantTransaction(TransactionCapsule trxCap)
-      throws ContractValidateException, ContractExeException {
+      throws ContractValidateException, ContractExeException, OutOfSlotTimeException {
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
     Runtime runtime = new Runtime(trxCap.getInstance(), programInvokeFactory, deposit);
     runtime.init();

@@ -10,6 +10,7 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.OutOfSlotTimeException;
 import org.tron.core.exception.ReceiptException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
@@ -73,6 +74,8 @@ public class PendingManager implements AutoCloseable {
             logger.debug("expiration transaction");
           } catch (TransactionTraceException e) {
             logger.debug("transactionTrace transaction");
+          } catch (OutOfSlotTimeException e) {
+            logger.debug("outOfSlotTime transaction");
           }
         });
   }
