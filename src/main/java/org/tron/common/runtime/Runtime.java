@@ -594,19 +594,13 @@ public class Runtime {
     if (cpuFee > 0) {
       storageFee -= cpuFee;
     }
-    long tryBuyStorage = storageMarket.tryBuyStorageBytes(storageFee);
+    long tryBuyStorage = storageMarket.tryBuyStorage(storageFee);
     if (tryBuyStorage + caller.getStorageLeft() < callerStorageUsage) {
       trace.setBill(callerCpuUsage, 0);
       return false;
     }
     trace.setBill(callerCpuUsage, callerStorageUsage);
     return true;
-  }
-
-  private void spendStorageUsage(long useedStorageSize) {
-  }
-
-  private void spendCpuUsage() {
   }
 
   private boolean isCallConstant() {
