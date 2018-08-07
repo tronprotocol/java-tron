@@ -414,7 +414,7 @@ public class Program {
       return;
     }
 
-    byte[] senderAddress = convertToTronAddress(this.getCallerAddress().getLast20Bytes());
+    byte[] senderAddress = convertToTronAddress(this.getOwnerAddress().getLast20Bytes());
     // todo: need check the value > 0?
     long endowment = value.value().longValue();
     if (getStorage().getBalance(senderAddress) < endowment) {
@@ -580,7 +580,7 @@ public class Program {
 
     // FETCH THE SAVED STORAGE
     byte[] codeAddress = convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
-    byte[] senderAddress = convertToTronAddress(getCallerAddress().getLast20Bytes());
+    byte[] senderAddress = convertToTronAddress(getOwnerAddress().getLast20Bytes());
     byte[] contextAddress = msg.getType().callIsStateless() ? senderAddress : codeAddress;
 
     if (logger.isInfoEnabled()) {
