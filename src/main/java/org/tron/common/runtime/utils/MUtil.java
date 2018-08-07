@@ -23,7 +23,7 @@ public class MUtil {
 
   public static void transfer(Deposit deposit, byte[] fromAddress, byte[] toAddress, long amount)
       throws ContractValidateException {
-    transferValidate(deposit,fromAddress,toAddress,amount);
+    transferValidate(deposit, fromAddress, toAddress, amount);
     if (deposit.getBalance(fromAddress) < amount) {
       throw new RuntimeException(
           Hex.toHexString(fromAddress).toUpperCase() + " not enough balance!");
@@ -35,7 +35,8 @@ public class MUtil {
     deposit.addBalance(fromAddress, -amount);
   }
 
-  public static void transferValidate(Deposit deposit, byte[] fromAddress, byte[] toAddress, long amount)
+  public static void transferValidate(Deposit deposit, byte[] fromAddress, byte[] toAddress,
+      long amount)
       throws ContractValidateException {
     Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
     builder.setAmount(amount);
@@ -44,7 +45,7 @@ public class MUtil {
     TransferContract contract = builder.build();
     TransactionCapsule trx = new TransactionCapsule(contract,
         ContractType.TransferContract);
-    Actuator actuator = ActuatorFactory.createActuator(trx ,deposit.getDbManager()).get(0);
+    Actuator actuator = ActuatorFactory.createActuator(trx, deposit.getDbManager()).get(0);
     actuator.validate();
   }
 

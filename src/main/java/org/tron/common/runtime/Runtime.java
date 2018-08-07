@@ -165,7 +165,8 @@ public class Runtime {
   /**
    * For constant trx with latest block.
    */
-  public Runtime(Transaction tx, Block block, DepositImpl deposit, ProgramInvokeFactory programInvokeFactory) {
+  public Runtime(Transaction tx, Block block, DepositImpl deposit,
+      ProgramInvokeFactory programInvokeFactory) {
     this.trx = tx;
     this.deposit = deposit;
     this.programInvokeFactory = programInvokeFactory;
@@ -445,7 +446,7 @@ public class Runtime {
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
     long callValue = newSmartContract.getCallValue();
     if (callValue != 0) {
-      transfer(this.deposit,callerAddress,callerAddress,callValue);
+      transfer(this.deposit, callerAddress, callerAddress, callValue);
     }
 
   }
@@ -495,7 +496,7 @@ public class Runtime {
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
     long callValue = contract.getCallValue();
     if (0 != callValue) {
-      transfer(this.deposit,callerAddress,contractAddress,callValue);
+      transfer(this.deposit, callerAddress, contractAddress, callValue);
     }
 
   }
