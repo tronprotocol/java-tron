@@ -450,8 +450,8 @@ public class Runtime {
     // transfer from callerAddress to contractAddress according to callValue
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
     long callValue = newSmartContract.getCallValue();
-    if (callValue != 0) {
-      transfer(this.deposit, callerAddress, callerAddress, callValue);
+    if (callValue > 0) {
+      transfer(this.deposit, callerAddress, contractAddress, callValue);
     }
 
   }
@@ -506,7 +506,7 @@ public class Runtime {
     //transfer from callerAddress to targetAddress according to callValue
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
     long callValue = contract.getCallValue();
-    if (0 != callValue) {
+    if (callValue > 0) {
       transfer(this.deposit, callerAddress, contractAddress, callValue);
     }
 
