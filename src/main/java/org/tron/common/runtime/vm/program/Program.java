@@ -462,10 +462,7 @@ public class Program {
     // [4] TRANSFER THE BALANCE
     long newBalance = 0L;
     if (!byTestingSuite()) {
-      if (!TransferActuator.validate(deposit, senderAddress, newAddress, endowment)){
-        throw new RuntimeException(
-            Hex.toHexString(senderAddress).toUpperCase() + " transfer to" +Hex.toHexString(newAddress).toUpperCase() +" validation fail!");
-      }
+      TransferActuator.validate(deposit, senderAddress, newAddress, endowment);
       deposit.addBalance(senderAddress, -endowment);
       newBalance = deposit.addBalance(newAddress, endowment);
     }
@@ -620,10 +617,7 @@ public class Program {
           msg.getGas().getNoLeadZeroesData(),
           msg.getEndowment().getNoLeadZeroesData());
     } else if(!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress) && senderAddress != contextAddress && endowment > 0) {
-      if (!TransferActuator.validate(deposit, senderAddress, contextAddress, endowment)){
-        throw new RuntimeException(
-            Hex.toHexString(senderAddress).toUpperCase() + " transfer to" +Hex.toHexString(contextAddress).toUpperCase() +" validation fail!");
-      }
+      TransferActuator.validate(deposit, senderAddress, contextAddress, endowment);
       deposit.addBalance(senderAddress, -endowment);
       contextBalance = deposit.addBalance(contextAddress, endowment);
     }
