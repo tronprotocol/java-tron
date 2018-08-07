@@ -200,22 +200,22 @@ public class Runtime {
   /**
    */
   public void init() {
-
-    switch (trxType) {
-      case TRX_PRECOMPILED_TYPE:
-        readyToExecute = true;
-        break;
-      case TRX_CONTRACT_CREATION_TYPE:
-      case TRX_CONTRACT_CALL_TYPE:
-        // if (!curCPULimitReachedBlockCPULimit()) {
-        //   readyToExecute = true;
-        // }
-        readyToExecute = true;
-        break;
-      default:
-        readyToExecute = true;
-        break;
-    }
+    readyToExecute = true;
+    // switch (trxType) {
+    //   case TRX_PRECOMPILED_TYPE:
+    //     readyToExecute = true;
+    //     break;
+    //   case TRX_CONTRACT_CREATION_TYPE:
+    //   case TRX_CONTRACT_CALL_TYPE:
+    //     // if (!curCPULimitReachedBlockCPULimit()) {
+    //     //   readyToExecute = true;
+    //     // }
+    //     readyToExecute = true;
+    //     break;
+    //   default:
+    //     readyToExecute = true;
+    //     break;
+    // }
   }
 
 
