@@ -48,10 +48,7 @@ public class DeployContractServlet extends HttpServlet {
       ABI.Builder abiBuilder = ABI.newBuilder();
       JsonFormat.merge(abiSB.toString(), abiBuilder);
 
-      long storageLimit = jsonObject.getLongValue("storage_limit");
       long dropLimit = jsonObject.getLongValue("drop_limit");
-      long cpuLimit = jsonObject.getLongValue("cpu_limit");
-      long bandwidthLimit = jsonObject.getLongValue("bandwidth_limit");
 
       SmartContract.Builder smartBuilder = SmartContract.newBuilder();
       smartBuilder.setAbi(abiBuilder)

@@ -62,10 +62,7 @@ public class TriggerSmartContractServlet extends HttpServlet {
       String data = parseMethod(selector, parameter);
       build.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
 
-      long storageLimit = jsonObject.getLongValue("storage_limit");
       long dropLimit = jsonObject.getLongValue("drop_limit");
-      long cpuLimit = jsonObject.getLongValue("cpu_limit");
-      long bandwidthLimit = jsonObject.getLongValue("bandwidth_limit");
 
       TransactionCapsule trxCap = wallet
           .createTransactionCapsule(build.build(), ContractType.TriggerSmartContract);
