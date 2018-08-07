@@ -4,8 +4,12 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +28,10 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
+import org.tron.core.exception.CancelException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.CreateSmartContract;
+import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -34,6 +40,7 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Result;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
+
 
 
 public class PublicMethed {
@@ -380,8 +387,10 @@ public class PublicMethed {
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
+
     Contract.TransferAssetContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.transferAsset(contract);
+
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       if (transaction == null) {
         logger.info("transaction == null");
@@ -391,12 +400,12 @@ public class PublicMethed {
       return false;
     }
     transaction = signTransaction(ecKey, transaction);
+
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
     if (response.getResult() == false) {
       logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
       return false;
     } else {
-      //Protocol.Account search = queryAccount(ecKey, blockingStubFull);
       return true;
     }
   }
@@ -879,8 +888,9 @@ public class PublicMethed {
   }
 
   public static byte[] deployContract(String contractName, String abiString, String code,
-      String data, Long maxCpuLimit, Long maxStorageLimit, Long maxFeeLimit, long value,
-      String priKey, byte[] ownerAddress, WalletGrpc.WalletBlockingStub blockingStubFull) {
+      String data, Long feeLimit, long value,
+      long consumeUserResourcePercent, byte[] libraryAddress,String priKey, byte[] ownerAddress,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -897,12 +907,14 @@ public class PublicMethed {
       logger.error("abi is null");
       return null;
     }
-    byte[] codeBytes = Hex.decode(code);
+    //byte[] codeBytes = Hex.decode(code);
     SmartContract.Builder builder = SmartContract.newBuilder();
     builder.setName(contractName);
     builder.setOriginAddress(ByteString.copyFrom(owner));
     builder.setAbi(abi);
-    builder.setBytecode(ByteString.copyFrom(codeBytes));
+    builder.setConsumeUserResourcePercent(consumeUserResourcePercent);
+    //builder.setBytecode(ByteString.copyFrom(codeBytes));
+
     if (data != null) {
       builder.setData(ByteString.copyFrom(Hex.decode(data)));
     }
@@ -910,6 +922,14 @@ public class PublicMethed {
 
       builder.setCallValue(value);
     }
+
+    byte[] byteCode;
+    if (null != libraryAddress) {
+      byteCode = replaceLibraryAddress(code, libraryAddress);
+    } else {
+      byteCode = Hex.decode(code);
+    }
+    builder.setBytecode(ByteString.copyFrom(byteCode));
 
     CreateSmartContract contractDeployContract = CreateSmartContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(owner)).setNewContract(builder.build()).build();
@@ -926,34 +946,26 @@ public class PublicMethed {
       return null;
     }
 
-    if (maxCpuLimit != null || maxStorageLimit != null || maxFeeLimit != null) {
-      final TransactionExtention.Builder texBuilder = TransactionExtention.newBuilder();
-      final Transaction.Builder transBuilder = Transaction.newBuilder();
-      Transaction.raw.Builder rawBuilder = transactionExtention.getTransaction().getRawData()
+    Transaction.Builder transBuilder = Transaction.newBuilder();
+    Transaction.raw.Builder rawBuilder = transactionExtention.getTransaction().getRawData()
           .toBuilder();
-//      if (maxCpuLimit != null) {
-//        rawBuilder.setMaxCpuUsage(maxCpuLimit);
-//      }
-//      if (maxStorageLimit != null) {
-//        rawBuilder.setMaxStorageUsage(maxStorageLimit);
-//      }
-      if (maxFeeLimit != null) {
-        rawBuilder.setFeeLimit(maxFeeLimit);
-      }
-      transBuilder.setRawData(rawBuilder);
-      for (int i = 0; i < transactionExtention.getTransaction().getSignatureCount(); i++) {
-        ByteString s = transactionExtention.getTransaction().getSignature(i);
-        transBuilder.setSignature(i, s);
-      }
-      for (int i = 0; i < transactionExtention.getTransaction().getRetCount(); i++) {
-        Result r = transactionExtention.getTransaction().getRet(i);
-        transBuilder.setRet(i, r);
-      }
-      texBuilder.setTransaction(transBuilder);
-      texBuilder.setResult(transactionExtention.getResult());
-      texBuilder.setTxid(transactionExtention.getTxid());
-      transactionExtention = texBuilder.build();
+    rawBuilder.setFeeLimit(feeLimit);
+    transBuilder.setRawData(rawBuilder);
+    for (int i = 0; i < transactionExtention.getTransaction().getSignatureCount(); i++) {
+      ByteString s = transactionExtention.getTransaction().getSignature(i);
+      transBuilder.setSignature(i, s);
     }
+    for (int i = 0; i < transactionExtention.getTransaction().getRetCount(); i++) {
+      Result r = transactionExtention.getTransaction().getRet(i);
+      transBuilder.setRet(i, r);
+    }
+    TransactionExtention.Builder texBuilder = TransactionExtention.newBuilder();
+    texBuilder.setTransaction(transBuilder);
+    texBuilder.setResult(transactionExtention.getResult());
+    texBuilder.setTxid(transactionExtention.getTxid());
+    transactionExtention = texBuilder.build();
+
+
 
     byte[] contractAddress = generateContractAddress(transactionExtention.getTransaction(), owner);
     System.out.println(
@@ -1163,5 +1175,76 @@ public class PublicMethed {
     return blockingStubFull.getContract(bytesMessage);
   }
 
+  private static byte[] replaceLibraryAddress(String code, byte[] libraryAddress) {
+
+    String libraryAddressHex;
+    try {
+      libraryAddressHex = (new String(Hex.encode(libraryAddress), "US-ASCII")).substring(2);
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e);  // now ignore
+    }
+
+    Matcher m = Pattern.compile("__.{36}__").matcher(code);
+    code = m.replaceAll(libraryAddressHex);
+    return Hex.decode(code);
+  }
+
+  public static boolean updateSetting(byte[] contractAddress, long consumeUserResourcePercent,
+      String priKey, byte[] ownerAddress, WalletGrpc
+      .WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+
+    byte[] owner = ownerAddress;
+    Contract.UpdateSettingContract.Builder builder = Contract.UpdateSettingContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner));
+    builder.setContractAddress(ByteString.copyFrom(contractAddress));
+    builder.setConsumeUserResourcePercent(consumeUserResourcePercent);
+
+
+    UpdateSettingContract updateSettingContract = builder.build();
+    TransactionExtention transactionExtention = blockingStubFull
+        .updateSetting(updateSettingContract);
+    if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
+      System.out.println("RPC create trx failed!");
+      if (transactionExtention != null) {
+        System.out.println("Code = " + transactionExtention.getResult().getCode());
+        System.out
+            .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+      }
+      return false;
+    }
+    if (transactionExtention == null) {
+      return false;
+    }
+    Return ret = transactionExtention.getResult();
+    if (!ret.getResult()) {
+      System.out.println("Code = " + ret.getCode());
+      System.out.println("Message = " + ret.getMessage().toStringUtf8());
+      return false;
+    }
+    Transaction transaction = transactionExtention.getTransaction();
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      System.out.println("Transaction is empty");
+      return false;
+    }
+    System.out.println(
+        "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
+    transaction = signTransaction(ecKey, transaction);
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      return false;
+    } else {
+      return true;
+    }
+  }
 
 }
