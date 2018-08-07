@@ -62,14 +62,14 @@ public class TriggerSmartContractServlet extends HttpServlet {
       String data = parseMethod(selector, parameter);
       build.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
 
-      long dropLimit = jsonObject.getLongValue("drop_limit");
+      long feeLimit = jsonObject.getLongValue("fee_limit");
 
       TransactionCapsule trxCap = wallet
           .createTransactionCapsule(build.build(), ContractType.TriggerSmartContract);
 
       Transaction.Builder txBuilder = trxCap.getInstance().toBuilder();
       Transaction.raw.Builder rawBuilder = trxCap.getInstance().getRawData().toBuilder();
-      rawBuilder.setFeeLimit(dropLimit);
+      rawBuilder.setFeeLimit(feeLimit);
       txBuilder.setRawData(rawBuilder);
 
       Transaction trx = wallet

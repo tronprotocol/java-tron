@@ -48,7 +48,7 @@ public class DeployContractServlet extends HttpServlet {
       ABI.Builder abiBuilder = ABI.newBuilder();
       JsonFormat.merge(abiSB.toString(), abiBuilder);
 
-      long dropLimit = jsonObject.getLongValue("drop_limit");
+      long feeLimit = jsonObject.getLongValue("fee_limit");
 
       SmartContract.Builder smartBuilder = SmartContract.newBuilder();
       smartBuilder.setAbi(abiBuilder)
@@ -76,7 +76,7 @@ public class DeployContractServlet extends HttpServlet {
           .createTransactionCapsule(build.build(), ContractType.CreateSmartContract).getInstance();
       Transaction.Builder txBuilder = tx.toBuilder();
       Transaction.raw.Builder rawBuilder = tx.getRawData().toBuilder();
-      rawBuilder.setFeeLimit(dropLimit);
+      rawBuilder.setFeeLimit(feeLimit);
       txBuilder.setRawData(rawBuilder);
       response.getWriter().println(Util.printTransaction(txBuilder.build()));
     } catch (Exception e) {
