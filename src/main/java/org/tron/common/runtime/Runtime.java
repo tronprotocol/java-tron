@@ -584,7 +584,7 @@ public class Runtime {
     }
     long originStorageUsage = useedStorageSize * originResourcePercent / 100;
     originStorageUsage = min(originCpuUsage, origin.getStorageLeft());
-    long callerStorageUsage = originStorageUsage - originStorageUsage;
+    long callerStorageUsage = useedStorageSize - originStorageUsage;
 
     byte[] callerAddressBytes = TransactionCapsule.getOwner(trx.getRawData().getContract(0));
     AccountCapsule caller = deposit.getAccount(callerAddressBytes);
