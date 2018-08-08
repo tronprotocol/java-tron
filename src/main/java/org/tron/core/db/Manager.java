@@ -129,6 +129,8 @@ public class Manager {
   private ContractStore contractStore;
   @Autowired
   private StorageStore storageStore;
+  @Autowired
+  private DelegatedResourceStore delegatedResourceStore;
 
   // for network
   @Autowired
@@ -195,6 +197,10 @@ public class Manager {
 
   public StorageStore getStorageStore() {
     return storageStore;
+  }
+
+  public DelegatedResourceStore getDelegatedResourceStore() {
+    return delegatedResourceStore;
   }
 
   public CodeStore getCodeStore() {
@@ -1394,6 +1400,7 @@ public class Manager {
     closeOneStore(codeStore);
     closeOneStore(contractStore);
     closeOneStore(storageStore);
+    closeOneStore(delegatedResourceStore);
     System.err.println("******** end to close db ********");
   }
 
