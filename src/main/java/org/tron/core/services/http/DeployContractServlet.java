@@ -65,10 +65,6 @@ public class DeployContractServlet extends HttpServlet {
       if (!ArrayUtils.isEmpty(byteCode)) {
         smartBuilder.setBytecode(ByteString.copyFrom(byteCode));
       }
-      byte[] data = ByteArray.fromHexString(jsonObject.getString("data"));
-      if (!ArrayUtils.isEmpty(data)) {
-        smartBuilder.setData(ByteString.copyFrom(data));
-      }
       String name = jsonObject.getString("name");
       if (!Strings.isNullOrEmpty(name)) {
         smartBuilder.setName(name);

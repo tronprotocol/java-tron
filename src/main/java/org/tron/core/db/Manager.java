@@ -87,6 +87,7 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo.Log;
+import org.tron.protos.Protocol.TransactionInfo.code;
 
 
 @Slf4j
@@ -985,6 +986,13 @@ public class Manager {
 
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
+    RuntimeException runtimeException = runtime.getResult().getException();
+
+    transactionInfoCapsule.setResult(code.SUCESS);
+    if (runtimeException != null) {
+      transactionInfoCapsule.setResult(code.FAILED);
+      transactionInfoCapsule.setResMessage(runtime.getRuntimeError());
+    }
     transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());
     transactionInfoCapsule.setFee(runtime.getResult().getRet().getFee());
     transactionInfoCapsule.setContractResult(runtime.getResult().getHReturn());
