@@ -96,14 +96,14 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       long unfreezeBalance = 0L;
       switch (unfreezeBalanceContract.getResource()) {
         case BANDWIDTH:
-          unfreezeBalance = delegatedResourceCapsule.getBandwidth();
-          delegatedResourceCapsule.setBandwidth(0);
+          unfreezeBalance = delegatedResourceCapsule.getFrozenBalanceForBandwidth();
+          delegatedResourceCapsule.setFrozenBalanceForBandwidth(0);
 
           receiverCapsule.deleteDelegatedFrozenBalanceForBandwidth(unfreezeBalance);
           break;
         case CPU:
           unfreezeBalance = delegatedResourceCapsule.getCpu();
-          delegatedResourceCapsule.setCpu(0);
+          delegatedResourceCapsule.setFrozenBalanceForCpu(0);
 
           receiverCapsule.deleteAcquiredDelegatedFrozenBalanceForCpu(unfreezeBalance);
           break;
@@ -235,15 +235,15 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
       switch (unfreezeBalanceContract.getResource()) {
         case BANDWIDTH:
-          if (delegatedResourceCapsule.getBandwidth() <= 0) {
+          if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() <= 0) {
             throw new ContractValidateException("no delegatedFrozenBalance(BANDWIDTH)");
           }
           if (receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
-              < delegatedResourceCapsule.getBandwidth()) {
+              < delegatedResourceCapsule.getFrozenBalanceForBandwidth()) {
             throw new ContractValidateException(
                 "AcquiredDelegatedFrozenBalanceForBandwidth[" + receiverCapsule
                     .getAcquiredDelegatedFrozenBalanceForBandwidth() + "] < delegatedBandwidth["
-                    + delegatedResourceCapsule.getBandwidth() + "],this should never happen");
+                    + delegatedResourceCapsule.getFrozenBalanceForBandwidth() + "],this should never happen");
           }
 
           ;
