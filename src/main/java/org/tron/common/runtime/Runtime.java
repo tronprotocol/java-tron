@@ -325,11 +325,28 @@ public class Runtime {
   }
 
   private long getGasLimit(AccountCapsule account, long feeLimit) {
-    CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
+
     // will change the name from us to gas
+    // can change the calc way
     long cpuGasFromFreeze = cpuProcessor.getAccountLeftCpuInUsFromFreeze(account);
     long cpuGasFromBalance = Math.floorDiv(account.getBalance(), Constant.SUN_PER_GAS);
-    long cpuGasFromFeeLimit = Math.floorDiv(feeLimit, Constant.SUN_PER_GAS);
+
+    CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
+    long balanceForCpuFreeze = account.getAccountResource().getFrozenBalanceForCpu()
+        .getFrozenBalance();
+    long totalCpuGasFromFreeze = cpuProcessor.calculateGlobalCpuLimit(balanceForCpuFreeze);
+    long leftBalanceForCpuFreeze =
+        Math.multiplyExact(cpuGasFromFreeze, balanceForCpuFreeze) / totalCpuGasFromFreeze;
+
+    long cpuGasFromFeeLimit;
+    if (leftBalanceForCpuFreeze >= feeLimit) {
+      cpuGasFromFeeLimit =
+          Math.multiplyExact(totalCpuGasFromFreeze, feeLimit) / balanceForCpuFreeze;
+    } else {
+      cpuGasFromFeeLimit = Math
+          .addExact(cpuGasFromFreeze, (feeLimit - leftBalanceForCpuFreeze) / Constant.SUN_PER_GAS);
+    }
+
     return min(Math.addExact(cpuGasFromFreeze, cpuGasFromBalance), cpuGasFromFeeLimit);
   }
 
