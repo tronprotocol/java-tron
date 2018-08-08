@@ -16,6 +16,7 @@
 package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.Sha256Hash;
@@ -41,17 +42,18 @@ public class StorageRowCapsule implements ProtoCapsule<StorageRow> {
     return new StorageRowCapsule();
   }
 
-//  public StorageRowCapsule(byte[] code) {
-//    try {
-//      this.instance = StorageRow.parseFrom(code);
-//    } catch (InvalidProtocolBufferException e) {
-//      //
-//    }
-//  }
-//
-//  public StorageRowCapsule(StorageRow cache) {
-//    this.instance = cache;
-//  }
+  public StorageRowCapsule(byte[] code) {
+    try {
+      this.instance = StorageRow.parseFrom(code);
+    } catch (InvalidProtocolBufferException e) {
+      //
+    }
+  }
+
+  //
+  public StorageRowCapsule(StorageRow cache) {
+    this.instance = cache;
+  }
 
   public Sha256Hash getHash() {
     byte[] storageBytes = this.instance.toByteArray();

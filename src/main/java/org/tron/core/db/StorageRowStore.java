@@ -25,6 +25,4 @@ public class StorageRowStore extends TronStoreWithRevoking<StorageRowCapsule> {
   void destory() {
     instance = null;
   }
-
-
 }

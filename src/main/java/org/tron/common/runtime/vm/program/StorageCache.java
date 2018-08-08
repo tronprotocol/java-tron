@@ -1,20 +1,3 @@
-/*
- * Copyright (c) [2016] [ <ether.camp> ]
- * This file is part of the ethereumJ library.
- *
- * The ethereumJ library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * The ethereumJ library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
- */
 package org.tron.common.runtime.vm.program;
 
 import java.util.HashMap;
@@ -22,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import org.ethereum.crypto.HashUtil;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.storage.Key;
 import org.tron.core.capsule.StorageRowCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.db.StorageRowStore;
@@ -30,11 +14,12 @@ public class StorageCache {
 
   private byte[] address;  // contract address
   private Manager manager;
-  private final Map<DataWord, StorageRowCapsule> rowCache = new HashMap<>();
+  private final Map<Key, StorageRowCapsule> rowCache = new HashMap<>();
+  private long beforeUseSize = 0;
 
   // for composor
-  public static final int PREFIX_BYTES = 16;
-  public static final int HASH_LEN = 32;
+  private static final int PREFIX_BYTES = 16;
+  private static final int HASH_LEN = 32;
 
 
   public StorageCache(byte[] address, Manager manager) {
@@ -43,22 +28,26 @@ public class StorageCache {
   }
 
   public DataWord getValue(DataWord key) {
-    if (rowCache.containsKey(key)) {
-      return rowCache.get(key).getValue();
+    Key k = Key.create(key.getData());
+    if (rowCache.containsKey(k)) {
+      return rowCache.get(k).getValue();
     } else {
       StorageRowStore store = manager.getStorageRowStore();
       StorageRowCapsule row = store.get(compose(key.getData(), address));
       if (row == null) {
         return null;
+      } else {
+        beforeUseSize += row.getInstance().getSerializedSize();
       }
-      rowCache.put(key, row);
+      rowCache.put(k, row);
       return row.getValue();
     }
   }
 
   public void put(DataWord key, DataWord value) {
-    if (rowCache.containsKey(key)) {
-      rowCache.get(key).setValue(value);
+    Key k = Key.create(key.getData());
+    if (rowCache.containsKey(k)) {
+      rowCache.get(k).setValue(value);
     } else {
       StorageRowStore store = manager.getStorageRowStore();
       byte[] composedKey = compose(key.getData(), address);
@@ -66,8 +55,10 @@ public class StorageCache {
 
       if (row == null) {
         row = new StorageRowCapsule(composedKey, value.getData());
+      } else {
+        beforeUseSize += row.getInstance().getSerializedSize();
       }
-      rowCache.put(key, row);
+      rowCache.put(k, row);
     }
   }
 
@@ -94,12 +85,16 @@ public class StorageCache {
     return size.get();
   }
 
+  public long getBeforeUseSize() {
+    return this.beforeUseSize;
+  }
+
   public void commit() {
+    // TODO can just write dirty row
     StorageRowStore store = manager.getStorageRowStore();
     rowCache.forEach((key, value) -> {
       byte[] composedKey = compose(key.getData(), address);
-      StorageRowCapsule row = store.get(composedKey);
-      store.put(composedKey, row);
+      store.put(composedKey, value);
     });
   }
 }

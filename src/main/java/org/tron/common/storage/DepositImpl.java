@@ -40,7 +40,6 @@ public class DepositImpl implements Deposit {
   private Deposit prevDeposit = null;
   private Deposit nextDeposit = null;
 
-  private long beforeRunStorageSize = 0;
   private HashMap<Key, Value> accounCache = new HashMap<>();
   private HashMap<Key, Value> transactionCache = new HashMap<>();
   private HashMap<Key, Value> blockCache = new HashMap<>();
@@ -378,9 +377,9 @@ public class DepositImpl implements Deposit {
     StorageCache storageCache;
     if (accountStorageCache.containsKey(addressKey)) {
       storageCache = accountStorageCache.get(addressKey);
-      return storageCache.getValue(key);
     } else {
       storageCache = getStorage(address);
+      accountStorageCache.put(addressKey, storageCache);
     }
     return storageCache.getValue(key);
 
@@ -503,7 +502,11 @@ public class DepositImpl implements Deposit {
 
   @Override
   public long getBeforeRunStorageSize() {
-    return beforeRunStorageSize;
+    AtomicLong beforeRunStorageSize = new AtomicLong();
+    accountStorageCache.forEach((key, value) -> {
+      beforeRunStorageSize.getAndAdd(value.getBeforeUseSize());
+    });
+    return beforeRunStorageSize.get();
   }
 
 
