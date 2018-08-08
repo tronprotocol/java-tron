@@ -204,6 +204,46 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = this.account.toBuilder().setBalance(balance).build();
   }
 
+  public void addDelegatedFrozenBalanceForBandwidth(long balance) {
+    this.account = this.account.toBuilder().setDelegatedFrozenBalanceForBandwidth(
+        this.account.getDelegatedFrozenBalanceForBandwidth() + balance).build();
+  }
+
+  public long getAcquiredDelegatedFrozenBalanceForBandwidth() {
+    return this.account.getAcquiredDelegatedFrozenBalanceForBandwidth();
+  }
+
+  public void addAcquiredDelegatedFrozenBalanceForBandwidth(long balance) {
+    this.account = this.account.toBuilder().setAcquiredDelegatedFrozenBalanceForBandwidth(
+        this.account.getAcquiredDelegatedFrozenBalanceForBandwidth() + balance)
+        .build();
+  }
+
+  public long getAcquiredDelegatedFrozenBalanceForCpu() {
+    return getAccountResource().getAcquiredDelegatedFrozenBalanceForCpu();
+  }
+
+  public void addAcquiredDelegatedFrozenBalanceForCpu(long balance) {
+    AccountResource newAccountResource = getAccountResource().toBuilder()
+        .setAcquiredDelegatedFrozenBalanceForCpu(
+            getAccountResource().getAcquiredDelegatedFrozenBalanceForCpu() + balance).build();
+
+    this.account = this.account.toBuilder()
+        .setAccountResource(newAccountResource)
+        .build();
+  }
+
+  public void addDelegatedFrozenBalanceForCpu(long balance) {
+    AccountResource newAccountResource = getAccountResource().toBuilder()
+        .setDelegatedFrozenBalanceForCpu(
+            getAccountResource().getDelegatedFrozenBalanceForCpu() + balance).build();
+
+    this.account = this.account.toBuilder()
+        .setAccountResource(newAccountResource)
+        .build();
+  }
+
+
   public void setAllowance(long allowance) {
     this.account = this.account.toBuilder().setAllowance(allowance).build();
   }
@@ -249,7 +289,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       tp += account.getFrozen(i).getFrozenBalance();
     }
 
+    tp += account.getDelegatedFrozenBalanceForBandwidth();
     tp += account.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance();
+    tp += account.getAccountResource().getDelegatedFrozenBalanceForCpu();
     return tp;
   }
 
@@ -365,6 +407,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return frozenBalance[0];
   }
 
+  public long getAllFrozenBalanceForBandwidth() {
+    return getFrozenBalance() + getAcquiredDelegatedFrozenBalanceForBandwidth();
+  }
 
   public int getFrozenSupplyCount() {
     return getInstance().getFrozenSupplyCount();
@@ -484,6 +529,10 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   public long getCpuFrozenBalance() {
     return this.account.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance();
+  }
+
+  public long getAllFrozenBalanceForCpu() {
+    return getCpuFrozenBalance() + getAcquiredDelegatedFrozenBalanceForCpu();
   }
 
   public long getCpuUsage() {

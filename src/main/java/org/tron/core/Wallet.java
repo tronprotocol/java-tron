@@ -572,7 +572,7 @@ public class Wallet {
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
 
-    long netLimit = processor.calculateGlobalNetLimit(accountCapsule.getFrozenBalance());
+    long netLimit = processor.calculateGlobalNetLimit(accountCapsule.getAllFrozenBalanceForBandwidth());
     long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
     long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
@@ -610,7 +610,7 @@ public class Wallet {
     CpuProcessor cpuProcessor = new CpuProcessor(dbManager);
     cpuProcessor.updateUsage(accountCapsule);
 
-    long netLimit = processor.calculateGlobalNetLimit(accountCapsule.getFrozenBalance());
+    long netLimit = processor.calculateGlobalNetLimit(accountCapsule.getAllFrozenBalanceForBandwidth());
     long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
     long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();

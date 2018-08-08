@@ -74,7 +74,6 @@ public class FreezeBalanceActuator extends AbstractActuator {
               freezeBalanceContract.getReceiverAddress().toByteArray());
       DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
           .get(key);
-
       if (delegatedResourceCapsule != null) {
         delegatedResourceCapsule
             .addResource(frozenBalanceForBandwidth, frozenBalanceForCpu, expireTime);
@@ -87,9 +86,15 @@ public class FreezeBalanceActuator extends AbstractActuator {
             expireTime
         );
       }
-
       dbManager.getDelegatedResourceStore().put(key, delegatedResourceCapsule);
 
+      AccountCapsule receiverCapsule = dbManager.getAccountStore().get(receiverAddress);
+      receiverCapsule.addAcquiredDelegatedFrozenBalanceForCpu(frozenBalanceForCpu);
+      receiverCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(frozenBalanceForBandwidth);
+      dbManager.getAccountStore().put(receiverCapsule.createDbKey(), receiverCapsule);
+
+      accountCapsule.addDelegatedFrozenBalanceForCpu(frozenBalanceForCpu);
+      accountCapsule.addDelegatedFrozenBalanceForBandwidth(frozenBalanceForBandwidth);
     }
 
     accountCapsule.setBalance(newBalance);
