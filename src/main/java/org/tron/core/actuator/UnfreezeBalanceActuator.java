@@ -4,12 +4,14 @@ import com.google.common.collect.Lists;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.db.Manager;
@@ -127,35 +129,94 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       throw new ContractValidateException(
           "Account[" + readableOwnerAddress + "] not exists");
     }
-
     long now = dbManager.getHeadBlockTimeStamp();
+    byte[] receiverAddress = unfreezeBalanceContract.getReceiverAddress().toByteArray();
+    //If the receiver is not included in the contract, unfreeze frozen balance for this account.
+    //otherwise,unfreeze delegated frozen balance provided this account.
+    if (receiverAddress.length == 0) {
 
-    switch (unfreezeBalanceContract.getResource()) {
-      case BANDWIDTH:
-        if (accountCapsule.getFrozenCount() <= 0) {
-          throw new ContractValidateException("no frozenBalance");
-        }
+      switch (unfreezeBalanceContract.getResource()) {
+        case BANDWIDTH:
+          if (accountCapsule.getFrozenCount() <= 0) {
+            throw new ContractValidateException("no frozenBalance(BANDWIDTH)");
+          }
 
-        long allowedUnfreezeCount = accountCapsule.getFrozenList().stream()
-            .filter(frozen -> frozen.getExpireTime() <= now).count();
-        if (allowedUnfreezeCount <= 0) {
-          throw new ContractValidateException("It's not time to unfreeze.");
-        }
-        break;
-      case CPU:
-        Frozen frozenBalanceForCpu = accountCapsule.getAccountResource().getFrozenBalanceForCpu();
-        if (frozenBalanceForCpu.getFrozenBalance() <= 0) {
-          throw new ContractValidateException("no frozenBalance");
-        }
-        if (frozenBalanceForCpu.getExpireTime() > now) {
-          throw new ContractValidateException("It's not time to unfreeze.");
-        }
+          long allowedUnfreezeCount = accountCapsule.getFrozenList().stream()
+              .filter(frozen -> frozen.getExpireTime() <= now).count();
+          if (allowedUnfreezeCount <= 0) {
+            throw new ContractValidateException("It's not time to unfreeze(BANDWIDTH).");
+          }
+          break;
+        case CPU:
+          Frozen frozenBalanceForCpu = accountCapsule.getAccountResource().getFrozenBalanceForCpu();
+          if (frozenBalanceForCpu.getFrozenBalance() <= 0) {
+            throw new ContractValidateException("no frozenBalance(CPU)");
+          }
+          if (frozenBalanceForCpu.getExpireTime() > now) {
+            throw new ContractValidateException("It's not time to unfreeze(CPU).");
+          }
 
-        break;
-      default:
+          break;
+        default:
+          throw new ContractValidateException(
+              "ResourceCode error.valid ResourceCode[BANDWIDTH、CPU]");
+      }
+    }else {
+      if (Arrays.equals(receiverAddress, ownerAddress)) {
         throw new ContractValidateException(
-            "ResourceCode error.valid ResourceCode[BANDWIDTH、CPU]");
+            "receiverAddress must not be the same as ownerAddress");
+      }
+
+      if (!Wallet.addressValid(receiverAddress)) {
+        throw new ContractValidateException("Invalid receiverAddress");
+      }
+
+      AccountCapsule receiverCapsule = dbManager.getAccountStore().get(receiverAddress);
+      if (receiverCapsule == null) {
+        String readableOwnerAddress = StringUtil.createReadableString(receiverAddress);
+        throw new ContractValidateException(
+            "Account[" + readableOwnerAddress + "] not exists");
+      }
+
+      byte[] key = DelegatedResourceCapsule
+          .createDbKey(unfreezeBalanceContract.getOwnerAddress().toByteArray(),
+              unfreezeBalanceContract.getReceiverAddress().toByteArray());
+      DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
+          .get(key);
+      if (delegatedResourceCapsule == null) {
+        throw new ContractValidateException(
+            "delegated Resource not exists");
+      }
+
+      if (delegatedResourceCapsule.getExpireTime() > now) {
+        throw new ContractValidateException("It's not time to unfreeze.");
+      }
+
+      Frozen frozenBalanceForCpu = accountCapsule.getAccountResource().getFrozenBalanceForCpu();
+      if (frozenBalanceForCpu.getFrozenBalance() <= 0) {
+        throw new ContractValidateException("no frozenBalance(CPU)");
+      }
+
+      switch (unfreezeBalanceContract.getResource()) {
+        case BANDWIDTH:
+          if (delegatedResourceCapsule.getBandwidth() <= 0) {
+            throw new ContractValidateException("no delegatedFrozenBalance(BANDWIDTH)");
+          }
+          break;
+        case CPU:
+          if (delegatedResourceCapsule.getCpu() <= 0) {
+            throw new ContractValidateException("no delegateFrozenBalance(CPU)");
+          }
+
+          break;
+        default:
+          throw new ContractValidateException(
+              "ResourceCode error.valid ResourceCode[BANDWIDTH、CPU]");
+      }
+
     }
+
+
 
     return true;
   }

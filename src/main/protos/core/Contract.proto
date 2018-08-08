@@ -139,6 +139,8 @@ message UnfreezeBalanceContract {
   bytes owner_address = 1;
 
   ResourceCode resource = 10;
+
+  bytes receiver_address = 13;
 }
 
 message UnfreezeAssetContract {
