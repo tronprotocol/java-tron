@@ -28,7 +28,6 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.capsule.StorageCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol;
@@ -39,6 +38,7 @@ public class Storage implements Deposit, ProgramListenerAware {
   private Deposit deposit;
   private final DataWord address;  // contract address
   private ProgramListener programListener;
+
 
   public Storage(ProgramInvoke programInvoke) {
     this.address = programInvoke.getOwnerAddress(); // contract address
@@ -156,8 +156,13 @@ public class Storage implements Deposit, ProgramListenerAware {
     deposit.commit();
   }
 
+//  @Override
+//  public StorageCapsule getStorage(byte[] address) {
+//    return deposit.getStorage(address);
+//  }
+
   @Override
-  public StorageCapsule getStorage(byte[] address) {
+  public StorageCache getStorage(byte[] address) {
     return deposit.getStorage(address);
   }
 
@@ -196,9 +201,14 @@ public class Storage implements Deposit, ProgramListenerAware {
     deposit.putContractByNormalAccountIndex(key, value);
   }
 
+//  @Override
+//  public void putStorage(Key key, Value value) {
+//    deposit.putStorage(key, value);
+//  }
+
   @Override
-  public void putStorage(Key key, Value value) {
-    deposit.putStorage(key, value);
+  public void putStorage(Key key, StorageCache cache) {
+    deposit.putStorage(key, cache);
   }
 
   @Override

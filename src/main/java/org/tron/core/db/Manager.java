@@ -130,6 +130,9 @@ public class Manager {
   private ContractStore contractStore;
   @Autowired
   private StorageStore storageStore;
+  @Autowired
+  @Getter
+  private StorageRowStore storageRowStore;
 
   // for network
   @Autowired
