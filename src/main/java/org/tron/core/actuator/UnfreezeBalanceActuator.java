@@ -44,40 +44,76 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
     long oldBalance = accountCapsule.getBalance();
-    long unfreezeBalance = 0L;
-    switch (unfreezeBalanceContract.getResource()) {
-      case BANDWIDTH:
 
-        List<Frozen> frozenList = Lists.newArrayList();
-        frozenList.addAll(accountCapsule.getFrozenList());
-        Iterator<Frozen> iterator = frozenList.iterator();
-        long now = dbManager.getHeadBlockTimeStamp();
-        while (iterator.hasNext()) {
-          Frozen next = iterator.next();
-          if (next.getExpireTime() <= now) {
-            unfreezeBalance += next.getFrozenBalance();
-            iterator.remove();
+    byte[] receiverAddress = unfreezeBalanceContract.getReceiverAddress().toByteArray();
+    //If the receiver is not included in the contract, unfreeze frozen balance for this account.
+    //otherwise,unfreeze delegated frozen balance provided this account.
+    if (receiverAddress.length == 0) {
+
+      long unfreezeBalance = 0L;
+      switch (unfreezeBalanceContract.getResource()) {
+        case BANDWIDTH:
+
+          List<Frozen> frozenList = Lists.newArrayList();
+          frozenList.addAll(accountCapsule.getFrozenList());
+          Iterator<Frozen> iterator = frozenList.iterator();
+          long now = dbManager.getHeadBlockTimeStamp();
+          while (iterator.hasNext()) {
+            Frozen next = iterator.next();
+            if (next.getExpireTime() <= now) {
+              unfreezeBalance += next.getFrozenBalance();
+              iterator.remove();
+            }
           }
-        }
 
-        accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-            .setBalance(oldBalance + unfreezeBalance)
-            .clearFrozen().addAllFrozen(frozenList).build());
+          accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+              .setBalance(oldBalance + unfreezeBalance)
+              .clearFrozen().addAllFrozen(frozenList).build());
 
-        dbManager.getDynamicPropertiesStore().addTotalNetWeight(-unfreezeBalance / 1000_000L);
-        break;
-      case CPU:
-        unfreezeBalance = accountCapsule.getAccountResource().getFrozenBalanceForCpu()
-            .getFrozenBalance();
+          break;
+        case CPU:
+          unfreezeBalance = accountCapsule.getAccountResource().getFrozenBalanceForCpu()
+              .getFrozenBalance();
 
-        AccountResource newAccountResource = accountCapsule.getAccountResource().toBuilder()
-            .clearFrozenBalanceForCpu().build();
-        accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-            .setBalance(oldBalance + unfreezeBalance)
-            .setAccountResource(newAccountResource).build());
+          AccountResource newAccountResource = accountCapsule.getAccountResource().toBuilder()
+              .clearFrozenBalanceForCpu().build();
+          accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+              .setBalance(oldBalance + unfreezeBalance)
+              .setAccountResource(newAccountResource).build());
 
-        dbManager.getDynamicPropertiesStore().addTotalCpuWeight(-unfreezeBalance / 1000_000L);
-        break;
+          break;
+      }
+      dbManager.getDynamicPropertiesStore().addTotalNetWeight(-unfreezeBalance / 1000_000L);
+    } else {
+      byte[] key = DelegatedResourceCapsule
+          .createDbKey(unfreezeBalanceContract.getOwnerAddress().toByteArray(),
+              unfreezeBalanceContract.getReceiverAddress().toByteArray());
+      DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
+          .get(key);
+
+      AccountCapsule receiverCapsule = dbManager.getAccountStore().get(receiverAddress);
+
+      long unfreezeBalance = 0L;
+      switch (unfreezeBalanceContract.getResource()) {
+        case BANDWIDTH:
+          unfreezeBalance = delegatedResourceCapsule.getBandwidth();
+          delegatedResourceCapsule.setBandwidth(0);
+
+          receiverCapsule.deleteDelegatedFrozenBalanceForBandwidth(unfreezeBalance);
+          break;
+        case CPU:
+          unfreezeBalance = delegatedResourceCapsule.getCpu();
+          delegatedResourceCapsule.setCpu(0);
+
+          receiverCapsule.deleteAcquiredDelegatedFrozenBalanceForCpu(unfreezeBalance);
+          break;
+      }
+      accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+          .setBalance(oldBalance + unfreezeBalance).build());
+
+      dbManager.getDynamicPropertiesStore().addTotalCpuWeight(-unfreezeBalance / 1000_000L);
+      dbManager.getDelegatedResourceStore().put(key, delegatedResourceCapsule);
+
     }
 
     VotesCapsule votesCapsule;
@@ -161,7 +197,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           throw new ContractValidateException(
               "ResourceCode error.valid ResourceCode[BANDWIDTH、CPU]");
       }
-    }else {
+    } else {
       if (Arrays.equals(receiverAddress, ownerAddress)) {
         throw new ContractValidateException(
             "receiverAddress must not be the same as ownerAddress");
@@ -202,10 +238,27 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           if (delegatedResourceCapsule.getBandwidth() <= 0) {
             throw new ContractValidateException("no delegatedFrozenBalance(BANDWIDTH)");
           }
+          if (receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
+              < delegatedResourceCapsule.getBandwidth()) {
+            throw new ContractValidateException(
+                "AcquiredDelegatedFrozenBalanceForBandwidth[" + receiverCapsule
+                    .getAcquiredDelegatedFrozenBalanceForBandwidth() + "] < delegatedBandwidth["
+                    + delegatedResourceCapsule.getBandwidth() + "],this should never happen");
+          }
+
+          ;
           break;
         case CPU:
           if (delegatedResourceCapsule.getCpu() <= 0) {
             throw new ContractValidateException("no delegateFrozenBalance(CPU)");
+          }
+          if (receiverCapsule.getAcquiredDelegatedFrozenBalanceForCpu()
+              < delegatedResourceCapsule.getCpu()) {
+            throw new ContractValidateException(
+                "AcquiredDelegatedFrozenBalanceForCpu[" + receiverCapsule
+                    .getAcquiredDelegatedFrozenBalanceForCpu() + "] < delegatedCpu["
+                    + delegatedResourceCapsule.getCpu() +
+                    "],this should never happen");
           }
 
           break;
@@ -215,8 +268,6 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       }
 
     }
-
-
 
     return true;
   }

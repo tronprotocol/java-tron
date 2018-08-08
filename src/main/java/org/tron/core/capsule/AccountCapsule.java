@@ -209,6 +209,11 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         this.account.getDelegatedFrozenBalanceForBandwidth() + balance).build();
   }
 
+  public void deleteDelegatedFrozenBalanceForBandwidth(long balance) {
+    this.account = this.account.toBuilder().setDelegatedFrozenBalanceForBandwidth(
+        this.account.getDelegatedFrozenBalanceForBandwidth() - balance).build();
+  }
+
   public long getAcquiredDelegatedFrozenBalanceForBandwidth() {
     return this.account.getAcquiredDelegatedFrozenBalanceForBandwidth();
   }
@@ -227,6 +232,16 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     AccountResource newAccountResource = getAccountResource().toBuilder()
         .setAcquiredDelegatedFrozenBalanceForCpu(
             getAccountResource().getAcquiredDelegatedFrozenBalanceForCpu() + balance).build();
+
+    this.account = this.account.toBuilder()
+        .setAccountResource(newAccountResource)
+        .build();
+  }
+
+  public void deleteAcquiredDelegatedFrozenBalanceForCpu(long balance) {
+    AccountResource newAccountResource = getAccountResource().toBuilder()
+        .setAcquiredDelegatedFrozenBalanceForCpu(
+            getAccountResource().getAcquiredDelegatedFrozenBalanceForCpu() - balance).build();
 
     this.account = this.account.toBuilder()
         .setAccountResource(newAccountResource)
