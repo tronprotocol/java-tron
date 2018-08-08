@@ -129,8 +129,8 @@ message Account {
 message  DelegatedResource{
   bytes from = 1;
   bytes to = 2;
-  bytes bandwidth = 3;
-  bytes cpu = 4;
+  int64 bandwidth = 3;
+  int64 cpu = 4;
   int64 expire_time = 5;
 }
 

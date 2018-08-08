@@ -3,14 +3,18 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Frozen;
@@ -44,27 +48,55 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
     switch (freezeBalanceContract.getResource()) {
       case BANDWIDTH:
-        long currentFrozenBalance = accountCapsule.getFrozenBalance();
-        long newFrozenBalance = freezeBalanceContract.getFrozenBalance() + currentFrozenBalance;
 
-        Frozen newFrozen = Frozen.newBuilder()
-            .setFrozenBalance(newFrozenBalance)
-            .setExpireTime(now + duration)
-            .build();
+        byte[] receiverAddress = freezeBalanceContract.getReceiverAddress().toByteArray();
+        //If the receiver is included in the contract, the receiver will receive the resource.
+        if (receiverAddress.length != 0) {
+          accountCapsule.setBalance(newBalance);
 
-        long frozenCount = accountCapsule.getFrozenCount();
-        if (frozenCount == 0) {
-          accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-              .addFrozen(newFrozen)
-              .setBalance(newBalance)
-              .build());
+          byte[] key = DelegatedResourceCapsule
+              .createDbKey(freezeBalanceContract.getOwnerAddress().toByteArray(),
+                  freezeBalanceContract.getReceiverAddress().toByteArray());
+          DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
+              .get(key);
+
+          if (delegatedResourceCapsule == null) {
+            delegatedResourceCapsule = new DelegatedResourceCapsule(
+                freezeBalanceContract.getOwnerAddress(),
+                freezeBalanceContract.getReceiverAddress(),
+                0L,
+                freezeBalanceContract.getFrozenBalance(),
+                duration
+            );
+          } else {
+            delegatedResourceCapsule.addBandwidth(freezeBalanceContract.getFrozenBalance());
+          }
+
+          dbManager.getDelegatedResourceStore().put(key, delegatedResourceCapsule);
+
         } else {
-          accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-              .setFrozen(0, newFrozen)
-              .setBalance(newBalance)
-              .build()
-          );
+          long currentFrozenBalance = accountCapsule.getFrozenBalance();
+          long newFrozenBalance = freezeBalanceContract.getFrozenBalance() + currentFrozenBalance;
+          Frozen newFrozen = Frozen.newBuilder()
+              .setFrozenBalance(newFrozenBalance)
+              .setExpireTime(now + duration)
+              .build();
+
+          long frozenCount = accountCapsule.getFrozenCount();
+          if (frozenCount == 0) {
+            accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+                .addFrozen(newFrozen)
+                .setBalance(newBalance)
+                .build());
+          } else {
+            accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+                .setFrozen(0, newFrozen)
+                .setBalance(newBalance)
+                .build()
+            );
+          }
         }
+
         dbManager.getDynamicPropertiesStore()
             .addTotalNetWeight(freezeBalanceContract.getFrozenBalance() / 1000_000L);
         break;
@@ -172,6 +204,27 @@ public class FreezeBalanceActuator extends AbstractActuator {
       default:
         throw new ContractValidateException(
             "ResourceCode error,valid ResourceCode[BANDWIDTH、CPU]");
+    }
+
+    byte[] receiverAddress = freezeBalanceContract.getReceiverAddress().toByteArray();
+    //If the receiver is included in the contract, the receiver will receive the resource.
+    if (receiverAddress.length != 0) {
+      if (Arrays.equals(receiverAddress, ownerAddress)) {
+        throw new ContractValidateException(
+            "receiverAddress must not be the same as ownerAddress");
+      }
+
+      if (!Wallet.addressValid(receiverAddress)) {
+        throw new ContractValidateException("Invalid receiverAddress");
+      }
+
+      AccountCapsule receiverCapsule = dbManager.getAccountStore().get(receiverAddress);
+      if (receiverCapsule == null) {
+        String readableOwnerAddress = StringUtil.createReadableString(receiverAddress);
+        throw new ContractValidateException(
+            "Account[" + readableOwnerAddress + "] not exists");
+      }
+
     }
 
     return true;

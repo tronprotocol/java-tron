@@ -22,6 +22,16 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
     }
   }
 
+  public DelegatedResourceCapsule(ByteString from,ByteString to,long cpu,long bandwidth,long expireTime) {
+    this.delegatedResource = DelegatedResource.newBuilder()
+        .setFrom(from)
+        .setTo(to)
+        .setCpu(cpu)
+        .setBandwidth(bandwidth)
+        .setExpireTime(expireTime)
+        .build();
+  }
+
 
   public ByteString getFrom() {
     return this.delegatedResource.getFrom();
@@ -29,6 +39,35 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
 
   public ByteString getTo() {
     return this.delegatedResource.getTo();
+  }
+
+  public long getCpu() {
+    return this.delegatedResource.getCpu();
+  }
+
+  public void setCpu(long cpu) {
+    this.delegatedResource = this.delegatedResource.toBuilder().setCpu(cpu).build();
+  }
+
+  public long getBandwidth() {
+    return this.delegatedResource.getBandwidth();
+  }
+
+  public void setBandwidth(long Bandwidth) {
+    this.delegatedResource = this.delegatedResource.toBuilder().setBandwidth(Bandwidth).build();
+  }
+
+  public void addBandwidth(long Bandwidth) {
+    this.delegatedResource = this.delegatedResource.toBuilder()
+        .setBandwidth(this.delegatedResource.getBandwidth() + Bandwidth).build();
+  }
+
+  public long getExpireTime() {
+    return this.delegatedResource.getExpireTime();
+  }
+
+  public void setExpireTime(long ExpireTime) {
+    this.delegatedResource = this.delegatedResource.toBuilder().setExpireTime(ExpireTime).build();
   }
 
   public byte[] createDbKey() {
