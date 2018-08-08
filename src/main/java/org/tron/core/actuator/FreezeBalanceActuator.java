@@ -5,7 +5,6 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -14,7 +13,6 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Frozen;
@@ -46,85 +44,59 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
     long newBalance = accountCapsule.getBalance() - freezeBalanceContract.getFrozenBalance();
 
+    long frozenBalanceForCpu = 0;
+    long frozenBalanceForBandwidth = 0;
+    long expireTime = now + duration;
     switch (freezeBalanceContract.getResource()) {
       case BANDWIDTH:
-
-        byte[] receiverAddress = freezeBalanceContract.getReceiverAddress().toByteArray();
-        //If the receiver is included in the contract, the receiver will receive the resource.
-        if (receiverAddress.length != 0) {
-          accountCapsule.setBalance(newBalance);
-
-          byte[] key = DelegatedResourceCapsule
-              .createDbKey(freezeBalanceContract.getOwnerAddress().toByteArray(),
-                  freezeBalanceContract.getReceiverAddress().toByteArray());
-          DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
-              .get(key);
-
-          if (delegatedResourceCapsule == null) {
-            delegatedResourceCapsule = new DelegatedResourceCapsule(
-                freezeBalanceContract.getOwnerAddress(),
-                freezeBalanceContract.getReceiverAddress(),
-                0L,
-                freezeBalanceContract.getFrozenBalance(),
-                duration
-            );
-          } else {
-            delegatedResourceCapsule.addBandwidth(freezeBalanceContract.getFrozenBalance());
-          }
-
-          dbManager.getDelegatedResourceStore().put(key, delegatedResourceCapsule);
-
-        } else {
-          long currentFrozenBalance = accountCapsule.getFrozenBalance();
-          long newFrozenBalance = freezeBalanceContract.getFrozenBalance() + currentFrozenBalance;
-          Frozen newFrozen = Frozen.newBuilder()
-              .setFrozenBalance(newFrozenBalance)
-              .setExpireTime(now + duration)
-              .build();
-
-          long frozenCount = accountCapsule.getFrozenCount();
-          if (frozenCount == 0) {
-            accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-                .addFrozen(newFrozen)
-                .setBalance(newBalance)
-                .build());
-          } else {
-            accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-                .setFrozen(0, newFrozen)
-                .setBalance(newBalance)
-                .build()
-            );
-          }
-        }
-
-        dbManager.getDynamicPropertiesStore()
-            .addTotalNetWeight(freezeBalanceContract.getFrozenBalance() / 1000_000L);
-        break;
+        frozenBalanceForBandwidth = freezeBalanceContract.getFrozenBalance();
       case CPU:
-        long currentFrozenBalanceForCpu = accountCapsule.getAccountResource()
-            .getFrozenBalanceForCpu()
-            .getFrozenBalance();
-        long newFrozenBalanceForCpu =
-            freezeBalanceContract.getFrozenBalance() + currentFrozenBalanceForCpu;
-
-        Frozen newFrozenForCpu = Frozen.newBuilder()
-            .setFrozenBalance(newFrozenBalanceForCpu)
-            .setExpireTime(now + duration)
-            .build();
-
-        AccountResource newAccountResource = accountCapsule.getAccountResource().toBuilder()
-            .setFrozenBalanceForCpu(newFrozenForCpu).build();
-
-        accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-            .setAccountResource(newAccountResource)
-            .setBalance(newBalance)
-            .build());
-        dbManager.getDynamicPropertiesStore()
-            .addTotalCpuWeight(freezeBalanceContract.getFrozenBalance() / 1000_000L);
-        break;
+        frozenBalanceForCpu = freezeBalanceContract.getFrozenBalance();
     }
 
+    byte[] receiverAddress = freezeBalanceContract.getReceiverAddress().toByteArray();
+
+    if (receiverAddress.length == 0) {
+      //If the receiver is not included in the contract, the owner will receive the resource.
+      long newFrozenBalanceForCpu =
+          frozenBalanceForCpu + accountCapsule.getAccountResource()
+              .getFrozenBalanceForCpu()
+              .getFrozenBalance();
+      long newFrozenBalanceForBandwidth =
+          frozenBalanceForBandwidth + accountCapsule.getFrozenBalance();
+
+      accountCapsule.setFrozenForCpu(newFrozenBalanceForCpu, expireTime);
+      accountCapsule.setFrozenForBandwidth(newFrozenBalanceForBandwidth, expireTime);
+    } else {
+      //If the receiver is included in the contract, the receiver will receive the resource.
+      byte[] key = DelegatedResourceCapsule
+          .createDbKey(freezeBalanceContract.getOwnerAddress().toByteArray(),
+              freezeBalanceContract.getReceiverAddress().toByteArray());
+      DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
+          .get(key);
+
+      if (delegatedResourceCapsule != null) {
+        delegatedResourceCapsule
+            .addResource(frozenBalanceForBandwidth, frozenBalanceForCpu, expireTime);
+      } else {
+        delegatedResourceCapsule = new DelegatedResourceCapsule(
+            freezeBalanceContract.getOwnerAddress(),
+            freezeBalanceContract.getReceiverAddress(),
+            frozenBalanceForCpu,
+            frozenBalanceForBandwidth,
+            expireTime
+        );
+      }
+
+      dbManager.getDelegatedResourceStore().put(key, delegatedResourceCapsule);
+
+    }
+
+    accountCapsule.setBalance(newBalance);
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+
+    dbManager.getDynamicPropertiesStore()
+        .addTotalNetWeight(freezeBalanceContract.getFrozenBalance() / 1000_000L);
 
     ret.setStatus(fee, code.SUCESS);
 

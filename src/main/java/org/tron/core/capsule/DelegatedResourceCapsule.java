@@ -22,7 +22,8 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
     }
   }
 
-  public DelegatedResourceCapsule(ByteString from,ByteString to,long cpu,long bandwidth,long expireTime) {
+  public DelegatedResourceCapsule(ByteString from, ByteString to, long cpu, long bandwidth,
+      long expireTime) {
     this.delegatedResource = DelegatedResource.newBuilder()
         .setFrom(from)
         .setTo(to)
@@ -49,6 +50,11 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
     this.delegatedResource = this.delegatedResource.toBuilder().setCpu(cpu).build();
   }
 
+  public void addCpu(long cpu) {
+    this.delegatedResource = this.delegatedResource.toBuilder()
+        .setCpu(this.delegatedResource.getCpu() + cpu).build();
+  }
+
   public long getBandwidth() {
     return this.delegatedResource.getBandwidth();
   }
@@ -60,6 +66,13 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
   public void addBandwidth(long Bandwidth) {
     this.delegatedResource = this.delegatedResource.toBuilder()
         .setBandwidth(this.delegatedResource.getBandwidth() + Bandwidth).build();
+  }
+
+  public void addResource(long Bandwidth, long cpu, long ExpireTime) {
+    this.delegatedResource = this.delegatedResource.toBuilder()
+        .setBandwidth(this.delegatedResource.getBandwidth() + Bandwidth)
+        .setCpu(this.delegatedResource.getCpu() + cpu)
+        .setExpireTime(ExpireTime).build();
   }
 
   public long getExpireTime() {

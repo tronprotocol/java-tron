@@ -365,6 +365,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return frozenBalance[0];
   }
 
+
   public int getFrozenSupplyCount() {
     return getInstance().getFrozenSupplyCount();
   }
@@ -412,6 +413,25 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   public void setIsCommittee(boolean isCommittee) {
     this.account = this.account.toBuilder().setIsCommittee(isCommittee).build();
+  }
+
+  public void setFrozenForBandwidth(long frozenBalance, long expireTime) {
+    Frozen newFrozen = Frozen.newBuilder()
+        .setFrozenBalance(frozenBalance)
+        .setExpireTime(expireTime)
+        .build();
+
+    long frozenCount = getFrozenCount();
+    if (frozenCount == 0) {
+      setInstance(getInstance().toBuilder()
+          .addFrozen(newFrozen)
+          .build());
+    } else {
+      setInstance(getInstance().toBuilder()
+          .setFrozen(0, newFrozen)
+          .build()
+      );
+    }
   }
 
   //for test only
