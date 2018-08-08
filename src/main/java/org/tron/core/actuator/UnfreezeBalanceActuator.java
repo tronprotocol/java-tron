@@ -102,7 +102,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           receiverCapsule.deleteDelegatedFrozenBalanceForBandwidth(unfreezeBalance);
           break;
         case CPU:
-          unfreezeBalance = delegatedResourceCapsule.getCpu();
+          unfreezeBalance = delegatedResourceCapsule.getFrozenBalanceForCpu();
           delegatedResourceCapsule.setFrozenBalanceForCpu(0);
 
           receiverCapsule.deleteAcquiredDelegatedFrozenBalanceForCpu(unfreezeBalance);
@@ -112,7 +112,13 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           .setBalance(oldBalance + unfreezeBalance).build());
 
       dbManager.getDynamicPropertiesStore().addTotalCpuWeight(-unfreezeBalance / 1000_000L);
-      dbManager.getDelegatedResourceStore().put(key, delegatedResourceCapsule);
+
+      if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() == 0
+          && delegatedResourceCapsule.getFrozenBalanceForCpu() == 0) {
+        dbManager.getDelegatedResourceStore().delete(key);
+      } else {
+        dbManager.getDelegatedResourceStore().put(key, delegatedResourceCapsule);
+      }
 
     }
 
@@ -243,21 +249,22 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
             throw new ContractValidateException(
                 "AcquiredDelegatedFrozenBalanceForBandwidth[" + receiverCapsule
                     .getAcquiredDelegatedFrozenBalanceForBandwidth() + "] < delegatedBandwidth["
-                    + delegatedResourceCapsule.getFrozenBalanceForBandwidth() + "],this should never happen");
+                    + delegatedResourceCapsule.getFrozenBalanceForBandwidth()
+                    + "],this should never happen");
           }
 
           ;
           break;
         case CPU:
-          if (delegatedResourceCapsule.getCpu() <= 0) {
+          if (delegatedResourceCapsule.getFrozenBalanceForCpu() <= 0) {
             throw new ContractValidateException("no delegateFrozenBalance(CPU)");
           }
           if (receiverCapsule.getAcquiredDelegatedFrozenBalanceForCpu()
-              < delegatedResourceCapsule.getCpu()) {
+              < delegatedResourceCapsule.getFrozenBalanceForCpu()) {
             throw new ContractValidateException(
                 "AcquiredDelegatedFrozenBalanceForCpu[" + receiverCapsule
                     .getAcquiredDelegatedFrozenBalanceForCpu() + "] < delegatedCpu["
-                    + delegatedResourceCapsule.getCpu() +
+                    + delegatedResourceCapsule.getFrozenBalanceForCpu() +
                     "],this should never happen");
           }
 

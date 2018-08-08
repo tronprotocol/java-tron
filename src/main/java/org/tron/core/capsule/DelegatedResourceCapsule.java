@@ -42,7 +42,7 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
     return this.delegatedResource.getTo();
   }
 
-  public long getCpu() {
+  public long getFrozenBalanceForCpu() {
     return this.delegatedResource.getFrozenBalanceForCpu();
   }
 
