@@ -328,11 +328,11 @@ public class Runtime {
 
     // will change the name from us to gas
     // can change the calc way
+    CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
     long cpuGasFromFreeze = cpuProcessor.getAccountLeftCpuInUsFromFreeze(account);
     long cpuGasFromBalance = Math.floorDiv(account.getBalance(), Constant.SUN_PER_GAS);
 
     long cpuGasFromFeeLimit;
-    CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
     long balanceForCpuFreeze = account.getAccountResource().getFrozenBalanceForCpu()
         .getFrozenBalance();
     if (0 == balanceForCpuFreeze) {
