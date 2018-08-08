@@ -172,6 +172,8 @@ public class Runtime {
     this.programInvokeFactory = programInvokeFactory;
     this.executorType = ET_PRE_TYPE;
     this.block = block;
+    this.cpuProcessor = new CpuProcessor(deposit.getDbManager());
+    this.storageMarket = new StorageMarket(deposit.getDbManager());
     Transaction.Contract.ContractType contractType = tx.getRawData().getContract(0).getType();
     switch (contractType.getNumber()) {
       case Transaction.Contract.ContractType.TriggerSmartContract_VALUE:
@@ -331,20 +333,24 @@ public class Runtime {
     long cpuGasFromFreeze = cpuProcessor.getAccountLeftCpuInUsFromFreeze(account);
     long cpuGasFromBalance = Math.floorDiv(account.getBalance(), Constant.SUN_PER_GAS);
 
-    CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
+    long cpuGasFromFeeLimit;
     long balanceForCpuFreeze = account.getAccountResource().getFrozenBalanceForCpu()
         .getFrozenBalance();
-    long totalCpuGasFromFreeze = cpuProcessor.calculateGlobalCpuLimit(balanceForCpuFreeze);
-    long leftBalanceForCpuFreeze =
-        Math.multiplyExact(cpuGasFromFreeze, balanceForCpuFreeze) / totalCpuGasFromFreeze;
-
-    long cpuGasFromFeeLimit;
-    if (leftBalanceForCpuFreeze >= feeLimit) {
-      cpuGasFromFeeLimit =
-          Math.multiplyExact(totalCpuGasFromFreeze, feeLimit) / balanceForCpuFreeze;
+    if (0 == balanceForCpuFreeze) {
+      cpuGasFromFeeLimit = feeLimit / Constant.SUN_PER_GAS;
     } else {
-      cpuGasFromFeeLimit = Math
-          .addExact(cpuGasFromFreeze, (feeLimit - leftBalanceForCpuFreeze) / Constant.SUN_PER_GAS);
+      long totalCpuGasFromFreeze = cpuProcessor.calculateGlobalCpuLimit(balanceForCpuFreeze);
+      long leftBalanceForCpuFreeze =
+          Math.multiplyExact(cpuGasFromFreeze, balanceForCpuFreeze) / totalCpuGasFromFreeze;
+
+      if (leftBalanceForCpuFreeze >= feeLimit) {
+        cpuGasFromFeeLimit =
+            Math.multiplyExact(totalCpuGasFromFreeze, feeLimit) / balanceForCpuFreeze;
+      } else {
+        cpuGasFromFeeLimit = Math
+            .addExact(cpuGasFromFreeze,
+                (feeLimit - leftBalanceForCpuFreeze) / Constant.SUN_PER_GAS);
+      }
     }
 
     return min(Math.addExact(cpuGasFromFreeze, cpuGasFromBalance), cpuGasFromFeeLimit);
@@ -357,8 +363,7 @@ public class Runtime {
     if (Arrays.equals(creator.getAddress().toByteArray(), caller.getAddress().toByteArray())) {
       return callerGasLimit;
     }
-
-    CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
+    
     // creatorCpuGasFromFreeze
     long creatorGasLimit = cpuProcessor.getAccountLeftCpuInUsFromFreeze(creator);
 
