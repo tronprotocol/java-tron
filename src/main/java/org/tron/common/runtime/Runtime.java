@@ -364,6 +364,16 @@ public class Runtime {
       return callerGasLimit;
     }
     
+    ContractCapsule contract = deposit.getContract(result.getContractAddress());
+    ByteString originAddress = contract.getInstance().getOriginAddress();
+    AccountCapsule origin = deposit.getAccount(originAddress.toByteArray());
+    long originResourcePercent = 100 - contract.getConsumeUserResourcePercent();
+    originResourcePercent = min(originResourcePercent, 100);
+    originResourcePercent = max(originResourcePercent, 0);
+    long originCpuUsage = cpuUsage * originResourcePercent / 100;
+    originCpuUsage = min(originCpuUsage, cpuProcessor.getAccountLeftCpuInUsFromFreeze(origin));
+    long callerCpuUsage = cpuUsage - originCpuUsage;
+    
     // creatorCpuGasFromFreeze
     long creatorGasLimit = cpuProcessor.getAccountLeftCpuInUsFromFreeze(creator);
 
