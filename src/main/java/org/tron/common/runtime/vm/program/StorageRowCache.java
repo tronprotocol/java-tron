@@ -1,18 +1,21 @@
 package org.tron.common.runtime.vm.program;
 
+import static java.lang.System.arraycopy;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import org.ethereum.crypto.HashUtil;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.storage.Key;
 import org.tron.core.capsule.StorageRowCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.db.StorageRowStore;
 
-public class StorageCache {
+public class StorageRowCache {
 
-  private byte[] address;  // contract address
+  private byte[] addressHash;  // contract address
   private Manager manager;
   private final Map<Key, StorageRowCapsule> rowCache = new HashMap<>();
   private long beforeUseSize = 0;
@@ -22,8 +25,8 @@ public class StorageCache {
   private static final int HASH_LEN = 32;
 
 
-  public StorageCache(byte[] address, Manager manager) {
-    this.address = address;
+  public StorageRowCache(byte[] address, Manager manager) {
+    addressHash = addrHash(address);
     this.manager = manager;
   }
 
@@ -33,7 +36,7 @@ public class StorageCache {
       return rowCache.get(k).getValue();
     } else {
       StorageRowStore store = manager.getStorageRowStore();
-      StorageRowCapsule row = store.get(compose(key.getData(), address));
+      StorageRowCapsule row = store.get(compose(key.getData(), addressHash));
       if (row == null) {
         return null;
       } else {
@@ -50,7 +53,7 @@ public class StorageCache {
       rowCache.get(k).setValue(value);
     } else {
       StorageRowStore store = manager.getStorageRowStore();
-      byte[] composedKey = compose(key.getData(), address);
+      byte[] composedKey = compose(key.getData(), addressHash);
       StorageRowCapsule row = store.get(composedKey);
 
       if (row == null) {
@@ -66,10 +69,11 @@ public class StorageCache {
     return composeInner(key, addrHash(addrOrHash));
   }
 
-  private static byte[] composeInner(byte[] key, byte[] addrhash) {
+  private static byte[] composeInner(byte[] key, byte[] addrHash) {
     byte[] derivative = new byte[key.length];
-    System.arraycopy(key, 0, derivative, 0, PREFIX_BYTES);
-    System.arraycopy(addrhash, 0, derivative, PREFIX_BYTES, PREFIX_BYTES);
+
+    arraycopy(addrHash, 0, derivative, 0, PREFIX_BYTES);
+    arraycopy(key, PREFIX_BYTES, derivative, PREFIX_BYTES, PREFIX_BYTES);
     return derivative;
   }
 
@@ -91,10 +95,10 @@ public class StorageCache {
 
   public void commit() {
     // TODO can just write dirty row
-    StorageRowStore store = manager.getStorageRowStore();
     rowCache.forEach((key, value) -> {
-      byte[] composedKey = compose(key.getData(), address);
-      store.put(composedKey, value);
+      byte[] composedKey = compose(key.getData(), addressHash);
+      manager.getStorageRowStore().put(composedKey, value);
     });
+    System.err.println("END\n");
   }
 }

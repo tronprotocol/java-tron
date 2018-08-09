@@ -6,7 +6,7 @@ import com.google.protobuf.ByteString;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.runtime.vm.program.StorageCache;
+import org.tron.common.runtime.vm.program.StorageRowCache;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -52,7 +52,7 @@ public class DepositImpl implements Deposit {
   private HashMap<Key, Value> assetIssueCache = new HashMap<>();
   private HashMap<Key, Value> accountContractIndexCache = new HashMap<>();
 
-  private HashMap<Key, StorageCache> accountStorageCache = new HashMap<>();
+  private HashMap<Key, StorageRowCache> accountStorageCache = new HashMap<>();
 /*
   to remove
   private HashMap<Key, Value> storageCache = new HashMap<>();
@@ -307,21 +307,21 @@ public class DepositImpl implements Deposit {
 //  }
 
   @Override
-  public synchronized StorageCache getStorage(byte[] address) {
+  public synchronized StorageRowCache getStorage(byte[] address) {
     Key key = Key.create(address);
     if (accountStorageCache.containsKey(key)) {
       return accountStorageCache.get(key);
     }
 
-    StorageCache storageCache;
+    StorageRowCache storageRowCache;
     if (this.parent != null) {
-      storageCache = parent.getStorage(address);
+      storageRowCache = parent.getStorage(address);
     } else if (prevDeposit != null) {
-      storageCache = prevDeposit.getStorage(address);
+      storageRowCache = prevDeposit.getStorage(address);
     } else {
-      storageCache = new StorageCache(address, dbManager);
+      storageRowCache = new StorageRowCache(address, dbManager);
     }
-    return storageCache;
+    return storageRowCache;
   }
 
   @Override
@@ -331,22 +331,22 @@ public class DepositImpl implements Deposit {
       return;
     }
     Key addressKey = Key.create(address);
-    StorageCache storageCache;
+    StorageRowCache storageRowCache;
     if (accountStorageCache.containsKey(addressKey)) {
-      storageCache = accountStorageCache.get(addressKey);
+      storageRowCache = accountStorageCache.get(addressKey);
     } else {
-      storageCache = getStorage(address);
-      accountStorageCache.put(addressKey, storageCache);
+      storageRowCache = getStorage(address);
+      accountStorageCache.put(addressKey, storageRowCache);
     }
-    storageCache.put(key, value);
-//    if (storageCache.containsKey(addressKey)) {
-//      StorageCapsule storageCapsule = storageCache.get(addressKey).getStorage();
+    storageRowCache.put(key, value);
+//    if (storageRowCache.containsKey(addressKey)) {
+//      StorageCapsule storageCapsule = storageRowCache.get(addressKey).getStorage();
 //
 //      if (storageCapsule != null) {
 //        storageCapsule.put(key, value);
 //        Value V = Value.create(storageCapsule.getData(),
-//            Type.VALUE_TYPE_DIRTY | storageCache.get(addressKey).getType().getType());
-//        storageCache.put(addressKey, V);
+//            Type.VALUE_TYPE_DIRTY | storageRowCache.get(addressKey).getType().getType());
+//        storageRowCache.put(addressKey, V);
 //      }
 //    } else {
 //      StorageCapsule storageCapsule = getStorage(address);
@@ -357,12 +357,12 @@ public class DepositImpl implements Deposit {
 //        storageCapsule = new StorageCapsule(storageItem);
 //        storageCapsule.put(key, value);
 //        Value V = Value.create(storageCapsule.getData(), Type.VALUE_TYPE_CREATE);
-//        storageCache.put(addressKey, V);
+//        storageRowCache.put(addressKey, V);
 //      } else {
 //        storageCapsule.put(key, value);
 //        Value V = Value.create(storageCapsule.getData(),
-//            Type.VALUE_TYPE_DIRTY | storageCache.get(addressKey).getType().getType());
-//        storageCache.put(addressKey, V);
+//            Type.VALUE_TYPE_DIRTY | storageRowCache.get(addressKey).getType().getType());
+//        storageRowCache.put(addressKey, V);
 //      }
 //    }
   }
@@ -374,25 +374,25 @@ public class DepositImpl implements Deposit {
       return null;
     }
     Key addressKey = Key.create(address);
-    StorageCache storageCache;
+    StorageRowCache storageRowCache;
     if (accountStorageCache.containsKey(addressKey)) {
-      storageCache = accountStorageCache.get(addressKey);
+      storageRowCache = accountStorageCache.get(addressKey);
     } else {
-      storageCache = getStorage(address);
-      accountStorageCache.put(addressKey, storageCache);
+      storageRowCache = getStorage(address);
+      accountStorageCache.put(addressKey, storageRowCache);
     }
-    return storageCache.getValue(key);
+    return storageRowCache.getValue(key);
 
 //
-//    if (storageCache.containsKey(addressKey)) {
-//      StorageCapsule storageCapsule = storageCache.get(addressKey).getStorage();
+//    if (storageRowCache.containsKey(addressKey)) {
+//      StorageCapsule storageCapsule = storageRowCache.get(addressKey).getStorage();
 //      return storageCapsule.get(key);
 //    }
 //
 //    StorageCapsule storageCapsule = getStorage(address);
 //    if (storageCapsule != null) {
 //      Value V = Value.create(storageCapsule.getData(), Type.VALUE_TYPE_NORMAL);
-//      storageCache.put(addressKey, V);
+//      storageRowCache.put(addressKey, V);
 //      return storageCapsule.get(key);
 //    } else {
 //      Protocol.StorageItem.Builder builder = Protocol.StorageItem.newBuilder();
@@ -400,7 +400,7 @@ public class DepositImpl implements Deposit {
 //      Protocol.StorageItem storageItem = builder.build();
 //      storageCapsule = new StorageCapsule(storageItem);
 //      Value V = Value.create(storageCapsule.getData(), Type.VALUE_TYPE_CREATE);
-//      storageCache.put(addressKey, V);
+//      storageRowCache.put(addressKey, V);
 //      return storageCapsule.get(key);
 //    }
   }
@@ -551,7 +551,7 @@ public class DepositImpl implements Deposit {
 //  }
 
   @Override
-  public void putStorage(Key key, StorageCache cache) {
+  public void putStorage(Key key, StorageRowCache cache) {
     accountStorageCache.put(key, cache);
   }
 

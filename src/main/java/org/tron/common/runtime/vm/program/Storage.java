@@ -162,7 +162,7 @@ public class Storage implements Deposit, ProgramListenerAware {
 //  }
 
   @Override
-  public StorageCache getStorage(byte[] address) {
+  public StorageRowCache getStorage(byte[] address) {
     return deposit.getStorage(address);
   }
 
@@ -207,7 +207,7 @@ public class Storage implements Deposit, ProgramListenerAware {
 //  }
 
   @Override
-  public void putStorage(Key key, StorageCache cache) {
+  public void putStorage(Key key, StorageRowCache cache) {
     deposit.putStorage(key, cache);
   }
 
