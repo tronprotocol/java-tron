@@ -31,7 +31,6 @@ import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.StorageCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.ContractExeException;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 
@@ -133,8 +132,7 @@ public class Storage implements Deposit, ProgramListenerAware {
   }
 
   @Override
-  public long addBalance(byte[] addr, long value)
-      throws ContractExeException {
+  public long addBalance(byte[] addr, long value) {
     return deposit.addBalance(addr, value);
   }
 

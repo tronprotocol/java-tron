@@ -1,7 +1,7 @@
 package org.tron.common.runtime.vm;
 
 
-public class DropCost {
+public class GasCost {
 
     /* backwards compatibility, remove eventually */
     private final int STEP = 1;
@@ -273,10 +273,11 @@ public class DropCost {
         return EXT_CODE_COPY;
     }
 
-    private static DropCost instance = null;
-    public static DropCost getInstance() {
+    private static GasCost instance = null;
+
+    public static GasCost getInstance() {
         if (instance == null) {
-            instance = new DropCost();
+            instance = new GasCost();
         }
 
         return instance;

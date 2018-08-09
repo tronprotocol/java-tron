@@ -1,4 +1,4 @@
-package stest.tron.wallet.contract;
+package stest.tron.wallet.contract.scenario;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -28,7 +28,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 @Slf4j
-public class WalletTestContract001 {
+public class ContractScenario001 {
 
   //testng001、testng002、testng003、testng004
   private final String testKey002 =
@@ -94,8 +94,8 @@ public class WalletTestContract001 {
         + "se,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inpu"
         + "ts\":[],\"name\":\"nowInSeconds\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\""
         + "payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
-    byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",cpuLimit,
-        storageLimit,maxFeeLimit,0L, contract001Key,contract001Address,blockingStubFull);
+    byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
+        0L, 100,null,contract001Key,contract001Address,blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
     Assert.assertTrue(smartContract.getAbi() != null);
     accountResource = PublicMethed.getAccountResource(contract001Address,blockingStubFull);

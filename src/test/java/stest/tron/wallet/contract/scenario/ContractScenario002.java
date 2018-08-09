@@ -1,4 +1,4 @@
-package stest.tron.wallet.contract;
+package stest.tron.wallet.contract.scenario;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -21,7 +21,7 @@ import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
-public class WalletTestContract002 {
+public class ContractScenario002 {
 
   //testng001、testng002、testng003、testng004
   private final String testKey002 =
@@ -144,8 +144,8 @@ public class WalletTestContract002 {
         + "s\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\""
         + "constant\":false,\"inputs\":[],\"name\":\"unFreezeBalance\",\"outputs\":[],\"payable\""
         + ":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
-    byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",cpuLimit,
-        storageLimit,maxFeeLimit,0L, contract002Key,contract002Address,blockingStubFull);
+    byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
+        0L, 100,null,contract002Key,contract002Address,blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
     Assert.assertTrue(smartContract.getAbi() != null);
     accountResource = PublicMethed.getAccountResource(contract002Address,blockingStubFull);
@@ -168,8 +168,9 @@ public class WalletTestContract002 {
     SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
     Assert.assertTrue(smartContract.getAbi() == null);
 
-
-
+    contractAddress = null;
+    smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
+    Assert.assertTrue(smartContract.getAbi() == null);
   }
 
   @AfterClass

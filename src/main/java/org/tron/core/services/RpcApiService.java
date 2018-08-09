@@ -1326,7 +1326,7 @@ public class RpcApiService implements Service {
       try {
         TransactionCapsule trxCap = createTransactionCapsule(request,
             ContractType.TriggerSmartContract);
-        trx = wallet.triggerContract(request, trxCap, trxExtBuilder);
+        trx = wallet.triggerContract(request, trxCap, trxExtBuilder, retBuilder);
         trxExtBuilder.setTransaction(trx);
         trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
         retBuilder.setResult(true).setCode(response_code.SUCCESS);

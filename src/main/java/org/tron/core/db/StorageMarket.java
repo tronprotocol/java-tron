@@ -147,7 +147,7 @@ public class StorageMarket {
     return exchange(bytes, false);
   }
 
-  public void buyStorageBytes(AccountCapsule accountCapsule, long storageBought) {
+  public AccountCapsule buyStorageBytes(AccountCapsule accountCapsule, long storageBought) {
     long now = dbManager.getHeadBlockTimeStamp();
     long currentStorageLimit = accountCapsule.getStorageLimit();
 
@@ -173,7 +173,7 @@ public class StorageMarket {
     logger.info("newTotalPool: " + newTotalPool + "  newTotalReserved: " + newTotalReserved);
     dbManager.getDynamicPropertiesStore().saveTotalStoragePool(newTotalPool);
     dbManager.getDynamicPropertiesStore().saveTotalStorageReserved(newTotalReserved);
-
+    return accountCapsule;
   }
 
 

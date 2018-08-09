@@ -9,21 +9,19 @@ import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.program.Program;
-import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
 import org.tron.common.runtime.vm.program.Stack;
-import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+
+@Slf4j(topic = "VM")
 
 public class VM {
 
-  private static final Logger logger = LoggerFactory.getLogger("TronVM");
-  private static final Logger dumpLogger = LoggerFactory.getLogger("dump");
+  // private static final Logger logger = LoggerFactory.getLogger("TronVM");
   private static BigInteger _32_ = BigInteger.valueOf(32);
   private static final String logString = "{}    Op: [{}]  Gas: [{}] Deep: [{}]  Hint: [{}]";
 
@@ -54,23 +52,25 @@ public class VM {
   }
 
   private void checkMemorySize(OpCode op, BigInteger newMemSize) {
+    // todo: add TVMruntime error
     if (newMemSize.compareTo(MEM_LIMIT) > 0) {
       throw Program.Exception.memoryOverflow(op);
     }
   }
 
 
-  private long calcMemDrop(DropCost dropCosts, long oldMemSize, BigInteger newMemSize,
+  private long calcMemGas(GasCost gasCosts, long oldMemSize, BigInteger newMemSize,
       long copySize) {
-    long dropConsume = 0;
+    //todo: simpfy this calc, just use gas relative to cpu time
+
+    long gasCost = 0;
 
     // Avoid overflows
     if (newMemSize.compareTo(MAX_MEM_SIZE) > 0) {
-//            throw VMMemoryOverflowException();
-
+      // throw VMMemoryOverflowException();
       throw Program.Exception.gasOverflow(newMemSize, MAX_MEM_SIZE);
-//
-//            throw Program.Exception.memoryOverflow()
+      // todo: add memory overflow
+      // throw Program.Exception.memoryOverflow();
     }
 
     // memory drop consume calc
@@ -79,20 +79,20 @@ public class VM {
       long memWords = (memoryUsage / 32);
       long memWordsOld = (oldMemSize / 32);
       //TODO #POC9 c_quadCoeffDiv = 512, this should be a constant, not magic number
-      long memDrop = (dropCosts.getMEMORY() * memWords + memWords * memWords / 512)
-          - (dropCosts.getMEMORY() * memWordsOld + memWordsOld * memWordsOld / 512);
-      dropConsume += memDrop;
+      long memGas = (gasCosts.getMEMORY() * memWords + memWords * memWords / 512)
+          - (gasCosts.getMEMORY() * memWordsOld + memWordsOld * memWordsOld / 512);
+      gasCost += memGas;
     }
 
     if (copySize > 0) {
-      long copyDrop = dropCosts.getCOPY_GAS() * ((copySize + 31) / 32);
-      dropConsume += copyDrop;
+      long copyGas = gasCosts.getCOPY_GAS() * ((copySize + 31) / 32);
+      gasCost += copyGas;
     }
-    return dropConsume;
+    return gasCost;
   }
 
   public void step(Program program)
-      throws ContractExeException, OutOfResourceException, ContractValidateException {
+      throws ContractValidateException {
     if (vmTrace) {
       program.saveOpTrace();
     }
@@ -134,83 +134,84 @@ public class VM {
 
       String hint = "";
       long callGas = 0, memWords = 0; // parameters for logging
-      long dropCost = op.getTier().asInt();
-      long dropBefore = program.getDroplimitLong();
-      int stepBefore = program.getPC();
-      DropCost dropCosts = DropCost.getInstance();
+      long gasCost = op.getTier().asInt();
+      GasCost gasCosts = GasCost.getInstance();
       DataWord adjustedCallGas = null;
 
-      // Calculate fees and spend drops
+      // Calculate fees and spend gas
       switch (op) {
         case STOP:
-          dropCost = dropCosts.getSTOP();
+          gasCost = gasCosts.getSTOP();
           break;
         case SUICIDE:
-          dropCost = dropCosts.getSUICIDE();
+          gasCost = gasCosts.getSUICIDE();
           break;
         case SSTORE:
+          // todo: check the reset to 0, refund or not
           DataWord newValue = stack.get(stack.size() - 2);
           DataWord oldValue = program.storageLoad(stack.peek());
           if (oldValue == null && !newValue.isZero()) {
-            dropCost = dropCosts.getSET_SSTORE();
+            // set a new not-zero value
+            gasCost = gasCosts.getSET_SSTORE();
           } else if (oldValue != null && newValue.isZero()) {
-            // todo: GASREFUND counter policy
-
-            // refund step cost policy.
-            program.futureRefundGas(dropCosts.getREFUND_SSTORE());
-            dropCost = dropCosts.getCLEAR_SSTORE();
+            // set zero to an old value
+            program.futureRefundGas(gasCosts.getREFUND_SSTORE());
+            gasCost = gasCosts.getCLEAR_SSTORE();
           } else {
-            dropCost = dropCosts.getRESET_SSTORE();
+            // include:
+            // [1] oldValue == null && newValue == 0
+            // [2] oldValue != null && newValue != 0
+            gasCost = gasCosts.getRESET_SSTORE();
           }
           break;
         case SLOAD:
-          dropCost = dropCosts.getSLOAD();
+          gasCost = gasCosts.getSLOAD();
           break;
         case BALANCE:
-          dropCost = dropCosts.getBALANCE();
+          gasCost = gasCosts.getBALANCE();
           break;
 
         // These all operate on memory and therefore potentially expand it:
         case MSTORE:
-          dropCost += calcMemDrop(dropCosts, oldMemSize, memNeeded(stack.peek(), new DataWord(32)),
+          gasCost = calcMemGas(gasCosts, oldMemSize, memNeeded(stack.peek(), new DataWord(32)),
               0);
           break;
         case MSTORE8:
-          dropCost += calcMemDrop(dropCosts, oldMemSize, memNeeded(stack.peek(), new DataWord(1)),
+          gasCost = calcMemGas(gasCosts, oldMemSize, memNeeded(stack.peek(), new DataWord(1)),
               0);
           break;
         case MLOAD:
-          dropCost += calcMemDrop(dropCosts, oldMemSize, memNeeded(stack.peek(), new DataWord(32)),
+          gasCost = calcMemGas(gasCosts, oldMemSize, memNeeded(stack.peek(), new DataWord(32)),
               0);
           break;
         case RETURN:
         case REVERT:
-          dropCost = dropCosts.getSTOP() + calcMemDrop(dropCosts, oldMemSize,
+          gasCost = gasCosts.getSTOP() + calcMemGas(gasCosts, oldMemSize,
               memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0);
           break;
         case SHA3:
-          dropCost = dropCosts.getSHA3() + calcMemDrop(dropCosts, oldMemSize,
+          gasCost = gasCosts.getSHA3() + calcMemGas(gasCosts, oldMemSize,
               memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0);
           DataWord size = stack.get(stack.size() - 2);
           long chunkUsed = (size.longValueSafe() + 31) / 32;
-          dropCost += chunkUsed * dropCosts.getSHA3_WORD();
+          gasCost += chunkUsed * gasCosts.getSHA3_WORD();
           break;
         case CALLDATACOPY:
         case RETURNDATACOPY:
-          dropCost += calcMemDrop(dropCosts, oldMemSize,
+          gasCost = calcMemGas(gasCosts, oldMemSize,
               memNeeded(stack.peek(), stack.get(stack.size() - 3)),
               stack.get(stack.size() - 3).longValueSafe());
           break;
         case CODECOPY:
-          dropCost += calcMemDrop(dropCosts, oldMemSize,
+          gasCost = calcMemGas(gasCosts, oldMemSize,
               memNeeded(stack.peek(), stack.get(stack.size() - 3)),
               stack.get(stack.size() - 3).longValueSafe());
           break;
         case EXTCODESIZE:
-          dropCost = dropCosts.getEXT_CODE_SIZE();
+          gasCost = gasCosts.getEXT_CODE_SIZE();
           break;
         case EXTCODECOPY:
-          dropCost = dropCosts.getEXT_CODE_COPY() + calcMemDrop(dropCosts, oldMemSize,
+          gasCost = gasCosts.getEXT_CODE_COPY() + calcMemGas(gasCosts, oldMemSize,
               memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 4)),
               stack.get(stack.size() - 4).longValueSafe());
           break;
@@ -218,23 +219,23 @@ public class VM {
         case CALLCODE:
         case DELEGATECALL:
         case STATICCALL:
+          // here, contract call an other contract, or a library, and so on
+          // todo: check the callvalue here
+          gasCost = gasCosts.getCALL();
 
-          dropCost = dropCosts.getCALL();
           DataWord callGasWord = stack.get(stack.size() - 1);
+          // DataWord callGasWord = new DataWord(1000000);
 
           DataWord callAddressWord = stack.get(stack.size() - 2);
-
           DataWord value = op.callHasValue() ?
               stack.get(stack.size() - 3) : DataWord.ZERO;
-
           //check to see if account does not exist and is not a precompiled contract
           if (op == CALL) {
-            dropCost = dropCosts.getNEW_ACCT_CALL();
+            gasCost += gasCosts.getNEW_ACCT_CALL();
           }
-
-          //TODO #POC9 Make sure this is converted to BigInteger (256num support)
+          // TODO #POC9 Make sure this is converted to BigInteger (256num support)
           if (!value.isZero()) {
-            dropCost += dropCosts.getVT_CALL();
+            gasCost += gasCosts.getVT_CALL();
           }
 
           int opOff = op.callHasValue() ? 4 : 3;
@@ -242,24 +243,22 @@ public class VM {
               stack.get(stack.size() - opOff - 1)); // in offset+size
           BigInteger out = memNeeded(stack.get(stack.size() - opOff - 2),
               stack.get(stack.size() - opOff - 3)); // out offset+size
-          //    dropCost += calcMemDrop(dropCosts, oldMemSize, in.max(out), 0);
+          gasCost += calcMemGas(gasCosts, oldMemSize, in.max(out), 0);
           checkMemorySize(op, in.max(out));
 
-          //TODO: recover this or give similar logic when tron cost mechanism is ready.
-//                    if (dropCost > program.getDroplimit().longValueSafe()) {
-//                        throw Program.Exception.notEnoughOpGas(op, callGasWord, program.getDroplimit());
-//                    }
+          if (gasCost > program.getGasLimitLeft().longValueSafe()) {
+            throw new Program.OutOfGasException(
+                "Not enough gas for '%s' operation executing: opGas[%d], programGas[%d]", op.name(),
+                callGasWord.longValueSafe(), program.getGasLimitLeft().longValueSafe());
+          }
+          DataWord getGasLimitLeft = program.getGasLimitLeft().clone();
+          getGasLimitLeft.sub(new DataWord(gasCost));
 
-          DataWord gasLeft = program.getDroplimit().clone();
-          gasLeft.sub(new DataWord(dropCost));
-          //adjustedCallGas = tronConfig.getCallGas(op, callGasWord, gasLeft);
-          //adjustedCallGas = new DataWord(tronConfig.getDropCost().getCALL());
-          //TODO: remove below and recover above statment when config is ready
-          adjustedCallGas = new DataWord();
-          dropCost += adjustedCallGas.longValueSafe();
+          adjustedCallGas = program.getCallGas(op, callGasWord, getGasLimitLeft);
+          gasCost += adjustedCallGas.longValueSafe();
           break;
         case CREATE:
-          dropCost = dropCosts.getCREATE() + calcMemDrop(dropCosts, oldMemSize,
+          gasCost = gasCosts.getCREATE() + calcMemGas(gasCosts, oldMemSize,
               memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 3)), 0);
           break;
         case LOG0:
@@ -267,37 +266,34 @@ public class VM {
         case LOG2:
         case LOG3:
         case LOG4:
-
           int nTopics = op.val() - OpCode.LOG0.val();
-
           BigInteger dataSize = stack.get(stack.size() - 2).value();
-          BigInteger dataCost = dataSize
-              .multiply(BigInteger.valueOf(dropCosts.getLOG_DATA_GAS()));
-//            if (program.getDroplimit().value().compareTo(dataCost) < 0) {
-//              throw Program.Exception.notEnoughOpGas(op, dataCost, program.getDroplimit().value());
-//            }
+          BigInteger dataCost = dataSize.multiply(BigInteger.valueOf(gasCosts.getLOG_DATA_GAS()));
+          if (program.getGasLimitLeft().value().compareTo(dataCost) < 0) {
+            throw new Program.OutOfGasException(
+                "Not enough gas for '%s' operation executing: opGas[%d], programGas[%d]", op.name(),
+                dataCost.longValue(), program.getGasLimitLeft().longValueSafe());
+          }
+          gasCost = gasCosts.getLOG_GAS() +
+              gasCosts.getLOG_TOPIC_GAS() * nTopics +
+              gasCosts.getLOG_DATA_GAS() * stack.get(stack.size() - 2).longValue() +
+              calcMemGas(gasCosts, oldMemSize, memNeeded(stack.peek(), stack.get(stack.size() - 2)),
+                  0);
 
-          dropCost = dropCosts.getLOG_GAS() +
-              dropCosts.getLOG_TOPIC_GAS() * nTopics +
-              dropCosts.getLOG_DATA_GAS() * stack.get(stack.size() - 2).longValue() +
-              calcMemDrop(dropCosts, oldMemSize,
-                  memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0);
-          checkMemorySize(op,
-              memNeeded(stack.peek(), stack.get(stack.size() - 2)));
+          checkMemorySize(op, memNeeded(stack.peek(), stack.get(stack.size() - 2)));
           break;
         case EXP:
 
           DataWord exp = stack.get(stack.size() - 2);
           int bytesOccupied = exp.bytesOccupied();
-          dropCost = dropCosts.getEXP_GAS() + dropCosts.getEXP_BYTE_GAS() * bytesOccupied;
+          gasCost = gasCosts.getEXP_GAS() + gasCosts.getEXP_BYTE_GAS() * bytesOccupied;
           break;
         default:
           break;
       }
 
       // DEBUG System.out.println(" OP IS " + op.name() + " GASCOST IS " + gasCost + " NUM IS " + op.asInt());
-      // program.spendDrop(dropCost, op.name());
-
+      program.spendGas(gasCost, op.name());
       program.checkCPULimit(op.name());
       // logger.info("after opName: {}, {}", op.name(), System.nanoTime() / 1000 - lastTime);
 
@@ -921,13 +917,14 @@ public class VM {
         }
         break;
         case GASLIMIT: {
-          DataWord droplimit = new DataWord(0);
+          // todo: this gaslimit is the block's gas limit
+          DataWord gasLimit = new DataWord(0);
 
           if (logger.isInfoEnabled()) {
-            hint = "gaslimit: " + droplimit;
+            hint = "gaslimit: " + gasLimit;
           }
 
-          program.stackPush(droplimit);
+          program.stackPush(gasLimit);
           program.step();
         }
         break;
@@ -1137,8 +1134,7 @@ public class VM {
         }
         break;
         case GAS: {
-          DataWord gas = new DataWord(0);
-
+          DataWord gas = program.getGasLimitLeft();
           if (logger.isInfoEnabled()) {
             hint = "" + gas;
           }
@@ -1223,6 +1219,8 @@ public class VM {
         case STATICCALL: {
           program.stackPop(); // use adjustedCallGas instead of requested
           DataWord codeAddress = program.stackPop();
+
+          // todo: check the callvalue >= 0
           DataWord value = op.callHasValue() ?
               program.stackPop() : DataWord.ZERO;
 
@@ -1230,8 +1228,9 @@ public class VM {
             throw new Program.StaticCallModificationException();
           }
 
+          // todo: should subtract?
           if (!value.isZero()) {
-            adjustedCallGas.add(new DataWord(dropCosts.getSTIPEND_CALL()));
+            adjustedCallGas.add(new DataWord(gasCosts.getSTIPEND_CALL()));
           }
 
           DataWord inDataOffs = program.stackPop();
@@ -1247,7 +1246,7 @@ public class VM {
                 + " inSize: " + inDataSize.shortHex();
             logger.info(logString, String.format("%5s", "[" + program.getPC() + "]"),
                 String.format("%-12s", op.name()),
-                program.getDroplimit().value(),
+                program.getGasLimitLeft().value(),
                 program.getCallDeep(), hint);
           }
 
@@ -1336,7 +1335,7 @@ public class VM {
   }
 
   public void play(Program program)
-      throws ContractExeException, ContractValidateException {
+      throws ContractValidateException {
     try {
       if (program.byTestingSuite()) {
         return;
@@ -1356,7 +1355,6 @@ public class VM {
 
     }
   }
-
 
   /**
    * Utility to calculate new total memory size needed for an operation. <br/> Basically just offset
