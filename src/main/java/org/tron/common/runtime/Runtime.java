@@ -549,15 +549,11 @@ public class Runtime {
           if (!spendUsage(usedStorageSize)) {
             throw Program.Exception.notEnoughStorage();
           }
-          if (executorType == ET_NORMAL_TYPE) {
-            deposit.commit();
-          }
+          deposit.commit();
         }
 
       } else {
-        if (executorType == ET_NORMAL_TYPE) {
           deposit.commit();
-        }
       }
     } catch (OutOfResourceException e) {
       logger.error(e.getMessage());
