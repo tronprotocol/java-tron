@@ -545,6 +545,10 @@ public class Runtime {
 
         result = program.getResult();
         if (isCallConstant()) {
+          long callValue = TransactionCapsule.getCallValue(trx.getRawData().getContract(0));
+          if (callValue > 0) {
+            runtimeError = "constant canot set call value .";
+          }
           return;
         }
 
@@ -556,6 +560,7 @@ public class Runtime {
           result.resetFutureRefund();
           spendUsage(0);
           if (result.getException() != null) {
+            runtimeError = result.getException().getMessage();
             throw result.getException();
           } else {
             runtimeError = "REVERT opcode executed";
@@ -566,23 +571,17 @@ public class Runtime {
           if (!spendUsage(usedStorageSize)) {
             throw Program.Exception.notEnoughStorage();
           }
-          if (executorType == ET_NORMAL_TYPE) {
-            deposit.commit();
-          }
+          deposit.commit();
         }
 
       } else {
-        if (executorType == ET_NORMAL_TYPE) {
           deposit.commit();
-        }
       }
     } catch (OutOfResourceException e) {
       logger.error(e.getMessage());
-      runtimeError = e.getMessage();
       throw new OutOfSlotTimeException(e.getMessage());
     } catch (Exception e) {
       logger.error(e.getMessage());
-      runtimeError = e.getMessage();
     }
   }
 
@@ -653,4 +652,7 @@ public class Runtime {
     return result;
   }
 
+  public String getRuntimeError() {
+    return runtimeError;
+  }
 }

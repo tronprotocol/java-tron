@@ -138,7 +138,7 @@ public class AssetIssueActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid assetName");
     }
     if ((!assetIssueContract.getAbbr().isEmpty()) && !TransactionUtil
-        .validAssetName(assetIssueContract.getAbbr().toByteArray())) {
+    	.validTokenAbbrName(assetIssueContract.getAbbr().toByteArray())) {
       throw new ContractValidateException("Invalid abbreviation for token");
     }
     if (!TransactionUtil.validUrl(assetIssueContract.getUrl().toByteArray())) {

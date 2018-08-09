@@ -1240,7 +1240,7 @@ public class Program {
         msg.getInDataSize().intValue());
 
     // Charge for endowment - is not reversible by rollback
-    if(!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress) && senderAddress != contextAddress) {
+    if(!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress) && senderAddress != contextAddress && msg.getEndowment().value().longValue() > 0) {
       transfer(deposit, senderAddress, contextAddress, msg.getEndowment().value().longValue());
     }
 
