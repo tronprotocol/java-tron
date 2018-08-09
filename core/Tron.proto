@@ -276,6 +276,7 @@ message TransactionInfo {
   repeated Log log = 8;
   code result = 9;
   bytes resMessage = 10;
+
   int64 withdraw_amount = 15;
   int64 unfreeze_amount = 16;
 }
