@@ -16,7 +16,6 @@
 package org.tron.core.capsule;
 
 import static org.tron.protos.Contract.AssetIssueContract;
-import static org.tron.protos.Contract.DeployContract;
 import static org.tron.protos.Contract.VoteAssetContract;
 import static org.tron.protos.Contract.VoteWitnessContract;
 import static org.tron.protos.Contract.WitnessCreateContract;
@@ -39,15 +38,26 @@ import org.tron.core.Wallet;
 import org.tron.core.db.AccountStore;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
+import org.tron.protos.Contract.BuyStorageBytesContract;
+import org.tron.protos.Contract.BuyStorageContract;
+import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
+import org.tron.protos.Contract.ProposalApproveContract;
+import org.tron.protos.Contract.ProposalCreateContract;
+import org.tron.protos.Contract.ProposalDeleteContract;
+import org.tron.protos.Contract.SellStorageContract;
+import org.tron.protos.Contract.SetAccountIdContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.UpdateAssetContract;
+import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -58,6 +68,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   private Transaction transaction;
   @Setter
   private boolean isVerified = false;
+
   /**
    * constructor TransactionCapsule.
    */
@@ -68,7 +79,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   /**
    * get account from bytes data.
    */
-  public TransactionCapsule(byte[] data) throws BadItemException{
+  public TransactionCapsule(byte[] data) throws BadItemException {
     try {
       this.transaction = Transaction.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
@@ -134,11 +145,14 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public void resetResult() {
-    this.transaction = this.getInstance().toBuilder().clearRet().build();
+    if (this.getInstance().getRetCount() > 0) {
+      this.transaction = this.getInstance().toBuilder().clearRet().build();
+    }
   }
 
   public void setResult(TransactionResultCapsule transactionResultCapsule) {
-//    this.transaction = this.getInstance().toBuilder().addRet(transactionResultCapsule.getInstance()).build();
+    this.transaction = this.getInstance().toBuilder().addRet(transactionResultCapsule.getInstance())
+        .build();
   }
 
   public void setReference(long blockNum, byte[] blockHash) {
@@ -264,9 +278,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case AssetIssueContract:
           owner = contractParameter.unpack(AssetIssueContract.class).getOwnerAddress();
           break;
-        case DeployContract:
-          owner = contractParameter.unpack(DeployContract.class).getOwnerAddress();
-          break;
         case WitnessUpdateContract:
           owner = contractParameter.unpack(WitnessUpdateContract.class).getOwnerAddress();
           break;
@@ -288,8 +299,39 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case WithdrawBalanceContract:
           owner = contractParameter.unpack(WithdrawBalanceContract.class).getOwnerAddress();
           break;
+        case CreateSmartContract:
+          owner = contractParameter.unpack(Contract.CreateSmartContract.class).getOwnerAddress();
+          break;
+        case TriggerSmartContract:
+          owner = contractParameter.unpack(Contract.TriggerSmartContract.class).getOwnerAddress();
+          break;
         case UpdateAssetContract:
           owner = contractParameter.unpack(UpdateAssetContract.class).getOwnerAddress();
+          break;
+        case ProposalCreateContract:
+          owner = contractParameter.unpack(ProposalCreateContract.class).getOwnerAddress();
+          break;
+        case ProposalApproveContract:
+          owner = contractParameter.unpack(ProposalApproveContract.class).getOwnerAddress();
+          break;
+        case ProposalDeleteContract:
+          owner = contractParameter.unpack(ProposalDeleteContract.class).getOwnerAddress();
+          break;
+        case SetAccountIdContract:
+          owner = contractParameter.unpack(SetAccountIdContract.class).getOwnerAddress();
+          break;
+        case BuyStorageContract:
+          owner = contractParameter.unpack(BuyStorageContract.class).getOwnerAddress();
+          break;
+        case BuyStorageBytesContract:
+          owner = contractParameter.unpack(BuyStorageBytesContract.class).getOwnerAddress();
+          break;
+        case SellStorageContract:
+          owner = contractParameter.unpack(SellStorageContract.class).getOwnerAddress();
+          break;
+        case UpdateSettingContract:
+          owner = contractParameter.unpack(UpdateSettingContract.class)
+              .getOwnerAddress();
           break;
         // todo add other contract
         default:
@@ -297,7 +339,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       }
       return owner.toByteArray();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());
       return null;
     }
   }
@@ -324,8 +366,30 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       }
       return to.toByteArray();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());
       return null;
+    }
+  }
+
+  // todo mv this static function to capsule util
+  public static long getCallValue(Transaction.Contract contract) {
+    int cpuForTrx;
+    try {
+      Any contractParameter = contract.getParameter();
+      long callValue;
+      switch (contract.getType()) {
+        case TriggerSmartContract:
+          return contractParameter.unpack(TriggerSmartContract.class).getCallValue();
+
+        case CreateSmartContract:
+          return contractParameter.unpack(CreateSmartContract.class).getNewContract()
+              .getCallValue();
+        default:
+          return 0L;
+      }
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
+      return 0L;
     }
   }
 

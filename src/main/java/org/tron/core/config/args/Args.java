@@ -66,6 +66,11 @@ public class Args {
   private boolean witness = false;
 
   @Getter
+  @Setter
+  @Parameter(names = {"--debug"})
+  private boolean debug = false;
+
+  @Getter
   @Parameter(description = "--seed-nodes")
   private List<String> seedNodes = new ArrayList<>();
 
@@ -77,6 +82,9 @@ public class Args {
 
   @Parameter(names = {"--storage-db-directory"}, description = "Storage db directory")
   private String storageDbDirectory = "";
+
+  @Parameter(names = {"--storage-db-version"}, description = "Storage db version.(1 or 2)")
+  private String storageDbVersion = "";
 
   @Parameter(names = {"--storage-index-directory"}, description = "Storage index directory")
   private String storageIndexDirectory = "";
@@ -230,6 +238,10 @@ public class Args {
 
   @Getter
   @Setter
+  private long proposalExpireTime; // (ms)
+
+  @Getter
+  @Setter
   private int tcpNettyWorkThreadNum;
 
   @Getter
@@ -256,6 +268,26 @@ public class Args {
   @Getter
   @Setter
   private List<String> backupMembers;
+
+  @Getter
+  @Setter
+  private double connectFactor;
+
+  @Getter
+  @Setter
+  private double activeConnectFactor;
+
+  @Getter
+  @Setter
+  private double disconnectNumberFactor;
+
+  @Getter
+  @Setter
+  private double maxConnectNumberFactor;
+
+  @Getter
+  @Setter
+  private long receiveTcpMinDataLength;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -299,12 +331,18 @@ public class Args {
     INSTANCE.fullNodeHttpPort = 0;
     INSTANCE.solidityHttpPort = 0;
     INSTANCE.maintenanceTimeInterval = 0;
+    INSTANCE.proposalExpireTime = 0;
     INSTANCE.tcpNettyWorkThreadNum = 0;
     INSTANCE.udpNettyWorkThreadNum = 0;
     INSTANCE.p2pNodeId = "";
     INSTANCE.solidityNode = false;
     INSTANCE.trustNodeAddr = "";
     INSTANCE.walletExtensionApi = false;
+    INSTANCE.connectFactor = 0.3;
+    INSTANCE.activeConnectFactor = 0.1;
+    INSTANCE.disconnectNumberFactor = 0.4;
+    INSTANCE.maxConnectNumberFactor = 0.8;
+    INSTANCE.receiveTcpMinDataLength = 2048;
   }
 
   /**
@@ -367,6 +405,11 @@ public class Args {
     }
 
     INSTANCE.storage = new Storage();
+    INSTANCE.storage.setDbVersion(Optional.ofNullable(INSTANCE.storageDbVersion)
+        .filter(StringUtils::isNotEmpty)
+        .map(Integer::valueOf)
+        .orElse(Storage.getDbVersionFromConfig(config)));
+
     INSTANCE.storage.setDbDirectory(Optional.ofNullable(INSTANCE.storageDbDirectory)
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getDbDirectoryFromConfig(config)));
@@ -494,6 +537,10 @@ public class Args {
         config.hasPath("block.maintenanceTimeInterval") ? config
             .getInt("block.maintenanceTimeInterval") : 21600000L;
 
+    INSTANCE.proposalExpireTime =
+        config.hasPath("block.proposalExpireTime") ? config
+            .getInt("block.proposalExpireTime") : 259200000L;
+
     INSTANCE.tcpNettyWorkThreadNum = config.hasPath("node.tcpNettyWorkThreadNum") ? config
         .getInt("node.tcpNettyWorkThreadNum") : 0;
 
@@ -510,6 +557,19 @@ public class Args {
 
     INSTANCE.walletExtensionApi =
         config.hasPath("node.walletExtensionApi") && config.getBoolean("node.walletExtensionApi");
+
+    INSTANCE.connectFactor =
+        config.hasPath("node.connectFactor") ? config.getDouble("node.connectFactor") : 0.3;
+
+    INSTANCE.activeConnectFactor = config.hasPath("node.activeConnectFactor") ?
+        config.getDouble("node.activeConnectFactor") : 0.1;
+
+    INSTANCE.disconnectNumberFactor = config.hasPath("node.disconnectNumberFactor") ?
+        config.getDouble("node.disconnectNumberFactor") : 0.4;
+    INSTANCE.maxConnectNumberFactor = config.hasPath("node.maxConnectNumberFactor") ?
+        config.getDouble("node.maxConnectNumberFactor") : 0.8;
+    INSTANCE.receiveTcpMinDataLength = config.hasPath("node.receiveTcpMinDataLength") ?
+        config.getLong("node.receiveTcpMinDataLength") : 2048;
 
     initBackupProperty(config);
 

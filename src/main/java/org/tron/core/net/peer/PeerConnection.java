@@ -280,6 +280,5 @@ public class PeerConnection extends Channel {
 
   public void sendMessage(Message message) {
     msgQueue.sendMessage(message);
-    nodeStatistics.tronOutMessage.add();
   }
 }

@@ -41,8 +41,8 @@ public class FindNodeMessage extends Message {
   }
 
   @Override
-  public byte[] getNodeId() {
-    return this.findNeighbours.getFrom().getNodeId().toByteArray();
+  public Node getFrom() {
+    return Message.getNode(findNeighbours.getFrom());
   }
 
   @Override

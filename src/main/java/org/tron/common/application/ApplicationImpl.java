@@ -71,7 +71,7 @@ public class ApplicationImpl implements Application {
   @Override
   public void shutdown() {
     System.err.println("******** begin to shutdown ********");
-    synchronized (RevokingStore.getInstance()) {
+    synchronized (dbManager.getRevokingStore()) {
       closeRevokingStore();
       closeAllStore();
     }
@@ -124,7 +124,7 @@ public class ApplicationImpl implements Application {
   }
 
   private void closeRevokingStore() {
-    RevokingStore.getInstance().shutdown();
+    dbManager.getRevokingStore().shutdown();
   }
 
   private void closeAllStore() {

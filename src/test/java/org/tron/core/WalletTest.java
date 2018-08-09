@@ -200,7 +200,7 @@ public class WalletTest {
     AssetIssueContract.Builder builder = AssetIssueContract.newBuilder();
     builder.setName(ByteString.copyFromUtf8("Asset1"));
     Asset1 = new AssetIssueCapsule(builder.build());
-    manager.getAssetIssueStore().put(Asset1.getName().toByteArray(),Asset1);
+    manager.getAssetIssueStore().put(Asset1.createDbKey(), Asset1);
   }
 
   @AfterClass

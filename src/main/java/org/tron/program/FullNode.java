@@ -28,6 +28,12 @@ public class FullNode {
       return;
     }
 
+    if (Args.getInstance().isDebug()) {
+      logger.info("in debug mode, it won't check cpu time");
+    } else {
+      logger.info("not in debug mode, it will check cpu time");
+    }
+
     DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
     beanFactory.setAllowCircularReferences(false);
     AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(beanFactory);

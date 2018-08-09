@@ -15,8 +15,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.db.TronDatabase;
 import org.tron.core.db.common.WrappedByteArray;
+import org.tron.core.db2.core.ITronChainBase;
 import org.tron.protos.Protocol.Transaction;
 
 @Component
@@ -31,7 +31,7 @@ public class TransactionIndex extends AbstractIndex<TransactionCapsule, Transact
 
   @Autowired
   public TransactionIndex(
-      @Qualifier("transactionStore") final TronDatabase<TransactionCapsule> database) {
+      @Qualifier("transactionStore") final ITronChainBase<TransactionCapsule> database) {
     super(database);
   }
 

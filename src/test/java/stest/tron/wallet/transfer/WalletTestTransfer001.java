@@ -94,6 +94,7 @@ public class WalletTestTransfer001 {
 
   @Test
   public void testSendCoin() {
+    logger.info(receiptAccountKey);
     //Test send coin.
     Account sendAccount = PublicMethed.queryAccount(sendAccountKey,blockingStubFull);
     Long sendAccountBeforeBalance = sendAccount.getBalance();
@@ -113,6 +114,7 @@ public class WalletTestTransfer001 {
 
     receiptAccount = PublicMethed.queryAccount(receiptAccountKey,blockingStubFull);
     Long receiptAccountAfterBalance = receiptAccount.getBalance();
+    logger.info(Long.toString(receiptAccountAfterBalance));
     Assert.assertTrue(receiptAccountAfterBalance == 49880000000L);
 
 

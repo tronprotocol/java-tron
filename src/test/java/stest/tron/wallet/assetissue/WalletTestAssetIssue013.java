@@ -97,8 +97,8 @@ public class WalletTestAssetIssue013 {
         .getAssetIssueByAccount(request1);
     Optional<GrpcAPI.AssetIssueList> queryAssetByAccount = Optional.ofNullable(assetIssueList1);
     if (queryAssetByAccount.get().getAssetIssueCount() == 0) {
-      Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 10000000, 3, testKey002,
-          blockingStubFull));
+      //Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 10000000, 3, testKey002,
+      //    blockingStubFull));
       Assert.assertTrue(PublicMethed
           .sendcoin(asset013Address, sendAmount, fromAddress, testKey002, blockingStubFull));
       Assert.assertTrue(PublicMethed
