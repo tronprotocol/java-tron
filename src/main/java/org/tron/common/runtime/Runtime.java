@@ -547,7 +547,7 @@ public class Runtime {
         if (isCallConstant()) {
           long callValue = TransactionCapsule.getCallValue(trx.getRawData().getContract(0));
           if (callValue > 0) {
-            runtimeError = "constant canot set call value .";
+            runtimeError = "constant cannot set call value.";
           }
           return;
         }
@@ -558,6 +558,7 @@ public class Runtime {
           result.getDeleteAccounts().clear();
           result.getLogInfoList().clear();
           result.resetFutureRefund();
+          program.spendAllGas();
           spendUsage(0);
           if (result.getException() != null) {
             runtimeError = result.getException().getMessage();
