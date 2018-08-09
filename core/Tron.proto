@@ -72,12 +72,17 @@ message Account {
   repeated Vote votes = 5;
   // the other asset owned by this account
   map<string, int64> asset = 6;
+
   // latest asset operation time
 
-  // the frozen balance
+  // the frozen balance for bandwidth
   repeated Frozen frozen = 7;
   // bandwidth, get from frozen
   int64 net_usage = 8;
+  //Frozen balance provided by other accounts to this account
+  int64 acquired_delegated_frozen_balance_for_bandwidth = 41;
+  //Freeze and provide balances to other accounts
+  int64 delegated_frozen_balance_for_bandwidth = 42;
 
   // this account create time
   int64 create_time = 0x09;
@@ -111,6 +116,11 @@ message Account {
     Frozen frozen_balance_for_cpu = 2;
     int64 latest_consume_time_for_cpu = 3;
 
+    //Frozen balance provided by other accounts to this account
+    int64 acquired_delegated_frozen_balance_for_cpu = 4;
+    //Frozen balances provided to other accounts
+    int64 delegated_frozen_balance_for_cpu = 5;
+
     // storage resource, get from market
     int64 storage_limit = 6;
     int64 storage_usage = 7;
@@ -119,6 +129,14 @@ message Account {
   AccountResource account_resource = 26;
 
   bytes codeHash = 30;
+}
+
+message  DelegatedResource{
+  bytes from = 1;
+  bytes to = 2;
+  int64 frozen_balance_for_bandwidth = 3;
+  int64 frozen_balance_for_cpu = 4;
+  int64 expire_time = 5;
 }
 
 message authority {
