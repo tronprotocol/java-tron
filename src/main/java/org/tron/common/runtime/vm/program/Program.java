@@ -37,11 +37,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.TreeSet;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.runtime.config.SystemProperties;
@@ -75,9 +74,12 @@ import org.tron.protos.Protocol;
  * @author Roman Mandeleil
  * @since 01.06.2014
  */
+
+@Slf4j(topic = "Program")
+
 public class Program {
 
-  private static final Logger logger = LoggerFactory.getLogger("VM");
+  // private static final Logger logger = LoggerFactory.getLogger("VM");
 
   private static final int MAX_DEPTH = 1024;
   //Max size for stack checks

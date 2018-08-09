@@ -73,7 +73,8 @@ public class TriggerSmartContractServlet extends HttpServlet {
       txBuilder.setRawData(rawBuilder);
 
       Transaction trx = wallet
-          .triggerContract(build.build(), new TransactionCapsule(txBuilder.build()), trxExtBuilder);
+          .triggerContract(build.build(), new TransactionCapsule(txBuilder.build()), trxExtBuilder,
+              retBuilder);
       trxExtBuilder.setTransaction(trx);
       trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
       retBuilder.setResult(true).setCode(response_code.SUCCESS);
