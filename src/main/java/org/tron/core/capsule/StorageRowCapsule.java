@@ -37,20 +37,13 @@ public class StorageRowCapsule implements ProtoCapsule<StorageRow> {
         .setValue(ByteString.copyFrom(value)).build();
   }
 
-  public static StorageRowCapsule createEmpty() {
-
-    return new StorageRowCapsule();
-  }
-
   public StorageRowCapsule(byte[] code) {
     try {
       this.instance = StorageRow.parseFrom(code);
     } catch (InvalidProtocolBufferException e) {
-      //
     }
   }
 
-  //
   public StorageRowCapsule(StorageRow cache) {
     this.instance = cache;
   }
@@ -63,6 +56,10 @@ public class StorageRowCapsule implements ProtoCapsule<StorageRow> {
 
   public DataWord getValue() {
     return new DataWord(this.instance.getValue().toByteArray());
+  }
+
+  public byte[] getKey() {
+    return this.instance.getKey().toByteArray();
   }
 
   public void setValue(DataWord value) {

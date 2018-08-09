@@ -13,7 +13,7 @@ public class StorageRowStore extends TronStoreWithRevoking<StorageRowCapsule> {
   private static StorageRowStore instance;
 
   @Autowired
-  private StorageRowStore(@Value("storagerow") String dbName) {
+  private StorageRowStore(@Value("storage-row") String dbName) {
     super(dbName);
   }
 
