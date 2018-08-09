@@ -131,6 +131,7 @@ message Account {
   bytes codeHash = 30;
 }
 
+
 message  DelegatedResource{
   bytes from = 1;
   bytes to = 2;
