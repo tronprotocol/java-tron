@@ -97,7 +97,7 @@ public class Program {
 
   private Stack stack;
   private Memory memory;
-  private Storage storage;
+  private ContractState contractState;
   private byte[] returnDataBuffer;
 
   private ProgramResult result = new ProgramResult();
@@ -140,7 +140,7 @@ public class Program {
     //traceListener = new ProgramTraceListener(config.vmTrace());
     this.memory = setupProgramListener(new Memory());
     this.stack = setupProgramListener(new Stack());
-    this.storage = setupProgramListener(new Storage(programInvoke));
+    this.contractState = setupProgramListener(new ContractState(programInvoke));
     //this.trace = new ProgramTrace(config, programInvoke);
   }
 
@@ -384,7 +384,7 @@ public class Program {
 
     byte[] owner = convertToTronAddress(getOwnerAddress().getLast20Bytes());
     byte[] obtainer = convertToTronAddress(obtainerAddress.getLast20Bytes());
-    long balance = getStorage().getBalance(owner);
+    long balance = getContractState().getBalance(owner);
 
     if (logger.isInfoEnabled()) {
       logger.info("Transfer to: [{}] heritage: [{}]",
@@ -396,15 +396,15 @@ public class Program {
 
     if (FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0) {
       // if owner == obtainer just zeroing account according to Yellow Paper
-      getStorage().addBalance(owner, -balance);
+      getContractState().addBalance(owner, -balance);
     } else {
-      transfer(getStorage(), owner, obtainer, balance);
+      transfer(getContractState(), owner, obtainer, balance);
     }
     getResult().addDeleteAccount(this.getOwnerAddress());
   }
 
-  public Deposit getStorage() {
-    return this.storage;
+  public Deposit getContractState() {
+    return this.contractState;
   }
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
@@ -420,7 +420,7 @@ public class Program {
     byte[] senderAddress = convertToTronAddress(this.getOwnerAddress().getLast20Bytes());
     // todo: need check the value > 0?
     long endowment = value.value().longValue();
-    if (getStorage().getBalance(senderAddress) < endowment) {
+    if (getContractState().getBalance(senderAddress) < endowment) {
       stackPushZero();
       // todo: need inform to outside?
       return;
@@ -441,7 +441,7 @@ public class Program {
     ECKey ecKey = ECKey.fromPrivate(privKey);
     byte[] newAddress = ecKey.getAddress();
 
-    AccountCapsule existingAddr = getStorage().getAccount(newAddress);
+    AccountCapsule existingAddr = getContractState().getAccount(newAddress);
     //boolean contractAlreadyExists = existingAddr != null && existingAddr.isContractExist(blockchainConfig);
     boolean contractAlreadyExists = existingAddr != null;
 
@@ -454,7 +454,7 @@ public class Program {
         }
         */
 
-    Deposit deposit = getStorage();
+    Deposit deposit = getContractState();
 
     //In case of hashing collisions, check for any balance before createAccount()
     long oldBalance = deposit.getBalance(newAddress);
@@ -593,8 +593,8 @@ public class Program {
           msg.getOutDataSize().longValue());
     }
 
-    //Repository track = getStorage().startTracking();
-    Deposit deposit = getStorage().newDepositChild();
+    //Repository track = getContractState().startTracking();
+    Deposit deposit = getContractState().newDepositChild();
 
     // 2.1 PERFORM THE VALUE (endowment) PART
     // todo: need to check value >= 0?
@@ -607,10 +607,10 @@ public class Program {
     }
 
     // FETCH THE CODE
-    AccountCapsule accountCapsule = getStorage().getAccount(codeAddress);
+    AccountCapsule accountCapsule = getContractState().getAccount(codeAddress);
 
     byte[] programCode =
-        accountCapsule != null ? getStorage().getCode(codeAddress) : EMPTY_BYTE_ARRAY;
+        accountCapsule != null ? getContractState().getCode(codeAddress) : EMPTY_BYTE_ARRAY;
 
     long contextBalance = 0L;
     if (byTestingSuite()) {
@@ -744,20 +744,12 @@ public class Program {
   }
 
   public void storageSave(DataWord word1, DataWord word2) {
-    //storageSave(word1.getData(), word2.getData());
     DataWord keyWord = word1.clone();
     DataWord valWord = word2.clone();
-    getStorage().addStorageValue(convertToTronAddress(getOwnerAddress().getLast20Bytes()), keyWord,
+    getContractState()
+        .addStorageValue(convertToTronAddress(getOwnerAddress().getLast20Bytes()), keyWord,
         valWord);
   }
-
-    /*
-    public void storageSave(byte[] key, byte[] val) {
-        DataWord keyWord = new DataWord(key);
-        DataWord valWord = new DataWord(val);
-        getStorage().addStorageRow(getOwnerAddress().getLast20Bytes(), keyWord, valWord);
-    }
-    */
 
   public byte[] getCode() {
     return ops;
@@ -795,7 +787,7 @@ public class Program {
   }
 
   public DataWord getBalance(DataWord address) {
-    long balance = getStorage().getBalance(convertToTronAddress(address.getLast20Bytes()));
+    long balance = getContractState().getBalance(convertToTronAddress(address.getLast20Bytes()));
     return new DataWord(balance);
   }
 
@@ -857,7 +849,7 @@ public class Program {
   }
 
   public DataWord storageLoad(DataWord key) {
-    DataWord ret = getStorage()
+    DataWord ret = getContractState()
         .getStorageValue(convertToTronAddress(getOwnerAddress().getLast20Bytes()), key.clone());
     return ret == null ? null : ret.clone();
   }
@@ -1220,8 +1212,8 @@ public class Program {
       return;
     }
 
-    // Repository track = getStorage().startTracking();
-    Deposit deposit = getStorage();
+    // Repository track = getContractState().startTracking();
+    Deposit deposit = getContractState();
 
     byte[] senderAddress = convertToTronAddress(this.getOwnerAddress().getLast20Bytes());
     byte[] codeAddress = convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
@@ -1255,7 +1247,7 @@ public class Program {
       // Delegate or not. if is delegated, we will use msg sender, otherwise use contract address
       contract.setCallerAddress(convertToTronAddress(msg.getType().callIsDelegate() ?
           getCallerAddress().getLast20Bytes() : getOwnerAddress().getLast20Bytes()));
-      // this is the depositImpl, not storage as above
+      // this is the depositImpl, not contractState as above
       contract.setDeposit(this.invoke.getDeposit());
       contract.setResult(this.result);
       Pair<Boolean, byte[]> out = contract.execute(data);
@@ -1399,7 +1391,7 @@ public class Program {
     }
 
     public static OutOfStorageException notEnoughStorage() {
-      return new OutOfStorageException("Not enough Storage resource");
+      return new OutOfStorageException("Not enough ContractState resource");
     }
 
     public static OutOfGasException gasOverflow(BigInteger actualGas, BigInteger gasLimit) {
