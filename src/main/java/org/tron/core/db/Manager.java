@@ -999,6 +999,8 @@ public class Manager {
     transactionInfoCapsule.setContractResult(runtime.getResult().getHReturn());
     transactionInfoCapsule.setContractAddress(runtime.getResult().getContractAddress());
 
+    transactionInfoCapsule.parseTransactionResult(runtime.getResult().getRet());
+
     List<Log> logList = getLogsByLogInfoList(runtime.getResult().getLogInfoList());
     transactionInfoCapsule.addAllLog(logList);
     transactionInfoCapsule.setReceipt(trace.getReceipt());

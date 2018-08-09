@@ -91,6 +91,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
     dbManager.getVotesStore().put(ownerAddress, votesCapsule);
 
+
+    ret.setUnfreezeAmount(unfreezeBalance);
     ret.setStatus(fee, code.SUCESS);
 
     return true;

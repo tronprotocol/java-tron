@@ -46,6 +46,22 @@ public class TransactionResultCapsule implements ProtoCapsule<Transaction.Result
     return transactionResult.getFee();
   }
 
+  public void setUnfreezeAmount(long amount) {
+    this.transactionResult = this.transactionResult.toBuilder().setUnfreezeAmount(amount).build();
+  }
+
+  public long getUnfreezeAmount() {
+    return transactionResult.getUnfreezeAmount();
+  }
+
+  public void setWithdrawAmount(long amount) {
+    this.transactionResult = this.transactionResult.toBuilder().setWithdrawAmount(amount).build();
+  }
+
+  public long getWithdrawAmount() {
+    return transactionResult.getWithdrawAmount();
+  }
+
   public void setFee(long fee) {
     this.transactionResult = this.transactionResult.toBuilder().setFee(fee).build();
   }
