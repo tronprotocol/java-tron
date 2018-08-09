@@ -18,9 +18,8 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.runtime.vm.VM;
@@ -59,13 +58,14 @@ import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
+
 /**
  * @author Guo Yonggang
  * @since 28.04.2018
  */
+@Slf4j(topic = "Runtime")
 public class Runtime {
 
-  private static final Logger logger = LoggerFactory.getLogger("execute");
 
   SystemProperties config;
 
@@ -363,7 +363,7 @@ public class Runtime {
     if (Arrays.equals(creator.getAddress().toByteArray(), caller.getAddress().toByteArray())) {
       return callerGasLimit;
     }
-    
+
     // creatorCpuGasFromFreeze
     long creatorGasLimit = cpuProcessor.getAccountLeftCpuInUsFromFreeze(creator);
 
