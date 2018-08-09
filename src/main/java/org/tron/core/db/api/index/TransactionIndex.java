@@ -27,7 +27,8 @@ public class TransactionIndex extends AbstractIndex<TransactionCapsule, Transact
   public static Attribute<WrappedByteArray, String> OWNERS;
   public static Attribute<WrappedByteArray, String> TOS;
   public static Attribute<WrappedByteArray, Long> TIMESTAMP;
-  public static Attribute<WrappedByteArray, Long> INDEX_CREATE_TIMESTAMP;
+  public static final Attribute<WrappedByteArray, Long> INDEX_CREATE_TIMESTAMP =
+      attribute("index create timestamp", bytes -> System.currentTimeMillis());
 
   @Autowired
   public TransactionIndex(
@@ -66,8 +67,5 @@ public class TransactionIndex extends AbstractIndex<TransactionCapsule, Transact
                 .collect(Collectors.toList()));
     TIMESTAMP =
         attribute("timestamp", bytes -> getObject(bytes).getRawData().getTimestamp());
-    INDEX_CREATE_TIMESTAMP =
-        attribute("index create timestamp", bytes -> System.currentTimeMillis());
-
   }
 }
