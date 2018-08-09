@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.Stack;
-import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 
 public class VM {

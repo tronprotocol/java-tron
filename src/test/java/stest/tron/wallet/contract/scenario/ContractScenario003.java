@@ -1,4 +1,4 @@
-package stest.tron.wallet.contract;
+package stest.tron.wallet.contract.scenario;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -21,7 +21,7 @@ import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
-public class WalletTestContract003 {
+public class ContractScenario003 {
 
   //testng001、testng002、testng003、testng004
   private final String testKey002 =
@@ -177,8 +177,8 @@ public class WalletTestContract003 {
         + "ype\":\"address\"},{\"indexed\":true,\"name\":\"_to\",\"type\":\"address\"},{\"indexed"
         + "\":false,\"name\":\"_value\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"_dat"
         + "a\",\"type\":\"bytes\"}],\"name\":\"Transfer\",\"type\":\"event\"}]";
-    byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",cpuLimit,
-        storageLimit,maxFeeLimit,0L, contract003Key,contract003Address,blockingStubFull);
+    byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
+        0L, 100,null,contract003Key,contract003Address,blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
 
     Assert.assertFalse(smartContract.getAbi().toString().isEmpty());

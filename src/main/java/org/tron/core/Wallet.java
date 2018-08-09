@@ -250,6 +250,10 @@ public class Wallet {
     }
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
+
+    CpuProcessor cpuProcessor = new CpuProcessor(dbManager);
+    cpuProcessor.updateUsage(accountCapsule);
+
     return accountCapsule.getInstance();
   }
 
@@ -266,6 +270,10 @@ public class Wallet {
     }
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
+
+    CpuProcessor cpuProcessor = new CpuProcessor(dbManager);
+    cpuProcessor.updateUsage(accountCapsule);
+
     return accountCapsule.getInstance();
   }
 
@@ -778,7 +786,7 @@ public class Wallet {
       } else {
         DepositImpl deposit = DepositImpl.createRoot(dbManager);
 
-        Block headBlock ;
+        Block headBlock;
         List<BlockCapsule> blockCapsuleList = dbManager.getBlockStore().getBlockByLatestNum(1);
         if (CollectionUtils.isEmpty(blockCapsuleList)) {
           throw new HeaderNotFound("latest block not found");
@@ -786,7 +794,8 @@ public class Wallet {
           headBlock = blockCapsuleList.get(0).getInstance();
         }
 
-        Runtime runtime = new Runtime(trxCap.getInstance(), headBlock, deposit, new ProgramInvokeFactoryImpl());
+        Runtime runtime = new Runtime(trxCap.getInstance(), headBlock, deposit,
+            new ProgramInvokeFactoryImpl());
         runtime.init();
         runtime.execute();
         runtime.go();

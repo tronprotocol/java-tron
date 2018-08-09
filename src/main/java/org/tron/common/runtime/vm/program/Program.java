@@ -26,7 +26,6 @@ import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.utils.MUtil.transfer;
-import static org.tron.common.runtime.utils.MUtil.transferValidate;
 import static org.tron.common.utils.BIUtil.isPositive;
 import static org.tron.common.utils.BIUtil.toBI;
 
@@ -65,6 +64,7 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
+import org.tron.core.actuator.TransferActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
@@ -462,7 +462,7 @@ public class Program {
     // [4] TRANSFER THE BALANCE
     long newBalance = 0L;
     if (!byTestingSuite()) {
-      transferValidate(deposit, senderAddress, newAddress, endowment);
+      TransferActuator.validate(deposit, senderAddress, newAddress, endowment);
       deposit.addBalance(senderAddress, -endowment);
       newBalance = deposit.addBalance(newAddress, endowment);
     }
@@ -617,7 +617,7 @@ public class Program {
           msg.getGas().getNoLeadZeroesData(),
           msg.getEndowment().getNoLeadZeroesData());
     } else if(!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress) && senderAddress != contextAddress && endowment > 0) {
-      transferValidate(deposit,senderAddress,contextAddress,endowment);
+      TransferActuator.validate(deposit, senderAddress, contextAddress, endowment);
       deposit.addBalance(senderAddress, -endowment);
       contextBalance = deposit.addBalance(contextAddress, endowment);
     }
@@ -1238,7 +1238,7 @@ public class Program {
         msg.getInDataSize().intValue());
 
     // Charge for endowment - is not reversible by rollback
-    if(!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress) && senderAddress != contextAddress) {
+    if(!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress) && senderAddress != contextAddress && msg.getEndowment().value().longValue() > 0) {
       transfer(deposit, senderAddress, contextAddress, msg.getEndowment().value().longValue());
     }
 

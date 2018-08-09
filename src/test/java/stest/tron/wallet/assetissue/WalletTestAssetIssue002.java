@@ -97,7 +97,8 @@ public class WalletTestAssetIssue002 {
           testKey002,blockingStubFull));
       //Create a new Asset Issue
       Assert.assertTrue(PublicMethed.createAssetIssue(participateAccountAddress,
-          name, totalSupply, 1, 1, start, end, 1, description, url,
+          name, totalSupply, 1, 1, System.currentTimeMillis() + 2000,
+          System.currentTimeMillis() + 1000000000, 1, description, url,
           2000L,2000L, 1L, 1L,
           participateAccountKey,blockingStubFull));
     } else {
