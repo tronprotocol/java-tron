@@ -584,7 +584,6 @@ public class Runtime {
     } catch (Exception e) {
       logger.error(e.getMessage());
       runtimeError = e.getMessage();
-      e.printStackTrace();
     }
   }
 
