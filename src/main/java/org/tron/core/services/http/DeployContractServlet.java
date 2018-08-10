@@ -48,10 +48,7 @@ public class DeployContractServlet extends HttpServlet {
       ABI.Builder abiBuilder = ABI.newBuilder();
       JsonFormat.merge(abiSB.toString(), abiBuilder);
 
-      long storageLimit = jsonObject.getLongValue("storage_limit");
-      long dropLimit = jsonObject.getLongValue("drop_limit");
-      long cpuLimit = jsonObject.getLongValue("cpu_limit");
-      long bandwidthLimit = jsonObject.getLongValue("bandwidth_limit");
+      long feeLimit = jsonObject.getLongValue("fee_limit");
 
       SmartContract.Builder smartBuilder = SmartContract.newBuilder();
       smartBuilder.setAbi(abiBuilder)
@@ -65,10 +62,6 @@ public class DeployContractServlet extends HttpServlet {
       if (!ArrayUtils.isEmpty(byteCode)) {
         smartBuilder.setBytecode(ByteString.copyFrom(byteCode));
       }
-      byte[] data = ByteArray.fromHexString(jsonObject.getString("data"));
-      if (!ArrayUtils.isEmpty(data)) {
-        smartBuilder.setData(ByteString.copyFrom(data));
-      }
       String name = jsonObject.getString("name");
       if (!Strings.isNullOrEmpty(name)) {
         smartBuilder.setName(name);
@@ -79,7 +72,7 @@ public class DeployContractServlet extends HttpServlet {
           .createTransactionCapsule(build.build(), ContractType.CreateSmartContract).getInstance();
       Transaction.Builder txBuilder = tx.toBuilder();
       Transaction.raw.Builder rawBuilder = tx.getRawData().toBuilder();
-      rawBuilder.setFeeLimit(dropLimit);
+      rawBuilder.setFeeLimit(feeLimit);
       txBuilder.setRawData(rawBuilder);
       response.getWriter().println(Util.printTransaction(txBuilder.build()));
     } catch (Exception e) {

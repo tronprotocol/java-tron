@@ -61,4 +61,9 @@ public class MessageCount {
     totalCount = 0;
   }
 
+  @Override
+  public String toString() {
+    return String.valueOf(totalCount);
+  }
+
 }

@@ -229,6 +229,9 @@ message Transaction {
     }
     int64 fee = 1;
     code ret = 2;
+
+    int64 withdraw_amount = 15;
+    int64 unfreeze_amount = 16;
   }
 
   message raw {
@@ -254,6 +257,10 @@ message Transaction {
 }
 
 message TransactionInfo {
+  enum code {
+    SUCESS = 0;
+    FAILED = 1;
+  }
   message Log {
     bytes address = 1;
     repeated bytes topics = 2;
@@ -267,6 +274,11 @@ message TransactionInfo {
   bytes contract_address = 6;
   ResourceReceipt receipt = 7;
   repeated Log log = 8;
+  code result = 9;
+  bytes resMessage = 10;
+
+  int64 withdraw_amount = 15;
+  int64 unfreeze_amount = 16;
 }
 
 message Transactions {
@@ -402,6 +414,11 @@ message StorageItem {
   map<string, bytes> items = 2;
 }
 
+message StorageRow {
+  bytes key = 1; // composition of contract_address and storage_key
+  bytes value = 2;
+}
+
 
 message SmartContract {
   message ABI {
@@ -443,8 +460,7 @@ message SmartContract {
   ABI abi = 3;
   bytes bytecode = 4;
   int64 call_value = 5;
-  bytes data = 6;
-  int64 consume_user_resource_percent = 7;
-  string name = 8;
+  int64 consume_user_resource_percent = 6;
+  string name = 7;
 
 }

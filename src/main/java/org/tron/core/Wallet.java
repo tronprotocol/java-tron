@@ -41,8 +41,9 @@ import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.ProposalList;
+import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
-import org.tron.api.GrpcAPI.TransactionExtention;
+import org.tron.api.GrpcAPI.TransactionExtention.Builder;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
@@ -250,6 +251,10 @@ public class Wallet {
     }
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
+
+    CpuProcessor cpuProcessor = new CpuProcessor(dbManager);
+    cpuProcessor.updateUsage(accountCapsule);
+
     return accountCapsule.getInstance();
   }
 
@@ -266,6 +271,10 @@ public class Wallet {
     }
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
+
+    CpuProcessor cpuProcessor = new CpuProcessor(dbManager);
+    cpuProcessor.updateUsage(accountCapsule);
+
     return accountCapsule.getInstance();
   }
 
@@ -299,15 +308,23 @@ public class Wallet {
     }
 
     if (contractType == ContractType.CreateSmartContract) {
-      // insure one owner just have one contract
+
       CreateSmartContract contract = ContractCapsule
           .getSmartContractFromTransaction(trx.getInstance());
-      byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
-      if (dbManager.getAccountContractIndexStore().get(ownerAddress) != null) {
-        throw new ContractValidateException(
-            "Trying to create second contract with one account: address: " + Wallet
-                .encode58Check(ownerAddress));
+      long percent = contract.getNewContract().getConsumeUserResourcePercent();
+      if (percent < 0 || percent > 100) {
+        throw new ContractValidateException("percent must be >= 0 and <= 100");
       }
+
+//        // insure one owner just have one contract
+//        CreateSmartContract contract = ContractCapsule
+//            .getSmartContractFromTransaction(trx.getInstance());
+//        byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
+//        if (dbManager.getAccountContractIndexStore().get(ownerAddress) != null) {
+//          throw new ContractValidateException(
+//              "Trying to create second contract with one account: address: " + Wallet
+//                  .encode58Check(ownerAddress));
+//        }
 
 //        // insure the new contract address haven't exist
 //        if (deposit.getAccount(contractAddress) != null) {
@@ -758,7 +775,8 @@ public class Wallet {
   }
 
   public Transaction triggerContract(TriggerSmartContract triggerSmartContract,
-      TransactionCapsule trxCap, TransactionExtention.Builder builder) {
+      TransactionCapsule trxCap, Builder builder,
+      Return.Builder retBuilder) {
 
     ContractStore contractStore = dbManager.getContractStore();
     byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
@@ -778,7 +796,7 @@ public class Wallet {
       } else {
         DepositImpl deposit = DepositImpl.createRoot(dbManager);
 
-        Block headBlock ;
+        Block headBlock;
         List<BlockCapsule> blockCapsuleList = dbManager.getBlockStore().getBlockByLatestNum(1);
         if (CollectionUtils.isEmpty(blockCapsuleList)) {
           throw new HeaderNotFound("latest block not found");
@@ -786,7 +804,8 @@ public class Wallet {
           headBlock = blockCapsuleList.get(0).getInstance();
         }
 
-        Runtime runtime = new Runtime(trxCap.getInstance(), headBlock, deposit, new ProgramInvokeFactoryImpl());
+        Runtime runtime = new Runtime(trxCap.getInstance(), headBlock, deposit,
+            new ProgramInvokeFactoryImpl());
         runtime.init();
         runtime.execute();
         runtime.go();
@@ -798,8 +817,11 @@ public class Wallet {
         TransactionResultCapsule ret = new TransactionResultCapsule();
 
         builder.addConstantResult(ByteString.copyFrom(result.getHReturn()));
-        //ret.setConstantResult(result.getHReturn());
         ret.setStatus(0, code.SUCESS);
+        if (StringUtils.isNoneEmpty(runtime.getRuntimeError())) {
+          ret.setStatus(0, code.FAILED);
+          retBuilder.setMessage(ByteString.copyFromUtf8(runtime.getRuntimeError())).build();
+        }
         trxCap.setResult(ret);
         return trxCap.getInstance();
       }
@@ -820,7 +842,10 @@ public class Wallet {
 
     ContractCapsule contractCapsule = dbManager.getContractStore()
         .get(bytesMessage.getValue().toByteArray());
-    return contractCapsule.getInstance();
+    if (Objects.nonNull(contractCapsule)) {
+      return contractCapsule.getInstance();
+    }
+    return null;
   }
 
   private static byte[] getSelector(byte[] data) {

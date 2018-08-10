@@ -137,7 +137,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     if (msg.getVersion() != Args.getInstance().getNodeP2pVersion()) {
       logger.info("Peer {} different p2p version, peer->{}, me->{}",
               ctx.channel().remoteAddress(), msg.getVersion(), Args.getInstance().getNodeP2pVersion());
-      channel.disconnect(ReasonCode.INCOMPATIBLE_PROTOCOL);
+      channel.disconnect(ReasonCode.INCOMPATIBLE_VERSION);
       return;
     }
 

@@ -1,19 +1,13 @@
 package org.tron.common.runtime.utils;
 
-import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.common.storage.Deposit;
 import org.tron.core.Wallet;
-import org.tron.core.actuator.Actuator;
-import org.tron.core.actuator.ActuatorFactory;
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.exception.ContractExeException;
+import org.tron.core.actuator.TransferActuator;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+
 
 /**
  * @author Guo Yonggang
@@ -22,8 +16,8 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 public class MUtil {
 
   public static void transfer(Deposit deposit, byte[] fromAddress, byte[] toAddress, long amount)
-      throws ContractExeException, ContractValidateException {
-    transferValidate(deposit,fromAddress,toAddress,amount);
+      throws ContractValidateException {
+    TransferActuator.validate(deposit, fromAddress, toAddress, amount);
     if (deposit.getBalance(fromAddress) < amount) {
       throw new RuntimeException(
           Hex.toHexString(fromAddress).toUpperCase() + " not enough balance!");
@@ -35,21 +29,8 @@ public class MUtil {
     deposit.addBalance(fromAddress, -amount);
   }
 
-  public static void transferValidate(Deposit deposit, byte[] fromAddress, byte[] toAddress, long amount)
-      throws ContractValidateException {
-    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
-    builder.setAmount(amount);
-    builder.setOwnerAddress(ByteString.copyFrom(fromAddress));
-    builder.setToAddress(ByteString.copyFrom(toAddress));
-    TransferContract contract = builder.build();
-    TransactionCapsule trx = new TransactionCapsule(contract,
-        ContractType.TransferContract);
-    Actuator actuator = ActuatorFactory.createActuator(trx ,deposit.getDbManager()).get(0);
-    actuator.validate();
-  }
 
-  public static void burn(Deposit deposit, byte[] address, long amount)
-      throws ContractExeException {
+  public static void burn(Deposit deposit, byte[] address, long amount) {
     if (deposit.getBalance(address) < amount) {
       throw new RuntimeException("Not enough balance!");
     }

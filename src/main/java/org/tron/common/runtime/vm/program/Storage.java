@@ -1,255 +1,93 @@
-/*
- * Copyright (c) [2016] [ <ether.camp> ]
- * This file is part of the ethereumJ library.
- *
- * The ethereumJ library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * The ethereumJ library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
- */
 package org.tron.common.runtime.vm.program;
 
+import static java.lang.System.arraycopy;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
+import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
-import org.tron.common.runtime.vm.program.listener.ProgramListener;
-import org.tron.common.runtime.vm.program.listener.ProgramListenerAware;
-import org.tron.common.storage.Deposit;
-import org.tron.common.storage.Key;
-import org.tron.common.storage.Value;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.capsule.StorageCapsule;
-import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.StorageRowCapsule;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.ContractExeException;
-import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.AccountType;
+import org.tron.core.db.StorageRowStore;
 
-public class Storage implements Deposit, ProgramListenerAware {
+//import org.ethereum.crypto.HashUtil;
 
-  private Deposit deposit;
-  private final DataWord address;  // contract address
-  private ProgramListener programListener;
+public class Storage {
 
-  public Storage(ProgramInvoke programInvoke) {
-    this.address = programInvoke.getOwnerAddress(); // contract address
-    this.deposit = programInvoke.getDeposit();
+  private byte[] addressHash;  // contract address
+  private Manager manager;
+  private final Map<DataWord, StorageRowCapsule> rowCache = new HashMap<>();
+  private long beforeUseSize = 0;
+
+  private static final int PREFIX_BYTES = 16;
+
+  public Storage(byte[] address, Manager manager) {
+    addressHash = addrHash(address);
+    this.manager = manager;
   }
 
-  @Override
-  public Manager getDbManager() {
-    return deposit.getDbManager();
-  }
-
-  @Override
-  public void setProgramListener(ProgramListener listener) {
-    this.programListener = listener;
-  }
-
-  @Override
-  public AccountCapsule createAccount(byte[] addr, Protocol.AccountType type) {
-    return deposit.createAccount(addr, type);
-  }
-
-  @Override
-  public AccountCapsule createAccount(byte[] address, String accountName, AccountType type) {
-    return deposit.createAccount(address, accountName, type);
-  }
-
-
-  @Override
-  public AccountCapsule getAccount(byte[] addr) {
-    return deposit.getAccount(addr);
-  }
-
-  @Override
-  public BytesCapsule getContractByNormalAccount(byte[] address) {
-    return deposit.getContractByNormalAccount(address);
-  }
-
-  @Override
-  public void createContractByNormalAccountIndex(byte[] address,
-      BytesCapsule contractAddress) {
-    deposit.createContractByNormalAccountIndex(address, contractAddress);
-  }
-
-  @Override
-  public void createContract(byte[] codeHash, ContractCapsule contractCapsule) {
-    deposit.createContract(codeHash, contractCapsule);
-  }
-
-  @Override
-  public ContractCapsule getContract(byte[] codeHash) {
-    return deposit.getContract(codeHash);
-  }
-
-  @Override
-  public void saveCode(byte[] addr, byte[] code) {
-    deposit.saveCode(addr, code);
-  }
-
-  @Override
-  public byte[] getCode(byte[] addr) {
-    return deposit.getCode(addr);
-  }
-
-    /*
-    @Override
-    public byte[] getCodeHash(byte[] addr) {
-        return deposit.getCodeHash(addr);
+  public DataWord getValue(DataWord key) {
+    if (rowCache.containsKey(key)) {
+      return rowCache.get(key).getValue();
+    } else {
+      StorageRowStore store = manager.getStorageRowStore();
+      StorageRowCapsule row = store.get(compose(key.getData(), addressHash));
+      if (row == null) {
+        return null;
+      } else {
+        beforeUseSize += row.getInstance().getSerializedSize();
+      }
+      rowCache.put(key, row);
+      return row.getValue();
     }
-    */
+  }
 
-  @Override
-  public void addStorageValue(byte[] addr, DataWord key, DataWord value) {
-    if (canListenTrace(addr)) {
-      programListener.onStoragePut(key, value);
+  public void put(DataWord key, DataWord value) {
+    if (rowCache.containsKey(key)) {
+      rowCache.get(key).setValue(value);
+    } else {
+      StorageRowStore store = manager.getStorageRowStore();
+      byte[] composedKey = compose(key.getData(), addressHash);
+      StorageRowCapsule row = store.get(composedKey);
+
+      if (row == null) {
+        row = new StorageRowCapsule(composedKey, value.getData());
+      } else {
+        beforeUseSize += row.getInstance().getSerializedSize();
+      }
+      rowCache.put(key, row);
     }
-    deposit.addStorageValue(addr, key, value);
   }
 
-  private boolean canListenTrace(byte[] address) {
-    return (programListener != null) && this.address.equals(new DataWord(address));
+  private static byte[] compose(byte[] key, byte[] addrHash) {
+    byte[] result = new byte[key.length];
+    arraycopy(addrHash, 0, result, 0, PREFIX_BYTES);
+    arraycopy(key, PREFIX_BYTES, result, PREFIX_BYTES, PREFIX_BYTES);
+    return result;
   }
 
-  @Override
-  public DataWord getStorageValue(byte[] addr, DataWord key) {
-    return deposit.getStorageValue(addr, key);
+  // 32 bytes
+  private static byte[] addrHash(byte[] address) {
+    return Hash.sha3(address);
   }
 
-  @Override
-  public long getBalance(byte[] addr) {
-    return deposit.getBalance(addr);
+  public long computeSize() {
+    AtomicLong size = new AtomicLong();
+    rowCache.forEach((key, value) -> {
+      size.getAndAdd(value.getInstance().getSerializedSize());
+    });
+    return size.get();
   }
 
-  @Override
-  public long addBalance(byte[] addr, long value)
-      throws ContractExeException {
-    return deposit.addBalance(addr, value);
+  public long getBeforeUseSize() {
+    return this.beforeUseSize;
   }
 
-  @Override
-  public Deposit newDepositChild() {
-    return deposit.newDepositChild();
-  }
-
-  @Override
-  public Deposit newDepositNext() {
-    return deposit.newDepositNext();
-  }
-
-  @Override
-  public void flush() {
-    deposit.flush();
-  }
-
-  @Override
   public void commit() {
-    deposit.commit();
-  }
-
-  @Override
-  public StorageCapsule getStorage(byte[] address) {
-    return deposit.getStorage(address);
-  }
-
-  @Override
-  public void putAccount(Key key, Value value) {
-    deposit.putAccount(key, value);
-  }
-
-  @Override
-  public void putTransaction(Key key, Value value) {
-    deposit.putTransaction(key, value);
-  }
-
-  @Override
-  public void putBlock(Key key, Value value) {
-    deposit.putBlock(key, value);
-  }
-
-  @Override
-  public void putWitness(Key key, Value value) {
-    deposit.putWitness(key, value);
-  }
-
-  @Override
-  public void putCode(Key key, Value value) {
-    deposit.putCode(key, value);
-  }
-
-  @Override
-  public void putContract(Key key, Value value) {
-    deposit.putContract(key, value);
-  }
-
-  @Override
-  public void putContractByNormalAccountIndex(Key key, Value value) {
-    deposit.putContractByNormalAccountIndex(key, value);
-  }
-
-  @Override
-  public void putStorage(Key key, Value value) {
-    deposit.putStorage(key, value);
-  }
-
-  @Override
-  public void putVotes(Key key, Value value) {
-    deposit.putVotes(key, value);
-  }
-
-  @Override
-  public void setParent(Deposit deposit) {
-    this.deposit.setParent(deposit);
-  }
-
-  @Override
-  public void setPrevDeposit(Deposit deposit) {
-    this.deposit.setPrevDeposit(deposit);
-  }
-
-  @Override
-  public void setNextDeposit(Deposit deposit) {
-    this.deposit.setNextDeposit(deposit);
-  }
-
-  @Override
-  public TransactionCapsule getTransaction(byte[] trxHash) {
-    return this.deposit.getTransaction(trxHash);
-  }
-
-  @Override
-  // Do nothing
-  public void syncCacheFromAccountStore(byte[] address) {
-  }
-
-  @Override
-  // Do nothing
-  public void syncCacheFromVotesStore(byte[] address) {
-  }
-
-  @Override
-  public BlockCapsule getBlock(byte[] blockHash) {
-    return this.deposit.getBlock(blockHash);
-  }
-
-  @Override
-  public long computeAfterRunStorageSize() {
-    return this.deposit.computeAfterRunStorageSize();
-  }
-
-  @Override
-  public long getBeforeRunStorageSize() {
-    return this.deposit.getBeforeRunStorageSize();
+    // TODO can just write dirty row
+    rowCache.forEach((key, value) -> {
+      manager.getStorageRowStore().put(value.getKey(), value);
+    });
   }
 }
