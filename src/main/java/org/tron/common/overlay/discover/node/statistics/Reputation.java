@@ -91,7 +91,18 @@ public class Reputation {
           baseScore *= 0.8;
         } else if (t.getTronLastLocalDisconnectReason() != ReasonCode.REQUESTED) {
           // the disconnect was not initiated by discover mode
-          if (t.getTronLastRemoteDisconnectReason() == ReasonCode.TOO_MANY_PEERS) {
+          if (t.getTronLastRemoteDisconnectReason() == ReasonCode.TOO_MANY_PEERS
+              || t.getTronLastLocalDisconnectReason() == ReasonCode.TOO_MANY_PEERS
+              || t.getTronLastRemoteDisconnectReason() == ReasonCode.TOO_MANY_PEERS_WITH_SAME_IP
+              || t.getTronLastLocalDisconnectReason() == ReasonCode.TOO_MANY_PEERS_WITH_SAME_IP
+              || t.getTronLastRemoteDisconnectReason() == ReasonCode.DUPLICATE_PEER
+              || t.getTronLastLocalDisconnectReason() == ReasonCode.DUPLICATE_PEER
+              || t.getTronLastRemoteDisconnectReason() == ReasonCode.TIME_OUT
+              || t.getTronLastLocalDisconnectReason() == ReasonCode.TIME_OUT
+              || t.getTronLastRemoteDisconnectReason() == ReasonCode.PING_TIMEOUT
+              || t.getTronLastLocalDisconnectReason() == ReasonCode.PING_TIMEOUT
+              || t.getTronLastRemoteDisconnectReason() == ReasonCode.CONNECT_FAIL
+              || t.getTronLastLocalDisconnectReason() == ReasonCode.CONNECT_FAIL) {
             // The peer is popular, but we were unlucky
             baseScore *= 0.9;
           } else if (t.getTronLastRemoteDisconnectReason() != ReasonCode.REQUESTED) {
