@@ -48,16 +48,17 @@ public class Reputation {
       int discoverReput = baseScore;
       discoverReput +=
           min(t.discoverInPong.getTotalCount(), 1) * (t.discoverOutPing.getTotalCount()
-              == t.discoverInPong.getTotalCount() ? 50 : 1);
+              == t.discoverInPong.getTotalCount() ? 90 : 1);
       discoverReput +=
           min(t.discoverInNeighbours.getTotalCount(), 1) * (t.discoverOutFindNode.getTotalCount()
-              == t.discoverInNeighbours.getTotalCount() ? 50 : 1);
+              == t.discoverInNeighbours.getTotalCount() ? 10 : 1);
       return discoverReput;
     }
 
     @Override
     public boolean isContinue() {
-      return t.discoverOutPing.getTotalCount() == t.discoverInPong.getTotalCount();
+      return t.discoverOutPing.getTotalCount() == t.discoverInPong.getTotalCount()
+          && t.discoverInNeighbours.getTotalCount() <= t.discoverOutFindNode.getTotalCount();
     }
   }
 
