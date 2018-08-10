@@ -340,12 +340,14 @@ public class Runtime {
       cpuGasFromFeeLimit = feeLimit / Constant.SUN_PER_GAS;
     } else {
       long totalCpuGasFromFreeze = cpuProcessor.calculateGlobalCpuLimit(balanceForCpuFreeze);
-      long leftBalanceForCpuFreeze =
-          Math.multiplyExact(cpuGasFromFreeze, balanceForCpuFreeze) / totalCpuGasFromFreeze;
+      long leftBalanceForCpuFreeze = BigInteger.valueOf(cpuGasFromFreeze)
+          .multiply(BigInteger.valueOf(balanceForCpuFreeze))
+          .divide(BigInteger.valueOf(totalCpuGasFromFreeze)).longValue();
 
       if (leftBalanceForCpuFreeze >= feeLimit) {
-        cpuGasFromFeeLimit =
-            Math.multiplyExact(totalCpuGasFromFreeze, feeLimit) / balanceForCpuFreeze;
+        cpuGasFromFeeLimit = BigInteger.valueOf(totalCpuGasFromFreeze)
+            .multiply(BigInteger.valueOf(feeLimit))
+            .divide(BigInteger.valueOf(balanceForCpuFreeze)).longValue();
       } else {
         cpuGasFromFeeLimit = Math
             .addExact(cpuGasFromFreeze,
@@ -371,12 +373,7 @@ public class Runtime {
         .getContract(contract.getContractAddress().toByteArray()).getInstance();
     long consumeUserResourcePercent = smartContract.getConsumeUserResourcePercent();
 
-    if (consumeUserResourcePercent >= 100) {
-      consumeUserResourcePercent = 100;
-    }
-    if (consumeUserResourcePercent <= 0) {
-      consumeUserResourcePercent = 0;
-    }
+    consumeUserResourcePercent = max(0, min(consumeUserResourcePercent, 100));
 
     if (consumeUserResourcePercent <= 0) {
       return creatorGasLimit;
@@ -414,9 +411,9 @@ public class Runtime {
 
     // insure the new contract address haven't exist
     if (deposit.getAccount(contractAddress) != null) {
-      logger.error("Trying to create a contract with existing contract address: " + Wallet
-          .encode58Check(contractAddress));
-      return;
+      throw new ContractExeException(
+          "Trying to create a contract with existing contract address: " + Wallet
+              .encode58Check(contractAddress));
     }
 
     newSmartContract = newSmartContract.toBuilder()
@@ -457,7 +454,7 @@ public class Runtime {
       this.program = new Program(ops, programInvoke, internalTransaction, config);
     } catch (Exception e) {
       logger.error(e.getMessage());
-      return;
+      throw new ContractExeException(e.getMessage());
     }
 
     program.getResult().setContractAddress(contractAddress);
@@ -481,8 +478,9 @@ public class Runtime {
   /**
    * **
    */
+
   private void call()
-      throws ContractValidateException {
+      throws ContractExeException, ContractValidateException {
     Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
     if (contract == null) {
       return;
@@ -510,7 +508,13 @@ public class Runtime {
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
       long feeLimit = trx.getRawData().getFeeLimit();
-      long gasLimit = getGasLimit(creator, caller, contract, feeLimit);
+      long gasLimit;
+      try {
+        gasLimit = getGasLimit(creator, caller, contract, feeLimit);
+      } catch (Exception e) {
+        logger.error(e.getMessage());
+        throw new ContractExeException(e.getMessage());
+      }
 
       if (isCallConstant(contractAddress)) {
         gasLimit = Constant.MAX_GAS_IN_TX;
