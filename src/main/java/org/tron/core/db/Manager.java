@@ -636,6 +636,7 @@ public class Manager {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException, ReceiptException,
       TaposException, ValidateScheduleException, TransactionTraceException, OutOfSlotTimeException {
     processBlock(block);
+    forkController.update(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
   }

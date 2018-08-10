@@ -20,7 +20,7 @@ public class ForkController {
 
   @Getter
   private Manager manager;
-  private int[] slots;
+  private volatile int[] slots;
   private boolean fork = false;
 
   @PostConstruct
@@ -50,14 +50,10 @@ public class ForkController {
         <= DISCARD_SCOPE;
   }
 
-  public synchronized void updateState(BlockCapsule blockCapsule) {
-    List<ByteString> witnesses = manager.getWitnessController().getActiveWitnesses();
-    if (witnesses.size() > slots.length) {
-      slots = Arrays.copyOf(slots, witnesses.size());
-    }
-
+  public synchronized void update(BlockCapsule blockCapsule) {
     ByteString witness = blockCapsule.getWitnessAddress();
     int slot = 0;
+    List<ByteString> witnesses = manager.getWitnessController().getActiveWitnesses();
     for (ByteString scheduledWitness : witnesses) {
       if (!scheduledWitness.equals(witness)) {
         ++slot;
