@@ -72,6 +72,8 @@ public class Reputation {
       int reput = baseScore;
       reput += t.p2pHandShake.getTotalCount() > 0 ? 10 : 0;
       reput += t.tcpFlow.getTotalCount() / 10240;
+      reput += t.messageStatistics.p2pOutPing.getTotalCount() == t.messageStatistics.p2pInPong
+          .getTotalCount() ? 10 : 0;
       return reput;
     }
   }
