@@ -1,7 +1,6 @@
 package org.tron.common.utils;
 
 import com.google.protobuf.ByteString;
-import java.util.Arrays;
 import java.util.List;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
