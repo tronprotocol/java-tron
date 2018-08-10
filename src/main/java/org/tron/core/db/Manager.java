@@ -132,7 +132,8 @@ public class Manager {
   @Autowired
   private ContractStore contractStore;
   @Autowired
-  private StorageStore storageStore;
+  @Getter
+  private StorageRowStore storageRowStore;
 
   // for network
   @Autowired
@@ -195,10 +196,6 @@ public class Manager {
 
   public void setWitnessScheduleStore(final WitnessScheduleStore witnessScheduleStore) {
     this.witnessScheduleStore = witnessScheduleStore;
-  }
-
-  public StorageStore getStorageStore() {
-    return storageStore;
   }
 
   public CodeStore getCodeStore() {
@@ -1003,6 +1000,8 @@ public class Manager {
       transactionInfoCapsule.setBlockNumber(block.getBlockHeader().getRawData().getNumber());
       transactionInfoCapsule.setBlockTimeStamp(block.getBlockHeader().getRawData().getTimestamp());
     }
+    transactionInfoCapsule.parseTransactionResult(runtime.getResult().getRet());
+
     List<Log> logList = getLogsByLogInfoList(runtime.getResult().getLogInfoList());
     transactionInfoCapsule.addAllLog(logList);
     transactionInfoCapsule.setReceipt(trace.getReceipt());
@@ -1397,7 +1396,7 @@ public class Manager {
     closeOneStore(utxoStore);
     closeOneStore(codeStore);
     closeOneStore(contractStore);
-    closeOneStore(storageStore);
+    closeOneStore(storageRowStore);
     System.err.println("******** end to close db ********");
   }
 

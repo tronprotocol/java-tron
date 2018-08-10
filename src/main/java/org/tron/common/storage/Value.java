@@ -8,7 +8,6 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.CodeCapsule;
 import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.capsule.StorageCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -179,13 +178,6 @@ public class Value {
         return new ContractCapsule(any);
     }
 
-    /**
-     * @return
-     */
-    public StorageCapsule getStorage() {
-        if (ArrayUtils.isEmpty(any)) return null;
-        return new StorageCapsule(any);
-    }
 
     public AssetIssueCapsule getAssetIssue() {
         if (ArrayUtils.isEmpty(any)) return null;

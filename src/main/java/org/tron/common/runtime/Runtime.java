@@ -18,9 +18,8 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.runtime.vm.VM;
@@ -59,13 +58,14 @@ import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
+
 /**
  * @author Guo Yonggang
  * @since 28.04.2018
  */
+@Slf4j(topic = "Runtime")
 public class Runtime {
 
-  private static final Logger logger = LoggerFactory.getLogger("execute");
 
   SystemProperties config;
 
@@ -547,7 +547,7 @@ public class Runtime {
         if (isCallConstant()) {
           long callValue = TransactionCapsule.getCallValue(trx.getRawData().getContract(0));
           if (callValue > 0) {
-            runtimeError = "constant canot set call value .";
+            runtimeError = "constant cannot set call value.";
           }
           return;
         }
@@ -558,6 +558,7 @@ public class Runtime {
           result.getDeleteAccounts().clear();
           result.getLogInfoList().clear();
           result.resetFutureRefund();
+          program.spendAllGas();
           spendUsage(0);
           if (result.getException() != null) {
             runtimeError = result.getException().getMessage();
