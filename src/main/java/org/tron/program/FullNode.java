@@ -36,19 +36,21 @@ public class FullNode {
 
     DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
     beanFactory.setAllowCircularReferences(false);
-    AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(beanFactory);
+    AnnotationConfigApplicationContext context =
+        new AnnotationConfigApplicationContext(beanFactory);
     context.register(DefaultConfig.class);
     context.refresh();
     Application appT = ApplicationFactory.create(context);
     shutdown(appT);
-    //appT.init(cfgArgs);
 
+    // grpc api server
     RpcApiService rpcApiService = context.getBean(RpcApiService.class);
     appT.addService(rpcApiService);
     if (cfgArgs.isWitness()) {
       appT.addService(new WitnessService(appT, context));
     }
-    //http
+
+    // http api server
     FullNodeHttpApiService httpApiService = context.getBean(FullNodeHttpApiService.class);
     appT.addService(httpApiService);
 
