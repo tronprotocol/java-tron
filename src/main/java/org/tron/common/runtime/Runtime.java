@@ -363,7 +363,7 @@ public class Runtime {
     if (Arrays.equals(creator.getAddress().toByteArray(), caller.getAddress().toByteArray())) {
       return callerGasLimit;
     }
-    
+
     // creatorCpuGasFromFreeze
     long creatorGasLimit = cpuProcessor.getAccountLeftCpuInUsFromFreeze(creator);
 
@@ -575,13 +575,14 @@ public class Runtime {
         }
 
       } else {
-          deposit.commit();
+        deposit.commit();
       }
     } catch (OutOfResourceException e) {
       logger.error(e.getMessage());
       throw new OutOfSlotTimeException(e.getMessage());
     } catch (Exception e) {
       logger.error(e.getMessage());
+      runtimeError = e.getMessage();
     }
   }
 
