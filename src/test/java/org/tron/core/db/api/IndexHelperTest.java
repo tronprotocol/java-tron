@@ -229,7 +229,7 @@ public class IndexHelperTest {
                 .setNum(12581)
                 .build());
     dbManager.getAssetIssueStore()
-        .put(assetIssueCapsule.getName().toByteArray(), assetIssueCapsule);
+        .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
     indexHelper.add(assetIssueCapsule.getInstance());
     int size = getIndexSizeOfAssetIssue();
     Assert.assertEquals("account index add", 1, size);

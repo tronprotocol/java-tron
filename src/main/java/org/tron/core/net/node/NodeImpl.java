@@ -4,8 +4,6 @@ import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERV
 import static org.tron.core.config.Parameter.NetConstants.MAX_TRX_PER_PEER;
 import static org.tron.core.config.Parameter.NetConstants.MSG_CACHE_DURATION_IN_BLOCKS;
 import static org.tron.core.config.Parameter.NetConstants.NET_MAX_TRX_PER_SECOND;
-import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_ALREADY_FETCHED;
-import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_IN_PROCESS;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_SYNC_FROM_ONE_PEER;
 
 import com.google.common.cache.Cache;
@@ -29,7 +27,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -144,29 +141,23 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
 
     public void add(Entry<Sha256Hash, InventoryType> id, PeerConnection peer) {
-      if (send.containsKey(peer) && send.get(peer).containsKey(id.getValue())) {
-        send.get(peer).get(id.getValue()).offer(id.getKey());
-      } else if (send.containsKey(peer)) {
+      if (send.containsKey(peer) && !send.get(peer).containsKey(id.getValue())) {
         send.get(peer).put(id.getValue(), new LinkedList<>());
-        send.get(peer).get(id.getValue()).offer(id.getKey());
-      } else {
+      } else if (!send.containsKey(peer)) {
         send.put(peer, new HashMap<>());
         send.get(peer).put(id.getValue(), new LinkedList<>());
-        send.get(peer).get(id.getValue()).offer(id.getKey());
       }
+      send.get(peer).get(id.getValue()).offer(id.getKey());
     }
 
     public void add(PriorItem id, PeerConnection peer) {
-      if (send.containsKey(peer) && send.get(peer).containsKey(id.getType())) {
-        send.get(peer).get(id.getType()).offer(id.getHash());
-      } else if (send.containsKey(peer)) {
+      if (send.containsKey(peer) && !send.get(peer).containsKey(id.getType())) {
         send.get(peer).put(id.getType(), new LinkedList<>());
-        send.get(peer).get(id.getType()).offer(id.getHash());
-      } else {
+      } else if (!send.containsKey(peer)) {
         send.put(peer, new HashMap<>());
         send.get(peer).put(id.getType(), new LinkedList<>());
-        send.get(peer).get(id.getType()).offer(id.getHash());
       }
+      send.get(peer).get(id.getType()).offer(id.getHash());
     }
 
     public int getSize(PeerConnection peer) {
@@ -268,9 +259,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private ExecutorLoop<FetchInvDataMessage> loopFetchBlocks;
 
   private ExecutorLoop<Message> loopAdvertiseInv;
-
-  private ExecutorService handleBackLogBlocksPool = Executors.newCachedThreadPool();
-
 
   private ScheduledExecutorService fetchSyncBlocksExecutor = Executors
       .newSingleThreadScheduledExecutor();
@@ -543,10 +531,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private synchronized void handleSyncBlock() {
-    if (((ThreadPoolExecutor) handleBackLogBlocksPool).getActiveCount() > MAX_BLOCKS_IN_PROCESS) {
-      logger.info("we're already processing too many blocks");
-      return;
-    } else if (isSuspendFetch) {
+    if (isSuspendFetch) {
       isSuspendFetch = false;
     }
 
@@ -594,14 +579,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         }
       });
 
-      if (((ThreadPoolExecutor) handleBackLogBlocksPool).getActiveCount() > MAX_BLOCKS_IN_PROCESS) {
-        logger.info("we're already processing too many blocks");
-        if (blockWaitToProc.size() >= MAX_BLOCKS_ALREADY_FETCHED) {
-          isSuspendFetch = true;
-        }
-        break;
-      }
-
     }
   }
 
@@ -635,22 +612,15 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     //logger.debug("size of activePeer: " + getActivePeer().size());
     getActivePeer().forEach(peer -> {
       final boolean[] isDisconnected = {false};
-      final ReasonCode[] reasonCode = {ReasonCode.USER_REASON};
 
       peer.getAdvObjWeRequested().values().stream()
           .filter(time -> time < Time.getCurrentMillis() - NetConstants.ADV_TIME_OUT)
-          .findFirst().ifPresent(time -> {
-        isDisconnected[0] = true;
-        reasonCode[0] = ReasonCode.FETCH_FAIL;
-      });
+          .findFirst().ifPresent(time -> isDisconnected[0] = true);
 
       if (!isDisconnected[0]) {
         peer.getSyncBlockRequested().values().stream()
             .filter(time -> time < Time.getCurrentMillis() - NetConstants.SYNC_TIME_OUT)
-            .findFirst().ifPresent(time -> {
-          isDisconnected[0] = true;
-          reasonCode[0] = ReasonCode.SYNC_FAIL;
-        });
+            .findFirst().ifPresent(time -> isDisconnected[0] = true);
       }
 
 //    TODO:optimize here
@@ -697,6 +667,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             && (peer.isAdvInvFull()
             || isFlooded())) {
           logger.warn("A peer is flooding us, stop handle inv, the peer is: " + peer);
+          //todo,should be disconnect the peer?
           return;
         }
 
@@ -768,6 +739,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       if (!syncFlag) {
         processAdvBlock(peer, blkMsg.getBlockCapsule());
         startFetchItem();
+      }
+    } else {
+      if (!syncFlag) {//not we request and not sync,disconnect
+        banTraitorPeer(peer, ReasonCode.BAD_PROTOCOL);
       }
     }
 
@@ -973,6 +948,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       if (msg == null) {
         logger.error("fetch message {} {} failed.", type, hash);
         peer.sendMessage(new ItemNotFound());
+        //todo,should be disconnect?
         return;
       }
 
@@ -1303,7 +1279,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     loopSyncBlockChain.shutdown();
     loopFetchBlocks.shutdown();
     loopAdvertiseInv.shutdown();
-    handleBackLogBlocksPool.shutdown();
     fetchSyncBlocksExecutor.shutdown();
     handleSyncBlockExecutor.shutdown();
   }

@@ -7,12 +7,11 @@ import com.googlecode.cqengine.persistence.disk.DiskPersistence;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.db.TronDatabase;
 import org.tron.core.db.common.WrappedByteArray;
+import org.tron.core.db2.core.ITronChainBase;
 import org.tron.protos.Protocol.Witness;
 
 import javax.annotation.PostConstruct;
@@ -29,7 +28,7 @@ public class WitnessIndex extends AbstractIndex<WitnessCapsule, Witness> {
 
   @Autowired
   public WitnessIndex(
-      @Qualifier("witnessStore") final TronDatabase<WitnessCapsule> database) {
+      @Qualifier("witnessStore") final ITronChainBase<WitnessCapsule> database) {
     super(database);
   }
 

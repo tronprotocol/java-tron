@@ -4,23 +4,23 @@ import com.google.protobuf.ByteString;
 import java.util.Objects;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 
+//todo ： need Compatibility test
 @Component
-public class AccountIndexStore extends TronStoreWithRevoking<BytesCapsule> {
+public class AccountIdIndexStore extends TronStoreWithRevoking<BytesCapsule> {
 
   @Autowired
-  public AccountIndexStore(@Value("account-index") String dbName) {
+  public AccountIdIndexStore(@Value("accountid-index") String dbName) {
     super(dbName);
   }
 
   public void put(AccountCapsule accountCapsule) {
-    put(accountCapsule.getAccountName().toByteArray(),
-        new BytesCapsule(accountCapsule.getAddress().toByteArray()));
+    byte[] lowerCaseAccountId = getLowerCaseAccountId(accountCapsule.getAccountId().toByteArray());
+    super.put(lowerCaseAccountId, new BytesCapsule(accountCapsule.getAddress().toByteArray()));
   }
 
   public byte[] get(ByteString name) {
@@ -33,7 +33,8 @@ public class AccountIndexStore extends TronStoreWithRevoking<BytesCapsule> {
 
   @Override
   public BytesCapsule get(byte[] key) {
-    byte[] value = dbSource.getData(key);
+    byte[] lowerCaseKey = getLowerCaseAccountId(key);
+    byte[] value = revokingDB.getUnchecked(lowerCaseKey);
     if (ArrayUtils.isEmpty(value)) {
       return null;
     }
@@ -42,10 +43,14 @@ public class AccountIndexStore extends TronStoreWithRevoking<BytesCapsule> {
 
   @Override
   public boolean has(byte[] key) {
-    byte[] value = dbSource.getData(key);
-    if (ArrayUtils.isEmpty(value)) {
-      return false;
-    }
-    return true;
+    byte[] lowerCaseKey = getLowerCaseAccountId(key);
+    byte[] value = revokingDB.getUnchecked(lowerCaseKey);
+    return !ArrayUtils.isEmpty(value);
   }
+
+  private static byte[] getLowerCaseAccountId(byte[] bsAccountId) {
+    return ByteString
+        .copyFromUtf8(ByteString.copyFrom(bsAccountId).toStringUtf8().toLowerCase()).toByteArray();
+  }
+
 }

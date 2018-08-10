@@ -15,8 +15,10 @@ import org.tron.common.storage.Value;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.OutOfSlotTimeException;
 
 /**
  * Deposit controller : process pre transaction , block, query contract and etc..
@@ -59,9 +61,10 @@ public class DepositController {
    * The trx may be invalid due to check with not newest data.
    */
   public int preProcessTransaction(TransactionCapsule trxCap)
-      throws ContractValidateException, ContractExeException {
+      throws ContractValidateException, ContractExeException, OutOfSlotTimeException {
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
     Runtime runtime = new Runtime(trxCap.getInstance(), deposit, programInvokeFactory);
+    runtime.init();
     runtime.execute();
     runtime.go();
     ProgramResult programResult = runtime.getResult();
@@ -77,7 +80,7 @@ public class DepositController {
    * @return
    */
   public int processBlock(BlockCapsule block)
-      throws ContractValidateException, ContractExeException {
+      throws ContractValidateException, ContractExeException, OutOfSlotTimeException {
     Deposit lastDeposit = getLastDeposit();
     Deposit currentDeposit;
     if (lastDeposit == null) {
@@ -89,8 +92,10 @@ public class DepositController {
     depositQueue.put(currentDeposit);
     for (TransactionCapsule trxCap : block.getTransactions()) {
       Deposit trxDeposit = currentDeposit.newDepositChild();
-      Runtime runtime = new Runtime(trxCap.getInstance(), block.getInstance(), trxDeposit,
+      Runtime runtime = new Runtime(new TransactionTrace(trxCap, trxDeposit.getDbManager()),
+          block.getInstance(), trxDeposit,
           programInvokeFactory);
+      runtime.init();
       runtime.execute();
       runtime.go();
 
@@ -129,9 +134,10 @@ public class DepositController {
    * @return
    */
   public ProgramResult processConstantTransaction(TransactionCapsule trxCap)
-      throws ContractValidateException, ContractExeException {
+      throws ContractValidateException, ContractExeException, OutOfSlotTimeException {
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
     Runtime runtime = new Runtime(trxCap.getInstance(), programInvokeFactory, deposit);
+    runtime.init();
     runtime.execute();
     runtime.go();
     ProgramResult programResult = runtime.getResult();

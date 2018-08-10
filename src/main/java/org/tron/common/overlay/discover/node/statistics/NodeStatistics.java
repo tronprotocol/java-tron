@@ -16,11 +16,13 @@
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.common.overlay.discover.node;
+package org.tron.common.overlay.discover.node.statistics;
 
 import static java.lang.Math.min;
 
 import java.util.concurrent.atomic.AtomicLong;
+import org.tron.common.overlay.discover.node.Node;
+import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol.ReasonCode;
 
 public class NodeStatistics {
@@ -28,57 +30,23 @@ public class NodeStatistics {
   public final static int REPUTATION_PREDEFINED = 100000;
   public final static long TOO_MANY_PEERS_PENALIZE_TIMEOUT = 60 * 1000L;
   private static final long CLEAR_CYCLE_TIME = 60 * 60 * 1000L;
-
-  public class StatHandler {
-
-    private AtomicLong count = new AtomicLong(0);
-
-    public void add() {
-      count.incrementAndGet();
-    }
-
-    public void add(long delta) {
-      count.addAndGet(delta);
-    }
-
-    public long get() {
-      return count.get();
-    }
-
-    public String toString() {
-      return count.toString();
-    }
-  }
+  private final long MIN_DATA_LENGTH = Args.getInstance().getReceiveTcpMinDataLength();
 
   private boolean isPredefined = false;
-
   private int persistedReputation = 0;
-
   private int disconnectTimes = 0;
-
-  // discovery stat
-  public final StatHandler discoverOutPing = new StatHandler();
-  public final StatHandler discoverInPong = new StatHandler();
-  public final StatHandler discoverOutPong = new StatHandler();
-  public final StatHandler discoverInPing = new StatHandler();
-  public final StatHandler discoverInFind = new StatHandler();
-  public final StatHandler discoverOutFind = new StatHandler();
-  public final StatHandler discoverInNeighbours = new StatHandler();
-  public final StatHandler discoverOutNeighbours = new StatHandler();
-  public final SimpleStatter discoverMessageLatency;
-  public final AtomicLong lastPongReplyTime = new AtomicLong(0l); // in milliseconds
-
-  //  stat
-  public final StatHandler p2pOutHello = new StatHandler();
-  public final StatHandler p2pInHello = new StatHandler();
-  public final StatHandler p2pHandShake = new StatHandler();
-  public final StatHandler tronOutMessage = new StatHandler();
-  public final StatHandler tronInMessage = new StatHandler();
-
   private ReasonCode tronLastRemoteDisconnectReason = null;
   private ReasonCode tronLastLocalDisconnectReason = null;
   private long lastDisconnectedTime = 0;
   private long firstDisconnectedTime = 0;
+
+  public final MessageStatistics messageStatistics = new MessageStatistics();
+  public final MessageCount p2pHandShake = new MessageCount();
+  public final MessageCount tcpFlow = new MessageCount();
+
+  public final SimpleStatter discoverMessageLatency;
+  public final AtomicLong lastPongReplyTime = new AtomicLong(0l); // in milliseconds
+
 
 
   public NodeStatistics(Node node) {
@@ -89,16 +57,18 @@ public class NodeStatistics {
     int discoverReput = 0;
 
     discoverReput +=
-        min(discoverInPong.get(), 1) * (discoverOutPing.get() == discoverInPong.get() ? 50 : 1);
+        min(messageStatistics.discoverInPong.getTotalCount(), 1) * (
+            messageStatistics.discoverOutPing.getTotalCount() == messageStatistics.discoverInPong.getTotalCount() ? 50 : 1);
 
     discoverReput +=
-        min(discoverInNeighbours.get(), 1) * (discoverOutFind.get() == discoverInNeighbours.get() ? 50 : 1);
+        min(messageStatistics.discoverInNeighbours.getTotalCount(), 1) * (
+            messageStatistics.discoverOutFindNode.getTotalCount() == messageStatistics.discoverInNeighbours.getTotalCount() ? 50 : 1);
 
     discoverReput += (int)discoverMessageLatency.getAvrg() == 0 ? 0 : 1000 / discoverMessageLatency.getAvrg();
 
     int reput = 0;
-    reput += p2pHandShake.get() > 0 ? 20 : 0;
-    reput += min(tronInMessage.get(), 10) * 3;
+    reput += p2pHandShake.getTotalCount() > 0 ? 20 : 0;
+    reput += min(messageStatistics.tronInMessage.getTotalCount(), 10) * 3;
 
     if (wasDisconnected()) {
       if (tronLastLocalDisconnectReason == null && tronLastRemoteDisconnectReason == null) {
@@ -166,9 +136,7 @@ public class NodeStatistics {
       firstDisconnectedTime = 0;
     }
 
-    if (tronLastLocalDisconnectReason == ReasonCode.NULL_IDENTITY ||
-        tronLastRemoteDisconnectReason == ReasonCode.NULL_IDENTITY ||
-        tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
+    if (tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
         tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
         tronLastLocalDisconnectReason == ReasonCode.BAD_PROTOCOL ||
         tronLastRemoteDisconnectReason == ReasonCode.BAD_PROTOCOL ||
@@ -180,12 +148,12 @@ public class NodeStatistics {
         tronLastRemoteDisconnectReason == ReasonCode.FORKED ||
         tronLastLocalDisconnectReason == ReasonCode.UNLINKABLE ||
         tronLastRemoteDisconnectReason == ReasonCode.UNLINKABLE ||
-        tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_VERSION ||
-        tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_VERSION ||
         tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_CHAIN ||
         tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_CHAIN ||
         tronLastRemoteDisconnectReason == ReasonCode.SYNC_FAIL ||
-        tronLastLocalDisconnectReason == ReasonCode.SYNC_FAIL) {
+        tronLastLocalDisconnectReason == ReasonCode.SYNC_FAIL ||
+        tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_VERSION ||
+        tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_VERSION) {
       persistedReputation = 0;
       return true;
     }
@@ -219,6 +187,10 @@ public class NodeStatistics {
     this.isPredefined = isPredefined;
   }
 
+  public boolean isPredefined() {
+    return isPredefined;
+  }
+
   public void setPersistedReputation(int persistedReputation) {
     this.persistedReputation = persistedReputation;
   }
@@ -226,16 +198,17 @@ public class NodeStatistics {
   @Override
   public String toString() {
     return "NodeStat[reput: " + getReputation() + "(" + persistedReputation + "), discover: " +
-        discoverInPong + "/" + discoverOutPing + " " +
-        discoverOutPong + "/" + discoverInPing + " " +
-        discoverInNeighbours + "/" + discoverOutFind + " " +
-        discoverOutNeighbours + "/" + discoverInFind + " " +
+        messageStatistics.discoverInPong + "/" + messageStatistics.discoverOutPing + " " +
+        messageStatistics.discoverOutPong + "/" + messageStatistics.discoverInPing + " " +
+        messageStatistics.discoverInNeighbours + "/" + messageStatistics.discoverOutFindNode + " " +
+        messageStatistics.discoverOutNeighbours + "/" + messageStatistics.discoverInFindNode + " " +
         ((int) discoverMessageLatency.getAvrg()) + "ms" +
-        ", p2p: " + p2pHandShake + "/" + p2pInHello + "/" + p2pOutHello + " " +
-        ", tron: " + tronInMessage + "/" + tronOutMessage + " " +
+        ", p2p: " + p2pHandShake + "/" + messageStatistics.p2pInHello + "/" + messageStatistics.p2pOutHello + " " +
+        ", tron: " + messageStatistics.tronInMessage + "/" + messageStatistics.tronOutMessage + " " +
         (wasDisconnected() ? "X " + disconnectTimes : "") +
         (tronLastLocalDisconnectReason != null ? ("<=" + tronLastLocalDisconnectReason) : " ") +
-        (tronLastRemoteDisconnectReason != null ? ("=>" + tronLastRemoteDisconnectReason) : " ");
+        (tronLastRemoteDisconnectReason != null ? ("=>" + tronLastRemoteDisconnectReason) : " ") +
+        ", tcp flow: " + tcpFlow.getTotalCount();
   }
 
   public class SimpleStatter {
@@ -275,6 +248,14 @@ public class NodeStatistics {
       return name;
     }
 
+  }
+
+  public boolean nodeIsHaveDataTransfer() {
+    return tcpFlow.getTotalCount() > MIN_DATA_LENGTH;
+  }
+
+  public void resetTcpFlow() {
+    tcpFlow.reset();
   }
 
 }

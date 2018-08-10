@@ -17,7 +17,9 @@ import org.tron.core.capsule.TransactionResultCapsule;
 
 public class ProgramResult {
 
-  private long dropUsed;
+  private long gasUsed = 0;
+  private long futureRefund = 0;
+
   private byte[] hReturn = EMPTY_BYTE_ARRAY;
   private byte[] contractAddress = EMPTY_BYTE_ARRAY;
   private RuntimeException exception;
@@ -27,7 +29,6 @@ public class ProgramResult {
   private ByteArraySet touchedAccounts = new ByteArraySet();
   private List<InternalTransaction> internalTransactions;
   private List<LogInfo> logInfoList;
-  private long futureRefund = 0;
 
   private TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -39,8 +40,8 @@ public class ProgramResult {
    */
   private List<CallCreate> callCreateList;
 
-  public void spendDrop(long drops) {
-    dropUsed += drops;
+  public void spendGas(long gas) {
+    gasUsed += gas;
   }
 
   public void setRevert() {
@@ -51,8 +52,8 @@ public class ProgramResult {
     return revert;
   }
 
-  public void refundGas(long drops) {
-    dropUsed -= drops;
+  public void refundGas(long gas) {
+    gasUsed -= gas;
   }
 
   public void setContractAddress(byte[] contractAddress) {
@@ -80,8 +81,8 @@ public class ProgramResult {
     return exception;
   }
 
-  public long getDropUsed() {
-    return dropUsed;
+  public long getGasUsed() {
+    return gasUsed;
   }
 
   public void setException(RuntimeException exception) {
@@ -184,6 +185,12 @@ public class ProgramResult {
     futureRefund = 0;
   }
 
+  public void reset() {
+    getDeleteAccounts().clear();
+    getLogInfoList().clear();
+    resetFutureRefund();
+  }
+
   public void merge(ProgramResult another) {
     addInternalTransactions(another.getInternalTransactions());
     if (another.getException() == null && !another.isRevert()) {
@@ -199,4 +206,5 @@ public class ProgramResult {
     result.setHReturn(EMPTY_BYTE_ARRAY);
     return result;
   }
+
 }

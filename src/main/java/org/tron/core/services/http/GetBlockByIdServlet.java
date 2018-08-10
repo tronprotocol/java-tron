@@ -1,6 +1,5 @@
 package org.tron.core.services.http;
 
-import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.stream.Collectors;
@@ -13,8 +12,6 @@ import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Protocol.Block;
 
 @Component

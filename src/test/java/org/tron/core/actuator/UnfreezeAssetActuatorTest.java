@@ -82,7 +82,7 @@ public class UnfreezeAssetActuatorTest {
             StringUtil.hexString2ByteString(OWNER_ADDRESS),
             AccountType.Normal,
             initBalance);
-    ownerCapsule.setAssetIssuedName(ByteString.copyFromUtf8(assetName));
+    ownerCapsule.setAssetIssuedName(assetName.getBytes());
     dbManager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
   }
 
@@ -105,8 +105,8 @@ public class UnfreezeAssetActuatorTest {
         .setExpireTime(now)
         .build();
     Frozen newFrozen1 = Frozen.newBuilder()
-        .setFrozenBalance(frozenBalance+1)
-        .setExpireTime(now+600000)
+        .setFrozenBalance(frozenBalance + 1)
+        .setExpireTime(now + 600000)
         .build();
     account = account.toBuilder().addFrozenSupply(newFrozen0).addFrozenSupply(newFrozen1).build();
     AccountCapsule accountCapsule = new AccountCapsule(account);

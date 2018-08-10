@@ -41,7 +41,7 @@ import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
-import org.tron.common.overlay.discover.node.NodeStatistics;
+import org.tron.common.overlay.discover.node.statistics.NodeStatistics;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
@@ -101,7 +101,7 @@ public class SyncPool {
       } catch (Throwable t) {
         logger.error("Exception in sync worker", t);
       }
-    }, 30, 3600, TimeUnit.MILLISECONDS);
+    }, 30000, 3600, TimeUnit.MILLISECONDS);
 
     logExecutor.scheduleWithFixedDelay(() -> {
       try {

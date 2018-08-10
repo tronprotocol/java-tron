@@ -1,13 +1,12 @@
 package org.tron.core.db;
 
+import com.google.common.collect.Streams;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.ContractCapsule;
-import org.tron.protos.Contract.CreateSmartContract;
-import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.SmartContract;
 
 @Slf4j
@@ -21,22 +20,14 @@ public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
 
   @Override
   public ContractCapsule get(byte[] key) {
-    byte[] value = dbSource.getData(key);
-    return ArrayUtils.isEmpty(value) ? null : new ContractCapsule(value);
-  }
-
-
-  @Override
-  public boolean has(byte[] key) {
-    byte[] contract = dbSource.getData(key);
-    return null != contract;
+    return getUnchecked(key);
   }
 
   /**
    * get total transaction.
    */
   public long getTotalContracts() {
-    return dbSource.getTotal();
+    return Streams.stream(revokingDB.iterator()).count();
   }
 
   private static ContractStore instance;
@@ -53,7 +44,7 @@ public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
    * find a transaction  by it's id.
    */
   public byte[] findContractByHash(byte[] trxHash) {
-    return dbSource.getData(trxHash);
+    return revokingDB.getUnchecked(trxHash);
   }
 
   /**
@@ -62,7 +53,7 @@ public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
    * @return
    */
   public SmartContract.ABI getABI(byte[] contractAddress) {
-    byte[] value = dbSource.getData(contractAddress);
+    byte[] value = revokingDB.getUnchecked(contractAddress);
     if (ArrayUtils.isEmpty(value)) {
       return null;
     }

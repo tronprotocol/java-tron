@@ -1,10 +1,17 @@
 package org.tron.common.storage;
 
-import org.apache.commons.lang3.ArrayUtils;
-import org.tron.core.capsule.*;
-import org.tron.core.exception.BadItemException;
-
 import java.util.Arrays;
+import org.apache.commons.lang3.ArrayUtils;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.CodeCapsule;
+import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.VotesCapsule;
+import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.exception.BadItemException;
 
 /**
  * @author Guo Yonggang
@@ -102,6 +109,16 @@ public class Value {
     /**
      * @return
      */
+    public BytesCapsule getBytes() {
+        if (ArrayUtils.isEmpty(any)) {
+            return null;
+        }
+        return new BytesCapsule(any);
+    }
+
+    /**
+     * @return
+     */
     public TransactionCapsule getTransaction() {
         if (ArrayUtils.isEmpty(any)) return null;
         try {
@@ -161,13 +178,6 @@ public class Value {
         return new ContractCapsule(any);
     }
 
-    /**
-     * @return
-     */
-    public StorageCapsule getStorage() {
-        if (ArrayUtils.isEmpty(any)) return null;
-        return new StorageCapsule(any);
-    }
 
     public AssetIssueCapsule getAssetIssue() {
         if (ArrayUtils.isEmpty(any)) return null;

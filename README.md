@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <img width=20% src="https://raw.githubusercontent.com/tronprotocol/wiki/master/images/java-tron.png">
+  <img width=20% src="https://github.com/tronprotocol/wiki/blob/master/images/java-tron.jpg?raw=true">
   <br>
   java-tron
   <br>
@@ -62,6 +62,12 @@ TRON Protocol and the Tron Virtual Machine (TVM) allow anyone to develop decentr
 
 * JDK 1.8 (JDK 1.9+ are not supported yet)
 * On Linux Ubuntu system (e.g. Ubuntu 16.04.4 LTS), ensure that the machine has [__Oracle JDK 8__](https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-get-on-ubuntu-16-04), instead of having __Open JDK 8__ in the system. If you are building the source code by using __Open JDK 8__, you will get [__Build Failed__](https://github.com/tronprotocol/java-tron/issues/337) result.
+* Open **UDP** ports for connection to the network
+* **MINIMUM** 2 CPU Cores
+
+## Build and Deploy automatically using scripts
+
+- Please take a look at the [Tron Deployment Scripts](https://github.com/tronprotocol/TronDeployment) repository.
 
 ## Getting the code with git
 
@@ -126,7 +132,7 @@ cd java-tron
 
 * Build in [IntelliJ IDEA](https://www.jetbrains.com/idea/) (community version is enough):
 
-  ** Please run ./gradlew build once to build the protocol files **
+  **Please run ./gradlew build once to build the protocol files**
 
   1. Start IntelliJ. Select `File` -> `Open`, then locate to the java-tron folder which you have git cloned to your local drive. Then click `Open` button on the right bottom.
   2. Check on `Use auto-import` on the `Import Project from Gradle` dialog. Select JDK 1.8 in the `Gradle JVM` option. Then click `OK`.
@@ -142,10 +148,54 @@ https://github.com/tronprotocol/Documentation/blob/master/TRX/Solidity_and_Full_
 
 ## Running a local node and connecting to the public testnet 
 
-* Ensure that the version number is consistent with the version number of the test network. If it is not consistent, please modify the node.p2p.version in the config.conf file and delete the out-directory directory (if it exists).
-* The current p2p.version is **619**
+* Use the [Testnet Config](https://github.com/tronprotocol/TronDeployment/blob/master/test_net_config.conf) or use the [Tron Deployment Scripts](https://github.com/tronprotocol/TronDeployment) 
 
-### How to run a Super Node
+
+### Running a Super Representative Node for mainnet
+
+* Use the executable JAR(Recommended way)
+
+```bash
+java -jar FullNode.jar -p your private key --witness -c your config.conf(Example：/data/java-tron/config.conf)
+Example:
+java -jar FullNode.jar -p 650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812 --witness -c /data/java-tron/config.conf
+
+```
+
+This is similar to running a private testnet, except that the IPs in the `config.conf` are officially declared by TRON.
+
+<details>
+<summary>Correct output</summary>
+
+```bash
+
+20:43:18.138 INFO  [main] [o.t.p.FullNode](FullNode.java:21) Full node running.
+20:43:18.486 INFO  [main] [o.t.c.c.a.Args](Args.java:429) Bind address wasn't set, Punching to identify it...
+20:43:18.493 INFO  [main] [o.t.c.c.a.Args](Args.java:433) UDP local bound to: 10.0.8.146
+20:43:18.495 INFO  [main] [o.t.c.c.a.Args](Args.java:448) External IP wasn't set, using checkip.amazonaws.com to identify it...
+20:43:19.450 INFO  [main] [o.t.c.c.a.Args](Args.java:461) External address identified: 47.74.147.87
+20:43:19.599 INFO  [main] [o.s.c.a.AnnotationConfigApplicationContext](AbstractApplicationContext.java:573) Refreshing org.springframework.context.annotation.AnnotationConfigApplicationContext@124c278f: startup date [Fri Apr 27 20:43:19 CST 2018]; root of context hierarchy
+20:43:19.972 INFO  [main] [o.s.b.f.a.AutowiredAnnotationBeanPostProcessor](AutowiredAnnotationBeanPostProcessor.java:153) JSR-330 'javax.inject.Inject' annotation found and supported for autowiring
+20:43:20.380 INFO  [main] [o.t.c.d.DynamicPropertiesStore](DynamicPropertiesStore.java:244) update latest block header timestamp = 0
+20:43:20.383 INFO  [main] [o.t.c.d.DynamicPropertiesStore](DynamicPropertiesStore.java:252) update latest block header number = 0
+20:43:20.393 INFO  [main] [o.t.c.d.DynamicPropertiesStore](DynamicPropertiesStore.java:260) update latest block header id = 00
+20:43:20.394 INFO  [main] [o.t.c.d.DynamicPropertiesStore](DynamicPropertiesStore.java:265) update state flag = 0
+20:43:20.559 INFO  [main] [o.t.c.c.TransactionCapsule](TransactionCapsule.java:83) Transaction create succeeded！
+20:43:20.567 INFO  [main] [o.t.c.c.TransactionCapsule](TransactionCapsule.java:83) Transaction create succeeded！
+20:43:20.568 INFO  [main] [o.t.c.c.TransactionCapsule](TransactionCapsule.java:83) Transaction create succeeded！
+20:43:20.568 INFO  [main] [o.t.c.c.TransactionCapsule](TransactionCapsule.java:83) Transaction create succeeded！
+20:43:20.569 INFO  [main] [o.t.c.c.TransactionCapsule](TransactionCapsule.java:83) Transaction create succeeded！
+20:43:20.596 INFO  [main] [o.t.c.d.Manager](Manager.java:300) create genesis block
+20:43:20.607 INFO  [main] [o.t.c.d.Manager](Manager.java:306) save block: BlockCapsule
+
+```
+
+Then observe whether block synchronization success，If synchronization successfully explains the success of the super node
+
+</details>
+
+
+### Running a Super Representative Node for private testnet
 * use master branch
 * You should modify the config.conf
   1. Replace existing entry in genesis.block.witnesses with your address.
@@ -157,16 +207,10 @@ https://github.com/tronprotocol/Documentation/blob/master/TRX/Solidity_and_Full_
 
 ```bash
 cd build/libs
-java -jar java-tron.jar -p yourself private key --witness -c yourself config.conf(Example：/data/java-tron/config.conf)
+java -jar FullNode.jar -p your private key --witness -c your config.conf (Example：/data/java-tron/config.conf)
 Example:
-java -jar java-tron.jar -p 650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812 --witness -c /data/java-tron/config.conf
+java -jar FullNode.jar -p 650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812 --witness -c /data/java-tron/config.conf
 
-```
-
-* In the Terminal
-  Un the config.conf localwitness add your private key.
-```bash
-./gradlew run -Pwitness
 ```
   
 <details>
@@ -285,50 +329,6 @@ In the `Program arguments` option, fill in `--witness`:
 </details> 
   
 Then, run `FullNode::main()` again.
-
-### Running a Super Node
-
-* Use the executable JAR(Recommended way)
-
-```bash
-cd build/libs
-java -jar java-tron.jar -p yourself private key --witness -c yourself config.conf(Example：/data/java-tron/config.conf)
-Example:
-java -jar java-tron.jar -p 650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812 --witness -c /data/java-tron/config.conf
-
-```
-
-This is similar to running a private testnet, except that the IPs in the `config.conf` are officially declared by TRON.
-
-<details>
-<summary>Correct output</summary>
-
-```bash
-
-20:43:18.138 INFO  [main] [o.t.p.FullNode](FullNode.java:21) Full node running.
-20:43:18.486 INFO  [main] [o.t.c.c.a.Args](Args.java:429) Bind address wasn't set, Punching to identify it...
-20:43:18.493 INFO  [main] [o.t.c.c.a.Args](Args.java:433) UDP local bound to: 10.0.8.146
-20:43:18.495 INFO  [main] [o.t.c.c.a.Args](Args.java:448) External IP wasn't set, using checkip.amazonaws.com to identify it...
-20:43:19.450 INFO  [main] [o.t.c.c.a.Args](Args.java:461) External address identified: 47.74.147.87
-20:43:19.599 INFO  [main] [o.s.c.a.AnnotationConfigApplicationContext](AbstractApplicationContext.java:573) Refreshing org.springframework.context.annotation.AnnotationConfigApplicationContext@124c278f: startup date [Fri Apr 27 20:43:19 CST 2018]; root of context hierarchy
-20:43:19.972 INFO  [main] [o.s.b.f.a.AutowiredAnnotationBeanPostProcessor](AutowiredAnnotationBeanPostProcessor.java:153) JSR-330 'javax.inject.Inject' annotation found and supported for autowiring
-20:43:20.380 INFO  [main] [o.t.c.d.DynamicPropertiesStore](DynamicPropertiesStore.java:244) update latest block header timestamp = 0
-20:43:20.383 INFO  [main] [o.t.c.d.DynamicPropertiesStore](DynamicPropertiesStore.java:252) update latest block header number = 0
-20:43:20.393 INFO  [main] [o.t.c.d.DynamicPropertiesStore](DynamicPropertiesStore.java:260) update latest block header id = 00
-20:43:20.394 INFO  [main] [o.t.c.d.DynamicPropertiesStore](DynamicPropertiesStore.java:265) update state flag = 0
-20:43:20.559 INFO  [main] [o.t.c.c.TransactionCapsule](TransactionCapsule.java:83) Transaction create succeeded！
-20:43:20.567 INFO  [main] [o.t.c.c.TransactionCapsule](TransactionCapsule.java:83) Transaction create succeeded！
-20:43:20.568 INFO  [main] [o.t.c.c.TransactionCapsule](TransactionCapsule.java:83) Transaction create succeeded！
-20:43:20.568 INFO  [main] [o.t.c.c.TransactionCapsule](TransactionCapsule.java:83) Transaction create succeeded！
-20:43:20.569 INFO  [main] [o.t.c.c.TransactionCapsule](TransactionCapsule.java:83) Transaction create succeeded！
-20:43:20.596 INFO  [main] [o.t.c.d.Manager](Manager.java:300) create genesis block
-20:43:20.607 INFO  [main] [o.t.c.d.Manager](Manager.java:306) save block: BlockCapsule
-
-```
-
-Then observe whether block synchronization success，If synchronization successfully explains the success of the super node
-
-</details>
 
 # Quick Start
 

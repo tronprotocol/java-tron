@@ -44,6 +44,7 @@ public class Storage {
    * Keys (names) of database config
    */
   private static final String DB_DIRECTORY_CONFIG_KEY = "storage.db.directory";
+  private static final String DB_VERSION_CONFIG_KEY = "storage.db.version";
   private static final String INDEX_DIRECTORY_CONFIG_KEY = "storage.index.directory";
   private static final String PROPERTIES_CONFIG_KEY = "storage.properties";
 
@@ -61,6 +62,7 @@ public class Storage {
   /**
    * Default values of directory
    */
+  private static final int DEFAULT_DB_VERSION = 1;
   private static final String DEFAULT_DB_DIRECTORY = "database";
   private static final String DEFAULT_INDEX_DIRECTORY = "index";
 
@@ -86,6 +88,10 @@ public class Storage {
   @Setter
   private String dbDirectory;
 
+  @Getter
+  @Setter
+  private int dbVersion;
+
   /**
    * Index storage directory: /path/to/{indexDirectory}
    */
@@ -108,6 +114,11 @@ public class Storage {
    * Key: dbName, Value: Property object of that database
    */
   private Map<String, Property> propertyMap;
+
+  public static int getDbVersionFromConfig(final Config config) {
+    return config.hasPath(DB_VERSION_CONFIG_KEY) ?
+        config.getInt(DB_VERSION_CONFIG_KEY) : DEFAULT_DB_VERSION;
+  }
 
   public static String getDbDirectoryFromConfig(final Config config) {
     return config.hasPath(DB_DIRECTORY_CONFIG_KEY) ?

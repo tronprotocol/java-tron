@@ -27,45 +27,47 @@ import org.tron.core.db.BlockStore;
  */
 public interface ProgramInvoke {
 
-    DataWord getOwnerAddress();
+  DataWord getOwnerAddress();
 
-    DataWord getBalance();
+  DataWord getBalance();
 
-    DataWord getOriginAddress();
+  DataWord getOriginAddress();
 
-    DataWord getCallerAddress();
+  DataWord getCallerAddress();
 
-    DataWord getCallValue();
+  DataWord getCallValue();
 
-    DataWord getDataSize();
+  DataWord getDataSize();
 
-    DataWord getDataValue(DataWord indexData);
+  DataWord getDataValue(DataWord indexData);
 
-    byte[] getDataCopy(DataWord offsetData, DataWord lengthData);
+  byte[] getDataCopy(DataWord offsetData, DataWord lengthData);
 
-    DataWord getPrevHash();
+  DataWord getPrevHash();
 
-    DataWord getCoinbase();
+  DataWord getCoinbase();
 
-    DataWord getTimestamp();
+  DataWord getTimestamp();
 
-    DataWord getNumber();
+  DataWord getNumber();
 
-    DataWord getDifficulty();
+  DataWord getDifficulty();
 
-    DataWord getDroplimit();
+  boolean byTransaction();
 
-    long getDroplimitLong();
+  boolean byTestingSuite();
 
-    boolean byTransaction();
+  int getCallDeep();
 
-    boolean byTestingSuite();
+  Deposit getDeposit();
 
-    int getCallDeep();
+  BlockStore getBlockStore();
 
-    Deposit getDeposit();
+  boolean isStaticCall();
 
-    BlockStore getBlockStore();
+  long getVmShouldEndInUs();
 
-    boolean isStaticCall();
+  long getVmStartInUs();
+
+  long getGasLimit();
 }

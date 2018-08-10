@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -125,7 +127,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     return dbOptions;
   }
 
-  private Path getDbPath() {
+  public Path getDbPath() {
     return Paths.get(parentName, dataBaseName);
   }
 
@@ -301,6 +303,26 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
   }
 
+  public Map<byte[], byte[]> getNext(byte[] key, long limit) {
+    if (limit <= 0) {
+      return Collections.emptyMap();
+    }
+    resetDbLock.readLock().lock();
+    try (DBIterator iterator = database.iterator()) {
+      Map<byte[], byte[]> result = new HashMap<>();
+      long i = 0;
+      for (iterator.seek(key); iterator.hasNext() && i++ < limit; iterator.next()) {
+        Entry<byte[], byte[]> entry = iterator.peekNext();
+        result.put(entry.getKey(), entry.getValue());
+      }
+      return result;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
   public Set<byte[]> getValuesPrev(byte[] key, long limit) {
     if (limit <= 0) {
       return Sets.newHashSet();
@@ -354,11 +376,40 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
   }
 
+  private void updateByBatchInner(Map<byte[], byte[]> rows, WriteOptions options) throws Exception {
+    try (WriteBatch batch = database.createWriteBatch()) {
+      rows.forEach((key, value) -> {
+        if (value == null) {
+          batch.delete(key);
+        } else {
+          batch.put(key, value);
+        }
+      });
+      database.write(batch, options);
+    }
+  }
+
   @Override
   public void updateByBatch(Map<byte[], byte[]> rows) {
     resetDbLock.readLock().lock();
     try {
       updateByBatchInner(rows);
+    } catch (Exception e) {
+      try {
+        updateByBatchInner(rows);
+      } catch (Exception e1) {
+        throw new RuntimeException(e);
+      }
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
+  @Override
+  public void updateByBatch(Map<byte[], byte[]> rows, WriteOptions options) {
+    resetDbLock.readLock().lock();
+    try {
+      updateByBatchInner(rows, options);
     } catch (Exception e) {
       try {
         updateByBatchInner(rows);
