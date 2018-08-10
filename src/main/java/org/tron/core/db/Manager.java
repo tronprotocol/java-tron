@@ -996,7 +996,7 @@ public class Manager {
     transactionInfoCapsule.setFee(runtime.getResult().getRet().getFee());
     transactionInfoCapsule.setContractResult(runtime.getResult().getHReturn());
     transactionInfoCapsule.setContractAddress(runtime.getResult().getContractAddress());
-if (Objects.nonNull(block)) {
+    if (Objects.nonNull(block)) {
       transactionInfoCapsule.setBlockNumber(block.getBlockHeader().getRawData().getNumber());
       transactionInfoCapsule.setBlockTimeStamp(block.getBlockHeader().getRawData().getTimestamp());
     }
