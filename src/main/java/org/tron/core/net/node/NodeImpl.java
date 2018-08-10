@@ -199,9 +199,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           new ThreadFactoryBuilder()
               .setNameFormat("TrxsHandlePool-%d").build());
 
-  //public
-  //TODO:need auto erase oldest block
-
   private Queue<BlockId> freshBlockId = new ConcurrentLinkedQueue<BlockId>() {
     @Override
     public boolean offer(BlockId blockId) {
