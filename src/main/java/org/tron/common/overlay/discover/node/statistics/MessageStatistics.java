@@ -2,7 +2,11 @@ package org.tron.common.overlay.discover.node.statistics;
 
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.net.udp.message.UdpMessageTypeEnum;
+import org.tron.common.overlay.message.Message;
+import org.tron.core.net.message.FetchInvDataMessage;
+import org.tron.core.net.message.InventoryMessage;
 import org.tron.core.net.message.MessageTypes;
+import org.tron.core.net.message.TransactionsMessage;
 
 @Slf4j
 public class MessageStatistics {
@@ -31,6 +35,24 @@ public class MessageStatistics {
   public final MessageCount tronInMessage = new MessageCount();
   public final MessageCount tronOutMessage = new MessageCount();
 
+  public final MessageCount tronInSyncBlockChain = new MessageCount();
+  public final MessageCount tronOutSyncBlockChain = new MessageCount();
+  public final MessageCount tronInBlockChainInventory = new MessageCount();
+  public final MessageCount tronOutBlockChainInventory = new MessageCount();
+  public final MessageCount tronInInventory = new MessageCount();
+  public final MessageCount tronOutInventory = new MessageCount();
+  public final MessageCount tronInInventoryElement = new MessageCount();
+  public final MessageCount tronOutInventoryElement = new MessageCount();
+  public final MessageCount tronInFetchInvData = new MessageCount();
+  public final MessageCount tronOutFetchInvData = new MessageCount();
+  public final MessageCount tronInFetchInvDataElement = new MessageCount();
+  public final MessageCount tronOutFetchInvDataElement = new MessageCount();
+  public final MessageCount tronInTrx = new MessageCount();
+  public final MessageCount tronOutTrx = new MessageCount();
+  public final MessageCount tronInTrxs = new MessageCount();
+  public final MessageCount tronOutTrxs = new MessageCount();
+  public final MessageCount tronInBlock = new MessageCount();
+  public final MessageCount tronOutBlock = new MessageCount();
 
   public void addUdpInMessage(UdpMessageTypeEnum type){
     addUdpMessage(type, true);
@@ -40,12 +62,12 @@ public class MessageStatistics {
     addUdpMessage(type, false);
   }
 
-  public void addTcpInMessage(MessageTypes type){
-    addTcpMessage(type, true);
+  public void addTcpInMessage(Message msg){
+    addTcpMessage(msg, true);
   }
 
-  public void addTcpOutMessage(MessageTypes type){
-    addTcpMessage(type, false);
+  public void addTcpOutMessage(Message msg){
+    addTcpMessage(msg, false);
   }
 
   private void addUdpMessage(UdpMessageTypeEnum type, boolean flag){
@@ -67,8 +89,15 @@ public class MessageStatistics {
     }
   }
 
-  private void addTcpMessage(MessageTypes type, boolean flag){
-    switch (type){
+  private void addTcpMessage(Message msg, boolean flag){
+
+    if (flag) {
+      tronInMessage.add();
+    } else {
+      tronOutMessage.add();
+    }
+
+    switch (msg.getType()){
       case P2P_HELLO:
         if (flag) p2pInHello.add(); else p2pOutHello.add();
         break;
@@ -82,13 +111,46 @@ public class MessageStatistics {
         if (flag) p2pInDisconnect.add(); else p2pOutDisconnect.add();
         break;
       case SYNC_BLOCK_CHAIN:
+        if (flag) tronInSyncBlockChain.add(); else tronOutSyncBlockChain.add();
+        break;
       case BLOCK_CHAIN_INVENTORY:
+        if (flag) tronInBlockChainInventory.add(); else tronOutBlockChainInventory.add();
+        break;
       case INVENTORY:
+        InventoryMessage inventoryMessage = (InventoryMessage) msg;
+        if (flag) {
+          tronInInventory.add();
+          tronInInventoryElement.add(inventoryMessage.getInventory().getIdsCount());
+        } else {
+          tronOutInventory.add();
+          tronOutInventoryElement.add(inventoryMessage.getInventory().getIdsCount());
+        }
+        break;
       case FETCH_INV_DATA:
-      case BLOCK:
+        FetchInvDataMessage fetchInvDataMessage = (FetchInvDataMessage) msg;
+        if (flag) {
+          tronInFetchInvData.add();
+          tronInFetchInvDataElement.add(fetchInvDataMessage.getInventory().getIdsCount());
+        } else {
+          tronOutFetchInvData.add();
+          tronOutFetchInvDataElement.add(fetchInvDataMessage.getInventory().getIdsCount());
+        }
+        break;
       case TRXS:
+        TransactionsMessage transactionsMessage = (TransactionsMessage)msg;
+        if (flag) {
+          tronInTrxs.add();
+          tronInTrx.add(transactionsMessage.getTransactions().getTransactionsCount());
+        } else {
+          tronOutTrxs.add();
+          tronOutTrx.add(transactionsMessage.getTransactions().getTransactionsCount());
+        }
+        break;
       case TRX:
         if (flag) tronInMessage.add(); else tronOutMessage.add();
+        break;
+      case BLOCK:
+        if (flag) tronInBlock.add(); tronOutBlock.add();
         break;
       default:
         break;

@@ -34,10 +34,10 @@ public class MessageCount {
     totalCount++;
   }
 
-  public void add(int length) {
+  public void add(int count) {
     update();
-    szCount[index]++;
-    totalCount += length;
+    szCount[index] += count;
+    totalCount += count;
   }
 
   public int getCount(int interval) {
