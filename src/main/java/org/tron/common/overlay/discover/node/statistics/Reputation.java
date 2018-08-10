@@ -10,7 +10,7 @@ public class Reputation {
 
   public abstract class Score<T> implements Comparable<Score> {
 
-    T t;
+    protected T t;
 
     public Score(T t) {
       this.t = t;
@@ -52,16 +52,12 @@ public class Reputation {
       discoverReput +=
           min(t.discoverInNeighbours.getTotalCount(), 1) * (t.discoverOutFindNode.getTotalCount()
               == t.discoverInNeighbours.getTotalCount() ? 50 : 1);
-      if (t.isUdpAttack()) {
-        discoverReput = 0;
-      }
       return discoverReput;
     }
 
     @Override
     public boolean isContinue() {
-      return t.discoverOutPing.getTotalCount() == t.discoverInPong.getTotalCount()
-          && !t.isUdpAttack();
+      return t.discoverOutPing.getTotalCount() == t.discoverInPong.getTotalCount();
     }
   }
 

@@ -7,9 +7,6 @@ import org.tron.core.net.message.MessageTypes;
 @Slf4j
 public class MessageStatistics {
 
-  public static final int INTERVAL = 10;
-  public static final int MAX_COUNT = 10;
-
   //udp discovery
   public final MessageCount discoverInPing = new MessageCount();
   public final MessageCount discoverOutPing = new MessageCount();
@@ -35,86 +32,54 @@ public class MessageStatistics {
   public final MessageCount tronOutMessage = new MessageCount();
 
 
-  public void addUdpInMessage(UdpMessageTypeEnum type) {
+  public void addUdpInMessage(UdpMessageTypeEnum type){
     addUdpMessage(type, true);
   }
 
-  public void addUdpOutMessage(UdpMessageTypeEnum type) {
+  public void addUdpOutMessage(UdpMessageTypeEnum type){
     addUdpMessage(type, false);
   }
 
-  public void addTcpInMessage(MessageTypes type) {
+  public void addTcpInMessage(MessageTypes type){
     addTcpMessage(type, true);
   }
 
-  public void addTcpOutMessage(MessageTypes type) {
+  public void addTcpOutMessage(MessageTypes type){
     addTcpMessage(type, false);
   }
 
-  private void addUdpMessage(UdpMessageTypeEnum type, boolean flag) {
-    switch (type) {
+  private void addUdpMessage(UdpMessageTypeEnum type, boolean flag){
+    switch (type){
       case DISCOVER_PING:
-        if (flag) {
-          discoverInPing.add();
-        } else {
-          discoverOutPing.add();
-        }
+        if (flag) discoverInPing.add(); else discoverOutPing.add();
         break;
       case DISCOVER_PONG:
-        if (flag) {
-          discoverInPong.add();
-        } else {
-          discoverOutPong.add();
-        }
+        if (flag) discoverInPong.add(); else discoverOutPong.add();
         break;
       case DISCOVER_FIND_NODE:
-        if (flag) {
-          discoverInFindNode.add();
-        } else {
-          discoverOutFindNode.add();
-        }
+        if (flag) discoverInFindNode.add(); else discoverOutFindNode.add();
         break;
       case DISCOVER_NEIGHBORS:
-        if (flag) {
-          discoverInNeighbours.add();
-        } else {
-          discoverOutNeighbours.add();
-        }
+        if (flag) discoverInNeighbours.add(); else discoverOutNeighbours.add();
         break;
       default:
         break;
     }
   }
 
-  private void addTcpMessage(MessageTypes type, boolean flag) {
-    switch (type) {
+  private void addTcpMessage(MessageTypes type, boolean flag){
+    switch (type){
       case P2P_HELLO:
-        if (flag) {
-          p2pInHello.add();
-        } else {
-          p2pOutHello.add();
-        }
+        if (flag) p2pInHello.add(); else p2pOutHello.add();
         break;
       case P2P_PING:
-        if (flag) {
-          p2pInPing.add();
-        } else {
-          p2pOutPing.add();
-        }
+        if (flag) p2pInPing.add(); else p2pOutPing.add();
         break;
       case P2P_PONG:
-        if (flag) {
-          p2pInPong.add();
-        } else {
-          p2pOutPong.add();
-        }
+        if (flag) p2pInPong.add(); else p2pOutPong.add();
         break;
       case P2P_DISCONNECT:
-        if (flag) {
-          p2pInDisconnect.add();
-        } else {
-          p2pOutDisconnect.add();
-        }
+        if (flag) p2pInDisconnect.add(); else p2pOutDisconnect.add();
         break;
       case SYNC_BLOCK_CHAIN:
       case BLOCK_CHAIN_INVENTORY:
@@ -123,27 +88,11 @@ public class MessageStatistics {
       case BLOCK:
       case TRXS:
       case TRX:
-        if (flag) {
-          tronInMessage.add();
-        } else {
-          tronOutMessage.add();
-        }
+        if (flag) tronInMessage.add(); else tronOutMessage.add();
         break;
       default:
         break;
     }
-  }
-
-  public boolean isUdpAttack() {
-    int pingCount = discoverInPing.getCount(INTERVAL);
-    int pongCount = discoverInPong.getCount(INTERVAL);
-    int findNodeCount = discoverInFindNode.getCount(INTERVAL);
-    int neighboursCount = discoverInNeighbours.getCount(INTERVAL);
-    int count = pingCount + pongCount + findNodeCount + neighboursCount;
-    if (count > MAX_COUNT) {
-      return true;
-    }
-    return false;
   }
 
 }
