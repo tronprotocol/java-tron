@@ -383,4 +383,9 @@ public class NodeDelegateImpl implements NodeDelegate {
   public boolean canChainRevoke(long num) {
     return num >= dbManager.getSyncBeginNumber();
   }
+
+  @Override
+  public boolean dealOrNot(TransactionCapsule transactionCapsule) {
+    return dbManager.getForkController().dealOrNot(transactionCapsule);
+  }
 }

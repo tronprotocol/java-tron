@@ -40,6 +40,7 @@ import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ForkController;
 import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
@@ -171,6 +172,10 @@ public class Manager {
   @Getter
   private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
       .newBuilder().maximumSize(100_000).recordStats().build();
+
+  @Getter
+  @Autowired
+  private ForkController forkController;
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -1079,7 +1084,9 @@ public class Manager {
 //        trx.resetResult();
         tmpSeesion.merge();
         // push into block
-        blockCapsule.addTransaction(trx);
+        if (forkController.dealOrNot(trx)) {
+          blockCapsule.addTransaction(trx);
+        }
         iterator.remove();
       } catch (ContractExeException e) {
         logger.info("contract not processed during execute");

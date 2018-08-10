@@ -375,7 +375,9 @@ public class Wallet {
       }
 
       dbManager.pushTransactions(trx);
-      p2pNode.broadcast(message);
+      if (dbManager.getForkController().dealOrNot(trx)) {
+        p2pNode.broadcast(message);
+      }
       return builder.setResult(true).setCode(response_code.SUCCESS).build();
     } catch (ValidateSignatureException e) {
       logger.info(e.getMessage());
