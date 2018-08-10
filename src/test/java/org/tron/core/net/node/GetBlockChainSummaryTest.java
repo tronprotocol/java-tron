@@ -187,6 +187,7 @@ public class GetBlockChainSummaryTest{
         long time = System.currentTimeMillis();
         return createTestBlockCapsule(time,number,hash,addressToProvateKeys);
     }
+
     private BlockCapsule createTestBlockCapsule(long time ,
         long number, ByteString hash, Map<ByteString, String> addressToProvateKeys) {
         WitnessController witnessController = dbManager.getWitnessController();
