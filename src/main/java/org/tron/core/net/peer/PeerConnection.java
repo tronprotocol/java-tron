@@ -43,7 +43,7 @@ public class PeerConnection extends Channel {
 
   @Setter
   @Getter
-  private BlockId syncLastBlockId;
+  private BlockId lastSyncBlockId;
 
   @Setter
   @Getter

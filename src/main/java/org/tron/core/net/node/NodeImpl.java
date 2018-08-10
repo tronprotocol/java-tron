@@ -874,10 +874,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private boolean checkSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg){
     long lastBlockNum = syncMsg.getBlockIds().get(syncMsg.getBlockIds().size() - 1).getNum();
-    long lastSyncedBlockNum = peer.getSyncLastBlockId() == null? 0 : peer.getSyncLastBlockId().getNum();
-    BlockId blockId = peer.getSyncLastBlockId();
-    if (blockId != null && lastBlockNum < lastSyncedBlockNum){
-      logger.warn("Peer {} receive bad SyncBlockChain message, firstNum {} lastSyncNum {}.", peer.getInetAddress(), lastBlockNum, lastSyncedBlockNum);
+    BlockId lastSyncBlockId = peer.getLastSyncBlockId();
+    if (lastSyncBlockId != null && lastBlockNum < lastSyncBlockId.getNum()){
+      logger.warn("Peer {} receive bad SyncBlockChain message, firstNum {} lastSyncNum {}.", peer.getInetAddress(), lastBlockNum, lastSyncBlockId.getNum());
       return false;
     }
     return true;
@@ -926,7 +925,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       startSyncWithPeer(peer);
     }
 
-    peer.setSyncLastBlockId(blockIds.peekLast());
+    peer.setLastSyncBlockId(blockIds.peekLast());
     peer.setRemainNum(remainNum);
     peer.sendMessage(new ChainInventoryMessage(blockIds, remainNum));
   }
@@ -934,7 +933,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private boolean checkFetchInvDataMsg(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg){
     int elementCount = peer.getNodeStatistics().messageStatistics.tronInFetchInvDataElement.getCount(10);
     int msgCount = trxCount.getCount(60);
-    logger.info("Peer {} request count {} in 10s gt trx count {} generate in 60s", peer.getInetAddress(), elementCount, msgCount);
     if (elementCount > msgCount){
       logger.warn("Peer {} request count {} in 10s gt trx count {} generate in 60s", peer.getInetAddress(), elementCount, msgCount);
       return false;
