@@ -121,7 +121,14 @@ public class NodeDelegateImpl implements NodeDelegate {
       dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
     }
     try {
+
+      long jack_handleTransaction_start = System.nanoTime() / 1000000;
+
       dbManager.pushTransactions(trx);
+
+      logger.error("in onMessage handleTransaction one tx consume: %d ms",
+          System.nanoTime() / 1000000 - jack_handleTransaction_start);
+
     } catch (ContractSizeNotEqualToOneException e) {
       logger.info("Contract validate failed" + e.getMessage());
       throw new BadTransactionException();

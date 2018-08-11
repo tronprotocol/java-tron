@@ -737,6 +737,7 @@ public class Manager {
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
       TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException, ReceiptException, TransactionTraceException, OutOfSlotTimeException {
+
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
@@ -1042,6 +1043,8 @@ public class Manager {
 
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, TransactionTraceException {
 
+    long jack_generate_start = System.nanoTime() / 1000000;
+
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
     final Sha256Hash preHash = this.dynamicPropertiesStore.getLatestBlockHeaderHash();
@@ -1074,7 +1077,10 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
+        long jack_tx_start = System.nanoTime() / 1000000;
         processTransaction(trx, null);
+        logger.error("in generateBlock one tx consume: %d ms",
+            System.nanoTime() / 1000000 - jack_tx_start);
 //        trx.resetResult();
         tmpSeesion.merge();
         // push into block
@@ -1125,6 +1131,10 @@ public class Manager {
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(privateKey);
     blockCapsule.generatedByMyself = true;
+
+    logger.error("pending to block total consume: %d ms",
+        System.nanoTime() / 1000000 - jack_generate_start);
+
     try {
       this.pushBlock(blockCapsule);
       return blockCapsule;
@@ -1203,9 +1213,18 @@ public class Manager {
       throw new ValidateScheduleException("validateWitnessSchedule error");
     }
 
+    long jack_processblock_start = System.nanoTime() / 1000000;
+
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       if (block.generatedByMyself) {
+
+        long jack_processblock_one_tx_start = System.nanoTime() / 1000000;
+
         transactionCapsule.setVerified(true);
+
+        logger.error("in processblock one tx consume: %d ms",
+            System.nanoTime() / 1000000 - jack_processblock_one_tx_start);
+
       }
       processTransaction(transactionCapsule, block.getInstance());
     }
@@ -1225,6 +1244,10 @@ public class Manager {
     updateMaintenanceState(needMaint);
     //witnessController.updateWitnessSchedule();
     updateRecentBlock(block);
+
+    logger.error("processblock consume: %d ms",
+        System.nanoTime() / 1000000 - jack_processblock_start);
+
   }
 
   private void updateTransHashCache(BlockCapsule block) {

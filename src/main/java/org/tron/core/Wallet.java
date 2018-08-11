@@ -382,7 +382,13 @@ public class Wallet {
         dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
       }
 
+      long jack_from_wallet = System.nanoTime() / 1000000;
       dbManager.pushTransactions(trx);
+
+      logger.error("from wallet broadcastTransaction one tx consume: %d ms",
+          System.nanoTime() / 1000000 - jack_from_wallet);
+
+
       p2pNode.broadcast(message);
       return builder.setResult(true).setCode(response_code.SUCCESS).build();
     } catch (ValidateSignatureException e) {
