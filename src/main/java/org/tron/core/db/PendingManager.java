@@ -34,7 +34,7 @@ public class PendingManager implements AutoCloseable {
     db.getPendingTransactions().clear();
     db.getSession().reset();
 
-    logger.error("pending to block total consume: %d ms",
+    logger.error("pending to block total consume: {} ms",
         System.nanoTime() / 1000000 - jack_pendingManager_init_start);
   }
 
@@ -48,7 +48,7 @@ public class PendingManager implements AutoCloseable {
     dbManager.getPoppedTransactions().clear();
     tmpTransactions.clear();
 
-    logger.error("repush total consume: %d ms",
+    logger.error("repush total consume: {} ms",
         System.nanoTime() / 1000000 - jack_repush_start);
 
   }

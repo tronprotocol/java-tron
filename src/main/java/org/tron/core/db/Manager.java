@@ -1079,7 +1079,7 @@ public class Manager {
       try (ISession tmpSeesion = revokingStore.buildSession()) {
         long jack_tx_start = System.nanoTime() / 1000000;
         processTransaction(trx, null);
-        logger.error("in generateBlock one tx consume: %d ms",
+        logger.error("in generateBlock one tx consume: {} ms",
             System.nanoTime() / 1000000 - jack_tx_start);
 //        trx.resetResult();
         tmpSeesion.merge();
@@ -1132,7 +1132,7 @@ public class Manager {
     blockCapsule.sign(privateKey);
     blockCapsule.generatedByMyself = true;
 
-    logger.error("pending to block total consume: %d ms",
+    logger.error("pending to block total consume: {} ms",
         System.nanoTime() / 1000000 - jack_generate_start);
 
     try {
@@ -1222,7 +1222,7 @@ public class Manager {
 
         transactionCapsule.setVerified(true);
 
-        logger.error("in processblock one tx consume: %d ms",
+        logger.error("in processblock one tx consume: {} ms",
             System.nanoTime() / 1000000 - jack_processblock_one_tx_start);
 
       }
@@ -1245,7 +1245,7 @@ public class Manager {
     //witnessController.updateWitnessSchedule();
     updateRecentBlock(block);
 
-    logger.error("processblock consume: %d ms",
+    logger.error("processblock consume: {} ms",
         System.nanoTime() / 1000000 - jack_processblock_start);
 
   }

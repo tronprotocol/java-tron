@@ -385,7 +385,7 @@ public class Wallet {
       long jack_from_wallet = System.nanoTime() / 1000000;
       dbManager.pushTransactions(trx);
 
-      logger.error("from wallet broadcastTransaction one tx consume: %d ms",
+      logger.error("from wallet broadcastTransaction one tx consume: {} ms",
           System.nanoTime() / 1000000 - jack_from_wallet);
 
 

@@ -126,7 +126,7 @@ public class NodeDelegateImpl implements NodeDelegate {
 
       dbManager.pushTransactions(trx);
 
-      logger.error("in onMessage handleTransaction one tx consume: %d ms",
+      logger.error("in onMessage handleTransaction one tx consume: {} ms",
           System.nanoTime() / 1000000 - jack_handleTransaction_start);
 
     } catch (ContractSizeNotEqualToOneException e) {
