@@ -538,7 +538,7 @@ public class Wallet {
         .build());
 
     builder.addChainParameter(builder1
-        .setKey(ChainParameters.START_VM.name())
+        .setKey(ChainParameters.ALLOW_CREATION_OF_CONTRACTS.name())
         .setValue(
             dynamicPropertiesStore.getAllowCreationOfContracts())
         .build());
