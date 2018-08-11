@@ -45,12 +45,13 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
     long oldBalance = accountCapsule.getBalance();
 
+    long unfreezeBalance = 0L;;
+
     byte[] receiverAddress = unfreezeBalanceContract.getReceiverAddress().toByteArray();
     //If the receiver is not included in the contract, unfreeze frozen balance for this account.
     //otherwise,unfreeze delegated frozen balance provided this account.
     if (receiverAddress.length == 0) {
 
-      long unfreezeBalance = 0L;
       switch (unfreezeBalanceContract.getResource()) {
         case BANDWIDTH:
 
@@ -93,7 +94,6 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
       AccountCapsule receiverCapsule = dbManager.getAccountStore().get(receiverAddress);
 
-      long unfreezeBalance = 0L;
       switch (unfreezeBalanceContract.getResource()) {
         case BANDWIDTH:
           unfreezeBalance = delegatedResourceCapsule.getFrozenBalanceForBandwidth();
