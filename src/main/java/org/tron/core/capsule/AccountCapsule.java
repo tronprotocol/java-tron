@@ -209,13 +209,15 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         this.account.getDelegatedFrozenBalanceForBandwidth() + balance).build();
   }
 
-  public void deleteDelegatedFrozenBalanceForBandwidth(long balance) {
-    this.account = this.account.toBuilder().setDelegatedFrozenBalanceForBandwidth(
-        this.account.getDelegatedFrozenBalanceForBandwidth() - balance).build();
-  }
 
   public long getAcquiredDelegatedFrozenBalanceForBandwidth() {
     return this.account.getAcquiredDelegatedFrozenBalanceForBandwidth();
+  }
+
+
+  public void setAcquiredDelegatedFrozenBalanceForBandwidth(long balance) {
+    this.account = this.account.toBuilder().setAcquiredDelegatedFrozenBalanceForBandwidth(balance)
+        .build();
   }
 
   public void addAcquiredDelegatedFrozenBalanceForBandwidth(long balance) {
@@ -228,20 +230,24 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return getAccountResource().getAcquiredDelegatedFrozenBalanceForCpu();
   }
 
+  public long getDelegatedFrozenBalanceForCpu() {
+    return getAccountResource().getDelegatedFrozenBalanceForCpu();
+  }
+
+  public long getDelegatedFrozenBalanceForBandwidth() {
+    return this.account.getDelegatedFrozenBalanceForBandwidth();
+  }
+
+  public void setDelegatedFrozenBalanceForBandwidth(long balance) {
+    this.account = this.account.toBuilder()
+        .setDelegatedFrozenBalanceForBandwidth(balance)
+        .build();
+  }
+
   public void addAcquiredDelegatedFrozenBalanceForCpu(long balance) {
     AccountResource newAccountResource = getAccountResource().toBuilder()
         .setAcquiredDelegatedFrozenBalanceForCpu(
             getAccountResource().getAcquiredDelegatedFrozenBalanceForCpu() + balance).build();
-
-    this.account = this.account.toBuilder()
-        .setAccountResource(newAccountResource)
-        .build();
-  }
-
-  public void deleteAcquiredDelegatedFrozenBalanceForCpu(long balance) {
-    AccountResource newAccountResource = getAccountResource().toBuilder()
-        .setAcquiredDelegatedFrozenBalanceForCpu(
-            getAccountResource().getAcquiredDelegatedFrozenBalanceForCpu() - balance).build();
 
     this.account = this.account.toBuilder()
         .setAccountResource(newAccountResource)
@@ -494,6 +500,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     }
   }
 
+  //set FrozenBalanceForBandwidth
   //for test only
   public void setFrozen(long frozenBalance, long expireTime) {
     Frozen newFrozen = Frozen.newBuilder()

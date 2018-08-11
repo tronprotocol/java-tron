@@ -50,8 +50,10 @@ public class FreezeBalanceActuator extends AbstractActuator {
     switch (freezeBalanceContract.getResource()) {
       case BANDWIDTH:
         frozenBalanceForBandwidth = freezeBalanceContract.getFrozenBalance();
+        break;
       case CPU:
         frozenBalanceForCpu = freezeBalanceContract.getFrozenBalance();
+        break;
     }
 
     byte[] receiverAddress = freezeBalanceContract.getReceiverAddress().toByteArray();

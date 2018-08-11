@@ -98,18 +98,19 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
         case BANDWIDTH:
           unfreezeBalance = delegatedResourceCapsule.getFrozenBalanceForBandwidth();
           delegatedResourceCapsule.setFrozenBalanceForBandwidth(0);
-
-          receiverCapsule.deleteDelegatedFrozenBalanceForBandwidth(unfreezeBalance);
+          receiverCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(-unfreezeBalance);
+          accountCapsule.addDelegatedFrozenBalanceForBandwidth(-unfreezeBalance);
           break;
         case CPU:
           unfreezeBalance = delegatedResourceCapsule.getFrozenBalanceForCpu();
           delegatedResourceCapsule.setFrozenBalanceForCpu(0);
-
-          receiverCapsule.deleteAcquiredDelegatedFrozenBalanceForCpu(unfreezeBalance);
+          receiverCapsule.addAcquiredDelegatedFrozenBalanceForCpu(-unfreezeBalance);
+          accountCapsule.addDelegatedFrozenBalanceForCpu(-unfreezeBalance);
           break;
       }
-      accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-          .setBalance(oldBalance + unfreezeBalance).build());
+      accountCapsule.setBalance(oldBalance + unfreezeBalance);
+
+      dbManager.getAccountStore().put(receiverCapsule.createDbKey(), receiverCapsule);
 
       dbManager.getDynamicPropertiesStore().addTotalCpuWeight(-unfreezeBalance / 1000_000L);
 
@@ -133,6 +134,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     votesCapsule.clearNewVotes();
 
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+
     dbManager.getVotesStore().put(ownerAddress, votesCapsule);
 
 
@@ -236,11 +238,6 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
         throw new ContractValidateException("It's not time to unfreeze.");
       }
 
-      Frozen frozenBalanceForCpu = accountCapsule.getAccountResource().getFrozenBalanceForCpu();
-      if (frozenBalanceForCpu.getFrozenBalance() <= 0) {
-        throw new ContractValidateException("no frozenBalance(CPU)");
-      }
-
       switch (unfreezeBalanceContract.getResource()) {
         case BANDWIDTH:
           if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() <= 0) {
@@ -254,8 +251,6 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
                     + delegatedResourceCapsule.getFrozenBalanceForBandwidth()
                     + "],this should never happen");
           }
-
-          ;
           break;
         case CPU:
           if (delegatedResourceCapsule.getFrozenBalanceForCpu() <= 0) {
@@ -269,7 +264,6 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
                     + delegatedResourceCapsule.getFrozenBalanceForCpu() +
                     "],this should never happen");
           }
-
           break;
         default:
           throw new ContractValidateException(
