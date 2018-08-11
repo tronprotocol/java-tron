@@ -25,10 +25,10 @@ public class GasCost {
     private final int SLOAD = 50;
     private final int STOP = 0;
     private final int SUICIDE = 0;
-    private final int CLEAR_SSTORE = 5000;
-    private final int SET_SSTORE = 20000;
-    private final int RESET_SSTORE = 5000;
-    private final int REFUND_SSTORE = 15000;
+    private final int CLEAR_SSTORE = 50;
+    private final int SET_SSTORE = 50;
+    private final int RESET_SSTORE = 50;
+    private final int REFUND_SSTORE = 50;
     private final int CREATE = 32000;
 
     private final int JUMPDEST = 1;
