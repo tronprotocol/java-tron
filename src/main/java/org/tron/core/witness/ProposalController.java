@@ -130,6 +130,10 @@ public class ProposalController {
           manager.getDynamicPropertiesStore().saveCreateNewAccountBandwidthRate(entry.getValue());
           break;
         }
+        case (9): {
+          manager.getDynamicPropertiesStore().saveAllowCreationOfContracts(entry.getValue());
+          break;
+        }
         default:
           break;
       }
