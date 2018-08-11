@@ -229,13 +229,6 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     return vmShouldEndInUs;
   }
 
-  /*  Storage */
-    /*
-    public Map<DataWord, DataWord> getStorage() {
-        return storage;
-    }
-    */
-
   public Deposit getDeposit() {
     return deposit;
   }

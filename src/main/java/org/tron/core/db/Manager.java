@@ -131,7 +131,8 @@ public class Manager {
   @Autowired
   private ContractStore contractStore;
   @Autowired
-  private StorageStore storageStore;
+  @Getter
+  private StorageRowStore storageRowStore;
 
   // for network
   @Autowired
@@ -194,10 +195,6 @@ public class Manager {
 
   public void setWitnessScheduleStore(final WitnessScheduleStore witnessScheduleStore) {
     this.witnessScheduleStore = witnessScheduleStore;
-  }
-
-  public StorageStore getStorageStore() {
-    return storageStore;
   }
 
   public CodeStore getCodeStore() {
@@ -1395,7 +1392,7 @@ public class Manager {
     closeOneStore(utxoStore);
     closeOneStore(codeStore);
     closeOneStore(contractStore);
-    closeOneStore(storageStore);
+    closeOneStore(storageRowStore);
     System.err.println("******** end to close db ********");
   }
 
