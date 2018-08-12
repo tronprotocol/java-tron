@@ -5,6 +5,8 @@ import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDIN
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
@@ -16,12 +18,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
 import javax.annotation.PostConstruct;
@@ -30,10 +27,21 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.hamcrest.CoreMatchers;
 import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
+import org.springframework.amqp.core.AmqpTemplate;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.abi.EventEncoder;
+import org.tron.abi.FunctionReturnDecoder;
+import org.tron.abi.TypeReference;
+import org.tron.abi.datatypes.Event;
+import org.tron.abi.datatypes.Type;
+import org.tron.abi.datatypes.generated.AbiTypes;
+import org.tron.abi.datatypes.generated.Uint256;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.LogInfo;
@@ -82,8 +90,10 @@ import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
@@ -94,6 +104,12 @@ import org.tron.protos.Protocol.TransactionInfo.code;
 @Slf4j
 @Component
 public class Manager {
+  @Autowired
+  private AmqpTemplate amqpTemplate;
+
+  private Cache<byte[], Protocol.SmartContract.ABI> abiCache = CacheBuilder.newBuilder()
+          .maximumSize(100_000).expireAfterWrite(1, TimeUnit.HOURS).initialCapacity(100_000)
+          .recordStats().build();
 
   // db store
   @Autowired
@@ -1002,9 +1018,65 @@ public class Manager {
     transactionInfoCapsule.addAllLog(logList);
     transactionInfoCapsule.setReceipt(trace.getReceipt());
 
+    if(block != null) {
+      sendEventToMQ(runtime.getResult().getContractAddress(), logList);
+    }
+
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfoCapsule);
 
     return true;
+  }
+
+  private void sendEventToMQ(byte[] contractAddress, List<Log> logList) {
+    try {
+      Protocol.SmartContract.ABI abi = abiCache.getIfPresent(contractAddress);
+      if (abi == null) {
+        abi = getContractStore().getABI(contractAddress);
+        if (abi == null) {
+          return;
+        }
+        abiCache.put(contractAddress, abi);
+      }
+      String contractAddressHexString = Hex.toHexString(contractAddress);
+      Protocol.SmartContract.ABI finalAbi = abi;
+      logList.forEach(log -> {
+        finalAbi.getEntrysList().forEach(abiEntry -> {
+          if(abiEntry.getType() != Protocol.SmartContract.ABI.Entry.EntryType.Event){
+            return;
+          }
+          String entryName = abiEntry.getName();
+          List<TypeReference<?>> typeList = new ArrayList<>();
+          List<String> nameList = new ArrayList<>();
+          List<Boolean> hasIndexList = new ArrayList<>();
+          abiEntry.getInputsList().forEach(input -> {
+            nameList.add(input.getName());
+            hasIndexList.add(input.getIndexed());
+            TypeReference<?> tr = AbiTypes.getTypeReference(input.getType());
+            typeList.add(tr);
+          });
+          Event event = new Event(entryName,typeList);
+          String encodeEventHexString = EventEncoder.encode(event);
+          log.getTopicsList().forEach(topic -> {
+            String topicHexString = Hex.toHexString(topic.toByteArray());
+            if(StringUtils.equalsIgnoreCase(encodeEventHexString, topicHexString)) {
+
+              List<Type> results = FunctionReturnDecoder.decode(
+                      ByteArray.toHexString(log.getData().toByteArray()), event.getNonIndexedParameters());
+              JSONArray resultJsonArray = new JSONArray();
+              for (Type result : results) {
+                resultJsonArray.add(result.getValue());
+              }
+
+              MessageProperties someProperties = new MessageProperties();
+              amqpTemplate.send(org.tron.mq.Constant.EXCHANGE,contractAddressHexString + "." + entryName,
+                      new Message(resultJsonArray.toJSONString().getBytes(), someProperties));
+            }
+          });
+        });
+      });
+    } catch(Exception e) {
+      logger.error("SendEventToMQ Failed {}", e);
+    }
   }
 
   private List<Log> getLogsByLogInfoList(List<LogInfo> logInfos) {
