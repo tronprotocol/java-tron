@@ -448,7 +448,7 @@ public class Program {
 //    byte[] privKey = Sha256Hash.hash(getOwnerAddress().getData());
 //    ECKey ecKey = ECKey.fromPrivate(privKey);
 
-    this.transactionHash = this.transaction.getHash();
+    this.transactionHash = Sha256Hash.hash(transactionHash);
     byte[] newAddress = Wallet.generateContractAddress(getOwnerAddress().getData(),transactionHash);
 
     AccountCapsule existingAddr = getContractState().getAccount(newAddress);
