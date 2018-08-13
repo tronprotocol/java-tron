@@ -463,8 +463,8 @@ public class Program {
 
     // [4] TRANSFER THE BALANCE
     long newBalance = 0L;
-    if (!byTestingSuite()) {
-      TransferActuator.validate(deposit, senderAddress, newAddress, endowment);
+    if (!byTestingSuite() && endowment > 0) {
+      TransferActuator.validateForSmartContract(deposit, senderAddress, newAddress, endowment);
       deposit.addBalance(senderAddress, -endowment);
       newBalance = deposit.addBalance(newAddress, endowment);
     }
@@ -618,8 +618,9 @@ public class Program {
       getResult().addCallCreate(data, contextAddress,
           msg.getGas().getNoLeadZeroesData(),
           msg.getEndowment().getNoLeadZeroesData());
-    } else if(!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress) && senderAddress != contextAddress && endowment > 0) {
-      TransferActuator.validate(deposit, senderAddress, contextAddress, endowment);
+    } else if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
+        && senderAddress != contextAddress && endowment > 0) {
+      TransferActuator.validateForSmartContract(deposit, senderAddress, contextAddress, endowment);
       deposit.addBalance(senderAddress, -endowment);
       contextBalance = deposit.addBalance(contextAddress, endowment);
     }
@@ -748,7 +749,7 @@ public class Program {
     DataWord valWord = word2.clone();
     getContractState()
         .addStorageValue(convertToTronAddress(getOwnerAddress().getLast20Bytes()), keyWord,
-        valWord);
+            valWord);
   }
 
   public byte[] getCode() {
@@ -1232,7 +1233,8 @@ public class Program {
         msg.getInDataSize().intValue());
 
     // Charge for endowment - is not reversible by rollback
-    if(!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress) && senderAddress != contextAddress && msg.getEndowment().value().longValue() > 0) {
+    if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
+        && senderAddress != contextAddress && msg.getEndowment().value().longValue() > 0) {
       transfer(deposit, senderAddress, contextAddress, msg.getEndowment().value().longValue());
     }
 
