@@ -225,7 +225,7 @@ public class Manager {
   }
 
   public BlockingQueue<TransactionCapsule> getRepushTransactions() {
-    return this.repushTransactions;
+    return repushTransactions;
   }
 
   // transactions cache
@@ -236,7 +236,7 @@ public class Manager {
       Collections.synchronizedList(Lists.newArrayList());
 
   // the capacity is equal to Integer.MAX_VALUE defaults
-  private BlockingQueue<TransactionCapsule> repushTransactions = new LinkedBlockingQueue<>();
+  private BlockingQueue<TransactionCapsule> repushTransactions;
 
   // for test only
   public List<ByteString> getWitnesses() {
@@ -316,6 +316,8 @@ public class Manager {
     this.setWitnessController(WitnessController.createInstance(this));
     this.setProposalController(ProposalController.createInstance(this));
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
+    this.repushTransactions = new LinkedBlockingQueue<>();
+
     this.initGenesis();
     try {
       this.khaosDb.start(getBlockById(getDynamicPropertiesStore().getLatestBlockHeaderHash()));
