@@ -19,6 +19,7 @@ package org.tron.common.runtime.vm.program.invoke;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.storage.Deposit;
@@ -57,7 +58,9 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     this.caller = caller;
     this.balance = balance;
     this.callValue = callValue;
-    this.msgData = Arrays.copyOf(msgData, msgData.length);
+    if (Objects.nonNull(msgData)) {
+      this.msgData = Arrays.copyOf(msgData, msgData.length);
+    }
 
     // last Block env
     this.prevHash = lastHash;

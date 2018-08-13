@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.PrecompiledContracts;
@@ -590,7 +591,9 @@ public class Runtime {
       throw new ContractExeException(e.getMessage());
     } catch (Exception e) {
       logger.error(e.getMessage());
-      runtimeError = e.getMessage();
+      if (StringUtils.isNoneEmpty(runtimeError)) {
+        runtimeError = e.getMessage();
+      }
     }
   }
 
@@ -609,7 +612,7 @@ public class Runtime {
     long callerCpuUsage = cpuUsage - originCpuUsage;
 
     if (useedStorageSize <= 0) {
-      trace.setBill(callerCpuUsage, 0);
+      trace.setBill(cpuUsage, 0);
       return true;
     }
     long originStorageUsage = Math
@@ -628,10 +631,10 @@ public class Runtime {
     }
     long tryBuyStorage = storageMarket.tryBuyStorage(storageFee);
     if (tryBuyStorage + caller.getStorageLeft() < callerStorageUsage) {
-      trace.setBill(callerCpuUsage, 0);
+      trace.setBill(cpuUsage, 0);
       return false;
     }
-    trace.setBill(callerCpuUsage, callerStorageUsage);
+    trace.setBill(cpuUsage, useedStorageSize);
     return true;
   }
 

@@ -17,6 +17,9 @@ public class MUtil {
 
   public static void transfer(Deposit deposit, byte[] fromAddress, byte[] toAddress, long amount)
       throws ContractValidateException {
+    if (0 == amount) {
+      return;
+    }
     TransferActuator.validate(deposit, fromAddress, toAddress, amount);
     if (deposit.getBalance(fromAddress) < amount) {
       throw new RuntimeException(
