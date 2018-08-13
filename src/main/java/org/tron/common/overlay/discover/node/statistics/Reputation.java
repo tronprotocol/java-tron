@@ -72,9 +72,9 @@ public class Reputation {
     int calculate(int baseScore) {
       int reput = baseScore;
       reput += t.p2pHandShake.getTotalCount() > 0 ? 10 : 0;
-      reput += min(t.tcpFlow.getTotalCount() / 10240, 100);
+      reput += min(t.tcpFlow.getTotalCount() / 10240, 20);
       reput += t.messageStatistics.p2pOutPing.getTotalCount() == t.messageStatistics.p2pInPong
-          .getTotalCount() ? 10 : 0;
+          .getTotalCount() ? 10 : -10;
       return reput;
     }
   }
@@ -132,7 +132,7 @@ public class Reputation {
     @Override
     int calculate(int baseScore) {
       baseScore += (int) t.discoverMessageLatency.getAvrg() == 0 ? 0
-          : 1000 / t.discoverMessageLatency.getAvrg();
+          : min(1000 / t.discoverMessageLatency.getAvrg(), 20);
       return baseScore;
     }
   }
