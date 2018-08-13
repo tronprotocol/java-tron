@@ -543,7 +543,7 @@ public class Manager {
   /**
    * push transaction into pending.
    */
-  public boolean pushTransactions(final TransactionCapsule trx, int index)
+  public boolean pushTransactions(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, DupTransactionException, TaposException,
       TooBigTransactionException, TransactionExpirationException, ReceiptException, TransactionTraceException, OutOfSlotTimeException {
@@ -560,12 +560,7 @@ public class Manager {
 
       try (ISession tmpSession = revokingStore.buildSession()) {
         processTransaction(trx, null);
-        if (-1 == index) {
-          pendingTransactions.add(trx);
-        } else {
-          // time complexity is O(n)
-          pendingTransactions.add(index, trx);
-        }
+        pendingTransactions.add(trx);
         tmpSession.merge();
       }
     }
@@ -1059,8 +1054,6 @@ public class Manager {
 
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, TransactionTraceException {
 
-    long jack_generate_start = System.nanoTime() / 1000000;
-
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
     final Sha256Hash preHash = this.dynamicPropertiesStore.getLatestBlockHeaderHash();
@@ -1076,9 +1069,6 @@ public class Manager {
         new BlockCapsule(number + 1, preHash, when, witnessCapsule.getAddress());
     session.reset();
     session.setValue(revokingStore.buildSession());
-
-    logger.error("generateBlock before iterator, length of pendingTransactions is: {}",
-        pendingTransactions.size());
 
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext()) {
@@ -1097,11 +1087,8 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
-        long jack_tx_start = System.nanoTime() / 1000000;
         processTransaction(trx, null);
-        logger.error("in generateBlock one tx consume: {} ms",
-            System.nanoTime() / 1000000 - jack_tx_start);
-//        trx.resetResult();
+        // trx.resetResult();
         tmpSeesion.merge();
         // push into block
         blockCapsule.addTransaction(trx);
@@ -1141,10 +1128,6 @@ public class Manager {
 
     session.reset();
 
-    logger.error("generateBlock after iterator, length of pendingTransactions is: {}",
-        pendingTransactions.size());
-
-
     if (postponedTrxCount > 0) {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
     }
@@ -1155,9 +1138,6 @@ public class Manager {
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(privateKey);
     blockCapsule.generatedByMyself = true;
-
-    logger.error("pending to block total consume: {} ms",
-        System.nanoTime() / 1000000 - jack_generate_start);
 
     try {
       this.pushBlock(blockCapsule);
@@ -1237,16 +1217,11 @@ public class Manager {
       throw new ValidateScheduleException("validateWitnessSchedule error");
     }
 
-    long jack_processblock_start = System.nanoTime() / 1000000;
-
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-      long jack_processblock_one_tx_start = System.nanoTime() / 1000000;
       if (block.generatedByMyself) {
         transactionCapsule.setVerified(true);
       }
       processTransaction(transactionCapsule, block.getInstance());
-      logger.error("in processblock one tx consume: {} ms",
-          System.nanoTime() / 1000000 - jack_processblock_one_tx_start);
     }
 
     boolean needMaint = needMaintenance(block.getTimeStamp());
@@ -1264,9 +1239,6 @@ public class Manager {
     updateMaintenanceState(needMaint);
     //witnessController.updateWitnessSchedule();
     updateRecentBlock(block);
-
-    logger.error("processblock consume: {} ms",
-        System.nanoTime() / 1000000 - jack_processblock_start);
 
   }
 
@@ -1513,19 +1485,18 @@ public class Manager {
     }
   }
 
-  public int rePush(TransactionCapsule tx, int index) {
+  public void rePush(TransactionCapsule tx) {
 
     try {
       if (transactionStore.get(tx.getTransactionId().getBytes()) != null) {
-        return index;
+        return;
       }
     } catch (BadItemException e) {
       // do nothing
     }
 
     try {
-      this.pushTransactions(tx, index);
-      index += 1;
+      this.pushTransactions(tx);
     } catch (ValidateSignatureException e) {
       logger.debug(e.getMessage(), e);
     } catch (ContractValidateException e) {
@@ -1549,8 +1520,6 @@ public class Manager {
     } catch (OutOfSlotTimeException e) {
       logger.debug("outOfSlotTime transaction");
     }
-
-    return index;
   }
 
 

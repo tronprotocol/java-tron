@@ -15,24 +15,15 @@ public class PendingManager implements AutoCloseable {
 
   public PendingManager(Manager db) {
 
-    long jack_pendingManager_init_start = System.nanoTime() / 1000000;
-
     this.dbManager = db;
-    logger.error("PendingManager length of pendingTransactions is: {}",
-        db.getPendingTransactions().size());
     tmpTransactions.addAll(db.getPendingTransactions());
-    logger.error("PendingManager length of tmpTransactions is: {}", tmpTransactions.size());
     db.getPendingTransactions().clear();
     db.getSession().reset();
-
-    logger.error("pending to block total consume: {} ms",
-        System.nanoTime() / 1000000 - jack_pendingManager_init_start);
   }
 
   @Override
   public void close() {
 
-    long jack_close_start = System.nanoTime() / 1000000;
     for (TransactionCapsule tx : this.tmpTransactions) {
       try {
         dbManager.getRepushTransactions().put(tx);
@@ -49,13 +40,8 @@ public class PendingManager implements AutoCloseable {
       }
     }
 
-    logger.error("close length of repushTransactions is: {}",
-        dbManager.getRepushTransactions().size());
-
     dbManager.getPoppedTransactions().clear();
     tmpTransactions.clear();
 
-    logger.error("close total consume: {} ms",
-        System.nanoTime() / 1000000 - jack_close_start);
   }
 }
