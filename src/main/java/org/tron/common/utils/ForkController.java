@@ -1,7 +1,6 @@
 package org.tron.common.utils;
 
 import com.google.protobuf.ByteString;
-import java.util.Arrays;
 import java.util.List;
 import lombok.Getter;
 import org.springframework.stereotype.Component;
@@ -48,7 +47,7 @@ public class ForkController {
 
   public synchronized void update(BlockCapsule blockCapsule) {
     List<ByteString> witnesses = manager.getWitnessController().getActiveWitnesses();
-    if (witnesses.size() > slots.length) {
+    if (witnesses.size() != slots.length) {
       slots = new int[witnesses.size()];
     }
 
