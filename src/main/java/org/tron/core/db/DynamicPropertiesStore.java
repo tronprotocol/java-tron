@@ -1,5 +1,6 @@
 package org.tron.core.db;
 
+import com.google.common.primitives.Booleans;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.Optional;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.Parameter;
@@ -104,6 +106,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] TOTAL_STORAGE_RESERVED = "TOTAL_STORAGE_RESERVED".getBytes();
 
   private static final byte[] STORAGE_EXCHANGE_TAX_RATE = "STORAGE_EXCHANGE_TAX_RATE".getBytes();
+
+  private static final byte[] FORK_CONTROLLER = "FORK_CONTROLLER".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -987,5 +991,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void addTotalTransactionCost(long fee) {
     long newValue = getTotalTransactionCost() + fee;
     saveTotalTransactionCost(newValue);
+  }
+
+  public void setForkController(boolean fork) {
+    put(FORK_CONTROLLER, new BytesCapsule(Boolean.toString(fork).getBytes()));
+  }
+
+  public boolean getForkController() {
+    byte[] value = revokingDB.getUnchecked(FORK_CONTROLLER);
+    return value == null ? Boolean.FALSE : Boolean.valueOf(new String(value));
   }
 }

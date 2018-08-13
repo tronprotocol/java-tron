@@ -18,10 +18,11 @@ public class ForkController {
   @Getter
   private Manager manager;
   private volatile int[] slots = new int[0];
-  private boolean fork = false;
+  private boolean fork;
 
   public void init(Manager manager) {
     this.manager = manager;
+    fork = manager.getDynamicPropertiesStore().getForkController();
   }
 
   public synchronized boolean shouldBeForked() {
@@ -36,6 +37,7 @@ public class ForkController {
     }
 
     fork = true;
+    manager.getDynamicPropertiesStore().setForkController(true);
     return true;
   }
 
