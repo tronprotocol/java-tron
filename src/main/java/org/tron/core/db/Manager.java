@@ -334,6 +334,7 @@ public class Manager {
           Args.getInstance().getOutputDirectory());
       System.exit(1);
     }
+    forkController.init(this);
     revokingStore.enable();
 
 //    this.codeStore = CodeStore.create("code");
@@ -1085,7 +1086,7 @@ public class Manager {
 //        trx.resetResult();
         tmpSeesion.merge();
         // push into block
-        if (forkController.dealOrNot(trx)) {
+        if (forkController.forkOrNot(trx)) {
           blockCapsule.addTransaction(trx);
         }
         iterator.remove();

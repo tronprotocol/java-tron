@@ -385,7 +385,7 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public boolean dealOrNot(TransactionCapsule transactionCapsule) {
-    return dbManager.getForkController().dealOrNot(transactionCapsule);
+  public boolean forkOrNot(TransactionCapsule transactionCapsule) {
+    return dbManager.getForkController().forkOrNot(transactionCapsule);
   }
 }

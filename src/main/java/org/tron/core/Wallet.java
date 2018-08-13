@@ -375,7 +375,7 @@ public class Wallet {
       }
 
       dbManager.pushTransactions(trx);
-      if (dbManager.getForkController().dealOrNot(trx)) {
+      if (dbManager.getForkController().forkOrNot(trx)) {
         p2pNode.broadcast(message);
       }
       return builder.setResult(true).setCode(response_code.SUCCESS).build();

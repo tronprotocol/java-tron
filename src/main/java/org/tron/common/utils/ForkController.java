@@ -2,9 +2,7 @@ package org.tron.common.utils;
 
 import com.google.protobuf.ByteString;
 import java.util.List;
-import javax.annotation.PostConstruct;
 import lombok.Getter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -22,8 +20,8 @@ public class ForkController {
   private volatile int[] slots;
   private boolean fork = false;
 
-  @PostConstruct
-  public void init() {
+  public void init(Manager manager) {
+    this.manager = manager;
     int size = manager.getWitnessController().getActiveWitnesses().size();
     slots = new int[size];
   }
@@ -43,7 +41,7 @@ public class ForkController {
     return true;
   }
 
-  public boolean dealOrNot(TransactionCapsule capsule) {
+  public boolean forkOrNot(TransactionCapsule capsule) {
     return shouldBeForked()
         || capsule.getInstance().getRawData().getContractList().get(0).getType().getNumber()
         <= DISCARD_SCOPE;
@@ -60,11 +58,6 @@ public class ForkController {
     }
 
     slots[slot] = blockCapsule.getInstance().getBlockHeader().getRawData().getVersion();
-  }
-
-  @Autowired
-  public void setManager(Manager manager) {
-    this.manager = manager;
   }
 
 }

@@ -50,5 +50,5 @@ public interface NodeDelegate {
 
   boolean canChainRevoke(long num);
 
-  boolean dealOrNot(TransactionCapsule transactionCapsule);
+  boolean forkOrNot(TransactionCapsule transactionCapsule);
 }
