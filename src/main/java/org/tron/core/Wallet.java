@@ -382,7 +382,7 @@ public class Wallet {
         dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
       }
 
-      dbManager.pushTransactions(trx);
+      dbManager.pushTransactions(trx, -1);
       p2pNode.broadcast(message);
       return builder.setResult(true).setCode(response_code.SUCCESS).build();
     } catch (ValidateSignatureException e) {

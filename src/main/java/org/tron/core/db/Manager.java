@@ -16,12 +16,14 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
 import javax.annotation.PostConstruct;
@@ -221,12 +223,19 @@ public class Manager {
     return this.popedTransactions;
   }
 
+  public BlockingQueue<TransactionCapsule> getRepushTransactions() {
+    return this.repushTransactions;
+  }
+
   // transactions cache
   private List<TransactionCapsule> pendingTransactions;
 
   // transactions popped
   private List<TransactionCapsule> popedTransactions =
       Collections.synchronizedList(Lists.newArrayList());
+
+  // the capacity is equal to Integer.MAX_VALUE defaults
+  private BlockingQueue<TransactionCapsule> repushTransactions = new LinkedBlockingQueue<>();
 
   // for test only
   public List<ByteString> getWitnesses() {
@@ -532,9 +541,9 @@ public class Manager {
   }
 
   /**
-   * push transaction into db.
+   * push transaction into pending.
    */
-  public boolean pushTransactions(final TransactionCapsule trx)
+  public boolean pushTransactions(final TransactionCapsule trx, int index)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, DupTransactionException, TaposException,
       TooBigTransactionException, TransactionExpirationException, ReceiptException, TransactionTraceException, OutOfSlotTimeException {
@@ -551,7 +560,12 @@ public class Manager {
 
       try (ISession tmpSession = revokingStore.buildSession()) {
         processTransaction(trx, null);
-        pendingTransactions.add(trx);
+        if (-1 == index) {
+          pendingTransactions.add(trx);
+        } else {
+          // time complexity is O(n)
+          pendingTransactions.add(index, trx);
+        }
         tmpSession.merge();
       }
     }
@@ -618,6 +632,9 @@ public class Manager {
       revokingStore.pop();
       logger.info("end to erase block:" + oldHeadBlock);
       popedTransactions.addAll(oldHeadBlock.getTransactions());
+      // todo: need add ??
+      // repushTransactions.addAll(oldHeadBlock.getTransactions());
+      //
     } catch (ItemNotFoundException | BadItemException e) {
       logger.warn(e.getMessage(), e);
     }
@@ -1075,7 +1092,7 @@ public class Manager {
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
         processTransaction(trx, null);
-//        trx.resetResult();
+        // trx.resetResult();
         tmpSeesion.merge();
         // push into block
         blockCapsule.addTransaction(trx);
@@ -1408,7 +1425,8 @@ public class Manager {
   }
 
   public boolean isTooManyPending() {
-    if (getPendingTransactions().size() + PendingManager.getTmpTransactions().size()
+    // if (getPendingTransactions().size() + PendingManager.getTmpTransactions().size()
+    if (getPendingTransactions().size() + getRepushTransactions().size()
         > MAX_TRANSACTION_PENDING) {
       return true;
     }
@@ -1468,4 +1486,46 @@ public class Manager {
       }
     }
   }
+
+  public int rePush(TransactionCapsule tx, int index) {
+
+    try {
+      if (transactionStore.get(tx.getTransactionId().getBytes()) != null) {
+        return index;
+      }
+    } catch (BadItemException e) {
+      // do nothing
+    }
+
+    try {
+      this.pushTransactions(tx, index);
+      index += 1;
+    } catch (ValidateSignatureException e) {
+      logger.debug(e.getMessage(), e);
+    } catch (ContractValidateException e) {
+      logger.debug(e.getMessage(), e);
+    } catch (ContractExeException e) {
+      logger.debug(e.getMessage(), e);
+    } catch (AccountResourceInsufficientException e) {
+      logger.debug(e.getMessage(), e);
+    } catch (DupTransactionException e) {
+      logger.debug("pending manager: dup trans", e);
+    } catch (TaposException e) {
+      logger.debug("pending manager: tapos exception", e);
+    } catch (TooBigTransactionException e) {
+      logger.debug("too big transaction");
+    } catch (ReceiptException e) {
+      logger.info("Receipt exception," + e.getMessage());
+    } catch (TransactionExpirationException e) {
+      logger.debug("expiration transaction");
+    } catch (TransactionTraceException e) {
+      logger.debug("transactionTrace transaction");
+    } catch (OutOfSlotTimeException e) {
+      logger.debug("outOfSlotTime transaction");
+    }
+
+    return index;
+  }
+
+
 }

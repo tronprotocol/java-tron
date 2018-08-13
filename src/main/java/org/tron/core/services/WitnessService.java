@@ -18,6 +18,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
@@ -45,6 +46,7 @@ public class WitnessService implements Service {
   protected Map<ByteString, WitnessCapsule> localWitnessStateMap = Maps
       .newHashMap(); //  <address,WitnessCapsule>
   private Thread generateThread;
+  private Thread repushThread;
   private volatile boolean isRunning = false;
   private Map<ByteString, byte[]> privateKeyMap = Maps.newHashMap();
   private volatile boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
@@ -66,6 +68,7 @@ public class WitnessService implements Service {
     backupManager = context.getBean(BackupManager.class);
     backupServer = context.getBean(BackupServer.class);
     generateThread = new Thread(scheduleProductionLoop);
+    repushThread = new Thread(repushLoop);
     controller = tronApp.getDbManager().getWitnessController();
     new Thread(() -> {
       while (needSyncCheck) {
@@ -112,6 +115,25 @@ public class WitnessService implements Service {
             logger.error("unknown exception happened in witness loop", ex);
           } catch (Throwable throwable) {
             logger.error("unknown throwable happened in witness loop", throwable);
+          }
+        }
+      };
+
+  /**
+   * Cycle thread to repush Transactions
+   */
+  private Runnable repushLoop =
+      () -> {
+        int index = 0;
+        while (isRunning) {
+          try {
+            if (this.tronApp.getDbManager().getRepushTransactions().isEmpty()) {
+              index = 0;
+            }
+            TransactionCapsule tx = this.tronApp.getDbManager().getRepushTransactions().take();
+            index = this.tronApp.getDbManager().rePush(tx, index);
+          } catch (InterruptedException e) {
+            // do nothing
           }
         }
       };
@@ -301,11 +323,13 @@ public class WitnessService implements Service {
   public void start() {
     isRunning = true;
     generateThread.start();
+    repushThread.start();
   }
 
   @Override
   public void stop() {
     isRunning = false;
     generateThread.interrupt();
+    repushThread.interrupt();
   }
 }
