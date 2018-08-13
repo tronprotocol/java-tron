@@ -464,7 +464,7 @@ public class Program {
     // [4] TRANSFER THE BALANCE
     long newBalance = 0L;
     if (!byTestingSuite() && endowment > 0) {
-      TransferActuator.validate(deposit, senderAddress, newAddress, endowment);
+      TransferActuator.validateForSmartContract(deposit, senderAddress, newAddress, endowment);
       deposit.addBalance(senderAddress, -endowment);
       newBalance = deposit.addBalance(newAddress, endowment);
     }
@@ -620,7 +620,7 @@ public class Program {
           msg.getEndowment().getNoLeadZeroesData());
     } else if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
         && senderAddress != contextAddress && endowment > 0) {
-      TransferActuator.validate(deposit, senderAddress, contextAddress, endowment);
+      TransferActuator.validateForSmartContract(deposit, senderAddress, contextAddress, endowment);
       deposit.addBalance(senderAddress, -endowment);
       contextBalance = deposit.addBalance(contextAddress, endowment);
     }
