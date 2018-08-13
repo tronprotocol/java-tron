@@ -1076,6 +1076,10 @@ public class Manager {
         new BlockCapsule(number + 1, preHash, when, witnessCapsule.getAddress());
     session.reset();
     session.setValue(revokingStore.buildSession());
+
+    logger.error("generateBlock before iterator, length of pendingTransactions is: {}",
+        pendingTransactions.size());
+
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext()) {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
@@ -1136,6 +1140,10 @@ public class Manager {
     }
 
     session.reset();
+
+    logger.error("generateBlock after iterator, length of pendingTransactions is: {}",
+        pendingTransactions.size());
+
 
     if (postponedTrxCount > 0) {
       logger.info("{} transactions over the block size limit", postponedTrxCount);

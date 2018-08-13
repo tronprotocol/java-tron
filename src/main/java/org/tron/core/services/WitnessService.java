@@ -4,6 +4,7 @@ import static org.tron.core.witness.BlockProductionCondition.NOT_MY_TURN;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
+import java.util.Date;
 import java.util.Map;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -124,17 +125,26 @@ public class WitnessService implements Service {
    */
   private Runnable repushLoop =
       () -> {
-        int index = 0;
+        // int index = 0;
         while (isRunning) {
+          // try {
+          //   if (this.tronApp.getDbManager().getRepushTransactions().isEmpty()) {
+          //     index = 0;
+          //   }
+          //   TransactionCapsule tx = this.tronApp.getDbManager().getRepushTransactions().take();
+          //   index = this.tronApp.getDbManager().rePush(tx, index);
+          // } catch (InterruptedException e) {
+          //   // do nothing
+          // }
+
           try {
-            if (this.tronApp.getDbManager().getRepushTransactions().isEmpty()) {
-              index = 0;
-            }
             TransactionCapsule tx = this.tronApp.getDbManager().getRepushTransactions().take();
-            index = this.tronApp.getDbManager().rePush(tx, index);
+            this.tronApp.getDbManager().rePush(tx, -1);
           } catch (InterruptedException e) {
             // do nothing
           }
+
+
         }
       };
 
@@ -243,6 +253,10 @@ public class WitnessService implements Service {
     }
 
     try {
+
+      logger.error("setGeneratingBlock true " + String
+          .format("%tF %tT", new Date(), new Date()));
+
       controller.setGeneratingBlock(true);
       BlockCapsule block = generateBlock(scheduledTime, scheduledWitness);
 
@@ -272,7 +286,10 @@ public class WitnessService implements Service {
       return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
     } finally {
       controller.setGeneratingBlock(false);
+      logger.error("setGeneratingBlock true " + String
+          .format("%tF %tT", new Date(), new Date()));
     }
+
 
   }
 

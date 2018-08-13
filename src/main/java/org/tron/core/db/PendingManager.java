@@ -18,7 +18,10 @@ public class PendingManager implements AutoCloseable {
     long jack_pendingManager_init_start = System.nanoTime() / 1000000;
 
     this.dbManager = db;
+    logger.error("PendingManager length of pendingTransactions is: {}",
+        db.getPendingTransactions().size());
     tmpTransactions.addAll(db.getPendingTransactions());
+    logger.error("PendingManager length of tmpTransactions is: {}", tmpTransactions.size());
     db.getPendingTransactions().clear();
     db.getSession().reset();
 
@@ -45,6 +48,9 @@ public class PendingManager implements AutoCloseable {
         continue;
       }
     }
+
+    logger.error("close length of repushTransactions is: {}",
+        dbManager.getRepushTransactions().size());
 
     dbManager.getPoppedTransactions().clear();
     tmpTransactions.clear();
