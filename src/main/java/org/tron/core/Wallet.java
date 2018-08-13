@@ -537,6 +537,12 @@ public class Wallet {
             dynamicPropertiesStore.getCreateNewAccountBandwidthRate())
         .build());
 
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.ALLOW_CREATION_OF_CONTRACTS.name())
+        .setValue(
+            dynamicPropertiesStore.getAllowCreationOfContracts())
+        .build());
+
     return builder.build();
   }
 
