@@ -134,7 +134,8 @@ public class TransferActuator extends AbstractActuator {
     return true;
   }
 
-  public static boolean validate(Deposit deposit, byte[] ownerAddress, byte[] toAddress, long amount) throws ContractValidateException {
+  public static boolean validateForSmartContract(Deposit deposit, byte[] ownerAddress,
+      byte[] toAddress, long amount) throws ContractValidateException {
     if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
@@ -153,13 +154,14 @@ public class TransferActuator extends AbstractActuator {
 
     AccountCapsule toAccount = deposit.getAccount(toAddress);
     if (toAccount == null) {
-      throw new ContractValidateException("Validate InternalTransfer error, no ToAccount. And not allowed to create account in smart contract.");
+      throw new ContractValidateException(
+          "Validate InternalTransfer error, no ToAccount. And not allowed to create account in smart contract.");
     }
 
     long balance = ownerAccount.getBalance();
 
-    if (amount <= 0) {
-      throw new ContractValidateException("Amount must greater than 0.");
+    if (amount < 0) {
+      throw new ContractValidateException("Amount must greater than or equals 0.");
     }
 
     try {

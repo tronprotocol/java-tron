@@ -19,16 +19,17 @@ package org.tron.common.runtime.vm.program;
 
 import java.util.HashSet;
 import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.vm.OpCode;
 
+
+@Slf4j(topic = "ProgramPrecompile")
 /**
  * Created by Anton Nashatyrev on 06.02.2017.
  */
 public class ProgramPrecompile {
 
-  private static final Logger logger = LoggerFactory.getLogger("PP");
+  // private static final Logger logger = LoggerFactory.getLogger("PP");
   private static final int version = 1;
 
   private Set<Integer> jumpdest = new HashSet<>();

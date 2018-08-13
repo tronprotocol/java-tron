@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -132,7 +133,8 @@ public class Manager {
   @Autowired
   private ContractStore contractStore;
   @Autowired
-  private StorageStore storageStore;
+  @Getter
+  private StorageRowStore storageRowStore;
 
   // for network
   @Autowired
@@ -199,10 +201,6 @@ public class Manager {
 
   public void setWitnessScheduleStore(final WitnessScheduleStore witnessScheduleStore) {
     this.witnessScheduleStore = witnessScheduleStore;
-  }
-
-  public StorageStore getStorageStore() {
-    return storageStore;
   }
 
   public CodeStore getCodeStore() {
@@ -1005,6 +1003,11 @@ public class Manager {
     transactionInfoCapsule.setFee(runtime.getResult().getRet().getFee());
     transactionInfoCapsule.setContractResult(runtime.getResult().getHReturn());
     transactionInfoCapsule.setContractAddress(runtime.getResult().getContractAddress());
+    if (Objects.nonNull(block)) {
+      transactionInfoCapsule.setBlockNumber(block.getBlockHeader().getRawData().getNumber());
+      transactionInfoCapsule.setBlockTimeStamp(block.getBlockHeader().getRawData().getTimestamp());
+    }
+    transactionInfoCapsule.parseTransactionResult(runtime.getResult().getRet());
 
     List<Log> logList = getLogsByLogInfoList(runtime.getResult().getLogInfoList());
     transactionInfoCapsule.addAllLog(logList);
@@ -1402,7 +1405,7 @@ public class Manager {
     closeOneStore(utxoStore);
     closeOneStore(codeStore);
     closeOneStore(contractStore);
-    closeOneStore(storageStore);
+    closeOneStore(storageRowStore);
     System.err.println("******** end to close db ********");
   }
 

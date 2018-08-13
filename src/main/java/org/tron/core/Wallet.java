@@ -308,15 +308,23 @@ public class Wallet {
     }
 
     if (contractType == ContractType.CreateSmartContract) {
-      // insure one owner just have one contract
+
       CreateSmartContract contract = ContractCapsule
           .getSmartContractFromTransaction(trx.getInstance());
-      byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
-      if (dbManager.getAccountContractIndexStore().get(ownerAddress) != null) {
-        throw new ContractValidateException(
-            "Trying to create second contract with one account: address: " + Wallet
-                .encode58Check(ownerAddress));
+      long percent = contract.getNewContract().getConsumeUserResourcePercent();
+      if (percent < 0 || percent > 100) {
+        throw new ContractValidateException("percent must be >= 0 and <= 100");
       }
+
+//        // insure one owner just have one contract
+//        CreateSmartContract contract = ContractCapsule
+//            .getSmartContractFromTransaction(trx.getInstance());
+//        byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
+//        if (dbManager.getAccountContractIndexStore().get(ownerAddress) != null) {
+//          throw new ContractValidateException(
+//              "Trying to create second contract with one account: address: " + Wallet
+//                  .encode58Check(ownerAddress));
+//        }
 
 //        // insure the new contract address haven't exist
 //        if (deposit.getAccount(contractAddress) != null) {
@@ -529,6 +537,12 @@ public class Wallet {
         .setKey(ChainParameters.CREATE_NEW_ACCOUNT_BANDWIDTH_RATE.name())
         .setValue(
             dynamicPropertiesStore.getCreateNewAccountBandwidthRate())
+        .build());
+
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.ALLOW_CREATION_OF_CONTRACTS.name())
+        .setValue(
+            dynamicPropertiesStore.getAllowCreationOfContracts())
         .build());
 
     return builder.build();

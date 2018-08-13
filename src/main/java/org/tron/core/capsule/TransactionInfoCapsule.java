@@ -46,6 +46,24 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
     return transactionInfo.getId().toByteArray();
   }
 
+
+
+  public void setUnfreezeAmount(long amount) {
+    this.transactionInfo = this.transactionInfo.toBuilder().setUnfreezeAmount(amount).build();
+  }
+
+  public long getUnfreezeAmount() {
+    return transactionInfo.getUnfreezeAmount();
+  }
+
+  public void setWithdrawAmount(long amount) {
+    this.transactionInfo = this.transactionInfo.toBuilder().setWithdrawAmount(amount).build();
+  }
+
+  public long getWithdrawAmount() {
+    return transactionInfo.getWithdrawAmount();
+  }
+
   public void setFee(long fee) {
     this.transactionInfo = this.transactionInfo.toBuilder().setFee(fee).build();
   }
@@ -122,5 +140,10 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
   @Override
   public TransactionInfo getInstance() {
     return this.transactionInfo;
+  }
+
+  public void parseTransactionResult(TransactionResultCapsule ret) {
+    setUnfreezeAmount(ret.getUnfreezeAmount());
+    setWithdrawAmount(ret.getWithdrawAmount());
   }
 }
