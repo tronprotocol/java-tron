@@ -108,6 +108,8 @@ public class Reputation {
               || t.getTronLastLocalDisconnectReason() == ReasonCode.CONNECT_FAIL) {
             // The peer is popular, but we were unlucky
             baseScore *= 0.9;
+          } else if (t.getTronLastLocalDisconnectReason() == ReasonCode.RESET) {
+            baseScore *= 0.95;
           } else if (t.getTronLastRemoteDisconnectReason() != ReasonCode.REQUESTED) {
             // other disconnect reasons
             baseScore *= 0.7;

@@ -137,6 +137,9 @@ public class NodeStatistics {
     if (firstDisconnectedTime <= 0) {
       firstDisconnectedTime = lastDisconnectedTime;
     }
+    if (tronLastLocalDisconnectReason == ReasonCode.RESET) {
+      return;
+    }
     disconnectTimes++;
     persistedReputation = persistedReputation / 2;
   }
