@@ -1,6 +1,5 @@
 package org.tron.core.db;
 
-import com.google.common.primitives.Booleans;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.Optional;
@@ -10,9 +9,7 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.Parameter;
