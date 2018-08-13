@@ -1,6 +1,7 @@
 package org.tron.common.utils;
 
 import com.google.protobuf.ByteString;
+import java.util.Arrays;
 import java.util.List;
 import lombok.Getter;
 import org.springframework.stereotype.Component;
@@ -17,13 +18,11 @@ public class ForkController {
 
   @Getter
   private Manager manager;
-  private volatile int[] slots;
+  private volatile int[] slots = new int[0];
   private boolean fork = false;
 
   public void init(Manager manager) {
     this.manager = manager;
-    int size = manager.getWitnessController().getActiveWitnesses().size();
-    slots = new int[size];
   }
 
   public synchronized boolean shouldBeForked() {
@@ -41,16 +40,20 @@ public class ForkController {
     return true;
   }
 
-  public boolean forkOrNot(TransactionCapsule capsule) {
+  public synchronized boolean forkOrNot(TransactionCapsule capsule) {
     return shouldBeForked()
         || capsule.getInstance().getRawData().getContractList().get(0).getType().getNumber()
         <= DISCARD_SCOPE;
   }
 
   public synchronized void update(BlockCapsule blockCapsule) {
+    List<ByteString> witnesses = manager.getWitnessController().getActiveWitnesses();
+    if (witnesses.size() > slots.length) {
+      slots = new int[witnesses.size()];
+    }
+
     ByteString witness = blockCapsule.getWitnessAddress();
     int slot = 0;
-    List<ByteString> witnesses = manager.getWitnessController().getActiveWitnesses();
     for (ByteString scheduledWitness : witnesses) {
       if (!scheduledWitness.equals(witness)) {
         ++slot;
