@@ -922,7 +922,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       startSyncWithPeer(peer);
     }
 
-    peer.setLastSyncBlockId(blockIds.peekLast());
+    if (blockIds.peekLast() == null){
+      peer.setLastSyncBlockId(del.getHeadBlockId());
+    }else {
+      peer.setLastSyncBlockId(blockIds.peekLast());
+    }
     peer.setRemainNum(remainNum);
     peer.sendMessage(new ChainInventoryMessage(blockIds, remainNum));
   }
