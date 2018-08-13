@@ -107,7 +107,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] FORK_CONTROLLER = "FORK_CONTROLLER".getBytes();
 
   //If the parameter is larger than 0, the contract is allowed to be created.
-  private static final byte[] ALLOW_CREATION_OF_CONTRACTS = "ALLOW_CREATION_OF_CONTRACTS".getBytes();
+  private static final byte[] ALLOW_CREATION_OF_CONTRACTS = "ALLOW_CREATION_OF_CONTRACTS"
+      .getBytes();
 
 
   @Autowired
