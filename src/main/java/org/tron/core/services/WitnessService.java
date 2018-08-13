@@ -324,7 +324,7 @@ public class WitnessService implements Service {
       } catch (InterruptedException e) {
         // do nothing
       }
-    }, 1000, 1000, TimeUnit.MILLISECONDS);
+    }, 0, 0, TimeUnit.MILLISECONDS);
   }
 
   @Override
