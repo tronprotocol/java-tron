@@ -1059,6 +1059,8 @@ public class Manager {
 
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, TransactionTraceException {
 
+    long jack_generate_start = System.nanoTime() / 1000000;
+
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
     final Sha256Hash preHash = this.dynamicPropertiesStore.getLatestBlockHeaderHash();
@@ -1091,8 +1093,11 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
+        long jack_tx_start = System.nanoTime() / 1000000;
         processTransaction(trx, null);
-        // trx.resetResult();
+        logger.error("in generateBlock one tx consume: {} ms",
+            System.nanoTime() / 1000000 - jack_tx_start);
+//        trx.resetResult();
         tmpSeesion.merge();
         // push into block
         blockCapsule.addTransaction(trx);
@@ -1142,6 +1147,10 @@ public class Manager {
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(privateKey);
     blockCapsule.generatedByMyself = true;
+
+    logger.error("pending to block total consume: {} ms",
+        System.nanoTime() / 1000000 - jack_generate_start);
+
     try {
       this.pushBlock(blockCapsule);
       return blockCapsule;
@@ -1220,11 +1229,16 @@ public class Manager {
       throw new ValidateScheduleException("validateWitnessSchedule error");
     }
 
+    long jack_processblock_start = System.nanoTime() / 1000000;
+
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+      long jack_processblock_one_tx_start = System.nanoTime() / 1000000;
       if (block.generatedByMyself) {
         transactionCapsule.setVerified(true);
       }
       processTransaction(transactionCapsule, block.getInstance());
+      logger.error("in processblock one tx consume: {} ms",
+          System.nanoTime() / 1000000 - jack_processblock_one_tx_start);
     }
 
     boolean needMaint = needMaintenance(block.getTimeStamp());
@@ -1242,6 +1256,10 @@ public class Manager {
     updateMaintenanceState(needMaint);
     //witnessController.updateWitnessSchedule();
     updateRecentBlock(block);
+
+    logger.error("processblock consume: {} ms",
+        System.nanoTime() / 1000000 - jack_processblock_start);
+
   }
 
   private void updateTransHashCache(BlockCapsule block) {
