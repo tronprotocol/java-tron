@@ -1028,9 +1028,10 @@ public class Manager {
                 resultJsonArray.add(result.getValue());
               }
 
-              MessageProperties someProperties = new MessageProperties();
+              long blockNumber = block.getBlockHeader().getRawData().getNumber();
+              long blockTimestamp = block.getBlockHeader().getRawData().getTimestamp();
               amqpTemplate.send(org.tron.mq.Constant.EXCHANGE, contractAddressHexString + "." + entryName,
-                      new Message(resultJsonArray.toJSONString().getBytes(), someProperties));
+                      new Message(resultJsonArray.toJSONString().getBytes(), new MessageProperties()));
             }
           });
         });
