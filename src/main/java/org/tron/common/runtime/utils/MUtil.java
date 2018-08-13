@@ -17,7 +17,10 @@ public class MUtil {
 
   public static void transfer(Deposit deposit, byte[] fromAddress, byte[] toAddress, long amount)
       throws ContractValidateException {
-    TransferActuator.validate(deposit, fromAddress, toAddress, amount);
+    if (0 == amount) {
+      return;
+    }
+    TransferActuator.validateForSmartContract(deposit, fromAddress, toAddress, amount);
     if (deposit.getBalance(fromAddress) < amount) {
       throw new RuntimeException(
           Hex.toHexString(fromAddress).toUpperCase() + " not enough balance!");

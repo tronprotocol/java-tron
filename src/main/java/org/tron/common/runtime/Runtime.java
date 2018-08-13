@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.PrecompiledContracts;
@@ -538,7 +539,7 @@ public class Runtime {
 
   }
 
-  public void go() throws OutOfSlotTimeException {
+  public void go() throws OutOfSlotTimeException, ContractExeException {
     if (!readyToExecute) {
       return;
     }
@@ -580,13 +581,19 @@ public class Runtime {
         }
 
       } else {
-          deposit.commit();
+        deposit.commit();
       }
     } catch (OutOfResourceException e) {
       logger.error(e.getMessage());
       throw new OutOfSlotTimeException(e.getMessage());
+    } catch (ArithmeticException e) {
+      logger.error(e.getMessage());
+      throw new ContractExeException(e.getMessage());
     } catch (Exception e) {
       logger.error(e.getMessage());
+      if (StringUtils.isNoneEmpty(runtimeError)) {
+        runtimeError = e.getMessage();
+      }
     }
   }
 
@@ -600,32 +607,34 @@ public class Runtime {
     long originResourcePercent = 100 - contract.getConsumeUserResourcePercent();
     originResourcePercent = min(originResourcePercent, 100);
     originResourcePercent = max(originResourcePercent, 0);
-    long originCpuUsage = cpuUsage * originResourcePercent / 100;
+    long originCpuUsage = Math.multiplyExact(cpuUsage, originResourcePercent) / 100;
     originCpuUsage = min(originCpuUsage, cpuProcessor.getAccountLeftCpuInUsFromFreeze(origin));
     long callerCpuUsage = cpuUsage - originCpuUsage;
 
     if (useedStorageSize <= 0) {
-      trace.setBill(callerCpuUsage, 0);
+      trace.setBill(cpuUsage, 0);
       return true;
     }
-    long originStorageUsage = useedStorageSize * originResourcePercent / 100;
+    long originStorageUsage = Math
+        .multiplyExact(useedStorageSize, originResourcePercent) / 100;
     originStorageUsage = min(originCpuUsage, origin.getStorageLeft());
     long callerStorageUsage = useedStorageSize - originStorageUsage;
 
     byte[] callerAddressBytes = TransactionCapsule.getOwner(trx.getRawData().getContract(0));
     AccountCapsule caller = deposit.getAccount(callerAddressBytes);
     long storageFee = trx.getRawData().getFeeLimit();
-    long cpuFee = (callerCpuUsage - cpuProcessor.getAccountLeftCpuInUsFromFreeze(caller))
-        * Constant.SUN_PER_GAS;
+    long cpuFee = Math
+        .multiplyExact((callerCpuUsage - cpuProcessor.getAccountLeftCpuInUsFromFreeze(caller))
+            , Constant.SUN_PER_GAS);
     if (cpuFee > 0) {
       storageFee -= cpuFee;
     }
     long tryBuyStorage = storageMarket.tryBuyStorage(storageFee);
     if (tryBuyStorage + caller.getStorageLeft() < callerStorageUsage) {
-      trace.setBill(callerCpuUsage, 0);
+      trace.setBill(cpuUsage, 0);
       return false;
     }
-    trace.setBill(callerCpuUsage, callerStorageUsage);
+    trace.setBill(cpuUsage, useedStorageSize);
     return true;
   }
 

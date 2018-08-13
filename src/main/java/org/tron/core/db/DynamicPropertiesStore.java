@@ -9,7 +9,6 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BytesCapsule;
@@ -104,6 +103,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] TOTAL_STORAGE_RESERVED = "TOTAL_STORAGE_RESERVED".getBytes();
 
   private static final byte[] STORAGE_EXCHANGE_TAX_RATE = "STORAGE_EXCHANGE_TAX_RATE".getBytes();
+
+  //If the parameter is larger than 0, the contract is allowed to be created.
+  private static final byte[] ALLOW_CREATION_OF_CONTRACTS = "ALLOW_CREATION_OF_CONTRACTS".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -335,6 +337,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getStorageExchangeTaxRate();
     } catch (IllegalArgumentException e) {
       this.saveStorageExchangeTaxRate(10);
+    }
+
+    try {
+      this.getAllowCreationOfContracts();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowCreationOfContracts(0L);
     }
 
     try {
@@ -799,6 +807,21 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElseThrow(
             () -> new IllegalArgumentException("not found STORAGE_EXCHANGE_TAX_RATE"));
   }
+
+  public void saveAllowCreationOfContracts(long allowCreationOfContracts) {
+    this.put(DynamicPropertiesStore.ALLOW_CREATION_OF_CONTRACTS,
+        new BytesCapsule(ByteArray.fromLong(allowCreationOfContracts)));
+  }
+
+  public long getAllowCreationOfContracts() {
+    return Optional.ofNullable(getUnchecked(ALLOW_CREATION_OF_CONTRACTS))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_CREATION_OF_CONTRACTS"));
+  }
+
+
 
   public void saveBlockFilledSlots(int[] blockFilledSlots) {
     logger.debug("blockFilledSlots:" + intArrayToString(blockFilledSlots));

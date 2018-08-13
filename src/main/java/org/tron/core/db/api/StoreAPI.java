@@ -1,12 +1,9 @@
 package org.tron.core.db.api;
 
-import static com.googlecode.cqengine.query.QueryFactory.applyThresholds;
 import static com.googlecode.cqengine.query.QueryFactory.ascending;
 import static com.googlecode.cqengine.query.QueryFactory.equal;
 import static com.googlecode.cqengine.query.QueryFactory.orderBy;
 import static com.googlecode.cqengine.query.QueryFactory.queryOptions;
-import static com.googlecode.cqengine.query.QueryFactory.threshold;
-import static com.googlecode.cqengine.query.option.EngineThresholds.INDEX_ORDERING_SELECTIVITY;
 import static org.tron.core.config.Parameter.DatabaseConstants.TRANSACTIONS_COUNT_LIMIT_MAX;
 
 import com.google.common.collect.ImmutableList;
@@ -103,8 +100,7 @@ public class StoreAPI {
         index.retrieve(
             equal(TransactionIndex.OWNERS, address),
             queryOptions(
-                orderBy(ascending(TransactionIndex.TIMESTAMP)),
-                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
+                orderBy(ascending(TransactionIndex.INDEX_CREATE_TIMESTAMP))))) {
       if (limit > TRANSACTIONS_COUNT_LIMIT_MAX) {
         limit = TRANSACTIONS_COUNT_LIMIT_MAX;
       }
@@ -122,8 +118,7 @@ public class StoreAPI {
         index.retrieve(
             equal(TransactionIndex.TOS, address),
             queryOptions(
-                orderBy(ascending(TransactionIndex.TIMESTAMP)),
-                applyThresholds(threshold(INDEX_ORDERING_SELECTIVITY, 1.0))))) {
+                orderBy(ascending(TransactionIndex.INDEX_CREATE_TIMESTAMP))))) {
       if (limit > TRANSACTIONS_COUNT_LIMIT_MAX) {
         limit = TRANSACTIONS_COUNT_LIMIT_MAX;
       }

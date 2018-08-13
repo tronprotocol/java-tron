@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -1007,7 +1008,10 @@ public class Manager {
     transactionInfoCapsule.setFee(runtime.getResult().getRet().getFee());
     transactionInfoCapsule.setContractResult(runtime.getResult().getHReturn());
     transactionInfoCapsule.setContractAddress(runtime.getResult().getContractAddress());
-
+    if (Objects.nonNull(block)) {
+      transactionInfoCapsule.setBlockNumber(block.getBlockHeader().getRawData().getNumber());
+      transactionInfoCapsule.setBlockTimeStamp(block.getBlockHeader().getRawData().getTimestamp());
+    }
     transactionInfoCapsule.parseTransactionResult(runtime.getResult().getRet());
 
     List<Log> logList = getLogsByLogInfoList(runtime.getResult().getLogInfoList());
