@@ -6,9 +6,6 @@ import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.util.Date;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
@@ -50,8 +47,7 @@ public class WitnessService implements Service {
   protected Map<ByteString, WitnessCapsule> localWitnessStateMap = Maps
       .newHashMap(); //  <address,WitnessCapsule>
   private Thread generateThread;
-
-  private ScheduledExecutorService repushExecutor = Executors.newSingleThreadScheduledExecutor();
+  private Thread repushThread;
 
   private volatile boolean isRunning = false;
   private Map<ByteString, byte[]> privateKeyMap = Maps.newHashMap();
@@ -74,6 +70,7 @@ public class WitnessService implements Service {
     backupManager = context.getBean(BackupManager.class);
     backupServer = context.getBean(BackupServer.class);
     generateThread = new Thread(scheduleProductionLoop);
+    repushThread = new Thread(repushLoop);
     controller = tronApp.getDbManager().getWitnessController();
     new Thread(() -> {
       while (needSyncCheck) {
@@ -120,6 +117,22 @@ public class WitnessService implements Service {
             logger.error("unknown exception happened in witness loop", ex);
           } catch (Throwable throwable) {
             logger.error("unknown throwable happened in witness loop", throwable);
+          }
+        }
+      };
+
+
+  /**
+   * Cycle thread to repush Transactions
+   */
+  private Runnable repushLoop =
+      () -> {
+        while (isRunning) {
+          try {
+            TransactionCapsule tx = this.tronApp.getDbManager().getRepushTransactions().take();
+            this.tronApp.getDbManager().rePush(tx);
+          } catch (InterruptedException e) {
+            // do nothing
           }
         }
       };
@@ -312,32 +325,17 @@ public class WitnessService implements Service {
     init();
   }
 
-  public void startRepush() {
-    /**
-     * Cycle thread to repush Transactions
-     */
-    repushExecutor.scheduleWithFixedDelay(() ->
-    {
-      try {
-        TransactionCapsule tx = this.tronApp.getDbManager().getRepushTransactions().take();
-        this.tronApp.getDbManager().rePush(tx);
-      } catch (InterruptedException e) {
-        // do nothing
-      }
-    }, 0, 0, TimeUnit.MILLISECONDS);
-  }
-
   @Override
   public void start() {
     isRunning = true;
     generateThread.start();
-    startRepush();
+    repushThread.start();
   }
 
   @Override
   public void stop() {
     isRunning = false;
     generateThread.interrupt();
-    repushExecutor.shutdown();
+    repushThread.interrupt();
   }
 }
