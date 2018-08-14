@@ -77,6 +77,10 @@ public class ProgramResult {
     return ret;
   }
 
+  public void setRet(TransactionResultCapsule ret) {
+    this.ret = ret;
+  }
+
   public RuntimeException getException() {
     return exception;
   }

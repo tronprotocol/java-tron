@@ -548,6 +548,7 @@ public class Runtime {
       if (vm != null) {
         vm.play(program);
 
+        program.getResult().setRet(result.getRet());
         result = program.getResult();
         if (isCallConstant()) {
           long callValue = TransactionCapsule.getCallValue(trx.getRawData().getContract(0));

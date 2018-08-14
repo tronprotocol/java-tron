@@ -83,6 +83,12 @@ public class TransactionTrace {
     receipt.setStorageDelta(storageUseage);
   }
 
+  //set net bill
+  public void setNetBill(long netUsage, long netFee) {
+    receipt.setNetUsage(netUsage);
+    receipt.setNetFee(netFee);
+  }
+
   public void exec(Runtime runtime)
       throws ContractExeException, ContractValidateException, OutOfSlotTimeException {
     /**  VM execute  **/

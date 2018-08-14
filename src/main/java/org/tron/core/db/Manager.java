@@ -571,16 +571,18 @@ public class Manager {
   }
 
 
-  public void consumeBandwidth(TransactionCapsule trx, TransactionResultCapsule ret)
+  public void consumeBandwidth(TransactionCapsule trx, TransactionResultCapsule ret,
+      TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException {
     BandwidthProcessor processor = new BandwidthProcessor(this);
-    processor.consume(trx, ret);
+    processor.consume(trx, ret, trace);
   }
 
-  public void consumeCpu(TransactionCapsule trx, TransactionResultCapsule ret)
+  public void consumeCpu(TransactionCapsule trx, TransactionResultCapsule ret,
+      TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException {
     CpuProcessor processor = new CpuProcessor(this);
-    processor.consume(trx, ret);
+    processor.consume(trx, ret, trace);
   }
 
   @Deprecated
@@ -988,7 +990,7 @@ public class Manager {
     DepositImpl deposit = DepositImpl.createRoot(this);
     Runtime runtime = new Runtime(trace, block, deposit,
         new ProgramInvokeFactoryImpl());
-    consumeBandwidth(trxCap, runtime.getResult().getRet());
+    consumeBandwidth(trxCap, runtime.getResult().getRet(), trace);
 
     // init
     trace.init();
