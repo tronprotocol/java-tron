@@ -29,54 +29,29 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   @Override
   public AccountCapsule get(byte[] key) {
-    byte[] value = dbSource.getData(key);
+    byte[] value = revokingDB.getUnchecked(key);
     return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
-  }
-
-  /**
-   * isAccountExist fun.
-   *
-   * @param key the address of Account
-   */
-  @Override
-  public boolean has(byte[] key) {
-    byte[] account = dbSource.getData(key);
-    return null != account;
-  }
-
-  @Override
-  public void put(byte[] key, AccountCapsule item) {
-    super.put(key, item);
-    if (Objects.nonNull(indexHelper)) {
-      indexHelper.update(item.getInstance());
-    }
   }
 
   /**
    * Max TRX account.
    */
   public AccountCapsule getSun() {
-    byte[] data = dbSource.getData(assertsAddress.get("Sun"));
-    AccountCapsule accountCapsule = new AccountCapsule(data);
-    return accountCapsule;
+    return getUnchecked(assertsAddress.get("Sun"));
   }
 
   /**
    * Min TRX account.
    */
   public AccountCapsule getBlackhole() {
-    byte[] data = dbSource.getData(assertsAddress.get("Blackhole"));
-    AccountCapsule accountCapsule = new AccountCapsule(data);
-    return accountCapsule;
+    return getUnchecked(assertsAddress.get("Blackhole"));
   }
 
   /**
    * Get foundation account info.
    */
   public AccountCapsule getZion() {
-    byte[] data = dbSource.getData(assertsAddress.get("Zion"));
-    AccountCapsule accountCapsule = new AccountCapsule(data);
-    return accountCapsule;
+    return getUnchecked(assertsAddress.get("Zion"));
   }
 
   public static void setAccount(com.typesafe.config.Config config) {
@@ -89,23 +64,4 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     }
   }
 
-  @Override
-  public Iterator<Entry<byte[], AccountCapsule>> iterator() {
-    return new AccountIterator(dbSource.iterator());
-  }
-
-  @Override
-  public void delete(byte[] key) {
-    deleteIndex(key);
-    super.delete(key);
-  }
-
-  private void deleteIndex(byte[] key) {
-    if (Objects.nonNull(indexHelper)) {
-      AccountCapsule item = get(key);
-      if (Objects.nonNull(item)) {
-        indexHelper.remove(item.getInstance());
-      }
-    }
-  }
 }

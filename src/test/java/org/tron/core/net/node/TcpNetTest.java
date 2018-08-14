@@ -5,7 +5,7 @@ import static org.tron.core.net.message.MessageTypes.P2P_HELLO;
 import static org.tron.protos.Protocol.ReasonCode.DUPLICATE_PEER;
 import static org.tron.protos.Protocol.ReasonCode.FORKED;
 import static org.tron.protos.Protocol.ReasonCode.INCOMPATIBLE_CHAIN;
-import static org.tron.protos.Protocol.ReasonCode.INCOMPATIBLE_PROTOCOL;
+import static org.tron.protos.Protocol.ReasonCode.INCOMPATIBLE_VERSION;
 
 import com.google.common.cache.CacheBuilder;
 import io.netty.buffer.ByteBuf;
@@ -99,7 +99,7 @@ public class TcpNetTest extends BaseNetTest {
           break;
         case errorVersion:
           Assert.assertEquals(msg.getType(), P2P_DISCONNECT);
-          Assert.assertEquals(((DisconnectMessage) msg).getReasonCode(), INCOMPATIBLE_PROTOCOL);
+          Assert.assertEquals(((DisconnectMessage) msg).getReasonCode(), INCOMPATIBLE_VERSION);
           break;
         case errorSolid:
           Assert.assertEquals(msg.getType(), P2P_DISCONNECT);

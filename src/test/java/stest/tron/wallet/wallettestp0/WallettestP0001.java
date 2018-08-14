@@ -73,7 +73,7 @@ public class WallettestP0001 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     walletClient = new WalletClient(testKey002);
     walletClient.init(0);
@@ -192,7 +192,7 @@ public class WallettestP0001 {
     return true;
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void checkNode() {
 
     Optional<GrpcAPI.NodeList> result = walletClient.listNodes();
@@ -210,7 +210,7 @@ public class WallettestP0001 {
   }
 
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

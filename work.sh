@@ -57,7 +57,7 @@ case "${1}" in
             rm ${PID_FILE_PATH}
             echo "Succeeded to stop java-tron."
         else
-            echo "Failed to start java-tron."
+            echo "Failed to stop java-tron."
         fi
     ;;
     restart)

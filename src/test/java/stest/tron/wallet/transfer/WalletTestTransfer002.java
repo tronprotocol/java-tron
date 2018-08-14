@@ -84,7 +84,7 @@ public class WalletTestTransfer002 {
         .totalTransaction(GrpcAPI.EmptyMessage.newBuilder().build());
     logger.info(Long.toString(afterGetTotalTransaction.getNum()));
     Long afterTotalTransaction = afterGetTotalTransaction.getNum();
-    Assert.assertTrue(afterTotalTransaction - beforeTotalTransaction == 1);
+    Assert.assertTrue(afterTotalTransaction - beforeTotalTransaction > 0);
 
     //Improve coverage.
     afterGetTotalTransaction.equals(beforeGetTotalTransaction);

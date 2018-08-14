@@ -43,4 +43,5 @@ public interface Application {
   void addService(Service service);
 
   Manager getDbManager();
+
 }

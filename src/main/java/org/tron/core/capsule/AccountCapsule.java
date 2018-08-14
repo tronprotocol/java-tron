@@ -26,6 +26,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Vote;
@@ -167,6 +168,10 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account.getAccountName();
   }
 
+  public ByteString getAccountId() {
+    return this.account.getAccountId();
+  }
+
   public long getBalance() {
     return this.account.getBalance();
   }
@@ -243,30 +248,29 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     for (int i = 0; i < account.getFrozenCount(); ++i) {
       tp += account.getFrozen(i).getFrozenBalance();
     }
+
+    tp += account.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance();
     return tp;
   }
 
   /**
    * asset balance enough
    */
-  public boolean assetBalanceEnough(ByteString name, long amount) {
+  public boolean assetBalanceEnough(byte[] key, long amount) {
     Map<String, Long> assetMap = this.account.getAssetMap();
-    String nameKey = ByteArray.toStr(name.toByteArray());
+    String nameKey = ByteArray.toStr(key);
     Long currentAmount = assetMap.get(nameKey);
 
-    if (amount > 0 && null != currentAmount && amount <= currentAmount) {
-      return true;
-    }
-    return false;
+    return amount > 0 && null != currentAmount && amount <= currentAmount;
   }
 
 
   /**
    * reduce asset amount.
    */
-  public boolean reduceAssetAmount(ByteString name, long amount) {
+  public boolean reduceAssetAmount(byte[] key, long amount) {
     Map<String, Long> assetMap = this.account.getAssetMap();
-    String nameKey = ByteArray.toStr(name.toByteArray());
+    String nameKey = ByteArray.toStr(key);
     Long currentAmount = assetMap.get(nameKey);
     if (amount > 0 && null != currentAmount && amount <= currentAmount) {
       this.account = this.account.toBuilder()
@@ -280,9 +284,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   /**
    * add asset amount.
    */
-  public boolean addAssetAmount(ByteString name, long amount) {
+  public boolean addAssetAmount(byte[] key, long amount) {
     Map<String, Long> assetMap = this.account.getAssetMap();
-    String nameKey = ByteArray.toStr(name.toByteArray());
+    String nameKey = ByteArray.toStr(key);
     Long currentAmount = assetMap.get(nameKey);
     if (currentAmount == null) {
       currentAmount = 0L;
@@ -300,17 +304,25 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   /**
+   * set account id
+   */
+  public void setAccountId(byte[] id) {
+    this.account = this.account.toBuilder().setAccountId(ByteString.copyFrom(id)).build();
+  }
+
+  /**
    * add asset.
    */
-  public boolean addAsset(String key, Long value) {
+  public boolean addAsset(byte[] key, long value) {
     Map<String, Long> assetMap = this.account.getAssetMap();
+    String nameKey = ByteArray.toStr(key);
     if (!assetMap.isEmpty()) {
-      if (assetMap.containsKey(key)) {
+      if (assetMap.containsKey(nameKey)) {
         return false;
       }
     }
 
-    this.account = this.account.toBuilder().putAsset(key, value).build();
+    this.account = this.account.toBuilder().putAsset(nameKey, value).build();
 
     return true;
   }
@@ -373,7 +385,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return getInstance().getAssetIssuedName();
   }
 
-  public void setAssetIssuedName(ByteString assetIssuedName) {
+  public void setAssetIssuedName(byte[] nameKey) {
+    ByteString assetIssuedName = ByteString.copyFrom(nameKey);
     this.account = this.account.toBuilder().setAssetIssuedName(assetIssuedName).build();
   }
 
@@ -429,6 +442,47 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .setNetUsage(netUsage).build();
   }
 
+  public AccountResource getAccountResource() {
+    return this.account.getAccountResource();
+  }
+
+
+  public void setFrozenForCpu(long newFrozenBalanceForCpu, long time) {
+    Frozen newFrozenForCpu = Frozen.newBuilder()
+        .setFrozenBalance(newFrozenBalanceForCpu)
+        .setExpireTime(time)
+        .build();
+
+    AccountResource newAccountResource = getAccountResource().toBuilder()
+        .setFrozenBalanceForCpu(newFrozenForCpu).build();
+
+    this.account = this.account.toBuilder()
+        .setAccountResource(newAccountResource)
+        .build();
+  }
+
+
+  public long getCpuFrozenBalance() {
+    return this.account.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance();
+  }
+
+  public long getCpuUsage() {
+    return this.account.getAccountResource().getCpuUsage();
+  }
+
+  public void setCpuUsage(long cpuUsage) {
+    this.account = this.account.toBuilder()
+        .setAccountResource(
+            this.account.getAccountResource().toBuilder().setCpuUsage(cpuUsage).build()).build();
+  }
+
+  public void setLatestConsumeTimeForCpu(long latest_time) {
+    this.account = this.account.toBuilder()
+        .setAccountResource(
+            this.account.getAccountResource().toBuilder().setLatestConsumeTimeForCpu(latest_time)
+                .build()).build();
+  }
+
   public long getFreeNetUsage() {
     return this.account.getFreeNetUsage();
   }
@@ -451,4 +505,59 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .putFreeAssetNetUsage(s, freeAssetNetUsage).build();
   }
 
+  public long getStorageLimit() {
+    return this.account.getAccountResource().getStorageLimit();
+  }
+
+  public void setStorageLimit(long limit) {
+    AccountResource accountResource = this.account.getAccountResource();
+    accountResource = accountResource.toBuilder().setStorageLimit(limit).build();
+
+    this.account = this.account.toBuilder()
+        .setAccountResource(accountResource)
+        .build();
+  }
+
+  public long getStorageUsage() {
+    return this.account.getAccountResource().getStorageUsage();
+  }
+
+  public long getStorageLeft() {
+    return getStorageLimit() - getStorageUsage();
+  }
+
+  public void setStorageUsage(long usage) {
+    AccountResource accountResource = this.account.getAccountResource();
+    accountResource = accountResource.toBuilder().setStorageUsage(usage).build();
+
+    this.account = this.account.toBuilder()
+        .setAccountResource(accountResource)
+        .build();
+  }
+
+  public long getLatestExchangeStorageTime() {
+    return this.account.getAccountResource().getLatestExchangeStorageTime();
+  }
+
+  public void setLatestExchangeStorageTime(long time) {
+    AccountResource accountResource = this.account.getAccountResource();
+    accountResource = accountResource.toBuilder().setLatestExchangeStorageTime(time).build();
+
+    this.account = this.account.toBuilder()
+        .setAccountResource(accountResource)
+        .build();
+  }
+
+  public void addStorageUsage(long storageUsage) {
+    if (storageUsage <= 0) {
+      return;
+    }
+    AccountResource accountResource = this.account.getAccountResource();
+    accountResource = accountResource.toBuilder()
+        .setStorageUsage(accountResource.getStorageUsage() + storageUsage).build();
+
+    this.account = this.account.toBuilder()
+        .setAccountResource(accountResource)
+        .build();
+  }
 }

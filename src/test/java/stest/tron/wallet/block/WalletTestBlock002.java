@@ -68,11 +68,11 @@ public class WalletTestBlock002 {
     }
 
     //The number is large than the currently number, there is no exception when query this number.
-    Long outOfCurrentBlockNum = currentBlockNum + 10000L;
+    /*    Long outOfCurrentBlockNum = currentBlockNum + 10000L;
     NumberMessage.Builder builder1 = NumberMessage.newBuilder();
     builder1.setNum(outOfCurrentBlockNum);
     Block outOfCurrentBlock = blockingStubFull.getBlockByNum(builder1.build());
-    Assert.assertFalse(outOfCurrentBlock.hasBlockHeader());
+    Assert.assertFalse(outOfCurrentBlock.hasBlockHeader());*/
 
     //Query the first block.
     NumberMessage.Builder builder2 = NumberMessage.newBuilder();
@@ -112,11 +112,11 @@ public class WalletTestBlock002 {
     }
 
     //The number is large than the currently number, there is no exception when query this number.
-    Long outOfCurrentBlockNum = currentBlockNum + 10000L;
+    /*    Long outOfCurrentBlockNum = currentBlockNum + 10000L;
     NumberMessage.Builder builder1 = NumberMessage.newBuilder();
     builder1.setNum(outOfCurrentBlockNum);
     Block outOfCurrentBlock = blockingStubSolidity.getBlockByNum(builder1.build());
-    Assert.assertFalse(outOfCurrentBlock.hasBlockHeader());
+    Assert.assertFalse(outOfCurrentBlock.hasBlockHeader());*/
 
     //Query the first block.
     NumberMessage.Builder builder2 = NumberMessage.newBuilder();
@@ -145,41 +145,6 @@ public class WalletTestBlock002 {
     Assert.assertTrue(lastSecondBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
     logger.info("Last second test from solidity succesfully");
   }
-
-  @Test(enabled = true)
-  public void testGetexceptionBlockByNum() {
-    //The number is -1, there is no exception when query this number.
-    NumberMessage.Builder builder1 = NumberMessage.newBuilder();
-    builder1.setNum(-1);
-    Block exceptionBlock = blockingStubFull.getBlockByNum(builder1.build());
-    Assert.assertFalse(exceptionBlock.hasBlockHeader());
-
-    //The number is 0, there is no exception when query this number.
-    builder1 = NumberMessage.newBuilder();
-    builder1.setNum(0);
-    exceptionBlock = blockingStubFull.getBlockByNum(builder1.build());
-    logger.info(Long.toString(exceptionBlock.getBlockHeader().getRawData().getNumber()));
-    Assert.assertTrue(exceptionBlock.hasBlockHeader());
-    //Assert.assertFalse(exceptionBlock.getBlockHeader().getRawData().
-    // getWitnessAddress().isEmpty());
-    Assert.assertFalse(exceptionBlock.getBlockHeader().getRawData().getTxTrieRoot().isEmpty());
-
-    //On soliditynode, the number is 0, there is no exception when query this number.
-    builder1 = NumberMessage.newBuilder();
-    builder1.setNum(0);
-    exceptionBlock = blockingStubSolidity.getBlockByNum(builder1.build());
-    Assert.assertTrue(exceptionBlock.hasBlockHeader());
-    Assert.assertFalse(exceptionBlock.getBlockHeader().getRawData().getTxTrieRoot().isEmpty());
-
-    //On soliditynode, the number is -1, there is no exception when query this number.
-    builder1 = NumberMessage.newBuilder();
-    builder1.setNum(-1);
-    exceptionBlock = blockingStubSolidity.getBlockByNum(builder1.build());
-    Assert.assertFalse(exceptionBlock.hasBlockHeader());
-
-
-  }
-
   @Test(enabled = true)
   public void testGetBlockById() {
 

@@ -88,6 +88,10 @@
   <logger name="AssetIssueCapsule" level="INFO"/>
   <logger name="Manager" level="INFO"/>
   <logger name="Net" level="INFO"/>
+  <logger name="Runtime" level="ERROR"/>
+  <logger name="VM" level="ERROR"/>
+  <logger name="Program" level="ERROR"/>
+  <logger name="ProgramPrecompile" level="ERROR"/>
 
 </configuration>
 

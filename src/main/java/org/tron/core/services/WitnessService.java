@@ -4,6 +4,7 @@ import static org.tron.core.witness.BlockProductionCondition.NOT_MY_TURN;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
+import java.util.Date;
 import java.util.Map;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -18,12 +19,15 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.ReceiptException;
+import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateScheduleException;
@@ -43,6 +47,8 @@ public class WitnessService implements Service {
   protected Map<ByteString, WitnessCapsule> localWitnessStateMap = Maps
       .newHashMap(); //  <address,WitnessCapsule>
   private Thread generateThread;
+  private Thread repushThread;
+
   private volatile boolean isRunning = false;
   private Map<ByteString, byte[]> privateKeyMap = Maps.newHashMap();
   private volatile boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
@@ -64,12 +70,14 @@ public class WitnessService implements Service {
     backupManager = context.getBean(BackupManager.class);
     backupServer = context.getBean(BackupServer.class);
     generateThread = new Thread(scheduleProductionLoop);
+    repushThread = new Thread(repushLoop);
     controller = tronApp.getDbManager().getWitnessController();
-    new Thread(()->{
-      while (needSyncCheck){
-        try{
+    new Thread(() -> {
+      while (needSyncCheck) {
+        try {
           Thread.sleep(100);
-        }catch (Exception e){}
+        } catch (Exception e) {
+        }
       }
       backupServer.initServer();
     }).start();
@@ -80,7 +88,7 @@ public class WitnessService implements Service {
    */
   private Runnable scheduleProductionLoop =
       () -> {
-        if (localWitnessStateMap == null || localWitnessStateMap.keySet().size() == 0) {
+        if (localWitnessStateMap == null || localWitnessStateMap.keySet().isEmpty()) {
           logger.error("LocalWitnesses is null");
           return;
         }
@@ -113,6 +121,27 @@ public class WitnessService implements Service {
         }
       };
 
+
+  /**
+   * Cycle thread to repush Transactions
+   */
+  private Runnable repushLoop =
+      () -> {
+        while (isRunning) {
+          try {
+            TransactionCapsule tx = this.tronApp.getDbManager().getRepushTransactions().take();
+            this.tronApp.getDbManager().rePush(tx);
+          } catch (InterruptedException ex) {
+            logger.info("repushLoop interrupted");
+            Thread.currentThread().interrupt();
+          } catch (Exception ex) {
+            logger.error("unknown exception happened in witness loop", ex);
+          } catch (Throwable throwable) {
+            logger.error("unknown throwable happened in witness loop", throwable);
+          }
+        }
+      };
+
   /**
    * Loop to generate blocks
    */
@@ -136,7 +165,7 @@ public class WitnessService implements Service {
    */
   private BlockProductionCondition tryProduceBlock() throws InterruptedException {
     logger.info("Try Produce Block");
-    if (!backupManager.getStatus().equals(BackupStatusEnum.MASTER)){
+    if (!backupManager.getStatus().equals(BackupStatusEnum.MASTER)) {
       return BlockProductionCondition.BACKUP_STATUS_IS_NOT_MASTER;
     }
     long now = DateTime.now().getMillis() + 50L;
@@ -218,6 +247,10 @@ public class WitnessService implements Service {
     }
 
     try {
+
+      logger.error("setGeneratingBlock true " + String
+          .format("%tF %tT", new Date(), new Date()));
+
       controller.setGeneratingBlock(true);
       BlockCapsule block = generateBlock(scheduledTime, scheduledWitness);
 
@@ -226,9 +259,9 @@ public class WitnessService implements Service {
         return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
       }
       if (DateTime.now().getMillis() - now
-          > ChainConstant.BLOCK_PRODUCED_INTERVAL * ChainConstant.BLOCK_PRODUCED_TIME_OUT) {
+          > ChainConstant.BLOCK_PRODUCED_INTERVAL * ChainConstant.BLOCK_PRODUCED_TIME_OUT / 100) {
         logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}",
-            ChainConstant.BLOCK_PRODUCED_INTERVAL * ChainConstant.BLOCK_PRODUCED_TIME_OUT,
+            ChainConstant.BLOCK_PRODUCED_INTERVAL * ChainConstant.BLOCK_PRODUCED_TIME_OUT / 100,
             new DateTime(now), DateTime.now());
         return BlockProductionCondition.TIME_OUT;
       }
@@ -247,7 +280,10 @@ public class WitnessService implements Service {
       return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
     } finally {
       controller.setGeneratingBlock(false);
+      logger.error("setGeneratingBlock true " + String
+          .format("%tF %tT", new Date(), new Date()));
     }
+
 
   }
 
@@ -260,7 +296,7 @@ public class WitnessService implements Service {
   }
 
   private BlockCapsule generateBlock(long when, ByteString witnessAddress)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException {
+      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, ReceiptException, TransactionTraceException {
     return tronApp.getDbManager().generateBlock(this.localWitnessStateMap.get(witnessAddress), when,
         this.privateKeyMap.get(witnessAddress));
   }
@@ -298,11 +334,13 @@ public class WitnessService implements Service {
   public void start() {
     isRunning = true;
     generateThread.start();
+    repushThread.start();
   }
 
   @Override
   public void stop() {
     isRunning = false;
     generateThread.interrupt();
+    repushThread.interrupt();
   }
 }

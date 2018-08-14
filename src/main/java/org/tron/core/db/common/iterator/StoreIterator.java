@@ -56,9 +56,4 @@ public final class StoreIterator implements org.tron.core.db.common.iterator.DBI
   public void remove() {
     throw new UnsupportedOperationException();
   }
-
-  @Override
-  public void forEachRemaining(Consumer<? super Entry<byte[], byte[]>> action) {
-    dbIterator.forEachRemaining(action);
-  }
 }
