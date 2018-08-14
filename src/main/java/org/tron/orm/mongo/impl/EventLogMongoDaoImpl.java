@@ -41,41 +41,53 @@ public class EventLogMongoDaoImpl<T> implements EventLogMongoDao<T> {
   }
 
   @Override
-  public List<EventLogEntity> findAll(String contractAddressHexString, String collectionName) {
+  public List<EventLogEntity> findAll(String contractAddress, String collectionName) {
 
-    Query query = new Query(Criteria.where("contractAddressHexString").is(contractAddressHexString));
+    Query query = new Query(Criteria.where("contract_address").is(contractAddress));
     return mongoTemplate.find(query, EventLogEntity.class, collectionName);
 
   }
 
   @Override
-  public EventLogEntity findOne(String contractAddressHexString, String collectionName) {
+  public EventLogEntity findOne(String contractAddress, String collectionName) {
 
-    Query query = new Query(Criteria.where("contractAddressHexString").is(contractAddressHexString));
+    Query query = new Query(Criteria.where("contract_address").is(contractAddress));
     return mongoTemplate.findOne(query, EventLogEntity.class, collectionName);
   }
 
   @Override
-  public List<EventLogEntity> findAll(String contractAddressHexString, String entryName, String collectionName) {
-    Query query = new Query(Criteria.where("contractAddressHexString").and(contractAddressHexString).where("entryName").is(entryName));
+  public List<EventLogEntity> findAll(String contractAddress, String eventName, String collectionName) {
+    Query query = new Query(Criteria.where("contract_address").is(contractAddress).and("event_name").is(eventName));
     return mongoTemplate.find(query, EventLogEntity.class, collectionName);
   }
 
   @Override
-  public EventLogEntity findOne(String contractAddressHexString, String entryName, String collectionName) {
-    Query query = new Query(Criteria.where("contractAddressHexString").and(contractAddressHexString).is(contractAddressHexString).where("entryName").is(entryName));
+  public EventLogEntity findOne(String contractAddress, String eventName, String collectionName) {
+    Query query = new Query(Criteria.where("contract_address").is(contractAddress).and("event_name").is(eventName));
     return mongoTemplate.findOne(query, EventLogEntity.class, collectionName);
   }
 
   @Override
-  public List<EventLogEntity> findAll(String contractAddressHexString, String entryName, long blockNumber, String collectionName) {
-    Query query = new Query(Criteria.where("contractAddressHexString").and(contractAddressHexString).where("entryName").and(entryName).is(entryName).where("blockNumber").is(blockNumber));
+  public List<EventLogEntity> findAll(String contractAddress, String eventName, long blockNumber, String collectionName) {
+    Query query = new Query(Criteria.where("contract_address").is(contractAddress).and("event_name").is(eventName).and("block_number").is(blockNumber));
     return mongoTemplate.find(query, EventLogEntity.class, collectionName);
   }
 
   @Override
-  public EventLogEntity findOne(String contractAddressHexString, String entryName, long blockNumber, String collectionName) {
-    Query query = new Query(Criteria.where("contractAddressHexString").and(contractAddressHexString).and(contractAddressHexString).where("entryName").is(entryName).where("blockNumber").is(blockNumber));
+  public EventLogEntity findOne(String contractAddress, String eventName, long blockNumber, String collectionName) {
+    Query query = new Query(Criteria.where("contract_address").is(contractAddress).and("event_name").is(eventName).and("block_number").is(blockNumber));
+    return mongoTemplate.findOne(query, EventLogEntity.class, collectionName);
+  }
+
+  @Override
+  public List<EventLogEntity> findAllByTransactionId(String transactionId, String collectionName) {
+    Query query = new Query(Criteria.where("transaction_id").is(transactionId));
+    return mongoTemplate.find(query, EventLogEntity.class, collectionName);
+  }
+
+  @Override
+  public EventLogEntity findOneByTransactionId(String transactionId, String collectionName) {
+    Query query = new Query(Criteria.where("transaction_id").is(transactionId));
     return mongoTemplate.findOne(query, EventLogEntity.class, collectionName);
   }
 

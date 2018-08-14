@@ -9,7 +9,7 @@ import java.util.List;
  */
 public interface EventLogService {
 
-  public void insertEventLog(String eventLog);
+  public void insertEventLog(EventLogEntity eventLog);
 
   public List<EventLogEntity> findAll(String contractAddressHexString);
 

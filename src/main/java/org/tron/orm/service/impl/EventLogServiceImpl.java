@@ -20,38 +20,38 @@ public class EventLogServiceImpl implements EventLogService {
   private static final String COLLECTION_EVENT_LOG_CENTER = "eventLog";
 
   @Override
-  public void insertEventLog(String eventLog) {
-    eventLogMongoDao.insert(eventLog, COLLECTION_EVENT_LOG_CENTER);
+  public void insertEventLog(EventLogEntity eventLogEntity) {
+    eventLogMongoDao.insert(eventLogEntity, COLLECTION_EVENT_LOG_CENTER);
   }
 
   @Override
-  public List<EventLogEntity> findAll(String contractAddressHexString) {
-    return eventLogMongoDao.findAll(contractAddressHexString, COLLECTION_EVENT_LOG_CENTER);
+  public List<EventLogEntity> findAll(String contractAddress) {
+    return eventLogMongoDao.findAll(contractAddress, COLLECTION_EVENT_LOG_CENTER);
   }
 
   @Override
-  public EventLogEntity findOne(String contractAddressHexString) {
-    return eventLogMongoDao.findOne(contractAddressHexString, COLLECTION_EVENT_LOG_CENTER);
+  public EventLogEntity findOne(String contractAddress) {
+    return eventLogMongoDao.findOne(contractAddress, COLLECTION_EVENT_LOG_CENTER);
   }
 
   @Override
-  public List<EventLogEntity> findAll(String contractAddressHexString, String entryName) {
-    return eventLogMongoDao.findAll(contractAddressHexString, entryName, COLLECTION_EVENT_LOG_CENTER);
+  public List<EventLogEntity> findAll(String contractAddress, String eventName) {
+    return eventLogMongoDao.findAll(contractAddress, eventName, COLLECTION_EVENT_LOG_CENTER);
   }
 
   @Override
-  public EventLogEntity findOne(String contractAddressHexString, String entryName) {
-    return eventLogMongoDao.findOne(contractAddressHexString, entryName, COLLECTION_EVENT_LOG_CENTER);
+  public EventLogEntity findOne(String contractAddress, String eventName) {
+    return eventLogMongoDao.findOne(contractAddress, eventName, COLLECTION_EVENT_LOG_CENTER);
   }
 
   @Override
-  public List<EventLogEntity> findAll(String contractAddressHexString, String entryName, long blockNumber) {
-    return eventLogMongoDao.findAll(contractAddressHexString, entryName, blockNumber, COLLECTION_EVENT_LOG_CENTER);
+  public List<EventLogEntity> findAll(String contractAddress, String eventName, long blockNumber) {
+    return eventLogMongoDao.findAll(contractAddress, eventName, blockNumber, COLLECTION_EVENT_LOG_CENTER);
   }
 
   @Override
-  public EventLogEntity findOne(String contractAddressHexString, String entryName, long blockNumber) {
-    return eventLogMongoDao.findOne(contractAddressHexString, entryName, blockNumber, COLLECTION_EVENT_LOG_CENTER);
+  public EventLogEntity findOne(String contractAddress, String eventName, long blockNumber) {
+    return eventLogMongoDao.findOne(contractAddress, eventName, blockNumber, COLLECTION_EVENT_LOG_CENTER);
   }
 
 

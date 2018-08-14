@@ -1,28 +1,46 @@
 package org.tron.orm.mongo.entity;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
-
+import com.alibaba.fastjson.JSONArray;
 import java.io.Serializable;
 import java.util.List;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 /**
- * MongoDB collection eventLog 映射的实体类
+ * MongoDB collection eventLog
  */
 @Document
 public class EventLogEntity implements Serializable {
 
   private static final long serialVersionUID = -70777625567836430L;
 
+  @Field(value = "block_number")
   private long blockNumber;
 
+  @Field(value = "block_timestamp")
   private long blockTimestamp;
 
-  private String contractAddressHexString;
+  @Field(value = "contract_address")
+  private String contractAddress;
 
+  @Field(value = "event_name")
   private String entryName;
 
-  private List<Integer> resultJsonArray;
+  @Field(value = "result")
+  private JSONArray resultJsonArray;
+
+  @Field(value = "transaction_id")
+  private String transactionId;
+
+  public EventLogEntity(long blockNumber, long blockTimestamp, String contractAddress,
+      String entryName, JSONArray resultJsonArray, String transactionId) {
+    this.blockNumber = blockNumber;
+    this.blockTimestamp = blockTimestamp;
+    this.contractAddress = contractAddress;
+    this.entryName = entryName;
+    this.resultJsonArray = resultJsonArray;
+    this.transactionId = transactionId;
+  }
 
   public static long getSerialVersionUID() {
     return serialVersionUID;
@@ -44,12 +62,12 @@ public class EventLogEntity implements Serializable {
     this.blockTimestamp = blockTimestamp;
   }
 
-  public String getContractAddressHexString() {
-    return contractAddressHexString;
+  public String getContractAddress() {
+    return contractAddress;
   }
 
-  public void setContractAddressHexString(String contractAddressHexString) {
-    this.contractAddressHexString = contractAddressHexString;
+  public void setContractAddress(String contractAddress) {
+    this.contractAddress = contractAddress;
   }
 
   public String getEntryName() {
@@ -60,11 +78,11 @@ public class EventLogEntity implements Serializable {
     this.entryName = entryName;
   }
 
-  public List<Integer> getResultJsonArray() {
+  public JSONArray getResultJsonArray() {
     return resultJsonArray;
   }
 
-  public void setResultJsonArray(List<Integer> resultJsonArray) {
+  public void setResultJsonArray(JSONArray resultJsonArray) {
     this.resultJsonArray = resultJsonArray;
   }
 }

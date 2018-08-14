@@ -1,12 +1,32 @@
 package org.tron.core.db;
 
+import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
+import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
+
 import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import javafx.util.Pair;
+import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -29,10 +49,21 @@ import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
-import org.tron.common.utils.*;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.SessionOptional;
+import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
+import org.tron.common.utils.Time;
 import org.tron.core.Constant;
-import org.tron.core.capsule.*;
+import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionInfoCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
@@ -40,7 +71,28 @@ import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.ITronChainBase;
-import org.tron.core.exception.*;
+import org.tron.core.exception.AccountResourceInsufficientException;
+import org.tron.core.exception.BadBlockException;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.BadNumberBlockException;
+import org.tron.core.exception.BalanceInsufficientException;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractSizeNotEqualToOneException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.HeaderNotFound;
+import org.tron.core.exception.HighFreqException;
+import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.exception.NonCommonBlockException;
+import org.tron.core.exception.OutOfSlotTimeException;
+import org.tron.core.exception.ReceiptException;
+import org.tron.core.exception.TaposException;
+import org.tron.core.exception.TooBigTransactionException;
+import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.ValidateScheduleException;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
 import org.tron.orm.mongo.entity.EventLogEntity;
@@ -51,16 +103,6 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo.Log;
 import org.tron.protos.Protocol.TransactionInfo.code;
-
-import javax.annotation.PostConstruct;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.stream.Collectors;
-
-import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
-import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
-import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
-import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
 
 @Slf4j
@@ -985,12 +1027,12 @@ public class Manager {
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfoCapsule);
 
-    sendEventLog(runtime.getResult().getContractAddress(), logList, block);
+    sendEventLog(runtime.getResult().getContractAddress(), logList, block, transactionInfoCapsule);
 
     return true;
   }
 
-  private void sendEventLog(byte[] contractAddress, List<Log> logList, Block block) {
+  private void sendEventLog(byte[] contractAddress, List<Log> logList, Block block, TransactionInfoCapsule transactionInfoCapsule) {
     if (block == null) {
       return;
     }
@@ -1003,7 +1045,6 @@ public class Manager {
         }
         abiCache.put(contractAddress, abi);
       }
-      String contractAddressHexString = Hex.toHexString(contractAddress);
       Protocol.SmartContract.ABI finalAbi = abi;
       logList.forEach(log -> {
         finalAbi.getEntrysList().forEach(abiEntry -> {
@@ -1039,15 +1080,11 @@ public class Manager {
 //              amqpTemplate.send(org.tron.mq.Constant.EXCHANGE, contractAddressHexString + "." + entryName,
 //                      new Message(resultJsonArray.toJSONString().getBytes(), someProperties));
 
-              JSONObject eventLog = new JSONObject();
-              eventLog.put("blockNumber", blockNumber);
-              eventLog.put("blockTimestamp", blockTimestamp);
-              eventLog.put("contractAddressHexString", contractAddressHexString);
-              eventLog.put("entryName", entryName);
-              eventLog.put("resultJsonArray", resultJsonArray);
-
+              EventLogEntity eventLogEntity = new EventLogEntity(blockNumber, blockTimestamp,
+                  Wallet.encode58Check(contractAddress), entryName, resultJsonArray,
+                  Hex.toHexString(transactionInfoCapsule.getId()));
               // 事件日志写入MongoDB
-              eventLogService.insertEventLog(eventLog.toJSONString());
+              eventLogService.insertEventLog(eventLogEntity);
 
             }
           });

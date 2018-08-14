@@ -10,18 +10,19 @@ import java.util.List;
  * @param <T>
  */
 public interface EventLogMongoDao<T> extends MongoBaseDao {
+  public List<EventLogEntity> findAll(String contractAddress, String collectionName);
 
-  public List<EventLogEntity> findAll(String contractAddressHexString, String collectionName);
+  public EventLogEntity findOne(String contractAddress, String collectionName);
 
-  public EventLogEntity findOne(String contractAddressHexString, String collectionName);
+  public List<EventLogEntity> findAll(String contractAddress, String entryName, String collectionName);
 
-  public List<EventLogEntity> findAll(String contractAddressHexString, String entryName, String collectionName);
+  public EventLogEntity findOne(String contractAddress, String entryName, String collectionName);
 
-  public EventLogEntity findOne(String contractAddressHexString, String entryName, String collectionName);
+  public List<EventLogEntity> findAll(String contractAddress, String entryName, long blockNumber, String collectionName);
 
-  public List<EventLogEntity> findAll(String contractAddressHexString, String entryName, long blockNumber, String collectionName);
+  public EventLogEntity findOne(String contractAddress, String entryName, long blockNumber, String collectionName);
 
-  public EventLogEntity findOne(String contractAddressHexString, String entryName, long blockNumber, String collectionName);
+  public List<EventLogEntity> findAllByTransactionId(String transactionId, String collectionName);
 
-
+  public EventLogEntity findOneByTransactionId(String transactionId, String collectionName);
 }
