@@ -48,7 +48,7 @@ public class TVMTestUtils {
     return Wallet.generateContractAddress(trx);
   }
 
-  public static Runtime tiggerContractWholeProcessReturnContractAddress(byte[] callerAddress,
+  public static Runtime triggerContractWholeProcessReturnContractAddress(byte[] callerAddress,
       byte[] contractAddress, byte[] data, long callValue, long feeLimit,DepositImpl deposit, Block block)
       throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
     Transaction trx = generateTriggerSmartContractAndGetTransaction(callerAddress,contractAddress,data,callValue,feeLimit);

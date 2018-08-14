@@ -30,13 +30,11 @@ public class InternalTransactionComplexTest {
   private static DepositImpl deposit;
   private static final String dbPath = "output_InternalTransactionComplexTest";
   private static final String OWNER_ADDRESS;
-  private static final String TRANSFER_TO;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
-    TRANSFER_TO = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
   }
 
   /**
@@ -48,8 +46,6 @@ public class InternalTransactionComplexTest {
     deposit = DepositImpl.createRoot(dbManager);
     deposit.createAccount(Hex.decode(OWNER_ADDRESS),AccountType.Normal);
     deposit.addBalance(Hex.decode(OWNER_ADDRESS),100000000);
-    deposit.createAccount(Hex.decode(TRANSFER_TO),AccountType.Normal);
-    deposit.addBalance(Hex.decode(TRANSFER_TO),10);
   }
 
   /**
@@ -98,19 +94,19 @@ public class InternalTransactionComplexTest {
    * }
    */
   @Test
-  public void internalTransactionTest()
+  public void internalTransactionAsInstanceTest()
       throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
     byte[] calledContractAddress = deployCalledContractandGetItsAddress();
     byte[] callerContractAddress = deployCallerContractAndGetItsAddress(calledContractAddress);
 
     /* =================================== CALL makeTheCall =================================== */
     byte[] triggerData1 = TVMTestUtils.parseABI("makeTheCall()","");
-    runtime = TVMTestUtils.tiggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),callerContractAddress,triggerData1,
+    runtime = TVMTestUtils.triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),callerContractAddress,triggerData1,
         0,1000000,deposit,null);
 
     /* =================================== CALL testCallbackReturns_ to check data =================================== */
     byte[] triggerData2 = TVMTestUtils.parseABI("testCallbackReturns_()","");
-    runtime = TVMTestUtils.tiggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),callerContractAddress,triggerData2,
+    runtime = TVMTestUtils.triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),callerContractAddress,triggerData2,
         0,1000000,deposit,null);
 
     // bool true => 0000000000000000000000000000000000000000000000000000000000000001,
@@ -177,7 +173,6 @@ public class InternalTransactionComplexTest {
         deposit,null);
     return contractAddress;
   }
-
 
 
 

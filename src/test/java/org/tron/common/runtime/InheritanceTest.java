@@ -29,13 +29,11 @@ public class InheritanceTest {
   private static DepositImpl deposit;
   private static final String dbPath = "output_InheritanceTest";
   private static final String OWNER_ADDRESS;
-  private static final String TRANSFER_TO;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
-    TRANSFER_TO = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
   }
 
   /**
@@ -47,8 +45,6 @@ public class InheritanceTest {
     deposit = DepositImpl.createRoot(dbManager);
     deposit.createAccount(Hex.decode(OWNER_ADDRESS),AccountType.Normal);
     deposit.addBalance(Hex.decode(OWNER_ADDRESS),100000000);
-    deposit.createAccount(Hex.decode(TRANSFER_TO),AccountType.Normal);
-    deposit.addBalance(Hex.decode(TRANSFER_TO),10);
   }
 
 
@@ -100,7 +96,7 @@ public class InheritanceTest {
 
     /* =================================== CALL getName() return child value =================================== */
     byte[] triggerData1 = TVMTestUtils.parseABI("getName()","");
-    runtime = TVMTestUtils.tiggerContractWholeProcessReturnContractAddress(callerAddress,contractAddress,triggerData1,
+    runtime = TVMTestUtils.triggerContractWholeProcessReturnContractAddress(callerAddress,contractAddress,triggerData1,
         0,1000000,deposit,null);
 
     //0x20 => pointer position, 0x3 => size,  626172 => "bar"
@@ -111,7 +107,7 @@ public class InheritanceTest {
 
     /* =================================== CALL getNumber() return parent value=================================== */
     byte[] triggerData2 = TVMTestUtils.parseABI("getNumber()","");
-    runtime = TVMTestUtils.tiggerContractWholeProcessReturnContractAddress(callerAddress,contractAddress,triggerData2,
+    runtime = TVMTestUtils.triggerContractWholeProcessReturnContractAddress(callerAddress,contractAddress,triggerData2,
         0,1000000,deposit,null);
 
     //0x64 =>100
@@ -120,7 +116,7 @@ public class InheritanceTest {
 
     /* =================================== CALL getId() call child function return parent field value=================================== */
     byte[] triggerData3 = TVMTestUtils.parseABI("getId()","");
-    runtime = TVMTestUtils.tiggerContractWholeProcessReturnContractAddress(callerAddress,contractAddress,triggerData3,
+    runtime = TVMTestUtils.triggerContractWholeProcessReturnContractAddress(callerAddress,contractAddress,triggerData3,
         0,1000000,deposit,null);
 
     //0x64 =>100
