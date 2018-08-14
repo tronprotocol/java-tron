@@ -63,12 +63,15 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
+import org.tron.core.Wallet;
 import org.tron.core.actuator.TransferActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.Transaction;
 
 /**
  * @author Roman Mandeleil
@@ -115,6 +118,8 @@ public class Program {
 
   private final SystemProperties config;
 
+  private byte[] transactionHash;
+
   public Program(byte[] ops, ProgramInvoke programInvoke) {
     this(ops, programInvoke, null);
   }
@@ -142,6 +147,8 @@ public class Program {
     this.stack = setupProgramListener(new Stack());
     this.contractState = setupProgramListener(new ContractState(programInvoke));
     //this.trace = new ProgramTrace(config, programInvoke);
+
+    this.transactionHash = transaction.getHash();
   }
 
   public ProgramPrecompile getProgramPrecompile() {
@@ -437,9 +444,12 @@ public class Program {
     // [2] CREATE THE CONTRACT ADDRESS
     // byte[] newAddress = HashUtil.calcNewAddr(getOwnerAddress().getLast20Bytes() nonce);
     // todo: modify this contract generate way
-    byte[] privKey = Sha256Hash.hash(getOwnerAddress().getData());
-    ECKey ecKey = ECKey.fromPrivate(privKey);
-    byte[] newAddress = ecKey.getAddress();
+
+//    byte[] privKey = Sha256Hash.hash(getOwnerAddress().getData());
+//    ECKey ecKey = ECKey.fromPrivate(privKey);
+
+    this.transactionHash = Sha256Hash.hash(transactionHash);
+    byte[] newAddress = Wallet.generateContractAddress(getOwnerAddress().getData(),transactionHash);
 
     AccountCapsule existingAddr = getContractState().getAccount(newAddress);
     //boolean contractAlreadyExists = existingAddr != null && existingAddr.isContractExist(blockchainConfig);
