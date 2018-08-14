@@ -2,6 +2,7 @@ package org.tron.common.overlay.server;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tron.common.overlay.discover.node.statistics.NodeStatistics;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -23,6 +25,7 @@ public class PeerConnectionCheckService {
   public static final long CHECK_TIME = 5 * 60 * 1000L;
   private double disconnectNumberFactor = Args.getInstance().getDisconnectNumberFactor();
   private double maxConnectNumberFactor = Args.getInstance().getMaxConnectNumberFactor();
+  private static long beforeBlockNum = -1;
 
   @Autowired
   private SyncPool pool;
@@ -30,14 +33,20 @@ public class PeerConnectionCheckService {
   @Autowired
   private ChannelManager channelManager;
 
-  private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1,
+  @Autowired
+  private Manager manager;
+
+  private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(2,
       r -> new Thread(r, "check-peer-connect"));
 
   @PostConstruct
   public void check() {
     logger.info("start the PeerConnectionCheckService");
+    beforeBlockNum = manager.getHeadBlockNum();
     scheduledExecutorService
         .scheduleWithFixedDelay(new CheckDataTransferTask(), 5, 5, TimeUnit.MINUTES);
+    scheduledExecutorService
+        .scheduleWithFixedDelay(new CheckBlockNumberHighTask(), 300, 5, TimeUnit.SECONDS);
   }
 
   @PreDestroy
@@ -77,6 +86,29 @@ public class PeerConnectionCheckService {
               willDisconnectPeerList.get(i).getInetAddress());
           willDisconnectPeerList.get(i).disconnect(ReasonCode.RESET);
         }
+      }
+    }
+  }
+
+  private class CheckBlockNumberHighTask implements Runnable {
+
+    @Override
+    public void run() {
+      if (beforeBlockNum == manager.getHeadBlockNum()) {
+        logger.error("block number not change, now block number is : {}", beforeBlockNum);
+        //disconnect some score low peer
+        List<PeerConnection> peerList = new ArrayList<>(pool.getActivePeers());
+        peerList.sort(Comparator.comparingInt(o -> o.getNodeStatistics().getReputation()));
+        if (pool.getActivePeers().size() >= Args.getInstance().getNodeMaxActiveNodes() * Args
+            .getInstance().getActiveConnectFactor()) {
+          for (int i = 0; i < peerList.size() * 0.9; i++) {
+            logger.error("block number not change, disconnect the peer : {}",
+                peerList.get(i).getInetAddress());
+            peerList.get(i).disconnect(ReasonCode.RESET);
+          }
+        }
+      } else {
+        beforeBlockNum = manager.getHeadBlockNum();
       }
     }
   }
