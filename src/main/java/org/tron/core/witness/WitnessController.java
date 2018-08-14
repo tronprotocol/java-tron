@@ -156,6 +156,14 @@ public class WitnessController {
     if (manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() == 0) {
       return true;
     }
+    long blockAbSlot = getAbSlotAtTime(block.getTimeStamp());
+    long headBlockAbSlot = getAbSlotAtTime(
+        manager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp());
+    if (blockAbSlot <= headBlockAbSlot) {
+      logger.warn("blockAbSlot is equals with headBlockAbSlot[" + blockAbSlot + "]");
+      return false;
+    }
+
     long slot = getSlotAtTime(block.getTimeStamp());
     final ByteString scheduledWitness = getScheduledWitness(slot);
     if (!scheduledWitness.equals(witnessAddress)) {

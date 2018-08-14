@@ -35,7 +35,8 @@ public class CpuProcessor extends ResourceProcessor {
   }
 
   @Override
-  public void consume(TransactionCapsule trx, TransactionResultCapsule ret)
+  public void consume(TransactionCapsule trx, TransactionResultCapsule ret,
+      TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException {
     List<Contract> contracts =
         trx.getInstance().getRawData().getContractList();
