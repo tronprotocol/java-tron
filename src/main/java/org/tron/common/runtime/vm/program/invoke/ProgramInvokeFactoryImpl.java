@@ -65,6 +65,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
       ownerAddress = contract.getOwnerAddress().toByteArray();
       balance = deposit.getBalance(ownerAddress);
       data = ByteUtil.EMPTY_BYTE_ARRAY;
+      long callValue = contract.getNewContract().getCallValue();
 
       switch (executorType) {
         case ET_NORMAL_TYPE:
@@ -80,7 +81,8 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
           return null;
       }
 
-      return new ProgramInvokeImpl(contractAddress, ownerAddress, ownerAddress, balance, 0, data,
+
+      return new ProgramInvokeImpl(contractAddress, ownerAddress, ownerAddress, balance, callValue, data,
           lastHash, coinbase, timestamp, number, deposit, vmStartInUs, vmShouldEndInUs, gasLimit);
 
     } else if (trxType == TRX_CONTRACT_CALL_TYPE) {

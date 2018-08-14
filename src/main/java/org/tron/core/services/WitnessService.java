@@ -4,6 +4,7 @@ import static org.tron.core.witness.BlockProductionCondition.NOT_MY_TURN;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
+import java.util.Date;
 import java.util.Map;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
@@ -45,6 +47,8 @@ public class WitnessService implements Service {
   protected Map<ByteString, WitnessCapsule> localWitnessStateMap = Maps
       .newHashMap(); //  <address,WitnessCapsule>
   private Thread generateThread;
+  private Thread repushThread;
+
   private volatile boolean isRunning = false;
   private Map<ByteString, byte[]> privateKeyMap = Maps.newHashMap();
   private volatile boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
@@ -66,6 +70,7 @@ public class WitnessService implements Service {
     backupManager = context.getBean(BackupManager.class);
     backupServer = context.getBean(BackupServer.class);
     generateThread = new Thread(scheduleProductionLoop);
+    repushThread = new Thread(repushLoop);
     controller = tronApp.getDbManager().getWitnessController();
     new Thread(() -> {
       while (needSyncCheck) {
@@ -108,6 +113,27 @@ public class WitnessService implements Service {
             this.blockProductionLoop();
           } catch (InterruptedException ex) {
             logger.info("ProductionLoop interrupted");
+          } catch (Exception ex) {
+            logger.error("unknown exception happened in witness loop", ex);
+          } catch (Throwable throwable) {
+            logger.error("unknown throwable happened in witness loop", throwable);
+          }
+        }
+      };
+
+
+  /**
+   * Cycle thread to repush Transactions
+   */
+  private Runnable repushLoop =
+      () -> {
+        while (isRunning) {
+          try {
+            TransactionCapsule tx = this.tronApp.getDbManager().getRepushTransactions().take();
+            this.tronApp.getDbManager().rePush(tx);
+          } catch (InterruptedException ex) {
+            logger.info("repushLoop interrupted");
+            Thread.currentThread().interrupt();
           } catch (Exception ex) {
             logger.error("unknown exception happened in witness loop", ex);
           } catch (Throwable throwable) {
@@ -221,6 +247,10 @@ public class WitnessService implements Service {
     }
 
     try {
+
+      logger.error("setGeneratingBlock true " + String
+          .format("%tF %tT", new Date(), new Date()));
+
       controller.setGeneratingBlock(true);
       BlockCapsule block = generateBlock(scheduledTime, scheduledWitness);
 
@@ -250,7 +280,10 @@ public class WitnessService implements Service {
       return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
     } finally {
       controller.setGeneratingBlock(false);
+      logger.error("setGeneratingBlock true " + String
+          .format("%tF %tT", new Date(), new Date()));
     }
+
 
   }
 
@@ -301,11 +334,13 @@ public class WitnessService implements Service {
   public void start() {
     isRunning = true;
     generateThread.start();
+    repushThread.start();
   }
 
   @Override
   public void stop() {
     isRunning = false;
     generateThread.interrupt();
+    repushThread.interrupt();
   }
 }

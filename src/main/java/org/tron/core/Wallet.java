@@ -225,6 +225,17 @@ public class Wallet {
 
   }
 
+  public static byte[] generateContractAddress(byte[] ownerAddress,byte[] txRawDataHash) {
+
+
+    byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
+    System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
+    System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
+
+    return Hash.sha3omit12(combined);
+
+  }
+
   public static byte[] decodeFromBase58Check(String addressBase58) {
     if (StringUtils.isEmpty(addressBase58)) {
       logger.warn("Warning: Address is empty !!");
@@ -535,6 +546,12 @@ public class Wallet {
         .setKey(ChainParameters.CREATE_NEW_ACCOUNT_BANDWIDTH_RATE.name())
         .setValue(
             dynamicPropertiesStore.getCreateNewAccountBandwidthRate())
+        .build());
+
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.ALLOW_CREATION_OF_CONTRACTS.name())
+        .setValue(
+            dynamicPropertiesStore.getAllowCreationOfContracts())
         .build());
 
     return builder.build();

@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.PrecompiledContracts;
@@ -340,12 +341,14 @@ public class Runtime {
       cpuGasFromFeeLimit = feeLimit / Constant.SUN_PER_GAS;
     } else {
       long totalCpuGasFromFreeze = cpuProcessor.calculateGlobalCpuLimit(balanceForCpuFreeze);
-      long leftBalanceForCpuFreeze =
-          Math.multiplyExact(cpuGasFromFreeze, balanceForCpuFreeze) / totalCpuGasFromFreeze;
+      long leftBalanceForCpuFreeze = BigInteger.valueOf(cpuGasFromFreeze)
+          .multiply(BigInteger.valueOf(balanceForCpuFreeze))
+          .divide(BigInteger.valueOf(totalCpuGasFromFreeze)).longValue();
 
       if (leftBalanceForCpuFreeze >= feeLimit) {
-        cpuGasFromFeeLimit =
-            Math.multiplyExact(totalCpuGasFromFreeze, feeLimit) / balanceForCpuFreeze;
+        cpuGasFromFeeLimit = BigInteger.valueOf(totalCpuGasFromFreeze)
+            .multiply(BigInteger.valueOf(feeLimit))
+            .divide(BigInteger.valueOf(balanceForCpuFreeze)).longValue();
       } else {
         cpuGasFromFeeLimit = Math
             .addExact(cpuGasFromFreeze,
@@ -371,12 +374,7 @@ public class Runtime {
         .getContract(contract.getContractAddress().toByteArray()).getInstance();
     long consumeUserResourcePercent = smartContract.getConsumeUserResourcePercent();
 
-    if (consumeUserResourcePercent >= 100) {
-      consumeUserResourcePercent = 100;
-    }
-    if (consumeUserResourcePercent <= 0) {
-      consumeUserResourcePercent = 0;
-    }
+    consumeUserResourcePercent = max(0, min(consumeUserResourcePercent, 100));
 
     if (consumeUserResourcePercent <= 0) {
       return creatorGasLimit;
@@ -414,9 +412,9 @@ public class Runtime {
 
     // insure the new contract address haven't exist
     if (deposit.getAccount(contractAddress) != null) {
-      logger.error("Trying to create a contract with existing contract address: " + Wallet
-          .encode58Check(contractAddress));
-      return;
+      throw new ContractExeException(
+          "Trying to create a contract with existing contract address: " + Wallet
+              .encode58Check(contractAddress));
     }
 
     newSmartContract = newSmartContract.toBuilder()
@@ -457,7 +455,7 @@ public class Runtime {
       this.program = new Program(ops, programInvoke, internalTransaction, config);
     } catch (Exception e) {
       logger.error(e.getMessage());
-      return;
+      throw new ContractExeException(e.getMessage());
     }
 
     program.getResult().setContractAddress(contractAddress);
@@ -481,8 +479,9 @@ public class Runtime {
   /**
    * **
    */
+
   private void call()
-      throws ContractValidateException {
+      throws ContractExeException, ContractValidateException {
     Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
     if (contract == null) {
       return;
@@ -510,7 +509,13 @@ public class Runtime {
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
       long feeLimit = trx.getRawData().getFeeLimit();
-      long gasLimit = getGasLimit(creator, caller, contract, feeLimit);
+      long gasLimit;
+      try {
+        gasLimit = getGasLimit(creator, caller, contract, feeLimit);
+      } catch (Exception e) {
+        logger.error(e.getMessage());
+        throw new ContractExeException(e.getMessage());
+      }
 
       if (isCallConstant(contractAddress)) {
         gasLimit = Constant.MAX_GAS_IN_TX;
@@ -534,7 +539,7 @@ public class Runtime {
 
   }
 
-  public void go() throws OutOfSlotTimeException {
+  public void go() throws OutOfSlotTimeException, ContractExeException {
     if (!readyToExecute) {
       return;
     }
@@ -576,17 +581,23 @@ public class Runtime {
         }
 
       } else {
-          deposit.commit();
+        deposit.commit();
       }
     } catch (OutOfResourceException e) {
       logger.error(e.getMessage());
       throw new OutOfSlotTimeException(e.getMessage());
+    } catch (ArithmeticException e) {
+      logger.error(e.getMessage());
+      throw new ContractExeException(e.getMessage());
     } catch (Exception e) {
       logger.error(e.getMessage());
+      if (StringUtils.isNoneEmpty(runtimeError)) {
+        runtimeError = e.getMessage();
+      }
     }
   }
 
-  private boolean spendUsage(long useedStorageSize) {
+  private boolean spendUsage(long usedStorageSize) {
 
     long cpuUsage = result.getGasUsed();
 
@@ -596,32 +607,34 @@ public class Runtime {
     long originResourcePercent = 100 - contract.getConsumeUserResourcePercent();
     originResourcePercent = min(originResourcePercent, 100);
     originResourcePercent = max(originResourcePercent, 0);
-    long originCpuUsage = cpuUsage * originResourcePercent / 100;
+    long originCpuUsage = Math.multiplyExact(cpuUsage, originResourcePercent) / 100;
     originCpuUsage = min(originCpuUsage, cpuProcessor.getAccountLeftCpuInUsFromFreeze(origin));
     long callerCpuUsage = cpuUsage - originCpuUsage;
 
-    if (useedStorageSize <= 0) {
-      trace.setBill(callerCpuUsage, 0);
+    if (usedStorageSize <= 0) {
+      trace.setBill(cpuUsage, 0);
       return true;
     }
-    long originStorageUsage = useedStorageSize * originResourcePercent / 100;
-    originStorageUsage = min(originCpuUsage, origin.getStorageLeft());
-    long callerStorageUsage = useedStorageSize - originStorageUsage;
+    long originStorageUsage = Math
+        .multiplyExact(usedStorageSize, originResourcePercent) / 100;
+    originStorageUsage = min(originStorageUsage, origin.getStorageLeft());
+    long callerStorageUsage = usedStorageSize - originStorageUsage;
 
     byte[] callerAddressBytes = TransactionCapsule.getOwner(trx.getRawData().getContract(0));
     AccountCapsule caller = deposit.getAccount(callerAddressBytes);
     long storageFee = trx.getRawData().getFeeLimit();
-    long cpuFee = (callerCpuUsage - cpuProcessor.getAccountLeftCpuInUsFromFreeze(caller))
-        * Constant.SUN_PER_GAS;
+    long cpuFee = Math
+        .multiplyExact((callerCpuUsage - cpuProcessor.getAccountLeftCpuInUsFromFreeze(caller))
+            , Constant.SUN_PER_GAS);
     if (cpuFee > 0) {
       storageFee -= cpuFee;
     }
     long tryBuyStorage = storageMarket.tryBuyStorage(storageFee);
     if (tryBuyStorage + caller.getStorageLeft() < callerStorageUsage) {
-      trace.setBill(callerCpuUsage, 0);
+      trace.setBill(cpuUsage, 0);
       return false;
     }
-    trace.setBill(callerCpuUsage, callerStorageUsage);
+    trace.setBill(cpuUsage, usedStorageSize);
     return true;
   }
 
