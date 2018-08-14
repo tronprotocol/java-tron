@@ -143,7 +143,7 @@ public class RuntimeTransferComplexTest {
     long consumeUserResourcePercent = 0;
     String libraryAddressPair=null;
 
-    byte[] contractAddress = TVMTestUtils.DeployContractWholeProcessReturnContractAddress(contractName,address,ABI,code,value,feeLimit,consumeUserResourcePercent,libraryAddressPair,
+    byte[] contractAddress = TVMTestUtils.deployContractWholeProcessReturnContractAddress(contractName,address,ABI,code,value,feeLimit,consumeUserResourcePercent,libraryAddressPair,
         deposit,null);
 
 
