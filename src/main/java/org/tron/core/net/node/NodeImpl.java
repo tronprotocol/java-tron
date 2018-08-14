@@ -932,16 +932,56 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private boolean checkFetchInvDataMsg(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg){
-    int elementCount = peer.getNodeStatistics().messageStatistics.tronInFetchInvDataElement.getCount(10);
-    int msgCount = trxCount.getCount(60);
-    if (elementCount > msgCount){
-      logger.warn("Peer {} request count {} in 10s gt trx count {} generate in 60s", peer.getInetAddress(), elementCount, msgCount);
-      return false;
-    }
-    for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
-      if (!peer.getAdvObjWeSpread().containsKey(hash)){
-        logger.warn("Peer {} get trx {} we not spread.", peer.getInetAddress(), hash);
+    MessageTypes type = fetchInvDataMsg.getInvMessageType();
+    if (type == MessageTypes.TRX) {
+      int elementCount = peer.getNodeStatistics().messageStatistics.tronInFetchInvDataElement.getCount(10);
+      int msgCount = trxCount.getCount(60);
+      if (elementCount > msgCount){
+        logger.warn("Check FetchInvDataMsg failed: Peer {} request count {} in 10s gt trx count {} generate in 60s", peer.getInetAddress(), elementCount, msgCount);
         return false;
+      }
+      for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
+        if (!peer.getAdvObjWeSpread().containsKey(hash)){
+          logger.warn("Check FetchInvDataMsg failed: Peer {} get trx {} we not spread.", peer.getInetAddress(), hash);
+          return false;
+        }
+      }
+    }else {
+      boolean isAdv = true;
+      for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
+        if (!peer.getAdvObjWeSpread().containsKey(hash)){
+          isAdv = false;
+          break;
+        }
+      }
+      if (isAdv){
+        MessageCount tronOutAdvBlock = peer.getNodeStatistics().messageStatistics.tronOutAdvBlock;
+        tronOutAdvBlock.add(fetchInvDataMsg.getHashList().size());
+        int outBlockCountIn1min = tronOutAdvBlock.getCount(60);
+        int producedBlockIn2min = 120_000 / ChainConstant.BLOCK_PRODUCED_INTERVAL;
+        if (outBlockCountIn1min > producedBlockIn2min){
+          logger.warn("Check FetchInvDataMsg failed: Peer {} outBlockCount {} producedBlockIn2min {}",
+              peer.getInetAddress(), outBlockCountIn1min, producedBlockIn2min);
+          return false;
+        }
+      }else {
+        if (!peer.isNeedSyncFromUs()){
+          logger.warn("Check FetchInvDataMsg failed: Peer {} not need sync from us.", peer.getInetAddress());
+          return false;
+        }
+        for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
+          long blockNum = new BlockId(hash).getNum();
+          long minBlockNum =  peer.getLastSyncBlockId().getNum() - 2 * NodeConstant.SYNC_FETCH_BATCH_NUM;
+          if (blockNum < minBlockNum){
+            logger.warn("Check FetchInvDataMsg failed: Peer {} blockNum {} lt minBlockNum {}", peer.getInetAddress(), blockNum, minBlockNum);
+            return false;
+          }
+          if (peer.getSyncBlockIdCache().getIfPresent(hash) != null){
+            logger.warn("Check FetchInvDataMsg failed: Peer {} blockNum {} hash {} is exist", peer.getInetAddress(), blockNum, hash);
+            return false;
+          }
+          peer.getSyncBlockIdCache().put(hash, 1);
+        }
       }
     }
     return true;
@@ -949,16 +989,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleFetchDataMessage(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) {
 
-    MessageTypes type = fetchInvDataMsg.getInvMessageType();
-    if (type == MessageTypes.TRX) {
-      if (!checkFetchInvDataMsg(peer, fetchInvDataMsg)){
-        disconnectPeer(peer, ReasonCode.BAD_PROTOCOL);
-        return;
-      }
+    if (!checkFetchInvDataMsg(peer, fetchInvDataMsg)){
+      disconnectPeer(peer, ReasonCode.BAD_PROTOCOL);
+      return;
     }
 
+    MessageTypes type = fetchInvDataMsg.getInvMessageType();
     BlockCapsule block = null;
-
     List<Protocol.Transaction> transactions = Lists.newArrayList();
 
     int size = 0;

@@ -53,6 +53,7 @@ public class MessageStatistics {
   public final MessageCount tronOutTrxs = new MessageCount();
   public final MessageCount tronInBlock = new MessageCount();
   public final MessageCount tronOutBlock = new MessageCount();
+  public final MessageCount tronOutAdvBlock = new MessageCount();
 
   public void addUdpInMessage(UdpMessageTypeEnum type){
     addUdpMessage(type, true);

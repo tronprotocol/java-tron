@@ -39,6 +39,7 @@ import org.tron.core.net.node.Item;
 @Scope("prototype")
 public class PeerConnection extends Channel {
 
+  @Getter
   private Cache<Sha256Hash, Integer> syncBlockIdCache = CacheBuilder.newBuilder().maximumSize(2 * NodeConstant.SYNC_FETCH_BATCH_NUM).build();
 
   @Setter
