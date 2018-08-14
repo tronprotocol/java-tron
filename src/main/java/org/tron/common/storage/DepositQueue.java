@@ -10,8 +10,8 @@ import java.util.LinkedList;
  */
 public class DepositQueue<E> {
 
-    public static int MAX_DEPOSIT_SIZE = 100;
-    public static int DEFAULT_DEPOSIT_SIZE = 20;
+    public static final int MAX_DEPOSIT_SIZE = 100;
+    public static final int DEFAULT_DEPOSIT_SIZE = 20;
 
     private int maxDepositSize = 0;
     private LinkedList<E> list = new LinkedList<>();
