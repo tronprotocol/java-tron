@@ -39,16 +39,32 @@ public class ReceiptCapsule {
     receipt = receipt.toBuilder().setCpuUsage(usage).build();
   }
 
+  public void setCpuFee(long fee) {
+    receipt = receipt.toBuilder().setCpuFee(fee).build();
+  }
+
   public long getCpuUsage() {
     return receipt.getCpuUsage();
+  }
+
+  public long getCpuFee() {
+    return receipt.getCpuFee();
   }
 
   public void setNetUsage(long netUsage) {
     this.receipt = this.receipt.toBuilder().setNetUsage(netUsage).build();
   }
 
+  public void setNetFee(long netFee) {
+    this.receipt = this.receipt.toBuilder().setNetFee(netFee).build();
+  }
+
   public long getNetUsage() {
     return this.receipt.getNetUsage();
+  }
+
+  public long getNetFee() {
+    return this.receipt.getNetFee();
   }
 
   public void calculateCpuFee() {
@@ -59,8 +75,16 @@ public class ReceiptCapsule {
     this.receipt = this.receipt.toBuilder().setStorageDelta(delta).build();
   }
 
+  public void setStorageFee(long fee) {
+    this.receipt = this.receipt.toBuilder().setStorageFee(fee).build();
+  }
+
   public long getStorageDelta() {
     return receipt.getStorageDelta();
+  }
+
+  public long getStorageFee() {
+    return receipt.getStorageFee();
   }
 
   /**
@@ -78,7 +102,7 @@ public class ReceiptCapsule {
     }
 
     long originUsage = receipt.getCpuUsage() * percent / 100;
-    originUsage = Math.min(originUsage, cpuProcessor.getAccountLeftCpuInUsFromFreeze(caller));
+    originUsage = Math.min(originUsage, cpuProcessor.getAccountLeftCpuInUsFromFreeze(origin));
     long callerUsage = receipt.getCpuUsage() - originUsage;
 
     payCpuBill(manager, origin, originUsage, cpuProcessor, now);
@@ -91,11 +115,15 @@ public class ReceiptCapsule {
       long usage,
       CpuProcessor cpuProcessor,
       long now) {
-
-    if (cpuProcessor.getAccountLeftCpuInUsFromFreeze(account) >= usage) {
+    long accountCpuLeft = cpuProcessor.getAccountLeftCpuInUsFromFreeze(account);
+    if (accountCpuLeft >= usage) {
       cpuProcessor.useCpu(account, usage, now);
     } else {
-      account.setBalance(account.getBalance() - usage * Constant.SUN_PER_GAS);
+      cpuProcessor.useCpu(account, accountCpuLeft, now);
+      long cpuFee = (usage - accountCpuLeft) * Constant.SUN_PER_GAS;
+      this.setCpuUsage(accountCpuLeft);
+      this.setCpuFee(cpuFee);
+      account.setBalance(account.getBalance() - cpuFee);
     }
 
     manager.getAccountStore().put(account.getAddress().toByteArray(), account);
@@ -132,8 +160,9 @@ public class ReceiptCapsule {
       account.setStorageUsage(account.getStorageUsage() + delta);
     } else {
       long needStorage = delta - account.getStorageLeft();
+      this.setStorageFee(storageMarket.tryBuyStorageBytes(needStorage));
       account = storageMarket.buyStorageBytes(account, needStorage);
-      account.setStorageUsage(account.getStorageUsage() + needStorage);
+      account.setStorageUsage(account.getStorageUsage() + delta);
     }
 
     manager.getAccountStore().put(account.getAddress().toByteArray(), account);

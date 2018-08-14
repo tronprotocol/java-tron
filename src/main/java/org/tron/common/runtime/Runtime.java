@@ -623,11 +623,18 @@ public class Runtime {
     byte[] callerAddressBytes = TransactionCapsule.getOwner(trx.getRawData().getContract(0));
     AccountCapsule caller = deposit.getAccount(callerAddressBytes);
     long storageFee = trx.getRawData().getFeeLimit();
-    long cpuFee = Math
-        .multiplyExact((callerCpuUsage - cpuProcessor.getAccountLeftCpuInUsFromFreeze(caller))
-            , Constant.SUN_PER_GAS);
-    if (cpuFee > 0) {
+    long callerCpuFrozen = caller.getCpuFrozenBalance();
+    long callerCpuLeft = cpuProcessor.getAccountLeftCpuInUsFromFreeze(caller);
+    long callerCpuTotal = cpuProcessor.calculateGlobalCpuLimit(callerCpuFrozen);
+    if (callerCpuUsage <= callerCpuLeft) {
+      long cpuFee = BigInteger.valueOf(callerCpuFrozen).multiply(BigInteger.valueOf(callerCpuUsage))
+          .divide(BigInteger.valueOf(callerCpuTotal)).longValue();
       storageFee -= cpuFee;
+    } else {
+      long cpuFee = BigInteger.valueOf(callerCpuFrozen).multiply(BigInteger.valueOf(callerCpuLeft))
+          .divide(BigInteger.valueOf(callerCpuTotal)).longValue();
+      storageFee -= cpuFee + Math
+          .multiplyExact(callerCpuUsage - callerCpuLeft, Constant.SUN_PER_GAS);
     }
     long tryBuyStorage = storageMarket.tryBuyStorage(storageFee);
     if (tryBuyStorage + caller.getStorageLeft() < callerStorageUsage) {
