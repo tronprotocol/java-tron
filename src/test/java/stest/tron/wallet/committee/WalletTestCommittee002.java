@@ -339,9 +339,9 @@ public class WalletTestCommittee002 {
 
   @Test(enabled = true)
   public void testInvalidProposals() {
-    // The index isn't from 0-8
+    // The index isn't from 0-9
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
-    proposalMap.put(9L, 60L);
+    proposalMap.put(10L, 60L);
     Assert.assertFalse(PublicMethed.createProposal(witness001Address,witnessKey001,
         proposalMap,blockingStubFull));
 

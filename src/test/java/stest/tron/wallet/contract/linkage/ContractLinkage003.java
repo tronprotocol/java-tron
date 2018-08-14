@@ -1,6 +1,5 @@
-package stest.tron.wallet.contract.scenario;
+package stest.tron.wallet.contract.linkage;
 
-import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.concurrent.TimeUnit;
@@ -11,24 +10,24 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.AccountResourceMessage;
-import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
+import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.SmartContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
-public class ContractScenario002 {
+public class ContractLinkage003 {
 
   //testng001、testng002、testng003、testng004
-  private final String testKey002 =
+  private final String testKey003 =
       "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
-  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey003);
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -36,8 +35,8 @@ public class ContractScenario002 {
       .getStringList("fullnode.ip.list").get(0);
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] contract002Address = ecKey1.getAddress();
-  String contract002Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  byte[] linkage003Address = ecKey1.getAddress();
+  String linkage002Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
   @BeforeSuite
   public void beforeSuite() {
@@ -47,23 +46,18 @@ public class ContractScenario002 {
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
-    PublicMethed.printAddress(contract002Key);
+    PublicMethed.printAddress(linkage002Key);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(contract002Address,20000000L,fromAddress,
-        testKey002,blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalanceGetCpu(contract002Address,5000000L,
-        3,1,contract002Key,blockingStubFull));
-    Assert.assertTrue(PublicMethed.buyStorage(5000000L,contract002Address,contract002Key,
-        blockingStubFull));
-
+    Assert.assertTrue(PublicMethed.sendcoin(linkage003Address,20000000L,fromAddress,
+        testKey003,blockingStubFull));
   }
 
-  @Test(enabled = true)
-  public void deployTronNative() {
-    AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract002Address,
+  @Test(enabled = false)
+  public void deployWhenNoCpuAndNoStorage() {
+    AccountResourceMessage accountResource = PublicMethed.getAccountResource(linkage003Address,
         blockingStubFull);
     Long cpuLimit = accountResource.getCpuLimit();
     Long storageLimit = accountResource.getStorageLimit();
@@ -146,31 +140,25 @@ public class ContractScenario002 {
         + "s\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\""
         + "constant\":false,\"inputs\":[],\"name\":\"unFreezeBalance\",\"outputs\":[],\"payable\""
         + ":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
-    byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
-        0L, 100,null,contract002Key,contract002Address,blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
-    Assert.assertTrue(smartContract.getAbi() != null);
-    accountResource = PublicMethed.getAccountResource(contract002Address,blockingStubFull);
-    cpuLimit = accountResource.getCpuLimit();
-    storageLimit = accountResource.getStorageLimit();
-    cpuUsage = accountResource.getCpuUsed();
-    storageUsage = accountResource.getStorageUsed();
-    Assert.assertTrue(cpuUsage > 0);
-    Assert.assertTrue(storageUsage > 0);
 
-    logger.info("after cpu limit is " + Long.toString(cpuLimit));
-    logger.info("after cpu usage is " + Long.toString(cpuUsage));
-    logger.info("after storage limit is " + Long.toString(storageLimit));
-    logger.info("after storage usaged is " + Long.toString(storageUsage));
+    Account account = PublicMethed.queryAccount(linkage003Address,blockingStubFull);
+    Long beforeBalance = account.getBalance();
+    byte []  contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
+        0L, 0,null,linkage002Key,linkage003Address,blockingStubFull);
+    SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
+    account = PublicMethed.queryAccount(linkage003Address,blockingStubFull);
+    Long afterBalance = account.getBalance();
+    Assert.assertTrue(beforeBalance - afterBalance > 0);
+    accountResource = PublicMethed.getAccountResource(linkage003Address, blockingStubFull);
+    Assert.assertTrue(accountResource.getCpuUsed() == 0L);
+    Assert.assertTrue(accountResource.getStorageUsed() > 400);
+
+
+
+
   }
 
-  @Test(enabled = true)
-  public void getContractWithInvaildAddress() {
-    byte[] contractAddress = contract002Address;
-    SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
-    logger.info(smartContract.getAbi().toString());
-    Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
-  }
+
 
   @AfterClass
   public void shutdown() throws InterruptedException {
