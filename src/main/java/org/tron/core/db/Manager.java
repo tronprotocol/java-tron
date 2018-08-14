@@ -985,12 +985,12 @@ public class Manager {
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfoCapsule);
 
-    sendEventToMQ(runtime.getResult().getContractAddress(), logList, block);
+    sendEventLog(runtime.getResult().getContractAddress(), logList, block);
 
     return true;
   }
 
-  private void sendEventToMQ(byte[] contractAddress, List<Log> logList, Block block) {
+  private void sendEventLog(byte[] contractAddress, List<Log> logList, Block block) {
     if (block == null) {
       return;
     }
