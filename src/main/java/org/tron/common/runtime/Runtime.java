@@ -597,7 +597,7 @@ public class Runtime {
     }
   }
 
-  private boolean spendUsage(long useedStorageSize) {
+  private boolean spendUsage(long usedStorageSize) {
 
     long cpuUsage = result.getGasUsed();
 
@@ -611,14 +611,14 @@ public class Runtime {
     originCpuUsage = min(originCpuUsage, cpuProcessor.getAccountLeftCpuInUsFromFreeze(origin));
     long callerCpuUsage = cpuUsage - originCpuUsage;
 
-    if (useedStorageSize <= 0) {
+    if (usedStorageSize <= 0) {
       trace.setBill(cpuUsage, 0);
       return true;
     }
     long originStorageUsage = Math
-        .multiplyExact(useedStorageSize, originResourcePercent) / 100;
-    originStorageUsage = min(originCpuUsage, origin.getStorageLeft());
-    long callerStorageUsage = useedStorageSize - originStorageUsage;
+        .multiplyExact(usedStorageSize, originResourcePercent) / 100;
+    originStorageUsage = min(originStorageUsage, origin.getStorageLeft());
+    long callerStorageUsage = usedStorageSize - originStorageUsage;
 
     byte[] callerAddressBytes = TransactionCapsule.getOwner(trx.getRawData().getContract(0));
     AccountCapsule caller = deposit.getAccount(callerAddressBytes);
@@ -634,7 +634,7 @@ public class Runtime {
       trace.setBill(cpuUsage, 0);
       return false;
     }
-    trace.setBill(cpuUsage, useedStorageSize);
+    trace.setBill(cpuUsage, usedStorageSize);
     return true;
   }
 
