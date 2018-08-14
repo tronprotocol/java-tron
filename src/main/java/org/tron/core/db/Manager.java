@@ -52,6 +52,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -1009,7 +1010,10 @@ public class Manager {
       transactionInfoCapsule.setResMessage(runtime.getRuntimeError());
     }
     transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());
-    transactionInfoCapsule.setFee(runtime.getResult().getRet().getFee());
+    ReceiptCapsule traceReceipt = trace.getReceipt();
+    transactionInfoCapsule.setFee(
+        runtime.getResult().getRet().getFee() + traceReceipt.getCpuFee() + traceReceipt
+            .getStorageFee());
     transactionInfoCapsule.setContractResult(runtime.getResult().getHReturn());
     transactionInfoCapsule.setContractAddress(runtime.getResult().getContractAddress());
     if (Objects.nonNull(block)) {
@@ -1020,7 +1024,7 @@ public class Manager {
 
     List<Log> logList = getLogsByLogInfoList(runtime.getResult().getLogInfoList());
     transactionInfoCapsule.addAllLog(logList);
-    transactionInfoCapsule.setReceipt(trace.getReceipt());
+    transactionInfoCapsule.setReceipt(traceReceipt);
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfoCapsule);
 
