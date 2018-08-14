@@ -20,7 +20,6 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.OutOfSlotTimeException;
 import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Protocol.AccountType;
-import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
 public class InheritanceTest {
@@ -28,7 +27,7 @@ public class InheritanceTest {
   private static Manager dbManager;
   private static AnnotationConfigApplicationContext context;
   private static DepositImpl deposit;
-  private static final String dbPath = "output_RuntimeTransferComplexTest";
+  private static final String dbPath = "output_InheritanceTest";
   private static final String OWNER_ADDRESS;
   private static final String TRANSFER_TO;
 
