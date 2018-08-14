@@ -95,8 +95,7 @@ public class PeerConnectionCheckService {
 
     @Override
     public void run() {
-//      if (pool.getActivePeers().size() >= Args.getInstance().getNodeMaxActiveNodes()) {
-      if (pool.getActivePeers().size() >= 9) {
+      if (pool.getActivePeers().size() >= Args.getInstance().getNodeMaxActiveNodes()) {
         logger.warn("connection pool is full");
         List<PeerConnection> peerList = new ArrayList<>(pool.getActivePeers());
         peerList.sort(
