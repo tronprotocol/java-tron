@@ -1,6 +1,5 @@
 buildscript {
     repositories {
-        maven {url 'http://maven.aliyun.com/nexus/content/groups/public/'}
         maven { url 'http://mvnrepository.com' }
         mavenCentral()
         jcenter()
@@ -47,7 +46,6 @@ task sourceJar(type: Jar, dependsOn: classes) {
 }
 
 repositories {
-    maven {url 'http://maven.aliyun.com/nexus/content/groups/public/'}
     maven { url 'http://mvnrepository.com' }
     mavenLocal()
     mavenCentral()
