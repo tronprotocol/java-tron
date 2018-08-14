@@ -341,9 +341,8 @@ public class Runtime {
       cpuGasFromFeeLimit = feeLimit / Constant.SUN_PER_GAS;
     } else {
       long totalCpuGasFromFreeze = cpuProcessor.calculateGlobalCpuLimit(balanceForCpuFreeze);
-      long leftBalanceForCpuFreeze = BigInteger.valueOf(cpuGasFromFreeze)
-          .multiply(BigInteger.valueOf(balanceForCpuFreeze))
-          .divide(BigInteger.valueOf(totalCpuGasFromFreeze)).longValue();
+      long leftBalanceForCpuFreeze = getCpuFee(balanceForCpuFreeze, cpuGasFromFreeze,
+          totalCpuGasFromFreeze);
 
       if (leftBalanceForCpuFreeze >= feeLimit) {
         cpuGasFromFeeLimit = BigInteger.valueOf(totalCpuGasFromFreeze)
@@ -627,15 +626,14 @@ public class Runtime {
     long callerCpuFrozen = caller.getCpuFrozenBalance();
     long callerCpuLeft = cpuProcessor.getAccountLeftCpuInUsFromFreeze(caller);
     long callerCpuTotal = cpuProcessor.calculateGlobalCpuLimit(callerCpuFrozen);
+
     if (callerCpuUsage <= callerCpuLeft) {
-      long cpuFee = BigInteger.valueOf(callerCpuFrozen).multiply(BigInteger.valueOf(callerCpuUsage))
-          .divide(BigInteger.valueOf(callerCpuTotal)).longValue();
+      long cpuFee = getCpuFee(callerCpuUsage, callerCpuFrozen, callerCpuTotal);
       storageFee -= cpuFee;
     } else {
-      long cpuFee = BigInteger.valueOf(callerCpuFrozen).multiply(BigInteger.valueOf(callerCpuLeft))
-          .divide(BigInteger.valueOf(callerCpuTotal)).longValue();
-      storageFee -= cpuFee + Math
-          .multiplyExact(callerCpuUsage - callerCpuLeft, Constant.SUN_PER_GAS);
+      long cpuFee = getCpuFee(callerCpuLeft, callerCpuFrozen, callerCpuTotal);
+      storageFee -= (cpuFee + Math
+          .multiplyExact(callerCpuUsage - callerCpuLeft, Constant.SUN_PER_GAS));
     }
     long tryBuyStorage = storageMarket.tryBuyStorage(storageFee);
     if (tryBuyStorage + caller.getStorageLeft() < callerStorageUsage) {
@@ -644,6 +642,14 @@ public class Runtime {
     }
     trace.setBill(cpuUsage, usedStorageSize);
     return true;
+  }
+
+  private long getCpuFee(long callerCpuUsage, long callerCpuFrozen, long callerCpuTotal) {
+    if (callerCpuTotal <= 0) {
+      return 0;
+    }
+    return BigInteger.valueOf(callerCpuFrozen).multiply(BigInteger.valueOf(callerCpuUsage))
+        .divide(BigInteger.valueOf(callerCpuTotal)).longValue();
   }
 
   private boolean isCallConstant() {
