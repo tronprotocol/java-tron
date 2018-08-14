@@ -1,6 +1,7 @@
 package org.tron.core.db;
 
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
@@ -14,7 +15,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.amqp.core.AmqpTemplate;
-import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -43,6 +43,8 @@ import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.exception.*;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
+import org.tron.orm.mongo.entity.EventLogEntity;
+import org.tron.orm.service.impl.EventLogServiceImpl;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
@@ -67,9 +69,12 @@ public class Manager {
   @Autowired
   private AmqpTemplate amqpTemplate;
 
+  @Autowired
+  private EventLogServiceImpl eventLogService;
+
   private Cache<byte[], Protocol.SmartContract.ABI> abiCache = CacheBuilder.newBuilder()
-          .maximumSize(100_000).expireAfterWrite(1, TimeUnit.HOURS).initialCapacity(100_000)
-          .recordStats().build();
+      .maximumSize(100_000).expireAfterWrite(1, TimeUnit.HOURS).initialCapacity(100_000)
+      .recordStats().build();
 
   // db store
   @Autowired
@@ -1022,7 +1027,7 @@ public class Manager {
             if (StringUtils.equalsIgnoreCase(encodeEventHexString, topicHexString)) {
 
               List<Type> results = FunctionReturnDecoder.decode(
-                      ByteArray.toHexString(log.getData().toByteArray()), event.getNonIndexedParameters());
+                  ByteArray.toHexString(log.getData().toByteArray()), event.getNonIndexedParameters());
               JSONArray resultJsonArray = new JSONArray();
               for (Type result : results) {
                 resultJsonArray.add(result.getValue());
@@ -1030,8 +1035,20 @@ public class Manager {
 
               long blockNumber = block.getBlockHeader().getRawData().getNumber();
               long blockTimestamp = block.getBlockHeader().getRawData().getTimestamp();
-              amqpTemplate.send(org.tron.mq.Constant.EXCHANGE, contractAddressHexString + "." + entryName,
-                      new Message(resultJsonArray.toJSONString().getBytes(), new MessageProperties()));
+              MessageProperties someProperties = new MessageProperties();
+//              amqpTemplate.send(org.tron.mq.Constant.EXCHANGE, contractAddressHexString + "." + entryName,
+//                      new Message(resultJsonArray.toJSONString().getBytes(), someProperties));
+
+              JSONObject eventLog = new JSONObject();
+              eventLog.put("blockNumber", blockNumber);
+              eventLog.put("blockTimestamp", blockTimestamp);
+              eventLog.put("contractAddressHexString", contractAddressHexString);
+              eventLog.put("entryName", entryName);
+              eventLog.put("resultJsonArray", resultJsonArray);
+
+              // 事件日志写入MongoDB
+              eventLogService.insertEventLog(eventLog.toJSONString());
+
             }
           });
         });
@@ -1340,7 +1357,7 @@ public class Manager {
 
   /**
    * @param block the block update signed witness. set witness who signed block the 1. the latest
-   * block num 2. pay the trx to witness. 3. the latest slot num.
+   *              block num 2. pay the trx to witness. 3. the latest slot num.
    */
   public void updateSignedWitness(BlockCapsule block) {
     // TODO: add verification
