@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -27,6 +28,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
+import org.tron.core.exception.CancelException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.UpdateSettingContract;
@@ -38,6 +40,7 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Result;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
+
 
 
 public class PublicMethed {
@@ -383,6 +386,7 @@ public class PublicMethed {
     builder.setAssetName(bsName);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
+
 
     Contract.TransferAssetContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.transferAsset(contract);
@@ -885,7 +889,7 @@ public class PublicMethed {
 
   public static byte[] deployContract(String contractName, String abiString, String code,
       String data, Long feeLimit, long value,
-      long consumeUserResourcePercent, byte[] libraryAddress, String priKey, byte[] ownerAddress,
+      long consumeUserResourcePercent, byte[] libraryAddress,String priKey, byte[] ownerAddress,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
@@ -909,7 +913,6 @@ public class PublicMethed {
     builder.setOriginAddress(ByteString.copyFrom(owner));
     builder.setAbi(abi);
     builder.setConsumeUserResourcePercent(consumeUserResourcePercent);
-    //builder.setBytecode(ByteString.copyFrom(codeBytes));
 
     if (value != 0) {
 
@@ -941,7 +944,7 @@ public class PublicMethed {
 
     Transaction.Builder transBuilder = Transaction.newBuilder();
     Transaction.raw.Builder rawBuilder = transactionExtention.getTransaction().getRawData()
-        .toBuilder();
+          .toBuilder();
     rawBuilder.setFeeLimit(feeLimit);
     transBuilder.setRawData(rawBuilder);
     for (int i = 0; i < transactionExtention.getTransaction().getSignatureCount(); i++) {
@@ -957,6 +960,8 @@ public class PublicMethed {
     texBuilder.setResult(transactionExtention.getResult());
     texBuilder.setTxid(transactionExtention.getTxid());
     transactionExtention = texBuilder.build();
+
+
 
     byte[] contractAddress = generateContractAddress(transactionExtention.getTransaction(), owner);
     System.out.println(
@@ -1156,13 +1161,15 @@ public class PublicMethed {
     ByteString byteString = ByteString.copyFrom(address);
     BytesMessage bytesMessage = BytesMessage.newBuilder().setValue(byteString).build();
     Integer i = 0;
-    while (blockingStubFull.getContract(bytesMessage).getName().isEmpty() && i++ < 9) {
+    while (blockingStubFull.getContract(bytesMessage).getName().isEmpty() && i++ < 7) {
       try {
         Thread.sleep(3000);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
     }
+    logger.info("contract name is " + blockingStubFull.getContract(bytesMessage).getName());
+    logger.info("contract address is " + WalletClient.encode58Check(address));
     return blockingStubFull.getContract(bytesMessage);
   }
 
@@ -1198,6 +1205,7 @@ public class PublicMethed {
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
     builder.setConsumeUserResourcePercent(consumeUserResourcePercent);
+
 
     UpdateSettingContract updateSettingContract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull
@@ -1235,6 +1243,14 @@ public class PublicMethed {
     } else {
       return true;
     }
+  }
+
+  public static Account queryAccount(byte[] address,WalletGrpc
+      .WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ByteString addressBS = ByteString.copyFrom(address);
+    Account request = Account.newBuilder().setAddress(addressBS).build();
+    return blockingStubFull.getAccount(request);
   }
 
 }
