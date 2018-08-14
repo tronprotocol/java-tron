@@ -131,8 +131,13 @@ public class WitnessService implements Service {
           try {
             TransactionCapsule tx = this.tronApp.getDbManager().getRepushTransactions().take();
             this.tronApp.getDbManager().rePush(tx);
-          } catch (InterruptedException e) {
-            // do nothing
+          } catch (InterruptedException ex) {
+            logger.info("repushLoop interrupted");
+            Thread.currentThread().interrupt();
+          } catch (Exception ex) {
+            logger.error("unknown exception happened in witness loop", ex);
+          } catch (Throwable throwable) {
+            logger.error("unknown throwable happened in witness loop", throwable);
           }
         }
       };

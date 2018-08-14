@@ -235,7 +235,7 @@ public class Manager {
   private List<TransactionCapsule> popedTransactions =
       Collections.synchronizedList(Lists.newArrayList());
 
-  // the capacity is equal to Integer.MAX_VALUE defaults
+  // the capacity is equal to Integer.MAX_VALUE default
   private BlockingQueue<TransactionCapsule> repushTransactions;
 
   // for test only

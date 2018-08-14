@@ -32,6 +32,8 @@ public class PendingManager implements AutoCloseable {
         Thread.currentThread().interrupt();
       }
     }
+    tmpTransactions.clear();
+
     for (TransactionCapsule tx : dbManager.getPoppedTransactions()) {
       try {
         dbManager.getRepushTransactions().put(tx);
@@ -41,7 +43,6 @@ public class PendingManager implements AutoCloseable {
       }
     }
     dbManager.getPoppedTransactions().clear();
-    tmpTransactions.clear();
-
+    
   }
 }
