@@ -101,12 +101,16 @@ public class ReceiptCapsule {
       return;
     }
 
-    long originUsage = receipt.getCpuUsage() * percent / 100;
-    originUsage = Math.min(originUsage, cpuProcessor.getAccountLeftCpuInUsFromFreeze(origin));
-    long callerUsage = receipt.getCpuUsage() - originUsage;
-
-    payCpuBill(manager, origin, originUsage, cpuProcessor, now);
-    payCpuBill(manager, caller, callerUsage, cpuProcessor, now);
+    if (caller.getAddress().equals(origin.getAddress())) {
+      payCpuBill(manager, caller, receipt.getCpuUsage(), cpuProcessor, now);
+    } else {
+      long originUsage = receipt.getCpuUsage() * percent / 100;
+      originUsage = Math.min(originUsage, cpuProcessor.getAccountLeftCpuInUsFromFreeze(origin));
+      long callerUsage = receipt.getCpuUsage() - originUsage;
+      payCpuBill(manager, origin, originUsage, cpuProcessor, now);
+      this.setOriginCpuUsage(originUsage);
+      payCpuBill(manager, caller, callerUsage, cpuProcessor, now);
+    }
   }
 
   private void payCpuBill(
@@ -121,7 +125,7 @@ public class ReceiptCapsule {
     } else {
       cpuProcessor.useCpu(account, accountCpuLeft, now);
       long cpuFee = (usage - accountCpuLeft) * Constant.SUN_PER_GAS;
-      this.setCpuUsage(accountCpuLeft);
+      this.setCpuUsage(getCpuUsage() - (usage - accountCpuLeft));
       this.setCpuFee(cpuFee);
       account.setBalance(account.getBalance() - cpuFee);
     }
@@ -142,12 +146,16 @@ public class ReceiptCapsule {
       return;
     }
 
-    long originDelta = receipt.getStorageDelta() * percent / 100;
-    originDelta = Math.min(originDelta, origin.getStorageLeft());
-    long callerDelta = receipt.getStorageDelta() - originDelta;
-
-    payStorageBill(manager, origin, originDelta, storageMarket);
-    payStorageBill(manager, caller, callerDelta, storageMarket);
+    if (caller.getAddress().equals(origin.getAddress())) {
+      payStorageBill(manager, caller, receipt.getStorageDelta(), storageMarket);
+    } else {
+      long originDelta = receipt.getStorageDelta() * percent / 100;
+      originDelta = Math.min(originDelta, origin.getStorageLeft());
+      long callerDelta = receipt.getStorageDelta() - originDelta;
+      payStorageBill(manager, origin, originDelta, storageMarket);
+      this.setOriginStorageDelta(originDelta);
+      payStorageBill(manager, caller, callerDelta, storageMarket);
+    }
   }
 
   private void payStorageBill(
@@ -156,6 +164,7 @@ public class ReceiptCapsule {
       long delta,
       StorageMarket storageMarket) {
 
+    this.setStorageDelta(delta);
     if (account.getStorageLeft() >= delta) {
       account.setStorageUsage(account.getStorageUsage() + delta);
     } else {
@@ -174,5 +183,13 @@ public class ReceiptCapsule {
 
   public static ResourceReceipt copyReceipt(ReceiptCapsule origin) {
     return origin.getReceipt().toBuilder().build();
+  }
+
+  public void setOriginCpuUsage(long delta) {
+    this.receipt = this.receipt.toBuilder().setOriginCpuUsage(delta).build();
+  }
+
+  public void setOriginStorageDelta(long delta) {
+    this.receipt = this.receipt.toBuilder().setOriginStorageDelta(delta).build();
   }
 }
