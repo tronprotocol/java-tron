@@ -71,7 +71,14 @@ public class ForkController {
       }
     }
 
-    logger.info("*******update:" + Arrays.toString(slots));
+    logger.info(
+        "*******update:" + Arrays.toString(slots)
+            + ",witness size:" + witnesses.size()
+            + "," + slots
+            + ",slot:" + slot
+            + ",version:" + blockCapsule.getInstance().getBlockHeader().getRawData().getVersion()
+
+    );
     slots[slot] = blockCapsule.getInstance().getBlockHeader().getRawData().getVersion();
   }
 
