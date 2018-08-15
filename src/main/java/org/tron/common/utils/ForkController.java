@@ -3,7 +3,6 @@ package org.tron.common.utils;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -77,13 +76,6 @@ public class ForkController {
             + "," + slots
             + ",slot:" + slot
             + ",version:" + blockCapsule.getInstance().getBlockHeader().getRawData().getVersion()
-            + ",block witness:" + ByteUtil.toHexString(witness.toByteArray())
-            + ",witnesses:" + witnesses.stream().map(w -> ByteUtil.toHexString(w.toByteArray()))
-            .collect(Collectors.toList())
-            + ", witness class:" + witness.getClass().getSimpleName()
-            + ", witnesses class:" + witnesses.stream().map(Object::getClass)
-            .map(Class::getSimpleName).collect(Collectors.toList())
-
     );
   }
 
