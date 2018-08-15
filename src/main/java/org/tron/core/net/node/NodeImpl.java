@@ -885,6 +885,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {
     peer.setTronState(TronState.SYNCING);
+    BlockId headBlockId = del.getHeadBlockId();
     long remainNum = 0;
     LinkedList<BlockId> blockIds = new LinkedList<>();
     List<BlockId> summaryChainIds = syncMsg.getBlockIds();
@@ -927,7 +928,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
 
     if (blockIds.peekLast() == null){
-      peer.setLastSyncBlockId(del.getHeadBlockId());
+      peer.setLastSyncBlockId(headBlockId);
     }else {
       peer.setLastSyncBlockId(blockIds.peekLast());
     }
