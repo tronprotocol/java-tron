@@ -2,7 +2,9 @@ package org.tron.common.runtime.vm;
 
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
@@ -25,24 +27,22 @@ import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
 public class InternalTransactionCallTest {
-  private static Runtime runtime;
-  private static Manager dbManager;
-  private static AnnotationConfigApplicationContext context;
-  private static DepositImpl deposit;
-  private static final String dbPath = "output_InternalTransactionCallTest";
-  private static final String OWNER_ADDRESS;
+  private  Runtime runtime;
+  private  Manager dbManager;
+  private  AnnotationConfigApplicationContext context;
+  private  DepositImpl deposit;
+  private  String dbPath = "output_InternalTransactionCallTest";
+  private  String OWNER_ADDRESS;
 
-  static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
-    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
-  }
 
   /**
    * Init data.
    */
-  @BeforeClass
-  public static void init() {
+  @Before
+  public void init() {
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     dbManager = context.getBean(Manager.class);
     deposit = DepositImpl.createRoot(dbManager);
     deposit.createAccount(Hex.decode(OWNER_ADDRESS),AccountType.Normal);
@@ -52,8 +52,8 @@ public class InternalTransactionCallTest {
 
   /**
    * contract A {
-   *   uint256 public number;
-   *   address public sender;
+   *   uint256 public numberForB;
+   *   address public senderForB;
    *   function callTest(address bAddress, uint256 _number) {
    *     bAddress.call(bytes4(sha3("setValue(uint256)")), _number); // B's storage is set, A is not modified
    *   }
@@ -68,22 +68,24 @@ public class InternalTransactionCallTest {
    * }
    *
    * contract B {
-   *   uint256 public number;
-   *   address public sender;
+   *   uint256 public numberForB;
+   *   address public senderForB;
    *
    *   function setValue(uint256 _number) {
-   *     number = _number;
-   *     sender = msg.sender;
-   *     // msg.sender is A if invoked by A's callTest. B's storage will be updated
-   *     // msg.sender is A if invoked by A's callcodeTest. None of B's storage is updated
-   *     // msg.sender is OWNER if invoked by A's delegatecallTest. None of B's storage is updated
-   *
-   *
-   *     // the value of "this" is A, when invoked by either A's callcodeSetN or C.foo()
+   *     numberForB = _number;
+   *     senderForB = msg.sender;
+   *     // senderForB is A if invoked by A's callTest. B's storage will be updated
+   *     // senderForB is A if invoked by A's callcodeTest. None of B's storage is updated
+   *     // senderForB is OWNER if invoked by A's delegatecallTest. None of B's storage is updated
    *   }
    * }
    */
 
+
+  /*
+      A call B, anything belongs to A should not be changed, B should be changed.
+      msg.sender for contractB should be A's address.
+   */
 
 
   @Test
@@ -92,48 +94,135 @@ public class InternalTransactionCallTest {
     byte[] contractBAddress = deployBContractAndGetItsAddress();
     byte[] contractAAddress =deployAContractandGetItsAddress();
 
-    /* =================================== CALL callTest to change B storage =================================== */
-    String params = Hex.toHexString(new DataWord(contractBAddress).getData()) + "0000000000000000000000000000000000000000000000000000000000000003";
-    byte[] triggerData = TVMTestUtils.parseABI("callTest()",params);
+    /* =================================== CALL callTest() to change B storage =================================== */
+    String params = Hex.toHexString(new DataWord(new DataWord(contractBAddress).getLast20Bytes()).getData()) + "0000000000000000000000000000000000000000000000000000000000000003";
+    byte[] triggerData = TVMTestUtils.parseABI("callTest(address,uint256)",params);
     TVMTestUtils.triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),contractAAddress,triggerData,
-        0,1000000,deposit,null);
+        0,1000000000,deposit,null);
 
-    /* =================================== CALL number() to check A's number =================================== */
-    byte[] triggerData2 = TVMTestUtils.parseABI("number()","");
+    /* =================================== CALL numberForB() to check A's numberForB =================================== */
+    byte[] triggerData2 = TVMTestUtils.parseABI("numberForB()","");
     runtime = TVMTestUtils.triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),contractAAddress,triggerData2,
-        0,1000000,deposit,null);
+        0,1000000000,deposit,null);
     // A should not be changed
     Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),"0000000000000000000000000000000000000000000000000000000000000000");
 
-    /* =================================== CALL number() to check B's number =================================== */
-    byte[] triggerData3 = TVMTestUtils.parseABI("number()","");
-    runtime = TVMTestUtils.triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),contractBAddress,triggerData3,
-        0,1000000,deposit,null);
-    // A should not be changed
+    /* =================================== CALL senderForB() to check A's senderForB =================================== */
+    byte[] triggerData3 = TVMTestUtils.parseABI("senderForB()","");
+    runtime = TVMTestUtils.triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),contractAAddress,triggerData3,
+        0,1000000000,deposit,null);
+    // A should be changed
+    Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),"0000000000000000000000000000000000000000000000000000000000000000");
+
+    /* =================================== CALL numberForB() to check B's numberForB =================================== */
+    byte[] triggerData4 = TVMTestUtils.parseABI("numberForB()","");
+    runtime = TVMTestUtils.triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),contractBAddress,triggerData4,
+        0,1000000000,deposit,null);
+    // B's numberForB should be changed to 3
     Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),"0000000000000000000000000000000000000000000000000000000000000003");
 
-
-    /* =================================== CALL number() to check B's sender =================================== */
-    byte[] triggerData4 = TVMTestUtils.parseABI("sender()","");
-    runtime = TVMTestUtils.triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),contractBAddress,triggerData4,
-        0,1000000,deposit,null);
-    // A should not be changed
+    /* =================================== CALL senderForB() to check B's senderForB =================================== */
+    byte[] triggerData5 = TVMTestUtils.parseABI("senderForB()","");
+    runtime = TVMTestUtils.triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),contractBAddress,triggerData5,
+        0,1000000000,deposit,null);
+    // B 's senderForB should be A
     Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),Hex.toHexString(new DataWord(new DataWord(contractAAddress).getLast20Bytes()).getData()));
   }
 
+  /*
+     A delegatecall B, A should be changed, anything belongs to B should not be changed.
+     msg.sender for contractB should be Caller(OWNER_ADDRESS), but this value will not be effected in B's senderForB since we use delegatecall.
+     We store it in A's senderForB.
+   */
   @Test
-  public void delegateCallTest(){
+  public void delegateCallTest()
+      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+    byte[] contractBAddress = deployBContractAndGetItsAddress();
+    byte[] contractAAddress =deployAContractandGetItsAddress();
+    /* =================================== CALL delegatecallTest() to change B storage =================================== */
+    String params = Hex.toHexString(new DataWord(new DataWord(contractBAddress).getLast20Bytes()).getData()) + "0000000000000000000000000000000000000000000000000000000000000003";
+    byte[] triggerData = TVMTestUtils.parseABI("delegatecallTest(address,uint256)",params);
+    TVMTestUtils.triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),contractAAddress,triggerData,
+        0,1000000000,deposit,null);
+
+    /* =================================== CALL numberForB() to check A's numberForB =================================== */
+    byte[] triggerData2 = TVMTestUtils.parseABI("numberForB()","");
+    runtime = TVMTestUtils.triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),contractAAddress,triggerData2,
+        0,1000000000,deposit,null);
+    // A should be changed to 3
+    Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),"0000000000000000000000000000000000000000000000000000000000000003");
+
+    /* =================================== CALL senderForB() to check A's senderForB =================================== */
+    byte[] triggerData3 = TVMTestUtils.parseABI("senderForB()","");
+    runtime = TVMTestUtils.triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),contractAAddress,triggerData3,
+        0,1000000000,deposit,null);
+    // A's senderForB should be changed to caller's contract Address (OWNER_ADDRESS)
+    Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),Hex.toHexString(new DataWord(new DataWord(OWNER_ADDRESS).getLast20Bytes()).getData()));
+
+    /* =================================== CALL numberForB() to check B's numberForB =================================== */
+    byte[] triggerData4 = TVMTestUtils.parseABI("numberForB()","");
+    runtime = TVMTestUtils.triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),contractBAddress,triggerData4,
+        0,1000000000,deposit,null);
+    // B's numberForB should not be changed
+    Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),"0000000000000000000000000000000000000000000000000000000000000000");
+
+    /* =================================== CALL senderForB() to check B's senderForB =================================== */
+    byte[] triggerData5 = TVMTestUtils.parseABI("senderForB()","");
+    runtime = TVMTestUtils.triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),contractBAddress,triggerData5,
+        0,1000000000,deposit,null);
+    // B 's senderForB should not be changed
+    Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),"0000000000000000000000000000000000000000000000000000000000000000");
 
   }
 
+  /*
+     A callcode B, A should be changed, anything belongs to B should not be changed.
+     msg.sender for contractB should be A, but this value will not be effected in B's senderForB since we use callcode.
+     We store it in A's senderForB.
+   */
   @Test
-  public void callCodeTest(){
+  public void callCodeTest()
+      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+    byte[] contractBAddress = deployBContractAndGetItsAddress();
+    byte[] contractAAddress =deployAContractandGetItsAddress();
+    /* =================================== CALL callcodeTest() to change B storage =================================== */
+    String params = Hex.toHexString(new DataWord(new DataWord(contractBAddress).getLast20Bytes()).getData()) + "0000000000000000000000000000000000000000000000000000000000000003";
+    byte[] triggerData = TVMTestUtils.parseABI("callcodeTest(address,uint256)",params);
+    TVMTestUtils.triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),contractAAddress,triggerData,
+        0,1000000000,deposit,null);
 
+    /* =================================== CALL numberForB() to check A's numberForB =================================== */
+    byte[] triggerData2 = TVMTestUtils.parseABI("numberForB()","");
+    runtime = TVMTestUtils.triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),contractAAddress,triggerData2,
+        0,1000000000,deposit,null);
+    // A should be changed to 3
+    Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),"0000000000000000000000000000000000000000000000000000000000000003");
+
+    /* =================================== CALL senderForB() to check A's senderForB =================================== */
+    byte[] triggerData3 = TVMTestUtils.parseABI("senderForB()","");
+    runtime = TVMTestUtils.triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),contractAAddress,triggerData3,
+        0,1000000000,deposit,null);
+    // A's senderForB should be changed to A's contract Address
+    Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),Hex.toHexString(new DataWord(new DataWord(contractAAddress).getLast20Bytes()).getData()));
+
+    /* =================================== CALL numberForB() to check B's numberForB =================================== */
+    byte[] triggerData4 = TVMTestUtils.parseABI("numberForB()","");
+    runtime = TVMTestUtils.triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),contractBAddress,triggerData4,
+        0,1000000000,deposit,null);
+    // B's numberForB should not be changed
+    Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),"0000000000000000000000000000000000000000000000000000000000000000");
+
+    /* =================================== CALL senderForB() to check B's senderForB =================================== */
+    byte[] triggerData5 = TVMTestUtils.parseABI("senderForB()","");
+    runtime = TVMTestUtils.triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),contractBAddress,triggerData5,
+        0,1000000000,deposit,null);
+    // B 's senderForB should not be changed
+    Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),"0000000000000000000000000000000000000000000000000000000000000000");
   }
 
   @Test
   public void staticCallTest(){
-
+    //TODO: need to implement this
   }
 
 
@@ -142,29 +231,28 @@ public class InternalTransactionCallTest {
       throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
     String contractName = "AContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
-    String ABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"bAddress\",\"type\":\"address\"},{\"name\":\"_number\",\"type\":"
-        + "\"uint256\"}],\"name\":\"delegatecallTest\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":"
-        + "\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"bAddress\",\"type\":\"address\"},{\"name\":\"_number\",\"type\":"
-        + "\"uint256\"}],\"name\":\"callTest\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},"
-        + "{\"constant\":true,\"inputs\":[],\"name\":\"sender\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,"
-        + "\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"number\",\"outputs\":[{\"name\":"
-        + "\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\""
-        + ":[{\"name\":\"bAddress\",\"type\":\"address\"},{\"name\":\"_number\",\"type\":\"uint256\"}],\"name\":\"callcodeTest\",\"outputs\":[],"
-        + "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
-    String code = "608060405234801561001057600080fd5b506102d4806100206000396000f3006080604052600436106100535763ffffffff"
-        + "60e060020a6000350416633da5d187811461005857806343c3a43a1461007e57806367e404ce146100a25780638381f58a146100d357806"
-        + "3d7d21f5b146100fa575b600080fd5b34801561006457600080fd5b5061007c600160a060020a036004351660243561011e565b005b3480"
-        + "1561008a57600080fd5b5061007c600160a060020a0360043516602435610199565b3480156100ae57600080fd5b506100b7610216565b6"
-        + "0408051600160a060020a039092168252519081900360200190f35b3480156100df57600080fd5b506100e8610225565b6040805191825251"
-        + "9081900360200190f35b34801561010657600080fd5b5061007c600160a060020a036004351660243561022b565b81600160a060020a03166"
-        + "0405180807f73657456616c75652875696e74323536290000000000000000000000000000008152506011019050604051809103902060e060"
-        + "020a9004826040518263ffffffff1660e060020a02815260040180828152602001915050600060405180830381865af4505050505050565b81"
-        + "600160a060020a031660405180807f73657456616c75652875696e743235362900000000000000000000000000000081525060110190506040"
-        + "51809103902060e060020a9004826040518263ffffffff1660e060020a02815260040180828152602001915050600060405180830381600087"
-        + "5af1505050505050565b600154600160a060020a031681565b60005481565b81600160a060020a031660405180807f73657456616c75652875"
-        + "696e74323536290000000000000000000000000000008152506011019050604051809103902060e060020a9004826040518263ffffffff1660e"
-        + "060020a028152600401808281526020019150506000604051808303816000875af25050505050505600a165627a7a7230582067259fcc4aa6b9"
-        + "f5995d34f7ee832cd11bf1930a9610a05643dc94243e1cfc2f0029";
+    String ABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"bAddress\",\"type\":\"address\"},{\"name\":\"_number\",\"type\":\"uint256\"}],"
+        + "\"name\":\"delegatecallTest\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant"
+        + "\":false,\"inputs\":[{\"name\":\"bAddress\",\"type\":\"address\"},{\"name\":\"_number\",\"type\":\"uint256\"}],\"name\":\"callTest\","
+        + "\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":"
+        + "\"senderForB\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":"
+        + "\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"bAddress\",\"type\":\"address\"},{\"name\":\"_number\",\"type\":\"uint256\"}],"
+        + "\"name\":\"callcodeTest\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,"
+        + "\"inputs\":[],\"name\":\"numberForB\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\","
+        + "\"type\":\"function\"}]";
+    String code = "608060405234801561001057600080fd5b506102d4806100206000396000f3006080604052600436106100535763ffffffff60e060020a6000350"
+        + "416633da5d187811461005857806343c3a43a1461007e578063b053ebd4146100a2578063d7d21f5b146100d3578063dd92afef146100f7575b600080fd5b"
+        + "34801561006457600080fd5b5061007c600160a060020a036004351660243561011e565b005b34801561008a57600080fd5b5061007c600160a060020a036"
+        + "0043516602435610199565b3480156100ae57600080fd5b506100b7610216565b60408051600160a060020a039092168252519081900360200190f35b3480"
+        + "156100df57600080fd5b5061007c600160a060020a0360043516602435610225565b34801561010357600080fd5b5061010c6102a2565b604080519182525"
+        + "19081900360200190f35b81600160a060020a031660405180807f73657456616c75652875696e743235362900000000000000000000000000000081525060"
+        + "11019050604051809103902060e060020a9004826040518263ffffffff1660e060020a02815260040180828152602001915050600060405180830381865af4"
+        + "505050505050565b81600160a060020a031660405180807f73657456616c75652875696e743235362900000000000000000000000000000081525060110190"
+        + "50604051809103902060e060020a9004826040518263ffffffff1660e060020a028152600401808281526020019150506000604051808303816000875af150"
+        + "5050505050565b600154600160a060020a031681565b81600160a060020a031660405180807f73657456616c75652875696e74323536290000000000000000"
+        + "000000000000008152506011019050604051809103902060e060020a9004826040518263ffffffff1660e060020a0281526004018082815260200191505060"
+        + "00604051808303816000875af2505050505050565b600054815600a165627a7a723058206d36ef7c6f6d387ad915f299e715c9b360f3719843a1113badb28b"
+        + "6595e66c1e0029";
     long value = 0;
     long feeLimit = 1000000000;
     long consumeUserResourcePercent = 0;
@@ -181,18 +269,19 @@ public class InternalTransactionCallTest {
       throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
     String contractName = "BContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
-    String ABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"_number\",\"type\":\"uint256\"}],\"name\":"
-        + "\"setValue\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},"
-        + "{\"constant\":true,\"inputs\":[],\"name\":\"sender\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],"
-        + "\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":"
-        + "\"number\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]";
-    String code = "608060405234801561001057600080fd5b5061014c806100206000396000f3006080604052600436106100565763ffffffff"
-        + "7c010000000000000000000000000000000000000000000000000000000060003504166355241077811461005b57806367e404ce1461"
-        + "00755780638381f58a146100b3575b600080fd5b34801561006757600080fd5b506100736004356100da565b005b34801561008157600"
-        + "080fd5b5061008a6100fe565b6040805173ffffffffffffffffffffffffffffffffffffffff9092168252519081900360200190f35b348"
-        + "0156100bf57600080fd5b506100c861011a565b60408051918252519081900360200190f35b6000556001805473fffffffffffffffffff"
-        + "fffffffffffffffffffff191633179055565b60015473ffffffffffffffffffffffffffffffffffffffff1681565b600054815600a16562"
-        + "7a7a72305820212c8bac78a209af736d0ea64104c0bb21efc4c7e6d536d07a780d4179613b820029";
+    String ABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"_number\",\"type\":\"uint256\"}],\"name\":\"setValue\","
+        + "\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,"
+        + "\"inputs\":[],\"name\":\"senderForB\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,"
+        + "\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"numberForB\","
+        + "\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":"
+        + "\"function\"}]";
+    String code = "608060405234801561001057600080fd5b5061014c806100206000396000f3006080604052600436106100565763ffffffff7"
+        + "c010000000000000000000000000000000000000000000000000000000060003504166355241077811461005b578063b053ebd4146100"
+        + "75578063dd92afef146100b3575b600080fd5b34801561006757600080fd5b506100736004356100da565b005b34801561008157600080"
+        + "fd5b5061008a6100fe565b6040805173ffffffffffffffffffffffffffffffffffffffff9092168252519081900360200190f35b348015"
+        + "6100bf57600080fd5b506100c861011a565b60408051918252519081900360200190f35b6000556001805473ffffffffffffffffffffff"
+        + "ffffffffffffffffff191633179055565b60015473ffffffffffffffffffffffffffffffffffffffff1681565b600054815600a165627a7"
+        + "a72305820e2c513cf46bb32018879ec48f8fe264c985b6d2c7a853a578f4f56583fe1ffb80029";
     long value = 0;
     long feeLimit = 1000000000;
     long consumeUserResourcePercent = 0;
@@ -207,8 +296,8 @@ public class InternalTransactionCallTest {
   /**
    * Release resources.
    */
-  @AfterClass
-  public static void destroy() {
+  @After
+  public  void destroy() {
     Args.clearParam();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
