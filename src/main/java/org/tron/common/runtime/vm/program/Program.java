@@ -42,7 +42,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.MessageCall;
@@ -67,11 +66,9 @@ import org.tron.core.Wallet;
 import org.tron.core.actuator.TransferActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.Transaction;
 
 /**
  * @author Roman Mandeleil
