@@ -8,11 +8,6 @@ import org.tron.core.Wallet;
 import org.tron.core.actuator.TransferActuator;
 import org.tron.core.exception.ContractValidateException;
 
-
-/**
- * @author Guo Yonggang
- * @since 02.05.2018
- */
 public class MUtil {
 
   public static void transfer(Deposit deposit, byte[] fromAddress, byte[] toAddress, long amount)

@@ -58,11 +58,6 @@ import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
-
-/**
- * @author Guo Yonggang
- * @since 28.04.2018
- */
 @Slf4j(topic = "Runtime")
 public class Runtime {
 

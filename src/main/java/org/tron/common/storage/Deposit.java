@@ -10,10 +10,6 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol;
 
-/**
- * @author Guo Yonggang
- * @since 2018.04
- */
 public interface Deposit {
 
   Manager getDbManager();
