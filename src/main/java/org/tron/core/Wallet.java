@@ -382,8 +382,8 @@ public class Wallet {
         dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
       }
 
-      dbManager.pushTransactions(trx);
       if (dbManager.getForkController().forkOrNot(trx)) {
+        dbManager.pushTransactions(trx);
         p2pNode.broadcast(message);
       }
       return builder.setResult(true).setCode(response_code.SUCCESS).build();

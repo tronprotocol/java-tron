@@ -1085,11 +1085,11 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
-        processTransaction(trx, null);
-//        trx.resetResult();
-        tmpSeesion.merge();
-        // push into block
         if (forkController.forkOrNot(trx)) {
+          processTransaction(trx, null);
+//        trx.resetResult();
+          tmpSeesion.merge();
+          // push into block
           blockCapsule.addTransaction(trx);
         }
         iterator.remove();
