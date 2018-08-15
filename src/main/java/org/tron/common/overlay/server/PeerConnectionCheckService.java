@@ -45,7 +45,7 @@ public class PeerConnectionCheckService {
     scheduledExecutorService
         .scheduleWithFixedDelay(new CheckDataTransferTask(), 5, 5, TimeUnit.MINUTES);
     scheduledExecutorService
-        .scheduleWithFixedDelay(new CheckConnectNumberTask(), 4, 4, TimeUnit.MINUTES);
+        .scheduleWithFixedDelay(new CheckConnectNumberTask(), 4, 1, TimeUnit.MINUTES);
   }
 
   @PreDestroy
@@ -63,7 +63,7 @@ public class PeerConnectionCheckService {
         NodeStatistics nodeStatistics = peerConnection.getNodeStatistics();
         if (!nodeStatistics.nodeIsHaveDataTransfer()
             && System.currentTimeMillis() - peerConnection.getStartTime() >= CHECK_TIME
-            && !channelManager.getTrustPeers().containsKey(peerConnection.getInetAddress())
+            && !peerConnection.isTrustPeer()
             && !nodeStatistics.isPredefined()) {
           //&& !peerConnection.isActive()
           //if xxx minutes not have data transfer,disconnect the peer,exclude trust peer and active peer
@@ -97,10 +97,17 @@ public class PeerConnectionCheckService {
     public void run() {
       if (pool.getActivePeers().size() >= Args.getInstance().getNodeMaxActiveNodes()) {
         logger.warn("connection pool is full");
-        List<PeerConnection> peerList = new ArrayList<>(pool.getActivePeers());
-        peerList.sort(
-            Comparator.comparingInt((PeerConnection o) -> o.getNodeStatistics().getReputation()));
-        peerList = CollectionUtils.truncateRandom(peerList, 2, 1);
+        List<PeerConnection> peerList = new ArrayList<>();
+        for (PeerConnection peer : pool.getActivePeers()) {
+          if (!peer.isTrustPeer() && !peer.getNodeStatistics().isPredefined()) {
+            peerList.add(peer);
+          }
+        }
+        if (peerList.size() >= 2) {
+          peerList.sort(
+              Comparator.comparingInt((PeerConnection o) -> o.getNodeStatistics().getReputation()));
+          peerList = CollectionUtils.truncateRandom(peerList, 2, 1);
+        }
         for (PeerConnection peerConnection : peerList) {
           logger.warn("connection pool is full, disconnect the peer : {}",
               peerConnection.getInetAddress());
