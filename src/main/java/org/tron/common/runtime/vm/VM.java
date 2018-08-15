@@ -249,7 +249,7 @@ public class VM {
           if (gasCost > program.getGasLimitLeft().longValueSafe()) {
             throw new Program.OutOfGasException(
                 "Not enough gas for '%s' operation executing: opGas[%d], programGas[%d]", op.name(),
-                callGasWord.longValueSafe(), program.getGasLimitLeft().longValueSafe());
+                gasCost, program.getGasLimitLeft().longValueSafe());
           }
           DataWord getGasLimitLeft = program.getGasLimitLeft().clone();
           getGasLimitLeft.sub(new DataWord(gasCost));
@@ -1228,7 +1228,6 @@ public class VM {
             throw new Program.StaticCallModificationException();
           }
 
-          // todo: should subtract?
           if (!value.isZero()) {
             adjustedCallGas.add(new DataWord(gasCosts.getSTIPEND_CALL()));
           }
