@@ -67,7 +67,7 @@ public class ForkController {
     ByteString witness = blockCapsule.getWitnessAddress();
     int slot = 0;
     for (ByteString scheduledWitness : witnesses) {
-      if (!scheduledWitness.equals(witness)) {
+      if (Arrays.equals(scheduledWitness.toByteArray(), witness.toByteArray())) {
         ++slot;
       }
     }
