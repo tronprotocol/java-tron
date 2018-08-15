@@ -1,8 +1,11 @@
 package org.tron.common.utils;
 
+import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
+import java.util.Arrays;
 import java.util.List;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -10,6 +13,7 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
+@Slf4j
 @Component
 public class ForkController {
 
@@ -27,11 +31,13 @@ public class ForkController {
 
   public synchronized boolean shouldBeForked() {
     if (fork) {
+      logger.info("*****shouldBeForked:" + true);
       return true;
     }
 
     for (int version : slots) {
       if (version != ChainConstant.version) {
+        logger.info("*****shouldBeForked:" + false);
         return false;
       }
     }
@@ -39,10 +45,14 @@ public class ForkController {
     // todo add Maintenance or block number
     fork = true;
     manager.getDynamicPropertiesStore().setForkController(true);
+    logger.info("*****shouldBeForked:" + true);
     return true;
   }
 
   public synchronized boolean forkOrNot(TransactionCapsule capsule) {
+    logger.info("*****forkOrNot:" + (shouldBeForked()
+        || capsule.getInstance().getRawData().getContractList().get(0).getType().getNumber()
+        <= DISCARD_SCOPE));
     return shouldBeForked()
         || capsule.getInstance().getRawData().getContractList().get(0).getType().getNumber()
         <= DISCARD_SCOPE;
@@ -62,6 +72,7 @@ public class ForkController {
       }
     }
 
+    logger.info("*******update:" + Arrays.toString(slots));
     slots[slot] = blockCapsule.getInstance().getBlockHeader().getRawData().getVersion();
   }
 
