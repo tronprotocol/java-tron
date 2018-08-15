@@ -66,6 +66,10 @@ public class ForkController {
 
     ByteString witness = blockCapsule.getWitnessAddress();
     int slot = witnesses.indexOf(witness);
+    if (slot < 0) {
+      return;
+    }
+    slots[slot] = blockCapsule.getInstance().getBlockHeader().getRawData().getVersion();
 
     logger.info(
         "*******update:" + Arrays.toString(slots)
@@ -81,7 +85,6 @@ public class ForkController {
             .map(Class::getSimpleName).collect(Collectors.toList())
 
     );
-    slots[slot] = blockCapsule.getInstance().getBlockHeader().getRawData().getVersion();
   }
 
 }
