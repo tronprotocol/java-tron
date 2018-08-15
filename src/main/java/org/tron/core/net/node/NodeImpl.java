@@ -514,8 +514,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     HashMap<Sha256Hash, InventoryType> spread = new HashMap<>();
     synchronized (advObjToSpread) {
       spread.putAll(advObjToSpread);
-      trxCount.add(spread.size());
       advObjToSpread.clear();
+    }
+    for (InventoryType type : spread.values()){
+      if (type == InventoryType.TRX){
+        trxCount.add();
+      }
     }
     getActivePeer().stream()
         .filter(peer -> !peer.isNeedSyncFromUs())
@@ -934,10 +938,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private boolean checkFetchInvDataMsg(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg){
     MessageTypes type = fetchInvDataMsg.getInvMessageType();
     if (type == MessageTypes.TRX) {
-      int elementCount = peer.getNodeStatistics().messageStatistics.tronInFetchInvDataElement.getCount(10);
-      int msgCount = trxCount.getCount(60);
-      if (elementCount > msgCount){
-        logger.warn("Check FetchInvDataMsg failed: Peer {} request count {} in 10s gt trx count {} generate in 60s", peer.getInetAddress(), elementCount, msgCount);
+      int elementCount = peer.getNodeStatistics().messageStatistics.tronInTrxFetchInvDataElement.getCount(10);
+      int maxCount = trxCount.getCount(60);
+      if (elementCount > maxCount){
+        logger.warn("Check FetchInvDataMsg failed: Peer {} request count {} in 10s gt trx count {} generate in 60s", peer.getInetAddress(), elementCount, maxCount);
         return false;
       }
       for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {

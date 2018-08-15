@@ -39,14 +39,28 @@ public class MessageStatistics {
   public final MessageCount tronOutSyncBlockChain = new MessageCount();
   public final MessageCount tronInBlockChainInventory = new MessageCount();
   public final MessageCount tronOutBlockChainInventory = new MessageCount();
-  public final MessageCount tronInInventory = new MessageCount();
-  public final MessageCount tronOutInventory = new MessageCount();
-  public final MessageCount tronInInventoryElement = new MessageCount();
-  public final MessageCount tronOutInventoryElement = new MessageCount();
-  public final MessageCount tronInFetchInvData = new MessageCount();
-  public final MessageCount tronOutFetchInvData = new MessageCount();
-  public final MessageCount tronInFetchInvDataElement = new MessageCount();
-  public final MessageCount tronOutFetchInvDataElement = new MessageCount();
+
+  public final MessageCount tronInTrxInventory = new MessageCount();
+  public final MessageCount tronOutTrxInventory = new MessageCount();
+  public final MessageCount tronInTrxInventoryElement = new MessageCount();
+  public final MessageCount tronOutTrxInventoryElement = new MessageCount();
+
+  public final MessageCount tronInBlockInventory = new MessageCount();
+  public final MessageCount tronOutBlockInventory = new MessageCount();
+  public final MessageCount tronInBlockInventoryElement = new MessageCount();
+  public final MessageCount tronOutBlockInventoryElement = new MessageCount();
+
+  public final MessageCount tronInTrxFetchInvData = new MessageCount();
+  public final MessageCount tronOutTrxFetchInvData = new MessageCount();
+  public final MessageCount tronInTrxFetchInvDataElement = new MessageCount();
+  public final MessageCount tronOutTrxFetchInvDataElement = new MessageCount();
+
+  public final MessageCount tronInBlockFetchInvData = new MessageCount();
+  public final MessageCount tronOutBlockFetchInvData = new MessageCount();
+  public final MessageCount tronInBlockFetchInvDataElement = new MessageCount();
+  public final MessageCount tronOutBlockFetchInvDataElement = new MessageCount();
+
+
   public final MessageCount tronInTrx = new MessageCount();
   public final MessageCount tronOutTrx = new MessageCount();
   public final MessageCount tronInTrxs = new MessageCount();
@@ -119,22 +133,44 @@ public class MessageStatistics {
         break;
       case INVENTORY:
         InventoryMessage inventoryMessage = (InventoryMessage) msg;
+        int inventorySize = inventoryMessage.getInventory().getIdsCount();
         if (flag) {
-          tronInInventory.add();
-          tronInInventoryElement.add(inventoryMessage.getInventory().getIdsCount());
+          if (inventoryMessage.getInvMessageType() == MessageTypes.TRX){
+            tronInTrxInventory.add();
+            tronInTrxInventoryElement.add(inventorySize);
+          }else {
+            tronInBlockInventory.add();
+            tronInBlockInventoryElement.add(inventorySize);
+          }
         } else {
-          tronOutInventory.add();
-          tronOutInventoryElement.add(inventoryMessage.getInventory().getIdsCount());
+          if (inventoryMessage.getInvMessageType() == MessageTypes.TRX){
+            tronOutTrxInventory.add();
+            tronOutTrxInventoryElement.add(inventorySize);
+          }else {
+            tronOutBlockInventory.add();
+            tronOutBlockInventoryElement.add(inventorySize);
+          }
         }
         break;
       case FETCH_INV_DATA:
         FetchInvDataMessage fetchInvDataMessage = (FetchInvDataMessage) msg;
+        int fetchSize = fetchInvDataMessage.getInventory().getIdsCount();
         if (flag) {
-          tronInFetchInvData.add();
-          tronInFetchInvDataElement.add(fetchInvDataMessage.getInventory().getIdsCount());
+          if (fetchInvDataMessage.getInvMessageType() == MessageTypes.TRX){
+            tronInTrxFetchInvData.add();
+            tronInTrxFetchInvDataElement.add(fetchSize);
+          }else {
+            tronInBlockFetchInvData.add();
+            tronInBlockFetchInvDataElement.add(fetchSize);
+          }
         } else {
-          tronOutFetchInvData.add();
-          tronOutFetchInvDataElement.add(fetchInvDataMessage.getInventory().getIdsCount());
+          if (fetchInvDataMessage.getInvMessageType() == MessageTypes.TRX){
+            tronOutTrxFetchInvData.add();
+            tronOutTrxFetchInvDataElement.add(fetchSize);
+          }else {
+            tronOutBlockFetchInvData.add();
+            tronOutBlockFetchInvDataElement.add(fetchSize);
+          }
         }
         break;
       case TRXS:
