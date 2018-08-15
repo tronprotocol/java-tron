@@ -133,6 +133,7 @@ public class Channel {
   }
 
   public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage msg) {
+    isDisconnect = false;
     ctx.pipeline().remove(handshakeHandler);
     msgQueue.activate(ctx);
     ctx.pipeline().addLast("messageCodec", messageCodec);
