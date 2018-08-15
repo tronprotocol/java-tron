@@ -26,9 +26,6 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 
-/**
- * Created by Guo Yonggang on 04.14.2018
- */
 @Slf4j
 public class CodeCapsule implements ProtoCapsule<byte[]> {
 

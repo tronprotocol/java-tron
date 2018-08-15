@@ -28,10 +28,6 @@ import org.tron.core.exception.BadItemException;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 
-/**
- * @author Guo Yonggang
- * @since 27.04.2018
- */
 public class DepositImpl implements Deposit {
 
   private Manager dbManager;

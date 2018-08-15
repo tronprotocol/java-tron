@@ -13,10 +13,6 @@ import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.exception.BadItemException;
 
-/**
- * @author Guo Yonggang
- * @since 27.04.2018
- */
 public class Value {
 
     private Type type;

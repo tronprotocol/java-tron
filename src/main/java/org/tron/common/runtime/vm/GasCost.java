@@ -62,7 +62,6 @@ public class GasCost {
     private final int EXT_CODE_COPY = 20;
     private final int NEW_ACCT_SUICIDE = 0;
 
-    // add by Guo Yonggang
     // private final int CREATE_DATA = 600;
 
     public int getSTEP() {
