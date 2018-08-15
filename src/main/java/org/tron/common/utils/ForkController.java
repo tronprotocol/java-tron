@@ -79,8 +79,11 @@ public class ForkController {
             + ",slot:" + slot
             + ",version:" + blockCapsule.getInstance().getBlockHeader().getRawData().getVersion()
             + ",block witness:" + ByteUtil.toHexString(witness.toByteArray())
-            + "witnesses:" + witnesses.stream().map(w -> ByteUtil.toHexString(w.toByteArray()))
+            + ",witnesses:" + witnesses.stream().map(w -> ByteUtil.toHexString(w.toByteArray()))
             .collect(Collectors.toList())
+            + ", witness class:" + witness.getClass().getSimpleName()
+            + ", witnesses class:" + witnesses.stream().map(Object::getClass)
+            .map(Class::getSimpleName).collect(Collectors.toList())
 
     );
     slots[slot] = blockCapsule.getInstance().getBlockHeader().getRawData().getVersion();
