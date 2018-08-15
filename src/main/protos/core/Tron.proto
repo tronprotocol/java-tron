@@ -182,6 +182,8 @@ message ResourceReceipt {
   int64 net_fee = 4;
   int64 storage_delta = 5;
   int64 storage_fee = 6;
+  int64 origin_cpu_usage = 7;
+  int64 origin_storage_delta = 8;
 }
 
 message Transaction {
