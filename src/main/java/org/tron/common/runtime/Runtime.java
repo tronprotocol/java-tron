@@ -39,7 +39,6 @@ import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
@@ -464,7 +463,7 @@ public class Runtime {
 
     deposit.createContract(contractAddress, new ContractCapsule(newSmartContract));
     deposit.saveCode(contractAddress, ProgramPrecompile.getCode(code));
-    deposit.createContractByNormalAccountIndex(ownerAddress, new BytesCapsule(contractAddress));
+    // deposit.createContractByNormalAccountIndex(ownerAddress, new BytesCapsule(contractAddress));
 
     // transfer from callerAddress to contractAddress according to callValue
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();

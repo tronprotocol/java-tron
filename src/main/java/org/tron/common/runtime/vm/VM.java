@@ -1228,7 +1228,6 @@ public class VM {
             throw new Program.StaticCallModificationException();
           }
 
-          // todo: should subtract?
           if (!value.isZero()) {
             adjustedCallGas.add(new DataWord(gasCosts.getSTIPEND_CALL()));
           }

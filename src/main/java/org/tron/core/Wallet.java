@@ -877,6 +877,10 @@ public class Wallet {
   }
 
   private static boolean isConstant(SmartContract.ABI abi, byte[] selector) throws Exception {
+
+    if (abi.getEntrysList().size() == 0) {
+      return false;
+    }
     if (selector == null || selector.length != 4) {
       throw new Exception("Selector's length or selector itself is invalid");
     }
