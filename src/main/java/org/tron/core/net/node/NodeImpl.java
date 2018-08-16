@@ -898,7 +898,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     } catch (StoreException e) {
       logger.error(e.getMessage());
     }
-
+  
     if (blockIds.isEmpty()) {
       if (CollectionUtils.isNotEmpty(summaryChainIds) && !del
           .canChainRevoke(summaryChainIds.get(0).getNum())) {
