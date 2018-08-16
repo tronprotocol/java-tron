@@ -25,10 +25,10 @@ public class GasCost {
     private final int SLOAD = 50;
     private final int STOP = 0;
     private final int SUICIDE = 0;
-    private final int CLEAR_SSTORE = 5000;
-    private final int SET_SSTORE = 20000;
-    private final int RESET_SSTORE = 5000;
-    private final int REFUND_SSTORE = 15000;
+    private final int CLEAR_SSTORE = 50;
+    private final int SET_SSTORE = 50;
+    private final int RESET_SSTORE = 50;
+    private final int REFUND_SSTORE = 50;
     private final int CREATE = 32000;
 
     private final int JUMPDEST = 1;
@@ -62,7 +62,6 @@ public class GasCost {
     private final int EXT_CODE_COPY = 20;
     private final int NEW_ACCT_SUICIDE = 0;
 
-    // add by Guo Yonggang
     // private final int CREATE_DATA = 600;
 
     public int getSTEP() {

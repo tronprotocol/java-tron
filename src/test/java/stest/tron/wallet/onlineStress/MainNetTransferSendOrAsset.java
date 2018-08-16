@@ -98,7 +98,6 @@ public class MainNetTransferSendOrAsset {
     start = System.currentTimeMillis();
   }
 
-  //@Test(enabled = )
   @Test(enabled = false,threadPoolSize = 20, invocationCount = 100000)
   public void freezeAnd() throws InterruptedException {
     Random rand = new Random();

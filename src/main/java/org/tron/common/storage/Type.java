@@ -1,9 +1,5 @@
 package org.tron.common.storage;
 
-/**
- * @author Guo Yonggang
- * @since 27.04.2018
- */
 public class Type {
     /**
      * Default Mode : VALUE_TYPE_NORMAL

@@ -12,14 +12,11 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.exception.AccountResourceInsufficientException;
-import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Transaction.Contract;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Slf4j
 public class BandwidthProcessor extends ResourceProcessor {
@@ -51,7 +48,8 @@ public class BandwidthProcessor extends ResourceProcessor {
   }
 
   @Override
-  public void consume(TransactionCapsule trx, TransactionResultCapsule ret)
+  public void consume(TransactionCapsule trx, TransactionResultCapsule ret,
+      TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException {
     List<Contract> contracts =
         trx.getInstance().getRawData().getContractList();
@@ -59,15 +57,17 @@ public class BandwidthProcessor extends ResourceProcessor {
     for (Contract contract : contracts) {
       long bytes = trx.getSerializedSize();
       logger.debug("trxId {},bandwidth cost :{}", trx.getTransactionId(), bytes);
+      trace.setNetBill(bytes, 0);
       byte[] address = TransactionCapsule.getOwner(contract);
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
-        if (accountCapsule == null) {
+      if (accountCapsule == null) {
         throw new ContractValidateException("account not exists");
       }
       long now = dbManager.getWitnessController().getHeadSlot();
 
       if (contractCreateNewAccount(contract)) {
         consumeForCreateNewAccount(accountCapsule, bytes, now, ret);
+        trace.setNetBill(0, ret.getFee());
         continue;
       }
 
@@ -86,6 +86,7 @@ public class BandwidthProcessor extends ResourceProcessor {
       }
 
       if (useTransactionFee(accountCapsule, bytes, ret)) {
+        trace.setNetBill(0, ret.getFee());
         continue;
       }
 
@@ -136,7 +137,8 @@ public class BandwidthProcessor extends ResourceProcessor {
     if (bytes * createNewAccountBandwidthRatio <= (netLimit - newNetUsage)) {
       latestConsumeTime = now;
       long latestOperationTime = dbManager.getHeadBlockTimeStamp();
-      newNetUsage = increase(newNetUsage, bytes * createNewAccountBandwidthRatio, latestConsumeTime, now);
+      newNetUsage = increase(newNetUsage, bytes * createNewAccountBandwidthRatio, latestConsumeTime,
+          now);
       accountCapsule.setLatestConsumeTime(latestConsumeTime);
       accountCapsule.setLatestOperationTime(latestOperationTime);
       accountCapsule.setNetUsage(newNetUsage);

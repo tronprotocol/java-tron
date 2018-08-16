@@ -4,6 +4,8 @@ import static com.google.common.primitives.Longs.max;
 import static com.google.common.primitives.Longs.min;
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.tron.common.runtime.utils.MUtil.transfer;
+import static org.tron.common.runtime.vm.VMUtils.saveProgramTraceFile;
+import static org.tron.common.runtime.vm.VMUtils.zipAndEncode;
 import static org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType.ET_CONSTANT_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType.ET_NORMAL_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType.ET_PRE_TYPE;
@@ -18,9 +20,10 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.runtime.vm.VM;
@@ -39,7 +42,6 @@ import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
@@ -59,15 +61,11 @@ import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
-/**
- * @author Guo Yonggang
- * @since 28.04.2018
- */
+@Slf4j(topic = "Runtime")
 public class Runtime {
 
-  private static final Logger logger = LoggerFactory.getLogger("execute");
 
-  SystemProperties config;
+  private SystemProperties config = SystemProperties.getInstance();
 
   private Transaction trx;
   private Block block = null;
@@ -172,6 +170,8 @@ public class Runtime {
     this.programInvokeFactory = programInvokeFactory;
     this.executorType = ET_PRE_TYPE;
     this.block = block;
+    this.cpuProcessor = new CpuProcessor(deposit.getDbManager());
+    this.storageMarket = new StorageMarket(deposit.getDbManager());
     Transaction.Contract.ContractType contractType = tx.getRawData().getContract(0).getType();
     switch (contractType.getNumber()) {
       case Transaction.Contract.ContractType.TriggerSmartContract_VALUE:
@@ -325,11 +325,33 @@ public class Runtime {
   }
 
   private long getGasLimit(AccountCapsule account, long feeLimit) {
-    CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
+
     // will change the name from us to gas
+    // can change the calc way
     long cpuGasFromFreeze = cpuProcessor.getAccountLeftCpuInUsFromFreeze(account);
     long cpuGasFromBalance = Math.floorDiv(account.getBalance(), Constant.SUN_PER_GAS);
-    long cpuGasFromFeeLimit = Math.floorDiv(feeLimit, Constant.SUN_PER_GAS);
+
+    long cpuGasFromFeeLimit;
+    long balanceForCpuFreeze = account.getAccountResource().getFrozenBalanceForCpu()
+        .getFrozenBalance();
+    if (0 == balanceForCpuFreeze) {
+      cpuGasFromFeeLimit = feeLimit / Constant.SUN_PER_GAS;
+    } else {
+      long totalCpuGasFromFreeze = cpuProcessor.calculateGlobalCpuLimit(balanceForCpuFreeze);
+      long leftBalanceForCpuFreeze = getCpuFee(balanceForCpuFreeze, cpuGasFromFreeze,
+          totalCpuGasFromFreeze);
+
+      if (leftBalanceForCpuFreeze >= feeLimit) {
+        cpuGasFromFeeLimit = BigInteger.valueOf(totalCpuGasFromFreeze)
+            .multiply(BigInteger.valueOf(feeLimit))
+            .divide(BigInteger.valueOf(balanceForCpuFreeze)).longValue();
+      } else {
+        cpuGasFromFeeLimit = Math
+            .addExact(cpuGasFromFreeze,
+                (feeLimit - leftBalanceForCpuFreeze) / Constant.SUN_PER_GAS);
+      }
+    }
+
     return min(Math.addExact(cpuGasFromFreeze, cpuGasFromBalance), cpuGasFromFeeLimit);
   }
 
@@ -341,7 +363,6 @@ public class Runtime {
       return callerGasLimit;
     }
 
-    CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
     // creatorCpuGasFromFreeze
     long creatorGasLimit = cpuProcessor.getAccountLeftCpuInUsFromFreeze(creator);
 
@@ -349,12 +370,7 @@ public class Runtime {
         .getContract(contract.getContractAddress().toByteArray()).getInstance();
     long consumeUserResourcePercent = smartContract.getConsumeUserResourcePercent();
 
-    if (consumeUserResourcePercent >= 100) {
-      consumeUserResourcePercent = 100;
-    }
-    if (consumeUserResourcePercent <= 0) {
-      consumeUserResourcePercent = 0;
-    }
+    consumeUserResourcePercent = max(0, min(consumeUserResourcePercent, 100));
 
     if (consumeUserResourcePercent <= 0) {
       return creatorGasLimit;
@@ -392,9 +408,9 @@ public class Runtime {
 
     // insure the new contract address haven't exist
     if (deposit.getAccount(contractAddress) != null) {
-      logger.error("Trying to create a contract with existing contract address: " + Wallet
-          .encode58Check(contractAddress));
-      return;
+      throw new ContractExeException(
+          "Trying to create a contract with existing contract address: " + Wallet
+              .encode58Check(contractAddress));
     }
 
     newSmartContract = newSmartContract.toBuilder()
@@ -435,7 +451,7 @@ public class Runtime {
       this.program = new Program(ops, programInvoke, internalTransaction, config);
     } catch (Exception e) {
       logger.error(e.getMessage());
-      return;
+      throw new ContractExeException(e.getMessage());
     }
 
     program.getResult().setContractAddress(contractAddress);
@@ -445,7 +461,7 @@ public class Runtime {
 
     deposit.createContract(contractAddress, new ContractCapsule(newSmartContract));
     deposit.saveCode(contractAddress, ProgramPrecompile.getCode(code));
-    deposit.createContractByNormalAccountIndex(ownerAddress, new BytesCapsule(contractAddress));
+    // deposit.createContractByNormalAccountIndex(ownerAddress, new BytesCapsule(contractAddress));
 
     // transfer from callerAddress to contractAddress according to callValue
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
@@ -459,8 +475,9 @@ public class Runtime {
   /**
    * **
    */
+
   private void call()
-      throws ContractValidateException {
+      throws ContractExeException, ContractValidateException {
     Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
     if (contract == null) {
       return;
@@ -488,7 +505,13 @@ public class Runtime {
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
       long feeLimit = trx.getRawData().getFeeLimit();
-      long gasLimit = getGasLimit(creator, caller, contract, feeLimit);
+      long gasLimit;
+      try {
+        gasLimit = getGasLimit(creator, caller, contract, feeLimit);
+      } catch (Exception e) {
+        logger.error(e.getMessage());
+        throw new ContractExeException(e.getMessage());
+      }
 
       if (isCallConstant(contractAddress)) {
         gasLimit = Constant.MAX_GAS_IN_TX;
@@ -512,7 +535,7 @@ public class Runtime {
 
   }
 
-  public void go() throws OutOfSlotTimeException {
+  public void go() throws OutOfSlotTimeException, ContractExeException {
     if (!readyToExecute) {
       return;
     }
@@ -521,8 +544,13 @@ public class Runtime {
       if (vm != null) {
         vm.play(program);
 
+        program.getResult().setRet(result.getRet());
         result = program.getResult();
         if (isCallConstant()) {
+          long callValue = TransactionCapsule.getCallValue(trx.getRawData().getContract(0));
+          if (callValue > 0) {
+            runtimeError = "constant cannot set call value.";
+          }
           return;
         }
 
@@ -532,8 +560,10 @@ public class Runtime {
           result.getDeleteAccounts().clear();
           result.getLogInfoList().clear();
           result.resetFutureRefund();
+          program.spendAllGas();
           spendUsage(0);
           if (result.getException() != null) {
+            runtimeError = result.getException().getMessage();
             throw result.getException();
           } else {
             runtimeError = "REVERT opcode executed";
@@ -544,27 +574,27 @@ public class Runtime {
           if (!spendUsage(usedStorageSize)) {
             throw Program.Exception.notEnoughStorage();
           }
-          if (executorType == ET_NORMAL_TYPE) {
-            deposit.commit();
-          }
+          deposit.commit();
         }
 
       } else {
-        if (executorType == ET_NORMAL_TYPE) {
-          deposit.commit();
-        }
+        deposit.commit();
       }
     } catch (OutOfResourceException e) {
       logger.error(e.getMessage());
-      runtimeError = e.getMessage();
       throw new OutOfSlotTimeException(e.getMessage());
+    } catch (ArithmeticException e) {
+      logger.error(e.getMessage());
+      throw new ContractExeException(e.getMessage());
     } catch (Exception e) {
       logger.error(e.getMessage());
-      runtimeError = e.getMessage();
+      if (StringUtils.isNoneEmpty(runtimeError)) {
+        runtimeError = e.getMessage();
+      }
     }
   }
 
-  private boolean spendUsage(long useedStorageSize) {
+  private boolean spendUsage(long usedStorageSize) {
 
     long cpuUsage = result.getGasUsed();
 
@@ -574,33 +604,49 @@ public class Runtime {
     long originResourcePercent = 100 - contract.getConsumeUserResourcePercent();
     originResourcePercent = min(originResourcePercent, 100);
     originResourcePercent = max(originResourcePercent, 0);
-    long originCpuUsage = cpuUsage * originResourcePercent / 100;
+    long originCpuUsage = Math.multiplyExact(cpuUsage, originResourcePercent) / 100;
     originCpuUsage = min(originCpuUsage, cpuProcessor.getAccountLeftCpuInUsFromFreeze(origin));
     long callerCpuUsage = cpuUsage - originCpuUsage;
 
-    if (useedStorageSize <= 0) {
-      trace.setBill(callerCpuUsage, 0);
+    if (usedStorageSize <= 0) {
+      trace.setBill(cpuUsage, 0);
       return true;
     }
-    long originStorageUsage = useedStorageSize * originResourcePercent / 100;
-    originStorageUsage = min(originCpuUsage, origin.getStorageLeft());
-    long callerStorageUsage = useedStorageSize - originStorageUsage;
+    long originStorageUsage = Math
+        .multiplyExact(usedStorageSize, originResourcePercent) / 100;
+    originStorageUsage = min(originStorageUsage, origin.getStorageLeft());
+    long callerStorageUsage = usedStorageSize - originStorageUsage;
 
     byte[] callerAddressBytes = TransactionCapsule.getOwner(trx.getRawData().getContract(0));
     AccountCapsule caller = deposit.getAccount(callerAddressBytes);
     long storageFee = trx.getRawData().getFeeLimit();
-    long cpuFee = (callerCpuUsage - cpuProcessor.getAccountLeftCpuInUsFromFreeze(caller))
-        * Constant.SUN_PER_GAS;
-    if (cpuFee > 0) {
+    long callerCpuFrozen = caller.getCpuFrozenBalance();
+    long callerCpuLeft = cpuProcessor.getAccountLeftCpuInUsFromFreeze(caller);
+    long callerCpuTotal = cpuProcessor.calculateGlobalCpuLimit(callerCpuFrozen);
+
+    if (callerCpuUsage <= callerCpuLeft) {
+      long cpuFee = getCpuFee(callerCpuUsage, callerCpuFrozen, callerCpuTotal);
       storageFee -= cpuFee;
+    } else {
+      long cpuFee = getCpuFee(callerCpuLeft, callerCpuFrozen, callerCpuTotal);
+      storageFee -= (cpuFee + Math
+          .multiplyExact(callerCpuUsage - callerCpuLeft, Constant.SUN_PER_GAS));
     }
     long tryBuyStorage = storageMarket.tryBuyStorage(storageFee);
     if (tryBuyStorage + caller.getStorageLeft() < callerStorageUsage) {
-      trace.setBill(callerCpuUsage, 0);
+      trace.setBill(cpuUsage, 0);
       return false;
     }
-    trace.setBill(callerCpuUsage, callerStorageUsage);
+    trace.setBill(cpuUsage, usedStorageSize);
     return true;
+  }
+
+  private long getCpuFee(long callerCpuUsage, long callerCpuFrozen, long callerCpuTotal) {
+    if (callerCpuTotal <= 0) {
+      return 0;
+    }
+    return BigInteger.valueOf(callerCpuFrozen).multiply(BigInteger.valueOf(callerCpuUsage))
+        .divide(BigInteger.valueOf(callerCpuTotal)).longValue();
   }
 
   private boolean isCallConstant() {
@@ -623,12 +669,29 @@ public class Runtime {
     return false;
   }
 
-  public RuntimeSummary finalization() {
-    return null;
+  public void finalization() {
+    if (config.vmTrace() && program != null && result != null) {
+      String trace = program.getTrace()
+          .result(result.getHReturn())
+          .error(result.getException())
+          .toString();
+
+
+      if (config.vmTraceCompressed()) {
+        trace = zipAndEncode(trace);
+      }
+
+      String txHash = Hex.toHexString(new InternalTransaction(trx).getHash());
+      saveProgramTraceFile(config,txHash, trace);
+    }
+
   }
 
   public ProgramResult getResult() {
     return result;
   }
 
+  public String getRuntimeError() {
+    return runtimeError;
+  }
 }

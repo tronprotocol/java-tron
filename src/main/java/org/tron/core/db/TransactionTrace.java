@@ -7,7 +7,6 @@ import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
@@ -16,9 +15,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.OutOfSlotTimeException;
 import org.tron.core.exception.TransactionTraceException;
-import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
-import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
@@ -64,60 +61,6 @@ public class TransactionTrace {
     this.storageMarket = new StorageMarket(this.dbManager);
   }
 
-  private void checkForSmartContract() throws TransactionTraceException {
-
-    //todo remove maxCpuInUsBySender
-    long maxCpuUsageInUs = 100000;
-    long value;
-    long limitInDrop = trx.getInstance().getRawData().getFeeLimit(); // in drop
-    if (TRX_CONTRACT_CREATION_TYPE == trxType) {
-      CreateSmartContract contract = ContractCapsule
-          .getSmartContractFromTransaction(trx.getInstance());
-      SmartContract smartContract = contract.getNewContract();
-      // todo modify later
-      value = smartContract.getCallValue();
-    } else if (TRX_CONTRACT_CALL_TYPE == trxType) {
-      TriggerSmartContract contract = ContractCapsule
-          .getTriggerContractFromTransaction(trx.getInstance());
-      // todo modify later
-      value = contract.getCallValue();
-    } else {
-      return;
-    }
-    AccountCapsule owner = dbManager.getAccountStore()
-        .get(TransactionCapsule.getOwner(trx.getInstance().getRawData().getContract(0)));
-    long balance = owner.getBalance();
-
-    CpuProcessor cpuProcessor = new CpuProcessor(this.dbManager);
-    long cpuInUsFromFreeze = cpuProcessor.getAccountLeftCpuInUsFromFreeze(owner);
-
-    checkAccountInputLimitAndMaxWithinBalance(maxCpuUsageInUs, value,
-        balance, limitInDrop, cpuInUsFromFreeze, Constant.SUN_PER_GAS);
-  }
-
-  private boolean checkAccountInputLimitAndMaxWithinBalance(long maxCpuUsageInUs, long value,
-      long balance, long limitInDrop, long cpuInUsFromFreeze, long dropPerCpuUs)
-      throws TransactionTraceException {
-
-    if (balance < Math.addExact(limitInDrop, value)) {
-      throw new TransactionTraceException("balance < limitInDrop + value");
-    }
-    long CpuInUsFromDrop = Math.floorDiv(limitInDrop, dropPerCpuUs);
-    long cpuNeedDrop;
-    if (CpuInUsFromDrop > cpuInUsFromFreeze) {
-      // prior to use freeze, so not include "="
-      cpuNeedDrop = maxCpuUsageInUs * dropPerCpuUs;
-    } else {
-      cpuNeedDrop = 0;
-    }
-
-    if (limitInDrop < cpuNeedDrop) {
-      throw new TransactionTraceException("limitInDrop < cpuNeedDrop");
-    }
-
-    return true;
-  }
-
   //pre transaction check
   public void init() throws TransactionTraceException {
 
@@ -140,10 +83,10 @@ public class TransactionTrace {
     receipt.setStorageDelta(storageUseage);
   }
 
-
-  private void checkStorage() {
-    //TODO if not enough buy some storage auto
-    receipt.buyStorage(0);
+  //set net bill
+  public void setNetBill(long netUsage, long netFee) {
+    receipt.setNetUsage(netUsage);
+    receipt.setNetFee(netFee);
   }
 
   public void exec(Runtime runtime)
@@ -152,6 +95,7 @@ public class TransactionTrace {
     runtime.init();
     runtime.execute();
     runtime.go();
+    runtime.finalization();
   }
 
   /**

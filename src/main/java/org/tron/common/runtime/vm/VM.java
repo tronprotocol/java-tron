@@ -9,20 +9,20 @@ import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.Stack;
-import org.tron.core.exception.ContractExeException;
+import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
+
+@Slf4j(topic = "VM")
 
 public class VM {
 
-  private static final Logger logger = LoggerFactory.getLogger("TronVM");
-  private static final Logger dumpLogger = LoggerFactory.getLogger("dump");
+  // private static final Logger logger = LoggerFactory.getLogger("TronVM");
   private static BigInteger _32_ = BigInteger.valueOf(32);
   private static final String logString = "{}    Op: [{}]  Gas: [{}] Deep: [{}]  Hint: [{}]";
 
@@ -42,7 +42,7 @@ public class VM {
   private final SystemProperties config;
 
   public VM() {
-    this(SystemProperties.getDefault());
+    config = SystemProperties.getInstance();
   }
 
   @Autowired
@@ -94,7 +94,7 @@ public class VM {
 
   public void step(Program program)
       throws ContractValidateException {
-    if (vmTrace) {
+    if (config.vmTrace()) {
       program.saveOpTrace();
     }
 
@@ -250,7 +250,7 @@ public class VM {
           if (gasCost > program.getGasLimitLeft().longValueSafe()) {
             throw new Program.OutOfGasException(
                 "Not enough gas for '%s' operation executing: opGas[%d], programGas[%d]", op.name(),
-                callGasWord.longValueSafe(), program.getGasLimitLeft().longValueSafe());
+                gasCost, program.getGasLimitLeft().longValueSafe());
           }
           DataWord getGasLimitLeft = program.getGasLimitLeft().clone();
           getGasLimitLeft.sub(new DataWord(gasCost));
@@ -1229,7 +1229,6 @@ public class VM {
             throw new Program.StaticCallModificationException();
           }
 
-          // todo: can delete?
           if (!value.isZero()) {
             adjustedCallGas.add(new DataWord(gasCosts.getSTIPEND_CALL()));
           }
