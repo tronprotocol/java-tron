@@ -310,6 +310,32 @@ public class Manager {
     return this.peersStore.get("neighbours".getBytes());
   }
 
+  /**
+   * Cycle thread to repush Transactions
+   */
+  private Runnable repushLoop =
+      () -> {
+        while (true) {
+          try {
+            TransactionCapsule tx = this.getRepushTransactions().take();
+            this.rePush(tx);
+          } catch (InterruptedException ex) {
+            logger.info("repushLoop interrupted");
+            Thread.currentThread().interrupt();
+          } catch (Exception ex) {
+            logger.error("unknown exception happened in witness loop", ex);
+          } catch (Throwable throwable) {
+            logger.error("unknown throwable happened in witness loop", throwable);
+          }
+        }
+      };
+
+  private Thread repushThread;
+  
+  public Thread getRepushThread() {
+    return repushThread;
+  }
+
   @PostConstruct
   public void init() {
     revokingStore.disable();
@@ -347,6 +373,9 @@ public class Manager {
 
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
+
+    repushThread = new Thread(repushLoop);
+    repushThread.start();
   }
 
   public BlockId getGenesisBlockId() {
