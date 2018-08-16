@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.Stack;
+import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
 
 @Slf4j(topic = "VM")
@@ -41,7 +42,7 @@ public class VM {
   private final SystemProperties config;
 
   public VM() {
-    this(SystemProperties.getDefault());
+    config = SystemProperties.getInstance();
   }
 
   @Autowired
@@ -93,7 +94,7 @@ public class VM {
 
   public void step(Program program)
       throws ContractValidateException {
-    if (vmTrace) {
+    if (config.vmTrace()) {
       program.saveOpTrace();
     }
 

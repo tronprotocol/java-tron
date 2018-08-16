@@ -4,6 +4,8 @@ import static com.google.common.primitives.Longs.max;
 import static com.google.common.primitives.Longs.min;
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.tron.common.runtime.utils.MUtil.transfer;
+import static org.tron.common.runtime.vm.VMUtils.saveProgramTraceFile;
+import static org.tron.common.runtime.vm.VMUtils.zipAndEncode;
 import static org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType.ET_CONSTANT_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType.ET_NORMAL_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType.ET_PRE_TYPE;
@@ -21,6 +23,7 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.runtime.vm.VM;
@@ -62,7 +65,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 public class Runtime {
 
 
-  SystemProperties config;
+  private SystemProperties config = SystemProperties.getInstance();
 
   private Transaction trx;
   private Block block = null;
@@ -666,8 +669,22 @@ public class Runtime {
     return false;
   }
 
-  public RuntimeSummary finalization() {
-    return null;
+  public void finalization() {
+    if (config.vmTrace() && program != null && result != null) {
+      String trace = program.getTrace()
+          .result(result.getHReturn())
+          .error(result.getException())
+          .toString();
+
+
+      if (config.vmTraceCompressed()) {
+        trace = zipAndEncode(trace);
+      }
+
+      String txHash = Hex.toHexString(new InternalTransaction(trx).getHash());
+      saveProgramTraceFile(config,txHash, trace);
+    }
+
   }
 
   public ProgramResult getResult() {
