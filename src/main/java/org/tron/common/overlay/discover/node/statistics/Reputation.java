@@ -48,7 +48,7 @@ public class Reputation {
       int discoverReput = baseScore;
       discoverReput +=
           min(t.discoverInPong.getTotalCount(), 1) * (t.discoverOutPing.getTotalCount()
-              == t.discoverInPong.getTotalCount() ? 90 : 1);
+              == t.discoverInPong.getTotalCount() ? 101 : 1);
       discoverReput +=
           min(t.discoverInNeighbours.getTotalCount(), 1) * (t.discoverOutFindNode.getTotalCount()
               == t.discoverInNeighbours.getTotalCount() ? 10 : 1);
