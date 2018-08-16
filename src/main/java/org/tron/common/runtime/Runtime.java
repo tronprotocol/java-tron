@@ -70,7 +70,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 public class Runtime {
 
 
-  SystemProperties config = SystemProperties.getInstance();
+  private SystemProperties config = SystemProperties.getInstance();
 
   private Transaction trx;
   private Block block = null;

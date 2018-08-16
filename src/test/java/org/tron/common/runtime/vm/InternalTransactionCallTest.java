@@ -40,7 +40,7 @@ public class InternalTransactionCallTest {
    */
   @Before
   public void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     dbManager = context.getBean(Manager.class);

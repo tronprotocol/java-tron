@@ -31,7 +31,7 @@ public class InheritanceTest {
   private static final String OWNER_ADDRESS;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath,"--debug"}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   }
@@ -88,10 +88,9 @@ public class InheritanceTest {
     long value = 0;
     long fee = 100000000;
     long consumeUserResourcePercent = 0;
-    String libraryAddressPair=null;
 
     byte[] contractAddress = TVMTestUtils.deployContractWholeProcessReturnContractAddress(
-        contractName,callerAddress,ABI,code,value,fee,consumeUserResourcePercent,libraryAddressPair,deposit,null);
+        contractName,callerAddress,ABI,code,value,fee,consumeUserResourcePercent,null,deposit,null);
 
 
     /* =================================== CALL getName() return child value =================================== */
