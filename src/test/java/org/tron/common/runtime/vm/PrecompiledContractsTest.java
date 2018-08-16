@@ -4,13 +4,11 @@ package org.tron.common.runtime.vm;
 import static junit.framework.TestCase.fail;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 
-import com.google.common.primitives.Longs;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -20,20 +18,16 @@ import org.junit.Test;
 import org.spongycastle.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.util.ReflectionUtils;
 import org.tron.common.runtime.vm.PrecompiledContracts.PrecompiledContract;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
-import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.FreezeBalanceActuator;
-import org.tron.core.actuator.ProposalCreateActuator;
-import org.tron.core.actuator.WithdrawBalanceActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -45,13 +39,9 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.witness.WitnessController;
 import org.tron.protos.Contract;
-import org.tron.protos.Contract.VoteWitnessContract;
-import org.tron.protos.Contract.VoteWitnessContract.Vote;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Proposal.State;
-import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
 public class PrecompiledContractsTest {
@@ -59,10 +49,10 @@ public class PrecompiledContractsTest {
   // common
   private static final DataWord voteContractAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010001");
-  private static final DataWord freezeBalanceAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000000010002");
-  private static final DataWord unFreezeBalanceAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000000010003");
+//  private static final DataWord freezeBalanceAddr = new DataWord(
+//      "0000000000000000000000000000000000000000000000000000000000010002");
+//  private static final DataWord unFreezeBalanceAddr = new DataWord(
+//      "0000000000000000000000000000000000000000000000000000000000010003");
   private static final DataWord withdrawBalanceAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010004");
   private static final DataWord proposalApproveAddr = new DataWord(
@@ -78,7 +68,6 @@ public class PrecompiledContractsTest {
 
   private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
-  private static WitnessController witnessController;
   private static final String dbPath = "output_PrecompiledContracts_test";
   private static final String ACCOUNT_NAME = "account";
   private static final String OWNER_ADDRESS;
@@ -86,14 +75,13 @@ public class PrecompiledContractsTest {
   private static final String WITNESS_ADDRESS;
   private static final String WITNESS_ADDRESS_BASE = "548794500882809695a8a687866e76d4271a1abc" ;
   private static final String URL = "https://tron.network";
-  private static final String ADDRESS_INVALID = "aaaa";
 
   // withdraw
   private static final long initBalance = 10_000_000_000L;
   private static final long allowance = 32_000_000L;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     WITNESS_ADDRESS = Wallet.getAddressPreFixString() + WITNESS_ADDRESS_BASE;
@@ -107,7 +95,6 @@ public class PrecompiledContractsTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
-    witnessController = dbManager.getWitnessController();
   }
 
   /**
@@ -186,7 +173,7 @@ public class PrecompiledContractsTest {
     long duration = 3;
     Any freezeContract = getFreezeContract(OWNER_ADDRESS, frozenBalance, duration);
     Constructor<FreezeBalanceActuator> constructor =
-        (Constructor<FreezeBalanceActuator>) FreezeBalanceActuator.class
+        FreezeBalanceActuator.class
             .getDeclaredConstructor(Any.class, dbManager.getClass());
     constructor.setAccessible(true);
     FreezeBalanceActuator freezeBalanceActuator = constructor
@@ -203,7 +190,7 @@ public class PrecompiledContractsTest {
     Assert.assertArrayEquals(ByteArray.fromHexString(WITNESS_ADDRESS),
         dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS)).getVotesList()
             .get(0).getVoteAddress().toByteArray());
-    Assert.assertEquals(result, true);
+    Assert.assertEquals(true, result);
   }
 
   @Test
@@ -219,8 +206,8 @@ public class PrecompiledContractsTest {
       fail("BalanceInsufficientException");
     }
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
-    Assert.assertEquals(accountCapsule.getAllowance(), allowance);
-    Assert.assertEquals(accountCapsule.getLatestWithdrawTime(), 0);
+    Assert.assertEquals(allowance, accountCapsule.getAllowance());
+    Assert.assertEquals(0, accountCapsule.getLatestWithdrawTime());
 
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address),
         100, "http://baidu.com");
@@ -239,7 +226,7 @@ public class PrecompiledContractsTest {
   public void proposalTest() {
 
     try {
-      /**
+      /*
        *  create proposal Test
        */
       DataWord key = new DataWord(
@@ -267,7 +254,7 @@ public class PrecompiledContractsTest {
 
 
 
-      /**
+      /*
        *  approve proposal Test
        */
 
@@ -282,16 +269,16 @@ public class PrecompiledContractsTest {
       Assert.assertEquals(ByteString.copyFrom(ByteArray.fromHexString(WITNESS_ADDRESS)),
           proposalCapsule.getApprovals().get(0));
 
-      /**
+      /*
        *  delete proposal Test
        */
       PrecompiledContract deleteContract = createPrecompiledContract(proposalDeleteAddr,WITNESS_ADDRESS);
       deleteContract.execute(idBytes);
       proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
-      Assert.assertEquals(proposalCapsule.getState(), State.CANCELED);
+      Assert.assertEquals(State.CANCELED, proposalCapsule.getState());
 
     } catch (ItemNotFoundException e) {
-      Assert.assertFalse(e instanceof ItemNotFoundException);
+      Assert.fail();
     }
   }
 
@@ -314,7 +301,7 @@ public class PrecompiledContractsTest {
     System.arraycopy(Arrays.copyOfRange(word2.getData(), 0, 3),0,data,word1.getData().length,3);
     PrecompiledContract contract = createPrecompiledContract(convertFromTronBase58AddressAddr, WITNESS_ADDRESS);
 
-    byte[] solidityAddress = contract.execute(data).getRight();;
+    byte[] solidityAddress = contract.execute(data).getRight();
     Assert.assertArrayEquals(solidityAddress,new DataWord(Hex.decode(WITNESS_ADDRESS_BASE)).getData());
   }
 

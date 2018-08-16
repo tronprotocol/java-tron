@@ -32,7 +32,7 @@ public class InternalTransactionComplexTest {
   private static final String OWNER_ADDRESS;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   }
@@ -121,7 +121,7 @@ public class InternalTransactionComplexTest {
 
 
   // Just for the caller/called example above
-  public byte[] deployCalledContractandGetItsAddress()
+  private byte[] deployCalledContractandGetItsAddress()
       throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
     String contractName = "calledContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
@@ -136,15 +136,13 @@ public class InternalTransactionComplexTest {
     long value = 0;
     long feeLimit = 1000000000;
     long consumeUserResourcePercent = 0;
-    String libraryAddressPair=null;
 
-    byte[] contractAddress = TVMTestUtils.deployContractWholeProcessReturnContractAddress(contractName,address,ABI,code,value,feeLimit,consumeUserResourcePercent,libraryAddressPair,
+    return TVMTestUtils.deployContractWholeProcessReturnContractAddress(contractName,address,ABI,code,value,feeLimit,consumeUserResourcePercent,null,
         deposit,null);
-    return contractAddress;
   }
 
   // Just for the caller/called example above
-  public byte[] deployCallerContractAndGetItsAddress(byte[] calledContractAddress)
+  private byte[] deployCallerContractAndGetItsAddress(byte[] calledContractAddress)
       throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
     String contractName = "calledContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
@@ -167,11 +165,9 @@ public class InternalTransactionComplexTest {
     long value = 0;
     long feeLimit = 1000000000;
     long consumeUserResourcePercent = 0;
-    String libraryAddressPair=null;
 
-    byte[] contractAddress = TVMTestUtils.deployContractWholeProcessReturnContractAddress(contractName,address,ABI,code,value,feeLimit,consumeUserResourcePercent,libraryAddressPair,
+    return  TVMTestUtils.deployContractWholeProcessReturnContractAddress(contractName,address,ABI,code,value,feeLimit,consumeUserResourcePercent,null,
         deposit,null);
-    return contractAddress;
   }
 
 

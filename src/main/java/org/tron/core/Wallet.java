@@ -826,6 +826,7 @@ public class Wallet {
         runtime.init();
         runtime.execute();
         runtime.go();
+        runtime.finalization();
         if (runtime.getResult().getException() != null) {
           throw new RuntimeException("Runtime exe failed!");
         }
