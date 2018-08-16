@@ -25,8 +25,10 @@ import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.tron.core.config.args.Args;
 
 import static java.lang.String.format;
+import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.vm.trace.Serializers.serializeFieldsOnly;
 import static org.tron.common.utils.ByteUtil.toHexString;
 
@@ -43,7 +45,7 @@ public class ProgramTrace {
 
     public ProgramTrace(SystemProperties config, ProgramInvoke programInvoke) {
         if (programInvoke != null && config.vmTrace()) {
-            contractAddress = Hex.toHexString(programInvoke.getOwnerAddress().getLast20Bytes());
+            contractAddress = Hex.toHexString(convertToTronAddress(programInvoke.getOwnerAddress().getLast20Bytes()));
         }
     }
 

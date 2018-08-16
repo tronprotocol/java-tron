@@ -125,7 +125,7 @@ public class Program {
   }
 
   public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction transaction) {
-    this(ops, programInvoke, transaction, SystemProperties.getDefault());
+    this(ops, programInvoke, transaction, SystemProperties.getInstance());
   }
 
   public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction transaction,
@@ -142,11 +142,11 @@ public class Program {
     //this.codeHash = codeHash;
     this.ops = nullToEmpty(ops);
 
-    //traceListener = new ProgramTraceListener(config.vmTrace());
+    traceListener = new ProgramTraceListener(config.vmTrace());
     this.memory = setupProgramListener(new Memory());
     this.stack = setupProgramListener(new Stack());
     this.contractState = setupProgramListener(new ContractState(programInvoke));
-    //this.trace = new ProgramTrace(config, programInvoke);
+    this.trace = new ProgramTrace(config, programInvoke);
 
     this.transactionHash = transaction.getHash();
   }
@@ -195,7 +195,7 @@ public class Program {
 
   private <T extends ProgramListenerAware> T setupProgramListener(T programListenerAware) {
     if (programListener.isEmpty()) {
-      //programListener.addListener(traceListener);
+      programListener.addListener(traceListener);
       programListener.addListener(storageDiffListener);
     }
 
@@ -512,6 +512,7 @@ public class Program {
       vm.play(program);
       result = program.getResult();
 
+      getTrace().merge(program.getTrace());
       getResult().merge(result);
     }
 

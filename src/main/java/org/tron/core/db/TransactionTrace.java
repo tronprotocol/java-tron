@@ -95,6 +95,7 @@ public class TransactionTrace {
     runtime.init();
     runtime.execute();
     runtime.go();
+    runtime.finalization();
   }
 
   /**
