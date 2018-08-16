@@ -162,6 +162,7 @@ public class Channel {
     logger.info("Send to {}, {}", ctx.channel().remoteAddress(), msg);
     getNodeStatistics().nodeDisconnectedLocal(reason);
     ctx.writeAndFlush(msg.getSendData()).addListener(future -> close());
+    cleanAll();
   }
 
   public void processException(Throwable throwable) {
@@ -299,6 +300,10 @@ public class Channel {
   @Override
   public String toString() {
     return String.format("%s | %s", inetSocketAddress, getPeerId());
+  }
+
+  public void cleanAll() {
+
   }
 }
 

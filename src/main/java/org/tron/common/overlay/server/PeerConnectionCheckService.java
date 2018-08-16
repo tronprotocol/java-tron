@@ -78,7 +78,6 @@ public class PeerConnectionCheckService {
           logger.error("{} not have data transfer, disconnect the peer",
               willDisconnectPeerList.get(i).getInetAddress());
           willDisconnectPeerList.get(i).disconnect(ReasonCode.TOO_MANY_PEERS);
-          willDisconnectPeerList.get(i).cleanAll();
         }
       }
 //      else if (willDisconnectPeerList.size() == peerConnectionList.size()) {

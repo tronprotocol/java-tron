@@ -6,7 +6,6 @@ import static org.tron.core.config.Parameter.NetConstants.NET_MAX_TRX_PER_SECOND
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -16,14 +15,12 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import javafx.util.Pair;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.tron.common.crypto.Hash;
 import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.Channel;
@@ -31,7 +28,6 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NodeConstant;
-import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.Item;
 
 @Slf4j
@@ -167,6 +163,7 @@ public class PeerConnection extends Channel {
     getAdvObjSpreadToUs().clear();
     getInvToUs().clear();
     getInvWeAdv().clear();
+    getSyncBlockIdCache().cleanUp();
   }
 
   public void cleanInvGarbage() {
