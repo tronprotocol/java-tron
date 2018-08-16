@@ -44,7 +44,7 @@ public class VoteWitnessActuatorTest {
   private static final String WITNESS_NAME = "witness";
   private static final String WITNESS_ADDRESS;
   private static final String URL = "https://tron.network";
-  private static final String ADDRESS_INVALIDATE = "aaaa";
+  private static final String ADDRESS_INVALID = "aaaa";
   private static final String WITNESS_ADDRESS_NOACCOUNT;
   private static final String OWNER_ADDRESS_NOACCOUNT;
   private static final String OWNER_ADDRESS_BALANCENOTSUFFICIENT;
@@ -171,7 +171,7 @@ public class VoteWitnessActuatorTest {
   @Test
   public void InvalidAddress() {
     VoteWitnessActuator actuator =
-        new VoteWitnessActuator(getContract(ADDRESS_INVALIDATE, WITNESS_ADDRESS, 1L),
+        new VoteWitnessActuator(getContract(ADDRESS_INVALID, WITNESS_ADDRESS, 1L),
             dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -267,7 +267,7 @@ public class VoteWitnessActuatorTest {
     dbManager.getAccountStore()
         .put(accountSecondCapsule.getAddress().toByteArray(), accountSecondCapsule);
     VoteWitnessActuator actuator =
-        new VoteWitnessActuator(getContract(OWNER_ADDRESS, ADDRESS_INVALIDATE, 1L),
+        new VoteWitnessActuator(getContract(OWNER_ADDRESS, ADDRESS_INVALID, 1L),
             dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {

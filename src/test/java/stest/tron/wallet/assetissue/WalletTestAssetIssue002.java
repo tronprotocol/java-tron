@@ -62,9 +62,14 @@ public class WalletTestAssetIssue002 {
       .get(0);
 
   //get account
-  ECKey ecKey = new ECKey(Utils.getRandom());
-  byte[] participateAccountAddress = ecKey.getAddress();
-  String participateAccountKey = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] participateAccountAddress = ecKey1.getAddress();
+  String participateAccountKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] assetIssueAccount002 = ecKey2.getAddress();
+  String testKeyForAssetIssueAccount002 = ByteArray.toHexString(ecKey2
+      .getPrivKeyBytes());
 
   @BeforeSuite
   public void beforeSuite() {

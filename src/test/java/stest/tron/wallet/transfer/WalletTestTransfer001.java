@@ -94,6 +94,7 @@ public class WalletTestTransfer001 {
 
   @Test
   public void testSendCoin() {
+    logger.info(receiptAccountKey);
     //Test send coin.
     Account sendAccount = PublicMethed.queryAccount(sendAccountKey,blockingStubFull);
     Long sendAccountBeforeBalance = sendAccount.getBalance();

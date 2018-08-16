@@ -12,14 +12,14 @@ import java.util.Iterator;
 import java.util.Objects;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.TronDatabase;
 import org.tron.core.db.api.index.Index.Iface;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db.common.WrappedResultSet;
+import org.tron.core.db2.core.ITronChainBase;
 
 public abstract class AbstractIndex<E extends ProtoCapsule<T>, T> implements Iface<T> {
 
-  protected TronDatabase<E> database;
+  protected ITronChainBase<E> database;
   protected ConcurrentIndexedCollection<WrappedByteArray> index;
   private File parent = new File(Args.getInstance().getOutputDirectory() + "index");
   protected File indexPath;
@@ -32,9 +32,9 @@ public abstract class AbstractIndex<E extends ProtoCapsule<T>, T> implements Ifa
     setAttribute();
   }
 
-  public AbstractIndex(TronDatabase<E> database) {
+  public AbstractIndex(ITronChainBase<E> database) {
     this.database = database;
-    String dbName = database.getDbSource().getDBName();
+    String dbName = database.getDbName();
     File parentDir = Paths.get(
         Args.getInstance().getOutputDirectoryByDbName(dbName),
         Args.getInstance().getStorage().getIndexDirectory()

@@ -5,12 +5,11 @@ import com.googlecode.cqengine.persistence.disk.DiskPersistence;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.db.TronDatabase;
 import org.tron.core.db.common.WrappedByteArray;
+import org.tron.core.db2.core.ITronChainBase;
 import org.tron.protos.Protocol.Account;
 
 import javax.annotation.PostConstruct;
@@ -24,7 +23,7 @@ public class AccountIndex extends AbstractIndex<AccountCapsule, Account> {
   public static SimpleAttribute<WrappedByteArray, String> Account_ADDRESS;
 
   @Autowired
-  public AccountIndex(@Qualifier("accountStore") final TronDatabase<AccountCapsule> database) {
+  public AccountIndex(@Qualifier("accountStore") final ITronChainBase<AccountCapsule> database) {
     super(database);
   }
 

@@ -12,6 +12,8 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.FreezeBalanceContract;
+import org.tron.protos.Contract.ResourceCode;
+import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -41,30 +43,56 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
     long newBalance = accountCapsule.getBalance() - freezeBalanceContract.getFrozenBalance();
 
-    long currentFrozenBalance = accountCapsule.getFrozenBalance();
-    long newFrozenBalance = freezeBalanceContract.getFrozenBalance() + currentFrozenBalance;
+    switch (freezeBalanceContract.getResource()) {
+      case BANDWIDTH:
+        long currentFrozenBalance = accountCapsule.getFrozenBalance();
+        long newFrozenBalance = freezeBalanceContract.getFrozenBalance() + currentFrozenBalance;
 
-    Frozen newFrozen = Frozen.newBuilder()
-        .setFrozenBalance(newFrozenBalance)
-        .setExpireTime(now + duration)
-        .build();
+        Frozen newFrozen = Frozen.newBuilder()
+            .setFrozenBalance(newFrozenBalance)
+            .setExpireTime(now + duration)
+            .build();
 
-    long frozenCount = accountCapsule.getFrozenCount();
-    if (frozenCount == 0) {
-      accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-          .addFrozen(newFrozen)
-          .setBalance(newBalance)
-          .build());
-    } else {
-      accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-          .setFrozen(0, newFrozen)
-          .setBalance(newBalance)
-          .build()
-      );
+        long frozenCount = accountCapsule.getFrozenCount();
+        if (frozenCount == 0) {
+          accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+              .addFrozen(newFrozen)
+              .setBalance(newBalance)
+              .build());
+        } else {
+          accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+              .setFrozen(0, newFrozen)
+              .setBalance(newBalance)
+              .build()
+          );
+        }
+        dbManager.getDynamicPropertiesStore()
+            .addTotalNetWeight(freezeBalanceContract.getFrozenBalance() / 1000_000L);
+        break;
+      case CPU:
+        long currentFrozenBalanceForCpu = accountCapsule.getAccountResource().getFrozenBalanceForCpu()
+            .getFrozenBalance();
+        long newFrozenBalanceForCpu = freezeBalanceContract.getFrozenBalance() + currentFrozenBalanceForCpu;
+
+        Frozen newFrozenForCpu = Frozen.newBuilder()
+            .setFrozenBalance(newFrozenBalanceForCpu)
+            .setExpireTime(now + duration)
+            .build();
+
+        AccountResource newAccountResource = accountCapsule.getAccountResource().toBuilder()
+            .setFrozenBalanceForCpu(newFrozenForCpu).build();
+
+        accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+            .setAccountResource(newAccountResource)
+            .setBalance(newBalance)
+            .build());
+        dbManager.getDynamicPropertiesStore()
+            .addTotalCpuWeight(freezeBalanceContract.getFrozenBalance() / 1000_000L);
+        break;
     }
+
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-    dbManager.getDynamicPropertiesStore()
-        .addTotalNetWeight(freezeBalanceContract.getFrozenBalance() / 1000_000L);
+
 
     ret.setStatus(fee, code.SUCESS);
 
@@ -134,6 +162,16 @@ public class FreezeBalanceActuator extends AbstractActuator {
       throw new ContractValidateException(
           "frozenDuration must be less than " + maxFrozenTime + " days "
               + "and more than " + minFrozenTime + " days");
+    }
+
+
+    switch (freezeBalanceContract.getResource()) {
+      case BANDWIDTH:
+        break;
+      case CPU:
+        break;
+      default: throw new ContractValidateException(
+          "ResourceCode error,valid ResourceCode[BANDWIDTH、CPU]");
     }
 
     return true;

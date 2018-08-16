@@ -3,6 +3,7 @@ package org.tron.common.net.udp.message.backup;
 import static org.tron.common.net.udp.message.UdpMessageTypeEnum.BACKUP_KEEP_ALIVE;
 
 import org.tron.common.net.udp.message.Message;
+import org.tron.common.overlay.discover.node.Node;
 import org.tron.protos.Discover;
 
 public class KeepAliveMessage extends Message {
@@ -29,7 +30,7 @@ public class KeepAliveMessage extends Message {
   }
 
   @Override
-  public byte[] getNodeId() {
+  public Node getFrom() {
     return null;
   }
 }

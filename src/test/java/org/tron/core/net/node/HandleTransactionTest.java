@@ -187,5 +187,12 @@ public class HandleTransactionTest {
             logger.info("Release resources failure.");
         }
         context.destroy();
+
+        dbManager.getSession().reset();
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
