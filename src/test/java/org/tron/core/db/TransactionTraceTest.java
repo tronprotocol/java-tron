@@ -59,6 +59,7 @@ import org.tron.protos.Protocol.Transaction.raw;
 public class TransactionTraceTest {
 
   public static final long totalBalance = 1000_0000_000_000L;
+  public static final int deployStorageDelta = 680000;
   private static String dbPath = "output_TransactionTrace_test";
   private static String dbDirectory = "db_TransactionTrace_test";
   private static String indexDirectory = "index_TransactionTrace_test";
@@ -152,7 +153,7 @@ public class TransactionTraceTest {
       trace.pay();
       Assert.assertEquals(0, trace.getReceipt().getCpuUsage());
       Assert.assertEquals(49503930, trace.getReceipt().getCpuFee());
-      Assert.assertEquals(680000, trace.getReceipt().getStorageDelta());
+      Assert.assertEquals(deployStorageDelta, trace.getReceipt().getStorageDelta());
       Assert.assertEquals(494800000, trace.getReceipt().getStorageFee());
       accountCapsule = dbManager.getAccountStore().get(accountCapsule.getAddress().toByteArray());
       Assert.assertEquals(totalBalance,
@@ -191,11 +192,11 @@ public class TransactionTraceTest {
       Assert.assertEquals(48531930, trace.getReceipt().getCpuFee());
       Assert.assertEquals(49503930,
           trace.getReceipt().getCpuUsage() * 30 + trace.getReceipt().getCpuFee());
-      Assert.assertEquals(680000, trace.getReceipt().getStorageDelta());
+      Assert.assertEquals(deployStorageDelta, trace.getReceipt().getStorageDelta());
       Assert.assertEquals(493800000, trace.getReceipt().getStorageFee());
       accountCapsule = dbManager.getAccountStore().get(accountCapsule.getAddress().toByteArray());
-      Assert.assertEquals(680000, accountCapsule.getStorageLimit());
-      Assert.assertEquals(680000, accountCapsule.getStorageUsage());
+      Assert.assertEquals(deployStorageDelta, accountCapsule.getStorageLimit());
+      Assert.assertEquals(deployStorageDelta, accountCapsule.getStorageUsage());
       Assert.assertEquals(0, accountCapsule.getStorageLeft());
       Assert.assertEquals(totalBalance,
           1000_000L + accountCapsule.getBalance() + trace.getReceipt().getStorageFee() + trace
