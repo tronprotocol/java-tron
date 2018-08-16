@@ -60,9 +60,6 @@ public class NodeManager implements EventHandler {
 
   private static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeManager");
 
-  private Cache<InetSocketAddress, NodeHandler> badNodes = CacheBuilder.newBuilder().maximumSize(10000)
-      .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
-
   private Args args = Args.getInstance();
 
   private Manager dbManager;
@@ -241,11 +238,6 @@ public class NodeManager implements EventHandler {
 
     NodeHandler nodeHandler = getNodeHandler(n);
     nodeHandler.getNodeStatistics().messageStatistics.addUdpInMessage(m.getType());
-    calculateMsgCount(nodeHandler);
-    if (badNodes.getIfPresent(nodeHandler.getInetSocketAddress()) != null){
-      logger.warn("Receive packet from bad node {}.", sender.getAddress());
-      return;
-    }
 
     switch (m.getType()) {
       case DISCOVER_PING:
@@ -381,23 +373,6 @@ public class NodeManager implements EventHandler {
           discoveredNodes.remove(handler);
         }
       }
-    }
-  }
-
-  private void calculateMsgCount(NodeHandler nodeHandler){
-    int interval = 10;
-    int maxCount = 10;
-    MessageStatistics statistics = nodeHandler.getNodeStatistics().messageStatistics;
-    int pingCount = statistics.discoverInPing.getCount(interval);
-    int pongCount = statistics.discoverInPong.getCount(interval);
-    int findNodeCount = statistics.discoverInFindNode.getCount(interval);
-    int neighboursCount = statistics.discoverInNeighbours.getCount(interval);
-    int count = pingCount + pongCount + findNodeCount + neighboursCount;
-    if (count > maxCount){
-      logger.warn("UDP attack found: {} with total count({}), ping({}), pong({}), findNode({}), neighbours({})",
-          nodeHandler, count, pingCount, pongCount, findNodeCount, neighboursCount);
-      badNodes.put(nodeHandler.getInetSocketAddress(), nodeHandler);
-      table.dropNode(nodeHandler.getNode());
     }
   }
 
