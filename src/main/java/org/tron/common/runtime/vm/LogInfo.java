@@ -17,10 +17,13 @@
  */
 package org.tron.common.runtime.vm;
 
+import com.google.common.collect.Lists;
+import com.google.protobuf.ByteString;
 import org.spongycastle.util.encoders.Hex;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.tron.protos.Protocol.TransactionInfo.Log;
 
 /**
  * @author Roman Mandeleil
@@ -127,6 +130,16 @@ public class LogInfo {
                 ", topics=" + topicsStr +
                 ", data=" + Hex.toHexString(data) +
                 '}';
+    }
+
+    public static Log buildLog(LogInfo logInfo) {
+        List<ByteString> topics = Lists.newArrayList();
+        logInfo.getTopics().forEach(topic -> {
+            topics.add(ByteString.copyFrom(topic.getData()));
+        });
+        ByteString address = ByteString.copyFrom(logInfo.getAddress());
+        ByteString data = ByteString.copyFrom(logInfo.getData());
+        return Log.newBuilder().setAddress(address).addAllTopics(topics).setData(data).build();
     }
 
 
