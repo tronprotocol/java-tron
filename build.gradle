@@ -150,6 +150,10 @@ dependencies {
     compile 'org.eclipse.jetty:jetty-servlet:9.4.11.v20180605'
     compile 'com.alibaba:fastjson:1.2.47'
     // end http
+
+    //For TVM trigger test case.
+    compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.54'
+    //end TVM
 }
 
 check.dependsOn 'lint'
