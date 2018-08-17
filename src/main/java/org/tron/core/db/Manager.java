@@ -993,6 +993,7 @@ public class Manager {
 
     TransactionTrace trace = new TransactionTrace(trxCap, this);
 
+// TODO vm switch
 //    if (!this.dynamicPropertiesStore.supportVM() && trace.needVM()) {
 //      throw new UnsupportVMException("this node doesn't support vm, trx id: " + trxCap.getTransactionId().toString());
 //    }
