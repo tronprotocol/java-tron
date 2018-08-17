@@ -225,14 +225,10 @@ public class TransactionTraceTest {
                         .build())
                 .setStorageUsage(this.storageUsage)
                 .setStorageLimit(3000)
-                .build()
-        )
-        .build();
+                .build()).build();
 
     AccountCapsule accountCapsule = new AccountCapsule(account);
-
     dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
-
     TriggerSmartContract contract = TriggerSmartContract.newBuilder()
         .setContractAddress(contractAddress)
         .setOwnerAddress(ownerAddress)
@@ -265,13 +261,9 @@ public class TransactionTraceTest {
         new ContractCapsule(smartContract));
 
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
-
     TransactionTrace transactionTrace = new TransactionTrace(transactionCapsule, dbManager);
-
     transactionTrace.setBill(this.cpuUsage, this.storageUsage);
-
     transactionTrace.pay();
-
     AccountCapsule accountCapsule1 = dbManager.getAccountStore().get(ownerAddress.toByteArray());
   }
 
