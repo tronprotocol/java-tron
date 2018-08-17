@@ -61,6 +61,10 @@ public class TransactionTrace {
     this.storageMarket = new StorageMarket(this.dbManager);
   }
 
+  public boolean needVM() {
+    return this.trxType == TRX_CONTRACT_CALL_TYPE || this.trxType == TRX_CONTRACT_CREATION_TYPE;
+  }
+
   //pre transaction check
   public void init() throws TransactionTraceException {
 
