@@ -1,10 +1,12 @@
 package org.tron.common.runtime.vm.program;
 
 import static java.lang.System.arraycopy;
+import static java.lang.System.setOut;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.StorageRowCapsule;
@@ -28,7 +30,11 @@ public class Storage {
   }
 
   public DataWord getValue(DataWord key) {
+    System.err.println("get " + key);
+
     if (rowCache.containsKey(key)) {
+      System.err.println("get " + key + " " + rowCache.get(key).getValue());
+
       return rowCache.get(key).getValue();
     } else {
       StorageRowStore store = manager.getStorageRowStore();
@@ -39,11 +45,13 @@ public class Storage {
         beforeUseSize += row.getInstance().getSerializedSize();
       }
       rowCache.put(key, row);
+      System.err.println("get " + key + " " + row.getValue());
       return row.getValue();
     }
   }
 
   public void put(DataWord key, DataWord value) {
+    System.err.println("put " + key + " " +  value);
     if (rowCache.containsKey(key)) {
       rowCache.get(key).setValue(value);
     } else {
@@ -89,5 +97,6 @@ public class Storage {
     rowCache.forEach((key, value) -> {
       manager.getStorageRowStore().put(value.getKey(), value);
     });
+    System.err.println("===================================");;
   }
 }
