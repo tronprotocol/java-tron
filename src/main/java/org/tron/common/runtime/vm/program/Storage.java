@@ -83,7 +83,9 @@ public class Storage {
   public long computeSize() {
     AtomicLong size = new AtomicLong();
     rowCache.forEach((key, value) -> {
-      size.getAndAdd(value.getInstance().getSerializedSize());
+      if (!value.getValue().isZero()) {
+        size.getAndAdd(value.getInstance().getSerializedSize());
+      }
     });
     return size.get();
   }
@@ -95,7 +97,15 @@ public class Storage {
   public void commit() {
     // TODO can just write dirty row
     rowCache.forEach((key, value) -> {
-      manager.getStorageRowStore().put(value.getKey(), value);
+      System.err.println("commit, dirty：" + value.isDirty());
+      System.err.println("key:" + Hex.toHexString(value.getKey()) + " value:" + value.getValue() );
+      if (value.isDirty()) {
+        if (value.getValue().isZero()) {
+          manager.getStorageRowStore().delete(value.getKey());
+        } else {
+          manager.getStorageRowStore().put(value.getKey(), value);
+        }
+      }
     });
     System.err.println("===================================");;
   }

@@ -17,6 +17,8 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.Sha256Hash;
@@ -28,6 +30,12 @@ public class StorageRowCapsule implements ProtoCapsule<StorageRow> {
 
   private StorageRow instance;
 
+  @Getter
+  @Setter
+  private boolean dirty = false;
+
+
+
   private StorageRowCapsule() {
     instance = StorageRow.newBuilder().build();
   }
@@ -35,6 +43,7 @@ public class StorageRowCapsule implements ProtoCapsule<StorageRow> {
   public StorageRowCapsule(byte[] key, byte[] value) {
     instance = StorageRow.newBuilder().setKey(ByteString.copyFrom(key))
         .setValue(ByteString.copyFrom(value)).build();
+    dirty = true;
   }
 
   public StorageRowCapsule(byte[] code) {
@@ -65,6 +74,7 @@ public class StorageRowCapsule implements ProtoCapsule<StorageRow> {
   public void setValue(DataWord value) {
     this.instance = this.instance.toBuilder().setValue(ByteString.copyFrom(value.getData()))
         .build();
+    dirty = true;
   }
 
   @Override
