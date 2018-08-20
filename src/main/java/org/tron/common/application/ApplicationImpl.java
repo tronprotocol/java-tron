@@ -75,6 +75,7 @@ public class ApplicationImpl implements Application {
       closeAllStore();
     }
     closeConnection();
+    dbManager.getRepushThread().interrupt();
     System.err.println("******** end to shutdown ********");
   }
 
