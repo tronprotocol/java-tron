@@ -29,9 +29,9 @@ public class FullNode {
     }
 
     if (Args.getInstance().isDebug()) {
-      logger.info("in debug mode, it won't check cpu time");
+      logger.info("in debug mode, it won't check energy time");
     } else {
-      logger.info("not in debug mode, it will check cpu time");
+      logger.info("not in debug mode, it will check energy time");
     }
 
     DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
