@@ -56,16 +56,16 @@ public class ContractLinkage003 {
   }
 
   @Test(enabled = false)
-  public void deployWhenNoCpuAndNoStorage() {
+  public void deployWhenNoEnergyAndNoStorage() {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(linkage003Address,
         blockingStubFull);
-    Long cpuLimit = accountResource.getCpuLimit();
+    Long energyLimit = accountResource.getEnergyLimit();
     Long storageLimit = accountResource.getStorageLimit();
-    Long cpuUsage = accountResource.getCpuUsed();
+    Long energyUsage = accountResource.getEnergyUsed();
     Long storageUsage = accountResource.getStorageUsed();
 
-    logger.info("before cpu limit is " + Long.toString(cpuLimit));
-    logger.info("before cpu usage is " + Long.toString(cpuUsage));
+    logger.info("before energy limit is " + Long.toString(energyLimit));
+    logger.info("before energy usage is " + Long.toString(energyUsage));
     logger.info("before storage limit is " + Long.toString(storageLimit));
     logger.info("before storage usaged is " + Long.toString(storageUsage));
     Long maxFeeLimit = 5000000L;
@@ -150,7 +150,7 @@ public class ContractLinkage003 {
     Long afterBalance = account.getBalance();
     Assert.assertTrue(beforeBalance - afterBalance > 0);
     accountResource = PublicMethed.getAccountResource(linkage003Address, blockingStubFull);
-    Assert.assertTrue(accountResource.getCpuUsed() == 0L);
+    Assert.assertTrue(accountResource.getEnergyUsed() == 0L);
     Assert.assertTrue(accountResource.getStorageUsed() > 400);
 
 

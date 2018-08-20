@@ -520,7 +520,7 @@ public class Program {
     byte[] code = result.getHReturn();
 
     //long storageCost = getLength(code) * getBlockchainConfig().getGasCost().getCREATE_DATA();
-    // todo: delete this gas, because this is not relative to the cpu time, but need add to storage cost
+    // todo: delete this gas, because this is not relative to the energy time, but need add to storage cost
     // long storageCost = getLength(code) * GasCost.getInstance().getCREATE_DATA();
     // // long afterSpend = programInvoke.getDroplimit().longValue() - storageCost - result.getDropUsed();
     // if (getLength(code) > DefaultConfig.getMaxCodeLength()) {
@@ -734,11 +734,11 @@ public class Program {
     getResult().spendGas(gasValue);
   }
 
-  public void checkCPULimit(String opName) {
+  public void checkENERGYLimit(String opName) {
     if (!Args.getInstance().isDebug()) {
       long vmNowInUs = System.nanoTime() / 1000;
       if (vmNowInUs > getVmShouldEndInUs()) {
-        throw Exception.notEnoughCPU(opName);
+        throw Exception.notEnoughENERGY(opName);
       }
     }
   }
@@ -1399,9 +1399,9 @@ public class Program {
     }
 
 
-    public static OutOfResourceException notEnoughCPU(String op) {
+    public static OutOfResourceException notEnoughENERGY(String op) {
       return new OutOfResourceException(
-          "CPU timeout for '%s' operation executing", op);
+          "ENERGY timeout for '%s' operation executing", op);
     }
 
 

@@ -1,9 +1,7 @@
 package stest.tron.wallet.contract.scenario;
 
-import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.math.BigInteger;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -11,21 +9,16 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
-import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.Contract;
-import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.SmartContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
-import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.PublicMethed;
-import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 @Slf4j
 public class ContractScenario001 {
@@ -61,7 +54,7 @@ public class ContractScenario001 {
         testKey002,blockingStubFull));
     logger.info(Long.toString(PublicMethed.queryAccount(contract001Key,blockingStubFull)
         .getBalance()));
-    Assert.assertTrue(PublicMethed.freezeBalanceGetCpu(contract001Address,1000000L,
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract001Address, 1000000L,
         3,1,contract001Key,blockingStubFull));
     Assert.assertTrue(PublicMethed.buyStorage(5000000L,contract001Address,contract001Key,
         blockingStubFull));
@@ -72,13 +65,13 @@ public class ContractScenario001 {
   public void deployAddressDemo() {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract001Address,
         blockingStubFull);
-    Long cpuLimit = accountResource.getCpuLimit();
+    Long energyLimit = accountResource.getEnergyLimit();
     Long storageLimit = accountResource.getStorageLimit();
-    Long cpuUsage = accountResource.getCpuUsed();
+    Long energyUsage = accountResource.getEnergyUsed();
     Long storageUsage = accountResource.getStorageUsed();
 
-    logger.info("before cpu limit is " + Long.toString(cpuLimit));
-    logger.info("before cpu usage is " + Long.toString(cpuUsage));
+    logger.info("before energy limit is " + Long.toString(energyLimit));
+    logger.info("before energy usage is " + Long.toString(energyUsage));
     logger.info("before storage limit is " + Long.toString(storageLimit));
     logger.info("before storage usaged is " + Long.toString(storageUsage));
     Long maxFeeLimit = 5000000L;
@@ -99,17 +92,17 @@ public class ContractScenario001 {
     SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
     Assert.assertTrue(smartContract.getAbi() != null);
     accountResource = PublicMethed.getAccountResource(contract001Address,blockingStubFull);
-    cpuLimit = accountResource.getCpuLimit();
+    energyLimit = accountResource.getEnergyLimit();
     storageLimit = accountResource.getStorageLimit();
-    cpuUsage = accountResource.getCpuUsed();
+    energyUsage = accountResource.getEnergyUsed();
     storageUsage = accountResource.getStorageUsed();
     Assert.assertTrue(storageUsage == 0L);
     Assert.assertTrue(storageLimit > 0);
-    Assert.assertTrue(cpuLimit > 0);
-    Assert.assertTrue(cpuUsage > 0);
+    Assert.assertTrue(energyLimit > 0);
+    Assert.assertTrue(energyUsage > 0);
 
-    logger.info("after cpu limit is " + Long.toString(cpuLimit));
-    logger.info("after cpu usage is " + Long.toString(cpuUsage));
+    logger.info("after energy limit is " + Long.toString(energyLimit));
+    logger.info("after energy usage is " + Long.toString(energyUsage));
     logger.info("after storage limit is " + Long.toString(storageLimit));
     logger.info("after storage usaged is " + Long.toString(storageUsage));
   }

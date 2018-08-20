@@ -69,7 +69,7 @@ public class TransactionTraceTest {
   private static ByteString ownerAddress = ByteString.copyFrom(ByteArray.fromInt(1));
   private static ByteString contractAddress = ByteString.copyFrom(ByteArray.fromInt(2));
 
-  private long cpuUsage;
+  private long energyUsage;
   private long storageUsage;
   /*
    * DeployContract tracetestContract [{"constant":false,"inputs":[{"name":"accountId","type":"uint256"}],"name":"getVoters","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"voters","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"vote","type":"uint256"}],"name":"addVoters","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":"constructor"}] 608060405234801561001057600080fd5b5060015b620186a0811015610038576000818152602081905260409020819055600a01610014565b5061010b806100486000396000f30060806040526004361060525763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166386b646f281146057578063da58c7d914607e578063eb91a5ff146093575b600080fd5b348015606257600080fd5b50606c60043560aa565b60408051918252519081900360200190f35b348015608957600080fd5b50606c60043560bc565b348015609e57600080fd5b5060a860043560ce565b005b60009081526020819052604090205490565b60006020819052908152604090205481565b6000818152602081905260409020555600a165627a7a72305820f9935f89890e51bcf3ea98fa4841c91ac5957a197d99eeb7879a775b30ee9a2d0029   1000000000000 100
@@ -91,8 +91,8 @@ public class TransactionTraceTest {
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
   }
 
-  public TransactionTraceTest(long cpuUsage, long storageUsage) {
-    this.cpuUsage = cpuUsage;
+  public TransactionTraceTest(long energyUsage, long storageUsage) {
+    this.energyUsage = energyUsage;
     this.storageUsage = storageUsage;
   }
 
@@ -123,9 +123,9 @@ public class TransactionTraceTest {
   public static void init() {
     dbManager = context.getBean(Manager.class);
     storageMarket = new StorageMarket(dbManager);
-    //init cpu
+    //init energy
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526647838000L);
-    dbManager.getDynamicPropertiesStore().saveTotalCpuWeight(10_000_000L);
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(10_000_000L);
     //init storage
     dbManager.getDynamicPropertiesStore().saveTotalStorageReserved(
         128L * 1024 * 1024 * 1024);
@@ -151,13 +151,13 @@ public class TransactionTraceTest {
     try {
       trace.exec(runtime);
       trace.pay();
-      Assert.assertEquals(0, trace.getReceipt().getCpuUsage());
-      Assert.assertEquals(49503930, trace.getReceipt().getCpuFee());
+      Assert.assertEquals(0, trace.getReceipt().getEnergyUsage());
+      Assert.assertEquals(49503930, trace.getReceipt().getEnergyFee());
       Assert.assertEquals(deployStorageDelta, trace.getReceipt().getStorageDelta());
       Assert.assertEquals(494800000, trace.getReceipt().getStorageFee());
       accountCapsule = dbManager.getAccountStore().get(accountCapsule.getAddress().toByteArray());
       Assert.assertEquals(totalBalance,
-          trace.getReceipt().getStorageFee() + trace.getReceipt().getCpuFee() + accountCapsule
+          trace.getReceipt().getStorageFee() + trace.getReceipt().getEnergyFee() + accountCapsule
               .getBalance());
     } catch (ContractExeException e) {
       e.printStackTrace();
@@ -175,7 +175,7 @@ public class TransactionTraceTest {
         ByteString.copyFrom(Wallet.decodeFromBase58Check(OwnerAddress)), AccountType.Normal,
         totalBalance);
 
-    accountCapsule.setFrozenForCpu(10_000_000L, 0L);
+    accountCapsule.setFrozenForEnergy(10_000_000L, 0L);
     dbManager.getAccountStore()
         .put(Wallet.decodeFromBase58Check(OwnerAddress), accountCapsule);
     storageMarket.buyStorage(accountCapsule, 1000_000L);
@@ -188,10 +188,10 @@ public class TransactionTraceTest {
     try {
       trace.exec(runtime);
       trace.pay();
-      Assert.assertEquals(32400, trace.getReceipt().getCpuUsage());
-      Assert.assertEquals(48531930, trace.getReceipt().getCpuFee());
+      Assert.assertEquals(32400, trace.getReceipt().getEnergyUsage());
+      Assert.assertEquals(48531930, trace.getReceipt().getEnergyFee());
       Assert.assertEquals(49503930,
-          trace.getReceipt().getCpuUsage() * 30 + trace.getReceipt().getCpuFee());
+          trace.getReceipt().getEnergyUsage() * 30 + trace.getReceipt().getEnergyFee());
       Assert.assertEquals(deployStorageDelta, trace.getReceipt().getStorageDelta());
       Assert.assertEquals(493800000, trace.getReceipt().getStorageFee());
       accountCapsule = dbManager.getAccountStore().get(accountCapsule.getAddress().toByteArray());
@@ -200,7 +200,7 @@ public class TransactionTraceTest {
       Assert.assertEquals(0, accountCapsule.getStorageLeft());
       Assert.assertEquals(totalBalance,
           1000_000L + accountCapsule.getBalance() + trace.getReceipt().getStorageFee() + trace
-              .getReceipt().getCpuFee());
+              .getReceipt().getEnergyFee());
     } catch (ContractExeException e) {
       e.printStackTrace();
     } catch (ContractValidateException e) {
@@ -217,8 +217,8 @@ public class TransactionTraceTest {
         .setBalance(1000000)
         .setAccountResource(
             AccountResource.newBuilder()
-                .setCpuUsage(this.cpuUsage)
-                .setFrozenBalanceForCpu(
+                .setEnergyUsage(this.energyUsage)
+                .setFrozenBalanceForEnergy(
                     Frozen.newBuilder()
                         .setExpireTime(100000)
                         .setFrozenBalance(100000)
@@ -262,7 +262,7 @@ public class TransactionTraceTest {
 
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     TransactionTrace transactionTrace = new TransactionTrace(transactionCapsule, dbManager);
-    transactionTrace.setBill(this.cpuUsage, this.storageUsage);
+    transactionTrace.setBill(this.energyUsage, this.storageUsage);
     transactionTrace.pay();
     AccountCapsule accountCapsule1 = dbManager.getAccountStore().get(ownerAddress.toByteArray());
   }

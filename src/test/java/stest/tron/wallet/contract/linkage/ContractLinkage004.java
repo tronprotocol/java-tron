@@ -1,6 +1,5 @@
 package stest.tron.wallet.contract.linkage;
 
-import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.Optional;
@@ -18,7 +17,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
-import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
@@ -62,13 +60,13 @@ public class ContractLinkage004 {
   public void getTransactionInfoById() {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(linkage004Address,
         blockingStubFull);
-    Long cpuLimit = accountResource.getCpuLimit();
+    Long energyLimit = accountResource.getEnergyLimit();
     Long storageLimit = accountResource.getStorageLimit();
-    Long cpuUsage = accountResource.getCpuUsed();
+    Long energyUsage = accountResource.getEnergyUsed();
     Long storageUsage = accountResource.getStorageUsed();
 
-    logger.info("before cpu limit is " + Long.toString(cpuLimit));
-    logger.info("before cpu usage is " + Long.toString(cpuUsage));
+    logger.info("before energy limit is " + Long.toString(energyLimit));
+    logger.info("before energy usage is " + Long.toString(energyUsage));
     logger.info("before storage limit is " + Long.toString(storageLimit));
     logger.info("before storage usaged is " + Long.toString(storageUsage));
     Long maxFeeLimit = 5000000L;
@@ -155,8 +153,8 @@ public class ContractLinkage004 {
     Assert.assertTrue(infoById.get().getFee() > 0);
     //logger.info(Integer.toString(infoById.get().getResultValue()));
     Assert.assertTrue(infoById.get().getResultValue() == 0);
-    Assert.assertTrue(infoById.get().getReceipt().getCpuFee() > 0);
-    Assert.assertTrue(infoById.get().getReceipt().getCpuUsage() == 0);
+    Assert.assertTrue(infoById.get().getReceipt().getEnergyFee() > 0);
+    Assert.assertTrue(infoById.get().getReceipt().getEnergyUsage() == 0);
     Assert.assertTrue(infoById.get().getReceipt().getStorageFee() > 0);
     Assert.assertTrue(infoById.get().getReceipt().getStorageDelta() > 200);
 

@@ -105,11 +105,11 @@ message Account {
   bytes account_id = 23;
 
   message AccountResource {
-    // cpu resource, get from frozen
-    int64 cpu_usage = 1;
-    // the frozen balance for cpu
-    Frozen frozen_balance_for_cpu = 2;
-    int64 latest_consume_time_for_cpu = 3;
+    // energy resource, get from frozen
+    int64 energy_usage = 1;
+    // the frozen balance for energy
+    Frozen frozen_balance_for_energy = 2;
+    int64 latest_consume_time_for_energy = 3;
 
     // storage resource, get from market
     int64 storage_limit = 6;
@@ -176,13 +176,13 @@ message ResourceReceipt {
     SUCCESS = 0;
     FAILED = 1;
   }
-  int64 cpu_usage = 1;
-  int64 cpu_fee = 2;
+  int64 energy_usage = 1;
+  int64 energy_fee = 2;
   int64 net_usage = 3;
   int64 net_fee = 4;
   int64 storage_delta = 5;
   int64 storage_fee = 6;
-  int64 origin_cpu_usage = 7;
+  int64 origin_energy_usage = 7;
   int64 origin_storage_delta = 8;
 }
 

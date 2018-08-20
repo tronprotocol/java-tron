@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.Stack;
-import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
 
 @Slf4j(topic = "VM")
@@ -62,7 +61,7 @@ public class VM {
 
   private long calcMemGas(GasCost gasCosts, long oldMemSize, BigInteger newMemSize,
       long copySize) {
-    //todo: simpfy this calc, just use gas relative to cpu time
+    //todo: simpfy this calc, just use gas relative to energy time
 
     long gasCost = 0;
 
@@ -295,7 +294,7 @@ public class VM {
 
       // DEBUG System.out.println(" OP IS " + op.name() + " GASCOST IS " + gasCost + " NUM IS " + op.asInt());
       program.spendGas(gasCost, op.name());
-      program.checkCPULimit(op.name());
+      program.checkENERGYLimit(op.name());
       // logger.info("after opName: {}, {}", op.name(), System.nanoTime() / 1000 - lastTime);
 
       // Execute operation

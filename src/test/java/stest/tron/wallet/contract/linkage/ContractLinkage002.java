@@ -52,7 +52,7 @@ public class ContractLinkage002 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     Assert.assertTrue(PublicMethed.sendcoin(linkage002Address,20000000L,fromAddress,
         testKey002,blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalanceGetCpu(linkage002Address,5000000L,
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage002Address, 5000000L,
         3,1,linkage002Key,blockingStubFull));
     Assert.assertTrue(PublicMethed.buyStorage(5000000L,linkage002Address,linkage002Key,
         blockingStubFull));
@@ -63,13 +63,13 @@ public class ContractLinkage002 {
   public void updateSetting() {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(linkage002Address,
         blockingStubFull);
-    Long cpuLimit = accountResource.getCpuLimit();
+    Long energyLimit = accountResource.getEnergyLimit();
     Long storageLimit = accountResource.getStorageLimit();
-    Long cpuUsage = accountResource.getCpuUsed();
+    Long energyUsage = accountResource.getEnergyUsed();
     Long storageUsage = accountResource.getStorageUsed();
 
-    logger.info("before cpu limit is " + Long.toString(cpuLimit));
-    logger.info("before cpu usage is " + Long.toString(cpuUsage));
+    logger.info("before energy limit is " + Long.toString(energyLimit));
+    logger.info("before energy usage is " + Long.toString(energyUsage));
     logger.info("before storage limit is " + Long.toString(storageLimit));
     logger.info("before storage usaged is " + Long.toString(storageUsage));
     Long maxFeeLimit = 5000000L;

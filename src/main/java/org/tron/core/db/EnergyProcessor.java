@@ -14,9 +14,9 @@ import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Transaction.Contract;
 
 @Slf4j
-public class CpuProcessor extends ResourceProcessor {
+public class EnergyProcessor extends ResourceProcessor {
 
-  public CpuProcessor(Manager manager) {
+  public EnergyProcessor(Manager manager) {
     super(manager);
   }
 
@@ -29,10 +29,10 @@ public class CpuProcessor extends ResourceProcessor {
   private void updateUsage(AccountCapsule accountCapsule, long now) {
     AccountResource accountResource = accountCapsule.getAccountResource();
 
-    long oldCpuUsage = accountResource.getCpuUsage();
-    long latestConsumeTime = accountResource.getLatestConsumeTimeForCpu();
+    long oldEnergyUsage = accountResource.getEnergyUsage();
+    long latestConsumeTime = accountResource.getLatestConsumeTimeForEnergy();
 
-    accountCapsule.setCpuUsage(increase(oldCpuUsage, 0, latestConsumeTime, now));
+    accountCapsule.setEnergyUsage(increase(oldEnergyUsage, 0, latestConsumeTime, now));
 
   }
 
@@ -50,9 +50,9 @@ public class CpuProcessor extends ResourceProcessor {
 //        continue;
 //      }
       //todo
-//      long cpuTime = trx.getReceipt().getCpuTime();
-      long cpuTime = 100L;
-      logger.debug("trxId {},cpu cost :{}", trx.getTransactionId(), cpuTime);
+//      long energy = trx.getReceipt().getEnergy();
+      long energy = 100L;
+      logger.debug("trxId {},energy cost :{}", trx.getTransactionId(), energy);
       byte[] address = TransactionCapsule.getOwner(contract);
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
       if (accountCapsule == null) {
@@ -61,29 +61,30 @@ public class CpuProcessor extends ResourceProcessor {
       long now = dbManager.getWitnessController().getHeadSlot();
 
       //todo
-//      int creatorRatio = contract.getUserCpuConsumeRatio();
+//      int creatorRatio = contract.getUserEnergyConsumeRatio();
       int creatorRatio = 50;
 
-      long creatorCpuTime = cpuTime * creatorRatio / 100;
+      long creatorEnergy = energy * creatorRatio / 100;
       AccountCapsule contractProvider = dbManager.getAccountStore()
           .get(contract.getProvider().toByteArray());
 
-      if (!useCpu(contractProvider, creatorCpuTime, now)) {
-        throw new ContractValidateException("creator has not enough cpu[" + creatorCpuTime + "]");
+      if (!useEnergy(contractProvider, creatorEnergy, now)) {
+        throw new ContractValidateException(
+            "creator has not enough energy[" + creatorEnergy + "]");
       }
 
-      long userCpuTime = cpuTime * (100 - creatorRatio) / 100;
+      long userEnergy = energy * (100 - creatorRatio) / 100;
       //1.The creator and the use of this have sufficient resources
-      if (useCpu(accountCapsule, userCpuTime, now)) {
+      if (useEnergy(accountCapsule, userEnergy, now)) {
         continue;
       }
 
 //     todo  long feeLimit = getUserFeeLimit();
       long feeLimit = 1000000;//sun
-      long fee = calculateFee(userCpuTime);
+      long fee = calculateFee(userEnergy);
       if (fee > feeLimit) {
         throw new AccountResourceInsufficientException(
-            "Account has Insufficient Cpu[" + userCpuTime + "] and feeLimit[" + feeLimit
+            "Account has Insufficient Energy[" + userEnergy + "] and feeLimit[" + feeLimit
                 + "] is not enough to trigger this contract");
       }
 
@@ -93,13 +94,13 @@ public class CpuProcessor extends ResourceProcessor {
       }
 
       throw new AccountResourceInsufficientException(
-          "Account has insufficient Cpu[" + userCpuTime + "] and balance[" + fee
+          "Account has insufficient Energy[" + userEnergy + "] and balance[" + fee
               + "] to trigger this contract");
     }
   }
 
-  private long calculateFee(long userCpuTime) {
-    return userCpuTime * 30;// 30 drop / macroSecond, move to dynamicStore later
+  private long calculateFee(long userEnergy) {
+    return userEnergy * 30;// 30 drop / macroSecond, move to dynamicStore later
   }
 
 
@@ -113,55 +114,55 @@ public class CpuProcessor extends ResourceProcessor {
     }
   }
 
-  public boolean useCpu(AccountCapsule accountCapsule, long cpuTime, long now) {
+  public boolean useEnergy(AccountCapsule accountCapsule, long energy, long now) {
 
-    long cpuUsage = accountCapsule.getCpuUsage();
-    long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForCpu();
-    long cpuLimit = calculateGlobalCpuLimit(
-        accountCapsule.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance());
+    long energyUsage = accountCapsule.getEnergyUsage();
+    long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();
+    long energyLimit = calculateGlobalEnergyLimit(
+        accountCapsule.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance());
 
-    long newCpuUsage = increase(cpuUsage, 0, latestConsumeTime, now);
+    long newEnergyUsage = increase(energyUsage, 0, latestConsumeTime, now);
 
-    if (cpuTime > (cpuLimit - newCpuUsage)) {
+    if (energy > (energyLimit - newEnergyUsage)) {
       return false;
     }
 
     latestConsumeTime = now;
     long latestOperationTime = dbManager.getHeadBlockTimeStamp();
-    newCpuUsage = increase(newCpuUsage, cpuTime, latestConsumeTime, now);
-    accountCapsule.setCpuUsage(newCpuUsage);
+    newEnergyUsage = increase(newEnergyUsage, energy, latestConsumeTime, now);
+    accountCapsule.setEnergyUsage(newEnergyUsage);
     accountCapsule.setLatestOperationTime(latestOperationTime);
-    accountCapsule.setLatestConsumeTimeForCpu(latestConsumeTime);
+    accountCapsule.setLatestConsumeTimeForEnergy(latestConsumeTime);
 
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     return true;
   }
 
 
-  public long calculateGlobalCpuLimit(long frozeBalance) {
+  public long calculateGlobalEnergyLimit(long frozeBalance) {
     if (frozeBalance < 1000_000L) {
       return 0;
     }
-    long cpuWeight = frozeBalance / 1000_000L;
-    long totalCpuLimit = dbManager.getDynamicPropertiesStore().getTotalCpuLimit();
-    long totalCpuWeight = dbManager.getDynamicPropertiesStore().getTotalCpuWeight();
-    assert totalCpuWeight > 0;
-    return (long) (cpuWeight * ((double) totalCpuLimit / totalCpuWeight));
+    long energyWeight = frozeBalance / 1000_000L;
+    long totalEnergyLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyLimit();
+    long totalEnergyWeight = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
+    assert totalEnergyWeight > 0;
+    return (long) (energyWeight * ((double) totalEnergyLimit / totalEnergyWeight));
   }
 
   // todo: will change the name from us to gas
-  public long getAccountLeftCpuInUsFromFreeze(AccountCapsule accountCapsule) {
+  public long getAccountLeftEnergyFromFreeze(AccountCapsule accountCapsule) {
 
     long now = dbManager.getWitnessController().getHeadSlot();
 
-    long cpuUsage = accountCapsule.getCpuUsage();
-    long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForCpu();
-    long cpuLimit = calculateGlobalCpuLimit(
-        accountCapsule.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance());
+    long energyUsage = accountCapsule.getEnergyUsage();
+    long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();
+    long energyLimit = calculateGlobalEnergyLimit(
+        accountCapsule.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance());
 
-    long newCpuUsage = increase(cpuUsage, 0, latestConsumeTime, now);
+    long newEnergyUsage = increase(energyUsage, 0, latestConsumeTime, now);
 
-    return max(cpuLimit - newCpuUsage, 0); // us
+    return max(energyLimit - newEnergyUsage, 0); // us
   }
 
 }

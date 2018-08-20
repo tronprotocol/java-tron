@@ -2,7 +2,7 @@ package org.tron.core.capsule;
 
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
-import org.tron.core.db.CpuProcessor;
+import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.db.StorageMarket;
 import org.tron.protos.Protocol.ResourceReceipt;
@@ -35,20 +35,20 @@ public class ReceiptCapsule {
     return this.receiptAddress;
   }
 
-  public void setCpuUsage(long usage) {
-    receipt = receipt.toBuilder().setCpuUsage(usage).build();
+  public void setEnergyUsage(long usage) {
+    receipt = receipt.toBuilder().setEnergyUsage(usage).build();
   }
 
-  public void setCpuFee(long fee) {
-    receipt = receipt.toBuilder().setCpuFee(fee).build();
+  public void setEnergyFee(long fee) {
+    receipt = receipt.toBuilder().setEnergyFee(fee).build();
   }
 
-  public long getCpuUsage() {
-    return receipt.getCpuUsage();
+  public long getEnergyUsage() {
+    return receipt.getEnergyUsage();
   }
 
-  public long getCpuFee() {
-    return receipt.getCpuFee();
+  public long getEnergyFee() {
+    return receipt.getEnergyFee();
   }
 
   public void setNetUsage(long netUsage) {
@@ -67,7 +67,7 @@ public class ReceiptCapsule {
     return this.receipt.getNetFee();
   }
 
-  public void calculateCpuFee() {
+  public void calculateEnergyFee() {
     //TODO: calculate
   }
 
@@ -88,46 +88,47 @@ public class ReceiptCapsule {
   }
 
   /**
-   * payCpuBill pay receipt cpu bill by cpu processor.
+   * payEnergyBill pay receipt energy bill by energy processor.
    */
-  public void payCpuBill(
+  public void payEnergyBill(
       Manager manager,
       AccountCapsule origin,
       AccountCapsule caller,
       long percent,
-      CpuProcessor cpuProcessor,
+      EnergyProcessor energyProcessor,
       long now) {
-    if (0 == receipt.getCpuUsage()) {
+    if (0 == receipt.getEnergyUsage()) {
       return;
     }
 
     if (caller.getAddress().equals(origin.getAddress())) {
-      payCpuBill(manager, caller, receipt.getCpuUsage(), cpuProcessor, now);
+      payEnergyBill(manager, caller, receipt.getEnergyUsage(), energyProcessor, now);
     } else {
-      long originUsage = receipt.getCpuUsage() * percent / 100;
-      originUsage = Math.min(originUsage, cpuProcessor.getAccountLeftCpuInUsFromFreeze(origin));
-      long callerUsage = receipt.getCpuUsage() - originUsage;
-      payCpuBill(manager, origin, originUsage, cpuProcessor, now);
-      this.setOriginCpuUsage(originUsage);
-      payCpuBill(manager, caller, callerUsage, cpuProcessor, now);
+      long originUsage = receipt.getEnergyUsage() * percent / 100;
+      originUsage = Math
+          .min(originUsage, energyProcessor.getAccountLeftEnergyFromFreeze(origin));
+      long callerUsage = receipt.getEnergyUsage() - originUsage;
+      payEnergyBill(manager, origin, originUsage, energyProcessor, now);
+      this.setOriginEnergyUsage(originUsage);
+      payEnergyBill(manager, caller, callerUsage, energyProcessor, now);
     }
   }
 
-  private void payCpuBill(
+  private void payEnergyBill(
       Manager manager,
       AccountCapsule account,
       long usage,
-      CpuProcessor cpuProcessor,
+      EnergyProcessor energyProcessor,
       long now) {
-    long accountCpuLeft = cpuProcessor.getAccountLeftCpuInUsFromFreeze(account);
-    if (accountCpuLeft >= usage) {
-      cpuProcessor.useCpu(account, usage, now);
+    long accountEnergyLeft = energyProcessor.getAccountLeftEnergyFromFreeze(account);
+    if (accountEnergyLeft >= usage) {
+      energyProcessor.useEnergy(account, usage, now);
     } else {
-      cpuProcessor.useCpu(account, accountCpuLeft, now);
-      long cpuFee = (usage - accountCpuLeft) * Constant.SUN_PER_GAS;
-      this.setCpuUsage(getCpuUsage() - (usage - accountCpuLeft));
-      this.setCpuFee(cpuFee);
-      account.setBalance(account.getBalance() - cpuFee);
+      energyProcessor.useEnergy(account, accountEnergyLeft, now);
+      long energyFee = (usage - accountEnergyLeft) * Constant.SUN_PER_GAS;
+      this.setEnergyUsage(getEnergyUsage() - (usage - accountEnergyLeft));
+      this.setEnergyFee(energyFee);
+      account.setBalance(account.getBalance() - energyFee);
     }
 
     manager.getAccountStore().put(account.getAddress().toByteArray(), account);
@@ -184,8 +185,8 @@ public class ReceiptCapsule {
     return origin.getReceipt().toBuilder().build();
   }
 
-  public void setOriginCpuUsage(long delta) {
-    this.receipt = this.receipt.toBuilder().setOriginCpuUsage(delta).build();
+  public void setOriginEnergyUsage(long delta) {
+    this.receipt = this.receipt.toBuilder().setOriginEnergyUsage(delta).build();
   }
 
   public void setOriginStorageDelta(long delta) {

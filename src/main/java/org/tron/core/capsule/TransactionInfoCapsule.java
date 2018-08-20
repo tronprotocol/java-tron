@@ -12,7 +12,6 @@ import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.core.exception.BadItemException;
 import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionInfo.Log;
 import org.tron.protos.Protocol.TransactionInfo.code;
@@ -168,7 +167,7 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
     builder.setId(ByteString.copyFrom(trxCap.getTransactionId().getBytes()));
 
     ProgramResult programResult = runtime.getResult();
-    long fee = programResult.getRet().getFee() + traceReceipt.getCpuFee() + traceReceipt
+    long fee = programResult.getRet().getFee() + traceReceipt.getEnergyFee() + traceReceipt
         .getStorageFee();
     ByteString contractResult = ByteString.copyFrom(programResult.getHReturn());
     ByteString ContractAddress = ByteString.copyFrom(programResult.getContractAddress());

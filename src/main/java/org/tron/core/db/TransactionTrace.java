@@ -27,7 +27,7 @@ public class TransactionTrace {
 
   private Manager dbManager;
 
-  private CpuProcessor cpuProcessor;
+  private EnergyProcessor energyProcessor;
 
   private StorageMarket storageMarket;
 
@@ -57,7 +57,7 @@ public class TransactionTrace {
     this.dbManager = dbManager;
     this.receipt = new ReceiptCapsule(Sha256Hash.ZERO_HASH);
 
-    this.cpuProcessor = new CpuProcessor(this.dbManager);
+    this.energyProcessor = new EnergyProcessor(this.dbManager);
     this.storageMarket = new StorageMarket(this.dbManager);
   }
 
@@ -82,8 +82,8 @@ public class TransactionTrace {
   }
 
   //set bill
-  public void setBill(long cpuUseage, long storageUseage) {
-    receipt.setCpuUsage(cpuUseage);
+  public void setBill(long energyUseage, long storageUseage) {
+    receipt.setEnergyUsage(energyUseage);
     receipt.setStorageDelta(storageUseage);
   }
 
@@ -103,7 +103,7 @@ public class TransactionTrace {
   }
 
   /**
-   * pay actually bill(include CPU and storage).
+   * pay actually bill(include ENERGY and storage).
    */
   public void pay() {
     byte[] originAccount;
@@ -132,12 +132,12 @@ public class TransactionTrace {
     // originAccount Percent = 30%
     AccountCapsule origin = dbManager.getAccountStore().get(originAccount);
     AccountCapsule caller = dbManager.getAccountStore().get(callerAccount);
-    receipt.payCpuBill(
+    receipt.payEnergyBill(
         dbManager,
         origin,
         caller,
         percent,
-        cpuProcessor,
+        energyProcessor,
         dbManager.getWitnessController().getHeadSlot());
 
     receipt.payStorageBill(dbManager, origin, caller, percent, storageMarket);

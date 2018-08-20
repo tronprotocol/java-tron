@@ -81,12 +81,12 @@ public class ActuatorFactory {
         return new ProposalDeleteActuator(contract.getParameter(), manager);
       case SetAccountIdContract:
         return new SetAccountIdActuator(contract.getParameter(), manager);
-      case BuyStorageContract:
-        return new BuyStorageActuator(contract.getParameter(), manager);
-      case BuyStorageBytesContract:
-        return new BuyStorageBytesActuator(contract.getParameter(), manager);
-      case SellStorageContract:
-        return new SellStorageActuator(contract.getParameter(), manager);
+//      case BuyStorageContract:
+//        return new BuyStorageActuator(contract.getParameter(), manager);
+//      case BuyStorageBytesContract:
+//        return new BuyStorageBytesActuator(contract.getParameter(), manager);
+//      case SellStorageContract:
+//        return new SellStorageActuator(contract.getParameter(), manager);
       case UpdateSettingContract:
         return new UpdateSettingContractActuator(contract.getParameter(), manager);
       default:
