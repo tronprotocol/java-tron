@@ -325,7 +325,7 @@ public class DataWordTest {
                 "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
     }
 
-    void testAddMod(String v1, String v2, String v3) {
+    private void testAddMod(String v1, String v2, String v3) {
         DataWord dv1 = new DataWord(Hex.decode(v1));
         DataWord dv2 = new DataWord(Hex.decode(v2));
         DataWord dv3 = new DataWord(Hex.decode(v3));
@@ -410,7 +410,7 @@ public class DataWordTest {
         assertTrue(wr.isZero());
     }
 
-    public static BigInteger pow(BigInteger x, BigInteger y) {
+    private static BigInteger pow(BigInteger x, BigInteger y) {
         if (y.compareTo(BigInteger.ZERO) < 0)
             throw new IllegalArgumentException();
         BigInteger z = x; // z will successively become x^2, x^4, x^8, x^16,

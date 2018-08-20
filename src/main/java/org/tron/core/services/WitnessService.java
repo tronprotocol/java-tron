@@ -4,7 +4,6 @@ import static org.tron.core.witness.BlockProductionCondition.NOT_MY_TURN;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
-import java.util.Date;
 import java.util.Map;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -248,9 +247,6 @@ public class WitnessService implements Service {
 
     try {
 
-      logger.error("setGeneratingBlock true " + String
-          .format("%tF %tT", new Date(), new Date()));
-
       controller.setGeneratingBlock(true);
       BlockCapsule block = generateBlock(scheduledTime, scheduledWitness);
 
@@ -280,11 +276,7 @@ public class WitnessService implements Service {
       return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
     } finally {
       controller.setGeneratingBlock(false);
-      logger.error("setGeneratingBlock true " + String
-          .format("%tF %tT", new Date(), new Date()));
     }
-
-
   }
 
   private void broadcastBlock(BlockCapsule block) {

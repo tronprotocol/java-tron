@@ -29,6 +29,7 @@ import static org.tron.common.runtime.utils.MUtil.transfer;
 import static org.tron.common.utils.BIUtil.isPositive;
 import static org.tron.common.utils.BIUtil.toBI;
 
+import com.google.protobuf.ByteString;
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -42,7 +43,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.MessageCall;
@@ -67,11 +67,11 @@ import org.tron.core.Wallet;
 import org.tron.core.actuator.TransferActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.SmartContract;
 
 /**
  * @author Roman Mandeleil
@@ -125,7 +125,7 @@ public class Program {
   }
 
   public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction transaction) {
-    this(ops, programInvoke, transaction, SystemProperties.getDefault());
+    this(ops, programInvoke, transaction, SystemProperties.getInstance());
   }
 
   public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction transaction,
@@ -142,11 +142,11 @@ public class Program {
     //this.codeHash = codeHash;
     this.ops = nullToEmpty(ops);
 
-    //traceListener = new ProgramTraceListener(config.vmTrace());
+    traceListener = new ProgramTraceListener(config.vmTrace());
     this.memory = setupProgramListener(new Memory());
     this.stack = setupProgramListener(new Stack());
     this.contractState = setupProgramListener(new ContractState(programInvoke));
-    //this.trace = new ProgramTrace(config, programInvoke);
+    this.trace = new ProgramTrace(config, programInvoke);
 
     this.transactionHash = transaction.getHash();
   }
@@ -195,7 +195,7 @@ public class Program {
 
   private <T extends ProgramListenerAware> T setupProgramListener(T programListenerAware) {
     if (programListener.isEmpty()) {
-      //programListener.addListener(traceListener);
+      programListener.addListener(traceListener);
       programListener.addListener(storageDiffListener);
     }
 
@@ -468,9 +468,15 @@ public class Program {
 
     //In case of hashing collisions, check for any balance before createAccount()
     long oldBalance = deposit.getBalance(newAddress);
-    deposit.createAccount(newAddress, Protocol.AccountType.Contract);
-    deposit.addBalance(newAddress, oldBalance);
 
+    SmartContract newSmartContract = SmartContract.newBuilder()
+        .setContractAddress(ByteString.copyFrom(newAddress)).setConsumeUserResourcePercent(100)
+        .setOriginAddress(ByteString.copyFrom(senderAddress)).build();
+    deposit.createContract(newAddress, new ContractCapsule(newSmartContract));
+    deposit.createAccount(newAddress, "CreatedByContract",
+        Protocol.AccountType.Contract);
+
+    deposit.addBalance(newAddress, oldBalance);
     // [4] TRANSFER THE BALANCE
     long newBalance = 0L;
     if (!byTestingSuite() && endowment > 0) {
@@ -506,6 +512,7 @@ public class Program {
       vm.play(program);
       result = program.getResult();
 
+      getTrace().merge(program.getTrace());
       getResult().merge(result);
     }
 

@@ -120,7 +120,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     HelloMessage message = new HelloMessage(nodeManager.getPublicHomeNode(), time,
             manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId());
     ctx.writeAndFlush(message.getSendData());
-    channel.getNodeStatistics().messageStatistics.addTcpInMessage(MessageTypes.P2P_HELLO);
+    channel.getNodeStatistics().messageStatistics.addTcpOutMessage(message);
     logger.info("Handshake Send to {}, {} ", ctx.channel().remoteAddress(), message);
   }
 
@@ -157,7 +157,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
     ((PeerConnection)channel).setHelloMessage(msg);
 
-    channel.getNodeStatistics().messageStatistics.addTcpOutMessage(MessageTypes.P2P_HELLO);
+    channel.getNodeStatistics().messageStatistics.addTcpInMessage(msg);
 
     channel.publicHandshakeFinished(ctx, msg);
     if (!channelManager.processPeer(channel)) {

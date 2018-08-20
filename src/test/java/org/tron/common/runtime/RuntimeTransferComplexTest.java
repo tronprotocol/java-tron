@@ -33,7 +33,7 @@ public class RuntimeTransferComplexTest {
   private static final String TRANSFER_TO;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     TRANSFER_TO = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
@@ -72,11 +72,10 @@ public class RuntimeTransferComplexTest {
     long value = 100;
     long fee = 100000000;
     long consumeUserResourcePercent = 0;
-    String libraryAddressPair=null;
 
 
     Transaction trx = TVMTestUtils.generateDeploySmartContractAndGetTransaction(
-        contractName,address,ABI,code,value,fee,consumeUserResourcePercent,libraryAddressPair);
+        contractName,address,ABI,code,value,fee,consumeUserResourcePercent,null);
     byte[] contractAddress = Wallet.generateContractAddress(trx);
     runtime = TVMTestUtils.processTransactionAndReturnRuntime(trx,deposit, null);
     Assert.assertNull(runtime.getRuntimeError());
@@ -103,15 +102,14 @@ public class RuntimeTransferComplexTest {
     long value = 100;
     long fee = 100000000;
     long consumeUserResourcePercent = 0;
-    String libraryAddressPair=null;
 
 
     Transaction trx = TVMTestUtils.generateDeploySmartContractAndGetTransaction(
-        contractName,address,ABI,code,value,fee,consumeUserResourcePercent,libraryAddressPair);
+        contractName,address,ABI,code,value,fee,consumeUserResourcePercent,null);
     byte[] contractAddress = Wallet.generateContractAddress(trx);
     runtime = TVMTestUtils.processTransactionAndReturnRuntime(trx, deposit, null);
     Assert.assertNotNull(runtime.getRuntimeError().contains("REVERT"));
-    Assert.assertEquals(dbManager.getAccountStore().get(contractAddress),null);
+    Assert.assertNull(dbManager.getAccountStore().get(contractAddress));
   }
 
 
@@ -141,9 +139,8 @@ public class RuntimeTransferComplexTest {
     long value = 0;
     long feeLimit = 100000000;
     long consumeUserResourcePercent = 0;
-    String libraryAddressPair=null;
 
-    byte[] contractAddress = TVMTestUtils.DeployContractWholeProcessReturnContractAddress(contractName,address,ABI,code,value,feeLimit,consumeUserResourcePercent,libraryAddressPair,
+    byte[] contractAddress = TVMTestUtils.deployContractWholeProcessReturnContractAddress(contractName,address,ABI,code,value,feeLimit,consumeUserResourcePercent,null,
         deposit,null);
 
 
