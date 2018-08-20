@@ -17,7 +17,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 
 public class ProgramResult {
 
-  private long gasUsed = 0;
+  private long energyUsed = 0;
   private long futureRefund = 0;
 
   private byte[] hReturn = EMPTY_BYTE_ARRAY;
@@ -41,7 +41,7 @@ public class ProgramResult {
   private List<CallCreate> callCreateList;
 
   public void spendGas(long gas) {
-    gasUsed += gas;
+    energyUsed += gas;
   }
 
   public void setRevert() {
@@ -53,7 +53,7 @@ public class ProgramResult {
   }
 
   public void refundGas(long gas) {
-    gasUsed -= gas;
+    energyUsed -= gas;
   }
 
   public void setContractAddress(byte[] contractAddress) {
@@ -85,8 +85,8 @@ public class ProgramResult {
     return exception;
   }
 
-  public long getGasUsed() {
-    return gasUsed;
+  public long getEnergyUsed() {
+    return energyUsed;
   }
 
   public void setException(RuntimeException exception) {

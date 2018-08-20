@@ -561,8 +561,8 @@ public class Runtime {
           result.getDeleteAccounts().clear();
           result.getLogInfoList().clear();
           result.resetFutureRefund();
-          program.spendAllGas();
-          spendUsage(0);
+          program.spendAllEnergy();
+          // spendUsage();
           if (result.getException() != null) {
             runtimeError = result.getException().getMessage();
             throw result.getException();
@@ -570,17 +570,18 @@ public class Runtime {
             runtimeError = "REVERT opcode executed";
           }
         } else {
-          long usedStorageSize =
-              deposit.computeAfterRunStorageSize() - deposit.getBeforeRunStorageSize();
-          if (!spendUsage(usedStorageSize)) {
-            throw Program.Exception.notEnoughStorage();
-          }
+          // long usedStorageSize =
+          //     deposit.computeAfterRunStorageSize() - deposit.getBeforeRunStorageSize();
+          // if (!spendUsage()) {
+          //   throw Program.Exception.notEnoughStorage();
+          // }
           deposit.commit();
         }
 
       } else {
         deposit.commit();
       }
+      trace.setBill(result.getEnergyUsed());
     } catch (OutOfResourceException e) {
       logger.error(e.getMessage());
       throw new OutOfSlotTimeException(e.getMessage());
@@ -593,54 +594,6 @@ public class Runtime {
         runtimeError = e.getMessage();
       }
     }
-  }
-
-  private boolean spendUsage(long usedStorageSize) {
-
-    long energyUsage = result.getGasUsed();
-
-    ContractCapsule contract = deposit.getContract(result.getContractAddress());
-    ByteString originAddress = contract.getInstance().getOriginAddress();
-    AccountCapsule origin = deposit.getAccount(originAddress.toByteArray());
-    long originResourcePercent = 100 - contract.getConsumeUserResourcePercent();
-    originResourcePercent = min(originResourcePercent, 100);
-    originResourcePercent = max(originResourcePercent, 0);
-    long originEnergyUsage = Math.multiplyExact(energyUsage, originResourcePercent) / 100;
-    originEnergyUsage = min(originEnergyUsage,
-        energyProcessor.getAccountLeftEnergyFromFreeze(origin));
-    long callerEnergyUsage = energyUsage - originEnergyUsage;
-
-    if (usedStorageSize <= 0) {
-      trace.setBill(energyUsage, 0);
-      return true;
-    }
-    long originStorageUsage = Math
-        .multiplyExact(usedStorageSize, originResourcePercent) / 100;
-    originStorageUsage = min(originStorageUsage, origin.getStorageLeft());
-    long callerStorageUsage = usedStorageSize - originStorageUsage;
-
-    byte[] callerAddressBytes = TransactionCapsule.getOwner(trx.getRawData().getContract(0));
-    AccountCapsule caller = deposit.getAccount(callerAddressBytes);
-    long storageFee = trx.getRawData().getFeeLimit();
-    long callerEnergyFrozen = caller.getEnergyFrozenBalance();
-    long callerEnergyLeft = energyProcessor.getAccountLeftEnergyFromFreeze(caller);
-    long callerEnergyTotal = energyProcessor.calculateGlobalEnergyLimit(callerEnergyFrozen);
-
-    if (callerEnergyUsage <= callerEnergyLeft) {
-      long energyFee = getEnergyFee(callerEnergyUsage, callerEnergyFrozen, callerEnergyTotal);
-      storageFee -= energyFee;
-    } else {
-      long energyFee = getEnergyFee(callerEnergyLeft, callerEnergyFrozen, callerEnergyTotal);
-      storageFee -= (energyFee + Math
-          .multiplyExact(callerEnergyUsage - callerEnergyLeft, Constant.SUN_PER_GAS));
-    }
-    long tryBuyStorage = storageMarket.tryBuyStorage(storageFee);
-    if (tryBuyStorage + caller.getStorageLeft() < callerStorageUsage) {
-      trace.setBill(energyUsage, 0);
-      return false;
-    }
-    trace.setBill(energyUsage, usedStorageSize);
-    return true;
   }
 
   private long getEnergyFee(long callerEnergyUsage, long callerEnergyFrozen,
@@ -679,13 +632,12 @@ public class Runtime {
           .error(result.getException())
           .toString();
 
-
       if (config.vmTraceCompressed()) {
         trace = zipAndEncode(trace);
       }
 
       String txHash = Hex.toHexString(new InternalTransaction(trx).getHash());
-      saveProgramTraceFile(config,txHash, trace);
+      saveProgramTraceFile(config, txHash, trace);
     }
 
   }
