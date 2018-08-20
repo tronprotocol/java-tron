@@ -821,7 +821,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found ALLOW_CREATION_OF_CONTRACTS"));
   }
 
-
+  public boolean supportVM() {
+    return  getAllowCreationOfContracts() == 1L;
+  }
 
   public void saveBlockFilledSlots(int[] blockFilledSlots) {
     logger.debug("blockFilledSlots:" + intArrayToString(blockFilledSlots));

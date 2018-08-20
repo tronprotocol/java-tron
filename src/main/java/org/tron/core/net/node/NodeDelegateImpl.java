@@ -39,6 +39,7 @@ import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.UnsupportVMException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
@@ -106,6 +107,8 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("TransactionTrace Exception," + e.getMessage());
     } catch (OutOfSlotTimeException e) {
       throw new BadBlockException("TransactionTrace Exception," + e.getMessage());
+    } catch (UnsupportVMException e) {
+      throw new BadBlockException(e.getMessage());
     }
 
   }
@@ -121,7 +124,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
     }
     try {
-      dbManager.pushTransactions(trx);
+      dbManager.pushTransaction(trx);
     } catch (ContractSizeNotEqualToOneException e) {
       logger.info("Contract validate failed" + e.getMessage());
       throw new BadTransactionException();
@@ -158,6 +161,9 @@ public class NodeDelegateImpl implements NodeDelegate {
       return false;
     } catch (OutOfSlotTimeException e) {
       logger.info("OutOfSlotTimeException Exception" + e.getMessage());
+      return false;
+    } catch (UnsupportVMException e) {
+      logger.warn(e.getMessage());
       return false;
     }
 

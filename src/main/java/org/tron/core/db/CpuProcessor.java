@@ -1,6 +1,8 @@
 package org.tron.core.db;
 
 
+import static java.lang.Long.max;
+
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.AccountCapsule;
@@ -159,7 +161,7 @@ public class CpuProcessor extends ResourceProcessor {
 
     long newCpuUsage = increase(cpuUsage, 0, latestConsumeTime, now);
 
-    return cpuLimit - newCpuUsage; // us
+    return max(cpuLimit - newCpuUsage, 0); // us
   }
 
 }

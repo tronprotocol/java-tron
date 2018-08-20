@@ -95,6 +95,7 @@ import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.UnsupportVMException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.witness.ProposalController;
@@ -333,6 +334,32 @@ public class Manager {
     return this.peersStore.get("neighbours".getBytes());
   }
 
+  /**
+   * Cycle thread to repush Transactions
+   */
+  private Runnable repushLoop =
+      () -> {
+        while (true) {
+          try {
+            TransactionCapsule tx = this.getRepushTransactions().take();
+            this.rePush(tx);
+          } catch (InterruptedException ex) {
+            logger.info("repushLoop interrupted");
+            Thread.currentThread().interrupt();
+          } catch (Exception ex) {
+            logger.error("unknown exception happened in witness loop", ex);
+          } catch (Throwable throwable) {
+            logger.error("unknown throwable happened in witness loop", throwable);
+          }
+        }
+      };
+
+  private Thread repushThread;
+  
+  public Thread getRepushThread() {
+    return repushThread;
+  }
+
   @PostConstruct
   public void init() {
     revokingStore.disable();
@@ -370,6 +397,9 @@ public class Manager {
 
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
+
+    repushThread = new Thread(repushLoop);
+    repushThread.start();
   }
 
   public BlockId getGenesisBlockId() {
@@ -570,10 +600,11 @@ public class Manager {
   /**
    * push transaction into pending.
    */
-  public boolean pushTransactions(final TransactionCapsule trx)
+  public boolean pushTransaction(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, DupTransactionException, TaposException,
-      TooBigTransactionException, TransactionExpirationException, ReceiptException, TransactionTraceException, OutOfSlotTimeException {
+      TooBigTransactionException, TransactionExpirationException, ReceiptException,
+      TransactionTraceException, OutOfSlotTimeException, UnsupportVMException {
 
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
@@ -667,7 +698,8 @@ public class Manager {
   private void applyBlock(BlockCapsule block) throws ContractValidateException,
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException, ReceiptException,
-      TaposException, ValidateScheduleException, TransactionTraceException, OutOfSlotTimeException {
+      TaposException, ValidateScheduleException, TransactionTraceException, OutOfSlotTimeException,
+      UnsupportVMException {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
@@ -677,7 +709,8 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       ValidateScheduleException, AccountResourceInsufficientException, TaposException,
       TooBigTransactionException, DupTransactionException, TransactionExpirationException,
-      NonCommonBlockException, ReceiptException, TransactionTraceException, OutOfSlotTimeException {
+      NonCommonBlockException, ReceiptException, TransactionTraceException, OutOfSlotTimeException,
+      UnsupportVMException {
     Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
     try {
       binaryTree =
@@ -722,7 +755,8 @@ public class Manager {
             | ReceiptException
             | OutOfSlotTimeException
             | TooBigTransactionException
-            | ValidateScheduleException e) {
+            | ValidateScheduleException
+            | UnsupportVMException e) {
           logger.warn(e.getMessage(), e);
           exception = e;
           throw e;
@@ -777,7 +811,8 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
       TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException,
-      BadNumberBlockException, BadBlockException, NonCommonBlockException, ReceiptException, TransactionTraceException, OutOfSlotTimeException {
+      BadNumberBlockException, BadBlockException, NonCommonBlockException, ReceiptException, TransactionTraceException,
+      OutOfSlotTimeException, UnsupportVMException {
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
@@ -990,8 +1025,7 @@ public class Manager {
   public boolean processTransaction(final TransactionCapsule trxCap, Block block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException, ReceiptException,
       AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException,
-      DupTransactionException, TaposException, TransactionTraceException, OutOfSlotTimeException {
-
+      DupTransactionException, TaposException, TransactionTraceException, OutOfSlotTimeException, UnsupportVMException {
     if (trxCap == null) {
       return false;
     }
@@ -1011,47 +1045,29 @@ public class Manager {
 
     TransactionTrace trace = new TransactionTrace(trxCap, this);
 
+// TODO vm switch
+//    if (!this.dynamicPropertiesStore.supportVM() && trace.needVM()) {
+//      throw new UnsupportVMException("this node doesn't support vm, trx id: " + trxCap.getTransactionId().toString());
+//    }
+
     DepositImpl deposit = DepositImpl.createRoot(this);
     Runtime runtime = new Runtime(trace, block, deposit,
         new ProgramInvokeFactoryImpl());
     consumeBandwidth(trxCap, runtime.getResult().getRet(), trace);
 
-    // init
     trace.init();
-    //exec
     trace.exec(runtime);
-
     trace.pay();
 
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
-    TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
+
     RuntimeException runtimeException = runtime.getResult().getException();
-
-    transactionInfoCapsule.setResult(code.SUCESS);
-    if (StringUtils.isNoneEmpty(runtime.getRuntimeError())) {
-      transactionInfoCapsule.setResult(code.FAILED);
-      transactionInfoCapsule.setResMessage(runtime.getRuntimeError());
-    }
-    transactionInfoCapsule.setId(trxCap.getTransactionId().getBytes());
     ReceiptCapsule traceReceipt = trace.getReceipt();
-    transactionInfoCapsule.setFee(
-        runtime.getResult().getRet().getFee() + traceReceipt.getCpuFee() + traceReceipt
-            .getStorageFee());
-    transactionInfoCapsule.setContractResult(runtime.getResult().getHReturn());
-    transactionInfoCapsule.setContractAddress(runtime.getResult().getContractAddress());
-    if (Objects.nonNull(block)) {
-      transactionInfoCapsule.setBlockNumber(block.getBlockHeader().getRawData().getNumber());
-      transactionInfoCapsule.setBlockTimeStamp(block.getBlockHeader().getRawData().getTimestamp());
-    }
-    transactionInfoCapsule.parseTransactionResult(runtime.getResult().getRet());
+    TransactionInfoCapsule transactionInfo = TransactionInfoCapsule.buildInstance(trxCap, block, runtime, traceReceipt);
 
-    List<Log> logList = getLogsByLogInfoList(runtime.getResult().getLogInfoList());
-    transactionInfoCapsule.addAllLog(logList);
-    transactionInfoCapsule.setReceipt(traceReceipt);
+    transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
 
-    transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfoCapsule);
-
-    sendEventLog(runtime.getResult().getContractAddress(), logList, block, transactionInfoCapsule);
+    sendEventLog(runtime.getResult().getContractAddress(), transactionInfo.getInstance().getLogList(), block, transactionInfo);
 
     return true;
   }
@@ -1132,7 +1148,6 @@ public class Manager {
     });
     return logList;
   }
-
 
   /**
    * Get the block id from the number.
@@ -1223,6 +1238,8 @@ public class Manager {
       } catch (OutOfSlotTimeException e) {
         logger.info("OutOfSlotTime exception: {}", e.getMessage());
         logger.debug(e.getMessage(), e);
+      } catch (UnsupportVMException e) {
+        logger.warn(e.getMessage(), e);
       }
     }
 
@@ -1262,6 +1279,8 @@ public class Manager {
     } catch (OutOfSlotTimeException e) {
       logger.info("OutOfSlotTime exception: {}", e.getMessage());
       logger.debug(e.getMessage(), e);
+    } catch (UnsupportVMException e) {
+      logger.warn(e.getMessage(), e);
     }
 
     return null;
@@ -1309,7 +1328,8 @@ public class Manager {
   public void processBlock(BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
-      DupTransactionException, TransactionExpirationException, ValidateScheduleException, ReceiptException, TransactionTraceException, OutOfSlotTimeException {
+      DupTransactionException, TransactionExpirationException, ValidateScheduleException,
+      ReceiptException, TransactionTraceException, OutOfSlotTimeException, UnsupportVMException {
     // todo set revoking db max size.
 
     // checkWitness
@@ -1596,7 +1616,7 @@ public class Manager {
     }
 
     try {
-      this.pushTransactions(tx);
+      this.pushTransaction(tx);
     } catch (ValidateSignatureException e) {
       logger.debug(e.getMessage(), e);
     } catch (ContractValidateException e) {
@@ -1619,6 +1639,8 @@ public class Manager {
       logger.debug("transactionTrace transaction");
     } catch (OutOfSlotTimeException e) {
       logger.debug("outOfSlotTime transaction");
+    } catch (UnsupportVMException e) {
+      logger.debug(e.getMessage(), e);
     }
   }
 

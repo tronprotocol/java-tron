@@ -1231,8 +1231,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           if (!send.containsKey(peer)) { //TODO: Attention multi thread here
             send.put(peer, new LinkedList<>());
           }
-          for (BlockId blockId :
-              peer.getSyncBlockToFetch()) {
+          for (BlockId blockId : peer.getSyncBlockToFetch()) {
             if (!request.contains(blockId) //TODO: clean processing block
                 && (syncBlockIdWeRequested.getIfPresent(blockId) == null)) {
               send.get(peer).add(blockId);

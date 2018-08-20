@@ -164,7 +164,6 @@ public class ReceiptCapsule {
       long delta,
       StorageMarket storageMarket) {
 
-    this.setStorageDelta(delta);
     if (account.getStorageLeft() >= delta) {
       account.setStorageUsage(account.getStorageUsage() + delta);
     } else {
