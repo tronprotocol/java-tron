@@ -796,10 +796,10 @@ message AccountResourceMessage {
   int64 TotalNetLimit = 7;
   int64 TotalNetWeight = 8;
 
-  int64 CpuUsed = 13;
-  int64 CpuLimit = 14;
-  int64 TotalCpuLimit = 15;
-  int64 TotalCpuWeight = 16;
+  int64 EnergyUsed = 13;
+  int64 EnergyLimit = 14;
+  int64 TotalEnergyLimit = 15;
+  int64 TotalEnergyWeight = 16;
 
   int64 storageUsed = 21;
   int64 storageLimit = 22;
