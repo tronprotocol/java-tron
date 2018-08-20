@@ -106,7 +106,7 @@ public class ReceiptCapsule {
     } else {
       long originUsage = receipt.getEnergyUsage() * percent / 100;
       originUsage = Math
-          .min(originUsage, energyProcessor.getAccountLeftEnergyInUsFromFreeze(origin));
+          .min(originUsage, energyProcessor.getAccountLeftEnergyFromFreeze(origin));
       long callerUsage = receipt.getEnergyUsage() - originUsage;
       payEnergyBill(manager, origin, originUsage, energyProcessor, now);
       this.setOriginEnergyUsage(originUsage);
@@ -120,7 +120,7 @@ public class ReceiptCapsule {
       long usage,
       EnergyProcessor energyProcessor,
       long now) {
-    long accountEnergyLeft = energyProcessor.getAccountLeftEnergyInUsFromFreeze(account);
+    long accountEnergyLeft = energyProcessor.getAccountLeftEnergyFromFreeze(account);
     if (accountEnergyLeft >= usage) {
       energyProcessor.useEnergy(account, usage, now);
     } else {

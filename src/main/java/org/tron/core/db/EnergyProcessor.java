@@ -50,9 +50,9 @@ public class EnergyProcessor extends ResourceProcessor {
 //        continue;
 //      }
       //todo
-//      long energyTime = trx.getReceipt().getEnergyTime();
-      long energyTime = 100L;
-      logger.debug("trxId {},energy cost :{}", trx.getTransactionId(), energyTime);
+//      long energy = trx.getReceipt().getEnergy();
+      long energy = 100L;
+      logger.debug("trxId {},energy cost :{}", trx.getTransactionId(), energy);
       byte[] address = TransactionCapsule.getOwner(contract);
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
       if (accountCapsule == null) {
@@ -64,27 +64,27 @@ public class EnergyProcessor extends ResourceProcessor {
 //      int creatorRatio = contract.getUserEnergyConsumeRatio();
       int creatorRatio = 50;
 
-      long creatorEnergyTime = energyTime * creatorRatio / 100;
+      long creatorEnergy = energy * creatorRatio / 100;
       AccountCapsule contractProvider = dbManager.getAccountStore()
           .get(contract.getProvider().toByteArray());
 
-      if (!useEnergy(contractProvider, creatorEnergyTime, now)) {
+      if (!useEnergy(contractProvider, creatorEnergy, now)) {
         throw new ContractValidateException(
-            "creator has not enough energy[" + creatorEnergyTime + "]");
+            "creator has not enough energy[" + creatorEnergy + "]");
       }
 
-      long userEnergyTime = energyTime * (100 - creatorRatio) / 100;
+      long userEnergy = energy * (100 - creatorRatio) / 100;
       //1.The creator and the use of this have sufficient resources
-      if (useEnergy(accountCapsule, userEnergyTime, now)) {
+      if (useEnergy(accountCapsule, userEnergy, now)) {
         continue;
       }
 
 //     todo  long feeLimit = getUserFeeLimit();
       long feeLimit = 1000000;//sun
-      long fee = calculateFee(userEnergyTime);
+      long fee = calculateFee(userEnergy);
       if (fee > feeLimit) {
         throw new AccountResourceInsufficientException(
-            "Account has Insufficient Energy[" + userEnergyTime + "] and feeLimit[" + feeLimit
+            "Account has Insufficient Energy[" + userEnergy + "] and feeLimit[" + feeLimit
                 + "] is not enough to trigger this contract");
       }
 
@@ -94,13 +94,13 @@ public class EnergyProcessor extends ResourceProcessor {
       }
 
       throw new AccountResourceInsufficientException(
-          "Account has insufficient Energy[" + userEnergyTime + "] and balance[" + fee
+          "Account has insufficient Energy[" + userEnergy + "] and balance[" + fee
               + "] to trigger this contract");
     }
   }
 
-  private long calculateFee(long userEnergyTime) {
-    return userEnergyTime * 30;// 30 drop / macroSecond, move to dynamicStore later
+  private long calculateFee(long userEnergy) {
+    return userEnergy * 30;// 30 drop / macroSecond, move to dynamicStore later
   }
 
 
@@ -114,7 +114,7 @@ public class EnergyProcessor extends ResourceProcessor {
     }
   }
 
-  public boolean useEnergy(AccountCapsule accountCapsule, long energyTime, long now) {
+  public boolean useEnergy(AccountCapsule accountCapsule, long energy, long now) {
 
     long energyUsage = accountCapsule.getEnergyUsage();
     long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();
@@ -123,13 +123,13 @@ public class EnergyProcessor extends ResourceProcessor {
 
     long newEnergyUsage = increase(energyUsage, 0, latestConsumeTime, now);
 
-    if (energyTime > (energyLimit - newEnergyUsage)) {
+    if (energy > (energyLimit - newEnergyUsage)) {
       return false;
     }
 
     latestConsumeTime = now;
     long latestOperationTime = dbManager.getHeadBlockTimeStamp();
-    newEnergyUsage = increase(newEnergyUsage, energyTime, latestConsumeTime, now);
+    newEnergyUsage = increase(newEnergyUsage, energy, latestConsumeTime, now);
     accountCapsule.setEnergyUsage(newEnergyUsage);
     accountCapsule.setLatestOperationTime(latestOperationTime);
     accountCapsule.setLatestConsumeTimeForEnergy(latestConsumeTime);
@@ -151,7 +151,7 @@ public class EnergyProcessor extends ResourceProcessor {
   }
 
   // todo: will change the name from us to gas
-  public long getAccountLeftEnergyInUsFromFreeze(AccountCapsule accountCapsule) {
+  public long getAccountLeftEnergyFromFreeze(AccountCapsule accountCapsule) {
 
     long now = dbManager.getWitnessController().getHeadSlot();
 

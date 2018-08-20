@@ -109,14 +109,14 @@ public class EnergyProcessorTest {
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
 
     EnergyProcessor processor = new EnergyProcessor(dbManager);
-    long energyTime = 10000;
+    long energy = 10000;
     long now = 1526647838000L;
 
-    boolean result = processor.useEnergy(ownerCapsule, energyTime, now);
+    boolean result = processor.useEnergy(ownerCapsule, energy, now);
     Assert.assertEquals(false, result);
 
     ownerCapsule.setFrozenForEnergy(10_000_000L, 0L);
-    result = processor.useEnergy(ownerCapsule, energyTime, now);
+    result = processor.useEnergy(ownerCapsule, energy, now);
     Assert.assertEquals(true, result);
 
     AccountCapsule ownerCapsuleNew = dbManager.getAccountStore()
