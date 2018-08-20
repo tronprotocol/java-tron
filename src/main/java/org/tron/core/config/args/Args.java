@@ -289,6 +289,10 @@ public class Args {
   @Setter
   private long receiveTcpMinDataLength;
 
+  @Getter
+  @Setter
+  private boolean isOpenFullTcpDisconnect;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -343,6 +347,7 @@ public class Args {
     INSTANCE.disconnectNumberFactor = 0.4;
     INSTANCE.maxConnectNumberFactor = 0.8;
     INSTANCE.receiveTcpMinDataLength = 2048;
+    INSTANCE.isOpenFullTcpDisconnect = false;
   }
 
   /**
@@ -570,6 +575,8 @@ public class Args {
         config.getDouble("node.maxConnectNumberFactor") : 0.8;
     INSTANCE.receiveTcpMinDataLength = config.hasPath("node.receiveTcpMinDataLength") ?
         config.getLong("node.receiveTcpMinDataLength") : 2048;
+    INSTANCE.isOpenFullTcpDisconnect = config.hasPath("node.isOpenFullTcpDisconnect") && config
+        .getBoolean("node.isOpenFullTcpDisconnect");
 
     initBackupProperty(config);
 
