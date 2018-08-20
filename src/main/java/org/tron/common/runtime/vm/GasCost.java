@@ -19,18 +19,19 @@ public class GasCost {
     private final int GENESISGASLIMIT = 1000000;
     private final int MINGASLIMIT = 125000;
 
+
     private final int BALANCE = 20;
     private final int SHA3 = 30;
     private final int SHA3_WORD = 6;
     private final int SLOAD = 50;
     private final int STOP = 0;
     private final int SUICIDE = 0;
-    private final int CLEAR_SSTORE = 50;
-    private final int SET_SSTORE = 50;
-    private final int RESET_SSTORE = 50;
-    private final int REFUND_SSTORE = 50;
+    private final int CLEAR_SSTORE = 5000;
+    private final int SET_SSTORE = 20000;
+    private final int RESET_SSTORE = 5000;
+    private final int REFUND_SSTORE = 15000;
     private final int CREATE = 32000;
-
+    
     private final int JUMPDEST = 1;
     private final int CREATE_DATA_BYTE = 5;
     private final int CALL = 40;

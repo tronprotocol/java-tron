@@ -1,6 +1,7 @@
 package org.tron.common.runtime.vm;
 
 import static org.tron.common.crypto.Hash.sha3;
+import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.vm.OpCode.CALL;
 import static org.tron.common.runtime.vm.OpCode.PUSH1;
 import static org.tron.common.runtime.vm.OpCode.REVERT;
@@ -145,6 +146,11 @@ public class VM {
           break;
         case SUICIDE:
           gasCost = gasCosts.getSUICIDE();
+          DataWord suicideAddressWord = stack.get(stack.size() - 1);
+          if (isDeadAccount(program, suicideAddressWord) &&
+              !program.getBalance(program.getOwnerAddress()).isZero()) {
+            gasCost += gasCosts.getNEW_ACCT_SUICIDE();
+          }
           break;
         case SSTORE:
           // todo: check the reset to 0, refund or not
@@ -222,17 +228,18 @@ public class VM {
           // here, contract call an other contract, or a library, and so on
           // todo: check the callvalue here
           gasCost = gasCosts.getCALL();
-
           DataWord callGasWord = stack.get(stack.size() - 1);
-          // DataWord callGasWord = new DataWord(1000000);
-
           DataWord callAddressWord = stack.get(stack.size() - 2);
           DataWord value = op.callHasValue() ?
               stack.get(stack.size() - 3) : DataWord.ZERO;
+
           //check to see if account does not exist and is not a precompiled contract
           if (op == CALL) {
-            gasCost += gasCosts.getNEW_ACCT_CALL();
+            if (isDeadAccount(program, callAddressWord) && !value.isZero()) {
+              gasCost += gasCosts.getNEW_ACCT_CALL();
+            }
           }
+
           // TODO #POC9 Make sure this is converted to BigInteger (256num support)
           if (!value.isZero()) {
             gasCost += gasCosts.getVT_CALL();
@@ -1353,6 +1360,11 @@ public class VM {
     } finally {
 
     }
+  }
+
+  private boolean isDeadAccount(Program program, DataWord address) {
+    return program.getContractState().getAccount(convertToTronAddress(address.getLast20Bytes()))
+        == null;
   }
 
   /**
