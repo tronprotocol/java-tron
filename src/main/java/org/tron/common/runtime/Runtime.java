@@ -45,7 +45,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
-import org.tron.core.db.CpuProcessor;
+import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.StorageMarket;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
@@ -74,7 +74,7 @@ public class Runtime {
   private String runtimeError;
   private boolean readyToExecute = false;
 
-  private CpuProcessor cpuProcessor = null;
+  private EnergyProcessor energyProcessor = null;
   private StorageMarket storageMarket = null;
   PrecompiledContracts.PrecompiledContract precompiledContract = null;
   private ProgramResult result = new ProgramResult();
@@ -107,7 +107,7 @@ public class Runtime {
     }
     this.deposit = deosit;
     this.programInvokeFactory = programInvokeFactory;
-    this.cpuProcessor = new CpuProcessor(deposit.getDbManager());
+    this.energyProcessor = new EnergyProcessor(deposit.getDbManager());
     this.storageMarket = new StorageMarket(deposit.getDbManager());
 
     Transaction.Contract.ContractType contractType = this.trx.getRawData().getContract(0).getType();
@@ -170,7 +170,7 @@ public class Runtime {
     this.programInvokeFactory = programInvokeFactory;
     this.executorType = ET_PRE_TYPE;
     this.block = block;
-    this.cpuProcessor = new CpuProcessor(deposit.getDbManager());
+    this.energyProcessor = new EnergyProcessor(deposit.getDbManager());
     this.storageMarket = new StorageMarket(deposit.getDbManager());
     Transaction.Contract.ContractType contractType = tx.getRawData().getContract(0).getType();
     switch (contractType.getNumber()) {
@@ -260,8 +260,8 @@ public class Runtime {
   private long getAccountCPULimitInUs(AccountCapsule account,
       long limitInDrop, long maxCpuInUsByAccount) {
 
-    CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
-    long cpuInUsFromFreeze = cpuProcessor.getAccountLeftCpuInUsFromFreeze(account);
+    EnergyProcessor energyProcessor = new EnergyProcessor(this.deposit.getDbManager());
+    long cpuInUsFromFreeze = energyProcessor.getAccountLeftCpuInUsFromFreeze(account);
 
     long cpuInUsFromDrop = Math.floorDiv(limitInDrop, Constant.SUN_PER_GAS);
 
@@ -278,8 +278,8 @@ public class Runtime {
       return senderCpuLimit;
     }
 
-    CpuProcessor cpuProcessor = new CpuProcessor(this.deposit.getDbManager());
-    long creatorCpuFromFrozen = cpuProcessor.getAccountLeftCpuInUsFromFreeze(creator);
+    EnergyProcessor energyProcessor = new EnergyProcessor(this.deposit.getDbManager());
+    long creatorCpuFromFrozen = energyProcessor.getAccountLeftCpuInUsFromFreeze(creator);
 
     SmartContract smartContract = this.deposit
         .getContract(contract.getContractAddress().toByteArray()).getInstance();
@@ -328,7 +328,7 @@ public class Runtime {
 
     // will change the name from us to gas
     // can change the calc way
-    long cpuGasFromFreeze = cpuProcessor.getAccountLeftCpuInUsFromFreeze(account);
+    long cpuGasFromFreeze = energyProcessor.getAccountLeftCpuInUsFromFreeze(account);
     long cpuGasFromBalance = Math.floorDiv(account.getBalance(), Constant.SUN_PER_GAS);
 
     long cpuGasFromFeeLimit;
@@ -337,7 +337,7 @@ public class Runtime {
     if (0 == balanceForCpuFreeze) {
       cpuGasFromFeeLimit = feeLimit / Constant.SUN_PER_GAS;
     } else {
-      long totalCpuGasFromFreeze = cpuProcessor.calculateGlobalCpuLimit(balanceForCpuFreeze);
+      long totalCpuGasFromFreeze = energyProcessor.calculateGlobalCpuLimit(balanceForCpuFreeze);
       long leftBalanceForCpuFreeze = getCpuFee(balanceForCpuFreeze, cpuGasFromFreeze,
           totalCpuGasFromFreeze);
 
@@ -364,7 +364,7 @@ public class Runtime {
     }
 
     // creatorCpuGasFromFreeze
-    long creatorGasLimit = cpuProcessor.getAccountLeftCpuInUsFromFreeze(creator);
+    long creatorGasLimit = energyProcessor.getAccountLeftCpuInUsFromFreeze(creator);
 
     SmartContract smartContract = this.deposit
         .getContract(contract.getContractAddress().toByteArray()).getInstance();
@@ -605,7 +605,7 @@ public class Runtime {
     originResourcePercent = min(originResourcePercent, 100);
     originResourcePercent = max(originResourcePercent, 0);
     long originCpuUsage = Math.multiplyExact(cpuUsage, originResourcePercent) / 100;
-    originCpuUsage = min(originCpuUsage, cpuProcessor.getAccountLeftCpuInUsFromFreeze(origin));
+    originCpuUsage = min(originCpuUsage, energyProcessor.getAccountLeftCpuInUsFromFreeze(origin));
     long callerCpuUsage = cpuUsage - originCpuUsage;
 
     if (usedStorageSize <= 0) {
@@ -621,8 +621,8 @@ public class Runtime {
     AccountCapsule caller = deposit.getAccount(callerAddressBytes);
     long storageFee = trx.getRawData().getFeeLimit();
     long callerCpuFrozen = caller.getCpuFrozenBalance();
-    long callerCpuLeft = cpuProcessor.getAccountLeftCpuInUsFromFreeze(caller);
-    long callerCpuTotal = cpuProcessor.calculateGlobalCpuLimit(callerCpuFrozen);
+    long callerCpuLeft = energyProcessor.getAccountLeftCpuInUsFromFreeze(caller);
+    long callerCpuTotal = energyProcessor.calculateGlobalCpuLimit(callerCpuFrozen);
 
     if (callerCpuUsage <= callerCpuLeft) {
       long cpuFee = getCpuFee(callerCpuUsage, callerCpuFrozen, callerCpuTotal);

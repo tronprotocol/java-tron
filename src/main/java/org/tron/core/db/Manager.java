@@ -15,7 +15,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -32,14 +31,12 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.Runtime;
-import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
@@ -92,8 +89,6 @@ import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.TransactionInfo.Log;
-import org.tron.protos.Protocol.TransactionInfo.code;
 
 
 @Slf4j
@@ -613,7 +608,7 @@ public class Manager {
   public void consumeCpu(TransactionCapsule trx, TransactionResultCapsule ret,
       TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException {
-    CpuProcessor processor = new CpuProcessor(this);
+    EnergyProcessor processor = new EnergyProcessor(this);
     processor.consume(trx, ret, trace);
   }
 
