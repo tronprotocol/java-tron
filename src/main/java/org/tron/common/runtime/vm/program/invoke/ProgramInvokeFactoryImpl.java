@@ -117,7 +117,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
       // byte[] data = tx.isContractCreation() ? ByteUtil.EMPTY_BYTE_ARRAY : nullToEmpty(tx.getData());
       data = contract.getData().toByteArray();
 
-      // dropLimit = contract.getTrxCpuLimitInUs().toByteArray();
+      // dropLimit = contract.getTrxEnergyLimitInUs().toByteArray();
       switch (executorType) {
         case ET_CONSTANT_TYPE:
           break;
