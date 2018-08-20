@@ -605,7 +605,7 @@ public class Manager {
     processor.consume(trx, ret, trace);
   }
 
-  public void consumeCpu(TransactionCapsule trx, TransactionResultCapsule ret,
+  public void consumeEnergy(TransactionCapsule trx, TransactionResultCapsule ret,
       TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException {
     EnergyProcessor processor = new EnergyProcessor(this);

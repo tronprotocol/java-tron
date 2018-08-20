@@ -373,7 +373,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   // todo mv this static function to capsule util
   public static long getCallValue(Transaction.Contract contract) {
-    int cpuForTrx;
+    int energyForTrx;
     try {
       Any contractParameter = contract.getParameter();
       long callValue;
