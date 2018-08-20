@@ -46,6 +46,7 @@ import org.tron.protos.Protocol.Transaction.Result;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
+import stest.tron.wallet.common.client.utils.AbiUtil;
 
 
 
@@ -1410,6 +1411,10 @@ public class PublicMethed {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
+    if (argsStr.equalsIgnoreCase("#")) {
+      logger.info("argsstr is #");
+      argsStr = "";
+    }
 
     byte[] owner = ownerAddress;
     byte[] input = Hex.decode(AbiUtil.parseMethod(method, argsStr, isHex));
@@ -1438,6 +1443,7 @@ public class PublicMethed {
       System.out.println(":" + ByteArray
           .toStr(transactionExtention.getResult().getMessage().toByteArray()));
       System.out.println("Result:" + Hex.toHexString(result));
+      return null;
     }
 
     TransactionExtention.Builder texBuilder = TransactionExtention.newBuilder();
