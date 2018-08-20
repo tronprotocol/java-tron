@@ -24,12 +24,12 @@ import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
-public class TimeTest {
+public class CPUTimeTest {
 
   private Manager dbManager;
   private AnnotationConfigApplicationContext context;
   private DepositImpl deposit;
-  private String dbPath = "output_InternalTransactionCallTest";
+  private String dbPath = "output_CPUTimeTest";
   private String OWNER_ADDRESS;
 
 
@@ -74,10 +74,9 @@ public class TimeTest {
   public void endlessLoopTest()
       throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
 
-    // [1]
     long value = 0;
     long feeLimit = 1000000000; // sun
-    long consumeUserResourcePercent = 0; // will exhaust the developer's resource ?
+    long consumeUserResourcePercent = 0;
     TVMTestResult result = deployEndlessLoopContract(value, feeLimit,
         consumeUserResourcePercent);
     Assert.assertEquals(result.getReceipt().getEnergyUsage(), 0);
@@ -88,13 +87,16 @@ public class TimeTest {
     /* =================================== CALL setVote(uint256) =================================== */
     String params = "0000000000000000000000000000000000000000000000000000000000000003";
     byte[] triggerData = TVMTestUtils.parseABI("setVote(uint256)", params);
+    boolean haveException = false;
     try {
       result = TVMTestUtils
           .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
               contractAddress, triggerData, value, feeLimit, deposit, null);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof OutOfSlotTimeException);
+      haveException = true;
     }
+    Assert.assertTrue(haveException);
   }
 
   public TVMTestResult deployEndlessLoopContract(long value, long feeLimit,
