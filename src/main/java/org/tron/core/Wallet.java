@@ -648,9 +648,10 @@ public class Wallet {
     long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
     long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
-    long cpuLimit = energyProcessor.calculateGlobalCpuLimit(accountCapsule.getCpuFrozenBalance());
-    long totalCpuLimit = dbManager.getDynamicPropertiesStore().getTotalCpuLimit();
-    long totalCpuWeight = dbManager.getDynamicPropertiesStore().getTotalCpuWeight();
+    long energyLimit = energyProcessor
+        .calculateGlobalEnergyLimit(accountCapsule.getEnergyFrozenBalance());
+    long totalEnergyLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyLimit();
+    long totalEnergyWeight = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
 
     long storageLimit = accountCapsule.getAccountResource().getStorageLimit();
     long storageUsage = accountCapsule.getAccountResource().getStorageUsage();
@@ -667,10 +668,10 @@ public class Wallet {
         .setNetLimit(netLimit)
         .setTotalNetLimit(totalNetLimit)
         .setTotalNetWeight(totalNetWeight)
-        .setCpuLimit(cpuLimit)
-        .setCpuUsed(accountCapsule.getAccountResource().getCpuUsage())
-        .setTotalCpuLimit(totalCpuLimit)
-        .setTotalCpuWeight(totalCpuWeight)
+        .setEnergyLimit(energyLimit)
+        .setEnergyUsed(accountCapsule.getAccountResource().getEnergyUsage())
+        .setTotalEnergyLimit(totalEnergyLimit)
+        .setTotalEnergyWeight(totalEnergyWeight)
         .setStorageLimit(storageLimit)
         .setStorageUsed(storageUsage)
         .putAllAssetNetUsed(accountCapsule.getAllFreeAssetNetUsage())
