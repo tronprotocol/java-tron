@@ -129,6 +129,17 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         return;
       }
+      case (10):{
+        if(dbManager.getDynamicPropertiesStore().getRemoveThePowerOfTheGr() == -1){
+          throw new ContractValidateException(
+              "This proposal has been executed before and is only allowed to be executed once");
+        }
+
+        if(entry.getValue() != 1){
+          throw new ContractValidateException(
+              "This value[REMOVE_THE_POWER_OF_THE_GR] is only allowed to be 1");
+        }
+      }
       default:
         break;
     }

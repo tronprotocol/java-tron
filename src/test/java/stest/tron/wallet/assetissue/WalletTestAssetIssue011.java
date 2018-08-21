@@ -73,8 +73,8 @@ public class WalletTestAssetIssue011 {
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
-    logger.info(testKeyForAssetIssue011);
-    logger.info(transferAssetCreateKey);
+    PublicMethed.printAddress(testKeyForAssetIssue011);
+    PublicMethed.printAddress(transferAssetCreateKey);
 
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)

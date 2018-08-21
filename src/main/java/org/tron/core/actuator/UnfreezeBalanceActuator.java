@@ -1,7 +1,5 @@
 package org.tron.core.actuator;
 
-import static org.tron.protos.Contract.ResourceCode.BANDWIDTH;
-
 import com.google.common.collect.Lists;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -66,17 +64,17 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
         dbManager.getDynamicPropertiesStore().addTotalNetWeight(-unfreezeBalance / 1000_000L);
         break;
-      case CPU:
-        unfreezeBalance = accountCapsule.getAccountResource().getFrozenBalanceForCpu()
+      case ENERGY:
+        unfreezeBalance = accountCapsule.getAccountResource().getFrozenBalanceForEnergy()
             .getFrozenBalance();
 
         AccountResource newAccountResource = accountCapsule.getAccountResource().toBuilder()
-            .clearFrozenBalanceForCpu().build();
+            .clearFrozenBalanceForEnergy().build();
         accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
             .setBalance(oldBalance + unfreezeBalance)
             .setAccountResource(newAccountResource).build());
 
-        dbManager.getDynamicPropertiesStore().addTotalCpuWeight(-unfreezeBalance / 1000_000L);
+        dbManager.getDynamicPropertiesStore().addTotalEnergyWeight(-unfreezeBalance / 1000_000L);
         break;
     }
 
@@ -94,6 +92,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     dbManager.getVotesStore().put(ownerAddress, votesCapsule);
 
 
+    ret.setUnfreezeAmount(unfreezeBalance);
     ret.setStatus(fee, code.SUCESS);
 
     return true;
@@ -145,19 +144,20 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           throw new ContractValidateException("It's not time to unfreeze.");
         }
         break;
-      case CPU:
-        Frozen frozenBalanceForCpu = accountCapsule.getAccountResource().getFrozenBalanceForCpu();
-        if (frozenBalanceForCpu.getFrozenBalance() <= 0) {
+      case ENERGY:
+        Frozen frozenBalanceForEnergy = accountCapsule.getAccountResource()
+            .getFrozenBalanceForEnergy();
+        if (frozenBalanceForEnergy.getFrozenBalance() <= 0) {
           throw new ContractValidateException("no frozenBalance");
         }
-        if (frozenBalanceForCpu.getExpireTime() > now) {
+        if (frozenBalanceForEnergy.getExpireTime() > now) {
           throw new ContractValidateException("It's not time to unfreeze.");
         }
 
         break;
       default:
         throw new ContractValidateException(
-            "ResourceCode error.valid ResourceCode[BANDWIDTH、CPU]");
+            "ResourceCode error.valid ResourceCode[BANDWIDTH、ENERGY]");
     }
 
     return true;

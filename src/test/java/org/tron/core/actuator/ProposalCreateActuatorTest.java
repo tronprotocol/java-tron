@@ -263,6 +263,34 @@ public class ProposalCreateActuatorTest {
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
+
+    paras = new HashMap<>();
+    paras.put(10L, -1L);
+    actuator =
+        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
+    dbManager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(-1);
+    try {
+      actuator.validate();
+      fail("This proposal has been executed before and is only allowed to be executed once");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("This proposal has been executed before and is only allowed to be executed once",
+          e.getMessage());
+    }
+
+    paras.put(10L, -1L);
+    dbManager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(0);
+    actuator =
+        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
+    dbManager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(0);
+    try {
+      actuator.validate();
+      fail("This value[REMOVE_THE_POWER_OF_THE_GR] is only allowed to be 1");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("This value[REMOVE_THE_POWER_OF_THE_GR] is only allowed to be 1",
+          e.getMessage());
+    }
   }
 
 }

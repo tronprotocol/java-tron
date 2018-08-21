@@ -8,7 +8,6 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.RevokingDatabase;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
 import org.tron.core.services.http.FullNodeHttpApiService;
@@ -29,21 +28,29 @@ public class FullNode {
       return;
     }
 
+    if (Args.getInstance().isDebug()) {
+      logger.info("in debug mode, it won't check cpu time");
+    } else {
+      logger.info("not in debug mode, it will check cpu time");
+    }
+
     DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
     beanFactory.setAllowCircularReferences(false);
-    AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(beanFactory);
+    AnnotationConfigApplicationContext context =
+        new AnnotationConfigApplicationContext(beanFactory);
     context.register(DefaultConfig.class);
     context.refresh();
     Application appT = ApplicationFactory.create(context);
     shutdown(appT);
-    //appT.init(cfgArgs);
 
+    // grpc api server
     RpcApiService rpcApiService = context.getBean(RpcApiService.class);
     appT.addService(rpcApiService);
     if (cfgArgs.isWitness()) {
       appT.addService(new WitnessService(appT, context));
     }
-    //http
+
+    // http api server
     FullNodeHttpApiService httpApiService = context.getBean(FullNodeHttpApiService.class);
     appT.addService(httpApiService);
 
