@@ -4,15 +4,13 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
-import org.tron.protos.Protocol.Exchange;
 import org.tron.core.capsule.utils.ExchangeProcessor;
+import org.tron.protos.Protocol.Exchange;
 
 @Slf4j
 public class ExchangeCapsule implements ProtoCapsule<Exchange> {
 
   private Exchange exchange;
-
-  private long supply = 1_000_000_000_000_000L;
 
   public ExchangeCapsule(final Exchange exchange) {
     this.exchange = exchange;
@@ -83,7 +81,8 @@ public class ExchangeCapsule implements ProtoCapsule<Exchange> {
   }
 
   public long transaction(byte[] sellTokenID, long sellTokenQuant) {
-    ExchangeProcessor processor = new ExchangeProcessor(this.supply);
+    long supply = 1_000_000_000_000_000L;
+    ExchangeProcessor processor = new ExchangeProcessor(supply);
 
     long buyTokenQuant = 0;
     long firstTokenBalance = this.exchange.getFirstTokenBalance();
