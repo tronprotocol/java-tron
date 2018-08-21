@@ -16,13 +16,13 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.protos.Contract.ExchangeInjectContract;
+import org.tron.protos.Contract.ExchangeWithdrawContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
-public class ExchangeInjectActuator extends AbstractActuator {
+public class ExchangeWithdrawActuator extends AbstractActuator {
 
-  ExchangeInjectActuator(final Any contract, final Manager dbManager) {
+  ExchangeWithdrawActuator(final Any contract, final Manager dbManager) {
     super(contract, dbManager);
   }
 
@@ -30,21 +30,21 @@ public class ExchangeInjectActuator extends AbstractActuator {
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
     try {
-      final ExchangeInjectContract exchangeInjectContract = this.contract
-          .unpack(ExchangeInjectContract.class);
+      final ExchangeWithdrawContract exchangeWithdrawContract = this.contract
+          .unpack(ExchangeWithdrawContract.class);
       AccountCapsule accountCapsule = dbManager.getAccountStore()
-          .get(exchangeInjectContract.getOwnerAddress().toByteArray());
+          .get(exchangeWithdrawContract.getOwnerAddress().toByteArray());
 
       ExchangeCapsule exchangeCapsule = dbManager.getExchangeStore().
-          get(ByteArray.fromLong(exchangeInjectContract.getExchangeId()));
+          get(ByteArray.fromLong(exchangeWithdrawContract.getExchangeId()));
 
       byte[] firstTokenID = exchangeCapsule.getFirstTokenId();
       byte[] secondTokenID = exchangeCapsule.getSecondTokenId();
       long firstTokenBalance = exchangeCapsule.getFirstTokenBalance();
       long secondTokenBalance = exchangeCapsule.getSecondTokenBalance();
 
-      byte[] tokenID = exchangeInjectContract.getTokenId().toByteArray();
-      long tokenQuant = exchangeInjectContract.getQuant();
+      byte[] tokenID = exchangeWithdrawContract.getTokenId().toByteArray();
+      long tokenQuant = exchangeWithdrawContract.getQuant();
 
       byte[] anotherTokenID;
       long anotherTokenQuant;
@@ -54,28 +54,28 @@ public class ExchangeInjectActuator extends AbstractActuator {
         anotherTokenID = secondTokenID;
         ratio = (double) secondTokenBalance / firstTokenBalance;
         anotherTokenQuant = (long) ratio * tokenQuant;
-        exchangeCapsule.setBalance(firstTokenBalance + tokenQuant,
-            secondTokenBalance + anotherTokenQuant);
+        exchangeCapsule.setBalance(firstTokenBalance - tokenQuant,
+            secondTokenBalance - anotherTokenQuant);
       } else {
         anotherTokenID = firstTokenID;
         ratio = (double) firstTokenBalance / secondTokenBalance;
         anotherTokenQuant = (long) ratio * tokenQuant;
-        exchangeCapsule.setBalance(firstTokenBalance + anotherTokenQuant,
-            secondTokenBalance + tokenQuant);
+        exchangeCapsule.setBalance(firstTokenBalance - anotherTokenQuant,
+            secondTokenBalance - tokenQuant);
       }
 
       long newBalance = accountCapsule.getBalance() - calcFee();
 
       if (tokenID == "_".getBytes()) {
-        accountCapsule.setBalance(newBalance - tokenQuant);
+        accountCapsule.setBalance(newBalance + tokenQuant);
       } else {
-        accountCapsule.reduceAssetAmount(tokenID, tokenQuant);
+        accountCapsule.addAssetAmount(tokenID, tokenQuant);
       }
 
       if (anotherTokenID == "_".getBytes()) {
-        accountCapsule.setBalance(newBalance - anotherTokenQuant);
+        accountCapsule.setBalance(newBalance + anotherTokenQuant);
       } else {
-        accountCapsule.reduceAssetAmount(anotherTokenID, anotherTokenQuant);
+        accountCapsule.addAssetAmount(anotherTokenID, anotherTokenQuant);
       }
 
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -103,14 +103,14 @@ public class ExchangeInjectActuator extends AbstractActuator {
     if (this.dbManager == null) {
       throw new ContractValidateException("No dbManager!");
     }
-    if (!this.contract.is(ExchangeInjectContract.class)) {
+    if (!this.contract.is(ExchangeWithdrawContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [ExchangeInjectContract],real type[" + contract
+          "contract type error,expected type [ExchangeWithdrawContract],real type[" + contract
               .getClass() + "]");
     }
-    final ExchangeInjectContract contract;
+    final ExchangeWithdrawContract contract;
     try {
-      contract = this.contract.unpack(ExchangeInjectContract.class);
+      contract = this.contract.unpack(ExchangeWithdrawContract.class);
     } catch (InvalidProtocolBufferException e) {
       throw new ContractValidateException(e.getMessage());
     }
@@ -129,7 +129,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
     AccountCapsule accountCapsule = this.dbManager.getAccountStore().get(ownerAddress);
 
     if (accountCapsule.getBalance() < calcFee()) {
-      throw new ContractValidateException("No enough balance for exchange inject fee!");
+      throw new ContractValidateException("No enough balance for exchange withdraw fee!");
     }
 
     ExchangeCapsule exchangeCapsule;
@@ -152,7 +152,6 @@ public class ExchangeInjectActuator extends AbstractActuator {
     byte[] tokenID = contract.getTokenId().toByteArray();
     long tokenQuant = contract.getQuant();
 
-    byte[] anotherTokenID;
     long anotherTokenQuant;
 
     if (!Arrays.equals(tokenID, firstTokenID) && !Arrays.equals(tokenID, secondTokenID)) {
@@ -160,36 +159,21 @@ public class ExchangeInjectActuator extends AbstractActuator {
     }
 
     if (tokenQuant <= 0) {
-      throw new ContractValidateException("injected token balance must greater than zero");
+      throw new ContractValidateException("withdraw token balance must greater than zero");
     }
 
     double ratio;
     if (Arrays.equals(tokenID, firstTokenID)) {
-      anotherTokenID = secondTokenID;
       ratio = (double) secondTokenBalance / firstTokenBalance;
+      anotherTokenQuant = (long) ratio * tokenQuant;
+      if (firstTokenBalance <= tokenQuant || secondTokenBalance <= anotherTokenQuant) {
+        throw new ContractValidateException("exchange balance is not enough");
+      }
     } else {
-      anotherTokenID = firstTokenID;
       ratio = (double) firstTokenBalance / secondTokenBalance;
-    }
-    anotherTokenQuant = (long) ratio * tokenQuant;
-
-    if (tokenID == "_".getBytes()) {
-      if (accountCapsule.getBalance() < (tokenQuant + calcFee())) {
-        throw new ContractValidateException("balance is not enough");
-      }
-    } else {
-      if (!accountCapsule.assetBalanceEnough(tokenID, tokenQuant)) {
-        throw new ContractValidateException("token balance is not enough");
-      }
-    }
-
-    if (anotherTokenID == "_".getBytes()) {
-      if (accountCapsule.getBalance() < (anotherTokenQuant + calcFee())) {
-        throw new ContractValidateException("balance is not enough");
-      }
-    } else {
-      if (!accountCapsule.assetBalanceEnough(anotherTokenID, anotherTokenQuant)) {
-        throw new ContractValidateException("another token balance is not enough");
+      anotherTokenQuant = (long) ratio * tokenQuant;
+      if (secondTokenBalance <= tokenQuant || firstTokenBalance <= anotherTokenQuant) {
+        throw new ContractValidateException("exchange balance is not enough");
       }
     }
 
@@ -199,7 +183,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(ExchangeInjectContract.class).getOwnerAddress();
+    return contract.unpack(ExchangeWithdrawContract.class).getOwnerAddress();
   }
 
   @Override
