@@ -29,7 +29,7 @@ public class PendingManager implements AutoCloseable {
         dbManager.getRepushTransactions().put(tx);
       } catch (InterruptedException e) {
         logger.error(e.getMessage());
-        // Thread.currentThread().interrupt();
+        Thread.currentThread().interrupt();
       }
     }
     tmpTransactions.clear();
