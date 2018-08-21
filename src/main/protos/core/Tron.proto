@@ -47,6 +47,17 @@ message Proposal {
   State state = 7;
 }
 
+// Exchange
+message Exchange {
+  int64 exchange_id = 1;
+  bytes creator_address = 2;
+  int64 create_time = 3;
+  bytes first_token_id = 6;
+  int64 first_token_quant = 7;
+  bytes second_token_id = 8;
+  int64 second_token_quant = 9;
+}
+
 message ChainParameters {
   repeated ChainParameter chainParameter = 1;
   message ChainParameter {
@@ -178,12 +189,10 @@ message ResourceReceipt {
   }
   int64 energy_usage = 1;
   int64 energy_fee = 2;
-  int64 net_usage = 3;
-  int64 net_fee = 4;
-  int64 storage_delta = 5;
-  int64 storage_fee = 6;
-  int64 origin_energy_usage = 7;
-  int64 origin_storage_delta = 8;
+  int64 origin_energy_usage = 3;
+  int64 energy_total = 4;
+  int64 net_usage = 5;
+  int64 net_fee = 6;
 }
 
 message Transaction {

@@ -197,3 +197,28 @@ message SellStorageContract {
   bytes owner_address = 1;
   int64 storage_bytes = 2;
 }
+
+message ExchangeCreateContract {
+  bytes first_token_id = 1;
+  int64 first_token_quant = 2;
+  bytes second_token_id = 3;
+  int64 second_token_quant = 4;
+}
+
+message ExchangeInjectContract {
+  int64 exchange_id = 1;
+  bytes token_id = 2;
+  int64 quant = 3;
+}
+
+message ExchangeWithdrawContract {
+  int64 exchange_id = 1;
+  bytes token_id = 2;
+  int64 quant = 3;
+}
+
+message ExchangeTransactionContract {
+  int64 exchange_id = 1;
+  bytes token_id = 2;
+  int64 quant = 3;
+}
