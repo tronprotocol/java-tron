@@ -514,7 +514,9 @@ public class Runtime {
           result.getDeleteAccounts().clear();
           result.getLogInfoList().clear();
           result.resetFutureRefund();
-          program.spendAllEnergy();
+          if (!result.isRevert()){
+            program.spendAllEnergy();
+          }
           // spendUsage();
           if (result.getException() != null) {
             runtimeError = result.getException().getMessage();
