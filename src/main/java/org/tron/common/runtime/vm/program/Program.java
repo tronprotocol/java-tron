@@ -176,16 +176,16 @@ public class Program {
     return invoke.getCallDeep();
   }
 
-  private InternalTransaction addInternalTx(DataWord gasLimit, byte[] senderAddress,
+  private InternalTransaction addInternalTx(DataWord energyLimit, byte[] senderAddress,
       byte[] receiveAddress,
       long value, byte[] data, String note) {
 
-    // todo: now, internal transaction needn't gaslimit
+    // todo: now, internal transaction needn't energylimit
     InternalTransaction result = null;
     if (transaction != null) {
       //data = config.recordInternalTransactionsData() ? data : null;
       //result = getResult().addInternalTransaction(transaction.getHash(), getCallDeep(),
-      //        getGasPrice(), gasLimit, senderAddress, receiveAddress, value.toByteArray(), data, note);
+      //        getEnergyPrice(), energyLimit, senderAddress, receiveAddress, value.toByteArray(), data, note);
       result = getResult().addInternalTransaction(transaction.getHash(), getCallDeep(),
           senderAddress, receiveAddress, value, data, note);
     }
@@ -460,7 +460,7 @@ public class Program {
         if (byTestingSuite()) {
             // This keeps track of the contracts created for a test
             getResult().addCallCreate(programCode, EMPTY_BYTE_ARRAY,
-                    gasLimit.getNoLeadZeroesData(),
+                    energyLimit.getNoLeadZeroesData(),
                     value.getNoLeadZeroesData());
         }
         */
@@ -487,9 +487,9 @@ public class Program {
     }
 
     // BlockchainConfig blockchainConfig = config.getBlockchainConfig().getConfigForBlock(getNumber().longValue());
-    // actual gas subtract
-    DataWord gasLimit = this.getCreateGas(getEnergyLimitLeft());
-    spendEnergy(gasLimit.longValue(), "internal call");
+    // actual energy subtract
+    DataWord energyLimit = this.getCreateEnergy(getEnergyLimitLeft());
+    spendEnergy(energyLimit.longValue(), "internal call");
 
     // [5] COOK THE INVOKE AND EXECUTE
     InternalTransaction internalTx = addInternalTx(null, senderAddress, null, endowment,
@@ -498,7 +498,7 @@ public class Program {
     ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
         this, new DataWord(newAddress), getOwnerAddress(), value,
         newBalance, null, deposit, false, byTestingSuite(), vmStartInUs,
-        getVmShouldEndInUs(), gasLimit.longValueSafe());
+        getVmShouldEndInUs(), energyLimit.longValueSafe());
 
     ProgramResult result = ProgramResult.createEmpty();
 
@@ -520,13 +520,13 @@ public class Program {
     // 4. CREATE THE CONTRACT OUT OF RETURN
     byte[] code = result.getHReturn();
 
-    //long storageCost = getLength(code) * getBlockchainConfig().getGasCost().getCREATE_DATA();
-    // todo: delete this gas, because this is not relative to the energy time, but need add to storage cost
+    //long storageCost = getLength(code) * getBlockchainConfig().getenergyCost().getCREATE_DATA();
+    // todo: delete this energy, because this is not relative to the cpu time, but need add to storage cost
     // long storageCost = getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
     // // long afterSpend = programInvoke.getDroplimit().longValue() - storageCost - result.getDropUsed();
     // if (getLength(code) > DefaultConfig.getMaxCodeLength()) {
     //   result.setException(Exception
-    //       .notEnoughSpendingGas("Contract size too large: " + getLength(result.getHReturn()),
+    //       .notEnoughSpendingEnergy("Contract size too large: " + getLength(result.getHReturn()),
     //           storageCost, this));
     // } else if (!result.isRevert()) {
     //   result.spendDrop(storageCost);
@@ -548,7 +548,7 @@ public class Program {
       stackPushZero();
 
       if (result.getException() != null) {
-        refundGasAfterVM(gasLimit, result);
+        refundEnergyAfterVM(energyLimit, result);
         return;
       } else {
         returnDataBuffer = result.getHReturn();
@@ -562,19 +562,19 @@ public class Program {
       stackPush(new DataWord(newAddress));
     }
 
-    // 5. REFUND THE REMAIN GAS
-    refundGasAfterVM(gasLimit, result);
+    // 5. REFUND THE REMAIN Energy
+    refundEnergyAfterVM(energyLimit, result);
   }
 
-  public void refundGasAfterVM(DataWord gasLimit, ProgramResult result) {
+  public void refundEnergyAfterVM(DataWord energyLimit, ProgramResult result) {
 
-    long refundGas = gasLimit.longValueSafe() - result.getEnergyUsed();
-    if (refundGas > 0) {
-      refundGas(refundGas, "remain gas from the internal call");
+    long refundEnergy = energyLimit.longValueSafe() - result.getEnergyUsed();
+    if (refundEnergy > 0) {
+      refundEnergy(refundEnergy, "remain energy from the internal call");
       if (logger.isInfoEnabled()) {
-        logger.info("The remaining gas is refunded, account: [{}], gas: [{}] ",
+        logger.info("The remaining energy is refunded, account: [{}], energy: [{}] ",
             Hex.toHexString(convertToTronAddress(getOwnerAddress().getLast20Bytes())),
-            refundGas);
+            refundEnergy);
       }
     }
   }
@@ -593,7 +593,7 @@ public class Program {
 
     if (getCallDeep() == MAX_DEPTH) {
       stackPushZero();
-      refundGas(msg.getGas().longValue(), " call deep limit reach");
+      refundEnergy(msg.getEnergy().longValue(), " call deep limit reach");
       return;
     }
 
@@ -620,7 +620,7 @@ public class Program {
     long senderBalance = deposit.getBalance(senderAddress);
     if (senderBalance < endowment) {
       stackPushZero();
-      refundGas(msg.getGas().longValue(), "refund gas from message call");
+      refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
       return;
     }
 
@@ -634,7 +634,7 @@ public class Program {
     if (byTestingSuite()) {
       // This keeps track of the calls created for a test
       getResult().addCallCreate(data, contextAddress,
-          msg.getGas().getNoLeadZeroesData(),
+          msg.getEnergy().getNoLeadZeroesData(),
           msg.getEndowment().getNoLeadZeroesData());
     } else if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
         && senderAddress != contextAddress && endowment > 0) {
@@ -655,7 +655,7 @@ public class Program {
           msg.getType().callIsDelegate() ? getCallerAddress() : getOwnerAddress(),
           msg.getType().callIsDelegate() ? getCallValue() : msg.getEndowment(),
           contextBalance, data, deposit, msg.getType().callIsStatic() || isStaticCall(),
-          byTestingSuite(), vmStartInUs, getVmShouldEndInUs(), msg.getGas().longValueSafe());
+          byTestingSuite(), vmStartInUs, getVmShouldEndInUs(), msg.getEnergy().longValueSafe());
 
       VM vm = new VM(config);
       Program program = new Program(null, programCode, programInvoke, internalTx, config);
@@ -677,7 +677,7 @@ public class Program {
         stackPushZero();
 
         if (result.getException() != null) {
-          refundGasAfterVM(msg.getGas(), result);
+          refundEnergyAfterVM(msg.getEnergy(), result);
           return;
         }
       } else {
@@ -709,37 +709,37 @@ public class Program {
       returnDataBuffer = buffer;
     }
 
-    // 5. REFUND THE REMAIN GAS
+    // 5. REFUND THE REMAIN ENERGY
     if (result != null) {
-      BigInteger refundGas = msg.getGas().value().subtract(toBI(result.getEnergyUsed()));
-      if (isPositive(refundGas)) {
-        refundGas(refundGas.longValue(), "remaining gas from the internal call");
+      BigInteger refundEnergy = msg.getEnergy().value().subtract(toBI(result.getEnergyUsed()));
+      if (isPositive(refundEnergy)) {
+        refundEnergy(refundEnergy.longValue(), "remaining energy from the internal call");
         if (logger.isInfoEnabled()) {
-          logger.info("The remaining gas refunded, account: [{}], gas: [{}] ",
+          logger.info("The remaining energy refunded, account: [{}], energy: [{}] ",
               Hex.toHexString(senderAddress),
-              refundGas.toString());
+              refundEnergy.toString());
         }
       }
     } else {
-      refundGas(msg.getGas().longValue(), "remaining gas from the internal call");
+      refundEnergy(msg.getEnergy().longValue(), "remaining esnergy from the internal call");
     }
 
   }
 
-  public void spendEnergy(long gasValue, String opName) {
-    if (getGaslimitLeftLong() < gasValue) {
+  public void spendEnergy(long energyValue, String opName) {
+    if (getEnergylimitLeftLong() < energyValue) {
       throw new OutOfEnergyException(
-          "Not enough gas for '%s' operation executing: curInvokeGasLimit[%d], curOpgas[%d], usedGas[%d]",
-          opName, invoke.getGasLimit(), gasValue, getResult().getEnergyUsed());
+          "Not enough energy for '%s' operation executing: curInvokeEnergyLimit[%d], curOpEnergy[%d], usedEnergy[%d]",
+          opName, invoke.getEnergyLimit(), energyValue, getResult().getEnergyUsed());
     }
-    getResult().spendGas(gasValue);
+    getResult().spendEnergy(energyValue);
   }
 
-  public void checkENERGYLimit(String opName) {
+  public void checkCPUTimeLimit(String opName) {
     if (!Args.getInstance().isDebug()) {
       long vmNowInUs = System.nanoTime() / 1000;
       if (vmNowInUs > getVmShouldEndInUs()) {
-        throw Exception.notEnoughENERGY(opName);
+        throw Exception.notEnoughTime(opName);
       }
     }
   }
@@ -748,14 +748,14 @@ public class Program {
     spendEnergy(getEnergyLimitLeft().longValue(), "Spending all remaining");
   }
 
-  public void refundGas(long gasValue, String cause) {
-    logger.info("[{}] Refund for cause: [{}], gas: [{}]", invoke.hashCode(), cause, gasValue);
-    getResult().refundGas(gasValue);
+  public void refundEnergy(long energyValue, String cause) {
+    logger.info("[{}] Refund for cause: [{}], energy: [{}]", invoke.hashCode(), cause, energyValue);
+    getResult().refundEnergy(energyValue);
   }
 
-  public void futureRefundEnergy(long gasValue) {
-    logger.info("Future refund added: [{}]", gasValue);
-    getResult().addFutureRefund(gasValue);
+  public void futureRefundEnergy(long energyValue) {
+    logger.info("Future refund added: [{}]", energyValue);
+    getResult().addFutureRefund(energyValue);
   }
 
   public void resetFutureRefund() {
@@ -822,12 +822,12 @@ public class Program {
     return new DataWord(1);
   }
 
-  public long getGaslimitLeftLong() {
-    return invoke.getGasLimit() - getResult().getEnergyUsed();
+  public long getEnergylimitLeftLong() {
+    return invoke.getEnergyLimit() - getResult().getEnergyUsed();
   }
 
   public DataWord getEnergyLimitLeft() {
-    return new DataWord(invoke.getGasLimit() - getResult().getEnergyUsed());
+    return new DataWord(invoke.getEnergyLimit() - getResult().getEnergyUsed());
   }
 
   public long getVmShouldEndInUs() {
@@ -977,9 +977,9 @@ public class Program {
       logger.trace(" -- OPS --     {}", opsString);
       logger.trace(" -- STACK --   {}", stackData);
       logger.trace(" -- MEMORY --  {}", memoryData);
-      logger.trace("\n  Spent Drop: [{}]/[{}]\n  Left Gas:  [{}]\n",
+      logger.trace("\n  Spent Drop: [{}]/[{}]\n  Left Energy:  [{}]\n",
           getResult().getEnergyUsed(),
-          invoke.getGasLimit(),
+          invoke.getEnergyLimit(),
           getEnergyLimitLeft().longValue());
 
       StringBuilder globalOutput = new StringBuilder("\n");
@@ -1006,7 +1006,7 @@ public class Program {
       if (!Arrays.equals(txData, ops)) {
         globalOutput.append("\n  msg.data: ").append(Hex.toHexString(txData));
       }
-      globalOutput.append("\n\n  Spent Gas: ").append(getResult().getEnergyUsed());
+      globalOutput.append("\n\n  Spent Energy: ").append(getResult().getEnergyUsed());
 
       if (listener != null) {
         listener.output(globalOutput.toString());
@@ -1227,7 +1227,7 @@ public class Program {
 
     if (getCallDeep() == MAX_DEPTH) {
       stackPushZero();
-      this.refundGas(msg.getGas().longValue(), " call deep limit reach");
+      this.refundEnergy(msg.getEnergy().longValue(), " call deep limit reach");
       return;
     }
 
@@ -1243,7 +1243,7 @@ public class Program {
     long senderBalance = deposit.getBalance(senderAddress);
     if (senderBalance < endowment) {
       stackPushZero();
-      this.refundGas(msg.getGas().longValue(), "refund gas from message call");
+      this.refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
       return;
     }
 
@@ -1256,11 +1256,11 @@ public class Program {
       transfer(deposit, senderAddress, contextAddress, msg.getEndowment().value().longValue());
     }
 
-    long requiredGas = contract.getGasForData(data);
-    if (requiredGas > msg.getGas().longValue()) {
+    long requiredEnergy = contract.getEnergyForData(data);
+    if (requiredEnergy > msg.getEnergy().longValue()) {
       // todo: new throw?? because it has done nothing, but outside don't know this
-      // regard as consumed the gas
-      this.refundGas(0, "call pre-compiled"); //matches cpp logic
+      // regard as consumed the energy
+      this.refundEnergy(0, "call pre-compiled"); //matches cpp logic
       this.stackPushZero();
       // deposit.rollback();
     } else {
@@ -1273,13 +1273,13 @@ public class Program {
       Pair<Boolean, byte[]> out = contract.execute(data);
 
       if (out.getLeft()) { // success
-        this.refundGas(msg.getGas().longValue() - requiredGas, "call pre-compiled");
+        this.refundEnergy(msg.getEnergy().longValue() - requiredEnergy, "call pre-compiled");
         this.stackPushOne();
         returnDataBuffer = out.getRight();
         deposit.commit();
       } else {
-        // spend all gas on failure, push zero and revert state changes
-        this.refundGas(0, "call pre-compiled");
+        // spend all energy on failure, push zero and revert state changes
+        this.refundEnergy(0, "call pre-compiled");
         this.stackPushZero();
         // deposit.rollback();
       }
@@ -1388,21 +1388,23 @@ public class Program {
 
   public static class Exception {
 
-    public static OutOfEnergyException notEnoughOpGas(OpCode op, long opGas, long programGas) {
+    public static OutOfEnergyException notEnoughOpEnergy(OpCode op, long opEnergy,
+        long programEnergy) {
       return new OutOfEnergyException(
-          "Not enough gas for '%s' operation executing: opGas[%d], programGas[%d];", op, opGas,
-          programGas);
+          "Not enough energy for '%s' operation executing: opEnergy[%d], programEnergy[%d];", op,
+          opEnergy,
+          programEnergy);
     }
 
-    public static OutOfEnergyException notEnoughOpGas(OpCode op, DataWord opGas,
-        DataWord programGas) {
-      return notEnoughOpGas(op, opGas.longValue(), programGas.longValue());
+    public static OutOfEnergyException notEnoughOpEnergy(OpCode op, DataWord opEnergy,
+        DataWord programEnergy) {
+      return notEnoughOpEnergy(op, opEnergy.longValue(), programEnergy.longValue());
     }
 
 
-    public static OutOfResourceException notEnoughENERGY(String op) {
+    public static OutOfResourceException notEnoughTime(String op) {
       return new OutOfResourceException(
-          "ENERGY timeout for '%s' operation executing", op);
+          "CPU timeout for '%s' operation executing", op);
     }
 
 
@@ -1414,9 +1416,10 @@ public class Program {
       return new OutOfStorageException("Not enough ContractState resource");
     }
 
-    public static OutOfEnergyException energyOverflow(BigInteger actualGas, BigInteger gasLimit) {
-      return new OutOfEnergyException("Gas value overflow: actualGas[%d], gasLimit[%d];",
-          actualGas.longValue(), gasLimit.longValue());
+    public static OutOfEnergyException energyOverflow(BigInteger actualEnergy,
+        BigInteger energyLimit) {
+      return new OutOfEnergyException("Energy value overflow: actualEnergy[%d], energyLimit[%d];",
+          actualEnergy.longValue(), energyLimit.longValue());
     }
 
     public static IllegalOperationException invalidOpCode(byte... opCode) {
@@ -1442,20 +1445,20 @@ public class Program {
     }
   }
 
-  public DataWord getCallEnergy(OpCode op, DataWord requestedGas, DataWord availableGas) {
+  public DataWord getCallEnergy(OpCode op, DataWord requestedEnergy, DataWord availableEnergy) {
 
-    // if (requestedGas.compareTo(availableGas) > 0) {
+    // if (requestedEnergy.compareTo(availableEnergy) > 0) {
     //   throw new Program.OutOfEnergyException(
-    //       "Not enough gas for '%s' operation executing: opGas[%d], programGas[%d]", op.name(),
-    //       requestedGas, availableGas);
+    //       "Not enough energy for '%s' operation executing: opEnergy[%d], programEnergy[%d]", op.name(),
+    //       requestedEnergy, availableEnergy);
     // }
     //
-    // return requestedGas.clone();
-    return requestedGas.compareTo(availableGas) > 0 ? availableGas : requestedGas;
+    // return requestedEnergy.clone();
+    return requestedEnergy.compareTo(availableEnergy) > 0 ? availableEnergy : requestedEnergy;
   }
 
-  public DataWord getCreateGas(DataWord availableGas) {
-    return availableGas;
+  public DataWord getCreateEnergy(DataWord availableEnergy) {
+    return availableEnergy;
   }
 
   /**

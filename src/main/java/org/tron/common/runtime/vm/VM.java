@@ -87,7 +87,7 @@ public class VM {
     }
 
     if (copySize > 0) {
-      long copyEnergy = energyCosts.getCOPY_GAS() * ((copySize + 31) / 32);
+      long copyEnergy = energyCosts.getCOPY_ENERGY() * ((copySize + 31) / 32);
       energyCost += copyEnergy;
     }
     return energyCost;
@@ -281,16 +281,16 @@ public class VM {
           int nTopics = op.val() - OpCode.LOG0.val();
           BigInteger dataSize = stack.get(stack.size() - 2).value();
           BigInteger dataCost = dataSize
-              .multiply(BigInteger.valueOf(energyCosts.getLOG_DATA_GAS()));
+              .multiply(BigInteger.valueOf(energyCosts.getLOG_DATA_ENERGY()));
           if (program.getEnergyLimitLeft().value().compareTo(dataCost) < 0) {
             throw new OutOfEnergyException(
                 "Not enough energy for '%s' operation executing: opEnergy[%d], programEnergy[%d]",
                 op.name(),
                 dataCost.longValue(), program.getEnergyLimitLeft().longValueSafe());
           }
-          energyCost = energyCosts.getLOG_GAS() +
-              energyCosts.getLOG_TOPIC_GAS() * nTopics +
-              energyCosts.getLOG_DATA_GAS() * stack.get(stack.size() - 2).longValue() +
+          energyCost = energyCosts.getLOG_ENERGY() +
+              energyCosts.getLOG_TOPIC_ENERGY() * nTopics +
+              energyCosts.getLOG_DATA_ENERGY() * stack.get(stack.size() - 2).longValue() +
               calcMemEnergy(energyCosts, oldMemSize,
                   memNeeded(stack.peek(), stack.get(stack.size() - 2)),
                   0);
@@ -301,15 +301,16 @@ public class VM {
 
           DataWord exp = stack.get(stack.size() - 2);
           int bytesOccupied = exp.bytesOccupied();
-          energyCost = energyCosts.getEXP_GAS() + energyCosts.getEXP_BYTE_GAS() * bytesOccupied;
+          energyCost =
+              energyCosts.getEXP_ENERGY() + energyCosts.getEXP_BYTE_ENERGY() * bytesOccupied;
           break;
         default:
           break;
       }
 
-      // DEBUG System.out.println(" OP IS " + op.name() + " GASCOST IS " + energyCost + " NUM IS " + op.asInt());
+      // DEBUG System.out.println(" OP IS " + op.name() + " ENERGYCOST IS " + energyCost + " NUM IS " + op.asInt());
       program.spendEnergy(energyCost, op.name());
-      program.checkENERGYLimit(op.name());
+      program.checkCPUTimeLimit(op.name());
       // logger.info("after opName: {}, {}", op.name(), System.nanoTime() / 1000 - lastTime);
 
       // Execute operation
@@ -859,13 +860,13 @@ public class VM {
         }
         break;
         case GASPRICE: {
-          DataWord gasPrice = new DataWord(0);
+          DataWord energyPrice = new DataWord(0);
 
           if (logger.isInfoEnabled()) {
-            hint = "price: " + gasPrice.toString();
+            hint = "price: " + energyPrice.toString();
           }
 
-          program.stackPush(gasPrice);
+          program.stackPush(energyPrice);
           program.step();
         }
         break;
@@ -932,14 +933,14 @@ public class VM {
         }
         break;
         case GASLIMIT: {
-          // todo: this gaslimit is the block's gas limit
-          DataWord gasLimit = new DataWord(0);
+          // todo: this energylimit is the block's energy limit
+          DataWord energyLimit = new DataWord(0);
 
           if (logger.isInfoEnabled()) {
-            hint = "gaslimit: " + gasLimit;
+            hint = "energylimit: " + energyLimit;
           }
 
-          program.stackPush(gasLimit);
+          program.stackPush(energyLimit);
           program.step();
         }
         break;
@@ -1149,12 +1150,12 @@ public class VM {
         }
         break;
         case GAS: {
-          DataWord gas = program.getEnergyLimitLeft();
+          DataWord energy = program.getEnergyLimitLeft();
           if (logger.isInfoEnabled()) {
-            hint = "" + gas;
+            hint = "" + energy;
           }
 
-          program.stackPush(gas);
+          program.stackPush(energy);
           program.step();
         }
         break;

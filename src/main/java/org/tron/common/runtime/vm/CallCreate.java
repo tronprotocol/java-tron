@@ -25,14 +25,14 @@ public class CallCreate {
 
     final byte[] data;
     final byte[] destination;
-    final byte[] gasLimit;
+    final byte[] energyLimit;
     final byte[] value;
 
 
-    public CallCreate(byte[] data, byte[] destination, byte[] gasLimit, byte[] value) {
+    public CallCreate(byte[] data, byte[] destination, byte[] energyLimit, byte[] value) {
         this.data = data;
         this.destination = destination;
-        this.gasLimit = gasLimit;
+        this.energyLimit = energyLimit;
         this.value = value;
     }
 
@@ -44,8 +44,8 @@ public class CallCreate {
         return destination;
     }
 
-    public byte[] getGasLimit() {
-        return gasLimit;
+    public byte[] getEnergyLimit() {
+        return energyLimit;
     }
 
     public byte[] getValue() {

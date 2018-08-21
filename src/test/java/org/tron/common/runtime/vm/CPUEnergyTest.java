@@ -3,6 +3,7 @@ package org.tron.common.runtime.vm;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
@@ -23,7 +24,7 @@ import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
-public class CPUGasTest {
+public class CPUEnergyTest {
 
   private Manager dbManager;
   private AnnotationConfigApplicationContext context;
@@ -78,10 +79,8 @@ public class CPUGasTest {
     long consumeUserResourcePercent = 100;
     TVMTestResult result = deployGasFunctionTestContract(value, feeLimit,
         consumeUserResourcePercent);
-    // Assert.assertEquals(result.getReceipt().getCpuUsage(), 0);
-    // Assert.assertEquals(result.getReceipt().getCpuFee(), 4710);
-    //
-    // byte[] contractAddress = result.getContractAddress();
+    Assert.assertEquals(result.getReceipt().getEnergyTotal(), 52457);
+    byte[] contractAddress = result.getContractAddress();
     //
     // /* =================================== CALL setVote(uint256) =================================== */
     // String params = "0000000000000000000000000000000000000000000000000000000000000003";

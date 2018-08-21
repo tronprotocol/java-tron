@@ -16,8 +16,8 @@ public class EnergyCost {
   private final int SLOWSTEP = 10;
   private final int EXTSTEP = 20;
 
-  private final int GENESISGASLIMIT = 1000000;
-  private final int MINGASLIMIT = 125000;
+  private final int GENESISENERGYLIMIT = 1000000;
+  private final int MINENERGYLIMIT = 125000;
 
 
   private final int BALANCE = 20;
@@ -46,12 +46,12 @@ public class EnergyCost {
   private final int TX_ZERO_DATA = 4;
   private final int TRANSACTION = 21000;
   private final int TRANSACTION_CREATE_CONTRACT = 53000;
-  private final int LOG_GAS = 375;
-  private final int LOG_DATA_GAS = 8;
-  private final int LOG_TOPIC_GAS = 375;
-  private final int COPY_GAS = 3;
-  private final int EXP_GAS = 10;
-  private final int EXP_BYTE_GAS = 10;
+  private final int LOG_ENERGY = 375;
+  private final int LOG_DATA_ENERGY = 8;
+  private final int LOG_TOPIC_ENERGY = 375;
+  private final int COPY_ENERGY = 3;
+  private final int EXP_ENERGY = 10;
+  private final int EXP_BYTE_ENERGY = 10;
   private final int IDENTITY = 15;
   private final int IDENTITY_WORD = 3;
   private final int RIPEMD160 = 600;
@@ -101,12 +101,12 @@ public class EnergyCost {
     return EXTSTEP;
   }
 
-  public int getGENESISGASLIMIT() {
-    return GENESISGASLIMIT;
+  public int getGENESISENERGYLIMIT() {
+    return GENESISENERGYLIMIT;
   }
 
-  public int getMINGASLIMIT() {
-    return MINGASLIMIT;
+  public int getMINENERGYLIMIT() {
+    return MINENERGYLIMIT;
   }
 
   public int getBALANCE() {
@@ -213,28 +213,28 @@ public class EnergyCost {
     return TRANSACTION_CREATE_CONTRACT;
   }
 
-  public int getLOG_GAS() {
-    return LOG_GAS;
+  public int getLOG_ENERGY() {
+    return LOG_ENERGY;
   }
 
-  public int getLOG_DATA_GAS() {
-    return LOG_DATA_GAS;
+  public int getLOG_DATA_ENERGY() {
+    return LOG_DATA_ENERGY;
   }
 
-  public int getLOG_TOPIC_GAS() {
-    return LOG_TOPIC_GAS;
+  public int getLOG_TOPIC_ENERGY() {
+    return LOG_TOPIC_ENERGY;
   }
 
-  public int getCOPY_GAS() {
-    return COPY_GAS;
+  public int getCOPY_ENERGY() {
+    return COPY_ENERGY;
   }
 
-  public int getEXP_GAS() {
-    return EXP_GAS;
+  public int getEXP_ENERGY() {
+    return EXP_ENERGY;
   }
 
-  public int getEXP_BYTE_GAS() {
-    return EXP_BYTE_GAS;
+  public int getEXP_BYTE_ENERGY() {
+    return EXP_BYTE_ENERGY;
   }
 
   public int getIDENTITY() {

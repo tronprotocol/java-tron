@@ -44,7 +44,7 @@ public class CPUTimeTest {
     dbManager = context.getBean(Manager.class);
     deposit = DepositImpl.createRoot(dbManager);
     deposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
-    deposit.addBalance(Hex.decode(OWNER_ADDRESS), 100000000);
+    deposit.addBalance(Hex.decode(OWNER_ADDRESS), 30000000000000L);
   }
 
   // solidity for endlessLoopTest
@@ -72,10 +72,10 @@ public class CPUTimeTest {
 
   @Test
   public void endlessLoopTest()
-      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, TransactionTraceException, ContractValidateException, OutOfSlotTimeException {
 
     long value = 0;
-    long feeLimit = 1000000000; // sun
+    long feeLimit = 20000000000000L; // sun
     long consumeUserResourcePercent = 0;
     TVMTestResult result = deployEndlessLoopContract(value, feeLimit,
         consumeUserResourcePercent);
@@ -95,8 +95,8 @@ public class CPUTimeTest {
           .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
               contractAddress, triggerData, value, feeLimit, deposit, null);
     } catch (Exception e) {
-      Assert.assertTrue(e instanceof OutOfSlotTimeException);
       haveException = true;
+      Assert.assertTrue(e instanceof OutOfSlotTimeException);
     }
     Assert.assertTrue(haveException);
   }
