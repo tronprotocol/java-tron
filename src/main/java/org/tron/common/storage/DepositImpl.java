@@ -265,7 +265,7 @@ public class DepositImpl implements Deposit {
   }
 
   @Override
-  public synchronized void addStorageValue(byte[] address, DataWord key, DataWord value) {
+  public synchronized void putStorageValue(byte[] address, DataWord key, DataWord value) {
     address = convertToTronAddress(address);
     if (getAccount(address) == null) {
       return;

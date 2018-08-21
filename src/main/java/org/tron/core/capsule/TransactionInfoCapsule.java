@@ -54,7 +54,6 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
   }
 
 
-
   public void setUnfreezeAmount(long amount) {
     this.transactionInfo = this.transactionInfo.toBuilder().setUnfreezeAmount(amount).build();
   }
@@ -154,7 +153,7 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
     setWithdrawAmount(ret.getWithdrawAmount());
   }
 
-  public static TransactionInfoCapsule buildInstance(TransactionCapsule trxCap,Block block,
+  public static TransactionInfoCapsule buildInstance(TransactionCapsule trxCap, Block block,
       Runtime runtime, ReceiptCapsule traceReceipt) {
 
     TransactionInfo.Builder builder = TransactionInfo.newBuilder();
@@ -167,8 +166,7 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
     builder.setId(ByteString.copyFrom(trxCap.getTransactionId().getBytes()));
 
     ProgramResult programResult = runtime.getResult();
-    long fee = programResult.getRet().getFee() + traceReceipt.getEnergyFee() + traceReceipt
-        .getStorageFee();
+    long fee = programResult.getRet().getFee() + traceReceipt.getEnergyFee();
     ByteString contractResult = ByteString.copyFrom(programResult.getHReturn());
     ByteString ContractAddress = ByteString.copyFrom(programResult.getContractAddress());
 

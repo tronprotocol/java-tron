@@ -111,7 +111,7 @@ public class GetBlockChainSummaryTest{
             peer_he.getSyncBlockToFetch().clear();
             for(int i=0; i<4 ;i++){
                 number = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1;
-                capsule = createTestBlockCapsule(number, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
+                capsule = createTestBlockCapsule(1533529947843L + 3000L * i, number, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
                         addressToProvateKeys);
                 toFetch.add(capsule.getBlockId());
             }
@@ -131,18 +131,18 @@ public class GetBlockChainSummaryTest{
             toFetch.clear();
             peer_he.getSyncBlockToFetch().clear();
             number = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1;
-            BlockCapsule capsule1 = createTestBlockCapsule(number, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
+            BlockCapsule capsule1 = createTestBlockCapsule(1533529947843L + 3000L * 6, number, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
                     addressToProvateKeys);
             dbManager.pushBlock(capsule1);
 
             number = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1;
-            BlockCapsule capsule2 = createTestBlockCapsule(number, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
+            BlockCapsule capsule2 = createTestBlockCapsule(1533529947843L + 3000L * 7, number, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
                     addressToProvateKeys);
             dbManager.pushBlock(capsule2);
 
             for(int i=0; i<2; i++){
                 number = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1;
-                capsule = createTestBlockCapsule(number, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
+                capsule = createTestBlockCapsule(1533529947843L + 3000L * 8 + 3000L * i, number, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
                         addressToProvateKeys);
                 toFetch.add(capsule.getBlockId());
             }

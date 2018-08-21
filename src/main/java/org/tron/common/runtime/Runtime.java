@@ -257,53 +257,6 @@ public class Runtime {
     return false;
   }
 
-  private long getAccountENERGYLimitInUs(AccountCapsule account,
-      long limitInDrop, long maxEnergyByAccount) {
-
-    EnergyProcessor energyProcessor = new EnergyProcessor(this.deposit.getDbManager());
-    long energyFromFreeze = energyProcessor.getAccountLeftEnergyFromFreeze(account);
-
-    long energyFromDrop = Math.floorDiv(limitInDrop, Constant.SUN_PER_GAS);
-
-    return min(maxEnergyByAccount, max(energyFromFreeze, energyFromDrop)); // us
-
-  }
-
-  private long getAccountENERGYLimitInUsByPercent(AccountCapsule creator, AccountCapsule sender,
-      TriggerSmartContract contract, long maxEnergyBySender, long limitInDrop) {
-
-    long senderEnergyLimit = getAccountENERGYLimitInUs(sender, limitInDrop,
-        maxEnergyBySender);
-    if (Arrays.equals(creator.getAddress().toByteArray(), sender.getAddress().toByteArray())) {
-      return senderEnergyLimit;
-    }
-
-    EnergyProcessor energyProcessor = new EnergyProcessor(this.deposit.getDbManager());
-    long creatorEnergyFromFrozen = energyProcessor.getAccountLeftEnergyFromFreeze(creator);
-
-    SmartContract smartContract = this.deposit
-        .getContract(contract.getContractAddress().toByteArray()).getInstance();
-    double consumeUserResourcePercent = smartContract.getConsumeUserResourcePercent() * 1.0 / 100;
-
-    if (consumeUserResourcePercent >= 1.0) {
-      consumeUserResourcePercent = 1.0;
-    }
-    if (consumeUserResourcePercent <= 0.0) {
-      consumeUserResourcePercent = 0.0;
-    }
-
-    if (consumeUserResourcePercent <= 0.0) {
-      return creatorEnergyFromFrozen;
-    }
-
-    if (creatorEnergyFromFrozen * consumeUserResourcePercent
-        >= (1 - consumeUserResourcePercent) * senderEnergyLimit) {
-      return (long) (senderEnergyLimit / consumeUserResourcePercent);
-    } else {
-      return Math.addExact(senderEnergyLimit, creatorEnergyFromFrozen);
-    }
-  }
-
   public void execute() throws ContractValidateException, ContractExeException {
 
     if (!readyToExecute) {
@@ -324,48 +277,48 @@ public class Runtime {
     }
   }
 
-  private long getGasLimit(AccountCapsule account, long feeLimit) {
+  private long getEnergyLimit(AccountCapsule account, long feeLimit) {
 
-    // will change the name from us to gas
     // can change the calc way
-    long energyGasFromFreeze = energyProcessor.getAccountLeftEnergyFromFreeze(account);
-    long energyGasFromBalance = Math.floorDiv(account.getBalance(), Constant.SUN_PER_GAS);
+    long leftEnergyFromFreeze = energyProcessor.getAccountLeftEnergyFromFreeze(account);
+    long energyFromBalance = Math.floorDiv(account.getBalance(), Constant.SUN_PER_ENERGY);
 
-    long energyGasFromFeeLimit;
-    long balanceForEnergyFreeze = account.getAccountResource().getFrozenBalanceForEnergy()
+    long energyFromFeeLimit;
+    long totalBalanceForEnergyFreeze = account.getAccountResource().getFrozenBalanceForEnergy()
         .getFrozenBalance();
-    if (0 == balanceForEnergyFreeze) {
-      energyGasFromFeeLimit = feeLimit / Constant.SUN_PER_GAS;
+    if (0 == totalBalanceForEnergyFreeze) {
+      energyFromFeeLimit = feeLimit / Constant.SUN_PER_ENERGY;
     } else {
-      long totalEnergyGasFromFreeze = energyProcessor
-          .calculateGlobalEnergyLimit(balanceForEnergyFreeze);
-      long leftBalanceForEnergyFreeze = getEnergyFee(balanceForEnergyFreeze, energyGasFromFreeze,
-          totalEnergyGasFromFreeze);
+      long totalEnergyFromFreeze = energyProcessor
+          .calculateGlobalEnergyLimit(totalBalanceForEnergyFreeze);
+      long leftBalanceForEnergyFreeze = getEnergyFee(totalBalanceForEnergyFreeze,
+          leftEnergyFromFreeze,
+          totalEnergyFromFreeze);
 
       if (leftBalanceForEnergyFreeze >= feeLimit) {
-        energyGasFromFeeLimit = BigInteger.valueOf(totalEnergyGasFromFreeze)
+        energyFromFeeLimit = BigInteger.valueOf(totalEnergyFromFreeze)
             .multiply(BigInteger.valueOf(feeLimit))
-            .divide(BigInteger.valueOf(balanceForEnergyFreeze)).longValue();
+            .divide(BigInteger.valueOf(totalBalanceForEnergyFreeze)).longValue();
       } else {
-        energyGasFromFeeLimit = Math
-            .addExact(energyGasFromFreeze,
-                (feeLimit - leftBalanceForEnergyFreeze) / Constant.SUN_PER_GAS);
+        energyFromFeeLimit = Math
+            .addExact(leftEnergyFromFreeze,
+                (feeLimit - leftBalanceForEnergyFreeze) / Constant.SUN_PER_ENERGY);
       }
     }
 
-    return min(Math.addExact(energyGasFromFreeze, energyGasFromBalance), energyGasFromFeeLimit);
+    return min(Math.addExact(leftEnergyFromFreeze, energyFromBalance), energyFromFeeLimit);
   }
 
-  private long getGasLimit(AccountCapsule creator, AccountCapsule caller,
+  private long getEnergyLimit(AccountCapsule creator, AccountCapsule caller,
       TriggerSmartContract contract, long feeLimit) {
 
-    long callerGasLimit = getGasLimit(caller, feeLimit);
+    long callerEnergyLimit = getEnergyLimit(caller, feeLimit);
     if (Arrays.equals(creator.getAddress().toByteArray(), caller.getAddress().toByteArray())) {
-      return callerGasLimit;
+      return callerEnergyLimit;
     }
 
-    // creatorEnergyGasFromFreeze
-    long creatorGasLimit = energyProcessor.getAccountLeftEnergyFromFreeze(creator);
+    // creatorEnergyFromFreeze
+    long creatorEnergyLimit = energyProcessor.getAccountLeftEnergyFromFreeze(creator);
 
     SmartContract smartContract = this.deposit
         .getContract(contract.getContractAddress().toByteArray()).getInstance();
@@ -374,14 +327,14 @@ public class Runtime {
     consumeUserResourcePercent = max(0, min(consumeUserResourcePercent, 100));
 
     if (consumeUserResourcePercent <= 0) {
-      return creatorGasLimit;
+      return creatorEnergyLimit;
     }
 
-    if (creatorGasLimit * consumeUserResourcePercent
-        >= (100 - consumeUserResourcePercent) * callerGasLimit) {
-      return 100 * Math.floorDiv(callerGasLimit, consumeUserResourcePercent);
+    if (creatorEnergyLimit * consumeUserResourcePercent
+        >= (100 - consumeUserResourcePercent) * callerEnergyLimit) {
+      return 100 * Math.floorDiv(callerEnergyLimit, consumeUserResourcePercent);
     } else {
-      return Math.addExact(callerGasLimit, creatorGasLimit);
+      return Math.addExact(callerEnergyLimit, creatorEnergyLimit);
     }
   }
 
@@ -440,14 +393,14 @@ public class Runtime {
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
       long feeLimit = trx.getRawData().getFeeLimit();
-      long gasLimit = getGasLimit(creator, feeLimit);
+      long energyLimit = getEnergyLimit(creator, feeLimit);
       byte[] ops = newSmartContract.getBytecode().toByteArray();
       InternalTransaction internalTransaction = new InternalTransaction(trx);
 
       // todo: callvalue should pass into this function
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executorType, trx,
-              block, deposit, vmStartInUs, vmShouldEndInUs, gasLimit);
+              block, deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
       this.vm = new VM(config);
       this.program = new Program(ops, programInvoke, internalTransaction, config);
     } catch (Exception e) {
@@ -506,21 +459,21 @@ public class Runtime {
       long vmShouldEndInUs = vmStartInUs + thisTxENERGYLimitInUs;
 
       long feeLimit = trx.getRawData().getFeeLimit();
-      long gasLimit;
+      long energyLimit;
       try {
-        gasLimit = getGasLimit(creator, caller, contract, feeLimit);
+        energyLimit = getEnergyLimit(creator, caller, contract, feeLimit);
       } catch (Exception e) {
         logger.error(e.getMessage());
         throw new ContractExeException(e.getMessage());
       }
 
       if (isCallConstant(contractAddress)) {
-        gasLimit = Constant.MAX_GAS_IN_TX;
+        energyLimit = Constant.MAX_ENERGY_IN_TX;
       }
 
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CALL_TYPE, executorType, trx,
-              block, deposit, vmStartInUs, vmShouldEndInUs, gasLimit);
+              block, deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
       this.vm = new VM(config);
       InternalTransaction internalTransaction = new InternalTransaction(trx);
       this.program = new Program(null, code, programInvoke, internalTransaction, config);
@@ -561,8 +514,10 @@ public class Runtime {
           result.getDeleteAccounts().clear();
           result.getLogInfoList().clear();
           result.resetFutureRefund();
-          program.spendAllGas();
-          spendUsage(0);
+          if (!result.isRevert()){
+            program.spendAllEnergy();
+          }
+          // spendUsage();
           if (result.getException() != null) {
             runtimeError = result.getException().getMessage();
             throw result.getException();
@@ -570,17 +525,18 @@ public class Runtime {
             runtimeError = "REVERT opcode executed";
           }
         } else {
-          long usedStorageSize =
-              deposit.computeAfterRunStorageSize() - deposit.getBeforeRunStorageSize();
-          if (!spendUsage(usedStorageSize)) {
-            throw Program.Exception.notEnoughStorage();
-          }
+          // long usedStorageSize =
+          //     deposit.computeAfterRunStorageSize() - deposit.getBeforeRunStorageSize();
+          // if (!spendUsage()) {
+          //   throw Program.Exception.notEnoughStorage();
+          // }
           deposit.commit();
         }
 
       } else {
         deposit.commit();
       }
+      trace.setBill(result.getEnergyUsed());
     } catch (OutOfResourceException e) {
       logger.error(e.getMessage());
       throw new OutOfSlotTimeException(e.getMessage());
@@ -593,54 +549,6 @@ public class Runtime {
         runtimeError = e.getMessage();
       }
     }
-  }
-
-  private boolean spendUsage(long usedStorageSize) {
-
-    long energyUsage = result.getGasUsed();
-
-    ContractCapsule contract = deposit.getContract(result.getContractAddress());
-    ByteString originAddress = contract.getInstance().getOriginAddress();
-    AccountCapsule origin = deposit.getAccount(originAddress.toByteArray());
-    long originResourcePercent = 100 - contract.getConsumeUserResourcePercent();
-    originResourcePercent = min(originResourcePercent, 100);
-    originResourcePercent = max(originResourcePercent, 0);
-    long originEnergyUsage = Math.multiplyExact(energyUsage, originResourcePercent) / 100;
-    originEnergyUsage = min(originEnergyUsage,
-        energyProcessor.getAccountLeftEnergyFromFreeze(origin));
-    long callerEnergyUsage = energyUsage - originEnergyUsage;
-
-    if (usedStorageSize <= 0) {
-      trace.setBill(energyUsage, 0);
-      return true;
-    }
-    long originStorageUsage = Math
-        .multiplyExact(usedStorageSize, originResourcePercent) / 100;
-    originStorageUsage = min(originStorageUsage, origin.getStorageLeft());
-    long callerStorageUsage = usedStorageSize - originStorageUsage;
-
-    byte[] callerAddressBytes = TransactionCapsule.getOwner(trx.getRawData().getContract(0));
-    AccountCapsule caller = deposit.getAccount(callerAddressBytes);
-    long storageFee = trx.getRawData().getFeeLimit();
-    long callerEnergyFrozen = caller.getEnergyFrozenBalance();
-    long callerEnergyLeft = energyProcessor.getAccountLeftEnergyFromFreeze(caller);
-    long callerEnergyTotal = energyProcessor.calculateGlobalEnergyLimit(callerEnergyFrozen);
-
-    if (callerEnergyUsage <= callerEnergyLeft) {
-      long energyFee = getEnergyFee(callerEnergyUsage, callerEnergyFrozen, callerEnergyTotal);
-      storageFee -= energyFee;
-    } else {
-      long energyFee = getEnergyFee(callerEnergyLeft, callerEnergyFrozen, callerEnergyTotal);
-      storageFee -= (energyFee + Math
-          .multiplyExact(callerEnergyUsage - callerEnergyLeft, Constant.SUN_PER_GAS));
-    }
-    long tryBuyStorage = storageMarket.tryBuyStorage(storageFee);
-    if (tryBuyStorage + caller.getStorageLeft() < callerStorageUsage) {
-      trace.setBill(energyUsage, 0);
-      return false;
-    }
-    trace.setBill(energyUsage, usedStorageSize);
-    return true;
   }
 
   private long getEnergyFee(long callerEnergyUsage, long callerEnergyFrozen,
@@ -679,13 +587,12 @@ public class Runtime {
           .error(result.getException())
           .toString();
 
-
       if (config.vmTraceCompressed()) {
         trace = zipAndEncode(trace);
       }
 
       String txHash = Hex.toHexString(new InternalTransaction(trx).getHash());
-      saveProgramTraceFile(config,txHash, trace);
+      saveProgramTraceFile(config, txHash, trace);
     }
 
   }

@@ -3,11 +3,11 @@ package org.tron.common.runtime.vm;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TVMTestUtils;
 import org.tron.common.storage.DepositImpl;
@@ -24,12 +24,12 @@ import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
-public class TimeTest {
+public class CPUEnergyTest {
 
   private Manager dbManager;
   private AnnotationConfigApplicationContext context;
   private DepositImpl deposit;
-  private String dbPath = "output_InternalTransactionCallTest";
+  private String dbPath = "output_CPUGasTest";
   private String OWNER_ADDRESS;
 
 
@@ -71,39 +71,39 @@ public class TimeTest {
   // }
 
   @Test
-  public void endlessLoopTest()
+  public void gasFunctionTest()
       throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
 
-    // [1]
     long value = 0;
     long feeLimit = 1000000000; // sun
-    long consumeUserResourcePercent = 0; // will exhaust the developer's resource ?
-    TVMTestResult result = deployEndlessLoopContract(value, feeLimit,
+    long consumeUserResourcePercent = 100;
+    TVMTestResult result = deployGasFunctionTestContract(value, feeLimit,
         consumeUserResourcePercent);
-    Assert.assertEquals(result.getReceipt().getEnergyUsage(), 0);
-    Assert.assertEquals(result.getReceipt().getEnergyFee(), 4710);
-
+    Assert.assertEquals(result.getReceipt().getEnergyTotal(), 52457);
     byte[] contractAddress = result.getContractAddress();
-
-    /* =================================== CALL setVote(uint256) =================================== */
-    String params = "0000000000000000000000000000000000000000000000000000000000000003";
-    byte[] triggerData = TVMTestUtils.parseABI("setVote(uint256)", params);
-    try {
-      result = TVMTestUtils
-          .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
-              contractAddress, triggerData, value, feeLimit, deposit, null);
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof OutOfSlotTimeException);
-    }
+    //
+    // /* =================================== CALL setVote(uint256) =================================== */
+    // String params = "0000000000000000000000000000000000000000000000000000000000000003";
+    // byte[] triggerData = TVMTestUtils.parseABI("setVote(uint256)", params);
+    // boolean haveException = false;
+    // try {
+    //   result = TVMTestUtils
+    //       .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+    //           contractAddress, triggerData, value, feeLimit, deposit, null);
+    // } catch (Exception e) {
+    //   Assert.assertTrue(e instanceof OutOfSlotTimeException);
+    //   haveException = true;
+    // }
+    // Assert.assertTrue(haveException);
   }
 
-  public TVMTestResult deployEndlessLoopContract(long value, long feeLimit,
+  public TVMTestResult deployGasFunctionTestContract(long value, long feeLimit,
       long consumeUserResourcePercent)
       throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
-    String contractName = "EndlessLoopContract";
+    String contractName = "TestForGasFunction";
     byte[] address = Hex.decode(OWNER_ADDRESS);
-    String ABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"getVote\",\"outputs\":[{\"name\":\"_vote\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_vote\",\"type\":\"uint256\"}],\"name\":\"setVote\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]";
-    String code = "608060405234801561001057600080fd5b506000808190555060fa806100266000396000f3006080604052600436106049576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680630242f35114604e578063230796ae146076575b600080fd5b348015605957600080fd5b50606060a0565b6040518082815260200191505060405180910390f35b348015608157600080fd5b50609e6004803603810190808035906020019092919050505060a9565b005b60008054905090565b806000819055505b60011560cb576001600080828254019250508190555060b1565b505600a165627a7a72305820290a38c9bbafccaf6c7f752ab56d229e354da767efb72715ee9fdb653b9f4b6c0029";
+    String ABI = "[{\"constant\":false,\"inputs\":[],\"name\":\"complexCall\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"simpleCall\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"constructor\"}]";
+    String code = "608060405261000c61004e565b604051809103906000f080158015610028573d6000803e3d6000fd5b5060008054600160a060020a031916600160a060020a039290921691909117905561005d565b60405160db8061020b83390190565b61019f8061006c6000396000f3006080604052600436106100325763ffffffff60e060020a60003504166306ce93af811461003757806340de221c1461004e575b600080fd5b34801561004357600080fd5b5061004c610063565b005b34801561005a57600080fd5b5061004c610103565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663cd95478c600a6003906040518363ffffffff1660e060020a0281526004016020604051808303818589803b1580156100d357600080fd5b5088f11580156100e7573d6000803e3d6000fd5b5050505050506040513d60208110156100ff57600080fd5b5050565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff166388b2c1df600a6003906040518363ffffffff1660e060020a0281526004016020604051808303818589803b1580156100d357600080fd00a165627a7a7230582082e2b19657bf96b8ec2a95e51775c519fc54300099f3c5406adac1a9c0ba23b80029608060405234801561001057600080fd5b5060bc8061001f6000396000f30060806040526004361060485763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166388b2c1df8114604d578063cd95478c146065575b600080fd5b6053606b565b60408051918252519081900360200190f35b60536070565b602a90565b600080805b612710821015608b57506001810190600a026075565b5050905600a165627a7a723058209cd23f669c1016dcfc6d0f557814f6c77dfdccb9db739dbfa8001fcfaf6e03880029";
     String libraryAddressPair = null;
 
     return TVMTestUtils
