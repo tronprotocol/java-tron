@@ -36,7 +36,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 @Slf4j
-public class fuzzytest {
+public class Fuzzytest {
 
   //testng001、testng002、testng003、testng004
   private final String testKey002 =
@@ -137,7 +137,7 @@ public class fuzzytest {
       blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
       GrpcAPI.NodeList nodeList = blockingStubFull
           .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
-      if (i%100 == 0) {
+      if (i % 100 == 0) {
         logger.info(Integer.toString(i));
       }
 
@@ -149,7 +149,7 @@ public class fuzzytest {
 
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
-/*    if (channelFull != null) {
+    /*    if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
     if (channelSolidity != null) {
