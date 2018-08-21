@@ -96,7 +96,7 @@ public class ReceiptCapsule {
     } else {
       long originUsage = Math.multiplyExact(receipt.getEnergyTotal(), percent) / 100;
       originUsage = Math
-          .min(originUsage, energyProcessor.getAccountLeftEnergyInUsFromFreeze(origin));
+          .min(originUsage, energyProcessor.getAccountLeftEnergyFromFreeze(origin));
       long callerUsage = receipt.getEnergyTotal() - originUsage;
       energyProcessor.useEnergy(origin, originUsage, now);
       this.setOriginEnergyUsage(originUsage);
