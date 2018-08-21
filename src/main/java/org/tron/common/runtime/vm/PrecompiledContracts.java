@@ -1137,8 +1137,7 @@ public class PrecompiledContracts {
   public static class TransferAssetNative extends PrecompiledContract {
 
     @Override
-    // TODO: Please re-implement this function after Tron cost is well designed.
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
       return 200;
     }
 
@@ -1205,8 +1204,7 @@ public class PrecompiledContracts {
   public static class GetTransferAssetNative extends PrecompiledContract {
 
     @Override
-    // TODO: Please re-implement this function after Tron cost is well designed.
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
       return 200;
     }
 
