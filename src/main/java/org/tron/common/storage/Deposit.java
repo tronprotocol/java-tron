@@ -32,7 +32,7 @@ public interface Deposit {
 
   //byte[] getCodeHash(byte[] address);
 
-  void addStorageValue(byte[] address, DataWord key, DataWord value);
+  void putStorageValue(byte[] address, DataWord key, DataWord value);
 
   DataWord getStorageValue(byte[] address, DataWord key);
 
