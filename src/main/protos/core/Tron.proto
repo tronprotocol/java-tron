@@ -53,9 +53,9 @@ message Exchange {
   bytes creator_address = 2;
   int64 create_time = 3;
   bytes first_token_id = 6;
-  int64 first_token_quant = 7;
+  int64 first_token_balance = 7;
   bytes second_token_id = 8;
-  int64 second_token_quant = 9;
+  int64 second_token_balance = 9;
 }
 
 message ChainParameters {
