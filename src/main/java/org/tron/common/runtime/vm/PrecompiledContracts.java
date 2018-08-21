@@ -59,6 +59,7 @@ import org.tron.protos.Contract;
 import org.tron.protos.Contract.ProposalApproveContract;
 import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Contract.ProposalDeleteContract;
+import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -88,6 +89,8 @@ public class PrecompiledContracts {
   private static final ProposalDeleteNative proposalDelete = new ProposalDeleteNative();
   private static final ConvertFromTronBytesAddressNative convertFromTronBytesAddress = new ConvertFromTronBytesAddressNative();
   private static final ConvertFromTronBase58AddressNative convertFromTronBase58Address = new ConvertFromTronBase58AddressNative();
+  private static final TransferAssetNative transferAsset = new TransferAssetNative();
+  private static final GetTransferAssetNative getTransferAssetAmount =  new GetTransferAssetNative();
 
 
   private static final DataWord ecRecoverAddr = new DataWord(
@@ -124,6 +127,10 @@ public class PrecompiledContracts {
       "0000000000000000000000000000000000000000000000000000000000010008");
   private static final DataWord convertFromTronBase58AddressAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010009");
+  private static final DataWord transferAssetAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000001000a");
+  private static final DataWord getTransferAssetAmountAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000001000b");
 
   public static PrecompiledContract getContractForAddress(DataWord address) {
 
@@ -168,6 +175,12 @@ public class PrecompiledContracts {
     }
     if (address.equals(convertFromTronBase58AddressAddr)) {
       return convertFromTronBase58Address;
+    }
+    if (address.equals(transferAssetAddr)) {
+      return transferAsset;
+    }
+    if (address.equals(getTransferAssetAmountAddr)) {
+      return getTransferAssetAmount;
     }
 
 
@@ -1110,6 +1123,116 @@ public class PrecompiledContracts {
       String hexString = Hex.toHexString(resultBytes);
 
       return Pair.of(true, new DataWord(new DataWord(hexString).getLast20Bytes()).getData());
+    }
+  }
+
+  /**
+   * Native function for transferring Asset to another account. <br/>
+   * <br/>
+   *
+   * Input data[]: <br/> toAddress, amount, assetName <br/>
+   *
+   * Output: <br/> transfer asset operation success or not <br/>
+   */
+  public static class TransferAssetNative extends PrecompiledContract {
+
+    @Override
+    // TODO: Please re-implement this function after Tron cost is well designed.
+    public long getGasForData(byte[] data) {
+      return 200;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+
+      if (data == null) {
+        data = EMPTY_BYTE_ARRAY;
+      }
+
+      byte[] toAddress = new byte[32];
+      System.arraycopy(data, 0, toAddress, 0, 32);
+      byte[] amount = new byte[32];
+      System.arraycopy(data, 32 + 16 + 8, amount, 0, 8);
+      // we already have a restrict for token name length, no more than 32 bytes. don't need to check again
+      byte[] name = new byte[32];
+      System.arraycopy(data, 64, name, 0, data.length-64);
+      int length =name.length;
+      while(length>0 && name[length -1] ==0){
+        length--;
+      }
+      name = ByteArray.subArray(name,0,length);
+      Contract.TransferAssetContract.Builder builder = Contract.TransferAssetContract
+          .newBuilder();
+      builder.setOwnerAddress(ByteString.copyFrom(getCallerAddress()));
+      builder.setToAddress(ByteString.copyFrom(convertToTronAddress(new DataWord(toAddress).getLast20Bytes())));
+      builder.setAmount(Longs.fromByteArray(amount));
+      builder.setAssetName(ByteString.copyFrom(name));
+
+
+      TransferAssetContract contract = builder.build();
+
+      TransactionCapsule trx = new TransactionCapsule(contract,
+          ContractType.TransferAssetContract);
+
+      final List<Actuator> actuatorList = ActuatorFactory
+          .createActuator(trx, getDeposit().getDbManager());
+      try {
+        actuatorList.get(0).validate();
+        actuatorList.get(0).execute(getResult().getRet());
+      } catch (ContractExeException e) {
+        logger.debug("ContractExeException when calling transferAssetContract in vm");
+        logger.debug("ContractExeException: {}", e.getMessage());
+        return null;
+      } catch (ContractValidateException e) {
+        logger.debug("ContractValidateException when calling transferAssetContract in vm");
+        logger.debug("ContractValidateException: {}", e.getMessage());
+        return null;
+      }
+      return Pair.of(true, new DataWord(1).getData());
+    }
+  }
+
+
+
+  /**
+   * Native function for check Asset balance basing on targetAddress and Asset name. <br/>
+   * <br/>
+   *
+   * Input data[]: <br/> address targetAddress, byte[] assetName <br/>
+   *
+   * Output: <br/> balance <br/>
+   */
+  public static class GetTransferAssetNative extends PrecompiledContract {
+
+    @Override
+    // TODO: Please re-implement this function after Tron cost is well designed.
+    public long getGasForData(byte[] data) {
+      return 200;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+
+      if (data == null) {
+        data = EMPTY_BYTE_ARRAY;
+      }
+
+      byte[] targetAddress = new byte[32];
+      System.arraycopy(data, 0, targetAddress, 0, 32);
+      // we already have a restrict for token name length, no more than 32 bytes. don't need to check again
+      byte[] name = new byte[32];
+      System.arraycopy(data, 32, name, 0, 32);
+      int length =name.length;
+      while(length>0 && name[length -1] ==0){
+        length--;
+      }
+      name = ByteArray.subArray(name,0,length);
+
+      long assetBalance = this.getDeposit().getDbManager().getAccountStore().
+          get(convertToTronAddress(new DataWord(targetAddress).getLast20Bytes())).
+          getAssetMap().get(ByteArray.toStr(name));
+
+      return Pair.of(true, new DataWord(Longs.toByteArray(assetBalance)).getData());
     }
   }
 }
