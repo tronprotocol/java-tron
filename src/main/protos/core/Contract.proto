@@ -199,26 +199,30 @@ message SellStorageContract {
 }
 
 message ExchangeCreateContract {
-  bytes first_token_id = 1;
-  int64 first_token_balance = 2;
-  bytes second_token_id = 3;
-  int64 second_token_balance = 4;
+  bytes owner_address = 1;
+  bytes first_token_id = 2;
+  int64 first_token_balance = 3;
+  bytes second_token_id = 4;
+  int64 second_token_balance = 5;
 }
 
 message ExchangeInjectContract {
-  int64 exchange_id = 1;
-  bytes token_id = 2;
-  int64 quant = 3;
+  bytes owner_address = 1;
+  int64 exchange_id = 2;
+  bytes token_id = 3;
+  int64 quant = 4;
 }
 
 message ExchangeWithdrawContract {
-  int64 exchange_id = 1;
-  bytes token_id = 2;
-  int64 quant = 3;
+  bytes owner_address = 1;
+  int64 exchange_id = 2;
+  bytes token_id = 3;
+  int64 quant = 4;
 }
 
 message ExchangeTransactionContract {
-  int64 exchange_id = 1;
-  bytes token_id = 2;
-  int64 quant = 3;
+  bytes owner_address = 1;
+  int64 exchange_id = 2;
+  bytes token_id = 3;
+  int64 quant = 4;
 }
