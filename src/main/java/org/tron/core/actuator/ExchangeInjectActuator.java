@@ -49,17 +49,16 @@ public class ExchangeInjectActuator extends AbstractActuator {
       byte[] anotherTokenID;
       long anotherTokenQuant;
 
-      double ratio;
       if (Arrays.equals(tokenID, firstTokenID)) {
         anotherTokenID = secondTokenID;
-        ratio = (double) secondTokenBalance / firstTokenBalance;
-        anotherTokenQuant = (long) ratio * tokenQuant;
+        anotherTokenQuant = Math
+            .floorDiv(Math.multiplyExact(secondTokenBalance, tokenQuant), firstTokenBalance);
         exchangeCapsule.setBalance(firstTokenBalance + tokenQuant,
             secondTokenBalance + anotherTokenQuant);
       } else {
         anotherTokenID = firstTokenID;
-        ratio = (double) firstTokenBalance / secondTokenBalance;
-        anotherTokenQuant = (long) ratio * tokenQuant;
+        anotherTokenQuant = Math
+            .floorDiv(Math.multiplyExact(firstTokenBalance, tokenQuant), secondTokenBalance);
         exchangeCapsule.setBalance(firstTokenBalance + anotherTokenQuant,
             secondTokenBalance + tokenQuant);
       }
@@ -163,15 +162,19 @@ public class ExchangeInjectActuator extends AbstractActuator {
       throw new ContractValidateException("injected token balance must greater than zero");
     }
 
-    double ratio;
     if (Arrays.equals(tokenID, firstTokenID)) {
       anotherTokenID = secondTokenID;
-      ratio = (double) secondTokenBalance / firstTokenBalance;
+      anotherTokenQuant = Math
+          .floorDiv(Math.multiplyExact(secondTokenBalance, tokenQuant), firstTokenBalance);
     } else {
       anotherTokenID = firstTokenID;
-      ratio = (double) firstTokenBalance / secondTokenBalance;
+      anotherTokenQuant = Math
+          .floorDiv(Math.multiplyExact(firstTokenBalance, tokenQuant), secondTokenBalance);
     }
-    anotherTokenQuant = (long) ratio * tokenQuant;
+
+    if(anotherTokenQuant <= 0){
+      throw new ContractValidateException(" The calculated Token Quant  must be larger than 0");
+    }
 
     if (tokenID == "_".getBytes()) {
       if (accountCapsule.getBalance() < (tokenQuant + calcFee())) {
