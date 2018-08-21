@@ -12,22 +12,19 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.CpuProcessor;
+import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
-public class CpuProcessorTest {
+public class EnergyProcessorTest {
 
   private static Manager dbManager;
-  private static final String dbPath = "CpuProcessorTest";
+  private static final String dbPath = "EnergyProcessorTest";
   private static AnnotationConfigApplicationContext context;
   private static final String ASSET_NAME;
   private static final String CONTRACT_PROVIDER_ADDRESS;
@@ -103,31 +100,32 @@ public class CpuProcessorTest {
   }
 
   @Test
-  public void testUseContractCreatorCpu() throws Exception {
+  public void testUseContractCreatorEnergy() throws Exception {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526647838000L);
-    dbManager.getDynamicPropertiesStore().saveTotalCpuWeight(10_000_000L);
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(10_000_000L);
 
     AccountCapsule ownerCapsule = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(CONTRACT_PROVIDER_ADDRESS));
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
 
-    CpuProcessor processor = new CpuProcessor(dbManager);
-    long cpuTime = 10000;
+    EnergyProcessor processor = new EnergyProcessor(dbManager);
+    long energy = 10000;
     long now = 1526647838000L;
 
-    boolean result = processor.useCpu(ownerCapsule, cpuTime, now);
+    boolean result = processor.useEnergy(ownerCapsule, energy, now);
     Assert.assertEquals(false, result);
 
-    ownerCapsule.setFrozenForCpu(10_000_000L, 0L);
-    result = processor.useCpu(ownerCapsule, cpuTime, now);
+    ownerCapsule.setFrozenForEnergy(10_000_000L, 0L);
+    result = processor.useEnergy(ownerCapsule, energy, now);
     Assert.assertEquals(true, result);
 
     AccountCapsule ownerCapsuleNew = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(CONTRACT_PROVIDER_ADDRESS));
 
     Assert.assertEquals(1526647838000L, ownerCapsuleNew.getLatestOperationTime());
-    Assert.assertEquals(1526647838000L, ownerCapsuleNew.getAccountResource().getLatestConsumeTimeForCpu());
-    Assert.assertEquals(10000L, ownerCapsuleNew.getAccountResource().getCpuUsage());
+    Assert.assertEquals(1526647838000L,
+        ownerCapsuleNew.getAccountResource().getLatestConsumeTimeForEnergy());
+    Assert.assertEquals(10000L, ownerCapsuleNew.getAccountResource().getEnergyUsage());
 
   }
 

@@ -77,7 +77,7 @@ public class RuntimeTransferComplexTest {
     Transaction trx = TVMTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName,address,ABI,code,value,fee,consumeUserResourcePercent,null);
     byte[] contractAddress = Wallet.generateContractAddress(trx);
-    runtime = TVMTestUtils.processTransactionAndReturnRuntime(trx,deposit, null);
+    runtime = TVMTestUtils.processTransactionAndReturnRuntime(trx, deposit, null);
     Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(dbManager.getAccountStore().get(contractAddress).getBalance(),100);
   }
@@ -152,7 +152,7 @@ public class RuntimeTransferComplexTest {
     long triggerCallValue =100;
 
     Transaction transaction = TVMTestUtils.generateTriggerSmartContractAndGetTransaction(address,contractAddress,triggerData,triggerCallValue,feeLimit);
-    runtime = TVMTestUtils.processTransactionAndReturnRuntime(transaction,deposit,null);
+    runtime = TVMTestUtils.processTransactionAndReturnRuntime(transaction, deposit, null);
     Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(dbManager.getAccountStore().get(contractAddress).getBalance(),100 - 5);
     Assert.assertEquals(dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getBalance(),10 + 5);

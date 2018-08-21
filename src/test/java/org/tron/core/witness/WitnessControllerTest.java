@@ -15,15 +15,17 @@ import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.config.args.Witness;
 import org.tron.core.db.Manager;
 
 public class WitnessControllerTest {
+
   private static Manager dbManager = new Manager();
   private static AnnotationConfigApplicationContext context;
   private static String dbPath = "output_witness_controller_test";
 
   static {
-    Args.setParam(new String[] {"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
     context = new AnnotationConfigApplicationContext(DefaultConfig.class);
   }
 
@@ -51,10 +53,9 @@ public class WitnessControllerTest {
 //    assertEquals(2, dbManager.getWitnessController().getSlotAtTime(21500));
 //    assertEquals(19, dbManager.getWitnessController().getHeadSlot());
 
-
   }
 
-//  @Test
+  //  @Test
   public void testWitnessSchedule() {
 
     // no witness produce block
@@ -106,4 +107,26 @@ public class WitnessControllerTest {
     assertEquals(a, dbManager.getWitnessController().getScheduledWitness(3));
     assertEquals(b, dbManager.getWitnessController().getScheduledWitness(4));
   }
+
+  @Test
+  public void testTryRemoveThePowerOfTheGr() {
+
+    Witness witness = Args.getInstance().getGenesisBlock().getWitnesses().get(0);
+    assertEquals(105, witness.getVoteCount());
+
+    dbManager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(-1);
+    dbManager.getWitnessController().tryRemoveThePowerOfTheGr();
+    assertEquals(105, dbManager.getWitnessStore().get(witness.getAddress()).getVoteCount());
+
+    dbManager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(1);
+    dbManager.getWitnessController().tryRemoveThePowerOfTheGr();
+    assertEquals(0, dbManager.getWitnessStore().get(witness.getAddress()).getVoteCount());
+
+    dbManager.getWitnessController().tryRemoveThePowerOfTheGr();
+    assertEquals(0, dbManager.getWitnessStore().get(witness.getAddress()).getVoteCount());
+
+
+  }
+
+
 }

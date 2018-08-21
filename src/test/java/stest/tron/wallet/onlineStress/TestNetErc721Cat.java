@@ -11,15 +11,12 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.WalletGrpc;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.SmartContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
-import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
@@ -56,7 +53,7 @@ public class TestNetErc721Cat {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     logger.info(Long.toString(PublicMethed.queryAccount(testNetAccountKey,blockingStubFull)
         .getBalance()));
-    Assert.assertTrue(PublicMethed.freezeBalanceGetCpu(testNetAccountAddress,10000000L,
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(testNetAccountAddress, 10000000L,
         3,1,testNetAccountKey,blockingStubFull));
     Assert.assertTrue(PublicMethed.buyStorage(50000000L,testNetAccountAddress,testNetAccountKey,
         blockingStubFull));
@@ -67,14 +64,14 @@ public class TestNetErc721Cat {
   public void deployErc721KittyCore() {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(testNetAccountAddress,
         blockingStubFull);
-    Long cpuLimit = accountResource.getCpuLimit();
+    Long energyLimit = accountResource.getEnergyLimit();
     Long storageLimit = accountResource.getStorageLimit();
-    Long cpuUsage = accountResource.getCpuUsed();
+    Long energyUsage = accountResource.getEnergyUsed();
     Long storageUsage = accountResource.getStorageUsed();
     Account account = PublicMethed.queryAccount(testNetAccountKey,blockingStubFull);
     logger.info("before balance is " + Long.toString(account.getBalance()));
-    logger.info("before cpu limit is " + Long.toString(cpuLimit));
-    logger.info("before cpu usage is " + Long.toString(cpuUsage));
+    logger.info("before energy limit is " + Long.toString(energyLimit));
+    logger.info("before energy usage is " + Long.toString(energyUsage));
     logger.info("before storage limit is " + Long.toString(storageLimit));
     logger.info("before storage usaged is " + Long.toString(storageUsage));
     Long maxFeeLimit = 3900000000L;
@@ -88,14 +85,14 @@ public class TestNetErc721Cat {
     SmartContract smartContract = PublicMethed.getContract(kittyCoreContractAddress,blockingStubFull);
     Assert.assertTrue(smartContract.getAbi() != null);
     accountResource = PublicMethed.getAccountResource(testNetAccountAddress,blockingStubFull);
-    cpuLimit = accountResource.getCpuLimit();
+    energyLimit = accountResource.getEnergyLimit();
     storageLimit = accountResource.getStorageLimit();
-    cpuUsage = accountResource.getCpuUsed();
+    energyUsage = accountResource.getEnergyUsed();
     storageUsage = accountResource.getStorageUsed();
     account = PublicMethed.queryAccount(testNetAccountKey,blockingStubFull);
     logger.info("after balance is " + Long.toString(account.getBalance()));
-    logger.info("after cpu limit is " + Long.toString(cpuLimit));
-    logger.info("after cpu usage is " + Long.toString(cpuUsage));
+    logger.info("after energy limit is " + Long.toString(energyLimit));
+    logger.info("after energy usage is " + Long.toString(energyUsage));
     logger.info("after storage limit is " + Long.toString(storageLimit));
     logger.info("after storage usaged is " + Long.toString(storageUsage));
     logger.info(ByteArray.toHexString(kittyCoreContractAddress));
@@ -109,14 +106,14 @@ public class TestNetErc721Cat {
   public void deploySaleClockAuction() {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(testNetAccountAddress,
         blockingStubFull);
-    Long cpuLimit = accountResource.getCpuLimit();
+    Long energyLimit = accountResource.getEnergyLimit();
     Long storageLimit = accountResource.getStorageLimit();
-    Long cpuUsage = accountResource.getCpuUsed();
+    Long energyUsage = accountResource.getEnergyUsed();
     Long storageUsage = accountResource.getStorageUsed();
     Account account = PublicMethed.queryAccount(testNetAccountKey,blockingStubFull);
     logger.info("before balance is " + Long.toString(account.getBalance()));
-    logger.info("before cpu limit is " + Long.toString(cpuLimit));
-    logger.info("before cpu usage is " + Long.toString(cpuUsage));
+    logger.info("before energy limit is " + Long.toString(energyLimit));
+    logger.info("before energy usage is " + Long.toString(energyUsage));
     logger.info("before storage limit is " + Long.toString(storageLimit));
     logger.info("before storage usaged is " + Long.toString(storageUsage));
     Long maxFeeLimit = 3900000000L;
@@ -129,14 +126,14 @@ public class TestNetErc721Cat {
     SmartContract smartContract = PublicMethed.getContract(saleClockAuctionContractAddress,blockingStubFull);
     Assert.assertTrue(smartContract.getAbi() != null);
     accountResource = PublicMethed.getAccountResource(testNetAccountAddress,blockingStubFull);
-    cpuLimit = accountResource.getCpuLimit();
+    energyLimit = accountResource.getEnergyLimit();
     storageLimit = accountResource.getStorageLimit();
-    cpuUsage = accountResource.getCpuUsed();
+    energyUsage = accountResource.getEnergyUsed();
     storageUsage = accountResource.getStorageUsed();
     account = PublicMethed.queryAccount(testNetAccountKey,blockingStubFull);
     logger.info("after balance is " + Long.toString(account.getBalance()));
-    logger.info("after cpu limit is " + Long.toString(cpuLimit));
-    logger.info("after cpu usage is " + Long.toString(cpuUsage));
+    logger.info("after energy limit is " + Long.toString(energyLimit));
+    logger.info("after energy usage is " + Long.toString(energyUsage));
     logger.info("after storage limit is " + Long.toString(storageLimit));
     logger.info("after storage usaged is " + Long.toString(storageUsage));
   }
@@ -145,14 +142,14 @@ public class TestNetErc721Cat {
   public void deploySiringClockAuction() {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(testNetAccountAddress,
         blockingStubFull);
-    Long cpuLimit = accountResource.getCpuLimit();
+    Long energyLimit = accountResource.getEnergyLimit();
     Long storageLimit = accountResource.getStorageLimit();
-    Long cpuUsage = accountResource.getCpuUsed();
+    Long energyUsage = accountResource.getEnergyUsed();
     Long storageUsage = accountResource.getStorageUsed();
     Account account = PublicMethed.queryAccount(testNetAccountKey,blockingStubFull);
     logger.info("before balance is " + Long.toString(account.getBalance()));
-    logger.info("before cpu limit is " + Long.toString(cpuLimit));
-    logger.info("before cpu usage is " + Long.toString(cpuUsage));
+    logger.info("before energy limit is " + Long.toString(energyLimit));
+    logger.info("before energy usage is " + Long.toString(energyUsage));
     logger.info("before storage limit is " + Long.toString(storageLimit));
     logger.info("before storage usaged is " + Long.toString(storageUsage));
     Long maxFeeLimit = 3900000000L;
@@ -165,14 +162,14 @@ public class TestNetErc721Cat {
     SmartContract smartContract = PublicMethed.getContract(siringClockAuctionContractAddress,blockingStubFull);
     Assert.assertTrue(smartContract.getAbi() != null);
     accountResource = PublicMethed.getAccountResource(testNetAccountAddress,blockingStubFull);
-    cpuLimit = accountResource.getCpuLimit();
+    energyLimit = accountResource.getEnergyLimit();
     storageLimit = accountResource.getStorageLimit();
-    cpuUsage = accountResource.getCpuUsed();
+    energyUsage = accountResource.getEnergyUsed();
     storageUsage = accountResource.getStorageUsed();
     account = PublicMethed.queryAccount(testNetAccountKey,blockingStubFull);
     logger.info("after balance is " + Long.toString(account.getBalance()));
-    logger.info("after cpu limit is " + Long.toString(cpuLimit));
-    logger.info("after cpu usage is " + Long.toString(cpuUsage));
+    logger.info("after energy limit is " + Long.toString(energyLimit));
+    logger.info("after energy usage is " + Long.toString(energyUsage));
     logger.info("after storage limit is " + Long.toString(storageLimit));
     logger.info("after storage usaged is " + Long.toString(storageUsage));
   }
@@ -181,14 +178,14 @@ public class TestNetErc721Cat {
   public void deployGeneScienceInterface() {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(testNetAccountAddress,
         blockingStubFull);
-    Long cpuLimit = accountResource.getCpuLimit();
+    Long energyLimit = accountResource.getEnergyLimit();
     Long storageLimit = accountResource.getStorageLimit();
-    Long cpuUsage = accountResource.getCpuUsed();
+    Long energyUsage = accountResource.getEnergyUsed();
     Long storageUsage = accountResource.getStorageUsed();
     Account account = PublicMethed.queryAccount(testNetAccountKey,blockingStubFull);
     logger.info("before balance is " + Long.toString(account.getBalance()));
-    logger.info("before cpu limit is " + Long.toString(cpuLimit));
-    logger.info("before cpu usage is " + Long.toString(cpuUsage));
+    logger.info("before energy limit is " + Long.toString(energyLimit));
+    logger.info("before energy usage is " + Long.toString(energyUsage));
     logger.info("before storage limit is " + Long.toString(storageLimit));
     logger.info("before storage usaged is " + Long.toString(storageUsage));
     Long maxFeeLimit = 3900000000L;
@@ -201,14 +198,14 @@ public class TestNetErc721Cat {
     SmartContract smartContract = PublicMethed.getContract(geneScienceInterfaceContractAddress,blockingStubFull);
     Assert.assertTrue(smartContract.getAbi() != null);
     accountResource = PublicMethed.getAccountResource(testNetAccountAddress,blockingStubFull);
-    cpuLimit = accountResource.getCpuLimit();
+    energyLimit = accountResource.getEnergyLimit();
     storageLimit = accountResource.getStorageLimit();
-    cpuUsage = accountResource.getCpuUsed();
+    energyUsage = accountResource.getEnergyUsed();
     storageUsage = accountResource.getStorageUsed();
     account = PublicMethed.queryAccount(testNetAccountKey,blockingStubFull);
     logger.info("after balance is " + Long.toString(account.getBalance()));
-    logger.info("after cpu limit is " + Long.toString(cpuLimit));
-    logger.info("after cpu usage is " + Long.toString(cpuUsage));
+    logger.info("after energy limit is " + Long.toString(energyLimit));
+    logger.info("after energy usage is " + Long.toString(energyUsage));
     logger.info("after storage limit is " + Long.toString(storageLimit));
     logger.info("after storage usaged is " + Long.toString(storageUsage));
   }

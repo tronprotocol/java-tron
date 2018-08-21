@@ -122,7 +122,7 @@ message ParticipateAssetIssueContract {
 
 enum ResourceCode {
   BANDWIDTH = 0x00;
-  CPU = 0x01;
+  ENERGY = 0x01;
 }
 
 message FreezeBalanceContract {

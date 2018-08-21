@@ -41,6 +41,7 @@ import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.UnsupportVMException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.witness.WitnessController;
@@ -90,7 +91,7 @@ public class ManagerTest {
   @Test
   public void setBlockReference()
       throws ContractExeException, UnLinkedBlockException, ValidateScheduleException, BadBlockException,
-      ContractValidateException, ValidateSignatureException, BadItemException, ItemNotFoundException, AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException, BadNumberBlockException, NonCommonBlockException, ReceiptException, TransactionTraceException, OutOfSlotTimeException {
+      ContractValidateException, ValidateSignatureException, BadItemException, ItemNotFoundException, AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException, BadNumberBlockException, NonCommonBlockException, ReceiptException, TransactionTraceException, OutOfSlotTimeException, UnsupportVMException {
 
     BlockCapsule blockCapsule =
         new BlockCapsule(
@@ -216,9 +217,9 @@ public class ManagerTest {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       UnLinkedBlockException, ValidateScheduleException, BadItemException, ReceiptException,
       ItemNotFoundException, HeaderNotFound, AccountResourceInsufficientException,
-      TransactionExpirationException, TooBigTransactionException,
-      DupTransactionException, BadBlockException,
-      TaposException, BadNumberBlockException, NonCommonBlockException, TransactionTraceException, OutOfSlotTimeException {
+      TransactionExpirationException, TooBigTransactionException, DupTransactionException,
+      BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
+      TransactionTraceException, OutOfSlotTimeException, UnsupportVMException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
@@ -287,7 +288,8 @@ public class ManagerTest {
       ItemNotFoundException, HeaderNotFound, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException,
       DupTransactionException, BadBlockException,
-      TaposException, BadNumberBlockException, NonCommonBlockException, TransactionTraceException, OutOfSlotTimeException {
+      TaposException, BadNumberBlockException, NonCommonBlockException, TransactionTraceException,
+      OutOfSlotTimeException, UnsupportVMException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
@@ -382,9 +384,9 @@ public class ManagerTest {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       UnLinkedBlockException, ValidateScheduleException, BadItemException, ReceiptException,
       ItemNotFoundException, HeaderNotFound, AccountResourceInsufficientException,
-      TransactionExpirationException, TooBigTransactionException,
-      DupTransactionException, BadBlockException,
-      TaposException, BadNumberBlockException, NonCommonBlockException, TransactionTraceException, OutOfSlotTimeException {
+      TransactionExpirationException, TooBigTransactionException, DupTransactionException,
+      BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
+      TransactionTraceException, OutOfSlotTimeException, UnsupportVMException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");

@@ -36,8 +36,6 @@ import stest.tron.wallet.common.client.WalletClient;
 @Slf4j
 public class TVMTestUtils {
 
-
-
   public static byte[] deployContractWholeProcessReturnContractAddress(String contractName,
       byte[] callerAddress,
       String ABI, String code, long value, long feeLimit, long consumeUserResourcePercent,
@@ -52,7 +50,7 @@ public class TVMTestUtils {
       byte[] contractAddress, byte[] data, long callValue, long feeLimit,DepositImpl deposit, Block block)
       throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
     Transaction trx = generateTriggerSmartContractAndGetTransaction(callerAddress,contractAddress,data,callValue,feeLimit);
-    return processTransactionAndReturnRuntime(trx,deposit,block);
+    return processTransactionAndReturnRuntime(trx, deposit, block);
   }
 
   /**
@@ -94,7 +92,8 @@ public class TVMTestUtils {
    * @throws OutOfSlotTimeException
    */
 
-  public static Runtime processTransactionAndReturnRuntime(Transaction trx, DepositImpl deposit, Block block)
+  public static Runtime processTransactionAndReturnRuntime(Transaction trx,
+      DepositImpl deposit, Block block)
       throws TransactionTraceException, ContractExeException, ContractValidateException, OutOfSlotTimeException {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
     TransactionTrace trace = new TransactionTrace(trxCap, deposit.getDbManager());
@@ -106,9 +105,53 @@ public class TVMTestUtils {
     //exec
     trace.exec(runtime);
 
-    //trace.pay();
     return runtime;
   }
+
+
+  public static TVMTestResult deployContractAndReturnTVMTestResult(String contractName,
+      byte[] callerAddress,
+      String ABI, String code, long value, long feeLimit, long consumeUserResourcePercent,
+      String libraryAddressPair, DepositImpl deposit, Block block)
+      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+    Transaction trx = generateDeploySmartContractAndGetTransaction(contractName, callerAddress, ABI,
+        code, value, feeLimit, consumeUserResourcePercent, libraryAddressPair);
+
+    byte[] contractAddress = Wallet.generateContractAddress(trx);
+
+    return processTransactionAndReturnTVMTestResult(trx, deposit, block)
+        .setContractAddress(Wallet.generateContractAddress(trx));
+  }
+
+  public static TVMTestResult triggerContractAndReturnTVMTestResult(byte[] callerAddress,
+      byte[] contractAddress, byte[] data, long callValue, long feeLimit, DepositImpl deposit,
+      Block block)
+      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+    Transaction trx = generateTriggerSmartContractAndGetTransaction(callerAddress, contractAddress,
+        data, callValue, feeLimit);
+    return processTransactionAndReturnTVMTestResult(trx, deposit, block)
+        .setContractAddress(contractAddress);
+  }
+
+
+  public static TVMTestResult processTransactionAndReturnTVMTestResult(Transaction trx,
+      DepositImpl deposit, Block block)
+      throws TransactionTraceException, ContractExeException, ContractValidateException, OutOfSlotTimeException {
+    TransactionCapsule trxCap = new TransactionCapsule(trx);
+    TransactionTrace trace = new TransactionTrace(trxCap, deposit.getDbManager());
+    Runtime runtime = new Runtime(trace, block, deposit,
+        new ProgramInvokeFactoryImpl());
+
+    // init
+    trace.init();
+    //exec
+    trace.exec(runtime);
+
+    trace.pay();
+
+    return new TVMTestResult(runtime, trace.getReceipt(), null);
+  }
+
 
 
   /**

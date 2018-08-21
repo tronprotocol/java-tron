@@ -93,11 +93,11 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
     return new DataWord(addr);
   }
 
-  /*           GASPRICE op       */
-  public DataWord getMinGasPrice() {
+  /*           ENERGYPRICE op       */
+  public DataWord getMinEnergyPrice() {
 
-    byte[] minGasPrice = Hex.decode("09184e72a000");
-    return new DataWord(minGasPrice);
+    byte[] minEnergyPrice = Hex.decode("09184e72a000");
+    return new DataWord(minEnergyPrice);
   }
 
   /*          CALLVALUE op    */
@@ -219,7 +219,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   }
 
   @Override
-  public long getGasLimit() {
+  public long getEnergyLimit() {
     return 0;
   }
 

@@ -68,27 +68,27 @@ public class FreezeBalanceActuator extends AbstractActuator {
         dbManager.getDynamicPropertiesStore()
             .addTotalNetWeight(freezeBalanceContract.getFrozenBalance() / 1000_000L);
         break;
-      case CPU:
-        long currentFrozenBalanceForCpu = accountCapsule.getAccountResource()
-            .getFrozenBalanceForCpu()
+      case ENERGY:
+        long currentFrozenBalanceForEnergy = accountCapsule.getAccountResource()
+            .getFrozenBalanceForEnergy()
             .getFrozenBalance();
-        long newFrozenBalanceForCpu =
-            freezeBalanceContract.getFrozenBalance() + currentFrozenBalanceForCpu;
+        long newFrozenBalanceForEnergy =
+            freezeBalanceContract.getFrozenBalance() + currentFrozenBalanceForEnergy;
 
-        Frozen newFrozenForCpu = Frozen.newBuilder()
-            .setFrozenBalance(newFrozenBalanceForCpu)
+        Frozen newFrozenForEnergy = Frozen.newBuilder()
+            .setFrozenBalance(newFrozenBalanceForEnergy)
             .setExpireTime(now + duration)
             .build();
 
         AccountResource newAccountResource = accountCapsule.getAccountResource().toBuilder()
-            .setFrozenBalanceForCpu(newFrozenForCpu).build();
+            .setFrozenBalanceForEnergy(newFrozenForEnergy).build();
 
         accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
             .setAccountResource(newAccountResource)
             .setBalance(newBalance)
             .build());
         dbManager.getDynamicPropertiesStore()
-            .addTotalCpuWeight(freezeBalanceContract.getFrozenBalance() / 1000_000L);
+            .addTotalEnergyWeight(freezeBalanceContract.getFrozenBalance() / 1000_000L);
         break;
     }
 
@@ -167,11 +167,11 @@ public class FreezeBalanceActuator extends AbstractActuator {
     switch (freezeBalanceContract.getResource()) {
       case BANDWIDTH:
         break;
-      case CPU:
+      case ENERGY:
         break;
       default:
         throw new ContractValidateException(
-            "ResourceCode error,valid ResourceCode[BANDWIDTH、CPU]");
+            "ResourceCode error,valid ResourceCode[BANDWIDTH、ENERGY]");
     }
 
     return true;

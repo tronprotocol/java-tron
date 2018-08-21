@@ -1,6 +1,5 @@
 package stest.tron.wallet.contract.scenario;
 
-import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.concurrent.TimeUnit;
@@ -11,7 +10,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.AccountResourceMessage;
-import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
@@ -54,7 +52,7 @@ public class ContractScenario002 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     Assert.assertTrue(PublicMethed.sendcoin(contract002Address,20000000L,fromAddress,
         testKey002,blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalanceGetCpu(contract002Address,5000000L,
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract002Address, 5000000L,
         3,1,contract002Key,blockingStubFull));
     Assert.assertTrue(PublicMethed.buyStorage(5000000L,contract002Address,contract002Key,
         blockingStubFull));
@@ -65,13 +63,13 @@ public class ContractScenario002 {
   public void deployTronNative() {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract002Address,
         blockingStubFull);
-    Long cpuLimit = accountResource.getCpuLimit();
+    Long energyLimit = accountResource.getEnergyLimit();
     Long storageLimit = accountResource.getStorageLimit();
-    Long cpuUsage = accountResource.getCpuUsed();
+    Long energyUsage = accountResource.getEnergyUsed();
     Long storageUsage = accountResource.getStorageUsed();
 
-    logger.info("before cpu limit is " + Long.toString(cpuLimit));
-    logger.info("before cpu usage is " + Long.toString(cpuUsage));
+    logger.info("before energy limit is " + Long.toString(energyLimit));
+    logger.info("before energy usage is " + Long.toString(energyUsage));
     logger.info("before storage limit is " + Long.toString(storageLimit));
     logger.info("before storage usaged is " + Long.toString(storageUsage));
     Long maxFeeLimit = 5000000L;
@@ -151,15 +149,15 @@ public class ContractScenario002 {
     SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
     Assert.assertTrue(smartContract.getAbi() != null);
     accountResource = PublicMethed.getAccountResource(contract002Address,blockingStubFull);
-    cpuLimit = accountResource.getCpuLimit();
+    energyLimit = accountResource.getEnergyLimit();
     storageLimit = accountResource.getStorageLimit();
-    cpuUsage = accountResource.getCpuUsed();
+    energyUsage = accountResource.getEnergyUsed();
     storageUsage = accountResource.getStorageUsed();
-    Assert.assertTrue(cpuUsage > 0);
+    Assert.assertTrue(energyUsage > 0);
     Assert.assertTrue(storageUsage > 0);
 
-    logger.info("after cpu limit is " + Long.toString(cpuLimit));
-    logger.info("after cpu usage is " + Long.toString(cpuUsage));
+    logger.info("after energy limit is " + Long.toString(energyLimit));
+    logger.info("after energy usage is " + Long.toString(energyUsage));
     logger.info("after storage limit is " + Long.toString(storageLimit));
     logger.info("after storage usaged is " + Long.toString(storageUsage));
   }

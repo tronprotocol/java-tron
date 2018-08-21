@@ -41,15 +41,12 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
-import org.tron.protos.Contract.BuyStorageBytesContract;
-import org.tron.protos.Contract.BuyStorageContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.ProposalApproveContract;
 import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Contract.ProposalDeleteContract;
-import org.tron.protos.Contract.SellStorageContract;
 import org.tron.protos.Contract.SetAccountIdContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
@@ -320,15 +317,15 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case SetAccountIdContract:
           owner = contractParameter.unpack(SetAccountIdContract.class).getOwnerAddress();
           break;
-        case BuyStorageContract:
-          owner = contractParameter.unpack(BuyStorageContract.class).getOwnerAddress();
-          break;
-        case BuyStorageBytesContract:
-          owner = contractParameter.unpack(BuyStorageBytesContract.class).getOwnerAddress();
-          break;
-        case SellStorageContract:
-          owner = contractParameter.unpack(SellStorageContract.class).getOwnerAddress();
-          break;
+//        case BuyStorageContract:
+//          owner = contractParameter.unpack(BuyStorageContract.class).getOwnerAddress();
+//          break;
+//        case BuyStorageBytesContract:
+//          owner = contractParameter.unpack(BuyStorageBytesContract.class).getOwnerAddress();
+//          break;
+//        case SellStorageContract:
+//          owner = contractParameter.unpack(SellStorageContract.class).getOwnerAddress();
+//          break;
         case UpdateSettingContract:
           owner = contractParameter.unpack(UpdateSettingContract.class)
               .getOwnerAddress();
@@ -373,7 +370,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   // todo mv this static function to capsule util
   public static long getCallValue(Transaction.Contract contract) {
-    int cpuForTrx;
+    int energyForTrx;
     try {
       Any contractParameter = contract.getParameter();
       long callValue;

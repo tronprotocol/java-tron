@@ -1,6 +1,5 @@
 package stest.tron.wallet.contract.linkage;
 
-import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.Optional;
@@ -18,7 +17,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
-import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
@@ -54,21 +52,21 @@ public class ContractLinkage004 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(linkage004Address,20000000L,fromAddress,
-        testKey003,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(linkage004Address, 20000000L, fromAddress,
+        testKey003, blockingStubFull));
   }
 
   @Test(enabled = true)
   public void getTransactionInfoById() {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(linkage004Address,
         blockingStubFull);
-    Long cpuLimit = accountResource.getCpuLimit();
+    Long energyLimit = accountResource.getEnergyLimit();
     Long storageLimit = accountResource.getStorageLimit();
-    Long cpuUsage = accountResource.getCpuUsed();
+    Long energyUsage = accountResource.getEnergyUsed();
     Long storageUsage = accountResource.getStorageUsed();
 
-    logger.info("before cpu limit is " + Long.toString(cpuLimit));
-    logger.info("before cpu usage is " + Long.toString(cpuUsage));
+    logger.info("before energy limit is " + Long.toString(energyLimit));
+    logger.info("before energy usage is " + Long.toString(energyUsage));
     logger.info("before storage limit is " + Long.toString(storageLimit));
     logger.info("before storage usaged is " + Long.toString(storageUsage));
     Long maxFeeLimit = 5000000L;
@@ -144,27 +142,24 @@ public class ContractLinkage004 {
         + "constant\":false,\"inputs\":[],\"name\":\"unFreezeBalance\",\"outputs\":[],\"payable\""
         + ":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
 
-    Account account = PublicMethed.queryAccount(linkage004Address,blockingStubFull);
+    Account account = PublicMethed.queryAccount(linkage004Address, blockingStubFull);
     Long beforeBalance = account.getBalance();
-    String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName,abi,code,
-        "",maxFeeLimit, 0L, 50,null,linkage004Key,linkage004Address,blockingStubFull);
+    String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code,
+        "", maxFeeLimit, 0L, 50, null, linkage004Key, linkage004Address, blockingStubFull);
     logger.info("This time txid is " + txid);
 
-    Optional<TransactionInfo> infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    Optional<TransactionInfo> infoById = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.isPresent());
     Assert.assertTrue(infoById.get().getFee() > 0);
     //logger.info(Integer.toString(infoById.get().getResultValue()));
     Assert.assertTrue(infoById.get().getResultValue() == 0);
-    Assert.assertTrue(infoById.get().getReceipt().getCpuFee() > 0);
-    Assert.assertTrue(infoById.get().getReceipt().getCpuUsage() == 0);
-    Assert.assertTrue(infoById.get().getReceipt().getStorageFee() > 0);
-    Assert.assertTrue(infoById.get().getReceipt().getStorageDelta() > 200);
-
-
-
+    Assert.assertTrue(infoById.get().getReceipt().getEnergyFee() > 0);
+    Assert.assertTrue(infoById.get().getReceipt().getEnergyUsage() == 0);
+    // Assert.assertTrue(infoById.get().getReceipt().getStorageFee() > 0);
+    // Assert.assertTrue(infoById.get().getReceipt().getStorageDelta() > 200);
 
   }
-
 
 
   @AfterClass

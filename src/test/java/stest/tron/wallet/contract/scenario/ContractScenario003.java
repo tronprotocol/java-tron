@@ -54,7 +54,7 @@ public class ContractScenario003 {
         testKey002,blockingStubFull));
     logger.info(Long.toString(PublicMethed.queryAccount(contract003Key,blockingStubFull)
         .getBalance()));
-    Assert.assertTrue(PublicMethed.freezeBalanceGetCpu(contract003Address,1000000L,
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract003Address, 1000000L,
         3,1,contract003Key,blockingStubFull));
     Assert.assertTrue(PublicMethed.buyStorage(5000000L,contract003Address,contract003Key,
         blockingStubFull));
@@ -65,13 +65,13 @@ public class ContractScenario003 {
   public void deployErc223() {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract003Address,
         blockingStubFull);
-    Long cpuLimit = accountResource.getCpuLimit();
+    Long energyLimit = accountResource.getEnergyLimit();
     Long storageLimit = accountResource.getStorageLimit();
-    Long cpuUsage = accountResource.getCpuUsed();
+    Long energyUsage = accountResource.getEnergyUsed();
     Long storageUsage = accountResource.getStorageUsed();
 
-    logger.info("before cpu limit is " + Long.toString(cpuLimit));
-    logger.info("before cpu usage is " + Long.toString(cpuUsage));
+    logger.info("before energy limit is " + Long.toString(energyLimit));
+    logger.info("before energy usage is " + Long.toString(energyUsage));
     logger.info("before storage limit is " + Long.toString(storageLimit));
     logger.info("before storage usaged is " + Long.toString(storageUsage));
     Long maxFeeLimit = 5000000L;
@@ -187,17 +187,17 @@ public class ContractScenario003 {
     //logger.info(smartContract.getName());
     //logger.info(smartContract.getAbi().toString());
     accountResource = PublicMethed.getAccountResource(contract003Address,blockingStubFull);
-    cpuLimit = accountResource.getCpuLimit();
+    energyLimit = accountResource.getEnergyLimit();
     storageLimit = accountResource.getStorageLimit();
-    cpuUsage = accountResource.getCpuUsed();
+    energyUsage = accountResource.getEnergyUsed();
     storageUsage = accountResource.getStorageUsed();
     Assert.assertTrue(storageUsage > 0);
     Assert.assertTrue(storageLimit > 0);
-    Assert.assertTrue(cpuLimit > 0);
-    Assert.assertTrue(cpuUsage > 0);
+    Assert.assertTrue(energyLimit > 0);
+    Assert.assertTrue(energyUsage > 0);
 
-    logger.info("after cpu limit is " + Long.toString(cpuLimit));
-    logger.info("after cpu usage is " + Long.toString(cpuUsage));
+    logger.info("after energy limit is " + Long.toString(energyLimit));
+    logger.info("after energy usage is " + Long.toString(energyUsage));
     logger.info("after storage limit is " + Long.toString(storageLimit));
     logger.info("after storage usaged is " + Long.toString(storageUsage));
   }

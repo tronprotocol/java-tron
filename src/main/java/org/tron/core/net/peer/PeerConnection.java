@@ -35,8 +35,8 @@ import org.tron.core.net.node.Item;
 @Scope("prototype")
 public class PeerConnection extends Channel {
 
-  @Getter
-  private Cache<Sha256Hash, Integer> syncBlockIdCache = CacheBuilder.newBuilder().maximumSize(2 * NodeConstant.SYNC_FETCH_BATCH_NUM).build();
+  private Cache<Sha256Hash, Integer> syncBlockIdCache = CacheBuilder.newBuilder()
+      .maximumSize(2 * NodeConstant.SYNC_FETCH_BATCH_NUM).build();
 
   @Setter
   @Getter
@@ -94,7 +94,7 @@ public class PeerConnection extends Channel {
     return syncChainRequested;
   }
 
-  public Cache<Sha256Hash, Integer> getSyncBlockIdCache(){
+  public Cache<Sha256Hash, Integer> getSyncBlockIdCache() {
     return syncBlockIdCache;
   }
 
@@ -191,7 +191,7 @@ public class PeerConnection extends Channel {
   }
 
   public boolean isAdvInvFull() {
-   return advObjSpreadToUs.size() > MAX_INVENTORY_SIZE_IN_MINUTES * 60 * NET_MAX_TRX_PER_SECOND;
+    return advObjSpreadToUs.size() > MAX_INVENTORY_SIZE_IN_MINUTES * 60 * NET_MAX_TRX_PER_SECOND;
   }
 
   public boolean isBanned() {
