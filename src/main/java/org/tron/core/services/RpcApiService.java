@@ -978,6 +978,31 @@ public class RpcApiService implements Service {
 //    }
 
     @Override
+    public void exchangeCreate(Contract.ExchangeCreateContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.ExchangeCreateContract, responseObserver);
+    }
+
+
+    @Override
+    public void exchangeInject(Contract.ExchangeInjectContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.ExchangeInjectContract, responseObserver);
+    }
+
+    @Override
+    public void exchangeWithdraw(Contract.ExchangeWithdrawContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.ExchangeWithdrawContract, responseObserver);
+    }
+
+    @Override
+    public void exchangeTransaction(Contract.ExchangeTransactionContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.ExchangeTransactionContract, responseObserver);
+    }
+
+    @Override
     public void getNowBlock(EmptyMessage request, StreamObserver<Block> responseObserver) {
       responseObserver.onNext(wallet.getNowBlock());
       responseObserver.onCompleted();
