@@ -29,16 +29,42 @@ public class ExchangeCreateActuator extends AbstractActuator {
     try {
       final ExchangeCreateContract exchangeCreateContract = this.contract
           .unpack(ExchangeCreateContract.class);
+      AccountCapsule accountCapsule = dbManager.getAccountStore()
+          .get(exchangeCreateContract.getOwnerAddress().toByteArray());
+
+      byte[] firstTokenID = exchangeCreateContract.getFirstTokenId().toByteArray();
+      byte[] secondTokenID = exchangeCreateContract.getSecondTokenId().toByteArray();
+      long firstTokenBalance = exchangeCreateContract.getFirstTokenBalance();
+      long secondTokenBalance = exchangeCreateContract.getSecondTokenBalance();
+
+      long newBalance = accountCapsule.getBalance() - calcFee();
+
+      if (firstTokenID == "_".getBytes()) {
+        accountCapsule.setBalance(newBalance - firstTokenBalance);
+      } else {
+        accountCapsule.reduceAssetAmount(firstTokenID, firstTokenBalance);
+      }
+
+      if (secondTokenID == "_".getBytes()) {
+        accountCapsule.setBalance(newBalance - secondTokenBalance);
+      } else {
+        accountCapsule.reduceAssetAmount(secondTokenID, secondTokenBalance);
+      }
+
       long id = dbManager.getDynamicPropertiesStore().getLatestExchangeNum() + 1;
       long now = dbManager.getHeadBlockTimeStamp();
       ExchangeCapsule exchangeCapsule =
-          new ExchangeCapsule(exchangeCreateContract.getOwnerAddress(), id, now,
-              exchangeCreateContract.getFirstTokenId().toByteArray(),
-              exchangeCreateContract.getSecondTokenId().toByteArray());
+          new ExchangeCapsule(
+              exchangeCreateContract.getOwnerAddress(),
+              id,
+              now,
+              firstTokenID,
+              secondTokenID
+          );
 
-      exchangeCapsule.setBalance(exchangeCreateContract.getFirstTokenBalance(),
-          exchangeCreateContract.getSecondTokenBalance());
+      exchangeCapsule.setBalance(firstTokenBalance, secondTokenBalance);
 
+      dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
       dbManager.getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
       dbManager.getDynamicPropertiesStore().saveLatestExchangeNum(id);
 
@@ -95,6 +121,10 @@ public class ExchangeCreateActuator extends AbstractActuator {
 
     if (firstTokenID == secondTokenID) {
       throw new ContractValidateException("cannot exchange same tokens");
+    }
+
+    if (firstTokenBalance <= 0 || secondTokenBalance <= 0) {
+      throw new ContractValidateException("token balance must greater than zero");
     }
 
     if (firstTokenID == "_".getBytes()) {

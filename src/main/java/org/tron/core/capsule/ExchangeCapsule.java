@@ -72,6 +72,23 @@ public class ExchangeCapsule implements ProtoCapsule<Exchange> {
         .build();
   }
 
+  public byte[] getFirstTokenId() {
+    return this.exchange.getFirstTokenId().toByteArray();
+  }
+
+  public byte[] getSecondTokenId() {
+    return this.exchange.getSecondTokenId().toByteArray();
+  }
+
+  public long getFirstTokenBalance() {
+    return this.exchange.getFirstTokenBalance();
+  }
+
+  public long getSecondTokenBalance() {
+    return this.exchange.getSecondTokenBalance();
+  }
+
+
   public byte[] createDbKey() {
     return calculateDbKey(getID());
   }
