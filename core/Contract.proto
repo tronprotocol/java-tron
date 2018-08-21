@@ -200,9 +200,9 @@ message SellStorageContract {
 
 message ExchangeCreateContract {
   bytes first_token_id = 1;
-  int64 first_token_quant = 2;
+  int64 first_token_balance = 2;
   bytes second_token_id = 3;
-  int64 second_token_quant = 4;
+  int64 second_token_balance = 4;
 }
 
 message ExchangeInjectContract {
