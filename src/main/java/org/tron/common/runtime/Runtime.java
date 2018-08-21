@@ -571,11 +571,7 @@ public class Runtime {
         } else {
           long usedStorageSize =
               deposit.computeAfterRunStorageSize() - deposit.getBeforeRunStorageSize();
-          System.err.println("consumer storage:" + usedStorageSize);
-          System.err.println("computeAfterRunStorageSize:" + deposit.computeAfterRunStorageSize());
-          System.err.println("computeAfterRunStorageSize:" + deposit.getBeforeRunStorageSize());
-
-//          logger.error("consumer storage:" + usedStorageSize);
+          logger.info("usedStorage:{}, ", usedStorageSize );
           if (!spendUsage(usedStorageSize)) {
             throw Program.Exception.notEnoughStorage();
           }

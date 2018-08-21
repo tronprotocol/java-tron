@@ -31,10 +31,11 @@ public class StorageRowCapsule implements ProtoCapsule<StorageRow> {
   private StorageRow instance;
 
   @Getter
-  @Setter
   private boolean dirty = false;
 
-
+  private void markDirty() {
+    dirty = true;
+  }
 
   private StorageRowCapsule() {
     instance = StorageRow.newBuilder().build();
@@ -43,7 +44,7 @@ public class StorageRowCapsule implements ProtoCapsule<StorageRow> {
   public StorageRowCapsule(byte[] key, byte[] value) {
     instance = StorageRow.newBuilder().setKey(ByteString.copyFrom(key))
         .setValue(ByteString.copyFrom(value)).build();
-    dirty = true;
+    markDirty();
   }
 
   public StorageRowCapsule(byte[] code) {
@@ -74,7 +75,7 @@ public class StorageRowCapsule implements ProtoCapsule<StorageRow> {
   public void setValue(DataWord value) {
     this.instance = this.instance.toBuilder().setValue(ByteString.copyFrom(value.getData()))
         .build();
-    dirty = true;
+    markDirty();
   }
 
   @Override
