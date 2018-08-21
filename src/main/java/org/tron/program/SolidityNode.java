@@ -20,7 +20,6 @@ import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
@@ -29,10 +28,14 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.NonCommonBlockException;
+import org.tron.core.exception.OutOfSlotTimeException;
+import org.tron.core.exception.ReceiptException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.UnsupportVMException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.services.RpcApiService;
@@ -138,8 +141,16 @@ public class SolidityNode {
           throw new BadBlockException("expiration exception");
         } catch (BadNumberBlockException e) {
           throw new BadBlockException("bad number exception");
+        } catch (ReceiptException e) {
+          throw new BadBlockException("Receipt exception");
         } catch (NonCommonBlockException e) {
           throw new BadBlockException("non common exception");
+        } catch (TransactionTraceException e) {
+          throw new BadBlockException("TransactionTrace Exception");
+        } catch (OutOfSlotTimeException e) {
+          throw new BadBlockException("OutOfSlotTime Exception");
+        } catch (UnsupportVMException e) {
+          throw new BadBlockException(e.getMessage());
         }
 
       } else {
@@ -177,8 +188,6 @@ public class SolidityNode {
     cfgArgs.setSolidityNode(true);
 
     ApplicationContext context = new AnnotationConfigApplicationContext(DefaultConfig.class);
-    SnapshotManager snapshotManager = context.getBean(SnapshotManager.class);
-    snapshotManager.check();
 
     if (cfgArgs.isHelp()) {
       logger.info("Here is the help message.");

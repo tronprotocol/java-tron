@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
-import org.tron.core.db.RevokingStore;
 import org.tron.core.net.node.Node;
 import org.tron.core.net.node.NodeDelegate;
 import org.tron.core.net.node.NodeDelegateImpl;
@@ -25,7 +24,7 @@ public class ApplicationImpl implements Application {
 
   @Autowired
   private Manager dbManager;
-
+  
   private boolean isProducer;
 
   private void resetP2PNode() {
@@ -76,6 +75,7 @@ public class ApplicationImpl implements Application {
       closeAllStore();
     }
     closeConnection();
+    dbManager.getRepushThread().interrupt();
     System.err.println("******** end to shutdown ********");
   }
 

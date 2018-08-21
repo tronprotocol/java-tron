@@ -37,8 +37,8 @@ public class MessageHandler extends SimpleChannelInboundHandler<UdpEvent>
 
   private EventHandler eventHandler;
 
-  public MessageHandler(NioDatagramChannel ch, EventHandler eventHandler) {
-    channel = ch;
+  public MessageHandler(NioDatagramChannel channel, EventHandler eventHandler) {
+    this.channel = channel;
     this.eventHandler = eventHandler;
   }
 

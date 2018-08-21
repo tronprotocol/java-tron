@@ -1,6 +1,7 @@
 package org.tron.common.runtime.vm;
 
 import static org.tron.common.crypto.Hash.sha3;
+import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.vm.OpCode.CALL;
 import static org.tron.common.runtime.vm.OpCode.PUSH1;
 import static org.tron.common.runtime.vm.OpCode.REVERT;
@@ -9,22 +10,22 @@ import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.program.Program;
-import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
+import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
 import org.tron.common.runtime.vm.program.Stack;
-import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
+
+@Slf4j(topic = "VM")
 
 public class VM {
 
-  private static final Logger logger = LoggerFactory.getLogger("TronVM");
-  private static final Logger dumpLogger = LoggerFactory.getLogger("dump");
+  // private static final Logger logger = LoggerFactory.getLogger("TronVM");
   private static BigInteger _32_ = BigInteger.valueOf(32);
-  private static final String logString = "{}    Op: [{}]  Gas: [{}] Deep: [{}]  Hint: [{}]";
+  private static final String logString = "{}    Op: [{}]  Energy: [{}] Deep: [{}]  Hint: [{}]";
 
   // max mem size which couldn't be paid for ever
   // used to reduce expensive BigInt arithmetic
@@ -42,7 +43,7 @@ public class VM {
   private final SystemProperties config;
 
   public VM() {
-    this(SystemProperties.getDefault());
+    config = SystemProperties.getInstance();
   }
 
   @Autowired
@@ -53,23 +54,25 @@ public class VM {
   }
 
   private void checkMemorySize(OpCode op, BigInteger newMemSize) {
+    // todo: add TVMruntime error
     if (newMemSize.compareTo(MEM_LIMIT) > 0) {
       throw Program.Exception.memoryOverflow(op);
     }
   }
 
 
-  private long calcMemDrop(DropCost dropCosts, long oldMemSize, BigInteger newMemSize,
+  private long calcMemEnergy(EnergyCost energyCosts, long oldMemSize, BigInteger newMemSize,
       long copySize) {
-    long dropConsume = 0;
+    //todo: simpfy this calc, just use energy relative to energy time
+
+    long energyCost = 0;
 
     // Avoid overflows
     if (newMemSize.compareTo(MAX_MEM_SIZE) > 0) {
-//            throw VMMemoryOverflowException();
-
-      throw Program.Exception.gasOverflow(newMemSize, MAX_MEM_SIZE);
-//
-//            throw Program.Exception.memoryOverflow()
+      // throw VMMemoryOverflowException();
+      throw Program.Exception.energyOverflow(newMemSize, MAX_MEM_SIZE);
+      // todo: add memory overflow
+      // throw Program.Exception.memoryOverflow();
     }
 
     // memory drop consume calc
@@ -78,21 +81,21 @@ public class VM {
       long memWords = (memoryUsage / 32);
       long memWordsOld = (oldMemSize / 32);
       //TODO #POC9 c_quadCoeffDiv = 512, this should be a constant, not magic number
-      long memDrop = (dropCosts.getMEMORY() * memWords + memWords * memWords / 512)
-          - (dropCosts.getMEMORY() * memWordsOld + memWordsOld * memWordsOld / 512);
-      dropConsume += memDrop;
+      long memEnergy = (energyCosts.getMEMORY() * memWords + memWords * memWords / 512)
+          - (energyCosts.getMEMORY() * memWordsOld + memWordsOld * memWordsOld / 512);
+      energyCost += memEnergy;
     }
 
     if (copySize > 0) {
-      long copyDrop = dropCosts.getCOPY_GAS() * ((copySize + 31) / 32);
-      dropConsume += copyDrop;
+      long copyEnergy = energyCosts.getCOPY_ENERGY() * ((copySize + 31) / 32);
+      energyCost += copyEnergy;
     }
-    return dropConsume;
+    return energyCost;
   }
 
   public void step(Program program)
-      throws ContractExeException, OutOfResourceException {
-    if (vmTrace) {
+      throws ContractValidateException {
+    if (config.vmTrace()) {
       program.saveOpTrace();
     }
 
@@ -132,84 +135,93 @@ public class VM {
       Stack stack = program.getStack();
 
       String hint = "";
-      long callGas = 0, memWords = 0; // parameters for logging
-      long dropCost = op.getTier().asInt();
-      long dropBefore = program.getDroplimitLong();
-      int stepBefore = program.getPC();
-      DropCost dropCosts = DropCost.getInstance();
-      DataWord adjustedCallGas = null;
+      long callEnergy = 0, memWords = 0; // parameters for logging
+      long energyCost = op.getTier().asInt();
+      EnergyCost energyCosts = EnergyCost.getInstance();
+      DataWord adjustedCallEnergy = null;
 
-      // Calculate fees and spend drops
+      // Calculate fees and spend energy
       switch (op) {
         case STOP:
-          dropCost = dropCosts.getSTOP();
+          energyCost = energyCosts.getSTOP();
           break;
         case SUICIDE:
-          dropCost = dropCosts.getSUICIDE();
+          energyCost = energyCosts.getSUICIDE();
+          DataWord suicideAddressWord = stack.get(stack.size() - 1);
+          if (isDeadAccount(program, suicideAddressWord) &&
+              !program.getBalance(program.getOwnerAddress()).isZero()) {
+            energyCost += energyCosts.getNEW_ACCT_SUICIDE();
+          }
           break;
         case SSTORE:
+          // todo: check the reset to 0, refund or not
           DataWord newValue = stack.get(stack.size() - 2);
           DataWord oldValue = program.storageLoad(stack.peek());
           if (oldValue == null && !newValue.isZero()) {
-            dropCost = dropCosts.getSET_SSTORE();
+            // set a new not-zero value
+            energyCost = energyCosts.getSET_SSTORE();
           } else if (oldValue != null && newValue.isZero()) {
-            // todo: GASREFUND counter policy
-
-            // refund step cost policy.
-            program.futureRefundGas(dropCosts.getREFUND_SSTORE());
-            dropCost = dropCosts.getCLEAR_SSTORE();
+            // set zero to an old value
+            program.futureRefundEnergy(energyCosts.getREFUND_SSTORE());
+            energyCost = energyCosts.getCLEAR_SSTORE();
           } else {
-            dropCost = dropCosts.getRESET_SSTORE();
+            // include:
+            // [1] oldValue == null && newValue == 0
+            // [2] oldValue != null && newValue != 0
+            energyCost = energyCosts.getRESET_SSTORE();
           }
           break;
         case SLOAD:
-          dropCost = dropCosts.getSLOAD();
+          energyCost = energyCosts.getSLOAD();
           break;
         case BALANCE:
-          dropCost = dropCosts.getBALANCE();
+          energyCost = energyCosts.getBALANCE();
           break;
 
         // These all operate on memory and therefore potentially expand it:
         case MSTORE:
-          dropCost += calcMemDrop(dropCosts, oldMemSize, memNeeded(stack.peek(), new DataWord(32)),
+          energyCost = calcMemEnergy(energyCosts, oldMemSize,
+              memNeeded(stack.peek(), new DataWord(32)),
               0);
           break;
         case MSTORE8:
-          dropCost += calcMemDrop(dropCosts, oldMemSize, memNeeded(stack.peek(), new DataWord(1)),
+          energyCost = calcMemEnergy(energyCosts, oldMemSize,
+              memNeeded(stack.peek(), new DataWord(1)),
               0);
           break;
         case MLOAD:
-          dropCost += calcMemDrop(dropCosts, oldMemSize, memNeeded(stack.peek(), new DataWord(32)),
+          energyCost = calcMemEnergy(energyCosts, oldMemSize,
+              memNeeded(stack.peek(), new DataWord(32)),
               0);
           break;
         case RETURN:
         case REVERT:
-          dropCost = dropCosts.getSTOP() + calcMemDrop(dropCosts, oldMemSize,
+          energyCost = energyCosts.getSTOP() + calcMemEnergy(energyCosts, oldMemSize,
               memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0);
           break;
         case SHA3:
-          dropCost = dropCosts.getSHA3() + calcMemDrop(dropCosts, oldMemSize,
+          energyCost = energyCosts.getSHA3() + calcMemEnergy(energyCosts, oldMemSize,
               memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0);
           DataWord size = stack.get(stack.size() - 2);
           long chunkUsed = (size.longValueSafe() + 31) / 32;
-          dropCost += chunkUsed * dropCosts.getSHA3_WORD();
+          energyCost += chunkUsed * energyCosts.getSHA3_WORD();
           break;
         case CALLDATACOPY:
         case RETURNDATACOPY:
-          dropCost += calcMemDrop(dropCosts, oldMemSize,
+          energyCost = calcMemEnergy(energyCosts, oldMemSize,
               memNeeded(stack.peek(), stack.get(stack.size() - 3)),
               stack.get(stack.size() - 3).longValueSafe());
           break;
         case CODECOPY:
-          dropCost += calcMemDrop(dropCosts, oldMemSize,
+          energyCost = calcMemEnergy(energyCosts, oldMemSize,
               memNeeded(stack.peek(), stack.get(stack.size() - 3)),
               stack.get(stack.size() - 3).longValueSafe());
           break;
         case EXTCODESIZE:
-          dropCost = dropCosts.getEXT_CODE_SIZE();
+          energyCost = energyCosts.getEXT_CODE_SIZE();
           break;
         case EXTCODECOPY:
-          dropCost = dropCosts.getEXT_CODE_COPY() + calcMemDrop(dropCosts, oldMemSize,
+          energyCost = energyCosts.getEXT_CODE_COPY() + calcMemEnergy(energyCosts, oldMemSize,
               memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 4)),
               stack.get(stack.size() - 4).longValueSafe());
           break;
@@ -217,23 +229,24 @@ public class VM {
         case CALLCODE:
         case DELEGATECALL:
         case STATICCALL:
-
-          dropCost = dropCosts.getCALL();
-          DataWord callGasWord = stack.get(stack.size() - 1);
-
+          // here, contract call an other contract, or a library, and so on
+          // todo: check the callvalue here
+          energyCost = energyCosts.getCALL();
+          DataWord callEnergyWord = stack.get(stack.size() - 1);
           DataWord callAddressWord = stack.get(stack.size() - 2);
-
           DataWord value = op.callHasValue() ?
               stack.get(stack.size() - 3) : DataWord.ZERO;
 
           //check to see if account does not exist and is not a precompiled contract
           if (op == CALL) {
-            dropCost = dropCosts.getNEW_ACCT_CALL();
+            if (isDeadAccount(program, callAddressWord) && !value.isZero()) {
+              energyCost += energyCosts.getNEW_ACCT_CALL();
+            }
           }
 
-          //TODO #POC9 Make sure this is converted to BigInteger (256num support)
+          // TODO #POC9 Make sure this is converted to BigInteger (256num support)
           if (!value.isZero()) {
-            dropCost += dropCosts.getVT_CALL();
+            energyCost += energyCosts.getVT_CALL();
           }
 
           int opOff = op.callHasValue() ? 4 : 3;
@@ -241,24 +254,23 @@ public class VM {
               stack.get(stack.size() - opOff - 1)); // in offset+size
           BigInteger out = memNeeded(stack.get(stack.size() - opOff - 2),
               stack.get(stack.size() - opOff - 3)); // out offset+size
-          //    dropCost += calcMemDrop(dropCosts, oldMemSize, in.max(out), 0);
+          energyCost += calcMemEnergy(energyCosts, oldMemSize, in.max(out), 0);
           checkMemorySize(op, in.max(out));
 
-          //TODO: recover this or give similar logic when tron cost mechanism is ready.
-//                    if (dropCost > program.getDroplimit().longValueSafe()) {
-//                        throw Program.Exception.notEnoughOpGas(op, callGasWord, program.getDroplimit());
-//                    }
+          if (energyCost > program.getEnergyLimitLeft().longValueSafe()) {
+            throw new OutOfEnergyException(
+                "Not enough energy for '%s' operation executing: opEnergy[%d], programEnergy[%d]",
+                op.name(),
+                energyCost, program.getEnergyLimitLeft().longValueSafe());
+          }
+          DataWord getEnergyLimitLeft = program.getEnergyLimitLeft().clone();
+          getEnergyLimitLeft.sub(new DataWord(energyCost));
 
-          DataWord gasLeft = program.getDroplimit().clone();
-          gasLeft.sub(new DataWord(dropCost));
-          //adjustedCallGas = tronConfig.getCallGas(op, callGasWord, gasLeft);
-          //adjustedCallGas = new DataWord(tronConfig.getDropCost().getCALL());
-          //TODO: remove below and recover above statment when config is ready
-          adjustedCallGas = new DataWord();
-          dropCost += adjustedCallGas.longValueSafe();
+          adjustedCallEnergy = program.getCallEnergy(op, callEnergyWord, getEnergyLimitLeft);
+          energyCost += adjustedCallEnergy.longValueSafe();
           break;
         case CREATE:
-          dropCost = dropCosts.getCREATE() + calcMemDrop(dropCosts, oldMemSize,
+          energyCost = energyCosts.getCREATE() + calcMemEnergy(energyCosts, oldMemSize,
               memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 3)), 0);
           break;
         case LOG0:
@@ -266,39 +278,39 @@ public class VM {
         case LOG2:
         case LOG3:
         case LOG4:
-
           int nTopics = op.val() - OpCode.LOG0.val();
-
           BigInteger dataSize = stack.get(stack.size() - 2).value();
           BigInteger dataCost = dataSize
-              .multiply(BigInteger.valueOf(dropCosts.getLOG_DATA_GAS()));
-//            if (program.getDroplimit().value().compareTo(dataCost) < 0) {
-//              throw Program.Exception.notEnoughOpGas(op, dataCost, program.getDroplimit().value());
-//            }
+              .multiply(BigInteger.valueOf(energyCosts.getLOG_DATA_ENERGY()));
+          if (program.getEnergyLimitLeft().value().compareTo(dataCost) < 0) {
+            throw new OutOfEnergyException(
+                "Not enough energy for '%s' operation executing: opEnergy[%d], programEnergy[%d]",
+                op.name(),
+                dataCost.longValue(), program.getEnergyLimitLeft().longValueSafe());
+          }
+          energyCost = energyCosts.getLOG_ENERGY() +
+              energyCosts.getLOG_TOPIC_ENERGY() * nTopics +
+              energyCosts.getLOG_DATA_ENERGY() * stack.get(stack.size() - 2).longValue() +
+              calcMemEnergy(energyCosts, oldMemSize,
+                  memNeeded(stack.peek(), stack.get(stack.size() - 2)),
+                  0);
 
-          dropCost = dropCosts.getLOG_GAS() +
-              dropCosts.getLOG_TOPIC_GAS() * nTopics +
-              dropCosts.getLOG_DATA_GAS() * stack.get(stack.size() - 2).longValue() +
-              calcMemDrop(dropCosts, oldMemSize,
-                  memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0);
-          checkMemorySize(op,
-              memNeeded(stack.peek(), stack.get(stack.size() - 2)));
+          checkMemorySize(op, memNeeded(stack.peek(), stack.get(stack.size() - 2)));
           break;
         case EXP:
 
           DataWord exp = stack.get(stack.size() - 2);
           int bytesOccupied = exp.bytesOccupied();
-          dropCost = dropCosts.getEXP_GAS() + dropCosts.getEXP_BYTE_GAS() * bytesOccupied;
+          energyCost =
+              energyCosts.getEXP_ENERGY() + energyCosts.getEXP_BYTE_ENERGY() * bytesOccupied;
           break;
         default:
           break;
       }
 
-      // DEBUG System.out.println(" OP IS " + op.name() + " GASCOST IS " + gasCost + " NUM IS " + op.asInt());
-      // program.spendDrop(dropCost, op.name());
-
-      //TODO: recover this after it is ready.
-      // program.checkCPULimit(op.name());
+      // DEBUG System.out.println(" OP IS " + op.name() + " ENERGYCOST IS " + energyCost + " NUM IS " + op.asInt());
+      program.spendEnergy(energyCost, op.name());
+      program.checkCPUTimeLimit(op.name());
       // logger.info("after opName: {}, {}", op.name(), System.nanoTime() / 1000 - lastTime);
 
       // Execute operation
@@ -848,13 +860,13 @@ public class VM {
         }
         break;
         case GASPRICE: {
-          DataWord gasPrice = new DataWord(0);
+          DataWord energyPrice = new DataWord(0);
 
           if (logger.isInfoEnabled()) {
-            hint = "price: " + gasPrice.toString();
+            hint = "price: " + energyPrice.toString();
           }
 
-          program.stackPush(gasPrice);
+          program.stackPush(energyPrice);
           program.step();
         }
         break;
@@ -921,13 +933,14 @@ public class VM {
         }
         break;
         case GASLIMIT: {
-          DataWord droplimit = new DataWord(0);
+          // todo: this energylimit is the block's energy limit
+          DataWord energyLimit = new DataWord(0);
 
           if (logger.isInfoEnabled()) {
-            hint = "gaslimit: " + droplimit;
+            hint = "energylimit: " + energyLimit;
           }
 
-          program.stackPush(droplimit);
+          program.stackPush(energyLimit);
           program.step();
         }
         break;
@@ -1137,13 +1150,12 @@ public class VM {
         }
         break;
         case GAS: {
-          DataWord gas = new DataWord(0);
-
+          DataWord energy = program.getEnergyLimitLeft();
           if (logger.isInfoEnabled()) {
-            hint = "" + gas;
+            hint = "" + energy;
           }
 
-          program.stackPush(gas);
+          program.stackPush(energy);
           program.step();
         }
         break;
@@ -1221,8 +1233,10 @@ public class VM {
         case CALLCODE:
         case DELEGATECALL:
         case STATICCALL: {
-          program.stackPop(); // use adjustedCallGas instead of requested
+          program.stackPop(); // use adjustedCallEnergy instead of requested
           DataWord codeAddress = program.stackPop();
+
+          // todo: check the callvalue >= 0
           DataWord value = op.callHasValue() ?
               program.stackPop() : DataWord.ZERO;
 
@@ -1231,7 +1245,7 @@ public class VM {
           }
 
           if (!value.isZero()) {
-            adjustedCallGas.add(new DataWord(dropCosts.getSTIPEND_CALL()));
+            adjustedCallEnergy.add(new DataWord(energyCosts.getSTIPEND_CALL()));
           }
 
           DataWord inDataOffs = program.stackPop();
@@ -1242,19 +1256,19 @@ public class VM {
 
           if (logger.isInfoEnabled()) {
             hint = "addr: " + Hex.toHexString(codeAddress.getLast20Bytes())
-                + " gas: " + adjustedCallGas.shortHex()
+                + " energy: " + adjustedCallEnergy.shortHex()
                 + " inOff: " + inDataOffs.shortHex()
                 + " inSize: " + inDataSize.shortHex();
             logger.info(logString, String.format("%5s", "[" + program.getPC() + "]"),
                 String.format("%-12s", op.name()),
-                program.getDroplimit().value(),
+                program.getEnergyLimitLeft().value(),
                 program.getCallDeep(), hint);
           }
 
           program.memoryExpand(outDataOffs, outDataSize);
 
           MessageCall msg = new MessageCall(
-              op, adjustedCallGas, codeAddress, value, inDataOffs, inDataSize,
+              op, adjustedCallEnergy, codeAddress, value, inDataOffs, inDataSize,
               outDataOffs, outDataSize);
 
           PrecompiledContracts.PrecompiledContract contract =
@@ -1325,8 +1339,8 @@ public class VM {
             */
       vmCounter++;
     } catch (RuntimeException e) {
-      logger.warn("VM halted: [{}]", e);
-      program.spendAllGas();
+      logger.warn("VM halted: [{}]", e.getMessage());
+      program.spendAllEnergy();
       program.resetFutureRefund();
       program.stop();
       throw e;
@@ -1336,7 +1350,7 @@ public class VM {
   }
 
   public void play(Program program)
-      throws ContractExeException {
+      throws ContractValidateException {
     try {
       if (program.byTestingSuite()) {
         return;
@@ -1357,6 +1371,10 @@ public class VM {
     }
   }
 
+  private boolean isDeadAccount(Program program, DataWord address) {
+    return program.getContractState().getAccount(convertToTronAddress(address.getLast20Bytes()))
+        == null;
+  }
 
   /**
    * Utility to calculate new total memory size needed for an operation. <br/> Basically just offset

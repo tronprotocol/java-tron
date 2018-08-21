@@ -583,7 +583,6 @@ public class TransferAssetActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
 
-
     //Too long name, throw exception. Max long is 32.
     String assetName = "testname0123456789abcdefghijgklmo";
 //    actuator = new TransferAssetActuator(getContract(100L, assetName),

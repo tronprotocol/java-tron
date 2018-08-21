@@ -24,6 +24,8 @@ import org.tron.core.config.args.Args;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.ReceiptException;
+import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateScheduleException;
@@ -43,6 +45,7 @@ public class WitnessService implements Service {
   protected Map<ByteString, WitnessCapsule> localWitnessStateMap = Maps
       .newHashMap(); //  <address,WitnessCapsule>
   private Thread generateThread;
+
   private volatile boolean isRunning = false;
   private Map<ByteString, byte[]> privateKeyMap = Maps.newHashMap();
   private volatile boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
@@ -65,11 +68,12 @@ public class WitnessService implements Service {
     backupServer = context.getBean(BackupServer.class);
     generateThread = new Thread(scheduleProductionLoop);
     controller = tronApp.getDbManager().getWitnessController();
-    new Thread(()->{
-      while (needSyncCheck){
-        try{
+    new Thread(() -> {
+      while (needSyncCheck) {
+        try {
           Thread.sleep(100);
-        }catch (Exception e){}
+        } catch (Exception e) {
+        }
       }
       backupServer.initServer();
     }).start();
@@ -136,7 +140,7 @@ public class WitnessService implements Service {
    */
   private BlockProductionCondition tryProduceBlock() throws InterruptedException {
     logger.info("Try Produce Block");
-    if (!backupManager.getStatus().equals(BackupStatusEnum.MASTER)){
+    if (!backupManager.getStatus().equals(BackupStatusEnum.MASTER)) {
       return BlockProductionCondition.BACKUP_STATUS_IS_NOT_MASTER;
     }
     long now = DateTime.now().getMillis() + 50L;
@@ -218,6 +222,7 @@ public class WitnessService implements Service {
     }
 
     try {
+
       controller.setGeneratingBlock(true);
       BlockCapsule block = generateBlock(scheduledTime, scheduledWitness);
 
@@ -248,7 +253,6 @@ public class WitnessService implements Service {
     } finally {
       controller.setGeneratingBlock(false);
     }
-
   }
 
   private void broadcastBlock(BlockCapsule block) {
@@ -260,7 +264,7 @@ public class WitnessService implements Service {
   }
 
   private BlockCapsule generateBlock(long when, ByteString witnessAddress)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException {
+      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, ReceiptException, TransactionTraceException {
     return tronApp.getDbManager().generateBlock(this.localWitnessStateMap.get(witnessAddress), when,
         this.privateKeyMap.get(witnessAddress));
   }
@@ -298,6 +302,7 @@ public class WitnessService implements Service {
   public void start() {
     isRunning = true;
     generateThread.start();
+
   }
 
   @Override

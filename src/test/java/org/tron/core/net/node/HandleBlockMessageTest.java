@@ -1,6 +1,10 @@
 package org.tron.core.net.node;
 
 import com.google.protobuf.ByteString;
+import java.io.File;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.junit.After;
@@ -31,10 +35,6 @@ import org.tron.core.services.WitnessService;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.Inventory.InventoryType;
-
-import java.io.File;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
 
 
 @Slf4j
@@ -67,7 +67,8 @@ public class HandleBlockMessageTest {
 
     @Test
     public void testHandleBlockMessage() throws Exception {
-        PeerConnection peer = new PeerConnection();
+        List<PeerConnection> activePeers = ReflectUtils.getFieldValue(pool, "activePeers");
+        PeerConnection peer = activePeers.get(0);
 
         //receive a sync block
         BlockCapsule headBlockCapsule = dbManager.getHead();
@@ -92,7 +93,7 @@ public class HandleBlockMessageTest {
 
         peer.getSyncBlockRequested().put(blockMessage.getBlockId(), System.currentTimeMillis());
         node.onMessage(peer, blockMessageOther);
-        Assert.assertEquals(peer.getSyncBlockRequested().isEmpty(), false);
+        Assert.assertEquals(peer.getSyncBlockRequested().isEmpty(), true);
     }
 
     // generate ong block by parent block

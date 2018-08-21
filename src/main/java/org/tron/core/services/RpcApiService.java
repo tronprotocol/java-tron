@@ -17,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 import org.tron.api.DatabaseGrpc.DatabaseImplBase;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountNetMessage;
@@ -58,30 +57,25 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.WalletSolidity;
-import org.tron.core.actuator.Actuator;
-import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.StoreException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
+import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocol;
@@ -577,50 +571,7 @@ public class RpcApiService implements Service {
 
     private TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
         ContractType contractType) throws ContractValidateException {
-      TransactionCapsule trx = new TransactionCapsule(message, contractType);
-      if (contractType != ContractType.CreateSmartContract
-          && contractType != ContractType.TriggerSmartContract) {
-        List<Actuator> actList = ActuatorFactory.createActuator(trx, dbManager);
-        for (Actuator act : actList) {
-          act.validate();
-        }
-      }
-
-      if (contractType == ContractType.CreateSmartContract) {
-        // insure one owner just have one contract
-        CreateSmartContract contract = ContractCapsule
-            .getSmartContractFromTransaction(trx.getInstance());
-        byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
-        if (dbManager.getAccountContractIndexStore().get(ownerAddress) != null) {
-          throw new ContractValidateException(
-              "Trying to create second contract with one account: address: " + Wallet
-                  .encode58Check(ownerAddress));
-        }
-
-//        // insure the new contract address haven't exist
-//        if (deposit.getAccount(contractAddress) != null) {
-//          logger.error("Trying to create a contract with existing contract address: " + Wallet
-//              .encode58Check(contractAddress));
-//          return;
-//        }
-      }
-
-      try {
-        BlockCapsule headBlock = null;
-        List<BlockCapsule> blockList = dbManager.getBlockStore().getBlockByLatestNum(1);
-        if (CollectionUtils.isEmpty(blockList)) {
-          throw new HeaderNotFound("latest block not found");
-        } else {
-          headBlock = blockList.get(0);
-        }
-        trx.setReference(headBlock.getNum(), headBlock.getBlockId().getBytes());
-        long expiration = headBlock.getTimeStamp() + Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME;
-        trx.setExpiration(expiration);
-        trx.setTimestamp();
-      } catch (HeaderNotFound headerNotFound) {
-        headerNotFound.printStackTrace();
-      }
-      return trx;
+      return wallet.createTransactionCapsule(message, contractType);
     }
 
     @Override
@@ -803,6 +754,13 @@ public class RpcApiService implements Service {
     public void voteWitnessAccount2(VoteWitnessContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.VoteWitnessContract, responseObserver);
+    }
+
+    @Override
+    public void updateSetting(UpdateSettingContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.UpdateSettingContract,
+          responseObserver);
     }
 
     @Override
@@ -1001,17 +959,23 @@ public class RpcApiService implements Service {
       createTransactionExtention(request, ContractType.ProposalDeleteContract, responseObserver);
     }
 
-    @Override
-    public void buyStorage(Contract.BuyStorageContract request,
-        StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.BuyStorageContract, responseObserver);
-    }
-
-    @Override
-    public void sellStorage(Contract.SellStorageContract request,
-        StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.SellStorageContract, responseObserver);
-    }
+//    @Override
+//    public void buyStorage(Contract.BuyStorageContract request,
+//        StreamObserver<TransactionExtention> responseObserver) {
+//      createTransactionExtention(request, ContractType.BuyStorageContract, responseObserver);
+//    }
+//
+//    @Override
+//    public void buyStorageBytes(Contract.BuyStorageBytesContract request,
+//        StreamObserver<TransactionExtention> responseObserver) {
+//      createTransactionExtention(request, ContractType.BuyStorageBytesContract, responseObserver);
+//    }
+//
+//    @Override
+//    public void sellStorage(Contract.SellStorageContract request,
+//        StreamObserver<TransactionExtention> responseObserver) {
+//      createTransactionExtention(request, ContractType.SellStorageContract, responseObserver);
+//    }
 
     @Override
     public void getNowBlock(EmptyMessage request, StreamObserver<Block> responseObserver) {
@@ -1304,7 +1268,7 @@ public class RpcApiService implements Service {
       try {
         TransactionCapsule trxCap = createTransactionCapsule(request,
             ContractType.TriggerSmartContract);
-        trx = wallet.triggerContract(request, trxCap);
+        trx = wallet.triggerContract(request, trxCap, trxExtBuilder, retBuilder);
         trxExtBuilder.setTransaction(trx);
         trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
         retBuilder.setResult(true).setCode(response_code.SUCCESS);

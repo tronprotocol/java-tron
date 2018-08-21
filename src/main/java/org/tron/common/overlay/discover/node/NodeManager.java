@@ -48,20 +48,17 @@ import org.tron.common.net.udp.message.discover.PingMessage;
 import org.tron.common.net.udp.message.discover.PongMessage;
 import org.tron.common.overlay.discover.DiscoverListener;
 import org.tron.common.overlay.discover.node.NodeHandler.State;
+import org.tron.common.overlay.discover.node.statistics.MessageStatistics;
 import org.tron.common.overlay.discover.node.statistics.NodeStatistics;
 import org.tron.common.overlay.discover.table.NodeTable;
 import org.tron.common.utils.CollectionUtils;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.protos.Protocol.ReasonCode;
 
 @Component
 public class NodeManager implements EventHandler {
 
   private static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeManager");
-
-  private Cache<InetSocketAddress, NodeHandler> badNodes = CacheBuilder.newBuilder().maximumSize(10000)
-      .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
 
   private Args args = Args.getInstance();
 
@@ -240,10 +237,7 @@ public class NodeManager implements EventHandler {
     }
 
     NodeHandler nodeHandler = getNodeHandler(n);
-    if (badNodes.getIfPresent(nodeHandler.getInetSocketAddress()) != null){
-      logger.warn("Receive packet from bad node {}.", sender.getAddress());
-      return;
-    }
+    nodeHandler.getNodeStatistics().messageStatistics.addUdpInMessage(m.getType());
 
     switch (m.getType()) {
       case DISCOVER_PING:
@@ -259,7 +253,6 @@ public class NodeManager implements EventHandler {
         nodeHandler.handleNeighbours((NeighborsMessage) m);
         break;
     }
-    calculateMsgCount(nodeHandler);
   }
 
   public void sendOutbound(UdpEvent udpEvent) {
@@ -380,19 +373,6 @@ public class NodeManager implements EventHandler {
           discoveredNodes.remove(handler);
         }
       }
-    }
-  }
-
-  private void calculateMsgCount(NodeHandler nodeHandler){
-    int interval = 10;
-    int maxCount = 10;
-    NodeStatistics statistics = nodeHandler.getNodeStatistics();
-    int count = statistics.discoverInPing.getCount(interval) + statistics.discoverInPong.getCount(interval)
-        + statistics.discoverInFind.getCount(interval) + statistics.discoverInNeighbours.getCount(interval);
-    if (count > maxCount){
-      logger.warn("UDP attack found: {}.", nodeHandler);
-      badNodes.put(nodeHandler.getInetSocketAddress(), nodeHandler);
-      table.dropNode(nodeHandler.getNode());
     }
   }
 

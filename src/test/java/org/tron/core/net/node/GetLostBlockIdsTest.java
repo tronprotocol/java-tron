@@ -61,7 +61,7 @@ public class GetLostBlockIdsTest {
         BlockCapsule capsule;
         for (int i = 0; i<5; i++) {
             number = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1;
-            capsule = createTestBlockCapsule(number, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(), addressToProvateKeys);
+            capsule = createTestBlockCapsule(1533529947843L + 3000L * i ,number, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(), addressToProvateKeys);
             try {
                 dbManager.pushBlock(capsule);
             } catch (Exception e) {
@@ -164,6 +164,10 @@ public class GetLostBlockIdsTest {
     private BlockCapsule createTestBlockCapsule(
             long number, ByteString hash, Map<ByteString, String> addressToProvateKeys) {
         long time = System.currentTimeMillis();
+        return createTestBlockCapsule(time,number,hash,addressToProvateKeys);
+    }
+    private BlockCapsule createTestBlockCapsule(long time ,
+        long number, ByteString hash, Map<ByteString, String> addressToProvateKeys) {
         WitnessController witnessController = dbManager.getWitnessController();
         ByteString witnessAddress =
                 witnessController.getScheduledWitness(witnessController.getSlotAtTime(time));
