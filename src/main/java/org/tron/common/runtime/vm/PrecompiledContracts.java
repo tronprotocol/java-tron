@@ -1145,14 +1145,19 @@ public class PrecompiledContracts {
       byte[] toAddress = new byte[32];
       System.arraycopy(data, 0, toAddress, 0, 32);
       byte[] amount = new byte[32];
-      System.arraycopy(data, 32, amount, 0, 32);
+      System.arraycopy(data, 32 + 16 + 8, amount, 0, 8);
+      // we already have a restrict for token name length, no more than 32 bytes. don't need to check again
       byte[] name = new byte[32];
-      System.arraycopy(data, 64, amount, 0, 32);
-
+      System.arraycopy(data, 64, name, 0, data.length-64);
+      int length =name.length;
+      while(length>0 && name[length -1] ==0){
+        length--;
+      }
+      name = ByteArray.subArray(name,0,length);
       Contract.TransferAssetContract.Builder builder = Contract.TransferAssetContract
           .newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(getCallerAddress()));
-      builder.setToAddress(ByteString.copyFrom(toAddress));
+      builder.setToAddress(ByteString.copyFrom(convertToTronAddress(new DataWord(toAddress).getLast20Bytes())));
       builder.setAmount(Longs.fromByteArray(amount));
       builder.setAssetName(ByteString.copyFrom(name));
 
