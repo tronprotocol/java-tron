@@ -47,6 +47,17 @@ message Proposal {
   State state = 7;
 }
 
+// Exchange
+message Exchange {
+  int64 exchange_id = 1;
+  bytes creator_address = 2;
+  int64 create_time = 3;
+  bytes first_token_id = 6;
+  int64 first_token_quant = 7;
+  bytes second_token_id = 8;
+  int64 second_token_quant = 9;
+}
+
 message ChainParameters {
   repeated ChainParameter chainParameter = 1;
   message ChainParameter {
