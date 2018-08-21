@@ -158,6 +158,10 @@ public class ExchangeInjectActuator extends AbstractActuator {
       throw new ContractValidateException("token is not in exchange");
     }
 
+    if (firstTokenBalance == 0 || secondTokenBalance == 0) {
+      throw new ContractValidateException("Token balance in exchange is equal with 0,the exchange has been closed");
+    }
+
     if (tokenQuant <= 0) {
       throw new ContractValidateException("injected token balance must greater than zero");
     }
@@ -172,7 +176,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
           .floorDiv(Math.multiplyExact(firstTokenBalance, tokenQuant), secondTokenBalance);
     }
 
-    if(anotherTokenQuant <= 0){
+    if (anotherTokenQuant <= 0) {
       throw new ContractValidateException(" The calculated Token Quant  must be larger than 0");
     }
 

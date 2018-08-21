@@ -49,17 +49,16 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
       byte[] anotherTokenID;
       long anotherTokenQuant;
 
-      double ratio;
       if (Arrays.equals(tokenID, firstTokenID)) {
         anotherTokenID = secondTokenID;
-        ratio = (double) secondTokenBalance / firstTokenBalance;
-        anotherTokenQuant = (long) ratio * tokenQuant;
+        anotherTokenQuant = Math
+            .floorDiv(Math.multiplyExact(secondTokenBalance, tokenQuant), firstTokenBalance);
         exchangeCapsule.setBalance(firstTokenBalance - tokenQuant,
             secondTokenBalance - anotherTokenQuant);
       } else {
         anotherTokenID = firstTokenID;
-        ratio = (double) firstTokenBalance / secondTokenBalance;
-        anotherTokenQuant = (long) ratio * tokenQuant;
+        anotherTokenQuant = Math
+            .floorDiv(Math.multiplyExact(firstTokenBalance, tokenQuant), secondTokenBalance);
         exchangeCapsule.setBalance(firstTokenBalance - anotherTokenQuant,
             secondTokenBalance - tokenQuant);
       }
@@ -162,16 +161,19 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
       throw new ContractValidateException("withdraw token balance must greater than zero");
     }
 
-    double ratio;
+    if (firstTokenBalance == 0 || secondTokenBalance == 0) {
+      throw new ContractValidateException("Token balance in exchange is equal with 0,the exchange has been closed");
+    }
+
     if (Arrays.equals(tokenID, firstTokenID)) {
-      ratio = (double) secondTokenBalance / firstTokenBalance;
-      anotherTokenQuant = (long) ratio * tokenQuant;
+      anotherTokenQuant = Math
+          .floorDiv(Math.multiplyExact(secondTokenBalance, tokenQuant), firstTokenBalance);
       if (firstTokenBalance <= tokenQuant || secondTokenBalance <= anotherTokenQuant) {
         throw new ContractValidateException("exchange balance is not enough");
       }
     } else {
-      ratio = (double) firstTokenBalance / secondTokenBalance;
-      anotherTokenQuant = (long) ratio * tokenQuant;
+      anotherTokenQuant = Math
+          .floorDiv(Math.multiplyExact(firstTokenBalance, tokenQuant), secondTokenBalance);
       if (secondTokenBalance <= tokenQuant || firstTokenBalance <= anotherTokenQuant) {
         throw new ContractValidateException("exchange balance is not enough");
       }
