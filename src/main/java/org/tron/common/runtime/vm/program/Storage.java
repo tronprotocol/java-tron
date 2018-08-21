@@ -33,7 +33,7 @@ public class Storage {
       StorageRowStore store = manager.getStorageRowStore();
       StorageRowCapsule row = store.get(compose(key.getData(), addrHash));
       if (row == null) {
-        return nul
+        return null;
       } else {
         beforeUseSize += row.getInstance().getSerializedSize();
       }
