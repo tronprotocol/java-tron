@@ -37,6 +37,7 @@ import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
+import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NumberMessage;
@@ -64,6 +65,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -96,6 +98,7 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.SmartContract.ABI;
@@ -495,6 +498,14 @@ public class Wallet {
     return builder.build();
   }
 
+  public ExchangeList getExchangeList() {
+    ExchangeList.Builder builder = ExchangeList.newBuilder();
+    List<ExchangeCapsule> exchangeCapsuleList = dbManager.getExchangeStore().getAllExchanges();
+    exchangeCapsuleList
+        .forEach(exchangeCapsule -> builder.addExchanges(exchangeCapsule.getInstance()));
+    return builder.build();
+  }
+
   public Protocol.ChainParameters getChainParameters() {
     Protocol.ChainParameters.Builder builder = Protocol.ChainParameters.newBuilder();
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
@@ -757,6 +768,22 @@ public class Wallet {
     }
     if (proposalCapsule != null) {
       return proposalCapsule.getInstance();
+    }
+    return null;
+  }
+
+  public Exchange getExchangeById(ByteString exchangeId) {
+    if (Objects.isNull(exchangeId)) {
+      return null;
+    }
+    ExchangeCapsule exchangeCapsule = null;
+    try {
+      exchangeCapsule = dbManager.getExchangeStore()
+          .get(exchangeId.toByteArray());
+    } catch (StoreException e) {
+    }
+    if (exchangeCapsule != null) {
+      return exchangeCapsule.getInstance();
     }
     return null;
   }
