@@ -3,11 +3,11 @@ package org.tron.core.capsule.utils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class ExchangeUtil {
+public class ExchangeProcessor {
 
   private long supply;
 
-  public ExchangeUtil(long supply) {
+  public ExchangeProcessor(long supply) {
     this.supply = supply;
   }
 
@@ -54,9 +54,9 @@ public class ExchangeUtil {
     return out;
   }
 
-  public long exchange(long fromTokenBalance, long toTokenBalance, long fromTokenQuant) {
-    long relay = exchange_to_supply(fromTokenBalance, fromTokenQuant);
-    return exchange_from_supply(toTokenBalance, relay);
+  public long exchange(long sellTokenBalance, long buyTokenBalance, long sellTokenQuant) {
+    long relay = exchange_to_supply(sellTokenBalance, sellTokenQuant);
+    return exchange_from_supply(buyTokenBalance, relay);
   }
 
 }

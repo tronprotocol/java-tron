@@ -5,6 +5,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocol.Exchange;
+import org.tron.core.capsule.utils.ExchangeProcessor;
 
 @Slf4j
 public class ExchangeCapsule implements ProtoCapsule<Exchange> {
@@ -56,10 +57,10 @@ public class ExchangeCapsule implements ProtoCapsule<Exchange> {
         .build();
   }
 
-  public void setQuants(long firstTokenQuant, long secondTokenQuant) {
+  public void setBalance(long firstTokenBalance, long secondTokenBalance) {
     this.exchange = this.exchange.toBuilder()
-        .setFirstTokenQuant(firstTokenQuant)
-        .setSecondTokenQuant(secondTokenQuant)
+        .setFirstTokenBalance(firstTokenBalance)
+        .setSecondTokenBalance(secondTokenBalance)
         .build();
   }
 
@@ -79,6 +80,34 @@ public class ExchangeCapsule implements ProtoCapsule<Exchange> {
 
   public static byte[] calculateDbKey(long number) {
     return ByteArray.fromLong(number);
+  }
+
+  public long transaction(byte[] sellTokenID, long sellTokenQuant) {
+    ExchangeProcessor processor = new ExchangeProcessor(this.supply);
+
+    long buyTokenQuant = 0;
+    long firstTokenBalance = this.exchange.getFirstTokenBalance();
+    long secondTokenBalance = this.exchange.getSecondTokenBalance();
+
+    if (this.exchange.getFirstTokenId().equals(ByteString.copyFrom(sellTokenID))) {
+      buyTokenQuant = processor.exchange(firstTokenBalance,
+          secondTokenBalance,
+          sellTokenQuant);
+      this.exchange = this.exchange.toBuilder()
+          .setFirstTokenBalance(firstTokenBalance - sellTokenQuant)
+          .setSecondTokenBalance(secondTokenBalance + buyTokenQuant)
+          .build();
+    } else {
+      buyTokenQuant = processor.exchange(secondTokenBalance,
+          firstTokenBalance,
+          sellTokenQuant);
+      this.exchange = this.exchange.toBuilder()
+          .setFirstTokenBalance(firstTokenBalance + buyTokenQuant)
+          .setSecondTokenBalance(secondTokenBalance - sellTokenQuant)
+          .build();
+    }
+
+    return buyTokenQuant;
   }
 
   @Override
