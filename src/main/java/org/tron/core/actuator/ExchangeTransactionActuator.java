@@ -51,12 +51,8 @@ public class ExchangeTransactionActuator extends AbstractActuator {
 
       if (Arrays.equals(tokenID, firstTokenID)) {
         anotherTokenID = secondTokenID;
-        exchangeCapsule.setBalance(firstTokenBalance + tokenQuant,
-            secondTokenBalance - anotherTokenQuant);
       } else {
         anotherTokenID = firstTokenID;
-        exchangeCapsule.setBalance(firstTokenBalance - anotherTokenQuant,
-            secondTokenBalance + tokenQuant);
       }
 
       long newBalance = accountCapsule.getBalance() - calcFee();
