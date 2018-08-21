@@ -90,6 +90,7 @@ public class PrecompiledContracts {
   private static final ConvertFromTronBytesAddressNative convertFromTronBytesAddress = new ConvertFromTronBytesAddressNative();
   private static final ConvertFromTronBase58AddressNative convertFromTronBase58Address = new ConvertFromTronBase58AddressNative();
   private static final TransferAssetNative transferAsset = new TransferAssetNative();
+  private static final GetTransferAssetNative getTransferAssetAmount =  new GetTransferAssetNative();
 
 
   private static final DataWord ecRecoverAddr = new DataWord(
@@ -128,6 +129,8 @@ public class PrecompiledContracts {
       "0000000000000000000000000000000000000000000000000000000000010009");
   private static final DataWord transferAssetAddr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000001000a");
+  private static final DataWord getTransferAssetAmountAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000001000b");
 
   public static PrecompiledContract getContractForAddress(DataWord address) {
 
@@ -175,6 +178,9 @@ public class PrecompiledContracts {
     }
     if (address.equals(transferAssetAddr)) {
       return transferAsset;
+    }
+    if (address.equals(getTransferAssetAmountAddr)) {
+      return getTransferAssetAmount;
     }
 
 
@@ -1182,6 +1188,50 @@ public class PrecompiledContracts {
         return null;
       }
       return Pair.of(true, new DataWord(1).getData());
+    }
+  }
+
+
+
+  /**
+   * Native function for check Asset balance basing on targetAddress and Asset name. <br/>
+   * <br/>
+   *
+   * Input data[]: <br/> address targetAddress, byte[] assetName <br/>
+   *
+   * Output: <br/> balance <br/>
+   */
+  public static class GetTransferAssetNative extends PrecompiledContract {
+
+    @Override
+    // TODO: Please re-implement this function after Tron cost is well designed.
+    public long getGasForData(byte[] data) {
+      return 200;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+
+      if (data == null) {
+        data = EMPTY_BYTE_ARRAY;
+      }
+
+      byte[] targetAddress = new byte[32];
+      System.arraycopy(data, 0, targetAddress, 0, 32);
+      // we already have a restrict for token name length, no more than 32 bytes. don't need to check again
+      byte[] name = new byte[32];
+      System.arraycopy(data, 32, name, 0, 32);
+      int length =name.length;
+      while(length>0 && name[length -1] ==0){
+        length--;
+      }
+      name = ByteArray.subArray(name,0,length);
+
+      long assetBalance = this.getDeposit().getDbManager().getAccountStore().
+          get(convertToTronAddress(new DataWord(targetAddress).getLast20Bytes())).
+          getAssetMap().get(ByteArray.toStr(name));
+
+      return Pair.of(true, new DataWord(Longs.toByteArray(assetBalance)).getData());
     }
   }
 }
