@@ -168,13 +168,13 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
     if (Arrays.equals(tokenID, firstTokenID)) {
       anotherTokenQuant = Math
           .floorDiv(Math.multiplyExact(secondTokenBalance, tokenQuant), firstTokenBalance);
-      if (firstTokenBalance <= tokenQuant || secondTokenBalance <= anotherTokenQuant) {
+      if (firstTokenBalance < tokenQuant || secondTokenBalance < anotherTokenQuant) {
         throw new ContractValidateException("exchange balance is not enough");
       }
     } else {
       anotherTokenQuant = Math
           .floorDiv(Math.multiplyExact(firstTokenBalance, tokenQuant), secondTokenBalance);
-      if (secondTokenBalance <= tokenQuant || firstTokenBalance <= anotherTokenQuant) {
+      if (secondTokenBalance < tokenQuant || firstTokenBalance < anotherTokenQuant) {
         throw new ContractValidateException("exchange balance is not enough");
       }
     }
