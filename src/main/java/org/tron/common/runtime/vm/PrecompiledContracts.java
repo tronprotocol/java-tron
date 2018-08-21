@@ -196,7 +196,7 @@ public class PrecompiledContracts {
 
   public static abstract class PrecompiledContract {
 
-    public abstract long getGasForData(byte[] data);
+    public abstract long getEnergyForData(byte[] data);
 
     public abstract Pair<Boolean, byte[]> execute(byte[] data);
 
@@ -237,9 +237,9 @@ public class PrecompiledContracts {
     }
 
     @Override
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
 
-      // gas charge for the execution:
+      // energy charge for the execution:
       // minimum 1 and additional 1 for each 32 bytes word (round  up)
       if (data == null) {
         return 15;
@@ -257,9 +257,9 @@ public class PrecompiledContracts {
 
 
     @Override
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
 
-      // gas charge for the execution:
+      // energy charge for the execution:
       // minimum 50 and additional 50 for each 32 bytes word (round  up)
       if (data == null) {
         return 60;
@@ -282,10 +282,10 @@ public class PrecompiledContracts {
 
 
     @Override
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
 
       // TODO #POC9 Replace magic numbers with constants
-      // gas charge for the execution:
+      // energy charge for the execution:
       // minimum 50 and additional 50 for each 32 bytes word (round  up)
       if (data == null) {
         return 600;
@@ -310,7 +310,7 @@ public class PrecompiledContracts {
   public static class ECRecover extends PrecompiledContract {
 
     @Override
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
       return 3000;
     }
 
@@ -372,7 +372,7 @@ public class PrecompiledContracts {
     private static final int ARGS_OFFSET = 32 * 3; // addresses length part
 
     @Override
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
 
       if (data == null) {
         data = EMPTY_BYTE_ARRAY;
@@ -388,11 +388,12 @@ public class PrecompiledContracts {
       long adjExpLen = getAdjustedExponentLength(expHighBytes, expLen);
 
       // use big numbers to stay safe in case of overflow
-      BigInteger gas = BigInteger.valueOf(multComplexity)
+      BigInteger energy = BigInteger.valueOf(multComplexity)
           .multiply(BigInteger.valueOf(Math.max(adjExpLen, 1)))
           .divide(GQUAD_DIVISOR);
 
-      return isLessThan(gas, BigInteger.valueOf(Long.MAX_VALUE)) ? gas.longValue() : Long.MAX_VALUE;
+      return isLessThan(energy, BigInteger.valueOf(Long.MAX_VALUE)) ? energy.longValue()
+          : Long.MAX_VALUE;
     }
 
     @Override
@@ -485,7 +486,7 @@ public class PrecompiledContracts {
   public static class BN128Addition extends PrecompiledContract {
 
     @Override
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
       return 500;
     }
 
@@ -532,7 +533,7 @@ public class PrecompiledContracts {
   public static class BN128Multiplication extends PrecompiledContract {
 
     @Override
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
       return 40000;
     }
 
@@ -578,7 +579,7 @@ public class PrecompiledContracts {
     private static final int PAIR_SIZE = 192;
 
     @Override
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
 
       if (data == null) {
         return 100000;
@@ -662,7 +663,7 @@ public class PrecompiledContracts {
 
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
       return 200;
     }
 
@@ -721,7 +722,7 @@ public class PrecompiledContracts {
 
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
       return 200;
     }
 
@@ -783,7 +784,7 @@ public class PrecompiledContracts {
 
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
       return 200;
     }
 
@@ -842,7 +843,7 @@ public class PrecompiledContracts {
 
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
       return 200;
     }
 
@@ -893,7 +894,7 @@ public class PrecompiledContracts {
 
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
       return 200;
     }
 
@@ -952,7 +953,7 @@ public class PrecompiledContracts {
 
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
       return 200;
     }
 
@@ -1016,7 +1017,7 @@ public class PrecompiledContracts {
 
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
       return 200;
     }
 
@@ -1066,7 +1067,7 @@ public class PrecompiledContracts {
 
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
       return 200;
     }
 
@@ -1093,7 +1094,7 @@ public class PrecompiledContracts {
 
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
       return 200;
     }
 

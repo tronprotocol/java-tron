@@ -23,32 +23,32 @@ package org.tron.common.runtime.vm;
  */
 public class CallCreate {
 
-    final byte[] data;
-    final byte[] destination;
-    final byte[] gasLimit;
-    final byte[] value;
+  private final byte[] data;
+  private final byte[] destination;
+  private final byte[] energyLimit;
+  private final byte[] value;
 
 
-    public CallCreate(byte[] data, byte[] destination, byte[] gasLimit, byte[] value) {
-        this.data = data;
-        this.destination = destination;
-        this.gasLimit = gasLimit;
-        this.value = value;
-    }
+  public CallCreate(byte[] data, byte[] destination, byte[] energyLimit, byte[] value) {
+    this.data = data;
+    this.destination = destination;
+    this.energyLimit = energyLimit;
+    this.value = value;
+  }
 
-    public byte[] getData() {
-        return data;
-    }
+  public byte[] getData() {
+    return data;
+  }
 
-    public byte[] getDestination() {
-        return destination;
-    }
+  public byte[] getDestination() {
+    return destination;
+  }
 
-    public byte[] getGasLimit() {
-        return gasLimit;
-    }
+  public byte[] getEnergyLimit() {
+    return energyLimit;
+  }
 
-    public byte[] getValue() {
-        return value;
-    }
+  public byte[] getValue() {
+    return value;
+  }
 }

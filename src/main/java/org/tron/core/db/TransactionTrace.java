@@ -29,8 +29,6 @@ public class TransactionTrace {
 
   private EnergyProcessor energyProcessor;
 
-  private StorageMarket storageMarket;
-
   private InternalTransaction.TrxType trxType;
 
   public TransactionCapsule getTrx() {
@@ -58,7 +56,6 @@ public class TransactionTrace {
     this.receipt = new ReceiptCapsule(Sha256Hash.ZERO_HASH);
 
     this.energyProcessor = new EnergyProcessor(this.dbManager);
-    this.storageMarket = new StorageMarket(this.dbManager);
   }
 
   public boolean needVM() {
@@ -82,9 +79,8 @@ public class TransactionTrace {
   }
 
   //set bill
-  public void setBill(long energyUseage, long storageUseage) {
-    receipt.setEnergyUsage(energyUseage);
-    receipt.setStorageDelta(storageUseage);
+  public void setBill(long energyUseage) {
+    receipt.setEnergyTotal(energyUseage);
   }
 
   //set net bill
@@ -139,8 +135,6 @@ public class TransactionTrace {
         percent,
         energyProcessor,
         dbManager.getWitnessController().getHeadSlot());
-
-    receipt.payStorageBill(dbManager, origin, caller, percent, storageMarket);
   }
 
   public ReceiptCapsule getReceipt() {

@@ -17,16 +17,15 @@
  */
 package org.tron.common.runtime.vm.trace;
 
-import org.tron.common.runtime.vm.OpCode;
-
 import java.math.BigInteger;
+import org.tron.common.runtime.vm.OpCode;
 
 public class Op {
 
     private OpCode code;
     private int deep;
     private int pc;
-    private BigInteger gas;
+    private BigInteger energy;
     private OpActions actions;
 
     public OpCode getCode() {
@@ -53,12 +52,12 @@ public class Op {
         this.pc = pc;
     }
 
-    public BigInteger getGas() {
-        return gas;
+    public BigInteger getEnergy() {
+        return energy;
     }
 
-    public void setGas(BigInteger gas) {
-        this.gas = gas;
+    public void setEnergy(BigInteger energy) {
+        this.energy = energy;
     }
 
     public OpActions getActions() {

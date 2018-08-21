@@ -327,7 +327,7 @@ public class Manager {
       };
 
   private Thread repushThread;
-  
+
   public Thread getRepushThread() {
     return repushThread;
   }
@@ -1035,7 +1035,8 @@ public class Manager {
 
     RuntimeException runtimeException = runtime.getResult().getException();
     ReceiptCapsule traceReceipt = trace.getReceipt();
-    TransactionInfoCapsule transactionInfo = TransactionInfoCapsule.buildInstance(trxCap, block, runtime, traceReceipt);
+    TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
+        .buildInstance(trxCap, block, runtime, traceReceipt);
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
 

@@ -150,7 +150,6 @@ public class EnergyProcessor extends ResourceProcessor {
     return (long) (energyWeight * ((double) totalEnergyLimit / totalEnergyWeight));
   }
 
-  // todo: will change the name from us to gas
   public long getAccountLeftEnergyFromFreeze(AccountCapsule accountCapsule) {
 
     long now = dbManager.getWitnessController().getHeadSlot();
