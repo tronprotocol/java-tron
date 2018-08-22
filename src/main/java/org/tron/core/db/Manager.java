@@ -316,7 +316,7 @@ public class Manager {
             TransactionCapsule tx = this.getRepushTransactions().take();
             this.rePush(tx);
           } catch (InterruptedException ex) {
-            logger.info("repushLoop interrupted");
+            logger.error(ex.getMessage());
             Thread.currentThread().interrupt();
           } catch (Exception ex) {
             logger.error("unknown exception happened in witness loop", ex);

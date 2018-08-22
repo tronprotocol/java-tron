@@ -421,7 +421,6 @@ public class Runtime {
 
     // transfer from callerAddress to contractAddress according to callValue
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
-    long callValue = newSmartContract.getCallValue();
     if (callValue > 0) {
       transfer(this.deposit, callerAddress, contractAddress, callValue);
     }
@@ -520,6 +519,8 @@ public class Runtime {
           if (result.getException() != null) {
             program.spendAllEnergy();
             runtimeError = result.getException().getMessage();
+            trace.setBill(result.getEnergyUsed());
+            throw result.getException();
           } else {
             runtimeError = "REVERT opcode executed";
           }
