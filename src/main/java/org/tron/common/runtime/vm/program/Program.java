@@ -89,11 +89,11 @@ public class Program {
   private static final int MAX_STACKSIZE = 1024;
 
   public static byte[] getRootTransactionId() {
-    return rootTransactionId;
+    return rootTransactionId.clone();
   }
 
   public static void setRootTransactionId(byte[] rootTransactionId) {
-    Program.rootTransactionId = rootTransactionId;
+    Program.rootTransactionId = rootTransactionId.clone();
   }
 
   public static long getNonce() {
