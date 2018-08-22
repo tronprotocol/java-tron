@@ -47,6 +47,17 @@ message Proposal {
   State state = 7;
 }
 
+// Exchange
+message Exchange {
+  int64 exchange_id = 1;
+  bytes creator_address = 2;
+  int64 create_time = 3;
+  bytes first_token_id = 6;
+  int64 first_token_balance = 7;
+  bytes second_token_id = 8;
+  int64 second_token_balance = 9;
+}
+
 message ChainParameters {
   repeated ChainParameter chainParameter = 1;
   message ChainParameter {
@@ -179,7 +190,7 @@ message ResourceReceipt {
   int64 energy_usage = 1;
   int64 energy_fee = 2;
   int64 origin_energy_usage = 3;
-  int64 energy_total = 4;
+  int64 energy_usage_total = 4;
   int64 net_usage = 5;
   int64 net_fee = 6;
 }
@@ -207,13 +218,17 @@ message Transaction {
       ProposalDeleteContract = 18;
       SetAccountIdContract = 19;
       CustomContract = 20;
-      BuyStorageContract = 21;
-      BuyStorageBytesContract = 22;
-      SellStorageContract = 23;
+      // BuyStorageContract = 21;
+      // BuyStorageBytesContract = 22;
+      // SellStorageContract = 23;
       CreateSmartContract = 30;
       TriggerSmartContract = 31;
       GetContract = 32;
       UpdateSettingContract = 33;
+      ExchangeCreateContract = 41;
+      ExchangeInjectContract = 42;
+      ExchangeWithdrawContract = 43;
+      ExchangeTransactionContract = 44;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
