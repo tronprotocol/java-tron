@@ -188,10 +188,9 @@ public class TransactionTraceTest {
     try {
       trace.exec(runtime);
       trace.pay();
-      Assert.assertEquals(32400, trace.getReceipt().getEnergyUsage());
-      Assert.assertEquals(6033531930L, trace.getReceipt().getEnergyFee());
-      Assert.assertEquals(6034503930L,
-          trace.getReceipt().getEnergyUsage() * 30 + trace.getReceipt().getEnergyFee());
+      Assert.assertEquals(50000, trace.getReceipt().getEnergyUsage());
+      Assert.assertEquals(20110013100L, trace.getReceipt().getEnergyFee());
+      Assert.assertEquals(201150131L, trace.getReceipt().getEnergyUsageTotal());
       // Assert.assertEquals(deployStorageDelta, trace.getReceipt().getStorageDelta());
       // Assert.assertEquals(493800000, trace.getReceipt().getStorageFee());
       accountCapsule = dbManager.getAccountStore().get(accountCapsule.getAddress().toByteArray());

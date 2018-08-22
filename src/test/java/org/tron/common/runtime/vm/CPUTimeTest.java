@@ -10,6 +10,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TVMTestUtils;
+import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -75,12 +76,11 @@ public class CPUTimeTest {
       throws ContractExeException, TransactionTraceException, ContractValidateException, OutOfSlotTimeException {
 
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 20000000000000L;
     long consumeUserResourcePercent = 0;
     TVMTestResult result = deployEndlessLoopContract(value, feeLimit,
         consumeUserResourcePercent);
     Assert.assertEquals(result.getReceipt().getEnergyUsage(), 0);
-    Assert.assertEquals(result.getReceipt().getEnergyFee(), 153210);
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 5107);
     Assert.assertEquals(result.getReceipt().getOriginEnergyUsage(), 0);
 
@@ -94,6 +94,9 @@ public class CPUTimeTest {
       result = TVMTestUtils
           .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
               contractAddress, triggerData, value, feeLimit, deposit, null);
+      Exception exception = result.getRuntime().getResult().getException();
+      Assert.assertTrue(exception instanceof OutOfEnergyException);
+      haveException = true;
     } catch (Exception e) {
       haveException = true;
       Assert.assertTrue(e instanceof OutOfSlotTimeException);
