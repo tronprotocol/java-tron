@@ -77,6 +77,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] TOTAL_ENERGY_LIMIT = "TOTAL_ENERGY_LIMIT".getBytes();
 
+  private static final byte[] ENERGY_FEE = "ENERGY_FEE".getBytes();
+
   //abandon
   private static final byte[] CREATE_ACCOUNT_FEE = "CREATE_ACCOUNT_FEE".getBytes();
 
@@ -267,7 +269,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getTotalEnergyLimit();
     } catch (IllegalArgumentException e) {
-      this.saveTotalEnergyLimit(32400_000_000L);
+      this.saveTotalEnergyLimit(50_000_000_000L);
+    }
+
+    try {
+      this.getEnergyFee();
+    } catch (IllegalArgumentException e) {
+      this.saveEnergyFee(100L);// 100 sun per energy
     }
 
     try {
@@ -658,6 +666,20 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_ENERGY_LIMIT"));
+  }
+
+
+  public void saveEnergyFee(long totalEnergyFee) {
+    this.put(ENERGY_FEE,
+        new BytesCapsule(ByteArray.fromLong(totalEnergyFee)));
+  }
+
+  public long getEnergyFee() {
+    return Optional.ofNullable(getUnchecked(ENERGY_FEE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ENERGY_FEE"));
   }
 
   public void saveCreateAccountFee(long fee) {
