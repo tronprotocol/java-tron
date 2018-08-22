@@ -159,25 +159,36 @@ public class ExchangeInjectActuator extends AbstractActuator {
     }
 
     if (firstTokenBalance == 0 || secondTokenBalance == 0) {
-      throw new ContractValidateException("Token balance in exchange is equal with 0,the exchange has been closed");
+      throw new ContractValidateException("Token balance in exchange is equal with 0,"
+          + "the exchange has been closed");
     }
 
     if (tokenQuant <= 0) {
       throw new ContractValidateException("injected token balance must greater than zero");
     }
 
+    long newTokenBalance, newAnotherTokenBalance;
     if (Arrays.equals(tokenID, firstTokenID)) {
       anotherTokenID = secondTokenID;
       anotherTokenQuant = Math
           .floorDiv(Math.multiplyExact(secondTokenBalance, tokenQuant), firstTokenBalance);
+      newTokenBalance = firstTokenBalance + tokenQuant;
+      newAnotherTokenBalance = secondTokenBalance + anotherTokenQuant;
     } else {
       anotherTokenID = firstTokenID;
       anotherTokenQuant = Math
           .floorDiv(Math.multiplyExact(firstTokenBalance, tokenQuant), secondTokenBalance);
+      newTokenBalance = secondTokenBalance + tokenQuant;
+      newAnotherTokenBalance = firstTokenBalance + anotherTokenQuant;
     }
 
     if (anotherTokenQuant <= 0) {
       throw new ContractValidateException(" The calculated Token Quant  must be larger than 0");
+    }
+
+    long balanceLimit = dbManager.getDynamicPropertiesStore().getExchangeBalanceLimit();
+    if (newTokenBalance > balanceLimit || newAnotherTokenBalance > balanceLimit) {
+      throw new ContractValidateException("token balance must less than " + balanceLimit);
     }
 
     if (tokenID == "_".getBytes()) {

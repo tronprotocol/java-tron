@@ -40,8 +40,6 @@ public class ExchangeTransactionActuator extends AbstractActuator {
 
       byte[] firstTokenID = exchangeCapsule.getFirstTokenId();
       byte[] secondTokenID = exchangeCapsule.getSecondTokenId();
-      long firstTokenBalance = exchangeCapsule.getFirstTokenBalance();
-      long secondTokenBalance = exchangeCapsule.getSecondTokenBalance();
 
       byte[] tokenID = exchangeTransactionContract.getTokenId().toByteArray();
       long tokenQuant = exchangeTransactionContract.getQuant();
@@ -133,6 +131,8 @@ public class ExchangeTransactionActuator extends AbstractActuator {
 
     byte[] firstTokenID = exchangeCapsule.getFirstTokenId();
     byte[] secondTokenID = exchangeCapsule.getSecondTokenId();
+    long firstTokenBalance = exchangeCapsule.getFirstTokenBalance();
+    long secondTokenBalance = exchangeCapsule.getSecondTokenBalance();
 
     byte[] tokenID = contract.getTokenId().toByteArray();
     long tokenQuant = contract.getQuant();
@@ -143,6 +143,13 @@ public class ExchangeTransactionActuator extends AbstractActuator {
 
     if (tokenQuant <= 0) {
       throw new ContractValidateException("transaction token balance must greater than zero");
+    }
+
+    long balanceLimit = dbManager.getDynamicPropertiesStore().getExchangeBalanceLimit();
+    long tokenBalance = (tokenID == firstTokenID ? firstTokenBalance : secondTokenBalance);
+    tokenBalance += tokenQuant;
+    if (tokenBalance > balanceLimit) {
+      throw new ContractValidateException("token balance must less than " + balanceLimit);
     }
 
     if (tokenID == "_".getBytes()) {

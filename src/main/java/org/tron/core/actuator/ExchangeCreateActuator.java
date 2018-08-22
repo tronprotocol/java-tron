@@ -127,6 +127,11 @@ public class ExchangeCreateActuator extends AbstractActuator {
       throw new ContractValidateException("token balance must greater than zero");
     }
 
+    long balanceLimit = dbManager.getDynamicPropertiesStore().getExchangeBalanceLimit();
+    if (firstTokenBalance > balanceLimit || secondTokenBalance > balanceLimit) {
+      throw new ContractValidateException("token balance must less than " + balanceLimit);
+    }
+
     if (firstTokenID == "_".getBytes()) {
       if (accountCapsule.getBalance() < (firstTokenBalance + calcFee())) {
         throw new ContractValidateException("balance is not enough");
