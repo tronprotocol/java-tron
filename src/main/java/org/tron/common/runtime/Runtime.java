@@ -519,6 +519,8 @@ public class Runtime {
           if (result.getException() != null) {
             program.spendAllEnergy();
             runtimeError = result.getException().getMessage();
+            trace.setBill(result.getEnergyUsed());
+            throw result.getException();
           } else {
             runtimeError = "REVERT opcode executed";
           }
