@@ -57,8 +57,8 @@ public class ContractScenario008 {
         .getBalance()));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract008Address, 1000000L,
         3,1,contract008Key,blockingStubFull));
-    Assert.assertTrue(PublicMethed.buyStorage(5000000L,contract008Address,contract008Key,
-        blockingStubFull));
+    /*    Assert.assertTrue(PublicMethed.buyStorage(5000000L,contract008Address,contract008Key,
+        blockingStubFull));*/
 
   }
 
@@ -67,15 +67,15 @@ public class ContractScenario008 {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract008Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
-    Long storageLimit = accountResource.getStorageLimit();
+    //Long storageLimit = accountResource.getStorageLimit();
     Long energyUsage = accountResource.getEnergyUsed();
-    Long storageUsage = accountResource.getStorageUsed();
+    //Long storageUsage = accountResource.getStorageUsed();
     Account account = PublicMethed.queryAccount(contract008Key,blockingStubFull);
     logger.info("before balance is " + Long.toString(account.getBalance()));
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
-    logger.info("before storage limit is " + Long.toString(storageLimit));
-    logger.info("before storage usaged is " + Long.toString(storageUsage));
+    //logger.info("before storage limit is " + Long.toString(storageLimit));
+    //logger.info("before storage usaged is " + Long.toString(storageUsage));
     Long maxFeeLimit = 900L;
     //maxFeeLimit = 3900000000L;
     String contractName = "Cat";
@@ -88,20 +88,20 @@ public class ContractScenario008 {
     contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
         0L, 100,null,contract008Key,contract008Address,blockingStubFull);
 
-    SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
+    final SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
     accountResource = PublicMethed.getAccountResource(contract008Address,blockingStubFull);
     energyLimit = accountResource.getEnergyLimit();
-    storageLimit = accountResource.getStorageLimit();
+    //storageLimit = accountResource.getStorageLimit();
     energyUsage = accountResource.getEnergyUsed();
-    storageUsage = accountResource.getStorageUsed();
+    //storageUsage = accountResource.getStorageUsed();
     account = PublicMethed.queryAccount(contract008Key,blockingStubFull);
     logger.info("after balance is " + Long.toString(account.getBalance()));
     logger.info("after energy limit is " + Long.toString(energyLimit));
     logger.info("after energy usage is " + Long.toString(energyUsage));
-    logger.info("after storage limit is " + Long.toString(storageLimit));
-    logger.info("after storage usaged is " + Long.toString(storageUsage));
-    Assert.assertTrue(storageUsage > 0);
-    Assert.assertTrue(storageLimit > 0);
+    //logger.info("after storage limit is " + Long.toString(storageLimit));
+    //logger.info("after storage usaged is " + Long.toString(storageUsage));
+    //Assert.assertTrue(storageUsage > 0);
+    //Assert.assertTrue(storageLimit > 0);
     Assert.assertTrue(energyLimit > 0);
     Assert.assertTrue(energyUsage > 0);
 

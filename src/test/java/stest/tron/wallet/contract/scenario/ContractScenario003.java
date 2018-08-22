@@ -56,8 +56,8 @@ public class ContractScenario003 {
         .getBalance()));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract003Address, 1000000L,
         3,1,contract003Key,blockingStubFull));
-    Assert.assertTrue(PublicMethed.buyStorage(5000000L,contract003Address,contract003Key,
-        blockingStubFull));
+    /*    Assert.assertTrue(PublicMethed.buyStorage(5000000L,contract003Address,contract003Key,
+        blockingStubFull));*/
 
   }
 
@@ -66,14 +66,14 @@ public class ContractScenario003 {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract003Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
-    Long storageLimit = accountResource.getStorageLimit();
+    //Long storageLimit = accountResource.getStorageLimit();
     Long energyUsage = accountResource.getEnergyUsed();
-    Long storageUsage = accountResource.getStorageUsed();
+    //Long storageUsage = accountResource.getStorageUsed();
 
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
-    logger.info("before storage limit is " + Long.toString(storageLimit));
-    logger.info("before storage usaged is " + Long.toString(storageUsage));
+    //logger.info("before storage limit is " + Long.toString(storageLimit));
+    //logger.info("before storage usaged is " + Long.toString(storageUsage));
     Long maxFeeLimit = 5000000L;
     String contractName = "ERC223";
     String code = "60c0604052600560808190527f546f6b656e0000000000000000000000000000000000000000000"
@@ -188,18 +188,18 @@ public class ContractScenario003 {
     //logger.info(smartContract.getAbi().toString());
     accountResource = PublicMethed.getAccountResource(contract003Address,blockingStubFull);
     energyLimit = accountResource.getEnergyLimit();
-    storageLimit = accountResource.getStorageLimit();
+    //storageLimit = accountResource.getStorageLimit();
     energyUsage = accountResource.getEnergyUsed();
-    storageUsage = accountResource.getStorageUsed();
-    Assert.assertTrue(storageUsage > 0);
-    Assert.assertTrue(storageLimit > 0);
+    //storageUsage = accountResource.getStorageUsed();
+    //Assert.assertTrue(storageUsage > 0);
+    //Assert.assertTrue(storageLimit > 0);
     Assert.assertTrue(energyLimit > 0);
     Assert.assertTrue(energyUsage > 0);
 
     logger.info("after energy limit is " + Long.toString(energyLimit));
     logger.info("after energy usage is " + Long.toString(energyUsage));
-    logger.info("after storage limit is " + Long.toString(storageLimit));
-    logger.info("after storage usaged is " + Long.toString(storageUsage));
+    //logger.info("after storage limit is " + Long.toString(storageLimit));
+    //logger.info("after storage usaged is " + Long.toString(storageUsage));
   }
 
   @AfterClass

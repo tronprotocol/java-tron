@@ -110,7 +110,8 @@ public class SuperWitnessAllowance {
       String lowBalTest = ByteArray.toHexString(ecKey.getPrivKeyBytes());
       logger.info(lowBalTest);
       Assert.assertTrue(sendcoin(lowBalAddress, costForCreateWitness, fromAddress, testKey002));
-      Assert.assertTrue(PublicMethed.freezeBalance(lowBalAddress,1000000,3,lowBalTest,blockingStubFull));
+      Assert.assertTrue(PublicMethed.freezeBalance(lowBalAddress,1000000,
+          3,lowBalTest,blockingStubFull));
       Assert.assertTrue(createWitness(lowBalAddress, createUrl, lowBalTest));
       String voteStr = Base58.encode58Check(PublicMethed.getFinalAddress(lowBalTest));
       HashMap<String, String> smallVoteMap = new HashMap<String, String>();
@@ -134,17 +135,18 @@ public class SuperWitnessAllowance {
     WitnessList witnessList = result.get();
     Integer allowanceNum = 0;
     for (Integer i = 0; i < witnessList.getWitnessesCount(); i++) {
-/*      witnessList.getWitnesses(i).getAddress();
+      /*      witnessList.getWitnesses(i).getAddress();
       witnessList.getWitnesses(i).getAddress();
       witnessList.getWitnesses(i).getAddress();
       witnessList.getWitnesses(i).getAddress();*/
-      ByteString addressBS = witnessList.getWitnesses(i).getAddress();
-      Account request = Account.newBuilder().setAddress(addressBS).build();
+      ByteString addressBs = witnessList.getWitnesses(i).getAddress();
+      Account request = Account.newBuilder().setAddress(addressBs).build();
       request = blockingStubFull.getAccount(request);
       if (request.getAllowance() > 0) {
         allowanceNum++;
       }
-      logger.info("Account " + Integer.toString(i) + " allowance is " + Long.toString(request.getAllowance()));
+      logger.info("Account " + Integer.toString(i) + " allowance is " + Long.toString(request
+          .getAllowance()));
 
     }
     logger.info("Allowance num is " + Integer.toString(allowanceNum));
@@ -319,7 +321,7 @@ public class SuperWitnessAllowance {
     } catch (Exception ex) {
       ex.printStackTrace();
     }
-    ECKey ecKey = temKey;
+    final ECKey ecKey = temKey;
     Account beforeVote  = PublicMethed.queryAccount(priKey,blockingStubFull);
     //Account beforeVote = queryAccount(ecKey, blockingStubFull);
     Long beforeVoteNum = 0L;
@@ -331,7 +333,7 @@ public class SuperWitnessAllowance {
     builder.setOwnerAddress(ByteString.copyFrom(addRess));
     for (String addressBase58 : witness.keySet()) {
       String value = witness.get(addressBase58);
-      long count = Long.parseLong(value);
+      final long count = Long.parseLong(value);
       Contract.VoteWitnessContract.Vote.Builder voteBuilder = Contract.VoteWitnessContract.Vote
           .newBuilder();
       byte[] address = WalletClient.decodeFromBase58Check(addressBase58);

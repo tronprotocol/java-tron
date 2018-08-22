@@ -61,14 +61,14 @@ public class ContractLinkage004 {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(linkage004Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
-    Long storageLimit = accountResource.getStorageLimit();
+    //Long storageLimit = accountResource.getStorageLimit();
     Long energyUsage = accountResource.getEnergyUsed();
-    Long storageUsage = accountResource.getStorageUsed();
+    //Long storageUsage = accountResource.getStorageUsed();
 
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
-    logger.info("before storage limit is " + Long.toString(storageLimit));
-    logger.info("before storage usaged is " + Long.toString(storageUsage));
+    //logger.info("before storage limit is " + Long.toString(storageLimit));
+    //logger.info("before storage usaged is " + Long.toString(storageUsage));
     Long maxFeeLimit = 5000000L;
     String contractName = "tronNative";
     String code = "608060405260008054600160a060020a03199081166201000117909155600180548216620100021"
@@ -155,8 +155,8 @@ public class ContractLinkage004 {
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertTrue(infoById.get().getReceipt().getEnergyFee() > 0);
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsage() == 0);
-    Assert.assertTrue(infoById.get().getReceipt().getStorageFee() > 0);
-    Assert.assertTrue(infoById.get().getReceipt().getStorageDelta() > 200);
+    //Assert.assertTrue(infoById.get().getReceipt().getStorageFee() > 0);
+    //Assert.assertTrue(infoById.get().getReceipt().getStorageDelta() > 200);
 
 
 

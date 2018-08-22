@@ -2,13 +2,16 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 
 <suite name="Wallet case">
+  <listeners>
+    <listener class-name="stest.tron.wallet.common.client.utils.RetryListener"/>
+  </listeners>
     <test name="Debug case" preserve-order="true">
                 <packages>
                     <package name="stest.tron.wallet.*">
                     </package>
                 </packages>
 <!--        <classes>
-            <class name="stest.tron.wallet.onlineStress.MainNetVoteOrFreezeOrCreate"/>
+            <class name="stest.tron.wallet.onlinestress.TestNetErc721Cat"/>
         </classes>-->
     </test>
 </suite>
