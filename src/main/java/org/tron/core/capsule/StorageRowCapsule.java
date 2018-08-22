@@ -20,6 +20,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.protos.Protocol.StorageRow;
@@ -29,6 +30,9 @@ import org.tron.protos.Protocol.StorageRow;
 public class StorageRowCapsule implements ProtoCapsule<StorageRow> {
 
   private StorageRow instance;
+  @Setter
+  @Getter
+  private byte[] composedKey;
 
   @Getter
   private boolean dirty = false;
@@ -41,35 +45,31 @@ public class StorageRowCapsule implements ProtoCapsule<StorageRow> {
     instance = StorageRow.newBuilder().build();
   }
 
-  public StorageRowCapsule(byte[] key, byte[] value) {
-    instance = StorageRow.newBuilder().setKey(ByteString.copyFrom(key))
-        .setValue(ByteString.copyFrom(value)).build();
+  public StorageRowCapsule(byte[] composedKey, byte[] value) {
+    this.composedKey = composedKey;
+    instance = StorageRow.newBuilder().setValue(ByteString.copyFrom(value)).build();
     markDirty();
   }
 
-  public StorageRowCapsule(byte[] code) {
+  public StorageRowCapsule(byte[] data) {
     try {
-      this.instance = StorageRow.parseFrom(code);
+      this.instance = StorageRow.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
     }
   }
 
-  public StorageRowCapsule(StorageRow cache) {
-    this.instance = cache;
+  public StorageRowCapsule(StorageRow row) {
+    this.instance = row;
   }
 
   public Sha256Hash getHash() {
-    byte[] storageBytes = this.instance.toByteArray();
-    return Sha256Hash.of(storageBytes);
+    byte[] storageValue = this.instance.toByteArray();
+    return Sha256Hash.of(storageValue);
   }
 
 
   public DataWord getValue() {
     return new DataWord(this.instance.getValue().toByteArray());
-  }
-
-  public byte[] getKey() {
-    return this.instance.getKey().toByteArray();
   }
 
   public void setValue(DataWord value) {

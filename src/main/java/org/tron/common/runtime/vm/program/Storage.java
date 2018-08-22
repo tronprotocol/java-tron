@@ -25,9 +25,7 @@ public class Storage {
   }
 
   public DataWord getValue(DataWord key) {
-
     if (rowCache.containsKey(key)) {
-
       return rowCache.get(key).getValue();
     } else {
       StorageRowStore store = manager.getStorageRowStore();
@@ -89,9 +87,9 @@ public class Storage {
     rowCache.forEach((key, value) -> {
       if (value.isDirty()) {
         if (value.getValue().isZero()) {
-          manager.getStorageRowStore().delete(value.getKey());
+          manager.getStorageRowStore().delete(value.getComposedKey());
         } else {
-          manager.getStorageRowStore().put(value.getKey(), value);
+          manager.getStorageRowStore().put(value.getComposedKey(), value);
         }
       }
     });

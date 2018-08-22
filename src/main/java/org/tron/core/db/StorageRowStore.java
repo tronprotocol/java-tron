@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.StorageRowCapsule;
+import org.tron.protos.Protocol.StorageRow;
 
 @Slf4j
 @Component
@@ -19,7 +20,9 @@ public class StorageRowStore extends TronStoreWithRevoking<StorageRowCapsule> {
 
   @Override
   public StorageRowCapsule get(byte[] key) {
-    return getUnchecked(key);
+    StorageRowCapsule row = getUnchecked(key);
+    row.setComposedKey(key);
+    return row;
   }
 
   void destory() {

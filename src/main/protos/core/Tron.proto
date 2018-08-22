@@ -430,8 +430,7 @@ message StorageItem {
 }
 
 message StorageRow {
-  bytes key = 1; // composition of contract_address and storage_key
-  bytes value = 2;
+  bytes value = 1;
 }
 
 
