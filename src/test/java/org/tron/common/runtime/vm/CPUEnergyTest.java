@@ -90,7 +90,7 @@ public class CPUEnergyTest {
     long consumeUserResourcePercent = 100;
     TVMTestResult result = deployCallValueTestContract(value, feeLimit,
         consumeUserResourcePercent);
-    Assert.assertEquals(result.getReceipt().getEnergyTotal(), 52439);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 52439);
     byte[] contractAddress = result.getContractAddress();
 
     /* =================================== CALL simpleCall() =================================== */
