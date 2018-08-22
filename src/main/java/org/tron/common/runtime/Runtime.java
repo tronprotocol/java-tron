@@ -279,17 +279,21 @@ public class Runtime {
 
   private long getEnergyLimit(AccountCapsule account, long feeLimit, long callValue) {
 
+    long SUN_PER_ENERGY = deposit.getDbManager().getDynamicPropertiesStore().getEnergyFee() == 0
+        ? Constant.SUN_PER_ENERGY :
+        deposit.getDbManager().getDynamicPropertiesStore().getEnergyFee();
     // can change the calc way
     long leftEnergyFromFreeze = energyProcessor.getAccountLeftEnergyFromFreeze(account);
     callValue = max(callValue, 0);
     long energyFromBalance = Math
-        .floorDiv(max(account.getBalance() - callValue, 0), Constant.SUN_PER_ENERGY);
+        .floorDiv(max(account.getBalance() - callValue, 0), SUN_PER_ENERGY);
 
     long energyFromFeeLimit;
     long totalBalanceForEnergyFreeze = account.getAccountResource().getFrozenBalanceForEnergy()
         .getFrozenBalance();
     if (0 == totalBalanceForEnergyFreeze) {
-      energyFromFeeLimit = feeLimit / Constant.SUN_PER_ENERGY;
+      energyFromFeeLimit =
+          feeLimit / SUN_PER_ENERGY;
     } else {
       long totalEnergyFromFreeze = energyProcessor
           .calculateGlobalEnergyLimit(totalBalanceForEnergyFreeze);
@@ -304,7 +308,7 @@ public class Runtime {
       } else {
         energyFromFeeLimit = Math
             .addExact(leftEnergyFromFreeze,
-                (feeLimit - leftBalanceForEnergyFreeze) / Constant.SUN_PER_ENERGY);
+                (feeLimit - leftBalanceForEnergyFreeze) / SUN_PER_ENERGY);
       }
     }
 
@@ -399,7 +403,6 @@ public class Runtime {
       byte[] ops = newSmartContract.getBytecode().toByteArray();
       InternalTransaction internalTransaction = new InternalTransaction(trx);
 
-      // todo: callvalue should pass into this function
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executorType, trx,
               block, deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
