@@ -81,7 +81,6 @@ public class CPUTimeTest {
     TVMTestResult result = deployEndlessLoopContract(value, feeLimit,
         consumeUserResourcePercent);
     Assert.assertEquals(result.getReceipt().getEnergyUsage(), 0);
-    Assert.assertEquals(result.getReceipt().getEnergyFee(), 153210);
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 5107);
     Assert.assertEquals(result.getReceipt().getOriginEnergyUsage(), 0);
 
