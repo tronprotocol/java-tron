@@ -421,6 +421,7 @@ public class Runtime {
 
     // transfer from callerAddress to contractAddress according to callValue
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
+    long callValue = newSmartContract.getCallValue();
     if (callValue > 0) {
       transfer(this.deposit, callerAddress, contractAddress, callValue);
     }
@@ -525,10 +526,10 @@ public class Runtime {
         } else {
           deposit.commit();
         }
-        trace.setBill(result.getEnergyUsed());
       } else {
         deposit.commit();
       }
+      trace.setBill(result.getEnergyUsed());
     } catch (OutOfResourceException e) {
       logger.error(e.getMessage());
       throw new OutOfSlotTimeException(e.getMessage());

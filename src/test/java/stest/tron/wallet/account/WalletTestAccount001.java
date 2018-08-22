@@ -5,6 +5,7 @@ import com.googlecode.cqengine.query.simple.In;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.math.BigInteger;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -19,14 +20,13 @@ import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
-import stest.tron.wallet.common.client.WalletClient;
-import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
-import org.tron.core.Wallet;
+
 
 
 @Slf4j
@@ -108,6 +108,7 @@ public class WalletTestAccount001 {
     Account invalidQueryResult = solidityqueryAccount(invalidTestKey, blockingStubSolidity);
     Assert.assertTrue(invalidQueryResult.getAccountName().isEmpty());
     Assert.assertTrue(invalidQueryResult.getAddress().isEmpty());
+
 
   }
 

@@ -1,11 +1,10 @@
-package stest.tron.wallet.onlineStress;
+package stest.tron.wallet.onlinestress;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
-import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
@@ -66,7 +65,7 @@ public class MainNetTransferSendOrAsset {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -85,7 +84,7 @@ public class MainNetTransferSendOrAsset {
           100000L, 1L, 1L, testKey001, blockingStubFull);
     }
     beforeToBalance = toAccount.getBalance();
-    beforeToAssetBalance =toAccount.getAssetMap().get("testNetAsset");
+    beforeToAssetBalance = toAccount.getAssetMap().get("testNetAsset");
 
     Account fromSendAccount = PublicMethed.queryAccount(testKey003,blockingStubFull);
     Account toSendAccount   = PublicMethed.queryAccount(testKey004,blockingStubFull);
@@ -102,7 +101,7 @@ public class MainNetTransferSendOrAsset {
   public void freezeAnd() throws InterruptedException {
     Random rand = new Random();
     Integer randNum = 0;
-    randNum= rand.nextInt(1000);
+    randNum = rand.nextInt(1000);
     try {
       Thread.sleep(randNum);
     } catch (InterruptedException e) {
@@ -113,13 +112,15 @@ public class MainNetTransferSendOrAsset {
     Integer i = 0;
     while (i < 60) {
       PublicMethed
-          .transferAsset(toAddress,"testNetAsset".getBytes(),transferAmount,fromAddress,testKey001,blockingStubFull);
+          .transferAsset(toAddress,"testNetAsset".getBytes(),transferAmount,fromAddress,
+              testKey001,blockingStubFull);
       try {
         Thread.sleep(200);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
-      PublicMethed.sendcoin(toSendAddress, sendAmount, fromSendAddress, testKey003, blockingStubFull);
+      PublicMethed.sendcoin(toSendAddress, sendAmount, fromSendAddress, testKey003,
+          blockingStubFull);
       try {
         Thread.sleep(200);
       } catch (InterruptedException e) {
@@ -128,14 +129,14 @@ public class MainNetTransferSendOrAsset {
     }
   }
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     end = System.currentTimeMillis();
     logger.info("Time is " + Long.toString(end - start));
     Account fromAccount = PublicMethed.queryAccount(testKey001,blockingStubFull);
     Account toAccount   = PublicMethed.queryAccount(testKey002,blockingStubFull);
     afterToBalance = toAccount.getBalance();
-    afterToAssetBalance =toAccount.getAssetMap().get("testNetAsset");
+    afterToAssetBalance = toAccount.getAssetMap().get("testNetAsset");
 
     logger.info("Success times is " + Long.toString(afterToAssetBalance - beforeToAssetBalance));
     if (channelFull != null) {

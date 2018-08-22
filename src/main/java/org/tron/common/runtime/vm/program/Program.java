@@ -766,7 +766,7 @@ public class Program {
     DataWord keyWord = word1.clone();
     DataWord valWord = word2.clone();
     getContractState()
-        .addStorageValue(convertToTronAddress(getOwnerAddress().getLast20Bytes()), keyWord,
+        .putStorageValue(convertToTronAddress(getOwnerAddress().getLast20Bytes()), keyWord,
             valWord);
   }
 

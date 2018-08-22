@@ -1,4 +1,4 @@
-package stest.tron.wallet.onlineStress;
+package stest.tron.wallet.onlinestress;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -11,7 +11,6 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
-import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
@@ -26,8 +25,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Contract;
-import org.tron.protos.Contract.FreezeBalanceContract;
-import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -94,7 +91,7 @@ public class MainNetVoteOrFreezeOrCreate {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -103,12 +100,12 @@ public class MainNetVoteOrFreezeOrCreate {
     startTime = System.currentTimeMillis();
   }
 
-  //@Test(enabled = true)
+  //@Test(enabled = false)
   @Test(enabled = false,threadPoolSize = 2, invocationCount = 2)
   public void freezeAndSendcoin() throws InterruptedException {
     Random rand = new Random();
     Integer randNum = 0;
-    randNum= rand.nextInt(1000);
+    randNum = rand.nextInt(1000);
     try {
       Thread.sleep(randNum);
     } catch (InterruptedException e) {
@@ -161,7 +158,7 @@ public class MainNetVoteOrFreezeOrCreate {
             blockingStubFull);
         logger.info("freezeBalance");
       }
-/*      ret = false;
+      /*      ret = false;
       while (!ret) {
         ret = PublicMethed
             .transferAsset(toAddress, name.getBytes(), 10L, accountAddress, testKeyAccount,
@@ -180,7 +177,7 @@ public class MainNetVoteOrFreezeOrCreate {
     }
   }
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     endTime = System.currentTimeMillis();
     logger.info("Time is " + Long.toString(endTime - startTime));
@@ -212,7 +209,7 @@ public class MainNetVoteOrFreezeOrCreate {
     builder.setOwnerAddress(ByteString.copyFrom(addRess));
     for (String addressBase58 : witness.keySet()) {
       String value = witness.get(addressBase58);
-      long count = Long.parseLong(value);
+      final long count = Long.parseLong(value);
       Contract.VoteWitnessContract.Vote.Builder voteBuilder = Contract.VoteWitnessContract.Vote
           .newBuilder();
       byte[] address = WalletClient.decodeFromBase58Check(addressBase58);
@@ -229,7 +226,8 @@ public class MainNetVoteOrFreezeOrCreate {
 
     Transaction transaction = blockingStubFull.voteWitnessAccount(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      //logger.info("transaction == null,\n contract:{},\n transaction:{}" , contract.toString(),transaction.toString());
+      //logger.info("transaction == null,\n contract:{},\n transaction:{}" , contract.toString(),
+      // transaction.toString());
       logger.info("transaction == null");
       return false;
     }
@@ -241,7 +239,7 @@ public class MainNetVoteOrFreezeOrCreate {
       //logger.info(response.getCode().toString());
       return false;
     }
-/*    try {
+    /*    try {
       Thread.sleep(5000);
     } catch (InterruptedException e) {
       e.printStackTrace();

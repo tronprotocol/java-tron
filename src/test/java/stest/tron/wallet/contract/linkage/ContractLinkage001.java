@@ -55,8 +55,8 @@ public class ContractLinkage001 {
         testKey002,blockingStubFull));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage001Address, 5000000L,
         3,1,linkage001Key,blockingStubFull));
-    Assert.assertTrue(PublicMethed.buyStorage(5000000L,linkage001Address,linkage001Key,
-        blockingStubFull));
+    /*    Assert.assertTrue(PublicMethed.buyStorage(5000000L,linkage001Address,linkage001Key,
+        blockingStubFull));*/
 
   }
 
@@ -71,14 +71,14 @@ public class ContractLinkage001 {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(linkage001Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
-    Long storageLimit = accountResource.getStorageLimit();
+    //Long storageLimit = accountResource.getStorageLimit();
     Long energyUsage = accountResource.getEnergyUsed();
-    Long storageUsage = accountResource.getStorageUsed();
+    //Long storageUsage = accountResource.getStorageUsed();
 
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
-    logger.info("before storage limit is " + Long.toString(storageLimit));
-    logger.info("before storage usaged is " + Long.toString(storageUsage));
+    //logger.info("before storage limit is " + Long.toString(storageLimit));
+    //logger.info("before storage usaged is " + Long.toString(storageUsage));
     Long maxFeeLimit = 5000000L;
 
     Account account = PublicMethed.queryAccount(linkage001Key,blockingStubFull);
@@ -92,14 +92,14 @@ public class ContractLinkage001 {
 
     accountResource = PublicMethed.getAccountResource(linkage001Address,blockingStubFull);
     energyLimit = accountResource.getEnergyLimit();
-    storageLimit = accountResource.getStorageLimit();
+    //storageLimit = accountResource.getStorageLimit();
     energyUsage = accountResource.getEnergyUsed();
-    storageUsage = accountResource.getStorageUsed();
+    //storageUsage = accountResource.getStorageUsed();
 
     logger.info("after energy limit is " + Long.toString(energyLimit));
     logger.info("after energy usage is " + Long.toString(energyUsage));
-    logger.info("after storage limit is " + Long.toString(storageLimit));
-    logger.info("after storage usaged is " + Long.toString(storageUsage));
+    //logger.info("after storage limit is " + Long.toString(storageLimit));
+    //logger.info("after storage usaged is " + Long.toString(storageUsage));
 
     account = PublicMethed.queryAccount(linkage001Key,blockingStubFull);
     Long afterAccountBalance = account.getBalance();

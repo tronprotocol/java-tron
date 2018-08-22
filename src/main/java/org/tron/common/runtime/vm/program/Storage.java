@@ -1,7 +1,6 @@
 package org.tron.common.runtime.vm.program;
 
 import static java.lang.System.arraycopy;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -11,11 +10,9 @@ import org.tron.core.capsule.StorageRowCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.db.StorageRowStore;
 
-//import org.ethereum.crypto.HashUtil;
-
 public class Storage {
 
-  private byte[] addressHash;  // contract address
+  private byte[] addrHash;  // contract address
   private Manager manager;
   private final Map<DataWord, StorageRowCapsule> rowCache = new HashMap<>();
   private long beforeUseSize = 0;
@@ -23,16 +20,18 @@ public class Storage {
   private static final int PREFIX_BYTES = 16;
 
   public Storage(byte[] address, Manager manager) {
-    addressHash = addrHash(address);
+    addrHash = addrHash(address);
     this.manager = manager;
   }
 
   public DataWord getValue(DataWord key) {
+
     if (rowCache.containsKey(key)) {
+
       return rowCache.get(key).getValue();
     } else {
       StorageRowStore store = manager.getStorageRowStore();
-      StorageRowCapsule row = store.get(compose(key.getData(), addressHash));
+      StorageRowCapsule row = store.get(compose(key.getData(), addrHash));
       if (row == null) {
         return null;
       } else {
@@ -48,7 +47,7 @@ public class Storage {
       rowCache.get(key).setValue(value);
     } else {
       StorageRowStore store = manager.getStorageRowStore();
-      byte[] composedKey = compose(key.getData(), addressHash);
+      byte[] composedKey = compose(key.getData(), addrHash);
       StorageRowCapsule row = store.get(composedKey);
 
       if (row == null) {
@@ -75,7 +74,9 @@ public class Storage {
   public long computeSize() {
     AtomicLong size = new AtomicLong();
     rowCache.forEach((key, value) -> {
-      size.getAndAdd(value.getInstance().getSerializedSize());
+      if (!value.getValue().isZero()) {
+        size.getAndAdd(value.getInstance().getSerializedSize());
+      }
     });
     return size.get();
   }
@@ -85,9 +86,14 @@ public class Storage {
   }
 
   public void commit() {
-    // TODO can just write dirty row
     rowCache.forEach((key, value) -> {
-      manager.getStorageRowStore().put(value.getKey(), value);
+      if (value.isDirty()) {
+        if (value.getValue().isZero()) {
+          manager.getStorageRowStore().delete(value.getKey());
+        } else {
+          manager.getStorageRowStore().put(value.getKey(), value);
+        }
+      }
     });
   }
 }

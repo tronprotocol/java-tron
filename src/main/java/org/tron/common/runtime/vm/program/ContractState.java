@@ -109,11 +109,11 @@ public class ContractState implements Deposit, ProgramListenerAware {
     */
 
   @Override
-  public void addStorageValue(byte[] addr, DataWord key, DataWord value) {
+  public void putStorageValue(byte[] addr, DataWord key, DataWord value) {
     if (canListenTrace(addr)) {
       programListener.onStoragePut(key, value);
     }
-    deposit.addStorageValue(addr, key, value);
+    deposit.putStorageValue(addr, key, value);
   }
 
   private boolean canListenTrace(byte[] address) {
