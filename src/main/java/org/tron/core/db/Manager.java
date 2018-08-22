@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -49,7 +48,6 @@ import org.tron.abi.datatypes.Type;
 import org.tron.abi.datatypes.generated.AbiTypes;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.Runtime;
-import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
@@ -106,8 +104,6 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.TransactionInfo.Log;
-import org.tron.protos.Protocol.TransactionInfo.code;
 
 
 @Slf4j
@@ -344,7 +340,7 @@ public class Manager {
             TransactionCapsule tx = this.getRepushTransactions().take();
             this.rePush(tx);
           } catch (InterruptedException ex) {
-            logger.info("repushLoop interrupted");
+            logger.error(ex.getMessage());
             Thread.currentThread().interrupt();
           } catch (Exception ex) {
             logger.error("unknown exception happened in witness loop", ex);
@@ -355,7 +351,7 @@ public class Manager {
       };
 
   private Thread repushThread;
-  
+
   public Thread getRepushThread() {
     return repushThread;
   }
@@ -633,10 +629,10 @@ public class Manager {
     processor.consume(trx, ret, trace);
   }
 
-  public void consumeCpu(TransactionCapsule trx, TransactionResultCapsule ret,
+  public void consumeEnergy(TransactionCapsule trx, TransactionResultCapsule ret,
       TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException {
-    CpuProcessor processor = new CpuProcessor(this);
+    EnergyProcessor processor = new EnergyProcessor(this);
     processor.consume(trx, ret, trace);
   }
 
@@ -1063,7 +1059,8 @@ public class Manager {
 
     RuntimeException runtimeException = runtime.getResult().getException();
     ReceiptCapsule traceReceipt = trace.getReceipt();
-    TransactionInfoCapsule transactionInfo = TransactionInfoCapsule.buildInstance(trxCap, block, runtime, traceReceipt);
+    TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
+        .buildInstance(trxCap, block, runtime, traceReceipt);
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
 
@@ -1072,7 +1069,7 @@ public class Manager {
     return true;
   }
 
-  private void sendEventLog(byte[] contractAddress, List<Log> logList, Block block, TransactionInfoCapsule transactionInfoCapsule) {
+  private void sendEventLog(byte[] contractAddress, List<org.tron.protos.Protocol.TransactionInfo.Log> logList, Block block, TransactionInfoCapsule transactionInfoCapsule) {
     if (block == null) {
       return;
     }
@@ -1133,20 +1130,6 @@ public class Manager {
     } catch (Exception e) {
       logger.error("SendEventToMQ Failed {}", e);
     }
-  }
-
-  private List<Log> getLogsByLogInfoList(List<LogInfo> logInfos) {
-    List<Log> logList = Lists.newArrayList();
-    logInfos.forEach(logInfo -> {
-      List<ByteString> topics = Lists.newArrayList();
-      logInfo.getTopics().forEach(topic -> {
-        topics.add(ByteString.copyFrom(topic.getData()));
-      });
-      ByteString address = ByteString.copyFrom(logInfo.getAddress());
-      ByteString data = ByteString.copyFrom(logInfo.getData());
-      logList.add(Log.newBuilder().setAddress(address).addAllTopics(topics).setData(data).build());
-    });
-    return logList;
   }
 
   /**

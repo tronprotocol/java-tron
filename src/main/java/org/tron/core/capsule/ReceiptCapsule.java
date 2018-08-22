@@ -2,9 +2,8 @@ package org.tron.core.capsule;
 
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
-import org.tron.core.db.CpuProcessor;
+import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
-import org.tron.core.db.StorageMarket;
 import org.tron.protos.Protocol.ResourceReceipt;
 
 public class ReceiptCapsule {
@@ -35,28 +34,44 @@ public class ReceiptCapsule {
     return this.receiptAddress;
   }
 
-  public void setCpuUsage(long usage) {
-    receipt = receipt.toBuilder().setCpuUsage(usage).build();
-  }
-
-  public void setCpuFee(long fee) {
-    receipt = receipt.toBuilder().setCpuFee(fee).build();
-  }
-
-  public long getCpuUsage() {
-    return receipt.getCpuUsage();
-  }
-
-  public long getCpuFee() {
-    return receipt.getCpuFee();
-  }
-
   public void setNetUsage(long netUsage) {
     this.receipt = this.receipt.toBuilder().setNetUsage(netUsage).build();
   }
 
   public void setNetFee(long netFee) {
     this.receipt = this.receipt.toBuilder().setNetFee(netFee).build();
+  }
+
+  public long getEnergyUsage() {
+    return this.receipt.getEnergyUsage();
+  }
+
+  public long getEnergyFee() {
+    return this.receipt.getEnergyFee();
+  }
+
+  public void setEnergyUsage(long energyUsage) {
+    this.receipt = this.receipt.toBuilder().setEnergyUsage(energyUsage).build();
+  }
+
+  public void setEnergyFee(long energyFee) {
+    this.receipt = this.receipt.toBuilder().setEnergyFee(energyFee).build();
+  }
+
+  public long getOriginEnergyUsage() {
+    return this.receipt.getOriginEnergyUsage();
+  }
+
+  public long getEnergyUsageTotal() {
+    return this.receipt.getEnergyUsageTotal();
+  }
+
+  public void setOriginEnergyUsage(long energyUsage) {
+    this.receipt = this.receipt.toBuilder().setOriginEnergyUsage(energyUsage).build();
+  }
+
+  public void setEnergyUsageTotal(long energyUsage) {
+    this.receipt = this.receipt.toBuilder().setEnergyUsageTotal(energyUsage).build();
   }
 
   public long getNetUsage() {
@@ -67,128 +82,50 @@ public class ReceiptCapsule {
     return this.receipt.getNetFee();
   }
 
-  public void calculateCpuFee() {
-    //TODO: calculate
-  }
-
-  public void setStorageDelta(long delta) {
-    this.receipt = this.receipt.toBuilder().setStorageDelta(delta).build();
-  }
-
-  public void setStorageFee(long fee) {
-    this.receipt = this.receipt.toBuilder().setStorageFee(fee).build();
-  }
-
-  public long getStorageDelta() {
-    return receipt.getStorageDelta();
-  }
-
-  public long getStorageFee() {
-    return receipt.getStorageFee();
-  }
-
   /**
-   * payCpuBill pay receipt cpu bill by cpu processor.
+   * payEnergyBill pay receipt energy bill by energy processor.
    */
-  public void payCpuBill(
-      Manager manager,
-      AccountCapsule origin,
-      AccountCapsule caller,
-      long percent,
-      CpuProcessor cpuProcessor,
-      long now) {
-    if (0 == receipt.getCpuUsage()) {
+  public void payEnergyBill(Manager manager, AccountCapsule origin, AccountCapsule caller,
+      long percent, EnergyProcessor energyProcessor, long now) {
+    if (0 == receipt.getEnergyUsageTotal()) {
       return;
     }
 
     if (caller.getAddress().equals(origin.getAddress())) {
-      payCpuBill(manager, caller, receipt.getCpuUsage(), cpuProcessor, now);
+      payEnergyBill(manager, caller, receipt.getEnergyUsageTotal(), energyProcessor, now);
     } else {
-      long originUsage = receipt.getCpuUsage() * percent / 100;
-      originUsage = Math.min(originUsage, cpuProcessor.getAccountLeftCpuInUsFromFreeze(origin));
-      long callerUsage = receipt.getCpuUsage() - originUsage;
-      payCpuBill(manager, origin, originUsage, cpuProcessor, now);
-      this.setOriginCpuUsage(originUsage);
-      payCpuBill(manager, caller, callerUsage, cpuProcessor, now);
+      long originUsage = Math.multiplyExact(receipt.getEnergyUsageTotal(), percent) / 100;
+      originUsage = Math
+          .min(originUsage, energyProcessor.getAccountLeftEnergyFromFreeze(origin));
+      long callerUsage = receipt.getEnergyUsageTotal() - originUsage;
+      energyProcessor.useEnergy(origin, originUsage, now);
+      this.setOriginEnergyUsage(originUsage);
+      payEnergyBill(manager, caller, callerUsage, energyProcessor, now);
     }
   }
 
-  private void payCpuBill(
+  private void payEnergyBill(
       Manager manager,
       AccountCapsule account,
       long usage,
-      CpuProcessor cpuProcessor,
+      EnergyProcessor energyProcessor,
       long now) {
-    long accountCpuLeft = cpuProcessor.getAccountLeftCpuInUsFromFreeze(account);
-    if (accountCpuLeft >= usage) {
-      cpuProcessor.useCpu(account, usage, now);
+    long accountEnergyLeft = energyProcessor.getAccountLeftEnergyFromFreeze(account);
+    if (accountEnergyLeft >= usage) {
+      energyProcessor.useEnergy(account, usage, now);
+      this.setEnergyUsage(usage);
     } else {
-      cpuProcessor.useCpu(account, accountCpuLeft, now);
-      long cpuFee = (usage - accountCpuLeft) * Constant.SUN_PER_GAS;
-      this.setCpuUsage(getCpuUsage() - (usage - accountCpuLeft));
-      this.setCpuFee(cpuFee);
-      account.setBalance(account.getBalance() - cpuFee);
+      energyProcessor.useEnergy(account, accountEnergyLeft, now);
+      long energyFee = (usage - accountEnergyLeft) * Constant.SUN_PER_ENERGY;
+      this.setEnergyUsage(accountEnergyLeft);
+      this.setEnergyFee(energyFee);
+      account.setBalance(account.getBalance() - energyFee);
     }
 
     manager.getAccountStore().put(account.getAddress().toByteArray(), account);
-  }
-
-  /**
-   * payStorageBill pay receipt storage bill by storage market.
-   */
-  public void payStorageBill(
-      Manager manager,
-      AccountCapsule origin,
-      AccountCapsule caller,
-      long percent,
-      StorageMarket storageMarket) {
-    if (0 == receipt.getStorageDelta()) {
-      return;
-    }
-
-    if (caller.getAddress().equals(origin.getAddress())) {
-      payStorageBill(manager, caller, receipt.getStorageDelta(), storageMarket);
-    } else {
-      long originDelta = receipt.getStorageDelta() * percent / 100;
-      originDelta = Math.min(originDelta, origin.getStorageLeft());
-      long callerDelta = receipt.getStorageDelta() - originDelta;
-      payStorageBill(manager, origin, originDelta, storageMarket);
-      this.setOriginStorageDelta(originDelta);
-      payStorageBill(manager, caller, callerDelta, storageMarket);
-    }
-  }
-
-  private void payStorageBill(
-      Manager manager,
-      AccountCapsule account,
-      long delta,
-      StorageMarket storageMarket) {
-
-    if (account.getStorageLeft() >= delta) {
-      account.setStorageUsage(account.getStorageUsage() + delta);
-    } else {
-      long needStorage = delta - account.getStorageLeft();
-      this.setStorageFee(storageMarket.tryBuyStorageBytes(needStorage));
-      account = storageMarket.buyStorageBytes(account, needStorage);
-      account.setStorageUsage(account.getStorageUsage() + delta);
-    }
-
-    manager.getAccountStore().put(account.getAddress().toByteArray(), account);
-  }
-
-  public void buyStorage(long storage) {
-    //TODO: buy the min storage
   }
 
   public static ResourceReceipt copyReceipt(ReceiptCapsule origin) {
     return origin.getReceipt().toBuilder().build();
-  }
-
-  public void setOriginCpuUsage(long delta) {
-    this.receipt = this.receipt.toBuilder().setOriginCpuUsage(delta).build();
-  }
-
-  public void setOriginStorageDelta(long delta) {
-    this.receipt = this.receipt.toBuilder().setOriginStorageDelta(delta).build();
   }
 }

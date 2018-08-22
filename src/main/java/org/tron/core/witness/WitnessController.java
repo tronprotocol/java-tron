@@ -23,6 +23,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.VotesStore;
@@ -305,6 +306,8 @@ public class WitnessController {
     VotesStore votesStore = manager.getVotesStore();
     AccountStore accountStore = manager.getAccountStore();
 
+    tryRemoveThePowerOfTheGr();
+
     Map<ByteString, Long> countWitness = countVote(votesStore);
 
     //Only possible during the initialization phase
@@ -371,6 +374,22 @@ public class WitnessController {
       logger.info(
           "updateWitness,before:{} ", StringUtil.getAddressStringList(currentWits)
               + ",\nafter:{} " + StringUtil.getAddressStringList(newWits));
+    }
+  }
+
+  public void tryRemoveThePowerOfTheGr(){
+    if(manager.getDynamicPropertiesStore().getRemoveThePowerOfTheGr() == 1){
+
+      WitnessStore witnessStore = manager.getWitnessStore();
+
+      Args.getInstance().getGenesisBlock().getWitnesses().forEach(witnessInGenesisBlock -> {
+        WitnessCapsule witnessCapsule = witnessStore.get(witnessInGenesisBlock.getAddress());
+        witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() - witnessInGenesisBlock.getVoteCount());
+
+        witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
+      });
+
+      manager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(-1);
     }
   }
 

@@ -10,6 +10,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TVMTestUtils;
+import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -24,12 +25,12 @@ import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
-public class TimeTest {
+public class CPUTimeTest {
 
   private Manager dbManager;
   private AnnotationConfigApplicationContext context;
   private DepositImpl deposit;
-  private String dbPath = "output_InternalTransactionCallTest";
+  private String dbPath = "output_CPUTimeTest";
   private String OWNER_ADDRESS;
 
 
@@ -44,7 +45,7 @@ public class TimeTest {
     dbManager = context.getBean(Manager.class);
     deposit = DepositImpl.createRoot(dbManager);
     deposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
-    deposit.addBalance(Hex.decode(OWNER_ADDRESS), 100000000);
+    deposit.addBalance(Hex.decode(OWNER_ADDRESS), 30000000000000L);
   }
 
   // solidity for endlessLoopTest
@@ -72,29 +73,36 @@ public class TimeTest {
 
   @Test
   public void endlessLoopTest()
-      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, TransactionTraceException, ContractValidateException, OutOfSlotTimeException {
 
-    // [1]
     long value = 0;
-    long feeLimit = 1000000000; // sun
-    long consumeUserResourcePercent = 0; // will exhaust the developer's resource ?
+    long feeLimit = 20000000000000L;
+    long consumeUserResourcePercent = 0;
     TVMTestResult result = deployEndlessLoopContract(value, feeLimit,
         consumeUserResourcePercent);
-    Assert.assertEquals(result.getReceipt().getCpuUsage(), 0);
-    Assert.assertEquals(result.getReceipt().getCpuFee(), 4710);
+    Assert.assertEquals(result.getReceipt().getEnergyUsage(), 0);
+    Assert.assertEquals(result.getReceipt().getEnergyFee(), 153210);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 5107);
+    Assert.assertEquals(result.getReceipt().getOriginEnergyUsage(), 0);
 
     byte[] contractAddress = result.getContractAddress();
 
     /* =================================== CALL setVote(uint256) =================================== */
     String params = "0000000000000000000000000000000000000000000000000000000000000003";
     byte[] triggerData = TVMTestUtils.parseABI("setVote(uint256)", params);
+    boolean haveException = false;
     try {
       result = TVMTestUtils
           .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
               contractAddress, triggerData, value, feeLimit, deposit, null);
+      Exception exception = result.getRuntime().getResult().getException();
+      Assert.assertTrue(exception instanceof OutOfEnergyException);
+      haveException = true;
     } catch (Exception e) {
+      haveException = true;
       Assert.assertTrue(e instanceof OutOfSlotTimeException);
     }
+    Assert.assertTrue(haveException);
   }
 
   public TVMTestResult deployEndlessLoopContract(long value, long feeLimit,

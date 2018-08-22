@@ -69,5 +69,5 @@ public interface ProgramInvoke {
 
   long getVmStartInUs();
 
-  long getGasLimit();
+  long getEnergyLimit();
 }
