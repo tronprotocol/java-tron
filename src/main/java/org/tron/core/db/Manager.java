@@ -318,6 +318,7 @@ public class Manager {
           } catch (InterruptedException ex) {
             logger.error(ex.getMessage());
             Thread.currentThread().interrupt();
+            break;
           } catch (Exception ex) {
             logger.error("unknown exception happened in witness loop", ex);
           } catch (Throwable throwable) {
