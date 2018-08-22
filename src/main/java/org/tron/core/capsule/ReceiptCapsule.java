@@ -116,7 +116,11 @@ public class ReceiptCapsule {
       this.setEnergyUsage(usage);
     } else {
       energyProcessor.useEnergy(account, accountEnergyLeft, now);
-      long energyFee = (usage - accountEnergyLeft) * Constant.SUN_PER_ENERGY;
+      long SUN_PER_ENERGY = manager.getDynamicPropertiesStore().getEnergyFee() == 0
+          ? Constant.SUN_PER_ENERGY
+          : manager.getDynamicPropertiesStore().getEnergyFee();
+      long energyFee =
+          (usage - accountEnergyLeft) * SUN_PER_ENERGY;
       this.setEnergyUsage(accountEnergyLeft);
       this.setEnergyFee(energyFee);
       account.setBalance(account.getBalance() - energyFee);
