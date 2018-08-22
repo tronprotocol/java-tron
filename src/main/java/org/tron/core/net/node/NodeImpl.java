@@ -755,16 +755,29 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   * @Date: 2018/7/13
   */
   private void processAdvBlock(PeerConnection peer, BlockCapsule block) {
-    boolean isSuccess = true;
-    while (isSuccess && block!=null) {
-      isSuccess = realProcessAdvBlock(peer, block);
-      if(!isSuccess){
-        break;
-      }
 
-      //Find whether block's child block exists or not, if exists,handle this child block simultaneously;
-      peer = advBlockDisorder.getPeer(block.getBlockId());
-      block = advBlockDisorder.getBlockCapsule(block.getBlockId());
+    if(!advBlockDisorder.isOrderedBlock(peer, block)){
+      // receive a disordered block we have requested
+      advBlockDisorder.add(peer, block);
+    }else{
+      // receive an ordered block we have requested, try to push block
+      boolean isSuccess = true;
+      while (isSuccess) {
+        try {
+          isSuccess = realProcessAdvBlock(peer, block);
+          if (isSuccess) {
+            // if push block success, we try to find his child block and continue push
+            block = advBlockDisorder.getNextBlock(block);
+          }
+        } catch (UnLinkedBlockException e) {
+          // get unlinked exception because we do not have the chain which the block is in.
+          logger.error("We get a unlinked block {}, from {}, head is {}",
+                  block.getBlockId().getString(), peer.getNode().getHost(),
+                  del.getHeadBlockId().getString());
+          isSuccess = false;
+          startSyncWithPeer(peer);
+        }
+      }
     }
   }
 
@@ -779,7 +792,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   * @Author: shydesky@gmail.com
   * @Date: 2018/7/13
   */
-  private boolean realProcessAdvBlock(PeerConnection peer, BlockCapsule block){
+  private boolean realProcessAdvBlock (PeerConnection peer, BlockCapsule block) throws UnLinkedBlockException{
     if (!freshBlockId.contains(block.getBlockId())) {
       try {
         LinkedList<Sha256Hash> trxIds = null;
@@ -793,18 +806,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             .forEach(p -> updateBlockWeBothHave(p, block));
 
         broadcast(new BlockMessage(block));
-        advBlockDisorder.remove(block.getParentHash());
         return true;
       } catch (BadBlockException e) {
         logger.error("We get a bad block {}, from {}, reason is {} ",
             block.getBlockId().getString(), peer.getNode().getHost(), e.getMessage());
         disconnectPeer(peer, ReasonCode.BAD_BLOCK);
-      } catch (UnLinkedBlockException e) {
-        logger.error("We get a unlinked block {}, from {}, head is {}",
-            block.getBlockId().getString(), peer.getNode().getHost(),
-            del.getHeadBlockId().getString());
-        advBlockDisorder.add(block.getParentHash(), peer, block);
-        //startSyncWithPeer(peer);
       } catch (NonCommonBlockException e) {
         logger.error("We get a block {} that do not have the most recent common ancestor with the main chain, from {}, reason is {} ",
             block.getBlockId().getString(), peer.getNode().getHost(), e.getMessage());

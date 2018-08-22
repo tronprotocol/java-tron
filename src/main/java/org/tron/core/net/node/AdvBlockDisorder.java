@@ -4,6 +4,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.net.peer.PeerConnection;
 
+import java.util.Comparator;
 import java.util.HashMap;
 
 /**
@@ -33,10 +34,10 @@ public class AdvBlockDisorder {
         return map;
     }
 
-    public void add(Sha256Hash hash, PeerConnection peer, BlockCapsule block){
+    public void add(PeerConnection peer, BlockCapsule block){
         PeerAndBlockCapsule peerAndBlockCapsule = new PeerAndBlockCapsule(peer, block);
         if(!peerAndBlockCapsule.isEmpty()){
-            map.put(hash, peerAndBlockCapsule);
+            map.put(block.getParentHash(), peerAndBlockCapsule);
         }
     }
 
@@ -56,8 +57,8 @@ public class AdvBlockDisorder {
         return get(hash) != null ? get(hash).getPeer(): null;
     }
 
-    public BlockCapsule getBlockCapsule(Sha256Hash hash){
-        return get(hash) != null ? get(hash).getBlockCapsule(): null;
+    public BlockCapsule getNextBlock(BlockCapsule block){
+        return get(block.getParentHash()) != null ? get(block.getParentHash()).getBlockCapsule(): null;
     }
 
     class PeerAndBlockCapsule{
@@ -80,6 +81,11 @@ public class AdvBlockDisorder {
         public PeerConnection getPeer() {
             return peer;
         }
+    }
+
+    public boolean isOrderedBlock(PeerConnection peer, BlockCapsule block){
+        //peer.getAdvObjWeRequested().values().stream().sorted(Comparator.comparing());
+        return false;
     }
 }
 
