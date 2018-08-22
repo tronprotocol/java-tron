@@ -527,10 +527,10 @@ public class Runtime {
         } else {
           deposit.commit();
         }
+        trace.setBill(result.getEnergyUsed());
       } else {
         deposit.commit();
       }
-      trace.setBill(result.getEnergyUsed());
     } catch (OutOfResourceException e) {
       logger.error(e.getMessage());
       throw new OutOfSlotTimeException(e.getMessage());
