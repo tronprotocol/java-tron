@@ -90,7 +90,7 @@ public class CPUEnergyTest {
     long consumeUserResourcePercent = 100;
     TVMTestResult result = deployCallValueTestContract(value, feeLimit,
         consumeUserResourcePercent);
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 52439);
+    Assert.assertEquals(result.getReceipt().getEnergyTotal(), 52439);
     byte[] contractAddress = result.getContractAddress();
 
     /* =================================== CALL simpleCall() =================================== */
@@ -99,7 +99,7 @@ public class CPUEnergyTest {
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 7370);
+    Assert.assertEquals(result.getReceipt().getEnergyTotal(), 7370);
 
     /* =================================== CALL complexCall() =================================== */
     triggerData = TVMTestUtils.parseABI("complexCall()", null);
@@ -107,7 +107,7 @@ public class CPUEnergyTest {
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 9459);
+    Assert.assertEquals(result.getReceipt().getEnergyTotal(), 9459);
     // boolean haveException = false;
     // try {
     //   result = TVMTestUtils
