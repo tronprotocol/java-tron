@@ -43,7 +43,7 @@ public class SystemProperties {
 
   private boolean vmTraceCompressed = false;
   private boolean vmOn = true;
-  private boolean vmTrace = false;
+  private boolean vmTrace = true;
 
   private SystemProperties() {
   }

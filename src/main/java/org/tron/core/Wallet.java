@@ -18,7 +18,9 @@
 
 package org.tron.core;
 
+import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -234,6 +236,15 @@ public class Wallet {
 
     return Hash.sha3omit12(combined);
 
+  }
+
+  public static byte[] generateContractAddress(byte[] transactionRootId, long nonce){
+    byte[] nonceBytes = Longs.toByteArray(nonce);
+    byte[] combined = new byte[transactionRootId.length + nonceBytes.length];
+    System.arraycopy(transactionRootId, 0, combined, 0, transactionRootId.length);
+    System.arraycopy(nonceBytes, 0, combined, transactionRootId.length, nonceBytes.length);
+
+    return Hash.sha3omit12(combined);
   }
 
   public static byte[] decodeFromBase58Check(String addressBase58) {

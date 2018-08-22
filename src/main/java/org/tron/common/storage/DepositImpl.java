@@ -225,7 +225,7 @@ public class DepositImpl implements Deposit {
   public synchronized byte[] getCode(byte[] codeHash) {
     Key key = Key.create(codeHash);
     if (codeCache.containsKey(key)) {
-      codeCache.get(key).getCode().getData();
+      return codeCache.get(key).getCode().getData();
     }
 
     byte[] code;
