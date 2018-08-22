@@ -17,16 +17,13 @@ public class AbiUtil {
   static Pattern paramTypeNumber = Pattern.compile("^(u?int)([0-9]*)$");
   static Pattern paramTypeArray = Pattern.compile("^(.*)\\[([0-9]*)\\]$");
 
-//  var paramTypeBytes = new RegExp(/^bytes([0-9]*)$/);
-//  var paramTypeNumber = new RegExp(/^(u?int)([0-9]*)$/);
-//  var paramTypeArray = new RegExp(/^(.*)\[([0-9]*)\]$/);
   static abstract class Coder {
     boolean dynamic = false;
     String name;
     String type;
 
-//    DataWord[] encode
     abstract byte[] encode(String value);
+
     abstract byte[] decode();
 
   }
@@ -34,14 +31,6 @@ public class AbiUtil {
   class Paramater {
     String type;
   }
-
-
-//  public static  String coderNumber(String coerceFunc, int size, String signed, String localName) {
-//
-//
-//  }
-
-//  public static List<Coder>
 
   public static String[] getTypes(String methodSign) {
     int start = methodSign.indexOf('(') + 1;
@@ -71,11 +60,14 @@ public class AbiUtil {
 
     boolean match = false;
 
-    if (type.matches("^bytes([0-9]*)$"))
+    if (type.matches("^bytes([0-9]*)$")) {
       return new CoderFixedBytes();
+    }
 
-    if (type.matches("^(u?int)([0-9]*)$"))
+
+    if (type.matches("^(u?int)([0-9]*)$")) {
       return new CoderNumber();
+    }
 
 
     Pattern r = Pattern.compile("^(.*)\\[([0-9]*)]$");
@@ -88,15 +80,13 @@ public class AbiUtil {
       }
       return new CoderArray(arrayType, length);
     }
-//    if (type.matches("^(.*)\\[([0-9]*)\\]$"))
-//      return new CoderArray();
-
     return null;
   }
 
   static class CoderArray extends Coder {
     private String elementType;
     private int length;
+
     public CoderArray(String arrayType, int length) {
       this.elementType = arrayType;
       this.length = length;
@@ -132,11 +122,11 @@ public class AbiUtil {
         }
       }
 
-//      String[] values = arrayValues.split(",");
 
       if (this.length == -1) {
         System.out.println("array encoded");
-        System.out.println(Hex.toHexString(concat(new DataWord(strings.size()).getData(), pack(coders, strings))));
+        System.out.println(Hex.toHexString(concat(new DataWord(strings.size()).getData(),
+            pack(coders, strings))));
         System.out.println("fdsfsdf");
         return concat(new DataWord(strings.size()).getData(), pack(coders, strings));
       } else {
@@ -169,8 +159,6 @@ public class AbiUtil {
       return new byte[0];
     }
   }
-
-//  static class
 
   static class CoderFixedBytes extends  Coder {
 
@@ -288,6 +276,7 @@ public class AbiUtil {
 
     return retBytes;
   }
+
   public static byte[] pack(List<Coder> codes, List<Object> values) {
 
     int staticSize = 0;
@@ -323,7 +312,7 @@ public class AbiUtil {
         System.arraycopy(new DataWord(dynamicOffset).getData(), 0,data, offset, 32);
         offset += 32;
 
-        System.arraycopy(encodedList.get(idx), 0,data, dynamicOffset, encodedList.get(idx).length );
+        System.arraycopy(encodedList.get(idx), 0,data, dynamicOffset, encodedList.get(idx).length);
         dynamicOffset += encodedList.get(idx).length;
       } else {
         System.arraycopy(encodedList.get(idx), 0,data, offset, encodedList.get(idx).length);
@@ -369,7 +358,6 @@ public class AbiUtil {
   }
 
   public  static void main(String[] args) {
-//    String method = "test(address,string,int)";
     String method = "test(string,int2,string)";
     String params = "asdf,3123,adf";
 
@@ -390,23 +378,16 @@ public class AbiUtil {
     String bytesValue2 = "123123123";
 
     System.out.println(parseMethod(byteMethod1, bytesValue1));
-//    System.out.println(parseMethod(byteMethod1, bytesValue2));
-
-//    String method3 = "voteForSingleWitness(address,uint256)";
-//    String method3 = "voteForSingleWitness(address)";
-//    String params3 = "\"TNNqZuYhMfQvooC4kJwTsMJEQVU3vWGa5u\"";
-//
-//    System.out.println(parseMethod(method3, params3));
   }
 
-  public static byte[] concat(byte[] ... bytesArray) {
+  public static byte[] concat(byte[]... bytesArray) {
     int length = 0;
     for (byte[] bytes: bytesArray) {
       length += bytes.length;
     }
     byte[] ret = new byte[length];
     int index = 0;
-    for(byte[] bytes: bytesArray) {
+    for (byte[] bytes: bytesArray) {
       System.arraycopy(bytes, 0, ret, index, bytes.length);
       index += bytes.length;
     }

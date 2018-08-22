@@ -32,12 +32,6 @@ public class TransactionUtils {
   private static final Logger logger = LoggerFactory.getLogger("Transaction");
   private final static int RESERVE_BALANCE = 10;
 
-  /**
-   * Obtain a data bytes after removing the id and SHA-256(data)
-   *
-   * @param transaction {@link Transaction} transaction
-   * @return byte[] the hash of the transaction's data bytes which have no id
-   */
   public static byte[] getHash(Transaction transaction) {
     Transaction.Builder tmp = transaction.toBuilder();
     //tmp.clearId();
@@ -114,8 +108,8 @@ public class TransactionUtils {
    * 4. check balance
    */
   public static boolean validTransaction(Transaction signedTransaction) {
-    assert (signedTransaction.getSignatureCount() ==
-        signedTransaction.getRawData().getContractCount());
+    assert (signedTransaction.getSignatureCount()
+        == signedTransaction.getRawData().getContractCount());
     List<Transaction.Contract> listContract = signedTransaction.getRawData().getContractList();
     byte[] hash = Sha256Hash.hash(signedTransaction.getRawData().toByteArray());
     int count = signedTransaction.getSignatureCount();
