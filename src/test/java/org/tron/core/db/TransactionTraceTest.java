@@ -188,7 +188,7 @@ public class TransactionTraceTest {
     try {
       trace.exec(runtime);
       trace.pay();
-      Assert.assertEquals(32400, trace.getReceipt().getEnergyUsage());
+      Assert.assertEquals(50000, trace.getReceipt().getEnergyUsage());
       Assert.assertEquals(6033531930L, trace.getReceipt().getEnergyFee());
       Assert.assertEquals(6034503930L,
           trace.getReceipt().getEnergyUsage() * 30 + trace.getReceipt().getEnergyFee());
