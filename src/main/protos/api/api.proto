@@ -261,6 +261,18 @@ service Wallet {
   rpc SellStorage (SellStorageContract) returns (TransactionExtention) {
   }
 
+  rpc ExchangeCreate (ExchangeCreateContract) returns (TransactionExtention) {
+  }
+
+  rpc ExchangeInject (ExchangeInjectContract) returns (TransactionExtention) {
+  }
+
+  rpc ExchangeWithdraw (ExchangeWithdrawContract) returns (TransactionExtention) {
+  }
+
+  rpc ExchangeTransaction (ExchangeTransactionContract) returns (TransactionExtention) {
+  }
+
   rpc ListNodes (EmptyMessage) returns (NodeList) {
     option (google.api.http) = {
       post: "/wallet/listnodes"
@@ -410,6 +422,26 @@ service Wallet {
         body: "*"
         additional_bindings {
           get: "/wallet/getproposalbyid"
+        }
+      };
+  };
+
+  rpc ListExchanges (EmptyMessage) returns (ExchangeList) {
+    option (google.api.http) = {
+      post: "/wallet/listexchanges"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/listexchanges"
+      }
+    };
+  };
+
+  rpc GetExchangeById (BytesMessage) returns (Exchange) {
+    option (google.api.http) = {
+        post: "/wallet/getexchangebyid"
+        body: "*"
+        additional_bindings {
+          get: "/wallet/getexchangebyid"
         }
       };
   };
@@ -718,6 +750,9 @@ message WitnessList {
 }
 message ProposalList {
   repeated Proposal proposals = 1;
+}
+message ExchangeList {
+  repeated Exchange exchanges = 1;
 }
 message AssetIssueList {
   repeated AssetIssueContract assetIssue = 1;
