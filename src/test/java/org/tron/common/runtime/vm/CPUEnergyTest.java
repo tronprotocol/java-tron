@@ -106,18 +106,68 @@ public class CPUEnergyTest {
     result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, deposit, null);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 9459);
+    Assert.assertEquals(result.getRuntime().getResult().isRevert(), true);
+  }
+
+  @Test
+  public void sendTest()
+      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+
+    long value = 10000000L;
+    long feeLimit = 20000000000000L; // sun
+    long consumeUserResourcePercent = 100;
+    TVMTestResult result = deployCallValueTestContract(value, feeLimit,
+        consumeUserResourcePercent);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 52439);
+    byte[] contractAddress = result.getContractAddress();
+
+    /* =================================== CALL simpleCall() =================================== */
+    byte[] triggerData = TVMTestUtils.parseABI("simpleCall()", null);
+    result = TVMTestUtils
+        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+            contractAddress, triggerData, 0, feeLimit, deposit, null);
+
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 7370);
+
+    /* =================================== CALL complexCall() =================================== */
+    triggerData = TVMTestUtils.parseABI("complexCall()", null);
+    result = TVMTestUtils
+        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+            contractAddress, triggerData, 0, feeLimit, deposit, null);
 
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 9459);
-    // boolean haveException = false;
-    // try {
-    //   result = TVMTestUtils
-    //       .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
-    //           contractAddress, triggerData, value, feeLimit, deposit, null);
-    // } catch (Exception e) {
-    //   Assert.assertTrue(e instanceof OutOfSlotTimeException);
-    //   haveException = true;
-    // }
-    // Assert.assertTrue(haveException);
+    Assert.assertEquals(result.getRuntime().getResult().isRevert(), true);
+  }
+
+  @Test
+  public void transferTest()
+      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+
+    long value = 10000000L;
+    long feeLimit = 20000000000000L; // sun
+    long consumeUserResourcePercent = 100;
+    TVMTestResult result = deployCallValueTestContract(value, feeLimit,
+        consumeUserResourcePercent);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 52439);
+    byte[] contractAddress = result.getContractAddress();
+
+    /* =================================== CALL simpleCall() =================================== */
+    byte[] triggerData = TVMTestUtils.parseABI("simpleCall()", null);
+    result = TVMTestUtils
+        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+            contractAddress, triggerData, 0, feeLimit, deposit, null);
+
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 7370);
+
+    /* =================================== CALL complexCall() =================================== */
+    triggerData = TVMTestUtils.parseABI("complexCall()", null);
+    result = TVMTestUtils
+        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+            contractAddress, triggerData, 0, feeLimit, deposit, null);
+
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 9459);
+    Assert.assertEquals(result.getRuntime().getResult().isRevert(), true);
   }
 
   public TVMTestResult deployCallValueTestContract(long value, long feeLimit,
