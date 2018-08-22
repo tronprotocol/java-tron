@@ -13,7 +13,8 @@ public class TronMessageFactory extends MessageFactory {
   @Override
   public TronMessage create(byte[] data) throws Exception {
     if (data.length <= 1){
-      throw new P2pException(TypeEnum.MESSAGE_WITH_WRONG_LENGTH, "len=" + data.length);
+      throw new P2pException(TypeEnum.MESSAGE_WITH_WRONG_LENGTH, "len=" + data.length
+          + ", MessageType=" + (data.length == 1 ? MessageTypes.fromByte(data[0]) : "unknow"));
     }
     try {
       byte type = data[0];
