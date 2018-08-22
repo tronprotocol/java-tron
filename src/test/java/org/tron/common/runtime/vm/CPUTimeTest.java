@@ -81,7 +81,7 @@ public class CPUTimeTest {
         consumeUserResourcePercent);
     Assert.assertEquals(result.getReceipt().getEnergyUsage(), 0);
     Assert.assertEquals(result.getReceipt().getEnergyFee(), 153210);
-    Assert.assertEquals(result.getReceipt().getEnergyTotal(), 5107);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 5107);
     Assert.assertEquals(result.getReceipt().getOriginEnergyUsage(), 0);
 
     byte[] contractAddress = result.getContractAddress();

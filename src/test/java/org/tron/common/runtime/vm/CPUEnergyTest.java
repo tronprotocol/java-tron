@@ -79,7 +79,7 @@ public class CPUEnergyTest {
     long consumeUserResourcePercent = 100;
     TVMTestResult result = deployGasFunctionTestContract(value, feeLimit,
         consumeUserResourcePercent);
-    Assert.assertEquals(result.getReceipt().getEnergyTotal(), 52457);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 52457);
     byte[] contractAddress = result.getContractAddress();
     //
     // /* =================================== CALL setVote(uint256) =================================== */
