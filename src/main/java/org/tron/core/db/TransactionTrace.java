@@ -80,7 +80,7 @@ public class TransactionTrace {
 
   //set bill
   public void setBill(long energyUseage) {
-    receipt.setEnergyTotal(energyUseage);
+    receipt.setEnergyUsageTotal(energyUseage);
   }
 
   //set net bill
