@@ -2,10 +2,16 @@ package stest.tron.wallet.contract.scenario;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
+import org.springframework.util.StringUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
@@ -27,8 +33,6 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class ContractScenario011 {
 
-  //testng001、testng002、testng003、testng004
-  //testng001、testng002、testng003、testng004
   private final String testKey002 =
       "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -44,11 +48,19 @@ public class ContractScenario011 {
   byte[] saleClockAuctionContractAddress = null;
   byte[] siringClockAuctionContractAddress = null;
   byte[] geneScienceInterfaceContractAddress = null;
-  Integer consumeUserResourcePercent = 1;
+  Integer consumeUserResourcePercent = 50;
+  String txid = "";
+  Optional<TransactionInfo> infoById = null;
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] contract011Address = ecKey1.getAddress();
-  String contract011Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  byte[] deployAddress = ecKey1.getAddress();
+  String deployKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] triggerAddress = ecKey2.getAddress();
+  String triggerKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+
+
 
 
   @BeforeSuite
@@ -59,37 +71,38 @@ public class ContractScenario011 {
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
-    PublicMethed.printAddress(contract011Key);
+    PublicMethed.printAddress(deployKey);
+    PublicMethed.printAddress(triggerKey);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    logger.info(Long.toString(PublicMethed.queryAccount(contract011Key,blockingStubFull)
-        .getBalance()));
-    Assert.assertTrue(PublicMethed.sendcoin(contract011Address,5000000000L,fromAddress,
+    Assert.assertTrue(PublicMethed.sendcoin(deployAddress,50000000000L,fromAddress,
         testKey002,blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract011Address, 10000000L,
-        3,1,contract011Key,blockingStubFull));
-    /*    Assert.assertTrue(PublicMethed.buyStorage(50000000L,contract011Address,contract011Key,
-        blockingStubFull));*/
-    Assert.assertTrue(PublicMethed.freezeBalance(contract011Address,10000000L,3,
-        contract011Key,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(triggerAddress,50000000000L,fromAddress,
+        testKey002,blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(deployAddress,100000000L,
+        3,1,deployKey,blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalance(deployAddress,100000000L,3,
+        deployKey,blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalance(triggerAddress,100000000L,3,
+        triggerKey,blockingStubFull));
 
 
   }
 
   @Test(enabled = true)
   public void deployErc721KittyCore() {
-    AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract011Address,
+    AccountResourceMessage accountResource = PublicMethed.getAccountResource(deployAddress,
         blockingStubFull);
-    Long energyLimit = accountResource.getEnergyLimit();
+    Long cpuLimit = accountResource.getEnergyLimit();
     //Long storageLimit = accountResource.getStorageLimit();
-    Long energyUsage = accountResource.getEnergyUsed();
+    Long cpuUsage = accountResource.getEnergyUsed();
     //Long storageUsage = accountResource.getStorageUsed();
-    Account account = PublicMethed.queryAccount(contract011Key,blockingStubFull);
+    Account account = PublicMethed.queryAccount(deployAddress,blockingStubFull);
     logger.info("before balance is " + Long.toString(account.getBalance()));
-    logger.info("before energy limit is " + Long.toString(energyLimit));
-    logger.info("before energy usage is " + Long.toString(energyUsage));
+    logger.info("before cpu limit is " + Long.toString(cpuLimit));
+    logger.info("before cpu usage is " + Long.toString(cpuUsage));
     //logger.info("before storage limit is " + Long.toString(storageLimit));
     //logger.info("before storage usaged is " + Long.toString(storageUsage));
     Long maxFeeLimit = 3900000000L;
@@ -99,21 +112,22 @@ public class ContractScenario011 {
 
     logger.info("Kitty Core");
     kittyCoreContractAddress = PublicMethed.deployContract(contractName,abi,code,"",
-        maxFeeLimit, 0L, consumeUserResourcePercent,null,contract011Key,
-        contract011Address,blockingStubFull);
+        maxFeeLimit, 0L, consumeUserResourcePercent,null,deployKey,
+        deployAddress,blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(kittyCoreContractAddress,
         blockingStubFull);
+    Assert.assertFalse(StringUtils.isEmpty(smartContract.getBytecode()));
 
     Assert.assertTrue(smartContract.getAbi() != null);
-    accountResource = PublicMethed.getAccountResource(contract011Address,blockingStubFull);
-    energyLimit = accountResource.getEnergyLimit();
+    accountResource = PublicMethed.getAccountResource(deployAddress,blockingStubFull);
+    cpuLimit = accountResource.getEnergyLimit();
     //storageLimit = accountResource.getStorageLimit();
-    energyUsage = accountResource.getEnergyUsed();
+    cpuUsage = accountResource.getEnergyUsed();
     //storageUsage = accountResource.getStorageUsed();
-    account = PublicMethed.queryAccount(contract011Key,blockingStubFull);
+    account = PublicMethed.queryAccount(deployKey,blockingStubFull);
     logger.info("after balance is " + Long.toString(account.getBalance()));
-    logger.info("after energy limit is " + Long.toString(energyLimit));
-    logger.info("after energy usage is " + Long.toString(energyUsage));
+    logger.info("after cpu limit is " + Long.toString(cpuLimit));
+    logger.info("after cpu usage is " + Long.toString(cpuUsage));
     //logger.info("after storage limit is " + Long.toString(storageLimit));
     //logger.info("after storage usaged is " + Long.toString(storageUsage));
     logger.info(ByteArray.toHexString(kittyCoreContractAddress));
@@ -127,16 +141,16 @@ public class ContractScenario011 {
 
   @Test(enabled = true)
   public void deploySaleClockAuction() {
-    AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract011Address,
+    AccountResourceMessage accountResource = PublicMethed.getAccountResource(deployAddress,
         blockingStubFull);
-    Long energyLimit = accountResource.getEnergyLimit();
+    Long cpuLimit = accountResource.getEnergyLimit();
     //Long storageLimit = accountResource.getStorageLimit();
-    Long energyUsage = accountResource.getEnergyUsed();
+    Long cpuUsage = accountResource.getEnergyUsed();
     //Long storageUsage = accountResource.getStorageUsed();
-    Account account = PublicMethed.queryAccount(contract011Key,blockingStubFull);
+    Account account = PublicMethed.queryAccount(deployKey,blockingStubFull);
     logger.info("before balance is " + Long.toString(account.getBalance()));
-    logger.info("before energy limit is " + Long.toString(energyLimit));
-    logger.info("before energy usage is " + Long.toString(energyUsage));
+    logger.info("before cpu limit is " + Long.toString(cpuLimit));
+    logger.info("before cpu usage is " + Long.toString(cpuUsage));
     //logger.info("before storage limit is " + Long.toString(storageLimit));
     //logger.info("before storage usaged is " + Long.toString(storageUsage));
     Long maxFeeLimit = 3900000000L;
@@ -145,36 +159,37 @@ public class ContractScenario011 {
     String abi = "[{\"constant\":false,\"inputs\":[{\"name\":\"_tokenId\",\"type\":\"uint256\"},{\"name\":\"_startingPrice\",\"type\":\"uint256\"},{\"name\":\"_endingPrice\",\"type\":\"uint256\"},{\"name\":\"_duration\",\"type\":\"uint256\"},{\"name\":\"_seller\",\"type\":\"address\"}],\"name\":\"createAuction\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"unpause\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_tokenId\",\"type\":\"uint256\"}],\"name\":\"bid\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"lastGen0SalePrices\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"paused\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"withdrawBalance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_tokenId\",\"type\":\"uint256\"}],\"name\":\"getAuction\",\"outputs\":[{\"name\":\"seller\",\"type\":\"address\"},{\"name\":\"startingPrice\",\"type\":\"uint256\"},{\"name\":\"endingPrice\",\"type\":\"uint256\"},{\"name\":\"duration\",\"type\":\"uint256\"},{\"name\":\"startedAt\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"ownerCut\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"pause\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isSaleClockAuction\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_tokenId\",\"type\":\"uint256\"}],\"name\":\"cancelAuctionWhenPaused\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"gen0SaleCount\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_tokenId\",\"type\":\"uint256\"}],\"name\":\"cancelAuction\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_tokenId\",\"type\":\"uint256\"}],\"name\":\"getCurrentPrice\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"nonFungibleContract\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"averageGen0SalePrice\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_nftAddr\",\"type\":\"address\"},{\"name\":\"_cut\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"tokenId\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"startingPrice\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"endingPrice\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"duration\",\"type\":\"uint256\"}],\"name\":\"AuctionCreated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"tokenId\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"totalPrice\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"winner\",\"type\":\"address\"}],\"name\":\"AuctionSuccessful\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"AuctionCancelled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"Pause\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"Unpause\",\"type\":\"event\"}]";
     logger.info("Sale Clock Auction");
     saleClockAuctionContractAddress = PublicMethed.deployContract(contractName,abi,code,
-        "",maxFeeLimit, 0L, consumeUserResourcePercent,null,contract011Key,
-        contract011Address,blockingStubFull);
+        "",maxFeeLimit, 0L, consumeUserResourcePercent,null,deployKey,
+        deployAddress,blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(saleClockAuctionContractAddress,
         blockingStubFull);
+    Assert.assertFalse(StringUtils.isEmpty(smartContract.getBytecode()));
     Assert.assertTrue(smartContract.getAbi() != null);
-    accountResource = PublicMethed.getAccountResource(contract011Address,blockingStubFull);
-    energyLimit = accountResource.getEnergyLimit();
+    accountResource = PublicMethed.getAccountResource(deployAddress,blockingStubFull);
+    cpuLimit = accountResource.getEnergyLimit();
     //storageLimit = accountResource.getStorageLimit();
-    energyUsage = accountResource.getEnergyUsed();
+    cpuUsage = accountResource.getEnergyUsed();
     //storageUsage = accountResource.getStorageUsed();
-    account = PublicMethed.queryAccount(contract011Key,blockingStubFull);
+    account = PublicMethed.queryAccount(deployKey,blockingStubFull);
     logger.info("after balance is " + Long.toString(account.getBalance()));
-    logger.info("after energy limit is " + Long.toString(energyLimit));
-    logger.info("after energy usage is " + Long.toString(energyUsage));
+    logger.info("after cpu limit is " + Long.toString(cpuLimit));
+    logger.info("after cpu usage is " + Long.toString(cpuUsage));
     //logger.info("after storage limit is " + Long.toString(storageLimit));
     //logger.info("after storage usaged is " + Long.toString(storageUsage));
   }
 
   @Test(enabled = true)
   public void deploySiringClockAuction() {
-    AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract011Address,
+    AccountResourceMessage accountResource = PublicMethed.getAccountResource(deployAddress,
         blockingStubFull);
-    Long energyLimit = accountResource.getEnergyLimit();
+    Long cpuLimit = accountResource.getEnergyLimit();
     //Long storageLimit = accountResource.getStorageLimit();
-    Long energyUsage = accountResource.getEnergyUsed();
+    Long cpuUsage = accountResource.getEnergyUsed();
     //Long storageUsage = accountResource.getStorageUsed();
-    Account account = PublicMethed.queryAccount(contract011Key,blockingStubFull);
+    Account account = PublicMethed.queryAccount(deployKey,blockingStubFull);
     logger.info("before balance is " + Long.toString(account.getBalance()));
-    logger.info("before energy limit is " + Long.toString(energyLimit));
-    logger.info("before energy usage is " + Long.toString(energyUsage));
+    logger.info("before cpu limit is " + Long.toString(cpuLimit));
+    logger.info("before cpu usage is " + Long.toString(cpuUsage));
     //logger.info("before storage limit is " + Long.toString(storageLimit));
     //logger.info("before storage usaged is " + Long.toString(storageUsage));
     Long maxFeeLimit = 3900000000L;
@@ -183,36 +198,37 @@ public class ContractScenario011 {
     String abi = "[{\"constant\":false,\"inputs\":[{\"name\":\"_tokenId\",\"type\":\"uint256\"},{\"name\":\"_startingPrice\",\"type\":\"uint256\"},{\"name\":\"_endingPrice\",\"type\":\"uint256\"},{\"name\":\"_duration\",\"type\":\"uint256\"},{\"name\":\"_seller\",\"type\":\"address\"}],\"name\":\"createAuction\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"unpause\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_tokenId\",\"type\":\"uint256\"}],\"name\":\"bid\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"paused\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"withdrawBalance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isSiringClockAuction\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_tokenId\",\"type\":\"uint256\"}],\"name\":\"getAuction\",\"outputs\":[{\"name\":\"seller\",\"type\":\"address\"},{\"name\":\"startingPrice\",\"type\":\"uint256\"},{\"name\":\"endingPrice\",\"type\":\"uint256\"},{\"name\":\"duration\",\"type\":\"uint256\"},{\"name\":\"startedAt\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"ownerCut\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"pause\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_tokenId\",\"type\":\"uint256\"}],\"name\":\"cancelAuctionWhenPaused\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_tokenId\",\"type\":\"uint256\"}],\"name\":\"cancelAuction\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_tokenId\",\"type\":\"uint256\"}],\"name\":\"getCurrentPrice\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"nonFungibleContract\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_nftAddr\",\"type\":\"address\"},{\"name\":\"_cut\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"tokenId\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"startingPrice\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"endingPrice\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"duration\",\"type\":\"uint256\"}],\"name\":\"AuctionCreated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"tokenId\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"totalPrice\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"winner\",\"type\":\"address\"}],\"name\":\"AuctionSuccessful\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"AuctionCancelled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"Pause\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"Unpause\",\"type\":\"event\"}]";
     logger.info("Siring Clock Auction");
     siringClockAuctionContractAddress = PublicMethed.deployContract(contractName,abi,code,
-        "",maxFeeLimit, 0L, consumeUserResourcePercent,null,contract011Key,
-        contract011Address,blockingStubFull);
+        "",maxFeeLimit, 0L, consumeUserResourcePercent,null,deployKey,
+        deployAddress,blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(siringClockAuctionContractAddress,
         blockingStubFull);
+    Assert.assertFalse(StringUtils.isEmpty(smartContract.getBytecode()));
     Assert.assertTrue(smartContract.getAbi() != null);
-    accountResource = PublicMethed.getAccountResource(contract011Address,blockingStubFull);
-    energyLimit = accountResource.getEnergyLimit();
+    accountResource = PublicMethed.getAccountResource(deployAddress,blockingStubFull);
+    cpuLimit = accountResource.getEnergyLimit();
     //storageLimit = accountResource.getStorageLimit();
-    energyUsage = accountResource.getEnergyUsed();
+    cpuUsage = accountResource.getEnergyUsed();
     //storageUsage = accountResource.getStorageUsed();
-    account = PublicMethed.queryAccount(contract011Key,blockingStubFull);
+    account = PublicMethed.queryAccount(deployKey,blockingStubFull);
     logger.info("after balance is " + Long.toString(account.getBalance()));
-    logger.info("after energy limit is " + Long.toString(energyLimit));
-    logger.info("after energy usage is " + Long.toString(energyUsage));
+    logger.info("after cpu limit is " + Long.toString(cpuLimit));
+    logger.info("after cpu usage is " + Long.toString(cpuUsage));
     //logger.info("after storage limit is " + Long.toString(storageLimit));
     //logger.info("after storage usaged is " + Long.toString(storageUsage));
   }
 
   @Test(enabled = true)
   public void deployGeneScienceInterface() {
-    AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract011Address,
+    AccountResourceMessage accountResource = PublicMethed.getAccountResource(deployAddress,
         blockingStubFull);
-    Long energyLimit = accountResource.getEnergyLimit();
+    Long cpuLimit = accountResource.getEnergyLimit();
     //Long storageLimit = accountResource.getStorageLimit();
-    Long energyUsage = accountResource.getEnergyUsed();
+    Long cpuUsage = accountResource.getEnergyUsed();
     //Long storageUsage = accountResource.getStorageUsed();
-    Account account = PublicMethed.queryAccount(contract011Key,blockingStubFull);
+    Account account = PublicMethed.queryAccount(deployKey,blockingStubFull);
     logger.info("before balance is " + Long.toString(account.getBalance()));
-    logger.info("before energy limit is " + Long.toString(energyLimit));
-    logger.info("before energy usage is " + Long.toString(energyUsage));
+    logger.info("before cpu limit is " + Long.toString(cpuLimit));
+    logger.info("before cpu usage is " + Long.toString(cpuUsage));
     //logger.info("before storage limit is " + Long.toString(storageLimit));
     //logger.info("before storage usaged is " + Long.toString(storageUsage));
     Long maxFeeLimit = 3900000000L;
@@ -222,19 +238,20 @@ public class ContractScenario011 {
     logger.info("gene Science Interface");
     geneScienceInterfaceContractAddress = PublicMethed.deployContract(contractName,abi,code,
         "",maxFeeLimit,
-        0L, consumeUserResourcePercent,null,contract011Key,contract011Address,blockingStubFull);
+        0L, consumeUserResourcePercent,null,deployKey,deployAddress,blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(geneScienceInterfaceContractAddress,
         blockingStubFull);
+    Assert.assertFalse(StringUtils.isEmpty(smartContract.getBytecode()));
     Assert.assertTrue(smartContract.getAbi() != null);
-    accountResource = PublicMethed.getAccountResource(contract011Address,blockingStubFull);
-    energyLimit = accountResource.getEnergyLimit();
+    accountResource = PublicMethed.getAccountResource(deployAddress,blockingStubFull);
+    cpuLimit = accountResource.getEnergyLimit();
     //storageLimit = accountResource.getStorageLimit();
-    energyUsage = accountResource.getEnergyUsed();
+    cpuUsage = accountResource.getEnergyUsed();
     //storageUsage = accountResource.getStorageUsed();
-    account = PublicMethed.queryAccount(contract011Key,blockingStubFull);
+    account = PublicMethed.queryAccount(deployKey,blockingStubFull);
     logger.info("after balance is " + Long.toString(account.getBalance()));
-    logger.info("after energy limit is " + Long.toString(energyLimit));
-    logger.info("after energy usage is " + Long.toString(energyUsage));
+    logger.info("after cpu limit is " + Long.toString(cpuLimit));
+    logger.info("after cpu usage is " + Long.toString(cpuUsage));
     //logger.info("after storage limit is " + Long.toString(storageLimit));
     //logger.info("after storage usaged is " + Long.toString(storageUsage));
   }
@@ -243,15 +260,15 @@ public class ContractScenario011 {
   public void triggerToSetThreeContractAddressToKittyCore() {
     //Set SaleAuctionAddress to kitty core.
     String saleContractString = "\"" + Base58.encode58Check(saleClockAuctionContractAddress) + "\"";
-    String txid = PublicMethed.triggerContract(kittyCoreContractAddress,"setSaleAuctionAddress(address)",saleContractString,false, 0,10000000L,contract011Address,contract011Key,blockingStubFull);
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,"setSaleAuctionAddress(address)",saleContractString,false, 0,10000000L,deployAddress,deployKey,blockingStubFull);
     logger.info(txid);
-    Optional<TransactionInfo> infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
     //Assert.assertTrue(infoById.get().getReceipt().getStorageDelta() > 50);
 
     //Set SiringAuctionAddress to kitty core.
     String siringContractString  = "\"" + Base58.encode58Check(siringClockAuctionContractAddress)
         + "\"";
-    txid = PublicMethed.triggerContract(kittyCoreContractAddress,"setSiringAuctionAddress(address)",siringContractString,false, 0,10000000L,contract011Address,contract011Key,blockingStubFull);
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,"setSiringAuctionAddress(address)",siringContractString,false, 0,10000000L,deployAddress,deployKey,blockingStubFull);
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
     //Assert.assertTrue(infoById.get().getReceipt().getStorageDelta() > 50);
@@ -261,46 +278,112 @@ public class ContractScenario011 {
         + "\"";
     txid = PublicMethed.triggerContract(kittyCoreContractAddress,
         "setGeneScienceAddress(address)",genContractString,
-        false, 0,10000000L,contract011Address,contract011Key,blockingStubFull);
+        false, 0,10000000L,deployAddress,deployKey,blockingStubFull);
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
     //Assert.assertTrue(infoById.get().getReceipt().getStorageDelta() > 50);
 
     //Start the game.
     txid = PublicMethed.triggerContract(kittyCoreContractAddress,"unpause()","",false, 0,
-        10000000L,contract011Address,contract011Key,blockingStubFull);
+        10000000L,deployAddress,deployKey,blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     logger.info("start the game " + txid);
 
     //Create one gen0 cat.
-    Integer times = 0;
-    while (times++ < 1) {
-      txid = PublicMethed.triggerContract(kittyCoreContractAddress,
-          "createGen0Auction(uint256)","-1000000000000000",false,
-          0,100000000L,contract011Address,contract011Key,blockingStubFull);
-      logger.info("createGen0 " + txid);
-      Assert.assertTrue(infoById.get().getResultValue() == 0);
-      String promoKitty = "\"" + times.toString() + "\",\""
-          +  Base58.encode58Check(kittyCoreContractAddress) + "\"";
-      logger.info(promoKitty);
-      txid = PublicMethed.triggerContract(kittyCoreContractAddress,
-          "createPromoKitty(uint256,address)", promoKitty,false,
-          0,10000000L,contract011Address,contract011Key,blockingStubFull);
-      logger.info("createPromoKitty " + txid);
-      Assert.assertTrue(infoById.get().getResultValue() == 0);
-      try {
-        Thread.sleep(10);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+        "createGen0Auction(uint256)","-1000000000000000",false,
+        0,100000000L,deployAddress,deployKey,blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
 
-      //infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
-    }
+
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+        "gen0CreatedCount()","#",false,
+        0,100000000L,deployAddress,deployKey,blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+
+    /*      txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+          "name()","#",false,0,10000000,triggerAddress,
+          triggerKey,blockingStubFull);
+      logger.info("getname " + txid);*/
+
+
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+        "getKitty(uint256)","1",false,0,10000000,triggerAddress,
+        triggerKey,blockingStubFull);
+    logger.info("getKitty " + txid);
+    infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+
+
+
+    String newCxoAddress = "\"" + Base58.encode58Check(triggerAddress)
+        + "\"";
+
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+        "setCOO(address)",newCxoAddress,false,0,10000000,deployAddress,
+        deployKey,blockingStubFull);
+    logger.info("COO " + txid);
+    infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+        "setCFO(address)",newCxoAddress,false,0,10000000,deployAddress,
+        deployKey,blockingStubFull);
+    logger.info("CFO " + txid);
+    infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+        "setCEO(address)",newCxoAddress,false,0,1000000,deployAddress,
+        deployKey,blockingStubFull);
+    logger.info("CEO " + txid);
+    infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+  }
+
+  @Test(enabled = true)
+  public void triggerUseTriggerEnergyUsage() {
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+        "createGen0Auction(uint256)", "0", false,
+        0, 100000000L, triggerAddress, triggerKey, blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getReceipt().getEnergyUsage() == 0);
+    Assert.assertTrue(infoById.get().getReceipt().getEnergyFee() > 10000);
+    Assert.assertTrue(infoById.get().getReceipt().getOriginEnergyUsage() > 10000);
+    Assert.assertTrue(infoById.get().getReceipt().getEnergyTotal() == infoById.get().getReceipt().getEnergyFee()/30 + infoById.get().getReceipt().getOriginEnergyUsage());
+    logger.info("before EnergyUsage is " + infoById.get().getReceipt().getEnergyUsage());
+    logger.info("before EnergyFee is " + infoById.get().getReceipt().getEnergyFee());
+    logger.info("before OriginEnergyUsage is " + infoById.get().getReceipt().getOriginEnergyUsage());
+    logger.info("before EnergyTotal is " + infoById.get().getReceipt().getEnergyTotal());
+
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(triggerAddress,100000000L,
+        3,1,triggerKey,blockingStubFull));
+
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+        "createGen0Auction(uint256)", "0", false,
+        0, 100000000L, triggerAddress, triggerKey, blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info("after EnergyUsage is " + infoById.get().getReceipt().getEnergyUsage());
+    logger.info("after EnergyFee is " + infoById.get().getReceipt().getEnergyFee());
+    logger.info("after OriginEnergyUsage is " + infoById.get().getReceipt().getOriginEnergyUsage());
+    logger.info("after EnergyTotal is " + infoById.get().getReceipt().getEnergyTotal());
+    Assert.assertTrue(infoById.get().getReceipt().getEnergyUsage() > 10000);
+    Assert.assertTrue(infoById.get().getReceipt().getEnergyFee() == 0);
+    Assert.assertTrue(infoById.get().getReceipt().getOriginEnergyUsage() > 10000);
+    Assert.assertTrue(infoById.get().getReceipt().getEnergyTotal() == infoById.get().getReceipt().getEnergyUsage() + infoById.get().getReceipt().getOriginEnergyUsage());
+    Assert.assertTrue(infoById.get().getReceipt().getEnergyUsage() == infoById.get().getReceipt().getOriginEnergyUsage());
+
+
 
 
 
   }
+
+
+
 
 
   @AfterClass
