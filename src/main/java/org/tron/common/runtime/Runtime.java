@@ -277,11 +277,13 @@ public class Runtime {
     }
   }
 
-  private long getEnergyLimit(AccountCapsule account, long feeLimit) {
+  private long getEnergyLimit(AccountCapsule account, long feeLimit, long callValue) {
 
     // can change the calc way
     long leftEnergyFromFreeze = energyProcessor.getAccountLeftEnergyFromFreeze(account);
-    long energyFromBalance = Math.floorDiv(account.getBalance(), Constant.SUN_PER_ENERGY);
+    callValue = max(callValue, 0);
+    long energyFromBalance = Math
+        .floorDiv(max(account.getBalance() - callValue, 0), Constant.SUN_PER_ENERGY);
 
     long energyFromFeeLimit;
     long totalBalanceForEnergyFreeze = account.getAccountResource().getFrozenBalanceForEnergy()
@@ -310,9 +312,9 @@ public class Runtime {
   }
 
   private long getEnergyLimit(AccountCapsule creator, AccountCapsule caller,
-      TriggerSmartContract contract, long feeLimit) {
+      TriggerSmartContract contract, long feeLimit, long callValue) {
 
-    long callerEnergyLimit = getEnergyLimit(caller, feeLimit);
+    long callerEnergyLimit = getEnergyLimit(caller, feeLimit, callValue);
     if (Arrays.equals(creator.getAddress().toByteArray(), caller.getAddress().toByteArray())) {
       return callerEnergyLimit;
     }
@@ -369,7 +371,7 @@ public class Runtime {
 
     newSmartContract = newSmartContract.toBuilder()
         .setContractAddress(ByteString.copyFrom(contractAddress)).build();
-
+    long callValue = newSmartContract.getCallValue();
     // create vm to constructor smart contract
     try {
 
@@ -393,7 +395,7 @@ public class Runtime {
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
       long feeLimit = trx.getRawData().getFeeLimit();
-      long energyLimit = getEnergyLimit(creator, feeLimit);
+      long energyLimit = getEnergyLimit(creator, feeLimit, callValue);
       byte[] ops = newSmartContract.getBytecode().toByteArray();
       InternalTransaction internalTransaction = new InternalTransaction(trx);
 
@@ -419,7 +421,6 @@ public class Runtime {
 
     // transfer from callerAddress to contractAddress according to callValue
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
-    long callValue = newSmartContract.getCallValue();
     if (callValue > 0) {
       transfer(this.deposit, callerAddress, contractAddress, callValue);
     }
@@ -439,6 +440,7 @@ public class Runtime {
 
     byte[] contractAddress = contract.getContractAddress().toByteArray();
     byte[] code = this.deposit.getCode(contractAddress);
+    long callValue = contract.getCallValue();
     if (isEmpty(code)) {
 
     } else {
@@ -461,7 +463,7 @@ public class Runtime {
       long feeLimit = trx.getRawData().getFeeLimit();
       long energyLimit;
       try {
-        energyLimit = getEnergyLimit(creator, caller, contract, feeLimit);
+        energyLimit = getEnergyLimit(creator, caller, contract, feeLimit, callValue);
       } catch (Exception e) {
         logger.error(e.getMessage());
         throw new ContractExeException(e.getMessage());
@@ -482,7 +484,6 @@ public class Runtime {
     program.getResult().setContractAddress(contractAddress);
     //transfer from callerAddress to targetAddress according to callValue
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
-    long callValue = contract.getCallValue();
     if (callValue > 0) {
       transfer(this.deposit, callerAddress, contractAddress, callValue);
     }
@@ -514,29 +515,22 @@ public class Runtime {
           result.getDeleteAccounts().clear();
           result.getLogInfoList().clear();
           result.resetFutureRefund();
-          if (!result.isRevert()){
-            program.spendAllEnergy();
-          }
-          // spendUsage();
+
           if (result.getException() != null) {
+            program.spendAllEnergy();
             runtimeError = result.getException().getMessage();
+            trace.setBill(result.getEnergyUsed());
             throw result.getException();
           } else {
             runtimeError = "REVERT opcode executed";
           }
         } else {
-          // long usedStorageSize =
-          //     deposit.computeAfterRunStorageSize() - deposit.getBeforeRunStorageSize();
-          // if (!spendUsage()) {
-          //   throw Program.Exception.notEnoughStorage();
-          // }
           deposit.commit();
         }
-
+        trace.setBill(result.getEnergyUsed());
       } else {
         deposit.commit();
       }
-      trace.setBill(result.getEnergyUsed());
     } catch (OutOfResourceException e) {
       logger.error(e.getMessage());
       throw new OutOfSlotTimeException(e.getMessage());
