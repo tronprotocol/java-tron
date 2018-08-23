@@ -12,7 +12,6 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.FreezeBalanceContract;
-import org.tron.protos.Contract.ResourceCode;
 import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -69,30 +68,31 @@ public class FreezeBalanceActuator extends AbstractActuator {
         dbManager.getDynamicPropertiesStore()
             .addTotalNetWeight(freezeBalanceContract.getFrozenBalance() / 1000_000L);
         break;
-      case CPU:
-        long currentFrozenBalanceForCpu = accountCapsule.getAccountResource().getFrozenBalanceForCpu()
+      case ENERGY:
+        long currentFrozenBalanceForEnergy = accountCapsule.getAccountResource()
+            .getFrozenBalanceForEnergy()
             .getFrozenBalance();
-        long newFrozenBalanceForCpu = freezeBalanceContract.getFrozenBalance() + currentFrozenBalanceForCpu;
+        long newFrozenBalanceForEnergy =
+            freezeBalanceContract.getFrozenBalance() + currentFrozenBalanceForEnergy;
 
-        Frozen newFrozenForCpu = Frozen.newBuilder()
-            .setFrozenBalance(newFrozenBalanceForCpu)
+        Frozen newFrozenForEnergy = Frozen.newBuilder()
+            .setFrozenBalance(newFrozenBalanceForEnergy)
             .setExpireTime(now + duration)
             .build();
 
         AccountResource newAccountResource = accountCapsule.getAccountResource().toBuilder()
-            .setFrozenBalanceForCpu(newFrozenForCpu).build();
+            .setFrozenBalanceForEnergy(newFrozenForEnergy).build();
 
         accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
             .setAccountResource(newAccountResource)
             .setBalance(newBalance)
             .build());
         dbManager.getDynamicPropertiesStore()
-            .addTotalCpuWeight(freezeBalanceContract.getFrozenBalance() / 1000_000L);
+            .addTotalEnergyWeight(freezeBalanceContract.getFrozenBalance() / 1000_000L);
         break;
     }
 
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-
 
     ret.setStatus(fee, code.SUCESS);
 
@@ -164,14 +164,14 @@ public class FreezeBalanceActuator extends AbstractActuator {
               + "and more than " + minFrozenTime + " days");
     }
 
-
     switch (freezeBalanceContract.getResource()) {
       case BANDWIDTH:
         break;
-      case CPU:
+      case ENERGY:
         break;
-      default: throw new ContractValidateException(
-          "ResourceCode error,valid ResourceCode[BANDWIDTH、CPU]");
+      default:
+        throw new ContractValidateException(
+            "ResourceCode error,valid ResourceCode[BANDWIDTH、ENERGY]");
     }
 
     return true;

@@ -91,6 +91,11 @@ service Wallet {
       }
     };
   };
+
+  //modify the consume_user_resource_percent
+  rpc UpdateSetting (UpdateSettingContract) returns (TransactionExtention) {
+  };
+
   //Use this function instead of VoteWitnessAccount.
   rpc VoteWitnessAccount2 (VoteWitnessContract) returns (TransactionExtention) {
   };
@@ -250,7 +255,22 @@ service Wallet {
   rpc BuyStorage (BuyStorageContract) returns (TransactionExtention) {
   }
 
+  rpc BuyStorageBytes (BuyStorageBytesContract) returns (TransactionExtention) {
+  }
+
   rpc SellStorage (SellStorageContract) returns (TransactionExtention) {
+  }
+
+  rpc ExchangeCreate (ExchangeCreateContract) returns (TransactionExtention) {
+  }
+
+  rpc ExchangeInject (ExchangeInjectContract) returns (TransactionExtention) {
+  }
+
+  rpc ExchangeWithdraw (ExchangeWithdrawContract) returns (TransactionExtention) {
+  }
+
+  rpc ExchangeTransaction (ExchangeTransactionContract) returns (TransactionExtention) {
   }
 
   rpc ListNodes (EmptyMessage) returns (NodeList) {
@@ -402,6 +422,26 @@ service Wallet {
         body: "*"
         additional_bindings {
           get: "/wallet/getproposalbyid"
+        }
+      };
+  };
+
+  rpc ListExchanges (EmptyMessage) returns (ExchangeList) {
+    option (google.api.http) = {
+      post: "/wallet/listexchanges"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/listexchanges"
+      }
+    };
+  };
+
+  rpc GetExchangeById (BytesMessage) returns (Exchange) {
+    option (google.api.http) = {
+        post: "/wallet/getexchangebyid"
+        body: "*"
+        additional_bindings {
+          get: "/wallet/getexchangebyid"
         }
       };
   };
@@ -711,6 +751,9 @@ message WitnessList {
 message ProposalList {
   repeated Proposal proposals = 1;
 }
+message ExchangeList {
+  repeated Exchange exchanges = 1;
+}
 message AssetIssueList {
   repeated AssetIssueContract assetIssue = 1;
 }
@@ -788,10 +831,10 @@ message AccountResourceMessage {
   int64 TotalNetLimit = 7;
   int64 TotalNetWeight = 8;
 
-  int64 CpuUsed = 13;
-  int64 CpuLimit = 14;
-  int64 TotalCpuLimit = 15;
-  int64 TotalCpuWeight = 16;
+  int64 EnergyUsed = 13;
+  int64 EnergyLimit = 14;
+  int64 TotalEnergyLimit = 15;
+  int64 TotalEnergyWeight = 16;
 
   int64 storageUsed = 21;
   int64 storageLimit = 22;
@@ -828,7 +871,8 @@ message AddressPrKeyPairMessage {
 message TransactionExtention {
   Transaction transaction = 1;
   bytes txid = 2;   //transaction id =  sha256(transaction.rowdata)
-  Return result = 3;
+  repeated bytes constant_result = 3;
+  Return result = 4;
 }
 
 message BlockExtention {

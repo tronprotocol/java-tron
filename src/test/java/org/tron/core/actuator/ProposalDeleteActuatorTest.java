@@ -12,7 +12,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
@@ -37,7 +37,7 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 
 public class ProposalDeleteActuatorTest {
 
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
   private static Manager dbManager;
   private static final String dbPath = "output_ProposalApprove_test";
   private static final String ACCOUNT_NAME_FIRST = "ownerF";
@@ -50,7 +50,7 @@ public class ProposalDeleteActuatorTest {
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_SECOND =

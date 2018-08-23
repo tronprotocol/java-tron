@@ -30,8 +30,6 @@ public class ChannelManager {
 
   private static final Logger logger = LoggerFactory.getLogger("ChannelManager");
 
-  private static final int inboundConnectionBanTimeout = 30 * 1000;
-
   private final Map<ByteArrayWrapper, Channel> activePeers = new ConcurrentHashMap<>();
 
   private Cache<InetAddress, ReasonCode> badPeers = CacheBuilder.newBuilder().maximumSize(10000)

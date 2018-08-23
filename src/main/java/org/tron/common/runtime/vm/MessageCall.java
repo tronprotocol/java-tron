@@ -29,9 +29,9 @@ public class MessageCall {
     private final OpCode type;
 
     /**
-     * gas to pay for the call, remaining gas will be refunded to the caller
+     * energy to pay for the call, remaining energy will be refunded to the caller
      */
-    private final DataWord gas;
+    private final DataWord energy;
     /**
      * address of account which code to call
      */
@@ -57,20 +57,20 @@ public class MessageCall {
      */
     private DataWord outDataSize;
 
-    public MessageCall(OpCode type, DataWord gas, DataWord codeAddress,
+    public MessageCall(OpCode type, DataWord energy, DataWord codeAddress,
                        DataWord endowment, DataWord inDataOffs, DataWord inDataSize) {
         this.type = type;
-        this.gas = gas;
+        this.energy = energy;
         this.codeAddress = codeAddress;
         this.endowment = endowment;
         this.inDataOffs = inDataOffs;
         this.inDataSize = inDataSize;
     }
 
-    public MessageCall(OpCode type, DataWord gas, DataWord codeAddress,
+    public MessageCall(OpCode type, DataWord energy, DataWord codeAddress,
                        DataWord endowment, DataWord inDataOffs, DataWord inDataSize,
                        DataWord outDataOffs, DataWord outDataSize) {
-        this(type, gas, codeAddress, endowment, inDataOffs, inDataSize);
+        this(type, energy, codeAddress, endowment, inDataOffs, inDataSize);
         this.outDataOffs = outDataOffs;
         this.outDataSize = outDataSize;
     }
@@ -79,8 +79,8 @@ public class MessageCall {
         return type;
     }
 
-    public DataWord getGas() {
-        return gas;
+    public DataWord getEnergy() {
+        return energy;
     }
 
     public DataWord getCodeAddress() {

@@ -94,6 +94,11 @@ public class BuyStorageActuator extends AbstractActuator {
     if (quant > accountCapsule.getBalance()) {
       throw new ContractValidateException("quantity must be less than accountBalance");
     }
+    long storage_bytes = storageMarket.tryBuyStorage(quant);
+    if (storage_bytes < 1L) {
+      throw new ContractValidateException(
+          "storage_bytes must be larger than 1,current storage_bytes[" + storage_bytes + "]");
+    }
 
 //    long storageBytes = storageMarket.exchange(quant, true);
 //    if (storageBytes > dbManager.getDynamicPropertiesStore().getTotalStorageReserved()) {

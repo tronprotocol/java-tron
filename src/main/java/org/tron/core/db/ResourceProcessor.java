@@ -22,7 +22,8 @@ abstract class ResourceProcessor {
 
   abstract void updateUsage(AccountCapsule accountCapsule);
 
-  abstract void consume(TransactionCapsule trx, TransactionResultCapsule ret)
+  abstract void consume(TransactionCapsule trx, TransactionResultCapsule ret,
+      TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException;
 
   protected long increase(long lastUsage, long usage, long lastTime, long now) {

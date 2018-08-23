@@ -5,7 +5,7 @@ import io.grpc.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.junit.*;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.crypto.ECKey;
@@ -37,7 +37,7 @@ import java.util.stream.IntStream;
 
 @Slf4j
 public class GetLostBlockIdsTest {
-    private static AnnotationConfigApplicationContext context;
+    private static TronApplicationContext context;
     private NodeImpl node;
     RpcApiService rpcApiService;
     PeerClient peerClient;
@@ -64,7 +64,7 @@ public class GetLostBlockIdsTest {
         BlockCapsule capsule = null;
         for (int i = 0; i<5; i++) {
             number = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1;
-            capsule = createTestBlockCapsule(number, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(), addressToProvateKeys);
+            capsule = createTestBlockCapsule(1533529947843L + 3000L * i ,number, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(), addressToProvateKeys);
             try {
                 dbManager.pushBlock(capsule);
             } catch (Exception e) {
@@ -167,6 +167,10 @@ public class GetLostBlockIdsTest {
     private BlockCapsule createTestBlockCapsule(
             long number, ByteString hash, Map<ByteString, String> addressToProvateKeys) {
         long time = System.currentTimeMillis();
+        return createTestBlockCapsule(time,number,hash,addressToProvateKeys);
+    }
+    private BlockCapsule createTestBlockCapsule(long time ,
+        long number, ByteString hash, Map<ByteString, String> addressToProvateKeys) {
         WitnessController witnessController = dbManager.getWitnessController();
         ByteString witnessAddress =
                 witnessController.getScheduledWitness(witnessController.getSlotAtTime(time));
@@ -198,7 +202,7 @@ public class GetLostBlockIdsTest {
                 cfgArgs.setNeedSyncCheck(false);
                 cfgArgs.setNodeExternalIp("127.0.0.1");
 
-                context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+                context = new TronApplicationContext(DefaultConfig.class);
 
                 if (cfgArgs.isHelp()) {
                     logger.info("Here is the help message.");

@@ -41,14 +41,16 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
-import org.tron.protos.Contract.BuyStorageContract;
 import org.tron.protos.Contract.CreateSmartContract;
+import org.tron.protos.Contract.ExchangeCreateContract;
+import org.tron.protos.Contract.ExchangeInjectContract;
+import org.tron.protos.Contract.ExchangeTransactionContract;
+import org.tron.protos.Contract.ExchangeWithdrawContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.ProposalApproveContract;
 import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Contract.ProposalDeleteContract;
-import org.tron.protos.Contract.SellStorageContract;
 import org.tron.protos.Contract.SetAccountIdContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
@@ -56,6 +58,7 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.UpdateAssetContract;
+import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -318,11 +321,30 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case SetAccountIdContract:
           owner = contractParameter.unpack(SetAccountIdContract.class).getOwnerAddress();
           break;
-        case BuyStorageContract:
-          owner = contractParameter.unpack(BuyStorageContract.class).getOwnerAddress();
+//        case BuyStorageContract:
+//          owner = contractParameter.unpack(BuyStorageContract.class).getOwnerAddress();
+//          break;
+//        case BuyStorageBytesContract:
+//          owner = contractParameter.unpack(BuyStorageBytesContract.class).getOwnerAddress();
+//          break;
+//        case SellStorageContract:
+//          owner = contractParameter.unpack(SellStorageContract.class).getOwnerAddress();
+//          break;
+        case UpdateSettingContract:
+          owner = contractParameter.unpack(UpdateSettingContract.class)
+              .getOwnerAddress();
           break;
-        case SellStorageContract:
-          owner = contractParameter.unpack(SellStorageContract.class).getOwnerAddress();
+        case ExchangeCreateContract:
+          owner = contractParameter.unpack(ExchangeCreateContract.class).getOwnerAddress();
+          break;
+        case ExchangeInjectContract:
+          owner = contractParameter.unpack(ExchangeInjectContract.class).getOwnerAddress();
+          break;
+        case ExchangeWithdrawContract:
+          owner = contractParameter.unpack(ExchangeWithdrawContract.class).getOwnerAddress();
+          break;
+        case ExchangeTransactionContract:
+          owner = contractParameter.unpack(ExchangeTransactionContract.class).getOwnerAddress();
           break;
         // todo add other contract
         default:
@@ -363,21 +385,24 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   // todo mv this static function to capsule util
-  public static long getCpuLimitInTrx(Transaction.Contract contract) {
-    int cpuForTrx;
+  public static long getCallValue(Transaction.Contract contract) {
+    int energyForTrx;
     try {
       Any contractParameter = contract.getParameter();
+      long callValue;
       switch (contract.getType()) {
         case TriggerSmartContract:
-          return contractParameter.unpack(TriggerSmartContract.class).getCpuLimitInTrx();
+          return contractParameter.unpack(TriggerSmartContract.class).getCallValue();
+
         case CreateSmartContract:
-          return contractParameter.unpack(CreateSmartContract.class).getCpuLimitInTrx();
+          return contractParameter.unpack(CreateSmartContract.class).getNewContract()
+              .getCallValue();
         default:
-          return 0;
+          return 0L;
       }
     } catch (Exception ex) {
       logger.error(ex.getMessage());
-      return 0;
+      return 0L;
     }
   }
 

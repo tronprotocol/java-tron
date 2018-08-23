@@ -6,7 +6,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.overlay.client.DatabaseGrpcClient;
@@ -20,7 +20,7 @@ import org.tron.protos.Protocol.DynamicProperties;
 @Slf4j
 public class SolidityNodeTest {
 
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
 
   private static RpcApiService rpcApiService;
   private static Application appT;
@@ -28,7 +28,7 @@ public class SolidityNodeTest {
 
   static {
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    context = new TronApplicationContext(DefaultConfig.class);
     Args.getInstance().setSolidityNode(true);
     appT = ApplicationFactory.create(context);
     rpcApiService = context.getBean(RpcApiService.class);

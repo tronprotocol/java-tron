@@ -8,12 +8,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -36,10 +34,14 @@ import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
+import org.tron.core.exception.OutOfSlotTimeException;
+import org.tron.core.exception.ReceiptException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.UnsupportVMException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.witness.WitnessController;
@@ -51,14 +53,14 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 public class ManagerTest {
 
   private static Manager dbManager;
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
   private static BlockCapsule blockCapsule2;
   private static String dbPath = "output_manager_test";
 
   @Before
   public void init() {
     Args.setParam(new String[]{"-d", dbPath, "-w"}, Constant.TEST_CONF);
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    context = new TronApplicationContext(DefaultConfig.class);
 
     dbManager = context.getBean(Manager.class);
 
@@ -89,7 +91,7 @@ public class ManagerTest {
   @Test
   public void setBlockReference()
       throws ContractExeException, UnLinkedBlockException, ValidateScheduleException, BadBlockException,
-      ContractValidateException, ValidateSignatureException, BadItemException, ItemNotFoundException, AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException, BadNumberBlockException, NonCommonBlockException {
+      ContractValidateException, ValidateSignatureException, BadItemException, ItemNotFoundException, AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException, BadNumberBlockException, NonCommonBlockException, ReceiptException, TransactionTraceException, OutOfSlotTimeException, UnsupportVMException {
 
     BlockCapsule blockCapsule =
         new BlockCapsule(
@@ -213,11 +215,11 @@ public class ManagerTest {
   @Test
   public void fork()
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      UnLinkedBlockException, ValidateScheduleException, BadItemException,
+      UnLinkedBlockException, ValidateScheduleException, BadItemException, ReceiptException,
       ItemNotFoundException, HeaderNotFound, AccountResourceInsufficientException,
-      TransactionExpirationException, TooBigTransactionException,
-      DupTransactionException, BadBlockException,
-      TaposException, BadNumberBlockException, NonCommonBlockException {
+      TransactionExpirationException, TooBigTransactionException, DupTransactionException,
+      BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
+      TransactionTraceException, OutOfSlotTimeException, UnsupportVMException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
@@ -227,29 +229,34 @@ public class ManagerTest {
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     dbManager.addWitness(ByteString.copyFrom(address));
-    dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey);
+    dbManager.generateBlock(witnessCapsule, 1533529947843L, privateKey);
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
+
 
     long num = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     BlockCapsule blockCapsule0 =
         createTestBlockCapsule(
+            1533529947843L+3000,
             num + 1,
             dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
             addressToProvateKeys);
 
     BlockCapsule blockCapsule1 =
         createTestBlockCapsule(
+            1533529947843L+3000,
             num + 1,
             dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
             addressToProvateKeys);
 
-    BlockCapsule blockCapsule2 =
-        createTestBlockCapsule(
-            num + 2, blockCapsule1.getBlockId().getByteString(), addressToProvateKeys);
-
     dbManager.pushBlock(blockCapsule0);
     dbManager.pushBlock(blockCapsule1);
+
+    BlockCapsule blockCapsule2 =
+        createTestBlockCapsule(
+            1533529947843L +6000,
+            num + 2, blockCapsule1.getBlockId().getByteString(), addressToProvateKeys);
+
     dbManager.pushBlock(blockCapsule2);
 
     Assert.assertNotNull(dbManager.getBlockStore().get(blockCapsule1.getBlockId().getBytes()));
@@ -277,11 +284,12 @@ public class ManagerTest {
   @Test
   public void doNotSwitch()
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      UnLinkedBlockException, ValidateScheduleException, BadItemException,
+      UnLinkedBlockException, ValidateScheduleException, BadItemException, ReceiptException,
       ItemNotFoundException, HeaderNotFound, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException,
       DupTransactionException, BadBlockException,
-      TaposException, BadNumberBlockException, NonCommonBlockException {
+      TaposException, BadNumberBlockException, NonCommonBlockException, TransactionTraceException,
+      OutOfSlotTimeException, UnsupportVMException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
@@ -291,35 +299,40 @@ public class ManagerTest {
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     dbManager.addWitness(ByteString.copyFrom(address));
-    dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey);
+    dbManager.generateBlock(witnessCapsule, 1533529947843L, privateKey);
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
 
     long num = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     BlockCapsule blockCapsule0 =
         createTestBlockCapsule(
+            1533529947843L + 3000,
             num + 1,
             dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
             addressToProvateKeys);
 
     BlockCapsule blockCapsule1 =
         createTestBlockCapsule(
+            1533529947843L + 3001,
             num + 1,
             dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
             addressToProvateKeys);
 
-    BlockCapsule blockCapsule2 =
-        createTestBlockCapsule(
-            num + 2, blockCapsule1.getBlockId().getByteString(), addressToProvateKeys);
+
 
     logger.info("******block0:" + blockCapsule0);
     logger.info("******block1:" + blockCapsule1);
-    logger.info("******block2:" + blockCapsule2);
 
     dbManager.pushBlock(blockCapsule0);
     dbManager.pushBlock(blockCapsule1);
     context.getBean(KhaosDatabase.class).removeBlk(dbManager.getBlockIdByNum(num));
     Exception exception = null;
+
+    BlockCapsule blockCapsule2 =
+        createTestBlockCapsule(
+            1533529947843L + 6000,
+            num + 2, blockCapsule1.getBlockId().getByteString(), addressToProvateKeys);
+    logger.info("******block2:" + blockCapsule2);
     try {
       dbManager.pushBlock(blockCapsule2);
     } catch (NonCommonBlockException e) {
@@ -337,19 +350,22 @@ public class ManagerTest {
     }
 
     BlockCapsule blockCapsule3 =
-        createTestBlockCapsule(
+        createTestBlockCapsule(1533529947843L + 9000,
             dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1,
-            dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(), addressToProvateKeys);
+            dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
+            addressToProvateKeys);
     logger.info("******block3:" + blockCapsule3);
     dbManager.pushBlock(blockCapsule3);
 
     Assert.assertEquals(blockCapsule3.getBlockId(),
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
     Assert.assertEquals(blockCapsule3.getBlockId(),
-        dbManager.getBlockStore().get(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes()).getBlockId());
+        dbManager.getBlockStore()
+            .get(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes())
+            .getBlockId());
 
     BlockCapsule blockCapsule4 =
-        createTestBlockCapsule(
+        createTestBlockCapsule(1533529947843L + 12000,
             dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1,
             blockCapsule3.getBlockId().getByteString(), addressToProvateKeys);
     logger.info("******block4:" + blockCapsule4);
@@ -358,17 +374,19 @@ public class ManagerTest {
     Assert.assertEquals(blockCapsule4.getBlockId(),
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
     Assert.assertEquals(blockCapsule4.getBlockId(),
-        dbManager.getBlockStore().get(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes()).getBlockId());
+        dbManager.getBlockStore()
+            .get(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes())
+            .getBlockId());
   }
 
   @Test
   public void switchBack()
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      UnLinkedBlockException, ValidateScheduleException, BadItemException,
+      UnLinkedBlockException, ValidateScheduleException, BadItemException, ReceiptException,
       ItemNotFoundException, HeaderNotFound, AccountResourceInsufficientException,
-      TransactionExpirationException, TooBigTransactionException,
-      DupTransactionException, BadBlockException,
-      TaposException, BadNumberBlockException, NonCommonBlockException {
+      TransactionExpirationException, TooBigTransactionException, DupTransactionException,
+      BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
+      TransactionTraceException, OutOfSlotTimeException, UnsupportVMException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
@@ -378,30 +396,34 @@ public class ManagerTest {
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     dbManager.addWitness(ByteString.copyFrom(address));
-    dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey);
+    dbManager.generateBlock(witnessCapsule, 1533529947843L, privateKey);
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
 
     long num = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     BlockCapsule blockCapsule0 =
         createTestBlockCapsule(
+            1533529947843L +3000,
             num + 1,
             dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
             addressToProvateKeys);
 
     BlockCapsule blockCapsule1 =
         createTestBlockCapsule(
+            1533529947843L +3000,
             num + 1,
             dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(),
             addressToProvateKeys);
 
-    BlockCapsule blockCapsule2 =
-        createTestBlockCapsuleError(
-            num + 2, blockCapsule1.getBlockId().getByteString(), addressToProvateKeys);
 
     dbManager.pushBlock(blockCapsule0);
     dbManager.pushBlock(blockCapsule1);
     try {
+      BlockCapsule blockCapsule2 =
+          createTestBlockCapsuleError(
+              1533529947843L +6000,
+              num + 2, blockCapsule1.getBlockId().getByteString(), addressToProvateKeys);
+
       dbManager.pushBlock(blockCapsule2);
     } catch (ValidateScheduleException e) {
       logger.info("the fork chain has error block");
@@ -413,6 +435,7 @@ public class ManagerTest {
 
     BlockCapsule blockCapsule3 =
         createTestBlockCapsule(
+            1533529947843L +9000,
             dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1,
             blockCapsule0.getBlockId().getByteString(), addressToProvateKeys);
     dbManager.pushBlock(blockCapsule3);
@@ -420,10 +443,13 @@ public class ManagerTest {
     Assert.assertEquals(blockCapsule3.getBlockId(),
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
     Assert.assertEquals(blockCapsule3.getBlockId(),
-        dbManager.getBlockStore().get(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes()).getBlockId());
+        dbManager.getBlockStore()
+            .get(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes())
+            .getBlockId());
 
     BlockCapsule blockCapsule4 =
         createTestBlockCapsule(
+            1533529947843L +12000,
             dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1,
             blockCapsule3.getBlockId().getByteString(), addressToProvateKeys);
     dbManager.pushBlock(blockCapsule4);
@@ -431,7 +457,9 @@ public class ManagerTest {
     Assert.assertEquals(blockCapsule4.getBlockId(),
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
     Assert.assertEquals(blockCapsule4.getBlockId(),
-        dbManager.getBlockStore().get(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes()).getBlockId());
+        dbManager.getBlockStore()
+            .get(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes())
+            .getBlockId());
   }
 
   private Map<ByteString, String> addTestWitnessAndAccount() {
@@ -455,14 +483,18 @@ public class ManagerTest {
             })
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
-
   private BlockCapsule createTestBlockCapsule(
       long number, ByteString hash, Map<ByteString, String> addressToProvateKeys) {
     long time = System.currentTimeMillis();
+    return createTestBlockCapsule(time,number,hash,addressToProvateKeys);
+  }
+  private BlockCapsule createTestBlockCapsule(long time ,
+      long number, ByteString hash, Map<ByteString, String> addressToProvateKeys) {
     WitnessController witnessController = dbManager.getWitnessController();
     ByteString witnessAddress =
         witnessController.getScheduledWitness(witnessController.getSlotAtTime(time));
-    BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Hash.wrap(hash), time, witnessAddress);
+    BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Hash.wrap(hash), time,
+        witnessAddress);
     blockCapsule.generatedByMyself = true;
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));
@@ -472,10 +504,15 @@ public class ManagerTest {
   private BlockCapsule createTestBlockCapsuleError(
       long number, ByteString hash, Map<ByteString, String> addressToProvateKeys) {
     long time = System.currentTimeMillis();
+    return createTestBlockCapsuleError(time,number,hash,addressToProvateKeys);
+  }
+  private BlockCapsule createTestBlockCapsuleError(long time ,
+      long number, ByteString hash, Map<ByteString, String> addressToProvateKeys) {
     WitnessController witnessController = dbManager.getWitnessController();
     ByteString witnessAddress =
         witnessController.getScheduledWitness(witnessController.getSlotAtTime(time));
-    BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Hash.wrap(hash), time, ByteString.copyFromUtf8("onlyTest"));
+    BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Hash.wrap(hash), time,
+        ByteString.copyFromUtf8("onlyTest"));
     blockCapsule.generatedByMyself = true;
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));

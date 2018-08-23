@@ -1,13 +1,17 @@
 package org.tron.core.net.node;
 
 import com.google.protobuf.ByteString;
+import java.io.File;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.crypto.ECKey;
@@ -32,15 +36,11 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
-import java.io.File;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-
 
 @Slf4j
 public class HandleBlockMessageTest {
 
-    private static AnnotationConfigApplicationContext context;
+    private static TronApplicationContext context;
     private NodeImpl node;
     RpcApiService rpcApiService;
     PeerClient peerClient;
@@ -67,7 +67,8 @@ public class HandleBlockMessageTest {
 
     @Test
     public void testHandleBlockMessage() throws Exception {
-        PeerConnection peer = new PeerConnection();
+        List<PeerConnection> activePeers = ReflectUtils.getFieldValue(pool, "activePeers");
+        PeerConnection peer = activePeers.get(0);
 
         //收到同步请求块
         BlockCapsule headBlockCapsule = dbManager.getHead();
@@ -148,7 +149,7 @@ public class HandleBlockMessageTest {
                 cfgArgs.setNeedSyncCheck(false);
                 cfgArgs.setNodeExternalIp("127.0.0.1");
 
-                context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+                context = new TronApplicationContext(DefaultConfig.class);
 
                 if (cfgArgs.isHelp()) {
                     logger.info("Here is the help message.");
