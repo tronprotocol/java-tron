@@ -3,6 +3,7 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.math.BigInteger;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
@@ -163,26 +164,33 @@ public class ExchangeInjectActuator extends AbstractActuator {
     }
 
     if (tokenQuant <= 0) {
-      throw new ContractValidateException("injected token balance must greater than zero");
+      throw new ContractValidateException("injected token quant must greater than zero");
     }
 
+    BigInteger bigFirstTokenBalance = new BigInteger(String.valueOf(firstTokenBalance));
+    BigInteger bigSecondTokenBalance = new BigInteger(String.valueOf(secondTokenBalance));
+    BigInteger bigTokenQuant = new BigInteger(String.valueOf(tokenQuant));
     long newTokenBalance, newAnotherTokenBalance;
     if (Arrays.equals(tokenID, firstTokenID)) {
       anotherTokenID = secondTokenID;
-      anotherTokenQuant = Math
-          .floorDiv(Math.multiplyExact(secondTokenBalance, tokenQuant), firstTokenBalance);
+//      anotherTokenQuant = Math
+//          .floorDiv(Math.multiplyExact(secondTokenBalance, tokenQuant), firstTokenBalance);
+      anotherTokenQuant = bigSecondTokenBalance.multiply(bigTokenQuant)
+          .divide(bigFirstTokenBalance).longValue();
       newTokenBalance = firstTokenBalance + tokenQuant;
       newAnotherTokenBalance = secondTokenBalance + anotherTokenQuant;
     } else {
       anotherTokenID = firstTokenID;
-      anotherTokenQuant = Math
-          .floorDiv(Math.multiplyExact(firstTokenBalance, tokenQuant), secondTokenBalance);
+//      anotherTokenQuant = Math
+//          .floorDiv(Math.multiplyExact(firstTokenBalance, tokenQuant), secondTokenBalance);
+      anotherTokenQuant = bigFirstTokenBalance.multiply(bigTokenQuant)
+          .divide(bigSecondTokenBalance).longValue();
       newTokenBalance = secondTokenBalance + tokenQuant;
       newAnotherTokenBalance = firstTokenBalance + anotherTokenQuant;
     }
 
     if (anotherTokenQuant <= 0) {
-      throw new ContractValidateException(" The calculated Token Quant  must be larger than 0");
+      throw new ContractValidateException("the calculated token quant  must be greater than 0");
     }
 
     long balanceLimit = dbManager.getDynamicPropertiesStore().getExchangeBalanceLimit();

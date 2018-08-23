@@ -3,6 +3,7 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.math.BigInteger;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
@@ -48,16 +49,23 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
       byte[] anotherTokenID;
       long anotherTokenQuant;
 
+      BigInteger bigFirstTokenBalance = new BigInteger(String.valueOf(firstTokenBalance));
+      BigInteger bigSecondTokenBalance = new BigInteger(String.valueOf(secondTokenBalance));
+      BigInteger bigTokenQuant = new BigInteger(String.valueOf(tokenQuant));
       if (Arrays.equals(tokenID, firstTokenID)) {
         anotherTokenID = secondTokenID;
-        anotherTokenQuant = Math
-            .floorDiv(Math.multiplyExact(secondTokenBalance, tokenQuant), firstTokenBalance);
+//        anotherTokenQuant = Math
+//            .floorDiv(Math.multiplyExact(secondTokenBalance, tokenQuant), firstTokenBalance);
+        anotherTokenQuant = bigSecondTokenBalance.multiply(bigTokenQuant)
+            .divide(bigFirstTokenBalance).longValue();
         exchangeCapsule.setBalance(firstTokenBalance - tokenQuant,
             secondTokenBalance - anotherTokenQuant);
       } else {
         anotherTokenID = firstTokenID;
-        anotherTokenQuant = Math
-            .floorDiv(Math.multiplyExact(firstTokenBalance, tokenQuant), secondTokenBalance);
+//        anotherTokenQuant = Math
+//            .floorDiv(Math.multiplyExact(firstTokenBalance, tokenQuant), secondTokenBalance);
+        anotherTokenQuant = bigFirstTokenBalance.multiply(bigTokenQuant)
+            .divide(bigSecondTokenBalance).longValue();
         exchangeCapsule.setBalance(firstTokenBalance - anotherTokenQuant,
             secondTokenBalance - tokenQuant);
       }
