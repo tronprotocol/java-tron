@@ -33,12 +33,12 @@ public interface ProgramInvokeFactory {
 
   ProgramInvoke createProgramInvoke(InternalTransaction.TrxType trxType, ExecutorType executorType,
       Transaction tx, Block block, Deposit deposit, long vmStartInUs, long vmShouldEndInUs,
-      long gasLimit);
+      long energyLimit);
 
   ProgramInvoke createProgramInvoke(Program program, DataWord toAddress, DataWord callerAddress,
       DataWord inValue,
       long balanceInt, byte[] dataIn, Deposit deposit, boolean staticCall, boolean byTestingSuite,
-      long vmStartInUs, long vmShouldEndInUs, long gasLimit);
+      long vmStartInUs, long vmShouldEndInUs, long energyLimit);
 
 
 }

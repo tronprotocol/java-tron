@@ -3,8 +3,9 @@ package org.tron.core.net.peer;
 import static org.tron.core.config.Parameter.NetConstants.MAX_INVENTORY_SIZE_IN_MINUTES;
 import static org.tron.core.config.Parameter.NetConstants.NET_MAX_TRX_PER_SECOND;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -15,6 +16,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -24,12 +27,24 @@ import org.tron.common.overlay.server.Channel;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.net.node.Item;
 
 @Slf4j
 @Component
 @Scope("prototype")
 public class PeerConnection extends Channel {
+
+  private Cache<Sha256Hash, Integer> syncBlockIdCache = CacheBuilder.newBuilder()
+      .maximumSize(2 * NodeConstant.SYNC_FETCH_BATCH_NUM).build();
+
+  @Setter
+  @Getter
+  private BlockId lastSyncBlockId;
+
+  @Setter
+  @Getter
+  private long remainNum;
 
   private volatile boolean syncFlag = true;
 
@@ -52,17 +67,8 @@ public class PeerConnection extends Channel {
     return advObjSpreadToUs;
   }
 
-  public void setAdvObjSpreadToUs(
-      HashMap<Sha256Hash, Long> advObjSpreadToUs) {
-    this.advObjSpreadToUs = advObjSpreadToUs;
-  }
-
   public Map<Sha256Hash, Long> getAdvObjWeSpread() {
     return advObjWeSpread;
-  }
-
-  public void setAdvObjWeSpread(HashMap<Sha256Hash, Long> advObjWeSpread) {
-    this.advObjWeSpread = advObjWeSpread;
   }
 
   public boolean isAdvInhibit() {
@@ -86,6 +92,10 @@ public class PeerConnection extends Channel {
 
   public Pair<Deque<BlockId>, Long> getSyncChainRequested() {
     return syncChainRequested;
+  }
+
+  public Cache<Sha256Hash, Integer> getSyncBlockIdCache() {
+    return syncBlockIdCache;
   }
 
   public void setSyncChainRequested(
@@ -168,7 +178,7 @@ public class PeerConnection extends Channel {
   }
 
   public boolean isAdvInvFull() {
-   return advObjSpreadToUs.size() > MAX_INVENTORY_SIZE_IN_MINUTES * 60 * NET_MAX_TRX_PER_SECOND;
+    return advObjSpreadToUs.size() > MAX_INVENTORY_SIZE_IN_MINUTES * 60 * NET_MAX_TRX_PER_SECOND;
   }
 
   public boolean isBanned() {

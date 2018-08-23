@@ -6,7 +6,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.testng.Assert;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
@@ -26,15 +26,15 @@ import org.tron.protos.Protocol.Transaction;
 public class RuntimeTransferComplexTest {
   private static Runtime runtime;
   private static Manager dbManager;
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
   private static DepositImpl deposit;
   private static final String dbPath = "output_RuntimeTransferComplexTest";
   private static final String OWNER_ADDRESS;
   private static final String TRANSFER_TO;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     TRANSFER_TO = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
   }
@@ -72,13 +72,12 @@ public class RuntimeTransferComplexTest {
     long value = 100;
     long fee = 100000000;
     long consumeUserResourcePercent = 0;
-    String libraryAddressPair=null;
 
 
     Transaction trx = TVMTestUtils.generateDeploySmartContractAndGetTransaction(
-        contractName,address,ABI,code,value,fee,consumeUserResourcePercent,libraryAddressPair);
+        contractName,address,ABI,code,value,fee,consumeUserResourcePercent,null);
     byte[] contractAddress = Wallet.generateContractAddress(trx);
-    runtime = TVMTestUtils.processTransactionAndReturnRuntime(trx,deposit, null);
+    runtime = TVMTestUtils.processTransactionAndReturnRuntime(trx, deposit, null);
     Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(dbManager.getAccountStore().get(contractAddress).getBalance(),100);
   }
@@ -103,15 +102,14 @@ public class RuntimeTransferComplexTest {
     long value = 100;
     long fee = 100000000;
     long consumeUserResourcePercent = 0;
-    String libraryAddressPair=null;
 
 
     Transaction trx = TVMTestUtils.generateDeploySmartContractAndGetTransaction(
-        contractName,address,ABI,code,value,fee,consumeUserResourcePercent,libraryAddressPair);
+        contractName,address,ABI,code,value,fee,consumeUserResourcePercent,null);
     byte[] contractAddress = Wallet.generateContractAddress(trx);
     runtime = TVMTestUtils.processTransactionAndReturnRuntime(trx, deposit, null);
     Assert.assertNotNull(runtime.getRuntimeError().contains("REVERT"));
-    Assert.assertEquals(dbManager.getAccountStore().get(contractAddress),null);
+    Assert.assertNull(dbManager.getAccountStore().get(contractAddress));
   }
 
 
@@ -141,9 +139,8 @@ public class RuntimeTransferComplexTest {
     long value = 0;
     long feeLimit = 100000000;
     long consumeUserResourcePercent = 0;
-    String libraryAddressPair=null;
 
-    byte[] contractAddress = TVMTestUtils.DeployContractWholeProcessReturnContractAddress(contractName,address,ABI,code,value,feeLimit,consumeUserResourcePercent,libraryAddressPair,
+    byte[] contractAddress = TVMTestUtils.deployContractWholeProcessReturnContractAddress(contractName,address,ABI,code,value,feeLimit,consumeUserResourcePercent,null,
         deposit,null);
 
 
@@ -155,7 +152,7 @@ public class RuntimeTransferComplexTest {
     long triggerCallValue =100;
 
     Transaction transaction = TVMTestUtils.generateTriggerSmartContractAndGetTransaction(address,contractAddress,triggerData,triggerCallValue,feeLimit);
-    runtime = TVMTestUtils.processTransactionAndReturnRuntime(transaction,deposit,null);
+    runtime = TVMTestUtils.processTransactionAndReturnRuntime(transaction, deposit, null);
     Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(dbManager.getAccountStore().get(contractAddress).getBalance(),100 - 5);
     Assert.assertEquals(dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getBalance(),10 + 5);

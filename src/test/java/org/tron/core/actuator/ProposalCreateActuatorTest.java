@@ -12,7 +12,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -35,7 +35,7 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 
 public class ProposalCreateActuatorTest {
 
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
   private static Manager dbManager;
   private static final String dbPath = "output_ProposalCreate_test";
   private static final String ACCOUNT_NAME_FIRST = "ownerF";
@@ -49,7 +49,7 @@ public class ProposalCreateActuatorTest {
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_SECOND =
@@ -262,6 +262,34 @@ public class ProposalCreateActuatorTest {
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
+    }
+
+    paras = new HashMap<>();
+    paras.put(10L, -1L);
+    actuator =
+        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
+    dbManager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(-1);
+    try {
+      actuator.validate();
+      fail("This proposal has been executed before and is only allowed to be executed once");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("This proposal has been executed before and is only allowed to be executed once",
+          e.getMessage());
+    }
+
+    paras.put(10L, -1L);
+    dbManager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(0);
+    actuator =
+        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
+    dbManager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(0);
+    try {
+      actuator.validate();
+      fail("This value[REMOVE_THE_POWER_OF_THE_GR] is only allowed to be 1");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("This value[REMOVE_THE_POWER_OF_THE_GR] is only allowed to be 1",
+          e.getMessage());
     }
   }
 

@@ -7,7 +7,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.WitnessCapsule;
@@ -18,12 +18,12 @@ import org.tron.core.config.args.Args;
 public class WitnessStoreTest {
 
   private static final String dbPath = "output-witnessStore-test";
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
   WitnessStore witnessStore;
 
   static {
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    context = new TronApplicationContext(DefaultConfig.class);
   }
 
   @Before

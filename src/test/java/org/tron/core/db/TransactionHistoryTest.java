@@ -5,7 +5,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -19,7 +19,7 @@ public class TransactionHistoryTest {
   private static String dbPath = "output_TransactionHistoryStore_test";
   private static String dbDirectory = "db_TransactionHistoryStore_test";
   private static String indexDirectory = "index_TransactionHistoryStore_test";
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
   private static TransactionHistoryStore transactionHistoryStore;
   private static final byte[] transactionId = TransactionStoreTest.randomBytes(32);
 
@@ -32,7 +32,7 @@ public class TransactionHistoryTest {
         },
         Constant.TEST_CONF
     );
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    context = new TronApplicationContext(DefaultConfig.class);
   }
 
   @AfterClass

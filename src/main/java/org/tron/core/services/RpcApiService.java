@@ -35,6 +35,7 @@ import org.tron.api.GrpcAPI.EasyTransferByPrivateMessage;
 import org.tron.api.GrpcAPI.EasyTransferMessage;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.EmptyMessage;
+import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NumberMessage;
@@ -82,6 +83,7 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
+import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -959,22 +961,48 @@ public class RpcApiService implements Service {
       createTransactionExtention(request, ContractType.ProposalDeleteContract, responseObserver);
     }
 
+//    @Override
+//    public void buyStorage(Contract.BuyStorageContract request,
+//        StreamObserver<TransactionExtention> responseObserver) {
+//      createTransactionExtention(request, ContractType.BuyStorageContract, responseObserver);
+//    }
+//
+//    @Override
+//    public void buyStorageBytes(Contract.BuyStorageBytesContract request,
+//        StreamObserver<TransactionExtention> responseObserver) {
+//      createTransactionExtention(request, ContractType.BuyStorageBytesContract, responseObserver);
+//    }
+//
+//    @Override
+//    public void sellStorage(Contract.SellStorageContract request,
+//        StreamObserver<TransactionExtention> responseObserver) {
+//      createTransactionExtention(request, ContractType.SellStorageContract, responseObserver);
+//    }
+
     @Override
-    public void buyStorage(Contract.BuyStorageContract request,
+    public void exchangeCreate(Contract.ExchangeCreateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.BuyStorageContract, responseObserver);
+      createTransactionExtention(request, ContractType.ExchangeCreateContract, responseObserver);
+    }
+
+
+    @Override
+    public void exchangeInject(Contract.ExchangeInjectContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.ExchangeInjectContract, responseObserver);
     }
 
     @Override
-    public void buyStorageBytes(Contract.BuyStorageBytesContract request,
+    public void exchangeWithdraw(Contract.ExchangeWithdrawContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.BuyStorageBytesContract, responseObserver);
+      createTransactionExtention(request, ContractType.ExchangeWithdrawContract, responseObserver);
     }
 
     @Override
-    public void sellStorage(Contract.SellStorageContract request,
+    public void exchangeTransaction(Contract.ExchangeTransactionContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.SellStorageContract, responseObserver);
+      createTransactionExtention(request, ContractType.ExchangeTransactionContract,
+          responseObserver);
     }
 
     @Override
@@ -1166,6 +1194,19 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getExchangeById(BytesMessage request,
+        StreamObserver<Exchange> responseObserver) {
+      ByteString exchangeId = request.getValue();
+
+      if (Objects.nonNull(exchangeId)) {
+        responseObserver.onNext(wallet.getExchangeById(exchangeId));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getBlockByLimitNext(BlockLimit request,
         StreamObserver<BlockList> responseObserver) {
       long startNum = request.getStartNum();
@@ -1276,6 +1317,7 @@ public class RpcApiService implements Service {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()));
         logger.debug("ContractValidateException: {}", e.getMessage());
+        // FIXME
         return;
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
@@ -1314,6 +1356,13 @@ public class RpcApiService implements Service {
     public void listProposals(EmptyMessage request,
         StreamObserver<ProposalList> responseObserver) {
       responseObserver.onNext(wallet.getProposalList());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void listExchanges(EmptyMessage request,
+        StreamObserver<ExchangeList> responseObserver) {
+      responseObserver.onNext(wallet.getExchangeList());
       responseObserver.onCompleted();
     }
 

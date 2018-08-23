@@ -52,10 +52,10 @@ public class ContractScenario002 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     Assert.assertTrue(PublicMethed.sendcoin(contract002Address,20000000L,fromAddress,
         testKey002,blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalanceGetCpu(contract002Address,5000000L,
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract002Address, 5000000L,
         3,1,contract002Key,blockingStubFull));
-    Assert.assertTrue(PublicMethed.buyStorage(5000000L,contract002Address,contract002Key,
-        blockingStubFull));
+    /*    Assert.assertTrue(PublicMethed.buyStorage(5000000L,contract002Address,contract002Key,
+        blockingStubFull));*/
 
   }
 
@@ -63,15 +63,15 @@ public class ContractScenario002 {
   public void deployTronNative() {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract002Address,
         blockingStubFull);
-    Long cpuLimit = accountResource.getCpuLimit();
-    Long storageLimit = accountResource.getStorageLimit();
-    Long cpuUsage = accountResource.getCpuUsed();
-    Long storageUsage = accountResource.getStorageUsed();
+    Long energyLimit = accountResource.getEnergyLimit();
+    //Long storageLimit = accountResource.getStorageLimit();
+    Long energyUsage = accountResource.getEnergyUsed();
+    //Long storageUsage = accountResource.getStorageUsed();
 
-    logger.info("before cpu limit is " + Long.toString(cpuLimit));
-    logger.info("before cpu usage is " + Long.toString(cpuUsage));
-    logger.info("before storage limit is " + Long.toString(storageLimit));
-    logger.info("before storage usaged is " + Long.toString(storageUsage));
+    logger.info("before energy limit is " + Long.toString(energyLimit));
+    logger.info("before energy usage is " + Long.toString(energyUsage));
+    //logger.info("before storage limit is " + Long.toString(storageLimit));
+    //logger.info("before storage usaged is " + Long.toString(storageUsage));
     Long maxFeeLimit = 5000000L;
     String contractName = "tronNative";
     String code = "608060405260008054600160a060020a03199081166201000117909155600180548216620100021"
@@ -149,28 +149,25 @@ public class ContractScenario002 {
     SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
     Assert.assertTrue(smartContract.getAbi() != null);
     accountResource = PublicMethed.getAccountResource(contract002Address,blockingStubFull);
-    cpuLimit = accountResource.getCpuLimit();
-    storageLimit = accountResource.getStorageLimit();
-    cpuUsage = accountResource.getCpuUsed();
-    storageUsage = accountResource.getStorageUsed();
-    Assert.assertTrue(cpuUsage > 0);
-    Assert.assertTrue(storageUsage > 0);
+    energyLimit = accountResource.getEnergyLimit();
+    //storageLimit = accountResource.getStorageLimit();
+    energyUsage = accountResource.getEnergyUsed();
+    //storageUsage = accountResource.getStorageUsed();
+    Assert.assertTrue(energyUsage > 0);
+    //Assert.assertTrue(storageUsage > 0);
 
-    logger.info("after cpu limit is " + Long.toString(cpuLimit));
-    logger.info("after cpu usage is " + Long.toString(cpuUsage));
-    logger.info("after storage limit is " + Long.toString(storageLimit));
-    logger.info("after storage usaged is " + Long.toString(storageUsage));
+    logger.info("after energy limit is " + Long.toString(energyLimit));
+    logger.info("after energy usage is " + Long.toString(energyUsage));
+    //logger.info("after storage limit is " + Long.toString(storageLimit));
+    //logger.info("after storage usaged is " + Long.toString(storageUsage));
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void getContractWithInvaildAddress() {
     byte[] contractAddress = contract002Address;
     SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
-    Assert.assertTrue(smartContract.getAbi() == null);
-
-    contractAddress = null;
-    smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
-    Assert.assertTrue(smartContract.getAbi() == null);
+    logger.info(smartContract.getAbi().toString());
+    Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
   }
 
   @AfterClass

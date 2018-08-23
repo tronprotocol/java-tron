@@ -27,9 +27,7 @@ public class TransactionTrace {
 
   private Manager dbManager;
 
-  private CpuProcessor cpuProcessor;
-
-  private StorageMarket storageMarket;
+  private EnergyProcessor energyProcessor;
 
   private InternalTransaction.TrxType trxType;
 
@@ -57,8 +55,11 @@ public class TransactionTrace {
     this.dbManager = dbManager;
     this.receipt = new ReceiptCapsule(Sha256Hash.ZERO_HASH);
 
-    this.cpuProcessor = new CpuProcessor(this.dbManager);
-    this.storageMarket = new StorageMarket(this.dbManager);
+    this.energyProcessor = new EnergyProcessor(this.dbManager);
+  }
+
+  public boolean needVM() {
+    return this.trxType == TRX_CONTRACT_CALL_TYPE || this.trxType == TRX_CONTRACT_CREATION_TYPE;
   }
 
   //pre transaction check
@@ -78,9 +79,14 @@ public class TransactionTrace {
   }
 
   //set bill
-  public void setBill(long cpuUseage, long storageUseage) {
-    receipt.setCpuUsage(cpuUseage);
-    receipt.setStorageDelta(storageUseage);
+  public void setBill(long energyUseage) {
+    receipt.setEnergyUsageTotal(energyUseage);
+  }
+
+  //set net bill
+  public void setNetBill(long netUsage, long netFee) {
+    receipt.setNetUsage(netUsage);
+    receipt.setNetFee(netFee);
   }
 
   public void exec(Runtime runtime)
@@ -89,10 +95,11 @@ public class TransactionTrace {
     runtime.init();
     runtime.execute();
     runtime.go();
+    runtime.finalization();
   }
 
   /**
-   * pay actually bill(include CPU and storage).
+   * pay actually bill(include ENERGY and storage).
    */
   public void pay() {
     byte[] originAccount;
@@ -121,15 +128,13 @@ public class TransactionTrace {
     // originAccount Percent = 30%
     AccountCapsule origin = dbManager.getAccountStore().get(originAccount);
     AccountCapsule caller = dbManager.getAccountStore().get(callerAccount);
-    receipt.payCpuBill(
+    receipt.payEnergyBill(
         dbManager,
         origin,
         caller,
         percent,
-        cpuProcessor,
+        energyProcessor,
         dbManager.getWitnessController().getHeadSlot());
-
-    receipt.payStorageBill(dbManager, origin, caller, percent, storageMarket);
   }
 
   public ReceiptCapsule getReceipt() {

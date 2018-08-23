@@ -8,9 +8,9 @@ import java.util.Map;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.backup.BackupManager;
 import org.tron.common.backup.BackupManager.BackupStatusEnum;
 import org.tron.common.backup.BackupServer;
@@ -45,13 +45,14 @@ public class WitnessService implements Service {
   protected Map<ByteString, WitnessCapsule> localWitnessStateMap = Maps
       .newHashMap(); //  <address,WitnessCapsule>
   private Thread generateThread;
+
   private volatile boolean isRunning = false;
   private Map<ByteString, byte[]> privateKeyMap = Maps.newHashMap();
   private volatile boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
 
   private WitnessController controller;
 
-  private AnnotationConfigApplicationContext context;
+  private TronApplicationContext context;
 
   private BackupManager backupManager;
 
@@ -60,7 +61,7 @@ public class WitnessService implements Service {
   /**
    * Construction method.
    */
-  public WitnessService(Application tronApp, AnnotationConfigApplicationContext context) {
+  public WitnessService(Application tronApp, TronApplicationContext context) {
     this.tronApp = tronApp;
     this.context = context;
     backupManager = context.getBean(BackupManager.class);
@@ -221,6 +222,7 @@ public class WitnessService implements Service {
     }
 
     try {
+
       controller.setGeneratingBlock(true);
       BlockCapsule block = generateBlock(scheduledTime, scheduledWitness);
 
@@ -251,7 +253,6 @@ public class WitnessService implements Service {
     } finally {
       controller.setGeneratingBlock(false);
     }
-
   }
 
   private void broadcastBlock(BlockCapsule block) {
@@ -301,6 +302,7 @@ public class WitnessService implements Service {
   public void start() {
     isRunning = true;
     generateThread.start();
+
   }
 
   @Override

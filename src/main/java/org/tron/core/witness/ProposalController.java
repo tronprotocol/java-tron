@@ -134,6 +134,10 @@ public class ProposalController {
           manager.getDynamicPropertiesStore().saveAllowCreationOfContracts(entry.getValue());
           break;
         }
+        case (10): {
+          manager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(entry.getValue());
+          break;
+        }
         default:
           break;
       }

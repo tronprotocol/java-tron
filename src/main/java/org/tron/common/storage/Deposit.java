@@ -10,10 +10,6 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol;
 
-/**
- * @author Guo Yonggang
- * @since 2018.04
- */
 public interface Deposit {
 
   Manager getDbManager();
@@ -36,7 +32,7 @@ public interface Deposit {
 
   //byte[] getCodeHash(byte[] address);
 
-  void addStorageValue(byte[] address, DataWord key, DataWord value);
+  void putStorageValue(byte[] address, DataWord key, DataWord value);
 
   DataWord getStorageValue(byte[] address, DataWord key);
 

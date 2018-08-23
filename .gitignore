@@ -52,3 +52,6 @@ src/main/resources/META-INF/
 output*
 nodeId.properties
 Wallet
+
+# vm_trace
+/vm_trace/

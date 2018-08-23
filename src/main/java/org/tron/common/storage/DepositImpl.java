@@ -28,10 +28,6 @@ import org.tron.core.exception.BadItemException;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 
-/**
- * @author Guo Yonggang
- * @since 27.04.2018
- */
 public class DepositImpl implements Deposit {
 
   private Manager dbManager;
@@ -229,7 +225,7 @@ public class DepositImpl implements Deposit {
   public synchronized byte[] getCode(byte[] codeHash) {
     Key key = Key.create(codeHash);
     if (codeCache.containsKey(key)) {
-      codeCache.get(key).getCode().getData();
+      return codeCache.get(key).getCode().getData();
     }
 
     byte[] code;
@@ -269,7 +265,7 @@ public class DepositImpl implements Deposit {
   }
 
   @Override
-  public synchronized void addStorageValue(byte[] address, DataWord key, DataWord value) {
+  public synchronized void putStorageValue(byte[] address, DataWord key, DataWord value) {
     address = convertToTronAddress(address);
     if (getAccount(address) == null) {
       return;
@@ -606,7 +602,7 @@ public class DepositImpl implements Deposit {
     commitContractCache(deposit);
     commitStorageCache(deposit);
     commitVoteCache(deposit);
-    commitAccountContractIndex(deposit);
+    // commitAccountContractIndex(deposit);
   }
 
   @Override

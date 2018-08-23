@@ -137,7 +137,7 @@ public class fuzzytest {
       blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
       GrpcAPI.NodeList nodeList = blockingStubFull
           .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
-      if (i%100 == 0) {
+      if (i % 100 == 0) {
         logger.info(Integer.toString(i));
       }
 
@@ -149,7 +149,7 @@ public class fuzzytest {
 
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
-/*    if (channelFull != null) {
+    /*    if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
     if (channelSolidity != null) {

@@ -5,10 +5,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.util.StringUtils;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.overlay.client.DatabaseGrpcClient;
 import org.tron.common.overlay.discover.DiscoverServer;
 import org.tron.common.overlay.discover.node.NodeManager;
@@ -35,6 +35,7 @@ import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.UnsupportVMException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.services.RpcApiService;
@@ -148,6 +149,8 @@ public class SolidityNode {
           throw new BadBlockException("TransactionTrace Exception");
         } catch (OutOfSlotTimeException e) {
           throw new BadBlockException("OutOfSlotTime Exception");
+        } catch (UnsupportVMException e) {
+          throw new BadBlockException(e.getMessage());
         }
 
       } else {
@@ -184,7 +187,7 @@ public class SolidityNode {
     }
     cfgArgs.setSolidityNode(true);
 
-    ApplicationContext context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    ApplicationContext context = new TronApplicationContext(DefaultConfig.class);
 
     if (cfgArgs.isHelp()) {
       logger.info("Here is the help message.");

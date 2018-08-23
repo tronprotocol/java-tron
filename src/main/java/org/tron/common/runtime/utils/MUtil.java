@@ -8,11 +8,6 @@ import org.tron.core.Wallet;
 import org.tron.core.actuator.TransferActuator;
 import org.tron.core.exception.ContractValidateException;
 
-
-/**
- * @author Guo Yonggang
- * @since 02.05.2018
- */
 public class MUtil {
 
   public static void transfer(Deposit deposit, byte[] fromAddress, byte[] toAddress, long amount)
@@ -53,5 +48,19 @@ public class MUtil {
 
   public static String get4BytesSha3HexString(String data) {
     return Hex.toHexString(Arrays.copyOf(Hash.sha3(data.getBytes()), 4));
+  }
+
+  public static byte[] generateByteArray(byte[] ...parameters){
+    int length =0;
+    for(int i=0;i<parameters.length;i++){
+      length+=parameters[i].length;
+    }
+    byte[] result = new byte[length];
+    int pos =0;
+    for (int i=0;i<parameters.length;i++){
+      System.arraycopy(parameters[i],0,result,pos,parameters[i].length);
+      pos += parameters[i].length;
+    }
+    return result;
   }
 }
