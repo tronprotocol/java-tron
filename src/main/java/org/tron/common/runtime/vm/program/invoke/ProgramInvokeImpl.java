@@ -238,8 +238,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
 
   @Override
   public BlockStore getBlockStore() {
-    return null;
-    //return deposit.getBlockStore();
+    return deposit.getDbManager().getBlockStore();
   }
 
   @Override
