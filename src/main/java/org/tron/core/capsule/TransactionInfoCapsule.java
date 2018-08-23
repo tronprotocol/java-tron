@@ -131,13 +131,6 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
         .build();
   }
 
-//todo set receipt
-//  public void setResult(TransactionResultCapsule result) {
-//    this.transactionInfo = this.transactionInfo.toBuilder()
-//        .setResult(result.getInstance())
-//        .build();
-//  }
-
   @Override
   public byte[] getData() {
     return this.transactionInfo.toByteArray();
@@ -146,11 +139,6 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
   @Override
   public TransactionInfo getInstance() {
     return this.transactionInfo;
-  }
-
-  public void parseTransactionResult(TransactionResultCapsule ret) {
-    setUnfreezeAmount(ret.getUnfreezeAmount());
-    setWithdrawAmount(ret.getWithdrawAmount());
   }
 
   public static TransactionInfoCapsule buildInstance(TransactionCapsule trxCap, Block block,

@@ -340,23 +340,6 @@ public class Wallet {
       if (percent < 0 || percent > 100) {
         throw new ContractValidateException("percent must be >= 0 and <= 100");
       }
-
-//        // insure one owner just have one contract
-//        CreateSmartContract contract = ContractCapsule
-//            .getSmartContractFromTransaction(trx.getInstance());
-//        byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
-//        if (dbManager.getAccountContractIndexStore().get(ownerAddress) != null) {
-//          throw new ContractValidateException(
-//              "Trying to create second contract with one account: address: " + Wallet
-//                  .encode58Check(ownerAddress));
-//        }
-
-//        // insure the new contract address haven't exist
-//        if (deposit.getAccount(contractAddress) != null) {
-//          logger.error("Trying to create a contract with existing contract address: " + Wallet
-//              .encode58Check(contractAddress));
-//          return;
-//        }
     }
 
     try {
