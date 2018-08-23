@@ -24,7 +24,7 @@ public class ApplicationImpl implements Application {
 
   @Autowired
   private Manager dbManager;
-  
+
   private boolean isProducer;
 
   private void resetP2PNode() {
@@ -75,7 +75,7 @@ public class ApplicationImpl implements Application {
       closeAllStore();
     }
     closeConnection();
-    dbManager.getRepushThread().interrupt();
+    //dbManager.getRepushThread().interrupt();
     System.err.println("******** end to shutdown ********");
   }
 
