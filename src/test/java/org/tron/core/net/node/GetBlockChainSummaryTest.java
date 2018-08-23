@@ -8,7 +8,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.crypto.ECKey;
@@ -43,7 +43,7 @@ import java.util.stream.IntStream;
 
 @Slf4j
 public class GetBlockChainSummaryTest{
-    private static AnnotationConfigApplicationContext context;
+    private static TronApplicationContext context;
     private NodeImpl node;
     RpcApiService rpcApiService;
     PeerClient peerClient;
@@ -221,7 +221,7 @@ public class GetBlockChainSummaryTest{
                 cfgArgs.setNeedSyncCheck(false);
                 cfgArgs.setNodeExternalIp("127.0.0.1");
 
-                context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+                context = new TronApplicationContext(DefaultConfig.class);
 
                 if (cfgArgs.isHelp()) {
                     logger.info("Here is the help message.");

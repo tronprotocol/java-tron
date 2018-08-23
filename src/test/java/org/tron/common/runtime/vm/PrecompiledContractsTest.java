@@ -17,7 +17,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.spongycastle.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.vm.PrecompiledContracts.PrecompiledContract;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.storage.DepositImpl;
@@ -66,7 +66,7 @@ public class PrecompiledContractsTest {
   private static final DataWord convertFromTronBase58AddressAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010009");
 
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
   private static Manager dbManager;
   private static final String dbPath = "output_PrecompiledContracts_test";
   private static final String ACCOUNT_NAME = "account";
@@ -82,7 +82,7 @@ public class PrecompiledContractsTest {
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     WITNESS_ADDRESS = Wallet.getAddressPreFixString() + WITNESS_ADDRESS_BASE;
 

@@ -18,6 +18,7 @@
 
 package org.tron.core;
 
+import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -228,8 +229,7 @@ public class Wallet {
 
   }
 
-  public static byte[] generateContractAddress(byte[] ownerAddress,byte[] txRawDataHash) {
-
+  public static byte[] generateContractAddress(byte[] ownerAddress, byte[] txRawDataHash) {
 
     byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
@@ -237,6 +237,15 @@ public class Wallet {
 
     return Hash.sha3omit12(combined);
 
+  }
+
+  public static byte[] generateContractAddress(byte[] transactionRootId, long nonce) {
+    byte[] nonceBytes = Longs.toByteArray(nonce);
+    byte[] combined = new byte[transactionRootId.length + nonceBytes.length];
+    System.arraycopy(transactionRootId, 0, combined, 0, transactionRootId.length);
+    System.arraycopy(nonceBytes, 0, combined, transactionRootId.length, nonceBytes.length);
+
+    return Hash.sha3omit12(combined);
   }
 
   public static byte[] decodeFromBase58Check(String addressBase58) {
@@ -329,23 +338,6 @@ public class Wallet {
       if (percent < 0 || percent > 100) {
         throw new ContractValidateException("percent must be >= 0 and <= 100");
       }
-
-//        // insure one owner just have one contract
-//        CreateSmartContract contract = ContractCapsule
-//            .getSmartContractFromTransaction(trx.getInstance());
-//        byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
-//        if (dbManager.getAccountContractIndexStore().get(ownerAddress) != null) {
-//          throw new ContractValidateException(
-//              "Trying to create second contract with one account: address: " + Wallet
-//                  .encode58Check(ownerAddress));
-//        }
-
-//        // insure the new contract address haven't exist
-//        if (deposit.getAccount(contractAddress) != null) {
-//          logger.error("Trying to create a contract with existing contract address: " + Wallet
-//              .encode58Check(contractAddress));
-//          return;
-//        }
     }
 
     try {
@@ -396,8 +388,11 @@ public class Wallet {
         dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
       }
 
-      dbManager.pushTransaction(trx);
-      p2pNode.broadcast(message);
+      if (dbManager.getForkController().forkOrNot(trx)) {
+        dbManager.pushTransaction(trx);
+        p2pNode.broadcast(message);
+      }
+
       return builder.setResult(true).setCode(response_code.SUCCESS).build();
     } catch (ValidateSignatureException e) {
       logger.info(e.getMessage());
@@ -827,12 +822,14 @@ public class Wallet {
     byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
     SmartContract.ABI abi = contractStore.getABI(contractAddress);
     if (abi == null) {
+      // FIXME
       return null;
     }
 
     try {
       byte[] selector = getSelector(triggerSmartContract.getData().toByteArray());
       if (selector == null) {
+        // FIXME
         return null;
       }
 
@@ -855,7 +852,9 @@ public class Wallet {
         runtime.execute();
         runtime.go();
         runtime.finalization();
+        // TODO exception
         if (runtime.getResult().getException() != null) {
+//          runtime.getResult().getException().printStackTrace();
           throw new RuntimeException("Runtime exe failed!");
         }
 

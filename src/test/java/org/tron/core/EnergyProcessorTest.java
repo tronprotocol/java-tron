@@ -8,7 +8,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -25,14 +25,14 @@ public class EnergyProcessorTest {
 
   private static Manager dbManager;
   private static final String dbPath = "EnergyProcessorTest";
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
   private static final String ASSET_NAME;
   private static final String CONTRACT_PROVIDER_ADDRESS;
   private static final String USER_ADDRESS;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    context = new TronApplicationContext(DefaultConfig.class);
     ASSET_NAME = "test_token";
     CONTRACT_PROVIDER_ADDRESS =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";

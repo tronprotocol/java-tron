@@ -13,7 +13,6 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.db.AccountContractIndexStore;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.AssetIssueStore;
 import org.tron.core.db.BlockStore;
@@ -99,10 +98,6 @@ public class DepositImpl implements Deposit {
     return dbManager.getAssetIssueStore();
   }
 
-  private AccountContractIndexStore getAccountContractIndexStore() {
-    return dbManager.getAccountContractIndexStore();
-  }
-
   @Override
   public Deposit newDepositChild() {
     return new DepositImpl(dbManager, this, null);
@@ -154,42 +149,11 @@ public class DepositImpl implements Deposit {
     return accountCapsule;
   }
 
-
-  public synchronized BytesCapsule getContractByNormalAccount(byte[] address) {
-
-    Key key = new Key(address);
-    if (accountContractIndexCache.containsKey(key)) {
-      return accountContractIndexCache.get(key).getBytes();
-    }
-
-    BytesCapsule contract;
-    if (parent != null) {
-      contract = parent.getContractByNormalAccount(address);
-    } else if (prevDeposit != null) {
-      contract = prevDeposit.getContractByNormalAccount(address);
-    } else {
-      contract = getAccountContractIndexStore().get(address);
-    }
-
-    if (contract != null) {
-      accountContractIndexCache.put(key, Value.create(contract.getData()));
-    }
-    return contract;
-  }
-
   @Override
   public synchronized void createContract(byte[] address, ContractCapsule contractCapsule) {
     Key key = Key.create(address);
     Value value = Value.create(contractCapsule.getData(), Type.VALUE_TYPE_CREATE);
     contractCache.put(key, value);
-  }
-
-  @Override
-  public synchronized void createContractByNormalAccountIndex(byte[] address,
-      BytesCapsule contractAddress) {
-    Key key = new Key(address);
-    accountContractIndexCache
-        .put(key, Value.create(contractAddress.getData(), Type.VALUE_TYPE_CREATE));
   }
 
   @Override
@@ -225,7 +189,7 @@ public class DepositImpl implements Deposit {
   public synchronized byte[] getCode(byte[] codeHash) {
     Key key = Key.create(codeHash);
     if (codeCache.containsKey(key)) {
-      codeCache.get(key).getCode().getData();
+      return codeCache.get(key).getCode().getData();
     }
 
     byte[] code;
@@ -430,11 +394,6 @@ public class DepositImpl implements Deposit {
     contractCache.put(key, value);
   }
 
-  @Override
-  public void putContractByNormalAccountIndex(Key key, Value value) {
-    accountContractIndexCache.put(key, value);
-  }
-
 //  @Override
 //  public void putStorage(Key key, Value value) {
 //    storageCache.put(key, value);
@@ -542,18 +501,6 @@ public class DepositImpl implements Deposit {
           deposit.putVotes(key, value);
         } else {
           getVotesStore().put(key.getData(), value.getVotes());
-        }
-      }
-    }));
-  }
-
-  private void commitAccountContractIndex(Deposit deposit) {
-    accountContractIndexCache.forEach(((key, value) -> {
-      if (value.getType().isDirty() || value.getType().isCreate()) {
-        if (deposit != null) {
-          deposit.putContractByNormalAccountIndex(key, value);
-        } else {
-          getAccountContractIndexStore().put(key.getData(), value.getBytes());
         }
       }
     }));

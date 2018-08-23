@@ -2,11 +2,6 @@ package stest.tron.wallet.contract.scenario;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -356,7 +351,9 @@ public class ContractScenario011 {
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsage() == 0);
     Assert.assertTrue(infoById.get().getReceipt().getEnergyFee() > 10000);
     Assert.assertTrue(infoById.get().getReceipt().getOriginEnergyUsage() > 10000);
-    Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() == infoById.get().getReceipt().getEnergyFee()/30 + infoById.get().getReceipt().getOriginEnergyUsage());
+    Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal()
+        == infoById.get().getReceipt().getEnergyFee() / 100 + infoById.get().getReceipt()
+        .getOriginEnergyUsage());
     logger.info("before EnergyUsage is " + infoById.get().getReceipt().getEnergyUsage());
     logger.info("before EnergyFee is " + infoById.get().getReceipt().getEnergyFee());
     logger.info("before OriginEnergyUsage is " + infoById.get().getReceipt().getOriginEnergyUsage());
@@ -364,7 +361,6 @@ public class ContractScenario011 {
 
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(triggerAddress,100000000L,
         3,1,triggerKey,blockingStubFull));
-
     txid = PublicMethed.triggerContract(kittyCoreContractAddress,
         "createGen0Auction(uint256)", "0", false,
         0, 100000000L, triggerAddress, triggerKey, blockingStubFull);
@@ -378,11 +374,6 @@ public class ContractScenario011 {
     Assert.assertTrue(infoById.get().getReceipt().getOriginEnergyUsage() > 10000);
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() == infoById.get().getReceipt().getEnergyUsage() + infoById.get().getReceipt().getOriginEnergyUsage());
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsage() == infoById.get().getReceipt().getOriginEnergyUsage());
-
-
-
-
-
   }
 
 

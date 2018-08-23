@@ -15,16 +15,10 @@
 
 package org.tron.core.capsule;
 
-import com.google.protobuf.Any;
-import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.protos.Contract.TriggerSmartContract;
-import org.tron.protos.Protocol.SmartContract;
-import org.tron.protos.Protocol.Transaction;
+
+import java.util.Arrays;
 
 @Slf4j
 public class CodeCapsule implements ProtoCapsule<byte[]> {
@@ -35,47 +29,8 @@ public class CodeCapsule implements ProtoCapsule<byte[]> {
     this.code = code;
   }
 
-  public CodeCapsule(ByteString bs) {
-    this.code = bs.toByteArray();
-  }
-
-  public static SmartContract getCreationContractFromTransaction(Transaction trx) {
-    try {
-      Any any = trx.getRawData().getContract(0).getParameter();
-      SmartContract contractCreationContract = any.unpack(SmartContract.class);
-      return contractCreationContract;
-    } catch (InvalidProtocolBufferException e) {
-      return null;
-    }
-  }
-
-  public static TriggerSmartContract getCallContractFromTransaction(Transaction trx) {
-    try {
-      Any any = trx.getRawData().getContract(0).getParameter();
-      TriggerSmartContract contractCallContract = any.unpack(TriggerSmartContract.class);
-      return contractCallContract;
-    } catch (InvalidProtocolBufferException e) {
-      return null;
-    }
-  }
-
-  public Sha256Hash getHash() {
-    return Sha256Hash.of(this.code);
-  }
-
   public Sha256Hash getCodeHash() {
     return Sha256Hash.of(this.code);
-  }
-
-  public static String getBase64FromByteString(ByteString sign) {
-    byte[] r = sign.substring(0, 32).toByteArray();
-    byte[] s = sign.substring(32, 64).toByteArray();
-    byte v = sign.byteAt(64);
-    if (v < 27) {
-      v += 27; //revId -> v
-    }
-    ECDSASignature signature = ECDSASignature.fromComponents(r, s, v);
-    return signature.toBase64();
   }
 
   @Override

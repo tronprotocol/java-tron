@@ -359,12 +359,6 @@ public class Runtime {
     if (percent < 0 || percent > 100) {
       throw new ContractExeException("percent must be >= 0 and <= 100");
     }
-    // insure one owner just have one contract
-    // if (this.deposit.getContractByNormalAccount(ownerAddress) != null) {
-    //   logger.error("Trying to create second contract with one account: address: " + Wallet
-    //       .encode58Check(ownerAddress));
-    //   return;
-    // }
 
     // insure the new contract address haven't exist
     if (deposit.getAccount(contractAddress) != null) {
@@ -408,6 +402,8 @@ public class Runtime {
               block, deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
       this.vm = new VM(config);
       this.program = new Program(ops, programInvoke, internalTransaction, config);
+      Program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
+      Program.resetNonce();
     } catch (Exception e) {
       logger.error(e.getMessage());
       throw new ContractExeException(e.getMessage());
@@ -482,6 +478,8 @@ public class Runtime {
       this.vm = new VM(config);
       InternalTransaction internalTransaction = new InternalTransaction(trx);
       this.program = new Program(null, code, programInvoke, internalTransaction, config);
+      Program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
+      Program.resetNonce();
     }
 
     program.getResult().setContractAddress(contractAddress);
@@ -493,7 +491,7 @@ public class Runtime {
 
   }
 
-  public void go() throws OutOfSlotTimeException, ContractExeException {
+  public void go() throws OutOfSlotTimeException {
     if (!readyToExecute) {
       return;
     }
@@ -522,7 +520,6 @@ public class Runtime {
           if (result.getException() != null) {
             program.spendAllEnergy();
             runtimeError = result.getException().getMessage();
-            trace.setBill(result.getEnergyUsed());
             throw result.getException();
           } else {
             runtimeError = "REVERT opcode executed";
@@ -530,22 +527,21 @@ public class Runtime {
         } else {
           deposit.commit();
         }
-        trace.setBill(result.getEnergyUsed());
+
       } else {
         deposit.commit();
       }
     } catch (OutOfResourceException e) {
       logger.error(e.getMessage());
       throw new OutOfSlotTimeException(e.getMessage());
-    } catch (ArithmeticException e) {
+    } catch (Throwable e) {
+      result.setException(new RuntimeException("Unknown Throwable"));
       logger.error(e.getMessage());
-      throw new ContractExeException(e.getMessage());
-    } catch (Exception e) {
-      logger.error(e.getMessage());
-      if (StringUtils.isNoneEmpty(runtimeError)) {
+      if (StringUtils.isEmpty(runtimeError)) {
         runtimeError = e.getMessage();
       }
     }
+    trace.setBill(result.getEnergyUsed());
   }
 
   private long getEnergyFee(long callerEnergyUsage, long callerEnergyFrozen,
