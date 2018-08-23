@@ -326,7 +326,6 @@ public class Manager {
       };
 
   public void stopRepushThread() {
-    logger.error("Repush Close");
     isRunRepushThread = false;
   }
 
