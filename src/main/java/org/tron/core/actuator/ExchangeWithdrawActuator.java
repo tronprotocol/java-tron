@@ -165,22 +165,30 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
     }
 
     if (tokenQuant <= 0) {
-      throw new ContractValidateException("withdraw token balance must greater than zero");
+      throw new ContractValidateException("withdraw token quant must greater than zero");
     }
 
     if (firstTokenBalance == 0 || secondTokenBalance == 0) {
-      throw new ContractValidateException("Token balance in exchange is equal with 0,the exchange has been closed");
+      throw new ContractValidateException("Token balance in exchange is equal with 0,"
+          + "the exchange has been closed");
     }
 
+    BigInteger bigFirstTokenBalance = new BigInteger(String.valueOf(firstTokenBalance));
+    BigInteger bigSecondTokenBalance = new BigInteger(String.valueOf(secondTokenBalance));
+    BigInteger bigTokenQuant = new BigInteger(String.valueOf(tokenQuant));
     if (Arrays.equals(tokenID, firstTokenID)) {
-      anotherTokenQuant = Math
-          .floorDiv(Math.multiplyExact(secondTokenBalance, tokenQuant), firstTokenBalance);
+//      anotherTokenQuant = Math
+//          .floorDiv(Math.multiplyExact(secondTokenBalance, tokenQuant), firstTokenBalance);
+      anotherTokenQuant = bigSecondTokenBalance.multiply(bigTokenQuant)
+          .divide(bigFirstTokenBalance).longValue();
       if (firstTokenBalance < tokenQuant || secondTokenBalance < anotherTokenQuant) {
         throw new ContractValidateException("exchange balance is not enough");
       }
     } else {
-      anotherTokenQuant = Math
-          .floorDiv(Math.multiplyExact(firstTokenBalance, tokenQuant), secondTokenBalance);
+//      anotherTokenQuant = Math
+//          .floorDiv(Math.multiplyExact(firstTokenBalance, tokenQuant), secondTokenBalance);
+      anotherTokenQuant = bigFirstTokenBalance.multiply(bigTokenQuant)
+          .divide(bigSecondTokenBalance).longValue();
       if (secondTokenBalance < tokenQuant || firstTokenBalance < anotherTokenQuant) {
         throw new ContractValidateException("exchange balance is not enough");
       }
