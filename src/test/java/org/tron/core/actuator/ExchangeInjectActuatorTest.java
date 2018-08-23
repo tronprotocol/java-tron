@@ -633,7 +633,7 @@ public class ExchangeInjectActuatorTest {
   }
 
   /**
-   * balance is not enough
+   * balance is not enough2
    */
   @Test
   public void balanceNotEnough2() {

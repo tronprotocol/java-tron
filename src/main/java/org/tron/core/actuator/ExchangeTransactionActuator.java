@@ -144,6 +144,11 @@ public class ExchangeTransactionActuator extends AbstractActuator {
       throw new ContractValidateException("transaction token balance must greater than zero");
     }
 
+    if (firstTokenBalance == 0 || secondTokenBalance == 0) {
+      throw new ContractValidateException("Token balance in exchange is equal with 0,"
+          + "the exchange has been closed");
+    }
+
     long balanceLimit = dbManager.getDynamicPropertiesStore().getExchangeBalanceLimit();
     long tokenBalance = (Arrays.equals(tokenID, firstTokenID) ? firstTokenBalance
         : secondTokenBalance);
