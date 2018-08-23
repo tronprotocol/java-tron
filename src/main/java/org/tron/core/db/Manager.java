@@ -108,8 +108,6 @@ public class Manager {
   @Autowired
   private AccountIdIndexStore accountIdIndexStore;
   @Autowired
-  private AccountContractIndexStore accountContractIndexStore;
-  @Autowired
   private WitnessScheduleStore witnessScheduleStore;
   @Autowired
   private RecentBlockStore recentBlockStore;
@@ -298,11 +296,6 @@ public class Manager {
 
   public void clearAndWriteNeighbours(Set<Node> nodes) {
     this.peersStore.put("neighbours".getBytes(), nodes);
-  }
-
-
-  public AccountContractIndexStore getAccountContractIndexStore() {
-    return accountContractIndexStore;
   }
 
   public Set<Node> readNeighbours() {
