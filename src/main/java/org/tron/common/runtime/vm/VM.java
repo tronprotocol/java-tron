@@ -1349,8 +1349,7 @@ public class VM {
     }
   }
 
-  public void play(Program program)
-      throws ContractValidateException {
+  public void play(Program program) {
     try {
       if (program.byTestingSuite()) {
         return;
@@ -1362,6 +1361,8 @@ public class VM {
 
     } catch (RuntimeException e) {
       program.setRuntimeFailure(e);
+    } catch (ContractValidateException e) {
+      program.setRuntimeFailure(new RuntimeException(e.getMessage()));
     } catch (StackOverflowError soe) {
       logger
           .error("\n !!! StackOverflowError: update your java run command with -Xss2M !!!\n", soe);
