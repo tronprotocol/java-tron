@@ -59,7 +59,8 @@ public class AdvBlockDisorder {
     }
 
     public BlockCapsule getNextBlock(BlockCapsule block){
-        return get(block.getParentHash()) != null ? get(block.getParentHash()).getBlockCapsule(): null;
+        //这段可能是有问题的 block的blockid和子block的parenthash是同一个吗？
+        return get(block.getBlockId()) != null ? get(block.getBlockId()).getBlockCapsule(): null;
     }
 
     class PeerAndBlockCapsule{
