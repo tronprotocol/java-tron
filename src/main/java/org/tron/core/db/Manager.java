@@ -311,7 +311,7 @@ public class Manager {
         while (isRunRepushThread) {
           try {
             TransactionCapsule tx = this.getRepushTransactions().poll(1, TimeUnit.SECONDS);
-            if (tx == null) {
+            if (tx != null) {
               this.rePush(tx);
             }
           } catch (InterruptedException ex) {
@@ -324,13 +324,10 @@ public class Manager {
           }
         }
       };
-s
-  public void stopRepushThread() {
-    isRunRepushThread = false;
-  }
 
-  public Thread getRepushThread() {
-    return repushThread;
+  public void stopRepushThread() {
+    logger.error("Repush Close");
+    isRunRepushThread = false;
   }
 
   @PostConstruct

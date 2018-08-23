@@ -12,7 +12,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -38,13 +38,13 @@ public class IndexHelperTest {
 
   private static Manager dbManager;
   private static IndexHelper indexHelper;
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
   private static String dbPath = "output_IndexHelper_test";
 
   static {
     Args.setParam(new String[]{"-d", dbPath, "-w"}, "config-test-index.conf");
     Args.getInstance().setSolidityNode(true);
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    context = new TronApplicationContext(DefaultConfig.class);
   }
 
   @BeforeClass

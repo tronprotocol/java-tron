@@ -28,7 +28,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
@@ -63,7 +63,7 @@ public class TransactionTraceTest {
   private static String dbPath = "output_TransactionTrace_test";
   private static String dbDirectory = "db_TransactionTrace_test";
   private static String indexDirectory = "index_TransactionTrace_test";
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
   private static Manager dbManager;
   private static StorageMarket storageMarket;
   private static ByteString ownerAddress = ByteString.copyFrom(ByteArray.fromInt(1));
@@ -88,7 +88,7 @@ public class TransactionTraceTest {
         },
         "config-test-mainnet.conf"
     );
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    context = new TronApplicationContext(DefaultConfig.class);
   }
 
   public TransactionTraceTest(long energyUsage, long storageUsage) {

@@ -7,7 +7,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.testng.collections.Lists;
 import org.tron.common.net.udp.message.discover.FindNodeMessage;
 import org.tron.common.net.udp.message.Message;
@@ -45,7 +45,7 @@ public class UdpTest {
       cfgArgs.getSeedNode().setIpList(Lists.newArrayList());
       cfgArgs.setNodeP2pVersion(100);
       cfgArgs.setNodeListenPort(10001);
-      context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+      context = new TronApplicationContext(DefaultConfig.class);
     }).start();
   }
 
