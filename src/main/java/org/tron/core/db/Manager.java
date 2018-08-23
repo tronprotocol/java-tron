@@ -316,7 +316,7 @@ public class Manager {
             TransactionCapsule tx = this.getRepushTransactions().take();
             this.rePush(tx);
           } catch (InterruptedException ex) {
-            logger.error(ex.getMessage());
+            logger.error("repushLoop Interrupt");
             Thread.currentThread().interrupt();
             break;
           } catch (Exception ex) {
@@ -1504,7 +1504,7 @@ public class Manager {
   @Override
   protected void finalize() throws Throwable {
     super.finalize();
-    System.out.println("jack finalize");
+    logger.info("finalize the manager");
     repushThread.interrupt();
   }
 
