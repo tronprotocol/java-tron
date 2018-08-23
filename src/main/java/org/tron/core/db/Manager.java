@@ -316,8 +316,9 @@ public class Manager {
             TransactionCapsule tx = this.getRepushTransactions().take();
             this.rePush(tx);
           } catch (InterruptedException ex) {
-            logger.error(ex.getMessage());
+            logger.error("repushLoop Interrupt");
             Thread.currentThread().interrupt();
+            break;
           } catch (Exception ex) {
             logger.error("unknown exception happened in witness loop", ex);
           } catch (Throwable throwable) {
@@ -1498,6 +1499,13 @@ public class Manager {
         throw new ValidateSignatureException(e.getCause().getMessage());
       }
     }
+  }
+
+  @Override
+  protected void finalize() throws Throwable {
+    super.finalize();
+    logger.info("finalize the manager");
+    repushThread.interrupt();
   }
 
   public void rePush(TransactionCapsule tx) {

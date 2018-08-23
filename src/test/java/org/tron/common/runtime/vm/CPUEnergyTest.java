@@ -182,7 +182,7 @@ public class CPUEnergyTest {
     byte[] contractAddress = result.getContractAddress();
     Assert.assertEquals(deposit.getAccount(contractAddress).getBalance(), 10000000L);
 
-    /* =================================== CALL doSend() =================================== */
+    /* =================================== CALL doTransfer() =================================== */
     byte[] triggerData = TVMTestUtils.parseABI("doTransfer()", null);
     result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),

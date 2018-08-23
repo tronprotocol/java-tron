@@ -348,6 +348,7 @@ public class Args {
     INSTANCE.maxConnectNumberFactor = 0.8;
     INSTANCE.receiveTcpMinDataLength = 2048;
     INSTANCE.isOpenFullTcpDisconnect = false;
+    INSTANCE.debug = false;
   }
 
   /**
