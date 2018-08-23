@@ -13,7 +13,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.overlay.client.PeerClient;
@@ -45,7 +45,7 @@ import org.tron.protos.Protocol.Transaction;
 @Slf4j
 public class BroadTest {
 
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
   private NodeImpl node;
   RpcApiService rpcApiService;
   PeerClient peerClient;
@@ -196,7 +196,7 @@ public class BroadTest {
         cfgArgs.setNeedSyncCheck(false);
         cfgArgs.setNodeExternalIp("127.0.0.1");
 
-        context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+        context = new TronApplicationContext(DefaultConfig.class);
 
         if (cfgArgs.isHelp()) {
           logger.info("Here is the help message.");
