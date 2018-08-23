@@ -88,6 +88,25 @@ public class Program {
   //Max size for stack checks
   private static final int MAX_STACKSIZE = 1024;
 
+  public static byte[] getRootTransactionId() {
+    return rootTransactionId.clone();
+  }
+
+  public static void setRootTransactionId(byte[] rootTransactionId) {
+    Program.rootTransactionId = rootTransactionId.clone();
+  }
+
+  public static long getNonce() {
+    return nonce;
+  }
+
+  public static void setNonce(long nonceValue) {
+    nonce = nonceValue;
+  }
+
+  private static long nonce = 0;
+  private static byte[] rootTransactionId = null;
+
   private InternalTransaction transaction;
 
   private ProgramInvoke invoke;
@@ -118,7 +137,7 @@ public class Program {
 
   private final SystemProperties config;
 
-  private byte[] transactionHash;
+  //private byte[] transactionHash;
 
   public Program(byte[] ops, ProgramInvoke programInvoke) {
     this(ops, programInvoke, null);
@@ -148,7 +167,7 @@ public class Program {
     this.contractState = setupProgramListener(new ContractState(programInvoke));
     this.trace = new ProgramTrace(config, programInvoke);
 
-    this.transactionHash = transaction.getHash();
+    //this.transactionHash = transaction.getHash();
   }
 
   public ProgramPrecompile getProgramPrecompile() {
@@ -447,10 +466,10 @@ public class Program {
 
 //    byte[] privKey = Sha256Hash.hash(getOwnerAddress().getData());
 //    ECKey ecKey = ECKey.fromPrivate(privKey);
-
-    this.transactionHash = Sha256Hash.hash(transactionHash);
+    this.increaseNonce();
+    //this.transactionHash = Sha256Hash.hash(transactionHash);
     byte[] newAddress = Wallet
-        .generateContractAddress(getOwnerAddress().getData(), transactionHash);
+        .generateContractAddress(rootTransactionId,nonce);
 
     AccountCapsule existingAddr = getContractState().getAccount(newAddress);
     //boolean contractAlreadyExists = existingAddr != null && existingAddr.isContractExist(blockchainConfig);
@@ -723,7 +742,14 @@ public class Program {
     } else {
       refundEnergy(msg.getEnergy().longValue(), "remaining esnergy from the internal call");
     }
+  }
 
+  public static void  increaseNonce(){
+    nonce++;
+  }
+
+  public static void resetNonce(){
+    nonce=0;
   }
 
   public void spendEnergy(long energyValue, String opName) {

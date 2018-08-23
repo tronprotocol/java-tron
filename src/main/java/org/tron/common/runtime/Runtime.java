@@ -408,6 +408,8 @@ public class Runtime {
               block, deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
       this.vm = new VM(config);
       this.program = new Program(ops, programInvoke, internalTransaction, config);
+      Program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
+      Program.resetNonce();
     } catch (Exception e) {
       logger.error(e.getMessage());
       throw new ContractExeException(e.getMessage());
@@ -482,6 +484,8 @@ public class Runtime {
       this.vm = new VM(config);
       InternalTransaction internalTransaction = new InternalTransaction(trx);
       this.program = new Program(null, code, programInvoke, internalTransaction, config);
+      Program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
+      Program.resetNonce();
     }
 
     program.getResult().setContractAddress(contractAddress);
