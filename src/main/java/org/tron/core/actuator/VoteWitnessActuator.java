@@ -140,7 +140,8 @@ public class VoteWitnessActuator extends AbstractActuator {
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
 
     if (!votesStore.has(ownerAddress)) {
-      votesCapsule = new VotesCapsule(voteContract.getOwnerAddress(), accountCapsule.getVotesList());
+      votesCapsule = new VotesCapsule(voteContract.getOwnerAddress(),
+          accountCapsule.getVotesList());
     } else {
       votesCapsule = votesStore.get(ownerAddress);
     }

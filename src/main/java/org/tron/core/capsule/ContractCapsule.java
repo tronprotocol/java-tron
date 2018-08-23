@@ -88,4 +88,12 @@ public class ContractCapsule implements ProtoCapsule<SmartContract> {
   public String toString() {
     return this.smartContract.toString();
   }
+
+  public byte[] getOriginAddress() {
+    return this.smartContract.getOriginAddress().toByteArray();
+  }
+
+  public long getConsumeUserResourcePercent() {
+    return this.smartContract.getConsumeUserResourcePercent();
+  }
 }

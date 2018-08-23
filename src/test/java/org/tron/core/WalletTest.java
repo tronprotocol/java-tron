@@ -32,7 +32,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.common.crypto.ECKey;
@@ -57,7 +57,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 @Slf4j
 public class WalletTest {
 
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
   private static Wallet wallet;
   private static Manager manager;
   private static String dbPath = "output_wallet_test";
@@ -100,7 +100,7 @@ public class WalletTest {
 
   static {
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    context = new TronApplicationContext(DefaultConfig.class);
   }
 
   @BeforeClass

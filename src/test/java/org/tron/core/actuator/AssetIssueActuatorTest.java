@@ -14,7 +14,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -35,7 +35,7 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j
 public class AssetIssueActuatorTest {
 
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
   private static Manager dbManager;
   private static final String dbPath = "output_assetIssue_test";
   private static final String OWNER_ADDRESS;
@@ -53,7 +53,7 @@ public class AssetIssueActuatorTest {
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
     OWNER_ADDRESS_SECOND =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
@@ -922,7 +922,7 @@ public class AssetIssueActuatorTest {
         .setTrxNum(TRX_NUM).setNum(NUM)
         .setStartTime(nowTime)
         .setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(description200Bytes+"0"))
+        .setDescription(ByteString.copyFromUtf8(description200Bytes + "0"))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
 
@@ -1329,24 +1329,21 @@ public class AssetIssueActuatorTest {
   }
 
   /**
-   * 1. start time should not be null
-   * 2. end time should not be null
-   * 3. start time >= getHeadBlockTimeStamp
-   * 4. start time < end time
-   *
+   * 1. start time should not be null 2. end time should not be null 3. start time >=
+   * getHeadBlockTimeStamp 4. start time < end time
    */
   @Test
   public void issueTimeTest() {
     //empty start time will throw exception
     Any contract = Any.pack(Contract.AssetIssueContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setName(ByteString.copyFromUtf8(NAME))
-            .setTotalSupply(TOTAL_SUPPLY)
-            .setTrxNum(TRX_NUM).setNum(NUM)
-            .setEndTime(endTime)
-            .setDescription(ByteString.copyFromUtf8("description"))
-            .setUrl(ByteString.copyFromUtf8(URL))
-            .build());
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+        .setName(ByteString.copyFromUtf8(NAME))
+        .setTotalSupply(TOTAL_SUPPLY)
+        .setTrxNum(TRX_NUM).setNum(NUM)
+        .setEndTime(endTime)
+        .setDescription(ByteString.copyFromUtf8("description"))
+        .setUrl(ByteString.copyFromUtf8(URL))
+        .build());
     AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -1364,14 +1361,14 @@ public class AssetIssueActuatorTest {
 
     //empty end time will throw exception
     contract = Any.pack(Contract.AssetIssueContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setName(ByteString.copyFromUtf8(NAME))
-            .setTotalSupply(TOTAL_SUPPLY)
-            .setTrxNum(TRX_NUM).setNum(NUM)
-            .setStartTime(startTime)
-            .setDescription(ByteString.copyFromUtf8("description"))
-            .setUrl(ByteString.copyFromUtf8(URL))
-            .build());
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+        .setName(ByteString.copyFromUtf8(NAME))
+        .setTotalSupply(TOTAL_SUPPLY)
+        .setTrxNum(TRX_NUM).setNum(NUM)
+        .setStartTime(startTime)
+        .setDescription(ByteString.copyFromUtf8("description"))
+        .setUrl(ByteString.copyFromUtf8(URL))
+        .build());
     actuator = new AssetIssueActuator(contract, dbManager);
     ret = new TransactionResultCapsule();
     try {
@@ -1389,15 +1386,15 @@ public class AssetIssueActuatorTest {
 
     //startTime == now, throw exception
     contract = Any.pack(Contract.AssetIssueContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setName(ByteString.copyFromUtf8(NAME))
-            .setTotalSupply(TOTAL_SUPPLY)
-            .setTrxNum(TRX_NUM).setNum(NUM)
-            .setStartTime(now)
-            .setEndTime(endTime)
-            .setDescription(ByteString.copyFromUtf8("description"))
-            .setUrl(ByteString.copyFromUtf8(URL))
-            .build());
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+        .setName(ByteString.copyFromUtf8(NAME))
+        .setTotalSupply(TOTAL_SUPPLY)
+        .setTrxNum(TRX_NUM).setNum(NUM)
+        .setStartTime(now)
+        .setEndTime(endTime)
+        .setDescription(ByteString.copyFromUtf8("description"))
+        .setUrl(ByteString.copyFromUtf8(URL))
+        .build());
     actuator = new AssetIssueActuator(contract, dbManager);
     ret = new TransactionResultCapsule();
     try {
@@ -1415,15 +1412,15 @@ public class AssetIssueActuatorTest {
 
     //startTime < now, throw exception
     contract = Any.pack(Contract.AssetIssueContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setName(ByteString.copyFromUtf8(NAME))
-            .setTotalSupply(TOTAL_SUPPLY)
-            .setTrxNum(TRX_NUM).setNum(NUM)
-            .setStartTime(now - 1)
-            .setEndTime(endTime)
-            .setDescription(ByteString.copyFromUtf8("description"))
-            .setUrl(ByteString.copyFromUtf8(URL))
-            .build());
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+        .setName(ByteString.copyFromUtf8(NAME))
+        .setTotalSupply(TOTAL_SUPPLY)
+        .setTrxNum(TRX_NUM).setNum(NUM)
+        .setStartTime(now - 1)
+        .setEndTime(endTime)
+        .setDescription(ByteString.copyFromUtf8("description"))
+        .setUrl(ByteString.copyFromUtf8(URL))
+        .build());
     actuator = new AssetIssueActuator(contract, dbManager);
     ret = new TransactionResultCapsule();
     try {
@@ -1441,15 +1438,15 @@ public class AssetIssueActuatorTest {
 
     //endTime == startTime, throw exception
     contract = Any.pack(Contract.AssetIssueContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setName(ByteString.copyFromUtf8(NAME))
-            .setTotalSupply(TOTAL_SUPPLY)
-            .setTrxNum(TRX_NUM).setNum(NUM)
-            .setStartTime(startTime)
-            .setEndTime(startTime)
-            .setDescription(ByteString.copyFromUtf8("description"))
-            .setUrl(ByteString.copyFromUtf8(URL))
-            .build());
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+        .setName(ByteString.copyFromUtf8(NAME))
+        .setTotalSupply(TOTAL_SUPPLY)
+        .setTrxNum(TRX_NUM).setNum(NUM)
+        .setStartTime(startTime)
+        .setEndTime(startTime)
+        .setDescription(ByteString.copyFromUtf8("description"))
+        .setUrl(ByteString.copyFromUtf8(URL))
+        .build());
     actuator = new AssetIssueActuator(contract, dbManager);
     ret = new TransactionResultCapsule();
     try {
@@ -1467,15 +1464,15 @@ public class AssetIssueActuatorTest {
 
     //endTime < startTime, throw exception
     contract = Any.pack(Contract.AssetIssueContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setName(ByteString.copyFromUtf8(NAME))
-            .setTotalSupply(TOTAL_SUPPLY)
-            .setTrxNum(TRX_NUM).setNum(NUM)
-            .setStartTime(endTime)
-            .setEndTime(startTime)
-            .setDescription(ByteString.copyFromUtf8("description"))
-            .setUrl(ByteString.copyFromUtf8(URL))
-            .build());
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+        .setName(ByteString.copyFromUtf8(NAME))
+        .setTotalSupply(TOTAL_SUPPLY)
+        .setTrxNum(TRX_NUM).setNum(NUM)
+        .setStartTime(endTime)
+        .setEndTime(startTime)
+        .setDescription(ByteString.copyFromUtf8("description"))
+        .setUrl(ByteString.copyFromUtf8(URL))
+        .build());
     actuator = new AssetIssueActuator(contract, dbManager);
     ret = new TransactionResultCapsule();
     try {
@@ -1493,21 +1490,22 @@ public class AssetIssueActuatorTest {
 
     //right issue, will not throw exception
     contract = Any.pack(Contract.AssetIssueContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setName(ByteString.copyFromUtf8(NAME))
-            .setTotalSupply(TOTAL_SUPPLY)
-            .setTrxNum(TRX_NUM).setNum(NUM)
-            .setStartTime(startTime)
-            .setEndTime(endTime)
-            .setDescription(ByteString.copyFromUtf8("description"))
-            .setUrl(ByteString.copyFromUtf8(URL))
-            .build());
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+        .setName(ByteString.copyFromUtf8(NAME))
+        .setTotalSupply(TOTAL_SUPPLY)
+        .setTrxNum(TRX_NUM).setNum(NUM)
+        .setStartTime(startTime)
+        .setEndTime(endTime)
+        .setDescription(ByteString.copyFromUtf8("description"))
+        .setUrl(ByteString.copyFromUtf8(URL))
+        .build());
     actuator = new AssetIssueActuator(contract, dbManager);
     ret = new TransactionResultCapsule();
     try {
       actuator.validate();
       actuator.execute(ret);
-      AccountCapsule account = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule account = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
       Assert.assertEquals(account.getAssetIssuedName().toStringUtf8(), NAME);
       Assert.assertEquals(account.getAssetMap().size(), 1);
@@ -1526,50 +1524,50 @@ public class AssetIssueActuatorTest {
   @Test
   public void assetIssueNameTest() {
     Any contract = Any.pack(Contract.AssetIssueContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setName(ByteString.copyFromUtf8(NAME))
-            .setTotalSupply(TOTAL_SUPPLY)
-            .setTrxNum(TRX_NUM).setNum(NUM)
-            .setStartTime(startTime)
-            .setEndTime(endTime)
-            .setDescription(ByteString.copyFromUtf8("description"))
-            .setUrl(ByteString.copyFromUtf8(URL))
-            .build());
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+        .setName(ByteString.copyFromUtf8(NAME))
+        .setTotalSupply(TOTAL_SUPPLY)
+        .setTrxNum(TRX_NUM).setNum(NUM)
+        .setStartTime(startTime)
+        .setEndTime(endTime)
+        .setDescription(ByteString.copyFromUtf8("description"))
+        .setUrl(ByteString.copyFromUtf8(URL))
+        .build());
     AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
-        actuator.validate();
-        actuator.execute(ret);
+      actuator.validate();
+      actuator.execute(ret);
     } catch (ContractValidateException e) {
-        Assert.assertFalse(e instanceof ContractValidateException);
+      Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
-        Assert.assertFalse(e instanceof ContractExeException);
+      Assert.assertFalse(e instanceof ContractExeException);
     }
 
     contract = Any.pack(Contract.AssetIssueContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setName(ByteString.copyFromUtf8(ASSET_NAME_SECOND))
-            .setTotalSupply(TOTAL_SUPPLY)
-            .setTrxNum(TRX_NUM).setNum(NUM)
-            .setStartTime(startTime)
-            .setEndTime(endTime)
-            .setDescription(ByteString.copyFromUtf8("description"))
-            .setUrl(ByteString.copyFromUtf8(URL))
-            .build());
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+        .setName(ByteString.copyFromUtf8(ASSET_NAME_SECOND))
+        .setTotalSupply(TOTAL_SUPPLY)
+        .setTrxNum(TRX_NUM).setNum(NUM)
+        .setStartTime(startTime)
+        .setEndTime(endTime)
+        .setDescription(ByteString.copyFromUtf8("description"))
+        .setUrl(ByteString.copyFromUtf8(URL))
+        .build());
     actuator = new AssetIssueActuator(contract, dbManager);
     ret = new TransactionResultCapsule();
     try {
-        actuator.validate();
-        actuator.execute(ret);
-        Assert.assertTrue(false);
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-        Assert.assertTrue(e instanceof ContractValidateException);
-        Assert.assertEquals("An account can only issue one asset", e.getMessage());
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("An account can only issue one asset", e.getMessage());
     } catch (ContractExeException e) {
-        Assert.assertFalse(e instanceof ContractExeException);
+      Assert.assertFalse(e instanceof ContractExeException);
     } finally {
-        dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
-        dbManager.getAssetIssueStore().delete(ByteArray.fromString(ASSET_NAME_SECOND));
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(ASSET_NAME_SECOND));
     }
   }
 
@@ -1577,24 +1575,25 @@ public class AssetIssueActuatorTest {
   public void frozenListSizeTest() {
     this.dbManager.getDynamicPropertiesStore().saveMaxFrozenSupplyNumber(3);
     List<FrozenSupply> frozenList = new ArrayList();
-    for (int i = 0; i < this.dbManager.getDynamicPropertiesStore().getMaxFrozenSupplyNumber() + 2; i++) {
+    for (int i = 0; i < this.dbManager.getDynamicPropertiesStore().getMaxFrozenSupplyNumber() + 2;
+        i++) {
       frozenList.add(FrozenSupply.newBuilder()
-              .setFrozenAmount(10)
-              .setFrozenDays(3)
-              .build());
+          .setFrozenAmount(10)
+          .setFrozenDays(3)
+          .build());
     }
 
     Any contract = Any.pack(Contract.AssetIssueContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setName(ByteString.copyFromUtf8(NAME))
-            .setTotalSupply(TOTAL_SUPPLY)
-            .setTrxNum(TRX_NUM).setNum(NUM)
-            .setStartTime(startTime)
-            .setEndTime(endTime)
-            .setDescription(ByteString.copyFromUtf8("description"))
-            .setUrl(ByteString.copyFromUtf8(URL))
-            .addAllFrozenSupply(frozenList)
-            .build());
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+        .setName(ByteString.copyFromUtf8(NAME))
+        .setTotalSupply(TOTAL_SUPPLY)
+        .setTrxNum(TRX_NUM).setNum(NUM)
+        .setStartTime(startTime)
+        .setEndTime(endTime)
+        .setDescription(ByteString.copyFromUtf8("description"))
+        .setUrl(ByteString.copyFromUtf8(URL))
+        .addAllFrozenSupply(frozenList)
+        .build());
     AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -1616,20 +1615,20 @@ public class AssetIssueActuatorTest {
     this.dbManager.getDynamicPropertiesStore().saveMaxFrozenSupplyNumber(3);
     List<FrozenSupply> frozenList = new ArrayList();
     frozenList.add(FrozenSupply.newBuilder()
-            .setFrozenAmount(TOTAL_SUPPLY + 1)
-            .setFrozenDays(3)
-            .build());
+        .setFrozenAmount(TOTAL_SUPPLY + 1)
+        .setFrozenDays(3)
+        .build());
     Any contract = Any.pack(Contract.AssetIssueContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setName(ByteString.copyFromUtf8(NAME))
-            .setTotalSupply(TOTAL_SUPPLY)
-            .setTrxNum(TRX_NUM).setNum(NUM)
-            .setStartTime(startTime)
-            .setEndTime(endTime)
-            .setDescription(ByteString.copyFromUtf8("description"))
-            .setUrl(ByteString.copyFromUtf8(URL))
-            .addAllFrozenSupply(frozenList)
-            .build());
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+        .setName(ByteString.copyFromUtf8(NAME))
+        .setTotalSupply(TOTAL_SUPPLY)
+        .setTrxNum(TRX_NUM).setNum(NUM)
+        .setStartTime(startTime)
+        .setEndTime(endTime)
+        .setDescription(ByteString.copyFromUtf8("description"))
+        .setUrl(ByteString.copyFromUtf8(URL))
+        .addAllFrozenSupply(frozenList)
+        .build());
     AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {

@@ -11,7 +11,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -31,7 +31,7 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j
 public class WitnessUpdateActuatorTest {
 
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
   private static Manager dbManager;
   private static final String dbPath = "output_WitnessUpdate_test";
   private static final String OWNER_ADDRESS;
@@ -45,7 +45,7 @@ public class WitnessUpdateActuatorTest {
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_NOTEXIST =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
@@ -68,10 +68,10 @@ public class WitnessUpdateActuatorTest {
   public void createCapsule() {
     // address in accountStore and witnessStore
     AccountCapsule accountCapsule =
-            new AccountCapsule(
-                    ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
-                    ByteString.copyFromUtf8(OWNER_ADDRESS_ACCOUNT_NAME),
-                    Protocol.AccountType.Normal);
+        new AccountCapsule(
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+            ByteString.copyFromUtf8(OWNER_ADDRESS_ACCOUNT_NAME),
+            Protocol.AccountType.Normal);
     dbManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS), accountCapsule);
     WitnessCapsule ownerCapsule = new WitnessCapsule(
         ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), 10_000_000L, URL);
@@ -79,11 +79,12 @@ public class WitnessUpdateActuatorTest {
 
     // address exist in accountStore, but is not witness
     AccountCapsule accountNotWitnessCapsule =
-            new AccountCapsule(
-                    ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_NOT_WITNESS)),
-                    ByteString.copyFromUtf8(OWNER_ADDRESS_NOT_WITNESS_ACCOUNT_NAME),
-                    Protocol.AccountType.Normal);
-    dbManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS_NOT_WITNESS), accountNotWitnessCapsule);
+        new AccountCapsule(
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_NOT_WITNESS)),
+            ByteString.copyFromUtf8(OWNER_ADDRESS_NOT_WITNESS_ACCOUNT_NAME),
+            Protocol.AccountType.Normal);
+    dbManager.getAccountStore()
+        .put(ByteArray.fromHexString(OWNER_ADDRESS_NOT_WITNESS), accountNotWitnessCapsule);
     dbManager.getWitnessStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_NOT_WITNESS));
 
     // address does not exist in accountStore
@@ -221,8 +222,8 @@ public class WitnessUpdateActuatorTest {
   }
 
   /**
-   * use AccountStore not exists Address createWitness,result is failed,exception is
-   * "Witness does not exist"
+   * use AccountStore not exists Address createWitness,result is failed,exception is "Witness does
+   * not exist"
    */
   @Test
   public void notExistWitness() {
@@ -247,7 +248,7 @@ public class WitnessUpdateActuatorTest {
   @Test
   public void notExistAccount() {
     WitnessUpdateActuator actuator = new WitnessUpdateActuator(
-            getContract(OWNER_ADDRESS_NOTEXIST, URL), dbManager);
+        getContract(OWNER_ADDRESS_NOTEXIST, URL), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();

@@ -9,7 +9,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.testng.collections.Lists;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -26,13 +26,13 @@ import org.tron.protos.Protocol.Proposal.State;
 public class ProposalControllerTest {
 
   private static Manager dbManager = new Manager();
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
   private static String dbPath = "output_proposal_controller_test";
   private static ProposalController proposalController;
 
   static {
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    context = new TronApplicationContext(DefaultConfig.class);
   }
 
   @BeforeClass

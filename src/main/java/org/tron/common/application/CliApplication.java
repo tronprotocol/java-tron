@@ -75,4 +75,5 @@ public class CliApplication implements Application {
   public Manager getDbManager() {
     return null;
   }
+
 }

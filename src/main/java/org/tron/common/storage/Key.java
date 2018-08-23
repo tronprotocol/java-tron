@@ -4,10 +4,6 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.Arrays;
 
-/**
- * @author Guo Yongang
- * @since 27.04.2018
- */
 public class Key {
 
     private static int MAX_KEY_LENGTH = 32;

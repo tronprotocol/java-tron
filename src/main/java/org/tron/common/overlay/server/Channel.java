@@ -98,6 +98,8 @@ public class Channel {
 
   private PeerStatistics peerStats = new PeerStatistics();
 
+  private boolean isTrustPeer;
+
   public void init(ChannelPipeline pipeline, String remoteId, boolean discoveryMode,
       ChannelManager channelManager, PeerConnectionDelegate peerDel) {
 
@@ -106,6 +108,8 @@ public class Channel {
     this.remoteId = remoteId;
 
     isActive = remoteId != null && !remoteId.isEmpty();
+
+    startTime = System.currentTimeMillis();
 
     //TODO: use config here
     pipeline.addLast("readTimeoutHandler", new ReadTimeoutHandler(60, TimeUnit.SECONDS));
@@ -131,6 +135,7 @@ public class Channel {
   }
 
   public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage msg) {
+    isTrustPeer = channelManager.getTrustPeers().containsKey(getInetAddress());
     ctx.pipeline().remove(handshakeHandler);
     msgQueue.activate(ctx);
     ctx.pipeline().addLast("messageCodec", messageCodec);
@@ -260,6 +265,10 @@ public class Channel {
     return tronState.ordinal() > TronState.INIT.ordinal();
   }
 
+  public boolean isTrustPeer() {
+    return isTrustPeer;
+  }
+
   @Override
   public boolean equals(Object o) {
 
@@ -291,5 +300,6 @@ public class Channel {
   public String toString() {
     return String.format("%s | %s", inetSocketAddress, getPeerId());
   }
+  
 }
 
