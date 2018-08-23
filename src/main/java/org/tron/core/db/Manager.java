@@ -370,8 +370,8 @@ public class Manager {
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
 
-    repushThread = new Thread(repushLoop);
-    repushThread.start();
+    // repushThread = new Thread(repushLoop);
+    // repushThread.start();
   }
 
   public BlockId getGenesisBlockId() {
