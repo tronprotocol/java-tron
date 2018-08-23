@@ -7,31 +7,31 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.tron.core.capsule.ProposalCapsule;
+import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.exception.ItemNotFoundException;
 
 @Component
-public class ProposalStore extends TronStoreWithRevoking<ProposalCapsule> {
+public class ExchangeStore extends TronStoreWithRevoking<ExchangeCapsule> {
 
   @Autowired
-  public ProposalStore(@Value("proposal") String dbName) {
+  public ExchangeStore(@Value("exchange") String dbName) {
     super(dbName);
   }
 
   @Override
-  public ProposalCapsule get(byte[] key) throws ItemNotFoundException {
+  public ExchangeCapsule get(byte[] key) throws ItemNotFoundException {
     byte[] value = revokingDB.get(key);
-    return new ProposalCapsule(value);
+    return new ExchangeCapsule(value);
   }
 
   /**
-   * get all proposals.
+   * get all exchanges.
    */
-  public List<ProposalCapsule> getAllProposals() {
+  public List<ExchangeCapsule> getAllExchanges() {
     return Streams.stream(iterator())
         .map(Map.Entry::getValue)
         .sorted(
-            (ProposalCapsule a, ProposalCapsule b) -> a.getCreateTime() <= b.getCreateTime() ? 1
+            (ExchangeCapsule a, ExchangeCapsule b) -> a.getCreateTime() <= b.getCreateTime() ? 1
                 : -1)
         .collect(Collectors.toList());
   }

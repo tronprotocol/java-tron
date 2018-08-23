@@ -93,7 +93,7 @@ public class HandleBlockMessageTest {
 
         peer.getSyncBlockRequested().put(blockMessage.getBlockId(), System.currentTimeMillis());
         node.onMessage(peer, blockMessageOther);
-        Assert.assertEquals(peer.getSyncBlockRequested().isEmpty(), true);
+        Assert.assertEquals(peer.getSyncBlockRequested().isEmpty(), false);
     }
 
     //根据父块生成一个区块

@@ -236,7 +236,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private ExecutorService broadPool = Executors.newFixedThreadPool(2, new ThreadFactory() {
     @Override
     public Thread newThread(Runnable r) {
-      return new Thread(r, "broad-msg-");
+      return new Thread(r, "broad-msg");
     }
   });
 

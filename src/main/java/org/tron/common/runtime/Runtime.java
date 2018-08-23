@@ -546,7 +546,7 @@ public class Runtime {
       throw new ContractExeException(e.getMessage());
     } catch (Exception e) {
       logger.error(e.getMessage());
-      if (StringUtils.isNoneEmpty(runtimeError)) {
+      if (StringUtils.isEmpty(runtimeError)) {
         runtimeError = e.getMessage();
       }
     }
