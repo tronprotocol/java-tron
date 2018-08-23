@@ -71,11 +71,6 @@ public class ContractState implements Deposit, ProgramListenerAware {
   }
 
   @Override
-  public BytesCapsule getContractByNormalAccount(byte[] address) {
-    return deposit.getContractByNormalAccount(address);
-  }
-
-  @Override
   public void createContractByNormalAccountIndex(byte[] address,
       BytesCapsule contractAddress) {
     deposit.createContractByNormalAccountIndex(address, contractAddress);

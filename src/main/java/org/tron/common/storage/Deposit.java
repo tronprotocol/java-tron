@@ -83,8 +83,6 @@ public interface Deposit {
 
   BlockCapsule getBlock(byte[] blockHash);
 
-  BytesCapsule getContractByNormalAccount(byte[] address);
-
   long computeAfterRunStorageSize();
 
   long getBeforeRunStorageSize();

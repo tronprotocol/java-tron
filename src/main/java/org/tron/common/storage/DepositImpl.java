@@ -13,7 +13,6 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.db.AccountContractIndexStore;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.AssetIssueStore;
 import org.tron.core.db.BlockStore;
@@ -99,10 +98,6 @@ public class DepositImpl implements Deposit {
     return dbManager.getAssetIssueStore();
   }
 
-  private AccountContractIndexStore getAccountContractIndexStore() {
-    return dbManager.getAccountContractIndexStore();
-  }
-
   @Override
   public Deposit newDepositChild() {
     return new DepositImpl(dbManager, this, null);
@@ -152,29 +147,6 @@ public class DepositImpl implements Deposit {
       accounCache.put(key, Value.create(accountCapsule.getData()));
     }
     return accountCapsule;
-  }
-
-
-  public synchronized BytesCapsule getContractByNormalAccount(byte[] address) {
-
-    Key key = new Key(address);
-    if (accountContractIndexCache.containsKey(key)) {
-      return accountContractIndexCache.get(key).getBytes();
-    }
-
-    BytesCapsule contract;
-    if (parent != null) {
-      contract = parent.getContractByNormalAccount(address);
-    } else if (prevDeposit != null) {
-      contract = prevDeposit.getContractByNormalAccount(address);
-    } else {
-      contract = getAccountContractIndexStore().get(address);
-    }
-
-    if (contract != null) {
-      accountContractIndexCache.put(key, Value.create(contract.getData()));
-    }
-    return contract;
   }
 
   @Override
@@ -542,18 +514,6 @@ public class DepositImpl implements Deposit {
           deposit.putVotes(key, value);
         } else {
           getVotesStore().put(key.getData(), value.getVotes());
-        }
-      }
-    }));
-  }
-
-  private void commitAccountContractIndex(Deposit deposit) {
-    accountContractIndexCache.forEach(((key, value) -> {
-      if (value.getType().isDirty() || value.getType().isCreate()) {
-        if (deposit != null) {
-          deposit.putContractByNormalAccountIndex(key, value);
-        } else {
-          getAccountContractIndexStore().put(key.getData(), value.getBytes());
         }
       }
     }));
