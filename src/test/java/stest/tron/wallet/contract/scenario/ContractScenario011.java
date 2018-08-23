@@ -361,7 +361,6 @@ public class ContractScenario011 {
 
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(triggerAddress,100000000L,
         3,1,triggerKey,blockingStubFull));
-
     txid = PublicMethed.triggerContract(kittyCoreContractAddress,
         "createGen0Auction(uint256)", "0", false,
         0, 100000000L, triggerAddress, triggerKey, blockingStubFull);
@@ -375,11 +374,6 @@ public class ContractScenario011 {
     Assert.assertTrue(infoById.get().getReceipt().getOriginEnergyUsage() > 10000);
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() == infoById.get().getReceipt().getEnergyUsage() + infoById.get().getReceipt().getOriginEnergyUsage());
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsage() == infoById.get().getReceipt().getOriginEnergyUsage());
-
-
-
-
-
   }
 
 
