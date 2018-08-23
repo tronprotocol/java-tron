@@ -21,15 +21,15 @@ public class ForkController {
   @Getter
   private Manager manager;
   private volatile int[] slots = new int[0];
-  private boolean fork;
+  private boolean forked;
 
   public void init(Manager manager) {
     this.manager = manager;
-    fork = manager.getDynamicPropertiesStore().getForkController();
+    forked = manager.getDynamicPropertiesStore().getForked();
   }
 
   public synchronized boolean shouldBeForked() {
-    if (fork) {
+    if (forked) {
       logger.info("*****shouldBeForked:" + true);
       return true;
     }
@@ -42,8 +42,8 @@ public class ForkController {
     }
 
     // todo add Maintenance or block number
-    fork = true;
-    manager.getDynamicPropertiesStore().setForkController(true);
+    forked = true;
+    manager.getDynamicPropertiesStore().forked();
     logger.info("*****shouldBeForked:" + true);
     return true;
   }
@@ -58,6 +58,10 @@ public class ForkController {
   }
 
   public synchronized void update(BlockCapsule blockCapsule) {
+    if (forked) {
+      return;
+    }
+
     List<ByteString> witnesses = manager.getWitnessController().getActiveWitnesses();
     if (witnesses.size() != slots.length) {
       slots = new int[witnesses.size()];

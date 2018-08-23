@@ -1126,11 +1126,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     saveTotalTransactionCost(newValue);
   }
 
-  public void setForkController(boolean fork) {
-    put(FORK_CONTROLLER, new BytesCapsule(Boolean.toString(fork).getBytes()));
+  public void forked() {
+    put(FORK_CONTROLLER, new BytesCapsule(Boolean.toString(true).getBytes()));
   }
 
-  public boolean getForkController() {
+  public boolean getForked() {
     byte[] value = revokingDB.getUnchecked(FORK_CONTROLLER);
     return value == null ? Boolean.FALSE : Boolean.valueOf(new String(value));
   }

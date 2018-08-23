@@ -690,7 +690,6 @@ public class Manager {
       TaposException, ValidateScheduleException, TransactionTraceException, OutOfSlotTimeException,
       UnsupportVMException {
     processBlock(block);
-    forkController.update(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
   }
@@ -1318,6 +1317,12 @@ public class Manager {
     }
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
     logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
+    try {
+      BlockCapsule solidifiedBlock = getBlockByNum(latestSolidifiedBlockNum);
+      forkController.update(solidifiedBlock);
+    } catch (ItemNotFoundException | BadItemException e) {
+      logger.error("solidified block not found");
+    }
   }
 
   public long getSyncBeginNumber() {
