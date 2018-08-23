@@ -21,6 +21,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
@@ -310,19 +311,19 @@ public class Manager {
    */
   private Runnable repushLoop =
       () -> {
-        while (true) {
-          try {
-            TransactionCapsule tx = this.getRepushTransactions().take();
-            this.rePush(tx);
-          } catch (InterruptedException ex) {
-            logger.error(ex.getMessage());
-            Thread.currentThread().interrupt();
-          } catch (Exception ex) {
-            logger.error("unknown exception happened in witness loop", ex);
-          } catch (Throwable throwable) {
-            logger.error("unknown throwable happened in witness loop", throwable);
-          }
+        //while (true) {
+        try {
+          TransactionCapsule tx = this.getRepushTransactions().take();
+          this.rePush(tx);
+        } catch (InterruptedException ex) {
+          logger.error(ex.getMessage());
+          Thread.currentThread().interrupt();
+        } catch (Exception ex) {
+          logger.error("unknown exception happened in witness loop", ex);
+        } catch (Throwable throwable) {
+          logger.error("unknown throwable happened in witness loop", throwable);
         }
+        //}
       };
 
   private Thread repushThread;
@@ -366,11 +367,11 @@ public class Manager {
 //    this.contractStore = ContractStore.create("contract");
 //    this.storageStore = StorageStore.create("storage");
 
-    // validateSignService = Executors
-    //     .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
+    validateSignService = Executors
+        .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
 
-    //repushThread = new Thread(repushLoop);
-    //repushThread.start();
+    repushThread = new Thread(repushLoop);
+    repushThread.start();
   }
 
   public BlockId getGenesisBlockId() {
