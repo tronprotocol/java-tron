@@ -118,6 +118,8 @@ public class Manager {
   @Autowired
   private ProposalStore proposalStore;
   @Autowired
+  private ExchangeStore exchangeStore;
+  @Autowired
   private TransactionHistoryStore transactionHistoryStore;
   @Autowired
   private CodeStore codeStore;
@@ -208,6 +210,10 @@ public class Manager {
 
   public ProposalStore getProposalStore() {
     return this.proposalStore;
+  }
+
+  public ExchangeStore getExchangeStore() {
+    return this.exchangeStore;
   }
 
   public List<TransactionCapsule> getPendingTransactions() {
