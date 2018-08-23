@@ -39,6 +39,8 @@ public class ExchangeCreateActuator extends AbstractActuator {
 
       long newBalance = accountCapsule.getBalance() - calcFee();
 
+      accountCapsule.setBalance(newBalance);
+
       if (firstTokenID == "_".getBytes()) {
         accountCapsule.setBalance(newBalance - firstTokenBalance);
       } else {
