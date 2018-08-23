@@ -31,11 +31,11 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
 
-public class ExchangeInjectActuatorTest {
+public class ExchangeTransactionActuatorTest {
 
   private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
-  private static final String dbPath = "output_ExchangeInject_test";
+  private static final String dbPath = "output_ExchangeTransaction_test";
   private static final String ACCOUNT_NAME_FIRST = "ownerF";
   private static final String OWNER_ADDRESS_FIRST;
   private static final String ACCOUNT_NAME_SECOND = "ownerS";
@@ -90,21 +90,21 @@ public class ExchangeInjectActuatorTest {
             ByteString.copyFromUtf8(ACCOUNT_NAME_FIRST),
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
             AccountType.Normal,
-            300_000_000L);
+            10000_000_000L);
     AccountCapsule ownerAccountSecondCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8(ACCOUNT_NAME_SECOND),
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)),
             AccountType.Normal,
-            200_000_000_000L);
+            20000_000_000L);
     ExchangeCapsule exchangeCapsule =
         new ExchangeCapsule(
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
             1,
             1000000,
-            "abc".getBytes(),
-            "def".getBytes());
-    exchangeCapsule.setBalance(100000000L, 200000000L);
+            "_".getBytes(),
+            "abc".getBytes());
+    exchangeCapsule.setBalance(1_000_000_000_000L, 10_000_000L); // 1M TRX == 10M abc
 
     dbManager.getAccountStore()
         .put(ownerAccountFirstCapsule.getAddress().toByteArray(), ownerAccountFirstCapsule);
@@ -120,7 +120,7 @@ public class ExchangeInjectActuatorTest {
 
   private Any getContract(String address, long exchangeId, String tokenId, long quant) {
     return Any.pack(
-        Contract.ExchangeInjectContract.newBuilder()
+        Contract.ExchangeTransactionContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
             .setExchangeId(exchangeId)
             .setTokenId(ByteString.copyFrom(tokenId.getBytes()))
@@ -129,50 +129,56 @@ public class ExchangeInjectActuatorTest {
   }
 
   /**
-   * first inject Exchange,result is success.
+   * first transaction Exchange,result is success.
    */
   @Test
-  public void successExchangeInject() {
+  public void successExchangeTransaction() {
     long exchangeId = 1;
-    String firstTokenId = "abc";
-    long firstTokenQuant = 200000000L;
-    String secondTokenId = "def";
-    long secondTokenQuant = 400000000L;
+    String tokenId = "_";
+    long quant = 100_000_000L; // use 100 TRX to buy abc
 
-    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmount(firstTokenId.getBytes(), firstTokenQuant);
-    accountCapsule.addAssetAmount(secondTokenId.getBytes(), secondTokenQuant);
-    accountCapsule.setBalance(10000_000000L);
-    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+    Map<String, Long> assetMap = accountCapsule.getAssetMap();
+    Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
+    Assert.assertEquals(null, assetMap.get(tokenId));
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant),
         dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
+      ExchangeCapsule exchangeCapsule = dbManager.getExchangeStore()
+          .get(ByteArray.fromLong(exchangeId));
+      Assert.assertNotNull(exchangeCapsule);
+      long firstTokenBalance = exchangeCapsule.getFirstTokenBalance();
+      long secondTokenBalance = exchangeCapsule.getSecondTokenBalance();
+
+      Assert.assertEquals(exchangeId, exchangeCapsule.getID());
+      Assert.assertEquals(tokenId, ByteArray.toStr(exchangeCapsule.getFirstTokenId()));
+      Assert.assertEquals(1_000_000_000_000L, firstTokenBalance);
+      Assert.assertEquals("abc", ByteArray.toStr(exchangeCapsule.getSecondTokenId()));
+      Assert.assertEquals(10_000_000L, secondTokenBalance);
+
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      long id = 1;
-      ExchangeCapsule exchangeCapsule = dbManager.getExchangeStore().get(ByteArray.fromLong(id));
+      exchangeCapsule = dbManager.getExchangeStore().get(ByteArray.fromLong(exchangeId));
       Assert.assertNotNull(exchangeCapsule);
 
-      Assert.assertEquals(ByteString.copyFrom(ownerAddress), exchangeCapsule.getCreatorAddress());
-      Assert.assertEquals(id, exchangeCapsule.getID());
+      Assert.assertEquals(exchangeId, exchangeCapsule.getID());
       Assert.assertEquals(1000000, exchangeCapsule.getCreateTime());
-      Assert.assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsule.getFirstTokenId()));
-      Assert.assertEquals(firstTokenId, ByteArray.toStr(exchangeCapsule.getFirstTokenId()));
-      Assert.assertEquals(300000000L, exchangeCapsule.getFirstTokenBalance());
-      Assert.assertEquals(secondTokenId, ByteArray.toStr(exchangeCapsule.getSecondTokenId()));
-      Assert.assertEquals(600000000L, exchangeCapsule.getSecondTokenBalance());
+      Assert.assertTrue(Arrays.equals(tokenId.getBytes(), exchangeCapsule.getFirstTokenId()));
+      Assert.assertEquals(tokenId, ByteArray.toStr(exchangeCapsule.getFirstTokenId()));
+      Assert.assertEquals(firstTokenBalance + quant, exchangeCapsule.getFirstTokenBalance());
+      Assert.assertEquals("abc", ByteArray.toStr(exchangeCapsule.getSecondTokenId()));
+      Assert.assertEquals(9999001L, exchangeCapsule.getSecondTokenBalance());
 
       accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-      Map<String, Long> assetMap = accountCapsule.getAssetMap();
-      Assert.assertEquals(10000_000000L, accountCapsule.getBalance());
-      Assert.assertEquals(0L, assetMap.get(firstTokenId).longValue());
-      Assert.assertEquals(0L, assetMap.get(secondTokenId).longValue());
+      assetMap = accountCapsule.getAssetMap();
+      Assert.assertEquals(20000_000000L - quant, accountCapsule.getBalance());
+      Assert.assertEquals(999L, assetMap.get("abc").longValue());
 
     } catch (ContractValidateException e) {
       logger.info(e.getMessage());

@@ -31,11 +31,11 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
 
-public class ExchangeInjectActuatorTest {
+public class ExchangeWithdrawActuatorTest {
 
   private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
-  private static final String dbPath = "output_ExchangeInject_test";
+  private static final String dbPath = "output_ExchangeWithdraw_test";
   private static final String ACCOUNT_NAME_FIRST = "ownerF";
   private static final String OWNER_ADDRESS_FIRST;
   private static final String ACCOUNT_NAME_SECOND = "ownerS";
@@ -90,13 +90,13 @@ public class ExchangeInjectActuatorTest {
             ByteString.copyFromUtf8(ACCOUNT_NAME_FIRST),
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
             AccountType.Normal,
-            300_000_000L);
+            10000_000_000L);
     AccountCapsule ownerAccountSecondCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8(ACCOUNT_NAME_SECOND),
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)),
             AccountType.Normal,
-            200_000_000_000L);
+            20000_000_000L);
     ExchangeCapsule exchangeCapsule =
         new ExchangeCapsule(
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
@@ -120,7 +120,7 @@ public class ExchangeInjectActuatorTest {
 
   private Any getContract(String address, long exchangeId, String tokenId, long quant) {
     return Any.pack(
-        Contract.ExchangeInjectContract.newBuilder()
+        Contract.ExchangeWithdrawContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
             .setExchangeId(exchangeId)
             .setTokenId(ByteString.copyFrom(tokenId.getBytes()))
@@ -129,24 +129,24 @@ public class ExchangeInjectActuatorTest {
   }
 
   /**
-   * first inject Exchange,result is success.
+   * first withdraw Exchange,result is success.
    */
   @Test
-  public void successExchangeInject() {
+  public void successExchangeWithdraw() {
     long exchangeId = 1;
     String firstTokenId = "abc";
-    long firstTokenQuant = 200000000L;
+    long firstTokenQuant = 100000000L;
     String secondTokenId = "def";
-    long secondTokenQuant = 400000000L;
+    long secondTokenQuant = 200000000L;
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmount(firstTokenId.getBytes(), firstTokenQuant);
-    accountCapsule.addAssetAmount(secondTokenId.getBytes(), secondTokenQuant);
-    accountCapsule.setBalance(10000_000000L);
-    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+    Map<String, Long> assetMap = accountCapsule.getAssetMap();
+    Assert.assertEquals(10000_000000L, accountCapsule.getBalance());
+    Assert.assertEquals(null, assetMap.get(firstTokenId));
+    Assert.assertEquals(null, assetMap.get(secondTokenId));
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
         OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
         dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -164,15 +164,15 @@ public class ExchangeInjectActuatorTest {
       Assert.assertEquals(1000000, exchangeCapsule.getCreateTime());
       Assert.assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsule.getFirstTokenId()));
       Assert.assertEquals(firstTokenId, ByteArray.toStr(exchangeCapsule.getFirstTokenId()));
-      Assert.assertEquals(300000000L, exchangeCapsule.getFirstTokenBalance());
+      Assert.assertEquals(0L, exchangeCapsule.getFirstTokenBalance());
       Assert.assertEquals(secondTokenId, ByteArray.toStr(exchangeCapsule.getSecondTokenId()));
-      Assert.assertEquals(600000000L, exchangeCapsule.getSecondTokenBalance());
+      Assert.assertEquals(0L, exchangeCapsule.getSecondTokenBalance());
 
       accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-      Map<String, Long> assetMap = accountCapsule.getAssetMap();
+      assetMap = accountCapsule.getAssetMap();
       Assert.assertEquals(10000_000000L, accountCapsule.getBalance());
-      Assert.assertEquals(0L, assetMap.get(firstTokenId).longValue());
-      Assert.assertEquals(0L, assetMap.get(secondTokenId).longValue());
+      Assert.assertEquals(firstTokenQuant, assetMap.get(firstTokenId).longValue());
+      Assert.assertEquals(secondTokenQuant, assetMap.get(secondTokenId).longValue());
 
     } catch (ContractValidateException e) {
       logger.info(e.getMessage());

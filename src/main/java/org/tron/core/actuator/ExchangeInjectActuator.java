@@ -65,13 +65,13 @@ public class ExchangeInjectActuator extends AbstractActuator {
 
       long newBalance = accountCapsule.getBalance() - calcFee();
 
-      if (tokenID == "_".getBytes()) {
+      if (Arrays.equals(tokenID, "_".getBytes())) {
         accountCapsule.setBalance(newBalance - tokenQuant);
       } else {
         accountCapsule.reduceAssetAmount(tokenID, tokenQuant);
       }
 
-      if (anotherTokenID == "_".getBytes()) {
+      if (Arrays.equals(anotherTokenID, "_".getBytes())) {
         accountCapsule.setBalance(newBalance - anotherTokenQuant);
       } else {
         accountCapsule.reduceAssetAmount(anotherTokenID, anotherTokenQuant);
@@ -191,7 +191,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
       throw new ContractValidateException("token balance must less than " + balanceLimit);
     }
 
-    if (tokenID == "_".getBytes()) {
+    if (Arrays.equals(tokenID, "_".getBytes())) {
       if (accountCapsule.getBalance() < (tokenQuant + calcFee())) {
         throw new ContractValidateException("balance is not enough");
       }
@@ -201,7 +201,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
       }
     }
 
-    if (anotherTokenID == "_".getBytes()) {
+    if (Arrays.equals(anotherTokenID, "_".getBytes())) {
       if (accountCapsule.getBalance() < (anotherTokenQuant + calcFee())) {
         throw new ContractValidateException("balance is not enough");
       }
@@ -223,10 +223,6 @@ public class ExchangeInjectActuator extends AbstractActuator {
   @Override
   public long calcFee() {
     return 0;
-  }
-
-  private boolean validKey(long idx) {
-    return idx >= 0 && idx < ChainParameters.values().length;
   }
 
 }

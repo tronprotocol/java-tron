@@ -55,13 +55,13 @@ public class ExchangeTransactionActuator extends AbstractActuator {
 
       long newBalance = accountCapsule.getBalance() - calcFee();
 
-      if (tokenID == "_".getBytes()) {
+      if (Arrays.equals(tokenID, "_".getBytes())) {
         accountCapsule.setBalance(newBalance - tokenQuant);
       } else {
         accountCapsule.reduceAssetAmount(tokenID, tokenQuant);
       }
 
-      if (anotherTokenID == "_".getBytes()) {
+      if (Arrays.equals(anotherTokenID, "_".getBytes())) {
         accountCapsule.setBalance(newBalance + anotherTokenQuant);
       } else {
         accountCapsule.addAssetAmount(anotherTokenID, anotherTokenQuant);
@@ -146,13 +146,14 @@ public class ExchangeTransactionActuator extends AbstractActuator {
     }
 
     long balanceLimit = dbManager.getDynamicPropertiesStore().getExchangeBalanceLimit();
-    long tokenBalance = (tokenID == firstTokenID ? firstTokenBalance : secondTokenBalance);
+    long tokenBalance = (Arrays.equals(tokenID, firstTokenID) ? firstTokenBalance
+        : secondTokenBalance);
     tokenBalance += tokenQuant;
     if (tokenBalance > balanceLimit) {
       throw new ContractValidateException("token balance must less than " + balanceLimit);
     }
 
-    if (tokenID == "_".getBytes()) {
+    if (Arrays.equals(tokenID, "_".getBytes())) {
       if (accountCapsule.getBalance() < (tokenQuant + calcFee())) {
         throw new ContractValidateException("balance is not enough");
       }
@@ -179,10 +180,6 @@ public class ExchangeTransactionActuator extends AbstractActuator {
   @Override
   public long calcFee() {
     return 0;
-  }
-
-  private boolean validKey(long idx) {
-    return idx >= 0 && idx < ChainParameters.values().length;
   }
 
 }
