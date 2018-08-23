@@ -20,7 +20,6 @@ package org.tron.core;
 
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -230,8 +229,7 @@ public class Wallet {
 
   }
 
-  public static byte[] generateContractAddress(byte[] ownerAddress,byte[] txRawDataHash) {
-
+  public static byte[] generateContractAddress(byte[] ownerAddress, byte[] txRawDataHash) {
 
     byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
@@ -241,7 +239,7 @@ public class Wallet {
 
   }
 
-  public static byte[] generateContractAddress(byte[] transactionRootId, long nonce){
+  public static byte[] generateContractAddress(byte[] transactionRootId, long nonce) {
     byte[] nonceBytes = Longs.toByteArray(nonce);
     byte[] combined = new byte[transactionRootId.length + nonceBytes.length];
     System.arraycopy(transactionRootId, 0, combined, 0, transactionRootId.length);
@@ -390,8 +388,11 @@ public class Wallet {
         dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
       }
 
-      dbManager.pushTransaction(trx);
-      p2pNode.broadcast(message);
+      if (dbManager.getForkController().forkOrNot(trx)) {
+        dbManager.pushTransaction(trx);
+        p2pNode.broadcast(message);
+      }
+
       return builder.setResult(true).setCode(response_code.SUCCESS).build();
     } catch (ValidateSignatureException e) {
       logger.info(e.getMessage());
