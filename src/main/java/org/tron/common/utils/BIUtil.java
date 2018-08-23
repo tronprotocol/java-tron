@@ -98,23 +98,8 @@ public class BIUtil {
     return value.signum() > 0;
   }
 
-  public static boolean isCovers(BigInteger covers, BigInteger value){
-    return !isNotCovers(covers, value);
-  }
-
   public static boolean isNotCovers(BigInteger covers, BigInteger value){
     return covers.compareTo(value) < 0;
-  }
-
-  public static boolean exitLong(BigInteger value){
-
-    return (value.compareTo(new BigInteger(Long.MAX_VALUE + ""))) > -1;
-  }
-
-  public static boolean isIn20PercentRange(BigInteger first, BigInteger second) {
-    BigInteger five = BigInteger.valueOf(5);
-    BigInteger limit = first.add(first.divide(five));
-    return !isMoreThan(second, limit);
   }
 
   public static BigInteger max(BigInteger first, BigInteger second) {
