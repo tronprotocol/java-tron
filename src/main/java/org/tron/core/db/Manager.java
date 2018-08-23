@@ -318,6 +318,7 @@ public class Manager {
           } catch (InterruptedException ex) {
             logger.error(ex.getMessage());
             Thread.currentThread().interrupt();
+            break;
           } catch (Exception ex) {
             logger.error("unknown exception happened in witness loop", ex);
           } catch (Throwable throwable) {
@@ -1498,6 +1499,13 @@ public class Manager {
         throw new ValidateSignatureException(e.getCause().getMessage());
       }
     }
+  }
+
+  @Override
+  protected void finalize() throws Throwable {
+    super.finalize();
+    System.out.println("jack finalize");
+    repushThread.interrupt();
   }
 
   public void rePush(TransactionCapsule tx) {
