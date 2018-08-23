@@ -71,12 +71,6 @@ public class ContractState implements Deposit, ProgramListenerAware {
   }
 
   @Override
-  public void createContractByNormalAccountIndex(byte[] address,
-      BytesCapsule contractAddress) {
-    deposit.createContractByNormalAccountIndex(address, contractAddress);
-  }
-
-  @Override
   public void createContract(byte[] codeHash, ContractCapsule contractCapsule) {
     deposit.createContract(codeHash, contractCapsule);
   }
@@ -188,11 +182,6 @@ public class ContractState implements Deposit, ProgramListenerAware {
   @Override
   public void putContract(Key key, Value value) {
     deposit.putContract(key, value);
-  }
-
-  @Override
-  public void putContractByNormalAccountIndex(Key key, Value value) {
-    deposit.putContractByNormalAccountIndex(key, value);
   }
 
   @Override

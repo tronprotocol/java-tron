@@ -157,14 +157,6 @@ public class DepositImpl implements Deposit {
   }
 
   @Override
-  public synchronized void createContractByNormalAccountIndex(byte[] address,
-      BytesCapsule contractAddress) {
-    Key key = new Key(address);
-    accountContractIndexCache
-        .put(key, Value.create(contractAddress.getData(), Type.VALUE_TYPE_CREATE));
-  }
-
-  @Override
   public synchronized ContractCapsule getContract(byte[] address) {
     Key key = Key.create(address);
     if (contractCache.containsKey(key)) {
@@ -400,11 +392,6 @@ public class DepositImpl implements Deposit {
   @Override
   public void putContract(Key key, Value value) {
     contractCache.put(key, value);
-  }
-
-  @Override
-  public void putContractByNormalAccountIndex(Key key, Value value) {
-    accountContractIndexCache.put(key, value);
   }
 
 //  @Override

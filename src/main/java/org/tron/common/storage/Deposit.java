@@ -22,8 +22,6 @@ public interface Deposit {
 
   void createContract(byte[] address, ContractCapsule contractCapsule);
 
-  void createContractByNormalAccountIndex(byte[] address, BytesCapsule contractAddress);
-
   ContractCapsule getContract(byte[] address);
 
   void saveCode(byte[] codeHash, byte[] code);
@@ -68,8 +66,6 @@ public interface Deposit {
   void putCode(Key key, Value value);
 
   void putContract(Key key, Value value);
-
-  void putContractByNormalAccountIndex(Key key, Value value);
 
   void putStorage(Key key, Storage cache);
 
