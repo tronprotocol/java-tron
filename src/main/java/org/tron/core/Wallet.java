@@ -838,12 +838,14 @@ public class Wallet {
     byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
     SmartContract.ABI abi = contractStore.getABI(contractAddress);
     if (abi == null) {
+      // FIXME
       return null;
     }
 
     try {
       byte[] selector = getSelector(triggerSmartContract.getData().toByteArray());
       if (selector == null) {
+        // FIXME
         return null;
       }
 
@@ -866,7 +868,9 @@ public class Wallet {
         runtime.execute();
         runtime.go();
         runtime.finalization();
+        // TODO exception
         if (runtime.getResult().getException() != null) {
+//          runtime.getResult().getException().printStackTrace();
           throw new RuntimeException("Runtime exe failed!");
         }
 

@@ -1317,6 +1317,7 @@ public class RpcApiService implements Service {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()));
         logger.debug("ContractValidateException: {}", e.getMessage());
+        // FIXME
         return;
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
