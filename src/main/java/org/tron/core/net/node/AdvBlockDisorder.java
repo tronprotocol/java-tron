@@ -3,6 +3,7 @@ package org.tron.core.net.node;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.protos.Protocol.Inventory.InventoryType;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -41,8 +42,8 @@ public class AdvBlockDisorder {
         }
     }
 
-    public void remove(Sha256Hash hash){
-        map.remove(hash);
+    public void remove(BlockCapsule block){
+        map.remove(block.getParentHash());
     }
 
     public PeerAndBlockCapsule get(Sha256Hash hash){
@@ -53,8 +54,8 @@ public class AdvBlockDisorder {
         this.map.clear();
     }
 
-    public PeerConnection getPeer(Sha256Hash hash){
-        return get(hash) != null ? get(hash).getPeer(): null;
+    public PeerConnection getPeer(BlockCapsule block){
+        return get(block.getParentHash()) != null ? get(block.getParentHash()).getPeer(): null;
     }
 
     public BlockCapsule getNextBlock(BlockCapsule block){
@@ -84,8 +85,9 @@ public class AdvBlockDisorder {
     }
 
     public boolean isOrderedBlock(PeerConnection peer, BlockCapsule block){
-        //peer.getAdvObjWeRequested().values().stream().sorted(Comparator.comparing());
-        return false;
+        Sha256Hash parentHash = block.getBlockId();
+        Item item = new Item(parentHash, InventoryType.BLOCK);
+        return !peer.getAdvObjWeRequested().keySet().contains(item);
     }
 }
 

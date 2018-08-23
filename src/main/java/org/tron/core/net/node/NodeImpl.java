@@ -553,6 +553,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         blockJustReceived.clear();
       }
 
+      logger.info("blockWaitToProc size: " + blockWaitToProc.size());
       blockWaitToProc.forEach((msg, peerConnection) -> {
 
         if (peerConnection.isDisconnect()) {
@@ -577,6 +578,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
               });
           if (isFound[0]) {
             blockWaitToProc.remove(msg);
+            logger.info("blockWaitToProc remove: " + msg.getBlockCapsule().getNum());
             isBlockProc[0] = true;
             if (freshBlockId.contains(msg.getBlockId()) || processSyncBlock(
                 msg.getBlockCapsule())) {
@@ -755,7 +757,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   * @Date: 2018/7/13
   */
   private void processAdvBlock(PeerConnection peer, BlockCapsule block) {
-
     if(!advBlockDisorder.isOrderedBlock(peer, block)){
       // receive a disordered block we have requested
       advBlockDisorder.add(peer, block);
@@ -763,19 +764,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       // receive an ordered block we have requested, try to push block
       boolean isSuccess = true;
       while (isSuccess) {
-        try {
-          isSuccess = realProcessAdvBlock(peer, block);
-          if (isSuccess) {
-            // if push block success, we try to find his child block and continue push
-            block = advBlockDisorder.getNextBlock(block);
-          }
-        } catch (UnLinkedBlockException e) {
-          // get unlinked exception because we do not have the chain which the block is in.
-          logger.error("We get a unlinked block {}, from {}, head is {}",
-                  block.getBlockId().getString(), peer.getNode().getHost(),
-                  del.getHeadBlockId().getString());
-          isSuccess = false;
-          startSyncWithPeer(peer);
+        isSuccess = realProcessAdvBlock(peer, block);
+        if (isSuccess) {
+          // if push block success, we try to find his child block and continue push
+          advBlockDisorder.remove(block);
+          block = advBlockDisorder.getNextBlock(block);
         }
       }
     }
@@ -792,7 +785,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   * @Author: shydesky@gmail.com
   * @Date: 2018/7/13
   */
-  private boolean realProcessAdvBlock (PeerConnection peer, BlockCapsule block) throws UnLinkedBlockException{
+  private boolean realProcessAdvBlock (PeerConnection peer, BlockCapsule block){
     if (!freshBlockId.contains(block.getBlockId())) {
       try {
         LinkedList<Sha256Hash> trxIds = null;
@@ -811,6 +804,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         logger.error("We get a bad block {}, from {}, reason is {} ",
             block.getBlockId().getString(), peer.getNode().getHost(), e.getMessage());
         disconnectPeer(peer, ReasonCode.BAD_BLOCK);
+      } catch (UnLinkedBlockException e) {
+        // get unlinked exception because we do not have the chain which the block is in.
+        logger.error("We get a unlinked block {}, from {}, head is {}",
+              block.getBlockId().getString(), peer.getNode().getHost(),
+              del.getHeadBlockId().getString());
+        startSyncWithPeer(peer);
+        return false;
       } catch (NonCommonBlockException e) {
         logger.error("We get a block {} that do not have the most recent common ancestor with the main chain, from {}, reason is {} ",
             block.getBlockId().getString(), peer.getNode().getHost(), e.getMessage());
