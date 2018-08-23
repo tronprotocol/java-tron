@@ -123,6 +123,14 @@ public class PublicMethed {
     return blockingStubFull.getAccount(request);
   }
 
+  public static Account queryAccount(byte[] address,WalletGrpc
+      .WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ByteString addressBs = ByteString.copyFrom(address);
+    Account request = Account.newBuilder().setAddress(addressBs).build();
+    return blockingStubFull.getAccount(request);
+  }
+
   public static Protocol.Account queryAccount(String priKey,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -953,7 +961,7 @@ public class PublicMethed {
       return null;
     }
 
-    TransactionExtention.Builder texBuilder = TransactionExtention.newBuilder();
+    final TransactionExtention.Builder texBuilder = TransactionExtention.newBuilder();
     Transaction.Builder transBuilder = Transaction.newBuilder();
     Transaction.raw.Builder rawBuilder = transactionExtention.getTransaction().getRawData()
         .toBuilder();
@@ -1021,8 +1029,8 @@ public class PublicMethed {
     }
   }
 
-  public static String deployContractAndGetTransactionInfoById(String contractName, String abiString, String code,
-      String data, Long feeLimit, long value,
+  public static String deployContractAndGetTransactionInfoById(String contractName,
+      String abiString, String code, String data, Long feeLimit, long value,
       long consumeUserResourcePercent, byte[] libraryAddress,String priKey, byte[] ownerAddress,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -1378,14 +1386,6 @@ public class PublicMethed {
     }
   }
 
-  public static Account queryAccount(byte[] address,WalletGrpc
-      .WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ByteString addressBs = ByteString.copyFrom(address);
-    Account request = Account.newBuilder().setAddress(addressBs).build();
-    return blockingStubFull.getAccount(request);
-  }
-
   public static Optional<TransactionInfo> getTransactionInfoById(String txId,WalletGrpc
       .WalletBlockingStub blockingStubFull) {
     ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
@@ -1395,7 +1395,8 @@ public class PublicMethed {
     return Optional.ofNullable(transactionInfo);
   }
 
-  public static String triggerContract(byte[] contractAddress, String method,String argsStr, Boolean isHex, long callValue, long feeLimit,byte[] ownerAddress,
+  public static String triggerContract(byte[] contractAddress, String method,String argsStr,
+      Boolean isHex, long callValue, long feeLimit,byte[] ownerAddress,
       String priKey,WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
@@ -1430,9 +1431,9 @@ public class PublicMethed {
       return null;
     }
     Transaction transaction = transactionExtention.getTransaction();
-    if (transaction.getRetCount() != 0 &&
-        transactionExtention.getConstantResult(0) != null &&
-        transactionExtention.getResult() != null) {
+    if (transaction.getRetCount() != 0
+        && transactionExtention.getConstantResult(0) != null
+        && transactionExtention.getResult() != null) {
       byte[] result = transactionExtention.getConstantResult(0).toByteArray();
       System.out.println("message:" + transaction.getRet(0).getRet());
       System.out.println(":" + ByteArray
@@ -1441,7 +1442,7 @@ public class PublicMethed {
       return null;
     }
 
-    TransactionExtention.Builder texBuilder = TransactionExtention.newBuilder();
+    final TransactionExtention.Builder texBuilder = TransactionExtention.newBuilder();
     Transaction.Builder transBuilder = Transaction.newBuilder();
     Transaction.raw.Builder rawBuilder = transactionExtention.getTransaction().getRawData()
         .toBuilder();
@@ -1475,7 +1476,8 @@ public class PublicMethed {
     }
     transaction = signTransaction(ecKey, transaction);
     System.out.println(
-        "trigger txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray())));
+        "trigger txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData()
+            .toByteArray())));
     int i = 10;
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
     while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY

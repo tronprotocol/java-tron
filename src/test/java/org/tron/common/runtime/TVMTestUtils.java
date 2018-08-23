@@ -183,7 +183,6 @@ public class TVMTestUtils {
     builder.setConsumeUserResourcePercent(consumeUserResourcePercent);
 
     if (value != 0) {
-
       builder.setCallValue(value);
     }
     byte[] byteCode;

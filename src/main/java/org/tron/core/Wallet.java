@@ -18,7 +18,9 @@
 
 package org.tron.core;
 
+import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +39,7 @@ import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
+import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NumberMessage;
@@ -64,6 +67,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -96,6 +100,7 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.SmartContract.ABI;
@@ -234,6 +239,15 @@ public class Wallet {
 
     return Hash.sha3omit12(combined);
 
+  }
+
+  public static byte[] generateContractAddress(byte[] transactionRootId, long nonce){
+    byte[] nonceBytes = Longs.toByteArray(nonce);
+    byte[] combined = new byte[transactionRootId.length + nonceBytes.length];
+    System.arraycopy(transactionRootId, 0, combined, 0, transactionRootId.length);
+    System.arraycopy(nonceBytes, 0, combined, transactionRootId.length, nonceBytes.length);
+
+    return Hash.sha3omit12(combined);
   }
 
   public static byte[] decodeFromBase58Check(String addressBase58) {
@@ -492,6 +506,14 @@ public class Wallet {
     List<ProposalCapsule> proposalCapsuleList = dbManager.getProposalStore().getAllProposals();
     proposalCapsuleList
         .forEach(proposalCapsule -> builder.addProposals(proposalCapsule.getInstance()));
+    return builder.build();
+  }
+
+  public ExchangeList getExchangeList() {
+    ExchangeList.Builder builder = ExchangeList.newBuilder();
+    List<ExchangeCapsule> exchangeCapsuleList = dbManager.getExchangeStore().getAllExchanges();
+    exchangeCapsuleList
+        .forEach(exchangeCapsule -> builder.addExchanges(exchangeCapsule.getInstance()));
     return builder.build();
   }
 
@@ -757,6 +779,22 @@ public class Wallet {
     }
     if (proposalCapsule != null) {
       return proposalCapsule.getInstance();
+    }
+    return null;
+  }
+
+  public Exchange getExchangeById(ByteString exchangeId) {
+    if (Objects.isNull(exchangeId)) {
+      return null;
+    }
+    ExchangeCapsule exchangeCapsule = null;
+    try {
+      exchangeCapsule = dbManager.getExchangeStore()
+          .get(exchangeId.toByteArray());
+    } catch (StoreException e) {
+    }
+    if (exchangeCapsule != null) {
+      return exchangeCapsule.getInstance();
     }
     return null;
   }

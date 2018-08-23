@@ -42,6 +42,10 @@ import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.CreateSmartContract;
+import org.tron.protos.Contract.ExchangeCreateContract;
+import org.tron.protos.Contract.ExchangeInjectContract;
+import org.tron.protos.Contract.ExchangeTransactionContract;
+import org.tron.protos.Contract.ExchangeWithdrawContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.ProposalApproveContract;
@@ -329,6 +333,18 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case UpdateSettingContract:
           owner = contractParameter.unpack(UpdateSettingContract.class)
               .getOwnerAddress();
+          break;
+        case ExchangeCreateContract:
+          owner = contractParameter.unpack(ExchangeCreateContract.class).getOwnerAddress();
+          break;
+        case ExchangeInjectContract:
+          owner = contractParameter.unpack(ExchangeInjectContract.class).getOwnerAddress();
+          break;
+        case ExchangeWithdrawContract:
+          owner = contractParameter.unpack(ExchangeWithdrawContract.class).getOwnerAddress();
+          break;
+        case ExchangeTransactionContract:
+          owner = contractParameter.unpack(ExchangeTransactionContract.class).getOwnerAddress();
           break;
         // todo add other contract
         default:

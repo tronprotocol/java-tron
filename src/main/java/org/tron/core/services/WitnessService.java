@@ -8,9 +8,9 @@ import java.util.Map;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.backup.BackupManager;
 import org.tron.common.backup.BackupManager.BackupStatusEnum;
 import org.tron.common.backup.BackupServer;
@@ -52,7 +52,7 @@ public class WitnessService implements Service {
 
   private WitnessController controller;
 
-  private AnnotationConfigApplicationContext context;
+  private TronApplicationContext context;
 
   private BackupManager backupManager;
 
@@ -61,7 +61,7 @@ public class WitnessService implements Service {
   /**
    * Construction method.
    */
-  public WitnessService(Application tronApp, AnnotationConfigApplicationContext context) {
+  public WitnessService(Application tronApp, TronApplicationContext context) {
     this.tronApp = tronApp;
     this.context = context;
     backupManager = context.getBean(BackupManager.class);

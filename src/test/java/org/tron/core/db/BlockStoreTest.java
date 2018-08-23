@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
@@ -16,12 +16,12 @@ public class BlockStoreTest {
 
   private static final String dbPath = "output-blockStore-test";
   BlockStore blockStore;
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath},
         Constant.TEST_CONF);
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    context = new TronApplicationContext(DefaultConfig.class);
   }
 
   @Before

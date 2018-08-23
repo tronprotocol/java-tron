@@ -16,14 +16,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
 import javax.annotation.PostConstruct;
@@ -125,6 +118,8 @@ public class Manager {
   @Autowired
   private ProposalStore proposalStore;
   @Autowired
+  private ExchangeStore exchangeStore;
+  @Autowired
   private TransactionHistoryStore transactionHistoryStore;
   @Autowired
   private CodeStore codeStore;
@@ -169,6 +164,10 @@ public class Manager {
 
   private ExecutorService validateSignService;
 
+  private Thread repushThread;
+
+  private boolean isRunRepushThread = true;
+
   @Getter
   private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
       .newBuilder().maximumSize(100_000).recordStats().build();
@@ -211,6 +210,10 @@ public class Manager {
 
   public ProposalStore getProposalStore() {
     return this.proposalStore;
+  }
+
+  public ExchangeStore getExchangeStore() {
+    return this.exchangeStore;
   }
 
   public List<TransactionCapsule> getPendingTransactions() {
@@ -311,12 +314,14 @@ public class Manager {
    */
   private Runnable repushLoop =
       () -> {
-        while (true) {
+        while (isRunRepushThread) {
           try {
-            TransactionCapsule tx = this.getRepushTransactions().take();
-            this.rePush(tx);
+            TransactionCapsule tx = this.getRepushTransactions().poll(1, TimeUnit.SECONDS);
+            if (tx != null) {
+              this.rePush(tx);
+            }
           } catch (InterruptedException ex) {
-            logger.info("repushLoop interrupted");
+            logger.error(ex.getMessage());
             Thread.currentThread().interrupt();
           } catch (Exception ex) {
             logger.error("unknown exception happened in witness loop", ex);
@@ -326,10 +331,8 @@ public class Manager {
         }
       };
 
-  private Thread repushThread;
-
-  public Thread getRepushThread() {
-    return repushThread;
+  public void stopRepushThread() {
+    isRunRepushThread = false;
   }
 
   @PostConstruct
