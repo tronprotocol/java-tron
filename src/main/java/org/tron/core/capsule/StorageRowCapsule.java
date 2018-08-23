@@ -15,24 +15,21 @@
 
 package org.tron.core.capsule;
 
-import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.protos.Protocol.StorageRow;
 
 
 @Slf4j
-public class StorageRowCapsule implements ProtoCapsule<StorageRow> {
+public class StorageRowCapsule implements ProtoCapsule<byte[]> {
 
-  private StorageRow instance;
+  private byte[] rowValue;
   @Setter
   @Getter
-  private byte[] composedKey;
+  private byte[] rowKey;
 
   @Getter
   private boolean dirty = false;
@@ -42,54 +39,45 @@ public class StorageRowCapsule implements ProtoCapsule<StorageRow> {
   }
 
   private StorageRowCapsule() {
-    instance = StorageRow.newBuilder().build();
   }
 
-  public StorageRowCapsule(byte[] composedKey, byte[] value) {
-    this.composedKey = composedKey;
-    instance = StorageRow.newBuilder().setValue(ByteString.copyFrom(value)).build();
+  public StorageRowCapsule(byte[] rowKey, byte[] rowValue) {
+    this.rowKey = rowKey;
+    this.rowValue = rowValue;
     markDirty();
   }
 
-  public StorageRowCapsule(byte[] data) {
-    try {
-      this.instance = StorageRow.parseFrom(data);
-    } catch (InvalidProtocolBufferException e) {
-    }
+  public StorageRowCapsule(byte[] rowValue) {
+    this.rowValue = rowValue;
   }
 
-  public StorageRowCapsule(StorageRow row) {
-    this.instance = row;
-  }
 
   public Sha256Hash getHash() {
-    byte[] storageValue = this.instance.toByteArray();
-    return Sha256Hash.of(storageValue);
+    return Sha256Hash.of(this.rowValue);
   }
 
 
   public DataWord getValue() {
-    return new DataWord(this.instance.getValue().toByteArray());
+    return new DataWord(this.rowValue);
   }
 
   public void setValue(DataWord value) {
-    this.instance = this.instance.toBuilder().setValue(ByteString.copyFrom(value.getData()))
-        .build();
+    this.rowValue = value.getData();
     markDirty();
   }
 
   @Override
   public byte[] getData() {
-    return this.instance.toByteArray();
+    return this.rowValue;
   }
 
   @Override
-  public StorageRow getInstance() {
-    return this.instance;
+  public byte[] getInstance() {
+    return this.rowValue;
   }
 
   @Override
   public String toString() {
-    return this.instance.toString();
+    return Hex.toHexString(rowValue);
   }
 }

@@ -33,7 +33,7 @@ public class Storage {
       if (row == null) {
         return null;
       } else {
-        beforeUseSize += row.getInstance().getSerializedSize();
+        beforeUseSize += row.getInstance().length;
       }
       rowCache.put(key, row);
       return row.getValue();
@@ -45,13 +45,13 @@ public class Storage {
       rowCache.get(key).setValue(value);
     } else {
       StorageRowStore store = manager.getStorageRowStore();
-      byte[] composedKey = compose(key.getData(), addrHash);
-      StorageRowCapsule row = store.get(composedKey);
+      byte[] rowKey = compose(key.getData(), addrHash);
+      StorageRowCapsule row = store.get(rowKey);
 
       if (row == null) {
-        row = new StorageRowCapsule(composedKey, value.getData());
+        row = new StorageRowCapsule(rowKey, value.getData());
       } else {
-        beforeUseSize += row.getInstance().getSerializedSize();
+        beforeUseSize += row.getInstance().length;
       }
       rowCache.put(key, row);
     }
@@ -73,7 +73,7 @@ public class Storage {
     AtomicLong size = new AtomicLong();
     rowCache.forEach((key, value) -> {
       if (!value.getValue().isZero()) {
-        size.getAndAdd(value.getInstance().getSerializedSize());
+        size.getAndAdd(value.getInstance().length);
       }
     });
     return size.get();
@@ -87,9 +87,9 @@ public class Storage {
     rowCache.forEach((key, value) -> {
       if (value.isDirty()) {
         if (value.getValue().isZero()) {
-          manager.getStorageRowStore().delete(value.getComposedKey());
+          manager.getStorageRowStore().delete(value.getRowKey());
         } else {
-          manager.getStorageRowStore().put(value.getComposedKey(), value);
+          manager.getStorageRowStore().put(value.getRowKey(), value);
         }
       }
     });

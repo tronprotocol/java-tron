@@ -424,16 +424,6 @@ message HelloMessage {
   BlockId headBlockId = 6;
 }
 
-message StorageItem {
-  bytes contract_address = 1;
-  map<string, bytes> items = 2;
-}
-
-message StorageRow {
-  bytes value = 1;
-}
-
-
 message SmartContract {
   message ABI {
     message Entry {
