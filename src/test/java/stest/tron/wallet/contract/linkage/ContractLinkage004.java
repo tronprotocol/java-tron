@@ -38,6 +38,7 @@ public class ContractLinkage004 {
   String contractName;
   String code;
   String abi;
+  Long currentFee;
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] linkage004Address = ecKey1.getAddress();
@@ -56,7 +57,7 @@ public class ContractLinkage004 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(linkage004Address,20000000L,fromAddress,
+    Assert.assertTrue(PublicMethed.sendcoin(linkage004Address,2000000000000L,fromAddress,
         testKey003,blockingStubFull));
     Assert.assertTrue(PublicMethed.freezeBalance(linkage004Address,1000000L,
         3,linkage004Key,blockingStubFull));
@@ -153,6 +154,8 @@ public class ContractLinkage004 {
     logger.info("This time txid is " + txid);
 
     Optional<TransactionInfo> infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    currentFee = infoById.get().getFee();
+    logger.info("current fee is " + currentFee.toString());
     Assert.assertTrue(infoById.isPresent());
     Assert.assertTrue(infoById.get().getFee() > 0);
     //logger.info(Integer.toString(infoById.get().getResultValue()));
@@ -163,7 +166,7 @@ public class ContractLinkage004 {
     //Assert.assertTrue(infoById.get().getReceipt().getStorageDelta() > 200);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testFeeLimitIsTooSmall() {
     Account account = PublicMethed.queryAccount(linkage004Address,blockingStubFull);
     Long maxFeeLimit = 0L;
@@ -176,7 +179,7 @@ public class ContractLinkage004 {
     Assert.assertTrue(infoById.get().getResultValue() == 1);
 
     //When the fee limit is only short with 1 sun.
-    maxFeeLimit = 14082200L - 1L;
+    maxFeeLimit = currentFee - 1L;
     txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName,abi,code,
         "",maxFeeLimit, 0L, 50,null,linkage004Key,linkage004Address,blockingStubFull);
     logger.info("testFeeLimitIsTooSmall, the txid is " + txid);
@@ -185,7 +188,7 @@ public class ContractLinkage004 {
     Assert.assertTrue(infoById.get().getResultValue() == 1);
 
     //When the fee limit is just ok.
-    maxFeeLimit = 14082200L;
+    maxFeeLimit = currentFee;
     txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName,abi,code,
         "",maxFeeLimit, 0L, 50,null,linkage004Key,linkage004Address,blockingStubFull);
     logger.info("testFeeLimitIsTooSmall, the txid is " + txid);

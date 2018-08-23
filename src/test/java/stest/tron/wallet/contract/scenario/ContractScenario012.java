@@ -89,7 +89,7 @@ public class ContractScenario012 {
     Assert.assertTrue(smartContract.getAbi() != null);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void triggerTransactionCoin() {
     //When the contract has no money,transaction coin failed.
     String receiveAddress = "\"" + Base58.encode58Check(receiverAddress)
@@ -110,7 +110,21 @@ public class ContractScenario012 {
         contract012Key,blockingStubFull));
 
 
+    //In smart contract, you can't create account
+    txid = PublicMethed.triggerContract(contractAddress,
+        "sendToAddress2(address)", receiveAddress, false,
+        0, 100000000L, contract012Address, contract012Key, blockingStubFull);
+    logger.info(txid);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info("result is " + infoById.get().getResultValue());
+    Assert.assertTrue(infoById.get().getResultValue() == 1);
+    Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() > 0);
+    Assert.assertTrue(infoById.get().getFee() == infoById.get().getReceipt().getEnergyFee());
+    Assert.assertFalse(infoById.get().getContractAddress().isEmpty());
+
     //This time, trigger the methed sendToAddress2 is OK.
+    Assert.assertTrue(PublicMethed.sendcoin(receiverAddress,10000000L,fromAddress,
+        testKey002,blockingStubFull));
     txid = PublicMethed.triggerContract(contractAddress,
         "sendToAddress2(address)", receiveAddress, false,
         0, 100000000L, contract012Address, contract012Key, blockingStubFull);
@@ -121,6 +135,7 @@ public class ContractScenario012 {
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() > 0);
     Assert.assertTrue(infoById.get().getFee() == infoById.get().getReceipt().getEnergyFee());
     Assert.assertFalse(infoById.get().getContractAddress().isEmpty());
+
   }
 
 

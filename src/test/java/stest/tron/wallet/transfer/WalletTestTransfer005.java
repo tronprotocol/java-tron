@@ -99,7 +99,7 @@ public class WalletTestTransfer005 {
         testKey002,blockingStubFull));
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testgetTransactionsFromThis() {
 
     ByteString addressBs = ByteString.copyFrom(fromAddress);
@@ -128,7 +128,7 @@ public class WalletTestTransfer005 {
     }
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testgetTransactionsFromThisByInvaildAddress() {
     //Invaild address.
     ByteString addressBs = ByteString.copyFrom(INVAILD_ADDRESS);

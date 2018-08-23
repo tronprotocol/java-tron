@@ -55,7 +55,7 @@ public class ContractLinkage003 {
         testKey003,blockingStubFull));
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void deployWhenNoEnergyAndNoStorage() {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(linkage003Address,
         blockingStubFull);
