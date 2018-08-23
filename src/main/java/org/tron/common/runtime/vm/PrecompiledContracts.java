@@ -56,14 +56,12 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
-import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ProposalApproveContract;
 import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Contract.ProposalDeleteContract;
-import org.tron.protos.Contract.UnfreezeBalanceContract;
+import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
-import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 /**
@@ -91,6 +89,8 @@ public class PrecompiledContracts {
   private static final ProposalDeleteNative proposalDelete = new ProposalDeleteNative();
   private static final ConvertFromTronBytesAddressNative convertFromTronBytesAddress = new ConvertFromTronBytesAddressNative();
   private static final ConvertFromTronBase58AddressNative convertFromTronBase58Address = new ConvertFromTronBase58AddressNative();
+  private static final TransferAssetNative transferAsset = new TransferAssetNative();
+  private static final GetTransferAssetNative getTransferAssetAmount =  new GetTransferAssetNative();
 
 
   private static final DataWord ecRecoverAddr = new DataWord(
@@ -127,6 +127,10 @@ public class PrecompiledContracts {
       "0000000000000000000000000000000000000000000000000000000000010008");
   private static final DataWord convertFromTronBase58AddressAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010009");
+  private static final DataWord transferAssetAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000001000a");
+  private static final DataWord getTransferAssetAmountAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000001000b");
 
   public static PrecompiledContract getContractForAddress(DataWord address) {
 
@@ -172,6 +176,12 @@ public class PrecompiledContracts {
     if (address.equals(convertFromTronBase58AddressAddr)) {
       return convertFromTronBase58Address;
     }
+    if (address.equals(transferAssetAddr)) {
+      return transferAsset;
+    }
+    if (address.equals(getTransferAssetAmountAddr)) {
+      return getTransferAssetAmount;
+    }
 
 
         /*
@@ -199,7 +209,7 @@ public class PrecompiledContracts {
 
   public static abstract class PrecompiledContract {
 
-    public abstract long getGasForData(byte[] data);
+    public abstract long getEnergyForData(byte[] data);
 
     public abstract Pair<Boolean, byte[]> execute(byte[] data);
 
@@ -240,9 +250,9 @@ public class PrecompiledContracts {
     }
 
     @Override
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
 
-      // gas charge for the execution:
+      // energy charge for the execution:
       // minimum 1 and additional 1 for each 32 bytes word (round  up)
       if (data == null) {
         return 15;
@@ -260,9 +270,9 @@ public class PrecompiledContracts {
 
 
     @Override
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
 
-      // gas charge for the execution:
+      // energy charge for the execution:
       // minimum 50 and additional 50 for each 32 bytes word (round  up)
       if (data == null) {
         return 60;
@@ -285,10 +295,10 @@ public class PrecompiledContracts {
 
 
     @Override
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
 
       // TODO #POC9 Replace magic numbers with constants
-      // gas charge for the execution:
+      // energy charge for the execution:
       // minimum 50 and additional 50 for each 32 bytes word (round  up)
       if (data == null) {
         return 600;
@@ -313,7 +323,7 @@ public class PrecompiledContracts {
   public static class ECRecover extends PrecompiledContract {
 
     @Override
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
       return 3000;
     }
 
@@ -375,7 +385,7 @@ public class PrecompiledContracts {
     private static final int ARGS_OFFSET = 32 * 3; // addresses length part
 
     @Override
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
 
       if (data == null) {
         data = EMPTY_BYTE_ARRAY;
@@ -391,11 +401,12 @@ public class PrecompiledContracts {
       long adjExpLen = getAdjustedExponentLength(expHighBytes, expLen);
 
       // use big numbers to stay safe in case of overflow
-      BigInteger gas = BigInteger.valueOf(multComplexity)
+      BigInteger energy = BigInteger.valueOf(multComplexity)
           .multiply(BigInteger.valueOf(Math.max(adjExpLen, 1)))
           .divide(GQUAD_DIVISOR);
 
-      return isLessThan(gas, BigInteger.valueOf(Long.MAX_VALUE)) ? gas.longValue() : Long.MAX_VALUE;
+      return isLessThan(energy, BigInteger.valueOf(Long.MAX_VALUE)) ? energy.longValue()
+          : Long.MAX_VALUE;
     }
 
     @Override
@@ -488,7 +499,7 @@ public class PrecompiledContracts {
   public static class BN128Addition extends PrecompiledContract {
 
     @Override
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
       return 500;
     }
 
@@ -535,7 +546,7 @@ public class PrecompiledContracts {
   public static class BN128Multiplication extends PrecompiledContract {
 
     @Override
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
       return 40000;
     }
 
@@ -581,7 +592,7 @@ public class PrecompiledContracts {
     private static final int PAIR_SIZE = 192;
 
     @Override
-    public long getGasForData(byte[] data) {
+    public long getEnergyForData(byte[] data) {
 
       if (data == null) {
         return 100000;
@@ -665,8 +676,8 @@ public class PrecompiledContracts {
 
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
-    public long getGasForData(byte[] data) {
-      return 0;
+    public long getEnergyForData(byte[] data) {
+      return 200;
     }
 
     @Override
@@ -703,9 +714,11 @@ public class PrecompiledContracts {
       } catch (ContractExeException e) {
         logger.debug("ContractExeException when calling voteWitness in vm");
         logger.debug("ContractExeException: {}", e.getMessage());
+        return null;
       } catch (ContractValidateException e) {
         logger.debug("ContractValidateException when calling voteWitness in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
+        return null;
       }
       return Pair.of(true, new DataWord(count).getData());
     }
@@ -722,8 +735,8 @@ public class PrecompiledContracts {
 
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
-    public long getGasForData(byte[] data) {
-      return 0;
+    public long getEnergyForData(byte[] data) {
+      return 200;
     }
 
     @Override
@@ -733,40 +746,42 @@ public class PrecompiledContracts {
         data = EMPTY_BYTE_ARRAY;
       }
 
-      byte[] frozenBalance = new byte[32];
-      System.arraycopy(data, 0, frozenBalance, 0, 32);
-      byte[] frozenDuration = new byte[32];
-      System.arraycopy(data, 32, frozenDuration, 0, 32);
-
-      if (getDeposit().getDbManager().getAccountStore().get(getCallerAddress()).getType()
-          == AccountType.Contract) {
-        logger.debug("caller can't be a contract");
-        // TODO: or exception here.
-        return Pair.of(false, null);
-      }
-
-      Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
-      ByteString byteAddress = ByteString.copyFrom(getCallerAddress());
-      builder.setOwnerAddress(byteAddress).setFrozenBalance(ByteArray.toLong(frozenBalance))
-          .setFrozenDuration(ByteArray.toLong(frozenDuration));
-      FreezeBalanceContract contract = builder.build();
-
-      TransactionCapsule trx = new TransactionCapsule(contract, ContractType.FreezeBalanceContract);
-
-      final List<Actuator> actuatorList = ActuatorFactory
-          .createActuator(trx, getDeposit().getDbManager());
-      try {
-        actuatorList.get(0).validate();
-        actuatorList.get(0).execute(getResult().getRet());
-        getDeposit()
-            .syncCacheFromAccountStore(ByteString.copyFrom(getCallerAddress()).toByteArray());
-      } catch (ContractExeException e) {
-        logger.debug("ContractExeException when calling freezeBalance in vm");
-        logger.debug("ContractExeException: {}", e.getMessage());
-      } catch (ContractValidateException e) {
-        logger.debug("ContractValidateException when calling freezeBalance in vm");
-        logger.debug("ContractValidateException: {}", e.getMessage());
-      }
+//      byte[] frozenBalance = new byte[32];
+//      System.arraycopy(data, 0, frozenBalance, 0, 32);
+//      byte[] frozenDuration = new byte[32];
+//      System.arraycopy(data, 32, frozenDuration, 0, 32);
+//
+//      if (getDeposit().getDbManager().getAccountStore().get(getCallerAddress()).getType()
+//          == AccountType.Contract) {
+//        logger.debug("caller can't be a contract");
+//        // TODO: or exception here.
+//        return Pair.of(false, null);
+//      }
+//
+//      Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
+//      ByteString byteAddress = ByteString.copyFrom(getCallerAddress());
+//      builder.setOwnerAddress(byteAddress).setFrozenBalance(ByteArray.toLong(frozenBalance))
+//          .setFrozenDuration(ByteArray.toLong(frozenDuration));
+//      FreezeBalanceContract contract = builder.build();
+//
+//      TransactionCapsule trx = new TransactionCapsule(contract, ContractType.FreezeBalanceContract);
+//
+//      final List<Actuator> actuatorList = ActuatorFactory
+//          .createActuator(trx, getDeposit().getDbManager());
+//      try {
+//        actuatorList.get(0).validate();
+//        actuatorList.get(0).execute(getResult().getRet());
+//        getDeposit()
+//            .syncCacheFromAccountStore(ByteString.copyFrom(getCallerAddress()).toByteArray());
+//      } catch (ContractExeException e) {
+//        logger.debug("ContractExeException when calling freezeBalance in vm");
+//        logger.debug("ContractExeException: {}", e.getMessage());
+//        return null;
+//      } catch (ContractValidateException e) {
+//        logger.debug("ContractValidateException when calling freezeBalance in vm");
+//        logger.debug("ContractValidateException: {}", e.getMessage());
+//        return null;
+//      }
       return Pair.of(true, new DataWord(1).getData());
     }
   }
@@ -782,8 +797,8 @@ public class PrecompiledContracts {
 
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
-    public long getGasForData(byte[] data) {
-      return 0;
+    public long getEnergyForData(byte[] data) {
+      return 200;
     }
 
     @Override
@@ -793,30 +808,39 @@ public class PrecompiledContracts {
         data = EMPTY_BYTE_ARRAY;
       }
 
-      Contract.UnfreezeBalanceContract.Builder builder = Contract.UnfreezeBalanceContract
-          .newBuilder();
-      ByteString byteAddress = ByteString.copyFrom(getCallerAddress());
-      builder.setOwnerAddress(byteAddress);
-      UnfreezeBalanceContract contract = builder.build();
-
-      TransactionCapsule trx = new TransactionCapsule(contract,
-          ContractType.UnfreezeBalanceContract);
-
-      final List<Actuator> actuatorList = ActuatorFactory
-          .createActuator(trx, getDeposit().getDbManager());
-      try {
-        actuatorList.get(0).validate();
-        actuatorList.get(0).execute(getResult().getRet());
-        getDeposit()
-            .syncCacheFromAccountStore(ByteString.copyFrom(getCallerAddress()).toByteArray());
-        getDeposit().syncCacheFromVotesStore(ByteString.copyFrom(getCallerAddress()).toByteArray());
-      } catch (ContractExeException e) {
-        logger.debug("ContractExeException when calling unfreezeBalance in vm");
-        logger.debug("ContractExeException: {}", e.getMessage());
-      } catch (ContractValidateException e) {
-        logger.debug("ContractValidateException when calling unfreezeBalance in vm");
-        logger.debug("ContractValidateException: {}", e.getMessage());
-      }
+//      if (getDeposit().getDbManager().getAccountStore().get(getCallerAddress()).getType()
+//          == AccountType.Contract) {
+//        logger.debug("caller can't be a contract");
+//        // TODO: or exception here.
+//        return Pair.of(false, null);
+//      }
+//
+//      Contract.UnfreezeBalanceContract.Builder builder = Contract.UnfreezeBalanceContract
+//          .newBuilder();
+//      ByteString byteAddress = ByteString.copyFrom(getCallerAddress());
+//      builder.setOwnerAddress(byteAddress);
+//      UnfreezeBalanceContract contract = builder.build();
+//
+//      TransactionCapsule trx = new TransactionCapsule(contract,
+//          ContractType.UnfreezeBalanceContract);
+//
+//      final List<Actuator> actuatorList = ActuatorFactory
+//          .createActuator(trx, getDeposit().getDbManager());
+//      try {
+//        actuatorList.get(0).validate();
+//        actuatorList.get(0).execute(getResult().getRet());
+//        getDeposit()
+//            .syncCacheFromAccountStore(ByteString.copyFrom(getCallerAddress()).toByteArray());
+//        getDeposit().syncCacheFromVotesStore(ByteString.copyFrom(getCallerAddress()).toByteArray());
+//      } catch (ContractExeException e) {
+//        logger.debug("ContractExeException when calling unfreezeBalance in vm");
+//        logger.debug("ContractExeException: {}", e.getMessage());
+//        return null;
+//      } catch (ContractValidateException e) {
+//        logger.debug("ContractValidateException when calling unfreezeBalance in vm");
+//        logger.debug("ContractValidateException: {}", e.getMessage());
+//        return null;
+//      }
       return Pair.of(true, new DataWord(1).getData());
     }
   }
@@ -832,8 +856,8 @@ public class PrecompiledContracts {
 
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
-    public long getGasForData(byte[] data) {
-      return 0;
+    public long getEnergyForData(byte[] data) {
+      return 200;
     }
 
     @Override
@@ -862,9 +886,11 @@ public class PrecompiledContracts {
       } catch (ContractExeException e) {
         logger.debug("ContractExeException when calling withdrawBalanceNative in vm");
         logger.debug("ContractExeException: {}", e.getMessage());
+        return null;
       } catch (ContractValidateException e) {
         logger.debug("ContractValidateException when calling withdrawBalanceNative in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
+        return null;
       }
       return Pair.of(true, new DataWord(1).getData());
     }
@@ -881,8 +907,8 @@ public class PrecompiledContracts {
 
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
-    public long getGasForData(byte[] data) {
-      return 0;
+    public long getEnergyForData(byte[] data) {
+      return 200;
     }
 
     @Override
@@ -918,9 +944,11 @@ public class PrecompiledContracts {
       } catch (ContractExeException e) {
         logger.debug("ContractExeException when calling proposalApproveNative in vm");
         logger.debug("ContractExeException: {}", e.getMessage());
+        return null;
       } catch (ContractValidateException e) {
         logger.debug("ContractValidateException when calling proposalApproveNative in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
+        return null;
       }
       return Pair.of(true, new DataWord(1).getData());
     }
@@ -938,8 +966,8 @@ public class PrecompiledContracts {
 
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
-    public long getGasForData(byte[] data) {
-      return 0;
+    public long getEnergyForData(byte[] data) {
+      return 200;
     }
 
     @Override
@@ -981,9 +1009,11 @@ public class PrecompiledContracts {
       } catch (ContractExeException e) {
         logger.debug("ContractExeException when calling proposalCreateNative in vm");
         logger.debug("ContractExeException: {}", e.getMessage());
+        return null;
       } catch (ContractValidateException e) {
         logger.debug("ContractValidateException when calling proposalCreateNative in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
+        return null;
       }
       return Pair.of(true, new DataWord(id).getData());
     }
@@ -1000,8 +1030,8 @@ public class PrecompiledContracts {
 
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
-    public long getGasForData(byte[] data) {
-      return 0;
+    public long getEnergyForData(byte[] data) {
+      return 200;
     }
 
     @Override
@@ -1028,9 +1058,11 @@ public class PrecompiledContracts {
       } catch (ContractExeException e) {
         logger.debug("ContractExeException when calling proposalDeleteContract in vm");
         logger.debug("ContractExeException: {}", e.getMessage());
+        return null;
       } catch (ContractValidateException e) {
         logger.debug("ContractValidateException when calling proposalDeleteContract in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
+        return null;
       }
       return Pair.of(true, new DataWord(1).getData());
     }
@@ -1048,8 +1080,8 @@ public class PrecompiledContracts {
 
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
-    public long getGasForData(byte[] data) {
-      return 0;
+    public long getEnergyForData(byte[] data) {
+      return 200;
     }
 
     @Override
@@ -1075,8 +1107,8 @@ public class PrecompiledContracts {
 
     @Override
     // TODO: Please re-implement this function after Tron cost is well designed.
-    public long getGasForData(byte[] data) {
-      return 0;
+    public long getEnergyForData(byte[] data) {
+      return 200;
     }
 
     @Override
@@ -1090,7 +1122,115 @@ public class PrecompiledContracts {
       byte[] resultBytes = Wallet.decodeFromBase58Check(addressBase58);
       String hexString = Hex.toHexString(resultBytes);
 
-      return Pair.of(true, new DataWord(hexString).getData());
+      return Pair.of(true, new DataWord(new DataWord(hexString).getLast20Bytes()).getData());
+    }
+  }
+
+  /**
+   * Native function for transferring Asset to another account. <br/>
+   * <br/>
+   *
+   * Input data[]: <br/> toAddress, amount, assetName <br/>
+   *
+   * Output: <br/> transfer asset operation success or not <br/>
+   */
+  public static class TransferAssetNative extends PrecompiledContract {
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return 200;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+
+      if (data == null) {
+        data = EMPTY_BYTE_ARRAY;
+      }
+
+      byte[] toAddress = new byte[32];
+      System.arraycopy(data, 0, toAddress, 0, 32);
+      byte[] amount = new byte[32];
+      System.arraycopy(data, 32 + 16 + 8, amount, 0, 8);
+      // we already have a restrict for token name length, no more than 32 bytes. don't need to check again
+      byte[] name = new byte[32];
+      System.arraycopy(data, 64, name, 0, data.length-64);
+      int length =name.length;
+      while(length>0 && name[length -1] ==0){
+        length--;
+      }
+      name = ByteArray.subArray(name,0,length);
+      Contract.TransferAssetContract.Builder builder = Contract.TransferAssetContract
+          .newBuilder();
+      builder.setOwnerAddress(ByteString.copyFrom(getCallerAddress()));
+      builder.setToAddress(ByteString.copyFrom(convertToTronAddress(new DataWord(toAddress).getLast20Bytes())));
+      builder.setAmount(Longs.fromByteArray(amount));
+      builder.setAssetName(ByteString.copyFrom(name));
+
+
+      TransferAssetContract contract = builder.build();
+
+      TransactionCapsule trx = new TransactionCapsule(contract,
+          ContractType.TransferAssetContract);
+
+      final List<Actuator> actuatorList = ActuatorFactory
+          .createActuator(trx, getDeposit().getDbManager());
+      try {
+        actuatorList.get(0).validate();
+        actuatorList.get(0).execute(getResult().getRet());
+      } catch (ContractExeException e) {
+        logger.debug("ContractExeException when calling transferAssetContract in vm");
+        logger.debug("ContractExeException: {}", e.getMessage());
+        return null;
+      } catch (ContractValidateException e) {
+        logger.debug("ContractValidateException when calling transferAssetContract in vm");
+        logger.debug("ContractValidateException: {}", e.getMessage());
+        return null;
+      }
+      return Pair.of(true, new DataWord(1).getData());
+    }
+  }
+
+
+
+  /**
+   * Native function for check Asset balance basing on targetAddress and Asset name. <br/>
+   * <br/>
+   *
+   * Input data[]: <br/> address targetAddress, byte[] assetName <br/>
+   *
+   * Output: <br/> balance <br/>
+   */
+  public static class GetTransferAssetNative extends PrecompiledContract {
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return 200;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+
+      if (data == null) {
+        data = EMPTY_BYTE_ARRAY;
+      }
+
+      byte[] targetAddress = new byte[32];
+      System.arraycopy(data, 0, targetAddress, 0, 32);
+      // we already have a restrict for token name length, no more than 32 bytes. don't need to check again
+      byte[] name = new byte[32];
+      System.arraycopy(data, 32, name, 0, 32);
+      int length =name.length;
+      while(length>0 && name[length -1] ==0){
+        length--;
+      }
+      name = ByteArray.subArray(name,0,length);
+
+      long assetBalance = this.getDeposit().getDbManager().getAccountStore().
+          get(convertToTronAddress(new DataWord(targetAddress).getLast20Bytes())).
+          getAssetMap().get(ByteArray.toStr(name));
+
+      return Pair.of(true, new DataWord(Longs.toByteArray(assetBalance)).getData());
     }
   }
 }

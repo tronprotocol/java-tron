@@ -18,12 +18,10 @@
 
 package org.tron.common.overlay.discover.node.statistics;
 
-import static java.lang.Math.min;
-
-import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
-import org.joda.time.DateTime;
+import lombok.Getter;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol.ReasonCode;
 
 public class NodeStatistics {
@@ -31,87 +29,37 @@ public class NodeStatistics {
   public final static int REPUTATION_PREDEFINED = 100000;
   public final static long TOO_MANY_PEERS_PENALIZE_TIMEOUT = 60 * 1000L;
   private static final long CLEAR_CYCLE_TIME = 60 * 60 * 1000L;
+  private final long MIN_DATA_LENGTH = Args.getInstance().getReceiveTcpMinDataLength();
 
   private boolean isPredefined = false;
-
   private int persistedReputation = 0;
-
+  @Getter
   private int disconnectTimes = 0;
-
-  // discovery stat
-  public final MessageCountStatistics discoverInPing = new MessageCountStatistics();
-  public final MessageCountStatistics discoverOutPing = new MessageCountStatistics();
-  public final MessageCountStatistics discoverInPong = new MessageCountStatistics();
-  public final MessageCountStatistics discoverOutPong = new MessageCountStatistics();
-  public final MessageCountStatistics discoverInFind = new MessageCountStatistics();
-  public final MessageCountStatistics discoverOutFind = new MessageCountStatistics();
-  public final MessageCountStatistics discoverInNeighbours = new MessageCountStatistics();
-  public final MessageCountStatistics discoverOutNeighbours = new MessageCountStatistics();
-
-  public final SimpleStatter discoverMessageLatency;
-  public final AtomicLong lastPongReplyTime = new AtomicLong(0l); // in milliseconds
-
-  //  stat
-  public final MessageCountStatistics p2pInHello = new MessageCountStatistics();
-  public final MessageCountStatistics p2pOutHello = new MessageCountStatistics();
-  public final MessageCountStatistics tronInMessage = new MessageCountStatistics();
-  public final MessageCountStatistics tronOutMessage = new MessageCountStatistics();
-
-  public final MessageCountStatistics p2pHandShake = new MessageCountStatistics();
-
+  @Getter
   private ReasonCode tronLastRemoteDisconnectReason = null;
+  @Getter
   private ReasonCode tronLastLocalDisconnectReason = null;
   private long lastDisconnectedTime = 0;
   private long firstDisconnectedTime = 0;
 
+  public final MessageStatistics messageStatistics = new MessageStatistics();
+  public final MessageCount p2pHandShake = new MessageCount();
+  public final MessageCount tcpFlow = new MessageCount();
+
+  public final SimpleStatter discoverMessageLatency;
+  public final AtomicLong lastPongReplyTime = new AtomicLong(0l); // in milliseconds
+
+  private Reputation reputation;
 
   public NodeStatistics(Node node) {
     discoverMessageLatency = new SimpleStatter(node.getIdString());
-  }
-
-  private int getSessionFairReputation() {
-    int discoverReput = 0;
-
-    discoverReput +=
-        min(discoverInPong.getTotalCount(), 1) * (discoverOutPing.getTotalCount() == discoverInPong.getTotalCount() ? 50 : 1);
-
-    discoverReput +=
-        min(discoverInNeighbours.getTotalCount(), 1) * (discoverOutFind.getTotalCount() == discoverInNeighbours.getTotalCount() ? 50 : 1);
-
-    discoverReput += (int)discoverMessageLatency.getAvrg() == 0 ? 0 : 1000 / discoverMessageLatency.getAvrg();
-
-    int reput = 0;
-    reput += p2pHandShake.getTotalCount() > 0 ? 20 : 0;
-    reput += min(tronInMessage.getTotalCount(), 10) * 3;
-
-    if (wasDisconnected()) {
-      if (tronLastLocalDisconnectReason == null && tronLastRemoteDisconnectReason == null) {
-        // means connection was dropped without reporting any reason - bad
-        reput *= 0.3;
-      } else if (tronLastLocalDisconnectReason != ReasonCode.REQUESTED) {
-        // the disconnect was not initiated by discover mode
-        if (tronLastRemoteDisconnectReason == ReasonCode.TOO_MANY_PEERS) {
-          // The peer is popular, but we were unlucky
-          reput *= 0.3;
-        } else if (tronLastRemoteDisconnectReason != ReasonCode.REQUESTED) {
-          // other disconnect reasons
-          reput *= 0.2;
-        }
-      }
-    }
-    if (disconnectTimes > 20) {
-      return 0;
-    }
-    int score =
-        discoverReput + 10 * reput - (int) Math.pow(2, disconnectTimes) * (disconnectTimes > 0 ? 10
-            : 0);
-    return score > 0 ? score : 0;
+    reputation = new Reputation(this);
   }
 
   public int getReputation() {
     int score = 0;
     if (!isReputationPenalized()){
-      score += persistedReputation / 2 + getSessionFairReputation();
+      score += persistedReputation / 5 + reputation.calculate();
     }
     if (isPredefined){
       score += REPUTATION_PREDEFINED;
@@ -150,9 +98,7 @@ public class NodeStatistics {
       firstDisconnectedTime = 0;
     }
 
-    if (tronLastLocalDisconnectReason == ReasonCode.NULL_IDENTITY ||
-        tronLastRemoteDisconnectReason == ReasonCode.NULL_IDENTITY ||
-        tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
+    if (tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
         tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_PROTOCOL ||
         tronLastLocalDisconnectReason == ReasonCode.BAD_PROTOCOL ||
         tronLastRemoteDisconnectReason == ReasonCode.BAD_PROTOCOL ||
@@ -164,12 +110,12 @@ public class NodeStatistics {
         tronLastRemoteDisconnectReason == ReasonCode.FORKED ||
         tronLastLocalDisconnectReason == ReasonCode.UNLINKABLE ||
         tronLastRemoteDisconnectReason == ReasonCode.UNLINKABLE ||
-        tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_VERSION ||
-        tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_VERSION ||
         tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_CHAIN ||
         tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_CHAIN ||
         tronLastRemoteDisconnectReason == ReasonCode.SYNC_FAIL ||
-        tronLastLocalDisconnectReason == ReasonCode.SYNC_FAIL) {
+        tronLastLocalDisconnectReason == ReasonCode.SYNC_FAIL ||
+        tronLastRemoteDisconnectReason == ReasonCode.INCOMPATIBLE_VERSION ||
+        tronLastLocalDisconnectReason == ReasonCode.INCOMPATIBLE_VERSION) {
       persistedReputation = 0;
       return true;
     }
@@ -191,6 +137,9 @@ public class NodeStatistics {
     if (firstDisconnectedTime <= 0) {
       firstDisconnectedTime = lastDisconnectedTime;
     }
+    if (tronLastLocalDisconnectReason == ReasonCode.RESET) {
+      return;
+    }
     disconnectTimes++;
     persistedReputation = persistedReputation / 2;
   }
@@ -203,6 +152,10 @@ public class NodeStatistics {
     this.isPredefined = isPredefined;
   }
 
+  public boolean isPredefined() {
+    return isPredefined;
+  }
+
   public void setPersistedReputation(int persistedReputation) {
     this.persistedReputation = persistedReputation;
   }
@@ -210,16 +163,17 @@ public class NodeStatistics {
   @Override
   public String toString() {
     return "NodeStat[reput: " + getReputation() + "(" + persistedReputation + "), discover: " +
-        discoverInPong + "/" + discoverOutPing + " " +
-        discoverOutPong + "/" + discoverInPing + " " +
-        discoverInNeighbours + "/" + discoverOutFind + " " +
-        discoverOutNeighbours + "/" + discoverInFind + " " +
+        messageStatistics.discoverInPong + "/" + messageStatistics.discoverOutPing + " " +
+        messageStatistics.discoverOutPong + "/" + messageStatistics.discoverInPing + " " +
+        messageStatistics.discoverInNeighbours + "/" + messageStatistics.discoverOutFindNode + " " +
+        messageStatistics.discoverOutNeighbours + "/" + messageStatistics.discoverInFindNode + " " +
         ((int) discoverMessageLatency.getAvrg()) + "ms" +
-        ", p2p: " + p2pHandShake + "/" + p2pInHello + "/" + p2pOutHello + " " +
-        ", tron: " + tronInMessage + "/" + tronOutMessage + " " +
+        ", p2p: " + p2pHandShake + "/" + messageStatistics.p2pInHello + "/" + messageStatistics.p2pOutHello + " " +
+        ", tron: " + messageStatistics.tronInMessage + "/" + messageStatistics.tronOutMessage + " " +
         (wasDisconnected() ? "X " + disconnectTimes : "") +
         (tronLastLocalDisconnectReason != null ? ("<=" + tronLastLocalDisconnectReason) : " ") +
-        (tronLastRemoteDisconnectReason != null ? ("=>" + tronLastRemoteDisconnectReason) : " ");
+        (tronLastRemoteDisconnectReason != null ? ("=>" + tronLastRemoteDisconnectReason) : " ") +
+        ", tcp flow: " + tcpFlow.getTotalCount();
   }
 
   public class SimpleStatter {
@@ -259,6 +213,14 @@ public class NodeStatistics {
       return name;
     }
 
+  }
+
+  public boolean nodeIsHaveDataTransfer() {
+    return tcpFlow.getTotalCount() > MIN_DATA_LENGTH;
+  }
+
+  public void resetTcpFlow() {
+    tcpFlow.reset();
   }
 
 }

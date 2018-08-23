@@ -91,6 +91,12 @@ public class FullNodeHttpApiService implements Service {
   private GenerateAddressServlet generateAddressServlet;
   @Autowired
   private ValidateAddressServlet validateAddressServlet;
+  @Autowired
+  private DeployContractServlet deployContractServlet;
+  @Autowired
+  private TriggerSmartContractServlet triggerSmartContractServlet;
+  @Autowired
+  private GetContractServlet getContractServlet;
 
   @Override
   public void init() {
@@ -149,6 +155,9 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(easyTransferByPrivateServlet), "/easytransferbyprivate");
       context.addServlet(new ServletHolder(generateAddressServlet), "/generateaddress");
       context.addServlet(new ServletHolder(validateAddressServlet), "/validateaddress");
+      context.addServlet(new ServletHolder(deployContractServlet), "/deploycontract");
+      context.addServlet(new ServletHolder(triggerSmartContractServlet), "/triggersmartcontract");
+      context.addServlet(new ServletHolder(getContractServlet), "/getcontract");
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());

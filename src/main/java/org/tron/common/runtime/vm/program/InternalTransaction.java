@@ -21,22 +21,43 @@ import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
 import static org.tron.common.utils.ByteUtil.toHexString;
 
+import com.google.common.primitives.Longs;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteUtil;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Protocol.Transaction;
 
-//import org.tron.common.utils.RLP;
+public class InternalTransaction {
 
-public class InternalTransaction extends VMTransaction {
-
+  private Transaction transaction;
+  private byte[] hash;
   private byte[] parentHash;
+  /* the amount of trx to transfer (calculated as sun) */
+  private long value;
+
+  /* the address of the destination account
+   * In creation transaction the receive address is - 0 */
+  private byte[] receiveAddress;
+
+  /* An unlimited size byte array specifying
+   * input [data] of the message call or
+   * Initialization code for a new contract */
+  private byte[] data;
+
+  protected byte[] sendAddress;
   private int deep;
   private int index;
   private boolean rejected = false;
   private String note;
+  private boolean parsed;
+  private byte[] protoEncoded;
+
 
   public enum TrxType {
     TRX_PRECOMPILED_TYPE,
@@ -45,38 +66,47 @@ public class InternalTransaction extends VMTransaction {
     TRX_UNKNOWN_TYPE,
   }
 
-  ;
-
-  public enum ExecuterType {
+  public enum ExecutorType {
     ET_PRE_TYPE,
     ET_NORMAL_TYPE,
     ET_CONSTANT_TYPE,
     ET_UNKNOWN_TYPE,
   }
 
-  public InternalTransaction(byte[] rawData) {
-    super(rawData);
+
+  /**
+   * Construct an un-encoded InternalTransaction
+   */
+  public InternalTransaction(Transaction trx) {
+    this.transaction = trx;
+    this.protoEncoded = new TransactionCapsule(trx).getData();
+    this.parsed = false;
   }
 
-  public InternalTransaction(Transaction tx) {
-    super(tx);
-  }
+  /**
+   * Construct an encoded InternalTransaction
+   */
 
   public InternalTransaction(byte[] parentHash, int deep, int index,
       byte[] sendAddress, byte[] receiveAddress, long value, byte[] data, String note) {
 
-    super(receiveAddress, value, nullToEmpty(data));
-
     this.parentHash = parentHash;
     this.deep = deep;
     this.index = index;
-    this.sendAddress = nullToEmpty(sendAddress);
     this.note = note;
+    this.sendAddress = nullToEmpty(sendAddress);
+    this.receiveAddress = nullToEmpty(receiveAddress);
+    this.value = value;
+    this.data = nullToEmpty(data);
     this.parsed = true;
   }
 
-  private static byte[] getData(DataWord gasPrice) {
-    return (gasPrice == null) ? ByteUtil.EMPTY_BYTE_ARRAY : gasPrice.getData();
+  public Transaction getTransaction() {
+    return transaction;
+  }
+
+  public void setTransaction(Transaction transaction) {
+    this.transaction = transaction;
   }
 
   public void reject() {
@@ -104,7 +134,6 @@ public class InternalTransaction extends VMTransaction {
     return note;
   }
 
-  @Override
   public byte[] getSender() {
     protoParse();
     return sendAddress;
@@ -115,87 +144,67 @@ public class InternalTransaction extends VMTransaction {
     return parentHash;
   }
 
-//    @Override
-//    public byte[] getEncoded() {
-//        if (protoEncoded == null) {
-//            /*
-//            this.protoEncoded = RLP.encodeList(
-//                    RLP.encodeElement(isEmptyNonce ? null : nonce),
-//                    RLP.encodeElement(this.parentHash),
-//                    RLP.encodeElement(getSender()),
-//                    RLP.encodeElement(getReceiveAddress()),
-//                    RLP.encodeElement(getValue()),
-//                    RLP.encodeElement(getGasPrice()),
-//                    RLP.encodeElement(getGasLimit()),
-//                    RLP.encodeElement(getData()),
-//                    RLP.encodeString(this.note),
-//                    encodeInt(this.deep),
-//                    encodeInt(this.index),
-//                    encodeInt(this.rejected ? 1 : 0)
-//            );
-//            */
-//        }
-//
-//        return protoEncoded;
-//    }
-
-  @Override
-  public byte[] getEncodedRaw() {
-    return getEncoded();
+  public long getValue() {
+    protoParse();
+    return value;
   }
 
-//    @Override
-//    public synchronized void protoParse() {
-//        if (parsed) return;
-//        /*
-//        RLPList decodedTxList = RLP.decode2(rlpEncoded);
-//        RLPList transaction = (RLPList) decodedTxList.get(0);
-//
-//        this.parentHash = transaction.get(1).getRLPData();
-//        this.sendAddress = transaction.get(2).getRLPData();
-//        setReceiveAddress(transaction.get(3).getRLPData());
-//        setValue(transaction.get(4).getRLPData());
-//        setGasPrice(transaction.get(5).getRLPData());
-//        setGasLimit(transaction.get(6).getRLPData());
-//        setData(transaction.get(7).getRLPData());
-//        this.note = new String(transaction.get(8).getRLPData());
-//        this.deep = decodeInt(transaction.get(9).getRLPData());
-//        this.index = decodeInt(transaction.get(10).getRLPData());
-//        this.rejected = decodeInt(transaction.get(11).getRLPData()) == 1;
-//        */
-//        this.parsed = true;
-//    }
-
-
-  private static byte[] intToBytes(int value) {
-    return ByteBuffer.allocate(Integer.SIZE / Byte.SIZE)
-        .order(ByteOrder.LITTLE_ENDIAN)
-        .putInt(value)
-        .array();
+  public byte[] getData() {
+    protoParse();
+    return data.clone();
   }
 
-  private static int bytesToInt(byte[] bytes) {
-    return isEmpty(bytes) ? 0 : ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).getInt();
+  protected void setValue(long value) {
+    this.value = value;
+    parsed = true;
   }
 
-    /*
-    private static byte[] encodeInt(int value) {
-        return RLP.encodeElement(intToBytes(value));
+  public byte[] getReceiveAddress() {
+    protoParse();
+    return receiveAddress.clone();
+  }
+
+  private void protoParse() {
+    if (parsed) {
+      return;
     }
-    */
-
-  private static int decodeInt(byte[] encoded) {
-    return bytesToInt(encoded);
+    try {
+      this.hash = Hash.sha3(protoEncoded);
+      this.parsed = true;
+    } catch (Exception e) {
+      throw new RuntimeException("Error on parsing proto", e);
+    }
   }
 
-  @Override
-  public ECKey getKey() {
-    throw new UnsupportedOperationException("Cannot sign internal transaction.");
+  public byte[] getHash() {
+    if (!isEmpty(hash)) {
+      return Arrays.copyOf(hash, hash.length);
+    }
+
+    protoParse();
+    byte[] plainMsg = this.getEncoded();
+    return Hash.sha3(plainMsg);
   }
 
-  @Override
-  public void sign(byte[] privKeyBytes) throws ECKey.MissingPrivateKeyException {
-    throw new UnsupportedOperationException("Cannot sign internal transaction.");
+
+  public byte[] getEncoded() {
+
+    if (protoEncoded != null) {
+      if (null == this.hash) {
+        this.hash = Hash.sha3(protoEncoded);
+      }
+      return protoEncoded.clone();
+    }
+
+    byte[] valueByte = Longs.toByteArray(this.value);
+    byte[] raw = new byte[this.receiveAddress.length + this.data.length + valueByte.length];
+    System.arraycopy(this.receiveAddress, 0, raw, 0, this.receiveAddress.length);
+    System.arraycopy(this.data, 0, raw, this.receiveAddress.length, this.data.length);
+    System.arraycopy(valueByte, 0, raw, this.data.length, valueByte.length);
+    this.protoEncoded = raw;
+    this.hash = Hash.sha3(protoEncoded);
+
+    return protoEncoded.clone();
   }
 
   @Override

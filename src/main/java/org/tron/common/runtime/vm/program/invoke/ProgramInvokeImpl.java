@@ -19,13 +19,13 @@ package org.tron.common.runtime.vm.program.invoke;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.storage.Deposit;
 import org.tron.core.db.BlockStore;
 
 @Slf4j
-
 public class ProgramInvokeImpl implements ProgramInvoke {
 
   // private BlockStore blockStore;
@@ -36,6 +36,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
 
   private long vmStartInUs;
   private long vmShouldEndInUs;
+  private long energyLimit;
 
   /* BLOCK  env **/
   private final DataWord prevHash, coinbase, timestamp, number;
@@ -51,19 +52,22 @@ public class ProgramInvokeImpl implements ProgramInvoke {
       DataWord lastHash, DataWord coinbase, DataWord timestamp, DataWord number,
       DataWord difficulty,
       Deposit deposit, int callDeep, boolean isStaticCall, boolean byTestingSuite,
-      long vmStartInUs, long vmShouldEndInUs) {
+      long vmStartInUs, long vmShouldEndInUs, long energyLimit) {
     this.address = address;
     this.origin = origin;
     this.caller = caller;
     this.balance = balance;
     this.callValue = callValue;
-    this.msgData = Arrays.copyOf(msgData, msgData.length);
+    if (Objects.nonNull(msgData)) {
+      this.msgData = Arrays.copyOf(msgData, msgData.length);
+    }
 
     // last Block env
     this.prevHash = lastHash;
     this.coinbase = coinbase;
     this.timestamp = timestamp;
     this.number = number;
+    this.callDeep = callDeep;
 
     this.deposit = deposit;
     this.byTransaction = false;
@@ -71,21 +75,22 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     this.byTestingSuite = byTestingSuite;
     this.vmStartInUs = vmStartInUs;
     this.vmShouldEndInUs = vmShouldEndInUs;
+    this.energyLimit = energyLimit;
 
   }
 
   public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
-      byte[] callValue, byte[] msgData,
+      long callValue, byte[] msgData,
       byte[] lastHash, byte[] coinbase, long timestamp, long number, Deposit deposit,
-      long vmStartInUs, long vmShouldEndInUs, boolean byTestingSuite) {
+      long vmStartInUs, long vmShouldEndInUs, boolean byTestingSuite, long energyLimit) {
     this(address, origin, caller, balance, callValue, msgData, lastHash, coinbase,
-        timestamp, number, deposit, vmStartInUs, vmShouldEndInUs);
+        timestamp, number, deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
     this.byTestingSuite = byTestingSuite;
   }
 
   public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
-      byte[] callValue, byte[] msgData, byte[] lastHash, byte[] coinbase, long timestamp,
-      long number, Deposit deposit, long vmStartInUs, long vmShouldEndInUs) {
+      long callValue, byte[] msgData, byte[] lastHash, byte[] coinbase, long timestamp,
+      long number, Deposit deposit, long vmStartInUs, long vmShouldEndInUs, long energyLimit) {
 
     // Transaction env
     this.address = new DataWord(address);
@@ -105,6 +110,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     // calc should end time
     this.vmStartInUs = vmStartInUs;
     this.vmShouldEndInUs = vmShouldEndInUs;
+    this.energyLimit = energyLimit;
     // logger.info("vmStartInUs: {}", vmStartInUs);
     // logger.info("vmShouldEndInUs: {}", vmShouldEndInUs);
 
@@ -222,27 +228,9 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     return null; //difficulty;
   }
 
-  /*     GASLIMIT op    */
-  @Override
-  public DataWord getDroplimit() {
-    return DataWord.ZERO;
-  }
-
-  @Override
-  public long getDroplimitLong() {
-    return 0;
-  }
-
   public long getVmShouldEndInUs() {
     return vmShouldEndInUs;
   }
-
-  /*  Storage */
-    /*
-    public Map<DataWord, DataWord> getStorage() {
-        return storage;
-    }
-    */
 
   public Deposit getDeposit() {
     return deposit;
@@ -250,8 +238,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
 
   @Override
   public BlockStore getBlockStore() {
-    return null;
-    //return deposit.getBlockStore();
+    return deposit.getDbManager().getBlockStore();
   }
 
   @Override
@@ -313,8 +300,8 @@ public class ProgramInvokeImpl implements ProgramInvoke {
       return false;
     }
     //if (difficulty != null ? !difficulty.equals(that.difficulty) : that.difficulty != null) return false;
-    //if (gas != null ? !gas.equals(that.gas) : that.gas != null) return false;
-    //if (gasPrice != null ? !gasPrice.equals(that.gasPrice) : that.gasPrice != null) return false;
+    //if (energy != null ? !energy.equals(that.energy) : that.energy != null) return false;
+    //if (energyPrice != null ? !energyPrice.equals(that.energyPrice) : that.energyPrice != null) return false;
     //if (dropLimit != null ? !dropLimit.equals(that.dropLimit) : that.dropLimit != null) {
     //    return false;
     // }
@@ -377,4 +364,9 @@ public class ProgramInvokeImpl implements ProgramInvoke {
         ", callDeep=" + callDeep +
         '}';
   }
+
+  public long getEnergyLimit() {
+    return energyLimit;
+  }
+
 }

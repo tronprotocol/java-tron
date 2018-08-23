@@ -15,21 +15,9 @@
 
 package org.tron.common.application;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.springframework.context.ApplicationContext;
 
 public class ApplicationFactory {
-
-  /**
-   * Build a Guice instance.
-   *
-   * @return Guice
-   */
-  public Injector buildGuice() {
-    return Guice.createInjector(
-        new Module());
-  }
 
   /**
    * Build a new application.

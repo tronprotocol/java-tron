@@ -30,12 +30,16 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
+import org.tron.core.exception.OutOfSlotTimeException;
+import org.tron.core.exception.ReceiptException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.UnsupportVMException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
@@ -95,8 +99,16 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("TooBigTransaction exception," + e.getMessage());
     } catch (TransactionExpirationException e) {
       throw new BadBlockException("Expiration exception," + e.getMessage());
+    } catch (ReceiptException e) {
+      throw new BadBlockException("Receipt exception," + e.getMessage());
     } catch (BadNumberBlockException e) {
       throw new BadBlockException("bad number exception," + e.getMessage());
+    } catch (TransactionTraceException e) {
+      throw new BadBlockException("TransactionTrace Exception," + e.getMessage());
+    } catch (OutOfSlotTimeException e) {
+      throw new BadBlockException("TransactionTrace Exception," + e.getMessage());
+    } catch (UnsupportVMException e) {
+      throw new BadBlockException(e.getMessage());
     }
 
   }
@@ -112,8 +124,8 @@ public class NodeDelegateImpl implements NodeDelegate {
       dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
     }
     try {
-      dbManager.pushTransactions(trx);
-    } catch (ContractSizeNotEqualToOneException e){
+      dbManager.pushTransaction(trx);
+    } catch (ContractSizeNotEqualToOneException e) {
       logger.info("Contract validate failed" + e.getMessage());
       throw new BadTransactionException();
     } catch (ContractValidateException e) {
@@ -136,13 +148,25 @@ public class NodeDelegateImpl implements NodeDelegate {
     } catch (TaposException e) {
       logger.info("tapos error" + e.getMessage());
       return false;
+    } catch (ReceiptException e) {
+      logger.info("Receipt exception," + e.getMessage());
     } catch (TooBigTransactionException e) {
       logger.info("too big transaction" + e.getMessage());
       return false;
     } catch (TransactionExpirationException e) {
       logger.info("expiration transaction" + e.getMessage());
       return false;
+    } catch (TransactionTraceException e) {
+      logger.info("TransactionTrace Exception" + e.getMessage());
+      return false;
+    } catch (OutOfSlotTimeException e) {
+      logger.info("OutOfSlotTimeException Exception" + e.getMessage());
+      return false;
+    } catch (UnsupportVMException e) {
+      logger.warn(e.getMessage());
+      return false;
     }
+
     return true;
   }
 
@@ -364,5 +388,10 @@ public class NodeDelegateImpl implements NodeDelegate {
   @Override
   public boolean canChainRevoke(long num) {
     return num >= dbManager.getSyncBeginNumber();
+  }
+
+  @Override
+  public boolean forkOrNot(TransactionCapsule transactionCapsule) {
+    return dbManager.getForkController().forkOrNot(transactionCapsule);
   }
 }
