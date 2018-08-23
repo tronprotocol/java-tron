@@ -79,4 +79,8 @@ public class ForkController {
     );
   }
 
+  public void reset() {
+    Arrays.fill(slots, 0);
+  }
+
 }
