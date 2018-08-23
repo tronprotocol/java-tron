@@ -497,7 +497,7 @@ public class Runtime {
 
   }
 
-  public void go() throws OutOfSlotTimeException, ContractExeException {
+  public void go() throws OutOfSlotTimeException {
     if (!readyToExecute) {
       return;
     }
@@ -526,7 +526,6 @@ public class Runtime {
           if (result.getException() != null) {
             program.spendAllEnergy();
             runtimeError = result.getException().getMessage();
-            trace.setBill(result.getEnergyUsed());
             throw result.getException();
           } else {
             runtimeError = "REVERT opcode executed";
@@ -534,22 +533,21 @@ public class Runtime {
         } else {
           deposit.commit();
         }
-        trace.setBill(result.getEnergyUsed());
+
       } else {
         deposit.commit();
       }
     } catch (OutOfResourceException e) {
       logger.error(e.getMessage());
       throw new OutOfSlotTimeException(e.getMessage());
-    } catch (ArithmeticException e) {
-      logger.error(e.getMessage());
-      throw new ContractExeException(e.getMessage());
-    } catch (Exception e) {
+    } catch (Throwable e) {
+      result.setException(new RuntimeException("Unknown Throwable"));
       logger.error(e.getMessage());
       if (StringUtils.isEmpty(runtimeError)) {
         runtimeError = e.getMessage();
       }
     }
+    trace.setBill(result.getEnergyUsed());
   }
 
   private long getEnergyFee(long callerEnergyUsage, long callerEnergyFrozen,
