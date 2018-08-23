@@ -15,6 +15,7 @@
 
 package org.tron.core.capsule;
 
+import java.util.Arrays;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -78,6 +79,6 @@ public class StorageRowCapsule implements ProtoCapsule<byte[]> {
 
   @Override
   public String toString() {
-    return Hex.toHexString(rowValue);
+    return Arrays.toString(rowValue);
   }
 }

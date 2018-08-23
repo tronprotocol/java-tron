@@ -30,7 +30,7 @@ public class Storage {
     } else {
       StorageRowStore store = manager.getStorageRowStore();
       StorageRowCapsule row = store.get(compose(key.getData(), addrHash));
-      if (row == null) {
+      if (row == null || row.getInstance() == null) {
         return null;
       } else {
         beforeUseSize += row.getInstance().length;
@@ -47,8 +47,7 @@ public class Storage {
       StorageRowStore store = manager.getStorageRowStore();
       byte[] rowKey = compose(key.getData(), addrHash);
       StorageRowCapsule row = store.get(rowKey);
-
-      if (row == null) {
+      if (row == null || row.getInstance() == null) {
         row = new StorageRowCapsule(rowKey, value.getData());
       } else {
         beforeUseSize += row.getInstance().length;

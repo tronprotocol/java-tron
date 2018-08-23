@@ -844,6 +844,8 @@ public class Wallet {
     try {
       byte[] selector = getSelector(triggerSmartContract.getData().toByteArray());
       if (selector == null) {
+        // TODO exception
+
         return null;
       }
 
@@ -866,7 +868,9 @@ public class Wallet {
         runtime.execute();
         runtime.go();
         runtime.finalization();
+        // TODO exception
         if (runtime.getResult().getException() != null) {
+          runtime.getResult().getException().printStackTrace();
           throw new RuntimeException("Runtime exe failed!");
         }
 
