@@ -249,7 +249,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       tp += account.getFrozen(i).getFrozenBalance();
     }
 
-    tp += account.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance();
+    tp += account.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance();
     return tp;
   }
 
@@ -447,14 +447,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
 
-  public void setFrozenForCpu(long newFrozenBalanceForCpu, long time) {
-    Frozen newFrozenForCpu = Frozen.newBuilder()
-        .setFrozenBalance(newFrozenBalanceForCpu)
+  public void setFrozenForEnergy(long newFrozenBalanceForEnergy, long time) {
+    Frozen newFrozenForEnergy = Frozen.newBuilder()
+        .setFrozenBalance(newFrozenBalanceForEnergy)
         .setExpireTime(time)
         .build();
 
     AccountResource newAccountResource = getAccountResource().toBuilder()
-        .setFrozenBalanceForCpu(newFrozenForCpu).build();
+        .setFrozenBalanceForEnergy(newFrozenForEnergy).build();
 
     this.account = this.account.toBuilder()
         .setAccountResource(newAccountResource)
@@ -462,24 +462,25 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
 
-  public long getCpuFrozenBalance() {
-    return this.account.getAccountResource().getFrozenBalanceForCpu().getFrozenBalance();
+  public long getEnergyFrozenBalance() {
+    return this.account.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance();
   }
 
-  public long getCpuUsage() {
-    return this.account.getAccountResource().getCpuUsage();
+  public long getEnergyUsage() {
+    return this.account.getAccountResource().getEnergyUsage();
   }
 
-  public void setCpuUsage(long cpuUsage) {
+  public void setEnergyUsage(long energyUsage) {
     this.account = this.account.toBuilder()
         .setAccountResource(
-            this.account.getAccountResource().toBuilder().setCpuUsage(cpuUsage).build()).build();
+            this.account.getAccountResource().toBuilder().setEnergyUsage(energyUsage).build())
+        .build();
   }
 
-  public void setLatestConsumeTimeForCpu(long latest_time) {
+  public void setLatestConsumeTimeForEnergy(long latest_time) {
     this.account = this.account.toBuilder()
         .setAccountResource(
-            this.account.getAccountResource().toBuilder().setLatestConsumeTimeForCpu(latest_time)
+            this.account.getAccountResource().toBuilder().setLatestConsumeTimeForEnergy(latest_time)
                 .build()).build();
   }
 

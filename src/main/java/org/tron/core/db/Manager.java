@@ -15,16 +15,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
 import javax.annotation.PostConstruct;
@@ -32,14 +24,12 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.Runtime;
-import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
@@ -92,8 +82,6 @@ import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.TransactionInfo.Log;
-import org.tron.protos.Protocol.TransactionInfo.code;
 
 
 @Slf4j
@@ -173,6 +161,10 @@ public class Manager {
   private ProposalController proposalController;
 
   private ExecutorService validateSignService;
+
+  private Thread repushThread;
+
+  private boolean isRunRepushThread = true;
 
   @Getter
   private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
@@ -316,12 +308,14 @@ public class Manager {
    */
   private Runnable repushLoop =
       () -> {
-        while (true) {
+        while (isRunRepushThread) {
           try {
-            TransactionCapsule tx = this.getRepushTransactions().take();
-            this.rePush(tx);
+            TransactionCapsule tx = this.getRepushTransactions().poll(1, TimeUnit.SECONDS);
+            if (tx != null) {
+              this.rePush(tx);
+            }
           } catch (InterruptedException ex) {
-            logger.info("repushLoop interrupted");
+            logger.error(ex.getMessage());
             Thread.currentThread().interrupt();
           } catch (Exception ex) {
             logger.error("unknown exception happened in witness loop", ex);
@@ -331,10 +325,8 @@ public class Manager {
         }
       };
 
-  private Thread repushThread;
-  
-  public Thread getRepushThread() {
-    return repushThread;
+  public void stopRepushThread() {
+    isRunRepushThread = false;
   }
 
   @PostConstruct
@@ -610,10 +602,10 @@ public class Manager {
     processor.consume(trx, ret, trace);
   }
 
-  public void consumeCpu(TransactionCapsule trx, TransactionResultCapsule ret,
+  public void consumeEnergy(TransactionCapsule trx, TransactionResultCapsule ret,
       TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException {
-    CpuProcessor processor = new CpuProcessor(this);
+    EnergyProcessor processor = new EnergyProcessor(this);
     processor.consume(trx, ret, trace);
   }
 
@@ -1040,7 +1032,8 @@ public class Manager {
 
     RuntimeException runtimeException = runtime.getResult().getException();
     ReceiptCapsule traceReceipt = trace.getReceipt();
-    TransactionInfoCapsule transactionInfo = TransactionInfoCapsule.buildInstance(trxCap, block, runtime, traceReceipt);
+    TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
+        .buildInstance(trxCap, block, runtime, traceReceipt);
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
 

@@ -18,7 +18,9 @@
 
 package org.tron.core;
 
+import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -73,8 +75,8 @@ import org.tron.core.db.AccountIdIndexStore;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.ContractStore;
-import org.tron.core.db.CpuProcessor;
 import org.tron.core.db.DynamicPropertiesStore;
+import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.db.PendingManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
@@ -236,6 +238,15 @@ public class Wallet {
 
   }
 
+  public static byte[] generateContractAddress(byte[] transactionRootId, long nonce){
+    byte[] nonceBytes = Longs.toByteArray(nonce);
+    byte[] combined = new byte[transactionRootId.length + nonceBytes.length];
+    System.arraycopy(transactionRootId, 0, combined, 0, transactionRootId.length);
+    System.arraycopy(nonceBytes, 0, combined, transactionRootId.length, nonceBytes.length);
+
+    return Hash.sha3omit12(combined);
+  }
+
   public static byte[] decodeFromBase58Check(String addressBase58) {
     if (StringUtils.isEmpty(addressBase58)) {
       logger.warn("Warning: Address is empty !!");
@@ -263,8 +274,8 @@ public class Wallet {
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
 
-    CpuProcessor cpuProcessor = new CpuProcessor(dbManager);
-    cpuProcessor.updateUsage(accountCapsule);
+    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager);
+    energyProcessor.updateUsage(accountCapsule);
 
     return accountCapsule.getInstance();
   }
@@ -283,8 +294,8 @@ public class Wallet {
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
 
-    CpuProcessor cpuProcessor = new CpuProcessor(dbManager);
-    cpuProcessor.updateUsage(accountCapsule);
+    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager);
+    energyProcessor.updateUsage(accountCapsule);
 
     return accountCapsule.getInstance();
   }
@@ -641,16 +652,17 @@ public class Wallet {
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
 
-    CpuProcessor cpuProcessor = new CpuProcessor(dbManager);
-    cpuProcessor.updateUsage(accountCapsule);
+    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager);
+    energyProcessor.updateUsage(accountCapsule);
 
     long netLimit = processor.calculateGlobalNetLimit(accountCapsule.getFrozenBalance());
     long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
     long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
-    long cpuLimit = cpuProcessor.calculateGlobalCpuLimit(accountCapsule.getCpuFrozenBalance());
-    long totalCpuLimit = dbManager.getDynamicPropertiesStore().getTotalCpuLimit();
-    long totalCpuWeight = dbManager.getDynamicPropertiesStore().getTotalCpuWeight();
+    long energyLimit = energyProcessor
+        .calculateGlobalEnergyLimit(accountCapsule.getEnergyFrozenBalance());
+    long totalEnergyLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyLimit();
+    long totalEnergyWeight = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
 
     long storageLimit = accountCapsule.getAccountResource().getStorageLimit();
     long storageUsage = accountCapsule.getAccountResource().getStorageUsage();
@@ -667,10 +679,10 @@ public class Wallet {
         .setNetLimit(netLimit)
         .setTotalNetLimit(totalNetLimit)
         .setTotalNetWeight(totalNetWeight)
-        .setCpuLimit(cpuLimit)
-        .setCpuUsed(accountCapsule.getAccountResource().getCpuUsage())
-        .setTotalCpuLimit(totalCpuLimit)
-        .setTotalCpuWeight(totalCpuWeight)
+        .setEnergyLimit(energyLimit)
+        .setEnergyUsed(accountCapsule.getAccountResource().getEnergyUsage())
+        .setTotalEnergyLimit(totalEnergyLimit)
+        .setTotalEnergyWeight(totalEnergyWeight)
         .setStorageLimit(storageLimit)
         .setStorageUsed(storageUsage)
         .putAllAssetNetUsed(accountCapsule.getAllFreeAssetNetUsage())

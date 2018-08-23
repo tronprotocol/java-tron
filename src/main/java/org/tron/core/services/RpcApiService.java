@@ -959,23 +959,23 @@ public class RpcApiService implements Service {
       createTransactionExtention(request, ContractType.ProposalDeleteContract, responseObserver);
     }
 
-    @Override
-    public void buyStorage(Contract.BuyStorageContract request,
-        StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.BuyStorageContract, responseObserver);
-    }
-
-    @Override
-    public void buyStorageBytes(Contract.BuyStorageBytesContract request,
-        StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.BuyStorageBytesContract, responseObserver);
-    }
-
-    @Override
-    public void sellStorage(Contract.SellStorageContract request,
-        StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.SellStorageContract, responseObserver);
-    }
+//    @Override
+//    public void buyStorage(Contract.BuyStorageContract request,
+//        StreamObserver<TransactionExtention> responseObserver) {
+//      createTransactionExtention(request, ContractType.BuyStorageContract, responseObserver);
+//    }
+//
+//    @Override
+//    public void buyStorageBytes(Contract.BuyStorageBytesContract request,
+//        StreamObserver<TransactionExtention> responseObserver) {
+//      createTransactionExtention(request, ContractType.BuyStorageBytesContract, responseObserver);
+//    }
+//
+//    @Override
+//    public void sellStorage(Contract.SellStorageContract request,
+//        StreamObserver<TransactionExtention> responseObserver) {
+//      createTransactionExtention(request, ContractType.SellStorageContract, responseObserver);
+//    }
 
     @Override
     public void getNowBlock(EmptyMessage request, StreamObserver<Block> responseObserver) {

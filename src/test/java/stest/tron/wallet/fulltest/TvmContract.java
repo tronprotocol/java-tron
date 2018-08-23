@@ -16,7 +16,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
-import org.tron.protos.Protocol.SmartContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -55,7 +54,7 @@ public class TvmContract {
         testKey002,blockingStubFull));
     logger.info(Long.toString(PublicMethed.queryAccount(contract008Key,blockingStubFull)
         .getBalance()));
-    Assert.assertTrue(PublicMethed.freezeBalanceGetCpu(contract008Address,1000000L,
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract008Address, 1000000L,
         3,1,contract008Key,blockingStubFull));
     Assert.assertTrue(PublicMethed.buyStorage(50000000L,contract008Address,contract008Key,
         blockingStubFull));
@@ -68,13 +67,13 @@ public class TvmContract {
   public void deployErc721CryptoKitties() {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract008Address,
         blockingStubFull);
-    Long cpuLimit = accountResource.getCpuLimit();
+    Long energyLimit = accountResource.getEnergyLimit();
     Long storageLimit = accountResource.getStorageLimit();
-    Long cpuUsage = accountResource.getCpuUsed();
+    Long energyUsage = accountResource.getEnergyUsed();
     Long storageUsage = accountResource.getStorageUsed();
 
-    logger.info("before cpu limit is " + Long.toString(cpuLimit));
-    logger.info("before cpu usage is " + Long.toString(cpuUsage));
+    logger.info("before energy limit is " + Long.toString(energyLimit));
+    logger.info("before energy usage is " + Long.toString(energyUsage));
     logger.info("before storage limit is " + Long.toString(storageLimit));
     logger.info("before storage usaged is " + Long.toString(storageUsage));
     Long maxFeeLimit = 50000000L;
@@ -96,8 +95,9 @@ public class TvmContract {
           30000000L,0L, 1,null,contract008Key,contract008Address,blockingStubFull);
       accountResource = PublicMethed.getAccountResource(contract008Address,blockingStubFull);
       freeNet = accountResource.getFreeNetUsed();
-      cpuUsage = accountResource.getCpuUsed();
-      logger.info("Time " + Integer.toString(i) + ": cpu usage is " + Long.toString(cpuUsage - m));
+      energyUsage = accountResource.getEnergyUsed();
+      logger.info(
+          "Time " + Integer.toString(i) + ": energy usage is " + Long.toString(energyUsage - m));
       logger.info("Time " + Integer.toString(i) + ": free net used is " + Long
           .toString(freeNet - net));
       account = PublicMethed.queryAccount(contract008Key,blockingStubFull);
@@ -105,7 +105,7 @@ public class TvmContract {
       netUsed = account.getNetUsage();
       logger.info("after net used is " + Long.toString(netUsed));
       net = freeNet;
-      m = cpuUsage;
+      m = energyUsage;
       try {
         Thread.sleep(2000);
       } catch (InterruptedException e) {
@@ -121,17 +121,17 @@ public class TvmContract {
     //logger.info(smartContract.getName());
     //logger.info(smartContract.getAbi().toString());
     accountResource = PublicMethed.getAccountResource(contract008Address,blockingStubFull);
-    cpuLimit = accountResource.getCpuLimit();
+    energyLimit = accountResource.getEnergyLimit();
     storageLimit = accountResource.getStorageLimit();
-    cpuUsage = accountResource.getCpuUsed();
+    energyUsage = accountResource.getEnergyUsed();
     storageUsage = accountResource.getStorageUsed();
     //Assert.assertTrue(storageUsage > 0);
     //Assert.assertTrue(storageLimit > 0);
-    //Assert.assertTrue(cpuLimit > 0);
-    //Assert.assertTrue(cpuUsage > 0);
+    //Assert.assertTrue(energyLimit > 0);
+    //Assert.assertTrue(energyUsage > 0);
 
-    logger.info("after cpu limit is " + Long.toString(cpuLimit));
-    logger.info("after cpu usage is " + Long.toString(cpuUsage));
+    logger.info("after energy limit is " + Long.toString(energyLimit));
+    logger.info("after energy usage is " + Long.toString(energyUsage));
     logger.info("after storage limit is " + Long.toString(storageLimit));
     logger.info("after storage usaged is " + Long.toString(storageUsage));
   }

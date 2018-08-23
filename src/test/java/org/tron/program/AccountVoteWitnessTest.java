@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -20,14 +20,14 @@ import org.tron.protos.Protocol.AccountType;
 @Slf4j
 public class AccountVoteWitnessTest {
 
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
 
   private static Manager dbManager;
   private static String dbPath = "output_witness_test";
 
   static {
     Args.setParam(new String[] {"-d", dbPath}, Constant.TEST_CONF);
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    context = new TronApplicationContext(DefaultConfig.class);
   }
 
   /** init db. */
