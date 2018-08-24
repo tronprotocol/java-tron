@@ -121,7 +121,7 @@ public class WalletTestAssetIssue007 {
   public void testParticipateAssetIssueUseParticipaterBandwidth() {
     logger.info(name);
     Assert.assertTrue(PublicMethed.waitProduceNextBlock(blockingStubFull));
-    Assert.assertTrue(PublicMethed.waitProduceNextBlock(blockingStubFull));
+    //Assert.assertTrue(PublicMethed.waitProduceNextBlock(blockingStubFull));
     //When no balance, participate an asset issue
     Assert.assertFalse(PublicMethed.participateAssetIssue(asset007Address, name.getBytes(),
         1L, participateAssetAddress, participateAssetCreateKey,blockingStubFull));

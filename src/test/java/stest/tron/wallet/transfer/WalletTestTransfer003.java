@@ -234,7 +234,7 @@ public class WalletTestTransfer003 {
     Account sendAccountInfo = PublicMethed.queryAccount(testKeyForSendCoin,blockingStubFull);
     Long beforeBalance = sendAccountInfo.getBalance();
     logger.info("Before test, the account balance is " + Long.toString(beforeBalance));
-    while (feeNum < 300) {
+    while (feeNum < 250) {
       sendCoinTransaction = sendcoin(fromAddress,10L,sendCoinAddress,
           testKeyForSendCoin,blockingStubFull);
       feeNum++;

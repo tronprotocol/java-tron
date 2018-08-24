@@ -57,14 +57,17 @@ public class ContractLinkage004 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(linkage004Address,2000000000000L,fromAddress,
-        testKey003,blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalance(linkage004Address,1000000L,
-        3,linkage004Key,blockingStubFull));
+
   }
 
   @Test(enabled = true)
   public void getTransactionInfoById() {
+    Assert.assertTrue(PublicMethed.sendcoin(linkage004Address,2000000000000L,fromAddress,
+        testKey003,blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalance(linkage004Address,1000000L,
+        3,linkage004Key,blockingStubFull));
+
+
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(linkage004Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();

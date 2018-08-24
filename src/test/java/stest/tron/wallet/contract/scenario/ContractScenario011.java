@@ -74,6 +74,13 @@ public class ContractScenario011 {
         testKey002, blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(triggerAddress, 50000000000L, fromAddress,
         testKey002, blockingStubFull));
+
+
+
+  }
+
+  @Test(enabled = true)
+  public void deployErc721KittyCore() {
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(deployAddress, 100000000L,
         3, 1, deployKey, blockingStubFull));
     Assert.assertTrue(PublicMethed.freezeBalance(deployAddress, 100000000L, 3,
@@ -82,10 +89,6 @@ public class ContractScenario011 {
         triggerKey, blockingStubFull));
 
 
-  }
-
-  @Test(enabled = true)
-  public void deployErc721KittyCore() {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(deployAddress,
         blockingStubFull);
     Long cpuLimit = accountResource.getEnergyLimit();
