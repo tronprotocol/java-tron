@@ -176,7 +176,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
 //      anotherTokenQuant = Math
 //          .floorDiv(Math.multiplyExact(secondTokenBalance, tokenQuant), firstTokenBalance);
       anotherTokenQuant = bigSecondTokenBalance.multiply(bigTokenQuant)
-          .divide(bigFirstTokenBalance).longValue();
+          .divide(bigFirstTokenBalance).longValueExact();
       newTokenBalance = firstTokenBalance + tokenQuant;
       newAnotherTokenBalance = secondTokenBalance + anotherTokenQuant;
     } else {
@@ -184,7 +184,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
 //      anotherTokenQuant = Math
 //          .floorDiv(Math.multiplyExact(firstTokenBalance, tokenQuant), secondTokenBalance);
       anotherTokenQuant = bigFirstTokenBalance.multiply(bigTokenQuant)
-          .divide(bigSecondTokenBalance).longValue();
+          .divide(bigSecondTokenBalance).longValueExact();
       newTokenBalance = secondTokenBalance + tokenQuant;
       newAnotherTokenBalance = firstTokenBalance + anotherTokenQuant;
     }
