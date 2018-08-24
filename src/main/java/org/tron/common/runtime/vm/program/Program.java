@@ -37,6 +37,7 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
+import java.util.Objects;
 import java.util.TreeSet;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -61,7 +62,6 @@ import org.tron.common.storage.Deposit;
 import org.tron.common.utils.ByteArraySet;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.TransferActuator;
@@ -70,6 +70,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.TronException;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.SmartContract;
 
@@ -87,6 +88,25 @@ public class Program {
   private static final int MAX_DEPTH = 1024;
   //Max size for stack checks
   private static final int MAX_STACKSIZE = 1024;
+
+  public static byte[] getRootTransactionId() {
+    return rootTransactionId.clone();
+  }
+
+  public static void setRootTransactionId(byte[] rootTransactionId) {
+    Program.rootTransactionId = rootTransactionId.clone();
+  }
+
+  public static long getNonce() {
+    return nonce;
+  }
+
+  public static void setNonce(long nonceValue) {
+    nonce = nonceValue;
+  }
+
+  private static long nonce = 0;
+  private static byte[] rootTransactionId = null;
 
   private InternalTransaction transaction;
 
@@ -118,7 +138,7 @@ public class Program {
 
   private final SystemProperties config;
 
-  private byte[] transactionHash;
+  //private byte[] transactionHash;
 
   public Program(byte[] ops, ProgramInvoke programInvoke) {
     this(ops, programInvoke, null);
@@ -148,7 +168,7 @@ public class Program {
     this.contractState = setupProgramListener(new ContractState(programInvoke));
     this.trace = new ProgramTrace(config, programInvoke);
 
-    this.transactionHash = transaction.getHash();
+    //this.transactionHash = transaction.getHash();
   }
 
   public ProgramPrecompile getProgramPrecompile() {
@@ -447,10 +467,10 @@ public class Program {
 
 //    byte[] privKey = Sha256Hash.hash(getOwnerAddress().getData());
 //    ECKey ecKey = ECKey.fromPrivate(privKey);
-
-    this.transactionHash = Sha256Hash.hash(transactionHash);
+    this.increaseNonce();
+    //this.transactionHash = Sha256Hash.hash(transactionHash);
     byte[] newAddress = Wallet
-        .generateContractAddress(getOwnerAddress().getData(), transactionHash);
+        .generateContractAddress(rootTransactionId, nonce);
 
     AccountCapsule existingAddr = getContractState().getAccount(newAddress);
     //boolean contractAlreadyExists = existingAddr != null && existingAddr.isContractExist(blockchainConfig);
@@ -723,7 +743,14 @@ public class Program {
     } else {
       refundEnergy(msg.getEnergy().longValue(), "remaining esnergy from the internal call");
     }
+  }
 
+  public static void increaseNonce() {
+    nonce++;
+  }
+
+  public static void resetNonce() {
+    nonce = 0;
   }
 
   public void spendEnergy(long energyValue, String opName) {
@@ -890,7 +917,7 @@ public class Program {
   }
 
   public DataWord getDifficulty() {
-    return new DataWord(0); //invoke.getDifficulty().clone();
+    return invoke.getDifficulty().clone();
   }
 
   public boolean isStaticCall() {
@@ -1281,6 +1308,9 @@ public class Program {
         // spend all energy on failure, push zero and revert state changes
         this.refundEnergy(0, "call pre-compiled");
         this.stackPushZero();
+        if (Objects.nonNull(this.result.getException())) {
+          throw result.getException();
+        }
         // deposit.rollback();
       }
 
@@ -1338,6 +1368,14 @@ public class Program {
   public static class OutOfStorageException extends BytecodeExecutionException {
 
     public OutOfStorageException(String message, Object... args) {
+      super(format(message, args));
+    }
+  }
+
+  @SuppressWarnings("serial")
+  public static class PrecompiledContractException extends BytecodeExecutionException {
+
+    public PrecompiledContractException(String message, Object... args) {
       super(format(message, args));
     }
   }
@@ -1414,6 +1452,14 @@ public class Program {
 
     public static OutOfStorageException notEnoughStorage() {
       return new OutOfStorageException("Not enough ContractState resource");
+    }
+
+    public static PrecompiledContractException contractValidateException(TronException e) {
+      return new PrecompiledContractException(e.getMessage());
+    }
+
+    public static PrecompiledContractException contractExecuteException(TronException e) {
+      return new PrecompiledContractException(e.getMessage());
     }
 
     public static OutOfEnergyException energyOverflow(BigInteger actualEnergy,

@@ -50,8 +50,6 @@ public class TransactionTrace {
         trxType = TRX_PRECOMPILED_TYPE;
     }
 
-    //TODO: set bill owner
-    receipt = new ReceiptCapsule(Sha256Hash.ZERO_HASH);
     this.dbManager = dbManager;
     this.receipt = new ReceiptCapsule(Sha256Hash.ZERO_HASH);
 

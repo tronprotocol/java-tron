@@ -114,7 +114,6 @@ public class PeerConnectionCheckService {
           logger.warn("connection pool is full, disconnect the peer : {}",
               peerConnection.getInetAddress());
           peerConnection.disconnect(ReasonCode.RESET);
-          peerConnection.cleanAll();
         }
       }
     }

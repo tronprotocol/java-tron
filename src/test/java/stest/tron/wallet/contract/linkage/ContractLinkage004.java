@@ -35,6 +35,11 @@ public class ContractLinkage004 {
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
 
+  String contractName;
+  String code;
+  String abi;
+  Long currentFee;
+
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] linkage004Address = ecKey1.getAddress();
   String linkage004Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
@@ -52,12 +57,17 @@ public class ContractLinkage004 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(linkage004Address,20000000L,fromAddress,
-        testKey003,blockingStubFull));
+
   }
 
   @Test(enabled = true)
   public void getTransactionInfoById() {
+    Assert.assertTrue(PublicMethed.sendcoin(linkage004Address,2000000000000L,fromAddress,
+        testKey003,blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalance(linkage004Address,1000000L,
+        3,linkage004Key,blockingStubFull));
+
+
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(linkage004Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
@@ -67,11 +77,9 @@ public class ContractLinkage004 {
 
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
-    //logger.info("before storage limit is " + Long.toString(storageLimit));
-    //logger.info("before storage usaged is " + Long.toString(storageUsage));
-    Long maxFeeLimit = 5000000L;
-    String contractName = "tronNative";
-    String code = "608060405260008054600160a060020a03199081166201000117909155600180548216620100021"
+    final Long maxFeeLimit = 15000000L;
+    contractName = "tronNative";
+    code = "608060405260008054600160a060020a03199081166201000117909155600180548216620100021"
         + "790556002805482166201000317905560038054821662010004179055600480548216620100051790556005"
         + "8054821662010006179055600680549091166201000717905534801561007757600080fd5b506104ce80610"
         + "0876000396000f3006080604052600436106100da5763ffffffff7c01000000000000000000000000000000"
@@ -103,7 +111,7 @@ public class ContractLinkage004 {
         + "00160a060020a0390931692818301926000928290030181855af45050505050565b600254604051600160a0"
         + "60020a03909116906000818181855af45050505600a165627a7a7230582076efe233a097282a46d3aefb879"
         + "b720ed02a4ad3c6cf053cc5936a01e366c7dc0029";
-    String abi = "[{\"constant\":false,\"inputs\":[{\"name\":\"frozen_Balance\",\"type\":\"uint256"
+    abi = "[{\"constant\":false,\"inputs\":[{\"name\":\"frozen_Balance\",\"type\":\"uint256"
         + "\"},{\"name\":\"frozen_Duration\",\"type\":\"uint256\"}],\"name\":\"freezeBalance\",\"o"
         + "utputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}"
         + ",{\"constant\":true,\"inputs\":[],\"name\":\"deleteProposalAddress\",\"outputs\":[{\"na"
@@ -149,6 +157,8 @@ public class ContractLinkage004 {
     logger.info("This time txid is " + txid);
 
     Optional<TransactionInfo> infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    currentFee = infoById.get().getFee();
+    logger.info("current fee is " + currentFee.toString());
     Assert.assertTrue(infoById.isPresent());
     Assert.assertTrue(infoById.get().getFee() > 0);
     //logger.info(Integer.toString(infoById.get().getResultValue()));
@@ -157,6 +167,39 @@ public class ContractLinkage004 {
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsage() == 0);
     //Assert.assertTrue(infoById.get().getReceipt().getStorageFee() > 0);
     //Assert.assertTrue(infoById.get().getReceipt().getStorageDelta() > 200);
+  }
+
+  @Test(enabled = true)
+  public void testFeeLimitIsTooSmall() {
+    Account account = PublicMethed.queryAccount(linkage004Address,blockingStubFull);
+    Long maxFeeLimit = 0L;
+    //When the fee limit is 0.
+    String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName,abi,code,
+        "",maxFeeLimit, 0L, 50,null,linkage004Key,linkage004Address,blockingStubFull);
+    logger.info("testFeeLimitIsTooSmall, the txid is " + txid);
+    Optional<TransactionInfo> infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    logger.info("0, Result valse is " + Integer.toString(infoById.get().getResultValue()));
+    Assert.assertTrue(infoById.get().getResultValue() == 1);
+
+    //When the fee limit is only short with 1 sun.
+    maxFeeLimit = currentFee - 1L;
+    txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName,abi,code,
+        "",maxFeeLimit, 0L, 50,null,linkage004Key,linkage004Address,blockingStubFull);
+    logger.info("testFeeLimitIsTooSmall, the txid is " + txid);
+    infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    logger.info("1000, Result value is " + Integer.toString(infoById.get().getResultValue()));
+    Assert.assertTrue(infoById.get().getResultValue() == 1);
+
+    //When the fee limit is just ok.
+    maxFeeLimit = currentFee;
+    txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName,abi,code,
+        "",maxFeeLimit, 0L, 50,null,linkage004Key,linkage004Address,blockingStubFull);
+    logger.info("testFeeLimitIsTooSmall, the txid is " + txid);
+    infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    logger.info("1000, Result value is " + Integer.toString(infoById.get().getResultValue()));
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+
+
 
 
 

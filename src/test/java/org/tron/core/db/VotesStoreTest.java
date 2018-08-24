@@ -9,7 +9,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.VotesCapsule;
@@ -21,12 +21,12 @@ import org.tron.protos.Protocol.Vote;
 public class VotesStoreTest {
 
   private static final String dbPath = "output-votesStore-test";
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
   VotesStore votesStore;
 
   static {
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    context = new TronApplicationContext(DefaultConfig.class);
   }
 
   @Before

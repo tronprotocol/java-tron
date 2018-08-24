@@ -31,6 +31,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] LATEST_PROPOSAL_NUM = "LATEST_PROPOSAL_NUM".getBytes();
 
+  private static final byte[] LATEST_EXCHANGE_NUM = "LATEST_EXCHANGE_NUM".getBytes();
+
   private static final byte[] BLOCK_FILLED_SLOTS = "BLOCK_FILLED_SLOTS".getBytes();
 
   private static final byte[] BLOCK_FILLED_SLOTS_INDEX = "BLOCK_FILLED_SLOTS_INDEX".getBytes();
@@ -92,6 +94,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] ASSET_ISSUE_FEE = "ASSET_ISSUE_FEE".getBytes();
 
+  private static final byte[] EXCHANGE_CREATE_FEE = "EXCHANGE_CREATE_FEE".getBytes();
+
+  private static final byte[] EXCHANGE_BALANCE_LIMIT = "EXCHANGE_BALANCE_LIMIT".getBytes();
+
   private static final byte[] TOTAL_TRANSACTION_COST = "TOTAL_TRANSACTION_COST".getBytes();
 
   private static final byte[] TOTAL_CREATE_ACCOUNT_COST = "TOTAL_CREATE_ACCOUNT_COST".getBytes();
@@ -106,11 +112,15 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] STORAGE_EXCHANGE_TAX_RATE = "STORAGE_EXCHANGE_TAX_RATE".getBytes();
 
+  private static final byte[] FORK_CONTROLLER = "FORK_CONTROLLER".getBytes();
+
   //This value is only allowed to be 0, 1, -1
   private static final byte[] REMOVE_THE_POWER_OF_THE_GR = "REMOVE_THE_POWER_OF_THE_GR".getBytes();
 
   //If the parameter is larger than 0, the contract is allowed to be created.
-  private static final byte[] ALLOW_CREATION_OF_CONTRACTS = "ALLOW_CREATION_OF_CONTRACTS".getBytes();
+  private static final byte[] ALLOW_CREATION_OF_CONTRACTS = "ALLOW_CREATION_OF_CONTRACTS"
+      .getBytes();
+
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -150,6 +160,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getLatestProposalNum();
     } catch (IllegalArgumentException e) {
       this.saveLatestProposalNum(0);
+    }
+
+    try {
+      this.getLatestExchangeNum();
+    } catch (IllegalArgumentException e) {
+      this.saveLatestExchangeNum(0);
     }
 
     try {
@@ -299,13 +315,25 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getTransactionFee();
     } catch (IllegalArgumentException e) {
-      this.saveTransactionFee(10L); // 10Drop/byte
+      this.saveTransactionFee(10L); // 10sun/byte
     }
 
     try {
       this.getAssetIssueFee();
     } catch (IllegalArgumentException e) {
       this.saveAssetIssueFee(1024000000L);
+    }
+
+    try {
+      this.getExchangeCreateFee();
+    } catch (IllegalArgumentException e) {
+      this.saveExchangeCreateFee(1024000000L);
+    }
+
+    try {
+      this.getExchangeBalanceLimit();
+    } catch (IllegalArgumentException e) {
+      this.saveExchangeBalanceLimit(1_000_000_000_000_000L);
     }
 
     try {
@@ -748,6 +776,32 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found ASSET_ISSUE_FEE"));
   }
 
+  public void saveExchangeCreateFee(long fee) {
+    this.put(EXCHANGE_CREATE_FEE,
+        new BytesCapsule(ByteArray.fromLong(fee)));
+  }
+
+  public long getExchangeCreateFee() {
+    return Optional.ofNullable(getUnchecked(EXCHANGE_CREATE_FEE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found EXCHANGE_CREATE_FEE"));
+  }
+
+  public void saveExchangeBalanceLimit(long limit) {
+    this.put(EXCHANGE_BALANCE_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(limit)));
+  }
+
+  public long getExchangeBalanceLimit() {
+    return Optional.ofNullable(getUnchecked(EXCHANGE_BALANCE_LIMIT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found EXCHANGE_BALANCE_LIMIT"));
+  }
+
   public void saveTotalTransactionCost(long value) {
     this.put(TOTAL_TRANSACTION_COST,
         new BytesCapsule(ByteArray.fromLong(value)));
@@ -868,7 +922,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public boolean supportVM() {
-    return  getAllowCreationOfContracts() == 1L;
+    return getAllowCreationOfContracts() == 1L;
   }
 
   public void saveBlockFilledSlots(int[] blockFilledSlots) {
@@ -926,6 +980,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found latest PROPOSAL_NUM"));
+  }
+
+  public void saveLatestExchangeNum(long number) {
+    this.put(LATEST_EXCHANGE_NUM, new BytesCapsule(ByteArray.fromLong(number)));
+  }
+
+  public long getLatestExchangeNum() {
+    return Optional.ofNullable(getUnchecked(LATEST_EXCHANGE_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found latest EXCHANGE_NUM"));
   }
 
   /**
@@ -1058,5 +1124,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void addTotalTransactionCost(long fee) {
     long newValue = getTotalTransactionCost() + fee;
     saveTotalTransactionCost(newValue);
+  }
+
+  public void forked() {
+    put(FORK_CONTROLLER, new BytesCapsule(Boolean.toString(true).getBytes()));
+  }
+
+  public boolean getForked() {
+    byte[] value = revokingDB.getUnchecked(FORK_CONTROLLER);
+    return value == null ? Boolean.FALSE : Boolean.valueOf(new String(value));
   }
 }

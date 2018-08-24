@@ -225,7 +225,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
 
   /*     DIFFICULTY op    */
   public DataWord getDifficulty() {
-    return null; //difficulty;
+    return new DataWord(0); //difficulty;
   }
 
   public long getVmShouldEndInUs() {
@@ -238,8 +238,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
 
   @Override
   public BlockStore getBlockStore() {
-    return null;
-    //return deposit.getBlockStore();
+    return deposit.getDbManager().getBlockStore();
   }
 
   @Override
