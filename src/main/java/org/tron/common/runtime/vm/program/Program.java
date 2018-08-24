@@ -447,7 +447,6 @@ public class Program {
     long endowment = value.value().longValue();
     if (getContractState().getBalance(senderAddress) < endowment) {
       stackPushZero();
-      // todo: need inform to outside?
       return;
     }
 
@@ -530,9 +529,8 @@ public class Program {
       Program program = new Program(programCode, programInvoke, internalTx, config);
       vm.play(program);
       result = program.getResult();
-
       getTrace().merge(program.getTrace());
-      getResult().merge(result);
+
     }
 
     // 4. CREATE THE CONTRACT OUT OF RETURN
@@ -554,6 +552,8 @@ public class Program {
       deposit.saveCode(newAddress, code);
     }
 
+    getResult().merge(result);
+
     if (result.getException() != null || result.isRevert()) {
       logger.debug("contract run halted by Exception: contract: [{}], exception: [{}]",
           Hex.toHexString(newAddress),
@@ -566,7 +566,6 @@ public class Program {
       stackPushZero();
 
       if (result.getException() != null) {
-        refundEnergyAfterVM(energyLimit, result);
         return;
       } else {
         returnDataBuffer = result.getHReturn();
@@ -605,8 +604,7 @@ public class Program {
    *
    * @param msg is the message call object
    */
-  public void callToAddress(MessageCall msg)
-      throws ContractValidateException {
+  public void callToAddress(MessageCall msg) throws ContractValidateException {
     returnDataBuffer = null; // reset return buffer right before the call
 
     if (getCallDeep() == MAX_DEPTH) {
@@ -695,7 +693,6 @@ public class Program {
         stackPushZero();
 
         if (result.getException() != null) {
-          refundEnergyAfterVM(msg.getEnergy(), result);
           return;
         }
       } else {
@@ -706,10 +703,9 @@ public class Program {
 
       if (byTestingSuite()) {
         logger.info("Testing run, skipping storage diff listener");
+      } else if (Arrays.equals(transaction.getReceiveAddress(), internalTx.getReceiveAddress())) {
+        storageDiffListener.merge(program.getStorageDiff());
       }
-//      else if (Arrays.equals(transaction.getReceiveAddress(), internalTx.getReceiveAddress())) {
-//        storageDiffListener.merge(program.getStorageDiff());
-//      }
     } else {
       // 4. THE FLAG OF SUCCESS IS ONE PUSHED INTO THE STACK
       deposit.commit();
