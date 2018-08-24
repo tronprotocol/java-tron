@@ -61,7 +61,6 @@ import org.tron.common.storage.Deposit;
 import org.tron.common.utils.ByteArraySet;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.TransferActuator;
@@ -469,7 +468,7 @@ public class Program {
     this.increaseNonce();
     //this.transactionHash = Sha256Hash.hash(transactionHash);
     byte[] newAddress = Wallet
-        .generateContractAddress(rootTransactionId,nonce);
+        .generateContractAddress(rootTransactionId, nonce);
 
     AccountCapsule existingAddr = getContractState().getAccount(newAddress);
     //boolean contractAlreadyExists = existingAddr != null && existingAddr.isContractExist(blockchainConfig);
@@ -744,12 +743,12 @@ public class Program {
     }
   }
 
-  public static void  increaseNonce(){
+  public static void increaseNonce() {
     nonce++;
   }
 
-  public static void resetNonce(){
-    nonce=0;
+  public static void resetNonce() {
+    nonce = 0;
   }
 
   public void spendEnergy(long energyValue, String opName) {
@@ -916,7 +915,7 @@ public class Program {
   }
 
   public DataWord getDifficulty() {
-    return new DataWord(0); //invoke.getDifficulty().clone();
+    return invoke.getDifficulty().clone();
   }
 
   public boolean isStaticCall() {

@@ -538,7 +538,7 @@ public class Runtime {
       result.setException(new RuntimeException("Unknown Throwable"));
       logger.error(e.getMessage());
       if (StringUtils.isEmpty(runtimeError)) {
-        runtimeError = e.getMessage();
+        runtimeError = result.getException().getMessage();
       }
     }
     trace.setBill(result.getEnergyUsed());

@@ -225,7 +225,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
 
   /*     DIFFICULTY op    */
   public DataWord getDifficulty() {
-    return null; //difficulty;
+    return new DataWord(0); //difficulty;
   }
 
   public long getVmShouldEndInUs() {
