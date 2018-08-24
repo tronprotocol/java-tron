@@ -50,6 +50,12 @@ public class ContractScenario006 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+
+  }
+
+  @Test(enabled = true)
+  public void deployFomo3D() {
     Assert.assertTrue(PublicMethed.sendcoin(contract006Address,20000000L,fromAddress,
         testKey002,blockingStubFull));
     logger.info(Long.toString(PublicMethed.queryAccount(contract006Key,blockingStubFull)
@@ -59,10 +65,7 @@ public class ContractScenario006 {
     /*    Assert.assertTrue(PublicMethed.buyStorage(5000000L,contract006Address,contract006Key,
         blockingStubFull));*/
 
-  }
 
-  @Test(enabled = true)
-  public void deployFomo3D() {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract006Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();

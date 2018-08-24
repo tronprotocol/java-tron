@@ -13,6 +13,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
@@ -1360,7 +1361,11 @@ public class VM {
       }
 
     } catch (RuntimeException e) {
-      program.setRuntimeFailure(e);
+      if (StringUtils.isEmpty(e.getMessage())) {
+        program.setRuntimeFailure(new RuntimeException("Unknown Exception"));
+      } else {
+        program.setRuntimeFailure(e);
+      }
     } catch (ContractValidateException e) {
       program.setRuntimeFailure(new RuntimeException(e.getMessage()));
     } catch (StackOverflowError soe) {

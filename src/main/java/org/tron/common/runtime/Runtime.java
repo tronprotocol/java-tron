@@ -509,9 +509,6 @@ public class Runtime {
           }
           return;
         }
-
-        // todo: consume bandwidth for successful creating contract
-
         if (result.getException() != null || result.isRevert()) {
           result.getDeleteAccounts().clear();
           result.getLogInfoList().clear();
@@ -527,7 +524,6 @@ public class Runtime {
         } else {
           deposit.commit();
         }
-
       } else {
         deposit.commit();
       }

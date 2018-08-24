@@ -147,7 +147,8 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
     TransactionInfo.Builder builder = TransactionInfo.newBuilder();
 
     builder.setResult(code.SUCESS);
-    if (StringUtils.isNoneEmpty(runtime.getRuntimeError())) {
+    if (StringUtils.isNoneEmpty(runtime.getRuntimeError()) || Objects
+        .nonNull(runtime.getResult().getException())) {
       builder.setResult(code.FAILED);
       builder.setResMessage(ByteString.copyFromUtf8(runtime.getRuntimeError()));
     }
