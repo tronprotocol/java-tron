@@ -129,7 +129,7 @@ public class WalletTestTransfer006 {
     }
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testgetTransactionsToThisByInvaildAddress() {
     //Invaild address.
     ByteString addressBs = ByteString.copyFrom(INVAILD_ADDRESS);
