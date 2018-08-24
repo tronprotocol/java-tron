@@ -131,5 +131,41 @@ public class ExchangeProcessorTest {
 
   }
 
+  @Test
+  public void testInject() {
+    long sellBalance = 1_000_000_000000L;
+    long buyBalance = 10_000_000L;
+    long sellQuant = 10_000_000L; // 10 trx
+
+    long result = processor.exchange(sellBalance, buyBalance, sellQuant);
+    Assert.assertEquals(99L, result);
+
+    // inject
+    sellBalance += 100_000_000000L;
+    buyBalance += 1_000_000L;
+
+    long result2 = processor.exchange(sellBalance, buyBalance, sellQuant);
+    Assert.assertEquals(99L, result2);
+
+  }
+
+  @Test
+  public void testWithdraw() {
+    long sellBalance = 1_000_000_000000L;
+    long buyBalance = 10_000_000L;
+    long sellQuant = 10_000_000L; // 10 trx
+
+    long result = processor.exchange(sellBalance, buyBalance, sellQuant);
+    Assert.assertEquals(99L, result);
+
+    // inject
+    sellBalance -= 800_000_000000L;
+    buyBalance -= 8_000_000L;
+
+    long result2 = processor.exchange(sellBalance, buyBalance, sellQuant);
+    Assert.assertEquals(99L, result2);
+
+  }
+
 
 }

@@ -3,13 +3,13 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.Parameter.ChainParameters;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -39,13 +39,15 @@ public class ExchangeCreateActuator extends AbstractActuator {
 
       long newBalance = accountCapsule.getBalance() - calcFee();
 
-      if (firstTokenID == "_".getBytes()) {
+      accountCapsule.setBalance(newBalance);
+
+      if (Arrays.equals(firstTokenID, "_".getBytes())) {
         accountCapsule.setBalance(newBalance - firstTokenBalance);
       } else {
         accountCapsule.reduceAssetAmount(firstTokenID, firstTokenBalance);
       }
 
-      if (secondTokenID == "_".getBytes()) {
+      if (Arrays.equals(secondTokenID, "_".getBytes())) {
         accountCapsule.setBalance(newBalance - secondTokenBalance);
       } else {
         accountCapsule.reduceAssetAmount(secondTokenID, secondTokenBalance);
@@ -119,7 +121,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
     long firstTokenBalance = contract.getFirstTokenBalance();
     long secondTokenBalance = contract.getSecondTokenBalance();
 
-    if (firstTokenID == secondTokenID) {
+    if (Arrays.equals(firstTokenID, secondTokenID)) {
       throw new ContractValidateException("cannot exchange same tokens");
     }
 
@@ -132,7 +134,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
       throw new ContractValidateException("token balance must less than " + balanceLimit);
     }
 
-    if (firstTokenID == "_".getBytes()) {
+    if (Arrays.equals(firstTokenID, "_".getBytes())) {
       if (accountCapsule.getBalance() < (firstTokenBalance + calcFee())) {
         throw new ContractValidateException("balance is not enough");
       }
@@ -142,7 +144,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
       }
     }
 
-    if (secondTokenID == "_".getBytes()) {
+    if (Arrays.equals(secondTokenID, "_".getBytes())) {
       if (accountCapsule.getBalance() < (secondTokenBalance + calcFee())) {
         throw new ContractValidateException("balance is not enough");
       }
@@ -164,10 +166,6 @@ public class ExchangeCreateActuator extends AbstractActuator {
   @Override
   public long calcFee() {
     return dbManager.getDynamicPropertiesStore().getExchangeCreateFee();
-  }
-
-  private boolean validKey(long idx) {
-    return idx >= 0 && idx < ChainParameters.values().length;
   }
 
 }

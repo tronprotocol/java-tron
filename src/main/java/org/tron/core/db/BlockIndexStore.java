@@ -1,8 +1,8 @@
 package org.tron.core.db;
 
+import java.util.Arrays;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
@@ -10,8 +10,6 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.exception.ItemNotFoundException;
-
-import java.util.Arrays;
 
 @Component
 public class BlockIndexStore extends TronStoreWithRevoking<BytesCapsule> {
@@ -29,8 +27,11 @@ public class BlockIndexStore extends TronStoreWithRevoking<BytesCapsule> {
 
   public BlockId get(Long num)
       throws ItemNotFoundException {
-    return new BlockId(Sha256Hash.wrap(getUnchecked(ByteArray.fromLong(num)).getData()),
-        num);
+    BytesCapsule value = getUnchecked(ByteArray.fromLong(num));
+    if (value == null || value.getData() == null) {
+      throw new ItemNotFoundException("number: " + num + " is not found!");
+    }
+    return new BlockId(Sha256Hash.wrap(value.getData()), num);
   }
 
   @Override

@@ -532,14 +532,16 @@ public class Runtime {
         deposit.commit();
       }
     } catch (OutOfResourceException e) {
-      logger.error(e.getMessage());
+      logger.error("runtime error is :{}", e.getMessage());
       throw new OutOfSlotTimeException(e.getMessage());
     } catch (Throwable e) {
-      result.setException(new RuntimeException("Unknown Throwable"));
-      logger.error(e.getMessage());
-      if (StringUtils.isEmpty(runtimeError)) {
-        runtimeError = e.getMessage();
+      if (Objects.isNull(result.getException())) {
+        result.setException(new RuntimeException("Unknown Throwable"));
       }
+      if (StringUtils.isEmpty(runtimeError)) {
+        runtimeError = result.getException().getMessage();
+      }
+      logger.error("runtime error is :{}", result.getException().getMessage());
     }
     trace.setBill(result.getEnergyUsed());
   }
