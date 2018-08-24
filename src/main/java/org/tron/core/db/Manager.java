@@ -683,6 +683,7 @@ public class Manager {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
+    updateFork();
   }
 
   private void switchFork(BlockCapsule newHead)
@@ -1300,7 +1301,15 @@ public class Manager {
     }
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
     logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
+  }
+
+  public void updateFork() {
+    if (forkController.shouldBeForked()) {
+      return;
+    }
+
     try {
+      long latestSolidifiedBlockNum = dynamicPropertiesStore.getLatestSolidifiedBlockNum();
       BlockCapsule solidifiedBlock = getBlockByNum(latestSolidifiedBlockNum);
       forkController.update(solidifiedBlock);
     } catch (ItemNotFoundException | BadItemException e) {
