@@ -1032,8 +1032,10 @@ public class Manager {
 //    }
 
     DepositImpl deposit = DepositImpl.createRoot(this);
-    Runtime runtime = new Runtime(trace, block, deposit,
-        new ProgramInvokeFactoryImpl());
+    Runtime runtime = new Runtime(trace, block, deposit, new ProgramInvokeFactoryImpl());
+    if (runtime.isCallConstant()) {
+      throw new UnsupportVMException("cannot call constant method ");
+    }
     consumeBandwidth(trxCap, runtime.getResult().getRet(), trace);
 
     trace.init();

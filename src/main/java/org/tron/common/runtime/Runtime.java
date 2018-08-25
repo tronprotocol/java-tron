@@ -348,7 +348,7 @@ public class Runtime {
    **/
   private void create()
       throws ContractExeException, ContractValidateException {
-    if(!deposit.getDbManager().getDynamicPropertiesStore().supportVM()){
+    if (!deposit.getDbManager().getDynamicPropertiesStore().supportVM()) {
       throw new ContractExeException("VM work is off, need to be opened by the committee");
     }
 
@@ -437,7 +437,7 @@ public class Runtime {
   private void call()
       throws ContractExeException, ContractValidateException {
 
-    if(!deposit.getDbManager().getDynamicPropertiesStore().supportVM()){
+    if (!deposit.getDbManager().getDynamicPropertiesStore().supportVM()) {
       throw new ContractExeException("VM work is off, need to be opened by the committee");
     }
 
@@ -511,13 +511,7 @@ public class Runtime {
 
         program.getResult().setRet(result.getRet());
         result = program.getResult();
-        if (isCallConstant()) {
-          long callValue = TransactionCapsule.getCallValue(trx.getRawData().getContract(0));
-          if (callValue > 0) {
-            runtimeError = "constant cannot set call value.";
-          }
-          return;
-        }
+
         if (result.getException() != null || result.isRevert()) {
           result.getDeleteAccounts().clear();
           result.getLogInfoList().clear();
@@ -560,7 +554,7 @@ public class Runtime {
         .divide(BigInteger.valueOf(callerEnergyTotal)).longValue();
   }
 
-  private boolean isCallConstant() {
+  public boolean isCallConstant() {
     if (TRX_CONTRACT_CALL_TYPE.equals(trxType)) {
       ABI abi = deposit.getContract(result.getContractAddress()).getInstance().getAbi();
       if (Wallet.isConstant(abi, ContractCapsule.getTriggerContractFromTransaction(trx))) {
