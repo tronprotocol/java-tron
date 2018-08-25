@@ -484,6 +484,10 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
                 .build()).build();
   }
 
+  public long getLatestConsumeTimeForEnergy() {
+    return this.account.getAccountResource().getLatestConsumeTimeForEnergy();
+  }
+
   public long getFreeNetUsage() {
     return this.account.getFreeNetUsage();
   }

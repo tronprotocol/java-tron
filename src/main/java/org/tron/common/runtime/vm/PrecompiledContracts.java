@@ -35,24 +35,31 @@ import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.Hash;
 import org.tron.common.crypto.zksnark.BN128;
 import org.tron.common.crypto.zksnark.BN128Fp;
 import org.tron.common.crypto.zksnark.BN128G1;
 import org.tron.common.crypto.zksnark.BN128G2;
 import org.tron.common.crypto.zksnark.Fp;
 import org.tron.common.crypto.zksnark.PairingCheck;
+import org.tron.common.runtime.vm.program.Program;
+import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.storage.Deposit;
 import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
@@ -81,8 +88,8 @@ public class PrecompiledContracts {
   private static final BN128Multiplication altBN128Mul = new BN128Multiplication();
   private static final BN128Pairing altBN128Pairing = new BN128Pairing();
   private static final VoteWitnessNative voteContract = new VoteWitnessNative();
-  private static final FreezeBalanceNative freezeBalance = new FreezeBalanceNative();
-  private static final UnfreezeBalanceNative unFreezeBalance = new UnfreezeBalanceNative();
+//  private static final FreezeBalanceNative freezeBalance = new FreezeBalanceNative();
+//  private static final UnfreezeBalanceNative unFreezeBalance = new UnfreezeBalanceNative();
   private static final WithdrawBalanceNative withdrawBalance = new WithdrawBalanceNative();
   private static final ProposalApproveNative proposalApprove = new ProposalApproveNative();
   private static final ProposalCreateNative proposalCreate = new ProposalCreateNative();
@@ -91,6 +98,9 @@ public class PrecompiledContracts {
   private static final ConvertFromTronBase58AddressNative convertFromTronBase58Address = new ConvertFromTronBase58AddressNative();
   private static final TransferAssetNative transferAsset = new TransferAssetNative();
   private static final GetTransferAssetNative getTransferAssetAmount =  new GetTransferAssetNative();
+
+  private static final ECKey addressCheckECKey = new ECKey();
+  private static final String addressCheckECKeyAddress = Wallet.encode58Check(addressCheckECKey.getAddress());
 
 
   private static final DataWord ecRecoverAddr = new DataWord(
@@ -111,10 +121,10 @@ public class PrecompiledContracts {
       "0000000000000000000000000000000000000000000000000000000000000008");
   private static final DataWord voteContractAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010001");
-  private static final DataWord freezeBalanceAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000000010002");
-  private static final DataWord unFreezeBalanceAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000000010003");
+//  private static final DataWord freezeBalanceAddr = new DataWord(
+//      "0000000000000000000000000000000000000000000000000000000000010002");
+//  private static final DataWord unFreezeBalanceAddr = new DataWord(
+//      "0000000000000000000000000000000000000000000000000000000000010003");
   private static final DataWord withdrawBalanceAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010004");
   private static final DataWord proposalApproveAddr = new DataWord(
@@ -152,12 +162,12 @@ public class PrecompiledContracts {
     if (address.equals(voteContractAddr)) {
       return voteContract;
     }
-    if (address.equals(freezeBalanceAddr)) {
-      return freezeBalance;
-    }
-    if (address.equals(unFreezeBalanceAddr)) {
-      return unFreezeBalance;
-    }
+//    if (address.equals(freezeBalanceAddr)) {
+//      return freezeBalance;
+//    }
+//    if (address.equals(unFreezeBalanceAddr)) {
+//      return unFreezeBalance;
+//    }
     if (address.equals(withdrawBalanceAddr)) {
       return withdrawBalance;
     }
@@ -183,14 +193,11 @@ public class PrecompiledContracts {
       return getTransferAssetAmount;
     }
 
-
-        /*
-        // Byzantium precompiles
-        if (address.equals(modExpAddr) && config.eip198()) return modExp;
-        if (address.equals(altBN128AddAddr) && config.eip213()) return altBN128Add;
-        if (address.equals(altBN128MulAddr) && config.eip213()) return altBN128Mul;
-        if (address.equals(altBN128PairingAddr) && config.eip212()) return altBN128Pairing;
-        */
+    // Byzantium precompiles
+    if (address.equals(modExpAddr)) return modExp;
+    if (address.equals(altBN128AddAddr)) return altBN128Add;
+    if (address.equals(altBN128MulAddr)) return altBN128Mul;
+    if (address.equals(altBN128PairingAddr)) return altBN128Pairing;
     return null;
   }
 
@@ -308,14 +315,13 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
-            /*
-            byte[] result = null;
-            if (data == null) result = Hash.ripemd160(EMPTY_BYTE_ARRAY);
-            else result = Hash.ripemd160(data);
-
-            return Pair.of(true, new DataWord(result).getData());
-            */
-      return null;
+      byte[] target = new byte[160];
+      if (data == null) {
+        data = EMPTY_BYTE_ARRAY;
+      }
+      byte[] orig = Sha256Hash.hash(data);
+      System.arraycopy(orig, 0, target, 0, 160);
+      return Pair.of(true, Sha256Hash.hash(target));
     }
   }
 
@@ -683,9 +689,10 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (data == null) {
-        data = EMPTY_BYTE_ARRAY;
+      if (data == null || data.length != 2 * DataWord.DATAWORD_UNIT_SIZE) {
+        return Pair.of(false, new DataWord(0).getData());
       }
+
       byte[] witnessAddress = new byte[32];
       System.arraycopy(data, 0, witnessAddress, 0, 32);
       byte[] value = new byte[8];
@@ -714,13 +721,15 @@ public class PrecompiledContracts {
       } catch (ContractExeException e) {
         logger.debug("ContractExeException when calling voteWitness in vm");
         logger.debug("ContractExeException: {}", e.getMessage());
-        return null;
+        this.getResult().setException(new Program.Exception().contractExecuteException(e));
+        return Pair.of(false, new DataWord(0).getData());
       } catch (ContractValidateException e) {
         logger.debug("ContractValidateException when calling voteWitness in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
-        return null;
+        this.getResult().setException(new Program.Exception().contractValidateException(e));
+        return Pair.of(false, new DataWord(0).getData());
       }
-      return Pair.of(true, new DataWord(count).getData());
+      return Pair.of(true, new DataWord(1).getData());
     }
   }
 
@@ -886,11 +895,13 @@ public class PrecompiledContracts {
       } catch (ContractExeException e) {
         logger.debug("ContractExeException when calling withdrawBalanceNative in vm");
         logger.debug("ContractExeException: {}", e.getMessage());
-        return null;
+        this.getResult().setException(new Program.Exception().contractExecuteException(e));
+        return Pair.of(false, new DataWord(0).getData());
       } catch (ContractValidateException e) {
         logger.debug("ContractValidateException when calling withdrawBalanceNative in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
-        return null;
+        this.getResult().setException(new Program.Exception().contractValidateException(e));
+        return Pair.of(false, new DataWord(0).getData());
       }
       return Pair.of(true, new DataWord(1).getData());
     }
@@ -914,8 +925,8 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (data == null) {
-        data = EMPTY_BYTE_ARRAY;
+      if (data == null || data.length != 2 * DataWord.DATAWORD_UNIT_SIZE) {
+        return Pair.of(false, new DataWord(0).getData());
       }
 
       byte[] proposalId = new byte[32];
@@ -944,11 +955,12 @@ public class PrecompiledContracts {
       } catch (ContractExeException e) {
         logger.debug("ContractExeException when calling proposalApproveNative in vm");
         logger.debug("ContractExeException: {}", e.getMessage());
-        return null;
+        this.getResult().setException(new Program.Exception().contractExecuteException(e));
+        return Pair.of(false, new DataWord(0).getData());
       } catch (ContractValidateException e) {
         logger.debug("ContractValidateException when calling proposalApproveNative in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
-        return null;
+        return Pair.of(false, new DataWord(0).getData());
       }
       return Pair.of(true, new DataWord(1).getData());
     }
@@ -973,8 +985,8 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (data == null) {
-        data = EMPTY_BYTE_ARRAY;
+      if (data == null || data.length == 0 || (data.length % (2 * DataWord.DATAWORD_UNIT_SIZE) != 0 )) {
+        return Pair.of(false, new DataWord(0).getData());
       }
 
       HashMap<Long, Long> parametersMap = new HashMap<>();
@@ -1009,11 +1021,13 @@ public class PrecompiledContracts {
       } catch (ContractExeException e) {
         logger.debug("ContractExeException when calling proposalCreateNative in vm");
         logger.debug("ContractExeException: {}", e.getMessage());
-        return null;
+        this.getResult().setException(new Program.Exception().contractExecuteException(e));
+        return Pair.of(false, new DataWord(0).getData());
       } catch (ContractValidateException e) {
         logger.debug("ContractValidateException when calling proposalCreateNative in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
-        return null;
+        this.getResult().setException(new Program.Exception().contractValidateException(e));
+        return Pair.of(false, new DataWord(0).getData());
       }
       return Pair.of(true, new DataWord(id).getData());
     }
@@ -1037,8 +1051,8 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (data == null) {
-        data = EMPTY_BYTE_ARRAY;
+      if (data == null || data.length != DataWord.DATAWORD_UNIT_SIZE) {
+        return Pair.of(false, new DataWord(0).getData());
       }
       Contract.ProposalDeleteContract.Builder builder = Contract.ProposalDeleteContract
           .newBuilder();
@@ -1058,11 +1072,13 @@ public class PrecompiledContracts {
       } catch (ContractExeException e) {
         logger.debug("ContractExeException when calling proposalDeleteContract in vm");
         logger.debug("ContractExeException: {}", e.getMessage());
-        return null;
+        this.getResult().setException(new Program.Exception().contractExecuteException(e));
+        return Pair.of(false, new DataWord(0).getData());
       } catch (ContractValidateException e) {
         logger.debug("ContractValidateException when calling proposalDeleteContract in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
-        return null;
+        this.getResult().setException(new Program.Exception().contractValidateException(e));
+        return Pair.of(false, new DataWord(0).getData());
       }
       return Pair.of(true, new DataWord(1).getData());
     }
@@ -1087,8 +1103,8 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (data == null) {
-        data = EMPTY_BYTE_ARRAY;
+      if (data == null || data.length != DataWord.DATAWORD_UNIT_SIZE) {
+        return Pair.of(false, new DataWord(0).getData());
       }
       DataWord address = new DataWord(data);
       return Pair.of(true, new DataWord(address.getLast20Bytes()).getData());
@@ -1114,8 +1130,9 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (data == null) {
-        data = EMPTY_BYTE_ARRAY;
+      int checklength = addressCheckECKeyAddress.length();
+      if (data == null || data.length != checklength) {
+        return Pair.of(false, new DataWord(0).getData());
       }
 
       String addressBase58 = new String(data);
@@ -1144,13 +1161,13 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (data == null) {
-        data = EMPTY_BYTE_ARRAY;
+      if (data == null || (data.length <= DataWord.DATAWORD_UNIT_SIZE * 2 || data.length > DataWord.DATAWORD_UNIT_SIZE * 3)) {
+        return Pair.of(false, new DataWord(0).getData());
       }
 
       byte[] toAddress = new byte[32];
       System.arraycopy(data, 0, toAddress, 0, 32);
-      byte[] amount = new byte[32];
+      byte[] amount = new byte[8];
       System.arraycopy(data, 32 + 16 + 8, amount, 0, 8);
       // we already have a restrict for token name length, no more than 32 bytes. don't need to check again
       byte[] name = new byte[32];
@@ -1181,11 +1198,13 @@ public class PrecompiledContracts {
       } catch (ContractExeException e) {
         logger.debug("ContractExeException when calling transferAssetContract in vm");
         logger.debug("ContractExeException: {}", e.getMessage());
-        return null;
+        this.getResult().setException(new Program.Exception().contractExecuteException(e));
+        return Pair.of(false, new DataWord(0).getData());
       } catch (ContractValidateException e) {
         logger.debug("ContractValidateException when calling transferAssetContract in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
-        return null;
+        this.getResult().setException(new Program.Exception().contractValidateException(e));
+        return Pair.of(false, new DataWord(0).getData());
       }
       return Pair.of(true, new DataWord(1).getData());
     }
@@ -1211,8 +1230,8 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (data == null) {
-        data = EMPTY_BYTE_ARRAY;
+      if (data == null || data.length != DataWord.DATAWORD_UNIT_SIZE * 2) {
+        return Pair.of(false, new DataWord(0).getData());
       }
 
       byte[] targetAddress = new byte[32];

@@ -7,8 +7,8 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.application.TronApplicationContext;
 import org.testng.Assert;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TVMTestUtils;
 import org.tron.common.storage.DepositImpl;
@@ -25,6 +25,7 @@ import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
+@Ignore
 public class CPUEnergyTest {
 
   private Manager dbManager;

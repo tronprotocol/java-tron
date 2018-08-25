@@ -348,6 +348,10 @@ public class Runtime {
    **/
   private void create()
       throws ContractExeException, ContractValidateException {
+    if(!deposit.getDbManager().getDynamicPropertiesStore().supportVM()){
+      throw new ContractExeException("VM work is off, need to be opened by the committee");
+    }
+
     CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
     SmartContract newSmartContract = contract.getNewContract();
 
@@ -432,6 +436,11 @@ public class Runtime {
 
   private void call()
       throws ContractExeException, ContractValidateException {
+
+    if(!deposit.getDbManager().getDynamicPropertiesStore().supportVM()){
+      throw new ContractExeException("VM work is off, need to be opened by the committee");
+    }
+
     Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
     if (contract == null) {
       return;
@@ -509,9 +518,6 @@ public class Runtime {
           }
           return;
         }
-
-        // todo: consume bandwidth for successful creating contract
-
         if (result.getException() != null || result.isRevert()) {
           result.getDeleteAccounts().clear();
           result.getLogInfoList().clear();
@@ -527,7 +533,6 @@ public class Runtime {
         } else {
           deposit.commit();
         }
-
       } else {
         deposit.commit();
       }

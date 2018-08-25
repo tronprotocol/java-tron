@@ -37,6 +37,7 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
+import java.util.Objects;
 import java.util.TreeSet;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -69,6 +70,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.TronException;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.SmartContract;
 
@@ -171,21 +173,7 @@ public class Program {
 
   public ProgramPrecompile getProgramPrecompile() {
     if (programPrecompile == null) {
-            /*
-            if (codeHash != null && commonConfig.precompileSource() != null) {
-                programPrecompile = commonConfig.precompileSource().get(codeHash);
-            }
-            */
-      if (programPrecompile == null) {
-        programPrecompile = ProgramPrecompile.compile(ops);
-
-                /*
-                if (codeHash != null && commonConfig.precompileSource() != null) {
-                    commonConfig.precompileSource().put(codeHash, programPrecompile);
-                }
-                */
-      }
-
+      programPrecompile = ProgramPrecompile.compile(ops);
     }
     return programPrecompile;
   }
@@ -404,8 +392,7 @@ public class Program {
   }
 
 
-  public void suicide(DataWord obtainerAddress)
-      throws ContractValidateException {
+  public void suicide(DataWord obtainerAddress) {
 
     byte[] owner = convertToTronAddress(getOwnerAddress().getLast20Bytes());
     byte[] obtainer = convertToTronAddress(obtainerAddress.getLast20Bytes());
@@ -423,7 +410,11 @@ public class Program {
       // if owner == obtainer just zeroing account according to Yellow Paper
       getContractState().addBalance(owner, -balance);
     } else {
-      transfer(getContractState(), owner, obtainer, balance);
+      try {
+        transfer(getContractState(), owner, obtainer, balance);
+      } catch (ContractValidateException e) {
+        throw new BytecodeExecutionException("transfer failure");
+      }
     }
     getResult().addDeleteAccount(this.getOwnerAddress());
   }
@@ -433,8 +424,7 @@ public class Program {
   }
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-  public void createContract(DataWord value, DataWord memStart, DataWord memSize)
-      throws ContractValidateException {
+  public void createContract(DataWord value, DataWord memStart, DataWord memSize) {
     returnDataBuffer = null; // reset return buffer right before the call
 
     if (getCallDeep() == MAX_DEPTH) {
@@ -447,7 +437,6 @@ public class Program {
     long endowment = value.value().longValue();
     if (getContractState().getBalance(senderAddress) < endowment) {
       stackPushZero();
-      // todo: need inform to outside?
       return;
     }
 
@@ -499,7 +488,11 @@ public class Program {
     // [4] TRANSFER THE BALANCE
     long newBalance = 0L;
     if (!byTestingSuite() && endowment > 0) {
-      TransferActuator.validateForSmartContract(deposit, senderAddress, newAddress, endowment);
+      try {
+        TransferActuator.validateForSmartContract(deposit, senderAddress, newAddress, endowment);
+      } catch (ContractValidateException e) {
+        throw new BytecodeExecutionException("validateForSmartContract failure");
+      }
       deposit.addBalance(senderAddress, -endowment);
       newBalance = deposit.addBalance(newAddress, endowment);
     }
@@ -530,9 +523,8 @@ public class Program {
       Program program = new Program(programCode, programInvoke, internalTx, config);
       vm.play(program);
       result = program.getResult();
-
       getTrace().merge(program.getTrace());
-      getResult().merge(result);
+
     }
 
     // 4. CREATE THE CONTRACT OUT OF RETURN
@@ -554,6 +546,8 @@ public class Program {
       deposit.saveCode(newAddress, code);
     }
 
+    getResult().merge(result);
+
     if (result.getException() != null || result.isRevert()) {
       logger.debug("contract run halted by Exception: contract: [{}], exception: [{}]",
           Hex.toHexString(newAddress),
@@ -566,7 +560,6 @@ public class Program {
       stackPushZero();
 
       if (result.getException() != null) {
-        refundEnergyAfterVM(energyLimit, result);
         return;
       } else {
         returnDataBuffer = result.getHReturn();
@@ -605,8 +598,7 @@ public class Program {
    *
    * @param msg is the message call object
    */
-  public void callToAddress(MessageCall msg)
-      throws ContractValidateException {
+  public void callToAddress(MessageCall msg) {
     returnDataBuffer = null; // reset return buffer right before the call
 
     if (getCallDeep() == MAX_DEPTH) {
@@ -656,7 +648,12 @@ public class Program {
           msg.getEndowment().getNoLeadZeroesData());
     } else if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
         && senderAddress != contextAddress && endowment > 0) {
-      TransferActuator.validateForSmartContract(deposit, senderAddress, contextAddress, endowment);
+      try {
+        TransferActuator
+            .validateForSmartContract(deposit, senderAddress, contextAddress, endowment);
+      } catch (ContractValidateException e) {
+        throw new BytecodeExecutionException("validateForSmartContract failure");
+      }
       deposit.addBalance(senderAddress, -endowment);
       contextBalance = deposit.addBalance(contextAddress, endowment);
     }
@@ -695,7 +692,6 @@ public class Program {
         stackPushZero();
 
         if (result.getException() != null) {
-          refundEnergyAfterVM(msg.getEnergy(), result);
           return;
         }
       } else {
@@ -707,9 +703,9 @@ public class Program {
       if (byTestingSuite()) {
         logger.info("Testing run, skipping storage diff listener");
       }
-//      else if (Arrays.equals(transaction.getReceiveAddress(), internalTx.getReceiveAddress())) {
-//        storageDiffListener.merge(program.getStorageDiff());
-//      }
+      // else if (Arrays.equals(transaction.getReceiveAddress(), internalTx.getReceiveAddress())) {
+      //   storageDiffListener.merge(program.getStorageDiff());
+      // }
     } else {
       // 4. THE FLAG OF SUCCESS IS ONE PUSHED INTO THE STACK
       deposit.commit();
@@ -817,6 +813,7 @@ public class Program {
     if (index < this.getNumber().longValue()
         && index >= Math.max(256, this.getNumber().longValue()) - 256) {
 
+      // todo: need add num??
       List<BlockCapsule> blocks = this.invoke.getBlockStore().getBlockByLatestNum(1);
       if (CollectionUtils.isNotEmpty(blocks)) {
         BlockCapsule blockCapsule = blocks.get(0);
@@ -1246,8 +1243,7 @@ public class Program {
   }
 
   public void callToPrecompiledAddress(MessageCall msg,
-      PrecompiledContracts.PrecompiledContract contract)
-      throws ContractValidateException {
+      PrecompiledContracts.PrecompiledContract contract) {
     returnDataBuffer = null; // reset return buffer right before the call
 
     if (getCallDeep() == MAX_DEPTH) {
@@ -1278,7 +1274,11 @@ public class Program {
     // Charge for endowment - is not reversible by rollback
     if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
         && senderAddress != contextAddress && msg.getEndowment().value().longValue() > 0) {
-      transfer(deposit, senderAddress, contextAddress, msg.getEndowment().value().longValue());
+      try {
+        transfer(deposit, senderAddress, contextAddress, msg.getEndowment().value().longValue());
+      } catch (ContractValidateException e) {
+        throw new BytecodeExecutionException("transfer failure");
+      }
     }
 
     long requiredEnergy = contract.getEnergyForData(data);
@@ -1306,6 +1306,9 @@ public class Program {
         // spend all energy on failure, push zero and revert state changes
         this.refundEnergy(0, "call pre-compiled");
         this.stackPushZero();
+        if (Objects.nonNull(this.result.getException())) {
+          throw result.getException();
+        }
         // deposit.rollback();
       }
 
@@ -1363,6 +1366,14 @@ public class Program {
   public static class OutOfStorageException extends BytecodeExecutionException {
 
     public OutOfStorageException(String message, Object... args) {
+      super(format(message, args));
+    }
+  }
+
+  @SuppressWarnings("serial")
+  public static class PrecompiledContractException extends BytecodeExecutionException {
+
+    public PrecompiledContractException(String message, Object... args) {
       super(format(message, args));
     }
   }
@@ -1439,6 +1450,14 @@ public class Program {
 
     public static OutOfStorageException notEnoughStorage() {
       return new OutOfStorageException("Not enough ContractState resource");
+    }
+
+    public static PrecompiledContractException contractValidateException(TronException e) {
+      return new PrecompiledContractException(e.getMessage());
+    }
+
+    public static PrecompiledContractException contractExecuteException(TronException e) {
+      return new PrecompiledContractException(e.getMessage());
     }
 
     public static OutOfEnergyException energyOverflow(BigInteger actualEnergy,
