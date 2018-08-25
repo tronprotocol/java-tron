@@ -21,19 +21,22 @@ public class ForkController {
 
   @Getter
   private Manager manager;
-  private volatile int[] slots;
+  private volatile int[] slots = new int[0];
   private boolean forked;
 
   public void init(Manager manager) {
     this.manager = manager;
     forked = manager.getDynamicPropertiesStore().getForked();
-    slots = new int[manager.getWitnessController().getActiveWitnesses().size()];
   }
 
   public synchronized boolean shouldBeForked() {
     if (forked) {
       logger.info("*****shouldBeForked:" + true);
       return true;
+    }
+
+    if (slots.length == 0) {
+      return false;
     }
 
     for (int version : slots) {
