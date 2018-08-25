@@ -1010,6 +1010,7 @@ public class Manager {
     if (trxCap == null) {
       return false;
     }
+    forkController.hardFork(trxCap);
     validateTapos(trxCap);
     validateCommon(trxCap);
 
@@ -1106,13 +1107,11 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
-        if (forkController.forkOrNot(trx)) {
-          processTransaction(trx, null);
-//        trx.resetResult();
-          tmpSeesion.merge();
-          // push into block
-          blockCapsule.addTransaction(trx);
-        }
+        processTransaction(trx, null);
+        // trx.resetResult();
+        tmpSeesion.merge();
+        // push into block
+        blockCapsule.addTransaction(trx);
         iterator.remove();
       } catch (ContractExeException e) {
         logger.info("contract not processed during execute");

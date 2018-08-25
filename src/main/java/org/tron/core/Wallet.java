@@ -398,10 +398,8 @@ public class Wallet {
         dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
       }
 
-      if (dbManager.getForkController().forkOrNot(trx)) {
-        dbManager.pushTransaction(trx);
-        p2pNode.broadcast(message);
-      }
+      dbManager.pushTransaction(trx);
+      p2pNode.broadcast(message);
 
       return builder.setResult(true).setCode(response_code.SUCCESS).build();
     } catch (ValidateSignatureException e) {

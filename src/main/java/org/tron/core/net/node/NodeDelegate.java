@@ -49,6 +49,4 @@ public interface NodeDelegate {
   BlockCapsule getGenesisBlock();
 
   boolean canChainRevoke(long num);
-
-  boolean forkOrNot(TransactionCapsule transactionCapsule);
 }
