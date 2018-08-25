@@ -512,6 +512,14 @@ public class Runtime {
         program.getResult().setRet(result.getRet());
         result = program.getResult();
 
+        if (isCallConstant()) {
+          long callValue = TransactionCapsule.getCallValue(trx.getRawData().getContract(0));
+          if (callValue > 0) {
+            runtimeError = "constant cannot set call value.";
+          }
+          return;
+        }
+
         if (result.getException() != null || result.isRevert()) {
           result.getDeleteAccounts().clear();
           result.getLogInfoList().clear();
