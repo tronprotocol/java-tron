@@ -555,9 +555,13 @@ public class Runtime {
   }
 
   public boolean isCallConstant() {
+    TriggerSmartContract triggerContractFromTransaction = ContractCapsule
+        .getTriggerContractFromTransaction(trx);
     if (TRX_CONTRACT_CALL_TYPE.equals(trxType)) {
-      ABI abi = deposit.getContract(result.getContractAddress()).getInstance().getAbi();
-      if (Wallet.isConstant(abi, ContractCapsule.getTriggerContractFromTransaction(trx))) {
+      ABI abi = deposit
+          .getContract(triggerContractFromTransaction.getContractAddress().toByteArray())
+          .getInstance().getAbi();
+      if (Wallet.isConstant(abi, triggerContractFromTransaction)) {
         return true;
       }
     }

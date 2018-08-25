@@ -1010,6 +1010,7 @@ public class Manager {
     if (trxCap == null) {
       return false;
     }
+
     validateTapos(trxCap);
     validateCommon(trxCap);
 
