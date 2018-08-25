@@ -37,6 +37,7 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
+import java.util.Objects;
 import java.util.TreeSet;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -69,6 +70,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.TronException;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.SmartContract;
 
@@ -1306,6 +1308,9 @@ public class Program {
         // spend all energy on failure, push zero and revert state changes
         this.refundEnergy(0, "call pre-compiled");
         this.stackPushZero();
+        if (Objects.nonNull(this.result.getException())) {
+          throw result.getException();
+        }
         // deposit.rollback();
       }
 
@@ -1363,6 +1368,14 @@ public class Program {
   public static class OutOfStorageException extends BytecodeExecutionException {
 
     public OutOfStorageException(String message, Object... args) {
+      super(format(message, args));
+    }
+  }
+
+  @SuppressWarnings("serial")
+  public static class PrecompiledContractException extends BytecodeExecutionException {
+
+    public PrecompiledContractException(String message, Object... args) {
       super(format(message, args));
     }
   }
@@ -1439,6 +1452,14 @@ public class Program {
 
     public static OutOfStorageException notEnoughStorage() {
       return new OutOfStorageException("Not enough ContractState resource");
+    }
+
+    public static PrecompiledContractException contractValidateException(TronException e) {
+      return new PrecompiledContractException(e.getMessage());
+    }
+
+    public static PrecompiledContractException contractExecuteException(TronException e) {
+      return new PrecompiledContractException(e.getMessage());
     }
 
     public static OutOfEnergyException energyOverflow(BigInteger actualEnergy,
