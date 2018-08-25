@@ -285,9 +285,9 @@ public class PrecompiledContractsTest {
 
   @Test
   public void convertFromTronBytesAddressNativeTest() {
-     PrecompiledContract contract = createPrecompiledContract(convertFromTronBytesAddressAddr, WITNESS_ADDRESS);
-     byte[] solidityAddress = contract.execute(Hex.decode(WITNESS_ADDRESS)).getRight();
-     Assert.assertArrayEquals(solidityAddress,new DataWord(Hex.decode(WITNESS_ADDRESS_BASE)).getData());
+    PrecompiledContract contract = createPrecompiledContract(convertFromTronBytesAddressAddr, WITNESS_ADDRESS);
+    byte[] solidityAddress = contract.execute(new DataWord(WITNESS_ADDRESS).getData()).getRight();
+    Assert.assertArrayEquals(solidityAddress,new DataWord(Hex.decode(WITNESS_ADDRESS_BASE)).getData());
   }
 
   @Test

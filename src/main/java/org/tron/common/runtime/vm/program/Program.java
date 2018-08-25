@@ -173,21 +173,7 @@ public class Program {
 
   public ProgramPrecompile getProgramPrecompile() {
     if (programPrecompile == null) {
-            /*
-            if (codeHash != null && commonConfig.precompileSource() != null) {
-                programPrecompile = commonConfig.precompileSource().get(codeHash);
-            }
-            */
-      if (programPrecompile == null) {
-        programPrecompile = ProgramPrecompile.compile(ops);
-
-                /*
-                if (codeHash != null && commonConfig.precompileSource() != null) {
-                    commonConfig.precompileSource().put(codeHash, programPrecompile);
-                }
-                */
-      }
-
+      programPrecompile = ProgramPrecompile.compile(ops);
     }
     return programPrecompile;
   }
