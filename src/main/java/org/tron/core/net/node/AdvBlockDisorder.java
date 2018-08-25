@@ -37,9 +37,7 @@ public class AdvBlockDisorder {
 
     public void add(PeerConnection peer, BlockCapsule block){
         PeerAndBlockCapsule peerAndBlockCapsule = new PeerAndBlockCapsule(peer, block);
-        if(!peerAndBlockCapsule.isEmpty()){
-            map.put(block.getParentHash(), peerAndBlockCapsule);
-        }
+        map.put(block.getParentHash(), peerAndBlockCapsule);
     }
 
     public void remove(BlockCapsule block){
@@ -59,7 +57,6 @@ public class AdvBlockDisorder {
     }
 
     public BlockCapsule getNextBlock(BlockCapsule block){
-        //这段可能是有问题的 block的blockid和子block的parenthash是同一个吗？
         return get(block.getBlockId()) != null ? get(block.getBlockId()).getBlockCapsule(): null;
     }
 
@@ -72,10 +69,6 @@ public class AdvBlockDisorder {
             this.blockCapsule = blockCapsule;
         }
 
-        private boolean isEmpty(){
-            return (this.blockCapsule == null || this.peer == null);
-        }
-
         public BlockCapsule getBlockCapsule() {
             return blockCapsule;
         }
@@ -83,12 +76,6 @@ public class AdvBlockDisorder {
         public PeerConnection getPeer() {
             return peer;
         }
-    }
-
-    public boolean isOrderedBlock(PeerConnection peer, BlockCapsule block){
-        Sha256Hash parentHash = block.getBlockId();
-        Item item = new Item(parentHash, InventoryType.BLOCK);
-        return !peer.getAdvObjWeRequested().keySet().contains(item);
     }
 }
 

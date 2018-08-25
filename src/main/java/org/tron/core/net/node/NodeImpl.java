@@ -610,7 +610,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             + "unSyncNum: %d\n"
             + "blockWaitToProc: %d\n"
             + "blockJustReceived: %d\n"
-            + "syncBlockIdWeRequested: %d\n",
+            + "syncBlockIdWeRequested: %d\n"
+            + "advBlockDisorder: %d\n",
         del.getHeadBlockId().getNum(),
         advObjToSpread.size(),
         advObjToFetch.size(),
@@ -618,7 +619,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         getUnSyncNum(),
         blockWaitToProc.size(),
         blockJustReceived.size(),
-        syncBlockIdWeRequested.size()
+        syncBlockIdWeRequested.size(),
+            advBlockDisorder.getMap().size()
     ));
 
     logger.info(sb.toString());
@@ -755,7 +757,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   //if the block been processed successfully, continue processed his child block if exsits.
-  private synchronized void processAdvBlock(PeerConnection peer, BlockCapsule block) {
+  private void processAdvBlock(PeerConnection peer, BlockCapsule block) {
     logger.info("handle adv block!");
     if(advObjWeRequested.keySet().contains(block.getParentHash())){
       // receive a disordered block we have requested.
