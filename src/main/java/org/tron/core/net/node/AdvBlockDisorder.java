@@ -43,7 +43,7 @@ public class AdvBlockDisorder {
     }
 
     public void remove(BlockCapsule block){
-        map.remove(block.getParentHash());
+        map.remove(block.getBlockId());
     }
 
     public PeerAndBlockCapsule get(Sha256Hash hash){
@@ -54,8 +54,8 @@ public class AdvBlockDisorder {
         this.map.clear();
     }
 
-    public PeerConnection getPeer(BlockCapsule block){
-        return get(block.getParentHash()) != null ? get(block.getParentHash()).getPeer(): null;
+    public PeerConnection getNextPeer(BlockCapsule block){
+        return get(block.getBlockId()) != null ? get(block.getBlockId()).getPeer(): null;
     }
 
     public BlockCapsule getNextBlock(BlockCapsule block){

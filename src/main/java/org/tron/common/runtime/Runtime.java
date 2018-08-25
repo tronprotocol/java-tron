@@ -359,12 +359,6 @@ public class Runtime {
     if (percent < 0 || percent > 100) {
       throw new ContractExeException("percent must be >= 0 and <= 100");
     }
-    // insure one owner just have one contract
-    // if (this.deposit.getContractByNormalAccount(ownerAddress) != null) {
-    //   logger.error("Trying to create second contract with one account: address: " + Wallet
-    //       .encode58Check(ownerAddress));
-    //   return;
-    // }
 
     // insure the new contract address haven't exist
     if (deposit.getAccount(contractAddress) != null) {
@@ -497,7 +491,7 @@ public class Runtime {
 
   }
 
-  public void go() throws OutOfSlotTimeException, ContractExeException {
+  public void go() throws OutOfSlotTimeException {
     if (!readyToExecute) {
       return;
     }
@@ -515,9 +509,6 @@ public class Runtime {
           }
           return;
         }
-
-        // todo: consume bandwidth for successful creating contract
-
         if (result.getException() != null || result.isRevert()) {
           result.getDeleteAccounts().clear();
           result.getLogInfoList().clear();
@@ -526,7 +517,6 @@ public class Runtime {
           if (result.getException() != null) {
             program.spendAllEnergy();
             runtimeError = result.getException().getMessage();
-            trace.setBill(result.getEnergyUsed());
             throw result.getException();
           } else {
             runtimeError = "REVERT opcode executed";
@@ -534,22 +524,22 @@ public class Runtime {
         } else {
           deposit.commit();
         }
-        trace.setBill(result.getEnergyUsed());
       } else {
         deposit.commit();
       }
     } catch (OutOfResourceException e) {
-      logger.error(e.getMessage());
+      logger.error("runtime error is :{}", e.getMessage());
       throw new OutOfSlotTimeException(e.getMessage());
-    } catch (ArithmeticException e) {
-      logger.error(e.getMessage());
-      throw new ContractExeException(e.getMessage());
-    } catch (Exception e) {
-      logger.error(e.getMessage());
-      if (StringUtils.isEmpty(runtimeError)) {
-        runtimeError = e.getMessage();
+    } catch (Throwable e) {
+      if (Objects.isNull(result.getException())) {
+        result.setException(new RuntimeException("Unknown Throwable"));
       }
+      if (StringUtils.isEmpty(runtimeError)) {
+        runtimeError = result.getException().getMessage();
+      }
+      logger.error("runtime error is :{}", result.getException().getMessage());
     }
+    trace.setBill(result.getEnergyUsed());
   }
 
   private long getEnergyFee(long callerEnergyUsage, long callerEnergyFrozen,

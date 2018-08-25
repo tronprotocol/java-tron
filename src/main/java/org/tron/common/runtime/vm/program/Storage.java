@@ -25,17 +25,15 @@ public class Storage {
   }
 
   public DataWord getValue(DataWord key) {
-
     if (rowCache.containsKey(key)) {
-
       return rowCache.get(key).getValue();
     } else {
       StorageRowStore store = manager.getStorageRowStore();
       StorageRowCapsule row = store.get(compose(key.getData(), addrHash));
-      if (row == null) {
+      if (row == null || row.getInstance() == null) {
         return null;
       } else {
-        beforeUseSize += row.getInstance().getSerializedSize();
+        beforeUseSize += row.getInstance().length;
       }
       rowCache.put(key, row);
       return row.getValue();
@@ -47,13 +45,12 @@ public class Storage {
       rowCache.get(key).setValue(value);
     } else {
       StorageRowStore store = manager.getStorageRowStore();
-      byte[] composedKey = compose(key.getData(), addrHash);
-      StorageRowCapsule row = store.get(composedKey);
-
-      if (row == null) {
-        row = new StorageRowCapsule(composedKey, value.getData());
+      byte[] rowKey = compose(key.getData(), addrHash);
+      StorageRowCapsule row = store.get(rowKey);
+      if (row == null || row.getInstance() == null) {
+        row = new StorageRowCapsule(rowKey, value.getData());
       } else {
-        beforeUseSize += row.getInstance().getSerializedSize();
+        beforeUseSize += row.getInstance().length;
       }
       rowCache.put(key, row);
     }
@@ -75,7 +72,7 @@ public class Storage {
     AtomicLong size = new AtomicLong();
     rowCache.forEach((key, value) -> {
       if (!value.getValue().isZero()) {
-        size.getAndAdd(value.getInstance().getSerializedSize());
+        size.getAndAdd(value.getInstance().length);
       }
     });
     return size.get();
@@ -89,9 +86,9 @@ public class Storage {
     rowCache.forEach((key, value) -> {
       if (value.isDirty()) {
         if (value.getValue().isZero()) {
-          manager.getStorageRowStore().delete(value.getKey());
+          manager.getStorageRowStore().delete(value.getRowKey());
         } else {
-          manager.getStorageRowStore().put(value.getKey(), value);
+          manager.getStorageRowStore().put(value.getRowKey(), value);
         }
       }
     });

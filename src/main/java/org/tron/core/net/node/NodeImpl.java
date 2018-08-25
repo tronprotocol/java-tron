@@ -11,16 +11,9 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
@@ -189,9 +182,15 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             if (key.equals(InventoryType.BLOCK)) {
               value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
             }
+            if (key.equals(InventoryType.BLOCK)){
+              for(int i=0; i < value.size(); i++) {
+                logger.info("send fetch block: " + value.get(i).toString() + " to peer: " + peer.getNode().getHost());
+              }
+            }
             peer.sendMessage(new FetchInvDataMessage(value, key));
           }));
     }
+
   }
 
   private ScheduledExecutorService logExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -482,6 +481,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
     InvToSend sendPackage = new InvToSend();
     long now = Time.getCurrentMillis();
+    Iterator iter = advObjToFetch.values().iterator();
+    while(iter.hasNext()){
+      PriorItem item = (PriorItem)iter.next();
+      logger.info("advObjToFetch id:" + item.getHash() + " count:" +item.getCount());
+    }
     advObjToFetch.values().stream().sorted(PriorItem::compareTo).forEach(idToFetch -> {
       Sha256Hash hash = idToFetch.getHash();
       if (idToFetch.getTime() < now - MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL) {
@@ -496,6 +500,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           .findFirst().ifPresent(peer -> {
         sendPackage.add(idToFetch, peer);
         peer.getAdvObjWeRequested().put(idToFetch.getItem(), now);
+        if(idToFetch.getItem().getType() == InventoryType.BLOCK) {
+          advObjWeRequested.put(idToFetch.getItem().getHash(), now);
+        }
         advObjToFetch.remove(hash);
       });
     });
@@ -737,6 +744,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       advObjWeRequested.remove(item);
       if (!syncFlag) {
         processAdvBlock(peer, blkMsg.getBlockCapsule());
+        logger.info("peer: {}, send the block {} to me!", peer.getNode().getHost(), blkMsg.getBlockId());
         startFetchItem();
       }
     } else {
@@ -746,46 +754,44 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
   }
 
-  /**
-  * @Description: process the advertise block.
-   * if the block been processed successfully, continue processed his child block if exsits.
-  * @Param:
-   * @param peer the peer who advertise the block;
-   * @param block the block we receive by advertise mode;
-  * @return: void
-  * @Author: shydesky@gmail.com
-  * @Date: 2018/7/13
-  */
-  private void processAdvBlock(PeerConnection peer, BlockCapsule block) {
-    if(!advBlockDisorder.isOrderedBlock(peer, block)){
-      // receive a disordered block we have requested
+  //if the block been processed successfully, continue processed his child block if exsits.
+  private synchronized void processAdvBlock(PeerConnection peer, BlockCapsule block) {
+    logger.info("handle adv block!");
+    if(advObjWeRequested.keySet().contains(block.getParentHash())){
+      // receive a disordered block we have requested.
       advBlockDisorder.add(peer, block);
+      logger.info("receive a disordered block:{}, parentHash:{}", block.getBlockId().getString(), block.getParentHash());
     }else{
       // receive an ordered block we have requested, try to push block
+      logger.info("receive a ordered block:{}, parentHash:{} from peer: {}", block.getBlockId().getString(), block.getParentHash(), peer.getNode().getHost());
+      advObjWeRequested.remove(block.getBlockId());
       boolean isSuccess = true;
       while (isSuccess) {
         isSuccess = realProcessAdvBlock(peer, block);
+        logger.info("ordered block {} is handled successfully!", block.getBlockId().getString());
         if (isSuccess) {
           // if push block success, we try to find his child block and continue push
+          BlockCapsule nextBlock = advBlockDisorder.getNextBlock(block);
+          peer = advBlockDisorder.getNextPeer(block);
+          if(nextBlock == null){
+            logger.info("do not find next block!");
+            break;
+          }
           advBlockDisorder.remove(block);
-          block = advBlockDisorder.getNextBlock(block);
+          block = nextBlock;
+          logger.info("handle next block {}", block.getBlockId().getString());
+        }else{
+          logger.info("unlink because of we not have chain, start sync!");
+          advBlockDisorder.remove(block);
         }
       }
     }
   }
 
-  /**
-  * @Description: "real" ProcessAdvBlock
-   * If UnLinkedBlockException because of disorder, we store the block temporarily and
-   * then we can processed this block again when his parent block if processed successfully
-  * @Param:
-   * @param peer the peer who advertise the block;
-   * @param block the block we receive by advertise mode;
-  * @return: boolean
-  * @Author: shydesky@gmail.com
-  * @Date: 2018/7/13
-  */
+  // If UnLinkedBlockException because of disorder, we store the block temporarily and
+  // then we can processed this block again when his parent block if processed successfully
   private boolean realProcessAdvBlock (PeerConnection peer, BlockCapsule block){
+    //TODO: lack the complete flow.
     if (!freshBlockId.contains(block.getBlockId())) {
       try {
         LinkedList<Sha256Hash> trxIds = null;
@@ -805,12 +811,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             block.getBlockId().getString(), peer.getNode().getHost(), e.getMessage());
         disconnectPeer(peer, ReasonCode.BAD_BLOCK);
       } catch (UnLinkedBlockException e) {
-        // get unlinked exception because we do not have the chain which the block is in.
-        logger.error("We get a unlinked block {}, from {}, head is {}",
-              block.getBlockId().getString(), peer.getNode().getHost(),
-              del.getHeadBlockId().getString());
+        logger.error("We get a unlinked block {}, parentHash is {}, from {}, head is {}",
+            block.getBlockId().getString(), block.getParentHash(), peer.getNode().getHost(),
+            del.getHeadBlockId().getString());
         startSyncWithPeer(peer);
-        return false;
       } catch (NonCommonBlockException e) {
         logger.error("We get a block {} that do not have the most recent common ancestor with the main chain, from {}, reason is {} ",
             block.getBlockId().getString(), peer.getNode().getHost(), e.getMessage());
@@ -820,7 +824,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
       return false;
     }
-    return false;
+    return true;
   }
 
   private boolean processSyncBlock(BlockCapsule block) {
@@ -896,7 +900,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             peer.getNode().getHost());
         return;
       }
-      if(del.handleTransaction(trxMsg.getTransactionCapsule())){
+      if (del.forkOrNot(trxMsg.getTransactionCapsule())
+          && del.handleTransaction(trxMsg.getTransactionCapsule())) {
         broadcast(trxMsg);
       }
     } catch (TraitorPeerException e) {

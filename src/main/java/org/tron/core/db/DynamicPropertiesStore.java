@@ -112,11 +112,15 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] STORAGE_EXCHANGE_TAX_RATE = "STORAGE_EXCHANGE_TAX_RATE".getBytes();
 
+  private static final byte[] FORK_CONTROLLER = "FORK_CONTROLLER".getBytes();
+
   //This value is only allowed to be 0, 1, -1
   private static final byte[] REMOVE_THE_POWER_OF_THE_GR = "REMOVE_THE_POWER_OF_THE_GR".getBytes();
 
   //If the parameter is larger than 0, the contract is allowed to be created.
-  private static final byte[] ALLOW_CREATION_OF_CONTRACTS = "ALLOW_CREATION_OF_CONTRACTS".getBytes();
+  private static final byte[] ALLOW_CREATION_OF_CONTRACTS = "ALLOW_CREATION_OF_CONTRACTS"
+      .getBytes();
+
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -918,7 +922,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public boolean supportVM() {
-    return  getAllowCreationOfContracts() == 1L;
+    return getAllowCreationOfContracts() == 1L;
   }
 
   public void saveBlockFilledSlots(int[] blockFilledSlots) {
@@ -1120,5 +1124,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void addTotalTransactionCost(long fee) {
     long newValue = getTotalTransactionCost() + fee;
     saveTotalTransactionCost(newValue);
+  }
+
+  public void forked() {
+    put(FORK_CONTROLLER, new BytesCapsule(Boolean.toString(true).getBytes()));
+  }
+
+  public boolean getForked() {
+    byte[] value = revokingDB.getUnchecked(FORK_CONTROLLER);
+    return value == null ? Boolean.FALSE : Boolean.valueOf(new String(value));
   }
 }

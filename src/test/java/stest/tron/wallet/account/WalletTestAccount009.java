@@ -83,6 +83,7 @@ public class WalletTestAccount009 {
     Assert.assertTrue(account009Info.getAccountResource().getEnergyUsage() == 0);
     Assert.assertTrue(account009Info.getAccountResource().getFrozenBalanceForEnergy()
         .getExpireTime() == 0);
+
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(account009Address, 1000000L,
         3,1,account009Key,blockingStubFull));
     account009Info = PublicMethed.queryAccount(account009Key,blockingStubFull);
@@ -92,7 +93,7 @@ public class WalletTestAccount009 {
 
     AccountResourceMessage account009Resource = PublicMethed.getAccountResource(account009Address,
         blockingStubFull);
-    Assert.assertTrue(account009Resource.getTotalEnergyLimit() == 32400000000L);
+    Assert.assertTrue(account009Resource.getTotalEnergyLimit() == 50000000000L);
     Assert.assertTrue(account009Resource.getEnergyLimit() > 0);
     Assert.assertTrue(account009Resource.getTotalEnergyWeight() >= 1);
   }

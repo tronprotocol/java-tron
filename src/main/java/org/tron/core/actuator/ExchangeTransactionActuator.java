@@ -11,7 +11,6 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.Parameter.ChainParameters;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -55,13 +54,13 @@ public class ExchangeTransactionActuator extends AbstractActuator {
 
       long newBalance = accountCapsule.getBalance() - calcFee();
 
-      if (tokenID == "_".getBytes()) {
+      if (Arrays.equals(tokenID, "_".getBytes())) {
         accountCapsule.setBalance(newBalance - tokenQuant);
       } else {
         accountCapsule.reduceAssetAmount(tokenID, tokenQuant);
       }
 
-      if (anotherTokenID == "_".getBytes()) {
+      if (Arrays.equals(anotherTokenID, "_".getBytes())) {
         accountCapsule.setBalance(newBalance + anotherTokenQuant);
       } else {
         accountCapsule.addAssetAmount(anotherTokenID, anotherTokenQuant);
@@ -145,14 +144,20 @@ public class ExchangeTransactionActuator extends AbstractActuator {
       throw new ContractValidateException("transaction token balance must greater than zero");
     }
 
+    if (firstTokenBalance == 0 || secondTokenBalance == 0) {
+      throw new ContractValidateException("Token balance in exchange is equal with 0,"
+          + "the exchange has been closed");
+    }
+
     long balanceLimit = dbManager.getDynamicPropertiesStore().getExchangeBalanceLimit();
-    long tokenBalance = (tokenID == firstTokenID ? firstTokenBalance : secondTokenBalance);
+    long tokenBalance = (Arrays.equals(tokenID, firstTokenID) ? firstTokenBalance
+        : secondTokenBalance);
     tokenBalance += tokenQuant;
     if (tokenBalance > balanceLimit) {
       throw new ContractValidateException("token balance must less than " + balanceLimit);
     }
 
-    if (tokenID == "_".getBytes()) {
+    if (Arrays.equals(tokenID, "_".getBytes())) {
       if (accountCapsule.getBalance() < (tokenQuant + calcFee())) {
         throw new ContractValidateException("balance is not enough");
       }
@@ -179,10 +184,6 @@ public class ExchangeTransactionActuator extends AbstractActuator {
   @Override
   public long calcFee() {
     return 0;
-  }
-
-  private boolean validKey(long idx) {
-    return idx >= 0 && idx < ChainParameters.values().length;
   }
 
 }

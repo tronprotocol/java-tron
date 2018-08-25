@@ -557,7 +557,7 @@ public class PublicMethed {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     WalletClient walletClient;
     walletClient = new WalletClient(priKey);
-    walletClient.init(0);
+    //walletClient.init(0);
     return walletClient.getAddress();
   }
 
