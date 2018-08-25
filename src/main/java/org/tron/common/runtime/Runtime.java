@@ -408,6 +408,7 @@ public class Runtime {
       this.program = new Program(ops, programInvoke, internalTransaction, config);
       Program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
       Program.resetNonce();
+      Program.setRootCallConstant(isCallConstant());
     } catch (Exception e) {
       logger.error(e.getMessage());
       throw new ContractExeException(e.getMessage());
@@ -489,6 +490,7 @@ public class Runtime {
       this.program = new Program(null, code, programInvoke, internalTransaction, config);
       Program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
       Program.resetNonce();
+      Program.setRootCallConstant(isCallConstant());
     }
 
     program.getResult().setContractAddress(contractAddress);
