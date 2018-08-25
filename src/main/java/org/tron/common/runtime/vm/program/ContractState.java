@@ -130,11 +130,6 @@ public class ContractState implements Deposit, ProgramListenerAware {
   }
 
   @Override
-  public Deposit newDepositNext() {
-    return deposit.newDepositNext();
-  }
-
-  @Override
   public void flush() {
     deposit.flush();
   }
@@ -197,16 +192,6 @@ public class ContractState implements Deposit, ProgramListenerAware {
   @Override
   public void setParent(Deposit deposit) {
     this.deposit.setParent(deposit);
-  }
-
-  @Override
-  public void setPrevDeposit(Deposit deposit) {
-    this.deposit.setPrevDeposit(deposit);
-  }
-
-  @Override
-  public void setNextDeposit(Deposit deposit) {
-    this.deposit.setNextDeposit(deposit);
   }
 
   @Override
