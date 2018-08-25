@@ -527,9 +527,7 @@ public class Runtime {
             runtimeError = "REVERT opcode executed";
           }
         } else {
-          if (isCallConstant()){
-            deposit.commit();
-          }
+          deposit.commit();
         }
       } else {
         deposit.commit();
