@@ -43,13 +43,7 @@ public interface Deposit {
 
   Deposit newDepositChild();
 
-  Deposit newDepositNext();
-
   void setParent(Deposit deposit);
-
-  void setPrevDeposit(Deposit deposit);
-
-  void setNextDeposit(Deposit deposit);
 
   void flush();
 
