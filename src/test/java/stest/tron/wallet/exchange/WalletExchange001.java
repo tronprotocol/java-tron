@@ -71,7 +71,7 @@ public class WalletExchange001 {
   }
 
   @Test(enabled = true)
-  public void testCreateUsedAsset() {
+  public void test1CreateUsedAsset() {
     Assert.assertTrue(PublicMethed.freezeBalance(exchange001Address, 1000000L,
         3,exchange001Key,blockingStubFull));
     Assert.assertTrue(PublicMethed.freezeBalance(secondExchange001Address, 1000000L,
@@ -87,7 +87,7 @@ public class WalletExchange001 {
   }
 
   @Test(enabled = true)
-  public void createExchange() {
+  public void test2CreateExchange() {
     Account firstAccount = PublicMethed.queryAccount(exchange001Address, blockingStubFull);
     Long token1BeforeBalance = 0L;
     for (String name : firstAccount.getAssetMap().keySet()) {
