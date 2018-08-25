@@ -105,8 +105,17 @@ public class Program {
     nonce = nonceValue;
   }
 
+  public static Boolean getRootCallConstant() {
+    return isRootCallConstant;
+  }
+
+  public static  void setRootCallConstant(Boolean rootCallConstant) {
+    isRootCallConstant = rootCallConstant;
+  }
+
   private static long nonce = 0;
   private static byte[] rootTransactionId = null;
+  private  static Boolean isRootCallConstant = null;
 
   private InternalTransaction transaction;
 
@@ -1295,6 +1304,7 @@ public class Program {
       // this is the depositImpl, not contractState as above
       contract.setDeposit(this.invoke.getDeposit());
       contract.setResult(this.result);
+      contract.setRootCallConstant(Program.getRootCallConstant().booleanValue());
       Pair<Boolean, byte[]> out = contract.execute(data);
 
       if (out.getLeft()) { // success

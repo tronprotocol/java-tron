@@ -249,6 +249,18 @@ public class PrecompiledContracts {
     public ProgramResult getResult() {
       return result;
     }
+
+    public boolean isRootCallConstant() {
+      return isRootCallConstant;
+    }
+
+    public void setRootCallConstant(boolean rootCallConstant) {
+      isRootCallConstant = rootCallConstant;
+    }
+
+    private boolean isRootCallConstant;
+
+
   }
 
   public static class Identity extends PrecompiledContract {
@@ -689,6 +701,9 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
+      if (isRootCallConstant()){
+        return Pair.of(true, new DataWord(0).getData());
+      }
       if (data == null || data.length != 2 * DataWord.DATAWORD_UNIT_SIZE) {
         return Pair.of(false, new DataWord(0).getData());
       }
@@ -872,6 +887,10 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
+      if (isRootCallConstant()){
+        return Pair.of(true, new DataWord(0).getData());
+      }
+
       if (data == null) {
         data = EMPTY_BYTE_ARRAY;
       }
@@ -924,6 +943,10 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
+
+      if (isRootCallConstant()){
+        return Pair.of(true, new DataWord(0).getData());
+      }
 
       if (data == null || data.length != 2 * DataWord.DATAWORD_UNIT_SIZE) {
         return Pair.of(false, new DataWord(0).getData());
@@ -984,6 +1007,10 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
+
+      if (isRootCallConstant()){
+        return Pair.of(true, new DataWord(0).getData());
+      }
 
       if (data == null || data.length == 0 || (data.length % (2 * DataWord.DATAWORD_UNIT_SIZE) != 0 )) {
         return Pair.of(false, new DataWord(0).getData());
@@ -1050,6 +1077,10 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
+
+      if (isRootCallConstant()){
+        return Pair.of(true, new DataWord(0).getData());
+      }
 
       if (data == null || data.length != DataWord.DATAWORD_UNIT_SIZE) {
         return Pair.of(false, new DataWord(0).getData());
@@ -1160,6 +1191,10 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
+
+      if (isRootCallConstant()){
+        return Pair.of(true, new DataWord(0).getData());
+      }
 
       if (data == null || (data.length <= DataWord.DATAWORD_UNIT_SIZE * 2 || data.length > DataWord.DATAWORD_UNIT_SIZE * 3)) {
         return Pair.of(false, new DataWord(0).getData());
