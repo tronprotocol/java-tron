@@ -1010,7 +1010,6 @@ public class Manager {
     if (trxCap == null) {
       return false;
     }
-    forkController.hardFork(trxCap);
     validateTapos(trxCap);
     validateCommon(trxCap);
 
@@ -1018,6 +1017,7 @@ public class Manager {
       throw new ContractSizeNotEqualToOneException(
           "act size should be exactly 1, this is extend feature");
     }
+    forkController.hardFork(trxCap);
 
     validateDup(trxCap);
 
