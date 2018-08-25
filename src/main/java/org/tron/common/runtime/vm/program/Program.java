@@ -716,9 +716,10 @@ public class Program {
 
       if (byTestingSuite()) {
         logger.info("Testing run, skipping storage diff listener");
-      } else if (Arrays.equals(transaction.getReceiveAddress(), internalTx.getReceiveAddress())) {
-        storageDiffListener.merge(program.getStorageDiff());
       }
+      // else if (Arrays.equals(transaction.getReceiveAddress(), internalTx.getReceiveAddress())) {
+      //   storageDiffListener.merge(program.getStorageDiff());
+      // }
     } else {
       // 4. THE FLAG OF SUCCESS IS ONE PUSHED INTO THE STACK
       deposit.commit();
