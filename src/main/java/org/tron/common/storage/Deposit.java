@@ -4,7 +4,6 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.Storage;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
@@ -20,13 +19,19 @@ public interface Deposit {
 
   AccountCapsule getAccount(byte[] address);
 
+  void deleteContract(byte[] address);
+
+  void deleteCode(byte[] address);
+
+  void deleteAccount(byte[] address);
+
   void createContract(byte[] address, ContractCapsule contractCapsule);
 
   ContractCapsule getContract(byte[] address);
 
   void saveCode(byte[] codeHash, byte[] code);
 
-  byte[] getCode(byte[] codeHash);
+  byte[] getCode(byte[] codeHashzzz);
 
   //byte[] getCodeHash(byte[] address);
 

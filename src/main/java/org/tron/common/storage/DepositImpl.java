@@ -137,6 +137,25 @@ public class DepositImpl implements Deposit {
     return accountCapsule;
   }
 
+  // TODO to refactor
+  @Override
+  public void deleteCode(byte[] address) {
+    getCodeStore().delete(address);
+  }
+
+  @Override
+  public void deleteAccount(byte[] address) {
+    getAccountStore().delete(address);
+  }
+
+  // just for depositRoot
+  @Override
+  public void deleteContract(byte[] address) {
+    deleteCode(address);
+    deleteAccount(address);
+    getContractStore().delete(address);
+  }
+
   @Override
   public synchronized void createContract(byte[] address, ContractCapsule contractCapsule) {
     Key key = Key.create(address);

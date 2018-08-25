@@ -1045,6 +1045,7 @@ public class Manager {
 
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
 
+    // TODO to remove?
     RuntimeException runtimeException = runtime.getResult().getException();
     ReceiptCapsule traceReceipt = trace.getReceipt();
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule

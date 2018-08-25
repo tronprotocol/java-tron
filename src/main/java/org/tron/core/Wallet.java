@@ -833,13 +833,15 @@ public class Wallet {
     SmartContract.ABI abi = contractStore.getABI(contractAddress);
     if (abi == null) {
       // FIXME
+//      throw new NotExistContractException;
       return null;
+//      return null;
     }
 
     try {
       byte[] selector = getSelector(triggerSmartContract.getData().toByteArray());
       if (selector == null) {
-        // FIXME
+        // FIXME should trigger fallback method
         return null;
       }
 
