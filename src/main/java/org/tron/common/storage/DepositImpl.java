@@ -205,7 +205,7 @@ public class DepositImpl implements Deposit {
     if (this.parent != null) {
       storage = parent.getStorage(address);
     } else {
-      storage = new Storage(address, dbManager);
+      storage = new Storage(address, dbManager.getStorageRowStore());
     }
     return storage;
   }
