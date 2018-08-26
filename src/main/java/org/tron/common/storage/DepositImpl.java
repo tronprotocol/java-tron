@@ -136,23 +136,11 @@ public class DepositImpl implements Deposit {
     }
     return accountCapsule;
   }
-
-  // TODO to refactor
-  @Override
-  public void deleteCode(byte[] address) {
-    getCodeStore().delete(address);
-  }
-
-  @Override
-  public void deleteAccount(byte[] address) {
-    getAccountStore().delete(address);
-  }
-
   // just for depositRoot
   @Override
   public void deleteContract(byte[] address) {
-    deleteCode(address);
-    deleteAccount(address);
+    getCodeStore().delete(address);
+    getAccountStore().delete(address);
     getContractStore().delete(address);
   }
 

@@ -21,10 +21,6 @@ public interface Deposit {
 
   void deleteContract(byte[] address);
 
-  void deleteCode(byte[] address);
-
-  void deleteAccount(byte[] address);
-
   void createContract(byte[] address, ContractCapsule contractCapsule);
 
   ContractCapsule getContract(byte[] address);
