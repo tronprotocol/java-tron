@@ -351,7 +351,7 @@ public class Runtime {
   private void create()
       throws ContractExeException, ContractValidateException {
     if (!deposit.getDbManager().getDynamicPropertiesStore().supportVM()) {
-      throw new ContractExeException("VM work is off, need to be opened by the committee");
+//      throw new contractexeexception("vm work is off, need to be opened by the committee");
     }
 
     CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
@@ -440,7 +440,7 @@ public class Runtime {
       throws ContractExeException, ContractValidateException {
 
     if (!deposit.getDbManager().getDynamicPropertiesStore().supportVM()) {
-      throw new ContractExeException("VM work is off, need to be opened by the committee");
+//      throw new ContractExeException("VM work is off, need to be opened by the committee");
     }
 
     Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);

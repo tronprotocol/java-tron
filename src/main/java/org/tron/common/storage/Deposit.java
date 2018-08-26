@@ -27,7 +27,7 @@ public interface Deposit {
 
   void saveCode(byte[] codeHash, byte[] code);
 
-  byte[] getCode(byte[] codeHashzzz);
+  byte[] getCode(byte[] codeHash);
 
   //byte[] getCodeHash(byte[] address);
 
