@@ -826,16 +826,13 @@ public class Wallet {
 
   public Transaction triggerContract(TriggerSmartContract triggerSmartContract,
       TransactionCapsule trxCap, Builder builder,
-      Return.Builder retBuilder) {
+      Return.Builder retBuilder) throws ContractValidateException {
 
     ContractStore contractStore = dbManager.getContractStore();
     byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
     SmartContract.ABI abi = contractStore.getABI(contractAddress);
     if (abi == null) {
-      // FIXME
-//      throw new NotExistContractException;
-      return null;
-//      return null;
+      throw new ContractValidateException("No contract or not a smart contract");
     }
 
     try {
