@@ -75,16 +75,6 @@ public class ContractState implements Deposit, ProgramListenerAware {
   }
 
   @Override
-  public void deleteCode(byte[] address) {
-    deposit.deleteCode(address);
-  }
-
-  @Override
-  public void deleteAccount(byte[] address) {
-    deposit.deleteAccount(address);
-  }
-
-  @Override
   public void createContract(byte[] codeHash, ContractCapsule contractCapsule) {
     deposit.createContract(codeHash, contractCapsule);
   }
