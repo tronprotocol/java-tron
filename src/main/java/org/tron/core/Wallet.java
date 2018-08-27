@@ -946,7 +946,7 @@ public class Wallet {
       }
     }
 
-    throw new Exception("There is no the selector!");
+    return false;
   }
 
 }
