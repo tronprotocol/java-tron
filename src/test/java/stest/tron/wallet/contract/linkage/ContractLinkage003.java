@@ -51,24 +51,24 @@ public class ContractLinkage003 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(linkage003Address,20000000L,fromAddress,
+    Assert.assertTrue(PublicMethed.sendcoin(linkage003Address,200000000L,fromAddress,
         testKey003,blockingStubFull));
   }
 
-  @Test(enabled = false)
-  public void deployWhenNoEnergyAndNoStorage() {
+  @Test(enabled = true)
+  public void deployWhenNoEnergy() {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(linkage003Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
-    Long storageLimit = accountResource.getStorageLimit();
+    //Long storageLimit = accountResource.getStorageLimit();
     Long energyUsage = accountResource.getEnergyUsed();
-    Long storageUsage = accountResource.getStorageUsed();
+    //Long storageUsage = accountResource.getStorageUsed();
 
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
-    logger.info("before storage limit is " + Long.toString(storageLimit));
-    logger.info("before storage usaged is " + Long.toString(storageUsage));
-    Long maxFeeLimit = 5000000L;
+    //logger.info("before storage limit is " + Long.toString(storageLimit));
+    //logger.info("before storage usaged is " + Long.toString(storageUsage));
+    Long maxFeeLimit = 100000000L;
     String contractName = "tronNative";
     String code = "608060405260008054600160a060020a03199081166201000117909155600180548216620100021"
         + "790556002805482166201000317905560038054821662010004179055600480548216620100051790556005"
@@ -146,12 +146,13 @@ public class ContractLinkage003 {
     byte []  contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
         0L, 0,null,linkage002Key,linkage003Address,blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
+    Assert.assertFalse(smartContract.getName().isEmpty());
     account = PublicMethed.queryAccount(linkage003Address,blockingStubFull);
     Long afterBalance = account.getBalance();
     Assert.assertTrue(beforeBalance - afterBalance > 0);
     accountResource = PublicMethed.getAccountResource(linkage003Address, blockingStubFull);
     Assert.assertTrue(accountResource.getEnergyUsed() == 0L);
-    Assert.assertTrue(accountResource.getStorageUsed() > 400);
+    //Assert.assertTrue(accountResource.getStorageUsed() > 400);
 
 
 

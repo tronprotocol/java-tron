@@ -4,12 +4,14 @@ import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TVMTestUtils;
+import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -24,10 +26,11 @@ import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
+@Ignore
 public class CPUTimeTest {
 
   private Manager dbManager;
-  private AnnotationConfigApplicationContext context;
+  private TronApplicationContext context;
   private DepositImpl deposit;
   private String dbPath = "output_CPUTimeTest";
   private String OWNER_ADDRESS;
@@ -39,7 +42,7 @@ public class CPUTimeTest {
   @Before
   public void init() {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     dbManager = context.getBean(Manager.class);
     deposit = DepositImpl.createRoot(dbManager);
@@ -75,13 +78,12 @@ public class CPUTimeTest {
       throws ContractExeException, TransactionTraceException, ContractValidateException, OutOfSlotTimeException {
 
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 20000000000000L;
     long consumeUserResourcePercent = 0;
     TVMTestResult result = deployEndlessLoopContract(value, feeLimit,
         consumeUserResourcePercent);
     Assert.assertEquals(result.getReceipt().getEnergyUsage(), 0);
-    Assert.assertEquals(result.getReceipt().getEnergyFee(), 153210);
-    Assert.assertEquals(result.getReceipt().getEnergyTotal(), 5107);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 5107);
     Assert.assertEquals(result.getReceipt().getOriginEnergyUsage(), 0);
 
     byte[] contractAddress = result.getContractAddress();
@@ -94,6 +96,9 @@ public class CPUTimeTest {
       result = TVMTestUtils
           .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
               contractAddress, triggerData, value, feeLimit, deposit, null);
+      Exception exception = result.getRuntime().getResult().getException();
+      Assert.assertTrue(exception instanceof OutOfEnergyException);
+      haveException = true;
     } catch (Exception e) {
       haveException = true;
       Assert.assertTrue(e instanceof OutOfSlotTimeException);

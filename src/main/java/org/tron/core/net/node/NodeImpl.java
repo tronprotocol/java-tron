@@ -236,7 +236,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private ExecutorService broadPool = Executors.newFixedThreadPool(2, new ThreadFactory() {
     @Override
     public Thread newThread(Runnable r) {
-      return new Thread(r, "broad-msg-");
+      return new Thread(r, "broad-msg");
     }
   });
 
@@ -855,7 +855,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             peer.getNode().getHost());
         return;
       }
-      if(del.handleTransaction(trxMsg.getTransactionCapsule())){
+      if (del.handleTransaction(trxMsg.getTransactionCapsule())) {
         broadcast(trxMsg);
       }
     } catch (TraitorPeerException e) {

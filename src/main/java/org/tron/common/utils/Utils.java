@@ -40,7 +40,7 @@ public interface Utils {
     return bb.array();
   }
 
-  public static String getIdShort(String Id) {
+  static String getIdShort(String Id) {
     return Id == null ? "<null>" : Id.substring(0, 8);
   }
 
@@ -67,14 +67,14 @@ public interface Utils {
     return String.format("%dGb", size / (1L << 30));
   }
 
-  public static String align(String s, char fillChar, int targetLen, boolean alignRight) {
+  static String align(String s, char fillChar, int targetLen, boolean alignRight) {
     if (targetLen <= s.length()) return s;
     String alignString = repeat("" + fillChar, targetLen - s.length());
     return alignRight ? alignString + s : s + alignString;
 
   }
 
-  public static String repeat(String s, int n) {
+  static String repeat(String s, int n) {
     if (s.length() == 1) {
       byte[] bb = new byte[n];
       Arrays.fill(bb, s.getBytes()[0]);

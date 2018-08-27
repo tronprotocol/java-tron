@@ -153,19 +153,6 @@ public class PeerConnection extends Channel {
     return this.helloMessage;
   }
 
-  public void cleanAll() {
-    setStartTime(0);
-    getSyncBlockToFetch().clear();
-    getSyncBlockRequested().clear();
-    getBlockInProc().clear();
-    getAdvObjWeRequested().clear();
-    getAdvObjWeSpread().clear();
-    getAdvObjSpreadToUs().clear();
-    getInvToUs().clear();
-    getInvWeAdv().clear();
-    getSyncBlockIdCache().cleanUp();
-  }
-
   public void cleanInvGarbage() {
     long oldestTimestamp =
         Time.getCurrentMillis() - MAX_INVENTORY_SIZE_IN_MINUTES * 60 * 1000;

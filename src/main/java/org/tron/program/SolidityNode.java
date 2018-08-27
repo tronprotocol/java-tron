@@ -5,10 +5,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.util.StringUtils;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.overlay.client.DatabaseGrpcClient;
 import org.tron.common.overlay.discover.DiscoverServer;
 import org.tron.common.overlay.discover.node.NodeManager;
@@ -187,7 +187,7 @@ public class SolidityNode {
     }
     cfgArgs.setSolidityNode(true);
 
-    ApplicationContext context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    ApplicationContext context = new TronApplicationContext(DefaultConfig.class);
 
     if (cfgArgs.isHelp()) {
       logger.info("Here is the help message.");

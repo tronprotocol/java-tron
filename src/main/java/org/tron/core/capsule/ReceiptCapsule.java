@@ -62,16 +62,16 @@ public class ReceiptCapsule {
     return this.receipt.getOriginEnergyUsage();
   }
 
-  public long getEnergyTotal() {
-    return this.receipt.getEnergyTotal();
+  public long getEnergyUsageTotal() {
+    return this.receipt.getEnergyUsageTotal();
   }
 
   public void setOriginEnergyUsage(long energyUsage) {
     this.receipt = this.receipt.toBuilder().setOriginEnergyUsage(energyUsage).build();
   }
 
-  public void setEnergyTotal(long energyUsage) {
-    this.receipt = this.receipt.toBuilder().setEnergyTotal(energyUsage).build();
+  public void setEnergyUsageTotal(long energyUsage) {
+    this.receipt = this.receipt.toBuilder().setEnergyUsageTotal(energyUsage).build();
   }
 
   public long getNetUsage() {
@@ -87,17 +87,17 @@ public class ReceiptCapsule {
    */
   public void payEnergyBill(Manager manager, AccountCapsule origin, AccountCapsule caller,
       long percent, EnergyProcessor energyProcessor, long now) {
-    if (0 == receipt.getEnergyTotal()) {
+    if (0 == receipt.getEnergyUsageTotal()) {
       return;
     }
 
     if (caller.getAddress().equals(origin.getAddress())) {
-      payEnergyBill(manager, caller, receipt.getEnergyTotal(), energyProcessor, now);
+      payEnergyBill(manager, caller, receipt.getEnergyUsageTotal(), energyProcessor, now);
     } else {
-      long originUsage = Math.multiplyExact(receipt.getEnergyTotal(), percent) / 100;
+      long originUsage = Math.multiplyExact(receipt.getEnergyUsageTotal(), percent) / 100;
       originUsage = Math
           .min(originUsage, energyProcessor.getAccountLeftEnergyFromFreeze(origin));
-      long callerUsage = receipt.getEnergyTotal() - originUsage;
+      long callerUsage = receipt.getEnergyUsageTotal() - originUsage;
       energyProcessor.useEnergy(origin, originUsage, now);
       this.setOriginEnergyUsage(originUsage);
       payEnergyBill(manager, caller, callerUsage, energyProcessor, now);
@@ -116,7 +116,11 @@ public class ReceiptCapsule {
       this.setEnergyUsage(usage);
     } else {
       energyProcessor.useEnergy(account, accountEnergyLeft, now);
-      long energyFee = (usage - accountEnergyLeft) * Constant.SUN_PER_ENERGY;
+      long SUN_PER_ENERGY = manager.getDynamicPropertiesStore().getEnergyFee() == 0
+          ? Constant.SUN_PER_ENERGY
+          : manager.getDynamicPropertiesStore().getEnergyFee();
+      long energyFee =
+          (usage - accountEnergyLeft) * SUN_PER_ENERGY;
       this.setEnergyUsage(accountEnergyLeft);
       this.setEnergyFee(energyFee);
       account.setBalance(account.getBalance() - energyFee);

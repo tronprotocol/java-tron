@@ -53,7 +53,7 @@ public class WalletTestAccount010 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(account010Key);
     PublicMethed.printAddress(account010SecondKey);
@@ -71,7 +71,7 @@ public class WalletTestAccount010 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testGetStorage() {
     Account account010Info = PublicMethed.queryAccount(account010Key,blockingStubFull);
     Assert.assertTrue(account010Info.getAccountResource().getStorageLimit() == 0);
@@ -89,7 +89,7 @@ public class WalletTestAccount010 {
     Assert.assertTrue(account010Resource.getStorageLimit() > 0);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testSellStorage() {
     AccountResourceMessage account010Resource = PublicMethed.getAccountResource(account010Address,
         blockingStubFull);
@@ -118,7 +118,7 @@ public class WalletTestAccount010 {
 
 
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

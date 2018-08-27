@@ -9,7 +9,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -27,12 +27,12 @@ public class KhaosDatabaseTest {
 
   private static final String dbPath = "output-khaosDatabase-test";
   private static KhaosDatabase khaosDatabase;
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath},
         Constant.TEST_CONF);
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    context = new TronApplicationContext(DefaultConfig.class);
   }
 
   @BeforeClass

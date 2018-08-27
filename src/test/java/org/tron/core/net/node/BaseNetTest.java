@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.overlay.client.PeerClient;
@@ -39,7 +39,7 @@ import org.tron.core.services.WitnessService;
 @Slf4j
 public abstract class BaseNetTest {
 
-  protected static AnnotationConfigApplicationContext context;
+  protected static TronApplicationContext context;
   protected NodeImpl node;
   protected RpcApiService rpcApiService;
   protected PeerClient peerClient;
@@ -84,7 +84,7 @@ public abstract class BaseNetTest {
         cfgArgs.setNeedSyncCheck(false);
         cfgArgs.setNodeExternalIp("127.0.0.1");
 
-        context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+        context = new TronApplicationContext(DefaultConfig.class);
 
         if (cfgArgs.isHelp()) {
           logger.info("Here is the help message.");

@@ -129,6 +129,12 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         return;
       }
+      case (9):{
+        if(entry.getValue() != 1){
+          throw new ContractValidateException(
+              "This value[ALLOW_CREATION_OF_CONTRACTS] is only allowed to be 1");
+        }
+      }
       case (10):{
         if(dbManager.getDynamicPropertiesStore().getRemoveThePowerOfTheGr() == -1){
           throw new ContractValidateException(

@@ -75,5 +75,6 @@ public class ArgsTest {
     Assert.assertEquals(Long.MAX_VALUE, args.getMaxConnectionAgeInMillis());
     Assert.assertEquals(GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE, args.getMaxMessageSize());
     Assert.assertEquals(GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE, args.getMaxHeaderListSize());
+    Assert.assertEquals(1L, args.getAllowCreationOfContracts());
   }
 }

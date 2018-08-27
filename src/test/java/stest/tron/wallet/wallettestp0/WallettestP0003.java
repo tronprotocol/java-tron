@@ -72,7 +72,7 @@ public class WallettestP0003 {
     searchBlockingStubFull = WalletGrpc.newBlockingStub(searchChannelFull);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testVoteWitness() {
     String voteStr = "TB4B1RMhoPeivkj4Hebm6tttHjRY9yQFes";
     HashMap<String, String> smallVoteMap = new HashMap<String, String>();

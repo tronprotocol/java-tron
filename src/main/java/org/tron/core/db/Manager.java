@@ -24,6 +24,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
 import javax.annotation.PostConstruct;
@@ -40,6 +41,7 @@ import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ForkController;
 import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
@@ -103,8 +105,6 @@ public class Manager {
   @Autowired
   private BlockStore blockStore;
   @Autowired
-  private UtxoStore utxoStore;
-  @Autowired
   private WitnessStore witnessStore;
   @Autowired
   private AssetIssueStore assetIssueStore;
@@ -115,8 +115,6 @@ public class Manager {
   @Autowired
   private AccountIdIndexStore accountIdIndexStore;
   @Autowired
-  private AccountContractIndexStore accountContractIndexStore;
-  @Autowired
   private WitnessScheduleStore witnessScheduleStore;
   @Autowired
   private RecentBlockStore recentBlockStore;
@@ -124,6 +122,8 @@ public class Manager {
   private VotesStore votesStore;
   @Autowired
   private ProposalStore proposalStore;
+  @Autowired
+  private ExchangeStore exchangeStore;
   @Autowired
   private TransactionHistoryStore transactionHistoryStore;
   @Autowired
@@ -169,9 +169,17 @@ public class Manager {
 
   private ExecutorService validateSignService;
 
+  private Thread repushThread;
+
+  private boolean isRunRepushThread = true;
+
   @Getter
   private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
       .newBuilder().maximumSize(100_000).recordStats().build();
+
+  @Getter
+  @Autowired
+  private ForkController forkController;
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -211,6 +219,10 @@ public class Manager {
 
   public ProposalStore getProposalStore() {
     return this.proposalStore;
+  }
+
+  public ExchangeStore getExchangeStore() {
+    return this.exchangeStore;
   }
 
   public List<TransactionCapsule> getPendingTransactions() {
@@ -297,11 +309,6 @@ public class Manager {
     this.peersStore.put("neighbours".getBytes(), nodes);
   }
 
-
-  public AccountContractIndexStore getAccountContractIndexStore() {
-    return accountContractIndexStore;
-  }
-
   public Set<Node> readNeighbours() {
     return this.peersStore.get("neighbours".getBytes());
   }
@@ -311,12 +318,14 @@ public class Manager {
    */
   private Runnable repushLoop =
       () -> {
-        while (true) {
+        while (isRunRepushThread) {
           try {
-            TransactionCapsule tx = this.getRepushTransactions().take();
-            this.rePush(tx);
+            TransactionCapsule tx = this.getRepushTransactions().poll(1, TimeUnit.SECONDS);
+            if (tx != null) {
+              this.rePush(tx);
+            }
           } catch (InterruptedException ex) {
-            logger.info("repushLoop interrupted");
+            logger.error(ex.getMessage());
             Thread.currentThread().interrupt();
           } catch (Exception ex) {
             logger.error("unknown exception happened in witness loop", ex);
@@ -326,10 +335,8 @@ public class Manager {
         }
       };
 
-  private Thread repushThread;
-
-  public Thread getRepushThread() {
-    return repushThread;
+  public void stopRepushThread() {
+    isRunRepushThread = false;
   }
 
   @PostConstruct
@@ -361,6 +368,7 @@ public class Manager {
           Args.getInstance().getOutputDirectory());
       System.exit(1);
     }
+    forkController.init(this);
     revokingStore.enable();
 
 //    this.codeStore = CodeStore.create("code");
@@ -675,6 +683,7 @@ public class Manager {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
+    updateFork();
   }
 
   private void switchFork(BlockCapsule newHead)
@@ -1001,6 +1010,7 @@ public class Manager {
     if (trxCap == null) {
       return false;
     }
+
     validateTapos(trxCap);
     validateCommon(trxCap);
 
@@ -1008,6 +1018,7 @@ public class Manager {
       throw new ContractSizeNotEqualToOneException(
           "act size should be exactly 1, this is extend feature");
     }
+    forkController.hardFork(trxCap);
 
     validateDup(trxCap);
 
@@ -1023,8 +1034,11 @@ public class Manager {
 //    }
 
     DepositImpl deposit = DepositImpl.createRoot(this);
-    Runtime runtime = new Runtime(trace, block, deposit,
-        new ProgramInvokeFactoryImpl());
+    Runtime runtime = new Runtime(trace, block, deposit, new ProgramInvokeFactoryImpl());
+    if (runtime.isCallConstant()) {
+      // Fixme Wrong exception
+      throw new UnsupportVMException("cannot call constant method ");
+    }
     consumeBandwidth(trxCap, runtime.getResult().getRet(), trace);
 
     trace.init();
@@ -1033,6 +1047,7 @@ public class Manager {
 
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
 
+    // TODO to remove?
     RuntimeException runtimeException = runtime.getResult().getException();
     ReceiptCapsule traceReceipt = trace.getReceipt();
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
@@ -1209,14 +1224,6 @@ public class Manager {
     this.blockStore = blockStore;
   }
 
-  public UtxoStore getUtxoStore() {
-    return this.utxoStore;
-  }
-
-  private void setUtxoStore(final UtxoStore utxoStore) {
-    this.utxoStore = utxoStore;
-  }
-
   /**
    * process block.
    */
@@ -1300,6 +1307,20 @@ public class Manager {
     logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
   }
 
+  public void updateFork() {
+    if (forkController.shouldBeForked()) {
+      return;
+    }
+
+    try {
+      long latestSolidifiedBlockNum = dynamicPropertiesStore.getLatestSolidifiedBlockNum();
+      BlockCapsule solidifiedBlock = getBlockByNum(latestSolidifiedBlockNum);
+      forkController.update(solidifiedBlock);
+    } catch (ItemNotFoundException | BadItemException e) {
+      logger.error("solidified block not found");
+    }
+  }
+
   public long getSyncBeginNumber() {
     logger.info("headNumber:" + dynamicPropertiesStore.getLatestBlockHeaderNumber());
     logger.info(
@@ -1332,6 +1353,7 @@ public class Manager {
     proposalController.processProposals();
     witnessController.updateWitness();
     this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
+    forkController.reset();
   }
 
   /**
@@ -1419,7 +1441,6 @@ public class Manager {
     closeOneStore(assetIssueStore);
     closeOneStore(dynamicPropertiesStore);
     closeOneStore(transactionStore);
-    closeOneStore(utxoStore);
     closeOneStore(codeStore);
     closeOneStore(contractStore);
     closeOneStore(storageRowStore);

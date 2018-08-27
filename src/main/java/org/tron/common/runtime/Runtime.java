@@ -3,6 +3,7 @@ package org.tron.common.runtime;
 import static com.google.common.primitives.Longs.max;
 import static com.google.common.primitives.Longs.min;
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
+import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.utils.MUtil.transfer;
 import static org.tron.common.runtime.vm.VMUtils.saveProgramTraceFile;
 import static org.tron.common.runtime.vm.VMUtils.zipAndEncode;
@@ -25,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.config.SystemProperties;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.runtime.vm.VM;
 import org.tron.common.runtime.vm.program.InternalTransaction;
@@ -277,17 +279,23 @@ public class Runtime {
     }
   }
 
-  private long getEnergyLimit(AccountCapsule account, long feeLimit) {
+  private long getEnergyLimit(AccountCapsule account, long feeLimit, long callValue) {
 
+    long SUN_PER_ENERGY = deposit.getDbManager().getDynamicPropertiesStore().getEnergyFee() == 0
+        ? Constant.SUN_PER_ENERGY :
+        deposit.getDbManager().getDynamicPropertiesStore().getEnergyFee();
     // can change the calc way
     long leftEnergyFromFreeze = energyProcessor.getAccountLeftEnergyFromFreeze(account);
-    long energyFromBalance = Math.floorDiv(account.getBalance(), Constant.SUN_PER_ENERGY);
+    callValue = max(callValue, 0);
+    long energyFromBalance = Math
+        .floorDiv(max(account.getBalance() - callValue, 0), SUN_PER_ENERGY);
 
     long energyFromFeeLimit;
     long totalBalanceForEnergyFreeze = account.getAccountResource().getFrozenBalanceForEnergy()
         .getFrozenBalance();
     if (0 == totalBalanceForEnergyFreeze) {
-      energyFromFeeLimit = feeLimit / Constant.SUN_PER_ENERGY;
+      energyFromFeeLimit =
+          feeLimit / SUN_PER_ENERGY;
     } else {
       long totalEnergyFromFreeze = energyProcessor
           .calculateGlobalEnergyLimit(totalBalanceForEnergyFreeze);
@@ -302,7 +310,7 @@ public class Runtime {
       } else {
         energyFromFeeLimit = Math
             .addExact(leftEnergyFromFreeze,
-                (feeLimit - leftBalanceForEnergyFreeze) / Constant.SUN_PER_ENERGY);
+                (feeLimit - leftBalanceForEnergyFreeze) / SUN_PER_ENERGY);
       }
     }
 
@@ -310,9 +318,9 @@ public class Runtime {
   }
 
   private long getEnergyLimit(AccountCapsule creator, AccountCapsule caller,
-      TriggerSmartContract contract, long feeLimit) {
+      TriggerSmartContract contract, long feeLimit, long callValue) {
 
-    long callerEnergyLimit = getEnergyLimit(caller, feeLimit);
+    long callerEnergyLimit = getEnergyLimit(caller, feeLimit, callValue);
     if (Arrays.equals(creator.getAddress().toByteArray(), caller.getAddress().toByteArray())) {
       return callerEnergyLimit;
     }
@@ -332,7 +340,7 @@ public class Runtime {
 
     if (creatorEnergyLimit * consumeUserResourcePercent
         >= (100 - consumeUserResourcePercent) * callerEnergyLimit) {
-      return 100 * Math.floorDiv(callerEnergyLimit, consumeUserResourcePercent);
+      return Math.floorDiv(callerEnergyLimit * 100, consumeUserResourcePercent);
     } else {
       return Math.addExact(callerEnergyLimit, creatorEnergyLimit);
     }
@@ -342,6 +350,10 @@ public class Runtime {
    **/
   private void create()
       throws ContractExeException, ContractValidateException {
+    if (!deposit.getDbManager().getDynamicPropertiesStore().supportVM()) {
+      throw new ContractExeException("vm work is off, need to be opened by the committee");
+    }
+
     CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
     SmartContract newSmartContract = contract.getNewContract();
 
@@ -353,12 +365,6 @@ public class Runtime {
     if (percent < 0 || percent > 100) {
       throw new ContractExeException("percent must be >= 0 and <= 100");
     }
-    // insure one owner just have one contract
-    // if (this.deposit.getContractByNormalAccount(ownerAddress) != null) {
-    //   logger.error("Trying to create second contract with one account: address: " + Wallet
-    //       .encode58Check(ownerAddress));
-    //   return;
-    // }
 
     // insure the new contract address haven't exist
     if (deposit.getAccount(contractAddress) != null) {
@@ -369,7 +375,7 @@ public class Runtime {
 
     newSmartContract = newSmartContract.toBuilder()
         .setContractAddress(ByteString.copyFrom(contractAddress)).build();
-
+    long callValue = newSmartContract.getCallValue();
     // create vm to constructor smart contract
     try {
 
@@ -393,16 +399,18 @@ public class Runtime {
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
       long feeLimit = trx.getRawData().getFeeLimit();
-      long energyLimit = getEnergyLimit(creator, feeLimit);
+      long energyLimit = getEnergyLimit(creator, feeLimit, callValue);
       byte[] ops = newSmartContract.getBytecode().toByteArray();
       InternalTransaction internalTransaction = new InternalTransaction(trx);
 
-      // todo: callvalue should pass into this function
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executorType, trx,
               block, deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
       this.vm = new VM(config);
       this.program = new Program(ops, programInvoke, internalTransaction, config);
+      Program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
+      Program.resetNonce();
+      Program.setRootCallConstant(isCallConstant());
     } catch (Exception e) {
       logger.error(e.getMessage());
       throw new ContractExeException(e.getMessage());
@@ -419,7 +427,6 @@ public class Runtime {
 
     // transfer from callerAddress to contractAddress according to callValue
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
-    long callValue = newSmartContract.getCallValue();
     if (callValue > 0) {
       transfer(this.deposit, callerAddress, contractAddress, callValue);
     }
@@ -432,6 +439,11 @@ public class Runtime {
 
   private void call()
       throws ContractExeException, ContractValidateException {
+
+    if (!deposit.getDbManager().getDynamicPropertiesStore().supportVM()) {
+      throw new ContractExeException("VM work is off, need to be opened by the committee");
+    }
+
     Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
     if (contract == null) {
       return;
@@ -439,6 +451,7 @@ public class Runtime {
 
     byte[] contractAddress = contract.getContractAddress().toByteArray();
     byte[] code = this.deposit.getCode(contractAddress);
+    long callValue = contract.getCallValue();
     if (isEmpty(code)) {
 
     } else {
@@ -461,7 +474,7 @@ public class Runtime {
       long feeLimit = trx.getRawData().getFeeLimit();
       long energyLimit;
       try {
-        energyLimit = getEnergyLimit(creator, caller, contract, feeLimit);
+        energyLimit = getEnergyLimit(creator, caller, contract, feeLimit, callValue);
       } catch (Exception e) {
         logger.error(e.getMessage());
         throw new ContractExeException(e.getMessage());
@@ -477,19 +490,21 @@ public class Runtime {
       this.vm = new VM(config);
       InternalTransaction internalTransaction = new InternalTransaction(trx);
       this.program = new Program(null, code, programInvoke, internalTransaction, config);
+      Program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
+      Program.resetNonce();
+      Program.setRootCallConstant(isCallConstant());
     }
 
     program.getResult().setContractAddress(contractAddress);
     //transfer from callerAddress to targetAddress according to callValue
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
-    long callValue = contract.getCallValue();
     if (callValue > 0) {
       transfer(this.deposit, callerAddress, contractAddress, callValue);
     }
 
   }
 
-  public void go() throws OutOfSlotTimeException, ContractExeException {
+  public void go() throws OutOfSlotTimeException {
     if (!readyToExecute) {
       return;
     }
@@ -500,6 +515,7 @@ public class Runtime {
 
         program.getResult().setRet(result.getRet());
         result = program.getResult();
+
         if (isCallConstant()) {
           long callValue = TransactionCapsule.getCallValue(trx.getRawData().getContract(0));
           if (callValue > 0) {
@@ -508,47 +524,37 @@ public class Runtime {
           return;
         }
 
-        // todo: consume bandwidth for successful creating contract
-
         if (result.getException() != null || result.isRevert()) {
           result.getDeleteAccounts().clear();
           result.getLogInfoList().clear();
           result.resetFutureRefund();
-          if (!result.isRevert()){
-            program.spendAllEnergy();
-          }
-          // spendUsage();
+
           if (result.getException() != null) {
+            program.spendAllEnergy();
             runtimeError = result.getException().getMessage();
             throw result.getException();
           } else {
             runtimeError = "REVERT opcode executed";
           }
         } else {
-          // long usedStorageSize =
-          //     deposit.computeAfterRunStorageSize() - deposit.getBeforeRunStorageSize();
-          // if (!spendUsage()) {
-          //   throw Program.Exception.notEnoughStorage();
-          // }
           deposit.commit();
         }
-
       } else {
         deposit.commit();
       }
-      trace.setBill(result.getEnergyUsed());
     } catch (OutOfResourceException e) {
-      logger.error(e.getMessage());
+      logger.error("runtime error is :{}", e.getMessage());
       throw new OutOfSlotTimeException(e.getMessage());
-    } catch (ArithmeticException e) {
-      logger.error(e.getMessage());
-      throw new ContractExeException(e.getMessage());
-    } catch (Exception e) {
-      logger.error(e.getMessage());
-      if (StringUtils.isNoneEmpty(runtimeError)) {
-        runtimeError = e.getMessage();
+    } catch (Throwable e) {
+      if (Objects.isNull(result.getException())) {
+        result.setException(new RuntimeException("Unknown Throwable"));
       }
+      if (StringUtils.isEmpty(runtimeError)) {
+        runtimeError = result.getException().getMessage();
+      }
+      logger.error("runtime error is :{}", result.getException().getMessage());
     }
+    trace.setBill(result.getEnergyUsed());
   }
 
   private long getEnergyFee(long callerEnergyUsage, long callerEnergyFrozen,
@@ -560,10 +566,14 @@ public class Runtime {
         .divide(BigInteger.valueOf(callerEnergyTotal)).longValue();
   }
 
-  private boolean isCallConstant() {
+  public boolean isCallConstant() {
+    TriggerSmartContract triggerContractFromTransaction = ContractCapsule
+        .getTriggerContractFromTransaction(trx);
     if (TRX_CONTRACT_CALL_TYPE.equals(trxType)) {
-      ABI abi = deposit.getContract(result.getContractAddress()).getInstance().getAbi();
-      if (Wallet.isConstant(abi, ContractCapsule.getTriggerContractFromTransaction(trx))) {
+      ABI abi = deposit
+          .getContract(triggerContractFromTransaction.getContractAddress().toByteArray())
+          .getInstance().getAbi();
+      if (Wallet.isConstant(abi, triggerContractFromTransaction)) {
         return true;
       }
     }
@@ -581,6 +591,10 @@ public class Runtime {
   }
 
   public void finalization() {
+    for (DataWord contract : result.getDeleteAccounts()) {
+      deposit.deleteContract(convertToTronAddress((contract.getLast20Bytes())));
+    }
+
     if (config.vmTrace() && program != null && result != null) {
       String trace = program.getTrace()
           .result(result.getHReturn())

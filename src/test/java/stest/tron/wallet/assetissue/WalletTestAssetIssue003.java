@@ -185,11 +185,6 @@ public class WalletTestAssetIssue003 {
       //Test not in the duration time, participate failed.
       Assert.assertFalse(PublicMethed.participateAssetIssue(fromAddress, name.getBytes(), 1L,
           toAddress, testKey003,blockingStubFull));
-      //Test another address try to create the same name asset issue, create failed.
-      Assert.assertFalse(PublicMethed.createAssetIssue(toAddress, name, totalSupply, 1, 10,
-          start, end, 2, description, url, 10000L,10000L,
-          1L, 3652L, testKey003,blockingStubFull));
-
       try {
         Thread.sleep(4000);
       } catch (InterruptedException e) {
