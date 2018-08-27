@@ -26,7 +26,6 @@ import org.tron.common.storage.Key;
 import org.tron.common.storage.Value;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
@@ -68,6 +67,11 @@ public class ContractState implements Deposit, ProgramListenerAware {
   @Override
   public AccountCapsule getAccount(byte[] addr) {
     return deposit.getAccount(addr);
+  }
+
+  @Override
+  public void deleteContract(byte[] address) {
+    deposit.deleteContract(address);
   }
 
   @Override

@@ -3,6 +3,7 @@ package org.tron.common.runtime;
 import static com.google.common.primitives.Longs.max;
 import static com.google.common.primitives.Longs.min;
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
+import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.utils.MUtil.transfer;
 import static org.tron.common.runtime.vm.VMUtils.saveProgramTraceFile;
 import static org.tron.common.runtime.vm.VMUtils.zipAndEncode;
@@ -25,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.config.SystemProperties;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.runtime.vm.VM;
 import org.tron.common.runtime.vm.program.InternalTransaction;
@@ -349,7 +351,7 @@ public class Runtime {
   private void create()
       throws ContractExeException, ContractValidateException {
     if (!deposit.getDbManager().getDynamicPropertiesStore().supportVM()) {
-      throw new ContractExeException("VM work is off, need to be opened by the committee");
+      throw new ContractExeException("vm work is off, need to be opened by the committee");
     }
 
     CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
@@ -589,6 +591,10 @@ public class Runtime {
   }
 
   public void finalization() {
+    for (DataWord contract : result.getDeleteAccounts()) {
+      deposit.deleteContract(convertToTronAddress((contract.getLast20Bytes())));
+    }
+
     if (config.vmTrace() && program != null && result != null) {
       String trace = program.getTrace()
           .result(result.getHReturn())

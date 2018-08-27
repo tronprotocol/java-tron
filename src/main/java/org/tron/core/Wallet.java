@@ -826,20 +826,19 @@ public class Wallet {
 
   public Transaction triggerContract(TriggerSmartContract triggerSmartContract,
       TransactionCapsule trxCap, Builder builder,
-      Return.Builder retBuilder) {
+      Return.Builder retBuilder) throws ContractValidateException {
 
     ContractStore contractStore = dbManager.getContractStore();
     byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
     SmartContract.ABI abi = contractStore.getABI(contractAddress);
     if (abi == null) {
-      // FIXME
-      return null;
+      throw new ContractValidateException("No contract or not a smart contract");
     }
 
     try {
       byte[] selector = getSelector(triggerSmartContract.getData().toByteArray());
       if (selector == null) {
-        // FIXME
+        // FIXME should trigger fallback method
         return null;
       }
 
