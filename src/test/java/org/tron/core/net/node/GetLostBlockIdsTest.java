@@ -52,13 +52,16 @@ public class GetLostBlockIdsTest {
 
     @Test
     public void testGetLostBlockIds(){
+        Collection<PeerConnection> activePeers = ReflectUtils.invokeMethod(node, "getActivePeer");
+        Object[] peers = activePeers.toArray();
+        PeerConnection peer_me = (PeerConnection) peers[0];
         NodeDelegate del = ReflectUtils.getFieldValue(node, "del");
-        List<BlockId> blockChainSummary;
+        List<BlockId> blockChainSummary = null;
         LinkedList<BlockId> blockIds = null;
 
         long number;
         Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
-        BlockCapsule capsule;
+        BlockCapsule capsule = null;
         for (int i = 0; i<5; i++) {
             number = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1;
             capsule = createTestBlockCapsule(1533529947843L + 3000L * i ,number, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(), addressToProvateKeys);
@@ -71,7 +74,7 @@ public class GetLostBlockIdsTest {
 
         //blockChainSummary is empty
         try {
-            blockChainSummary = new ArrayList<>();
+            blockChainSummary = new ArrayList<BlockId>();
             blockIds = del.getLostBlockIds(blockChainSummary);
         } catch (StoreException e) {
             e.printStackTrace();
@@ -80,7 +83,7 @@ public class GetLostBlockIdsTest {
 
         //blockChainSummary only have a genesis block
         try {
-            blockChainSummary = new ArrayList<>();
+            blockChainSummary = new ArrayList<BlockId>();
             blockChainSummary.add(dbManager.getGenesisBlockId());
             blockIds = del.getLostBlockIds(blockChainSummary);
         }catch (StoreException e) {
@@ -91,7 +94,7 @@ public class GetLostBlockIdsTest {
         //blockChainSummary have genesis block、2nd block、3rd block
         BlockId except_first_block = null;
         try {
-            blockChainSummary = new ArrayList<>();
+            blockChainSummary = new ArrayList<BlockId>();
             blockChainSummary.add(dbManager.getGenesisBlockId());
             blockChainSummary.add(dbManager.getBlockIdByNum(2));
             blockChainSummary.add(dbManager.getBlockIdByNum(3));
@@ -112,14 +115,14 @@ public class GetLostBlockIdsTest {
                     Sha256Hash.wrap(ByteString.copyFrom(
                             ByteArray.fromHexString("00000000000000042498b464ac0292229938a342238077182498b464ac029222"))),
                     1234, ByteString.copyFrom("abcdefg".getBytes()));
-            blockChainSummary = new ArrayList<>();
+            blockChainSummary = new ArrayList<BlockId>();
             blockChainSummary.add(capsule2.getBlockId());
             blockChainSummary.add(capsule4.getBlockId());
             blockIds = del.getLostBlockIds(blockChainSummary);
         }catch (StoreException e) {
             e.printStackTrace();
         }
-        Assert.assertEquals(blockIds.size(), 0);
+        Assert.assertTrue(blockIds.size() == 0);
 
         //blockChainSummary have 2nd block(main chain)、4th block(fork chain)
         try {
@@ -127,7 +130,7 @@ public class GetLostBlockIdsTest {
                     Sha256Hash.wrap(ByteString.copyFrom(
                             ByteArray.fromHexString("00000000000000042498b464ac0292229938a342238077182498b464ac029222"))),
                     1234, ByteString.copyFrom("abcdefg".getBytes()));
-            blockChainSummary = new ArrayList<>();
+            blockChainSummary = new ArrayList<BlockId>();
             blockChainSummary.add(dbManager.getBlockIdByNum(2));
             blockChainSummary.add(capsule4.getBlockId());
             except_first_block = dbManager.getBlockIdByNum(2);
