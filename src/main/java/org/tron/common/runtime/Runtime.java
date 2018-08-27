@@ -3,6 +3,7 @@ package org.tron.common.runtime;
 import static com.google.common.primitives.Longs.max;
 import static com.google.common.primitives.Longs.min;
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
+import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.utils.MUtil.transfer;
 import static org.tron.common.runtime.vm.VMUtils.saveProgramTraceFile;
 import static org.tron.common.runtime.vm.VMUtils.zipAndEncode;
@@ -25,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.config.SystemProperties;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.runtime.vm.VM;
 import org.tron.common.runtime.vm.program.InternalTransaction;
@@ -348,6 +350,10 @@ public class Runtime {
    **/
   private void create()
       throws ContractExeException, ContractValidateException {
+    if (!deposit.getDbManager().getDynamicPropertiesStore().supportVM()) {
+      throw new ContractExeException("vm work is off, need to be opened by the committee");
+    }
+
     CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
     SmartContract newSmartContract = contract.getNewContract();
 
@@ -404,6 +410,7 @@ public class Runtime {
       this.program = new Program(ops, programInvoke, internalTransaction, config);
       Program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
       Program.resetNonce();
+      Program.setRootCallConstant(isCallConstant());
     } catch (Exception e) {
       logger.error(e.getMessage());
       throw new ContractExeException(e.getMessage());
@@ -432,6 +439,11 @@ public class Runtime {
 
   private void call()
       throws ContractExeException, ContractValidateException {
+
+    if (!deposit.getDbManager().getDynamicPropertiesStore().supportVM()) {
+      throw new ContractExeException("VM work is off, need to be opened by the committee");
+    }
+
     Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
     if (contract == null) {
       return;
@@ -480,6 +492,7 @@ public class Runtime {
       this.program = new Program(null, code, programInvoke, internalTransaction, config);
       Program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
       Program.resetNonce();
+      Program.setRootCallConstant(isCallConstant());
     }
 
     program.getResult().setContractAddress(contractAddress);
@@ -502,6 +515,7 @@ public class Runtime {
 
         program.getResult().setRet(result.getRet());
         result = program.getResult();
+
         if (isCallConstant()) {
           long callValue = TransactionCapsule.getCallValue(trx.getRawData().getContract(0));
           if (callValue > 0) {
@@ -509,8 +523,6 @@ public class Runtime {
           }
           return;
         }
-
-        // todo: consume bandwidth for successful creating contract
 
         if (result.getException() != null || result.isRevert()) {
           result.getDeleteAccounts().clear();
@@ -527,7 +539,6 @@ public class Runtime {
         } else {
           deposit.commit();
         }
-
       } else {
         deposit.commit();
       }
@@ -555,10 +566,14 @@ public class Runtime {
         .divide(BigInteger.valueOf(callerEnergyTotal)).longValue();
   }
 
-  private boolean isCallConstant() {
+  public boolean isCallConstant() {
+    TriggerSmartContract triggerContractFromTransaction = ContractCapsule
+        .getTriggerContractFromTransaction(trx);
     if (TRX_CONTRACT_CALL_TYPE.equals(trxType)) {
-      ABI abi = deposit.getContract(result.getContractAddress()).getInstance().getAbi();
-      if (Wallet.isConstant(abi, ContractCapsule.getTriggerContractFromTransaction(trx))) {
+      ABI abi = deposit
+          .getContract(triggerContractFromTransaction.getContractAddress().toByteArray())
+          .getInstance().getAbi();
+      if (Wallet.isConstant(abi, triggerContractFromTransaction)) {
         return true;
       }
     }
@@ -576,6 +591,10 @@ public class Runtime {
   }
 
   public void finalization() {
+    for (DataWord contract : result.getDeleteAccounts()) {
+      deposit.deleteContract(convertToTronAddress((contract.getLast20Bytes())));
+    }
+
     if (config.vmTrace() && program != null && result != null) {
       String trace = program.getTrace()
           .result(result.getHReturn())

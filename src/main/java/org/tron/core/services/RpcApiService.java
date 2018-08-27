@@ -1305,28 +1305,24 @@ public class RpcApiService implements Service {
         StreamObserver<TransactionExtention> responseObserver) {
       TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
       Return.Builder retBuilder = Return.newBuilder();
-      Transaction trx = Transaction.newBuilder().build();
       try {
         TransactionCapsule trxCap = createTransactionCapsule(request,
             ContractType.TriggerSmartContract);
-        trx = wallet.triggerContract(request, trxCap, trxExtBuilder, retBuilder);
+        Transaction trx = wallet.triggerContract(request, trxCap, trxExtBuilder, retBuilder);
         trxExtBuilder.setTransaction(trx);
         trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
         retBuilder.setResult(true).setCode(response_code.SUCCESS);
       } catch (ContractValidateException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()));
-        logger.debug("ContractValidateException: {}", e.getMessage());
-        // FIXME
-        return;
+        trxExtBuilder.setResult(retBuilder);
+        logger.warn("ContractValidateException: {}", e.getMessage(), e);
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        logger.info("exception caught" + e.getMessage());
-        return;
-      } finally {
         trxExtBuilder.setResult(retBuilder);
-        trxExtBuilder.setTransaction(trx);
+        logger.warn("exception caught" + e.getMessage(), e);
+      } finally {
         responseObserver.onNext(trxExtBuilder.build());
         responseObserver.onCompleted();
       }

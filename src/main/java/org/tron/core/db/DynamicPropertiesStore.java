@@ -387,7 +387,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowCreationOfContracts();
     } catch (IllegalArgumentException e) {
-      this.saveAllowCreationOfContracts(0L);
+      this.saveAllowCreationOfContracts(Args.getInstance().getAllowCreationOfContracts());
     }
 
     try {
