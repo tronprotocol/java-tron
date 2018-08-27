@@ -7,6 +7,7 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @program: java-tron
@@ -48,8 +49,27 @@ public class AdvBlockDisorder {
         return map.get(block.getBlockId());
     }
 
+    public PeerAndBlockCapsule getNextBlockAndRemove(BlockCapsule block){
+        PeerAndBlockCapsule blockPeer = map.get(block.getBlockId());
+        if(blockPeer != null){
+            map.remove(block.getBlockId());
+        }
+        return blockPeer;
+    }
+
     public void clear(){
         this.map.clear();
+    }
+
+    public void cleanUnusedBlock(BlockCapsule.BlockId blockId){
+        long solidBlockNum = blockId.getNum();
+        for(Map.Entry entry: map.entrySet()){
+            BlockCapsule block = (BlockCapsule)entry.getValue();
+            if(block.getNum() < solidBlockNum){
+                Sha256Hash hash = (Sha256Hash) entry.getValue();
+                map.remove(hash);
+            }
+        }
     }
 
     class PeerAndBlockCapsule{
