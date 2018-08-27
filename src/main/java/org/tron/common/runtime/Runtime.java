@@ -340,7 +340,7 @@ public class Runtime {
 
     if (creatorEnergyLimit * consumeUserResourcePercent
         >= (100 - consumeUserResourcePercent) * callerEnergyLimit) {
-      return 100 * Math.floorDiv(callerEnergyLimit, consumeUserResourcePercent);
+      return Math.floorDiv(callerEnergyLimit * 100, consumeUserResourcePercent);
     } else {
       return Math.addExact(callerEnergyLimit, creatorEnergyLimit);
     }
