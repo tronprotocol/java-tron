@@ -727,9 +727,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           isFetchSyncActive = true;
         }
       }
-    }
-
-    if (advObjWeRequested.containsKey(item)) {
+    } else if (advObjWeRequested.containsKey(item)) {
       advObjWeRequested.remove(item);
       if (!syncFlag) {
         processAdvBlock(peer, blkMsg.getBlockCapsule());
@@ -737,6 +735,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
     } else {
       if (!syncFlag) {//not we request and not sync,disconnect
+        logger.error("not we request and not sync, disconnect : {}", peer.getInetAddress());
         banTraitorPeer(peer, ReasonCode.BAD_PROTOCOL);
       }
     }
