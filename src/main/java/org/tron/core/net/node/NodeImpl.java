@@ -481,11 +481,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
     InvToSend sendPackage = new InvToSend();
     long now = Time.getCurrentMillis();
-    Iterator iter = advObjToFetch.values().iterator();
-    while(iter.hasNext()){
-      PriorItem item = (PriorItem)iter.next();
-      logger.info("advObjToFetch id:" + item.getHash() + " count:" +item.getCount());
-    }
     advObjToFetch.values().stream().sorted(PriorItem::compareTo).forEach(idToFetch -> {
       Sha256Hash hash = idToFetch.getHash();
       if (idToFetch.getTime() < now - MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL) {
@@ -560,7 +555,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         blockJustReceived.clear();
       }
 
-      logger.info("blockWaitToProc size: " + blockWaitToProc.size());
       blockWaitToProc.forEach((msg, peerConnection) -> {
 
         if (peerConnection.isDisconnect()) {
@@ -585,7 +579,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
               });
           if (isFound[0]) {
             blockWaitToProc.remove(msg);
-            logger.info("blockWaitToProc remove: " + msg.getBlockCapsule().getNum());
             isBlockProc[0] = true;
             if (freshBlockId.contains(msg.getBlockId()) || processSyncBlock(
                 msg.getBlockCapsule())) {
@@ -746,7 +739,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       advObjWeRequested.remove(item);
       if (!syncFlag) {
         processAdvBlock(peer, blkMsg.getBlockCapsule());
-        logger.info("peer: {}, send the block {} to me!", peer.getNode().getHost(), blkMsg.getBlockId());
         startFetchItem();
       }
     } else {
@@ -758,32 +750,27 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   //if the block been processed successfully, continue processed his child block if exsits.
   private void processAdvBlock(PeerConnection peer, BlockCapsule block) {
-    logger.info("handle adv block!");
     if(advObjWeRequested.keySet().contains(block.getParentHash())){
       // receive a disordered block we have requested.
       advBlockDisorder.add(peer, block);
       logger.info("receive a disordered block:{}, parentHash:{}", block.getBlockId().getString(), block.getParentHash());
     }else{
       // receive an ordered block we have requested, try to push block
-      logger.info("receive a ordered block:{}, parentHash:{} from peer: {}", block.getBlockId().getString(), block.getParentHash(), peer.getNode().getHost());
       advObjWeRequested.remove(block.getBlockId());
       boolean isSuccess = true;
       while (isSuccess) {
         isSuccess = realProcessAdvBlock(peer, block);
-        logger.info("ordered block {} is handled successfully!", block.getBlockId().getString());
         if (isSuccess) {
           // if push block success, we try to find his child block and continue push
-          BlockCapsule nextBlock = advBlockDisorder.getNextBlock(block);
-          peer = advBlockDisorder.getNextPeer(block);
+          AdvBlockDisorder.PeerAndBlockCapsule blockAndPeer = advBlockDisorder.get(block);
+          BlockCapsule nextBlock = blockAndPeer.getBlockCapsule();
+          peer = blockAndPeer.getPeer();
           if(nextBlock == null){
-            logger.info("do not find next block!");
             break;
           }
           advBlockDisorder.remove(block);
           block = nextBlock;
-          logger.info("handle next block {}", block.getBlockId().getString());
         }else{
-          logger.info("unlink because of we not have chain, start sync!");
           advBlockDisorder.remove(block);
         }
       }

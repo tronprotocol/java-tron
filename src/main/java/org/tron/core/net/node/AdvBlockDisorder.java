@@ -44,20 +44,12 @@ public class AdvBlockDisorder {
         map.remove(block.getBlockId());
     }
 
-    public PeerAndBlockCapsule get(Sha256Hash hash){
-        return map.get(hash);
+    public PeerAndBlockCapsule get(BlockCapsule block){
+        return map.get(block.getBlockId());
     }
 
     public void clear(){
         this.map.clear();
-    }
-
-    public PeerConnection getNextPeer(BlockCapsule block){
-        return get(block.getBlockId()) != null ? get(block.getBlockId()).getPeer(): null;
-    }
-
-    public BlockCapsule getNextBlock(BlockCapsule block){
-        return get(block.getBlockId()) != null ? get(block.getBlockId()).getBlockCapsule(): null;
     }
 
     class PeerAndBlockCapsule{
