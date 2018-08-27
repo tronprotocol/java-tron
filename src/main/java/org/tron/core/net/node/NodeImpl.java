@@ -735,7 +735,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
     } else {
       if (!syncFlag) {//not we request and not sync,disconnect
-        logger.error("not we request and not sync, disconnect : {}", peer.getInetAddress());
+        logger.error("not we request and not sync, disconnect : {}, block : {}",
+            peer.getInetAddress(), blockId.getString());
         banTraitorPeer(peer, ReasonCode.BAD_PROTOCOL);
       }
     }
