@@ -26,12 +26,12 @@ import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
 @Ignore
-public class CPUEnergyTest {
+public class CPUEnergyWhenSendAndTransferTest {
 
   private Manager dbManager;
   private TronApplicationContext context;
   private DepositImpl deposit;
-  private String dbPath = "output_CPUEnergyTest";
+  private String dbPath = "output_CPUEnergyWhenSendAndTransferTest";
   private String OWNER_ADDRESS;
 
 
