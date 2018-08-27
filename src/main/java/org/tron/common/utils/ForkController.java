@@ -10,6 +10,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.ContractExeException;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Slf4j
@@ -34,6 +35,10 @@ public class ForkController {
       return true;
     }
 
+    if (slots.length == 0) {
+      return false;
+    }
+
     for (int version : slots) {
       if (version != ChainConstant.version) {
         logger.info("*****shouldBeForked:" + false);
@@ -48,13 +53,14 @@ public class ForkController {
     return true;
   }
 
-  public synchronized boolean forkOrNot(TransactionCapsule capsule) {
-    logger.info("*****forkOrNot:" + (shouldBeForked()
-        || capsule.getInstance().getRawData().getContractList().get(0).getType().getNumber()
-        <= DISCARD_SCOPE));
-    return shouldBeForked()
+  public synchronized void hardFork(TransactionCapsule capsule) throws ContractExeException {
+    boolean hardFork = shouldBeForked()
         || capsule.getInstance().getRawData().getContractList().get(0).getType().getNumber()
         <= DISCARD_SCOPE;
+    logger.info("*****hardFork:" + hardFork);
+    if (!hardFork) {
+      throw new ContractExeException("not yet hard forked");
+    }
   }
 
   public synchronized void update(BlockCapsule blockCapsule) {
@@ -72,18 +78,20 @@ public class ForkController {
     if (slot < 0) {
       return;
     }
-    slots[slot] = blockCapsule.getInstance().getBlockHeader().getRawData().getVersion();
+
+    int version = blockCapsule.getInstance().getBlockHeader().getRawData().getVersion();
+    slots[slot] = version;
 
     logger.info(
-        "*******update:" + Arrays.toString(slots)
+        "*******update fork:" + Arrays.toString(slots)
             + ",witness size:" + witnesses.size()
-            + "," + slots
             + ",slot:" + slot
-            + ",version:" + blockCapsule.getInstance().getBlockHeader().getRawData().getVersion()
+            + ",witness:" + ByteUtil.toHexString(witness.toByteArray())
+            + ",version:" + version
     );
   }
 
-  public void reset() {
+  public synchronized void reset() {
     Arrays.fill(slots, 0);
   }
 

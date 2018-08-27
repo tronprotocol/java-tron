@@ -13,11 +13,11 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
 import org.tron.common.runtime.vm.program.Stack;
-import org.tron.core.exception.ContractValidateException;
 
 @Slf4j(topic = "VM")
 
@@ -93,8 +93,7 @@ public class VM {
     return energyCost;
   }
 
-  public void step(Program program)
-      throws ContractValidateException {
+  public void step(Program program) {
     if (config.vmTrace()) {
       program.saveOpTrace();
     }
@@ -1360,9 +1359,11 @@ public class VM {
       }
 
     } catch (RuntimeException e) {
-      program.setRuntimeFailure(e);
-    } catch (ContractValidateException e) {
-      program.setRuntimeFailure(new RuntimeException(e.getMessage()));
+      if (StringUtils.isEmpty(e.getMessage())) {
+        program.setRuntimeFailure(new RuntimeException("Unknown Exception"));
+      } else {
+        program.setRuntimeFailure(e);
+      }
     } catch (StackOverflowError soe) {
       logger
           .error("\n !!! StackOverflowError: update your java run command with -Xss2M !!!\n", soe);

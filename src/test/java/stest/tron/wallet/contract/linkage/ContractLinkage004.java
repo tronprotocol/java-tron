@@ -176,28 +176,31 @@ public class ContractLinkage004 {
     //When the fee limit is 0.
     String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName,abi,code,
         "",maxFeeLimit, 0L, 50,null,linkage004Key,linkage004Address,blockingStubFull);
-    logger.info("testFeeLimitIsTooSmall, the txid is " + txid);
+    //logger.info("testFeeLimitIsTooSmall, the txid is " + txid);
     Optional<TransactionInfo> infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
-    logger.info("0, Result valse is " + Integer.toString(infoById.get().getResultValue()));
+    //logger.info("0, Result valse is " + Integer.toString(infoById.get().getResultValue()));
     Assert.assertTrue(infoById.get().getResultValue() == 1);
+    Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() == 0);
 
     //When the fee limit is only short with 1 sun.
     maxFeeLimit = currentFee - 1L;
     txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName,abi,code,
         "",maxFeeLimit, 0L, 50,null,linkage004Key,linkage004Address,blockingStubFull);
-    logger.info("testFeeLimitIsTooSmall, the txid is " + txid);
+    //logger.info("testFeeLimitIsTooSmall, the txid is " + txid);
     infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
-    logger.info("1000, Result value is " + Integer.toString(infoById.get().getResultValue()));
+    //logger.info("1000, Result value is " + Integer.toString(infoById.get().getResultValue()));
     Assert.assertTrue(infoById.get().getResultValue() == 1);
+    Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() > 0);
 
     //When the fee limit is just ok.
     maxFeeLimit = currentFee;
     txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName,abi,code,
         "",maxFeeLimit, 0L, 50,null,linkage004Key,linkage004Address,blockingStubFull);
-    logger.info("testFeeLimitIsTooSmall, the txid is " + txid);
+    //logger.info("testFeeLimitIsTooSmall, the txid is " + txid);
     infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
-    logger.info("1000, Result value is " + Integer.toString(infoById.get().getResultValue()));
+    //logger.info("1000, Result value is " + Integer.toString(infoById.get().getResultValue()));
     Assert.assertTrue(infoById.get().getResultValue() == 0);
+    Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() > 0);
 
 
 
