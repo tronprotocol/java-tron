@@ -70,7 +70,7 @@ public class HandleBlockMessageTest {
         List<PeerConnection> activePeers = ReflectUtils.getFieldValue(pool, "activePeers");
         PeerConnection peer = activePeers.get(0);
 
-        //收到同步请求块
+        //receive a sync block
         BlockCapsule headBlockCapsule = dbManager.getHead();
         BlockCapsule syncblockCapsule = generateOneBlockCapsule(headBlockCapsule);
         BlockMessage blockMessage = new BlockMessage(syncblockCapsule);
@@ -78,14 +78,14 @@ public class HandleBlockMessageTest {
         node.onMessage(peer, blockMessage);
         Assert.assertEquals(peer.getSyncBlockRequested().isEmpty(), true);
 
-        //收到广播请求块
+        //receive a advertise block
         BlockCapsule advblockCapsule = generateOneBlockCapsule(headBlockCapsule);
         BlockMessage advblockMessage = new BlockMessage(advblockCapsule);
         peer.getAdvObjWeRequested().put(new Item(advblockMessage.getBlockId(), InventoryType.BLOCK), System.currentTimeMillis());
         node.onMessage(peer, advblockMessage);
         Assert.assertEquals(peer.getAdvObjWeRequested().size(), 0);
 
-        //收到非请求块
+        //receive a sync block but not requested
         BlockCapsule blockCapsule = generateOneBlockCapsule(headBlockCapsule);
         blockMessage = new BlockMessage(blockCapsule);
         BlockCapsule blockCapsuleOther = generateOneBlockCapsule(blockCapsule);
@@ -96,7 +96,7 @@ public class HandleBlockMessageTest {
         Assert.assertEquals(peer.getSyncBlockRequested().isEmpty(), false);
     }
 
-    //根据父块生成一个区块
+    // generate ong block by parent block
     private BlockCapsule generateOneBlockCapsule(BlockCapsule parentCapsule) {
         ByteString witnessAddress = ByteString.copyFrom(
                 ECKey.fromPrivate(

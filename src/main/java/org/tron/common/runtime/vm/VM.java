@@ -18,7 +18,6 @@ import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
 import org.tron.common.runtime.vm.program.Stack;
-import org.tron.core.exception.ContractValidateException;
 
 @Slf4j(topic = "VM")
 
@@ -94,8 +93,7 @@ public class VM {
     return energyCost;
   }
 
-  public void step(Program program)
-      throws ContractValidateException {
+  public void step(Program program) {
     if (config.vmTrace()) {
       program.saveOpTrace();
     }
@@ -1366,8 +1364,6 @@ public class VM {
       } else {
         program.setRuntimeFailure(e);
       }
-    } catch (ContractValidateException e) {
-      program.setRuntimeFailure(new RuntimeException(e.getMessage()));
     } catch (StackOverflowError soe) {
       logger
           .error("\n !!! StackOverflowError: update your java run command with -Xss2M !!!\n", soe);
