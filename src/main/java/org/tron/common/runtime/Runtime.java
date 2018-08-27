@@ -47,6 +47,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.StorageMarket;
 import org.tron.core.db.TransactionTrace;
@@ -58,6 +59,7 @@ import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.ResourceReceipt;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
@@ -390,10 +392,17 @@ public class Runtime {
       // }
 
       long thisTxCPULimitInUs;
+      long tolerance = max(0, min(100, Args.getInstance().getTolerance()));
       if (ET_NORMAL_TYPE == executorType) {
-        thisTxCPULimitInUs = Constant.MAX_CPU_TIME_OF_ONE_TX_WHEN_VERIFY_BLOCK;
+        if (contract.getReceipt().getResult() == ResourceReceipt.code.OUT_OF_TIME) {
+          thisTxCPULimitInUs =
+              Constant.MAX_CPU_TIME_OF_ONE_TX * (100 - tolerance) / 100;
+        } else {
+          thisTxCPULimitInUs = Constant.MAX_CPU_TIME_OF_ONE_TX_WHEN_VERIFY_BLOCK;
+        }
       } else {
-        thisTxCPULimitInUs = Constant.MAX_CPU_TIME_OF_ONE_TX;
+        thisTxCPULimitInUs =
+            Constant.MAX_CPU_TIME_OF_ONE_TX * (100 + tolerance) / 100;
       }
       long vmStartInUs = System.nanoTime() / 1000;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
@@ -461,15 +470,22 @@ public class Runtime {
           this.deposit.getContract(contractAddress).getInstance()
               .getOriginAddress().toByteArray());
 
-      long thisTxENERGYLimitInUs;
+      long thisTxCPULimitInUs;
+      long tolerance = max(0, min(100, Args.getInstance().getTolerance()));
       if (ET_NORMAL_TYPE == executorType) {
-        thisTxENERGYLimitInUs = Constant.MAX_CPU_TIME_OF_ONE_TX_WHEN_VERIFY_BLOCK;
+        if (contract.getReceipt().getResult() == ResourceReceipt.code.OUT_OF_TIME) {
+          thisTxCPULimitInUs =
+              Constant.MAX_CPU_TIME_OF_ONE_TX * (100 - tolerance) / 100;
+        } else {
+          thisTxCPULimitInUs = Constant.MAX_CPU_TIME_OF_ONE_TX_WHEN_VERIFY_BLOCK;
+        }
       } else {
-        thisTxENERGYLimitInUs = Constant.MAX_CPU_TIME_OF_ONE_TX;
+        thisTxCPULimitInUs =
+            Constant.MAX_CPU_TIME_OF_ONE_TX * (100 + tolerance) / 100;
       }
 
       long vmStartInUs = System.nanoTime() / 1000;
-      long vmShouldEndInUs = vmStartInUs + thisTxENERGYLimitInUs;
+      long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
       long feeLimit = trx.getRawData().getFeeLimit();
       long energyLimit;

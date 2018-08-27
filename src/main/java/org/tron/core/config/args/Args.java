@@ -71,6 +71,11 @@ public class Args {
   private boolean debug = false;
 
   @Getter
+  @Setter
+  @Parameter(names = {"--tolerance"})
+  private long tolerance = 30;
+
+  @Getter
   @Parameter(description = "--seed-nodes")
   private List<String> seedNodes = new ArrayList<>();
 
