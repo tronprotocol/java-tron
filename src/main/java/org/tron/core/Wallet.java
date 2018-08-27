@@ -835,10 +835,6 @@ public class Wallet {
 
     try {
       byte[] selector = getSelector(triggerSmartContract.getData().toByteArray());
-      if (selector == null) {
-        // FIXME should trigger fallback method
-        return null;
-      }
 
       if (!isConstant(abi, selector)) {
         return trxCap.getInstance();
@@ -912,11 +908,10 @@ public class Wallet {
   }
 
   private static boolean isConstant(SmartContract.ABI abi, byte[] selector) throws Exception {
-
-    if (abi.getEntrysList().size() == 0) {
+    if (selector == null || abi.getEntrysList().size() == 0) {
       return false;
     }
-    if (selector == null || selector.length != 4) {
+    if ( selector.length != 4) {
       throw new Exception("Selector's length or selector itself is invalid");
     }
 
