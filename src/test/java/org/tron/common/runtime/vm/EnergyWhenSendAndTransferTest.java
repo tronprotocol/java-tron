@@ -26,7 +26,7 @@ import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
 @Ignore
-public class CPUEnergyWhenSendAndTransferTest {
+public class EnergyWhenSendAndTransferTest {
 
   private Manager dbManager;
   private TronApplicationContext context;

@@ -27,7 +27,7 @@ import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
 @Ignore
-public class CPUTimeTest {
+public class EnergyWhenTimeoutStyleTest {
 
   private Manager dbManager;
   private TronApplicationContext context;
