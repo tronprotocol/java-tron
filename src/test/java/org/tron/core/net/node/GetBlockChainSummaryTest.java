@@ -92,7 +92,7 @@ public class GetBlockChainSummaryTest{
 
         BlockCapsule.BlockId commonBlockId = null;
 
-        //共有头块是创世块，syncBlockToFetch为空。代表建立连接后第1次区块清单同步。
+        //the common block is genesisblock，syncBlockToFetch is empty。
         try {
             commonBlockId = del.getGenesisBlock().getBlockId();
             peer_he.getSyncBlockToFetch().clear();
@@ -104,7 +104,7 @@ public class GetBlockChainSummaryTest{
             System.out.println("exception!");
         }
 
-        //共有头块是创世块，syncBlockToFetch不空。代表第2次区块清单同步，但是没有收到区块。
+        //the common block is genesisblock，syncBlockToFetch is not empty。
         peer_he.getSyncBlockToFetch().addAll(toFetch);
         try {
             toFetch.clear();
@@ -126,7 +126,7 @@ public class GetBlockChainSummaryTest{
             System.out.println("exception!");
         }
 
-        //共有头块不是创世块，syncBlockToFetc不空。代表第2次区块清单同步，但是收到过2个区块
+        //the common block is a normal block(not genesisblock)，syncBlockToFetc is not empty.
         try {
             toFetch.clear();
             peer_he.getSyncBlockToFetch().clear();
