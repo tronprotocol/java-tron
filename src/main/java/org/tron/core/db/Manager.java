@@ -1018,6 +1018,7 @@ public class Manager {
       throw new ContractSizeNotEqualToOneException(
           "act size should be exactly 1, this is extend feature");
     }
+    forkController.hardFork(trxCap);
 
     validateDup(trxCap);
 
@@ -1111,13 +1112,11 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
-        if (forkController.forkOrNot(trx)) {
-          processTransaction(trx, null);
-//        trx.resetResult();
-          tmpSeesion.merge();
-          // push into block
-          blockCapsule.addTransaction(trx);
-        }
+        processTransaction(trx, null);
+        // trx.resetResult();
+        tmpSeesion.merge();
+        // push into block
+        blockCapsule.addTransaction(trx);
         iterator.remove();
       } catch (ContractExeException e) {
         logger.info("contract not processed during execute");
