@@ -89,6 +89,8 @@ public class Program {
   //Max size for stack checks
   private static final int MAX_STACKSIZE = 1024;
 
+  private BlockCapsule blockCap;
+
   public static byte[] getRootTransactionId() {
     return rootTransactionId.clone();
   }
@@ -154,20 +156,20 @@ public class Program {
   }
 
   public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction transaction) {
-    this(ops, programInvoke, transaction, SystemProperties.getInstance());
+    this(ops, programInvoke, transaction, SystemProperties.getInstance(), null);
   }
 
   public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction transaction,
-      SystemProperties config) {
-    this(null, ops, programInvoke, transaction, config);
+      SystemProperties config, BlockCapsule blockCap) {
+    this(null, ops, programInvoke, transaction, config, blockCap);
   }
 
   public Program(byte[] codeHash, byte[] ops, ProgramInvoke programInvoke,
-      InternalTransaction transaction, SystemProperties config) {
+      InternalTransaction transaction, SystemProperties config, BlockCapsule blockCap) {
     this.config = config;
     this.invoke = programInvoke;
     this.transaction = transaction;
-
+    this.blockCap = blockCap;
     //this.codeHash = codeHash;
     this.ops = nullToEmpty(ops);
 
@@ -529,7 +531,7 @@ public class Program {
               .toHexString(newAddress)));
     } else if (isNotEmpty(programCode)) {
       VM vm = new VM(config);
-      Program program = new Program(programCode, programInvoke, internalTx, config);
+      Program program = new Program(programCode, programInvoke, internalTx, config, this.blockCap);
       vm.play(program);
       result = program.getResult();
       getTrace().merge(program.getTrace());
@@ -682,7 +684,8 @@ public class Program {
           byTestingSuite(), vmStartInUs, getVmShouldEndInUs(), msg.getEnergy().longValueSafe());
 
       VM vm = new VM(config);
-      Program program = new Program(null, programCode, programInvoke, internalTx, config);
+      Program program = new Program(null, programCode, programInvoke, internalTx, config,
+          this.blockCap);
       vm.play(program);
       result = program.getResult();
 
@@ -766,12 +769,18 @@ public class Program {
   }
 
   public void checkCPUTimeLimit(String opName) {
-    if (!Args.getInstance().isDebug()) {
-      long vmNowInUs = System.nanoTime() / 1000;
-      if (vmNowInUs > getVmShouldEndInUs()) {
-        throw Exception.notEnoughTime(opName);
-      }
+    // if (this.blockCap != null && this.blockCap.generatedByMyself &&
+    //     !this.blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
+    //   return;
+    // }
+    if (Args.getInstance().isDebug()) {
+      return;
     }
+    long vmNowInUs = System.nanoTime() / 1000;
+    if (vmNowInUs > getVmShouldEndInUs()) {
+      throw Exception.notEnoughTime(opName);
+    }
+
   }
 
   public void spendAllEnergy() {

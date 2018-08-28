@@ -1,13 +1,12 @@
 package org.tron.common.runtime;
 
-import static com.google.common.primitives.Longs.max;
-import static com.google.common.primitives.Longs.min;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.utils.MUtil.transfer;
 import static org.tron.common.runtime.vm.VMUtils.saveProgramTraceFile;
 import static org.tron.common.runtime.vm.VMUtils.zipAndEncode;
-import static org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType.ET_CONSTANT_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType.ET_NORMAL_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType.ET_PRE_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType.ET_UNKNOWN_TYPE;
@@ -33,7 +32,6 @@ import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
-import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
 import org.tron.common.runtime.vm.program.ProgramPrecompile;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
@@ -45,15 +43,16 @@ import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.StorageMarket;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.OutOfSlotTimeException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
@@ -63,6 +62,7 @@ import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
 @Slf4j(topic = "Runtime")
 public class Runtime {
@@ -71,7 +71,7 @@ public class Runtime {
   private SystemProperties config = SystemProperties.getInstance();
 
   private Transaction trx;
-  private Block block = null;
+  private BlockCapsule blockCap = null;
   private Deposit deposit;
   private ProgramInvokeFactory programInvokeFactory = null;
   private String runtimeError;
@@ -93,18 +93,18 @@ public class Runtime {
 
 
   /**
-   * For block's trx run
+   * For blockCap's trx run
    */
-  public Runtime(TransactionTrace trace, Block block, Deposit deosit,
+  public Runtime(TransactionTrace trace, BlockCapsule block, Deposit deosit,
       ProgramInvokeFactory programInvokeFactory) {
     this.trace = trace;
     this.trx = trace.getTrx().getInstance();
 
     if (Objects.nonNull(block)) {
-      this.block = block;
+      this.blockCap = block;
       this.executorType = ET_NORMAL_TYPE;
     } else {
-      this.block = Block.newBuilder().build();
+      this.blockCap = new BlockCapsule(Block.newBuilder().build());
       this.executorType = ET_PRE_TYPE;
     }
     this.deposit = deosit;
@@ -127,15 +127,15 @@ public class Runtime {
 
 
   /**
-   * For constant trx with latest block.
+   * For constant trx with latest blockCap.
    */
-  public Runtime(Transaction tx, Block block, DepositImpl deposit,
+  public Runtime(Transaction tx, BlockCapsule block, DepositImpl deposit,
       ProgramInvokeFactory programInvokeFactory) {
     this.trx = tx;
     this.deposit = deposit;
     this.programInvokeFactory = programInvokeFactory;
     this.executorType = ET_PRE_TYPE;
-    this.block = block;
+    this.blockCap = block;
     this.energyProcessor = new EnergyProcessor(deposit.getDbManager());
     this.storageMarket = new StorageMarket(deposit.getDbManager());
     Transaction.Contract.ContractType contractType = tx.getRawData().getContract(0).getType();
@@ -166,10 +166,11 @@ public class Runtime {
 
   public BigInteger getBlockCPULeftInUs() {
 
-    // insure block is not null
+    // insure blockCap is not null
     BigInteger curBlockHaveElapsedCPUInUs =
         BigInteger.valueOf(
-            1000 * (DateTime.now().getMillis() - block.getBlockHeader().getRawData()
+            1000 * (DateTime.now().getMillis() - blockCap.getInstance().getBlockHeader()
+                .getRawData()
                 .getTimestamp())); // us
     BigInteger curBlockCPULimitInUs = BigInteger.valueOf((long)
         (1000 * ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5
@@ -178,28 +179,6 @@ public class Runtime {
 
     return curBlockCPULimitInUs.subtract(curBlockHaveElapsedCPUInUs);
 
-  }
-
-  public boolean curCPULimitReachedBlockCPULimit() {
-
-    if (executorType == ET_NORMAL_TYPE) {
-      BigInteger blockCPULeftInUs = getBlockCPULeftInUs();
-      BigInteger oneTxCPULimitInUs = BigInteger
-          .valueOf(Constant.MAX_CPU_TIME_OF_ONE_TX);
-
-      // TODO get from account
-      BigInteger increasedStorageLimit = BigInteger.valueOf(10000000);
-
-      boolean cumulativeCPUReached =
-          oneTxCPULimitInUs.compareTo(blockCPULeftInUs) > 0;
-
-      if (cumulativeCPUReached) {
-        logger.error("cumulative CPU Reached");
-        return true;
-      }
-    }
-
-    return false;
   }
 
   public void execute() throws ContractValidateException, ContractExeException {
@@ -285,6 +264,32 @@ public class Runtime {
     }
   }
 
+  private double getThisTxCPULimitInUsRatio() {
+
+    double thisTxCPULimitInUsRatio;
+
+    if (ET_NORMAL_TYPE == executorType) {
+      // self witness 2
+      if (this.blockCap != null && blockCap.generatedByMyself &&
+          this.blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
+        thisTxCPULimitInUsRatio = 1.0;
+      } else
+      // self witness 3, other witness 3, fullnode 2
+      {
+        if (trx.getRet(0).getContractRet() == contractResult.OUT_OF_TIME) {
+          thisTxCPULimitInUsRatio = Args.getInstance().getMinTimeRatio();
+        } else {
+          thisTxCPULimitInUsRatio = Args.getInstance().getMaxTimeRatio();
+        }
+      }
+    } else {
+      // self witness 1, other witness 1, fullnode 1
+      thisTxCPULimitInUsRatio = 1.0;
+    }
+
+    return thisTxCPULimitInUsRatio;
+  }
+
   /*
    **/
   private void create()
@@ -328,12 +333,10 @@ public class Runtime {
       //   thisTxENERGYLimitInUs = Constant.ENERGY_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT;
       // }
 
-      long thisTxCPULimitInUs;
-      if (ET_NORMAL_TYPE == executorType) {
-        thisTxCPULimitInUs = Constant.MAX_CPU_TIME_OF_ONE_TX_WHEN_VERIFY_BLOCK;
-      } else {
-        thisTxCPULimitInUs = Constant.MAX_CPU_TIME_OF_ONE_TX;
-      }
+
+
+      long thisTxCPULimitInUs =
+          (long) (Constant.MAX_CPU_TIME_OF_ONE_TX * getThisTxCPULimitInUsRatio());
       long vmStartInUs = System.nanoTime() / 1000;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
@@ -344,9 +347,9 @@ public class Runtime {
 
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executorType, trx,
-              block, deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
+              blockCap.getInstance(), deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
       this.vm = new VM(config);
-      this.program = new Program(ops, programInvoke, internalTransaction, config);
+      this.program = new Program(ops, programInvoke, internalTransaction, config, this.blockCap);
       Program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
       Program.resetNonce();
       Program.setRootCallConstant(isCallConstant());
@@ -400,15 +403,11 @@ public class Runtime {
           this.deposit.getContract(contractAddress).getInstance()
               .getOriginAddress().toByteArray());
 
-      long thisTxENERGYLimitInUs;
-      if (ET_NORMAL_TYPE == executorType) {
-        thisTxENERGYLimitInUs = Constant.MAX_CPU_TIME_OF_ONE_TX_WHEN_VERIFY_BLOCK;
-      } else {
-        thisTxENERGYLimitInUs = Constant.MAX_CPU_TIME_OF_ONE_TX;
-      }
+      long thisTxCPULimitInUs =
+          (long) (Constant.MAX_CPU_TIME_OF_ONE_TX * getThisTxCPULimitInUsRatio());
 
       long vmStartInUs = System.nanoTime() / 1000;
-      long vmShouldEndInUs = vmStartInUs + thisTxENERGYLimitInUs;
+      long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
       long feeLimit = trx.getRawData().getFeeLimit();
       long energyLimit;
@@ -425,10 +424,11 @@ public class Runtime {
 
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CALL_TYPE, executorType, trx,
-              block, deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
+              blockCap.getInstance(), deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
       this.vm = new VM(config);
       InternalTransaction internalTransaction = new InternalTransaction(trx);
-      this.program = new Program(null, code, programInvoke, internalTransaction, config);
+      this.program = new Program(null, code, programInvoke, internalTransaction, config,
+          this.blockCap);
       Program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
       Program.resetNonce();
       Program.setRootCallConstant(isCallConstant());
@@ -443,8 +443,7 @@ public class Runtime {
 
   }
 
-  public void go() throws OutOfSlotTimeException {
-
+  public void go() {
     try {
       if (vm != null) {
         vm.play(program);
@@ -478,15 +477,13 @@ public class Runtime {
       } else {
         deposit.commit();
       }
-    } catch (OutOfResourceException e) {
-      logger.error("runtime error is :{}", e.getMessage());
-      throw new OutOfSlotTimeException(e.getMessage());
-    } catch (JVMStackOverFlowException e){
+    } catch (JVMStackOverFlowException e) {
       result.setException(e);
       runtimeError = result.getException().getMessage();
       logger.error("runtime error is :{}", result.getException().getMessage());
-    } catch(Throwable e) {
+    } catch (Throwable e) {
       if (Objects.isNull(result.getException())) {
+        logger.error(e.getMessage(), e);
         result.setException(new RuntimeException("Unknown Throwable"));
       }
       if (StringUtils.isEmpty(runtimeError)) {
@@ -506,7 +503,8 @@ public class Runtime {
         .divide(BigInteger.valueOf(callerEnergyTotal)).longValue();
   }
 
-  public boolean isCallConstant() {
+  public boolean isCallConstant() throws ContractValidateException {
+
     TriggerSmartContract triggerContractFromTransaction = ContractCapsule
         .getTriggerContractFromTransaction(trx);
     if (TRX_CONTRACT_CALL_TYPE.equals(trxType)) {
@@ -520,7 +518,8 @@ public class Runtime {
     return false;
   }
 
-  private boolean isCallConstant(byte[] address) {
+  private boolean isCallConstant(byte[] address) throws ContractValidateException {
+
     if (TRX_CONTRACT_CALL_TYPE.equals(trxType)) {
       ABI abi = deposit.getContract(address).getInstance().getAbi();
       if (Wallet.isConstant(abi, ContractCapsule.getTriggerContractFromTransaction(trx))) {
