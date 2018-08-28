@@ -70,6 +70,11 @@ public class Args {
 
   @Getter
   @Setter
+  @Parameter(names = {"--support-constant"})
+  private boolean supportConstant = false;
+
+  @Getter
+  @Setter
   @Parameter(names = {"--debug"})
   private boolean debug = false;
 
