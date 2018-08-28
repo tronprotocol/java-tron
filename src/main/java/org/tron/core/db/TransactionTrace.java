@@ -157,7 +157,7 @@ public class TransactionTrace {
     if (Objects.isNull(trx.getContractRet())) {
       throw new ReceiptCheckErrException("null resultCode");
     }
-    if (trx.getContractRet().equals(receipt.getResult())) {
+    if (!trx.getContractRet().equals(receipt.getResult())) {
       throw new ReceiptCheckErrException("Different resultCode");
     }
   }
