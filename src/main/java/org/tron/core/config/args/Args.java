@@ -71,7 +71,7 @@ public class Args {
   @Getter
   @Setter
   @Parameter(names = {"--support-constant"})
-  private boolean supportConstant = true;
+  private boolean supportConstant = false;
 
   @Getter
   @Setter
@@ -371,6 +371,7 @@ public class Args {
     INSTANCE.maxConnectNumberFactor = 0.8;
     INSTANCE.receiveTcpMinDataLength = 2048;
     INSTANCE.isOpenFullTcpDisconnect = false;
+    INSTANCE.supportConstant = false;
   }
 
   /**

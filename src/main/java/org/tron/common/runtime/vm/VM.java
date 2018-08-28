@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.program.Program;
+import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
 import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
 import org.tron.common.runtime.vm.program.Stack;
 
@@ -102,28 +103,6 @@ public class VM {
       OpCode op = OpCode.code(program.getCurrentOp());
       if (op == null) {
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
-      }
-      switch (op) {
-        case DELEGATECALL:
-          // opcode since Homestead release only
-          //if (!tronConfig.getConstants().hasDelegateCallOpcode()) throw Program.Exception.invalidOpCode(program.getCurrentOp());
-          break;
-        case REVERT:
-          //if (!tronConfig.eip206()) {
-          //    throw Program.Exception.invalidOpCode(program.getCurrentOp());
-          //}
-          break;
-        case RETURNDATACOPY:
-        case RETURNDATASIZE:
-          //if (!blockchainConfig.eip211()) {
-          //    throw Program.Exception.invalidOpCode(program.getCurrentOp());
-          //}
-          break;
-        case STATICCALL:
-          //if (!blockchainConfig.eip214()) {
-          //    throw Program.Exception.invalidOpCode(program.getCurrentOp());
-          //}
-          break;
       }
 
       program.setLastOp(op.val());
@@ -1358,6 +1337,8 @@ public class VM {
         this.step(program);
       }
 
+    } catch (JVMStackOverFlowException e){
+      throw new JVMStackOverFlowException();
     } catch (RuntimeException e) {
       if (StringUtils.isEmpty(e.getMessage())) {
         program.setRuntimeFailure(new RuntimeException("Unknown Exception"));
@@ -1366,8 +1347,8 @@ public class VM {
       }
     } catch (StackOverflowError soe) {
       logger
-          .error("\n !!! StackOverflowError: update your java run command with -Xss2M !!!\n", soe);
-      System.exit(-1);
+          .error("\n !!! StackOverflowError: update your java run command with -Xss !!!\n", soe);
+      throw new JVMStackOverFlowException();
     } finally {
 
     }
