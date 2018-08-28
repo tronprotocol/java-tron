@@ -76,6 +76,15 @@ public class TestNetFomo3D {
 
     byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
         0L, 100,null,testNetAccountKey,testNetAccountAddress,blockingStubFull);
+
+    code = "608060405234801561001057600080fd5b5061011a806100206000396000f300608060405260043610603f576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff168063f8a8fd6d146044575b600080fd5b348015604f57600080fd5b506056606c565b6040518082815260200191505060405180910390f35b6000600180141515607c57600080fd5b603c80141515608a57600080fd5b610e1080141515609957600080fd5b620151808014151560a957600080fd5b62093a808014151560b957600080fd5b6301e133808014151560ca57600080fd5b620f42408014151560da57600080fd5b60018014151560e857600080fd5b429050905600a165627a7a72305820e8f9994ec320bbc329299a1cec491445178da2a60b219fb25e91adb9c4e4aa930029";
+    abi = "[{\"constant\":false,\"inputs\":[],\"name\":\"test\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
+
+    String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName,abi,
+        code,"",maxFeeLimit, 0L, 100,null,
+        testNetAccountKey,testNetAccountAddress,blockingStubFull);
+
+
     final SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
     accountResource = PublicMethed.getAccountResource(testNetAccountAddress,blockingStubFull);
     cpuLimit = accountResource.getEnergyLimit();

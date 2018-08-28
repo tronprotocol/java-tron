@@ -74,8 +74,8 @@ public class ContractScenario013 {
     String contractName = "TronTrxAndSunContract";
     String code = "6080604052348015600f57600080fd5b50600180141515601e57600080fd5b603c80141515602c57600080fd5b610e1080141515603b57600080fd5b6201518080141515604b57600080fd5b62093a8080141515605b57600080fd5b6301e1338080141515606c57600080fd5b620f424080141515607c57600080fd5b60358060896000396000f3006080604052600080fd00a165627a7a723058206a36395ee2292959a89e7956d6826a7107c490331e4505fc319010873c26392b0029";
     String abi = "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]";
-    txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName,abi,code,"",maxFeeLimit,
-        0L, 100,null,contract013Key,contract013Address,blockingStubFull);
+    txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName,abi,code,"",
+        maxFeeLimit, 0L, 100,null,contract013Key,contract013Address,blockingStubFull);
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     //logger.info("result is " + infoById.get().getResultValue());
