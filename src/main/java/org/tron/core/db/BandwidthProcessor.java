@@ -16,7 +16,10 @@ import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
+import org.tron.protos.Protocol.Transaction.Result;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
 @Slf4j
 public class BandwidthProcessor extends ResourceProcessor {
@@ -53,9 +56,10 @@ public class BandwidthProcessor extends ResourceProcessor {
       throws ContractValidateException, AccountResourceInsufficientException {
     List<Contract> contracts =
         trx.getInstance().getRawData().getContractList();
-
+    TransactionCapsule transactionCap = new TransactionCapsule(
+        trx.getInstance().toBuilder().clearRet().build());
     for (Contract contract : contracts) {
-      long bytes = trx.getSerializedSize();
+      long bytes = transactionCap.getSerializedSize();
       logger.debug("trxId {},bandwidth cost :{}", trx.getTransactionId(), bytes);
       trace.setNetBill(bytes, 0);
       byte[] address = TransactionCapsule.getOwner(contract);

@@ -601,10 +601,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public contractResult getContractRet() {
-    Result ret = this.transaction.getRet(0);
-    if (Objects.isNull(ret)) {
+    if (this.transaction.getRetCount() <= 0) {
       return null;
     }
-    return ret.getContractRet();
+    return this.transaction.getRet(0).getContractRet();
   }
 }

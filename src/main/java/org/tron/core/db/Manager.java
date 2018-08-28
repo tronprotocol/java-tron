@@ -39,6 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
@@ -1045,7 +1046,7 @@ public class Manager {
     trace.exec(runtime);
 
     if (Objects.nonNull(blockCap)) {
-      trace.setResult(runtime); 
+      trace.setResult(runtime);
       if (!blockCap.generatedByMyself) {
         trace.check();
       }

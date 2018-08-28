@@ -89,8 +89,8 @@ public class TransactionTrace {
   }
 
   //set bill
-  public void setBill(long energyUseage) {
-    receipt.setEnergyUsageTotal(energyUseage);
+  public void setBill(long energyUsage) {
+    receipt.setEnergyUsageTotal(energyUsage);
   }
 
   //set net bill
@@ -100,7 +100,7 @@ public class TransactionTrace {
   }
 
   public void exec(Runtime runtime)
-      throws ContractExeException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, ContractValidateException {
     /**  VM execute  **/
     runtime.execute();
     runtime.go();
