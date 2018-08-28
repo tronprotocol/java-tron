@@ -239,7 +239,7 @@ message Transaction {
       FAILED = 1;
     }
     enum contractResult {
-      DEFULT = 0;
+      DEFAULT = 0;
       SUCCESS = 1;
       REVERT = 2;
       BAD_JUMP_DESTINATION = 3;
@@ -251,7 +251,8 @@ message Transaction {
       STACK_OVERFLOW = 9;
       OUT_OF_ENERGY = 10;
       OUT_OF_TIME = 11;
-      UNKNOWN = 12;
+      OUT_OF_TIME = 12;
+      UNKNOWN = 13;
     }
     int64 fee = 1;
     code ret = 2;

@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -1043,6 +1044,11 @@ public class Manager {
 
     trace.init();
     trace.exec(runtime);
+
+    if (Objects.nonNull(block)) {
+      trace.check();
+    }
+    trace.finalization(runtime);
 
     trxCap.setResult(runtime);
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
