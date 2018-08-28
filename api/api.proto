@@ -917,4 +917,5 @@ message TransactionSignWeight {
   Permission permission = 1;
   TransactionExtention transaction = 2;
   int64 current_weight = 3;
+  repeated bytes approved_ist = 4;
 }
