@@ -1347,7 +1347,7 @@ public class VM {
       }
     } catch (StackOverflowError soe) {
       logger
-          .error("\n !!! StackOverflowError: update your java run command with -Xss20M !!!\n", soe);
+          .error("\n !!! StackOverflowError: update your java run command with -Xss !!!\n", soe);
       throw new JVMStackOverFlowException();
     } finally {
 

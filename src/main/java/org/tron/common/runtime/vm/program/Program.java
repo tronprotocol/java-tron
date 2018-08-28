@@ -1428,7 +1428,7 @@ public class Program {
   public static class JVMStackOverFlowException extends BytecodeExecutionException {
 
     public JVMStackOverFlowException() {
-      super("StackOverflowError:  exceed maximum 20M!");
+      super("StackOverflowError:  exceed default JVM stack size!");
     }
   }
 
