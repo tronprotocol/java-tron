@@ -851,7 +851,6 @@ public class Wallet {
 
         Runtime runtime = new Runtime(trxCap.getInstance(), headBlock, deposit,
             new ProgramInvokeFactoryImpl());
-        runtime.init();
         runtime.execute();
         runtime.go();
         runtime.finalization();

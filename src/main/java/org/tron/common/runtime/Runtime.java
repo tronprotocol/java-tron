@@ -75,7 +75,6 @@ public class Runtime {
   private Deposit deposit;
   private ProgramInvokeFactory programInvokeFactory = null;
   private String runtimeError;
-  private boolean readyToExecute = false;
 
   private EnergyProcessor energyProcessor = null;
   private StorageMarket storageMarket = null;
@@ -200,27 +199,6 @@ public class Runtime {
     }
   }
 
-  /**
-   */
-  public void init() {
-    readyToExecute = true;
-    // switch (trxType) {
-    //   case TRX_PRECOMPILED_TYPE:
-    //     readyToExecute = true;
-    //     break;
-    //   case TRX_CONTRACT_CREATION_TYPE:
-    //   case TRX_CONTRACT_CALL_TYPE:
-    //     // if (!curENERGYLimitReachedBlockENERGYLimit()) {
-    //     //   readyToExecute = true;
-    //     // }
-    //     readyToExecute = true;
-    //     break;
-    //   default:
-    //     readyToExecute = true;
-    //     break;
-    // }
-  }
-
 
   public BigInteger getBlockCPULeftInUs() {
 
@@ -261,10 +239,6 @@ public class Runtime {
   }
 
   public void execute() throws ContractValidateException, ContractExeException {
-
-    if (!readyToExecute) {
-      return;
-    }
     switch (trxType) {
       case TRX_PRECOMPILED_TYPE:
         precompiled();
@@ -276,7 +250,7 @@ public class Runtime {
         call();
         break;
       default:
-        break;
+        throw new ContractValidateException("Unknown contract type");
     }
   }
 
@@ -517,9 +491,6 @@ public class Runtime {
   }
 
   public void go() throws OutOfSlotTimeException {
-    if (!readyToExecute) {
-      return;
-    }
 
     try {
       if (vm != null) {

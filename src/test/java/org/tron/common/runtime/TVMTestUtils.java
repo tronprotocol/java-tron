@@ -147,8 +147,6 @@ public class TVMTestUtils {
     //exec
     trace.exec(runtime);
 
-    trace.pay();
-
     return new TVMTestResult(runtime, trace.getReceipt(), null);
   }
 
