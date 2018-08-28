@@ -85,7 +85,7 @@ public class Program {
 
   // private static final Logger logger = LoggerFactory.getLogger("VM");
 
-  private static final int MAX_DEPTH = 1024;
+  private static final int MAX_DEPTH = 64;
   //Max size for stack checks
   private static final int MAX_STACKSIZE = 1024;
 
@@ -1421,6 +1421,14 @@ public class Program {
           .format(
               "Illegal RETURNDATACOPY arguments: offset (%s) + size (%s) > RETURNDATASIZE (%d)",
               off, size, returnDataSize));
+    }
+  }
+
+  @SuppressWarnings("serial")
+  public static class JVMStackOverFlowException extends BytecodeExecutionException {
+
+    public JVMStackOverFlowException() {
+      super("StackOverflowError:  exceed default JVM stack size!");
     }
   }
 
