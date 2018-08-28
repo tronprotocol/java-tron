@@ -89,7 +89,7 @@ public class Program {
   //Max size for stack checks
   private static final int MAX_STACKSIZE = 1024;
 
-  public static BlockCapsule blockCap = null;
+  private static BlockCapsule blockCap;
 
   public static byte[] getRootTransactionId() {
     return rootTransactionId.clone();
