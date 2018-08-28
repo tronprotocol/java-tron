@@ -770,9 +770,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       advBlockDisorder.add(peer, block);
       logger.info("receive a disordered block:{}, parentHash:{}", block.getBlockId().getString(), block.getParentHash());
     }else{
+      advObjWeRequested.remove(block.getBlockId());
       // receive an ordered block we have requested, try to push block
       while (realProcessAdvBlock(peer, block)) {
-        advObjWeRequested.remove(block.getBlockId());
         // if push block success, we try to find his child block and continue push
         AdvBlockDisorder.PeerAndBlockCapsule blockAndPeer = advBlockDisorder.getNextBlockAndRemove(block);
         if(blockAndPeer == null){
