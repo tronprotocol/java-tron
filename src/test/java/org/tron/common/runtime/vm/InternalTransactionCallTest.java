@@ -6,8 +6,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.application.TronApplicationContext;
 import org.testng.Assert;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TVMTestUtils;
 import org.tron.common.storage.DepositImpl;
@@ -19,7 +19,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.OutOfContractTimeException;
+import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Protocol.AccountType;
 
@@ -38,7 +38,8 @@ public class InternalTransactionCallTest {
    */
   @Before
   public void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"},
+        Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     dbManager = context.getBean(Manager.class);
@@ -88,7 +89,7 @@ public class InternalTransactionCallTest {
 
   @Test
   public void callTest()
-      throws ContractExeException, OutOfContractTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
     byte[] contractBAddress = deployBContractAndGetItsAddress();
     byte[] contractAAddress =deployAContractandGetItsAddress();
 
@@ -134,7 +135,7 @@ public class InternalTransactionCallTest {
    */
   @Test
   public void delegateCallTest()
-      throws ContractExeException, OutOfContractTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
     byte[] contractBAddress = deployBContractAndGetItsAddress();
     byte[] contractAAddress =deployAContractandGetItsAddress();
     /* =================================== CALL delegatecallTest() to change B storage =================================== */
@@ -180,7 +181,7 @@ public class InternalTransactionCallTest {
    */
   @Test
   public void callCodeTest()
-      throws ContractExeException, OutOfContractTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
     byte[] contractBAddress = deployBContractAndGetItsAddress();
     byte[] contractAAddress =deployAContractandGetItsAddress();
     /* =================================== CALL callcodeTest() to change B storage =================================== */
@@ -226,7 +227,7 @@ public class InternalTransactionCallTest {
 
   // Just for the AB example above
   public byte[] deployAContractandGetItsAddress()
-      throws ContractExeException, OutOfContractTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
     String contractName = "AContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"bAddress\",\"type\":\"address\"},{\"name\":\"_number\",\"type\":\"uint256\"}],"
@@ -264,7 +265,7 @@ public class InternalTransactionCallTest {
 
   // Just for the AB example above
   public byte[] deployBContractAndGetItsAddress()
-      throws ContractExeException, OutOfContractTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
     String contractName = "BContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"_number\",\"type\":\"uint256\"}],\"name\":\"setValue\","

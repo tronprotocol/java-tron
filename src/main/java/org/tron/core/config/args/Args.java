@@ -71,7 +71,7 @@ public class Args {
   @Getter
   @Setter
   @Parameter(names = {"--support-constant"})
-  private boolean supportConstant = false;
+  private boolean supportConstant = true;
 
   @Getter
   @Setter
@@ -432,9 +432,17 @@ public class Args {
       logger.warn("This is a witness node,but localWitnesses is null");
     }
 
-    INSTANCE.supportConstant = config.getBoolean("vm.supportConstant");
-    INSTANCE.minTimeRatio = config.getDouble("vm.minTimeRatio");
-    INSTANCE.maxTimeRatio = config.getDouble("vm.maxTimeRatio");
+    if (config.hasPath("vm.supportConstant")) {
+      INSTANCE.supportConstant = config.getBoolean("vm.supportConstant");
+    }
+
+    if (config.hasPath("vm.minTimeRatio")) {
+      INSTANCE.minTimeRatio = config.getDouble("vm.minTimeRatio");
+    }
+
+    if (config.hasPath("vm.maxTimeRatio")) {
+      INSTANCE.maxTimeRatio = config.getDouble("vm.maxTimeRatio");
+    }
 
     INSTANCE.storage = new Storage();
     INSTANCE.storage.setDbVersion(Optional.ofNullable(INSTANCE.storageDbVersion)

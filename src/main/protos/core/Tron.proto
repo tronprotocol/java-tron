@@ -251,8 +251,7 @@ message Transaction {
       STACK_OVERFLOW = 9;
       OUT_OF_ENERGY = 10;
       OUT_OF_TIME = 11;
-      OUT_OF_TIME = 12;
-      UNKNOWN = 13;
+      UNKNOWN = 12;
     }
     int64 fee = 1;
     code ret = 2;

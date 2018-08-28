@@ -215,28 +215,6 @@ public class Runtime {
 
   }
 
-  public boolean curCPULimitReachedBlockCPULimit() {
-
-    if (executorType == ET_NORMAL_TYPE) {
-      BigInteger blockCPULeftInUs = getBlockCPULeftInUs();
-      BigInteger oneTxCPULimitInUs = BigInteger
-          .valueOf(Constant.MAX_CPU_TIME_OF_ONE_TX);
-
-      // TODO get from account
-      BigInteger increasedStorageLimit = BigInteger.valueOf(10000000);
-
-      boolean cumulativeCPUReached =
-          oneTxCPULimitInUs.compareTo(blockCPULeftInUs) > 0;
-
-      if (cumulativeCPUReached) {
-        logger.error("cumulative CPU Reached");
-        return true;
-      }
-    }
-
-    return false;
-  }
-
   public void execute() throws ContractValidateException, ContractExeException {
     switch (trxType) {
       case TRX_PRECOMPILED_TYPE:
@@ -491,7 +469,6 @@ public class Runtime {
   }
 
   public void go() {
-
     try {
       if (vm != null) {
         vm.play(program);

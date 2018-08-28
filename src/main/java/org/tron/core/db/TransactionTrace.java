@@ -23,7 +23,7 @@ import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.OutOfContractTimeException;
+import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Transaction;
@@ -99,7 +99,7 @@ public class TransactionTrace {
   }
 
   public void exec(Runtime runtime)
-      throws ContractExeException, ContractValidateException, OutOfContractTimeException {
+      throws ContractExeException, ContractValidateException, ReceiptCheckErrException {
     /**  VM execute  **/
     runtime.execute();
     runtime.go();
@@ -150,15 +150,15 @@ public class TransactionTrace {
         dbManager.getWitnessController().getHeadSlot());
   }
 
-  public void check() throws OutOfContractTimeException {
+  public void check() throws ReceiptCheckErrException {
     if (!needVM()) {
       return;
     }
     if (Objects.isNull(trx.getContractRet())) {
-      throw new OutOfContractTimeException("null resultCode");
+      throw new ReceiptCheckErrException("null resultCode");
     }
     if (trx.getContractRet().equals(receipt.getResult())) {
-      throw new OutOfContractTimeException("Different resultCode");
+      throw new ReceiptCheckErrException("Different resultCode");
     }
   }
 
