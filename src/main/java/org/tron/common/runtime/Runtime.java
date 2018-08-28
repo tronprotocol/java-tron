@@ -569,7 +569,7 @@ public class Runtime {
 
   }
 
-  public ProgramResult   getResult() {
+  public ProgramResult getResult() {
     return result;
   }
 

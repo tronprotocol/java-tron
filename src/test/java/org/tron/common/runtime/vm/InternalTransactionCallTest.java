@@ -19,7 +19,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.OutOfContractTimeException;
+import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Protocol.AccountType;
 
@@ -88,7 +88,7 @@ public class InternalTransactionCallTest {
 
   @Test
   public void callTest()
-      throws ContractExeException, OutOfContractTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
     byte[] contractBAddress = deployBContractAndGetItsAddress();
     byte[] contractAAddress =deployAContractandGetItsAddress();
 
@@ -134,7 +134,7 @@ public class InternalTransactionCallTest {
    */
   @Test
   public void delegateCallTest()
-      throws ContractExeException, OutOfContractTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
     byte[] contractBAddress = deployBContractAndGetItsAddress();
     byte[] contractAAddress =deployAContractandGetItsAddress();
     /* =================================== CALL delegatecallTest() to change B storage =================================== */
@@ -180,7 +180,7 @@ public class InternalTransactionCallTest {
    */
   @Test
   public void callCodeTest()
-      throws ContractExeException, OutOfContractTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
     byte[] contractBAddress = deployBContractAndGetItsAddress();
     byte[] contractAAddress =deployAContractandGetItsAddress();
     /* =================================== CALL callcodeTest() to change B storage =================================== */
@@ -226,7 +226,7 @@ public class InternalTransactionCallTest {
 
   // Just for the AB example above
   public byte[] deployAContractandGetItsAddress()
-      throws ContractExeException, OutOfContractTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
     String contractName = "AContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"bAddress\",\"type\":\"address\"},{\"name\":\"_number\",\"type\":\"uint256\"}],"
@@ -264,7 +264,7 @@ public class InternalTransactionCallTest {
 
   // Just for the AB example above
   public byte[] deployBContractAndGetItsAddress()
-      throws ContractExeException, OutOfContractTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
     String contractName = "BContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"_number\",\"type\":\"uint256\"}],\"name\":\"setValue\","

@@ -21,7 +21,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.OutOfContractTimeException;
+import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Protocol.AccountType;
 
@@ -75,7 +75,7 @@ public class CPUTimeTest {
 
   @Test
   public void endlessLoopTest()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, OutOfContractTimeException {
+      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
 
     long value = 0;
     long feeLimit = 20000000000000L;
@@ -101,14 +101,14 @@ public class CPUTimeTest {
       haveException = true;
     } catch (Exception e) {
       haveException = true;
-      Assert.assertTrue(e instanceof OutOfContractTimeException);
+      Assert.assertTrue(e instanceof ReceiptCheckErrException);
     }
     Assert.assertTrue(haveException);
   }
 
   public TVMTestResult deployEndlessLoopContract(long value, long feeLimit,
       long consumeUserResourcePercent)
-      throws ContractExeException, OutOfContractTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
     String contractName = "EndlessLoopContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"getVote\",\"outputs\":[{\"name\":\"_vote\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_vote\",\"type\":\"uint256\"}],\"name\":\"setVote\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]";
