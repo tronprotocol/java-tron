@@ -1043,7 +1043,6 @@ public class Manager {
 
     trace.init();
     trace.exec(runtime);
-    trace.pay();
 
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
 
