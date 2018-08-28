@@ -541,9 +541,7 @@ public class Runtime {
   }
 
   public boolean isCallConstant() throws ContractValidateException {
-    if (!Args.getInstance().isSupportConstant()) {
-      throw new ContractValidateException("this node don't support constant");
-    }
+
     TriggerSmartContract triggerContractFromTransaction = ContractCapsule
         .getTriggerContractFromTransaction(trx);
     if (TRX_CONTRACT_CALL_TYPE.equals(trxType)) {
@@ -558,9 +556,7 @@ public class Runtime {
   }
 
   private boolean isCallConstant(byte[] address) throws ContractValidateException {
-    if (!Args.getInstance().isSupportConstant()) {
-      throw new ContractValidateException("this node don't support constant");
-    }
+
     if (TRX_CONTRACT_CALL_TYPE.equals(trxType)) {
       ABI abi = deposit.getContract(address).getInstance().getAbi();
       if (Wallet.isConstant(abi, ContractCapsule.getTriggerContractFromTransaction(trx))) {

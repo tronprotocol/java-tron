@@ -141,9 +141,18 @@ public class Wallet {
     logger.info("wallet address: {}", ByteArray.toHexString(this.ecKey.getAddress()));
   }
 
-  public static boolean isConstant(ABI abi, TriggerSmartContract triggerSmartContract) {
+  public static boolean isConstant(ABI abi, TriggerSmartContract triggerSmartContract)
+      throws ContractValidateException {
     try {
-      return isConstant(abi, getSelector(triggerSmartContract.getData().toByteArray()));
+      boolean constant = isConstant(abi, getSelector(triggerSmartContract.getData().toByteArray()));
+      if (constant) {
+        if (!Args.getInstance().isSupportConstant()) {
+          throw new ContractValidateException("this node don't support constant");
+        }
+      }
+      return constant;
+    } catch (ContractValidateException e) {
+      throw e;
     } catch (Exception e) {
       return false;
     }
@@ -837,9 +846,13 @@ public class Wallet {
     try {
       byte[] selector = getSelector(triggerSmartContract.getData().toByteArray());
 
-      if (!isConstant(abi, selector)) {
+      boolean constant = isConstant(abi, selector);
+      if (!constant) {
         return trxCap.getInstance();
       } else {
+        if (!Args.getInstance().isSupportConstant()) {
+          throw new ContractValidateException("this node don't support constant");
+        }
         DepositImpl deposit = DepositImpl.createRoot(dbManager);
 
         Block headBlock;
@@ -908,9 +921,7 @@ public class Wallet {
   }
 
   private static boolean isConstant(SmartContract.ABI abi, byte[] selector) throws Exception {
-    if (!Args.getInstance().isSupportConstant()) {
-      throw new ContractValidateException("this node don't support constant");
-    }
+
     if (selector == null || abi.getEntrysList().size() == 0) {
       return false;
     }
