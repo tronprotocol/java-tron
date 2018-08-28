@@ -1040,6 +1040,12 @@ public class Manager {
       // Fixme Wrong exception
       throw new UnsupportVMException("cannot call constant method ");
     }
+    // if (SystemProperties.getInstance().vmOn()) {
+    //   if(trxCap.getInstance().getRetCount()<=0){
+    //     trxCap.setResult(new TransactionResultCapsule(contractResult.UNKNOWN));
+    //   }
+    // }
+
     consumeBandwidth(trxCap, runtime.getResult().getRet(), trace);
 
     trace.init();
@@ -1053,8 +1059,11 @@ public class Manager {
     }
 
     trace.finalization(runtime);
-
-    trxCap.setResult(runtime);
+    if (Objects.nonNull(blockCap)) {
+      if (SystemProperties.getInstance().vmOn()) {
+        trxCap.setResult(runtime);
+      }
+    }
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
 
     ReceiptCapsule traceReceipt = trace.getReceipt();

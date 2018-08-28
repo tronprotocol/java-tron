@@ -53,9 +53,10 @@ public class BandwidthProcessor extends ResourceProcessor {
       throws ContractValidateException, AccountResourceInsufficientException {
     List<Contract> contracts =
         trx.getInstance().getRawData().getContractList();
-
+    TransactionCapsule transactionCapsule = new TransactionCapsule(trx.getInstance().getRawData(),
+        trx.getInstance().getSignatureList());
     for (Contract contract : contracts) {
-      long bytes = trx.getSerializedSize();
+      long bytes = transactionCapsule.getSerializedSize();
       logger.debug("trxId {},bandwidth cost :{}", trx.getTransactionId(), bytes);
       trace.setNetBill(bytes, 0);
       byte[] address = TransactionCapsule.getOwner(contract);

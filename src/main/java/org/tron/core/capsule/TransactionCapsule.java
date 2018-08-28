@@ -76,6 +76,7 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
+import org.tron.protos.Protocol.Transaction.raw;
 
 @Slf4j
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
@@ -157,6 +158,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   public TransactionCapsule(ParticipateAssetIssueContract participateAssetIssueContract) {
     createTransaction(participateAssetIssueContract, ContractType.ParticipateAssetIssueContract);
+  }
+
+  public TransactionCapsule(raw rawData, List<ByteString> signatureList) {
+    this.transaction = Transaction.newBuilder().setRawData(rawData).addAllSignature(signatureList)
+        .build();
   }
 
   public void resetResult() {

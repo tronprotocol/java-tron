@@ -167,6 +167,9 @@ public class TransactionTrace {
   }
 
   public void setResult(Runtime runtime) {
+    if (!needVM()) {
+      return;
+    }
     RuntimeException exception = runtime.getResult().getException();
     if (Objects.isNull(exception) && StringUtils
         .isEmpty(runtime.getRuntimeError()) && !runtime.getResult().isRevert()) {

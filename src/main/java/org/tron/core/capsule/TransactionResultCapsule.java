@@ -1,11 +1,11 @@
 package org.tron.core.capsule;
 
-import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.exception.BadItemException;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Result;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
 @Slf4j
 public class TransactionResultCapsule implements ProtoCapsule<Transaction.Result> {
@@ -29,6 +29,10 @@ public class TransactionResultCapsule implements ProtoCapsule<Transaction.Result
 
   public TransactionResultCapsule() {
     this.transactionResult = Transaction.Result.newBuilder().build();
+  }
+
+  public TransactionResultCapsule(contractResult code) {
+    this.transactionResult = Transaction.Result.newBuilder().setContractRet(code).build();
   }
 
   public TransactionResultCapsule(Transaction.Result.code code, long fee) {
