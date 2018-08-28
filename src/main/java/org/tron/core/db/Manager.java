@@ -1042,6 +1042,14 @@ public class Manager {
     consumeBandwidth(trxCap, runtime.getResult().getRet(), trace);
 
     trace.init();
+
+    // if (blockCap != null && blockCap.generatedByMyself &&
+    //     !blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty() &&
+    //     trxCap.getInstance().getRet(0).getContractRet() != contractResult.SUCCESS) {
+    //
+    // } else {
+    // }
+
     trace.exec(runtime);
 
     if (Objects.nonNull(blockCap)) {

@@ -300,6 +300,36 @@ public class Runtime {
     }
   }
 
+  private double getThisTxCPULimitInUsRatio() {
+
+    double thisTxCPULimitInUsRatio;
+    if (this.block != null && block.generatedByMyself) {
+      // ET_NORMAL_TYPE must be executorType
+      if (!this.block.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
+        // self witness 3
+        thisTxCPULimitInUsRatio = Args.getInstance().getMaxTimeRatio();
+      } else {
+        // self witness 2
+        thisTxCPULimitInUsRatio = 1.0;
+      }
+    } else {
+      if (ET_NORMAL_TYPE == executorType) {
+        // other witness 3
+        // fullnode 2
+        if (trx.getRet(0).getContractRet() == contractResult.OUT_OF_TIME) {
+          thisTxCPULimitInUsRatio = Args.getInstance().getMinTimeRatio();
+        } else {
+          thisTxCPULimitInUsRatio = Args.getInstance().getMaxTimeRatio();
+        }
+      } else {
+        // self witness 1, other witness 1
+        // fullnode 1
+        thisTxCPULimitInUsRatio = 1.0;
+      }
+    }
+    return thisTxCPULimitInUsRatio;
+  }
+
   /*
    **/
   private void create()
@@ -343,29 +373,10 @@ public class Runtime {
       //   thisTxENERGYLimitInUs = Constant.ENERGY_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT;
       // }
 
-      double thisTxCPULimitInUsRatio;
-      if (block.generatedByMyself) {
-        // ET_NORMAL_TYPE must be executorType
-        // self witness 2, self witness 3
-        thisTxCPULimitInUsRatio = 1.0;
-      } else {
-        if (ET_NORMAL_TYPE == executorType) {
-          // other witness 3
-          // fullnode 2
-          if (trx.getRet(0).getContractRet() == contractResult.OUT_OF_TIME) {
-            thisTxCPULimitInUsRatio = max(0.0, Args.getInstance().getMinTimeRatio());
-          } else {
-            thisTxCPULimitInUsRatio = max(0.0, Args.getInstance().getMaxTimeRatio());
-          }
-        } else {
-          // self witness 1, other witness 1
-          // fullnode 1
-          thisTxCPULimitInUsRatio = 1.0;
-        }
-      }
+
 
       long thisTxCPULimitInUs =
-          (long) (Constant.MAX_CPU_TIME_OF_ONE_TX * thisTxCPULimitInUsRatio);
+          (long) (Constant.MAX_CPU_TIME_OF_ONE_TX * getThisTxCPULimitInUsRatio());
       long vmStartInUs = System.nanoTime() / 1000;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
@@ -378,7 +389,7 @@ public class Runtime {
           .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executorType, trx,
               block.getInstance(), deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
       this.vm = new VM(config);
-      this.program = new Program(ops, programInvoke, internalTransaction, config);
+      this.program = new Program(ops, programInvoke, internalTransaction, config, this.block);
       Program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
       Program.resetNonce();
       Program.setRootCallConstant(isCallConstant());
@@ -432,23 +443,8 @@ public class Runtime {
           this.deposit.getContract(contractAddress).getInstance()
               .getOriginAddress().toByteArray());
 
-      double thisTxCPULimitInUsRatio;
-      if (block.generatedByMyself) {
-        // ET_NORMAL_TYPE must be executorType
-        thisTxCPULimitInUsRatio = 1.0;
-      } else {
-        if (ET_NORMAL_TYPE == executorType) {
-          if (trx.getRet(0).getContractRet() == contractResult.OUT_OF_TIME) {
-            thisTxCPULimitInUsRatio = max(0.0, Args.getInstance().getMinTimeRatio());
-          } else {
-            thisTxCPULimitInUsRatio = max(0.0, Args.getInstance().getMaxTimeRatio());
-          }
-        } else {
-          thisTxCPULimitInUsRatio = 1.0;
-        }
-      }
       long thisTxCPULimitInUs =
-          (long) (Constant.MAX_CPU_TIME_OF_ONE_TX * thisTxCPULimitInUsRatio);
+          (long) (Constant.MAX_CPU_TIME_OF_ONE_TX * getThisTxCPULimitInUsRatio());
 
       long vmStartInUs = System.nanoTime() / 1000;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
@@ -471,7 +467,8 @@ public class Runtime {
               block.getInstance(), deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
       this.vm = new VM(config);
       InternalTransaction internalTransaction = new InternalTransaction(trx);
-      this.program = new Program(null, code, programInvoke, internalTransaction, config);
+      this.program = new Program(null, code, programInvoke, internalTransaction, config,
+          this.block);
       Program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
       Program.resetNonce();
       Program.setRootCallConstant(isCallConstant());

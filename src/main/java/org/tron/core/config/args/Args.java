@@ -804,7 +804,7 @@ public class Args {
   }
 
   private static double calcMaxTimeRatio() {
-    return max(1, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
+    return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
   }
 
   private static void initBackupProperty(Config config) {
