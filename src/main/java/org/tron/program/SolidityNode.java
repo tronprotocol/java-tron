@@ -28,7 +28,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.NonCommonBlockException;
-import org.tron.core.exception.OutOfSlotTimeException;
+import org.tron.core.exception.OutOfContractTimeException;
 import org.tron.core.exception.ReceiptException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
@@ -147,7 +147,7 @@ public class SolidityNode {
           throw new BadBlockException("non common exception");
         } catch (TransactionTraceException e) {
           throw new BadBlockException("TransactionTrace Exception");
-        } catch (OutOfSlotTimeException e) {
+        } catch (OutOfContractTimeException e) {
           throw new BadBlockException("OutOfSlotTime Exception");
         } catch (UnsupportVMException e) {
           throw new BadBlockException(e.getMessage());

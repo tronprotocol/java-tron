@@ -52,7 +52,7 @@ import org.tron.core.db.StorageMarket;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.OutOfSlotTimeException;
+import org.tron.core.exception.OutOfContractTimeException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
@@ -490,7 +490,7 @@ public class Runtime {
 
   }
 
-  public void go() throws OutOfSlotTimeException {
+  public void go() throws OutOfContractTimeException {
 
     try {
       if (vm != null) {

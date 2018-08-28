@@ -76,7 +76,7 @@ import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
-import org.tron.core.exception.OutOfSlotTimeException;
+import org.tron.core.exception.OutOfContractTimeException;
 import org.tron.core.exception.ReceiptException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
@@ -584,7 +584,7 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, DupTransactionException, TaposException,
       TooBigTransactionException, TransactionExpirationException, ReceiptException,
-      TransactionTraceException, OutOfSlotTimeException, UnsupportVMException {
+      TransactionTraceException, OutOfContractTimeException, UnsupportVMException {
 
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
@@ -678,7 +678,7 @@ public class Manager {
   private void applyBlock(BlockCapsule block) throws ContractValidateException,
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException, ReceiptException,
-      TaposException, ValidateScheduleException, TransactionTraceException, OutOfSlotTimeException,
+      TaposException, ValidateScheduleException, TransactionTraceException, OutOfContractTimeException,
       UnsupportVMException {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
@@ -690,7 +690,7 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       ValidateScheduleException, AccountResourceInsufficientException, TaposException,
       TooBigTransactionException, DupTransactionException, TransactionExpirationException,
-      NonCommonBlockException, ReceiptException, TransactionTraceException, OutOfSlotTimeException,
+      NonCommonBlockException, ReceiptException, TransactionTraceException, OutOfContractTimeException,
       UnsupportVMException {
     Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
     try {
@@ -734,7 +734,7 @@ public class Manager {
             | TransactionExpirationException
             | TransactionTraceException
             | ReceiptException
-            | OutOfSlotTimeException
+            | OutOfContractTimeException
             | TooBigTransactionException
             | ValidateScheduleException
             | UnsupportVMException e) {
@@ -793,7 +793,7 @@ public class Manager {
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
       TaposException, TooBigTransactionException, DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException, ReceiptException, TransactionTraceException,
-      OutOfSlotTimeException, UnsupportVMException {
+      OutOfContractTimeException, UnsupportVMException {
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
@@ -1006,7 +1006,7 @@ public class Manager {
   public boolean processTransaction(final TransactionCapsule trxCap, Block block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException, ReceiptException,
       AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException,
-      DupTransactionException, TaposException, TransactionTraceException, OutOfSlotTimeException, UnsupportVMException {
+      DupTransactionException, TaposException, TransactionTraceException, OutOfContractTimeException, UnsupportVMException {
     if (trxCap == null) {
       return false;
     }
@@ -1043,10 +1043,8 @@ public class Manager {
 
     trace.init();
     trace.exec(runtime);
-    trace.setResult(runtime);
+
     trxCap.setResult(runtime);
-    trace.check(trxCap.getContractRet());
-    trace.pay();
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
 
     ReceiptCapsule traceReceipt = trace.getReceipt();
@@ -1145,7 +1143,7 @@ public class Manager {
       } catch (ReceiptException e) {
         logger.info("receipt exception: {}", e.getMessage());
         logger.debug(e.getMessage(), e);
-      } catch (OutOfSlotTimeException e) {
+      } catch (OutOfContractTimeException e) {
         logger.info("OutOfSlotTime exception: {}", e.getMessage());
         logger.debug(e.getMessage(), e);
       } catch (UnsupportVMException e) {
@@ -1186,7 +1184,7 @@ public class Manager {
     } catch (ReceiptException e) {
       logger.info("receipt exception: {}", e.getMessage());
       logger.debug(e.getMessage(), e);
-    } catch (OutOfSlotTimeException e) {
+    } catch (OutOfContractTimeException e) {
       logger.info("OutOfSlotTime exception: {}", e.getMessage());
       logger.debug(e.getMessage(), e);
     } catch (UnsupportVMException e) {
@@ -1231,7 +1229,7 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
       DupTransactionException, TransactionExpirationException, ValidateScheduleException,
-      ReceiptException, TransactionTraceException, OutOfSlotTimeException, UnsupportVMException {
+      ReceiptException, TransactionTraceException, OutOfContractTimeException, UnsupportVMException {
     // todo set revoking db max size.
 
     // checkWitness
@@ -1553,7 +1551,7 @@ public class Manager {
       logger.debug("expiration transaction");
     } catch (TransactionTraceException e) {
       logger.debug("transactionTrace transaction");
-    } catch (OutOfSlotTimeException e) {
+    } catch (OutOfContractTimeException e) {
       logger.debug("outOfSlotTime transaction");
     } catch (UnsupportVMException e) {
       logger.debug(e.getMessage(), e);
