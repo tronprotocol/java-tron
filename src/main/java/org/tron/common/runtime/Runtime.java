@@ -526,6 +526,7 @@ public class Runtime {
       logger.error("runtime error is :{}", result.getException().getMessage());
     } catch (Throwable e) {
       if (Objects.isNull(result.getException())) {
+        logger.error(e.getMessage(), e);
         result.setException(new RuntimeException("Unknown Throwable"));
       }
       if (StringUtils.isEmpty(runtimeError)) {

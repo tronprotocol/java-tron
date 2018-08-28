@@ -1058,7 +1058,7 @@ public class Manager {
 
     ReceiptCapsule traceReceipt = trace.getReceipt();
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
-        .buildInstance(trxCap, blockCap.getInstance(), runtime, traceReceipt);
+        .buildInstance(trxCap, blockCap, runtime, traceReceipt);
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
 
