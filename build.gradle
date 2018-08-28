@@ -150,9 +150,9 @@ dependencies {
 
     checkstyleConfig "com.puppycrawl.tools:checkstyle:${versions.checkstyle}"
     // google grpc
-    compile group: 'io.grpc', name: 'grpc-netty', version: '1.9.0'
-    compile group: 'io.grpc', name: 'grpc-protobuf', version: '1.9.0'
-    compile group: 'io.grpc', name: 'grpc-stub', version: '1.9.0'
+    compile group: 'io.grpc', name: 'grpc-netty', version: '1.14.0'
+    compile group: 'io.grpc', name: 'grpc-protobuf', version: '1.14.0'
+    compile group: 'io.grpc', name: 'grpc-stub', version: '1.14.0'
     // end google grpc
 
     compile group: 'com.carrotsearch', name: 'java-sizeof', version: '0.0.5'
