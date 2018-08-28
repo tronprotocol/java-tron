@@ -733,13 +733,14 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         processAdvBlock(peer, blkMsg.getBlockCapsule());
         startFetchItem();
       }
-    } else {
-      if (!syncFlag) {//not we request and not sync,disconnect
-        logger.error("not we request and not sync, disconnect : {}, block : {}",
-            peer.getInetAddress(), blockId.getString());
-        banTraitorPeer(peer, ReasonCode.BAD_PROTOCOL);
-      }
     }
+//    else {
+//      if (!syncFlag) {//not we request and not sync,disconnect
+//        logger.error("not we request and not sync, disconnect : {}, block : {}",
+//            peer.getInetAddress(), blockId.getString());
+//        banTraitorPeer(peer, ReasonCode.BAD_PROTOCOL);
+//      }
+//    }
 
   }
 
