@@ -43,6 +43,7 @@ import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
@@ -70,7 +71,7 @@ public class Runtime {
   private SystemProperties config = SystemProperties.getInstance();
 
   private Transaction trx;
-  private Block block = null;
+  private BlockCapsule block = null;
   private Deposit deposit;
   private ProgramInvokeFactory programInvokeFactory = null;
   private String runtimeError;
@@ -94,7 +95,7 @@ public class Runtime {
   /**
    * For block's trx run
    */
-  public Runtime(TransactionTrace trace, Block block, Deposit deosit,
+  public Runtime(TransactionTrace trace, BlockCapsule block, Deposit deosit,
       ProgramInvokeFactory programInvokeFactory) {
     this.trace = trace;
     this.trx = trace.getTrx().getInstance();
@@ -103,7 +104,7 @@ public class Runtime {
       this.block = block;
       this.executorType = ET_NORMAL_TYPE;
     } else {
-      this.block = Block.newBuilder().build();
+      this.block = new BlockCapsule(Block.newBuilder().build());
       this.executorType = ET_PRE_TYPE;
     }
     this.deposit = deosit;
@@ -164,7 +165,7 @@ public class Runtime {
   /**
    * For constant trx with latest block.
    */
-  public Runtime(Transaction tx, Block block, DepositImpl deposit,
+  public Runtime(Transaction tx, BlockCapsule block, DepositImpl deposit,
       ProgramInvokeFactory programInvokeFactory) {
     this.trx = tx;
     this.deposit = deposit;
@@ -204,7 +205,7 @@ public class Runtime {
     // insure block is not null
     BigInteger curBlockHaveElapsedCPUInUs =
         BigInteger.valueOf(
-            1000 * (DateTime.now().getMillis() - block.getBlockHeader().getRawData()
+            1000 * (DateTime.now().getMillis() - block.getInstance().getBlockHeader().getRawData()
                 .getTimestamp())); // us
     BigInteger curBlockCPULimitInUs = BigInteger.valueOf((long)
         (1000 * ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5
@@ -342,15 +343,26 @@ public class Runtime {
       // }
 
       double thisTxCPULimitInUsRatio;
-      if (ET_NORMAL_TYPE == executorType) {
-        if (trx.getRet(0).getContractRet() == contractResult.OUT_OF_TIME) {
-          thisTxCPULimitInUsRatio = max(0.0, Args.getInstance().getMinTimeRatio());
-        } else {
-          thisTxCPULimitInUsRatio = max(0.0, Args.getInstance().getMaxTimeRatio());
-        }
-      } else {
+      if (block.generatedByMyself) {
+        // ET_NORMAL_TYPE must be executorType
+        // self witness 2, self witness 3
         thisTxCPULimitInUsRatio = 1.0;
+      } else {
+        if (ET_NORMAL_TYPE == executorType) {
+          // other witness 3
+          // fullnode 2
+          if (trx.getRet(0).getContractRet() == contractResult.OUT_OF_TIME) {
+            thisTxCPULimitInUsRatio = max(0.0, Args.getInstance().getMinTimeRatio());
+          } else {
+            thisTxCPULimitInUsRatio = max(0.0, Args.getInstance().getMaxTimeRatio());
+          }
+        } else {
+          // self witness 1, other witness 1
+          // fullnode 1
+          thisTxCPULimitInUsRatio = 1.0;
+        }
       }
+
       long thisTxCPULimitInUs =
           (long) (Constant.MAX_CPU_TIME_OF_ONE_TX * thisTxCPULimitInUsRatio);
       long vmStartInUs = System.nanoTime() / 1000;
@@ -363,7 +375,7 @@ public class Runtime {
 
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executorType, trx,
-              block, deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
+              block.getInstance(), deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
       this.vm = new VM(config);
       this.program = new Program(ops, programInvoke, internalTransaction, config);
       Program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
@@ -420,14 +432,19 @@ public class Runtime {
               .getOriginAddress().toByteArray());
 
       double thisTxCPULimitInUsRatio;
-      if (ET_NORMAL_TYPE == executorType) {
-        if (trx.getRet(0).getContractRet() == contractResult.OUT_OF_TIME) {
-          thisTxCPULimitInUsRatio = max(0.0, Args.getInstance().getMinTimeRatio());
-        } else {
-          thisTxCPULimitInUsRatio = max(0.0, Args.getInstance().getMaxTimeRatio());
-        }
-      } else {
+      if (block.generatedByMyself) {
+        // ET_NORMAL_TYPE must be executorType
         thisTxCPULimitInUsRatio = 1.0;
+      } else {
+        if (ET_NORMAL_TYPE == executorType) {
+          if (trx.getRet(0).getContractRet() == contractResult.OUT_OF_TIME) {
+            thisTxCPULimitInUsRatio = max(0.0, Args.getInstance().getMinTimeRatio());
+          } else {
+            thisTxCPULimitInUsRatio = max(0.0, Args.getInstance().getMaxTimeRatio());
+          }
+        } else {
+          thisTxCPULimitInUsRatio = 1.0;
+        }
       }
       long thisTxCPULimitInUs =
           (long) (Constant.MAX_CPU_TIME_OF_ONE_TX * thisTxCPULimitInUsRatio);
@@ -450,7 +467,7 @@ public class Runtime {
 
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CALL_TYPE, executorType, trx,
-              block, deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
+              block.getInstance(), deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
       this.vm = new VM(config);
       InternalTransaction internalTransaction = new InternalTransaction(trx);
       this.program = new Program(null, code, programInvoke, internalTransaction, config);

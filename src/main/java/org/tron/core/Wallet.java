@@ -850,7 +850,7 @@ public class Wallet {
           headBlock = blockCapsuleList.get(0).getInstance();
         }
 
-        Runtime runtime = new Runtime(trxCap.getInstance(), headBlock, deposit,
+        Runtime runtime = new Runtime(trxCap.getInstance(), new BlockCapsule(headBlock), deposit,
             new ProgramInvokeFactoryImpl());
         runtime.execute();
         runtime.go();
@@ -914,7 +914,7 @@ public class Wallet {
     if (selector == null || abi.getEntrysList().size() == 0) {
       return false;
     }
-    if ( selector.length != 4) {
+    if (selector.length != 4) {
       throw new Exception("Selector's length or selector itself is invalid");
     }
 

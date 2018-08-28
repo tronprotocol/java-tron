@@ -683,7 +683,7 @@ public class Args {
 
   private static List<Node> getNodes(final com.typesafe.config.Config config, String path) {
     if (!config.hasPath(path)) {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
     List<Node> ret = new ArrayList<>();
     List<String> list = config.getStringList(path);
