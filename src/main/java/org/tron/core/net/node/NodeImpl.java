@@ -223,7 +223,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       .newSingleThreadScheduledExecutor();
 
   private ScheduledExecutorService cleanDisorderBlockExecutor = Executors
-          .newSingleThreadScheduledExecutor();
+          .newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("clean-disorder-block").build()
+          );
 
   //broadcast
   private ConcurrentHashMap<Sha256Hash, InventoryType> advObjToSpread = new ConcurrentHashMap<>();
@@ -442,6 +443,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     cleanDisorderBlockExecutor.scheduleWithFixedDelay(() -> {
        advBlockDisorder.cleanUnusedBlock(del.getSolidBlockId());
+       cleanAdvObjWeRequested(del.getSolidBlockId());
     }, 60, 60, TimeUnit.SECONDS);
 
     fetchSyncBlocksExecutor.scheduleWithFixedDelay(() -> {
@@ -467,6 +469,17 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         logger.error("Unhandled exception", t);
       }
     }, 1000, 100, TimeUnit.MILLISECONDS);
+  }
+
+  private void cleanAdvObjWeRequested(BlockId blockId){
+    long solidBlockNum = blockId.getNum();
+    for(Map.Entry entry: advObjWeRequested.entrySet()){
+      BlockCapsule block = (BlockCapsule)entry.getValue();
+      if(block.getNum() < solidBlockNum){
+        Sha256Hash hash = (Sha256Hash) entry.getValue();
+        advObjWeRequested.remove(hash);
+      }
+    }
   }
 
   private void consumerAdvObjToFetch() {
@@ -758,8 +771,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       logger.info("receive a disordered block:{}, parentHash:{}", block.getBlockId().getString(), block.getParentHash());
     }else{
       // receive an ordered block we have requested, try to push block
-      advObjWeRequested.remove(block.getBlockId());
       while (realProcessAdvBlock(peer, block)) {
+        advObjWeRequested.remove(block.getBlockId());
         // if push block success, we try to find his child block and continue push
         AdvBlockDisorder.PeerAndBlockCapsule blockAndPeer = advBlockDisorder.getNextBlockAndRemove(block);
         if(blockAndPeer == null){
