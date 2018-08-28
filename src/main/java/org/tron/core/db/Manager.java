@@ -1559,6 +1559,4 @@ public class Manager {
       logger.debug(e.getMessage(), e);
     }
   }
-
-
 }

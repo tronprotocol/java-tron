@@ -147,7 +147,10 @@ public class TransactionTrace {
   }
 
   public void check(contractResult contractRet) throws OutOfSlotTimeException {
-    if (contractRet.equals(trx.getContractRet())) {
+    if (Objects.isNull(trx.getContractRet())) {
+      return;
+    }
+    if (trx.getContractRet().equals(contractRet)) {
       throw new OutOfSlotTimeException("Different resultCode");
     }
   }
