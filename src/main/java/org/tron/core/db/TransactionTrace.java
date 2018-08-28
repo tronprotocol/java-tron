@@ -104,11 +104,11 @@ public class TransactionTrace {
     runtime.execute();
     runtime.go();
     setResult(runtime);
-    check(receipt.getResult());
+  }
+
+  public void finalization(Runtime runtime) {
     pay();
-
     runtime.finalization();
-
   }
 
   /**
@@ -150,11 +150,14 @@ public class TransactionTrace {
         dbManager.getWitnessController().getHeadSlot());
   }
 
-  public void check(contractResult contractRet) throws OutOfContractTimeException {
-    if (Objects.isNull(trx.getContractRet())) {
+  public void check() throws OutOfContractTimeException {
+    if (!needVM()) {
       return;
     }
-    if (trx.getContractRet().equals(contractRet)) {
+    if (Objects.isNull(trx.getContractRet())) {
+      throw new OutOfContractTimeException("null resultCode");
+    }
+    if (trx.getContractRet().equals(receipt.getResult())) {
       throw new OutOfContractTimeException("Different resultCode");
     }
   }
@@ -206,5 +209,7 @@ public class TransactionTrace {
       receipt.setResult(contractResult.STACK_TOO_LARGE);
       return;
     }
+    receipt.setResult(contractResult.UNKNOWN);
+    return;
   }
 }

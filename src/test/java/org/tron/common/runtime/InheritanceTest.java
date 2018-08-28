@@ -17,7 +17,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.OutOfSlotTimeException;
+import org.tron.core.exception.OutOfContractTimeException;
 import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Protocol.AccountType;
 
@@ -67,7 +67,7 @@ public class InheritanceTest {
    */
   @Test
   public void inheritanceTest()
-      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, OutOfContractTimeException, TransactionTraceException, ContractValidateException {
     String contractName = "barContract";
     byte[] callerAddress = Hex.decode(OWNER_ADDRESS);
     String ABI = "[{\"constant\":false,\"inputs\":[],\"name\":\"getName\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],"

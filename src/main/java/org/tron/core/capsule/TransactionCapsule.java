@@ -580,6 +580,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       this.setResultCode(contractResult.STACK_TOO_LARGE);
       return;
     }
+    this.setResultCode(contractResult.UNKNOWN);
+    return;
   }
 
   private void setResultCode(contractResult code) {
