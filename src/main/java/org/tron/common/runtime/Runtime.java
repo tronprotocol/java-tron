@@ -392,18 +392,17 @@ public class Runtime {
       // }
 
       long thisTxCPULimitInUs;
-      long tolerance = max(0, min(100, Args.getInstance().getTolerance()));
       if (ET_NORMAL_TYPE == executorType) {
         if (contract.getReceipt().getResult() == ResourceReceipt.code.OUT_OF_TIME) {
-          thisTxCPULimitInUs =
-              Constant.MAX_CPU_TIME_OF_ONE_TX * (100 - tolerance) / 100;
+          thisTxCPULimitInUs = max(0, Args.getInstance().getLowTolerance());
         } else {
-          thisTxCPULimitInUs = Constant.MAX_CPU_TIME_OF_ONE_TX_WHEN_VERIFY_BLOCK;
+          thisTxCPULimitInUs = max(0, Args.getInstance().getHighTolerance());
         }
       } else {
         thisTxCPULimitInUs =
-            Constant.MAX_CPU_TIME_OF_ONE_TX * (100 + tolerance) / 100;
+            Constant.MAX_CPU_TIME_OF_ONE_TX;
       }
+      
       long vmStartInUs = System.nanoTime() / 1000;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
@@ -471,17 +470,15 @@ public class Runtime {
               .getOriginAddress().toByteArray());
 
       long thisTxCPULimitInUs;
-      long tolerance = max(0, min(100, Args.getInstance().getTolerance()));
       if (ET_NORMAL_TYPE == executorType) {
         if (contract.getReceipt().getResult() == ResourceReceipt.code.OUT_OF_TIME) {
-          thisTxCPULimitInUs =
-              Constant.MAX_CPU_TIME_OF_ONE_TX * (100 - tolerance) / 100;
+          thisTxCPULimitInUs = max(0, Args.getInstance().getLowTolerance());
         } else {
-          thisTxCPULimitInUs = Constant.MAX_CPU_TIME_OF_ONE_TX_WHEN_VERIFY_BLOCK;
+          thisTxCPULimitInUs = max(0, Args.getInstance().getHighTolerance());
         }
       } else {
         thisTxCPULimitInUs =
-            Constant.MAX_CPU_TIME_OF_ONE_TX * (100 + tolerance) / 100;
+            Constant.MAX_CPU_TIME_OF_ONE_TX;
       }
 
       long vmStartInUs = System.nanoTime() / 1000;
