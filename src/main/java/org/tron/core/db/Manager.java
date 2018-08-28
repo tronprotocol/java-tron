@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -89,7 +90,6 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
-import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 
 
@@ -1003,7 +1003,7 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public boolean processTransaction(final TransactionCapsule trxCap, Block block)
+  public boolean processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
       throws ValidateSignatureException, ContractValidateException, ContractExeException, ReceiptException,
       AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException,
       DupTransactionException, TaposException, TransactionTraceException, ReceiptCheckErrException, UnsupportVMException {
@@ -1034,7 +1034,7 @@ public class Manager {
 //    }
 
     DepositImpl deposit = DepositImpl.createRoot(this);
-    Runtime runtime = new Runtime(trace, block, deposit, new ProgramInvokeFactoryImpl());
+    Runtime runtime = new Runtime(trace, blockCap, deposit, new ProgramInvokeFactoryImpl());
     if (runtime.isCallConstant()) {
       // Fixme Wrong exception
       throw new UnsupportVMException("cannot call constant method ");
@@ -1044,9 +1044,10 @@ public class Manager {
     trace.init();
     trace.exec(runtime);
 
-    if (new BlockCapsule(block).generatedByMyself) {
+    if (Objects.nonNull(blockCap) && !blockCap.generatedByMyself) {
       trace.check();
     }
+
     trace.finalization(runtime);
 
     trxCap.setResult(runtime);
@@ -1054,7 +1055,7 @@ public class Manager {
 
     ReceiptCapsule traceReceipt = trace.getReceipt();
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
-        .buildInstance(trxCap, block, runtime, traceReceipt);
+        .buildInstance(trxCap, blockCap.getInstance(), runtime, traceReceipt);
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
 
@@ -1095,6 +1096,7 @@ public class Manager {
 
     final BlockCapsule blockCapsule =
         new BlockCapsule(number + 1, preHash, when, witnessCapsule.getAddress());
+    blockCapsule.generatedByMyself = true;
     session.reset();
     session.setValue(revokingStore.buildSession());
 
@@ -1115,7 +1117,7 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
-        processTransaction(trx, blockCapsule.getInstance());
+        processTransaction(trx, blockCapsule);
         // trx.resetResult();
         tmpSeesion.merge();
         // push into block
@@ -1167,7 +1169,6 @@ public class Manager {
             + "]");
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(privateKey);
-    blockCapsule.generatedByMyself = true;
 
     try {
       this.pushBlock(blockCapsule);
@@ -1246,7 +1247,7 @@ public class Manager {
       if (block.generatedByMyself) {
         transactionCapsule.setVerified(true);
       }
-      processTransaction(transactionCapsule, block.getInstance());
+      processTransaction(transactionCapsule, block);
     }
 
     boolean needMaint = needMaintenance(block.getTimeStamp());
