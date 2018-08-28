@@ -1,7 +1,7 @@
 package org.tron.common.runtime;
 
-import static com.google.common.primitives.Longs.max;
-import static com.google.common.primitives.Longs.min;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.utils.MUtil.transfer;
@@ -52,7 +52,6 @@ import org.tron.core.db.StorageMarket;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.OutOfContractTimeException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
@@ -364,18 +363,18 @@ public class Runtime {
       //   thisTxENERGYLimitInUs = Constant.ENERGY_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT;
       // }
 
-      long thisTxCPULimitInUs;
+      double thisTxCPULimitInUsRatio;
       if (ET_NORMAL_TYPE == executorType) {
         if (trx.getRet(0).getContractRet() == contractResult.OUT_OF_TIME) {
-          thisTxCPULimitInUs = max(0, Args.getInstance().getLowTolerance());
+          thisTxCPULimitInUsRatio = max(0.0, Args.getInstance().getMinTimeRatio());
         } else {
-          thisTxCPULimitInUs = max(0, Args.getInstance().getHighTolerance());
+          thisTxCPULimitInUsRatio = max(0.0, Args.getInstance().getMaxTimeRatio());
         }
       } else {
-        thisTxCPULimitInUs =
-            Constant.MAX_CPU_TIME_OF_ONE_TX;
+        thisTxCPULimitInUsRatio = 1.0;
       }
-
+      long thisTxCPULimitInUs =
+          (long) (Constant.MAX_CPU_TIME_OF_ONE_TX * thisTxCPULimitInUsRatio);
       long vmStartInUs = System.nanoTime() / 1000;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
@@ -442,17 +441,18 @@ public class Runtime {
           this.deposit.getContract(contractAddress).getInstance()
               .getOriginAddress().toByteArray());
 
-      long thisTxCPULimitInUs;
+      double thisTxCPULimitInUsRatio;
       if (ET_NORMAL_TYPE == executorType) {
         if (trx.getRet(0).getContractRet() == contractResult.OUT_OF_TIME) {
-          thisTxCPULimitInUs = max(0, Args.getInstance().getLowTolerance());
+          thisTxCPULimitInUsRatio = max(0.0, Args.getInstance().getMinTimeRatio());
         } else {
-          thisTxCPULimitInUs = max(0, Args.getInstance().getHighTolerance());
+          thisTxCPULimitInUsRatio = max(0.0, Args.getInstance().getMaxTimeRatio());
         }
       } else {
-        thisTxCPULimitInUs =
-            Constant.MAX_CPU_TIME_OF_ONE_TX;
+        thisTxCPULimitInUsRatio = 1.0;
       }
+      long thisTxCPULimitInUs =
+          (long) (Constant.MAX_CPU_TIME_OF_ONE_TX * thisTxCPULimitInUsRatio);
 
       long vmStartInUs = System.nanoTime() / 1000;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
@@ -490,7 +490,7 @@ public class Runtime {
 
   }
 
-  public void go() throws OutOfContractTimeException {
+  public void go() {
 
     try {
       if (vm != null) {
@@ -546,7 +546,10 @@ public class Runtime {
         .divide(BigInteger.valueOf(callerEnergyTotal)).longValue();
   }
 
-  public boolean isCallConstant() {
+  public boolean isCallConstant() throws ContractValidateException {
+    if (!Args.getInstance().isSupportConstant()) {
+      throw new ContractValidateException("this node don't support constant");
+    }
     TriggerSmartContract triggerContractFromTransaction = ContractCapsule
         .getTriggerContractFromTransaction(trx);
     if (TRX_CONTRACT_CALL_TYPE.equals(trxType)) {
@@ -560,7 +563,10 @@ public class Runtime {
     return false;
   }
 
-  private boolean isCallConstant(byte[] address) {
+  private boolean isCallConstant(byte[] address) throws ContractValidateException {
+    if (!Args.getInstance().isSupportConstant()) {
+      throw new ContractValidateException("this node don't support constant");
+    }
     if (TRX_CONTRACT_CALL_TYPE.equals(trxType)) {
       ABI abi = deposit.getContract(address).getInstance().getAbi();
       if (Wallet.isConstant(abi, ContractCapsule.getTriggerContractFromTransaction(trx))) {

@@ -80,13 +80,13 @@ public class Args {
 
   @Getter
   @Setter
-  @Parameter(names = {"--low-tolerance"})
-  private long lowTolerance = 50000; // 50ms = 50000us
+  @Parameter(names = {"--min-time-ratio"})
+  private double minTimeRatio = 1.0; // 50ms * 1.0 = 50ms = 50000us
 
   @Getter
   @Setter
-  @Parameter(names = {"--high-tolerance"})
-  private long highTolerance = calcHighTolerance();
+  @Parameter(names = {"--max-time-ratio"})
+  private double maxTimeRatio = calcMaxTimeRatio();
 
   @Getter
   @Parameter(description = "--seed-nodes")
@@ -431,6 +431,10 @@ public class Args {
     if (INSTANCE.isWitness() && CollectionUtils.isEmpty(INSTANCE.localWitnesses.getPrivateKeys())) {
       logger.warn("This is a witness node,but localWitnesses is null");
     }
+
+    INSTANCE.supportConstant = config.getBoolean("vm.supportConstant");
+    INSTANCE.minTimeRatio = config.getDouble("vm.minTimeRatio");
+    INSTANCE.maxTimeRatio = config.getDouble("vm.maxTimeRatio");
 
     INSTANCE.storage = new Storage();
     INSTANCE.storage.setDbVersion(Optional.ofNullable(INSTANCE.storageDbVersion)
@@ -790,9 +794,8 @@ public class Args {
     return ECKey.fromPrivate(Hex.decode(INSTANCE.p2pNodeId));
   }
 
-  private static long calcHighTolerance() {
-    double ratio = min(1.0, 4.0 / max(Runtime.getRuntime().availableProcessors(), 1));
-    return 100000 + (long) (150000 * ratio);
+  private static double calcMaxTimeRatio() {
+    return max(1, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
   }
 
   private static void initBackupProperty(Config config) {

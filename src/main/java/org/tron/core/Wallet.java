@@ -73,6 +73,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.ChainParameters;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.AccountIdIndexStore;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BandwidthProcessor;
@@ -907,6 +908,9 @@ public class Wallet {
   }
 
   private static boolean isConstant(SmartContract.ABI abi, byte[] selector) throws Exception {
+    if (!Args.getInstance().isSupportConstant()) {
+      throw new ContractValidateException("this node don't support constant");
+    }
     if (selector == null || abi.getEntrysList().size() == 0) {
       return false;
     }
