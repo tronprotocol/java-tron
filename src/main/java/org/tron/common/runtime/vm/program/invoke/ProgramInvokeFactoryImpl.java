@@ -31,6 +31,7 @@ import org.tron.common.storage.Deposit;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Protocol.Block;
@@ -49,7 +50,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
   @Override
   public ProgramInvoke createProgramInvoke(InternalTransaction.TrxType trxType,
       ExecutorType executorType, Transaction tx, Block block, Deposit deposit, long vmStartInUs,
-      long vmShouldEndInUs, long energyLimit) {
+      long vmShouldEndInUs, long energyLimit) throws ContractValidateException {
     byte[] contractAddress;
     byte[] ownerAddress;
     long balance;
@@ -78,9 +79,8 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
           }
           break;
         default:
-          return null;
+          break;
       }
-
 
       return new ProgramInvokeImpl(contractAddress, ownerAddress, ownerAddress, balance, callValue, data,
           lastHash, coinbase, timestamp, number, deposit, vmStartInUs, vmShouldEndInUs,
@@ -142,10 +142,8 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
       return new ProgramInvokeImpl(address, origin, caller, balance, callValue, data,
           lastHash, coinbase, timestamp, number, deposit, vmStartInUs, vmShouldEndInUs,
           energyLimit);
-    } else {
-      return null;
     }
-
+    throw new ContractValidateException("Unknown contract type");
   }
 
   /**

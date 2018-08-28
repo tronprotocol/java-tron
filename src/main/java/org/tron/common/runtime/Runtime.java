@@ -125,42 +125,6 @@ public class Runtime {
     }
   }
 
-  /**
-   * For pre trx run
-   */
-  @Deprecated
-  public Runtime(Transaction tx, DepositImpl deposit, ProgramInvokeFactory programInvokeFactory) {
-    this.trx = tx;
-    this.deposit = deposit;
-    this.programInvokeFactory = programInvokeFactory;
-    this.executorType = ET_PRE_TYPE;
-    Transaction.Contract.ContractType contractType = tx.getRawData().getContract(0).getType();
-    switch (contractType.getNumber()) {
-      case Transaction.Contract.ContractType.TriggerSmartContract_VALUE:
-        trxType = TRX_CONTRACT_CALL_TYPE;
-        break;
-      case Transaction.Contract.ContractType.CreateSmartContract_VALUE:
-        trxType = TRX_CONTRACT_CREATION_TYPE;
-        break;
-      default:
-        trxType = TRX_PRECOMPILED_TYPE;
-
-    }
-  }
-
-  /**
-   * For constant trx
-   */
-  @Deprecated
-  public Runtime(Transaction tx, ProgramInvokeFactory programInvokeFactory, Deposit deposit) {
-    trx = tx;
-    this.deposit = deposit;
-    this.programInvokeFactory = programInvokeFactory;
-    executorType = ET_CONSTANT_TYPE;
-    trxType = TRX_CONTRACT_CALL_TYPE;
-
-  }
-
 
   /**
    * For constant trx with latest block.
@@ -449,14 +413,14 @@ public class Runtime {
       long feeLimit = trx.getRawData().getFeeLimit();
       long energyLimit;
       try {
-        energyLimit = getEnergyLimit(creator, caller, contract, feeLimit, callValue);
+        if (isCallConstant(contractAddress)) {
+          energyLimit = Constant.MAX_ENERGY_IN_TX;
+        }
+        else
+          energyLimit = getEnergyLimit(creator, caller, contract, feeLimit, callValue);
       } catch (Exception e) {
         logger.error(e.getMessage());
         throw new ContractExeException(e.getMessage());
-      }
-
-      if (isCallConstant(contractAddress)) {
-        energyLimit = Constant.MAX_ENERGY_IN_TX;
       }
 
       ProgramInvoke programInvoke = programInvokeFactory
