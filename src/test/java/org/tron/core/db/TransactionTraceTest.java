@@ -150,7 +150,6 @@ public class TransactionTraceTest {
         new ProgramInvokeFactoryImpl());
     try {
       trace.exec(runtime);
-      trace.pay();
       Assert.assertEquals(0, trace.getReceipt().getEnergyUsage());
       Assert.assertEquals(49503930, trace.getReceipt().getEnergyFee());
       // Assert.assertEquals(deployStorageDelta, trace.getReceipt().getStorageDelta());

@@ -90,9 +90,9 @@ public class TransactionTrace {
   public void exec(Runtime runtime)
       throws ContractExeException, ContractValidateException, OutOfSlotTimeException {
     /**  VM execute  **/
-    runtime.init();
     runtime.execute();
     runtime.go();
+    pay();
     runtime.finalization();
   }
 
