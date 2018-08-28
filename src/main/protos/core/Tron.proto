@@ -251,7 +251,8 @@ message Transaction {
       STACK_OVERFLOW = 9;
       OUT_OF_ENERGY = 10;
       OUT_OF_TIME = 11;
-      UNKNOWN = 12;
+      JVM_STACK_OVER_FLOW = 12;
+      UNKNOWN = 13;
     }
     int64 fee = 1;
     code ret = 2;
