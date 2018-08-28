@@ -16,10 +16,7 @@ import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
-import org.tron.protos.Protocol.Transaction.Result;
-import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
 @Slf4j
 public class BandwidthProcessor extends ResourceProcessor {
