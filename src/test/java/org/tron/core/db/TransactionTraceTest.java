@@ -42,7 +42,6 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Account;
@@ -162,8 +161,6 @@ public class TransactionTraceTest {
       e.printStackTrace();
     } catch (ContractValidateException e) {
       e.printStackTrace();
-    } catch (ReceiptCheckErrException e) {
-      e.printStackTrace();
     }
   }
 
@@ -196,8 +193,6 @@ public class TransactionTraceTest {
     } catch (ContractExeException e) {
       e.printStackTrace();
     } catch (ContractValidateException e) {
-      e.printStackTrace();
-    } catch (ReceiptCheckErrException e) {
       e.printStackTrace();
     }
   }
