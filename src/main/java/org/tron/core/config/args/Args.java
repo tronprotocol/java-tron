@@ -1,5 +1,8 @@
 package org.tron.core.config.args;
 
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.typesafe.config.Config;
@@ -72,8 +75,13 @@ public class Args {
 
   @Getter
   @Setter
-  @Parameter(names = {"--tolerance"})
-  private long tolerance = 30;
+  @Parameter(names = {"--low-tolerance"})
+  private long lowTolerance = 50000; // 50ms = 50000us
+
+  @Getter
+  @Setter
+  @Parameter(names = {"--high-tolerance"})
+  private long highTolerance = calcHighTolerance();
 
   @Getter
   @Parameter(description = "--seed-nodes")
@@ -775,6 +783,11 @@ public class Args {
     }
 
     return ECKey.fromPrivate(Hex.decode(INSTANCE.p2pNodeId));
+  }
+
+  private static long calcHighTolerance() {
+    double ratio = min(1.0, 4.0 / max(Runtime.getRuntime().availableProcessors(), 1));
+    return 100000 + (long) (150000 * ratio);
   }
 
   private static void initBackupProperty(Config config) {
