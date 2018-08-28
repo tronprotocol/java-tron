@@ -759,20 +759,14 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }else{
       // receive an ordered block we have requested, try to push block
       advObjWeRequested.remove(block.getBlockId());
-      boolean isSuccess = true;
-      while (isSuccess) {
-        isSuccess = realProcessAdvBlock(peer, block);
-        if (isSuccess) {
-          // if push block success, we try to find his child block and continue push
-          AdvBlockDisorder.PeerAndBlockCapsule blockAndPeer = advBlockDisorder.getNextBlockAndRemove(block);
-          if(blockAndPeer == null){
-            break;
-          }
-          block = blockAndPeer.getBlockCapsule();
-          peer = blockAndPeer.getPeer();
-        }else{
-          advBlockDisorder.remove(block);
+      while (realProcessAdvBlock(peer, block)) {
+        // if push block success, we try to find his child block and continue push
+        AdvBlockDisorder.PeerAndBlockCapsule blockAndPeer = advBlockDisorder.getNextBlockAndRemove(block);
+        if(blockAndPeer == null){
+          break;
         }
+        block = blockAndPeer.getBlockCapsule();
+        peer = blockAndPeer.getPeer();
       }
     }
   }

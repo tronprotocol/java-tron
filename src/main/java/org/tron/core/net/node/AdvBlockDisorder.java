@@ -14,12 +14,10 @@ import java.util.Map;
  * @description: This class is for Mapping Util using.
  * The member variable map is used for store the block's parent hash(key)
  * and the PeerAndBlockCapsule(value).
- * When we handle a block unsuccessfully because of UnLinkedBlockException, we
- * add the parent hash and the PeerAndBlockCapsule to the map.
- * When we handle a block successfully,we can search whether his child block
- * exists in the map, and we can handle this child simultaneously.
- * @author: shydesky@gmail.com
- * @create: 2018-07-13
+ * When we receive a disordered block, we
+ * add the (parent hash, PeerAndBlockCapsule) to the map.
+ * When we receive a ordered block and handle it, if success, we can search whether his child block
+ * exists in the map, and we can handle this child simultaneously, if failure, we remove the his child block
  **/
 public class AdvBlockDisorder {
     private HashMap<Sha256Hash, PeerAndBlockCapsule> map;
