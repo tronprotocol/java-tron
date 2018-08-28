@@ -3,9 +3,7 @@ package org.tron.common.runtime.vm;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.application.TronApplicationContext;
@@ -21,7 +19,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.OutOfSlotTimeException;
+import org.tron.core.exception.OutOfContractTimeException;
 import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Protocol.AccountType;
 
@@ -90,7 +88,7 @@ public class InternalTransactionCallTest {
 
   @Test
   public void callTest()
-      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, OutOfContractTimeException, TransactionTraceException, ContractValidateException {
     byte[] contractBAddress = deployBContractAndGetItsAddress();
     byte[] contractAAddress =deployAContractandGetItsAddress();
 
@@ -136,7 +134,7 @@ public class InternalTransactionCallTest {
    */
   @Test
   public void delegateCallTest()
-      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, OutOfContractTimeException, TransactionTraceException, ContractValidateException {
     byte[] contractBAddress = deployBContractAndGetItsAddress();
     byte[] contractAAddress =deployAContractandGetItsAddress();
     /* =================================== CALL delegatecallTest() to change B storage =================================== */
@@ -182,7 +180,7 @@ public class InternalTransactionCallTest {
    */
   @Test
   public void callCodeTest()
-      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, OutOfContractTimeException, TransactionTraceException, ContractValidateException {
     byte[] contractBAddress = deployBContractAndGetItsAddress();
     byte[] contractAAddress =deployAContractandGetItsAddress();
     /* =================================== CALL callcodeTest() to change B storage =================================== */
@@ -228,7 +226,7 @@ public class InternalTransactionCallTest {
 
   // Just for the AB example above
   public byte[] deployAContractandGetItsAddress()
-      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, OutOfContractTimeException, TransactionTraceException, ContractValidateException {
     String contractName = "AContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"bAddress\",\"type\":\"address\"},{\"name\":\"_number\",\"type\":\"uint256\"}],"
@@ -266,7 +264,7 @@ public class InternalTransactionCallTest {
 
   // Just for the AB example above
   public byte[] deployBContractAndGetItsAddress()
-      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, OutOfContractTimeException, TransactionTraceException, ContractValidateException {
     String contractName = "BContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"_number\",\"type\":\"uint256\"}],\"name\":\"setValue\","
