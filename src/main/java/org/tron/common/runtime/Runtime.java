@@ -32,7 +32,6 @@ import org.tron.common.runtime.vm.VM;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.vm.program.Program;
-import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
 import org.tron.common.runtime.vm.program.ProgramPrecompile;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
@@ -59,11 +58,11 @@ import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.ResourceReceipt;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
 @Slf4j(topic = "Runtime")
 public class Runtime {
@@ -394,7 +393,7 @@ public class Runtime {
       long thisTxCPULimitInUs;
       long tolerance = max(0, min(100, Args.getInstance().getTolerance()));
       if (ET_NORMAL_TYPE == executorType) {
-        if (contract.getReceipt().getResult() == ResourceReceipt.code.OUT_OF_TIME) {
+        if (trx.getRet(0).getContractRet() == contractResult.OUT_OF_TIME) {
           thisTxCPULimitInUs =
               Constant.MAX_CPU_TIME_OF_ONE_TX * (100 - tolerance) / 100;
         } else {
@@ -473,7 +472,7 @@ public class Runtime {
       long thisTxCPULimitInUs;
       long tolerance = max(0, min(100, Args.getInstance().getTolerance()));
       if (ET_NORMAL_TYPE == executorType) {
-        if (contract.getReceipt().getResult() == ResourceReceipt.code.OUT_OF_TIME) {
+        if (trx.getRet(0).getContractRet() == contractResult.OUT_OF_TIME) {
           thisTxCPULimitInUs =
               Constant.MAX_CPU_TIME_OF_ONE_TX * (100 - tolerance) / 100;
         } else {
@@ -558,9 +557,6 @@ public class Runtime {
       } else {
         deposit.commit();
       }
-    } catch (OutOfResourceException e) {
-      logger.error("runtime error is :{}", e.getMessage());
-      throw new OutOfSlotTimeException(e.getMessage());
     } catch (Throwable e) {
       if (Objects.isNull(result.getException())) {
         result.setException(new RuntimeException("Unknown Throwable"));

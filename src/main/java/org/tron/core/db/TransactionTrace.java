@@ -4,8 +4,18 @@ import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_PRECOMPILED_TYPE;
 
+import java.util.Objects;
+import org.springframework.util.StringUtils;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.InternalTransaction;
+import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
+import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
+import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
+import org.tron.common.runtime.vm.program.Program.OutOfMemoryException;
+import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
+import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
+import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
+import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -18,6 +28,7 @@ import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
 public class TransactionTrace {
 
@@ -135,7 +146,58 @@ public class TransactionTrace {
         dbManager.getWitnessController().getHeadSlot());
   }
 
+  public void check(contractResult contractRet) throws OutOfSlotTimeException {
+    if (contractRet.equals(trx.getContractRet())) {
+      throw new OutOfSlotTimeException("Different resultCode");
+    }
+  }
+
   public ReceiptCapsule getReceipt() {
     return receipt;
+  }
+
+  public void setResult(Runtime runtime) {
+    RuntimeException exception = runtime.getResult().getException();
+    if (Objects.isNull(exception) && StringUtils
+        .isEmpty(runtime.getRuntimeError()) && !runtime.getResult().isRevert()) {
+      receipt.setResult(contractResult.SUCCESS);
+      return;
+    }
+    if (runtime.getResult().isRevert()) {
+      receipt.setResult(contractResult.REVERT);
+      return;
+    }
+    if (exception instanceof IllegalOperationException) {
+      receipt.setResult(contractResult.ILLEGAL_OPERATION);
+      return;
+    }
+    if (exception instanceof OutOfEnergyException) {
+      receipt.setResult(contractResult.OUT_OF_ENERGY);
+      return;
+    }
+    if (exception instanceof BadJumpDestinationException) {
+      receipt.setResult(contractResult.BAD_JUMP_DESTINATION);
+      return;
+    }
+    if (exception instanceof OutOfResourceException) {
+      receipt.setResult(contractResult.OUT_OF_TIME);
+      return;
+    }
+    if (exception instanceof OutOfMemoryException) {
+      receipt.setResult(contractResult.OUT_OF_MEMORY);
+      return;
+    }
+    if (exception instanceof PrecompiledContractException) {
+      receipt.setResult(contractResult.PRECOMPILED_CONTRACT);
+      return;
+    }
+    if (exception instanceof StackTooSmallException) {
+      receipt.setResult(contractResult.STACK_TOO_SMALL);
+      return;
+    }
+    if (exception instanceof StackTooLargeException) {
+      receipt.setResult(contractResult.STACK_TOO_LARGE);
+      return;
+    }
   }
 }

@@ -1043,12 +1043,12 @@ public class Manager {
 
     trace.init();
     trace.exec(runtime);
+    trace.setResult(runtime);
+    trxCap.setResult(runtime);
+    trace.check(trxCap.getContractRet());
     trace.pay();
-
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
 
-    // TODO to remove?
-    RuntimeException runtimeException = runtime.getResult().getException();
     ReceiptCapsule traceReceipt = trace.getReceipt();
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
         .buildInstance(trxCap, block, runtime, traceReceipt);
