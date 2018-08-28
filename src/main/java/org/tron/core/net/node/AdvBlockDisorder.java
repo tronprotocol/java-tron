@@ -5,9 +5,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @program: java-tron
@@ -61,13 +59,12 @@ public class AdvBlockDisorder {
 
     public void cleanUnusedBlock(BlockCapsule.BlockId blockId){
         long solidBlockNum = blockId.getNum();
-        for(Map.Entry entry: map.entrySet()){
-            BlockCapsule block = (BlockCapsule)entry.getValue();
-            if(block.getNum() < solidBlockNum){
-                Sha256Hash hash = (Sha256Hash) entry.getValue();
-                map.remove(hash);
-            }
-        }
+        map.entrySet().removeIf(entry -> {
+            PeerAndBlockCapsule peerAndBlock = entry.getValue();
+            BlockCapsule block = peerAndBlock.getBlockCapsule();
+            return block.getNum() < solidBlockNum;
+        });
+
     }
 
     class PeerAndBlockCapsule{

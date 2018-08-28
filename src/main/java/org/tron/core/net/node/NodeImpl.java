@@ -764,7 +764,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   //if the block been processed successfully, continue processed his child block if exsits.
-  private void processAdvBlock(PeerConnection peer, BlockCapsule block) {
+  private synchronized void processAdvBlock(PeerConnection peer, BlockCapsule block) {
     if(advObjWeRequested.keySet().contains(block.getParentHash())){
       // receive a disordered block we have requested.
       advBlockDisorder.add(peer, block);
