@@ -559,27 +559,27 @@ service Wallet {
     };
   }
 
-  rpc AccountPermissionUpdate (AccountPermissionUpdateContract) returns (Account) {
+  rpc AccountPermissionUpdate (AccountPermissionUpdateContract) returns (TransactionExtention) {
 
   }
 
-  rpc PermissionAddKey (PermissionAddKeyContract) returns (Account) {
+  rpc PermissionAddKey (PermissionAddKeyContract) returns (TransactionExtention) {
 
   }
 
-  rpc PermissionUpdateKey (PermissionUpdateKeyContract) returns (Account) {
+  rpc PermissionUpdateKey (PermissionUpdateKeyContract) returns (TransactionExtention) {
 
   }
 
-  rpc PermissionDeleteKey (PermissionDeleteKeyContract) returns (Account) {
+  rpc PermissionDeleteKey (PermissionDeleteKeyContract) returns (TransactionExtention) {
 
   }
 
-  rpc AddSign (Transaction) returns (Transaction) {
+  rpc AddSign (TransactionExtention) returns (TransactionExtention) {
 
   }
 
-  rpc GetTransactionSignWeight (BytesMessage) returns (Transaction) {
+  rpc GetTransactionSignWeight (TransactionExtention) returns (TransactionSignWeight) {
 
   }
 };
@@ -911,4 +911,10 @@ message BlockListExtention {
 
 message TransactionListExtention {
   repeated TransactionExtention transaction = 1;
+}
+
+message TransactionSignWeight {
+  Permission permission = 1;
+  TransactionExtention transaction = 2;
+  int64 current_weight = 3;
 }
