@@ -5,6 +5,7 @@ import org.tron.core.Constant;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.ResourceReceipt;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
 public class ReceiptCapsule {
 
@@ -131,5 +132,13 @@ public class ReceiptCapsule {
 
   public static ResourceReceipt copyReceipt(ReceiptCapsule origin) {
     return origin.getReceipt().toBuilder().build();
+  }
+
+  public void setResult(contractResult success) {
+    this.receipt = receipt.toBuilder().setResult(success).build();
+  }
+
+  public contractResult getResult() {
+    return this.receipt.getResult();
   }
 }

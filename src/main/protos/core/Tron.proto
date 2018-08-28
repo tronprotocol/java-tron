@@ -183,16 +183,13 @@ message TXOutputs {
 }
 
 message ResourceReceipt {
-  enum code {
-    SUCCESS = 0;
-    FAILED = 1;
-  }
   int64 energy_usage = 1;
   int64 energy_fee = 2;
   int64 origin_energy_usage = 3;
   int64 energy_usage_total = 4;
   int64 net_usage = 5;
   int64 net_fee = 6;
+  Transaction.Result.contractResult result = 7;
 }
 
 message Transaction {
@@ -234,7 +231,6 @@ message Transaction {
     google.protobuf.Any parameter = 2;
     bytes provider = 3;
     bytes ContractName = 4;
-
   }
 
   message Result {
@@ -242,8 +238,25 @@ message Transaction {
       SUCESS = 0;
       FAILED = 1;
     }
+    enum contractResult {
+      DEFAULT = 0;
+      SUCCESS = 1;
+      REVERT = 2;
+      BAD_JUMP_DESTINATION = 3;
+      OUT_OF_MEMORY = 4;
+      PRECOMPILED_CONTRACT = 5;
+      STACK_TOO_SMALL = 6;
+      STACK_TOO_LARGE = 7;
+      ILLEGAL_OPERATION = 8;
+      STACK_OVERFLOW = 9;
+      OUT_OF_ENERGY = 10;
+      OUT_OF_TIME = 11;
+      JVM_STACK_OVER_FLOW = 12;
+      UNKNOWN = 13;
+    }
     int64 fee = 1;
     code ret = 2;
+    contractResult contractRet = 3;
 
     int64 withdraw_amount = 15;
     int64 unfreeze_amount = 16;
