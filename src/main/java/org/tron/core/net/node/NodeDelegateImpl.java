@@ -30,7 +30,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
-import org.tron.core.exception.OutOfContractTimeException;
+import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.ReceiptException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
@@ -105,7 +105,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("bad number exception," + e.getMessage());
     } catch (TransactionTraceException e) {
       throw new BadBlockException("TransactionTrace Exception," + e.getMessage());
-    } catch (OutOfContractTimeException e) {
+    } catch (ReceiptCheckErrException e) {
       throw new BadBlockException("TransactionTrace Exception," + e.getMessage());
     } catch (UnsupportVMException e) {
       throw new BadBlockException(e.getMessage());
@@ -159,8 +159,8 @@ public class NodeDelegateImpl implements NodeDelegate {
     } catch (TransactionTraceException e) {
       logger.info("TransactionTrace Exception" + e.getMessage());
       return false;
-    } catch (OutOfContractTimeException e) {
-      logger.info("OutOfContractTimeException Exception" + e.getMessage());
+    } catch (ReceiptCheckErrException e) {
+      logger.info("ReceiptCheckErrException Exception" + e.getMessage());
       return false;
     } catch (UnsupportVMException e) {
       logger.warn(e.getMessage());

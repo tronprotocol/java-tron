@@ -52,7 +52,7 @@ import org.tron.core.db.StorageMarket;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.OutOfContractTimeException;
+import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
@@ -214,28 +214,6 @@ public class Runtime {
 
     return curBlockCPULimitInUs.subtract(curBlockHaveElapsedCPUInUs);
 
-  }
-
-  public boolean curCPULimitReachedBlockCPULimit() {
-
-    if (executorType == ET_NORMAL_TYPE) {
-      BigInteger blockCPULeftInUs = getBlockCPULeftInUs();
-      BigInteger oneTxCPULimitInUs = BigInteger
-          .valueOf(Constant.MAX_CPU_TIME_OF_ONE_TX);
-
-      // TODO get from account
-      BigInteger increasedStorageLimit = BigInteger.valueOf(10000000);
-
-      boolean cumulativeCPUReached =
-          oneTxCPULimitInUs.compareTo(blockCPULeftInUs) > 0;
-
-      if (cumulativeCPUReached) {
-        logger.error("cumulative CPU Reached");
-        return true;
-      }
-    }
-
-    return false;
   }
 
   public void execute() throws ContractValidateException, ContractExeException {
@@ -490,7 +468,7 @@ public class Runtime {
 
   }
 
-  public void go() throws OutOfContractTimeException {
+  public void go() throws ReceiptCheckErrException {
 
     try {
       if (vm != null) {
@@ -591,7 +569,7 @@ public class Runtime {
 
   }
 
-  public ProgramResult getResult() {
+  public ProgramResult   getResult() {
     return result;
   }
 
