@@ -727,7 +727,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           isFetchSyncActive = true;
         }
       }
-    } else if (advObjWeRequested.containsKey(item)) {
+    }
+    if (advObjWeRequested.containsKey(item)) {
       advObjWeRequested.remove(item);
       if (!syncFlag) {
         processAdvBlock(peer, blkMsg.getBlockCapsule());
