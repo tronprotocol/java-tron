@@ -558,6 +558,30 @@ service Wallet {
       }
     };
   }
+
+  rpc AccountPermissionUpdate (AccountPermissionUpdateContract) returns (Account) {
+
+  }
+
+  rpc PermissionAddKey (PermissionAddKeyContract) returns (Account) {
+
+  }
+
+  rpc PermissionUpdateKey (PermissionUpdateKeyContract) returns (Account) {
+
+  }
+
+  rpc PermissionDeleteKey (PermissionDeleteKeyContract) returns (Account) {
+
+  }
+
+  rpc AddSign (Transaction) returns (Transaction) {
+
+  }
+
+  rpc GetTransactionSignWeight (BytesMessage) returns (Transaction) {
+
+  }
 };
 
 
