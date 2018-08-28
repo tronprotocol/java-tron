@@ -780,6 +780,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         }
         block = blockAndPeer.getBlockCapsule();
         peer = blockAndPeer.getPeer();
+        advObjWeRequested.remove(block.getBlockId());
       }
     }
   }
