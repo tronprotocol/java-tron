@@ -1044,8 +1044,11 @@ public class Manager {
     trace.init();
     trace.exec(runtime);
 
-    if (Objects.nonNull(blockCap) && !blockCap.generatedByMyself) {
-      trace.check();
+    if (Objects.nonNull(blockCap)) {
+      trace.setResult(runtime); 
+      if (!blockCap.generatedByMyself) {
+        trace.check();
+      }
     }
 
     trace.finalization(runtime);

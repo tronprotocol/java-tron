@@ -104,7 +104,6 @@ public class TransactionTrace {
     /**  VM execute  **/
     runtime.execute();
     runtime.go();
-    setResult(runtime);
   }
 
   public void finalization(Runtime runtime) {
