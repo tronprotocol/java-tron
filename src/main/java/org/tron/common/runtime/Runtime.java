@@ -32,6 +32,7 @@ import org.tron.common.runtime.vm.VM;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.vm.program.Program;
+import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
 import org.tron.common.runtime.vm.program.ProgramPrecompile;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
@@ -519,6 +520,10 @@ public class Runtime {
       } else {
         deposit.commit();
       }
+    } catch (JVMStackOverFlowException e) {
+      result.setException(e);
+      runtimeError = result.getException().getMessage();
+      logger.error("runtime error is :{}", result.getException().getMessage());
     } catch (Throwable e) {
       if (Objects.isNull(result.getException())) {
         result.setException(new RuntimeException("Unknown Throwable"));
