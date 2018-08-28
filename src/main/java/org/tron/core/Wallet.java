@@ -146,7 +146,6 @@ public class Wallet {
     try {
       boolean constant = isConstant(abi, getSelector(triggerSmartContract.getData().toByteArray()));
       if (constant) {
-        logger.info("jack log: {}", Args.getInstance().isSupportConstant());
         if (!Args.getInstance().isSupportConstant()) {
           throw new ContractValidateException("this node don't support constant");
         }
