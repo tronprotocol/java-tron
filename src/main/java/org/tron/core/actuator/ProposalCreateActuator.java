@@ -127,13 +127,14 @@ public class ProposalCreateActuator extends AbstractActuator {
           throw new ContractValidateException(
               "Bad chain parameter value,valid range is [0,100_000_000_000_000_000L]");
         }
-        return;
+        break;
       }
       case (9):{
         if(entry.getValue() != 1){
           throw new ContractValidateException(
               "This value[ALLOW_CREATION_OF_CONTRACTS] is only allowed to be 1");
         }
+        break;
       }
       case (10):{
         if(dbManager.getDynamicPropertiesStore().getRemoveThePowerOfTheGr() == -1){
@@ -145,7 +146,14 @@ public class ProposalCreateActuator extends AbstractActuator {
           throw new ContractValidateException(
               "This value[REMOVE_THE_POWER_OF_THE_GR] is only allowed to be 1");
         }
+        break;
       }
+      case (11):
+        break;
+      case (12):
+        break;
+      case (13):
+        break;
       default:
         break;
     }

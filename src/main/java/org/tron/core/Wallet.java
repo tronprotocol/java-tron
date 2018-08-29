@@ -580,6 +580,30 @@ public class Wallet {
             dynamicPropertiesStore.getAllowCreationOfContracts())
         .build());
 
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.REMOVE_THE_POWER_OF_THE_GR.name())
+        .setValue(
+            dynamicPropertiesStore.getRemoveThePowerOfTheGr())
+        .build());
+
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.ENERGY_FEE.name())
+        .setValue(
+            dynamicPropertiesStore.getEnergyFee())
+        .build());
+
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.EXCHANGE_CREATE_FEE.name())
+        .setValue(
+            dynamicPropertiesStore.getExchangeCreateFee())
+        .build());
+
+    builder.addChainParameter(builder1
+        .setKey(ChainParameters.MAX_CPU_TIME_OF_ONE_TX.name())
+        .setValue(
+            dynamicPropertiesStore.getMaxCpuTimeOfOneTX())
+        .build());
+
     return builder.build();
   }
 
