@@ -39,6 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
@@ -1039,6 +1040,12 @@ public class Manager {
       // Fixme Wrong exception
       throw new UnsupportVMException("cannot call constant method ");
     }
+    // if (SystemProperties.getInstance().vmOn()) {
+    //   if(trxCap.getInstance().getRetCount()<=0){
+    //     trxCap.setResult(new TransactionResultCapsule(contractResult.UNKNOWN));
+    //   }
+    // }
+
     consumeBandwidth(trxCap, runtime.getResult().getRet(), trace);
 
     trace.init();
@@ -1053,15 +1060,18 @@ public class Manager {
     trace.exec(runtime);
 
     if (Objects.nonNull(blockCap)) {
-      trace.setResult(runtime); 
+      trace.setResult(runtime);
       if (!blockCap.generatedByMyself) {
         trace.check();
       }
     }
 
     trace.finalization(runtime);
-
-    trxCap.setResult(runtime);
+    if (Objects.nonNull(blockCap)) {
+      if (SystemProperties.getInstance().vmOn()) {
+        trxCap.setResult(runtime);
+      }
+    }
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
 
     ReceiptCapsule traceReceipt = trace.getReceipt();
