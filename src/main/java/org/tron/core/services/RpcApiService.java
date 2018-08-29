@@ -603,6 +603,25 @@ public class RpcApiService implements Service {
       responseObserver.onNext(trxExtBuilder.build());
       responseObserver.onCompleted();
     }
+    @Override
+    public void addSign(TransactionSign req,
+        StreamObserver<TransactionExtention> responseObserver) {
+      TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
+      Return.Builder retBuilder = Return.newBuilder();
+      try {
+        TransactionCapsule trx = wallet.addSign(req);
+        trxExtBuilder.setTransaction(trx.getInstance());
+        trxExtBuilder.setTxid(trx.getTransactionId().getByteString());
+        retBuilder.setResult(true).setCode(response_code.SUCCESS);
+      } catch (Exception e) {
+        retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+        logger.info("exception caught" + e.getMessage());
+      }
+      trxExtBuilder.setResult(retBuilder);
+      responseObserver.onNext(trxExtBuilder.build());
+      responseObserver.onCompleted();
+    }
 
     @Override
     public void createAddress(BytesMessage req,

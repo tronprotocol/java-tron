@@ -467,6 +467,13 @@ public class Wallet {
     return trx;
   }
 
+  public TransactionCapsule addSign(TransactionSign transactionSign){
+    byte[] privateKey = transactionSign.getPrivateKey().toByteArray();
+    TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
+    trx.addSign(privateKey);
+    return trx;
+  }
+
   public byte[] pass2Key(byte[] passPhrase) {
     return Sha256Hash.hash(passPhrase);
   }

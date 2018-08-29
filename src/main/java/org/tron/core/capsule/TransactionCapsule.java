@@ -272,6 +272,21 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
 
+  public void addSign(byte[] privateKey) {
+    ECKey ecKey = ECKey.fromPrivate(privateKey);
+    ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
+    int signCount = this.transaction.getRetCount();
+    if (signCount > 0) {
+      ByteString sign = this.transaction.getSignature(signCount - 1);
+      ByteString sig = ByteString.copyFrom(signature.toByteArray());
+      sign.concat(sig);
+      this.transaction = this.transaction.toBuilder().setSignature(signCount - 1, sign).build();//add sign at last default.
+    } else {
+      ByteString sig = ByteString.copyFrom(signature.toByteArray());
+      this.transaction = this.transaction.toBuilder().addSignature(sig).build();
+    }
+  }
+
   // todo mv this static function to capsule util
   public static byte[] getOwner(Transaction.Contract contract) {
     ByteString owner;
