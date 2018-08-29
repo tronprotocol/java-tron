@@ -144,10 +144,10 @@ message Permission {
   repeated Key keys = 4;
 }
 
-//message authority {
-//  AccountId account = 1;
-//  bytes permission_name = 2;
-//}
+message authority {
+  AccountId account = 1;
+  bytes permission_name = 2;
+}
 //
 //message permission {
 //  AccountId account = 1;
