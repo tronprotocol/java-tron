@@ -27,11 +27,23 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
+import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
+import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
+import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
+import org.tron.common.runtime.vm.program.Program.OutOfMemoryException;
+import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
+import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
+import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
+import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
@@ -62,6 +74,9 @@ import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Transaction.Result;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
+import org.tron.protos.Protocol.Transaction.raw;
 
 @Slf4j
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
@@ -143,6 +158,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   public TransactionCapsule(ParticipateAssetIssueContract participateAssetIssueContract) {
     createTransaction(participateAssetIssueContract, ContractType.ParticipateAssetIssueContract);
+  }
+
+  public TransactionCapsule(raw rawData, List<ByteString> signatureList) {
+    this.transaction = Transaction.newBuilder().setRawData(rawData).addAllSignature(signatureList)
+        .build();
   }
 
   public void resetResult() {
@@ -465,6 +485,14 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return this.transaction.getSerializedSize();
   }
 
+  public long getResultSerializedSize() {
+    long size = 0;
+    for (Result result : this.transaction.getRetList()) {
+      size += result.getSerializedSize();
+    }
+    return size;
+  }
+
   @Override
   public Transaction getInstance() {
     return this.transaction;
@@ -522,5 +550,74 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
     toStringBuff.append("]");
     return toStringBuff.toString();
+  }
+
+  public void setResult(Runtime runtime) {
+    RuntimeException exception = runtime.getResult().getException();
+    if (Objects.isNull(exception) && StringUtils
+        .isEmpty(runtime.getRuntimeError()) && !runtime.getResult().isRevert()) {
+      this.setResultCode(contractResult.SUCCESS);
+      return;
+    }
+    if (runtime.getResult().isRevert()) {
+      this.setResultCode(contractResult.REVERT);
+      return;
+    }
+    if (exception instanceof IllegalOperationException) {
+      this.setResultCode(contractResult.ILLEGAL_OPERATION);
+      return;
+    }
+    if (exception instanceof OutOfEnergyException) {
+      this.setResultCode(contractResult.OUT_OF_ENERGY);
+      return;
+    }
+    if (exception instanceof BadJumpDestinationException) {
+      this.setResultCode(contractResult.BAD_JUMP_DESTINATION);
+      return;
+    }
+    if (exception instanceof OutOfResourceException) {
+      this.setResultCode(contractResult.OUT_OF_TIME);
+      return;
+    }
+    if (exception instanceof OutOfMemoryException) {
+      this.setResultCode(contractResult.OUT_OF_MEMORY);
+      return;
+    }
+    if (exception instanceof PrecompiledContractException) {
+      this.setResultCode(contractResult.PRECOMPILED_CONTRACT);
+      return;
+    }
+    if (exception instanceof StackTooSmallException) {
+      this.setResultCode(contractResult.STACK_TOO_SMALL);
+      return;
+    }
+    if (exception instanceof StackTooLargeException) {
+      this.setResultCode(contractResult.STACK_TOO_LARGE);
+      return;
+    }
+    if (exception instanceof JVMStackOverFlowException) {
+      this.setResultCode(contractResult.JVM_STACK_OVER_FLOW);
+      return;
+    }
+    this.setResultCode(contractResult.UNKNOWN);
+    return;
+  }
+
+  private void setResultCode(contractResult code) {
+    Result ret = Result.newBuilder().setContractRet(code).build();
+    if (this.transaction.getRetCount() > 0) {
+      ret = this.transaction.getRet(0).toBuilder().setContractRet(code).build();
+
+      this.transaction = transaction.toBuilder().setRet(0, ret).build();
+      return;
+    }
+    this.transaction = transaction.toBuilder().addRet(ret).build();
+  }
+
+  public contractResult getContractRet() {
+    if (this.transaction.getRetCount() <= 0) {
+      return null;
+    }
+    return this.transaction.getRet(0).getContractRet();
   }
 }

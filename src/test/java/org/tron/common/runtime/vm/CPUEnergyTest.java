@@ -20,7 +20,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.OutOfSlotTimeException;
+import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Protocol.AccountType;
 
@@ -86,7 +86,7 @@ public class CPUEnergyTest {
   @Test
   @Ignore
   public void callValueTest()
-      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
     long value = 10000000L;
     long feeLimit = 20000000000000L; // sun
@@ -149,7 +149,7 @@ public class CPUEnergyTest {
 
   @Test
   public void sendTest()
-      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
     long value = 10000000L;
     long feeLimit = 20000000000000L; // sun
@@ -174,7 +174,7 @@ public class CPUEnergyTest {
 
   @Test
   public void transferTest()
-      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
     long value = 10000000L;
     long feeLimit = 20000000000000L; // sun
@@ -199,7 +199,7 @@ public class CPUEnergyTest {
 
   public TVMTestResult deployCallValueTestContract(long value, long feeLimit,
       long consumeUserResourcePercent)
-      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
     String contractName = "TestForCallValue";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI = "[{\"constant\":false,\"inputs\":[],\"name\":\"complexCall\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"simpleCall\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"constructor\"}]";
@@ -215,7 +215,7 @@ public class CPUEnergyTest {
 
   public TVMTestResult deploySendAndTransferTestContract(long value, long feeLimit,
       long consumeUserResourcePercent)
-      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
     String contractName = "TestForSendAndTransfer";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"getBalance\",\"outputs\":[{\"name\":\"balance\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"doTransfer\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"doSend\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"constructor\"}]";

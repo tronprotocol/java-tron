@@ -626,9 +626,9 @@ public class JsonFormat {
           }
         } else {
           String id = tokenizer.consumeIdentifier();
-          if (StringUtils.isAllLowerCase(id)){
+          if (StringUtils.isAllLowerCase(id)) {
             char b = id.charAt(0);
-            b = (char)(b  + 'A' - 'a');
+            b = (char) (b + 'A' - 'a');
             String s = id.substring(1);
             id = b + s;
           }
@@ -1008,7 +1008,7 @@ public class JsonFormat {
         }
       }
 
-      result = bigValue.longValue();
+      result = bigValue.longValueExact();
     }
 
     return result;
