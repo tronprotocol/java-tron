@@ -20,6 +20,8 @@ package org.tron.core;
 
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
+import java.security.SignatureException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -45,7 +47,9 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionExtention.Builder;
+import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
@@ -87,6 +91,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
+import org.tron.core.exception.NonePermissionException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
@@ -102,11 +107,14 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Exchange;
+import org.tron.protos.Protocol.Key;
+import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.SmartContract.ABI.Entry.StateMutabilityType;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.Protocol.TransactionSign;
@@ -467,11 +475,80 @@ public class Wallet {
     return trx;
   }
 
-  public TransactionCapsule addSign(TransactionSign transactionSign){
+  public TransactionCapsule addSign(TransactionSign transactionSign) {
     byte[] privateKey = transactionSign.getPrivateKey().toByteArray();
     TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
     trx.addSign(privateKey);
     return trx;
+  }
+
+  public String getPermissionName(Contract contract) {
+    return "active";
+  }
+
+  public Permission getDefaultPermission(ByteString owner) {
+    Permission.Builder builder = Permission.newBuilder();
+    Key.Builder key = Key.newBuilder();
+    key.setAddress(owner).setWeight(1);
+    builder.setKeys(0, key);
+    builder.setThreshold(1);
+    builder.setName(ByteString.copyFromUtf8("owner"));
+    return builder.build();
+  }
+
+  public Permission getPermission(Account account, String name) {
+    List<Permission> list = account.getPermissionsList();
+    if (list.isEmpty()) {
+      return getDefaultPermission(account.getAddress());
+    }
+    for (Permission permission : list) {
+      if (Arrays.equals(name.getBytes(), permission.getName().toByteArray())) {
+        return permission;
+      }
+    }
+    return null;
+  }
+
+  public TransactionSignWeight getTransactionSignWeight(Transaction trx) {
+    TransactionSignWeight.Builder tswBuilder = TransactionSignWeight.newBuilder();
+    TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
+    trxExBuilder.setTransaction(trx);
+    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(trx.getRawData().toByteArray())));
+    Contract contract = trx.getRawData().getContract(0);
+    byte[] owner = TransactionCapsule.getOwner(contract);
+    AccountCapsule account = dbManager.getAccountStore().get(owner);
+    Permission permission = getPermission(account.getInstance(), getPermissionName(contract));
+    long currentWeight = 0;
+    try {
+      if (permission == null) {
+        throw new NonePermissionException("Permission of " + getPermissionName(contract) + " is null.");
+      }
+      if (trx.getSignatureCount() > 0) {
+        ByteString sig = trx.getSignature(0);
+        List<ByteString> approveList = new ArrayList<ByteString>();
+        if (sig.size() % 65 != 0) {
+          throw new SignatureException("Signature size is " + sig.size());
+        } else {
+          byte[] hash = Sha256Hash.hash(trx.getRawData().toByteArray());
+          for (int i = 0; i < sig.size(); i += 65) {
+            ByteString sub = sig.substring(i, i + 65);
+            String base64 = TransactionCapsule.getBase64FromByteString(sub);
+            byte[] address = ECKey.signatureToAddress(hash, base64);
+            approveList.add(ByteString.copyFrom(address));
+            currentWeight += 0;
+          }
+        }
+        tswBuilder.addAllApprovedList(approveList);
+        tswBuilder.setCurrentWeight(currentWeight);
+      }
+    } catch (SignatureException signEx) {
+
+    } catch (NonePermissionException nonePermiEx){
+
+    }
+    tswBuilder.setPermission(permission);
+    tswBuilder.setTransaction(trxExBuilder);
+    return tswBuilder.build();
   }
 
   public byte[] pass2Key(byte[] passPhrase) {
