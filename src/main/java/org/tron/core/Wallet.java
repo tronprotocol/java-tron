@@ -467,7 +467,7 @@ public class Wallet {
     return trx;
   }
 
-  public TransactionCapsule addSign(TransactionSign transactionSign){
+  public TransactionCapsule addSign(TransactionSign transactionSign) {
     byte[] privateKey = transactionSign.getPrivateKey().toByteArray();
     TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
     trx.addSign(privateKey);
@@ -915,6 +915,7 @@ public class Wallet {
     }
     return null;
   }
+
 
   private static byte[] getSelector(byte[] data) {
     if (data == null ||

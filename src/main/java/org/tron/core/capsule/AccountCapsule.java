@@ -29,6 +29,7 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Vote;
 
 @Slf4j
@@ -563,6 +564,13 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
     this.account = this.account.toBuilder()
         .setAccountResource(accountResource)
+        .build();
+  }
+
+  public void updatePermissions(List<Permission> permissions) {
+    this.account = this.account.toBuilder()
+        .clearPermissions()
+        .addAllPermissions(permissions)
         .build();
   }
 }
