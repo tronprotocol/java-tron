@@ -333,10 +333,10 @@ public class Runtime {
       //   thisTxENERGYLimitInUs = Constant.ENERGY_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT;
       // }
 
+      long MAX_CPU_TIME_OF_ONE_TX = deposit.getDbManager().getDynamicPropertiesStore()
+          .getMaxCpuTimeOfOneTX() * 1000;
 
-
-      long thisTxCPULimitInUs =
-          (long) (Constant.MAX_CPU_TIME_OF_ONE_TX * getThisTxCPULimitInUsRatio());
+      long thisTxCPULimitInUs = (long) (MAX_CPU_TIME_OF_ONE_TX * getThisTxCPULimitInUsRatio());
       long vmStartInUs = System.nanoTime() / 1000;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
@@ -403,8 +403,10 @@ public class Runtime {
           this.deposit.getContract(contractAddress).getInstance()
               .getOriginAddress().toByteArray());
 
+      long MAX_CPU_TIME_OF_ONE_TX = deposit.getDbManager().getDynamicPropertiesStore()
+          .getMaxCpuTimeOfOneTX() * 1000;
       long thisTxCPULimitInUs =
-          (long) (Constant.MAX_CPU_TIME_OF_ONE_TX * getThisTxCPULimitInUsRatio());
+          (long) (MAX_CPU_TIME_OF_ONE_TX * getThisTxCPULimitInUsRatio());
 
       long vmStartInUs = System.nanoTime() / 1000;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
