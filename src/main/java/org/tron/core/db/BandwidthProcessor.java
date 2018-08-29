@@ -7,7 +7,6 @@ import com.google.protobuf.ByteString;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
@@ -55,13 +54,14 @@ public class BandwidthProcessor extends ResourceProcessor {
       TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException {
     List<Contract> contracts = trx.getInstance().getRawData().getContractList();
-    if(trx.getResultSerializedSize() > Constant.MAX_RESULT_SIZE_IN_TX * contracts.size()) {
+    if (trx.getResultSerializedSize() > Constant.MAX_RESULT_SIZE_IN_TX * contracts.size()) {
       throw new TooBigTransactionResultException();
     }
     for (Contract contract : contracts) {
       long bytes = 0;
-      if (SystemProperties.getInstance().vmOn()) {
-        TransactionCapsule txCapForEstimateBandWidth = new TransactionCapsule(trx.getInstance().getRawData(),
+      if (dbManager.getDynamicPropertiesStore().supportVM()) {
+        TransactionCapsule txCapForEstimateBandWidth = new TransactionCapsule(
+            trx.getInstance().getRawData(),
             trx.getInstance().getSignatureList());
         bytes = txCapForEstimateBandWidth.getSerializedSize() + Constant.MAX_RESULT_SIZE_IN_TX;
       } else {

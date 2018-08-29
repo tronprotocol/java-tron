@@ -39,7 +39,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.Runtime;
-import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
@@ -1042,7 +1041,7 @@ public class Manager {
       // Fixme Wrong exception
       throw new UnsupportVMException("cannot call constant method ");
     }
-    // if (SystemProperties.getInstance().vmOn()) {
+    // if (getDynamicPropertiesStore().supportVM()) {
     //   if(trxCap.getInstance().getRetCount()<=0){
     //     trxCap.setResult(new TransactionResultCapsule(contractResult.UNKNOWN));
     //   }
@@ -1070,7 +1069,7 @@ public class Manager {
 
     trace.finalization(runtime);
     if (Objects.nonNull(blockCap)) {
-      if (SystemProperties.getInstance().vmOn()) {
+      if (getDynamicPropertiesStore().supportVM()) {
         trxCap.setResult(runtime);
       }
     }
