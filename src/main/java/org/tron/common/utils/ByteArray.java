@@ -58,7 +58,7 @@ public class ByteArray {
    * get long data from bytes data.
    */
   public static long toLong(byte[] b) {
-    return ArrayUtils.isEmpty(b) ? 0 : new BigInteger(1, b).longValue();
+    return ArrayUtils.isEmpty(b) ? 0 : new BigInteger(1, b).longValueExact();
   }
 
   /**

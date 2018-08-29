@@ -100,7 +100,7 @@ public class Value {
     if (isLong()) {
       return (Long) value;
     } else if (isBytes()) {
-      return new BigInteger(1, asBytes()).longValue();
+      return new BigInteger(1, asBytes()).longValueExact();
     }
     return 0;
   }

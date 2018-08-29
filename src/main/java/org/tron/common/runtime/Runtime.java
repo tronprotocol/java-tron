@@ -224,7 +224,7 @@ public class Runtime {
       if (leftBalanceForEnergyFreeze >= feeLimit) {
         energyFromFeeLimit = BigInteger.valueOf(totalEnergyFromFreeze)
             .multiply(BigInteger.valueOf(feeLimit))
-            .divide(BigInteger.valueOf(totalBalanceForEnergyFreeze)).longValue();
+            .divide(BigInteger.valueOf(totalBalanceForEnergyFreeze)).longValueExact();
       } else {
         energyFromFeeLimit = Math
             .addExact(leftEnergyFromFreeze,
@@ -326,14 +326,12 @@ public class Runtime {
       AccountCapsule creator = this.deposit
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
       // if (executorType == ET_NORMAL_TYPE) {
-      //   long blockENERGYLeftInUs = getBlockENERGYLeftInUs().longValue();
+      //   long blockENERGYLeftInUs = getBlockENERGYLeftInUs().longValueExact();
       //   thisTxENERGYLimitInUs = min(blockENERGYLeftInUs,
       //       Constant.ENERGY_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
       // } else {
       //   thisTxENERGYLimitInUs = Constant.ENERGY_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT;
       // }
-
-
 
       long thisTxCPULimitInUs =
           (long) (Constant.MAX_CPU_TIME_OF_ONE_TX * getThisTxCPULimitInUsRatio());
@@ -414,9 +412,9 @@ public class Runtime {
       try {
         if (isCallConstant(contractAddress)) {
           energyLimit = Constant.MAX_ENERGY_IN_TX;
-        }
-        else
+        } else {
           energyLimit = getEnergyLimit(creator, caller, contract, feeLimit, callValue);
+        }
       } catch (Exception e) {
         logger.error(e.getMessage());
         throw new ContractExeException(e.getMessage());
@@ -500,7 +498,7 @@ public class Runtime {
       return 0;
     }
     return BigInteger.valueOf(callerEnergyFrozen).multiply(BigInteger.valueOf(callerEnergyUsage))
-        .divide(BigInteger.valueOf(callerEnergyTotal)).longValue();
+        .divide(BigInteger.valueOf(callerEnergyTotal)).longValueExact();
   }
 
   public boolean isCallConstant() throws ContractValidateException {

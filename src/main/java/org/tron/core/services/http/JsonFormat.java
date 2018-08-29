@@ -1008,7 +1008,7 @@ public class JsonFormat {
         }
       }
 
-      result = bigValue.longValue();
+      result = bigValue.longValueExact();
     }
 
     return result;

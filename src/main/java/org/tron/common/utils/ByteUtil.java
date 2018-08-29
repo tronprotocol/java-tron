@@ -237,7 +237,7 @@ public class ByteUtil {
   public static long byteArrayToLong(byte[] b) {
     if (b == null || b.length == 0)
       return 0;
-    return new BigInteger(1, b).longValue();
+    return new BigInteger(1, b).longValueExact();
   }
 
   public static int firstNonZeroByte(byte[] data) {
