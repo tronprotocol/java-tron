@@ -575,11 +575,11 @@ service Wallet {
 
   }
 
-  rpc AddSign (TransactionExtention) returns (TransactionExtention) {
+  rpc AddSign (TransactionSign) returns (TransactionExtention) {
 
   }
 
-  rpc GetTransactionSignWeight (TransactionExtention) returns (TransactionSignWeight) {
+  rpc GetTransactionSignWeight (Transaction) returns (TransactionSignWeight) {
 
   }
 };
