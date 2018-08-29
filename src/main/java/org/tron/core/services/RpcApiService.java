@@ -46,6 +46,7 @@ import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.TransactionListExtention;
+import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc.WalletImplBase;
@@ -603,6 +604,7 @@ public class RpcApiService implements Service {
       responseObserver.onNext(trxExtBuilder.build());
       responseObserver.onCompleted();
     }
+
     @Override
     public void addSign(TransactionSign req,
         StreamObserver<TransactionExtention> responseObserver) {
@@ -620,6 +622,14 @@ public class RpcApiService implements Service {
       }
       trxExtBuilder.setResult(retBuilder);
       responseObserver.onNext(trxExtBuilder.build());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getTransactionSignWeight(Transaction req,
+        StreamObserver<TransactionSignWeight> responseObserver) {
+      TransactionSignWeight tsw = wallet.getTransactionSignWeight(req);
+      responseObserver.onNext(tsw);
       responseObserver.onCompleted();
     }
 
