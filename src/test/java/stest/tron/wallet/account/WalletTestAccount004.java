@@ -175,7 +175,8 @@ public class WalletTestAccount004 {
 
     Long afterBlockNum = 0L;
     Integer wait = 0;
-    while (afterBlockNum < beforeBlockNum + 1 && wait < 10) {
+    PublicMethed.waitProduceNextBlock(searchBlockingStubFull);
+    /*    while (afterBlockNum < beforeBlockNum + 1 && wait < 10) {
       Block currentBlock1 = searchBlockingStubFull.getNowBlock(EmptyMessage.newBuilder().build());
       afterBlockNum = currentBlock1.getBlockHeader().getRawData().getNumber();
       wait++;
@@ -185,7 +186,7 @@ public class WalletTestAccount004 {
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
-    }
+    }*/
 
     Account afterFronzen = queryAccount(ecKey, searchBlockingStubFull);
     Long afterFrozenBalance = afterFronzen.getFrozen(0).getFrozenBalance();

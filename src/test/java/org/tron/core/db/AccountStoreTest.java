@@ -8,7 +8,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -22,7 +22,7 @@ public class AccountStoreTest {
   private static String dbPath = "output_AccountStore_test";
   private static String dbDirectory = "db_AccountStore_test";
   private static String indexDirectory = "index_AccountStore_test";
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
   private static AccountStore accountStore;
   private static final byte[] data = TransactionStoreTest.randomBytes(32);
   private static byte[] address = TransactionStoreTest.randomBytes(32);
@@ -37,7 +37,7 @@ public class AccountStoreTest {
         },
         Constant.TEST_CONF
     );
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    context = new TronApplicationContext(DefaultConfig.class);
   }
 
   @AfterClass

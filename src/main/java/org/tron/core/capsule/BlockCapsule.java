@@ -33,6 +33,7 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.utils.MerkleTree;
+import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocol.Block;
@@ -128,7 +129,9 @@ public class BlockCapsule implements ProtoCapsule<Block> {
         .setNumber(number)
         .setParentHash(hash.getByteString())
         .setTimestamp(when)
-        .setWitnessAddress(witnessAddress).build();
+        .setVersion(ChainConstant.version)
+        .setWitnessAddress(witnessAddress)
+        .build();
 
     // block header
     BlockHeader.Builder blockHeaderBuild = BlockHeader.newBuilder();

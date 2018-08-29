@@ -11,7 +11,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.crypto.ECKey;
@@ -40,7 +40,7 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 @Slf4j
 public class HandleBlockMessageTest {
 
-    private static AnnotationConfigApplicationContext context;
+    private static TronApplicationContext context;
     private NodeImpl node;
     RpcApiService rpcApiService;
     PeerClient peerClient;
@@ -70,7 +70,7 @@ public class HandleBlockMessageTest {
         List<PeerConnection> activePeers = ReflectUtils.getFieldValue(pool, "activePeers");
         PeerConnection peer = activePeers.get(0);
 
-        //收到同步请求块
+        //receive a sync block
         BlockCapsule headBlockCapsule = dbManager.getHead();
         BlockCapsule syncblockCapsule = generateOneBlockCapsule(headBlockCapsule);
         BlockMessage blockMessage = new BlockMessage(syncblockCapsule);
@@ -78,14 +78,14 @@ public class HandleBlockMessageTest {
         node.onMessage(peer, blockMessage);
         Assert.assertEquals(peer.getSyncBlockRequested().isEmpty(), true);
 
-        //收到广播请求块
+        //receive a advertise block
         BlockCapsule advblockCapsule = generateOneBlockCapsule(headBlockCapsule);
         BlockMessage advblockMessage = new BlockMessage(advblockCapsule);
         peer.getAdvObjWeRequested().put(new Item(advblockMessage.getBlockId(), InventoryType.BLOCK), System.currentTimeMillis());
         node.onMessage(peer, advblockMessage);
         Assert.assertEquals(peer.getAdvObjWeRequested().size(), 0);
 
-        //收到非请求块
+        //receive a sync block but not requested
         BlockCapsule blockCapsule = generateOneBlockCapsule(headBlockCapsule);
         blockMessage = new BlockMessage(blockCapsule);
         BlockCapsule blockCapsuleOther = generateOneBlockCapsule(blockCapsule);
@@ -93,10 +93,10 @@ public class HandleBlockMessageTest {
 
         peer.getSyncBlockRequested().put(blockMessage.getBlockId(), System.currentTimeMillis());
         node.onMessage(peer, blockMessageOther);
-        Assert.assertEquals(peer.getSyncBlockRequested().isEmpty(), true);
+        Assert.assertEquals(peer.getSyncBlockRequested().isEmpty(), false);
     }
 
-    //根据父块生成一个区块
+    // generate ong block by parent block
     private BlockCapsule generateOneBlockCapsule(BlockCapsule parentCapsule) {
         ByteString witnessAddress = ByteString.copyFrom(
                 ECKey.fromPrivate(
@@ -149,7 +149,7 @@ public class HandleBlockMessageTest {
                 cfgArgs.setNeedSyncCheck(false);
                 cfgArgs.setNodeExternalIp("127.0.0.1");
 
-                context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+                context = new TronApplicationContext(DefaultConfig.class);
 
                 if (cfgArgs.isHelp()) {
                     logger.info("Here is the help message.");

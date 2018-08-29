@@ -131,13 +131,6 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
         .build();
   }
 
-//todo set receipt
-//  public void setResult(TransactionResultCapsule result) {
-//    this.transactionInfo = this.transactionInfo.toBuilder()
-//        .setResult(result.getInstance())
-//        .build();
-//  }
-
   @Override
   public byte[] getData() {
     return this.transactionInfo.toByteArray();
@@ -148,18 +141,14 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
     return this.transactionInfo;
   }
 
-  public void parseTransactionResult(TransactionResultCapsule ret) {
-    setUnfreezeAmount(ret.getUnfreezeAmount());
-    setWithdrawAmount(ret.getWithdrawAmount());
-  }
-
-  public static TransactionInfoCapsule buildInstance(TransactionCapsule trxCap, Block block,
+  public static TransactionInfoCapsule buildInstance(TransactionCapsule trxCap, BlockCapsule block,
       Runtime runtime, ReceiptCapsule traceReceipt) {
 
     TransactionInfo.Builder builder = TransactionInfo.newBuilder();
 
     builder.setResult(code.SUCESS);
-    if (StringUtils.isNoneEmpty(runtime.getRuntimeError())) {
+    if (StringUtils.isNoneEmpty(runtime.getRuntimeError()) || Objects
+        .nonNull(runtime.getResult().getException())) {
       builder.setResult(code.FAILED);
       builder.setResMessage(ByteString.copyFromUtf8(runtime.getRuntimeError()));
     }
@@ -185,8 +174,8 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
     builder.addAllLog(logList);
 
     if (Objects.nonNull(block)) {
-      builder.setBlockNumber(block.getBlockHeader().getRawData().getNumber());
-      builder.setBlockTimeStamp(block.getBlockHeader().getRawData().getTimestamp());
+      builder.setBlockNumber(block.getInstance().getBlockHeader().getRawData().getNumber());
+      builder.setBlockTimeStamp(block.getInstance().getBlockHeader().getRawData().getTimestamp());
     }
 
     builder.setReceipt(traceReceipt.getReceipt());

@@ -5,6 +5,7 @@ import org.tron.core.Constant;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.ResourceReceipt;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
 public class ReceiptCapsule {
 
@@ -116,7 +117,11 @@ public class ReceiptCapsule {
       this.setEnergyUsage(usage);
     } else {
       energyProcessor.useEnergy(account, accountEnergyLeft, now);
-      long energyFee = (usage - accountEnergyLeft) * Constant.SUN_PER_ENERGY;
+      long SUN_PER_ENERGY = manager.getDynamicPropertiesStore().getEnergyFee() == 0
+          ? Constant.SUN_PER_ENERGY
+          : manager.getDynamicPropertiesStore().getEnergyFee();
+      long energyFee =
+          (usage - accountEnergyLeft) * SUN_PER_ENERGY;
       this.setEnergyUsage(accountEnergyLeft);
       this.setEnergyFee(energyFee);
       account.setBalance(account.getBalance() - energyFee);
@@ -127,5 +132,13 @@ public class ReceiptCapsule {
 
   public static ResourceReceipt copyReceipt(ReceiptCapsule origin) {
     return origin.getReceipt().toBuilder().build();
+  }
+
+  public void setResult(contractResult success) {
+    this.receipt = receipt.toBuilder().setResult(success).build();
+  }
+
+  public contractResult getResult() {
+    return this.receipt.getResult();
   }
 }

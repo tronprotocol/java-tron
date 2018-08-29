@@ -144,13 +144,13 @@ public class WalletTestTransfer003 {
 
       if (times++ < 1) {
         PublicMethed.waitProduceNextBlock(blockingStubFull);
-        PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+        //PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
         String txId = ByteArray.toHexString(Sha256Hash.hash(sendCoinTransaction
             .getRawData().toByteArray()));
         logger.info(txId);
         ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
         BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
-        TransactionInfo transactionInfo = blockingStubSolidity.getTransactionInfoById(request);
+        TransactionInfo transactionInfo = blockingStubFull.getTransactionInfoById(request);
         Optional<TransactionInfo> getTransactionById = Optional.ofNullable(transactionInfo);
         logger.info("solidity block num is " + Long.toString(getTransactionById.get().getBlockNumber()));
         Assert.assertTrue(getTransactionById.get().getBlockNumber() > 0);
@@ -169,13 +169,13 @@ public class WalletTestTransfer003 {
     sendCoinTransaction = sendcoin(fromAddress, 1L, sendCoinAddress,
         testKeyForSendCoin, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    //PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
     String txId = ByteArray.toHexString(Sha256Hash.hash(sendCoinTransaction
           .getRawData().toByteArray()));
     logger.info(txId);
     ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
     BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
-    TransactionInfo transactionInfo = blockingStubSolidity.getTransactionInfoById(request);
+    TransactionInfo transactionInfo = blockingStubFull.getTransactionInfoById(request);
     Optional<TransactionInfo> getTransactionById = Optional.ofNullable(transactionInfo);
     logger.info(getTransactionById.get().toString());
     logger.info("when use fee, the block num is " + Long.toString(getTransactionById.get().getBlockNumber()));
@@ -192,13 +192,13 @@ public class WalletTestTransfer003 {
     sendCoinTransaction = sendcoin(newAccountAddress,1L,sendCoinAddress,
         testKeyForSendCoin,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    //PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
     String txId = ByteArray.toHexString(Sha256Hash.hash(sendCoinTransaction
         .getRawData().toByteArray()));
     logger.info(txId);
     ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
     BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
-    TransactionInfo transactionInfo = blockingStubSolidity.getTransactionInfoById(request);
+    TransactionInfo transactionInfo = blockingStubFull.getTransactionInfoById(request);
     Optional<TransactionInfo> getTransactionById = Optional.ofNullable(transactionInfo);
 
     logger.info("In create account case, the fee is " + getTransactionById.get().getFee());
@@ -234,7 +234,7 @@ public class WalletTestTransfer003 {
     Account sendAccountInfo = PublicMethed.queryAccount(testKeyForSendCoin,blockingStubFull);
     Long beforeBalance = sendAccountInfo.getBalance();
     logger.info("Before test, the account balance is " + Long.toString(beforeBalance));
-    while (feeNum < 300) {
+    while (feeNum < 250) {
       sendCoinTransaction = sendcoin(fromAddress,10L,sendCoinAddress,
           testKeyForSendCoin,blockingStubFull);
       feeNum++;

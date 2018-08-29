@@ -5,7 +5,7 @@ import io.grpc.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.junit.*;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.crypto.ECKey;
@@ -37,7 +37,7 @@ import java.util.stream.IntStream;
 
 @Slf4j
 public class GetLostBlockIdsTest {
-    private static AnnotationConfigApplicationContext context;
+    private static TronApplicationContext context;
     private NodeImpl node;
     RpcApiService rpcApiService;
     PeerClient peerClient;
@@ -72,7 +72,7 @@ public class GetLostBlockIdsTest {
             }
         }
 
-        //blockChainSummary 为空
+        //blockChainSummary is empty
         try {
             blockChainSummary = new ArrayList<BlockId>();
             blockIds = del.getLostBlockIds(blockChainSummary);
@@ -81,7 +81,7 @@ public class GetLostBlockIdsTest {
         }
         Assert.assertTrue(blockIds.size() == 6);
 
-        //blockChainSummary 为创世块
+        //blockChainSummary only have a genesis block
         try {
             blockChainSummary = new ArrayList<BlockId>();
             blockChainSummary.add(dbManager.getGenesisBlockId());
@@ -91,7 +91,7 @@ public class GetLostBlockIdsTest {
         }
         Assert.assertTrue(blockIds.size() == 6);
 
-        //blockChainSummary 为创世块、第2块、第3块
+        //blockChainSummary have genesis block、2nd block、3rd block
         BlockId except_first_block = null;
         try {
             blockChainSummary = new ArrayList<BlockId>();
@@ -105,7 +105,7 @@ public class GetLostBlockIdsTest {
         }
         Assert.assertTrue(blockIds.size() == 3 && Arrays.equals(blockIds.peekFirst().getBytes(), except_first_block.getBytes()));
 
-        //blockChainSummary 为支链上的第2块、第4块，并且都不在主链
+        //blockChainSummary have 2nd block、4th block，and they are on fork chain
         try {
             BlockCapsule capsule2 = new BlockCapsule(2,
                     Sha256Hash.wrap(ByteString.copyFrom(
@@ -124,7 +124,7 @@ public class GetLostBlockIdsTest {
         }
         Assert.assertTrue(blockIds.size() == 0);
 
-        //blockChainSummary 为支链上的第2块、第4块，第2块在主链
+        //blockChainSummary have 2nd block(main chain)、4th block(fork chain)
         try {
             BlockCapsule capsule4 = new BlockCapsule(4,
                     Sha256Hash.wrap(ByteString.copyFrom(
@@ -202,7 +202,7 @@ public class GetLostBlockIdsTest {
                 cfgArgs.setNeedSyncCheck(false);
                 cfgArgs.setNodeExternalIp("127.0.0.1");
 
-                context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+                context = new TronApplicationContext(DefaultConfig.class);
 
                 if (cfgArgs.isHelp()) {
                     logger.info("Here is the help message.");

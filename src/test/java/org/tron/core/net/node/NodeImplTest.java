@@ -11,7 +11,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.crypto.ECKey;
@@ -36,7 +36,7 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 @Slf4j
 public class NodeImplTest {
 
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
 
   private static Application appT;
   private static String dbPath = "output_nodeimpl_test";
@@ -46,7 +46,7 @@ public class NodeImplTest {
 
   static {
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    context = new TronApplicationContext(DefaultConfig.class);
     Args.getInstance().setSolidityNode(true);
     appT = ApplicationFactory.create(context);
   }

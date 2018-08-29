@@ -1,4 +1,4 @@
-package stest.tron.wallet.onlinestress;
+package stest.tron.wallet.onlineStress;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -31,9 +31,9 @@ public class TestNetErc721Cat {
   //testng001、testng002、testng003、testng004
   private final String testKey002 =
       //"7306c6044ad7c03709980aa188b8555288b7e0608f5edbf76ff2381c5a7a15a8";
-      "3a54ba30e3ee41b602eca8fb3a3ca1f99f49a3d3ab5d8d646a2ccdd3ffd9c21d";
+      //"3a54ba30e3ee41b602eca8fb3a3ca1f99f49a3d3ab5d8d646a2ccdd3ffd9c21d";
       //fromAddress
-      //"FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
+      "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
   private ManagedChannel channelFull = null;
@@ -80,11 +80,11 @@ public class TestNetErc721Cat {
         testKey002,blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(triggerAddress,50000000000L,fromAddress,
         testKey002,blockingStubFull));
-    /*Assert.assertTrue(PublicMethed.freezeBalanceGetCpu(deployAddress,100000000L,
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(deployAddress,100000000L,
         3,1,deployKey,blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalanceGetCpu(triggerAddress,100000000L,
-        3,1,triggerKey,blockingStubFull));
-    Assert.assertTrue(PublicMethed.buyStorage(500000000L,deployAddress,deployKey,
+    /*    Assert.assertTrue(PublicMethed.freezeBalanceGetCpu(triggerAddress,100000000L,
+        3,1,triggerKey,blockingStubFull));*/
+    /*Assert.assertTrue(PublicMethed.buyStorage(500000000L,deployAddress,deployKey,
         blockingStubFull));
     Assert.assertTrue(PublicMethed.buyStorage(500000000L,triggerAddress,triggerKey,
         blockingStubFull));
@@ -350,7 +350,7 @@ public class TestNetErc721Cat {
     Integer times = 0;
     logger.info("In create kitty, kitty core address is " + ByteArray
         .toHexString(kittyCoreContractAddress));
-    while (times++ < 2) {
+    while (times++ < 20) {
       txid = PublicMethed.triggerContract(kittyCoreContractAddress,
           "createGen0Auction(uint256)","0",false,
           0,100000000L,triggerAddress,triggerKey,blockingStubFull);
@@ -372,7 +372,6 @@ public class TestNetErc721Cat {
         e.printStackTrace();
       }
 
-      //infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
     }
 
   }

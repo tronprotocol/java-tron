@@ -26,7 +26,6 @@ import org.tron.common.storage.Key;
 import org.tron.common.storage.Value;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
@@ -71,14 +70,8 @@ public class ContractState implements Deposit, ProgramListenerAware {
   }
 
   @Override
-  public BytesCapsule getContractByNormalAccount(byte[] address) {
-    return deposit.getContractByNormalAccount(address);
-  }
-
-  @Override
-  public void createContractByNormalAccountIndex(byte[] address,
-      BytesCapsule contractAddress) {
-    deposit.createContractByNormalAccountIndex(address, contractAddress);
+  public void deleteContract(byte[] address) {
+    deposit.deleteContract(address);
   }
 
   @Override
@@ -141,11 +134,6 @@ public class ContractState implements Deposit, ProgramListenerAware {
   }
 
   @Override
-  public Deposit newDepositNext() {
-    return deposit.newDepositNext();
-  }
-
-  @Override
   public void flush() {
     deposit.flush();
   }
@@ -196,11 +184,6 @@ public class ContractState implements Deposit, ProgramListenerAware {
   }
 
   @Override
-  public void putContractByNormalAccountIndex(Key key, Value value) {
-    deposit.putContractByNormalAccountIndex(key, value);
-  }
-
-  @Override
   public void putStorage(Key key, Storage cache) {
     deposit.putStorage(key, cache);
   }
@@ -213,16 +196,6 @@ public class ContractState implements Deposit, ProgramListenerAware {
   @Override
   public void setParent(Deposit deposit) {
     this.deposit.setParent(deposit);
-  }
-
-  @Override
-  public void setPrevDeposit(Deposit deposit) {
-    this.deposit.setPrevDeposit(deposit);
-  }
-
-  @Override
-  public void setNextDeposit(Deposit deposit) {
-    this.deposit.setNextDeposit(deposit);
   }
 
   @Override

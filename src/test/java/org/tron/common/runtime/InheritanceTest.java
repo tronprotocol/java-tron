@@ -6,7 +6,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.testng.Assert;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
@@ -17,7 +17,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.OutOfSlotTimeException;
+import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Protocol.AccountType;
 
@@ -25,14 +25,14 @@ import org.tron.protos.Protocol.AccountType;
 public class InheritanceTest {
   private static Runtime runtime;
   private static Manager dbManager;
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
   private static DepositImpl deposit;
   private static final String dbPath = "output_InheritanceTest";
   private static final String OWNER_ADDRESS;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath,"--debug"}, Constant.TEST_CONF);
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   }
 
@@ -67,7 +67,7 @@ public class InheritanceTest {
    */
   @Test
   public void inheritanceTest()
-      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
     String contractName = "barContract";
     byte[] callerAddress = Hex.decode(OWNER_ADDRESS);
     String ABI = "[{\"constant\":false,\"inputs\":[],\"name\":\"getName\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],"
