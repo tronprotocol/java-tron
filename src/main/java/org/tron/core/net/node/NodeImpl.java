@@ -40,12 +40,14 @@ import org.tron.common.overlay.discover.node.statistics.MessageCount;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.Channel.TronState;
 import org.tron.common.overlay.server.SyncPool;
+import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.utils.ExecutorLoop;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.SlidingWindowCounter;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
@@ -857,7 +859,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             peer.getNode().getHost());
         return;
       }
-      if (del.handleTransaction(trxMsg.getTransactionCapsule())) {
+      TransactionCapsule clearResultTransactionCapsule = trxMsg.getTransactionCapsule();
+      if (SystemProperties.getInstance().vmOn()) {
+        clearResultTransactionCapsule.resetResult();
+      }
+
+      if (del.handleTransaction(clearResultTransactionCapsule)) {
         broadcast(trxMsg);
       }
     } catch (TraitorPeerException e) {

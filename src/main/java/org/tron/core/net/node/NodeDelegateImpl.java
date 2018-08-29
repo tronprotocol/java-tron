@@ -35,6 +35,7 @@ import org.tron.core.exception.ReceiptException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
+import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.TronException;
@@ -96,6 +97,8 @@ public class NodeDelegateImpl implements NodeDelegate {
     } catch (DupTransactionException e) {
       throw new BadBlockException("DupTransaction exception," + e.getMessage());
     } catch (TooBigTransactionException e) {
+      throw new BadBlockException("TooBigTransaction exception," + e.getMessage());
+    } catch (TooBigTransactionResultException e) {
       throw new BadBlockException("TooBigTransaction exception," + e.getMessage());
     } catch (TransactionExpirationException e) {
       throw new BadBlockException("Expiration exception," + e.getMessage());
@@ -164,6 +167,9 @@ public class NodeDelegateImpl implements NodeDelegate {
       return false;
     } catch (UnsupportVMException e) {
       logger.warn(e.getMessage());
+      return false;
+    } catch (TooBigTransactionResultException e) {
+      logger.info("too big transactionresult" + e.getMessage());
       return false;
     }
 
