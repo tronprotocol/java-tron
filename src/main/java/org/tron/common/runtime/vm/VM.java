@@ -1331,7 +1331,7 @@ public class VM {
         this.step(program);
       }
 
-    } catch (JVMStackOverFlowException e){
+    } catch (JVMStackOverFlowException e) {
       throw new JVMStackOverFlowException();
     } catch (RuntimeException e) {
       if (StringUtils.isEmpty(e.getMessage())) {

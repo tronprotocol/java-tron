@@ -111,13 +111,13 @@ public class Program {
     return isRootCallConstant;
   }
 
-  public static  void setRootCallConstant(Boolean rootCallConstant) {
+  public static void setRootCallConstant(Boolean rootCallConstant) {
     isRootCallConstant = rootCallConstant;
   }
 
   private static long nonce = 0;
   private static byte[] rootTransactionId = null;
-  private  static Boolean isRootCallConstant = null;
+  private static Boolean isRootCallConstant = null;
 
   private InternalTransaction transaction;
 
@@ -1293,7 +1293,8 @@ public class Program {
     if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
         && senderAddress != contextAddress && msg.getEndowment().value().longValueExact() > 0) {
       try {
-        transfer(deposit, senderAddress, contextAddress, msg.getEndowment().value().longValueExact());
+        transfer(deposit, senderAddress, contextAddress,
+            msg.getEndowment().value().longValueExact());
       } catch (ContractValidateException e) {
         throw new BytecodeExecutionException("transfer failure");
       }

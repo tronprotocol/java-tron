@@ -343,8 +343,8 @@ public class Value {
 //        decode();
     if (this.isList()) {
       return this.asList().stream()
-              .mapToInt(obj -> (new Value(obj)).countBranchNodes())
-              .sum();
+          .mapToInt(obj -> (new Value(obj)).countBranchNodes())
+          .sum();
     } else if (this.isBytes()) {
       this.asBytes();
     }
