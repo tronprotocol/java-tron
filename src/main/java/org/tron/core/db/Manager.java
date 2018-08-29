@@ -105,6 +105,7 @@ import org.tron.core.witness.WitnessController;
 import org.tron.orm.mongo.entity.EventLogEntity;
 import org.tron.orm.service.impl.EventLogServiceImpl;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 
@@ -1105,7 +1106,7 @@ public class Manager {
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
 
-    sendEventLog(runtime.getResult().getContractAddress(), transactionInfo.getInstance().getLogList(), block, transactionInfo);
+    sendEventLog(runtime.getResult().getContractAddress(), transactionInfo.getInstance().getLogList(), blockCap.getInstance(), transactionInfo);
 
     return true;
   }
