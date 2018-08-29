@@ -189,7 +189,7 @@ public class WalletTestCommittee004 {
       logger.info(getChainParameters.get().getChainParameter(i).getKey());
       logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
     }
-    Assert.assertTrue(getChainParameters.get().getChainParameterCount() == 10);
+    Assert.assertTrue(getChainParameters.get().getChainParameterCount() >= 10);
     Assert.assertTrue(getChainParameters.get()
         .getChainParameter(1).getValue() == 9999000000L);
     Assert.assertTrue(getChainParameters.get().getChainParameter(4)
