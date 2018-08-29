@@ -46,6 +46,7 @@ import org.tron.common.utils.SlidingWindowCounter;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
@@ -516,8 +517,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       spread.putAll(advObjToSpread);
       advObjToSpread.clear();
     }
-    for (InventoryType type : spread.values()){
-      if (type == InventoryType.TRX){
+    for (InventoryType type : spread.values()) {
+      if (type == InventoryType.TRX) {
         trxCount.add();
       }
     }
@@ -771,7 +772,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             del.getHeadBlockId().getString());
         startSyncWithPeer(peer);
       } catch (NonCommonBlockException e) {
-        logger.error("We get a block {} that do not have the most recent common ancestor with the main chain, from {}, reason is {} ",
+        logger.error(
+            "We get a block {} that do not have the most recent common ancestor with the main chain, from {}, reason is {} ",
             block.getBlockId().getString(), peer.getNode().getHost(), e.getMessage());
         disconnectPeer(peer, ReasonCode.FORKED);
       } catch (InterruptedException e) {
@@ -805,7 +807,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           del.getHeadBlockId().getString());
       reason = ReasonCode.UNLINKABLE;
     } catch (NonCommonBlockException e) {
-      logger.error("We get a block {} that do not have the most recent common ancestor with the main chain, head is {}",
+      logger.error(
+          "We get a block {} that do not have the most recent common ancestor with the main chain, head is {}",
           block.getBlockId().getString(),
           del.getHeadBlockId().getString());
       reason = ReasonCode.FORKED;
@@ -857,7 +860,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             peer.getNode().getHost());
         return;
       }
-      if (del.handleTransaction(trxMsg.getTransactionCapsule())) {
+      TransactionCapsule transactionCapsule = trxMsg.getTransactionCapsule();
+
+      if (del.handleTransaction(transactionCapsule)) {
         broadcast(trxMsg);
       }
     } catch (TraitorPeerException e) {
@@ -875,11 +880,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
   }
 
-  private boolean checkSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg){
+  private boolean checkSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {
     long lastBlockNum = syncMsg.getBlockIds().get(syncMsg.getBlockIds().size() - 1).getNum();
     BlockId lastSyncBlockId = peer.getLastSyncBlockId();
-    if (lastSyncBlockId != null && lastBlockNum < lastSyncBlockId.getNum()){
-      logger.warn("Peer {} receive bad SyncBlockChain message, firstNum {} lastSyncNum {}.", peer.getInetAddress(), lastBlockNum, lastSyncBlockId.getNum());
+    if (lastSyncBlockId != null && lastBlockNum < lastSyncBlockId.getNum()) {
+      logger.warn("Peer {} receive bad SyncBlockChain message, firstNum {} lastSyncNum {}.",
+          peer.getInetAddress(), lastBlockNum, lastSyncBlockId.getNum());
       return false;
     }
     return true;
@@ -891,7 +897,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     long remainNum = 0;
     LinkedList<BlockId> blockIds = new LinkedList<>();
     List<BlockId> summaryChainIds = syncMsg.getBlockIds();
-    if (!checkSyncBlockChainMessage(peer, syncMsg)){
+    if (!checkSyncBlockChainMessage(peer, syncMsg)) {
       disconnectPeer(peer, ReasonCode.BAD_PROTOCOL);
       return;
     }
@@ -900,7 +906,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     } catch (StoreException e) {
       logger.error(e.getMessage());
     }
-  
+
     if (blockIds.isEmpty()) {
       if (CollectionUtils.isNotEmpty(summaryChainIds) && !del
           .canChainRevoke(summaryChainIds.get(0).getNum())) {
@@ -929,62 +935,71 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       startSyncWithPeer(peer);
     }
 
-    if (blockIds.peekLast() == null){
+    if (blockIds.peekLast() == null) {
       peer.setLastSyncBlockId(headBlockId);
-    }else {
+    } else {
       peer.setLastSyncBlockId(blockIds.peekLast());
     }
     peer.setRemainNum(remainNum);
     peer.sendMessage(new ChainInventoryMessage(blockIds, remainNum));
   }
 
-  private boolean checkFetchInvDataMsg(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg){
+  private boolean checkFetchInvDataMsg(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) {
     MessageTypes type = fetchInvDataMsg.getInvMessageType();
     if (type == MessageTypes.TRX) {
-      int elementCount = peer.getNodeStatistics().messageStatistics.tronInTrxFetchInvDataElement.getCount(10);
+      int elementCount = peer.getNodeStatistics().messageStatistics.tronInTrxFetchInvDataElement
+          .getCount(10);
       int maxCount = trxCount.getCount(60);
-      if (elementCount > maxCount){
-        logger.warn("Check FetchInvDataMsg failed: Peer {} request count {} in 10s gt trx count {} generate in 60s", peer.getInetAddress(), elementCount, maxCount);
+      if (elementCount > maxCount) {
+        logger.warn(
+            "Check FetchInvDataMsg failed: Peer {} request count {} in 10s gt trx count {} generate in 60s",
+            peer.getInetAddress(), elementCount, maxCount);
         return false;
       }
       for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
-        if (!peer.getAdvObjWeSpread().containsKey(hash)){
-          logger.warn("Check FetchInvDataMsg failed: Peer {} get trx {} we not spread.", peer.getInetAddress(), hash);
+        if (!peer.getAdvObjWeSpread().containsKey(hash)) {
+          logger.warn("Check FetchInvDataMsg failed: Peer {} get trx {} we not spread.",
+              peer.getInetAddress(), hash);
           return false;
         }
       }
-    }else {
+    } else {
       boolean isAdv = true;
       for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
-        if (!peer.getAdvObjWeSpread().containsKey(hash)){
+        if (!peer.getAdvObjWeSpread().containsKey(hash)) {
           isAdv = false;
           break;
         }
       }
-      if (isAdv){
+      if (isAdv) {
         MessageCount tronOutAdvBlock = peer.getNodeStatistics().messageStatistics.tronOutAdvBlock;
         tronOutAdvBlock.add(fetchInvDataMsg.getHashList().size());
         int outBlockCountIn1min = tronOutAdvBlock.getCount(60);
         int producedBlockIn2min = 120_000 / ChainConstant.BLOCK_PRODUCED_INTERVAL;
-        if (outBlockCountIn1min > producedBlockIn2min){
-          logger.warn("Check FetchInvDataMsg failed: Peer {} outBlockCount {} producedBlockIn2min {}",
-              peer.getInetAddress(), outBlockCountIn1min, producedBlockIn2min);
+        if (outBlockCountIn1min > producedBlockIn2min) {
+          logger
+              .warn("Check FetchInvDataMsg failed: Peer {} outBlockCount {} producedBlockIn2min {}",
+                  peer.getInetAddress(), outBlockCountIn1min, producedBlockIn2min);
           return false;
         }
-      }else {
-        if (!peer.isNeedSyncFromUs()){
-          logger.warn("Check FetchInvDataMsg failed: Peer {} not need sync from us.", peer.getInetAddress());
+      } else {
+        if (!peer.isNeedSyncFromUs()) {
+          logger.warn("Check FetchInvDataMsg failed: Peer {} not need sync from us.",
+              peer.getInetAddress());
           return false;
         }
         for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
           long blockNum = new BlockId(hash).getNum();
-          long minBlockNum =  peer.getLastSyncBlockId().getNum() - 2 * NodeConstant.SYNC_FETCH_BATCH_NUM;
-          if (blockNum < minBlockNum){
-            logger.warn("Check FetchInvDataMsg failed: Peer {} blockNum {} lt minBlockNum {}", peer.getInetAddress(), blockNum, minBlockNum);
+          long minBlockNum =
+              peer.getLastSyncBlockId().getNum() - 2 * NodeConstant.SYNC_FETCH_BATCH_NUM;
+          if (blockNum < minBlockNum) {
+            logger.warn("Check FetchInvDataMsg failed: Peer {} blockNum {} lt minBlockNum {}",
+                peer.getInetAddress(), blockNum, minBlockNum);
             return false;
           }
-          if (peer.getSyncBlockIdCache().getIfPresent(hash) != null){
-            logger.warn("Check FetchInvDataMsg failed: Peer {} blockNum {} hash {} is exist", peer.getInetAddress(), blockNum, hash);
+          if (peer.getSyncBlockIdCache().getIfPresent(hash) != null) {
+            logger.warn("Check FetchInvDataMsg failed: Peer {} blockNum {} hash {} is exist",
+                peer.getInetAddress(), blockNum, hash);
             return false;
           }
           peer.getSyncBlockIdCache().put(hash, 1);
@@ -996,7 +1011,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleFetchDataMessage(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) {
 
-    if (!checkFetchInvDataMsg(peer, fetchInvDataMsg)){
+    if (!checkFetchInvDataMsg(peer, fetchInvDataMsg)) {
       disconnectPeer(peer, ReasonCode.BAD_PROTOCOL);
       return;
     }
@@ -1033,7 +1048,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         peer.sendMessage(msg);
       } else {
         transactions.add(((TransactionMessage) msg).getTransactionCapsule().getInstance());
-        size += ((TransactionMessage) msg).getTransactionCapsule().getInstance().getSerializedSize();
+        size += ((TransactionMessage) msg).getTransactionCapsule().getInstance()
+            .getSerializedSize();
         if (transactions.size() % maxTrxsCnt == 0 || size > maxTrxsSize) {
           peer.sendMessage(new TransactionsMessage(transactions));
           transactions = Lists.newArrayList();

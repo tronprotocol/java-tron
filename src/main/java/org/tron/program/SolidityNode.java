@@ -32,6 +32,7 @@ import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.ReceiptException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
+import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.UnLinkedBlockException;
@@ -137,6 +138,8 @@ public class SolidityNode {
           throw new BadBlockException("dup exception");
         } catch (TooBigTransactionException e) {
           throw new BadBlockException("too big exception");
+        } catch (TooBigTransactionResultException e) {
+          throw new BadBlockException("too big exception result");
         } catch (TransactionExpirationException e) {
           throw new BadBlockException("expiration exception");
         } catch (BadNumberBlockException e) {

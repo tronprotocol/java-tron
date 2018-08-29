@@ -407,7 +407,9 @@ public class Wallet {
       } else {
         dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
       }
-
+      if (dbManager.getDynamicPropertiesStore().supportVM()) {
+        trx.resetResult();
+      }
       dbManager.pushTransaction(trx);
       p2pNode.broadcast(message);
 
