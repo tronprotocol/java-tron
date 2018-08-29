@@ -71,7 +71,7 @@ public class VM {
     checkMemorySize(op, newMemSize);
 
     // memory drop consume calc
-    long memoryUsage = (newMemSize.longValue() + 31) / 32 * 32;
+    long memoryUsage = (newMemSize.longValueExact() + 31) / 32 * 32;
     if (memoryUsage > oldMemSize) {
       long memWords = (memoryUsage / 32);
       long memWordsOld = (oldMemSize / 32);
@@ -258,7 +258,7 @@ public class VM {
             throw new OutOfEnergyException(
                 "Not enough energy for '%s' operation executing: opEnergy[%d], programEnergy[%d]",
                 op.name(),
-                dataCost.longValue(), program.getEnergyLimitLeft().longValueSafe());
+                dataCost.longValueExact(), program.getEnergyLimitLeft().longValueSafe());
           }
           energyCost = energyCosts.getLOG_ENERGY() +
               energyCosts.getLOG_TOPIC_ENERGY() * nTopics +
@@ -1331,7 +1331,7 @@ public class VM {
         this.step(program);
       }
 
-    } catch (JVMStackOverFlowException e){
+    } catch (JVMStackOverFlowException e) {
       throw new JVMStackOverFlowException();
     } catch (RuntimeException e) {
       if (StringUtils.isEmpty(e.getMessage())) {

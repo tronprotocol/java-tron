@@ -35,11 +35,9 @@ import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.Hash;
 import org.tron.common.crypto.zksnark.BN128;
 import org.tron.common.crypto.zksnark.BN128Fp;
 import org.tron.common.crypto.zksnark.BN128G1;
@@ -47,19 +45,15 @@ import org.tron.common.crypto.zksnark.BN128G2;
 import org.tron.common.crypto.zksnark.Fp;
 import org.tron.common.crypto.zksnark.PairingCheck;
 import org.tron.common.runtime.vm.program.Program;
-import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.storage.Deposit;
 import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
@@ -88,7 +82,7 @@ public class PrecompiledContracts {
   private static final BN128Multiplication altBN128Mul = new BN128Multiplication();
   private static final BN128Pairing altBN128Pairing = new BN128Pairing();
   private static final VoteWitnessNative voteContract = new VoteWitnessNative();
-//  private static final FreezeBalanceNative freezeBalance = new FreezeBalanceNative();
+  //  private static final FreezeBalanceNative freezeBalance = new FreezeBalanceNative();
 //  private static final UnfreezeBalanceNative unFreezeBalance = new UnfreezeBalanceNative();
   private static final WithdrawBalanceNative withdrawBalance = new WithdrawBalanceNative();
   private static final ProposalApproveNative proposalApprove = new ProposalApproveNative();
@@ -97,10 +91,11 @@ public class PrecompiledContracts {
   private static final ConvertFromTronBytesAddressNative convertFromTronBytesAddress = new ConvertFromTronBytesAddressNative();
   private static final ConvertFromTronBase58AddressNative convertFromTronBase58Address = new ConvertFromTronBase58AddressNative();
   private static final TransferAssetNative transferAsset = new TransferAssetNative();
-  private static final GetTransferAssetNative getTransferAssetAmount =  new GetTransferAssetNative();
+  private static final GetTransferAssetNative getTransferAssetAmount = new GetTransferAssetNative();
 
   private static final ECKey addressCheckECKey = new ECKey();
-  private static final String addressCheckECKeyAddress = Wallet.encode58Check(addressCheckECKey.getAddress());
+  private static final String addressCheckECKeyAddress = Wallet
+      .encode58Check(addressCheckECKey.getAddress());
 
 
   private static final DataWord ecRecoverAddr = new DataWord(
@@ -121,7 +116,7 @@ public class PrecompiledContracts {
       "0000000000000000000000000000000000000000000000000000000000000008");
   private static final DataWord voteContractAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010001");
-//  private static final DataWord freezeBalanceAddr = new DataWord(
+  //  private static final DataWord freezeBalanceAddr = new DataWord(
 //      "0000000000000000000000000000000000000000000000000000000000010002");
 //  private static final DataWord unFreezeBalanceAddr = new DataWord(
 //      "0000000000000000000000000000000000000000000000000000000000010003");
@@ -194,10 +189,18 @@ public class PrecompiledContracts {
     }
 
     // Byzantium precompiles
-    if (address.equals(modExpAddr)) return modExp;
-    if (address.equals(altBN128AddAddr)) return altBN128Add;
-    if (address.equals(altBN128MulAddr)) return altBN128Mul;
-    if (address.equals(altBN128PairingAddr)) return altBN128Pairing;
+    if (address.equals(modExpAddr)) {
+      return modExp;
+    }
+    if (address.equals(altBN128AddAddr)) {
+      return altBN128Add;
+    }
+    if (address.equals(altBN128MulAddr)) {
+      return altBN128Mul;
+    }
+    if (address.equals(altBN128PairingAddr)) {
+      return altBN128Pairing;
+    }
     return null;
   }
 
@@ -423,7 +426,7 @@ public class PrecompiledContracts {
           .multiply(BigInteger.valueOf(Math.max(adjExpLen, 1)))
           .divide(GQUAD_DIVISOR);
 
-      return isLessThan(energy, BigInteger.valueOf(Long.MAX_VALUE)) ? energy.longValue()
+      return isLessThan(energy, BigInteger.valueOf(Long.MAX_VALUE)) ? energy.longValueExact()
           : Long.MAX_VALUE;
     }
 
@@ -701,7 +704,7 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (isRootCallConstant()){
+      if (isRootCallConstant()) {
         return Pair.of(true, new DataWord(0).getData());
       }
       if (data == null || data.length != 2 * DataWord.DATAWORD_UNIT_SIZE) {
@@ -887,7 +890,7 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (isRootCallConstant()){
+      if (isRootCallConstant()) {
         return Pair.of(true, new DataWord(0).getData());
       }
 
@@ -944,7 +947,7 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (isRootCallConstant()){
+      if (isRootCallConstant()) {
         return Pair.of(true, new DataWord(0).getData());
       }
 
@@ -1008,11 +1011,12 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (isRootCallConstant()){
+      if (isRootCallConstant()) {
         return Pair.of(true, new DataWord(0).getData());
       }
 
-      if (data == null || data.length == 0 || (data.length % (2 * DataWord.DATAWORD_UNIT_SIZE) != 0 )) {
+      if (data == null || data.length == 0 || (data.length % (2 * DataWord.DATAWORD_UNIT_SIZE)
+          != 0)) {
         return Pair.of(false, new DataWord(0).getData());
       }
 
@@ -1078,7 +1082,7 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (isRootCallConstant()){
+      if (isRootCallConstant()) {
         return Pair.of(true, new DataWord(0).getData());
       }
 
@@ -1175,8 +1179,7 @@ public class PrecompiledContracts {
   }
 
   /**
-   * Native function for transferring Asset to another account. <br/>
-   * <br/>
+   * Native function for transferring Asset to another account. <br/> <br/>
    *
    * Input data[]: <br/> toAddress, amount, assetName <br/>
    *
@@ -1192,11 +1195,12 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (isRootCallConstant()){
+      if (isRootCallConstant()) {
         return Pair.of(true, new DataWord(0).getData());
       }
 
-      if (data == null || (data.length <= DataWord.DATAWORD_UNIT_SIZE * 2 || data.length > DataWord.DATAWORD_UNIT_SIZE * 3)) {
+      if (data == null || (data.length <= DataWord.DATAWORD_UNIT_SIZE * 2
+          || data.length > DataWord.DATAWORD_UNIT_SIZE * 3)) {
         return Pair.of(false, new DataWord(0).getData());
       }
 
@@ -1206,19 +1210,19 @@ public class PrecompiledContracts {
       System.arraycopy(data, 32 + 16 + 8, amount, 0, 8);
       // we already have a restrict for token name length, no more than 32 bytes. don't need to check again
       byte[] name = new byte[32];
-      System.arraycopy(data, 64, name, 0, data.length-64);
-      int length =name.length;
-      while(length>0 && name[length -1] ==0){
+      System.arraycopy(data, 64, name, 0, data.length - 64);
+      int length = name.length;
+      while (length > 0 && name[length - 1] == 0) {
         length--;
       }
-      name = ByteArray.subArray(name,0,length);
+      name = ByteArray.subArray(name, 0, length);
       Contract.TransferAssetContract.Builder builder = Contract.TransferAssetContract
           .newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(getCallerAddress()));
-      builder.setToAddress(ByteString.copyFrom(convertToTronAddress(new DataWord(toAddress).getLast20Bytes())));
+      builder.setToAddress(
+          ByteString.copyFrom(convertToTronAddress(new DataWord(toAddress).getLast20Bytes())));
       builder.setAmount(Longs.fromByteArray(amount));
       builder.setAssetName(ByteString.copyFrom(name));
-
 
       TransferAssetContract contract = builder.build();
 
@@ -1246,10 +1250,8 @@ public class PrecompiledContracts {
   }
 
 
-
   /**
-   * Native function for check Asset balance basing on targetAddress and Asset name. <br/>
-   * <br/>
+   * Native function for check Asset balance basing on targetAddress and Asset name. <br/> <br/>
    *
    * Input data[]: <br/> address targetAddress, byte[] assetName <br/>
    *
@@ -1274,11 +1276,11 @@ public class PrecompiledContracts {
       // we already have a restrict for token name length, no more than 32 bytes. don't need to check again
       byte[] name = new byte[32];
       System.arraycopy(data, 32, name, 0, 32);
-      int length =name.length;
-      while(length>0 && name[length -1] ==0){
+      int length = name.length;
+      while (length > 0 && name[length - 1] == 0) {
         length--;
       }
-      name = ByteArray.subArray(name,0,length);
+      name = ByteArray.subArray(name, 0, length);
 
       long assetBalance = this.getDeposit().getDbManager().getAccountStore().
           get(convertToTronAddress(new DataWord(targetAddress).getLast20Bytes())).

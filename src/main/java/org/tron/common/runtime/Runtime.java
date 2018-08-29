@@ -224,7 +224,7 @@ public class Runtime {
       if (leftBalanceForEnergyFreeze >= feeLimit) {
         energyFromFeeLimit = BigInteger.valueOf(totalEnergyFromFreeze)
             .multiply(BigInteger.valueOf(feeLimit))
-            .divide(BigInteger.valueOf(totalBalanceForEnergyFreeze)).longValue();
+            .divide(BigInteger.valueOf(totalBalanceForEnergyFreeze)).longValueExact();
       } else {
         energyFromFeeLimit = Math
             .addExact(leftEnergyFromFreeze,
@@ -326,7 +326,7 @@ public class Runtime {
       AccountCapsule creator = this.deposit
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
       // if (executorType == ET_NORMAL_TYPE) {
-      //   long blockENERGYLeftInUs = getBlockENERGYLeftInUs().longValue();
+      //   long blockENERGYLeftInUs = getBlockENERGYLeftInUs().longValueExact();
       //   thisTxENERGYLimitInUs = min(blockENERGYLeftInUs,
       //       Constant.ENERGY_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
       // } else {
@@ -337,6 +337,7 @@ public class Runtime {
           .getMaxCpuTimeOfOneTX() * 1000;
 
       long thisTxCPULimitInUs = (long) (MAX_CPU_TIME_OF_ONE_TX * getThisTxCPULimitInUsRatio());
+
       long vmStartInUs = System.nanoTime() / 1000;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
@@ -413,12 +414,11 @@ public class Runtime {
 
       long feeLimit = trx.getRawData().getFeeLimit();
       long energyLimit;
-
       if (isCallConstant(contractAddress)) {
         energyLimit = Constant.MAX_ENERGY_IN_TX;
-      }
-      else
+      } else {
         energyLimit = getEnergyLimit(creator, caller, contract, feeLimit, callValue);
+      }
 
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CALL_TYPE, executorType, trx,
@@ -498,7 +498,7 @@ public class Runtime {
       return 0;
     }
     return BigInteger.valueOf(callerEnergyFrozen).multiply(BigInteger.valueOf(callerEnergyUsage))
-        .divide(BigInteger.valueOf(callerEnergyTotal)).longValue();
+        .divide(BigInteger.valueOf(callerEnergyTotal)).longValueExact();
   }
 
   public boolean isCallConstant() throws ContractValidateException {
