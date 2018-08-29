@@ -81,7 +81,7 @@ public class Args {
   @Getter
   @Setter
   @Parameter(names = {"--min-time-ratio"})
-  private double minTimeRatio = 1.0; // 50ms * 1.0 = 50ms = 50000us
+  private double minTimeRatio = 0.6;
 
   @Getter
   @Setter
@@ -372,6 +372,9 @@ public class Args {
     INSTANCE.receiveTcpMinDataLength = 2048;
     INSTANCE.isOpenFullTcpDisconnect = false;
     INSTANCE.supportConstant = false;
+    INSTANCE.debug = false;
+    INSTANCE.minTimeRatio = 0.6;
+    INSTANCE.maxTimeRatio = 5.0;
   }
 
   /**

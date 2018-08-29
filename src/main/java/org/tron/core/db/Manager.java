@@ -1053,7 +1053,7 @@ public class Manager {
     // if (blockCap != null && blockCap.generatedByMyself &&
     //     !blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty() &&
     //     trxCap.getInstance().getRet(0).getContractRet() != contractResult.SUCCESS) {
-    //
+    // setBill(energyUsage);
     // } else {
     // }
 

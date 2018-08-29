@@ -886,6 +886,8 @@ public class Wallet {
         trxCap.setResult(ret);
         return trxCap.getInstance();
       }
+    } catch (ContractValidateException e) {
+      throw e;
     } catch (Exception e) {
       logger.error(e.getMessage());
       return null;
