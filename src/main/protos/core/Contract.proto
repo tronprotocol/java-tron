@@ -226,3 +226,23 @@ message ExchangeTransactionContract {
   bytes token_id = 3;
   int64 quant = 4;
 }
+
+message AccountPermissionUpdateContract {
+  bytes owner_address = 1;
+  repeated Permission permissions = 2;
+}
+
+message PermissionAddKeyContract {
+  bytes owner_address = 1;
+  Key key = 2;
+}
+
+message PermissionUpdateKeyContract {
+  bytes owner_address = 1;
+  Key key = 2;
+}
+
+message PermissionDeleteKeyContract {
+  bytes owner_address = 1;
+  Key key = 2;
+}
