@@ -1472,7 +1472,7 @@ public class Program {
 
 
     public static OutOfMemoryException memoryOverflow(OpCode op) {
-      return new OutOfMemoryException("Out of Memory when '%s' operation executing", op);
+      return new OutOfMemoryException("Out of Memory when '%s' operation executing", op.name());
     }
 
     public static OutOfStorageException notEnoughStorage() {
