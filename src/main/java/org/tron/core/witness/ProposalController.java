@@ -41,11 +41,13 @@ public class ProposalController {
             .get(ProposalCapsule.calculateDbKey(proposalNum));
       } catch (Exception ex) {
         logger.error("", ex);
+        continue;
       }
 
       if (proposalCapsule.hasProcessed()) {
         logger
-            .info("Proposal has processed，id:[{}],skip it and before it", proposalCapsule.getID());
+            .info("Proposal has processed，id:[{}],skip it and before it",
+                proposalCapsule.getID());
         //proposals with number less than this one, have been processed before
         break;
       }
