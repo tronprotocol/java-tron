@@ -72,6 +72,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.StoreException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
@@ -1427,8 +1428,14 @@ public class RpcApiService implements Service {
       }
       responseObserver.onCompleted();
     }
-  }
 
+    @Override
+    public void accountPermissionUpdate(AccountPermissionUpdateContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.AccountPermissionUpdateContract,
+          responseObserver);
+    }
+  }
 
   @Override
   public void stop() {

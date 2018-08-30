@@ -369,7 +369,7 @@ public class Wallet {
     }
 
     try {
-      BlockCapsule headBlock = null;
+      BlockCapsule headBlock;
       List<BlockCapsule> blockList = dbManager.getBlockStore().getBlockByLatestNum(1);
       if (CollectionUtils.isEmpty(blockList)) {
         throw new HeaderNotFound("latest block not found");
@@ -521,7 +521,8 @@ public class Wallet {
     long currentWeight = 0;
     try {
       if (permission == null) {
-        throw new NonePermissionException("Permission of " + getPermissionName(contract) + " is null.");
+        throw new NonePermissionException(
+            "Permission of " + getPermissionName(contract) + " is null.");
       }
       if (trx.getSignatureCount() > 0) {
         ByteString sig = trx.getSignature(0);
@@ -543,7 +544,7 @@ public class Wallet {
       }
     } catch (SignatureException signEx) {
 
-    } catch (NonePermissionException nonePermiEx){
+    } catch (NonePermissionException nonePermiEx) {
 
     }
     tswBuilder.setPermission(permission);

@@ -101,7 +101,8 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
         weightSum += key.getWeight();
       }
       if (weightSum < permission.getThreshold()) {
-        throw new ContractValidateException("sum of all key's weight should not be less than threshold");
+        throw new ContractValidateException(
+            "sum of all key's weight should not be less than threshold");
       }
     }
     return true;
