@@ -138,7 +138,7 @@ message Key {
 }
 
 message Permission {
-  bytes name = 1;
+  string name = 1;
   int64 threshold = 2;
   bytes parent = 3;
   repeated Key keys = 4;
