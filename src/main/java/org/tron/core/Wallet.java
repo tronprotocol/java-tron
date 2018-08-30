@@ -475,9 +475,22 @@ public class Wallet {
     return trx;
   }
 
-  public TransactionCapsule addSign(TransactionSign transactionSign) {
-    byte[] privateKey = transactionSign.getPrivateKey().toByteArray();
+  public TransactionCapsule addSign(TransactionSign transactionSign)
+      throws PermissionException, SignatureException {
     TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
+    Permission permission = getPermission(trx.getInstance());
+    if (trx.getInstance().getSignatureCount() > 0) {
+      checkWeight(permission, trx.getInstance(), null);
+    }
+    byte[] privateKey = transactionSign.getPrivateKey().toByteArray();
+    ECKey ecKey = ECKey.fromPrivate(privateKey);
+    byte[] address = ecKey.getAddress();
+    long weight = getWeight(permission, address);
+    if (weight == 0) {
+      throw new PermissionException(
+          ByteArray.toHexString(privateKey) + " 's add is " + Wallet
+              .encode58Check(address) + " but it is not contained of permission.");
+    }
     trx.addSign(privateKey);
     return trx;
   }
@@ -496,17 +509,21 @@ public class Wallet {
     return builder.build();
   }
 
-  public Permission getPermission(Account account, String name) {
+  public Permission getPermission(Transaction trx) throws PermissionException {
+    Contract contract = trx.getRawData().getContract(0);
+    byte[] owner = TransactionCapsule.getOwner(contract);
+    Account account = dbManager.getAccountStore().get(owner).getInstance();
+    String permissionName = getPermissionName(contract);
     List<Permission> list = account.getPermissionsList();
     if (list.isEmpty()) {
-      return getDefaultPermission(account.getAddress(), name);
+      return getDefaultPermission(account.getAddress(), permissionName);
     }
     for (Permission permission : list) {
-      if (name.equals(permission.getName())) {
+      if (permissionName.equals(permission.getName())) {
         return permission;
       }
     }
-    return null;
+    throw new PermissionException("Permission of " + permissionName + " is null.");
   }
 
   public long getWeight(Permission permission, byte[] address) {
@@ -519,43 +536,44 @@ public class Wallet {
     return 0;
   }
 
+  public long checkWeight(Permission permission, Transaction trx, List<ByteString> approveList)
+      throws SignatureException, PermissionException {
+    long currentWeight = 0;
+    byte[] hash = Sha256Hash.hash(trx.getRawData().toByteArray());
+    ByteString signature = trx.getSignature(0);
+    if (signature.size() % 65 != 0) {
+      throw new SignatureException("Signature size is " + signature.size());
+    }
+    for (int i = 0; i < signature.size(); i += 65) {
+      ByteString sub = signature.substring(i, i + 65);
+      String base64 = TransactionCapsule.getBase64FromByteString(sub);
+      byte[] address = ECKey.signatureToAddress(hash, base64);
+      long weight = getWeight(permission, address);
+      if (weight == 0) {
+        throw new PermissionException(
+            ByteArray.toHexString(sub.toByteArray()) + " is signed by " + Wallet
+                .encode58Check(address) + " but it is not contained of permission.");
+      }
+      if (approveList != null) {
+        approveList.add(ByteString.copyFrom(address)); //out put approve list.
+      }
+      currentWeight += weight;
+    }
+    return currentWeight;
+  }
+
   public TransactionSignWeight getTransactionSignWeight(Transaction trx) {
     TransactionSignWeight.Builder tswBuilder = TransactionSignWeight.newBuilder();
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
     Return.Builder retBuilder = Return.newBuilder();
     trxExBuilder.setTransaction(trx);
     trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(trx.getRawData().toByteArray())));
-    Contract contract = trx.getRawData().getContract(0);
-    byte[] owner = TransactionCapsule.getOwner(contract);
-    AccountCapsule account = dbManager.getAccountStore().get(owner);
-    String permissionName = getPermissionName(contract);
-    Permission permission = getPermission(account.getInstance(), permissionName);
-    long currentWeight = 0;
     try {
-      if (permission == null) {
-        throw new PermissionException("Permission of " + permissionName + " is null.");
-      }
+      Permission permission = getPermission(trx);
+      tswBuilder.setPermission(permission);
       if (trx.getSignatureCount() > 0) {
-        ByteString sig = trx.getSignature(0);
         List<ByteString> approveList = new ArrayList<ByteString>();
-        if (sig.size() % 65 != 0) {
-          throw new SignatureException("Signature size is " + sig.size());
-        }
-        byte[] hash = Sha256Hash.hash(trx.getRawData().toByteArray());
-        for (int i = 0; i < sig.size(); i += 65) {
-          ByteString sub = sig.substring(i, i + 65);
-          String base64 = TransactionCapsule.getBase64FromByteString(sub);
-          byte[] address = ECKey.signatureToAddress(hash, base64);
-          long weight = getWeight(permission, address);
-          if (weight == 0) {
-            throw new PermissionException(
-                ByteArray.toHexString(sub.toByteArray()) + " is signed by " + Wallet
-                    .encode58Check(address) + " but it is not contained of " + permissionName
-                    + " permission.");
-          }
-          approveList.add(ByteString.copyFrom(address));
-          currentWeight += weight;
-        }
+        long currentWeight = checkWeight(permission, trx, approveList);
         tswBuilder.addAllApprovedList(approveList);
         tswBuilder.setCurrentWeight(currentWeight);
         retBuilder.setResult(true).setCode(response_code.SUCCESS);
@@ -563,11 +581,13 @@ public class Wallet {
     } catch (SignatureException signEx) {
       retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8(signEx.getMessage()));
-    } catch (PermissionException nonePermiEx) {
+    } catch (PermissionException permEx) {
       retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
-          .setMessage(ByteString.copyFromUtf8(nonePermiEx.getMessage()));
+          .setMessage(ByteString.copyFromUtf8(permEx.getMessage()));
+    } catch (Exception ex) {
+      retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+          .setMessage(ByteString.copyFromUtf8(ex.getClass() + " : " + ex.getMessage()));
     }
-    tswBuilder.setPermission(permission);
     trxExBuilder.setResult(retBuilder);
     tswBuilder.setTransaction(trxExBuilder);
     return tswBuilder.build();
