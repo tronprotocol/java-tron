@@ -22,13 +22,14 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.OutOfSlotTimeException;
+import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Protocol.AccountType;
 
 
 @Slf4j
 @Ignore
+
 public class EnergyWhenAssertStyleTest {
 
   private Manager dbManager;
@@ -79,7 +80,7 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void outOfIndexTest()
-      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
 
     long value = 0;
     long feeLimit = 20000000000000L; // sun
@@ -124,7 +125,7 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void bytesNTest()
-      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
     long value = 0;
     long feeLimit = 20000000000000L; // sun
@@ -168,7 +169,7 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void divZeroTest()
-      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
     long value = 0;
     long feeLimit = 20000000000000L; // sun
@@ -213,7 +214,7 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void shiftByNegativeTest()
-      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
     long value = 0;
     long feeLimit = 20000000000000L; // sun
@@ -259,7 +260,7 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void enumTypeTest()
-      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
     long value = 0;
     long feeLimit = 20000000000000L; // sun
@@ -303,7 +304,7 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void functionPointerTest()
-      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
     long value = 0;
     long feeLimit = 20000000000000L; // sun
@@ -347,7 +348,7 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void assertTest()
-      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
     long value = 0;
     long feeLimit = 20000000000000L; // sun
@@ -383,13 +384,13 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void systemPrecompileTest()
-      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
     // todo
   }
 
   @Test
   public void outOfMemTest()
-      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
     // todo
   }
 
