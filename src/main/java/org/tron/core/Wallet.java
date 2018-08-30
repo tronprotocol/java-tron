@@ -492,7 +492,7 @@ public class Wallet {
     key.setAddress(owner).setWeight(1);
     builder.addKeys(key);
     builder.setThreshold(1);
-    builder.setName(ByteString.copyFromUtf8(name));
+    builder.setName(name);
     return builder.build();
   }
 
@@ -502,7 +502,7 @@ public class Wallet {
       return getDefaultPermission(account.getAddress(), name);
     }
     for (Permission permission : list) {
-      if (Arrays.equals(name.getBytes(), permission.getName().toByteArray())) {
+      if (name.equals(permission.getName())) {
         return permission;
       }
     }
