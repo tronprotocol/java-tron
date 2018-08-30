@@ -47,6 +47,7 @@ public class EnergyWhenSendAndTransferTest {
     deposit = DepositImpl.createRoot(dbManager);
     deposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
     deposit.addBalance(Hex.decode(OWNER_ADDRESS), 30000000000000L);
+    deposit.commit();
   }
 
   // solidity for callValueTest

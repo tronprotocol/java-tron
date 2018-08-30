@@ -32,7 +32,7 @@ public class EnergyWhenRequireStyleTest {
   private Manager dbManager;
   private AnnotationConfigApplicationContext context;
   private DepositImpl deposit;
-  private String dbPath = "output_CPUEnergyWhenRevertStyleTest";
+  private String dbPath = "output_EnergyWhenRequireStyleTest";
   private String OWNER_ADDRESS;
 
 
@@ -49,6 +49,7 @@ public class EnergyWhenRequireStyleTest {
     deposit = DepositImpl.createRoot(dbManager);
     deposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
     deposit.addBalance(Hex.decode(OWNER_ADDRESS), 30000000000000L);
+    deposit.commit();
   }
 
   // A require-style exception is generated in the following situations:

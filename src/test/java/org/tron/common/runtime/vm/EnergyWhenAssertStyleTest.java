@@ -34,7 +34,7 @@ public class EnergyWhenAssertStyleTest {
   private Manager dbManager;
   private AnnotationConfigApplicationContext context;
   private DepositImpl deposit;
-  private String dbPath = "output_CPUEnergyWhenAssertStyleTest";
+  private String dbPath = "output_EnergyWhenAssertStyleTest";
   private String OWNER_ADDRESS;
 
 
@@ -51,6 +51,7 @@ public class EnergyWhenAssertStyleTest {
     deposit = DepositImpl.createRoot(dbManager);
     deposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
     deposit.addBalance(Hex.decode(OWNER_ADDRESS), 30000000000000L);
+    deposit.commit();
   }
 
   // An assert-style exception is generated in the following situations:
@@ -63,6 +64,7 @@ public class EnergyWhenAssertStyleTest {
   // If you call a zero-initialized variable of internal function type.
   // If you call assert with an argument that evaluates to false.
   // If you call a system precompile contract and fail.
+  // If you out of memory
 
   // pragma solidity ^0.4.0;
   //
@@ -384,6 +386,13 @@ public class EnergyWhenAssertStyleTest {
       throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
     // todo
   }
+
+  @Test
+  public void outOfMemTest()
+      throws ContractExeException, OutOfSlotTimeException, TransactionTraceException, ContractValidateException {
+    // todo
+  }
+
 
   /**
    * Release resources.
