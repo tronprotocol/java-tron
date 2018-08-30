@@ -224,7 +224,7 @@ public class Runtime {
       if (leftBalanceForEnergyFreeze >= feeLimit) {
         energyFromFeeLimit = BigInteger.valueOf(totalEnergyFromFreeze)
             .multiply(BigInteger.valueOf(feeLimit))
-            .divide(BigInteger.valueOf(totalBalanceForEnergyFreeze)).longValue();
+            .divide(BigInteger.valueOf(totalBalanceForEnergyFreeze)).longValueExact();
       } else {
         energyFromFeeLimit = Math
             .addExact(leftEnergyFromFreeze,
@@ -293,9 +293,9 @@ public class Runtime {
   /*
    **/
   private void create()
-      throws ContractExeException, ContractValidateException {
+      throws  ContractValidateException {
     if (!deposit.getDbManager().getDynamicPropertiesStore().supportVM()) {
-      throw new ContractExeException("vm work is off, need to be opened by the committee");
+      throw new ContractValidateException("vm work is off, need to be opened by the committee");
     }
 
     CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
@@ -307,12 +307,12 @@ public class Runtime {
 
     long percent = contract.getNewContract().getConsumeUserResourcePercent();
     if (percent < 0 || percent > 100) {
-      throw new ContractExeException("percent must be >= 0 and <= 100");
+      throw new ContractValidateException("percent must be >= 0 and <= 100");
     }
 
     // insure the new contract address haven't exist
     if (deposit.getAccount(contractAddress) != null) {
-      throw new ContractExeException(
+      throw new ContractValidateException(
           "Trying to create a contract with existing contract address: " + Wallet
               .encode58Check(contractAddress));
     }
@@ -326,7 +326,7 @@ public class Runtime {
       AccountCapsule creator = this.deposit
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
       // if (executorType == ET_NORMAL_TYPE) {
-      //   long blockENERGYLeftInUs = getBlockENERGYLeftInUs().longValue();
+      //   long blockENERGYLeftInUs = getBlockENERGYLeftInUs().longValueExact();
       //   thisTxENERGYLimitInUs = min(blockENERGYLeftInUs,
       //       Constant.ENERGY_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
       // } else {
@@ -337,6 +337,7 @@ public class Runtime {
           .getMaxCpuTimeOfOneTX() * 1000;
 
       long thisTxCPULimitInUs = (long) (MAX_CPU_TIME_OF_ONE_TX * getThisTxCPULimitInUsRatio());
+
       long vmStartInUs = System.nanoTime() / 1000;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
@@ -355,7 +356,7 @@ public class Runtime {
       Program.setRootCallConstant(isCallConstant());
     } catch (Exception e) {
       logger.error(e.getMessage());
-      throw new ContractExeException(e.getMessage());
+      throw new ContractValidateException(e.getMessage());
     }
 
     program.getResult().setContractAddress(contractAddress);
@@ -380,10 +381,10 @@ public class Runtime {
    */
 
   private void call()
-      throws ContractExeException, ContractValidateException {
+      throws  ContractValidateException {
 
     if (!deposit.getDbManager().getDynamicPropertiesStore().supportVM()) {
-      throw new ContractExeException("VM work is off, need to be opened by the committee");
+      throw new ContractValidateException("VM work is off, need to be opened by the committee");
     }
 
     Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
@@ -413,15 +414,10 @@ public class Runtime {
 
       long feeLimit = trx.getRawData().getFeeLimit();
       long energyLimit;
-      try {
-        if (isCallConstant(contractAddress)) {
-          energyLimit = Constant.MAX_ENERGY_IN_TX;
-        }
-        else
-          energyLimit = getEnergyLimit(creator, caller, contract, feeLimit, callValue);
-      } catch (Exception e) {
-        logger.error(e.getMessage());
-        throw new ContractExeException(e.getMessage());
+      if (isCallConstant(contractAddress)) {
+        energyLimit = Constant.MAX_ENERGY_IN_TX;
+      } else {
+        energyLimit = getEnergyLimit(creator, caller, contract, feeLimit, callValue);
       }
 
       ProgramInvoke programInvoke = programInvokeFactory
@@ -502,7 +498,7 @@ public class Runtime {
       return 0;
     }
     return BigInteger.valueOf(callerEnergyFrozen).multiply(BigInteger.valueOf(callerEnergyUsage))
-        .divide(BigInteger.valueOf(callerEnergyTotal)).longValue();
+        .divide(BigInteger.valueOf(callerEnergyTotal)).longValueExact();
   }
 
   public boolean isCallConstant() throws ContractValidateException {

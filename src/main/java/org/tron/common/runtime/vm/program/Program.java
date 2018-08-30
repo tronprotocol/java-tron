@@ -111,13 +111,13 @@ public class Program {
     return isRootCallConstant;
   }
 
-  public static  void setRootCallConstant(Boolean rootCallConstant) {
+  public static void setRootCallConstant(Boolean rootCallConstant) {
     isRootCallConstant = rootCallConstant;
   }
 
   private static long nonce = 0;
   private static byte[] rootTransactionId = null;
-  private  static Boolean isRootCallConstant = null;
+  private static Boolean isRootCallConstant = null;
 
   private InternalTransaction transaction;
 
@@ -445,7 +445,7 @@ public class Program {
 
     byte[] senderAddress = convertToTronAddress(this.getOwnerAddress().getLast20Bytes());
     // todo: need check the value > 0?
-    long endowment = value.value().longValue();
+    long endowment = value.value().longValueExact();
     if (getContractState().getBalance(senderAddress) < endowment) {
       stackPushZero();
       return;
@@ -508,7 +508,7 @@ public class Program {
       newBalance = deposit.addBalance(newAddress, endowment);
     }
 
-    // BlockchainConfig blockchainConfig = config.getBlockchainConfig().getConfigForBlock(getNumber().longValue());
+    // BlockchainConfig blockchainConfig = config.getBlockchainConfig().getConfigForBlock(getNumber().longValueExact());
     // actual energy subtract
     DataWord energyLimit = this.getCreateEnergy(getEnergyLimitLeft());
     spendEnergy(energyLimit.longValue(), "internal call");
@@ -637,7 +637,7 @@ public class Program {
 
     // 2.1 PERFORM THE VALUE (endowment) PART
     // todo: need to check value >= 0?
-    long endowment = msg.getEndowment().value().longValue();
+    long endowment = msg.getEndowment().value().longValueExact();
     long senderBalance = deposit.getBalance(senderAddress);
     if (senderBalance < endowment) {
       stackPushZero();
@@ -739,7 +739,7 @@ public class Program {
     if (result != null) {
       BigInteger refundEnergy = msg.getEnergy().value().subtract(toBI(result.getEnergyUsed()));
       if (isPositive(refundEnergy)) {
-        refundEnergy(refundEnergy.longValue(), "remaining energy from the internal call");
+        refundEnergy(refundEnergy.longValueExact(), "remaining energy from the internal call");
         if (logger.isInfoEnabled()) {
           logger.info("The remaining energy refunded, account: [{}], energy: [{}] ",
               Hex.toHexString(senderAddress),
@@ -1278,7 +1278,7 @@ public class Program {
     byte[] contextAddress = msg.getType().callIsStateless() ? senderAddress : codeAddress;
 
     // todo: need check endowment > 0 and not exceed?? because of "senderBalance < endowment"
-    long endowment = msg.getEndowment().value().longValue();
+    long endowment = msg.getEndowment().value().longValueExact();
     long senderBalance = deposit.getBalance(senderAddress);
     if (senderBalance < endowment) {
       stackPushZero();
@@ -1291,9 +1291,10 @@ public class Program {
 
     // Charge for endowment - is not reversible by rollback
     if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
-        && senderAddress != contextAddress && msg.getEndowment().value().longValue() > 0) {
+        && senderAddress != contextAddress && msg.getEndowment().value().longValueExact() > 0) {
       try {
-        transfer(deposit, senderAddress, contextAddress, msg.getEndowment().value().longValue());
+        transfer(deposit, senderAddress, contextAddress,
+            msg.getEndowment().value().longValueExact());
       } catch (ContractValidateException e) {
         throw new BytecodeExecutionException("transfer failure");
       }
@@ -1490,7 +1491,7 @@ public class Program {
     public static OutOfEnergyException energyOverflow(BigInteger actualEnergy,
         BigInteger energyLimit) {
       return new OutOfEnergyException("Energy value overflow: actualEnergy[%d], energyLimit[%d];",
-          actualEnergy.longValue(), energyLimit.longValue());
+          actualEnergy.longValueExact(), energyLimit.longValueExact());
     }
 
     public static IllegalOperationException invalidOpCode(byte... opCode) {
