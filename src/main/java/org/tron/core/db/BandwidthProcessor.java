@@ -8,12 +8,14 @@ import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -50,12 +52,21 @@ public class BandwidthProcessor extends ResourceProcessor {
   @Override
   public void consume(TransactionCapsule trx, TransactionResultCapsule ret,
       TransactionTrace trace)
-      throws ContractValidateException, AccountResourceInsufficientException {
-    List<Contract> contracts =
-        trx.getInstance().getRawData().getContractList();
-
+      throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException {
+    List<Contract> contracts = trx.getInstance().getRawData().getContractList();
+    if (trx.getResultSerializedSize() > Constant.MAX_RESULT_SIZE_IN_TX * contracts.size()) {
+      throw new TooBigTransactionResultException();
+    }
     for (Contract contract : contracts) {
-      long bytes = trx.getSerializedSize();
+      long bytes = 0;
+      if (dbManager.getDynamicPropertiesStore().supportVM()) {
+        TransactionCapsule txCapForEstimateBandWidth = new TransactionCapsule(
+            trx.getInstance().getRawData(),
+            trx.getInstance().getSignatureList());
+        bytes = txCapForEstimateBandWidth.getSerializedSize() + Constant.MAX_RESULT_SIZE_IN_TX;
+      } else {
+        bytes = trx.getSerializedSize();
+      }
       logger.debug("trxId {},bandwidth cost :{}", trx.getTransactionId(), bytes);
       trace.setNetBill(bytes, 0);
       byte[] address = TransactionCapsule.getOwner(contract);

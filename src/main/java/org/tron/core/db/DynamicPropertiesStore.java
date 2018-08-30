@@ -81,11 +81,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] ENERGY_FEE = "ENERGY_FEE".getBytes();
 
+  private static final byte[] MAX_CPU_TIME_OF_ONE_TX = "MAX_CPU_TIME_OF_ONE_TX".getBytes();
+
   //abandon
   private static final byte[] CREATE_ACCOUNT_FEE = "CREATE_ACCOUNT_FEE".getBytes();
 
-  private static final byte[] CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT = "CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT"
-      .getBytes();
+  private static final byte[] CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT
+      = "CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT".getBytes();
 
   private static final byte[] CREATE_NEW_ACCOUNT_BANDWIDTH_RATE = "CREATE_NEW_ACCOUNT_BANDWIDTH_RATE"
       .getBytes();
@@ -292,6 +294,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getEnergyFee();
     } catch (IllegalArgumentException e) {
       this.saveEnergyFee(100L);// 100 sun per energy
+    }
+
+    try {
+      this.getMaxCpuTimeOfOneTX();
+    } catch (IllegalArgumentException e) {
+      this.saveMaxCpuTimeOfOneTX(50L);
     }
 
     try {
@@ -708,6 +716,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found ENERGY_FEE"));
+  }
+
+  public void saveMaxCpuTimeOfOneTX(long time) {
+    this.put(MAX_CPU_TIME_OF_ONE_TX,
+        new BytesCapsule(ByteArray.fromLong(time)));
+  }
+
+  public long getMaxCpuTimeOfOneTX() {
+    return Optional.ofNullable(getUnchecked(MAX_CPU_TIME_OF_ONE_TX))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found MAX_CPU_TIME_OF_ONE_TX"));
   }
 
   public void saveCreateAccountFee(long fee) {

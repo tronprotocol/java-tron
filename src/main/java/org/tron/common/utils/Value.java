@@ -100,7 +100,7 @@ public class Value {
     if (isLong()) {
       return (Long) value;
     } else if (isBytes()) {
-      return new BigInteger(1, asBytes()).longValue();
+      return new BigInteger(1, asBytes()).longValueExact();
     }
     return 0;
   }
@@ -343,8 +343,8 @@ public class Value {
 //        decode();
     if (this.isList()) {
       return this.asList().stream()
-              .mapToInt(obj -> (new Value(obj)).countBranchNodes())
-              .sum();
+          .mapToInt(obj -> (new Value(obj)).countBranchNodes())
+          .sum();
     } else if (this.isBytes()) {
       this.asBytes();
     }

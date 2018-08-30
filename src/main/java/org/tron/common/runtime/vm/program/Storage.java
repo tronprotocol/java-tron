@@ -48,6 +48,7 @@ public class Storage {
       if (row == null || row.getInstance() == null) {
         row = new StorageRowCapsule(rowKey, value.getData());
       } else {
+        row.setValue(value);
         beforeUseSize += row.getInstance().length;
       }
       rowCache.put(key, row);
