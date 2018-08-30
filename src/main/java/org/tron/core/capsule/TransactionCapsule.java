@@ -45,6 +45,7 @@ import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
 import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
 import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.db.AccountStore;
@@ -275,12 +276,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   public void addSign(byte[] privateKey) {
     ECKey ecKey = ECKey.fromPrivate(privateKey);
     ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
-    int signCount = this.transaction.getRetCount();
+    int signCount = this.transaction.getSignatureCount();
     if (signCount > 0) {
       ByteString sign = this.transaction.getSignature(signCount - 1);
-      ByteString sig = ByteString.copyFrom(signature.toByteArray());
-      sign.concat(sig);
-      this.transaction = this.transaction.toBuilder().setSignature(signCount - 1, sign).build();//add sign at last default.
+      byte[] signa = ByteUtil.merge(sign.toByteArray(), signature.toByteArray());
+      this.transaction = this.transaction.toBuilder().setSignature(signCount - 1, ByteString.copyFrom(signa)).build();//add sign at last default.
     } else {
       ByteString sig = ByteString.copyFrom(signature.toByteArray());
       this.transaction = this.transaction.toBuilder().addSignature(sig).build();

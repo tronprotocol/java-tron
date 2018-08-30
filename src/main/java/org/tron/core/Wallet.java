@@ -486,20 +486,20 @@ public class Wallet {
     return "active";
   }
 
-  public Permission getDefaultPermission(ByteString owner) {
+  public Permission getDefaultPermission(ByteString owner, String name) {
     Permission.Builder builder = Permission.newBuilder();
     Key.Builder key = Key.newBuilder();
     key.setAddress(owner).setWeight(1);
-    builder.setKeys(0, key);
+    builder.addKeys(key);
     builder.setThreshold(1);
-    builder.setName(ByteString.copyFromUtf8("owner"));
+    builder.setName(ByteString.copyFromUtf8(name));
     return builder.build();
   }
 
   public Permission getPermission(Account account, String name) {
     List<Permission> list = account.getPermissionsList();
     if (list.isEmpty()) {
-      return getDefaultPermission(account.getAddress());
+      return getDefaultPermission(account.getAddress(), name);
     }
     for (Permission permission : list) {
       if (Arrays.equals(name.getBytes(), permission.getName().toByteArray())) {
@@ -550,7 +550,7 @@ public class Wallet {
           if (weight == 0) {
             throw new PermissionException(
                 ByteArray.toHexString(sub.toByteArray()) + " is signed by " + Wallet
-                    .encode58Check(address) + "but it is not contained of " + permissionName
+                    .encode58Check(address) + " but it is not contained of " + permissionName
                     + " permission.");
           }
           approveList.add(ByteString.copyFrom(address));
