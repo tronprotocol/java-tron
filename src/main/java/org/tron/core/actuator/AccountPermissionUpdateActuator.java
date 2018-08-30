@@ -4,7 +4,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -79,10 +79,10 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
       if (permission.getThreshold() <= 0) {
         throw new ContractValidateException("permission's threshold should be greater than 0");
       }
-      if (ArrayUtils.isEmpty(permission.getName().toByteArray())) {
+      if (StringUtils.isEmpty(permission.getName())) {
         throw new ContractValidateException("permission's name should not be empty");
       }
-      String name = permission.getName().toStringUtf8();
+      String name = permission.getName();
       if (!name.equalsIgnoreCase("owner") && !name.equalsIgnoreCase("active")) {
         throw new ContractValidateException("permission's name should be owner or active");
       }
