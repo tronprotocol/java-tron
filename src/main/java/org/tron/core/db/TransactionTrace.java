@@ -107,8 +107,12 @@ public class TransactionTrace {
     runtime.go();
   }
 
-  public void finalization(Runtime runtime) throws BalanceInsufficientException {
-    pay();
+  public void finalization(Runtime runtime) throws ContractExeException {
+    try {
+      pay();
+    } catch (BalanceInsufficientException e) {
+      throw new ContractExeException(e.getMessage());
+    }
     runtime.finalization();
   }
 
