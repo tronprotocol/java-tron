@@ -3,7 +3,9 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.storage.Deposit;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
@@ -26,11 +28,12 @@ public class ProposalApproveActuator extends AbstractActuator {
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
+    Manager contextDbManager = Objects.isNull(deposit)? dbManager : deposit.getDbManager();
     long fee = calcFee();
     try {
       final ProposalApproveContract proposalApproveContract =
           this.contract.unpack(ProposalApproveContract.class);
-      ProposalCapsule proposalCapsule = dbManager.getProposalStore().
+      ProposalCapsule proposalCapsule = contextDbManager.getProposalStore().
           get(ByteArray.fromLong(proposalApproveContract.getProposalId()));
 
       ByteString committeeAddress = proposalApproveContract.getOwnerAddress();
@@ -39,7 +42,12 @@ public class ProposalApproveActuator extends AbstractActuator {
       } else {
         proposalCapsule.removeApproval(committeeAddress);
       }
-      dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
+      if (Objects.isNull(deposit)) {
+        contextDbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
+      }
+      else {
+        deposit.putProposalValue(proposalCapsule.createDbKey(),proposalCapsule);
+      }
       ret.setStatus(fee, code.SUCESS);
     } catch (ItemNotFoundException e) {
       logger.debug(e.getMessage(), e);
@@ -55,10 +63,11 @@ public class ProposalApproveActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+    Manager contextDbManager = Objects.isNull(getDeposit()) ? dbManager : getDeposit().getDbManager();
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (this.dbManager == null) {
+    if (contextDbManager == null) {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(ProposalApproveContract.class)) {
@@ -80,22 +89,22 @@ public class ProposalApproveActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
 
-    if (!this.dbManager.getAccountStore().has(ownerAddress)) {
+    if (!contextDbManager.getAccountStore().has(ownerAddress)) {
       throw new ContractValidateException("account[" + readableOwnerAddress + "] not exists");
     }
 
-    if (!this.dbManager.getWitnessStore().has(ownerAddress)) {
+    if (!contextDbManager.getWitnessStore().has(ownerAddress)) {
       throw new ContractValidateException("Witness[" + readableOwnerAddress + "] not exists");
     }
 
-    if (contract.getProposalId() > dbManager.getDynamicPropertiesStore().getLatestProposalNum()) {
+    if (contract.getProposalId() > contextDbManager.getDynamicPropertiesStore().getLatestProposalNum()) {
       throw new ContractValidateException("Proposal[" + contract.getProposalId() + "] not exists");
     }
 
-    long now = dbManager.getHeadBlockTimeStamp();
+    long now = contextDbManager.getHeadBlockTimeStamp();
     ProposalCapsule proposalCapsule;
     try {
-      proposalCapsule = dbManager.getProposalStore().
+      proposalCapsule = contextDbManager.getProposalStore().
           get(ByteArray.fromLong(contract.getProposalId()));
     } catch (ItemNotFoundException ex) {
       throw new ContractValidateException("Proposal[" + contract.getProposalId() + "] not exists");

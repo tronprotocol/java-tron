@@ -3,6 +3,7 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
@@ -26,15 +27,22 @@ public class ProposalDeleteActuator extends AbstractActuator {
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
+    Manager contextDbManager = Objects.isNull(deposit)? dbManager : deposit.getDbManager();
     long fee = calcFee();
     try {
       final ProposalDeleteContract proposalDeleteContract = this.contract
           .unpack(ProposalDeleteContract.class);
-      ProposalCapsule proposalCapsule = dbManager.getProposalStore().
+      ProposalCapsule proposalCapsule = contextDbManager.getProposalStore().
           get(ByteArray.fromLong(proposalDeleteContract.getProposalId()));
 
       proposalCapsule.setState(State.CANCELED);
-      dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
+      if (Objects.isNull(deposit)) {
+        dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
+      }
+      else{
+        deposit.putProposalValue(proposalCapsule.createDbKey(),proposalCapsule);
+      }
+
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
@@ -50,10 +58,11 @@ public class ProposalDeleteActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+    Manager contextDbManager = Objects.isNull(deposit)? dbManager : deposit.getDbManager();
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (this.dbManager == null) {
+    if (contextDbManager == null) {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(ProposalDeleteContract.class)) {
@@ -75,23 +84,23 @@ public class ProposalDeleteActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
 
-    if (!this.dbManager.getAccountStore().has(ownerAddress)) {
+    if (!contextDbManager.getAccountStore().has(ownerAddress)) {
       throw new ContractValidateException("account[" + readableOwnerAddress + "] not exists");
     }
 
-    if (contract.getProposalId() > dbManager.getDynamicPropertiesStore().getLatestProposalNum()) {
+    if (contract.getProposalId() > contextDbManager.getDynamicPropertiesStore().getLatestProposalNum()) {
       throw new ContractValidateException("Proposal[" + contract.getProposalId() + "] not exists");
     }
 
     ProposalCapsule proposalCapsule = null;
     try {
-      proposalCapsule = dbManager.getProposalStore().
+      proposalCapsule = contextDbManager.getProposalStore().
           get(ByteArray.fromLong(contract.getProposalId()));
     } catch (ItemNotFoundException ex) {
       throw new ContractValidateException("Proposal[" + contract.getProposalId() + "] not exists");
     }
 
-    long now = dbManager.getHeadBlockTimeStamp();
+    long now = contextDbManager.getHeadBlockTimeStamp();
     if (!proposalCapsule.getProposalAddress().equals(contract.getOwnerAddress())) {
       throw new ContractValidateException("Proposal[" + contract.getProposalId() + "] "
           + "is not proposed by " + readableOwnerAddress);

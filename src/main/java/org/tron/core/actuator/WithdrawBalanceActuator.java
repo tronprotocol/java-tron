@@ -5,7 +5,9 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.storage.Deposit;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -27,6 +29,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
+    Manager contextDbManager = Objects.isNull(getDeposit()) ? dbManager : deposit.getDbManager();
     long fee = calcFee();
     final WithdrawBalanceContract withdrawBalanceContract;
     try {
@@ -37,18 +40,25 @@ public class WithdrawBalanceActuator extends AbstractActuator {
       throw new ContractExeException(e.getMessage());
     }
 
-    AccountCapsule accountCapsule = dbManager.getAccountStore()
+    AccountCapsule accountCapsule = contextDbManager.getAccountStore()
         .get(withdrawBalanceContract.getOwnerAddress().toByteArray());
     long oldBalance = accountCapsule.getBalance();
     long allowance = accountCapsule.getAllowance();
 
-    long now = dbManager.getHeadBlockTimeStamp();
+    long now = contextDbManager.getHeadBlockTimeStamp();
     accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
         .setBalance(oldBalance + allowance)
         .setAllowance(0L)
         .setLatestWithdrawTime(now)
         .build());
-    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    if (Objects.isNull(getDeposit())) {
+      contextDbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    }
+    else{
+      // cache
+      deposit.putAccountValue(accountCapsule.createDbKey(),accountCapsule);
+    }
+
     ret.setWithdrawAmount(allowance);
     ret.setStatus(fee, code.SUCESS);
 
@@ -57,10 +67,11 @@ public class WithdrawBalanceActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+    Manager contextDbManager = Objects.isNull(getDeposit()) ? dbManager : deposit.getDbManager();
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (this.dbManager == null) {
+    if (contextDbManager == null) {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(WithdrawBalanceContract.class)) {
@@ -80,7 +91,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
 
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    AccountCapsule accountCapsule = contextDbManager.getAccountStore().get(ownerAddress);
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
@@ -88,7 +99,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     }
 
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
-    if (!dbManager.getWitnessStore().has(ownerAddress)) {
+    if (!contextDbManager.getWitnessStore().has(ownerAddress)) {
       throw new ContractValidateException(
           "Account[" + readableOwnerAddress + "] is not a witnessAccount");
     }
@@ -102,9 +113,9 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     }
 
     long latestWithdrawTime = accountCapsule.getLatestWithdrawTime();
-    long now = dbManager.getHeadBlockTimeStamp();
+    long now = contextDbManager.getHeadBlockTimeStamp();
     long witnessAllowanceFrozenTime =
-        dbManager.getDynamicPropertiesStore().getWitnessAllowanceFrozenTime() * 86_400_000L;
+        contextDbManager.getDynamicPropertiesStore().getWitnessAllowanceFrozenTime() * 86_400_000L;
 
     if (now - latestWithdrawTime < witnessAllowanceFrozenTime) {
       throw new ContractValidateException("The last withdraw time is "

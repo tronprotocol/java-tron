@@ -5,7 +5,10 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Iterator;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.storage.Deposit;
+import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
@@ -35,7 +38,7 @@ public class VoteWitnessActuator extends AbstractActuator {
     long fee = calcFee();
     try {
       VoteWitnessContract voteContract = contract.unpack(VoteWitnessContract.class);
-      countVoteAccount(voteContract);
+      countVoteAccount(voteContract, getDeposit());
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
@@ -47,10 +50,11 @@ public class VoteWitnessActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+    Manager contextDbManager = Objects.isNull(getDeposit()) ? dbManager : getDeposit().getDbManager();
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (this.dbManager == null) {
+    if (contextDbManager == null) {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(VoteWitnessContract.class)) {
@@ -71,8 +75,8 @@ public class VoteWitnessActuator extends AbstractActuator {
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
 
-    AccountStore accountStore = dbManager.getAccountStore();
-    WitnessStore witnessStore = dbManager.getWitnessStore();
+    AccountStore accountStore = contextDbManager.getAccountStore();
+    WitnessStore witnessStore = contextDbManager.getWitnessStore();
 
     if (contract.getVotesCount() == 0) {
       throw new ContractValidateException(
@@ -130,12 +134,12 @@ public class VoteWitnessActuator extends AbstractActuator {
     return true;
   }
 
-  private void countVoteAccount(VoteWitnessContract voteContract) {
+  private void countVoteAccount(VoteWitnessContract voteContract, Deposit deposit) {
     byte[] ownerAddress = voteContract.getOwnerAddress().toByteArray();
 
     VotesCapsule votesCapsule;
-    VotesStore votesStore = dbManager.getVotesStore();
-    AccountStore accountStore = dbManager.getAccountStore();
+    VotesStore votesStore = Objects.isNull(deposit)? dbManager.getVotesStore() : deposit.getDbManager().getVotesStore();
+    AccountStore accountStore = Objects.isNull(deposit)? dbManager.getAccountStore() : deposit.getDbManager().getAccountStore();
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
 
@@ -157,8 +161,16 @@ public class VoteWitnessActuator extends AbstractActuator {
       accountCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount());
     });
 
-    accountStore.put(accountCapsule.createDbKey(), accountCapsule);
-    votesStore.put(ownerAddress, votesCapsule);
+    if (Objects.isNull(deposit)) {
+      accountStore.put(accountCapsule.createDbKey(), accountCapsule);
+      votesStore.put(ownerAddress, votesCapsule);
+    }
+    else{
+      // cache
+      deposit.putAccountValue(accountCapsule.createDbKey(),accountCapsule);
+      deposit.putVoteValue(ownerAddress,votesCapsule);
+    }
+
   }
 
   @Override

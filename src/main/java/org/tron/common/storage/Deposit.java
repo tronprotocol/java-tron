@@ -5,7 +5,9 @@ import org.tron.common.runtime.vm.program.Storage;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol;
 
@@ -66,9 +68,19 @@ public interface Deposit {
 
   void putVotes(Key key, Value value);
 
-  void syncCacheFromAccountStore(byte[] address);
+  void putProposal(Key key, Value value);
 
-  void syncCacheFromVotesStore(byte[] address);
+  void putDynamicProperties(Key key, Value value);
+
+  void putAccountValue(byte[] address, AccountCapsule accountCapsule);
+
+  void putVoteValue(byte[] address, VotesCapsule votesCapsule);
+
+  void putProposalValue(byte[] address, ProposalCapsule proposalCapsule);
+
+  void putDynamicPropertiesWithLatestProposalNum(long num);
+
+  long getLatestProposalNum();
 
   TransactionCapsule getTransaction(byte[] trxHash);
 

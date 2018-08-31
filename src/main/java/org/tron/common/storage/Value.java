@@ -2,12 +2,14 @@ package org.tron.common.storage;
 
 import java.util.Arrays;
 import org.apache.commons.lang3.ArrayUtils;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.CodeCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -178,6 +180,16 @@ public class Value {
     public AssetIssueCapsule getAssetIssue() {
         if (ArrayUtils.isEmpty(any)) return null;
         return new AssetIssueCapsule(any);
+    }
+
+    public ProposalCapsule getProposal() {
+        if (ArrayUtils.isEmpty(any)) return null;
+        return new ProposalCapsule(any);
+    }
+
+    public BytesCapsule getDynamicProperties(){
+        if (ArrayUtils.isEmpty(any)) return null;
+        return new BytesCapsule(any);
     }
 
     @Override

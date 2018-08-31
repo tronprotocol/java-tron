@@ -27,7 +27,9 @@ import org.tron.common.storage.Value;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
@@ -194,6 +196,16 @@ public class ContractState implements Deposit, ProgramListenerAware {
   }
 
   @Override
+  public void putProposal(Key key, Value value) {
+    deposit.putProposal(key, value);
+  }
+
+  @Override
+  public void putDynamicProperties(Key key, Value value) {
+    deposit.putDynamicProperties(key, value);
+  }
+
+  @Override
   public void setParent(Deposit deposit) {
     this.deposit.setParent(deposit);
   }
@@ -204,13 +216,28 @@ public class ContractState implements Deposit, ProgramListenerAware {
   }
 
   @Override
-  // Do nothing
-  public void syncCacheFromAccountStore(byte[] address) {
+  public void putAccountValue(byte[] address, AccountCapsule accountCapsule) {
+    this.deposit.putAccountValue(address,accountCapsule);
   }
 
   @Override
-  // Do nothing
-  public void syncCacheFromVotesStore(byte[] address) {
+  public void putVoteValue(byte[] address, VotesCapsule votesCapsule) {
+    this.deposit.putVoteValue(address,votesCapsule);
+  }
+
+  @Override
+  public void putProposalValue(byte[] address, ProposalCapsule proposalCapsule) {
+    deposit.putProposalValue(address, proposalCapsule);
+  }
+
+  @Override
+  public void putDynamicPropertiesWithLatestProposalNum(long num) {
+    deposit.putDynamicPropertiesWithLatestProposalNum(num);
+  }
+
+  @Override
+  public long getLatestProposalNum() {
+    return deposit.getLatestProposalNum();
   }
 
   @Override
