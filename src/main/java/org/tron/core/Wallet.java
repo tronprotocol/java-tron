@@ -601,7 +601,7 @@ public class Wallet {
       resultBuilder.setCode(Result.response_code.OTHER_ERROR);
       resultBuilder.setMessage(ex.getClass() + " : " + ex.getMessage());
     }
-
+    tswBuilder.setResult(resultBuilder);
     return tswBuilder.build();
   }
 
