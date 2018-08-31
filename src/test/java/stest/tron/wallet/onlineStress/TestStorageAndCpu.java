@@ -81,7 +81,7 @@ public class TestStorageAndCpu {
       SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
       logger.info("contract name is " + smartContract.getName());*/
       try {
-        Thread.sleep(1000);
+        Thread.sleep(3000);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
