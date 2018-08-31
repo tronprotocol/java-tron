@@ -295,6 +295,7 @@ public class Runtime {
   private void create()
       throws  ContractValidateException {
     if (!deposit.getDbManager().getDynamicPropertiesStore().supportVM()) {
+      logger.error("vm work is off, need to be opened by the committee");
       throw new ContractValidateException("vm work is off, need to be opened by the committee");
     }
 
@@ -307,11 +308,14 @@ public class Runtime {
 
     long percent = contract.getNewContract().getConsumeUserResourcePercent();
     if (percent < 0 || percent > 100) {
+      logger.error("percent must be >= 0 and <= 100");
       throw new ContractValidateException("percent must be >= 0 and <= 100");
     }
 
     // insure the new contract address haven't exist
     if (deposit.getAccount(contractAddress) != null) {
+      logger.error("Trying to create a contract with existing contract address: " + Wallet
+          .encode58Check(contractAddress));
       throw new ContractValidateException(
           "Trying to create a contract with existing contract address: " + Wallet
               .encode58Check(contractAddress));
@@ -384,6 +388,7 @@ public class Runtime {
       throws  ContractValidateException {
 
     if (!deposit.getDbManager().getDynamicPropertiesStore().supportVM()) {
+      logger.error("vm work is off, need to be opened by the committee");
       throw new ContractValidateException("VM work is off, need to be opened by the committee");
     }
 
@@ -506,9 +511,17 @@ public class Runtime {
     TriggerSmartContract triggerContractFromTransaction = ContractCapsule
         .getTriggerContractFromTransaction(trx);
     if (TRX_CONTRACT_CALL_TYPE.equals(trxType)) {
-      ABI abi = deposit
-          .getContract(triggerContractFromTransaction.getContractAddress().toByteArray())
-          .getInstance().getAbi();
+
+      ContractCapsule contract = deposit
+          .getContract(triggerContractFromTransaction.getContractAddress().toByteArray());
+      if (contract == null) {
+        logger.error("contract: {} is not in contract store", Wallet
+            .encode58Check(triggerContractFromTransaction.getContractAddress().toByteArray()));
+        throw new ContractValidateException("contract: " + Wallet
+            .encode58Check(triggerContractFromTransaction.getContractAddress().toByteArray())
+            + " is not in contract store");
+      }
+      ABI abi = contract.getInstance().getAbi();
       if (Wallet.isConstant(abi, triggerContractFromTransaction)) {
         return true;
       }
