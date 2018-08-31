@@ -920,11 +920,11 @@ message TransactionSignWeight {
       NOT_ENOUGH_PERMISSION = 1; // error in
       SIGNATURE_FORMAT_ERROR = 2;
       COMPUTE_ADDRESS_ERROR = 3;
-      UNALLOWED_SIGNATURE = 4;      //The key is not in permission
+      PERMISSION_ERROR = 4;      //The key is not in permission
       OTHER_ERROR = 20;
     }
     response_code code = 1;
-    bytes message = 2;
+    string message = 2;
   }
 
   Permission permission = 1;
