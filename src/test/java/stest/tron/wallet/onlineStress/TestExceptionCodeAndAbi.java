@@ -137,9 +137,9 @@ public class TestExceptionCodeAndAbi {
     //logger.info("timeout txid: " + txid);
     Optional<TransactionInfo> infoById = null;
     //infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
-    Integer triggerNum = 24950;
+    Integer triggerNum = 28950;
     Long energy;
-    while (triggerNum < 25820) {
+    while (triggerNum < 29820) {
       txid = PublicMethed.triggerContract(contractAddress,
           "testUseCpu(uint256)", triggerNum.toString(), false,
           0, 1000000000L, testNetAccountAddress, testNetAccountKey, blockingStubFull);
