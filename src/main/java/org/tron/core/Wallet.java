@@ -478,7 +478,7 @@ public class Wallet {
   }
 
   public TransactionCapsule addSign(TransactionSign transactionSign)
-      throws PermissionException, SignatureException {
+      throws PermissionException, SignatureException, SignatureFormatException {
     TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
     Permission permission = getPermission(trx.getInstance());
     if (trx.getInstance().getSignatureCount() > 0) {
