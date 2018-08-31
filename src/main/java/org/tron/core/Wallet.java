@@ -50,6 +50,7 @@ import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionExtention.Builder;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
+import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
@@ -92,6 +93,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.PermissionException;
+import org.tron.core.exception.SignatureFormatException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
@@ -476,7 +478,7 @@ public class Wallet {
   }
 
   public TransactionCapsule addSign(TransactionSign transactionSign)
-      throws PermissionException, SignatureException {
+      throws PermissionException, SignatureException, SignatureFormatException {
     TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
     Permission permission = getPermission(trx.getInstance());
     if (trx.getInstance().getSignatureCount() > 0) {
@@ -537,12 +539,12 @@ public class Wallet {
   }
 
   public long checkWeight(Permission permission, Transaction trx, List<ByteString> approveList)
-      throws SignatureException, PermissionException {
+      throws SignatureException, PermissionException, SignatureFormatException {
     long currentWeight = 0;
     byte[] hash = Sha256Hash.hash(trx.getRawData().toByteArray());
     ByteString signature = trx.getSignature(0);
     if (signature.size() % 65 != 0) {
-      throw new SignatureException("Signature size is " + signature.size());
+      throw new SignatureFormatException("Signature size is " + signature.size());
     }
     for (int i = 0; i < signature.size(); i += 65) {
       ByteString sub = signature.substring(i, i + 65);
@@ -565,9 +567,13 @@ public class Wallet {
   public TransactionSignWeight getTransactionSignWeight(Transaction trx) {
     TransactionSignWeight.Builder tswBuilder = TransactionSignWeight.newBuilder();
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
-    Return.Builder retBuilder = Return.newBuilder();
     trxExBuilder.setTransaction(trx);
     trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(trx.getRawData().toByteArray())));
+    Return.Builder retBuilder = Return.newBuilder();
+    retBuilder.setResult(true).setCode(response_code.SUCCESS);
+    trxExBuilder.setResult(retBuilder);
+    tswBuilder.setTransaction(trxExBuilder);
+    Result.Builder resultBuilder = Result.newBuilder();
     try {
       Permission permission = getPermission(trx);
       tswBuilder.setPermission(permission);
@@ -576,20 +582,26 @@ public class Wallet {
         long currentWeight = checkWeight(permission, trx, approveList);
         tswBuilder.addAllApprovedList(approveList);
         tswBuilder.setCurrentWeight(currentWeight);
-        retBuilder.setResult(true).setCode(response_code.SUCCESS);
       }
+      if (tswBuilder.getCurrentWeight() >= permission.getThreshold()) {
+        resultBuilder.setCode(Result.response_code.ENOUGH_PERMISSION);
+      } else {
+        resultBuilder.setCode(Result.response_code.NOT_ENOUGH_PERMISSION);
+      }
+    } catch (SignatureFormatException signEx) {
+      resultBuilder.setCode(Result.response_code.SIGNATURE_FORMAT_ERROR);
+      resultBuilder.setMessage(signEx.getMessage());
     } catch (SignatureException signEx) {
-      retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
-          .setMessage(ByteString.copyFromUtf8(signEx.getMessage()));
+      resultBuilder.setCode(Result.response_code.COMPUTE_ADDRESS_ERROR);
+      resultBuilder.setMessage(signEx.getMessage());
     } catch (PermissionException permEx) {
-      retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
-          .setMessage(ByteString.copyFromUtf8(permEx.getMessage()));
+      resultBuilder.setCode(Result.response_code.PERMISSION_ERROR);
+      resultBuilder.setMessage(permEx.getMessage());
     } catch (Exception ex) {
-      retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
-          .setMessage(ByteString.copyFromUtf8(ex.getClass() + " : " + ex.getMessage()));
+      resultBuilder.setCode(Result.response_code.OTHER_ERROR);
+      resultBuilder.setMessage(ex.getClass() + " : " + ex.getMessage());
     }
-    trxExBuilder.setResult(retBuilder);
-    tswBuilder.setTransaction(trxExBuilder);
+    tswBuilder.setResult(resultBuilder);
     return tswBuilder.build();
   }
 

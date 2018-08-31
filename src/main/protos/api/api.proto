@@ -914,8 +914,22 @@ message TransactionListExtention {
 }
 
 message TransactionSignWeight {
+  message Result {
+    enum response_code {
+      ENOUGH_PERMISSION = 0;
+      NOT_ENOUGH_PERMISSION = 1; // error in
+      SIGNATURE_FORMAT_ERROR = 2;
+      COMPUTE_ADDRESS_ERROR = 3;
+      PERMISSION_ERROR = 4;      //The key is not in permission
+      OTHER_ERROR = 20;
+    }
+    response_code code = 1;
+    string message = 2;
+  }
+
   Permission permission = 1;
-  TransactionExtention transaction = 2;
+  repeated bytes approved_list = 2;
   int64 current_weight = 3;
-  repeated bytes approved_list = 4;
+  Result result = 4;
+  TransactionExtention transaction = 5;
 }
