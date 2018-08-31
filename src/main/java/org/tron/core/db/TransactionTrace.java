@@ -22,6 +22,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
@@ -106,15 +107,19 @@ public class TransactionTrace {
     runtime.go();
   }
 
-  public void finalization(Runtime runtime) {
-    pay();
+  public void finalization(Runtime runtime) throws ContractExeException {
+    try {
+      pay();
+    } catch (BalanceInsufficientException e) {
+      throw new ContractExeException(e.getMessage());
+    }
     runtime.finalization();
   }
 
   /**
    * pay actually bill(include ENERGY and storage).
    */
-  public void pay() {
+  public void pay() throws BalanceInsufficientException {
     byte[] originAccount;
     byte[] callerAccount;
     long percent = 0;
