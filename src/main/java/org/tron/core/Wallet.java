@@ -595,7 +595,7 @@ public class Wallet {
       resultBuilder.setCode(Result.response_code.COMPUTE_ADDRESS_ERROR);
       resultBuilder.setMessage(signEx.getMessage());
     } catch (PermissionException permEx) {
-      resultBuilder.setCode(Result.response_code.UNALLOWED_SIGNATURE);
+      resultBuilder.setCode(Result.response_code.PERMISSION_ERROR);
       resultBuilder.setMessage(permEx.getMessage());
     } catch (Exception ex) {
       resultBuilder.setCode(Result.response_code.OTHER_ERROR);
