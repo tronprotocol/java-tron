@@ -19,6 +19,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Vote;
 
@@ -572,5 +574,55 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .clearPermissions()
         .addAllPermissions(permissions)
         .build();
+  }
+
+  public void permissionAddKey(Key addKey, String permissionName) {
+    List<Permission> permissions = new ArrayList<>();
+    for (Permission permission : this.account.getPermissionsList()) {
+      if (permission.getName().equalsIgnoreCase(permissionName)) {
+        permissions.add(permission.toBuilder().addKeys(addKey).build());
+      } else {
+        permissions.add(permission);
+      }
+    }
+    updatePermissions(permissions);
+  }
+
+  public void permissionUpdateKey(Key updateKey, String permissionName) {
+    List<Permission> permissions = new ArrayList<>();
+    for (Permission permission : this.account.getPermissionsList()) {
+      if (permission.getName().equalsIgnoreCase(permissionName)) {
+        List<Key> keys = new ArrayList<>();
+        for (Key key : permission.getKeysList()) {
+          if (key.getAddress().endsWith(updateKey.getAddress())) {
+            keys.add(updateKey);
+          } else {
+            keys.add(key);
+          }
+        }
+        permissions.add(permission.toBuilder().clearKeys().addAllKeys(keys).build());
+      } else {
+        permissions.add(permission);
+      }
+    }
+    updatePermissions(permissions);
+  }
+
+  public void permissionDeleteKey(ByteString deleteAddress, String permissionName) {
+    List<Permission> permissions = new ArrayList<>();
+    for (Permission permission : this.account.getPermissionsList()) {
+      if (permission.getName().equalsIgnoreCase(permissionName)) {
+        List<Key> keys = new ArrayList<>();
+        for (Key key : permission.getKeysList()) {
+          if (!key.getAddress().endsWith(deleteAddress)) {
+            keys.add(key);
+          }
+        }
+        permissions.add(permission.toBuilder().clearKeys().addAllKeys(keys).build());
+      } else {
+        permissions.add(permission);
+      }
+    }
+    updatePermissions(permissions);
   }
 }

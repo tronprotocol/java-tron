@@ -235,14 +235,17 @@ message AccountPermissionUpdateContract {
 message PermissionAddKeyContract {
   bytes owner_address = 1;
   Key key = 2;
+  string permission_name = 3;
 }
 
 message PermissionUpdateKeyContract {
   bytes owner_address = 1;
   Key key = 2;
+  string permission_name = 3;
 }
 
 message PermissionDeleteKeyContract {
   bytes owner_address = 1;
   Key key = 2;
+  string permission_name = 3;
 }
