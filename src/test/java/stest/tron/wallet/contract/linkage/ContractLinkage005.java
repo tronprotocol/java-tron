@@ -75,14 +75,36 @@ public class ContractLinkage005 {
 
   @Test(enabled = true)
   public void testEnergyCostDetail() {
-    Assert.assertTrue(PublicMethed.sendcoin(linkage005Address,2000000000000L,fromAddress,
+    Assert.assertTrue(PublicMethed.sendcoin(linkage005Address,5000000000000L,fromAddress,
         testKey003,blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalance(linkage005Address,1000000L,
-        3,linkage005Key,blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage005Address,1000000L,
-        3,1,linkage005Key,blockingStubFull));
+    Integer times = 0;
+    while (!PublicMethed.freezeBalance(linkage005Address,200000000000L,
+        3,linkage005Key,blockingStubFull)) {
+      times++;
+      if (times == 3) {
+        break;
+      }
+      try {
+        Thread.sleep(500);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
+    times = 0;
+    while (!PublicMethed.freezeBalanceGetEnergy(linkage005Address,200000000000L,
+        3,1,linkage005Key,blockingStubFull)) {
+      times++;
+      if (times == 3) {
+        break;
+      }
+      try {
+        Thread.sleep(500);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
 
-    final Long maxFeeLimit = 150000000L;
+    final Long maxFeeLimit = 200000000000L;
     contractName = "EnergyCost";
     code = "6080604052600060035534801561001557600080fd5b5061027b806100256000396000f3006080604052600436106100825763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416633755cd3c81146100875780637d965688146100b1578063a05b2577146100c9578063b0d6304d146100e1578063bbe1d75b14610115578063f8a8fd6d1461012a578063fe75faab14610141575b600080fd5b34801561009357600080fd5b5061009f600435610159565b60408051918252519081900360200190f35b3480156100bd57600080fd5b5061009f600435610178565b3480156100d557600080fd5b5061009f600435610198565b3480156100ed57600080fd5b5061009f73ffffffffffffffffffffffffffffffffffffffff600435811690602435166101e2565b34801561012157600080fd5b5061009f6101ff565b34801561013657600080fd5b5061013f610205565b005b34801561014d57600080fd5b5061009f600435610218565b600080548290811061016757fe5b600091825260209091200154905081565b600080805b83811015610191576001918201910161017d565b5092915050565b600080805b838110156101915760008054600181810183559180527f290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e56301829055918201910161019d565b600260209081526000928352604080842090915290825290205481565b60015481565b600380546001019055610216610205565b565b60006102238261022e565b600181905592915050565b600061023c6002830361022e565b6102486001840361022e565b01929150505600a165627a7a72305820bc44fd5f3a0e48cc057752b52e3abf50cd7dc75b3874ea7d049893cf1a2e345f0029";
     abi = "[{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"iarray\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"a\",\"type\":\"uint256\"}],\"name\":\"testUseCpu\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"a\",\"type\":\"uint256\"}],\"name\":\"testUseStorage\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"address\"}],\"name\":\"m\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"calculatedFibNumber\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"test\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"n\",\"type\":\"uint256\"}],\"name\":\"setFibonacci\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
@@ -166,9 +188,7 @@ public class ContractLinkage005 {
     infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
     fifthForCycleCost = infoById.get().getReceipt().getEnergyUsageTotal();
 
-
-
-    /*    logger.info("Zero cost is " + zeroForCycleCost);
+    logger.info("Zero cost is " + zeroForCycleCost);
     logger.info("First cost is " + firstForCycleCost);
     logger.info("Second cost is " + secondForCycleCost);
     logger.info("Third cost is " + thirdForCycleCost);
@@ -178,7 +198,7 @@ public class ContractLinkage005 {
     logger.info(Long.toString(secondForCycleCost - firstForCycleCost));
     logger.info(Long.toString(thirdForCycleCost - secondForCycleCost));
     logger.info(Long.toString(forthForCycleCost - thirdForCycleCost));
-    logger.info(Long.toString(fifthForCycleCost - forthForCycleCost));*/
+    logger.info(Long.toString(fifthForCycleCost - forthForCycleCost));
 
     Assert.assertTrue(thirdForCycleCost - secondForCycleCost
         == secondForCycleCost - firstForCycleCost);

@@ -138,6 +138,18 @@ public class ProposalController {
           manager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(entry.getValue());
           break;
         }
+        case (11): {
+          manager.getDynamicPropertiesStore().saveEnergyFee(entry.getValue());
+          break;
+        }
+        case (12): {
+          manager.getDynamicPropertiesStore().saveExchangeCreateFee(entry.getValue());
+          break;
+        }
+        case (13): {
+          manager.getDynamicPropertiesStore().saveMaxCpuTimeOfOneTX(entry.getValue());
+          break;
+        }
         default:
           break;
       }
