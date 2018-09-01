@@ -32,9 +32,9 @@ import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
@@ -737,14 +737,19 @@ public class PrecompiledContracts {
 
       final List<Actuator> actuatorList = ActuatorFactory
           .createActuator(new TransactionCapsule(contract), getDeposit().getDbManager());
-      Optional<List<Actuator>> optionalList = Optional.ofNullable(actuatorList);
       VoteWitnessActuator voteWitnessActuator;
       try {
-        if (!optionalList.isPresent() || optionalList.get().isEmpty()){
-          throw new ContractExeException("can't initiate WithdrawBalanceActuator for precompiled vm method");
+        if (Objects.isNull(actuatorList) || actuatorList.isEmpty()){
+          throw new ContractExeException("can't initiate VoteWitnessActuator for precompiled vm method");
         }
-        else{
-          voteWitnessActuator = (VoteWitnessActuator)optionalList.get().stream().findFirst().get();
+        else {
+          Optional voteOptional = actuatorList.stream().findFirst();
+          if (voteOptional.isPresent()){
+            voteWitnessActuator = (VoteWitnessActuator) voteOptional.get();
+          }
+          else{
+            throw new ContractExeException("can't initiate VoteWitnessActuator for precompiled vm method");
+          }
         }
         voteWitnessActuator.setDeposit(getDeposit());
         voteWitnessActuator.validate();
@@ -922,15 +927,21 @@ public class PrecompiledContracts {
 
       final List<Actuator> actuatorList = ActuatorFactory
           .createActuator(trx, getDeposit().getDbManager());
-      Optional<List<Actuator>> optionalList = Optional.ofNullable(actuatorList);
       WithdrawBalanceActuator withdrawBalanceActuator;
       try {
-        if (!optionalList.isPresent() || optionalList.get().isEmpty()){
+        if (Objects.isNull(actuatorList) || actuatorList.isEmpty()){
           throw new ContractExeException("can't initiate WithdrawBalanceActuator for precompiled vm method");
         }
-        else{
-          withdrawBalanceActuator = (WithdrawBalanceActuator)optionalList.get().stream().findFirst().get();
+        else {
+          Optional withdrawOptional = actuatorList.stream().findFirst();
+          if (withdrawOptional.isPresent()) {
+            withdrawBalanceActuator = (WithdrawBalanceActuator) withdrawOptional.get();
+          } else {
+            throw new ContractExeException(
+                  "can't initiate WithdrawBalanceActuator for precompiled vm method");
+          }
         }
+
         withdrawBalanceActuator.setDeposit(getDeposit());
         withdrawBalanceActuator.validate();
         withdrawBalanceActuator.execute(getResult().getRet());
@@ -993,14 +1004,19 @@ public class PrecompiledContracts {
 
       final List<Actuator> actuatorList = ActuatorFactory
           .createActuator(trx, getDeposit().getDbManager());
-      Optional<List<Actuator>> optionalList = Optional.ofNullable(actuatorList);
       ProposalApproveActuator proposalApproveActuator;
       try {
-        if (!optionalList.isPresent() || optionalList.get().isEmpty()){
+        if (Objects.isNull(actuatorList) || actuatorList.isEmpty()){
           throw new ContractExeException("can't initiate ProposalApproveActuator for precompiled vm method");
         }
-        else{
-          proposalApproveActuator = (ProposalApproveActuator)optionalList.get().stream().findFirst().get();
+        else {
+          Optional proposalApproveOptional = actuatorList.stream().findFirst();
+          if (proposalApproveOptional.isPresent()) {
+            proposalApproveActuator = (ProposalApproveActuator) proposalApproveOptional.get();
+          } else {
+            throw new ContractExeException(
+                "can't initiate ProposalApproveActuator for precompiled vm method");
+          }
         }
         proposalApproveActuator.setDeposit(getDeposit());
         proposalApproveActuator.validate();
@@ -1072,14 +1088,19 @@ public class PrecompiledContracts {
 
       final List<Actuator> actuatorList = ActuatorFactory
           .createActuator(trx, getDeposit().getDbManager());
-      Optional<List<Actuator>> optionalList = Optional.ofNullable(actuatorList);
       ProposalCreateActuator proposalCreateActuator;
       try {
-        if (!optionalList.isPresent() || optionalList.get().isEmpty()){
+        if (Objects.isNull(actuatorList) || actuatorList.isEmpty()){
           throw new ContractExeException("can't initiate ProposalCreateActuator for precompiled vm method");
         }
-        else{
-          proposalCreateActuator = (ProposalCreateActuator)optionalList.get().stream().findFirst().get();
+        else {
+          Optional proposalCreateOptional = actuatorList.stream().findFirst();
+          if (proposalCreateOptional.isPresent()) {
+            proposalCreateActuator = (ProposalCreateActuator) proposalCreateOptional.get();
+          } else {
+            throw new ContractExeException(
+                "can't initiate ProposalCreateActuator for precompiled vm method");
+          }
         }
         proposalCreateActuator.setDeposit(getDeposit());
         proposalCreateActuator.validate();
@@ -1137,14 +1158,19 @@ public class PrecompiledContracts {
 
       final List<Actuator> actuatorList = ActuatorFactory
           .createActuator(trx, getDeposit().getDbManager());
-      Optional<List<Actuator>> optionalList = Optional.ofNullable(actuatorList);
       ProposalDeleteActuator proposalDeleteActuator;
       try {
-        if (!optionalList.isPresent() || optionalList.get().isEmpty()){
-          throw new ContractExeException("can't initiate ProposalCreateActuator for precompiled vm method");
+        if (Objects.isNull(actuatorList) || actuatorList.isEmpty()){
+          throw new ContractExeException("can't initiate ProposalDeleteActuator for precompiled vm method");
         }
-        else{
-          proposalDeleteActuator = (ProposalDeleteActuator)optionalList.get().stream().findFirst().get();
+        else {
+          Optional proposalDeleteOptional = actuatorList.stream().findFirst();
+          if (proposalDeleteOptional.isPresent()) {
+            proposalDeleteActuator = (ProposalDeleteActuator) proposalDeleteOptional.get();
+          } else {
+            throw new ContractExeException(
+                "can't initiate ProposalDeleteActuator for precompiled vm method");
+          }
         }
         proposalDeleteActuator.setDeposit(getDeposit());
         proposalDeleteActuator.validate();
