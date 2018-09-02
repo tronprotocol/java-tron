@@ -75,6 +75,9 @@ import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
+import org.tron.protos.Contract.PermissionAddKeyContract;
+import org.tron.protos.Contract.PermissionDeleteKeyContract;
+import org.tron.protos.Contract.PermissionUpdateKeyContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
@@ -1433,6 +1436,27 @@ public class RpcApiService implements Service {
     public void accountPermissionUpdate(AccountPermissionUpdateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.AccountPermissionUpdateContract,
+          responseObserver);
+    }
+
+    @Override
+    public void permissionAddKey(PermissionAddKeyContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.PermissionAddKeyContract,
+          responseObserver);
+    }
+
+    @Override
+    public void permissionUpdateKey(PermissionUpdateKeyContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.PermissionUpdateKeyContract,
+          responseObserver);
+    }
+
+    @Override
+    public void permissionDeleteKey(PermissionDeleteKeyContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.PermissionDeleteKeyContract,
           responseObserver);
     }
   }
