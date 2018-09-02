@@ -26,12 +26,12 @@ import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
 @Ignore
-public class CPUEnergyTest {
+public class EnergyWhenSendAndTransferTest {
 
   private Manager dbManager;
   private TronApplicationContext context;
   private DepositImpl deposit;
-  private String dbPath = "output_CPUEnergyTest";
+  private String dbPath = "output_EnergyWhenSendAndTransferTest";
   private String OWNER_ADDRESS;
 
 
@@ -47,6 +47,7 @@ public class CPUEnergyTest {
     deposit = DepositImpl.createRoot(dbManager);
     deposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
     deposit.addBalance(Hex.decode(OWNER_ADDRESS), 30000000000000L);
+    deposit.commit();
   }
 
   // solidity for callValueTest
@@ -84,7 +85,6 @@ public class CPUEnergyTest {
   // }
 
   @Test
-  @Ignore
   public void callValueTest()
       throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
@@ -135,9 +135,9 @@ public class CPUEnergyTest {
   //   }
   //
   //
-  //   function doSend() public { address(subContract).send(10 ether); }
+  //   function doSend() public { address(subContract).send(10000); }
   //
-  //   function doTransfer() public { address(subContract).transfer(10 ether); }
+  //   function doTransfer() public { address(subContract).transfer(10000); }
   //
   //   function getBalance() public view returns(uint256 balance){
   //     balance = address(this).balance;
@@ -151,14 +151,14 @@ public class CPUEnergyTest {
   public void sendTest()
       throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
-    long value = 10000000L;
+    long value = 1000L;
     long feeLimit = 20000000000000L; // sun
     long consumeUserResourcePercent = 100;
     TVMTestResult result = deploySendAndTransferTestContract(value, feeLimit,
         consumeUserResourcePercent);
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 52400);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 52394);
     byte[] contractAddress = result.getContractAddress();
-    Assert.assertEquals(deposit.getAccount(contractAddress).getBalance(), 10000000L);
+    Assert.assertEquals(deposit.getAccount(contractAddress).getBalance(), value);
 
     /* =================================== CALL doSend() =================================== */
     byte[] triggerData = TVMTestUtils.parseABI("doSend()", null);
@@ -166,24 +166,25 @@ public class CPUEnergyTest {
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 9325);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 7025);
     Assert.assertEquals(result.getRuntime().getResult().getException(), null);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
-    Assert.assertEquals(deposit.getAccount(contractAddress).getBalance(), 10000000L);
+    Assert.assertEquals(deposit.getAccount(contractAddress).getBalance(), value);
   }
 
   @Test
   public void transferTest()
       throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
-    long value = 10000000L;
+    long value = 1000L;
+    // long value = 10000000L;
     long feeLimit = 20000000000000L; // sun
     long consumeUserResourcePercent = 100;
     TVMTestResult result = deploySendAndTransferTestContract(value, feeLimit,
         consumeUserResourcePercent);
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 52400);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 52394);
     byte[] contractAddress = result.getContractAddress();
-    Assert.assertEquals(deposit.getAccount(contractAddress).getBalance(), 10000000L);
+    Assert.assertEquals(deposit.getAccount(contractAddress).getBalance(), value);
 
     /* =================================== CALL doSend() =================================== */
     byte[] triggerData = TVMTestUtils.parseABI("doTransfer()", null);
@@ -191,10 +192,10 @@ public class CPUEnergyTest {
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 9330);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 7030);
     Assert.assertEquals(result.getRuntime().getResult().getException(), null);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), true);
-    Assert.assertEquals(deposit.getAccount(contractAddress).getBalance(), 10000000L);
+    Assert.assertEquals(deposit.getAccount(contractAddress).getBalance(), value);
   }
 
   public TVMTestResult deployCallValueTestContract(long value, long feeLimit,
@@ -219,7 +220,7 @@ public class CPUEnergyTest {
     String contractName = "TestForSendAndTransfer";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"getBalance\",\"outputs\":[{\"name\":\"balance\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"doTransfer\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"doSend\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"constructor\"}]";
-    String code = "608060405261000c61004e565b604051809103906000f080158015610028573d6000803e3d6000fd5b5060008054600160a060020a031916600160a060020a039290921691909117905561005d565b604051606f806101d183390190565b6101658061006c6000396000f3006080604052600436106100565763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166312065fe0811461005b57806333182e8f14610082578063e3d237f914610099575b600080fd5b34801561006757600080fd5b506100706100ae565b60408051918252519081900360200190f35b34801561008e57600080fd5b506100976100b3565b005b3480156100a557600080fd5b506100976100ff565b303190565b6000805460405173ffffffffffffffffffffffffffffffffffffffff9091169190678ac7230489e800009082818181858883f193505050501580156100fc573d6000803e3d6000fd5b50565b6000805460405173ffffffffffffffffffffffffffffffffffffffff9091169190678ac7230489e800009082818181858883f150505050505600a165627a7a723058201c038c3f247a923f3cb38ac9d3e0f2804c483ae86e67e3578d8839b39a71d2f900296080604052605e8060116000396000f3006080604052600160008181526020527fada5013122d395ba3c54772283fb069b10426056ef8ca54750cb9bb552a59e7d550000a165627a7a723058206850a348611e816bc7d1acd245e900cdde8ce98252ccc01d424d78bfd12eb6ed0029";
+    String code = "608060405261000c61004e565b604051809103906000f080158015610028573d6000803e3d6000fd5b5060008054600160a060020a031916600160a060020a039290921691909117905561005d565b604051606f806101c583390190565b6101598061006c6000396000f3006080604052600436106100565763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166312065fe0811461005b57806333182e8f14610082578063e3d237f914610099575b600080fd5b34801561006757600080fd5b506100706100ae565b60408051918252519081900360200190f35b34801561008e57600080fd5b506100976100b3565b005b3480156100a557600080fd5b506100976100f9565b303190565b6000805460405173ffffffffffffffffffffffffffffffffffffffff90911691906127109082818181858883f193505050501580156100f6573d6000803e3d6000fd5b50565b6000805460405173ffffffffffffffffffffffffffffffffffffffff90911691906127109082818181858883f150505050505600a165627a7a72305820677efa58ed7b277b589fe6626cb77f930caeb0f75c3ab638bfe07292db961a8200296080604052605e8060116000396000f3006080604052600160008181526020527fada5013122d395ba3c54772283fb069b10426056ef8ca54750cb9bb552a59e7d550000a165627a7a7230582029b27c10c1568d590fa66bc0b7d42537a314c78d028f59a188fa411f7fc15c4f0029";
     String libraryAddressPair = null;
 
     return TVMTestUtils

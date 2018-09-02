@@ -35,6 +35,7 @@ import org.tron.core.exception.ReceiptException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
+import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.TronException;
@@ -97,6 +98,8 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("DupTransaction exception," + e.getMessage());
     } catch (TooBigTransactionException e) {
       throw new BadBlockException("TooBigTransaction exception," + e.getMessage());
+    } catch (TooBigTransactionResultException e) {
+      throw new BadBlockException("TooBigTransaction exception," + e.getMessage());
     } catch (TransactionExpirationException e) {
       throw new BadBlockException("Expiration exception," + e.getMessage());
     } catch (ReceiptException e) {
@@ -116,6 +119,9 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
   public boolean handleTransaction(TransactionCapsule trx) throws BadTransactionException {
+    if (dbManager.getDynamicPropertiesStore().supportVM()) {
+      trx.resetResult();
+    }
     logger.debug("handle transaction");
     if (dbManager.getTransactionIdCache().getIfPresent(trx.getTransactionId()) != null) {
       logger.warn("This transaction has been processed");
@@ -164,6 +170,9 @@ public class NodeDelegateImpl implements NodeDelegate {
       return false;
     } catch (UnsupportVMException e) {
       logger.warn(e.getMessage());
+      return false;
+    } catch (TooBigTransactionResultException e) {
+      logger.info("too big transactionresult" + e.getMessage());
       return false;
     }
 

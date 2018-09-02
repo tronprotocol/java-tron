@@ -287,10 +287,19 @@ public class ContractScenario011 {
     //Assert.assertTrue(infoById.get().getReceipt().getStorageDelta() > 50);
 
     //Start the game.
-    txid = PublicMethed.triggerContract(kittyCoreContractAddress, "unpause()", "", false, 0,
-        10000000L, deployAddress, deployKey, blockingStubFull);
-    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertTrue(infoById.get().getResultValue() == 0);
+    Integer result = 1;
+    Integer times = 0;
+    while (result == 1) {
+      txid = PublicMethed.triggerContract(kittyCoreContractAddress, "unpause()", "", false, 0,
+          10000000L, deployAddress, deployKey, blockingStubFull);
+      infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+      result = infoById.get().getResultValue();
+      if (times++ == 3) {
+        break;
+      }
+    }
+
+    Assert.assertTrue(result == 0);
     logger.info("start the game " + txid);
 
     //Create one gen0 cat.

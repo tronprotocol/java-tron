@@ -500,6 +500,14 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return this.transaction.getSerializedSize();
   }
 
+  public long getResultSerializedSize() {
+    long size = 0;
+    for (Result result : this.transaction.getRetList()) {
+      size += result.getSerializedSize();
+    }
+    return size;
+  }
+
   @Override
   public Transaction getInstance() {
     return this.transaction;
