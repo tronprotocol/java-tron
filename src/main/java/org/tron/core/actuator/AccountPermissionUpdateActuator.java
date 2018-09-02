@@ -87,7 +87,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
       if (!name.equalsIgnoreCase("owner") && !name.equalsIgnoreCase("active")) {
         throw new ContractValidateException("permission's name should be owner or active");
       }
-      String parent = permission.getParent().toStringUtf8();
+      String parent = permission.getParent();
       if (!parent.isEmpty() && !parent.equalsIgnoreCase("owner")) {
         throw new ContractValidateException("permission's parent should be owner");
       }
