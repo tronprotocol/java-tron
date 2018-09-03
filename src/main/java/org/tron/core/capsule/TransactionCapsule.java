@@ -53,6 +53,7 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.ExchangeCreateContract;
@@ -61,6 +62,9 @@ import org.tron.protos.Contract.ExchangeTransactionContract;
 import org.tron.protos.Contract.ExchangeWithdrawContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
+import org.tron.protos.Contract.PermissionAddKeyContract;
+import org.tron.protos.Contract.PermissionDeleteKeyContract;
+import org.tron.protos.Contract.PermissionUpdateKeyContract;
 import org.tron.protos.Contract.ProposalApproveContract;
 import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Contract.ProposalDeleteContract;
@@ -280,7 +284,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     if (signCount > 0) {
       ByteString sign = this.transaction.getSignature(signCount - 1);
       byte[] signa = ByteUtil.merge(sign.toByteArray(), signature.toByteArray());
-      this.transaction = this.transaction.toBuilder().setSignature(signCount - 1, ByteString.copyFrom(signa)).build();//add sign at last default.
+      this.transaction = this.transaction.toBuilder()
+          .setSignature(signCount - 1, ByteString.copyFrom(signa))
+          .build();//add sign at last default.
     } else {
       ByteString sig = ByteString.copyFrom(signature.toByteArray());
       this.transaction = this.transaction.toBuilder().addSignature(sig).build();
@@ -380,6 +386,18 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           break;
         case ExchangeTransactionContract:
           owner = contractParameter.unpack(ExchangeTransactionContract.class).getOwnerAddress();
+          break;
+        case AccountPermissionUpdateContract:
+          owner = contractParameter.unpack(AccountPermissionUpdateContract.class).getOwnerAddress();
+          break;
+        case PermissionAddKeyContract:
+          owner = contractParameter.unpack(PermissionAddKeyContract.class).getOwnerAddress();
+          break;
+        case PermissionUpdateKeyContract:
+          owner = contractParameter.unpack(PermissionUpdateKeyContract.class).getOwnerAddress();
+          break;
+        case PermissionDeleteKeyContract:
+          owner = contractParameter.unpack(PermissionDeleteKeyContract.class).getOwnerAddress();
           break;
         // todo add other contract
         default:
