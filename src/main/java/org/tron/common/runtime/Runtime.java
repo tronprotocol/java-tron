@@ -448,6 +448,9 @@ public class Runtime {
 
   public void go() {
     try {
+      if (null != trx.getRet(0) && contractResult.OUT_OF_TIME == trx.getRet(0).getContractRet()) {
+        throw Program.Exception.notEnoughTime("Haven Time Out");
+      }
       if (vm != null) {
         vm.play(program);
 
