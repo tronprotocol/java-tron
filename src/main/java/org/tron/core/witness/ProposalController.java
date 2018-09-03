@@ -137,7 +137,9 @@ public class ProposalController {
           break;
         }
         case (10): {
-          manager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(entry.getValue());
+          if (manager.getDynamicPropertiesStore().getRemoveThePowerOfTheGr() == 0) {
+            manager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(entry.getValue());
+          }
           break;
         }
         case (11): {
