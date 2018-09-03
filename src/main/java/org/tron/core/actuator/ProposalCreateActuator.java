@@ -153,6 +153,10 @@ public class ProposalCreateActuator extends AbstractActuator {
       case (12):
         break;
       case (13):
+        if (entry.getValue() < 10 || entry.getValue() > 100) {
+          throw new ContractValidateException(
+              "Bad chain parameter value,valid range is [10,100]");
+        }
         break;
       default:
         break;

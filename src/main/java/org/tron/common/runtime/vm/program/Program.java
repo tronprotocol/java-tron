@@ -776,6 +776,9 @@ public class Program {
     if (Args.getInstance().isDebug()) {
       return;
     }
+    if (Args.getInstance().isSolidityNode()) {
+      return;
+    }
     long vmNowInUs = System.nanoTime() / 1000;
     if (vmNowInUs > getVmShouldEndInUs()) {
       throw Exception.notEnoughTime(opName);
