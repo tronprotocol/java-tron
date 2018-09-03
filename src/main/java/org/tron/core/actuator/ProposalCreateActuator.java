@@ -1,5 +1,9 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
+import static org.tron.core.actuator.ActuatorConstant.WITNESS_EXCEPTION_STR;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -27,23 +31,25 @@ public class ProposalCreateActuator extends AbstractActuator {
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
-    Manager contextDbManager = Objects.isNull(deposit)? dbManager : deposit.getDbManager();
     long fee = calcFee();
     try {
       final ProposalCreateContract proposalCreateContract = this.contract
           .unpack(ProposalCreateContract.class);
-      long id = contextDbManager.getDynamicPropertiesStore().getLatestProposalNum() + 1;
+      long id = (Objects.isNull(getDeposit())) ? dbManager.getDynamicPropertiesStore().getLatestProposalNum() + 1 :
+          getDeposit().getLatestProposalNum() + 1;
       ProposalCapsule proposalCapsule =
           new ProposalCapsule(proposalCreateContract.getOwnerAddress(), id);
 
       proposalCapsule.setParameters(proposalCreateContract.getParametersMap());
 
-      long now = contextDbManager.getHeadBlockTimeStamp();
-      long maintenanceTimeInterval =
-          contextDbManager.getDynamicPropertiesStore().getMaintenanceTimeInterval();
+      long now = dbManager.getHeadBlockTimeStamp();
+      long maintenanceTimeInterval = (Objects.isNull(getDeposit())) ?
+          dbManager.getDynamicPropertiesStore().getMaintenanceTimeInterval() :
+          getDeposit().getMaintenanceTimeInterval();
       proposalCapsule.setCreateTime(now);
 
-      long currentMaintenanceTime = contextDbManager.getDynamicPropertiesStore().getNextMaintenanceTime();
+      long currentMaintenanceTime = (Objects.isNull(getDeposit())) ? dbManager.getDynamicPropertiesStore().getNextMaintenanceTime():
+          getDeposit().getNextMaintenanceTime();
       long now3 = now + Args.getInstance().getProposalExpireTime();
       long round = (now3 - currentMaintenanceTime) / maintenanceTimeInterval;
       long expirationTime =
@@ -71,11 +77,10 @@ public class ProposalCreateActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    Manager contextDbManager = Objects.isNull(deposit)? dbManager : deposit.getDbManager();
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (contextDbManager == null) {
+    if (dbManager == null && (deposit == null || deposit.getDbManager() == null)) {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(ProposalCreateContract.class)) {
@@ -97,12 +102,23 @@ public class ProposalCreateActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
 
-    if (!contextDbManager.getAccountStore().has(ownerAddress)) {
-      throw new ContractValidateException("account[" + readableOwnerAddress + "] not exists");
+    if(!Objects.isNull(deposit)) {
+      if (Objects.isNull(deposit.getAccount(ownerAddress))) {
+        throw new ContractValidateException(
+            ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
+      }
+    }
+    else if (!dbManager.getAccountStore().has(ownerAddress)) {
+      throw new ContractValidateException(ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
 
-    if (!contextDbManager.getWitnessStore().has(ownerAddress)) {
-      throw new ContractValidateException("Witness[" + readableOwnerAddress + "] not exists");
+    if( !Objects.isNull(getDeposit())) {
+      if (Objects.isNull(getDeposit().getWitness(ownerAddress))) {
+        throw new ContractValidateException(
+            WITNESS_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
+      }
+    }else if (!dbManager.getWitnessStore().has(ownerAddress)) {
+      throw new ContractValidateException(WITNESS_EXCEPTION_STR+ readableOwnerAddress + NOT_EXIST_STR);
     }
 
     for (Map.Entry<Long, Long> entry : contract.getParametersMap().entrySet()) {

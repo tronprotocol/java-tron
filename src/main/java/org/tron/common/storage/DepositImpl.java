@@ -17,6 +17,7 @@ import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.VotesCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.AssetIssueStore;
 import org.tron.core.db.BlockStore;
@@ -30,15 +31,60 @@ import org.tron.core.db.TransactionStore;
 import org.tron.core.db.VotesStore;
 import org.tron.core.db.WitnessStore;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 
 public class DepositImpl implements Deposit {
 
   private static final byte[] LATEST_PROPOSAL_NUM = "LATEST_PROPOSAL_NUM".getBytes();
+  private static final byte[] WITNESS_ALLOWANCE_FROZEN_TIME = "WITNESS_ALLOWANCE_FROZEN_TIME"
+      .getBytes();
+  private static final byte[] MAINTENANCE_TIME_INTERVAL = "MAINTENANCE_TIME_INTERVAL".getBytes();
+  private static final byte[] NEXT_MAINTENANCE_TIME = "NEXT_MAINTENANCE_TIME".getBytes();
 
   private Manager dbManager;
   private Deposit parent = null;
+
+  public HashMap<Key, Value> getAccountCache() {
+    return accountCache;
+  }
+
+  public HashMap<Key, Value> getTransactionCache() {
+    return transactionCache;
+  }
+
+  public HashMap<Key, Value> getBlockCache() {
+    return blockCache;
+  }
+
+  public HashMap<Key, Value> getWitnessCache() {
+    return witnessCache;
+  }
+
+  public HashMap<Key, Value> getCodeCache() {
+    return codeCache;
+  }
+
+  public HashMap<Key, Value> getContractCache() {
+    return contractCache;
+  }
+
+  public HashMap<Key, Value> getVotesCache() {
+    return votesCache;
+  }
+
+  public HashMap<Key, Value> getProposalCache() {
+    return proposalCache;
+  }
+
+  public HashMap<Key, Value> getDynamicPropertiesCache() {
+    return dynamicPropertiesCache;
+  }
+
+  public HashMap<Key, Storage> getStorageCache() {
+    return storageCache;
+  }
 
   private HashMap<Key, Value> accountCache = new HashMap<>();
   private HashMap<Key, Value> transactionCache = new HashMap<>();
@@ -155,6 +201,73 @@ public class DepositImpl implements Deposit {
     }
     return accountCapsule;
   }
+
+  @Override
+  public WitnessCapsule getWitness(byte[] address) {
+    Key key = new Key(address);
+    if (witnessCache.containsKey(key)) {
+      return witnessCache.get(key).getWitness();
+    }
+
+    WitnessCapsule witnessCapsule;
+    if (parent != null) {
+      witnessCapsule = parent.getWitness(address);
+    } else {
+      witnessCapsule = getWitnessStore().get(address);
+    }
+
+    if (witnessCapsule != null) {
+      witnessCache.put(key, Value.create(witnessCapsule.getData()));
+    }
+    return witnessCapsule;
+  }
+
+
+  @Override
+  public synchronized VotesCapsule getVotesCapsule(byte[] address) {
+    Key key = new Key(address);
+    if (votesCache.containsKey(key)) {
+      return votesCache.get(key).getVotes();
+    }
+
+    VotesCapsule votesCapsule;
+    if (parent != null) {
+      votesCapsule = parent.getVotesCapsule(address);
+    } else {
+      votesCapsule = getVotesStore().get(address);
+    }
+
+    if (votesCapsule != null) {
+      votesCache.put(key, Value.create(votesCapsule.getData()));
+    }
+    return votesCapsule;
+  }
+
+
+  @Override
+  public synchronized ProposalCapsule getProposalCapsule(byte[] id) {
+    Key key = new Key(id);
+    if (proposalCache.containsKey(key)) {
+      return proposalCache.get(key).getProposal();
+    }
+
+    ProposalCapsule proposalCapsule;
+    if (parent != null) {
+      proposalCapsule = parent.getProposalCapsule(id);
+    } else {
+      try {
+        proposalCapsule = getProposalStore().get(id);
+      } catch (ItemNotFoundException e) {
+        proposalCapsule = null;
+      }
+    }
+
+    if (proposalCapsule != null) {
+      accountCache.put(key, Value.create(proposalCapsule.getData()));
+    }
+    return proposalCapsule;
+  }
+
   // just for depositRoot
   @Override
   public void deleteContract(byte[] address) {
@@ -425,7 +538,55 @@ public class DepositImpl implements Deposit {
 
   @Override
   public long getLatestProposalNum(){
-    return Longs.fromByteArray(dynamicPropertiesCache.get(new Key(LATEST_PROPOSAL_NUM)).getAny());
+    return Longs.fromByteArray(getDynamic(LATEST_PROPOSAL_NUM).getData());
+  }
+
+  @Override
+  public long getWitnessAllowanceFrozenTime() {
+    byte[] frozenTime = getDynamic(WITNESS_ALLOWANCE_FROZEN_TIME).getData();
+    if (frozenTime.length >= 8) {
+      return Longs.fromByteArray(getDynamic(WITNESS_ALLOWANCE_FROZEN_TIME).getData());
+    }
+
+    byte[] result = new byte[8];
+    System.arraycopy(frozenTime,0,result,8-frozenTime.length, frozenTime.length);
+    return Longs.fromByteArray(result);
+
+  }
+
+  @Override
+  public long getMaintenanceTimeInterval() {
+    return Longs.fromByteArray(getDynamic(MAINTENANCE_TIME_INTERVAL).getData());
+  }
+
+  @Override
+  public long getNextMaintenanceTime() {
+    return Longs.fromByteArray(getDynamic(NEXT_MAINTENANCE_TIME).getData());
+  }
+
+  public BytesCapsule getDynamic(byte[] word){
+    Key key = Key.create(word);
+    if (dynamicPropertiesCache.containsKey(key)) {
+      return dynamicPropertiesCache.get(key).getDynamicProperties();
+    }
+
+    BytesCapsule bytesCapsule;
+    if (parent != null) {
+      bytesCapsule = parent.getDynamic(word);
+    } else {
+      try {
+        bytesCapsule = getDynamicPropertiesStore().get(word);
+      } catch (BadItemException e) {
+        bytesCapsule = null;
+      } catch (ItemNotFoundException e) {
+        bytesCapsule = null;
+      }
+    }
+
+    if (bytesCapsule != null) {
+      dynamicPropertiesCache.put(key, Value.create(bytesCapsule.getData()));
+    }
+    return bytesCapsule;
   }
 
   private void commitAccountCache(Deposit deposit) {

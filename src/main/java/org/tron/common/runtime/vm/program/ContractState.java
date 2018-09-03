@@ -26,10 +26,12 @@ import org.tron.common.storage.Key;
 import org.tron.common.storage.Value;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.VotesCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
@@ -69,6 +71,26 @@ public class ContractState implements Deposit, ProgramListenerAware {
   @Override
   public AccountCapsule getAccount(byte[] addr) {
     return deposit.getAccount(addr);
+  }
+
+  @Override
+  public WitnessCapsule getWitness(byte[] address) {
+    return deposit.getWitness(address);
+  }
+
+  @Override
+  public VotesCapsule getVotesCapsule(byte[] address) {
+    return deposit.getVotesCapsule(address);
+  }
+
+  @Override
+  public ProposalCapsule getProposalCapsule(byte[] id) {
+    return getProposalCapsule(id);
+  }
+
+  @Override
+  public BytesCapsule getDynamic(byte[] bytesKey) {
+    return deposit.getDynamic(bytesKey);
   }
 
   @Override
@@ -238,6 +260,21 @@ public class ContractState implements Deposit, ProgramListenerAware {
   @Override
   public long getLatestProposalNum() {
     return deposit.getLatestProposalNum();
+  }
+
+  @Override
+  public long getWitnessAllowanceFrozenTime() {
+    return  deposit.getWitnessAllowanceFrozenTime();
+  }
+
+  @Override
+  public long getMaintenanceTimeInterval() {
+    return deposit.getMaintenanceTimeInterval();
+  }
+
+  @Override
+  public long getNextMaintenanceTime() {
+    return deposit.getNextMaintenanceTime();
   }
 
   @Override
