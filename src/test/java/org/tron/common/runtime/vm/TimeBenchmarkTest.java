@@ -111,7 +111,7 @@ public class TimeBenchmarkTest {
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 124);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 110);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), true);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() == null);
