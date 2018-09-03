@@ -293,7 +293,7 @@ public class Runtime {
   /*
    **/
   private void create()
-      throws  ContractValidateException {
+      throws ContractValidateException {
     if (!deposit.getDbManager().getDynamicPropertiesStore().supportVM()) {
       logger.error("vm work is off, need to be opened by the committee");
       throw new ContractValidateException("vm work is off, need to be opened by the committee");
@@ -385,7 +385,7 @@ public class Runtime {
    */
 
   private void call()
-      throws  ContractValidateException {
+      throws ContractValidateException {
 
     if (!deposit.getDbManager().getDynamicPropertiesStore().supportVM()) {
       logger.error("vm work is off, need to be opened by the committee");
@@ -452,6 +452,7 @@ public class Runtime {
       TransactionCapsule trxCap = new TransactionCapsule(trx);
       if (null != trxCap.getContractRet() && contractResult.OUT_OF_TIME
           .equals(trxCap.getContractRet())) {
+        result = program.getResult();
         program.spendAllEnergy();
         runtimeError = "Haven Time Out";
         result.setException(Program.Exception.notEnoughTime("Haven Time Out"));
@@ -495,6 +496,7 @@ public class Runtime {
       runtimeError = result.getException().getMessage();
       logger.error("runtime error is :{}", result.getException().getMessage());
     } catch (Throwable e) {
+      program.spendAllEnergy();
       if (Objects.isNull(result.getException())) {
         logger.error(e.getMessage(), e);
         result.setException(new RuntimeException("Unknown Throwable"));
