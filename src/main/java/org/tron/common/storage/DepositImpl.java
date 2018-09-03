@@ -46,46 +46,6 @@ public class DepositImpl implements Deposit {
   private Manager dbManager;
   private Deposit parent = null;
 
-  public HashMap<Key, Value> getAccountCache() {
-    return accountCache;
-  }
-
-  public HashMap<Key, Value> getTransactionCache() {
-    return transactionCache;
-  }
-
-  public HashMap<Key, Value> getBlockCache() {
-    return blockCache;
-  }
-
-  public HashMap<Key, Value> getWitnessCache() {
-    return witnessCache;
-  }
-
-  public HashMap<Key, Value> getCodeCache() {
-    return codeCache;
-  }
-
-  public HashMap<Key, Value> getContractCache() {
-    return contractCache;
-  }
-
-  public HashMap<Key, Value> getVotesCache() {
-    return votesCache;
-  }
-
-  public HashMap<Key, Value> getProposalCache() {
-    return proposalCache;
-  }
-
-  public HashMap<Key, Value> getDynamicPropertiesCache() {
-    return dynamicPropertiesCache;
-  }
-
-  public HashMap<Key, Storage> getStorageCache() {
-    return storageCache;
-  }
-
   private HashMap<Key, Value> accountCache = new HashMap<>();
   private HashMap<Key, Value> transactionCache = new HashMap<>();
   private HashMap<Key, Value> blockCache = new HashMap<>();
@@ -263,7 +223,7 @@ public class DepositImpl implements Deposit {
     }
 
     if (proposalCapsule != null) {
-      accountCache.put(key, Value.create(proposalCapsule.getData()));
+      proposalCache.put(key, Value.create(proposalCapsule.getData()));
     }
     return proposalCapsule;
   }
