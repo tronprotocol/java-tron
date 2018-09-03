@@ -355,9 +355,9 @@ public class Runtime {
               blockCap.getInstance(), deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
       this.vm = new VM(config);
       this.program = new Program(ops, programInvoke, internalTransaction, config, this.blockCap);
-      Program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
-      Program.resetNonce();
-      Program.setRootCallConstant(isCallConstant());
+      this.program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
+      this.program.resetNonce();
+      this.program.setRootCallConstant(isCallConstant());
     } catch (Exception e) {
       logger.error(e.getMessage());
       throw new ContractValidateException(e.getMessage());
@@ -432,9 +432,9 @@ public class Runtime {
       InternalTransaction internalTransaction = new InternalTransaction(trx);
       this.program = new Program(null, code, programInvoke, internalTransaction, config,
           this.blockCap);
-      Program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
-      Program.resetNonce();
-      Program.setRootCallConstant(isCallConstant());
+      this.program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
+      this.program.resetNonce();
+      this.program.setRootCallConstant(isCallConstant());
     }
 
     program.getResult().setContractAddress(contractAddress);
