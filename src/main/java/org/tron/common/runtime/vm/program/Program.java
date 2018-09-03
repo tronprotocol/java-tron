@@ -1271,7 +1271,7 @@ public class Program {
     }
 
     // Repository track = getContractState().startTracking();
-    Deposit deposit = getContractState();
+    Deposit deposit = getContractState().newDepositChild();
 
     byte[] senderAddress = convertToTronAddress(this.getOwnerAddress().getLast20Bytes());
     byte[] codeAddress = convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
@@ -1312,7 +1312,7 @@ public class Program {
       contract.setCallerAddress(convertToTronAddress(msg.getType().callIsDelegate() ?
           getCallerAddress().getLast20Bytes() : getOwnerAddress().getLast20Bytes()));
       // this is the depositImpl, not contractState as above
-      contract.setDeposit(this.invoke.getDeposit());
+      contract.setDeposit(deposit);
       contract.setResult(this.result);
       contract.setRootCallConstant(Program.getRootCallConstant().booleanValue());
       Pair<Boolean, byte[]> out = contract.execute(data);
