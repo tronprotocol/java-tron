@@ -48,7 +48,7 @@ public class Value {
      */
     private Value(Value value) {
         if (value.getAny() != null && value.getAny().length > 0) {
-            this.any = new byte[any.length];
+            this.any = new byte[value.any.length];
             System.arraycopy(value.getAny(), 0, this.any, 0, value.getAny().length);
             this.type = value.getType().clone();
         }
