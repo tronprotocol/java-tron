@@ -2,6 +2,7 @@ package org.tron.common.runtime;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
+import static org.apache.commons.lang3.ArrayUtils.getLength;
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.utils.MUtil.transfer;
@@ -26,6 +27,7 @@ import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.vm.EnergyCost;
 import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.runtime.vm.VM;
 import org.tron.common.runtime.vm.program.InternalTransaction;
@@ -471,6 +473,21 @@ public class Runtime {
             runtimeError = "constant cannot set call value.";
           }
           return;
+        }
+
+        if (TRX_CONTRACT_CREATION_TYPE == trxType && !result.isRevert()) {
+          byte[] code = program.getResult().getHReturn();
+          long saveCodeEnergy = getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
+          long afterSpend = program.getEnergyLimitLeft().longValue() - saveCodeEnergy;
+          if (afterSpend < 0) {
+            result.setException(
+                Program.Exception
+                    .notEnoughSpendEnergy("No energy to save just created contract code",
+                        saveCodeEnergy, program.getEnergyLimitLeft().longValue()));
+          } else {
+            result.spendEnergy(saveCodeEnergy);
+            // have saveCode in create()
+          }
         }
 
         if (result.getException() != null || result.isRevert()) {

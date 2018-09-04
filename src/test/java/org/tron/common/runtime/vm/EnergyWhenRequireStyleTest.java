@@ -95,7 +95,7 @@ public class EnergyWhenRequireStyleTest {
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
             deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 75);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 26275);
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
@@ -140,7 +140,7 @@ public class EnergyWhenRequireStyleTest {
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
             deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 75);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 26275);
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
@@ -190,7 +190,7 @@ public class EnergyWhenRequireStyleTest {
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
             deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 105);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 57905);
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
@@ -249,7 +249,7 @@ public class EnergyWhenRequireStyleTest {
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
             deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 141);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 97341);
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
@@ -258,7 +258,7 @@ public class EnergyWhenRequireStyleTest {
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 37525);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 64125);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), true);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() == null);
@@ -301,7 +301,7 @@ public class EnergyWhenRequireStyleTest {
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
             deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 87);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 42687);
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
@@ -371,14 +371,14 @@ public class EnergyWhenRequireStyleTest {
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
             deposit, null);
     byte[] contractAddress = result.getContractAddress();
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 141);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 100341);
     /* ====================================================================== */
     byte[] triggerData = TVMTestUtils.parseABI("testFallback()", null);
     result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 10, feeLimit, deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 39433);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 51833);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), true);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() == null);
@@ -427,7 +427,7 @@ public class EnergyWhenRequireStyleTest {
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
             deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 81);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 36481);
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */

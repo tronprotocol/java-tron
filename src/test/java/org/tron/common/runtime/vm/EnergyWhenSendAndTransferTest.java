@@ -93,7 +93,7 @@ public class EnergyWhenSendAndTransferTest {
     long consumeUserResourcePercent = 100;
     TVMTestResult result = deployCallValueTestContract(value, feeLimit,
         consumeUserResourcePercent);
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 52439);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 174639);
     byte[] contractAddress = result.getContractAddress();
 
     /* =================================== CALL simpleCall() =================================== */
@@ -156,7 +156,7 @@ public class EnergyWhenSendAndTransferTest {
     long consumeUserResourcePercent = 100;
     TVMTestResult result = deploySendAndTransferTestContract(value, feeLimit,
         consumeUserResourcePercent);
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 52394);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 140194);
     byte[] contractAddress = result.getContractAddress();
     Assert.assertEquals(deposit.getAccount(contractAddress).getBalance(), value);
 
@@ -182,7 +182,7 @@ public class EnergyWhenSendAndTransferTest {
     long consumeUserResourcePercent = 100;
     TVMTestResult result = deploySendAndTransferTestContract(value, feeLimit,
         consumeUserResourcePercent);
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 52394);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 140194);
     byte[] contractAddress = result.getContractAddress();
     Assert.assertEquals(deposit.getAccount(contractAddress).getBalance(), value);
 
