@@ -82,7 +82,7 @@ public class ChargeTest {
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
             deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 93);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 51293);
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
@@ -132,7 +132,7 @@ public class ChargeTest {
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
             deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 111);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 68111);
     byte[] contractAddress = result.getContractAddress();
 
     /* ======================================CALL testNegative() with 0 callvalue ================================ */
@@ -201,7 +201,7 @@ public class ChargeTest {
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
             deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 117);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 74517);
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
@@ -278,7 +278,7 @@ public class ChargeTest {
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
             deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 52650);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 286450);
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
@@ -314,7 +314,7 @@ public class ChargeTest {
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
             deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 239);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 201839);
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
@@ -325,7 +325,7 @@ public class ChargeTest {
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, value, feeLimit, deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 179313959);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 239432959);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertEquals(result.getRuntime().getResult().getException(), null);
 

@@ -83,7 +83,7 @@ public class EnergyWhenTimeoutStyleTest {
     TVMTestResult result = deployEndlessLoopContract(value, feeLimit,
         consumeUserResourcePercent);
     Assert.assertEquals(result.getReceipt().getEnergyUsage(), 0);
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 5107);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 55107);
     Assert.assertEquals(result.getReceipt().getOriginEnergyUsage(), 0);
 
     byte[] contractAddress = result.getContractAddress();
