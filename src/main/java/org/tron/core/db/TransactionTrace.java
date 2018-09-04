@@ -110,7 +110,7 @@ public class TransactionTrace {
     /**  VM execute  **/
     runtime.execute();
     runtime.go();
-    runtime.finalization();
+    
   }
 
   public void finalization(Runtime runtime) throws ContractExeException {
