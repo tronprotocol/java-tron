@@ -109,14 +109,12 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Exchange;
-import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.SmartContract.ABI.Entry.StateMutabilityType;
 import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.Protocol.TransactionSign;
@@ -427,7 +425,7 @@ public class Wallet {
     } catch (ValidateSignatureException e) {
       logger.info(e.getMessage());
       return builder.setResult(false).setCode(response_code.SIGERROR)
-          .setMessage(ByteString.copyFromUtf8("validate signature error"))
+          .setMessage(ByteString.copyFromUtf8("validate signature error " + e.getMessage()))
           .build();
     } catch (ContractValidateException e) {
       logger.info(e.getMessage());
@@ -481,89 +479,10 @@ public class Wallet {
 
   public TransactionCapsule addSign(TransactionSign transactionSign)
       throws PermissionException, SignatureException, SignatureFormatException {
-    TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
-    Permission permission = getPermission(trx.getInstance());
-    if (trx.getInstance().getSignatureCount() > 0) {
-      checkWeight(permission, trx.getInstance(), null);
-    }
     byte[] privateKey = transactionSign.getPrivateKey().toByteArray();
-    ECKey ecKey = ECKey.fromPrivate(privateKey);
-    byte[] address = ecKey.getAddress();
-    long weight = getWeight(permission, address);
-    if (weight == 0) {
-      throw new PermissionException(
-          ByteArray.toHexString(privateKey) + " 's add is " + Wallet
-              .encode58Check(address) + " but it is not contained of permission.");
-    }
-    trx.addSign(privateKey);
+    TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
+    trx.addSign(privateKey, dbManager.getAccountStore());
     return trx;
-  }
-
-  public String getPermissionName(Contract contract) {
-    return "active";
-  }
-
-  public Permission getDefaultPermission(ByteString owner, String name) {
-    Permission.Builder builder = Permission.newBuilder();
-    Key.Builder key = Key.newBuilder();
-    key.setAddress(owner).setWeight(1);
-    builder.addKeys(key);
-    builder.setThreshold(1);
-    builder.setName(name);
-    return builder.build();
-  }
-
-  public Permission getPermission(Transaction trx) throws PermissionException {
-    Contract contract = trx.getRawData().getContract(0);
-    byte[] owner = TransactionCapsule.getOwner(contract);
-    Account account = dbManager.getAccountStore().get(owner).getInstance();
-    String permissionName = getPermissionName(contract);
-    List<Permission> list = account.getPermissionsList();
-    if (list.isEmpty()) {
-      return getDefaultPermission(account.getAddress(), permissionName);
-    }
-    for (Permission permission : list) {
-      if (permissionName.equals(permission.getName())) {
-        return permission;
-      }
-    }
-    throw new PermissionException("Permission of " + permissionName + " is null.");
-  }
-
-  public long getWeight(Permission permission, byte[] address) {
-    List<Key> list = permission.getKeysList();
-    for (Key key : list) {
-      if (key.getAddress().endsWith(ByteString.copyFrom(address))) {
-        return key.getWeight();
-      }
-    }
-    return 0;
-  }
-
-  public long checkWeight(Permission permission, Transaction trx, List<ByteString> approveList)
-      throws SignatureException, PermissionException, SignatureFormatException {
-    long currentWeight = 0;
-    byte[] hash = Sha256Hash.hash(trx.getRawData().toByteArray());
-    ByteString signature = trx.getSignature(0);
-    if (signature.size() % 65 != 0) {
-      throw new SignatureFormatException("Signature size is " + signature.size());
-    }
-    for (int i = 0; i < signature.size(); i += 65) {
-      ByteString sub = signature.substring(i, i + 65);
-      String base64 = TransactionCapsule.getBase64FromByteString(sub);
-      byte[] address = ECKey.signatureToAddress(hash, base64);
-      long weight = getWeight(permission, address);
-      if (weight == 0) {
-        throw new PermissionException(
-            ByteArray.toHexString(sub.toByteArray()) + " is signed by " + Wallet
-                .encode58Check(address) + " but it is not contained of permission.");
-      }
-      if (approveList != null) {
-        approveList.add(ByteString.copyFrom(address)); //out put approve list.
-      }
-      currentWeight += weight;
-    }
-    return currentWeight;
   }
 
   public TransactionSignWeight getTransactionSignWeight(Transaction trx) {
@@ -577,11 +496,13 @@ public class Wallet {
     tswBuilder.setTransaction(trxExBuilder);
     Result.Builder resultBuilder = Result.newBuilder();
     try {
-      Permission permission = getPermission(trx);
+      Permission permission = TransactionCapsule
+          .getPermission(dbManager.getAccountStore(), trx.getRawData().getContract(0));
       tswBuilder.setPermission(permission);
       if (trx.getSignatureCount() > 0) {
         List<ByteString> approveList = new ArrayList<ByteString>();
-        long currentWeight = checkWeight(permission, trx, approveList);
+        long currentWeight = TransactionCapsule.checkWeight(permission, trx.getSignature(0),
+            Sha256Hash.hash(trx.getRawData().toByteArray()), approveList);
         tswBuilder.addAllApprovedList(approveList);
         tswBuilder.setCurrentWeight(currentWeight);
       }
@@ -1080,9 +1001,9 @@ public class Wallet {
     return ret;
   }
 
-  private static boolean isConstant(SmartContract.ABI abi, byte[] selector)  {
+  private static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
 
-    if (selector == null || selector.length != 4 ||  abi.getEntrysList().size() == 0) {
+    if (selector == null || selector.length != 4 || abi.getEntrysList().size() == 0) {
       return false;
     }
 
