@@ -92,33 +92,33 @@ public class Program {
 
   private BlockCapsule blockCap;
 
-  public static byte[] getRootTransactionId() {
+  public  byte[] getRootTransactionId() {
     return rootTransactionId.clone();
   }
 
-  public static void setRootTransactionId(byte[] rootTransactionId) {
-    Program.rootTransactionId = rootTransactionId.clone();
+  public void setRootTransactionId(byte[] rootTransactionId) {
+    rootTransactionId = rootTransactionId.clone();
   }
 
-  public static long getNonce() {
+  public long getNonce() {
     return nonce;
   }
 
-  public static void setNonce(long nonceValue) {
+  public void setNonce(long nonceValue) {
     nonce = nonceValue;
   }
 
-  public static Boolean getRootCallConstant() {
+  public  Boolean getRootCallConstant() {
     return isRootCallConstant;
   }
 
-  public static void setRootCallConstant(Boolean rootCallConstant) {
+  public  void setRootCallConstant(Boolean rootCallConstant) {
     isRootCallConstant = rootCallConstant;
   }
 
-  private static long nonce = 0;
-  private static byte[] rootTransactionId = null;
-  private static Boolean isRootCallConstant = null;
+  private long nonce = 0;
+  private byte[] rootTransactionId = null;
+  private Boolean isRootCallConstant = null;
 
   private InternalTransaction transaction;
 
@@ -466,7 +466,7 @@ public class Program {
 
 //    byte[] privKey = Sha256Hash.hash(getOwnerAddress().getData());
 //    ECKey ecKey = ECKey.fromPrivate(privKey);
-    this.increaseNonce();
+    increaseNonce();
     //this.transactionHash = Sha256Hash.hash(transactionHash);
     byte[] newAddress = Wallet
         .generateContractAddress(rootTransactionId, nonce);
@@ -536,6 +536,8 @@ public class Program {
       vm.play(program);
       result = program.getResult();
       getTrace().merge(program.getTrace());
+      // always commit nonce
+      this.nonce = program.nonce;
 
     }
 
@@ -690,6 +692,8 @@ public class Program {
 
       getTrace().merge(program.getTrace());
       getResult().merge(result);
+      // always commit nonce
+      this.nonce = program.nonce;
 
       if (result.getException() != null || result.isRevert()) {
         logger.debug("contract run halted by Exception: contract: [{}], exception: [{}]",
@@ -750,11 +754,11 @@ public class Program {
     }
   }
 
-  public static void increaseNonce() {
+  public  void increaseNonce() {
     nonce++;
   }
 
-  public static void resetNonce() {
+  public  void resetNonce() {
     nonce = 0;
   }
 
@@ -1273,7 +1277,7 @@ public class Program {
     }
 
     // Repository track = getContractState().startTracking();
-    Deposit deposit = getContractState();
+    Deposit deposit = getContractState().newDepositChild();
 
     byte[] senderAddress = convertToTronAddress(this.getOwnerAddress().getLast20Bytes());
     byte[] codeAddress = convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
@@ -1314,9 +1318,9 @@ public class Program {
       contract.setCallerAddress(convertToTronAddress(msg.getType().callIsDelegate() ?
           getCallerAddress().getLast20Bytes() : getOwnerAddress().getLast20Bytes()));
       // this is the depositImpl, not contractState as above
-      contract.setDeposit(this.invoke.getDeposit());
+      contract.setDeposit(deposit);
       contract.setResult(this.result);
-      contract.setRootCallConstant(Program.getRootCallConstant().booleanValue());
+      contract.setRootCallConstant(getRootCallConstant().booleanValue());
       Pair<Boolean, byte[]> out = contract.execute(data);
 
       if (out.getLeft()) { // success

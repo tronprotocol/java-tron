@@ -25,6 +25,7 @@ import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
+@Ignore
 public class ChargeTest {
 
   private Manager dbManager;

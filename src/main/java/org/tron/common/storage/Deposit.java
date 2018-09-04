@@ -4,8 +4,12 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.Storage;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.VotesCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol;
 
@@ -18,6 +22,14 @@ public interface Deposit {
   AccountCapsule createAccount(byte[] address, String accountName, Protocol.AccountType type);
 
   AccountCapsule getAccount(byte[] address);
+
+  WitnessCapsule getWitness(byte[] address);
+
+  VotesCapsule getVotesCapsule(byte[] address);
+
+  ProposalCapsule getProposalCapsule(byte[] id);
+
+  BytesCapsule getDynamic(byte[] bytesKey);
 
   void deleteContract(byte[] address);
 
@@ -66,9 +78,25 @@ public interface Deposit {
 
   void putVotes(Key key, Value value);
 
-  void syncCacheFromAccountStore(byte[] address);
+  void putProposal(Key key, Value value);
 
-  void syncCacheFromVotesStore(byte[] address);
+  void putDynamicProperties(Key key, Value value);
+
+  void putAccountValue(byte[] address, AccountCapsule accountCapsule);
+
+  void putVoteValue(byte[] address, VotesCapsule votesCapsule);
+
+  void putProposalValue(byte[] address, ProposalCapsule proposalCapsule);
+
+  void putDynamicPropertiesWithLatestProposalNum(long num);
+
+  long getLatestProposalNum();
+
+  long getWitnessAllowanceFrozenTime();
+
+  long getMaintenanceTimeInterval();
+
+  long getNextMaintenanceTime();
 
   TransactionCapsule getTransaction(byte[] trxHash);
 

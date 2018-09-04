@@ -34,6 +34,8 @@ import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
@@ -53,6 +55,11 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
+import org.tron.core.actuator.ProposalApproveActuator;
+import org.tron.core.actuator.ProposalCreateActuator;
+import org.tron.core.actuator.ProposalDeleteActuator;
+import org.tron.core.actuator.VoteWitnessActuator;
+import org.tron.core.actuator.WithdrawBalanceActuator;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -90,8 +97,8 @@ public class PrecompiledContracts {
   private static final ProposalDeleteNative proposalDelete = new ProposalDeleteNative();
   private static final ConvertFromTronBytesAddressNative convertFromTronBytesAddress = new ConvertFromTronBytesAddressNative();
   private static final ConvertFromTronBase58AddressNative convertFromTronBase58Address = new ConvertFromTronBase58AddressNative();
-  private static final TransferAssetNative transferAsset = new TransferAssetNative();
-  private static final GetTransferAssetNative getTransferAssetAmount = new GetTransferAssetNative();
+//  private static final TransferAssetNative transferAsset = new TransferAssetNative();
+  private static final GetTransferAssetNative getTransferAssetAmount =  new GetTransferAssetNative();
 
   private static final ECKey addressCheckECKey = new ECKey();
   private static final String addressCheckECKeyAddress = Wallet
@@ -132,8 +139,8 @@ public class PrecompiledContracts {
       "0000000000000000000000000000000000000000000000000000000000010008");
   private static final DataWord convertFromTronBase58AddressAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010009");
-  private static final DataWord transferAssetAddr = new DataWord(
-      "000000000000000000000000000000000000000000000000000000000001000a");
+//  private static final DataWord transferAssetAddr = new DataWord(
+//      "000000000000000000000000000000000000000000000000000000000001000a");
   private static final DataWord getTransferAssetAmountAddr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000001000b");
 
@@ -181,9 +188,9 @@ public class PrecompiledContracts {
     if (address.equals(convertFromTronBase58AddressAddr)) {
       return convertFromTronBase58Address;
     }
-    if (address.equals(transferAssetAddr)) {
-      return transferAsset;
-    }
+//    if (address.equals(transferAssetAddr)) {
+//      return transferAsset;
+//    }
     if (address.equals(getTransferAssetAmountAddr)) {
       return getTransferAssetAmount;
     }
@@ -730,12 +737,23 @@ public class PrecompiledContracts {
 
       final List<Actuator> actuatorList = ActuatorFactory
           .createActuator(new TransactionCapsule(contract), getDeposit().getDbManager());
+      VoteWitnessActuator voteWitnessActuator;
       try {
-        actuatorList.get(0).validate();
-        actuatorList.get(0).execute(getResult().getRet());
-        getDeposit()
-            .syncCacheFromAccountStore(ByteString.copyFrom(getCallerAddress()).toByteArray());
-        getDeposit().syncCacheFromVotesStore(ByteString.copyFrom(getCallerAddress()).toByteArray());
+        if (Objects.isNull(actuatorList) || actuatorList.isEmpty()){
+          throw new ContractExeException("can't initiate VoteWitnessActuator for precompiled vm method");
+        }
+        else {
+          Optional voteOptional = actuatorList.stream().findFirst();
+          if (voteOptional.isPresent()){
+            voteWitnessActuator = (VoteWitnessActuator) voteOptional.get();
+          }
+          else{
+            throw new ContractExeException("can't initiate VoteWitnessActuator for precompiled vm method");
+          }
+        }
+        voteWitnessActuator.setDeposit(getDeposit());
+        voteWitnessActuator.validate();
+        voteWitnessActuator.execute(getResult().getRet());
       } catch (ContractExeException e) {
         logger.debug("ContractExeException when calling voteWitness in vm");
         logger.debug("ContractExeException: {}", e.getMessage());
@@ -909,11 +927,24 @@ public class PrecompiledContracts {
 
       final List<Actuator> actuatorList = ActuatorFactory
           .createActuator(trx, getDeposit().getDbManager());
+      WithdrawBalanceActuator withdrawBalanceActuator;
       try {
-        actuatorList.get(0).validate();
-        actuatorList.get(0).execute(getResult().getRet());
-        getDeposit()
-            .syncCacheFromAccountStore(ByteString.copyFrom(getCallerAddress()).toByteArray());
+        if (Objects.isNull(actuatorList) || actuatorList.isEmpty()){
+          throw new ContractExeException("can't initiate WithdrawBalanceActuator for precompiled vm method");
+        }
+        else {
+          Optional withdrawOptional = actuatorList.stream().findFirst();
+          if (withdrawOptional.isPresent()) {
+            withdrawBalanceActuator = (WithdrawBalanceActuator) withdrawOptional.get();
+          } else {
+            throw new ContractExeException(
+                  "can't initiate WithdrawBalanceActuator for precompiled vm method");
+          }
+        }
+
+        withdrawBalanceActuator.setDeposit(getDeposit());
+        withdrawBalanceActuator.validate();
+        withdrawBalanceActuator.execute(getResult().getRet());
       } catch (ContractExeException e) {
         logger.debug("ContractExeException when calling withdrawBalanceNative in vm");
         logger.debug("ContractExeException: {}", e.getMessage());
@@ -973,11 +1004,23 @@ public class PrecompiledContracts {
 
       final List<Actuator> actuatorList = ActuatorFactory
           .createActuator(trx, getDeposit().getDbManager());
+      ProposalApproveActuator proposalApproveActuator;
       try {
-        actuatorList.get(0).validate();
-        actuatorList.get(0).execute(getResult().getRet());
-        getDeposit()
-            .syncCacheFromAccountStore(ByteString.copyFrom(getCallerAddress()).toByteArray());
+        if (Objects.isNull(actuatorList) || actuatorList.isEmpty()){
+          throw new ContractExeException("can't initiate ProposalApproveActuator for precompiled vm method");
+        }
+        else {
+          Optional proposalApproveOptional = actuatorList.stream().findFirst();
+          if (proposalApproveOptional.isPresent()) {
+            proposalApproveActuator = (ProposalApproveActuator) proposalApproveOptional.get();
+          } else {
+            throw new ContractExeException(
+                "can't initiate ProposalApproveActuator for precompiled vm method");
+          }
+        }
+        proposalApproveActuator.setDeposit(getDeposit());
+        proposalApproveActuator.validate();
+        proposalApproveActuator.execute(getResult().getRet());
       } catch (ContractExeException e) {
         logger.debug("ContractExeException when calling proposalApproveNative in vm");
         logger.debug("ContractExeException: {}", e.getMessage());
@@ -1045,10 +1088,24 @@ public class PrecompiledContracts {
 
       final List<Actuator> actuatorList = ActuatorFactory
           .createActuator(trx, getDeposit().getDbManager());
+      ProposalCreateActuator proposalCreateActuator;
       try {
-        actuatorList.get(0).validate();
-        actuatorList.get(0).execute(getResult().getRet());
-        id = getDeposit().getDbManager().getDynamicPropertiesStore().getLatestProposalNum();
+        if (Objects.isNull(actuatorList) || actuatorList.isEmpty()){
+          throw new ContractExeException("can't initiate ProposalCreateActuator for precompiled vm method");
+        }
+        else {
+          Optional proposalCreateOptional = actuatorList.stream().findFirst();
+          if (proposalCreateOptional.isPresent()) {
+            proposalCreateActuator = (ProposalCreateActuator) proposalCreateOptional.get();
+          } else {
+            throw new ContractExeException(
+                "can't initiate ProposalCreateActuator for precompiled vm method");
+          }
+        }
+        proposalCreateActuator.setDeposit(getDeposit());
+        proposalCreateActuator.validate();
+        proposalCreateActuator.execute(getResult().getRet());
+        id = getDeposit().getLatestProposalNum();
       } catch (ContractExeException e) {
         logger.debug("ContractExeException when calling proposalCreateNative in vm");
         logger.debug("ContractExeException: {}", e.getMessage());
@@ -1101,9 +1158,23 @@ public class PrecompiledContracts {
 
       final List<Actuator> actuatorList = ActuatorFactory
           .createActuator(trx, getDeposit().getDbManager());
+      ProposalDeleteActuator proposalDeleteActuator;
       try {
-        actuatorList.get(0).validate();
-        actuatorList.get(0).execute(getResult().getRet());
+        if (Objects.isNull(actuatorList) || actuatorList.isEmpty()){
+          throw new ContractExeException("can't initiate ProposalDeleteActuator for precompiled vm method");
+        }
+        else {
+          Optional proposalDeleteOptional = actuatorList.stream().findFirst();
+          if (proposalDeleteOptional.isPresent()) {
+            proposalDeleteActuator = (ProposalDeleteActuator) proposalDeleteOptional.get();
+          } else {
+            throw new ContractExeException(
+                "can't initiate ProposalDeleteActuator for precompiled vm method");
+          }
+        }
+        proposalDeleteActuator.setDeposit(getDeposit());
+        proposalDeleteActuator.validate();
+        proposalDeleteActuator.execute(getResult().getRet());
       } catch (ContractExeException e) {
         logger.debug("ContractExeException when calling proposalDeleteContract in vm");
         logger.debug("ContractExeException: {}", e.getMessage());
@@ -1195,56 +1266,55 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (isRootCallConstant()) {
-        return Pair.of(true, new DataWord(0).getData());
-      }
-
-      if (data == null || (data.length <= DataWord.DATAWORD_UNIT_SIZE * 2
-          || data.length > DataWord.DATAWORD_UNIT_SIZE * 3)) {
-        return Pair.of(false, new DataWord(0).getData());
-      }
-
-      byte[] toAddress = new byte[32];
-      System.arraycopy(data, 0, toAddress, 0, 32);
-      byte[] amount = new byte[8];
-      System.arraycopy(data, 32 + 16 + 8, amount, 0, 8);
-      // we already have a restrict for token name length, no more than 32 bytes. don't need to check again
-      byte[] name = new byte[32];
-      System.arraycopy(data, 64, name, 0, data.length - 64);
-      int length = name.length;
-      while (length > 0 && name[length - 1] == 0) {
-        length--;
-      }
-      name = ByteArray.subArray(name, 0, length);
-      Contract.TransferAssetContract.Builder builder = Contract.TransferAssetContract
-          .newBuilder();
-      builder.setOwnerAddress(ByteString.copyFrom(getCallerAddress()));
-      builder.setToAddress(
-          ByteString.copyFrom(convertToTronAddress(new DataWord(toAddress).getLast20Bytes())));
-      builder.setAmount(Longs.fromByteArray(amount));
-      builder.setAssetName(ByteString.copyFrom(name));
-
-      TransferAssetContract contract = builder.build();
-
-      TransactionCapsule trx = new TransactionCapsule(contract,
-          ContractType.TransferAssetContract);
-
-      final List<Actuator> actuatorList = ActuatorFactory
-          .createActuator(trx, getDeposit().getDbManager());
-      try {
-        actuatorList.get(0).validate();
-        actuatorList.get(0).execute(getResult().getRet());
-      } catch (ContractExeException e) {
-        logger.debug("ContractExeException when calling transferAssetContract in vm");
-        logger.debug("ContractExeException: {}", e.getMessage());
-        this.getResult().setException(new Program.Exception().contractExecuteException(e));
-        return Pair.of(false, new DataWord(0).getData());
-      } catch (ContractValidateException e) {
-        logger.debug("ContractValidateException when calling transferAssetContract in vm");
-        logger.debug("ContractValidateException: {}", e.getMessage());
-        this.getResult().setException(new Program.Exception().contractValidateException(e));
-        return Pair.of(false, new DataWord(0).getData());
-      }
+//      if (isRootCallConstant()){
+//        return Pair.of(true, new DataWord(0).getData());
+//      }
+//
+//      if (data == null || (data.length <= DataWord.DATAWORD_UNIT_SIZE * 2 || data.length > DataWord.DATAWORD_UNIT_SIZE * 3)) {
+//        return Pair.of(false, new DataWord(0).getData());
+//      }
+//
+//      byte[] toAddress = new byte[32];
+//      System.arraycopy(data, 0, toAddress, 0, 32);
+//      byte[] amount = new byte[8];
+//      System.arraycopy(data, 32 + 16 + 8, amount, 0, 8);
+//      // we already have a restrict for token name length, no more than 32 bytes. don't need to check again
+//      byte[] name = new byte[32];
+//      System.arraycopy(data, 64, name, 0, data.length-64);
+//      int length =name.length;
+//      while(length>0 && name[length -1] ==0){
+//        length--;
+//      }
+//      name = ByteArray.subArray(name,0,length);
+//      Contract.TransferAssetContract.Builder builder = Contract.TransferAssetContract
+//          .newBuilder();
+//      builder.setOwnerAddress(ByteString.copyFrom(getCallerAddress()));
+//      builder.setToAddress(ByteString.copyFrom(convertToTronAddress(new DataWord(toAddress).getLast20Bytes())));
+//      builder.setAmount(Longs.fromByteArray(amount));
+//      builder.setAssetName(ByteString.copyFrom(name));
+//
+//
+//      TransferAssetContract contract = builder.build();
+//
+//      TransactionCapsule trx = new TransactionCapsule(contract,
+//          ContractType.TransferAssetContract);
+//
+//      final List<Actuator> actuatorList = ActuatorFactory
+//          .createActuator(trx, getDeposit().getDbManager());
+//      try {
+//        actuatorList.get(0).validate();
+//        actuatorList.get(0).execute(getResult().getRet());
+//      } catch (ContractExeException e) {
+//        logger.debug("ContractExeException when calling transferAssetContract in vm");
+//        logger.debug("ContractExeException: {}", e.getMessage());
+//        this.getResult().setException(new Program.Exception().contractExecuteException(e));
+//        return Pair.of(false, new DataWord(0).getData());
+//      } catch (ContractValidateException e) {
+//        logger.debug("ContractValidateException when calling transferAssetContract in vm");
+//        logger.debug("ContractValidateException: {}", e.getMessage());
+//        this.getResult().setException(new Program.Exception().contractValidateException(e));
+//        return Pair.of(false, new DataWord(0).getData());
+//      }
       return Pair.of(true, new DataWord(1).getData());
     }
   }
@@ -1282,8 +1352,8 @@ public class PrecompiledContracts {
       }
       name = ByteArray.subArray(name, 0, length);
 
-      long assetBalance = this.getDeposit().getDbManager().getAccountStore().
-          get(convertToTronAddress(new DataWord(targetAddress).getLast20Bytes())).
+      long assetBalance = this.getDeposit().
+          getAccount(convertToTronAddress(new DataWord(targetAddress).getLast20Bytes())).
           getAssetMap().get(ByteArray.toStr(name));
 
       return Pair.of(true, new DataWord(Longs.toByteArray(assetBalance)).getData());
