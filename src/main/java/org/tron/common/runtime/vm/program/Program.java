@@ -46,6 +46,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.vm.EnergyCost;
 import org.tron.common.runtime.vm.MessageCall;
 import org.tron.common.runtime.vm.OpCode;
 import org.tron.common.runtime.vm.PrecompiledContracts;
@@ -541,20 +542,18 @@ public class Program {
     // 4. CREATE THE CONTRACT OUT OF RETURN
     byte[] code = result.getHReturn();
 
-    //long storageCost = getLength(code) * getBlockchainConfig().getenergyCost().getCREATE_DATA();
-    // todo: delete this energy, because this is not relative to the cpu time, but need add to storage cost
-    // long storageCost = getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
-    // // long afterSpend = programInvoke.getDroplimit().longValue() - storageCost - result.getDropUsed();
-    // if (getLength(code) > DefaultConfig.getMaxCodeLength()) {
-    //   result.setException(Exception
-    //       .notEnoughSpendingEnergy("Contract size too large: " + getLength(result.getHReturn()),
-    //           storageCost, this));
-    // } else if (!result.isRevert()) {
-    //   result.spendDrop(storageCost);
-    //   deposit.saveCode(newAddress, code);
-    // }
+    long saveCodeEnergy = getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
+
+    long afterSpend = programInvoke.getEnergyLimit() - result.getEnergyUsed() - saveCodeEnergy;
     if (!result.isRevert()) {
-      deposit.saveCode(newAddress, code);
+      if (afterSpend < 0) {
+        result.setException(
+            Program.Exception.notEnoughSpendEnergy("No energy to save just created contract code",
+                saveCodeEnergy, programInvoke.getEnergyLimit() - result.getEnergyUsed()));
+      } else {
+        result.spendEnergy(saveCodeEnergy);
+        deposit.saveCode(newAddress, code);
+      }
     }
 
     getResult().merge(result);
@@ -1461,6 +1460,13 @@ public class Program {
           "Not enough energy for '%s' operation executing: opEnergy[%d], programEnergy[%d];", op,
           opEnergy,
           programEnergy);
+    }
+
+    public static OutOfEnergyException notEnoughSpendEnergy(String hint, long needEnergy,
+        long leftEnergy) {
+      return new OutOfEnergyException(
+          "Not enough energy for '%s' executing: needEnergy[%d], leftEnergy[%d];", hint, needEnergy,
+          leftEnergy);
     }
 
     public static OutOfEnergyException notEnoughOpEnergy(OpCode op, DataWord opEnergy,
