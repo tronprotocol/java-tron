@@ -5,6 +5,7 @@ import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_PRECOMPILED_TYPE;
 
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.InternalTransaction;
@@ -32,6 +33,7 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
+@Slf4j(topic = "TransactionTrace")
 public class TransactionTrace {
 
   private TransactionCapsule trx;
@@ -91,6 +93,9 @@ public class TransactionTrace {
 
   //set bill
   public void setBill(long energyUsage) {
+    if (energyUsage < 0) {
+      energyUsage = 0L;
+    }
     receipt.setEnergyUsageTotal(energyUsage);
   }
 
@@ -105,6 +110,7 @@ public class TransactionTrace {
     /**  VM execute  **/
     runtime.execute();
     runtime.go();
+    
   }
 
   public void finalization(Runtime runtime) throws ContractExeException {
@@ -163,6 +169,8 @@ public class TransactionTrace {
       throw new ReceiptCheckErrException("null resultCode");
     }
     if (!trx.getContractRet().equals(receipt.getResult())) {
+      logger.info("this tx resultCode in received block: {}", trx.getContractRet());
+      logger.info("this tx resultCode in self: {}", receipt.getResult());
       throw new ReceiptCheckErrException("Different resultCode");
     }
   }

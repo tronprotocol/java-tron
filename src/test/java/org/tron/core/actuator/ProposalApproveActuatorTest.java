@@ -290,7 +290,7 @@ public class ProposalApproveActuatorTest {
       fail("account[+OWNER_ADDRESS_NOACCOUNT+] not exists");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("account[" + OWNER_ADDRESS_NOACCOUNT + "] not exists",
+      Assert.assertEquals("Account[" + OWNER_ADDRESS_NOACCOUNT + "] not exists",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -385,7 +385,7 @@ public class ProposalApproveActuatorTest {
           + "] before");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("witness [" + readableOwnerAddress + "]has approved "
+      Assert.assertEquals("Witness[" + readableOwnerAddress + "]has approved "
               + "proposal[" + id + "] before",
           e.getMessage());
     } catch (ContractExeException e) {
@@ -483,7 +483,7 @@ public class ProposalApproveActuatorTest {
       fail("witness [" + readableOwnerAddress + "]has not approved proposal[" + id + "] before");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("witness [" + readableOwnerAddress + "]has not approved "
+      Assert.assertEquals("Witness[" + readableOwnerAddress + "]has not approved "
               + "proposal[" + id + "] before",
           e.getMessage());
     } catch (ContractExeException e) {

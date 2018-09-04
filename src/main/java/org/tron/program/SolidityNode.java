@@ -23,11 +23,9 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
-import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
-import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.ReceiptException;
 import org.tron.core.exception.TaposException;
@@ -35,7 +33,6 @@ import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.TransactionTraceException;
-import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.UnsupportVMException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
@@ -107,7 +104,8 @@ public class SolidityNode {
         Block block = databaseGrpcClient.getBlock(lastSolidityBlockNum + 1);
         try {
           BlockCapsule blockCapsule = new BlockCapsule(block);
-          dbManager.pushBlock(blockCapsule);
+          dbManager.pushVerifiedBlock(blockCapsule);
+          //dbManager.pushBlock(blockCapsule);
           for (TransactionCapsule trx : blockCapsule.getTransactions()) {
             TransactionInfoCapsule ret;
             try {
@@ -130,7 +128,7 @@ public class SolidityNode {
           throw new BadBlockException("validate signature exception");
         } catch (ContractValidateException e) {
           throw new BadBlockException("ContractValidate exception");
-        } catch (ContractExeException | UnLinkedBlockException e) {
+        } catch (ContractExeException e) {
           throw new BadBlockException("Contract Execute exception");
         } catch (TaposException e) {
           throw new BadBlockException("tapos exception");
@@ -142,12 +140,12 @@ public class SolidityNode {
           throw new BadBlockException("too big exception result");
         } catch (TransactionExpirationException e) {
           throw new BadBlockException("expiration exception");
-        } catch (BadNumberBlockException e) {
-          throw new BadBlockException("bad number exception");
+//        } catch (BadNumberBlockException e) {
+//          throw new BadBlockException("bad number exception");
         } catch (ReceiptException e) {
           throw new BadBlockException("Receipt exception");
-        } catch (NonCommonBlockException e) {
-          throw new BadBlockException("non common exception");
+//        } catch (NonCommonBlockException e) {
+//          throw new BadBlockException("non common exception");
         } catch (TransactionTraceException e) {
           throw new BadBlockException("TransactionTrace Exception");
         } catch (ReceiptCheckErrException e) {
@@ -170,7 +168,7 @@ public class SolidityNode {
         syncSolidityBlock();
         shutdownGrpcClient();
       } catch (Throwable t) {
-        logger.error("Error in sync solidity block " + t.getMessage(), t);
+        logger.error("Error in sync solidity block " + t.getMessage());
       }
     }, 5000, 5000, TimeUnit.MILLISECONDS);
     //new Thread(() -> syncLoop(cfgArgs), logger.getName()).start();

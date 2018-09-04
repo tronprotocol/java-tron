@@ -97,6 +97,8 @@ public class TVMTestUtils {
     //exec
     trace.exec(runtime);
 
+    runtime.finalization();
+
     return runtime;
   }
 
@@ -138,6 +140,8 @@ public class TVMTestUtils {
     trace.init();
     //exec
     trace.exec(runtime);
+
+    runtime.finalization();
 
     return new TVMTestResult(runtime, trace.getReceipt(), null);
   }

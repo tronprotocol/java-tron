@@ -4,7 +4,6 @@ import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
@@ -25,7 +24,6 @@ import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
-@Ignore
 public class EnergyWhenSendAndTransferTest {
 
   private Manager dbManager;
@@ -93,7 +91,7 @@ public class EnergyWhenSendAndTransferTest {
     long consumeUserResourcePercent = 100;
     TVMTestResult result = deployCallValueTestContract(value, feeLimit,
         consumeUserResourcePercent);
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 52439);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 174639);
     byte[] contractAddress = result.getContractAddress();
 
     /* =================================== CALL simpleCall() =================================== */
@@ -156,7 +154,7 @@ public class EnergyWhenSendAndTransferTest {
     long consumeUserResourcePercent = 100;
     TVMTestResult result = deploySendAndTransferTestContract(value, feeLimit,
         consumeUserResourcePercent);
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 52394);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 140194);
     byte[] contractAddress = result.getContractAddress();
     Assert.assertEquals(deposit.getAccount(contractAddress).getBalance(), value);
 
@@ -182,7 +180,7 @@ public class EnergyWhenSendAndTransferTest {
     long consumeUserResourcePercent = 100;
     TVMTestResult result = deploySendAndTransferTestContract(value, feeLimit,
         consumeUserResourcePercent);
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 52394);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 140194);
     byte[] contractAddress = result.getContractAddress();
     Assert.assertEquals(deposit.getAccount(contractAddress).getBalance(), value);
 
