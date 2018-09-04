@@ -85,7 +85,7 @@ public class ContractState implements Deposit, ProgramListenerAware {
 
   @Override
   public ProposalCapsule getProposalCapsule(byte[] id) {
-    return getProposalCapsule(id);
+    return deposit.getProposalCapsule(id);
   }
 
   @Override
