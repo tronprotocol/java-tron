@@ -880,7 +880,7 @@ public class Manager {
           applyBlock(newBlock);
           tmpSession.commit();
         } catch (Throwable throwable) {
-          logger.error(throwable.getMessage(), throwable);
+          logger.error(throwable.getMessage());
           khaosDb.removeBlk(block.getBlockId());
           throw throwable;
         }
