@@ -95,7 +95,7 @@ public class Runtime {
   /**
    * For blockCap's trx run
    */
-  public Runtime(TransactionTrace trace, BlockCapsule block, Deposit deosit,
+  public Runtime(TransactionTrace trace, BlockCapsule block, Deposit deposit,
       ProgramInvokeFactory programInvokeFactory) {
     this.trace = trace;
     this.trx = trace.getTrx().getInstance();
@@ -107,7 +107,7 @@ public class Runtime {
       this.blockCap = new BlockCapsule(Block.newBuilder().build());
       this.executorType = ET_PRE_TYPE;
     }
-    this.deposit = deosit;
+    this.deposit = deposit;
     this.programInvokeFactory = programInvokeFactory;
     this.energyProcessor = new EnergyProcessor(deposit.getDbManager());
     this.storageMarket = new StorageMarket(deposit.getDbManager());
@@ -355,9 +355,9 @@ public class Runtime {
               blockCap.getInstance(), deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
       this.vm = new VM(config);
       this.program = new Program(ops, programInvoke, internalTransaction, config, this.blockCap);
-      Program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
-      Program.resetNonce();
-      Program.setRootCallConstant(isCallConstant());
+      this.program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
+      this.program.resetNonce();
+      this.program.setRootCallConstant(isCallConstant());
     } catch (Exception e) {
       logger.error(e.getMessage());
       throw new ContractValidateException(e.getMessage());
@@ -432,9 +432,9 @@ public class Runtime {
       InternalTransaction internalTransaction = new InternalTransaction(trx);
       this.program = new Program(null, code, programInvoke, internalTransaction, config,
           this.blockCap);
-      Program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
-      Program.resetNonce();
-      Program.setRootCallConstant(isCallConstant());
+      this.program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
+      this.program.resetNonce();
+      this.program.setRootCallConstant(isCallConstant());
     }
 
     program.getResult().setContractAddress(contractAddress);

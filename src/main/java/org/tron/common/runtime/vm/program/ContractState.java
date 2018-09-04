@@ -26,8 +26,12 @@ import org.tron.common.storage.Key;
 import org.tron.common.storage.Value;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.VotesCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
@@ -67,6 +71,26 @@ public class ContractState implements Deposit, ProgramListenerAware {
   @Override
   public AccountCapsule getAccount(byte[] addr) {
     return deposit.getAccount(addr);
+  }
+
+  @Override
+  public WitnessCapsule getWitness(byte[] address) {
+    return deposit.getWitness(address);
+  }
+
+  @Override
+  public VotesCapsule getVotesCapsule(byte[] address) {
+    return deposit.getVotesCapsule(address);
+  }
+
+  @Override
+  public ProposalCapsule getProposalCapsule(byte[] id) {
+    return getProposalCapsule(id);
+  }
+
+  @Override
+  public BytesCapsule getDynamic(byte[] bytesKey) {
+    return deposit.getDynamic(bytesKey);
   }
 
   @Override
@@ -194,6 +218,16 @@ public class ContractState implements Deposit, ProgramListenerAware {
   }
 
   @Override
+  public void putProposal(Key key, Value value) {
+    deposit.putProposal(key, value);
+  }
+
+  @Override
+  public void putDynamicProperties(Key key, Value value) {
+    deposit.putDynamicProperties(key, value);
+  }
+
+  @Override
   public void setParent(Deposit deposit) {
     this.deposit.setParent(deposit);
   }
@@ -204,13 +238,43 @@ public class ContractState implements Deposit, ProgramListenerAware {
   }
 
   @Override
-  // Do nothing
-  public void syncCacheFromAccountStore(byte[] address) {
+  public void putAccountValue(byte[] address, AccountCapsule accountCapsule) {
+    this.deposit.putAccountValue(address,accountCapsule);
   }
 
   @Override
-  // Do nothing
-  public void syncCacheFromVotesStore(byte[] address) {
+  public void putVoteValue(byte[] address, VotesCapsule votesCapsule) {
+    this.deposit.putVoteValue(address,votesCapsule);
+  }
+
+  @Override
+  public void putProposalValue(byte[] address, ProposalCapsule proposalCapsule) {
+    deposit.putProposalValue(address, proposalCapsule);
+  }
+
+  @Override
+  public void putDynamicPropertiesWithLatestProposalNum(long num) {
+    deposit.putDynamicPropertiesWithLatestProposalNum(num);
+  }
+
+  @Override
+  public long getLatestProposalNum() {
+    return deposit.getLatestProposalNum();
+  }
+
+  @Override
+  public long getWitnessAllowanceFrozenTime() {
+    return  deposit.getWitnessAllowanceFrozenTime();
+  }
+
+  @Override
+  public long getMaintenanceTimeInterval() {
+    return deposit.getMaintenanceTimeInterval();
+  }
+
+  @Override
+  public long getNextMaintenanceTime() {
+    return deposit.getNextMaintenanceTime();
   }
 
   @Override
