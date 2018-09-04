@@ -97,7 +97,7 @@ public class Program {
   }
 
   public void setRootTransactionId(byte[] rootTransactionId) {
-    rootTransactionId = rootTransactionId.clone();
+    this.rootTransactionId = rootTransactionId.clone();
   }
 
   public long getNonce() {
@@ -533,6 +533,9 @@ public class Program {
     } else if (isNotEmpty(programCode)) {
       VM vm = new VM(config);
       Program program = new Program(programCode, programInvoke, internalTx, config, this.blockCap);
+      program.setRootTransactionId(this.rootTransactionId);
+      program.setRootCallConstant(this.isRootCallConstant);
+      program.nonce = this.nonce;
       vm.play(program);
       result = program.getResult();
       getTrace().merge(program.getTrace());
@@ -687,6 +690,9 @@ public class Program {
       VM vm = new VM(config);
       Program program = new Program(null, programCode, programInvoke, internalTx, config,
           this.blockCap);
+      program.setRootTransactionId(this.rootTransactionId);
+      program.setRootCallConstant(this.isRootCallConstant);
+      program.nonce = this.nonce;
       vm.play(program);
       result = program.getResult();
 

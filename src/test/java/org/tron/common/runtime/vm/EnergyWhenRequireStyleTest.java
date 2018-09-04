@@ -28,7 +28,6 @@ import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
 
-@Ignore
 public class EnergyWhenRequireStyleTest {
 
   private Manager dbManager;

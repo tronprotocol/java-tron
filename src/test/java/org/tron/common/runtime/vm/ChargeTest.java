@@ -25,7 +25,7 @@ import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
-@Ignore
+
 public class ChargeTest {
 
   private Manager dbManager;
@@ -47,7 +47,7 @@ public class ChargeTest {
     dbManager = context.getBean(Manager.class);
     deposit = DepositImpl.createRoot(dbManager);
     deposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
-    deposit.addBalance(Hex.decode(OWNER_ADDRESS), 30000000000000L);
+    deposit.addBalance(Hex.decode(OWNER_ADDRESS), 100000000000000L);
     deposit.commit();
   }
 
@@ -158,7 +158,7 @@ public class ChargeTest {
     Assert.assertTrue(
         result.getRuntime().getResult().getException() instanceof ArithmeticException);
 
-    Assert.assertEquals(deposit.getBalance(address), 30000000000000L);
+    Assert.assertEquals(deposit.getBalance(address), 100000000000000L);
 
   }
 
@@ -300,7 +300,7 @@ public class ChargeTest {
   public void testCreateDepthAndWidth()
       throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 90000000000000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "testCallDepthAndWidth";
@@ -319,14 +319,14 @@ public class ChargeTest {
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
-    String params = "000000000000000000000000000000000000000000000000000000000000000a";
+    String params = "0000000000000000000000000000000000000000000000000000000000000001";
     // byte[] triggerData = TVMTestUtils.parseABI("CallstackExploit(int)", params);
     byte[] triggerData = TVMTestUtils.parseABI("testCreate(uint256)", params);
     result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, value, feeLimit, deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 239432959);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 4481164);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertEquals(result.getRuntime().getResult().getException(), null);
 
