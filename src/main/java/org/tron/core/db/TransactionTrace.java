@@ -5,6 +5,7 @@ import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_PRECOMPILED_TYPE;
 
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.InternalTransaction;
@@ -22,6 +23,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
@@ -31,6 +33,7 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
+@Slf4j(topic = "TransactionTrace")
 public class TransactionTrace {
 
   private TransactionCapsule trx;
@@ -106,15 +109,19 @@ public class TransactionTrace {
     runtime.go();
   }
 
-  public void finalization(Runtime runtime) {
-    pay();
+  public void finalization(Runtime runtime) throws ContractExeException {
+    try {
+      pay();
+    } catch (BalanceInsufficientException e) {
+      throw new ContractExeException(e.getMessage());
+    }
     runtime.finalization();
   }
 
   /**
    * pay actually bill(include ENERGY and storage).
    */
-  public void pay() {
+  public void pay() throws BalanceInsufficientException {
     byte[] originAccount;
     byte[] callerAccount;
     long percent = 0;
@@ -158,6 +165,8 @@ public class TransactionTrace {
       throw new ReceiptCheckErrException("null resultCode");
     }
     if (!trx.getContractRet().equals(receipt.getResult())) {
+      logger.info("this tx resultCode in received block: {}", trx.getContractRet());
+      logger.info("this tx resultCode in self: {}", receipt.getResult());
       throw new ReceiptCheckErrException("Different resultCode");
     }
   }

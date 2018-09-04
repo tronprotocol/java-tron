@@ -18,22 +18,12 @@
 
 package org.tron.common.utils;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import com.google.common.base.Preconditions;
+import com.google.common.primitives.UnsignedBytes;
 import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
-import com.google.common.base.Preconditions;
-import com.google.common.base.Predicates;
-import com.google.common.primitives.Bytes;
-import com.google.common.primitives.UnsignedBytes;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.core.db.ByteArrayWrapper;
 
 public class ByteUtil {
 
@@ -61,13 +51,12 @@ public class ByteUtil {
   }
 
   /**
-   * Omitting sign indication byte. <br><br> Instead of
-   * {@link org.spongycastle.util.BigIntegers#asUnsignedByteArray(BigInteger)}
+   * Omitting sign indication byte. <br><br> Instead of {@link org.spongycastle.util.BigIntegers#asUnsignedByteArray(BigInteger)}
    * <br>we use this custom method to avoid an empty array in case of BigInteger.ZERO
    *
    * @param value - any big integer number. A <code>null</code>-value will return <code>null</code>
    * @return A byte array without a leading zero byte if present in the signed encoding.
-   *     BigInteger.ZERO will return an array with length 1 and byte-value 0.
+   * BigInteger.ZERO will return an array with length 1 and byte-value 0.
    */
   public static byte[] bigIntegerToBytes(BigInteger value) {
     if (value == null) {
@@ -86,6 +75,7 @@ public class ByteUtil {
 
   /**
    * merge arrays.
+   *
    * @param arrays - arrays to merge
    * @return - merged array
    */
@@ -215,8 +205,7 @@ public class ByteUtil {
   }
 
   /**
-   * Cast hex encoded value from byte[] to BigInteger
-   * null is parsed like byte[0]
+   * Cast hex encoded value from byte[] to BigInteger null is parsed like byte[0]
    *
    * @param bb byte array contains the values
    * @return unsigned positive BigInteger value.
@@ -226,8 +215,7 @@ public class ByteUtil {
   }
 
   /**
-   * Cast hex encoded value from byte[] to long
-   * null is parsed like byte[0]
+   * Cast hex encoded value from byte[] to long null is parsed like byte[0]
    *
    * Limited to Long.MAX_VALUE: 2<sup>63</sup>-1 (8 bytes)
    *
@@ -235,9 +223,10 @@ public class ByteUtil {
    * @return unsigned positive long value.
    */
   public static long byteArrayToLong(byte[] b) {
-    if (b == null || b.length == 0)
+    if (b == null || b.length == 0) {
       return 0;
-    return new BigInteger(1, b).longValue();
+    }
+    return new BigInteger(1, b).longValueExact();
   }
 
   public static int firstNonZeroByte(byte[] data) {
@@ -251,8 +240,9 @@ public class ByteUtil {
 
   public static byte[] stripLeadingZeroes(byte[] data) {
 
-    if (data == null)
+    if (data == null) {
       return null;
+    }
 
     final int firstNonZero = firstNonZeroByte(data);
     switch (firstNonZero) {
@@ -271,9 +261,8 @@ public class ByteUtil {
   }
 
   /**
-   * Utility function to copy a byte array into a new byte array with given size.
-   * If the src length is smaller than the given size, the result will be left-padded
-   * with zeros.
+   * Utility function to copy a byte array into a new byte array with given size. If the src length
+   * is smaller than the given size, the result will be left-padded with zeros.
    *
    * @param value - a BigInteger with a maximum value of 2^256-1
    * @return Byte array of given size with a copy of the <code>src</code>
@@ -281,15 +270,15 @@ public class ByteUtil {
   public static byte[] copyToArray(BigInteger value) {
     byte[] dest = ByteBuffer.allocate(32).array();
     byte[] src = ByteUtil.bigIntegerToBytes(value);
-    if(src != null) {
+    if (src != null) {
       System.arraycopy(src, 0, dest, dest.length - src.length, src.length);
     }
     return dest;
   }
 
   /**
-   * Returns a number of zero bits preceding the highest-order ("leftmost") one-bit
-   * interpreting input array as a big-endian integer value
+   * Returns a number of zero bits preceding the highest-order ("leftmost") one-bit interpreting
+   * input array as a big-endian integer value
    */
   public static int numberOfLeadingZeros(byte[] bytes) {
 
@@ -298,20 +287,22 @@ public class ByteUtil {
     if (i == -1) {
       return bytes.length * 8;
     } else {
-      int byteLeadingZeros = Integer.numberOfLeadingZeros((int)bytes[i] & 0xff) - 24;
+      int byteLeadingZeros = Integer.numberOfLeadingZeros((int) bytes[i] & 0xff) - 24;
       return i * 8 + byteLeadingZeros;
     }
   }
 
   /**
-   * Parses fixed number of bytes starting from {@code offset} in {@code input} array.
-   * If {@code input} has not enough bytes return array will be right padded with zero bytes.
-   * I.e. if {@code offset} is higher than {@code input.length} then zero byte array of length {@code len} will be returned
+   * Parses fixed number of bytes starting from {@code offset} in {@code input} array. If {@code
+   * input} has not enough bytes return array will be right padded with zero bytes. I.e. if {@code
+   * offset} is higher than {@code input.length} then zero byte array of length {@code len} will be
+   * returned
    */
   public static byte[] parseBytes(byte[] input, int offset, int len) {
 
-    if (offset >= input.length || len == 0)
+    if (offset >= input.length || len == 0) {
       return EMPTY_BYTE_ARRAY;
+    }
 
     byte[] bytes = new byte[len];
     System.arraycopy(input, offset, bytes, 0, Math.min(input.length - offset, len));
@@ -319,9 +310,8 @@ public class ByteUtil {
   }
 
   /**
-   * Parses 32-bytes word from given input.
-   * Uses {@link #parseBytes(byte[], int, int)} method,
-   * thus, result will be right-padded with zero bytes if there is not enough bytes in {@code input}
+   * Parses 32-bytes word from given input. Uses {@link #parseBytes(byte[], int, int)} method, thus,
+   * result will be right-padded with zero bytes if there is not enough bytes in {@code input}
    *
    * @param idx an index of the word starting from {@code 0}
    */
@@ -330,9 +320,8 @@ public class ByteUtil {
   }
 
   /**
-   * Parses 32-bytes word from given input.
-   * Uses {@link #parseBytes(byte[], int, int)} method,
-   * thus, result will be right-padded with zero bytes if there is not enough bytes in {@code input}
+   * Parses 32-bytes word from given input. Uses {@link #parseBytes(byte[], int, int)} method, thus,
+   * result will be right-padded with zero bytes if there is not enough bytes in {@code input}
    *
    * @param idx an index of the word starting from {@code 0}
    * @param offset an offset in {@code input} array to start parsing from

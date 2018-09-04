@@ -9,36 +9,33 @@ import java.util.regex.Pattern;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.core.Wallet;
-//import org.tron.walletserver.WalletClient;
 
 public class AbiUtil {
 
   static Pattern paramTypeBytes = Pattern.compile("^bytes([0-9]*)$");
   static Pattern paramTypeNumber = Pattern.compile("^(u?int)([0-9]*)$");
   static Pattern paramTypeArray = Pattern.compile("^(.*)\\[([0-9]*)\\]$");
+  //
 
   static abstract class Coder {
     boolean dynamic = false;
     String name;
     String type;
 
+    //    DataWord[] encode
     abstract byte[] encode(String value);
 
     abstract byte[] decode();
 
   }
 
-  class Paramater {
-    String type;
-  }
-
   public static String[] getTypes(String methodSign) {
     int start = methodSign.indexOf('(') + 1;
     int end = methodSign.indexOf(')');
 
-    String typeSring = methodSign.subSequence(start,end).toString();
+    String typeString = methodSign.subSequence(start,end).toString();
 
-    return typeSring.split(",");
+    return typeString.split(",");
   }
 
   public static String geMethodId(String methodSign) {
@@ -58,20 +55,15 @@ public class AbiUtil {
         return new CoderDynamicBytes();
     }
 
-    boolean match = false;
-
-    if (type.matches("^bytes([0-9]*)$")) {
+    if (paramTypeBytes.matcher(type).find()) {
       return new CoderFixedBytes();
     }
 
-
-    if (type.matches("^(u?int)([0-9]*)$")) {
+    if (paramTypeNumber.matcher(type).find()) {
       return new CoderNumber();
     }
 
-
-    Pattern r = Pattern.compile("^(.*)\\[([0-9]*)]$");
-    Matcher m = r.matcher(type);
+    Matcher m = paramTypeArray.matcher(type);
     if (m.find()) {
       String arrayType = m.group(1);
       int length = -1;
@@ -87,7 +79,7 @@ public class AbiUtil {
     private String elementType;
     private int length;
 
-    public CoderArray(String arrayType, int length) {
+    CoderArray(String arrayType, int length) {
       this.elementType = arrayType;
       this.length = length;
       if (length == -1) {
@@ -101,13 +93,13 @@ public class AbiUtil {
 
       Coder coder = getParamCoder(elementType);
 
-
       List<Object> strings = null;
       try {
         ObjectMapper mapper = new ObjectMapper();
         strings = mapper.readValue(arrayValues, List.class);
       } catch (IOException e) {
         e.printStackTrace();
+        return null;
       }
 
       List<Coder> coders = new ArrayList<>();
@@ -122,16 +114,9 @@ public class AbiUtil {
         }
       }
 
-
       if (this.length == -1) {
-        System.out.println("array encoded");
-        System.out.println(Hex.toHexString(concat(new DataWord(strings.size()).getData(),
-            pack(coders, strings))));
-        System.out.println("fdsfsdf");
         return concat(new DataWord(strings.size()).getData(), pack(coders, strings));
       } else {
-        System.out.println(Hex.toHexString(pack(coders, strings)));
-
         return pack(coders, strings);
       }
     }
@@ -327,21 +312,27 @@ public class AbiUtil {
     return parseMethod(methodSign, params, false);
   }
 
-  public static String parseMethod(String methodSign, String params, boolean isHex) {
+  public static String parseMethod(String methodSign, String input, boolean isHex) {
     byte[] selector = new byte[4];
     System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector,0, 4);
     System.out.println(methodSign + ":" + Hex.toHexString(selector));
-    if (params.length() == 0) {
+    if (input.length() == 0) {
       return Hex.toHexString(selector);
     }
     if (isHex) {
-      return Hex.toHexString(selector) + params;
+      return Hex.toHexString(selector) + input;
     }
+    byte[] encodedParms = encodeInput(methodSign, input);
+
+    return Hex.toHexString(selector) + Hex.toHexString(encodedParms);
+  }
+
+  public static byte[] encodeInput(String methodSign, String input) {
     ObjectMapper mapper = new ObjectMapper();
-    params = "[" + params + "]";
-    List<Object> strings = null;
+    input = "[" + input + "]";
+    List<Object> items = null;
     try {
-      strings = mapper.readValue(params, List.class);
+      items = mapper.readValue(input, List.class);
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -352,12 +343,11 @@ public class AbiUtil {
       coders.add(c);
     }
 
-    byte[] encodedParms = pack(coders, strings);
-
-    return Hex.toHexString(selector) + Hex.toHexString(encodedParms);
+    return pack(coders, items);
   }
 
   public  static void main(String[] args) {
+    //    String method = "test(address,string,int)";
     String method = "test(string,int2,string)";
     String params = "asdf,3123,adf";
 
@@ -378,6 +368,7 @@ public class AbiUtil {
     String bytesValue2 = "123123123";
 
     System.out.println(parseMethod(byteMethod1, bytesValue1));
+
   }
 
   public static byte[] concat(byte[]... bytesArray) {

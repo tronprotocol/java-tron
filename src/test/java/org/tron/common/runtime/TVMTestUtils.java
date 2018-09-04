@@ -23,7 +23,6 @@ import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
-import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -105,34 +104,34 @@ public class TVMTestUtils {
   public static TVMTestResult deployContractAndReturnTVMTestResult(String contractName,
       byte[] callerAddress,
       String ABI, String code, long value, long feeLimit, long consumeUserResourcePercent,
-      String libraryAddressPair, DepositImpl deposit, Block block)
+      String libraryAddressPair, DepositImpl deposit, BlockCapsule blockCap)
       throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
     Transaction trx = generateDeploySmartContractAndGetTransaction(contractName, callerAddress, ABI,
         code, value, feeLimit, consumeUserResourcePercent, libraryAddressPair);
 
     byte[] contractAddress = Wallet.generateContractAddress(trx);
 
-    return processTransactionAndReturnTVMTestResult(trx, deposit, block)
+    return processTransactionAndReturnTVMTestResult(trx, deposit, blockCap)
         .setContractAddress(Wallet.generateContractAddress(trx));
   }
 
   public static TVMTestResult triggerContractAndReturnTVMTestResult(byte[] callerAddress,
       byte[] contractAddress, byte[] data, long callValue, long feeLimit, DepositImpl deposit,
-      Block block)
+      BlockCapsule blockCap)
       throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
     Transaction trx = generateTriggerSmartContractAndGetTransaction(callerAddress, contractAddress,
         data, callValue, feeLimit);
-    return processTransactionAndReturnTVMTestResult(trx, deposit, block)
+    return processTransactionAndReturnTVMTestResult(trx, deposit, blockCap)
         .setContractAddress(contractAddress);
   }
 
 
   public static TVMTestResult processTransactionAndReturnTVMTestResult(Transaction trx,
-      DepositImpl deposit, Block block)
+      DepositImpl deposit, BlockCapsule blockCap)
       throws TransactionTraceException, ContractExeException, ContractValidateException, ReceiptCheckErrException {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
     TransactionTrace trace = new TransactionTrace(trxCap, deposit.getDbManager());
-    Runtime runtime = new Runtime(trace, new BlockCapsule(block), deposit,
+    Runtime runtime = new Runtime(trace, blockCap, deposit,
         new ProgramInvokeFactoryImpl());
 
     // init

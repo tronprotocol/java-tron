@@ -74,7 +74,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
           if (null != block) {
             lastHash = block.getBlockHeader().getRawDataOrBuilder().getParentHash().toByteArray();
             coinbase = block.getBlockHeader().getRawDataOrBuilder().getWitnessAddress().toByteArray();
-            timestamp = block.getBlockHeader().getRawDataOrBuilder().getTimestamp();
+            timestamp = block.getBlockHeader().getRawDataOrBuilder().getTimestamp() / 1000;
             number = block.getBlockHeader().getRawDataOrBuilder().getNumber();
           }
           break;
@@ -130,7 +130,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
             /***   COINBASE  op ***/
             coinbase = block.getBlockHeader().getRawDataOrBuilder().getWitnessAddress().toByteArray();
             /*** TIMESTAMP  op  ***/
-            timestamp = block.getBlockHeader().getRawDataOrBuilder().getTimestamp();
+            timestamp = block.getBlockHeader().getRawDataOrBuilder().getTimestamp() / 1000;
             /*** NUMBER  op  ***/
             number = block.getBlockHeader().getRawDataOrBuilder().getNumber();
           }

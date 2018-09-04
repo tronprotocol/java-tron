@@ -63,21 +63,15 @@ public class VM {
 
 
   private long calcMemEnergy(EnergyCost energyCosts, long oldMemSize, BigInteger newMemSize,
-      long copySize) {
+      long copySize, OpCode op) {
     //todo: simpfy this calc, just use energy relative to energy time
 
     long energyCost = 0;
 
-    // Avoid overflows
-    if (newMemSize.compareTo(MAX_MEM_SIZE) > 0) {
-      // throw VMMemoryOverflowException();
-      throw Program.Exception.energyOverflow(newMemSize, MAX_MEM_SIZE);
-      // todo: add memory overflow
-      // throw Program.Exception.memoryOverflow();
-    }
+    checkMemorySize(op, newMemSize);
 
     // memory drop consume calc
-    long memoryUsage = (newMemSize.longValue() + 31) / 32 * 32;
+    long memoryUsage = (newMemSize.longValueExact() + 31) / 32 * 32;
     if (memoryUsage > oldMemSize) {
       long memWords = (memoryUsage / 32);
       long memWordsOld = (oldMemSize / 32);
@@ -160,26 +154,26 @@ public class VM {
         case MSTORE:
           energyCost = calcMemEnergy(energyCosts, oldMemSize,
               memNeeded(stack.peek(), new DataWord(32)),
-              0);
+              0, op);
           break;
         case MSTORE8:
           energyCost = calcMemEnergy(energyCosts, oldMemSize,
               memNeeded(stack.peek(), new DataWord(1)),
-              0);
+              0, op);
           break;
         case MLOAD:
           energyCost = calcMemEnergy(energyCosts, oldMemSize,
               memNeeded(stack.peek(), new DataWord(32)),
-              0);
+              0, op);
           break;
         case RETURN:
         case REVERT:
           energyCost = energyCosts.getSTOP() + calcMemEnergy(energyCosts, oldMemSize,
-              memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0);
+              memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0, op);
           break;
         case SHA3:
           energyCost = energyCosts.getSHA3() + calcMemEnergy(energyCosts, oldMemSize,
-              memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0);
+              memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0, op);
           DataWord size = stack.get(stack.size() - 2);
           long chunkUsed = (size.longValueSafe() + 31) / 32;
           energyCost += chunkUsed * energyCosts.getSHA3_WORD();
@@ -188,12 +182,12 @@ public class VM {
         case RETURNDATACOPY:
           energyCost = calcMemEnergy(energyCosts, oldMemSize,
               memNeeded(stack.peek(), stack.get(stack.size() - 3)),
-              stack.get(stack.size() - 3).longValueSafe());
+              stack.get(stack.size() - 3).longValueSafe(), op);
           break;
         case CODECOPY:
           energyCost = calcMemEnergy(energyCosts, oldMemSize,
               memNeeded(stack.peek(), stack.get(stack.size() - 3)),
-              stack.get(stack.size() - 3).longValueSafe());
+              stack.get(stack.size() - 3).longValueSafe(), op);
           break;
         case EXTCODESIZE:
           energyCost = energyCosts.getEXT_CODE_SIZE();
@@ -201,7 +195,7 @@ public class VM {
         case EXTCODECOPY:
           energyCost = energyCosts.getEXT_CODE_COPY() + calcMemEnergy(energyCosts, oldMemSize,
               memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 4)),
-              stack.get(stack.size() - 4).longValueSafe());
+              stack.get(stack.size() - 4).longValueSafe(), op);
           break;
         case CALL:
         case CALLCODE:
@@ -232,7 +226,7 @@ public class VM {
               stack.get(stack.size() - opOff - 1)); // in offset+size
           BigInteger out = memNeeded(stack.get(stack.size() - opOff - 2),
               stack.get(stack.size() - opOff - 3)); // out offset+size
-          energyCost += calcMemEnergy(energyCosts, oldMemSize, in.max(out), 0);
+          energyCost += calcMemEnergy(energyCosts, oldMemSize, in.max(out), 0, op);
           checkMemorySize(op, in.max(out));
 
           if (energyCost > program.getEnergyLimitLeft().longValueSafe()) {
@@ -249,7 +243,7 @@ public class VM {
           break;
         case CREATE:
           energyCost = energyCosts.getCREATE() + calcMemEnergy(energyCosts, oldMemSize,
-              memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 3)), 0);
+              memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 3)), 0, op);
           break;
         case LOG0:
         case LOG1:
@@ -264,14 +258,14 @@ public class VM {
             throw new OutOfEnergyException(
                 "Not enough energy for '%s' operation executing: opEnergy[%d], programEnergy[%d]",
                 op.name(),
-                dataCost.longValue(), program.getEnergyLimitLeft().longValueSafe());
+                dataCost.longValueExact(), program.getEnergyLimitLeft().longValueSafe());
           }
           energyCost = energyCosts.getLOG_ENERGY() +
               energyCosts.getLOG_TOPIC_ENERGY() * nTopics +
               energyCosts.getLOG_DATA_ENERGY() * stack.get(stack.size() - 2).longValue() +
               calcMemEnergy(energyCosts, oldMemSize,
                   memNeeded(stack.peek(), stack.get(stack.size() - 2)),
-                  0);
+                  0, op);
 
           checkMemorySize(op, memNeeded(stack.peek(), stack.get(stack.size() - 2)));
           break;
@@ -1337,7 +1331,7 @@ public class VM {
         this.step(program);
       }
 
-    } catch (JVMStackOverFlowException e){
+    } catch (JVMStackOverFlowException e) {
       throw new JVMStackOverFlowException();
     } catch (RuntimeException e) {
       if (StringUtils.isEmpty(e.getMessage())) {
