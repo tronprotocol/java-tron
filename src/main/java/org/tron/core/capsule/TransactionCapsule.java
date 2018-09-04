@@ -255,7 +255,15 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public static String getPermissionName(Transaction.Contract contract) {
-    return "active";
+    switch (contract.getType()) {
+      case AccountPermissionUpdateContract:
+      case PermissionAddKeyContract:
+      case PermissionUpdateKeyContract:
+      case PermissionDeleteKeyContract:
+        return "owner";
+      default:
+        return "active";
+    }
   }
 
   public static Permission getDefaultPermission(ByteString owner, String name) {
@@ -278,7 +286,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       return getDefaultPermission(account.getAddress(), permissionName);
     }
     for (Permission permission : list) {
-      if (permissionName.equals(permission.getName())) {
+      if (permissionName.equalsIgnoreCase(permission.getName())) {
         return permission;
       }
     }
@@ -526,11 +534,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return signature.toBase64();
   }
 
-  private boolean validateSignature(Transaction.Contract contract, ByteString sigs,
-      AccountStore accountStore)
+  public static boolean validateSignature(Transaction.Contract contract, ByteString sigs,
+      byte[] hash, AccountStore accountStore)
       throws PermissionException, SignatureException, SignatureFormatException {
     Permission permission = getPermission(accountStore, contract);
-    long weight = checkWeight(permission, sigs, this.getRawHash().getBytes(), null);
+    long weight = checkWeight(permission, sigs, hash, null);
     if (weight >= permission.getThreshold()) {
       return true;
     }
@@ -552,10 +560,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
 
     List<Transaction.Contract> listContract = this.transaction.getRawData().getContractList();
+    byte[] hash = this.getRawHash().getBytes();
     for (int i = 0; i < this.transaction.getSignatureCount(); ++i) {
       try {
         Transaction.Contract contract = listContract.get(i);
-        if (!validateSignature(contract, this.transaction.getSignature(i), accountStore)) {
+        ByteString sigs = this.transaction.getSignature(i);
+        if (!validateSignature(contract, sigs, hash, accountStore)) {
           isVerified = false;
           throw new ValidateSignatureException("sig error");
         }
