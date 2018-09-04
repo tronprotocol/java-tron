@@ -1,6 +1,7 @@
 buildscript {
     repositories {
         maven { url 'http://mvnrepository.com' }
+        maven { url 'http://4thline.org/m2' }
         mavenCentral()
         jcenter()
     }
@@ -50,6 +51,7 @@ repositories {
     mavenLocal()
     mavenCentral()
     maven { url 'http://repo.spring.io/plugins-release' }
+    maven { url 'http://4thline.org/m2' }
 }
 def versions = [
         checkstyle: '8.7',
@@ -168,6 +170,10 @@ dependencies {
     compile 'org.eclipse.jetty:jetty-servlet:9.4.11.v20180605'
     compile 'com.alibaba:fastjson:1.2.47'
     // end http
+    //upnp
+//    compile 'com.offbynull.portmapper:portmapper:2.0.5'
+    compile 'org.fourthline.cling:cling-support:2.1.1'
+    compile 'org.bitlet:weupnp:0.1.4'
 }
 
 check.dependsOn 'lint'

@@ -315,6 +315,10 @@ public class Args {
   @Setter
   private boolean isOpenFullTcpDisconnect;
 
+  @Getter
+  @Setter
+  private boolean isOpenPortMapper;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -375,6 +379,7 @@ public class Args {
     INSTANCE.debug = false;
     INSTANCE.minTimeRatio = 0.6;
     INSTANCE.maxTimeRatio = 5.0;
+    INSTANCE.isOpenFullTcpDisconnect = true;
   }
 
   /**
@@ -620,6 +625,8 @@ public class Args {
         config.getLong("node.receiveTcpMinDataLength") : 2048;
     INSTANCE.isOpenFullTcpDisconnect = config.hasPath("node.isOpenFullTcpDisconnect") && config
         .getBoolean("node.isOpenFullTcpDisconnect");
+    INSTANCE.isOpenPortMapper = config.hasPath("node.discovery.isOpenPortMapper") && config
+        .getBoolean("node.discovery.isOpenPortMapper");
 
     initBackupProperty(config);
 
