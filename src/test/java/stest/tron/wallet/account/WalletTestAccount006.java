@@ -58,7 +58,7 @@ public class WalletTestAccount006 {
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
-    logger.info(account006Key);
+    PublicMethed.printAddress(account006Key);
 
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -95,6 +95,7 @@ public class WalletTestAccount006 {
     Assert.assertTrue(accountNetMessage.getFreeNetUsed() == 0);
     Assert.assertTrue(accountNetMessage.getTotalNetLimit() > 0);
     Assert.assertTrue(accountNetMessage.getTotalNetWeight() > 0);
+    logger.info("testGetAccountNet");
 
   }
 
@@ -110,6 +111,7 @@ public class WalletTestAccount006 {
     //Every transaction may cost 200 net.
     Assert.assertTrue(accountNetMessage.getFreeNetUsed() > 0 && accountNetMessage
         .getFreeNetUsed() < 300);
+    logger.info("testUseFreeNet");
   }
 
   @Test(enabled = true)
@@ -120,7 +122,8 @@ public class WalletTestAccount006 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     AccountNetMessage accountNetMessage = blockingStubFull.getAccountNet(request);
     //Use out the free net
-    while (accountNetMessage.getFreeNetUsed() < BASELINE) {
+    Integer times = 0;
+    while (accountNetMessage.getFreeNetUsed() < BASELINE && times++ < 30) {
       PublicMethed.sendcoin(fromAddress,1L,account006Address,account006Key,
           blockingStubFull);
       accountNetMessage = blockingStubFull.getAccountNet(request);
@@ -134,6 +137,7 @@ public class WalletTestAccount006 {
     Long afterSendBalance = queryAccount.getBalance();
     //when the free net is not enough and no balance freeze, use money to do the transaction.
     Assert.assertTrue(beforeSendBalance - afterSendBalance > 1);
+    logger.info("testUseMoneyToDoTransaction");
   }
 
   @Test(enabled = true)
