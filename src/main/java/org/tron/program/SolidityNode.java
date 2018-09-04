@@ -170,7 +170,7 @@ public class SolidityNode {
         syncSolidityBlock();
         shutdownGrpcClient();
       } catch (Throwable t) {
-        logger.error("Error in sync solidity block " + t.getMessage(), t);
+        logger.error("Error in sync solidity block " + t.getMessage());
       }
     }, 5000, 5000, TimeUnit.MILLISECONDS);
     //new Thread(() -> syncLoop(cfgArgs), logger.getName()).start();
