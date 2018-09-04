@@ -1,9 +1,14 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
+import static org.tron.core.actuator.ActuatorConstant.WITNESS_EXCEPTION_STR;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Map;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
@@ -30,26 +35,36 @@ public class ProposalCreateActuator extends AbstractActuator {
     try {
       final ProposalCreateContract proposalCreateContract = this.contract
           .unpack(ProposalCreateContract.class);
-      long id = dbManager.getDynamicPropertiesStore().getLatestProposalNum() + 1;
+      long id = (Objects.isNull(getDeposit())) ? dbManager.getDynamicPropertiesStore().getLatestProposalNum() + 1 :
+          getDeposit().getLatestProposalNum() + 1;
       ProposalCapsule proposalCapsule =
           new ProposalCapsule(proposalCreateContract.getOwnerAddress(), id);
 
       proposalCapsule.setParameters(proposalCreateContract.getParametersMap());
 
       long now = dbManager.getHeadBlockTimeStamp();
-      long maintenanceTimeInterval =
-          dbManager.getDynamicPropertiesStore().getMaintenanceTimeInterval();
+      long maintenanceTimeInterval = (Objects.isNull(getDeposit())) ?
+          dbManager.getDynamicPropertiesStore().getMaintenanceTimeInterval() :
+          getDeposit().getMaintenanceTimeInterval();
       proposalCapsule.setCreateTime(now);
 
-      long currentMaintenanceTime = dbManager.getDynamicPropertiesStore().getNextMaintenanceTime();
+      long currentMaintenanceTime = (Objects.isNull(getDeposit())) ? dbManager.getDynamicPropertiesStore().getNextMaintenanceTime():
+          getDeposit().getNextMaintenanceTime();
       long now3 = now + Args.getInstance().getProposalExpireTime();
       long round = (now3 - currentMaintenanceTime) / maintenanceTimeInterval;
       long expirationTime =
           currentMaintenanceTime + (round + 1) * maintenanceTimeInterval;
       proposalCapsule.setExpirationTime(expirationTime);
 
-      dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
-      dbManager.getDynamicPropertiesStore().saveLatestProposalNum(id);
+      if (Objects.isNull(deposit)) {
+        dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
+        dbManager.getDynamicPropertiesStore().saveLatestProposalNum(id);
+      }
+      else {
+        deposit.putProposalValue(proposalCapsule.createDbKey(),proposalCapsule);
+        deposit.putDynamicPropertiesWithLatestProposalNum(id);
+      }
+
 
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
@@ -65,7 +80,7 @@ public class ProposalCreateActuator extends AbstractActuator {
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (this.dbManager == null) {
+    if (dbManager == null && (deposit == null || deposit.getDbManager() == null)) {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(ProposalCreateContract.class)) {
@@ -87,12 +102,23 @@ public class ProposalCreateActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
 
-    if (!this.dbManager.getAccountStore().has(ownerAddress)) {
-      throw new ContractValidateException("account[" + readableOwnerAddress + "] not exists");
+    if(!Objects.isNull(deposit)) {
+      if (Objects.isNull(deposit.getAccount(ownerAddress))) {
+        throw new ContractValidateException(
+            ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
+      }
+    }
+    else if (!dbManager.getAccountStore().has(ownerAddress)) {
+      throw new ContractValidateException(ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
 
-    if (!this.dbManager.getWitnessStore().has(ownerAddress)) {
-      throw new ContractValidateException("Witness[" + readableOwnerAddress + "] not exists");
+    if( !Objects.isNull(getDeposit())) {
+      if (Objects.isNull(getDeposit().getWitness(ownerAddress))) {
+        throw new ContractValidateException(
+            WITNESS_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
+      }
+    }else if (!dbManager.getWitnessStore().has(ownerAddress)) {
+      throw new ContractValidateException(WITNESS_EXCEPTION_STR+ readableOwnerAddress + NOT_EXIST_STR);
     }
 
     for (Map.Entry<Long, Long> entry : contract.getParametersMap().entrySet()) {
@@ -153,6 +179,10 @@ public class ProposalCreateActuator extends AbstractActuator {
       case (12):
         break;
       case (13):
+        if (entry.getValue() < 10 || entry.getValue() > 100) {
+          throw new ContractValidateException(
+              "Bad chain parameter value,valid range is [10,100]");
+        }
         break;
       default:
         break;
