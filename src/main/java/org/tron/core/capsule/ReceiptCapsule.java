@@ -90,7 +90,7 @@ public class ReceiptCapsule {
    */
   public void payEnergyBill(Manager manager, AccountCapsule origin, AccountCapsule caller,
       long percent, EnergyProcessor energyProcessor, long now) throws BalanceInsufficientException {
-    if (0 == receipt.getEnergyUsageTotal()) {
+    if (receipt.getEnergyUsageTotal() <= 0) {
       return;
     }
 
