@@ -348,9 +348,9 @@ public class Runtime {
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
       long feeLimit = trx.getRawData().getFeeLimit();
-      if (feeLimit <= 0) {
-        logger.info("feeLimit <= 0");
-        throw new ContractValidateException("feeLimit must be > 0");
+      if (feeLimit < 0) {
+        logger.info("feeLimit < 0");
+        throw new ContractValidateException("feeLimit must be >= 0");
       }
 
       long energyLimit = getEnergyLimit(creator, feeLimit, callValue);
@@ -425,9 +425,9 @@ public class Runtime {
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
       long feeLimit = trx.getRawData().getFeeLimit();
-      if (feeLimit <= 0) {
-        logger.info("feeLimit <= 0");
-        throw new ContractValidateException("feeLimit must be > 0");
+      if (feeLimit < 0) {
+        logger.info("feeLimit < 0");
+        throw new ContractValidateException("feeLimit must be >= 0");
       }
       long energyLimit;
       if (isCallConstant(contractAddress)) {

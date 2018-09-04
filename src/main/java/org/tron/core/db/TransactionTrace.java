@@ -93,6 +93,9 @@ public class TransactionTrace {
 
   //set bill
   public void setBill(long energyUsage) {
+    if (energyUsage < 0) {
+      energyUsage = 0L;
+    }
     receipt.setEnergyUsageTotal(energyUsage);
   }
 
