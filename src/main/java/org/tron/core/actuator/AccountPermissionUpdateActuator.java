@@ -1,8 +1,11 @@
 package org.tron.core.actuator;
 
+import static java.util.stream.Collectors.toList;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.core.Wallet;
@@ -92,6 +95,15 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
         throw new ContractValidateException("permission's parent should be owner");
       }
       long weightSum = 0;
+      List<ByteString> addressList = permission.getKeysList()
+          .stream()
+          .map(x -> x.getAddress())
+          .distinct()
+          .collect(toList());
+      if (addressList.size() != permission.getKeysList().size()) {
+        throw new ContractValidateException(
+            String.format("address should be distinct in permission %s", name));
+      }
       for (Key key : permission.getKeysList()) {
         if (!Wallet.addressValid(key.getAddress().toByteArray())) {
           throw new ContractValidateException("key is not a validate address");

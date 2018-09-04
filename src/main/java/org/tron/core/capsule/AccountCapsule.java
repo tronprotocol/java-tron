@@ -569,6 +569,22 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
+  public List<Permission> getPermissions() {
+    return this.account.getPermissionsList();
+  }
+
+  public Permission getPermissionByName(String permissionName) {
+    if (permissionName.equalsIgnoreCase("owner") ||
+        permissionName.equalsIgnoreCase("active")) {
+      for (Permission permission : this.account.getPermissionsList()) {
+        if (permission.getName().equalsIgnoreCase(permissionName)) {
+          return permission;
+        }
+      }
+    }
+    return null;
+  }
+
   public void updatePermissions(List<Permission> permissions) {
     this.account = this.account.toBuilder()
         .clearPermissions()
@@ -594,7 +610,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       if (permission.getName().equalsIgnoreCase(permissionName)) {
         List<Key> keys = new ArrayList<>();
         for (Key key : permission.getKeysList()) {
-          if (key.getAddress().endsWith(updateKey.getAddress())) {
+          if (key.getAddress().equals(updateKey.getAddress())) {
             keys.add(updateKey);
           } else {
             keys.add(key);
@@ -614,7 +630,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       if (permission.getName().equalsIgnoreCase(permissionName)) {
         List<Key> keys = new ArrayList<>();
         for (Key key : permission.getKeysList()) {
-          if (!key.getAddress().endsWith(deleteAddress)) {
+          if (!key.getAddress().equals(deleteAddress)) {
             keys.add(key);
           }
         }

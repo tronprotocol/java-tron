@@ -1,8 +1,11 @@
 package org.tron.core.actuator;
 
+import static java.util.stream.Collectors.toSet;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -12,6 +15,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.PermissionUpdateKeyContract;
+import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 
@@ -65,21 +69,36 @@ public class PermissionUpdateKeyActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
     byte[] ownerAddress = permissionUpdateKeyContract.getOwnerAddress().toByteArray();
+    AccountStore accountStore = dbManager.getAccountStore();
+    AccountCapsule account = accountStore.get(ownerAddress);
+    String name = permissionUpdateKeyContract.getPermissionName();
+    if (!name.equalsIgnoreCase("owner") &&
+        !name.equalsIgnoreCase("active")) {
+      throw new ContractValidateException("permission name should be owner or active");
+    }
+    Permission permission = account.getPermissionByName(name);
+    if (permission == null) {
+      throw new ContractValidateException("you have not set permission with the name " + name);
+    }
     if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("invalidate ownerAddress");
     }
-    if (permissionUpdateKeyContract.getPermissionName().isEmpty()) {
+    if (name.isEmpty()) {
       throw new ContractValidateException("permission name should be not empty");
-    }
-    if (!permissionUpdateKeyContract.getPermissionName().equalsIgnoreCase("owner") &&
-        !permissionUpdateKeyContract.getPermissionName().equalsIgnoreCase("active")) {
-      throw new ContractValidateException("permission name should be owner or active");
     }
     if (!permissionUpdateKeyContract.getKey().isInitialized()) {
       throw new ContractValidateException("key should be initialized");
     }
     if (!Wallet.addressValid(permissionUpdateKeyContract.getKey().getAddress().toByteArray())) {
       throw new ContractValidateException("address in key is invalidate");
+    }
+    Set<ByteString> addressSet = permission.getKeysList()
+        .stream()
+        .map(x -> x.getAddress())
+        .collect(toSet());
+    if (!addressSet.contains(permissionUpdateKeyContract.getKey().getAddress())) {
+      throw new ContractValidateException(String.format("address is not in permission %s",
+          name));
     }
     if (permissionUpdateKeyContract.getKey().getWeight() <= 0) {
       throw new ContractValidateException("key weight should be greater than 0");

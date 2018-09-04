@@ -12,6 +12,8 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.PermissionAddKeyContract;
+import org.tron.protos.Protocol.Key;
+import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 
@@ -64,21 +66,36 @@ public class PermissionAddKeyActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
     byte[] ownerAddress = permissionAddKeyContract.getOwnerAddress().toByteArray();
+    AccountStore accountStore = dbManager.getAccountStore();
+    AccountCapsule account = accountStore.get(ownerAddress);
+    String name = permissionAddKeyContract.getPermissionName();
+    if (!name.equalsIgnoreCase("owner") &&
+        !name.equalsIgnoreCase("active")) {
+      throw new ContractValidateException("permission name should be owner or active");
+    }
+    Permission permission = account.getPermissionByName(name);
+    if (permission == null) {
+      throw new ContractValidateException("you have not set permission with the name " + name);
+    }
     if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("invalidate ownerAddress");
     }
-    if (permissionAddKeyContract.getPermissionName().isEmpty()) {
+    if (name.isEmpty()) {
       throw new ContractValidateException("permission name should be not empty");
-    }
-    if (!permissionAddKeyContract.getPermissionName().equalsIgnoreCase("owner") &&
-        !permissionAddKeyContract.getPermissionName().equalsIgnoreCase("active")) {
-      throw new ContractValidateException("permission name should be owner or active");
     }
     if (!permissionAddKeyContract.getKey().isInitialized()) {
       throw new ContractValidateException("key should be initialized");
     }
     if (!Wallet.addressValid(permissionAddKeyContract.getKey().getAddress().toByteArray())) {
       throw new ContractValidateException("address in key is invalidate");
+    }
+    for (Key key : permission.getKeysList()) {
+      String address = Wallet
+          .encode58Check(permissionAddKeyContract.getKey().getAddress().toByteArray());
+      if (key.getAddress().equals(permissionAddKeyContract.getKey().getAddress())) {
+        throw new ContractValidateException("address " + address + " is already in permission "
+            + name);
+      }
     }
     if (permissionAddKeyContract.getKey().getWeight() <= 0) {
       throw new ContractValidateException("key weight should be greater than 0");

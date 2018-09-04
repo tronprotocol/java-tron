@@ -1,8 +1,11 @@
 package org.tron.core.actuator;
 
+import static java.util.stream.Collectors.toSet;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -12,6 +15,8 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.PermissionDeleteKeyContract;
+import org.tron.protos.Protocol.Key;
+import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 
@@ -64,18 +69,43 @@ public class PermissionDeleteKeyActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
     byte[] ownerAddress = permissionDeleteKeyContract.getOwnerAddress().toByteArray();
+    AccountStore accountStore = dbManager.getAccountStore();
+    AccountCapsule account = accountStore.get(ownerAddress);
+    String name = permissionDeleteKeyContract.getPermissionName();
+    if (!name.equalsIgnoreCase("owner") &&
+        !name.equalsIgnoreCase("active")) {
+      throw new ContractValidateException("permission name should be owner or active");
+    }
+    Permission permission = account.getPermissionByName(name);
+    if (permission == null) {
+      throw new ContractValidateException("you have not set permission with the name " + name);
+    }
     if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("invalidate ownerAddress");
     }
-    if (permissionDeleteKeyContract.getPermissionName().isEmpty()) {
+    if (name.isEmpty()) {
       throw new ContractValidateException("permission name should be not empty");
-    }
-    if (!permissionDeleteKeyContract.getPermissionName().equalsIgnoreCase("owner") &&
-        !permissionDeleteKeyContract.getPermissionName().equalsIgnoreCase("active")) {
-      throw new ContractValidateException("permission name should be owner or active");
     }
     if (!Wallet.addressValid(permissionDeleteKeyContract.getKeyAddress().toByteArray())) {
       throw new ContractValidateException("address in key is invalidate");
+    }
+    Set<ByteString> addressSet = permission.getKeysList()
+        .stream()
+        .map(x -> x.getAddress())
+        .collect(toSet());
+    if (!addressSet.contains(permissionDeleteKeyContract.getKeyAddress())) {
+      throw new ContractValidateException(String.format("address is not in permission %s",
+          name));
+    }
+    int weightSum = 0;
+    for (Key key : permission.getKeysList()) {
+      if (!key.getAddress().equals(permissionDeleteKeyContract.getKeyAddress())) {
+        weightSum += key.getWeight();
+      }
+    }
+    if (weightSum < permission.getThreshold()) {
+      throw new ContractValidateException("the sum of weight is less than threshold "
+          + "after delete this address, please add a new key before delete this key");
     }
     return true;
   }

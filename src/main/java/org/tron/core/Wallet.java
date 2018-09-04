@@ -533,7 +533,7 @@ public class Wallet {
   public long getWeight(Permission permission, byte[] address) {
     List<Key> list = permission.getKeysList();
     for (Key key : list) {
-      if (key.getAddress().endsWith(ByteString.copyFrom(address))) {
+      if (key.getAddress().equals(ByteString.copyFrom(address))) {
         return key.getWeight();
       }
     }
@@ -1080,9 +1080,9 @@ public class Wallet {
     return ret;
   }
 
-  private static boolean isConstant(SmartContract.ABI abi, byte[] selector)  {
+  private static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
 
-    if (selector == null || selector.length != 4 ||  abi.getEntrysList().size() == 0) {
+    if (selector == null || selector.length != 4 || abi.getEntrysList().size() == 0) {
       return false;
     }
 
