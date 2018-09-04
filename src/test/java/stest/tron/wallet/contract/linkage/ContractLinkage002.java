@@ -50,10 +50,9 @@ public class ContractLinkage002 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(linkage002Address,20000000L,fromAddress,
+    Assert.assertTrue(PublicMethed.sendcoin(linkage002Address,200000000000L,fromAddress,
         testKey002,blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage002Address, 5000000L,
-        3,1,linkage002Key,blockingStubFull));
+
     /*    Assert.assertTrue(PublicMethed.buyStorage(5000000L,linkage002Address,linkage002Key,
         blockingStubFull));*/
 
@@ -61,6 +60,8 @@ public class ContractLinkage002 {
 
   @Test(enabled = true)
   public void updateSetting() {
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage002Address, 50000000L,
+        3,1,linkage002Key,blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(linkage002Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
@@ -72,7 +73,7 @@ public class ContractLinkage002 {
     logger.info("before energy usage is " + Long.toString(energyUsage));
     //logger.info("before storage limit is " + Long.toString(storageLimit));
     //logger.info("before storage usaged is " + Long.toString(storageUsage));
-    Long maxFeeLimit = 5000000L;
+    Long maxFeeLimit = 5000000000L;
     String contractName = "tronNative";
     String code = "608060405260008054600160a060020a03199081166201000117909155600180548216620100021"
         + "790556002805482166201000317905560038054821662010004179055600480548216620100051790556005"

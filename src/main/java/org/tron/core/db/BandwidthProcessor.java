@@ -57,18 +57,24 @@ public class BandwidthProcessor extends ResourceProcessor {
     if (trx.getResultSerializedSize() > Constant.MAX_RESULT_SIZE_IN_TX * contracts.size()) {
       throw new TooBigTransactionResultException();
     }
+
+    long bytesSize;
+    if (dbManager.getDynamicPropertiesStore().supportVM()) {
+      TransactionCapsule txCapForEstimateBandWidth = new TransactionCapsule(
+          trx.getInstance().getRawData(),
+          trx.getInstance().getSignatureList());
+      bytesSize = txCapForEstimateBandWidth.getSerializedSize();
+    } else {
+      bytesSize = trx.getSerializedSize();
+    }
+
     for (Contract contract : contracts) {
-      long bytes = 0;
       if (dbManager.getDynamicPropertiesStore().supportVM()) {
-        TransactionCapsule txCapForEstimateBandWidth = new TransactionCapsule(
-            trx.getInstance().getRawData(),
-            trx.getInstance().getSignatureList());
-        bytes = txCapForEstimateBandWidth.getSerializedSize() + Constant.MAX_RESULT_SIZE_IN_TX;
-      } else {
-        bytes = trx.getSerializedSize();
+        bytesSize += Constant.MAX_RESULT_SIZE_IN_TX;
       }
-      logger.debug("trxId {},bandwidth cost :{}", trx.getTransactionId(), bytes);
-      trace.setNetBill(bytes, 0);
+
+      logger.debug("trxId {},bandwidth cost :{}", trx.getTransactionId(), bytesSize);
+      trace.setNetBill(bytesSize, 0);
       byte[] address = TransactionCapsule.getOwner(contract);
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
       if (accountCapsule == null) {
@@ -77,33 +83,33 @@ public class BandwidthProcessor extends ResourceProcessor {
       long now = dbManager.getWitnessController().getHeadSlot();
 
       if (contractCreateNewAccount(contract)) {
-        consumeForCreateNewAccount(accountCapsule, bytes, now, ret);
+        consumeForCreateNewAccount(accountCapsule, bytesSize, now, ret);
         trace.setNetBill(0, ret.getFee());
         continue;
       }
 
       if (contract.getType() == TransferAssetContract) {
-        if (useAssetAccountNet(contract, accountCapsule, now, bytes)) {
+        if (useAssetAccountNet(contract, accountCapsule, now, bytesSize)) {
           continue;
         }
       }
 
-      if (useAccountNet(accountCapsule, bytes, now)) {
+      if (useAccountNet(accountCapsule, bytesSize, now)) {
         continue;
       }
 
-      if (useFreeNet(accountCapsule, bytes, now)) {
+      if (useFreeNet(accountCapsule, bytesSize, now)) {
         continue;
       }
 
-      if (useTransactionFee(accountCapsule, bytes, ret)) {
+      if (useTransactionFee(accountCapsule, bytesSize, ret)) {
         trace.setNetBill(0, ret.getFee());
         continue;
       }
 
-      long fee = dbManager.getDynamicPropertiesStore().getTransactionFee() * bytes;
+      long fee = dbManager.getDynamicPropertiesStore().getTransactionFee() * bytesSize;
       throw new AccountResourceInsufficientException(
-          "Account Insufficient bandwidth[" + bytes + "] and balance["
+          "Account Insufficient bandwidth[" + bytesSize + "] and balance["
               + fee + "] to create new account");
     }
   }

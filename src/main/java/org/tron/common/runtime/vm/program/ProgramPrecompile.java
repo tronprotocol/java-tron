@@ -20,6 +20,7 @@ package org.tron.common.runtime.vm.program;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.OpCode;
 
 
@@ -88,7 +89,7 @@ public class ProgramPrecompile {
       }
 
       if (op.equals(OpCode.RETURN)) {
-        logger.info("retrun");
+        logger.info("return");
       }
 
       if (op.equals(OpCode.RETURN) && i + 1 < ops.length && OpCode.code(ops[i + 1]) != null
@@ -105,7 +106,7 @@ public class ProgramPrecompile {
         i += op.asInt() - OpCode.PUSH1.asInt() + 1;
       }
     }
-    return null;
+    return new DataWord(0).getData();
   }
 
   public boolean hasJumpDest(int pc) {

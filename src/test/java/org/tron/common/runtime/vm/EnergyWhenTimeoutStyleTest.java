@@ -4,7 +4,6 @@ import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
@@ -26,8 +25,7 @@ import org.tron.core.exception.TransactionTraceException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
-@Ignore
-public class CPUTimeTest {
+public class EnergyWhenTimeoutStyleTest {
 
   private Manager dbManager;
   private TronApplicationContext context;
@@ -49,6 +47,7 @@ public class CPUTimeTest {
     deposit = DepositImpl.createRoot(dbManager);
     deposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
     deposit.addBalance(Hex.decode(OWNER_ADDRESS), 30000000000000L);
+    deposit.commit();
   }
 
   // solidity for endlessLoopTest
@@ -84,7 +83,7 @@ public class CPUTimeTest {
     TVMTestResult result = deployEndlessLoopContract(value, feeLimit,
         consumeUserResourcePercent);
     Assert.assertEquals(result.getReceipt().getEnergyUsage(), 0);
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 5107);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 55107);
     Assert.assertEquals(result.getReceipt().getOriginEnergyUsage(), 0);
 
     byte[] contractAddress = result.getContractAddress();

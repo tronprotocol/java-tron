@@ -46,6 +46,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.vm.EnergyCost;
 import org.tron.common.runtime.vm.MessageCall;
 import org.tron.common.runtime.vm.OpCode;
 import org.tron.common.runtime.vm.PrecompiledContracts;
@@ -91,33 +92,33 @@ public class Program {
 
   private BlockCapsule blockCap;
 
-  public static byte[] getRootTransactionId() {
+  public  byte[] getRootTransactionId() {
     return rootTransactionId.clone();
   }
 
-  public static void setRootTransactionId(byte[] rootTransactionId) {
-    Program.rootTransactionId = rootTransactionId.clone();
+  public void setRootTransactionId(byte[] rootTransactionId) {
+    this.rootTransactionId = rootTransactionId.clone();
   }
 
-  public static long getNonce() {
+  public long getNonce() {
     return nonce;
   }
 
-  public static void setNonce(long nonceValue) {
+  public void setNonce(long nonceValue) {
     nonce = nonceValue;
   }
 
-  public static Boolean getRootCallConstant() {
+  public  Boolean getRootCallConstant() {
     return isRootCallConstant;
   }
 
-  public static void setRootCallConstant(Boolean rootCallConstant) {
+  public  void setRootCallConstant(Boolean rootCallConstant) {
     isRootCallConstant = rootCallConstant;
   }
 
-  private static long nonce = 0;
-  private static byte[] rootTransactionId = null;
-  private static Boolean isRootCallConstant = null;
+  private long nonce = 0;
+  private byte[] rootTransactionId = null;
+  private Boolean isRootCallConstant = null;
 
   private InternalTransaction transaction;
 
@@ -465,7 +466,7 @@ public class Program {
 
 //    byte[] privKey = Sha256Hash.hash(getOwnerAddress().getData());
 //    ECKey ecKey = ECKey.fromPrivate(privKey);
-    this.increaseNonce();
+    increaseNonce();
     //this.transactionHash = Sha256Hash.hash(transactionHash);
     byte[] newAddress = Wallet
         .generateContractAddress(rootTransactionId, nonce);
@@ -532,29 +533,32 @@ public class Program {
     } else if (isNotEmpty(programCode)) {
       VM vm = new VM(config);
       Program program = new Program(programCode, programInvoke, internalTx, config, this.blockCap);
+      program.setRootTransactionId(this.rootTransactionId);
+      program.setRootCallConstant(this.isRootCallConstant);
+      program.nonce = this.nonce;
       vm.play(program);
       result = program.getResult();
       getTrace().merge(program.getTrace());
+      // always commit nonce
+      this.nonce = program.nonce;
 
     }
 
     // 4. CREATE THE CONTRACT OUT OF RETURN
     byte[] code = result.getHReturn();
 
-    //long storageCost = getLength(code) * getBlockchainConfig().getenergyCost().getCREATE_DATA();
-    // todo: delete this energy, because this is not relative to the cpu time, but need add to storage cost
-    // long storageCost = getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
-    // // long afterSpend = programInvoke.getDroplimit().longValue() - storageCost - result.getDropUsed();
-    // if (getLength(code) > DefaultConfig.getMaxCodeLength()) {
-    //   result.setException(Exception
-    //       .notEnoughSpendingEnergy("Contract size too large: " + getLength(result.getHReturn()),
-    //           storageCost, this));
-    // } else if (!result.isRevert()) {
-    //   result.spendDrop(storageCost);
-    //   deposit.saveCode(newAddress, code);
-    // }
+    long saveCodeEnergy = getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
+
+    long afterSpend = programInvoke.getEnergyLimit() - result.getEnergyUsed() - saveCodeEnergy;
     if (!result.isRevert()) {
-      deposit.saveCode(newAddress, code);
+      if (afterSpend < 0) {
+        result.setException(
+            Program.Exception.notEnoughSpendEnergy("No energy to save just created contract code",
+                saveCodeEnergy, programInvoke.getEnergyLimit() - result.getEnergyUsed()));
+      } else {
+        result.spendEnergy(saveCodeEnergy);
+        deposit.saveCode(newAddress, code);
+      }
     }
 
     getResult().merge(result);
@@ -686,11 +690,16 @@ public class Program {
       VM vm = new VM(config);
       Program program = new Program(null, programCode, programInvoke, internalTx, config,
           this.blockCap);
+      program.setRootTransactionId(this.rootTransactionId);
+      program.setRootCallConstant(this.isRootCallConstant);
+      program.nonce = this.nonce;
       vm.play(program);
       result = program.getResult();
 
       getTrace().merge(program.getTrace());
       getResult().merge(result);
+      // always commit nonce
+      this.nonce = program.nonce;
 
       if (result.getException() != null || result.isRevert()) {
         logger.debug("contract run halted by Exception: contract: [{}], exception: [{}]",
@@ -751,11 +760,11 @@ public class Program {
     }
   }
 
-  public static void increaseNonce() {
+  public  void increaseNonce() {
     nonce++;
   }
 
-  public static void resetNonce() {
+  public  void resetNonce() {
     nonce = 0;
   }
 
@@ -774,6 +783,9 @@ public class Program {
     //   return;
     // }
     if (Args.getInstance().isDebug()) {
+      return;
+    }
+    if (Args.getInstance().isSolidityNode()) {
       return;
     }
     long vmNowInUs = System.nanoTime() / 1000;
@@ -1271,7 +1283,7 @@ public class Program {
     }
 
     // Repository track = getContractState().startTracking();
-    Deposit deposit = getContractState();
+    Deposit deposit = getContractState().newDepositChild();
 
     byte[] senderAddress = convertToTronAddress(this.getOwnerAddress().getLast20Bytes());
     byte[] codeAddress = convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
@@ -1312,9 +1324,9 @@ public class Program {
       contract.setCallerAddress(convertToTronAddress(msg.getType().callIsDelegate() ?
           getCallerAddress().getLast20Bytes() : getOwnerAddress().getLast20Bytes()));
       // this is the depositImpl, not contractState as above
-      contract.setDeposit(this.invoke.getDeposit());
+      contract.setDeposit(deposit);
       contract.setResult(this.result);
-      contract.setRootCallConstant(Program.getRootCallConstant().booleanValue());
+      contract.setRootCallConstant(getRootCallConstant().booleanValue());
       Pair<Boolean, byte[]> out = contract.execute(data);
 
       if (out.getLeft()) { // success
@@ -1458,6 +1470,13 @@ public class Program {
           "Not enough energy for '%s' operation executing: opEnergy[%d], programEnergy[%d];", op,
           opEnergy,
           programEnergy);
+    }
+
+    public static OutOfEnergyException notEnoughSpendEnergy(String hint, long needEnergy,
+        long leftEnergy) {
+      return new OutOfEnergyException(
+          "Not enough energy for '%s' executing: needEnergy[%d], leftEnergy[%d];", hint, needEnergy,
+          leftEnergy);
     }
 
     public static OutOfEnergyException notEnoughOpEnergy(OpCode op, DataWord opEnergy,

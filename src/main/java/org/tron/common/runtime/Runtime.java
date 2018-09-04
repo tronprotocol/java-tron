@@ -2,6 +2,7 @@ package org.tron.common.runtime;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
+import static org.apache.commons.lang3.ArrayUtils.getLength;
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.utils.MUtil.transfer;
@@ -26,6 +27,7 @@ import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.vm.EnergyCost;
 import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.runtime.vm.VM;
 import org.tron.common.runtime.vm.program.InternalTransaction;
@@ -95,7 +97,7 @@ public class Runtime {
   /**
    * For blockCap's trx run
    */
-  public Runtime(TransactionTrace trace, BlockCapsule block, Deposit deosit,
+  public Runtime(TransactionTrace trace, BlockCapsule block, Deposit deposit,
       ProgramInvokeFactory programInvokeFactory) {
     this.trace = trace;
     this.trx = trace.getTrx().getInstance();
@@ -107,7 +109,7 @@ public class Runtime {
       this.blockCap = new BlockCapsule(Block.newBuilder().build());
       this.executorType = ET_PRE_TYPE;
     }
-    this.deposit = deosit;
+    this.deposit = deposit;
     this.programInvokeFactory = programInvokeFactory;
     this.energyProcessor = new EnergyProcessor(deposit.getDbManager());
     this.storageMarket = new StorageMarket(deposit.getDbManager());
@@ -293,8 +295,9 @@ public class Runtime {
   /*
    **/
   private void create()
-      throws  ContractValidateException {
+      throws ContractValidateException {
     if (!deposit.getDbManager().getDynamicPropertiesStore().supportVM()) {
+      logger.error("vm work is off, need to be opened by the committee");
       throw new ContractValidateException("vm work is off, need to be opened by the committee");
     }
 
@@ -307,11 +310,14 @@ public class Runtime {
 
     long percent = contract.getNewContract().getConsumeUserResourcePercent();
     if (percent < 0 || percent > 100) {
+      logger.error("percent must be >= 0 and <= 100");
       throw new ContractValidateException("percent must be >= 0 and <= 100");
     }
 
     // insure the new contract address haven't exist
     if (deposit.getAccount(contractAddress) != null) {
+      logger.error("Trying to create a contract with existing contract address: " + Wallet
+          .encode58Check(contractAddress));
       throw new ContractValidateException(
           "Trying to create a contract with existing contract address: " + Wallet
               .encode58Check(contractAddress));
@@ -342,6 +348,11 @@ public class Runtime {
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
       long feeLimit = trx.getRawData().getFeeLimit();
+      if (feeLimit < 0) {
+        logger.info("feeLimit < 0");
+        throw new ContractValidateException("feeLimit must be >= 0");
+      }
+
       long energyLimit = getEnergyLimit(creator, feeLimit, callValue);
       byte[] ops = newSmartContract.getBytecode().toByteArray();
       InternalTransaction internalTransaction = new InternalTransaction(trx);
@@ -351,9 +362,9 @@ public class Runtime {
               blockCap.getInstance(), deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
       this.vm = new VM(config);
       this.program = new Program(ops, programInvoke, internalTransaction, config, this.blockCap);
-      Program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
-      Program.resetNonce();
-      Program.setRootCallConstant(isCallConstant());
+      this.program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
+      this.program.resetNonce();
+      this.program.setRootCallConstant(isCallConstant());
     } catch (Exception e) {
       logger.error(e.getMessage());
       throw new ContractValidateException(e.getMessage());
@@ -381,9 +392,10 @@ public class Runtime {
    */
 
   private void call()
-      throws  ContractValidateException {
+      throws ContractValidateException {
 
     if (!deposit.getDbManager().getDynamicPropertiesStore().supportVM()) {
+      logger.error("vm work is off, need to be opened by the committee");
       throw new ContractValidateException("VM work is off, need to be opened by the committee");
     }
 
@@ -413,6 +425,10 @@ public class Runtime {
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
       long feeLimit = trx.getRawData().getFeeLimit();
+      if (feeLimit < 0) {
+        logger.info("feeLimit < 0");
+        throw new ContractValidateException("feeLimit must be >= 0");
+      }
       long energyLimit;
       if (isCallConstant(contractAddress)) {
         energyLimit = Constant.MAX_ENERGY_IN_TX;
@@ -427,9 +443,9 @@ public class Runtime {
       InternalTransaction internalTransaction = new InternalTransaction(trx);
       this.program = new Program(null, code, programInvoke, internalTransaction, config,
           this.blockCap);
-      Program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
-      Program.resetNonce();
-      Program.setRootCallConstant(isCallConstant());
+      this.program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
+      this.program.resetNonce();
+      this.program.setRootCallConstant(isCallConstant());
     }
 
     program.getResult().setContractAddress(contractAddress);
@@ -443,6 +459,17 @@ public class Runtime {
 
   public void go() {
     try {
+
+      TransactionCapsule trxCap = new TransactionCapsule(trx);
+      if (null != trxCap.getContractRet() && contractResult.OUT_OF_TIME
+          .equals(trxCap.getContractRet())) {
+        result = program.getResult();
+        program.spendAllEnergy();
+        runtimeError = "Haven Time Out";
+        result.setException(Program.Exception.notEnoughTime("Haven Time Out"));
+        throw Program.Exception.notEnoughTime("Haven Time Out");
+      }
+
       if (vm != null) {
         vm.play(program);
 
@@ -455,6 +482,21 @@ public class Runtime {
             runtimeError = "constant cannot set call value.";
           }
           return;
+        }
+
+        if (TRX_CONTRACT_CREATION_TYPE == trxType && !result.isRevert()) {
+          byte[] code = program.getResult().getHReturn();
+          long saveCodeEnergy = getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
+          long afterSpend = program.getEnergyLimitLeft().longValue() - saveCodeEnergy;
+          if (afterSpend < 0) {
+            result.setException(
+                Program.Exception
+                    .notEnoughSpendEnergy("No energy to save just created contract code",
+                        saveCodeEnergy, program.getEnergyLimitLeft().longValue()));
+          } else {
+            result.spendEnergy(saveCodeEnergy);
+            // have saveCode in create()
+          }
         }
 
         if (result.getException() != null || result.isRevert()) {
@@ -480,6 +522,7 @@ public class Runtime {
       runtimeError = result.getException().getMessage();
       logger.error("runtime error is :{}", result.getException().getMessage());
     } catch (Throwable e) {
+      program.spendAllEnergy();
       if (Objects.isNull(result.getException())) {
         logger.error(e.getMessage(), e);
         result.setException(new RuntimeException("Unknown Throwable"));
@@ -506,9 +549,17 @@ public class Runtime {
     TriggerSmartContract triggerContractFromTransaction = ContractCapsule
         .getTriggerContractFromTransaction(trx);
     if (TRX_CONTRACT_CALL_TYPE.equals(trxType)) {
-      ABI abi = deposit
-          .getContract(triggerContractFromTransaction.getContractAddress().toByteArray())
-          .getInstance().getAbi();
+
+      ContractCapsule contract = deposit
+          .getContract(triggerContractFromTransaction.getContractAddress().toByteArray());
+      if (contract == null) {
+        logger.error("contract: {} is not in contract store", Wallet
+            .encode58Check(triggerContractFromTransaction.getContractAddress().toByteArray()));
+        throw new ContractValidateException("contract: " + Wallet
+            .encode58Check(triggerContractFromTransaction.getContractAddress().toByteArray())
+            + " is not in contract store");
+      }
+      ABI abi = contract.getInstance().getAbi();
       if (Wallet.isConstant(abi, triggerContractFromTransaction)) {
         return true;
       }
