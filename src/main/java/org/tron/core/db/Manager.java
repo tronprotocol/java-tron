@@ -676,6 +676,15 @@ public class Manager {
     }
   }
 
+  public void pushVerifiedBlock(BlockCapsule block) throws ContractValidateException,
+      ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
+      TransactionExpirationException, TooBigTransactionException, DupTransactionException, ReceiptException,
+      TaposException, ValidateScheduleException, TransactionTraceException, ReceiptCheckErrException,
+      UnsupportVMException, TooBigTransactionResultException {
+    block.generatedByMyself = true;
+    applyBlock(block);
+  }
+
   private void applyBlock(BlockCapsule block) throws ContractValidateException,
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException, ReceiptException,
