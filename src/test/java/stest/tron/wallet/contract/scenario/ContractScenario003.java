@@ -50,11 +50,11 @@ public class ContractScenario003 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(contract003Address,20000000L,fromAddress,
+    Assert.assertTrue(PublicMethed.sendcoin(contract003Address,200000000L,fromAddress,
         testKey002,blockingStubFull));
     logger.info(Long.toString(PublicMethed.queryAccount(contract003Key,blockingStubFull)
         .getBalance()));
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract003Address, 1000000L,
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract003Address, 10000000L,
         3,1,contract003Key,blockingStubFull));
     /*    Assert.assertTrue(PublicMethed.buyStorage(5000000L,contract003Address,contract003Key,
         blockingStubFull));*/
@@ -74,7 +74,7 @@ public class ContractScenario003 {
     logger.info("before energy usage is " + Long.toString(energyUsage));
     //logger.info("before storage limit is " + Long.toString(storageLimit));
     //logger.info("before storage usaged is " + Long.toString(storageUsage));
-    Long maxFeeLimit = 5000000L;
+    Long maxFeeLimit = 50000000L;
     String contractName = "ERC223";
     String code = "60c0604052600560808190527f546f6b656e0000000000000000000000000000000000000000000"
         + "0000000000060a090815261003e91600191906100f5565b506040805180820190915260038082527f544b4e"
