@@ -303,7 +303,10 @@ public class Runtime {
 
     CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
     SmartContract newSmartContract = contract.getNewContract();
-
+    if (!contract.getOwnerAddress().equals(newSmartContract.getOriginAddress())) {
+      logger.error("OwnerAddress not equals OriginAddress");
+      throw new ContractValidateException("OwnerAddress not equals OriginAddress");
+    }
     byte[] code = newSmartContract.getBytecode().toByteArray();
     byte[] contractAddress = Wallet.generateContractAddress(trx);
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
