@@ -135,13 +135,18 @@ public class ExchangeTransactionActuator extends AbstractActuator {
 
     byte[] tokenID = contract.getTokenId().toByteArray();
     long tokenQuant = contract.getQuant();
+    long tokenExpected = contract.getExpected();
 
     if (!Arrays.equals(tokenID, firstTokenID) && !Arrays.equals(tokenID, secondTokenID)) {
       throw new ContractValidateException("token is not in exchange");
     }
 
     if (tokenQuant <= 0) {
-      throw new ContractValidateException("transaction token balance must greater than zero");
+      throw new ContractValidateException("token quant must greater than zero");
+    }
+
+    if (tokenExpected <= 0) {
+      throw new ContractValidateException("token expected must greater than zero");
     }
 
     if (firstTokenBalance == 0 || secondTokenBalance == 0) {
@@ -168,8 +173,8 @@ public class ExchangeTransactionActuator extends AbstractActuator {
     }
 
     long anotherTokenQuant = exchangeCapsule.transaction(tokenID, tokenQuant);
-    if (anotherTokenQuant < 1) {
-      throw new ContractValidateException("token quant is not enough to buy 1 another token");
+    if (anotherTokenQuant < tokenExpected) {
+      throw new ContractValidateException("token required must greater than expected");
     }
 
     return true;
