@@ -64,6 +64,7 @@ public interface ProgramInvoke {
   BlockStore getBlockStore();
 
   boolean isStaticCall();
+  void setStaticCall();
 
   long getVmShouldEndInUs();
 

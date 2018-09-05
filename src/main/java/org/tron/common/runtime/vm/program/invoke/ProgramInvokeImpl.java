@@ -47,6 +47,12 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   private int callDeep = 0;
   private boolean isStaticCall = false;
 
+  // TODO just for constant call, TO refactor
+  @Override
+  public void setStaticCall() {
+    this.isStaticCall = true;
+  }
+
   public ProgramInvokeImpl(DataWord address, DataWord origin, DataWord caller, DataWord balance,
       DataWord callValue, byte[] msgData,
       DataWord lastHash, DataWord coinbase, DataWord timestamp, DataWord number,

@@ -822,7 +822,7 @@ public class Wallet {
         }
 
         Runtime runtime = new Runtime(trxCap.getInstance(), headBlock, deposit,
-            new ProgramInvokeFactoryImpl());
+            new ProgramInvokeFactoryImpl(), true);
         runtime.init();
         runtime.execute();
         runtime.go();

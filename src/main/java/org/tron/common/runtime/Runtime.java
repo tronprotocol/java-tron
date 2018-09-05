@@ -92,6 +92,8 @@ public class Runtime {
   //tx trace
   private TransactionTrace trace;
 
+  private boolean isStaticCall = false;
+
 
   /**
    * For block's trx run
@@ -166,6 +168,12 @@ public class Runtime {
   /**
    * For constant trx with latest block.
    */
+  public Runtime(Transaction tx, Block block, DepositImpl deposit,
+                 ProgramInvokeFactory programInvokeFactory, boolean isStaticCall) {
+    this(tx, block,  deposit, programInvokeFactory);
+    this.isStaticCall = isStaticCall;
+  }
+
   public Runtime(Transaction tx, Block block, DepositImpl deposit,
       ProgramInvokeFactory programInvokeFactory) {
     this.trx = tx;
@@ -450,6 +458,9 @@ public class Runtime {
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executorType, trx,
               block, deposit, vmStartInUs, vmShouldEndInUs, gasLimit);
+      if (this.isStaticCall) {
+        programInvoke.setStaticCall();
+      }
       this.vm = new VM(config);
       this.program = new Program(ops, programInvoke, internalTransaction, config);
     } catch (Exception e) {
