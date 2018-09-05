@@ -455,7 +455,7 @@ public class ExchangeTransactionActuatorTest {
   }
 
   /**
-   * withdraw token quant must greater than zero
+   * token quant must greater than zero
    */
   @Test
   public void tokenQuantLessThanZero() {
@@ -562,7 +562,7 @@ public class ExchangeTransactionActuatorTest {
   }
 
   /**
-   * first token balance is not enough
+   * token balance is not enough
    */
   @Test
   public void tokenBalanceNotEnough() {
