@@ -524,10 +524,12 @@ public class Runtime {
         deposit.commit();
       }
     } catch (JVMStackOverFlowException e) {
+      program.spendAllEnergy();
       result.setException(e);
       runtimeError = result.getException().getMessage();
       logger.error("runtime error is :{}", result.getException().getMessage());
     } catch (OutOfResourceException e) {
+      program.spendAllEnergy();
       result.setException(e);
       runtimeError = result.getException().getMessage();
       logger.error("runtime error is :{}", result.getException().getMessage());
