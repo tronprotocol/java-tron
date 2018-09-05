@@ -184,18 +184,29 @@ public class Runtime {
   }
 
   public void execute() throws ContractValidateException, ContractExeException {
-    switch (trxType) {
-      case TRX_PRECOMPILED_TYPE:
-        precompiled();
-        break;
-      case TRX_CONTRACT_CREATION_TYPE:
-        create();
-        break;
-      case TRX_CONTRACT_CALL_TYPE:
-        call();
-        break;
-      default:
-        throw new ContractValidateException("Unknown contract type");
+    try {
+      switch (trxType) {
+        case TRX_PRECOMPILED_TYPE:
+          precompiled();
+          break;
+        case TRX_CONTRACT_CREATION_TYPE:
+          create();
+          break;
+        case TRX_CONTRACT_CALL_TYPE:
+          call();
+          break;
+        default:
+          throw new ContractValidateException("Unknown contract type");
+      }
+    }
+    catch (ContractExeException e){
+      throw e;
+    }
+    catch (ContractValidateException e){
+      throw e;
+    }
+    catch (Exception e){
+      throw new ContractValidateException("Unknown contract error");
     }
   }
 

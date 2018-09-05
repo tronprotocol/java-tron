@@ -912,10 +912,6 @@ public class PrecompiledContracts {
         return Pair.of(true, new DataWord(0).getData());
       }
 
-      if (data == null) {
-        data = EMPTY_BYTE_ARRAY;
-      }
-
       Contract.WithdrawBalanceContract.Builder builder = Contract.WithdrawBalanceContract
           .newBuilder();
       ByteString byteAddress = ByteString.copyFrom(getCallerAddress());
