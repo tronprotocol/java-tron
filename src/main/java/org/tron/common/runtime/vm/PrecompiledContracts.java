@@ -88,17 +88,17 @@ public class PrecompiledContracts {
   private static final BN128Addition altBN128Add = new BN128Addition();
   private static final BN128Multiplication altBN128Mul = new BN128Multiplication();
   private static final BN128Pairing altBN128Pairing = new BN128Pairing();
-  private static final VoteWitnessNative voteContract = new VoteWitnessNative();
-  //  private static final FreezeBalanceNative freezeBalance = new FreezeBalanceNative();
+//  private static final VoteWitnessNative voteContract = new VoteWitnessNative();
+//  private static final FreezeBalanceNative freezeBalance = new FreezeBalanceNative();
 //  private static final UnfreezeBalanceNative unFreezeBalance = new UnfreezeBalanceNative();
-  private static final WithdrawBalanceNative withdrawBalance = new WithdrawBalanceNative();
-  private static final ProposalApproveNative proposalApprove = new ProposalApproveNative();
-  private static final ProposalCreateNative proposalCreate = new ProposalCreateNative();
-  private static final ProposalDeleteNative proposalDelete = new ProposalDeleteNative();
-  private static final ConvertFromTronBytesAddressNative convertFromTronBytesAddress = new ConvertFromTronBytesAddressNative();
-  private static final ConvertFromTronBase58AddressNative convertFromTronBase58Address = new ConvertFromTronBase58AddressNative();
+//  private static final WithdrawBalanceNative withdrawBalance = new WithdrawBalanceNative();
+//  private static final ProposalApproveNative proposalApprove = new ProposalApproveNative();
+//  private static final ProposalCreateNative proposalCreate = new ProposalCreateNative();
+//  private static final ProposalDeleteNative proposalDelete = new ProposalDeleteNative();
+//  private static final ConvertFromTronBytesAddressNative convertFromTronBytesAddress = new ConvertFromTronBytesAddressNative();
+//  private static final ConvertFromTronBase58AddressNative convertFromTronBase58Address = new ConvertFromTronBase58AddressNative();
 //  private static final TransferAssetNative transferAsset = new TransferAssetNative();
-  private static final GetTransferAssetNative getTransferAssetAmount =  new GetTransferAssetNative();
+//  private static final GetTransferAssetNative getTransferAssetAmount =  new GetTransferAssetNative();
 
   private static final ECKey addressCheckECKey = new ECKey();
   private static final String addressCheckECKeyAddress = Wallet
