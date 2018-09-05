@@ -1333,9 +1333,8 @@ public class VM {
       }
 
     } catch (JVMStackOverFlowException e) {
-      throw new JVMStackOverFlowException();
+      throw e;
     } catch (OutOfResourceException e) {
-      program.setRuntimeFailure(e);
       throw e;
     } catch (RuntimeException e) {
       if (StringUtils.isEmpty(e.getMessage())) {
