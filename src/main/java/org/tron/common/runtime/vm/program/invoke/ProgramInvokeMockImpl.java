@@ -224,6 +224,11 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   }
 
   @Override
+  public void setStaticCall() {
+
+  }
+
+  @Override
   public boolean byTestingSuite() {
     return false;
   }
