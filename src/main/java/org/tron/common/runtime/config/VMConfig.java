@@ -17,34 +17,29 @@
  */
 package org.tron.common.runtime.config;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
- *  For developer only
+ * For developer only
  */
-public class SystemProperties {
+public class VMConfig {
 
-  private static Logger logger = LoggerFactory.getLogger("general");
+  public static final int MAX_CODE_LENGTH = 1024 * 1024;
+
+  public static final int MAX_FEE_LIMIT = 1_000_000_000; //1000 trx
 
   private boolean vmTraceCompressed = false;
-  private boolean vmOn = true;
   private boolean vmTrace = false;
 
-  private SystemProperties() {
+
+  private VMConfig() {
   }
 
   private static class SystemPropertiesInstance {
 
-    private static final SystemProperties INSTANCE = new SystemProperties();
+    private static final VMConfig INSTANCE = new VMConfig();
   }
 
-  public static SystemProperties getInstance() {
+  public static VMConfig getInstance() {
     return SystemPropertiesInstance.INSTANCE;
-  }
-
-  public boolean vmOn() {
-    return vmOn;
   }
 
   public boolean vmTrace() {
