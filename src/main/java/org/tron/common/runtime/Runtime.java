@@ -34,6 +34,7 @@ import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
+import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
 import org.tron.common.runtime.vm.program.ProgramPrecompile;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
@@ -500,10 +501,12 @@ public class Runtime {
           long saveCodeEnergy = getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
           long afterSpend = program.getEnergyLimitLeft().longValue() - saveCodeEnergy;
           if (afterSpend < 0) {
-            result.setException(
-                Program.Exception
-                    .notEnoughSpendEnergy("No energy to save just created contract code",
-                        saveCodeEnergy, program.getEnergyLimitLeft().longValue()));
+            if (null == result.getException()) {
+              result.setException(
+                  Program.Exception
+                      .notEnoughSpendEnergy("save just created contract code",
+                          saveCodeEnergy, program.getEnergyLimitLeft().longValue()));
+            }
           } else {
             result.spendEnergy(saveCodeEnergy);
             // have saveCode in create()
@@ -529,6 +532,12 @@ public class Runtime {
         deposit.commit();
       }
     } catch (JVMStackOverFlowException e) {
+      program.spendAllEnergy();
+      result.setException(e);
+      runtimeError = result.getException().getMessage();
+      logger.error("runtime error is :{}", result.getException().getMessage());
+    } catch (OutOfResourceException e) {
+      program.spendAllEnergy();
       result.setException(e);
       runtimeError = result.getException().getMessage();
       logger.error("runtime error is :{}", result.getException().getMessage());
