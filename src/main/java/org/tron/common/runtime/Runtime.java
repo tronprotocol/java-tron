@@ -198,14 +198,9 @@ public class Runtime {
         default:
           throw new ContractValidateException("Unknown contract type");
       }
-    }
-    catch (ContractExeException e){
+    } catch (ContractExeException | ContractValidateException e) {
       throw e;
-    }
-    catch (ContractValidateException e){
-      throw e;
-    }
-    catch (Exception e){
+    } catch (Exception e) {
       throw new ContractValidateException("Unknown contract error");
     }
   }
