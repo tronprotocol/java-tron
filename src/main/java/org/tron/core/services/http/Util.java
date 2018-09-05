@@ -401,6 +401,30 @@ public class Util {
                     CreateSmartContractBuilder);
             any = Any.pack(CreateSmartContractBuilder.build());
             break;
+          case "ProposalCreateContract":
+            ProposalCreateContract.Builder ProposalCreateContractBuilder = ProposalCreateContract
+                .newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    ProposalCreateContractBuilder);
+            any = Any.pack(ProposalCreateContractBuilder.build());
+            break;
+          case "ProposalApproveContract":
+            ProposalApproveContract.Builder ProposalApproveContractBuilder = ProposalApproveContract
+                .newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    ProposalApproveContractBuilder);
+            any = Any.pack(ProposalApproveContractBuilder.build());
+            break;
+          case "ProposalDeleteContract":
+            ProposalDeleteContract.Builder ProposalDeleteContractBuilder = ProposalDeleteContract
+                .newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    ProposalDeleteContractBuilder);
+            any = Any.pack(ProposalDeleteContractBuilder.build());
+            break;
           // todo add other contract
           default:
         }
