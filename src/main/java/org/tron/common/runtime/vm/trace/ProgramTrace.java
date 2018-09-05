@@ -25,7 +25,7 @@ import static org.tron.common.utils.ByteUtil.toHexString;
 import java.util.ArrayList;
 import java.util.List;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.runtime.config.SystemProperties;
+import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.OpCode;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
@@ -41,7 +41,7 @@ public class ProgramTrace {
         this(null, null);
     }
 
-    public ProgramTrace(SystemProperties config, ProgramInvoke programInvoke) {
+    public ProgramTrace(VMConfig config, ProgramInvoke programInvoke) {
         if (programInvoke != null && config.vmTrace()) {
             contractAddress = Hex.toHexString(convertToTronAddress(programInvoke.getOwnerAddress().getLast20Bytes()));
         }

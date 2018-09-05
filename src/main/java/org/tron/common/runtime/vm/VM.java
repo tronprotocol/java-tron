@@ -14,10 +14,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
-import org.tron.common.runtime.config.SystemProperties;
+import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
 import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
+import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
 import org.tron.common.runtime.vm.program.Stack;
 
 @Slf4j(topic = "VM")
@@ -41,14 +42,14 @@ public class VM {
   private boolean vmTrace;
   // private long dumpBlock;
 
-  private final SystemProperties config;
+  private final VMConfig config;
 
   public VM() {
-    config = SystemProperties.getInstance();
+    config = VMConfig.getInstance();
   }
 
   @Autowired
-  public VM(SystemProperties config) {
+  public VM(VMConfig config) {
     this.config = config;
     // vmTrace = config.vmTrace();
     // dumpBlock = config.dumpBlock();
@@ -1332,7 +1333,9 @@ public class VM {
       }
 
     } catch (JVMStackOverFlowException e) {
-      throw new JVMStackOverFlowException();
+      throw e;
+    } catch (OutOfResourceException e) {
+      throw e;
     } catch (RuntimeException e) {
       if (StringUtils.isEmpty(e.getMessage())) {
         program.setRuntimeFailure(new RuntimeException("Unknown Exception"));

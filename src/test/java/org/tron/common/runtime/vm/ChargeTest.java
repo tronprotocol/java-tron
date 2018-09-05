@@ -68,7 +68,7 @@ public class ChargeTest {
   public void testOverflow()
       throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "testOverflow";
@@ -92,7 +92,7 @@ public class ChargeTest {
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 20000000000L, feeLimit, deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 200000000000L);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 10_000_000L);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() instanceof ArithmeticException);
@@ -118,7 +118,7 @@ public class ChargeTest {
   public void testNegative()
       throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "testNegative";
@@ -142,7 +142,7 @@ public class ChargeTest {
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, value, feeLimit, deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 200000000000L);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 10_000_000L);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() instanceof ArithmeticException);
@@ -153,7 +153,7 @@ public class ChargeTest {
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, -100, feeLimit, deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 200000000000L);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 10_000_000L);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() instanceof ArithmeticException);
@@ -187,7 +187,7 @@ public class ChargeTest {
   public void testCallDepth()
       throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "testCallDepth";
@@ -264,7 +264,7 @@ public class ChargeTest {
   public void testCallDepthAndWidth()
       throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "testCallDepthAndWidth";
@@ -300,7 +300,7 @@ public class ChargeTest {
   public void testCreateDepthAndWidth()
       throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
     long value = 0;
-    long feeLimit = 90000000000000L; // sun
+    long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "testCallDepthAndWidth";
