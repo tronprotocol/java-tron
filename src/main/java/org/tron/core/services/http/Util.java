@@ -258,12 +258,14 @@ public class Util {
           case ExchangeWithdrawContract:
             ExchangeWithdrawContract exchangeWithdrawContract = contractParameter
                 .unpack(ExchangeWithdrawContract.class);
-            contractJson = JSONObject.parseObject(JsonFormat.printToString(exchangeWithdrawContract));
+            contractJson = JSONObject
+                .parseObject(JsonFormat.printToString(exchangeWithdrawContract));
             break;
           case ExchangeTransactionContract:
             ExchangeTransactionContract exchangeTransactionContract = contractParameter
                 .unpack(ExchangeTransactionContract.class);
-            contractJson = JSONObject.parseObject(JsonFormat.printToString(exchangeTransactionContract));
+            contractJson = JSONObject
+                .parseObject(JsonFormat.printToString(exchangeTransactionContract));
             break;
           // todo add other contract
           default:
