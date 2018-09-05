@@ -489,10 +489,12 @@ public class Runtime {
           long saveCodeEnergy = getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
           long afterSpend = program.getEnergyLimitLeft().longValue() - saveCodeEnergy;
           if (afterSpend < 0) {
-            result.setException(
-                Program.Exception
-                    .notEnoughSpendEnergy("No energy to save just created contract code",
-                        saveCodeEnergy, program.getEnergyLimitLeft().longValue()));
+            if (null == result.getException()) {
+              result.setException(
+                  Program.Exception
+                      .notEnoughSpendEnergy("save just created contract code",
+                          saveCodeEnergy, program.getEnergyLimitLeft().longValue()));
+            }
           } else {
             result.spendEnergy(saveCodeEnergy);
             // have saveCode in create()
