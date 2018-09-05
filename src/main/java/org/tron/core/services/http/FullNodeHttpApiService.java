@@ -97,6 +97,13 @@ public class FullNodeHttpApiService implements Service {
   private TriggerSmartContractServlet triggerSmartContractServlet;
   @Autowired
   private GetContractServlet getContractServlet;
+  @Autowired
+  private ProposalCreateServlet proposalCreateServlet;
+  @Autowired
+  private ProposalApproveServlet proposalApproveServlet;
+  @Autowired
+  private ProposalDeleteServlet proposalDeleteServlet;
+
 
   @Override
   public void init() {
@@ -158,6 +165,9 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(deployContractServlet), "/deploycontract");
       context.addServlet(new ServletHolder(triggerSmartContractServlet), "/triggersmartcontract");
       context.addServlet(new ServletHolder(getContractServlet), "/getcontract");
+      context.addServlet(new ServletHolder(proposalCreateServlet), "/proposalcreate");
+      context.addServlet(new ServletHolder(proposalApproveServlet), "/proposalapprove");
+      context.addServlet(new ServletHolder(proposalDeleteServlet), "/proposaldelete");
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());

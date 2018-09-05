@@ -22,6 +22,9 @@ import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
+import org.tron.protos.Contract.ProposalApproveContract;
+import org.tron.protos.Contract.ProposalCreateContract;
+import org.tron.protos.Contract.ProposalDeleteContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.TriggerSmartContract;
@@ -221,6 +224,22 @@ public class Util {
             TriggerSmartContract triggerSmartContract = contractParameter
                 .unpack(TriggerSmartContract.class);
             contractJson = JSONObject.parseObject(JsonFormat.printToString(triggerSmartContract));
+            break;
+          case ProposalCreateContract:
+            ProposalCreateContract proposalCreateContract = contractParameter
+                .unpack(ProposalCreateContract.class);
+            contractJson = JSONObject.parseObject(JsonFormat.printToString(proposalCreateContract));
+            break;
+          case ProposalApproveContract:
+            ProposalApproveContract proposalApproveContract = contractParameter
+                .unpack(ProposalApproveContract.class);
+            contractJson = JSONObject
+                .parseObject(JsonFormat.printToString(proposalApproveContract));
+            break;
+          case ProposalDeleteContract:
+            ProposalDeleteContract proposalDeleteContract = contractParameter
+                .unpack(ProposalDeleteContract.class);
+            contractJson = JSONObject.parseObject(JsonFormat.printToString(proposalDeleteContract));
             break;
           // todo add other contract
           default:
