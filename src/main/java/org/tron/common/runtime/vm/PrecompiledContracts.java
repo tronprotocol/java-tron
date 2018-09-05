@@ -88,17 +88,17 @@ public class PrecompiledContracts {
   private static final BN128Addition altBN128Add = new BN128Addition();
   private static final BN128Multiplication altBN128Mul = new BN128Multiplication();
   private static final BN128Pairing altBN128Pairing = new BN128Pairing();
-  private static final VoteWitnessNative voteContract = new VoteWitnessNative();
-  //  private static final FreezeBalanceNative freezeBalance = new FreezeBalanceNative();
+//  private static final VoteWitnessNative voteContract = new VoteWitnessNative();
+//  private static final FreezeBalanceNative freezeBalance = new FreezeBalanceNative();
 //  private static final UnfreezeBalanceNative unFreezeBalance = new UnfreezeBalanceNative();
-  private static final WithdrawBalanceNative withdrawBalance = new WithdrawBalanceNative();
-  private static final ProposalApproveNative proposalApprove = new ProposalApproveNative();
-  private static final ProposalCreateNative proposalCreate = new ProposalCreateNative();
-  private static final ProposalDeleteNative proposalDelete = new ProposalDeleteNative();
-  private static final ConvertFromTronBytesAddressNative convertFromTronBytesAddress = new ConvertFromTronBytesAddressNative();
-  private static final ConvertFromTronBase58AddressNative convertFromTronBase58Address = new ConvertFromTronBase58AddressNative();
+//  private static final WithdrawBalanceNative withdrawBalance = new WithdrawBalanceNative();
+//  private static final ProposalApproveNative proposalApprove = new ProposalApproveNative();
+//  private static final ProposalCreateNative proposalCreate = new ProposalCreateNative();
+//  private static final ProposalDeleteNative proposalDelete = new ProposalDeleteNative();
+//  private static final ConvertFromTronBytesAddressNative convertFromTronBytesAddress = new ConvertFromTronBytesAddressNative();
+//  private static final ConvertFromTronBase58AddressNative convertFromTronBase58Address = new ConvertFromTronBase58AddressNative();
 //  private static final TransferAssetNative transferAsset = new TransferAssetNative();
-  private static final GetTransferAssetNative getTransferAssetAmount =  new GetTransferAssetNative();
+//  private static final GetTransferAssetNative getTransferAssetAmount =  new GetTransferAssetNative();
 
   private static final ECKey addressCheckECKey = new ECKey();
   private static final String addressCheckECKeyAddress = Wallet
@@ -121,28 +121,28 @@ public class PrecompiledContracts {
       "0000000000000000000000000000000000000000000000000000000000000007");
   private static final DataWord altBN128PairingAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000000008");
-  private static final DataWord voteContractAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000000010001");
+//  private static final DataWord voteContractAddr = new DataWord(
+//      "0000000000000000000000000000000000000000000000000000000000010001");
   //  private static final DataWord freezeBalanceAddr = new DataWord(
 //      "0000000000000000000000000000000000000000000000000000000000010002");
 //  private static final DataWord unFreezeBalanceAddr = new DataWord(
 //      "0000000000000000000000000000000000000000000000000000000000010003");
-  private static final DataWord withdrawBalanceAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000000010004");
-  private static final DataWord proposalApproveAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000000010005");
-  private static final DataWord proposalCreateAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000000010006");
-  private static final DataWord proposalDeleteAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000000010007");
-  private static final DataWord convertFromTronBytesAddressAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000000010008");
-  private static final DataWord convertFromTronBase58AddressAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000000010009");
+//  private static final DataWord withdrawBalanceAddr = new DataWord(
+//      "0000000000000000000000000000000000000000000000000000000000010004");
+//  private static final DataWord proposalApproveAddr = new DataWord(
+//      "0000000000000000000000000000000000000000000000000000000000010005");
+//  private static final DataWord proposalCreateAddr = new DataWord(
+//      "0000000000000000000000000000000000000000000000000000000000010006");
+//  private static final DataWord proposalDeleteAddr = new DataWord(
+//      "0000000000000000000000000000000000000000000000000000000000010007");
+//  private static final DataWord convertFromTronBytesAddressAddr = new DataWord(
+//      "0000000000000000000000000000000000000000000000000000000000010008");
+//  private static final DataWord convertFromTronBase58AddressAddr = new DataWord(
+//      "0000000000000000000000000000000000000000000000000000000000010009");
 //  private static final DataWord transferAssetAddr = new DataWord(
 //      "000000000000000000000000000000000000000000000000000000000001000a");
-  private static final DataWord getTransferAssetAmountAddr = new DataWord(
-      "000000000000000000000000000000000000000000000000000000000001000b");
+//  private static final DataWord getTransferAssetAmountAddr = new DataWord(
+//      "000000000000000000000000000000000000000000000000000000000001000b");
 
   public static PrecompiledContract getContractForAddress(DataWord address) {
 
@@ -161,39 +161,39 @@ public class PrecompiledContracts {
     if (address.equals(identityAddr)) {
       return identity;
     }
-    if (address.equals(voteContractAddr)) {
-      return voteContract;
-    }
+//    if (address.equals(voteContractAddr)) {
+//      return voteContract;
+//    }
 //    if (address.equals(freezeBalanceAddr)) {
 //      return freezeBalance;
 //    }
 //    if (address.equals(unFreezeBalanceAddr)) {
 //      return unFreezeBalance;
 //    }
-    if (address.equals(withdrawBalanceAddr)) {
-      return withdrawBalance;
-    }
-    if (address.equals(proposalApproveAddr)) {
-      return proposalApprove;
-    }
-    if (address.equals(proposalCreateAddr)) {
-      return proposalCreate;
-    }
-    if (address.equals(proposalDeleteAddr)) {
-      return proposalDelete;
-    }
-    if (address.equals(convertFromTronBytesAddressAddr)) {
-      return convertFromTronBytesAddress;
-    }
-    if (address.equals(convertFromTronBase58AddressAddr)) {
-      return convertFromTronBase58Address;
-    }
+//    if (address.equals(withdrawBalanceAddr)) {
+//      return withdrawBalance;
+//    }
+//    if (address.equals(proposalApproveAddr)) {
+//      return proposalApprove;
+//    }
+//    if (address.equals(proposalCreateAddr)) {
+//      return proposalCreate;
+//    }
+//    if (address.equals(proposalDeleteAddr)) {
+//      return proposalDelete;
+//    }
+//    if (address.equals(convertFromTronBytesAddressAddr)) {
+//      return convertFromTronBytesAddress;
+//    }
+//    if (address.equals(convertFromTronBase58AddressAddr)) {
+//      return convertFromTronBase58Address;
+//    }
 //    if (address.equals(transferAssetAddr)) {
 //      return transferAsset;
 //    }
-    if (address.equals(getTransferAssetAmountAddr)) {
-      return getTransferAssetAmount;
-    }
+//    if (address.equals(getTransferAssetAmountAddr)) {
+//      return getTransferAssetAmount;
+//    }
 
     // Byzantium precompiles
     if (address.equals(modExpAddr)) {

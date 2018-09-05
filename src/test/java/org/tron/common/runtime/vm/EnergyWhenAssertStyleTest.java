@@ -399,7 +399,7 @@ public class EnergyWhenAssertStyleTest {
   //
   // }
 
-  @Test
+  //@Test
   public void systemPrecompileTest()
       throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
     long value = 0;
