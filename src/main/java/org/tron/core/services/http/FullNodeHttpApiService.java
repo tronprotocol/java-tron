@@ -103,7 +103,10 @@ public class FullNodeHttpApiService implements Service {
   private ProposalApproveServlet proposalApproveServlet;
   @Autowired
   private ProposalDeleteServlet proposalDeleteServlet;
-
+  @Autowired
+  private ListProposalsServlet listProposalsServlet;
+  @Autowired
+  private GetProposalByIdServlet getProposalByIdServlet;
 
   @Override
   public void init() {
@@ -168,6 +171,8 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(proposalCreateServlet), "/proposalcreate");
       context.addServlet(new ServletHolder(proposalApproveServlet), "/proposalapprove");
       context.addServlet(new ServletHolder(proposalDeleteServlet), "/proposaldelete");
+      context.addServlet(new ServletHolder(listProposalsServlet), "/listproposals");
+      context.addServlet(new ServletHolder(getProposalByIdServlet), "/getproposalbyid");
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());
