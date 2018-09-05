@@ -214,6 +214,10 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   }
 
   @Override
+  public void setStaticCall() {
+  }
+
+  @Override
   public long getVmStartInUs() {
     return 0;
   }
