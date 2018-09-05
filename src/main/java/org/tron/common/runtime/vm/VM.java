@@ -18,6 +18,7 @@ import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
 import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
+import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
 import org.tron.common.runtime.vm.program.Stack;
 
 @Slf4j(topic = "VM")
@@ -1333,6 +1334,9 @@ public class VM {
 
     } catch (JVMStackOverFlowException e) {
       throw new JVMStackOverFlowException();
+    } catch (OutOfResourceException e) {
+      program.setRuntimeFailure(e);
+      throw e;
     } catch (RuntimeException e) {
       if (StringUtils.isEmpty(e.getMessage())) {
         program.setRuntimeFailure(new RuntimeException("Unknown Exception"));
