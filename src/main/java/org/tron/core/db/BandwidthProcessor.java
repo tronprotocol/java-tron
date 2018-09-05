@@ -18,7 +18,10 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
+import org.tron.protos.Protocol.Transaction.Result;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
 @Slf4j
 public class BandwidthProcessor extends ResourceProcessor {
@@ -60,10 +63,7 @@ public class BandwidthProcessor extends ResourceProcessor {
 
     long bytesSize;
     if (dbManager.getDynamicPropertiesStore().supportVM()) {
-      TransactionCapsule txCapForEstimateBandWidth = new TransactionCapsule(
-          trx.getInstance().getRawData(),
-          trx.getInstance().getSignatureList());
-      bytesSize = txCapForEstimateBandWidth.getSerializedSize();
+      bytesSize = trx.getInstance().toBuilder().clearRet().build().getSerializedSize();
     } else {
       bytesSize = trx.getSerializedSize();
     }
