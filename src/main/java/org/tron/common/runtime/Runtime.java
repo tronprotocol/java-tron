@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.runtime.config.SystemProperties;
+import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.EnergyCost;
 import org.tron.common.runtime.vm.PrecompiledContracts;
@@ -71,7 +71,7 @@ import org.tron.protos.Protocol.Transaction.Result.contractResult;
 public class Runtime {
 
 
-  private SystemProperties config = SystemProperties.getInstance();
+  private VMConfig config = VMConfig.getInstance();
 
   private Transaction trx;
   private BlockCapsule blockCap = null;
@@ -185,18 +185,24 @@ public class Runtime {
   }
 
   public void execute() throws ContractValidateException, ContractExeException {
-    switch (trxType) {
-      case TRX_PRECOMPILED_TYPE:
-        precompiled();
-        break;
-      case TRX_CONTRACT_CREATION_TYPE:
-        create();
-        break;
-      case TRX_CONTRACT_CALL_TYPE:
-        call();
-        break;
-      default:
-        throw new ContractValidateException("Unknown contract type");
+    try {
+      switch (trxType) {
+        case TRX_PRECOMPILED_TYPE:
+          precompiled();
+          break;
+        case TRX_CONTRACT_CREATION_TYPE:
+          create();
+          break;
+        case TRX_CONTRACT_CALL_TYPE:
+          call();
+          break;
+        default:
+          throw new ContractValidateException("Unknown contract type");
+      }
+    } catch (ContractExeException | ContractValidateException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new ContractValidateException("Unknown contract error");
     }
   }
 
@@ -352,9 +358,10 @@ public class Runtime {
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
       long feeLimit = trx.getRawData().getFeeLimit();
-      if (feeLimit < 0) {
-        logger.info("feeLimit < 0");
-        throw new ContractValidateException("feeLimit must be >= 0");
+      if (feeLimit < 0 || feeLimit > VMConfig.MAX_FEE_LIMIT) {
+        logger.warn("invalid feeLimit {}", feeLimit);
+        throw new ContractValidateException(
+            "feeLimit must be >= 0 and <= " + VMConfig.MAX_FEE_LIMIT);
       }
 
       long energyLimit = getEnergyLimit(creator, feeLimit, callValue);
@@ -429,9 +436,10 @@ public class Runtime {
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
       long feeLimit = trx.getRawData().getFeeLimit();
-      if (feeLimit < 0) {
-        logger.info("feeLimit < 0");
-        throw new ContractValidateException("feeLimit must be >= 0");
+      if (feeLimit < 0 || feeLimit > VMConfig.MAX_FEE_LIMIT) {
+        logger.warn("invalid feeLimit {}", feeLimit);
+        throw new ContractValidateException(
+            "feeLimit must be >= 0 and <= " + VMConfig.MAX_FEE_LIMIT);
       }
       long energyLimit;
       if (isCallConstant(contractAddress)) {

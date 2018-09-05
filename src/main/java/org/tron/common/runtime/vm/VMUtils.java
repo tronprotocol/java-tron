@@ -19,7 +19,7 @@ package org.tron.common.runtime.vm;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.common.runtime.config.SystemProperties;
+import org.tron.common.runtime.config.VMConfig;
 import java.io.*;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
@@ -47,7 +47,7 @@ public final class VMUtils {
         }
     }
 
-    private static File createProgramTraceFile(SystemProperties config, String txHash) {
+    private static File createProgramTraceFile(VMConfig config, String txHash) {
         File result = null;
 
         if (config.vmTrace()) {
@@ -86,7 +86,7 @@ public final class VMUtils {
         }
     }
 
-    public static void saveProgramTraceFile(SystemProperties config, String txHash, String content) {
+    public static void saveProgramTraceFile(VMConfig config, String txHash, String content) {
         File file = createProgramTraceFile(config, txHash);
         if (file != null) {
             writeStringToFile(file, content);
