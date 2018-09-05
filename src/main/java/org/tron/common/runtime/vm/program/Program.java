@@ -484,7 +484,7 @@ public class Program {
         }
         */
 
-    Deposit deposit = getContractState();
+    Deposit deposit = getContractState().newDepositChild();
 
     //In case of hashing collisions, check for any balance before createAccount()
     long oldBalance = deposit.getBalance(newAddress);
