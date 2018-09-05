@@ -87,7 +87,7 @@ public class EnergyWhenSendAndTransferTest {
       throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
     long value = 10000000L;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
     TVMTestResult result = deployCallValueTestContract(value, feeLimit,
         consumeUserResourcePercent);
@@ -150,7 +150,7 @@ public class EnergyWhenSendAndTransferTest {
       throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
     long value = 1000L;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
     TVMTestResult result = deploySendAndTransferTestContract(value, feeLimit,
         consumeUserResourcePercent);
@@ -176,7 +176,7 @@ public class EnergyWhenSendAndTransferTest {
 
     long value = 1000L;
     // long value = 10000000L;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
     TVMTestResult result = deploySendAndTransferTestContract(value, feeLimit,
         consumeUserResourcePercent);

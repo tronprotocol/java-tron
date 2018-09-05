@@ -79,7 +79,7 @@ public class EnergyWhenRequireStyleTest {
       throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "test";
@@ -124,7 +124,7 @@ public class EnergyWhenRequireStyleTest {
       throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "test";
@@ -174,7 +174,7 @@ public class EnergyWhenRequireStyleTest {
       throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "test";
@@ -233,7 +233,7 @@ public class EnergyWhenRequireStyleTest {
       throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "test";
@@ -285,7 +285,7 @@ public class EnergyWhenRequireStyleTest {
       throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "test";
@@ -309,7 +309,7 @@ public class EnergyWhenRequireStyleTest {
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 200000000000L);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 10_000_000L);
 
     // todo: revert should be true!! see later
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
@@ -344,7 +344,7 @@ public class EnergyWhenRequireStyleTest {
       throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
     long value = 10;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "test";
@@ -411,7 +411,7 @@ public class EnergyWhenRequireStyleTest {
       throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "test";

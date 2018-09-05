@@ -85,7 +85,7 @@ public class EnergyWhenAssertStyleTest {
       throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
 
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "test";
@@ -108,7 +108,7 @@ public class EnergyWhenAssertStyleTest {
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 200000000000L);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 10_000_000L);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() instanceof IllegalOperationException);
@@ -130,7 +130,7 @@ public class EnergyWhenAssertStyleTest {
       throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "test";
@@ -153,7 +153,7 @@ public class EnergyWhenAssertStyleTest {
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 200000000000L);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 10_000_000L);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() instanceof IllegalOperationException);
@@ -174,7 +174,7 @@ public class EnergyWhenAssertStyleTest {
       throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "test";
@@ -197,7 +197,7 @@ public class EnergyWhenAssertStyleTest {
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 200000000000L);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 10_000_000L);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() instanceof IllegalOperationException);
@@ -219,7 +219,7 @@ public class EnergyWhenAssertStyleTest {
       throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "test";
@@ -242,7 +242,7 @@ public class EnergyWhenAssertStyleTest {
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 200000000000L);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 10_000_000L);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() instanceof IllegalOperationException);
@@ -265,7 +265,7 @@ public class EnergyWhenAssertStyleTest {
       throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "test";
@@ -288,7 +288,7 @@ public class EnergyWhenAssertStyleTest {
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 200000000000L);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 10_000_000L);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() instanceof IllegalOperationException);
@@ -309,7 +309,7 @@ public class EnergyWhenAssertStyleTest {
       throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "test";
@@ -332,7 +332,7 @@ public class EnergyWhenAssertStyleTest {
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 200000000000L);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 10_000_000L);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() instanceof IllegalOperationException);
@@ -353,7 +353,7 @@ public class EnergyWhenAssertStyleTest {
       throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
 
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "test";
@@ -376,7 +376,7 @@ public class EnergyWhenAssertStyleTest {
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 200000000000L);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 10_000_000L);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() instanceof IllegalOperationException);
@@ -403,7 +403,7 @@ public class EnergyWhenAssertStyleTest {
   public void systemPrecompileTest()
       throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "test";
@@ -430,7 +430,7 @@ public class EnergyWhenAssertStyleTest {
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 200000000000L);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 10_000_000L);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() instanceof PrecompiledContractException);
@@ -451,7 +451,7 @@ public class EnergyWhenAssertStyleTest {
   public void outOfMemTest()
       throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "test";
@@ -474,7 +474,7 @@ public class EnergyWhenAssertStyleTest {
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, deposit, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 200000000000L);
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 10_000_000L);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() instanceof OutOfMemoryException);
