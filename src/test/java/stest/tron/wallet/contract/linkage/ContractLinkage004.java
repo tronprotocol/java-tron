@@ -77,7 +77,7 @@ public class ContractLinkage004 {
 
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
-    final Long maxFeeLimit = 15000000L;
+    final Long maxFeeLimit = 2000000000L;
     contractName = "tronNative";
     code = "608060405260008054600160a060020a03199081166201000117909155600180548216620100021"
         + "790556002805482166201000317905560038054821662010004179055600480548216620100051790556005"
