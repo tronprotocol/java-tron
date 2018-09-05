@@ -78,7 +78,7 @@ public class EnergyWhenTimeoutStyleTest {
       throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
 
     long value = 0;
-    long feeLimit = 20000000000000L;
+    long feeLimit = 1000_000_000L;
     long consumeUserResourcePercent = 0;
     TVMTestResult result = deployEndlessLoopContract(value, feeLimit,
         consumeUserResourcePercent);

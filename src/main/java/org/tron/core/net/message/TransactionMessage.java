@@ -1,6 +1,5 @@
 package org.tron.core.net.message;
 
-import org.tron.common.runtime.config.SystemProperties;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.BadItemException;
