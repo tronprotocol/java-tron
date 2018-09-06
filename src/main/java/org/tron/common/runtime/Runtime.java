@@ -490,7 +490,8 @@ public class Runtime {
     try {
 
       TransactionCapsule trxCap = new TransactionCapsule(trx);
-      if (null != trxCap.getContractRet() && contractResult.OUT_OF_TIME
+      if (blockCap.generatedByMyself && null != trxCap.getContractRet()
+          && contractResult.OUT_OF_TIME
           .equals(trxCap.getContractRet())) {
         result = program.getResult();
         program.spendAllEnergy();
