@@ -25,8 +25,6 @@ import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
 
-//import stest.tron.wallet.common.client.AccountComparator;
-
 @Slf4j
 public class WalletTestBlock001 {
 

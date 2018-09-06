@@ -43,7 +43,7 @@ public class TvmContract {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(contract008Key);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)

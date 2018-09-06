@@ -86,7 +86,7 @@ public class fuzzytest {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -147,7 +147,7 @@ public class fuzzytest {
 
   }
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     /*    if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
