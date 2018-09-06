@@ -107,6 +107,20 @@ public class FullNodeHttpApiService implements Service {
   private ListProposalsServlet listProposalsServlet;
   @Autowired
   private GetProposalByIdServlet getProposalByIdServlet;
+  @Autowired
+  private ExchangeCreateServlet exchangeCreateServlet;
+  @Autowired
+  private ExchangeInjectServlet exchangeInjectServlet;
+  @Autowired
+  private ExchangeTransactionServlet exchangeTransactionServlet;
+  @Autowired
+  private ExchangeWithdrawServlet exchangeWithdrawServlet;
+  @Autowired
+  private GetExchangeByIdServlet getExchangeByIdServlet;
+  @Autowired
+  private ListExchangesServlet listExchangesServlet;
+  @Autowired
+  private GetChainParametersServlet getChainParametersServlet;
 
   @Override
   public void init() {
@@ -173,6 +187,13 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(proposalDeleteServlet), "/proposaldelete");
       context.addServlet(new ServletHolder(listProposalsServlet), "/listproposals");
       context.addServlet(new ServletHolder(getProposalByIdServlet), "/getproposalbyid");
+      context.addServlet(new ServletHolder(exchangeCreateServlet), "/exchangecreate");
+      context.addServlet(new ServletHolder(exchangeInjectServlet), "/exchangeinject");
+      context.addServlet(new ServletHolder(exchangeTransactionServlet), "/exchangetransaction");
+      context.addServlet(new ServletHolder(exchangeWithdrawServlet), "/exchangewithdraw");
+      context.addServlet(new ServletHolder(getExchangeByIdServlet), "/getexchangebyid");
+      context.addServlet(new ServletHolder(listExchangesServlet), "/listexchanges");
+      context.addServlet(new ServletHolder(getChainParametersServlet), "/getchainparameters");
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());
