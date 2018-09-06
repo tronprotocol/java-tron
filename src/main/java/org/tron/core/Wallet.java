@@ -896,8 +896,8 @@ public class Wallet {
       // TODO exception
       if (runtime.getResult().getException() != null) {
         RuntimeException e = runtime.getResult().getException();
-        logger.info(e.getMessage(), e);
-        throw new RuntimeException(e.getMessage());
+        logger.info(e.getMessage());
+        throw e;
       }
 
       ProgramResult result = runtime.getResult();
