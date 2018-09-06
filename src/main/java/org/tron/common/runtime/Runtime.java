@@ -262,18 +262,15 @@ public class Runtime {
     // creatorEnergyFromFreeze
     long creatorEnergyLimit = energyProcessor.getAccountLeftEnergyFromFreeze(creator);
 
+
     SmartContract smartContract = this.deposit
         .getContract(contract.getContractAddress().toByteArray()).getInstance();
     long consumeUserResourcePercent = smartContract.getConsumeUserResourcePercent();
 
     consumeUserResourcePercent = max(0, min(consumeUserResourcePercent, 100));
 
-    if (consumeUserResourcePercent <= 0) {
-      return creatorEnergyLimit;
-    }
-
     if (creatorEnergyLimit * consumeUserResourcePercent
-        >= (100 - consumeUserResourcePercent) * callerEnergyLimit) {
+        > (100 - consumeUserResourcePercent) * callerEnergyLimit) {
       return Math.floorDiv(callerEnergyLimit * 100, consumeUserResourcePercent);
     } else {
       return Math.addExact(callerEnergyLimit, creatorEnergyLimit);
