@@ -1698,7 +1698,8 @@ public class PublicMethed {
 
 
   public static boolean exchangeTransaction(long exchangeId, byte[] tokenId, long quant,
-      byte[] ownerAddress, String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
+      long expected, byte[] ownerAddress, String priKey,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -1716,7 +1717,8 @@ public class PublicMethed {
         .setOwnerAddress(ByteString.copyFrom(owner))
         .setExchangeId(exchangeId)
         .setTokenId(ByteString.copyFrom(tokenId))
-        .setQuant(quant);
+        .setQuant(quant)
+        .setExpected(expected);
     Contract.ExchangeTransactionContract contract =  builder.build();
     TransactionExtention transactionExtention = blockingStubFull.exchangeTransaction(contract);
     if (transactionExtention == null) {

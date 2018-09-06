@@ -54,8 +54,7 @@ public class ContractScenario001 {
         testKey002,blockingStubFull));
     logger.info(Long.toString(PublicMethed.queryAccount(contract001Key,blockingStubFull)
         .getBalance()));
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract001Address, 1000000L,
-        3,1,contract001Key,blockingStubFull));
+
     /*    Assert.assertTrue(PublicMethed.buyStorage(5000000L,contract001Address,contract001Key,
         blockingStubFull));*/
 
@@ -63,6 +62,8 @@ public class ContractScenario001 {
 
   @Test(enabled = true)
   public void deployAddressDemo() {
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract001Address, 1000000L,
+        3,1,contract001Key,blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract001Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
