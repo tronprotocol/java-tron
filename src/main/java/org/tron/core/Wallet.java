@@ -896,7 +896,7 @@ public class Wallet {
       // TODO exception
       if (runtime.getResult().getException() != null) {
 //          runtime.getResult().getException().printStackTrace();
-        throw new RuntimeException("Runtime exe failed!");
+        throw new RuntimeException(runtime.getResult().getException().getMessage());
       }
 
       ProgramResult result = runtime.getResult();
