@@ -31,8 +31,6 @@ public class WalletExchange001 {
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
-  //private final String testKey002 =
-  //   "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
   private ManagedChannel channelFull = null;
