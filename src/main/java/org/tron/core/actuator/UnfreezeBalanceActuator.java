@@ -76,6 +76,9 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
         dbManager.getDynamicPropertiesStore().addTotalEnergyWeight(-unfreezeBalance / 1000_000L);
         break;
+      default:
+        //this should never happen
+        break;
     }
 
     VotesCapsule votesCapsule;
