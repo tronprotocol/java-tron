@@ -324,6 +324,12 @@ public class Runtime {
     byte[] code = newSmartContract.getBytecode().toByteArray();
     byte[] contractAddress = Wallet.generateContractAddress(trx);
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
+    byte[] contractName = newSmartContract.getName().getBytes();
+
+    if (contractName.length > 200) {
+      logger.error("contractName's length mustn't  greater than 200");
+      throw new ContractValidateException("contractName's length mustn't  greater than 200");
+    }
 
     long percent = contract.getNewContract().getConsumeUserResourcePercent();
     if (percent < 0 || percent > 100) {
