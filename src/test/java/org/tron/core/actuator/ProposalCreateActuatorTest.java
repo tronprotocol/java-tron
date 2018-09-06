@@ -302,7 +302,6 @@ public class ProposalCreateActuatorTest {
     ProposalCreateActuator actuator =
             new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestProposalNum(), 0);
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -324,7 +323,6 @@ public class ProposalCreateActuatorTest {
     ProposalCreateActuator actuator =
             new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestProposalNum(), 0);
     try {
       actuator.validate();
       actuator.execute(ret);
