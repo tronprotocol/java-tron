@@ -9,3 +9,5 @@ if [ "$TRAVIS_BRANCH" = "develop" ];then
   ./gradlew stest
 fi
 echo "bye bye"
+
+exit 1
