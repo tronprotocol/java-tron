@@ -262,18 +262,15 @@ public class Runtime {
     // creatorEnergyFromFreeze
     long creatorEnergyLimit = energyProcessor.getAccountLeftEnergyFromFreeze(creator);
 
+
     SmartContract smartContract = this.deposit
         .getContract(contract.getContractAddress().toByteArray()).getInstance();
     long consumeUserResourcePercent = smartContract.getConsumeUserResourcePercent();
 
     consumeUserResourcePercent = max(0, min(consumeUserResourcePercent, 100));
 
-    if (consumeUserResourcePercent <= 0) {
-      return creatorEnergyLimit;
-    }
-
     if (creatorEnergyLimit * consumeUserResourcePercent
-        >= (100 - consumeUserResourcePercent) * callerEnergyLimit) {
+        > (100 - consumeUserResourcePercent) * callerEnergyLimit) {
       return Math.floorDiv(callerEnergyLimit * 100, consumeUserResourcePercent);
     } else {
       return Math.addExact(callerEnergyLimit, creatorEnergyLimit);
@@ -326,9 +323,9 @@ public class Runtime {
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
     byte[] contractName = newSmartContract.getName().getBytes();
 
-    if (contractName.length > 200) {
-      logger.error("contractName's length mustn't  greater than 200");
-      throw new ContractValidateException("contractName's length mustn't  greater than 200");
+    if (contractName.length > 32) {
+      logger.error("contractName's length mustn't be greater than 32");
+      throw new ContractValidateException("contractName's length mustn't be greater than 32");
     }
 
     long percent = contract.getNewContract().getConsumeUserResourcePercent();
@@ -490,7 +487,8 @@ public class Runtime {
     try {
 
       TransactionCapsule trxCap = new TransactionCapsule(trx);
-      if (null != trxCap.getContractRet() && contractResult.OUT_OF_TIME
+      if (blockCap.generatedByMyself && null != trxCap.getContractRet()
+          && contractResult.OUT_OF_TIME
           .equals(trxCap.getContractRet())) {
         result = program.getResult();
         program.spendAllEnergy();
