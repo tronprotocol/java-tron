@@ -84,7 +84,7 @@ public class ContractScenario008 {
 
     byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
         0L, 100,null,contract008Key,contract008Address,blockingStubFull);
-    maxFeeLimit = 3900000000L;
+    maxFeeLimit = 1000000000L;
     contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
         0L, 100,null,contract008Key,contract008Address,blockingStubFull);
 

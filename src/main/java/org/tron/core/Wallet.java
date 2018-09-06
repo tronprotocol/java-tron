@@ -895,8 +895,9 @@ public class Wallet {
       runtime.finalization();
       // TODO exception
       if (runtime.getResult().getException() != null) {
-//          runtime.getResult().getException().printStackTrace();
-        throw new RuntimeException("Runtime exe failed!");
+        RuntimeException e = runtime.getResult().getException();
+        logger.warn("Constant call has error {} {}", e.getMessage(), e);
+        throw new RuntimeException(e.getMessage());
       }
 
       ProgramResult result = runtime.getResult();
