@@ -896,7 +896,7 @@ public class Wallet {
       // TODO exception
       if (runtime.getResult().getException() != null) {
         RuntimeException e = runtime.getResult().getException();
-        logger.info(e.getMessage());
+        logger.warn("Constant call has error {}", e.getMessage());
         throw e;
       }
 

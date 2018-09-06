@@ -83,7 +83,7 @@ public class ParticipateAssetIssue {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     logger.info(testKeyForCreate);
     logger.info(testKeyForParticipate);
@@ -130,7 +130,7 @@ public class ParticipateAssetIssue {
     start1 = System.currentTimeMillis();
   }
 
-  //@Test(enabled = true)
+  //@Test(enabled = false)
   @Test(enabled = false,threadPoolSize = 250, invocationCount = 250)
   public void testParticipateAssetIssue() throws InterruptedException {
     Integer i = 0;
@@ -151,7 +151,7 @@ public class ParticipateAssetIssue {
     }
   }
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     //Print the duration.
     end1 = System.currentTimeMillis();

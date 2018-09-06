@@ -66,7 +66,7 @@ public class FreezeAndSendcoin {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     /*    Random rand = new Random();
     Integer randNum = rand.nextInt(30) + 1;
@@ -86,7 +86,7 @@ public class FreezeAndSendcoin {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  //@Test(enabled = true)
+  //@Test(enabled = false)
 
   @Test(enabled = false,threadPoolSize = 500, invocationCount = 1000)
   public void freezeAndSendcoin() throws InterruptedException {
@@ -168,7 +168,7 @@ public class FreezeAndSendcoin {
     }
   }
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
         if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
