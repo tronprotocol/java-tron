@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.stream.Collectors;
@@ -9,7 +10,6 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 
@@ -25,10 +25,11 @@ public class GetExchangeByIdServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
-      BytesMessage.Builder build = BytesMessage.newBuilder();
-      JsonFormat.merge(input, build);
+      JSONObject jsonObject = JSONObject.parseObject(input);
+      long id = jsonObject.getLong("id");
       response.getWriter()
-          .println(JsonFormat.printToString(wallet.getExchangeById(build.getValue())));
+          .println(JsonFormat
+              .printToString(wallet.getExchangeById(ByteString.copyFrom(ByteArray.fromLong(id)))));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {
@@ -41,9 +42,10 @@ public class GetExchangeByIdServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getParameter("value");
+      String input = request.getParameter("id");
       response.getWriter()
-          .println(wallet.getExchangeById(ByteString.copyFrom(ByteArray.fromHexString(input))));
+          .println(JsonFormat.printToString(wallet
+              .getExchangeById(ByteString.copyFrom(ByteArray.fromLong(Long.parseLong(input))))));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

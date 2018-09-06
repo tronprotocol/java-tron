@@ -121,6 +121,7 @@ public class FullNodeHttpApiService implements Service {
   private ListExchangesServlet listExchangesServlet;
   @Autowired
   private GetChainParametersServlet getChainParametersServlet;
+  @Autowired
   private GetAccountResourceServlet getAccountResourceServlet;
 
   @Override
