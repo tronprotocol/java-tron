@@ -13,7 +13,7 @@ cache:
     - '$HOME/.sonar/cache'
 script:
 - sh tron.sh
-- "./gradlew build"
+- "./gradlew build -x test"
 - sh deploy.sh
 
 skip_build:
