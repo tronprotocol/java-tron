@@ -1122,14 +1122,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void addTotalNetWeight(long amount) {
     long totalNetWeight = getTotalNetWeight();
     totalNetWeight += amount;
-    saveTotalNetWeight(totalNetWeight);
+    saveTotalNetWeight( Math.max(0L, totalNetWeight) );
   }
 
   //The unit is trx
   public void addTotalEnergyWeight(long amount) {
     long totalEnergyWeight = getTotalEnergyWeight();
     totalEnergyWeight += amount;
-    saveTotalEnergyWeight(totalEnergyWeight);
+    saveTotalEnergyWeight( Math.max(0L, totalEnergyWeight) );
   }
 
   public void addTotalCreateAccountCost(long fee) {
