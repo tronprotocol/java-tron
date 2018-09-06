@@ -34,6 +34,7 @@ import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
+import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
 import org.tron.common.runtime.vm.program.ProgramPrecompile;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
@@ -131,6 +132,13 @@ public class Runtime {
   /**
    * For constant trx with latest blockCap.
    */
+  private boolean isStaticCall = false;
+  public Runtime(Transaction tx, BlockCapsule block, DepositImpl deposit,
+                 ProgramInvokeFactory programInvokeFactory, boolean isStaticCall) {
+    this(tx, block, deposit, programInvokeFactory);
+
+  }
+
   public Runtime(Transaction tx, BlockCapsule block, DepositImpl deposit,
       ProgramInvokeFactory programInvokeFactory) {
     this.trx = tx;
@@ -370,6 +378,9 @@ public class Runtime {
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executorType, trx,
               blockCap.getInstance(), deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
+      if (isStaticCall) {
+        programInvoke.setStaticCall();
+      }
       this.vm = new VM(config);
       this.program = new Program(ops, programInvoke, internalTransaction, config, this.blockCap);
       this.program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
@@ -500,10 +511,12 @@ public class Runtime {
           long saveCodeEnergy = getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
           long afterSpend = program.getEnergyLimitLeft().longValue() - saveCodeEnergy;
           if (afterSpend < 0) {
-            result.setException(
-                Program.Exception
-                    .notEnoughSpendEnergy("No energy to save just created contract code",
-                        saveCodeEnergy, program.getEnergyLimitLeft().longValue()));
+            if (null == result.getException()) {
+              result.setException(
+                  Program.Exception
+                      .notEnoughSpendEnergy("save just created contract code",
+                          saveCodeEnergy, program.getEnergyLimitLeft().longValue()));
+            }
           } else {
             result.spendEnergy(saveCodeEnergy);
             // have saveCode in create()
@@ -529,6 +542,12 @@ public class Runtime {
         deposit.commit();
       }
     } catch (JVMStackOverFlowException e) {
+      program.spendAllEnergy();
+      result.setException(e);
+      runtimeError = result.getException().getMessage();
+      logger.error("runtime error is :{}", result.getException().getMessage());
+    } catch (OutOfResourceException e) {
+      program.spendAllEnergy();
       result.setException(e);
       runtimeError = result.getException().getMessage();
       logger.error("runtime error is :{}", result.getException().getMessage());

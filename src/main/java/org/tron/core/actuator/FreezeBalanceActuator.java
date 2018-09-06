@@ -90,6 +90,9 @@ public class FreezeBalanceActuator extends AbstractActuator {
         dbManager.getDynamicPropertiesStore()
             .addTotalEnergyWeight(freezeBalanceContract.getFrozenBalance() / 1000_000L);
         break;
+      default:
+        //this should never happen
+        break;
     }
 
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
