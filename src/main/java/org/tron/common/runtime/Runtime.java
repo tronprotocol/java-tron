@@ -136,7 +136,7 @@ public class Runtime {
   public Runtime(Transaction tx, BlockCapsule block, DepositImpl deposit,
                  ProgramInvokeFactory programInvokeFactory, boolean isStaticCall) {
     this(tx, block, deposit, programInvokeFactory);
-
+    this.isStaticCall = isStaticCall;
   }
 
   public Runtime(Transaction tx, BlockCapsule block, DepositImpl deposit,
@@ -324,6 +324,12 @@ public class Runtime {
     byte[] code = newSmartContract.getBytecode().toByteArray();
     byte[] contractAddress = Wallet.generateContractAddress(trx);
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
+    byte[] contractName = newSmartContract.getName().getBytes();
+
+    if (contractName.length > 200) {
+      logger.error("contractName's length mustn't  greater than 200");
+      throw new ContractValidateException("contractName's length mustn't  greater than 200");
+    }
 
     long percent = contract.getNewContract().getConsumeUserResourcePercent();
     if (percent < 0 || percent > 100) {
@@ -378,9 +384,6 @@ public class Runtime {
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executorType, trx,
               blockCap.getInstance(), deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
-      if (isStaticCall) {
-        programInvoke.setStaticCall();
-      }
       this.vm = new VM(config);
       this.program = new Program(ops, programInvoke, internalTransaction, config, this.blockCap);
       this.program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
@@ -453,6 +456,7 @@ public class Runtime {
       }
       long energyLimit;
       if (isCallConstant(contractAddress)) {
+        isStaticCall = true;
         energyLimit = Constant.MAX_ENERGY_IN_TX;
       } else {
         energyLimit = getEnergyLimit(creator, caller, contract, feeLimit, callValue);
@@ -461,6 +465,9 @@ public class Runtime {
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CALL_TYPE, executorType, trx,
               blockCap.getInstance(), deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
+      if (isStaticCall) {
+        programInvoke.setStaticCall();
+      }
       this.vm = new VM(config);
       InternalTransaction internalTransaction = new InternalTransaction(trx);
       this.program = new Program(null, code, programInvoke, internalTransaction, config,
