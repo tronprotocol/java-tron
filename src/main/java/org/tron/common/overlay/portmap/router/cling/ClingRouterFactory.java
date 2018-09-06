@@ -32,7 +32,7 @@ import org.tron.common.overlay.portmap.router.RouterException;
 
 public class ClingRouterFactory extends AbstractRouterFactory {
 
-  private static final long DISCOVERY_TIMEOUT_SECONDS = 5;
+  private static final long DISCOVERY_TIMEOUT_SECONDS = 15;
   private final Logger log = LoggerFactory.getLogger(this.getClass());
   private UpnpService upnpService;
 

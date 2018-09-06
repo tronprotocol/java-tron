@@ -28,7 +28,8 @@ import org.tron.core.config.args.Args;
 @Component
 public class PortMapperStarter {
 
-  private Protocol protocol = Protocol.TCP;
+  private Protocol tcp = Protocol.TCP;
+  private Protocol udp = Protocol.UDP;
   private int port = Args.getInstance().getNodeListenPort();
 
   private ExecutorService executorService;
@@ -46,7 +47,8 @@ public class PortMapperStarter {
   @PreDestroy
   public void destroy() {
     try {
-      portMapperService.deletePortForwardings(protocol, port);
+      portMapperService.deletePortForwardings(tcp, port);
+      portMapperService.deletePortForwardings(udp, port);
 //      portMapperService.destroy();
       executorService.shutdown();
     } catch (Exception e) {
@@ -58,7 +60,8 @@ public class PortMapperStarter {
   public void discoverPortMappers() {
     try {
       if (portMapperService.start()) {
-        portMapperService.addPortForwarding(protocol, port, port, null, null);
+        portMapperService.addPortForwarding(tcp, port, port, null, null);
+        portMapperService.addPortForwarding(udp, port, port, null, null);
         logger.info("port mapper success,port is {}", port);
       } else {
         logger.info("can not find the mapper device");
