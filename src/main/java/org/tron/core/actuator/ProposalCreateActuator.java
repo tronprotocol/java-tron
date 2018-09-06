@@ -35,7 +35,8 @@ public class ProposalCreateActuator extends AbstractActuator {
     try {
       final ProposalCreateContract proposalCreateContract = this.contract
           .unpack(ProposalCreateContract.class);
-      long id = (Objects.isNull(getDeposit())) ? dbManager.getDynamicPropertiesStore().getLatestProposalNum() + 1 :
+      long id = (Objects.isNull(getDeposit())) ?
+          dbManager.getDynamicPropertiesStore().getLatestProposalNum() + 1 :
           getDeposit().getLatestProposalNum() + 1;
       ProposalCapsule proposalCapsule =
           new ProposalCapsule(proposalCreateContract.getOwnerAddress(), id);
@@ -48,8 +49,10 @@ public class ProposalCreateActuator extends AbstractActuator {
           getDeposit().getMaintenanceTimeInterval();
       proposalCapsule.setCreateTime(now);
 
-      long currentMaintenanceTime = (Objects.isNull(getDeposit())) ? dbManager.getDynamicPropertiesStore().getNextMaintenanceTime():
-          getDeposit().getNextMaintenanceTime();
+      long currentMaintenanceTime =
+          (Objects.isNull(getDeposit())) ? dbManager.getDynamicPropertiesStore()
+              .getNextMaintenanceTime() :
+              getDeposit().getNextMaintenanceTime();
       long now3 = now + Args.getInstance().getProposalExpireTime();
       long round = (now3 - currentMaintenanceTime) / maintenanceTimeInterval;
       long expirationTime =
@@ -59,12 +62,10 @@ public class ProposalCreateActuator extends AbstractActuator {
       if (Objects.isNull(deposit)) {
         dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
         dbManager.getDynamicPropertiesStore().saveLatestProposalNum(id);
-      }
-      else {
-        deposit.putProposalValue(proposalCapsule.createDbKey(),proposalCapsule);
+      } else {
+        deposit.putProposalValue(proposalCapsule.createDbKey(), proposalCapsule);
         deposit.putDynamicPropertiesWithLatestProposalNum(id);
       }
-
 
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
@@ -102,23 +103,28 @@ public class ProposalCreateActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
 
-    if(!Objects.isNull(deposit)) {
+    if (!Objects.isNull(deposit)) {
       if (Objects.isNull(deposit.getAccount(ownerAddress))) {
         throw new ContractValidateException(
             ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
       }
-    }
-    else if (!dbManager.getAccountStore().has(ownerAddress)) {
-      throw new ContractValidateException(ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
+    } else if (!dbManager.getAccountStore().has(ownerAddress)) {
+      throw new ContractValidateException(
+          ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
 
-    if( !Objects.isNull(getDeposit())) {
+    if (!Objects.isNull(getDeposit())) {
       if (Objects.isNull(getDeposit().getWitness(ownerAddress))) {
         throw new ContractValidateException(
             WITNESS_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
       }
-    }else if (!dbManager.getWitnessStore().has(ownerAddress)) {
-      throw new ContractValidateException(WITNESS_EXCEPTION_STR+ readableOwnerAddress + NOT_EXIST_STR);
+    } else if (!dbManager.getWitnessStore().has(ownerAddress)) {
+      throw new ContractValidateException(
+          WITNESS_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
+    }
+
+    if (contract.getParametersMap().size() == 0) {
+      throw new ContractValidateException("This proposal has no parameter.");
     }
 
     for (Map.Entry<Long, Long> entry : contract.getParametersMap().entrySet()) {
@@ -155,20 +161,20 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         break;
       }
-      case (9):{
-        if(entry.getValue() != 1){
+      case (9): {
+        if (entry.getValue() != 1) {
           throw new ContractValidateException(
               "This value[ALLOW_CREATION_OF_CONTRACTS] is only allowed to be 1");
         }
         break;
       }
-      case (10):{
-        if(dbManager.getDynamicPropertiesStore().getRemoveThePowerOfTheGr() == -1){
+      case (10): {
+        if (dbManager.getDynamicPropertiesStore().getRemoveThePowerOfTheGr() == -1) {
           throw new ContractValidateException(
               "This proposal has been executed before and is only allowed to be executed once");
         }
 
-        if(entry.getValue() != 1){
+        if (entry.getValue() != 1) {
           throw new ContractValidateException(
               "This value[REMOVE_THE_POWER_OF_THE_GR] is only allowed to be 1");
         }
