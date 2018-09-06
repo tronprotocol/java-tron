@@ -88,7 +88,7 @@ public class WalletTestCommittee003 {
         toAddress,testKey003,blockingStubFull));
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testApproveProposal() {
     //Create a proposal
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
@@ -103,16 +103,21 @@ public class WalletTestCommittee003 {
 
     Assert.assertTrue(PublicMethed.approveProposal(witness002Address,witnessKey002,proposalId,
         true,blockingStubFull));
+    /*    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }*/
     //Get proposal list after approve
     proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
     listProposals =  Optional.ofNullable(proposalList);
-    //logger.info(Integer.toString(listProposals.get().getProposals(0).getApprovalsCount()));
-    Assert.assertTrue(listProposals.get().getProposals(0).getApprovalsCount() == 1);
+    logger.info(Integer.toString(listProposals.get().getProposals(proposalId).getApprovalsCount()));
+    Assert.assertTrue(listProposals.get().getProposals(proposalId).getApprovalsCount() == 1);
     //logger.info(Base58.encode58Check(witness002Address));
     //logger.info(Base58.encode58Check(listProposals.get().getProposals(0).
     // getApprovalsList().get(0).toByteArray()));
     Assert.assertTrue(Base58.encode58Check(witness002Address).equals(Base58.encode58Check(
-        listProposals.get().getProposals(0).getApprovalsList().get(0).toByteArray())));
+        listProposals.get().getProposals(listProposals.get().getProposalsCount()).getApprovalsList().get(0).toByteArray())));
 
     //Failed to approve proposal when you already approval this proposal
     Assert.assertFalse(PublicMethed.approveProposal(witness002Address,witnessKey002,proposalId,
@@ -147,7 +152,7 @@ public class WalletTestCommittee003 {
         true,blockingStubFull));
     proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
     listProposals =  Optional.ofNullable(proposalList);
-    Assert.assertTrue(listProposals.get().getProposals(0).getApprovalsCount() == 5);
+    Assert.assertTrue(listProposals.get().getProposals(listProposals.get().getProposalsCount()).getApprovalsCount() == 5);
 
 
   }

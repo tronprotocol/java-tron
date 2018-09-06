@@ -247,7 +247,7 @@ public class WalletExchange001 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void test6TransactionExchange() {
     exchangeIdInfo = PublicMethed.getExchange(exchangeId.toString(),blockingStubFull);
     final Long beforeExchangeToken1Balance = exchangeIdInfo.get().getFirstTokenBalance();
