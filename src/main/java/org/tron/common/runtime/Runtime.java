@@ -132,6 +132,13 @@ public class Runtime {
   /**
    * For constant trx with latest blockCap.
    */
+  private boolean isStaticCall = false;
+  public Runtime(Transaction tx, BlockCapsule block, DepositImpl deposit,
+                 ProgramInvokeFactory programInvokeFactory, boolean isStaticCall) {
+    this(tx, block, deposit, programInvokeFactory);
+
+  }
+
   public Runtime(Transaction tx, BlockCapsule block, DepositImpl deposit,
       ProgramInvokeFactory programInvokeFactory) {
     this.trx = tx;
@@ -371,6 +378,9 @@ public class Runtime {
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executorType, trx,
               blockCap.getInstance(), deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
+      if (isStaticCall) {
+        programInvoke.setStaticCall();
+      }
       this.vm = new VM(config);
       this.program = new Program(ops, programInvoke, internalTransaction, config, this.blockCap);
       this.program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
