@@ -121,6 +121,7 @@ public class FullNodeHttpApiService implements Service {
   private ListExchangesServlet listExchangesServlet;
   @Autowired
   private GetChainParametersServlet getChainParametersServlet;
+  private GetAccountResourceServlet getAccountResourceServlet;
 
   @Override
   public void init() {
@@ -194,6 +195,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getExchangeByIdServlet), "/getexchangebyid");
       context.addServlet(new ServletHolder(listExchangesServlet), "/listexchanges");
       context.addServlet(new ServletHolder(getChainParametersServlet), "/getchainparameters");
+      context.addServlet(new ServletHolder(getAccountResourceServlet), "/getaccountresource");
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());

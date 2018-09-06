@@ -10,22 +10,27 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
-import org.tron.protos.Protocol.Proposal;
+import org.tron.core.db.Manager;
+
 
 @Component
 @Slf4j
-public class GetProposalByIdServlet extends HttpServlet {
+public class GetAccountResourceServlet extends HttpServlet {
 
   @Autowired
   private Wallet wallet;
 
+  @Autowired
+  private Manager dbManager;
+
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getParameter("id");
-      long id = new Long(input);
-      Proposal reply = wallet.getProposalById(ByteString.copyFrom(ByteArray.fromLong(id)));
+      String address = request.getParameter("address");
+      AccountResourceMessage reply = wallet
+          .getAccountResource(ByteString.copyFrom(ByteArray.fromHexString(address)));
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply));
       } else {
@@ -46,8 +51,9 @@ public class GetProposalByIdServlet extends HttpServlet {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       JSONObject jsonObject = JSONObject.parseObject(input);
-      long id = jsonObject.getLong("id");
-      Proposal reply = wallet.getProposalById(ByteString.copyFrom(ByteArray.fromLong(id)));
+      String address = jsonObject.getString("address");
+      AccountResourceMessage reply = wallet
+          .getAccountResource(ByteString.copyFrom(ByteArray.fromHexString(address)));
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply));
       } else {
