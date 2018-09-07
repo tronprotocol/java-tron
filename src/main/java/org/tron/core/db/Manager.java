@@ -98,6 +98,7 @@ import org.tron.protos.Protocol.Transaction;
 public class Manager {
 
   public static ThreadLocal<Boolean> isProcessBLock = new ThreadLocal<>();
+  public static ThreadLocal<BlockCapsule> currentBlcok = new ThreadLocal<>();
 
   // db store
   @Autowired
@@ -1220,6 +1221,7 @@ public class Manager {
 
     try {
       isProcessBLock.set(true);
+      currentBlcok.set(blockCapsule);
       this.pushBlock(blockCapsule);
       return blockCapsule;
     } catch (TaposException e) {
