@@ -85,7 +85,7 @@ import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.exception.UnsupportVMException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.witness.ProposalController;
@@ -585,7 +585,7 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, DupTransactionException, TaposException,
       TooBigTransactionException, TransactionExpirationException, ReceiptException,
-      TransactionTraceException, ReceiptCheckErrException, UnsupportVMException, TooBigTransactionResultException {
+      TransactionTraceException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
 
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
@@ -680,7 +680,7 @@ public class Manager {
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException, ReceiptException,
       TaposException, ValidateScheduleException, TransactionTraceException, ReceiptCheckErrException,
-      UnsupportVMException, TooBigTransactionResultException {
+      VMIllegalException, TooBigTransactionResultException {
     block.generatedByMyself = true;
     applyBlock(block);
   }
@@ -689,7 +689,7 @@ public class Manager {
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException, ReceiptException,
       TaposException, ValidateScheduleException, TransactionTraceException, ReceiptCheckErrException,
-      UnsupportVMException, TooBigTransactionResultException {
+      VMIllegalException, TooBigTransactionResultException {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
@@ -701,7 +701,7 @@ public class Manager {
       ValidateScheduleException, AccountResourceInsufficientException, TaposException,
       TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TransactionExpirationException,
       NonCommonBlockException, ReceiptException, TransactionTraceException, ReceiptCheckErrException,
-      UnsupportVMException {
+      VMIllegalException {
     Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
     try {
       binaryTree =
@@ -748,7 +748,7 @@ public class Manager {
             | TooBigTransactionException
             | TooBigTransactionResultException
             | ValidateScheduleException
-            | UnsupportVMException e) {
+            | VMIllegalException e) {
           logger.warn(e.getMessage(), e);
           exception = e;
           throw e;
@@ -804,7 +804,7 @@ public class Manager {
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
       TaposException, TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException, ReceiptException, TransactionTraceException,
-      ReceiptCheckErrException, UnsupportVMException {
+      ReceiptCheckErrException, VMIllegalException {
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
@@ -1017,7 +1017,7 @@ public class Manager {
   public boolean processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
       throws ValidateSignatureException, ContractValidateException, ContractExeException, ReceiptException,
       AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, TooBigTransactionResultException,
-      DupTransactionException, TaposException, TransactionTraceException, ReceiptCheckErrException, UnsupportVMException {
+      DupTransactionException, TaposException, TransactionTraceException, ReceiptCheckErrException, VMIllegalException {
     if (trxCap == null) {
       return false;
     }
@@ -1041,14 +1041,14 @@ public class Manager {
 
 // TODO vm switch
 //    if (!this.dynamicPropertiesStore.supportVM() && trace.needVM()) {
-//      throw new UnsupportVMException("this node doesn't support vm, trx id: " + trxCap.getTransactionId().toString());
+//      throw new VMIllegalException("this node doesn't support vm, trx id: " + trxCap.getTransactionId().toString());
 //    }
 
     DepositImpl deposit = DepositImpl.createRoot(this);
     Runtime runtime = new Runtime(trace, blockCap, deposit, new ProgramInvokeFactoryImpl());
     if (runtime.isCallConstant()) {
       // Fixme Wrong exception
-      throw new UnsupportVMException("cannot call constant method ");
+      throw new VMIllegalException("cannot call constant method ");
     }
     // if (getDynamicPropertiesStore().supportVM()) {
     //   if(trxCap.getInstance().getRetCount()<=0){
@@ -1187,7 +1187,7 @@ public class Manager {
       } catch (ReceiptCheckErrException e) {
         logger.info("OutOfSlotTime exception: {}", e.getMessage());
         logger.debug(e.getMessage(), e);
-      } catch (UnsupportVMException e) {
+      } catch (VMIllegalException e) {
         logger.warn(e.getMessage(), e);
       }
     }
@@ -1227,7 +1227,7 @@ public class Manager {
     } catch (ReceiptCheckErrException e) {
       logger.info("OutOfSlotTime exception: {}", e.getMessage());
       logger.debug(e.getMessage(), e);
-    } catch (UnsupportVMException e) {
+    } catch (VMIllegalException e) {
       logger.warn(e.getMessage(), e);
     } catch (TooBigTransactionResultException e) {
       logger.info("contract not processed during TooBigTransactionResultException");
@@ -1271,7 +1271,7 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
       DupTransactionException, TransactionExpirationException, ValidateScheduleException,
-      ReceiptException, TransactionTraceException, ReceiptCheckErrException, UnsupportVMException, TooBigTransactionResultException {
+      ReceiptException, TransactionTraceException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
     // todo set revoking db max size.
 
     // checkWitness
@@ -1595,7 +1595,7 @@ public class Manager {
       logger.debug("transactionTrace transaction");
     } catch (ReceiptCheckErrException e) {
       logger.debug("outOfSlotTime transaction");
-    } catch (UnsupportVMException e) {
+    } catch (VMIllegalException e) {
       logger.debug(e.getMessage(), e);
     } catch (TooBigTransactionResultException e) {
       logger.debug("too big transaction result");
