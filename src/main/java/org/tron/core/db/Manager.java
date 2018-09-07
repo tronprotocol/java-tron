@@ -1040,7 +1040,6 @@ public class Manager {
     DepositImpl deposit = DepositImpl.createRoot(this);
     Runtime runtime = new Runtime(trace, blockCap, deposit, new ProgramInvokeFactoryImpl());
     if (runtime.isCallConstant()) {
-      // Fixme Wrong exception
       throw new VMIllegalException("cannot call constant method ");
     }
     // if (getDynamicPropertiesStore().supportVM()) {
