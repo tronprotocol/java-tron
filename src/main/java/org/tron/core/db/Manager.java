@@ -1075,7 +1075,9 @@ public class Manager {
 
     if (Objects.nonNull(blockCap)) {
       trace.setResult(runtime);
+      if (!blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
         trace.check();
+      }
     }
 
     trace.finalization(runtime);
@@ -1095,7 +1097,6 @@ public class Manager {
     logger.error("after tx: balance: {}", deposit.getBalance(callerAccount));
     logger.error("after tx: resource: {}",
         deposit.getAccount(callerAccount).getAccountResource().toString());
-
 
     return true;
   }
@@ -1138,8 +1139,10 @@ public class Manager {
     session.reset();
     session.setValue(revokingStore.buildSession());
 
-    logger.info("1: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore.get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance()
-    + "\n" + accountStore.get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")));
+    logger.info("1: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore
+        .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance()
+        + "\n" + accountStore
+        .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")));
 
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext()) {
@@ -1158,7 +1161,6 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
-
 
         processTransaction(trx, blockCapsule);
         // trx.resetResult();
@@ -1204,8 +1206,10 @@ public class Manager {
       }
     }
 
-    logger.info("2: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore.get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance()
-        + "\n" + accountStore.get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")));
+    logger.info("2: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore
+        .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance()
+        + "\n" + accountStore
+        .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")));
 
     session.reset();
 
@@ -1221,13 +1225,17 @@ public class Manager {
 
     try {
 
-      logger.info("3: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore.get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance()
-          + "\n" + accountStore.get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")));
+      logger.info("3: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore
+          .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance()
+          + "\n" + accountStore
+          .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")));
 
       this.pushBlock(blockCapsule);
 
-      logger.info("4: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore.get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance()
-          + "\n" + accountStore.get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")));
+      logger.info("4: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore
+          .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance()
+          + "\n" + accountStore
+          .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")));
 
       return blockCapsule;
     } catch (TaposException e) {
