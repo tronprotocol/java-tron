@@ -354,7 +354,7 @@ public class BandwidthProcessorTest {
     Assert.assertEquals(
         10_000_000L - transactionFee,
         ownerCapsuleNew.getBalance());
-    Assert.assertEquals(transactionFee, 1860);
+    Assert.assertEquals(transactionFee, trace.getReceipt().getNetFee());
 
     dbManager.getAccountStore().delete(ByteArray.fromHexString(TO_ADDRESS));
     dbManager.consumeBandwidth(trx, trace);
