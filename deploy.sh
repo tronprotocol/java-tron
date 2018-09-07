@@ -13,6 +13,7 @@ if [ "$TRAVIS_BRANCH" = "deploy_test" ];then
 
   echo "stest end endendendendend"
 
+  cat stest.log
 
 fi
 echo "bye bye"
