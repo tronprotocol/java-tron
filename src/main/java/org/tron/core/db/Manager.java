@@ -55,7 +55,6 @@ import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
-import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.Parameter.ChainConstant;
@@ -607,21 +606,10 @@ public class Manager {
   }
 
 
-  public void consumeBandwidth(TransactionCapsule trx, TransactionResultCapsule ret,
-      TransactionTrace trace)
+  public void consumeBandwidth(TransactionCapsule trx, TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException {
     BandwidthProcessor processor = new BandwidthProcessor(this);
-    processor.consume(trx, ret, trace);
-    logger.info(
-        "******consumeBandwidth netfee:" + trace.getReceipt().getNetFee() + ", netusage:" + trace
-            .getReceipt().getNetUsage() + ", trx id:" + trx.getTransactionId());
-  }
-
-  public void consumeEnergy(TransactionCapsule trx, TransactionResultCapsule ret,
-      TransactionTrace trace)
-      throws ContractValidateException, AccountResourceInsufficientException {
-    EnergyProcessor processor = new EnergyProcessor(this);
-    processor.consume(trx, ret, trace);
+    processor.consume(trx, trace);
   }
 
   @Deprecated
@@ -1047,10 +1035,20 @@ public class Manager {
 //      throw new VMIllegalException("this node doesn't support vm, trx id: " + trxCap.getTransactionId().toString());
 //    }
 
+    logger.info("transactionId:" + trxCap.getTransactionId());
+
+    byte[] callerAccount = TransactionCapsule
+        .getOwner(trxCap.getInstance().getRawData().getContract(0));
+    AccountCapsule acp = getAccountStore().get(callerAccount);
+    logger.error("before consumeBandwidth: balance: {}", acp.getBalance());
+    logger.error("before consumeBandwidth: resource: {}",
+        acp.getAccountResource().toString());
+
+    consumeBandwidth(trxCap, trace);
+
     DepositImpl deposit = DepositImpl.createRoot(this);
     Runtime runtime = new Runtime(trace, blockCap, deposit, new ProgramInvokeFactoryImpl());
     if (runtime.isCallConstant()) {
-      // Fixme Wrong exception
       throw new VMIllegalException("cannot call constant method ");
     }
     // if (getDynamicPropertiesStore().supportVM()) {
@@ -1059,17 +1057,6 @@ public class Manager {
     //   }
     // }
 
-    logger.info("transactionId:" + trxCap.getTransactionId());
-
-    byte[] callerAccount = TransactionCapsule
-        .getOwner(trxCap.getInstance().getRawData().getContract(0));
-    logger.error("before consumeBandwidth: balance: {}", deposit.getBalance(callerAccount));
-    logger.error("before consumeBandwidth: resource: {}",
-        deposit.getAccount(callerAccount).getAccountResource().toString());
-
-
-
-    consumeBandwidth(trxCap, runtime.getResult().getRet(), trace);
     logger.error("after consumeBandwidth: ResultFee: {}", runtime.getResult().getRet().getFee());
     logger.error("after consumeBandwidth: balance: {}", deposit.getBalance(callerAccount));
     logger.error("after consumeBandwidth: resource: {}",

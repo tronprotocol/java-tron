@@ -55,13 +55,12 @@ public class ContractScenario003 {
         testKey002,blockingStubFull));
     logger.info(Long.toString(PublicMethed.queryAccount(contract003Key,blockingStubFull)
         .getBalance()));
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract003Address, 10000000L,
-        3,1,contract003Key,blockingStubFull));
-
   }
 
   @Test(enabled = true)
   public void deployErc223() {
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract003Address, 10000000L,
+        3,1,contract003Key,blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract003Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();

@@ -46,7 +46,7 @@ public class PacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
       out.add(event);
     } catch (Exception e) {
       logger.error("Parse msg failed, type {}, len {}, address {}", encoded[0], encoded.length,
-          ctx.channel().remoteAddress());
+          packet.sender());
     }
   }
 }
