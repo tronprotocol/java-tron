@@ -58,7 +58,7 @@ public class WallettestP0003 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     WalletClient.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -94,7 +94,7 @@ public class WallettestP0003 {
   }
 
 
-  @AfterClass
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
