@@ -1209,7 +1209,7 @@ public class Manager {
 
     logger.info(
         "postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTransactions.size()
-            + "]");
+            + "], RepushTrxCount[ " + repushTransactions.size() + " ]");
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(privateKey);
 
