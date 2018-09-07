@@ -41,6 +41,7 @@ import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
+import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.SessionOptional;
@@ -1143,6 +1144,9 @@ public class Manager {
     session.reset();
     session.setValue(revokingStore.buildSession());
 
+    logger.info("1: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore.get(Base58.decode("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7")).getBalance()
+    + "\n" + accountStore.get(Base58.decode("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7")));
+
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext()) {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
@@ -1207,6 +1211,9 @@ public class Manager {
       }
     }
 
+    logger.info("2: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore.get(Base58.decode("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7")).getBalance()
+        + "\n" + accountStore.get(Base58.decode("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7")));
+
     session.reset();
 
     if (postponedTrxCount > 0) {
@@ -1222,7 +1229,15 @@ public class Manager {
     try {
       isProcessBLock.set(true);
       currentBlcok.set(blockCapsule);
+
+      logger.info("3: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore.get(Base58.decode("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7")).getBalance()
+          + "\n" + accountStore.get(Base58.decode("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7")));
+
       this.pushBlock(blockCapsule);
+
+      logger.info("4: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore.get(Base58.decode("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7")).getBalance()
+          + "\n" + accountStore.get(Base58.decode("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7")));
+
       return blockCapsule;
     } catch (TaposException e) {
       logger.info("contract not processed during TaposException");
