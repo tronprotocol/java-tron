@@ -97,6 +97,9 @@ import org.tron.protos.Protocol.Transaction;
 @Component
 public class Manager {
 
+  public static ThreadLocal<Boolean> isProcessBLock = new ThreadLocal<>();
+  public static ThreadLocal<BlockCapsule> currentBlcok = new ThreadLocal<>();
+
   // db store
   @Autowired
   private AccountStore accountStore;
@@ -1035,6 +1038,15 @@ public class Manager {
 //      throw new VMIllegalException("this node doesn't support vm, trx id: " + trxCap.getTransactionId().toString());
 //    }
 
+    logger.info("transactionId:" + trxCap.getTransactionId());
+
+    byte[] callerAccount = TransactionCapsule
+        .getOwner(trxCap.getInstance().getRawData().getContract(0));
+    AccountCapsule acp = getAccountStore().get(callerAccount);
+    logger.error("before consumeBandwidth: balance: {}", acp.getBalance());
+    logger.error("before consumeBandwidth: resource: {}",
+        acp.getAccountResource().toString());
+
     consumeBandwidth(trxCap, trace);
 
     DepositImpl deposit = DepositImpl.createRoot(this);
@@ -1048,6 +1060,10 @@ public class Manager {
     //   }
     // }
 
+    logger.error("after consumeBandwidth: ResultFee: {}", runtime.getResult().getRet().getFee());
+    logger.error("after consumeBandwidth: balance: {}", deposit.getBalance(callerAccount));
+    logger.error("after consumeBandwidth: resource: {}",
+        deposit.getAccount(callerAccount).getAccountResource().toString());
     trace.init();
 
     // if (blockCap != null && blockCap.generatedByMyself &&
@@ -1079,6 +1095,12 @@ public class Manager {
         .buildInstance(trxCap, blockCap, runtime, traceReceipt);
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
+
+    logger.error("after tx: balance: {}", deposit.getBalance(callerAccount));
+    logger.error("after tx: resource: {}",
+        deposit.getAccount(callerAccount).getAccountResource().toString());
+    trace.init();
+
 
     return true;
   }
@@ -1138,6 +1160,9 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
+
+        isProcessBLock.set(false);
+
         processTransaction(trx, blockCapsule);
         // trx.resetResult();
         tmpSeesion.merge();
@@ -1190,11 +1215,13 @@ public class Manager {
 
     logger.info(
         "postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTransactions.size()
-            + "]");
+            + "], RepushTrxCount[ " + repushTransactions.size() + " ]");
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(privateKey);
 
     try {
+      isProcessBLock.set(true);
+      currentBlcok.set(blockCapsule);
       this.pushBlock(blockCapsule);
       return blockCapsule;
     } catch (TaposException e) {
@@ -1221,6 +1248,9 @@ public class Manager {
       logger.warn(e.getMessage(), e);
     } catch (TooBigTransactionResultException e) {
       logger.info("contract not processed during TooBigTransactionResultException");
+    }catch (ContractValidateException e) {
+      logger.info("contract not processed during validate");
+      logger.error(e.getMessage(), e);
     }
 
     return null;

@@ -119,7 +119,13 @@ public class TransferActuator extends AbstractActuator {
         fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
       }
 
+      logger.error("amount: {}, fee: {}, balance: {}", amount, fee, balance);
+      logger.error("from: {}", Wallet.encode58Check(ownerAddress));
+      logger.error("to: {}", Wallet.encode58Check(toAddress));
       if (balance < Math.addExact(amount, fee)) {
+        if(Manager.isProcessBLock.get()){
+          logger.info("Problem is here.");
+        }
         throw new ContractValidateException(
             "Validate TransferContract error, balance is not sufficient.");
       }
