@@ -1061,7 +1061,7 @@ public class Manager {
 
     if (Objects.nonNull(blockCap)) {
       trace.setResult(runtime);
-      if (!blockCap.generatedByMyself) {
+      if (!blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
         trace.check();
       }
     }
