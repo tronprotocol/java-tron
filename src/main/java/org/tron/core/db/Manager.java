@@ -668,9 +668,7 @@ public class Manager {
       revokingStore.pop();
       logger.info("end to erase block:" + oldHeadBlock);
       popedTransactions.addAll(oldHeadBlock.getTransactions());
-      // todo: need add ??
-      // repushTransactions.addAll(oldHeadBlock.getTransactions());
-      //
+     
     } catch (ItemNotFoundException | BadItemException e) {
       logger.warn(e.getMessage(), e);
     }
