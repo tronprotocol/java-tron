@@ -41,7 +41,6 @@ import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
-import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.SessionOptional;
@@ -1143,8 +1142,8 @@ public class Manager {
     session.reset();
     session.setValue(revokingStore.buildSession());
 
-    logger.info("1: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore.get(Base58.decode("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7")).getBalance()
-    + "\n" + accountStore.get(Base58.decode("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7")));
+    logger.info("1: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore.get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance()
+    + "\n" + accountStore.get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")));
 
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext()) {
@@ -1210,8 +1209,8 @@ public class Manager {
       }
     }
 
-    logger.info("2: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore.get(Base58.decode("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7")).getBalance()
-        + "\n" + accountStore.get(Base58.decode("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7")));
+    logger.info("2: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore.get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance()
+        + "\n" + accountStore.get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")));
 
     session.reset();
 
@@ -1229,13 +1228,13 @@ public class Manager {
       isProcessBLock.set(true);
       currentBlcok.set(blockCapsule);
 
-      logger.info("3: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore.get(Base58.decode("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7")).getBalance()
-          + "\n" + accountStore.get(Base58.decode("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7")));
+      logger.info("3: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore.get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance()
+          + "\n" + accountStore.get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")));
 
       this.pushBlock(blockCapsule);
 
-      logger.info("4: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore.get(Base58.decode("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7")).getBalance()
-          + "\n" + accountStore.get(Base58.decode("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7")));
+      logger.info("4: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore.get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance()
+          + "\n" + accountStore.get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")));
 
       return blockCapsule;
     } catch (TaposException e) {
