@@ -892,8 +892,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void onHandleSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage syncMsg) {
-    peer.setTronState(TronState.SYNCING);
-    BlockId headBlockId = del.getHeadBlockId();
+    peer.setTronState(TronState.SYNCIG);
+    BlockId headBlockId = del.getHeadBlNockId();
     long remainNum = 0;
     LinkedList<BlockId> blockIds = new LinkedList<>();
     List<BlockId> summaryChainIds = syncMsg.getBlockIds();
@@ -1174,8 +1174,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         peer.setUnfetchSyncNum(msg.getRemainNum());
         peer.getSyncBlockToFetch().addAll(blockIdWeGet);
         synchronized (freshBlockId) {
-          while (!peer.getSyncBlockToFetch().isEmpty() && freshBlockId
-              .contains(peer.getSyncBlockToFetch().peek())) {
+          while (!peer.getSyncBlockToFetch().isEmpty()
+              && freshBlockId.contains(peer.getSyncBlockToFetch().peek())
+              && del.containBlock(peer.getSyncBlockToFetch().peek())) {
             BlockId blockId = peer.getSyncBlockToFetch().pop();
             updateBlockWeBothHave(peer, blockId);
             logger.info("Block {} from {} is processed", blockId.getString(),
