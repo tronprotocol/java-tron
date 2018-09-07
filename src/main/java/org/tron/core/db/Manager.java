@@ -1257,9 +1257,6 @@ public class Manager {
       logger.warn(e.getMessage(), e);
     } catch (TooBigTransactionResultException e) {
       logger.info("contract not processed during TooBigTransactionResultException");
-    }catch (ContractValidateException e) {
-      logger.info("contract not processed during validate");
-      logger.error(e.getMessage(), e);
     }
 
     return null;
