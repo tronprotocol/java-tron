@@ -82,7 +82,7 @@ public class WallettestP0002 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     logger.info("this is before class");
     walletClient = new WalletClient(testKey002);
@@ -176,7 +176,7 @@ public class WallettestP0002 {
     Assert.assertTrue(result.getAmount() == AMOUNT);
   }
 
-  @AfterClass
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
