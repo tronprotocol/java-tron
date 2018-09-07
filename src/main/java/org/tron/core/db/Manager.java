@@ -612,6 +612,9 @@ public class Manager {
       throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException {
     BandwidthProcessor processor = new BandwidthProcessor(this);
     processor.consume(trx, ret, trace);
+    logger.info(
+        "******consumeBandwidth netfee:" + trace.getReceipt().getNetFee() + ", netusage:" + trace
+            .getReceipt().getNetUsage() + ", trx id:" + trx.getTransactionId());
   }
 
   public void consumeEnergy(TransactionCapsule trx, TransactionResultCapsule ret,
