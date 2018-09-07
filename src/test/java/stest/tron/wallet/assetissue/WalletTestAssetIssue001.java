@@ -35,18 +35,10 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 @Slf4j
 public class WalletTestAssetIssue001 {
 
-  //testng001、testng002、testng003、testng004
-  private final String testKey002 =
-      "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
-  private final String testKey003 =
-      "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
-
-  /*  //testng001、testng002、testng003、testng004
-  private static final byte[] fromAddress = Base58
-      .decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");
-  private static final byte[] toAddress = Base58
-      .decodeFromBase58Check("TV75jZpdmP2juMe1dRwGrwpV6AMU6mr1EU");*/
-
+  private final String testKey002 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key1");
+  private final String testKey003 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
@@ -54,8 +46,10 @@ public class WalletTestAssetIssue001 {
   private static final long now = System.currentTimeMillis();
   private static String name = "testAssetIssue001_" + Long.toString(now);
   private static final long totalSupply = now;
-  String description = "just-test-assetissue-001";
-  String url = "https://github.com/tronprotocol/wallet-cli/assetissue001";
+  String description = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.assetDescription");
+  String url = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.assetUrl");
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -77,7 +71,7 @@ public class WalletTestAssetIssue001 {
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
-    logger.info(ByteArray.toHexString(ecKey.getPrivKeyBytes()));
+    PublicMethed.printAddress(noBandwitch);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
