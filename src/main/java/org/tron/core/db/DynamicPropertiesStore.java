@@ -263,7 +263,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getFreeNetLimit();
     } catch (IllegalArgumentException e) {
-      this.saveFreeNetLimit(5000L);
+      this.saveFreeNetLimit(0L);
     }
 
     try {

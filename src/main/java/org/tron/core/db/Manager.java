@@ -1059,8 +1059,21 @@ public class Manager {
     //   }
     // }
 
-    consumeBandwidth(trxCap, runtime.getResult().getRet(), trace);
+    logger.info("transactionId:" + trxCap.getTransactionId());
 
+    byte[] callerAccount = TransactionCapsule
+        .getOwner(trxCap.getInstance().getRawData().getContract(0));
+    logger.error("before consumeBandwidth: balance: {}", deposit.getBalance(callerAccount));
+    logger.error("before consumeBandwidth: resource: {}",
+        deposit.getAccount(callerAccount).getAccountResource().toString());
+
+
+
+    consumeBandwidth(trxCap, runtime.getResult().getRet(), trace);
+    logger.error("after consumeBandwidth: ResultFee: {}", runtime.getResult().getRet().getFee());
+    logger.error("after consumeBandwidth: balance: {}", deposit.getBalance(callerAccount));
+    logger.error("after consumeBandwidth: resource: {}",
+        deposit.getAccount(callerAccount).getAccountResource().toString());
     trace.init();
 
     // if (blockCap != null && blockCap.generatedByMyself &&
@@ -1092,6 +1105,12 @@ public class Manager {
         .buildInstance(trxCap, blockCap, runtime, traceReceipt);
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
+
+    logger.error("after tx: balance: {}", deposit.getBalance(callerAccount));
+    logger.error("after tx: resource: {}",
+        deposit.getAccount(callerAccount).getAccountResource().toString());
+    trace.init();
+
 
     return true;
   }
