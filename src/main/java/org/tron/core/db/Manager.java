@@ -97,8 +97,6 @@ import org.tron.protos.Protocol.Transaction;
 @Component
 public class Manager {
 
-  public static ThreadLocal<Boolean> isProcessBLock = new ThreadLocal<>();
-  public static ThreadLocal<BlockCapsule> currentBlcok = new ThreadLocal<>();
 
   // db store
   @Autowired
@@ -1163,7 +1161,6 @@ public class Manager {
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
 
-        isProcessBLock.set(false);
 
         processTransaction(trx, blockCapsule);
         // trx.resetResult();
@@ -1225,8 +1222,6 @@ public class Manager {
     blockCapsule.sign(privateKey);
 
     try {
-      isProcessBLock.set(true);
-      currentBlcok.set(blockCapsule);
 
       logger.info("3: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore.get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance()
           + "\n" + accountStore.get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")));
@@ -1261,9 +1256,6 @@ public class Manager {
       logger.warn(e.getMessage(), e);
     } catch (TooBigTransactionResultException e) {
       logger.info("contract not processed during TooBigTransactionResultException");
-    }catch (ContractValidateException e) {
-      logger.info("contract not processed during validate");
-      logger.error(e.getMessage(), e);
     }
 
     return null;
