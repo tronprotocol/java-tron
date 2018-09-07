@@ -37,8 +37,8 @@ public class WitnessControllerTest {
   @AfterClass
   public static void removeDb() {
     Args.clearParam();
-    FileUtil.deleteDir(new File(dbPath));
     context.destroy();
+    FileUtil.deleteDir(new File(dbPath));
   }
 
   ByteString blank = ByteString.copyFrom(new byte[1]);
