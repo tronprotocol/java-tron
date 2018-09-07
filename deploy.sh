@@ -8,7 +8,7 @@ if [ "$TRAVIS_BRANCH" = "deploy_test" ];then
   echo "stest start"
   testr = $(./gradlew stest)
   echo "stest end"
-  echo $testr
+  echo "$testr"
 fi
 echo "bye bye"
 
