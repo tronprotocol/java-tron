@@ -97,6 +97,8 @@ import org.tron.protos.Protocol.Transaction;
 @Component
 public class Manager {
 
+  public static ThreadLocal<Boolean> isProcessBLock = new ThreadLocal<>();
+
   // db store
   @Autowired
   private AccountStore accountStore;
@@ -1157,6 +1159,9 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
+
+        isProcessBLock.set(false);
+
         processTransaction(trx, blockCapsule);
         // trx.resetResult();
         tmpSeesion.merge();
@@ -1214,6 +1219,7 @@ public class Manager {
     blockCapsule.sign(privateKey);
 
     try {
+      isProcessBLock.set(true);
       this.pushBlock(blockCapsule);
       return blockCapsule;
     } catch (TaposException e) {
