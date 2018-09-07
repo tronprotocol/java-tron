@@ -14,15 +14,11 @@ cache:
 script:
 - sh tron.sh
 - "./gradlew build"
+- sh deploy.sh
 
 skip_build:
 - README.md：
 - LICENSE
-deploy:
-  provider: script
-  script: bash deploy.sh
-  on:
-    branch: develop
 
 
 
