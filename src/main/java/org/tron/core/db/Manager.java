@@ -1075,9 +1075,7 @@ public class Manager {
 
     if (Objects.nonNull(blockCap)) {
       trace.setResult(runtime);
-      if (!blockCap.generatedByMyself) {
         trace.check();
-      }
     }
 
     trace.finalization(runtime);
