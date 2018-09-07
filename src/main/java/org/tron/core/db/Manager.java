@@ -55,7 +55,6 @@ import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
-import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.Parameter.ChainConstant;
@@ -607,18 +606,10 @@ public class Manager {
   }
 
 
-  public void consumeBandwidth(TransactionCapsule trx, TransactionResultCapsule ret,
-      TransactionTrace trace)
+  public void consumeBandwidth(TransactionCapsule trx, TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException {
     BandwidthProcessor processor = new BandwidthProcessor(this);
-    processor.consume(trx, ret, trace);
-  }
-
-  public void consumeEnergy(TransactionCapsule trx, TransactionResultCapsule ret,
-      TransactionTrace trace)
-      throws ContractValidateException, AccountResourceInsufficientException {
-    EnergyProcessor processor = new EnergyProcessor(this);
-    processor.consume(trx, ret, trace);
+    processor.consume(trx, trace);
   }
 
   @Deprecated
@@ -1044,6 +1035,8 @@ public class Manager {
 //      throw new VMIllegalException("this node doesn't support vm, trx id: " + trxCap.getTransactionId().toString());
 //    }
 
+    consumeBandwidth(trxCap, trace);
+
     DepositImpl deposit = DepositImpl.createRoot(this);
     Runtime runtime = new Runtime(trace, blockCap, deposit, new ProgramInvokeFactoryImpl());
     if (runtime.isCallConstant()) {
@@ -1055,8 +1048,6 @@ public class Manager {
     //     trxCap.setResult(new TransactionResultCapsule(contractResult.UNKNOWN));
     //   }
     // }
-
-    consumeBandwidth(trxCap, runtime.getResult().getRet(), trace);
 
     trace.init();
 
