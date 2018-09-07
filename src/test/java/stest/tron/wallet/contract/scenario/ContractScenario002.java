@@ -53,12 +53,13 @@ public class ContractScenario002 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     Assert.assertTrue(PublicMethed.sendcoin(contract002Address,20000000L,fromAddress,
         testKey002,blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract002Address, 5000000L,
-        3,1,contract002Key,blockingStubFull));
+
   }
 
   @Test(enabled = true)
   public void deployTronNative() {
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract002Address, 5000000L,
+        3,1,contract002Key,blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract002Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();

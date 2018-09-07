@@ -56,12 +56,13 @@ public class ContractScenario008 {
         testKey002,blockingStubFull));
     logger.info(Long.toString(PublicMethed.queryAccount(contract008Key,blockingStubFull)
         .getBalance()));
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract008Address, 1000000L,
-        3,1,contract008Key,blockingStubFull));
+
   }
 
   @Test(enabled = true)
   public void deployErc721CryptoKitties() {
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract008Address, 1000000L,
+        3,1,contract008Key,blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract008Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
