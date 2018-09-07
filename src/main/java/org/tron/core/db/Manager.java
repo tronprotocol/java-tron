@@ -1100,7 +1100,6 @@ public class Manager {
     logger.error("after tx: balance: {}", deposit.getBalance(callerAccount));
     logger.error("after tx: resource: {}",
         deposit.getAccount(callerAccount).getAccountResource().toString());
-    trace.init();
 
 
     return true;
