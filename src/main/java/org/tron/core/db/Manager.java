@@ -115,6 +115,8 @@ public class Manager {
   @Autowired
   private AccountIdIndexStore accountIdIndexStore;
   @Autowired
+  private AccountIndexStore accountIndexStore;
+  @Autowired
   private WitnessScheduleStore witnessScheduleStore;
   @Autowired
   private RecentBlockStore recentBlockStore;

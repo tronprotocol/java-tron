@@ -70,7 +70,9 @@ public interface Parameter {
     REMOVE_THE_POWER_OF_THE_GR,  // 1 ,10
     ENERGY_FEE, // drop, 11
     EXCHANGE_CREATE_FEE, // drop, 12
-    MAX_CPU_TIME_OF_ONE_TX // ms, 13
+    MAX_CPU_TIME_OF_ONE_TX, // ms, 13
+    ALLOW_UPDATE_ACCOUNT_NAME, // 1, 14
+    ALLOW_SAME_TOKEN_NAME, // 1, 15
 //    ONE_DAY_NET_LIMIT,
 //    MAX_FROZEN_TIME,
 //    MIN_FROZEN_TIME,
