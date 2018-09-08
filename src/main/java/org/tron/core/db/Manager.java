@@ -1207,7 +1207,7 @@ public class Manager {
         logger.debug(e.getMessage(), e);
       } catch (ReceiptCheckErrException e) {
         logger.info("OutOfSlotTime exception: {}", e.getMessage());
-        logger.debug(e.getMessage(), e);
+        logger.error(e.getMessage(), e);
       } catch (VMIllegalException e) {
         logger.warn(e.getMessage(), e);
       }
@@ -1264,7 +1264,7 @@ public class Manager {
       logger.debug(e.getMessage(), e);
     } catch (ReceiptCheckErrException e) {
       logger.info("OutOfSlotTime exception: {}", e.getMessage());
-      logger.debug(e.getMessage(), e);
+      logger.error(e.getMessage(), e);
     } catch (VMIllegalException e) {
       logger.warn(e.getMessage(), e);
     } catch (TooBigTransactionResultException e) {
