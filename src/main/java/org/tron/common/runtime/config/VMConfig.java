@@ -27,7 +27,7 @@ public class VMConfig {
   public static final int MAX_FEE_LIMIT = 1_000_000_000; //1000 trx
 
   private boolean vmTraceCompressed = false;
-  private boolean vmTrace = false;
+  private boolean vmTrace = true;
 
 
   private VMConfig() {

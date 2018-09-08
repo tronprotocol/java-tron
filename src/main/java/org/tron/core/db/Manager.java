@@ -1011,7 +1011,6 @@ public class Manager {
     if (trxCap == null) {
       return false;
     }
-
     validateTapos(trxCap);
     validateCommon(trxCap);
 
@@ -1135,6 +1134,8 @@ public class Manager {
     session.reset();
     session.setValue(revokingStore.buildSession());
 
+    long b1 = accountStore
+        .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance();
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext()) {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
@@ -1152,8 +1153,12 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
+        long start = System.currentTimeMillis();
         processTransaction(trx, blockCapsule);
-        // trx.resetResult();
+        logger.info(
+            "***** generateblock processTransaction cost:" + (System.currentTimeMillis() - start)
+                + ", trx id:" + trx.getTransactionId() + ", result:" + trx.getContractRet());
+// trx.resetResult();
         tmpSeesion.merge();
         // push into block
         blockCapsule.addTransaction(trx);
@@ -1196,6 +1201,8 @@ public class Manager {
       }
     }
 
+    long b2 = accountStore
+        .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance();
     session.reset();
 
     if (postponedTrxCount > 0) {
@@ -1209,7 +1216,23 @@ public class Manager {
     blockCapsule.sign(privateKey);
 
     try {
+      long b3 = accountStore
+          .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance();
       this.pushBlock(blockCapsule);
+
+      long b4 = accountStore
+          .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance();
+      logger.info("*****diff:"
+          + " b4-b2=" + (b4 - b2)
+          + " b3-b1=" + (b3 - b1)
+          + " b2-b1=" + (b2 - b1)
+          + " b4-b3=" + (b4 - b3)
+          + " b1=" + b1
+          + " b2=" + b2
+          + " b3=" + b3
+          + " b4=" + b4
+      );
+
       return blockCapsule;
     } catch (TaposException e) {
       logger.info("contract not processed during TaposException");
@@ -1287,7 +1310,10 @@ public class Manager {
       if (block.generatedByMyself) {
         transactionCapsule.setVerified(true);
       }
+      long start = System.currentTimeMillis();
       processTransaction(transactionCapsule, block);
+      logger.info("***** pushblock processTransaction cost:" + (System.currentTimeMillis() - start)
+          + ", trx id:" + transactionCapsule.getTransactionId() + ", result:" + transactionCapsule.getContractRet());
     }
 
     boolean needMaint = needMaintenance(block.getTimeStamp());

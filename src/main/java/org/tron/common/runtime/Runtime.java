@@ -573,6 +573,7 @@ public class Runtime {
       }
       logger.error("runtime error is :{}", result.getException().getMessage());
     }
+    result = program.getResult();
     trace.setBill(result.getEnergyUsed());
   }
 

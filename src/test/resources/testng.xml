@@ -5,13 +5,13 @@
   <listeners>
     <listener class-name="stest.tron.wallet.common.client.utils.RetryListener"/>
   </listeners>
-    <test name="Debug case" preserve-order="true">
-                <packages>
-                    <package name="stest.tron.wallet.*">
-                    </package>
-                </packages>
-<!--        <classes>
-            <class name="stest.tron.wallet.onlinestress.TestNetErc721Cat"/>
-        </classes>-->
-    </test>
+  <test name="Debug case" preserve-order="true">
+    <!--                <packages>
+                      <package name="stest.tron.wallet.contract.*">
+                        </package>
+                    </packages>-->
+    <classes>
+      <class name="stest.tron.wallet.contract.linkage.ContractLinkage009"/>
+    </classes>
+  </test>
 </suite>
