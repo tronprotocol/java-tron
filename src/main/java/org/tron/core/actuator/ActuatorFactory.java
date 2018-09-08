@@ -40,6 +40,7 @@ public class ActuatorFactory {
   }
 
   private static Actuator getActuatorByContract(Contract contract, Manager manager) {
+    logger.info("contractRaw :"+contract);
     switch (contract.getType()) {
       case AccountUpdateContract:
         return new UpdateAccountActuator(contract.getParameter(), manager);

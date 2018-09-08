@@ -48,6 +48,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Time;
 import org.tron.core.Constant;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -96,6 +97,7 @@ import org.tron.protos.Protocol.Transaction;
 @Slf4j
 @Component
 public class Manager {
+
 
   // db store
   @Autowired
@@ -329,6 +331,7 @@ public class Manager {
             Thread.currentThread().interrupt();
           } catch (Exception ex) {
             logger.error("unknown exception happened in witness loop", ex);
+            logger.error("getStackTrace", ex.getStackTrace());
           } catch (Throwable throwable) {
             logger.error("unknown throwable happened in witness loop", throwable);
           }
@@ -1033,6 +1036,14 @@ public class Manager {
 //      throw new VMIllegalException("this node doesn't support vm, trx id: " + trxCap.getTransactionId().toString());
 //    }
 
+    logger.info("transactionId:{},infoSimple:{}" , trxCap.getTransactionId(),trxCap.toString());
+
+    byte[] callerAccount = TransactionCapsule
+        .getOwner(trxCap.getInstance().getRawData().getContract(0));
+    AccountCapsule acp = getAccountStore().get(callerAccount);
+    logger.error("before consumeBandwidth: account : {}, account store info: {}",
+        Wallet.encode58Check(callerAccount), acp.toString());
+
     consumeBandwidth(trxCap, trace);
 
     DepositImpl deposit = DepositImpl.createRoot(this);
@@ -1045,6 +1056,11 @@ public class Manager {
     //     trxCap.setResult(new TransactionResultCapsule(contractResult.UNKNOWN));
     //   }
     // }
+
+    acp = getAccountStore().get(callerAccount);
+    logger.error("after consumeBandwidth: ResultFee: {}", runtime.getResult().getRet().getFee());
+    logger.error("after consumeBandwidth: account: {}, account store info: {}, deposit info: {}",
+        Wallet.encode58Check(callerAccount), acp.toString(), deposit.getAccount(callerAccount).toString());
 
     trace.init();
 
@@ -1059,7 +1075,7 @@ public class Manager {
 
     if (Objects.nonNull(blockCap)) {
       trace.setResult(runtime);
-      if (!blockCap.generatedByMyself) {
+      if (!blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
         trace.check();
       }
     }
@@ -1078,6 +1094,10 @@ public class Manager {
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
 
+    acp = getAccountStore().get(callerAccount);
+    logger.error("after tx: account: {}, account store info: {}, deposit info: {}",
+        Wallet.encode58Check(callerAccount), acp.toString(), deposit.getAccount(callerAccount).toString());
+    logger.error("after tx: trace:{},runtimeResult:{}" , trace.getReceipt().getReceipt().toString(),runtime.getResult().getRet().getInstance().toString() );
     return true;
   }
 
@@ -1119,6 +1139,11 @@ public class Manager {
     session.reset();
     session.setValue(revokingStore.buildSession());
 
+    logger.info("1: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore
+        .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance()
+        + "\n" + accountStore
+        .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")));
+
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext()) {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
@@ -1136,6 +1161,7 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
+
         processTransaction(trx, blockCapsule);
         // trx.resetResult();
         tmpSeesion.merge();
@@ -1174,11 +1200,16 @@ public class Manager {
         logger.debug(e.getMessage(), e);
       } catch (ReceiptCheckErrException e) {
         logger.info("OutOfSlotTime exception: {}", e.getMessage());
-        logger.debug(e.getMessage(), e);
+        logger.error(e.getMessage(), e);
       } catch (VMIllegalException e) {
         logger.warn(e.getMessage(), e);
       }
     }
+
+    logger.info("2: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore
+        .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance()
+        + "\n" + accountStore
+        .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")));
 
     session.reset();
 
@@ -1188,12 +1219,25 @@ public class Manager {
 
     logger.info(
         "postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTransactions.size()
-            + "]");
+            + "], RepushTrxCount[ " + repushTransactions.size() + " ]");
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(privateKey);
+    logger.info("start to push generated block");
 
     try {
+
+      logger.info("3: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore
+          .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance()
+          + "\n" + accountStore
+          .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")));
+
       this.pushBlock(blockCapsule);
+
+      logger.info("4: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore
+          .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance()
+          + "\n" + accountStore
+          .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")));
+
       return blockCapsule;
     } catch (TaposException e) {
       logger.info("contract not processed during TaposException");
@@ -1214,7 +1258,8 @@ public class Manager {
       logger.debug(e.getMessage(), e);
     } catch (ReceiptCheckErrException e) {
       logger.info("OutOfSlotTime exception: {}", e.getMessage());
-      logger.debug(e.getMessage(), e);
+      logger.error(
+              e.getMessage(), e);
     } catch (VMIllegalException e) {
       logger.warn(e.getMessage(), e);
     } catch (TooBigTransactionResultException e) {
