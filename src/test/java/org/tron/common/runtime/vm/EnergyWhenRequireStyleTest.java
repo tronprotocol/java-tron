@@ -24,6 +24,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMTimeOutException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
@@ -76,7 +77,7 @@ public class EnergyWhenRequireStyleTest {
 
   @Test
   public void throwTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -121,7 +122,7 @@ public class EnergyWhenRequireStyleTest {
 
   @Test
   public void requireTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -171,7 +172,7 @@ public class EnergyWhenRequireStyleTest {
 
   @Test
   public void thisFunctionViaMessageCallTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -230,7 +231,7 @@ public class EnergyWhenRequireStyleTest {
 
   @Test
   public void thatFunctionViaMessageCallTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -282,7 +283,7 @@ public class EnergyWhenRequireStyleTest {
 
   @Test
   public void newContractTest1()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -341,7 +342,7 @@ public class EnergyWhenRequireStyleTest {
 
   @Test
   public void receiveTrxWithoutPayableTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
 
     long value = 10;
     long feeLimit = 1000_000_000L; // sun
@@ -408,7 +409,7 @@ public class EnergyWhenRequireStyleTest {
 
   @Test
   public void revertTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun

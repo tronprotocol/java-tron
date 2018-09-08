@@ -41,6 +41,7 @@ import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.exception.VMTimeOutException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
@@ -112,6 +113,8 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("TransactionTrace Exception," + e.getMessage());
     } catch (VMIllegalException e) {
       throw new BadBlockException(e.getMessage());
+    } catch (VMTimeOutException e) {
+      throw new BadBlockException(e.getMessage());
     }
 
   }
@@ -167,6 +170,9 @@ public class NodeDelegateImpl implements NodeDelegate {
       return false;
     } catch (ReceiptCheckErrException e) {
       logger.info("ReceiptCheckErrException Exception" + e.getMessage());
+      return false;
+    } catch (VMTimeOutException e) {
+      logger.info("VM TimeOut Exception: " + e.getMessage());
       return false;
     } catch (VMIllegalException e) {
       logger.warn(e.getMessage());

@@ -34,6 +34,7 @@ import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.exception.VMTimeOutException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.services.RpcApiService;
@@ -149,8 +150,10 @@ public class SolidityNode {
         } catch (TransactionTraceException e) {
           throw new BadBlockException("TransactionTrace Exception");
         } catch (ReceiptCheckErrException e) {
-          throw new BadBlockException("OutOfSlotTime Exception");
+          throw new BadBlockException("ReceiptCheckErrException Exception");
         } catch (VMIllegalException e) {
+          throw new BadBlockException(e.getMessage());
+        } catch (VMTimeOutException e) {
           throw new BadBlockException(e.getMessage());
         }
 

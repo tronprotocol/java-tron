@@ -21,6 +21,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMTimeOutException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
@@ -90,7 +91,7 @@ public class InternalTransactionCallTest {
 
   @Test
   public void callTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
     byte[] contractBAddress = deployBContractAndGetItsAddress();
     byte[] contractAAddress =deployAContractandGetItsAddress();
 
@@ -136,7 +137,7 @@ public class InternalTransactionCallTest {
    */
   @Test
   public void delegateCallTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
     byte[] contractBAddress = deployBContractAndGetItsAddress();
     byte[] contractAAddress =deployAContractandGetItsAddress();
     /* =================================== CALL delegatecallTest() to change B storage =================================== */
@@ -182,7 +183,7 @@ public class InternalTransactionCallTest {
    */
   @Test
   public void callCodeTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
     byte[] contractBAddress = deployBContractAndGetItsAddress();
     byte[] contractAAddress =deployAContractandGetItsAddress();
     /* =================================== CALL callcodeTest() to change B storage =================================== */
@@ -228,7 +229,7 @@ public class InternalTransactionCallTest {
 
   // Just for the AB example above
   public byte[] deployAContractandGetItsAddress()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
     String contractName = "AContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"bAddress\",\"type\":\"address\"},{\"name\":\"_number\",\"type\":\"uint256\"}],"
@@ -266,7 +267,7 @@ public class InternalTransactionCallTest {
 
   // Just for the AB example above
   public byte[] deployBContractAndGetItsAddress()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
     String contractName = "BContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"_number\",\"type\":\"uint256\"}],\"name\":\"setValue\","

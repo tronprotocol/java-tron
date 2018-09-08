@@ -26,6 +26,8 @@ public class VMConfig {
 
   public static final int MAX_FEE_LIMIT = 1_000_000_000; //1000 trx
 
+  public static final long MAX_TIME_ON_TX_WHEN_PUSH_BLOCK = 1000_000L; // 1000 ms
+
   private boolean vmTraceCompressed = false;
   private boolean vmTrace = false;
 

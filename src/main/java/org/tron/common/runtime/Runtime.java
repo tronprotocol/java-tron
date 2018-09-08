@@ -55,7 +55,7 @@ import org.tron.core.db.StorageMarket;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.OutOfSlotTimeException;
+import org.tron.core.exception.VMTimeOutException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
@@ -282,7 +282,7 @@ public class Runtime {
 
     if (ET_NORMAL_TYPE == executorType && null != this.blockCap &&
         !this.blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
-      thisTxCPULimitInUs = 1000_000L;
+      thisTxCPULimitInUs = VMConfig.MAX_TIME_ON_TX_WHEN_PUSH_BLOCK;
     } else {
       thisTxCPULimitInUs = deposit.getDbManager().getDynamicPropertiesStore()
           .getMaxCpuTimeOfOneTX() * 1000;
@@ -462,7 +462,7 @@ public class Runtime {
 
   }
 
-  public void go() throws OutOfSlotTimeException {
+  public void go() throws VMTimeOutException {
     try {
       if (vm != null) {
         vm.play(program);
@@ -523,7 +523,7 @@ public class Runtime {
       result.setException(e);
       runtimeError = result.getException().getMessage();
       logger.error("runtime error is :{}", result.getException().getMessage());
-      throw new OutOfSlotTimeException(e.getMessage());
+      throw new VMTimeOutException(e.getMessage());
     } catch (Throwable e) {
       program.spendAllEnergy();
       if (Objects.isNull(result.getException())) {

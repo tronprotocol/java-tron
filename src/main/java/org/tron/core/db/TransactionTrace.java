@@ -26,9 +26,9 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.OutOfSlotTimeException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMTimeOutException;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -107,14 +107,10 @@ public class TransactionTrace {
   }
 
   public void exec(Runtime runtime)
-      throws ContractExeException, ContractValidateException {
+      throws ContractExeException, ContractValidateException, VMTimeOutException {
     /**  VM execute  **/
     runtime.execute();
-    try {
-      runtime.go();
-    } catch (OutOfSlotTimeException e) {
-      throw new ContractExeException(e.getMessage());
-    }
+    runtime.go();
 
   }
 

@@ -22,6 +22,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMTimeOutException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
@@ -85,7 +86,7 @@ public class TimeBenchmarkTest {
 
   @Test
   public void timeBenchmark()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException, VMTimeOutException {
     long value = 0;
     long feeLimit = 20000000000000L; // sun
     long consumeUserResourcePercent = 100;
