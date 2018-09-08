@@ -226,7 +226,8 @@ public class WitnessService implements Service {
       controller.getManager().lastHeadBlockIsMaintenance();
 
       controller.setGeneratingBlock(true);
-      BlockCapsule block = generateBlock(scheduledTime, scheduledWitness);
+      BlockCapsule block = generateBlock(scheduledTime, scheduledWitness,
+          controller.lastHeadBlockIsMaintenance());
 
       if (block == null) {
         logger.warn("exception when generate block");
@@ -265,10 +266,10 @@ public class WitnessService implements Service {
     }
   }
 
-  private BlockCapsule generateBlock(long when, ByteString witnessAddress)
+  private BlockCapsule generateBlock(long when, ByteString witnessAddress,Boolean lastHeadBlockIsMaintenance)
       throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, ReceiptException, TransactionTraceException {
     return tronApp.getDbManager().generateBlock(this.localWitnessStateMap.get(witnessAddress), when,
-        this.privateKeyMap.get(witnessAddress));
+        this.privateKeyMap.get(witnessAddress),lastHeadBlockIsMaintenance);
   }
 
   /**
