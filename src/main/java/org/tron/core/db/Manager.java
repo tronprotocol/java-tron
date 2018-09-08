@@ -1043,10 +1043,8 @@ public class Manager {
     byte[] callerAccount = TransactionCapsule
         .getOwner(trxCap.getInstance().getRawData().getContract(0));
     AccountCapsule acp = getAccountStore().get(callerAccount);
-    logger.error("before consumeBandwidth: account: {}, balance: {}",
-        Wallet.encode58Check(callerAccount), acp.getBalance());
-    logger.error("before consumeBandwidth: account: {}, store resource: {}",
-        Wallet.encode58Check(callerAccount), acp.getAccountResource().toString());
+    logger.error("before consumeBandwidth: account : {}, account store info: {}",
+        Wallet.encode58Check(callerAccount), acp.toString());
 
     consumeBandwidth(trxCap, trace);
 
@@ -1063,10 +1061,8 @@ public class Manager {
 
     acp = getAccountStore().get(callerAccount);
     logger.error("after consumeBandwidth: ResultFee: {}", runtime.getResult().getRet().getFee());
-    logger.error("after consumeBandwidth: account: {}, store balance: {}, deposit balance: {}",
-        Wallet.encode58Check(callerAccount), acp.getBalance(), deposit.getBalance(callerAccount));
-    logger.error("after consumeBandwidth: deposit resource: {}",
-        deposit.getAccount(callerAccount).getAccountResource().toString());
+    logger.error("after consumeBandwidth: account: {}, account store info: {}, deposit info: {}",
+        Wallet.encode58Check(callerAccount), acp.toString(), deposit.getAccount(callerAccount).toString());
 
     trace.init();
 
