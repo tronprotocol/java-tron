@@ -40,7 +40,7 @@ import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.exception.UnsupportVMException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
@@ -110,7 +110,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("TransactionTrace Exception," + e.getMessage());
     } catch (ReceiptCheckErrException e) {
       throw new BadBlockException("TransactionTrace Exception," + e.getMessage());
-    } catch (UnsupportVMException e) {
+    } catch (VMIllegalException e) {
       throw new BadBlockException(e.getMessage());
     }
 
@@ -168,9 +168,9 @@ public class NodeDelegateImpl implements NodeDelegate {
     } catch (ReceiptCheckErrException e) {
       logger.info("ReceiptCheckErrException Exception" + e.getMessage());
       return false;
-    } catch (UnsupportVMException e) {
+    } catch (VMIllegalException e) {
       logger.warn(e.getMessage());
-      return false;
+      throw new BadTransactionException();
     } catch (TooBigTransactionResultException e) {
       logger.info("too big transactionresult" + e.getMessage());
       return false;

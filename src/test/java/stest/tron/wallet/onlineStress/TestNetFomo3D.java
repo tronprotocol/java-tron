@@ -1,7 +1,15 @@
 package stest.tron.wallet.onlineStress;
 
+import static stest.tron.wallet.common.client.utils.PublicMethed.getTransactionInfoById;
+
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -14,6 +22,7 @@ import org.tron.api.WalletGrpc;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -31,6 +40,7 @@ public class TestNetFomo3D {
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
+  Optional<TransactionInfo> infoById = null;
 
 
   @BeforeSuite
@@ -48,10 +58,11 @@ public class TestNetFomo3D {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     logger.info(Long.toString(PublicMethed.queryAccount(testNetAccountKey,blockingStubFull)
         .getBalance()));
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(testNetAccountAddress,10000000L,
-        3,1,testNetAccountKey,blockingStubFull));
-    /*    Assert.assertTrue(PublicMethed.buyStorage(50000000L,testNetAccountAddress,testNetAccountKey,
-        blockingStubFull));*/
+    //Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(testNetAccountAddress,10000000L,
+    //3,1,testNetAccountKey,blockingStubFull));
+    /*    Assert.assertTrue(PublicMethed.buyStorage(50000000L,testNetAccountAddress,
+    testNetAccountKey,
+       blockingStubFull));*/
 
   }
 
@@ -112,11 +123,85 @@ public class TestNetFomo3D {
 
   }
 
+  @Test(enabled = false)
+  public void tooLargeStorage() throws IOException {
+    AccountResourceMessage accountResource = PublicMethed.getAccountResource(testNetAccountAddress,
+        blockingStubFull);
+    Long cpuLimit = accountResource.getEnergyLimit();
+    Long cpuUsage = accountResource.getEnergyUsed();
+    Account account = PublicMethed.queryAccount(testNetAccountKey,blockingStubFull);
+    logger.info("before balance is " + Long.toString(account.getBalance()));
+    logger.info("before cpu limit is " + Long.toString(cpuLimit));
+    logger.info("before cpu usage is " + Long.toString(cpuUsage));
+    Long maxFeeLimit = 100000000000000000L;
+    String contractName = "tooLargeStorage";
+    String code = "60e0604090815260808190527f313233343536373831323334353637383132333435363738313233343536373860a081815260c091909152610044916001919061009e565b50604080516060810182528181527f6162636466657467616263646665746761626364666574676162636466657467602082018181529183015261008b916002919061009e565b5034801561009857600080fd5b50610139565b828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f106100df57805160ff191683800117855561010c565b8280016001018555821561010c579182015b8281111561010c5782518255916020019190600101906100f1565b5061011892915061011c565b5090565b61013691905b808211156101185760008155600101610122565b90565b6105bb806101486000396000f3006080604052600436106100615763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166386b714e28114610066578063c2985578146100f0578063e6a01b5a14610105578063f8ac93e81461011f575b600080fd5b34801561007257600080fd5b5061007b610134565b6040805160208082528351818301528351919283929083019185019080838360005b838110156100b557818101518382015260200161009d565b50505050905090810190601f1680156100e25780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b3480156100fc57600080fd5b5061007b6101c2565b34801561011157600080fd5b5061011d6004356102cc565b005b34801561012b57600080fd5b5061011d6103e0565b6000805460408051602060026001851615610100026000190190941693909304601f810184900484028201840190925281815292918301828280156101ba5780601f1061018f576101008083540402835291602001916101ba565b820191906000526020600020905b81548152906001019060200180831161019d57829003601f168201915b505050505081565b60028054604080516020601f600019610100600187161502019094168590049384018190048102820181019092528281526060936102c6936102599383018282801561024f5780601f106102245761010080835404028352916020019161024f565b820191906000526020600020905b81548152906001019060200180831161023257829003601f168201915b50505050506103ff565b60018054604080516020601f6002600019610100878916150201909516949094049384018190048102820181019092528281526102ba939092909183018282801561024f5780601f106102245761010080835404028352916020019161024f565b9063ffffffff61042516565b90505b90565b60006102d66101c2565b80516102ea916000916020909101906104e0565b50600090505b818110156103dc576000805460408051602060026001851615610100026000190190941693909304601f81018490048402820184019092528181526103bf9361035d939192909183018282801561024f5780601f106102245761010080835404028352916020019161024f565b60008054604080516020601f600260001961010060018816150201909516949094049384018190048102820181019092528281526102ba939092909183018282801561024f5780601f106102245761010080835404028352916020019161024f565b80516103d3916000916020909101906104e0565b506001016102f0565b5050565b6040805160208101918290526000908190526103fc91816104e0565b50565b61040761055e565b50604080518082019091528151815260209182019181019190915290565b606080600083600001518560000151016040519080825280601f01601f191660200182016040528015610462578160200160208202803883390190505b50915060208201905061047e818660200151876000015161049c565b845160208501518551610494928401919061049c565b509392505050565b60005b602082106104c1578251845260209384019390920191601f199091019061049f565b50905182516020929092036101000a6000190180199091169116179052565b828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f1061052157805160ff191683800117855561054e565b8280016001018555821561054e579182015b8281111561054e578251825591602001919060010190610533565b5061055a929150610575565b5090565b604080518082019091526000808252602082015290565b6102c991905b8082111561055a576000815560010161057b5600a165627a7a723058207e0cfcb8e796037851028c428aca173ecd924a4572c51605ecebbf548fecdf3d0029";
+    String abi = "[{\"constant\":true,\"inputs\":[],\"name\":\"s\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"foo\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"times\",\"type\":\"uint256\"}],\"name\":\"slice\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"refresh\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
+
+    String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName,abi,
+        code,"",maxFeeLimit, 0L, 100,null,
+        testNetAccountKey,testNetAccountAddress,blockingStubFull);
+    infoById = getTransactionInfoById(txid,blockingStubFull);
+    accountResource = PublicMethed.getAccountResource(testNetAccountAddress,blockingStubFull);
+    cpuLimit = accountResource.getEnergyLimit();
+    //storageLimit = accountResource.getStorageLimit();
+    cpuUsage = accountResource.getEnergyUsed();
+    //storageUsage = accountResource.getStorageUsed();
+    account = PublicMethed.queryAccount(testNetAccountKey,blockingStubFull);
+    logger.info("after balance is " + Long.toString(account.getBalance()));
+    logger.info("after cpu limit is " + Long.toString(cpuLimit));
+    logger.info("after cpu usage is " + Long.toString(cpuUsage));
+
+    /*    String name = readFromXieChang();*/
+    String stringTimes = Integer.toString(7);
+    byte[] contractAddress = infoById.get().getContractAddress().toByteArray();
+    txid = PublicMethed.triggerContract(contractAddress, "slice(uint256)",stringTimes,false,
+        0,maxFeeLimit,testNetAccountAddress,testNetAccountKey,blockingStubFull);
+    logger.info("slice  " + txid);
+    logger.info(Integer.toString(infoById.get().getResultValue()));
+    infoById = getTransactionInfoById(txid,blockingStubFull);
+
+    txid = PublicMethed.triggerContract(contractAddress, "s()","#",false,
+        0,maxFeeLimit,testNetAccountAddress,testNetAccountKey,blockingStubFull);
+    logger.info(txid);
+    logger.info(Integer.toString(infoById.get().getResultValue()));
+
+
+
+
+
+
+
+  }
+
+
+
   @AfterClass
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
+  }
+
+  public String readFromXieChang() throws IOException {
+    File file = new File(
+        "/Users/wangzihe/Desktop/ddd.txt");
+    FileReader reader = null;
+    try {
+      reader = new FileReader(file);
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    }
+    BufferedReader reAder = new BufferedReader(reader);
+    StringBuilder sb = new StringBuilder();
+    String s = "";
+    while ((s = reAder.readLine()) != null) {
+      sb.append(s);
+    }
+
+    String code = sb.toString();
+    reAder.close();
+    return code;
   }
 }
 

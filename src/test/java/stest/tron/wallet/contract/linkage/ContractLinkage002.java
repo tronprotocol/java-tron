@@ -23,15 +23,16 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class ContractLinkage002 {
 
-  //testng001、testng002、testng003、testng004
-  private final String testKey002 =
-      "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
+  private final String testKey002 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
+  private Long maxFeeLimit = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.maxFeeLimit");
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] linkage002Address = ecKey1.getAddress();
@@ -52,10 +53,6 @@ public class ContractLinkage002 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     Assert.assertTrue(PublicMethed.sendcoin(linkage002Address,200000000000L,fromAddress,
         testKey002,blockingStubFull));
-
-    /*    Assert.assertTrue(PublicMethed.buyStorage(5000000L,linkage002Address,linkage002Key,
-        blockingStubFull));*/
-
   }
 
   @Test(enabled = true)
@@ -65,15 +62,10 @@ public class ContractLinkage002 {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(linkage002Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
-    //Long storageLimit = accountResource.getStorageLimit();
     Long energyUsage = accountResource.getEnergyUsed();
-    //Long storageUsage = accountResource.getStorageUsed();
 
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
-    //logger.info("before storage limit is " + Long.toString(storageLimit));
-    //logger.info("before storage usaged is " + Long.toString(storageUsage));
-    Long maxFeeLimit = 5000000000L;
     String contractName = "tronNative";
     String code = "608060405260008054600160a060020a03199081166201000117909155600180548216620100021"
         + "790556002805482166201000317905560038054821662010004179055600480548216620100051790556005"
@@ -166,7 +158,6 @@ public class ContractLinkage002 {
     smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
     Assert.assertTrue(smartContract.getConsumeUserResourcePercent() == 0);
 
-
     //Update the consumeUserResourcePercent setting.
     Assert.assertTrue(PublicMethed.updateSetting(contractAddress,66L,
         linkage002Key,linkage002Address,blockingStubFull));
@@ -180,8 +171,6 @@ public class ContractLinkage002 {
         linkage002Key,linkage002Address,blockingStubFull));
 
   }
-
-
 
   @AfterClass
   public void shutdown() throws InterruptedException {
