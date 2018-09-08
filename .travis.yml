@@ -14,7 +14,7 @@ cache:
 script:
 - sh tron.sh
 - "./gradlew build"
-- bash deploy.sh
+- sh deploy.sh
 
 skip_build:
 - README.md：
