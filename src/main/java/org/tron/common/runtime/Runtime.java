@@ -384,7 +384,6 @@ public class Runtime {
       this.vm = new VM(config);
       this.program = new Program(ops, programInvoke, internalTransaction, config, this.blockCap);
       this.program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
-      this.program.resetNonce();
       this.program.setRootCallConstant(isCallConstant());
     } catch (Exception e) {
       logger.error(e.getMessage());
@@ -476,7 +475,6 @@ public class Runtime {
       this.program = new Program(null, code, programInvoke, internalTransaction, config,
           this.blockCap);
       this.program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
-      this.program.resetNonce();
       this.program.setRootCallConstant(isCallConstant());
     }
 

@@ -179,6 +179,7 @@ public class Program {
     this.stack = setupProgramListener(new Stack());
     this.contractState = setupProgramListener(new ContractState(programInvoke));
     this.trace = new ProgramTrace(config, programInvoke);
+    this.nonce = transaction.getNonce();
 
     //this.transactionHash = transaction.getHash();
   }
@@ -196,7 +197,7 @@ public class Program {
 
   private InternalTransaction addInternalTx(DataWord energyLimit, byte[] senderAddress,
       byte[] receiveAddress,
-      long value, byte[] data, String note) {
+      long value, byte[] data, String note, long nonce) {
 
     // todo: now, internal transaction needn't energylimit
     InternalTransaction result = null;
@@ -205,7 +206,7 @@ public class Program {
       //result = getResult().addInternalTransaction(transaction.getHash(), getCallDeep(),
       //        getEnergyPrice(), energyLimit, senderAddress, receiveAddress, value.toByteArray(), data, note);
       result = getResult().addInternalTransaction(transaction.getHash(), getCallDeep(),
-          senderAddress, receiveAddress, value, data, note);
+          senderAddress, receiveAddress, value, data, note, nonce);
     }
 
     return result;
@@ -416,7 +417,8 @@ public class Program {
           balance);
     }
 
-    addInternalTx(null, owner, obtainer, balance, null, "suicide");
+    increaseNonce();
+    addInternalTx(null, owner, obtainer, balance, null, "suicide", nonce);
 
     if (FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0) {
       // if owner == obtainer just zeroing account according to Yellow Paper
@@ -466,7 +468,7 @@ public class Program {
 
 //    byte[] privKey = Sha256Hash.hash(getOwnerAddress().getData());
 //    ECKey ecKey = ECKey.fromPrivate(privKey);
-    increaseNonce();
+
     //this.transactionHash = Sha256Hash.hash(transactionHash);
     byte[] newAddress = Wallet
         .generateContractAddress(rootTransactionId, nonce);
@@ -514,9 +516,10 @@ public class Program {
     DataWord energyLimit = this.getCreateEnergy(getEnergyLimitLeft());
     spendEnergy(energyLimit.longValue(), "internal call");
 
+    increaseNonce();
     // [5] COOK THE INVOKE AND EXECUTE
     InternalTransaction internalTx = addInternalTx(null, senderAddress, null, endowment,
-        programCode, "create");
+        programCode, "create", nonce);
     long vmStartInUs = System.nanoTime() / 1000;
     ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
         this, new DataWord(newAddress), getOwnerAddress(), value,
@@ -534,7 +537,6 @@ public class Program {
       Program program = new Program(programCode, programInvoke, internalTx, config, this.blockCap);
       program.setRootTransactionId(this.rootTransactionId);
       program.setRootCallConstant(this.isRootCallConstant);
-      program.nonce = this.nonce;
       vm.play(program);
       result = program.getResult();
       getTrace().merge(program.getTrace());
@@ -672,8 +674,9 @@ public class Program {
     }
 
     // CREATE CALL INTERNAL TRANSACTION
+    increaseNonce();
     InternalTransaction internalTx = addInternalTx(null, senderAddress, contextAddress,
-        endowment, data, "call");
+        endowment, data, "call" , nonce);
 
     ProgramResult result = null;
     if (isNotEmpty(programCode)) {
@@ -684,13 +687,11 @@ public class Program {
           msg.getType().callIsDelegate() ? getCallValue() : msg.getEndowment(),
           contextBalance, data, deposit, msg.getType().callIsStatic() || isStaticCall(),
           byTestingSuite(), vmStartInUs, getVmShouldEndInUs(), msg.getEnergy().longValueSafe());
-
       VM vm = new VM(config);
       Program program = new Program(null, programCode, programInvoke, internalTx, config,
           this.blockCap);
       program.setRootTransactionId(this.rootTransactionId);
       program.setRootCallConstant(this.isRootCallConstant);
-      program.nonce = this.nonce;
       vm.play(program);
       result = program.getResult();
 
