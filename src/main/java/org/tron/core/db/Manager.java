@@ -1097,10 +1097,8 @@ public class Manager {
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
 
     acp = getAccountStore().get(callerAccount);
-    logger.error("after tx: account: {}, store balance: {}, deposit balance: {}",
-        Wallet.encode58Check(callerAccount), acp.getBalance(), deposit.getBalance(callerAccount));
-    logger.error("after tx: deposit resource: {}",
-        deposit.getAccount(callerAccount).getAccountResource().toString());
+    logger.error("after tx: account: {}, account store info: {}, deposit info: {}",
+        Wallet.encode58Check(callerAccount), acp.toString(), deposit.getAccount(callerAccount).toString());
 
     return true;
   }
@@ -1226,6 +1224,7 @@ public class Manager {
             + "], RepushTrxCount[ " + repushTransactions.size() + " ]");
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(privateKey);
+    logger.info("start to push generated block");
 
     try {
 
