@@ -1120,6 +1120,8 @@ public class Manager {
 
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, TransactionTraceException {
 
+    lastHeadBlockIsMaintenance();
+
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
     final Sha256Hash preHash = this.dynamicPropertiesStore.getLatestBlockHeaderHash();

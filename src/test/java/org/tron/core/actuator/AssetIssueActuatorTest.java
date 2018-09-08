@@ -167,6 +167,7 @@ public class AssetIssueActuatorTest {
     AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager); // second asset
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     try {
       // put first assetissue
       dbManager

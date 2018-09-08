@@ -223,6 +223,8 @@ public class WitnessService implements Service {
 
     try {
 
+      controller.getManager().lastHeadBlockIsMaintenance();
+
       controller.setGeneratingBlock(true);
       BlockCapsule block = generateBlock(scheduledTime, scheduledWitness);
 

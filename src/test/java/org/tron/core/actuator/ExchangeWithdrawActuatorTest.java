@@ -336,7 +336,7 @@ public class ExchangeWithdrawActuatorTest {
    */
   @Test
   public void exchangeNotExist() {
-    long exchangeId = 3;
+    long exchangeId = 4;
     String firstTokenId = "abc";
     long firstTokenQuant = 100000000L;
     String secondTokenId = "def";
@@ -360,7 +360,7 @@ public class ExchangeWithdrawActuatorTest {
       fail("Exchange not exists");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Exchange[3] not exists",
+      Assert.assertEquals("Exchange[4] not exists",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
