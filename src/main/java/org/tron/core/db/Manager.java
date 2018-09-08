@@ -323,6 +323,10 @@ public class Manager {
       () -> {
         while (isRunRepushThread) {
           try {
+            if (isGeneratingBlock()) {
+              TimeUnit.MILLISECONDS.sleep(10L);
+              continue;
+            }
             TransactionCapsule tx = this.getRepushTransactions().poll(1, TimeUnit.SECONDS);
             if (tx != null) {
               this.rePush(tx);
