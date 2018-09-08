@@ -86,7 +86,7 @@ public class UpdateAccountActuator extends AbstractActuator {
       throw new ContractValidateException("This account name already exist");
     }
 
-    if (dbManager.getAccountIdIndexStore().has(accountName)
+    if (dbManager.getAccountIndexStore().has(accountName)
         && dbManager.getDynamicPropertiesStore().getAllowUpdateAccountName() == 0) {
       throw new ContractValidateException("This name has existed");
     }
