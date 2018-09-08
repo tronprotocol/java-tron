@@ -10,7 +10,7 @@ if [ "$TRAVIS_BRANCH" = "deploy_test" ];then
   echo "stest end"
 
   echo $?
-  ret=$(cat test.txt | grep "stest FAILED" | wc -l)
+  ret=$(cat stest.log | grep "stest FAILED" | wc -l)
 
   if [ $ret > 0 ];then
     exit 1
