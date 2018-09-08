@@ -331,6 +331,7 @@ public class Manager {
             Thread.currentThread().interrupt();
           } catch (Exception ex) {
             logger.error("unknown exception happened in witness loop", ex);
+            logger.error("getStackTrace", ex.getStackTrace());
           } catch (Throwable throwable) {
             logger.error("unknown throwable happened in witness loop", throwable);
           }
@@ -1264,7 +1265,8 @@ public class Manager {
       logger.debug(e.getMessage(), e);
     } catch (ReceiptCheckErrException e) {
       logger.info("OutOfSlotTime exception: {}", e.getMessage());
-      logger.error(e.getMessage(), e);
+      logger.error(
+              e.getMessage(), e);
     } catch (VMIllegalException e) {
       logger.warn(e.getMessage(), e);
     } catch (TooBigTransactionResultException e) {
