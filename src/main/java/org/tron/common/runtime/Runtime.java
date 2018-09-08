@@ -384,7 +384,6 @@ public class Runtime {
       this.vm = new VM(config);
       this.program = new Program(ops, programInvoke, internalTransaction, config, this.blockCap);
       this.program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
-      this.program.resetNonce();
       this.program.setRootCallConstant(isCallConstant());
     } catch (Exception e) {
       logger.error(e.getMessage());
@@ -476,7 +475,6 @@ public class Runtime {
       this.program = new Program(null, code, programInvoke, internalTransaction, config,
           this.blockCap);
       this.program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
-      this.program.resetNonce();
       this.program.setRootCallConstant(isCallConstant());
     }
 
@@ -506,7 +504,6 @@ public class Runtime {
       if (vm != null) {
         vm.play(program);
 
-        program.getResult().setRet(result.getRet());
         result = program.getResult();
 
         if (isCallConstant()) {
@@ -554,16 +551,19 @@ public class Runtime {
       }
     } catch (JVMStackOverFlowException e) {
       program.spendAllEnergy();
+      result = program.getResult();
       result.setException(e);
       runtimeError = result.getException().getMessage();
       logger.error("runtime error is :{}", result.getException().getMessage());
     } catch (OutOfResourceException e) {
       program.spendAllEnergy();
+      result = program.getResult();
       result.setException(e);
       runtimeError = result.getException().getMessage();
       logger.error("runtime error is :{}", result.getException().getMessage());
     } catch (Throwable e) {
       program.spendAllEnergy();
+      result = program.getResult();
       if (Objects.isNull(result.getException())) {
         logger.error(e.getMessage(), e);
         result.setException(new RuntimeException("Unknown Throwable"));

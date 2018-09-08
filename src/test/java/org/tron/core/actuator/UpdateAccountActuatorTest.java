@@ -231,6 +231,7 @@ public class UpdateAccountActuatorTest {
    * Account name need 8 - 32 bytes.
    */
   public void invalidName() {
+    dbManager.getDynamicPropertiesStore().saveAllowUpdateAccountName(1);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     //Just OK 32 bytes is OK
     try {

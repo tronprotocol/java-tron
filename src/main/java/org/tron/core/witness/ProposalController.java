@@ -76,14 +76,17 @@ public class ProposalController {
     List<ByteString> activeWitnesses = this.manager.getWitnessScheduleStore().getActiveWitnesses();
     if (proposalCapsule.hasMostApprovals(activeWitnesses)) {
       logger.info(
-          "Processing proposal,id:{},it has received most approvals ,begin to set dynamic parameter,{},and set  proposal state as DISAPPROVED",
+          "Processing proposal,id:{},it has received most approvals, "
+              + "begin to set dynamic parameter:{}, "
+              + "and set proposal state as APPROVED",
           proposalCapsule.getID(), proposalCapsule.getParameters());
       setDynamicParameters(proposalCapsule);
       proposalCapsule.setState(State.APPROVED);
       manager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
     } else {
       logger.info(
-          "Processing proposal,id:{},it has not received enough approvals,set proposal state as DISAPPROVED",
+          "Processing proposal,id:{}, "
+              + "it has not received enough approvals, set proposal state as DISAPPROVED",
           proposalCapsule.getID());
       proposalCapsule.setState(State.DISAPPROVED);
       manager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
@@ -152,6 +155,14 @@ public class ProposalController {
         }
         case (13): {
           manager.getDynamicPropertiesStore().saveMaxCpuTimeOfOneTX(entry.getValue());
+          break;
+        }
+        case (14): {
+          manager.getDynamicPropertiesStore().saveAllowUpdateAccountName(entry.getValue());
+          break;
+        }
+        case (15): {
+          manager.getDynamicPropertiesStore().saveAllowSameTokenName(entry.getValue());
           break;
         }
         default:
