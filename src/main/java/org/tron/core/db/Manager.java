@@ -116,6 +116,8 @@ public class Manager {
   @Autowired
   private AccountIdIndexStore accountIdIndexStore;
   @Autowired
+  private AccountIndexStore accountIndexStore;
+  @Autowired
   private WitnessScheduleStore witnessScheduleStore;
   @Autowired
   private RecentBlockStore recentBlockStore;
@@ -1028,17 +1030,6 @@ public class Manager {
 
     TransactionTrace trace = new TransactionTrace(trxCap, this);
 
-// TODO vm switch
-//    if (!this.dynamicPropertiesStore.supportVM() && trace.needVM()) {
-//      throw new VMIllegalException("this node doesn't support vm, trx id: " + trxCap.getTransactionId().toString());
-//    }
-    logger.info("transactionId:{},infoSimple:{}", trxCap.getTransactionId(), trxCap.toString());
-
-    byte[] callerAccount = TransactionCapsule
-        .getOwner(trxCap.getInstance().getRawData().getContract(0));
-    AccountCapsule acp = getAccountStore().get(callerAccount);
-    logger.info("before consumeBandwidth: account : {}, account store info: {}",
-        Wallet.encode58Check(callerAccount), acp.toString());
     consumeBandwidth(trxCap, trace);
 
     DepositImpl deposit = DepositImpl.createRoot(this);
@@ -1046,25 +1037,8 @@ public class Manager {
     if (runtime.isCallConstant()) {
       throw new VMIllegalException("cannot call constant method ");
     }
-    // if (getDynamicPropertiesStore().supportVM()) {
-    //   if(trxCap.getInstance().getRetCount()<=0){
-    //     trxCap.setResult(new TransactionResultCapsule(contractResult.UNKNOWN));
-    //   }
-    // }
-    acp = getAccountStore().get(callerAccount);
-    logger.info("after consumeBandwidth: ResultFee: {}", runtime.getResult().getRet().getFee());
-    logger.info("after consumeBandwidth: account: {}, account store info: {}, deposit info: {}",
-        Wallet.encode58Check(callerAccount), acp.toString(),
-        deposit.getAccount(callerAccount).toString());
+
     trace.init();
-
-    // if (blockCap != null && blockCap.generatedByMyself &&
-    //     !blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty() &&
-    //     trxCap.getInstance().getRet(0).getContractRet() != contractResult.SUCCESS) {
-    // setBill(energyUsage);
-    // } else {
-    // }
-
     trace.exec(runtime);
 
     if (Objects.nonNull(blockCap)) {
@@ -1087,12 +1061,7 @@ public class Manager {
         .buildInstance(trxCap, blockCap, runtime, traceReceipt);
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
-    acp = getAccountStore().get(callerAccount);
-    logger.info("after tx: account: {}, account store info: {}, deposit info: {}",
-        Wallet.encode58Check(callerAccount), acp.toString(),
-        deposit.getAccount(callerAccount).toString());
-    logger.info("after tx: trace:{},runtimeResult:{}", trace.getReceipt().getReceipt().toString(),
-        runtime.getResult().getRet().getInstance().toString());
+
     return true;
   }
 
@@ -1112,10 +1081,20 @@ public class Manager {
    * Generate a block.
    */
   public synchronized BlockCapsule generateBlock(
-      final WitnessCapsule witnessCapsule, final long when, final byte[] privateKey)
+      final WitnessCapsule witnessCapsule, final long when, final byte[] privateKey,
+      Boolean lastHeadBlockIsMaintenanceBefore)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
+      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
+      TransactionTraceException {
 
-      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, TransactionTraceException {
+    //check that the first block after the maintenance period has just been processed
+    if (lastHeadBlockIsMaintenanceBefore && !lastHeadBlockIsMaintenance()) {
+      if (!witnessController.validateWitnessSchedule(witnessCapsule.getAddress(), when)) {
+        logger.info("It's not my turn, "
+            + "and the first block after the maintenance period has just been processed");
+        return null;
+      }
+    }
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
@@ -1500,12 +1479,21 @@ public class Manager {
     this.accountIdIndexStore = indexStore;
   }
 
+  public AccountIndexStore getAccountIndexStore() {
+    return this.accountIndexStore;
+  }
+
+  public void setAccountIndexStore(AccountIndexStore indexStore) {
+    this.accountIndexStore = indexStore;
+  }
+
   public void closeAllStore() {
     System.err.println("******** begin to close db ********");
     closeOneStore(accountStore);
     closeOneStore(blockStore);
     closeOneStore(blockIndexStore);
     closeOneStore(accountIdIndexStore);
+    closeOneStore(accountIndexStore);
     closeOneStore(witnessStore);
     closeOneStore(witnessScheduleStore);
     closeOneStore(assetIssueStore);
