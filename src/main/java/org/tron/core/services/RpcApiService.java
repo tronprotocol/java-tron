@@ -67,8 +67,8 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.OutOfSlotTimeException;
 import org.tron.core.exception.StoreException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
@@ -1319,7 +1319,7 @@ public class RpcApiService implements Service {
             .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()));
         trxExtBuilder.setResult(retBuilder);
         logger.warn("ContractValidateException: {}", e.getMessage());
-      } catch (OutOfSlotTimeException e) {
+      } catch (ContractExeException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
             .setMessage(ByteString.copyFromUtf8("contract exe error : " + e.getMessage()));
         trxExtBuilder.setResult(retBuilder);

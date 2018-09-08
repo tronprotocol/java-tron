@@ -10,7 +10,6 @@ import org.testng.Assert;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TVMTestUtils;
-import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -92,11 +91,13 @@ public class EnergyWhenTimeoutStyleTest {
     String params = "0000000000000000000000000000000000000000000000000000000000000003";
     byte[] triggerData = TVMTestUtils.parseABI("setVote(uint256)", params);
     boolean haveException = false;
-    result = TVMTestUtils
-        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS), contractAddress,
-            triggerData, value, feeLimit, deposit, null);
-    Exception exception = result.getRuntime().getResult().getException();
-    Assert.assertTrue(exception instanceof OutOfResourceException);
+    try {
+      result = TVMTestUtils
+          .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS), contractAddress,
+              triggerData, value, feeLimit, deposit, null);
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof ContractExeException);
+    }
   }
 
   public TVMTestResult deployEndlessLoopContract(long value, long feeLimit,

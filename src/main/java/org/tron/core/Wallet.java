@@ -862,7 +862,7 @@ public class Wallet {
   public Transaction triggerContract(TriggerSmartContract triggerSmartContract,
       TransactionCapsule trxCap, Builder builder,
       Return.Builder retBuilder)
-      throws ContractValidateException, ContractExeException, HeaderNotFound, OutOfSlotTimeException {
+      throws ContractValidateException, ContractExeException, HeaderNotFound {
 
     ContractStore contractStore = dbManager.getContractStore();
     byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
@@ -892,7 +892,11 @@ public class Wallet {
       Runtime runtime = new Runtime(trxCap.getInstance(), new BlockCapsule(headBlock), deposit,
           new ProgramInvokeFactoryImpl(), true);
       runtime.execute();
-      runtime.go();
+      try {
+        runtime.go();
+      } catch (OutOfSlotTimeException e) {
+        throw new ContractExeException(e.getMessage());
+      }
       runtime.finalization();
       // TODO exception
       if (runtime.getResult().getException() != null) {
