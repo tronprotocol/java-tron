@@ -1038,7 +1038,7 @@ public class Manager {
 //      throw new VMIllegalException("this node doesn't support vm, trx id: " + trxCap.getTransactionId().toString());
 //    }
 
-    logger.info("transactionId:" + trxCap.getTransactionId());
+    logger.info("transactionId:{},infoSimple:{}" , trxCap.getTransactionId(),trxCap.toString());
 
     byte[] callerAccount = TransactionCapsule
         .getOwner(trxCap.getInstance().getRawData().getContract(0));
