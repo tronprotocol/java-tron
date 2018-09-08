@@ -48,6 +48,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Time;
 import org.tron.core.Constant;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -1041,9 +1042,10 @@ public class Manager {
     byte[] callerAccount = TransactionCapsule
         .getOwner(trxCap.getInstance().getRawData().getContract(0));
     AccountCapsule acp = getAccountStore().get(callerAccount);
-    logger.error("before consumeBandwidth: balance: {}", acp.getBalance());
-    logger.error("before consumeBandwidth: resource: {}",
-        acp.getAccountResource().toString());
+    logger.error("before consumeBandwidth: account: {}, balance: {}",
+        Wallet.encode58Check(callerAccount), acp.getBalance());
+    logger.error("before consumeBandwidth: account: {}, store resource: {}",
+        Wallet.encode58Check(callerAccount), acp.getAccountResource().toString());
 
     consumeBandwidth(trxCap, trace);
 
@@ -1058,10 +1060,13 @@ public class Manager {
     //   }
     // }
 
+    acp = getAccountStore().get(callerAccount);
     logger.error("after consumeBandwidth: ResultFee: {}", runtime.getResult().getRet().getFee());
-    logger.error("after consumeBandwidth: balance: {}", deposit.getBalance(callerAccount));
-    logger.error("after consumeBandwidth: resource: {}",
+    logger.error("after consumeBandwidth: account: {}, store balance: {}, deposit balance: {}",
+        Wallet.encode58Check(callerAccount), acp.getBalance(), deposit.getBalance(callerAccount));
+    logger.error("after consumeBandwidth: deposit resource: {}",
         deposit.getAccount(callerAccount).getAccountResource().toString());
+
     trace.init();
 
     // if (blockCap != null && blockCap.generatedByMyself &&
@@ -1094,8 +1099,10 @@ public class Manager {
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
 
-    logger.error("after tx: balance: {}", deposit.getBalance(callerAccount));
-    logger.error("after tx: resource: {}",
+    acp = getAccountStore().get(callerAccount);
+    logger.error("after tx: account: {}, store balance: {}, deposit balance: {}",
+        Wallet.encode58Check(callerAccount), acp.getBalance(), deposit.getBalance(callerAccount));
+    logger.error("after tx: deposit resource: {}",
         deposit.getAccount(callerAccount).getAccountResource().toString());
 
     return true;
