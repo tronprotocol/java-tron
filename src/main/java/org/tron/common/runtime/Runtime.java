@@ -403,6 +403,12 @@ public class Runtime {
     }
 
     byte[] contractAddress = contract.getContractAddress().toByteArray();
+
+    ContractCapsule deployedContract = this.deposit.getContract(contractAddress);
+    if (null == deployedContract) {
+      logger.error("No contract or not a smart contract");
+      throw new ContractValidateException("No contract or not a smart contract");
+    }
     byte[] code = this.deposit.getCode(contractAddress);
     long callValue = contract.getCallValue();
     if (isEmpty(code)) {
@@ -411,7 +417,7 @@ public class Runtime {
 
       AccountCapsule caller = this.deposit.getAccount(contract.getOwnerAddress().toByteArray());
       AccountCapsule creator = this.deposit.getAccount(
-          this.deposit.getContract(contractAddress).getInstance()
+          deployedContract.getInstance()
               .getOriginAddress().toByteArray());
 
       long thisTxCPULimitInUs = getThisTxCPULimitInUs();
