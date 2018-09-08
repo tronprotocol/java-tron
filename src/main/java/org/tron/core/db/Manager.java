@@ -97,6 +97,7 @@ import org.tron.protos.Protocol.Transaction;
 @Component
 public class Manager {
 
+
   // db store
   @Autowired
   private AccountStore accountStore;
@@ -1074,7 +1075,7 @@ public class Manager {
 
     if (Objects.nonNull(blockCap)) {
       trace.setResult(runtime);
-      if (!blockCap.generatedByMyself) {
+      if (!blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
         trace.check();
       }
     }
@@ -1138,6 +1139,11 @@ public class Manager {
     session.reset();
     session.setValue(revokingStore.buildSession());
 
+    logger.info("1: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore
+        .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance()
+        + "\n" + accountStore
+        .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")));
+
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext()) {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
@@ -1155,6 +1161,7 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
+
         processTransaction(trx, blockCapsule);
         // trx.resetResult();
         tmpSeesion.merge();
@@ -1199,6 +1206,11 @@ public class Manager {
       }
     }
 
+    logger.info("2: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore
+        .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance()
+        + "\n" + accountStore
+        .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")));
+
     session.reset();
 
     if (postponedTrxCount > 0) {
@@ -1212,7 +1224,19 @@ public class Manager {
     blockCapsule.sign(privateKey);
 
     try {
+
+      logger.info("3: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore
+          .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance()
+          + "\n" + accountStore
+          .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")));
+
       this.pushBlock(blockCapsule);
+
+      logger.info("4: THph9K2M2nLvkianrMGswRhz5hjSA9fuH7: " + accountStore
+          .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")).getBalance()
+          + "\n" + accountStore
+          .get(ByteArray.fromHexString("415624C12E308B03A1A6B21D9B86E3942FAC1AB92B")));
+
       return blockCapsule;
     } catch (TaposException e) {
       logger.info("contract not processed during TaposException");
