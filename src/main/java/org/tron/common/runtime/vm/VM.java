@@ -1209,7 +1209,6 @@ public class VM {
           program.stackPop(); // use adjustedCallEnergy instead of requested
           DataWord codeAddress = program.stackPop();
 
-          // todo: check the callvalue >= 0
           DataWord value = op.callHasValue() ?
               program.stackPop() : DataWord.ZERO;
 
