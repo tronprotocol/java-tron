@@ -13,6 +13,7 @@ if [ "$TRAVIS_BRANCH" = "develop" ];then
   ret=$(cat stest.log | grep "stest FAILED" | wc -l)
 
   if [ $ret > 0 ];then
+    echo $ret
     exit 1
   fi
 
