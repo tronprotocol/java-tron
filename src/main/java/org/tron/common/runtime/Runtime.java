@@ -280,9 +280,14 @@ public class Runtime {
 
     long thisTxCPULimitInUs;
 
-    if (ET_NORMAL_TYPE == executorType && null != this.blockCap &&
-        !this.blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
-      thisTxCPULimitInUs = VMConfig.MAX_TIME_ON_TX_WHEN_PUSH_BLOCK;
+    if (ET_NORMAL_TYPE == executorType && null != this.blockCap) {
+      if (this.blockCap.generatedByMyself && this.blockCap.getInstance().getBlockHeader()
+          .getWitnessSignature().isEmpty()) {
+        thisTxCPULimitInUs = deposit.getDbManager().getDynamicPropertiesStore()
+            .getMaxCpuTimeOfOneTX() * 1000 * 2;
+      } else {
+        thisTxCPULimitInUs = VMConfig.MAX_TIME_ON_TX_WHEN_PUSH_BLOCK;
+      }
     } else {
       thisTxCPULimitInUs = deposit.getDbManager().getDynamicPropertiesStore()
           .getMaxCpuTimeOfOneTX() * 1000;
@@ -467,7 +472,6 @@ public class Runtime {
       if (vm != null) {
         vm.play(program);
 
-        program.getResult().setRet(result.getRet());
         result = program.getResult();
 
         if (isCallConstant()) {
@@ -515,17 +519,22 @@ public class Runtime {
       }
     } catch (JVMStackOverFlowException e) {
       program.spendAllEnergy();
+      result = program.getResult();
       result.setException(e);
       runtimeError = result.getException().getMessage();
       logger.error("runtime error is :{}", result.getException().getMessage());
     } catch (OutOfResourceException e) {
       program.spendAllEnergy();
+      result = program.getResult();
       result.setException(e);
       runtimeError = result.getException().getMessage();
       logger.error("runtime error is :{}", result.getException().getMessage());
       throw new VMTimeOutException(e.getMessage());
+    } catch (ContractValidateException e) {
+      logger.error("when call isCallConstant(), have error: {}", e.getMessage());
     } catch (Throwable e) {
       program.spendAllEnergy();
+      result = program.getResult();
       if (Objects.isNull(result.getException())) {
         logger.error(e.getMessage(), e);
         result.setException(new RuntimeException("Unknown Throwable"));
