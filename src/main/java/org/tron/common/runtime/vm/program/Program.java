@@ -776,10 +776,7 @@ public class Program {
   }
 
   public void checkCPUTimeLimit(String opName) {
-    // if (this.blockCap != null && this.blockCap.generatedByMyself &&
-    //     !this.blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
-    //   return;
-    // }
+
     if (Args.getInstance().isDebug()) {
       return;
     }

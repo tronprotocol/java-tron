@@ -48,6 +48,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Time;
 import org.tron.core.Constant;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -1032,7 +1033,13 @@ public class Manager {
 //    if (!this.dynamicPropertiesStore.supportVM() && trace.needVM()) {
 //      throw new VMIllegalException("this node doesn't support vm, trx id: " + trxCap.getTransactionId().toString());
 //    }
+    logger.info("transactionId:{},infoSimple:{}", trxCap.getTransactionId(), trxCap.toString());
 
+    byte[] callerAccount = TransactionCapsule
+        .getOwner(trxCap.getInstance().getRawData().getContract(0));
+    AccountCapsule acp = getAccountStore().get(callerAccount);
+    logger.info("before consumeBandwidth: account : {}, account store info: {}",
+        Wallet.encode58Check(callerAccount), acp.toString());
     consumeBandwidth(trxCap, trace);
 
     DepositImpl deposit = DepositImpl.createRoot(this);
@@ -1045,7 +1052,11 @@ public class Manager {
     //     trxCap.setResult(new TransactionResultCapsule(contractResult.UNKNOWN));
     //   }
     // }
-
+    acp = getAccountStore().get(callerAccount);
+    logger.info("after consumeBandwidth: ResultFee: {}", runtime.getResult().getRet().getFee());
+    logger.info("after consumeBandwidth: account: {}, account store info: {}, deposit info: {}",
+        Wallet.encode58Check(callerAccount), acp.toString(),
+        deposit.getAccount(callerAccount).toString());
     trace.init();
 
     // if (blockCap != null && blockCap.generatedByMyself &&
@@ -1059,7 +1070,7 @@ public class Manager {
 
     if (Objects.nonNull(blockCap)) {
       trace.setResult(runtime);
-      if (!blockCap.generatedByMyself) {
+      if (!blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
         trace.check();
       }
     }
@@ -1077,7 +1088,12 @@ public class Manager {
         .buildInstance(trxCap, blockCap, runtime, traceReceipt);
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
-
+    acp = getAccountStore().get(callerAccount);
+    logger.info("after tx: account: {}, account store info: {}, deposit info: {}",
+        Wallet.encode58Check(callerAccount), acp.toString(),
+        deposit.getAccount(callerAccount).toString());
+    logger.info("after tx: trace:{},runtimeResult:{}", trace.getReceipt().getReceipt().toString(),
+        runtime.getResult().getRet().getInstance().toString());
     return true;
   }
 
