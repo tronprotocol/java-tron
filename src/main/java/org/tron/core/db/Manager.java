@@ -1101,10 +1101,18 @@ public class Manager {
    * Generate a block.
    */
   public synchronized BlockCapsule generateBlock(
-      final WitnessCapsule witnessCapsule, final long when, final byte[] privateKey)
+      final WitnessCapsule witnessCapsule, final long when, final byte[] privateKey,Boolean lastHeadBlockIsMaintenanceBefore)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
 
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, TransactionTraceException {
+
+    //check that the first block after the maintenance period has just been processed
+    if(lastHeadBlockIsMaintenanceBefore && !lastHeadBlockIsMaintenance()){
+        if (!witnessController.validateWitnessSchedule(witnessCapsule.getAddress(),when)) {
+            logger.info("It's not my turn,and the first block after the maintenance period has just been processed");
+            return null;
+        }
+    }
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();

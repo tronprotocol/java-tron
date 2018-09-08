@@ -230,7 +230,7 @@ public class ManagerTest {
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     dbManager.addWitness(ByteString.copyFrom(address));
-    dbManager.generateBlock(witnessCapsule, 1533529947843L, privateKey);
+    dbManager.generateBlock(witnessCapsule, 1533529947843L, privateKey,false);
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
 
@@ -299,7 +299,7 @@ public class ManagerTest {
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     dbManager.addWitness(ByteString.copyFrom(address));
-    dbManager.generateBlock(witnessCapsule, 1533529947843L, privateKey);
+    dbManager.generateBlock(witnessCapsule, 1533529947843L, privateKey,false);
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
 
@@ -394,7 +394,7 @@ public class ManagerTest {
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     dbManager.addWitness(ByteString.copyFrom(address));
-    dbManager.generateBlock(witnessCapsule, 1533529947843L, privateKey);
+    dbManager.generateBlock(witnessCapsule, 1533529947843L, privateKey,false);
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
 
