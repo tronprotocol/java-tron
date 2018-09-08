@@ -445,7 +445,7 @@ public class Program {
     }
 
     byte[] senderAddress = convertToTronAddress(this.getOwnerAddress().getLast20Bytes());
-    // todo: need check the value > 0?
+
     long endowment = value.value().longValueExact();
     if (getContractState().getBalance(senderAddress) < endowment) {
       stackPushZero();
@@ -526,7 +526,6 @@ public class Program {
     ProgramResult result = ProgramResult.createEmpty();
 
     if (contractAlreadyExists) {
-      // todo: this exception must lead to rollback this function modification at least
       result.setException(new BytecodeExecutionException(
           "Trying to create a contract with existing contract address: 0x" + Hex
               .toHexString(newAddress)));
@@ -640,7 +639,6 @@ public class Program {
     Deposit deposit = getContractState().newDepositChild();
 
     // 2.1 PERFORM THE VALUE (endowment) PART
-    // todo: need to check value >= 0?
     long endowment = msg.getEndowment().value().longValueExact();
     long senderBalance = deposit.getBalance(senderAddress);
     if (senderBalance < endowment) {
@@ -778,10 +776,7 @@ public class Program {
   }
 
   public void checkCPUTimeLimit(String opName) {
-    // if (this.blockCap != null && this.blockCap.generatedByMyself &&
-    //     !this.blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
-    //   return;
-    // }
+
     if (Args.getInstance().isDebug()) {
       return;
     }
