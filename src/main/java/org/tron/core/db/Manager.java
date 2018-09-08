@@ -1099,7 +1099,7 @@ public class Manager {
     acp = getAccountStore().get(callerAccount);
     logger.error("after tx: account: {}, account store info: {}, deposit info: {}",
         Wallet.encode58Check(callerAccount), acp.toString(), deposit.getAccount(callerAccount).toString());
-
+    logger.error("after tx: trace:{},runtimeResult:{}" , trace.getReceipt().getReceipt().toString(),runtime.getResult().getRet().getInstance().toString() );
     return true;
   }
 
