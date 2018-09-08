@@ -116,6 +116,8 @@ public class Manager {
   @Autowired
   private AccountIdIndexStore accountIdIndexStore;
   @Autowired
+  private AccountIndexStore accountIndexStore;
+  @Autowired
   private WitnessScheduleStore witnessScheduleStore;
   @Autowired
   private RecentBlockStore recentBlockStore;
@@ -1113,10 +1115,20 @@ public class Manager {
    * Generate a block.
    */
   public synchronized BlockCapsule generateBlock(
-      final WitnessCapsule witnessCapsule, final long when, final byte[] privateKey)
+      final WitnessCapsule witnessCapsule, final long when, final byte[] privateKey,
+      Boolean lastHeadBlockIsMaintenanceBefore)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
+      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
+      TransactionTraceException {
 
-      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, TransactionTraceException {
+    //check that the first block after the maintenance period has just been processed
+    if (lastHeadBlockIsMaintenanceBefore && !lastHeadBlockIsMaintenance()) {
+      if (!witnessController.validateWitnessSchedule(witnessCapsule.getAddress(), when)) {
+        logger.info("It's not my turn, "
+            + "and the first block after the maintenance period has just been processed");
+        return null;
+      }
+    }
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
@@ -1474,12 +1486,21 @@ public class Manager {
     this.accountIdIndexStore = indexStore;
   }
 
+  public AccountIndexStore getAccountIndexStore() {
+    return this.accountIndexStore;
+  }
+
+  public void setAccountIndexStore(AccountIndexStore indexStore) {
+    this.accountIndexStore = indexStore;
+  }
+
   public void closeAllStore() {
     System.err.println("******** begin to close db ********");
     closeOneStore(accountStore);
     closeOneStore(blockStore);
     closeOneStore(blockIndexStore);
     closeOneStore(accountIdIndexStore);
+    closeOneStore(accountIndexStore);
     closeOneStore(witnessStore);
     closeOneStore(witnessScheduleStore);
     closeOneStore(assetIssueStore);

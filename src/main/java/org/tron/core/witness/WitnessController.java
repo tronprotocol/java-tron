@@ -152,12 +152,18 @@ public class WitnessController {
   public boolean validateWitnessSchedule(BlockCapsule block) {
 
     ByteString witnessAddress = block.getInstance().getBlockHeader().getRawData()
-        .getWitnessAddress();
+            .getWitnessAddress();
+    long timeStamp = block.getTimeStamp();
+    return validateWitnessSchedule(witnessAddress,timeStamp);
+  }
+
+  public boolean validateWitnessSchedule(ByteString witnessAddress,long timeStamp) {
+
     //to deal with other condition later
     if (manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() == 0) {
       return true;
     }
-    long blockAbSlot = getAbSlotAtTime(block.getTimeStamp());
+    long blockAbSlot = getAbSlotAtTime(timeStamp);
     long headBlockAbSlot = getAbSlotAtTime(
         manager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp());
     if (blockAbSlot <= headBlockAbSlot) {
@@ -165,13 +171,13 @@ public class WitnessController {
       return false;
     }
 
-    long slot = getSlotAtTime(block.getTimeStamp());
+    long slot = getSlotAtTime(timeStamp);
     final ByteString scheduledWitness = getScheduledWitness(slot);
     if (!scheduledWitness.equals(witnessAddress)) {
       logger.warn(
           "Witness is out of order, scheduledWitness[{}],blockWitnessAddress[{}],blockTimeStamp[{}],slot[{}]",
           ByteArray.toHexString(scheduledWitness.toByteArray()),
-          ByteArray.toHexString(witnessAddress.toByteArray()), new DateTime(block.getTimeStamp()),
+          ByteArray.toHexString(witnessAddress.toByteArray()), new DateTime(timeStamp),
           slot);
       return false;
     }
