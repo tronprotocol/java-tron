@@ -1318,11 +1318,16 @@ public class RpcApiService implements Service {
             .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()));
         trxExtBuilder.setResult(retBuilder);
         logger.warn("ContractValidateException: {}", e.getMessage());
+      } catch (RuntimeException e) {
+        retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+        trxExtBuilder.setResult(retBuilder);
+        logger.warn("When run constant call in VM, have RuntimeException: " + e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
         trxExtBuilder.setResult(retBuilder);
-        logger.warn("unknown exception caught" + e.getMessage(), e);
+        logger.warn("unknown exception caught: " + e.getMessage(), e);
       } finally {
         responseObserver.onNext(trxExtBuilder.build());
         responseObserver.onCompleted();

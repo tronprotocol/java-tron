@@ -322,6 +322,10 @@ public class Manager {
       () -> {
         while (isRunRepushThread) {
           try {
+            if (isGeneratingBlock()) {
+              TimeUnit.MILLISECONDS.sleep(10L);
+              continue;
+            }
             TransactionCapsule tx = this.getRepushTransactions().poll(1, TimeUnit.SECONDS);
             if (tx != null) {
               this.rePush(tx);
@@ -1182,7 +1186,7 @@ public class Manager {
 
     logger.info(
         "postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTransactions.size()
-            + "]");
+            + "],repushTrxCount[" + repushTransactions.size() + "]");
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(privateKey);
 
