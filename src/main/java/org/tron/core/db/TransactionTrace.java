@@ -5,6 +5,8 @@ import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_PRECOMPILED_TYPE;
 
 import java.util.Objects;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.Runtime;
@@ -49,6 +51,16 @@ public class TransactionTrace {
   public TransactionCapsule getTrx() {
     return trx;
   }
+
+  public enum TimeResultType {
+    NORMAL,
+    LONG_RUNNING,
+    OUT_OF_TIME
+  }
+
+  @Getter
+  @Setter
+  private TimeResultType timeResultType = TimeResultType.NORMAL;
 
   public TransactionTrace(TransactionCapsule trx, Manager dbManager) {
     this.trx = trx;

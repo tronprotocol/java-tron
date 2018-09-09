@@ -49,6 +49,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.db.AccountStore;
+import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract;
@@ -86,15 +87,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Setter
   private boolean isVerified = false;
 
-  public enum TimeResultType {
-    NORMAL,
-    LONG_RUNNING,
-    OUT_OF_TIME
-  }
-
   @Getter
   @Setter
-  private TimeResultType timeResultType = TimeResultType.NORMAL;
+  private TransactionTrace trxTrace;
 
   /**
    * constructor TransactionCapsule.

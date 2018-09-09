@@ -5,7 +5,7 @@ import java.util.List;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.TransactionCapsule.TimeResultType;
+import org.tron.core.db.TransactionTrace.TimeResultType;
 
 @Slf4j
 public class PendingManager implements AutoCloseable {
@@ -27,7 +27,7 @@ public class PendingManager implements AutoCloseable {
 
     for (TransactionCapsule tx : this.tmpTransactions) {
       try {
-        if (!tx.getTimeResultType().equals(TimeResultType.LONG_RUNNING)) {
+        if (!tx.getTrxTrace().getTimeResultType().equals(TimeResultType.LONG_RUNNING)) {
           dbManager.getRepushTransactions().put(tx);
         }
       } catch (InterruptedException e) {
@@ -39,7 +39,7 @@ public class PendingManager implements AutoCloseable {
 
     for (TransactionCapsule tx : dbManager.getPoppedTransactions()) {
       try {
-        if (!tx.getTimeResultType().equals(TimeResultType.LONG_RUNNING)) {
+        if (!tx.getTrxTrace().getTimeResultType().equals(TimeResultType.LONG_RUNNING)) {
           dbManager.getRepushTransactions().put(tx);
         }
       } catch (InterruptedException e) {

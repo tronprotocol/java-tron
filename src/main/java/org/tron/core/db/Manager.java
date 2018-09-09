@@ -1029,6 +1029,7 @@ public class Manager {
     }
 
     TransactionTrace trace = new TransactionTrace(trxCap, this);
+    trxCap.setTrxTrace(trace);
 
     consumeBandwidth(trxCap, trace);
 
