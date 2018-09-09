@@ -38,8 +38,6 @@ public class WitnessController {
   @Getter
   private Manager manager;
 
-  @Setter
-  @Getter
   private AtomicBoolean generatingBlock = new AtomicBoolean(false);
 
   public static WitnessController createInstance(Manager manager) {
