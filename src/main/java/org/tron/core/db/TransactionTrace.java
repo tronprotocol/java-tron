@@ -88,7 +88,7 @@ public class TransactionTrace {
     return this.trxType == TRX_CONTRACT_CALL_TYPE || this.trxType == TRX_CONTRACT_CREATION_TYPE;
   }
 
-  public long txStartTimeInMs;
+  private long txStartTimeInMs;
   //pre transaction check
   public void init() throws TransactionTraceException {
     txStartTimeInMs = System.currentTimeMillis();
