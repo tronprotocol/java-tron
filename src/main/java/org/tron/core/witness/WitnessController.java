@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +40,7 @@ public class WitnessController {
 
   @Setter
   @Getter
-  private boolean isGeneratingBlock;
+  private AtomicBoolean generatingBlock = new AtomicBoolean(false);
 
   public static WitnessController createInstance(Manager manager) {
     WitnessController instance = new WitnessController();
@@ -451,4 +452,11 @@ public class WitnessController {
 
   }
 
+  public boolean isGeneratingBlock() {
+    return generatingBlock.get();
+  }
+
+  public void setGeneratingBlock(boolean generatingBlock) {
+    this.generatingBlock.set(generatingBlock);
+  }
 }
