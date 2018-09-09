@@ -89,6 +89,11 @@ public class Args {
   private double maxTimeRatio = calcMaxTimeRatio();
 
   @Getter
+  @Setter
+  @Parameter(names = {"--long-running-time"});
+  private int longRunningTime = 10;
+
+  @Getter
   @Parameter(description = "--seed-nodes")
   private List<String> seedNodes = new ArrayList<>();
 
@@ -375,6 +380,7 @@ public class Args {
     INSTANCE.debug = false;
     INSTANCE.minTimeRatio = 0.6;
     INSTANCE.maxTimeRatio = 5.0;
+    INSTANCE.longRunningTime = 10;
   }
 
   /**
@@ -446,6 +452,10 @@ public class Args {
 
     if (config.hasPath("vm.maxTimeRatio")) {
       INSTANCE.maxTimeRatio = config.getDouble("vm.maxTimeRatio");
+    }
+
+    if (config.hasPath("vm.longRunningTime")) {
+      INSTANCE.longRunningTime = config.getInt("vm.longRunningTime");
     }
 
     INSTANCE.storage = new Storage();
