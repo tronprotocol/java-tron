@@ -188,7 +188,7 @@ public class Runtime {
                 .getTimestamp())); // us
     BigInteger curBlockCPULimitInUs = BigInteger.valueOf((long)
         (1000 * ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5
-            * ChainConstant.BLOCK_PRODUCED_TIME_OUT
+            * Args.getInstance().getBlockProducedTimeOut()
             / 100)); // us
 
     return curBlockCPULimitInUs.subtract(curBlockHaveElapsedCPUInUs);
