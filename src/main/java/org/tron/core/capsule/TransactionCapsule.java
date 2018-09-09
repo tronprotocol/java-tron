@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
@@ -48,6 +49,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.db.AccountStore;
+import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract;
@@ -84,6 +86,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   private Transaction transaction;
   @Setter
   private boolean isVerified = false;
+
+  @Getter
+  @Setter
+  private TransactionTrace trxTrace;
 
   /**
    * constructor TransactionCapsule.

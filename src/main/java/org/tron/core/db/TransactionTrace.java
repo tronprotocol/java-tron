@@ -5,6 +5,8 @@ import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_PRECOMPILED_TYPE;
 
 import java.util.Objects;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.Runtime;
@@ -23,6 +25,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -46,9 +49,21 @@ public class TransactionTrace {
 
   private InternalTransaction.TrxType trxType;
 
+  private long txStartTimeInMs;
+
   public TransactionCapsule getTrx() {
     return trx;
   }
+
+  public enum TimeResultType {
+    NORMAL,
+    LONG_RUNNING,
+    OUT_OF_TIME
+  }
+
+  @Getter
+  @Setter
+  private TimeResultType timeResultType = TimeResultType.NORMAL;
 
   public TransactionTrace(TransactionCapsule trx, Manager dbManager) {
     this.trx = trx;
@@ -77,7 +92,7 @@ public class TransactionTrace {
 
   //pre transaction check
   public void init() throws TransactionTraceException {
-
+    txStartTimeInMs = System.currentTimeMillis();
     // switch (trxType) {
     //   case TRX_PRECOMPILED_TYPE:
     //     break;
@@ -110,7 +125,16 @@ public class TransactionTrace {
     /**  VM execute  **/
     runtime.execute();
     runtime.go();
-    
+
+    if (TRX_PRECOMPILED_TYPE != runtime.getTrxType()) {
+      if (contractResult.OUT_OF_TIME
+          .equals(receipt.getResult())) {
+        setTimeResultType(TimeResultType.OUT_OF_TIME);
+      } else if (System.currentTimeMillis() - txStartTimeInMs
+          > Args.getInstance().getLongRunningTime()) {
+        setTimeResultType(TimeResultType.LONG_RUNNING);
+      }
+    }
   }
 
   public void finalization(Runtime runtime) throws ContractExeException {

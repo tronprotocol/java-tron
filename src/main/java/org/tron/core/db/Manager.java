@@ -665,7 +665,7 @@ public class Manager {
       revokingStore.pop();
       logger.info("end to erase block:" + oldHeadBlock);
       popedTransactions.addAll(oldHeadBlock.getTransactions());
-     
+
     } catch (ItemNotFoundException | BadItemException e) {
       logger.warn(e.getMessage(), e);
     }
@@ -1033,6 +1033,7 @@ public class Manager {
     }
 
     TransactionTrace trace = new TransactionTrace(trxCap, this);
+    trxCap.setTrxTrace(trace);
 
     consumeBandwidth(trxCap, trace);
 
@@ -1061,6 +1062,7 @@ public class Manager {
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
 
     ReceiptCapsule traceReceipt = trace.getReceipt();
+
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
         .buildInstance(trxCap, blockCap, runtime, traceReceipt);
 
@@ -1121,7 +1123,8 @@ public class Manager {
     while (iterator.hasNext()) {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
       if (DateTime.now().getMillis() - when
-          > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5 * ChainConstant.BLOCK_PRODUCED_TIME_OUT
+          > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5
+          * Args.getInstance().getBlockProducedTimeOut()
           / 100) {
         logger.warn("Processing transaction time exceeds the 50% producing time。");
         break;
