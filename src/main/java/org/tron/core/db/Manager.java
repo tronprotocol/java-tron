@@ -1475,6 +1475,12 @@ public class Manager {
     closeOneStore(codeStore);
     closeOneStore(contractStore);
     closeOneStore(storageRowStore);
+    closeOneStore(exchangeStore);
+    closeOneStore(peersStore);
+    closeOneStore(proposalStore);
+    closeOneStore(recentBlockStore);
+    closeOneStore(transactionHistoryStore);
+    closeOneStore(votesStore);
     System.err.println("******** end to close db ********");
   }
 
