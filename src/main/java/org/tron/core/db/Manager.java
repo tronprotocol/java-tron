@@ -1118,7 +1118,8 @@ public class Manager {
     while (iterator.hasNext()) {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
       if (DateTime.now().getMillis() - when
-          > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5 * ChainConstant.BLOCK_PRODUCED_TIME_OUT
+          > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5
+          * Args.getInstance().getBlockProducedTimeOut()
           / 100) {
         logger.warn("Processing transaction time exceeds the 50% producing time。");
         break;
