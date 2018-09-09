@@ -77,7 +77,7 @@ public class HandleTransactionTest {
         peer.getAdvObjWeRequested().put(new Item(transactionMessage.getMessageId(), InventoryType.TRX), System.currentTimeMillis());
         peer.setSyncFlag(true);
         node.onMessage(peer, transactionMessage);
-        //Assert.assertEquals(peer.getAdvObjWeRequested().isEmpty(), true);
+        Assert.assertEquals(peer.getAdvObjWeRequested().isEmpty(), true);
         //ConcurrentHashMap<Sha256Hash, InventoryType> advObjToSpread = ReflectUtils.getFieldValue(nodeImpl, "advObjToSpread");
         //Assert.assertEquals(advObjToSpread.contains(transactionMessage.getMessageId()), true);
     }
@@ -187,6 +187,7 @@ public class HandleTransactionTest {
             logger.info("Release resources failure.");
         }
         context.destroy();
+
         dbManager.getSession().reset();
         try {
             Thread.sleep(10000);
