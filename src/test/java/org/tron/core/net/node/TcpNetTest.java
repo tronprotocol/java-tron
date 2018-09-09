@@ -14,6 +14,8 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
+
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -21,6 +23,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.overlay.discover.node.Node;
@@ -29,6 +33,7 @@ import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.P2pMessage;
 import org.tron.common.overlay.message.P2pMessageFactory;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -40,7 +45,7 @@ import org.tron.protos.Protocol.Block;
 @Slf4j
 public class TcpNetTest extends BaseNetTest {
 
-  private static final String dbPath = "output-nodeImplTest/tcpNet";
+  private static final String dbPath = "output-nodeImplTest-tcpNet";
   private static final String dbDirectory = "db_tcp_test";
   private static final String indexDirectory = "index_tcp_test";
   public static final int sleepTime = 1000;

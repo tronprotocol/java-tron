@@ -98,12 +98,12 @@ public class UpdateSettingContractActuatorTest {
     @AfterClass
     public static void destroy() {
         Args.clearParam();
+        context.destroy();
         if (FileUtil.deleteDir(new File(dbPath))) {
             logger.info("Release resources successful.");
         } else {
             logger.info("Release resources failure.");
         }
-        context.destroy();
     }
 
     private  Any getContract(String accountAddress, String contractAddress, long percent ) {
