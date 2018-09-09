@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
@@ -84,6 +85,16 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   private Transaction transaction;
   @Setter
   private boolean isVerified = false;
+
+  public enum TimeResultType {
+    NORMAL,
+    LONG_RUNNING,
+    OUT_OF_TIME
+  }
+
+  @Getter
+  @Setter
+  private TimeResultType timeResultType = TimeResultType.NORMAL;
 
   /**
    * constructor TransactionCapsule.
