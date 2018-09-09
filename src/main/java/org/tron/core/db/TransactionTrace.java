@@ -25,6 +25,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -123,17 +124,16 @@ public class TransactionTrace {
     /**  VM execute  **/
     runtime.execute();
     runtime.go();
-    long txDurationInMs = System.currentTimeMillis() - txStartTimeInMs;
+
     if (TRX_PRECOMPILED_TYPE != runtime.getTrxType()) {
       if (contractResult.OUT_OF_TIME
           .equals(receipt.getResult())) {
         setTimeResultType(TimeResultType.OUT_OF_TIME);
-      } else if (txDurationInMs > 10_000L) {
+      } else if (System.currentTimeMillis() - txStartTimeInMs
+          > Args.getInstance().getLongRunningTime()) {
         setTimeResultType(TimeResultType.LONG_RUNNING);
       }
     }
-
-    
   }
 
   public void finalization(Runtime runtime) throws ContractExeException {
