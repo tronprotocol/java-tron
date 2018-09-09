@@ -87,9 +87,10 @@ public class TransactionTrace {
     return this.trxType == TRX_CONTRACT_CALL_TYPE || this.trxType == TRX_CONTRACT_CREATION_TYPE;
   }
 
+  public long txStartTimeInMs;
   //pre transaction check
   public void init() throws TransactionTraceException {
-
+    txStartTimeInMs = System.currentTimeMillis();
     // switch (trxType) {
     //   case TRX_PRECOMPILED_TYPE:
     //     break;
@@ -122,6 +123,16 @@ public class TransactionTrace {
     /**  VM execute  **/
     runtime.execute();
     runtime.go();
+    long txDurationInMs = System.currentTimeMillis() - txStartTimeInMs;
+    if (TRX_PRECOMPILED_TYPE != runtime.getTrxType()) {
+      if (contractResult.OUT_OF_TIME
+          .equals(receipt.getResult())) {
+        setTimeResultType(TimeResultType.OUT_OF_TIME);
+      } else if (txDurationInMs > 10_000L) {
+        setTimeResultType(TimeResultType.LONG_RUNNING);
+      }
+    }
+
     
   }
 

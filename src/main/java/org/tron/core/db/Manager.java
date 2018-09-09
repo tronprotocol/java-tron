@@ -661,7 +661,7 @@ public class Manager {
       revokingStore.pop();
       logger.info("end to erase block:" + oldHeadBlock);
       popedTransactions.addAll(oldHeadBlock.getTransactions());
-     
+
     } catch (ItemNotFoundException | BadItemException e) {
       logger.warn(e.getMessage(), e);
     }
@@ -1058,6 +1058,7 @@ public class Manager {
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
 
     ReceiptCapsule traceReceipt = trace.getReceipt();
+
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
         .buildInstance(trxCap, blockCap, runtime, traceReceipt);
 
@@ -1065,6 +1066,7 @@ public class Manager {
 
     return true;
   }
+}
 
 
   /**

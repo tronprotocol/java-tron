@@ -21,6 +21,8 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
@@ -88,6 +90,8 @@ public class Runtime {
   private VM vm = null;
   private Program program = null;
 
+  @Getter
+  @Setter
   private InternalTransaction.TrxType trxType = TRX_UNKNOWN_TYPE;
   private ExecutorType executorType = ET_UNKNOWN_TYPE;
 
