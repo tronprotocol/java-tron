@@ -49,6 +49,8 @@ public class TransactionTrace {
 
   private InternalTransaction.TrxType trxType;
 
+  private long txStartTimeInMs;
+
   public TransactionCapsule getTrx() {
     return trx;
   }
@@ -88,7 +90,6 @@ public class TransactionTrace {
     return this.trxType == TRX_CONTRACT_CALL_TYPE || this.trxType == TRX_CONTRACT_CREATION_TYPE;
   }
 
-  private long txStartTimeInMs;
   //pre transaction check
   public void init() throws TransactionTraceException {
     txStartTimeInMs = System.currentTimeMillis();
