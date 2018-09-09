@@ -889,14 +889,15 @@ public class Wallet {
       }
 
       Runtime runtime = new Runtime(trxCap.getInstance(), new BlockCapsule(headBlock), deposit,
-          new ProgramInvokeFactoryImpl());
+          new ProgramInvokeFactoryImpl(), true);
       runtime.execute();
       runtime.go();
       runtime.finalization();
       // TODO exception
       if (runtime.getResult().getException() != null) {
-//          runtime.getResult().getException().printStackTrace();
-        throw new RuntimeException("Runtime exe failed!");
+        RuntimeException e = runtime.getResult().getException();
+        logger.warn("Constant call has error {}", e.getMessage());
+        throw e;
       }
 
       ProgramResult result = runtime.getResult();

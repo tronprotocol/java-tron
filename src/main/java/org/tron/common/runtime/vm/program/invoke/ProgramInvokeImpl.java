@@ -369,4 +369,9 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     return energyLimit;
   }
 
+  @Override
+  public void setStaticCall() {
+    isStaticCall = true;
+  }
+
 }

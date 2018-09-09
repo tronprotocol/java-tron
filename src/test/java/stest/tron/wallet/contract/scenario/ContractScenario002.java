@@ -23,15 +23,16 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class ContractScenario002 {
 
-  //testng001、testng002、testng003、testng004
-  private final String testKey002 =
-      "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
+  private final String testKey002 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
+  private Long maxFeeLimit = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.maxFeeLimit");
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] contract002Address = ecKey1.getAddress();
@@ -52,27 +53,20 @@ public class ContractScenario002 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     Assert.assertTrue(PublicMethed.sendcoin(contract002Address,20000000L,fromAddress,
         testKey002,blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract002Address, 5000000L,
-        3,1,contract002Key,blockingStubFull));
-    /*    Assert.assertTrue(PublicMethed.buyStorage(5000000L,contract002Address,contract002Key,
-        blockingStubFull));*/
 
   }
 
   @Test(enabled = true)
   public void deployTronNative() {
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract002Address, 5000000L,
+        3,1,contract002Key,blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract002Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
-    //Long storageLimit = accountResource.getStorageLimit();
     Long energyUsage = accountResource.getEnergyUsed();
-    //Long storageUsage = accountResource.getStorageUsed();
 
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
-    //logger.info("before storage limit is " + Long.toString(storageLimit));
-    //logger.info("before storage usaged is " + Long.toString(storageUsage));
-    Long maxFeeLimit = 5000000L;
     String contractName = "tronNative";
     String code = "608060405260008054600160a060020a03199081166201000117909155600180548216620100021"
         + "790556002805482166201000317905560038054821662010004179055600480548216620100051790556005"
@@ -150,16 +144,10 @@ public class ContractScenario002 {
     Assert.assertTrue(smartContract.getAbi() != null);
     accountResource = PublicMethed.getAccountResource(contract002Address,blockingStubFull);
     energyLimit = accountResource.getEnergyLimit();
-    //storageLimit = accountResource.getStorageLimit();
     energyUsage = accountResource.getEnergyUsed();
-    //storageUsage = accountResource.getStorageUsed();
     Assert.assertTrue(energyUsage > 0);
-    //Assert.assertTrue(storageUsage > 0);
-
     logger.info("after energy limit is " + Long.toString(energyLimit));
     logger.info("after energy usage is " + Long.toString(energyUsage));
-    //logger.info("after storage limit is " + Long.toString(storageLimit));
-    //logger.info("after storage usaged is " + Long.toString(storageUsage));
   }
 
   @Test(enabled = true)

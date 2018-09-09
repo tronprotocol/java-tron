@@ -9,10 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
@@ -43,13 +40,13 @@ import org.tron.protos.Protocol;
 public class HandleSyncBlockTest {
 
   private static TronApplicationContext context;
-  private NodeImpl node;
+  private static NodeImpl node;
   RpcApiService rpcApiService;
-  PeerClient peerClient;
+  private static PeerClient peerClient;
   ChannelManager channelManager;
   SyncPool pool;
-  Application appT;
-  private static final String dbPath = "output-nodeImplTest/handleSyncBlock";
+  private static Application appT;
+  private static final String dbPath = "output-nodeImplTest-handleSyncBlock";
   private static final String dbDirectory = "db_HandleSyncBlock_test";
   private static final String indexDirectory = "index_HandleSyncBlock_test";
 
@@ -240,16 +237,17 @@ public class HandleSyncBlockTest {
     }
   }
 
-  @After
-  public void destroy() {
+  @AfterClass
+  public static void destroy() {
     Args.clearParam();
-    FileUtil.deleteDir(new File("output-nodeImplTest"));
     Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(node, "getActivePeer");
     for (PeerConnection peer : peerConnections) {
       peer.close();
     }
     peerClient.close();
+    context.destroy();
     appT.shutdownServices();
     appT.shutdown();
+    FileUtil.deleteDir(new File(dbPath));
   }
 }

@@ -3,7 +3,6 @@ package org.tron.core.net.node;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.NetConstants.MAX_TRX_PER_PEER;
 import static org.tron.core.config.Parameter.NetConstants.MSG_CACHE_DURATION_IN_BLOCKS;
-import static org.tron.core.config.Parameter.NetConstants.NET_MAX_TRX_PER_SECOND;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_BLOCKS_SYNC_FROM_ONE_PEER;
 
 import com.google.common.cache.Cache;
@@ -686,7 +685,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private boolean isFlooded() {
     return fetchWaterLine.totalCount()
-        > BLOCK_PRODUCED_INTERVAL * NET_MAX_TRX_PER_SECOND * MSG_CACHE_DURATION_IN_BLOCKS / 1000;
+        > BLOCK_PRODUCED_INTERVAL
+        * Args.getInstance().getNetMaxTrxPerSecond()
+        * MSG_CACHE_DURATION_IN_BLOCKS
+        / 1000;
   }
 
   @Override

@@ -20,8 +20,15 @@ import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.CreateSmartContract;
+import org.tron.protos.Contract.ExchangeCreateContract;
+import org.tron.protos.Contract.ExchangeInjectContract;
+import org.tron.protos.Contract.ExchangeTransactionContract;
+import org.tron.protos.Contract.ExchangeWithdrawContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
+import org.tron.protos.Contract.ProposalApproveContract;
+import org.tron.protos.Contract.ProposalCreateContract;
+import org.tron.protos.Contract.ProposalDeleteContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.TriggerSmartContract;
@@ -222,6 +229,44 @@ public class Util {
                 .unpack(TriggerSmartContract.class);
             contractJson = JSONObject.parseObject(JsonFormat.printToString(triggerSmartContract));
             break;
+          case ProposalCreateContract:
+            ProposalCreateContract proposalCreateContract = contractParameter
+                .unpack(ProposalCreateContract.class);
+            contractJson = JSONObject.parseObject(JsonFormat.printToString(proposalCreateContract));
+            break;
+          case ProposalApproveContract:
+            ProposalApproveContract proposalApproveContract = contractParameter
+                .unpack(ProposalApproveContract.class);
+            contractJson = JSONObject
+                .parseObject(JsonFormat.printToString(proposalApproveContract));
+            break;
+          case ProposalDeleteContract:
+            ProposalDeleteContract proposalDeleteContract = contractParameter
+                .unpack(ProposalDeleteContract.class);
+            contractJson = JSONObject.parseObject(JsonFormat.printToString(proposalDeleteContract));
+            break;
+          case ExchangeCreateContract:
+            ExchangeCreateContract exchangeCreateContract = contractParameter
+                .unpack(ExchangeCreateContract.class);
+            contractJson = JSONObject.parseObject(JsonFormat.printToString(exchangeCreateContract));
+            break;
+          case ExchangeInjectContract:
+            ExchangeInjectContract exchangeInjectContract = contractParameter
+                .unpack(ExchangeInjectContract.class);
+            contractJson = JSONObject.parseObject(JsonFormat.printToString(exchangeInjectContract));
+            break;
+          case ExchangeWithdrawContract:
+            ExchangeWithdrawContract exchangeWithdrawContract = contractParameter
+                .unpack(ExchangeWithdrawContract.class);
+            contractJson = JSONObject
+                .parseObject(JsonFormat.printToString(exchangeWithdrawContract));
+            break;
+          case ExchangeTransactionContract:
+            ExchangeTransactionContract exchangeTransactionContract = contractParameter
+                .unpack(ExchangeTransactionContract.class);
+            contractJson = JSONObject
+                .parseObject(JsonFormat.printToString(exchangeTransactionContract));
+            break;
           // todo add other contract
           default:
         }
@@ -375,12 +420,68 @@ public class Util {
             any = Any.pack(triggerSmartContractBuilder.build());
             break;
           case "CreateSmartContract":
-            CreateSmartContract.Builder CreateSmartContractBuilder = CreateSmartContract
+            CreateSmartContract.Builder createSmartContractBuilder = CreateSmartContract
                 .newBuilder();
             JsonFormat
                 .merge(parameter.getJSONObject("value").toJSONString(),
-                    CreateSmartContractBuilder);
-            any = Any.pack(CreateSmartContractBuilder.build());
+                    createSmartContractBuilder);
+            any = Any.pack(createSmartContractBuilder.build());
+            break;
+          case "ExchangeCreateContract":
+            ExchangeCreateContract.Builder exchangeCreateContractBuilder = ExchangeCreateContract
+                .newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    exchangeCreateContractBuilder);
+            any = Any.pack(exchangeCreateContractBuilder.build());
+            break;
+          case "ExchangeInjectContract":
+            ExchangeInjectContract.Builder exchangeInjectContractBuilder = ExchangeInjectContract
+                .newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    exchangeInjectContractBuilder);
+            any = Any.pack(exchangeInjectContractBuilder.build());
+            break;
+          case "ExchangeTransactionContract":
+            ExchangeTransactionContract.Builder exchangeTransactionContractBuilder =
+                ExchangeTransactionContract.newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    exchangeTransactionContractBuilder);
+            any = Any.pack(exchangeTransactionContractBuilder.build());
+            break;
+          case "ExchangeWithdrawContract":
+            ExchangeWithdrawContract.Builder exchangeWithdrawContractBuilder =
+                ExchangeWithdrawContract.newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    exchangeWithdrawContractBuilder);
+            any = Any.pack(exchangeWithdrawContractBuilder.build());
+            break;
+          case "ProposalCreateContract":
+            ProposalCreateContract.Builder ProposalCreateContractBuilder = ProposalCreateContract
+                .newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    ProposalCreateContractBuilder);
+            any = Any.pack(ProposalCreateContractBuilder.build());
+            break;
+          case "ProposalApproveContract":
+            ProposalApproveContract.Builder ProposalApproveContractBuilder = ProposalApproveContract
+                .newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    ProposalApproveContractBuilder);
+            any = Any.pack(ProposalApproveContractBuilder.build());
+            break;
+          case "ProposalDeleteContract":
+            ProposalDeleteContract.Builder ProposalDeleteContractBuilder = ProposalDeleteContract
+                .newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    ProposalDeleteContractBuilder);
+            any = Any.pack(ProposalDeleteContractBuilder.build());
             break;
           // todo add other contract
           default:

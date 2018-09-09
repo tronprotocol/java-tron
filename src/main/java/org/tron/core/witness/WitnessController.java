@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -37,9 +38,7 @@ public class WitnessController {
   @Getter
   private Manager manager;
 
-  @Setter
-  @Getter
-  private boolean isGeneratingBlock;
+  private AtomicBoolean generatingBlock = new AtomicBoolean(false);
 
   public static WitnessController createInstance(Manager manager) {
     WitnessController instance = new WitnessController();
@@ -152,12 +151,18 @@ public class WitnessController {
   public boolean validateWitnessSchedule(BlockCapsule block) {
 
     ByteString witnessAddress = block.getInstance().getBlockHeader().getRawData()
-        .getWitnessAddress();
+            .getWitnessAddress();
+    long timeStamp = block.getTimeStamp();
+    return validateWitnessSchedule(witnessAddress,timeStamp);
+  }
+
+  public boolean validateWitnessSchedule(ByteString witnessAddress,long timeStamp) {
+
     //to deal with other condition later
     if (manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() == 0) {
       return true;
     }
-    long blockAbSlot = getAbSlotAtTime(block.getTimeStamp());
+    long blockAbSlot = getAbSlotAtTime(timeStamp);
     long headBlockAbSlot = getAbSlotAtTime(
         manager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp());
     if (blockAbSlot <= headBlockAbSlot) {
@@ -165,13 +170,13 @@ public class WitnessController {
       return false;
     }
 
-    long slot = getSlotAtTime(block.getTimeStamp());
+    long slot = getSlotAtTime(timeStamp);
     final ByteString scheduledWitness = getScheduledWitness(slot);
     if (!scheduledWitness.equals(witnessAddress)) {
       logger.warn(
           "Witness is out of order, scheduledWitness[{}],blockWitnessAddress[{}],blockTimeStamp[{}],slot[{}]",
           ByteArray.toHexString(scheduledWitness.toByteArray()),
-          ByteArray.toHexString(witnessAddress.toByteArray()), new DateTime(block.getTimeStamp()),
+          ByteArray.toHexString(witnessAddress.toByteArray()), new DateTime(timeStamp),
           slot);
       return false;
     }
@@ -445,4 +450,11 @@ public class WitnessController {
 
   }
 
+  public boolean isGeneratingBlock() {
+    return generatingBlock.get();
+  }
+
+  public void setGeneratingBlock(boolean generatingBlock) {
+    this.generatingBlock.set(generatingBlock);
+  }
 }

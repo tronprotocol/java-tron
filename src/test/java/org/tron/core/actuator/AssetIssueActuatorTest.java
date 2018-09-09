@@ -167,6 +167,7 @@ public class AssetIssueActuatorTest {
     AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager); // second asset
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     try {
       // put first assetissue
       dbManager
@@ -1651,11 +1652,11 @@ public class AssetIssueActuatorTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
+    context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {
       logger.info("Release resources failure.");
     }
-    context.destroy();
   }
 }

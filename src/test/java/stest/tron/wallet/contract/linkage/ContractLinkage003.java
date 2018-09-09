@@ -24,15 +24,16 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class ContractLinkage003 {
 
-  //testng001、testng002、testng003、testng004
-  private final String testKey003 =
-      "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
+  private final String testKey003 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey003);
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
+  private Long maxFeeLimit = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.maxFeeLimit");
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] linkage003Address = ecKey1.getAddress();
@@ -60,15 +61,9 @@ public class ContractLinkage003 {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(linkage003Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
-    //Long storageLimit = accountResource.getStorageLimit();
     Long energyUsage = accountResource.getEnergyUsed();
-    //Long storageUsage = accountResource.getStorageUsed();
-
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
-    //logger.info("before storage limit is " + Long.toString(storageLimit));
-    //logger.info("before storage usaged is " + Long.toString(storageUsage));
-    Long maxFeeLimit = 100000000L;
     String contractName = "tronNative";
     String code = "608060405260008054600160a060020a03199081166201000117909155600180548216620100021"
         + "790556002805482166201000317905560038054821662010004179055600480548216620100051790556005"
@@ -152,11 +147,6 @@ public class ContractLinkage003 {
     Assert.assertTrue(beforeBalance - afterBalance > 0);
     accountResource = PublicMethed.getAccountResource(linkage003Address, blockingStubFull);
     Assert.assertTrue(accountResource.getEnergyUsed() == 0L);
-    //Assert.assertTrue(accountResource.getStorageUsed() > 400);
-
-
-
-
   }
 
 
