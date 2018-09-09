@@ -306,7 +306,7 @@ public class TransactionTraceTest {
 
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     TransactionTrace transactionTrace = new TransactionTrace(transactionCapsule, dbManager);
-    transactionTrace.setBill(1111111L);
+    transactionTrace.setBill(0L);
     transactionTrace.pay();
     AccountCapsule accountCapsule1 = dbManager.getAccountStore().get(ownerAddress.toByteArray());
   }
