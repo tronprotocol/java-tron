@@ -43,6 +43,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.VMTimeOutException;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Account;
@@ -136,7 +137,7 @@ public class TransactionTraceTest {
   }
 
   @Test
-  public void testUseFee() throws InvalidProtocolBufferException {
+  public void testUseFee() throws InvalidProtocolBufferException, VMTimeOutException {
     AccountCapsule accountCapsule = new AccountCapsule(ByteString.copyFrom("owner".getBytes()),
         ByteString.copyFrom(Wallet.decodeFromBase58Check(OwnerAddress)), AccountType.Normal,
         totalBalance);
@@ -166,7 +167,7 @@ public class TransactionTraceTest {
   }
 
   @Test
-  public void testUseUsage() throws InvalidProtocolBufferException {
+  public void testUseUsage() throws InvalidProtocolBufferException, VMTimeOutException {
 
     AccountCapsule accountCapsule = new AccountCapsule(ByteString.copyFrom("owner".getBytes()),
         ByteString.copyFrom(Wallet.decodeFromBase58Check(OwnerAddress)), AccountType.Normal,

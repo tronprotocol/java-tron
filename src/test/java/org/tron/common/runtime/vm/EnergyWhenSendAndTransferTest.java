@@ -21,6 +21,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMTimeOutException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
@@ -84,7 +85,7 @@ public class EnergyWhenSendAndTransferTest {
 
   @Test
   public void callValueTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
 
     long value = 10000000L;
     long feeLimit = 1000_000_000L; // sun
@@ -147,7 +148,7 @@ public class EnergyWhenSendAndTransferTest {
 
   @Test
   public void sendTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
 
     long value = 1000L;
     long feeLimit = 1000_000_000L; // sun
@@ -172,7 +173,7 @@ public class EnergyWhenSendAndTransferTest {
 
   @Test
   public void transferTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
 
     long value = 1000L;
     // long value = 10000000L;
@@ -198,7 +199,7 @@ public class EnergyWhenSendAndTransferTest {
 
   public TVMTestResult deployCallValueTestContract(long value, long feeLimit,
       long consumeUserResourcePercent)
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
     String contractName = "TestForCallValue";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI = "[{\"constant\":false,\"inputs\":[],\"name\":\"complexCall\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"simpleCall\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"constructor\"}]";
@@ -214,7 +215,7 @@ public class EnergyWhenSendAndTransferTest {
 
   public TVMTestResult deploySendAndTransferTestContract(long value, long feeLimit,
       long consumeUserResourcePercent)
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
     String contractName = "TestForSendAndTransfer";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"getBalance\",\"outputs\":[{\"name\":\"balance\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"doTransfer\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"doSend\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"constructor\"}]";

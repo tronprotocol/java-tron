@@ -22,6 +22,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMTimeOutException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
@@ -66,7 +67,7 @@ public class ChargeTest {
 
   @Test
   public void testOverflow()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException, VMTimeOutException {
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
@@ -116,7 +117,7 @@ public class ChargeTest {
 
   @Test
   public void testNegative()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException, VMTimeOutException {
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
@@ -185,7 +186,7 @@ public class ChargeTest {
 
   @Test
   public void testCallDepth()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException, VMTimeOutException {
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
@@ -262,7 +263,7 @@ public class ChargeTest {
 
   @Test
   public void testCallDepthAndWidth()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException, VMTimeOutException {
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
@@ -298,7 +299,7 @@ public class ChargeTest {
 
   @Test
   public void testCreateDepthAndWidth()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException, VMTimeOutException {
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;

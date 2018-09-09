@@ -10,7 +10,6 @@ import org.testng.Assert;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TVMTestUtils;
-import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -22,6 +21,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMTimeOutException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
@@ -75,7 +75,7 @@ public class EnergyWhenTimeoutStyleTest {
 
   @Test
   public void endlessLoopTest()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException, VMTimeOutException {
 
     long value = 0;
     long feeLimit = 1000_000_000L;
@@ -92,16 +92,18 @@ public class EnergyWhenTimeoutStyleTest {
     String params = "0000000000000000000000000000000000000000000000000000000000000003";
     byte[] triggerData = TVMTestUtils.parseABI("setVote(uint256)", params);
     boolean haveException = false;
-    result = TVMTestUtils
-        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS), contractAddress,
-            triggerData, value, feeLimit, deposit, null);
-    Exception exception = result.getRuntime().getResult().getException();
-    Assert.assertTrue(exception instanceof OutOfResourceException);
+    try {
+      result = TVMTestUtils
+          .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS), contractAddress,
+              triggerData, value, feeLimit, deposit, null);
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof VMTimeOutException);
+    }
   }
 
   public TVMTestResult deployEndlessLoopContract(long value, long feeLimit,
       long consumeUserResourcePercent)
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
     String contractName = "EndlessLoopContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"getVote\",\"outputs\":[{\"name\":\"_vote\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_vote\",\"type\":\"uint256\"}],\"name\":\"setVote\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]";

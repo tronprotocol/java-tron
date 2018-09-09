@@ -91,6 +91,7 @@ import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.VMTimeOutException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
@@ -423,6 +424,11 @@ public class Wallet {
       logger.info(e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
           .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()))
+          .build();
+    } catch (VMTimeOutException e) {
+      logger.info(e.getMessage());
+      return builder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
+          .setMessage(ByteString.copyFromUtf8("contract execute error : " + e.getMessage()))
           .build();
     } catch (ContractExeException e) {
       logger.info(e.getMessage());
@@ -861,7 +867,7 @@ public class Wallet {
   public Transaction triggerContract(TriggerSmartContract triggerSmartContract,
       TransactionCapsule trxCap, Builder builder,
       Return.Builder retBuilder)
-      throws ContractValidateException, ContractExeException, HeaderNotFound {
+      throws ContractValidateException, ContractExeException, HeaderNotFound, VMTimeOutException {
 
     ContractStore contractStore = dbManager.getContractStore();
     byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();

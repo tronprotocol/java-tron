@@ -6,8 +6,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.application.TronApplicationContext;
 import org.testng.Assert;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -19,6 +19,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMTimeOutException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
@@ -67,7 +68,7 @@ public class InheritanceTest {
    */
   @Test
   public void inheritanceTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
     String contractName = "barContract";
     byte[] callerAddress = Hex.decode(OWNER_ADDRESS);
     String ABI = "[{\"constant\":false,\"inputs\":[],\"name\":\"getName\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],"

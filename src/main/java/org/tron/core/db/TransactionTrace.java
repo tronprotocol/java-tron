@@ -28,6 +28,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMTimeOutException;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -106,11 +107,11 @@ public class TransactionTrace {
   }
 
   public void exec(Runtime runtime)
-      throws ContractExeException, ContractValidateException {
+      throws ContractExeException, ContractValidateException, VMTimeOutException {
     /**  VM execute  **/
     runtime.execute();
     runtime.go();
-    
+
   }
 
   public void finalization(Runtime runtime) throws ContractExeException {

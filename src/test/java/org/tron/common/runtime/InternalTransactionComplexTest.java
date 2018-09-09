@@ -20,6 +20,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMTimeOutException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
@@ -72,7 +73,7 @@ public class InternalTransactionComplexTest {
    */
   @Test
   public void internalTransactionAsInstanceTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
     byte[] calledContractAddress = deployCalledContractandGetItsAddress();
     byte[] callerContractAddress = deployCallerContractAndGetItsAddress(calledContractAddress);
 
@@ -104,7 +105,7 @@ public class InternalTransactionComplexTest {
 
   // Just for the caller/called example above
   private byte[] deployCalledContractandGetItsAddress()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
     String contractName = "calledContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI =
@@ -129,7 +130,7 @@ public class InternalTransactionComplexTest {
 
   // Just for the caller/called example above
   private byte[] deployCallerContractAndGetItsAddress(byte[] calledContractAddress)
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
     String contractName = "calledContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI =

@@ -50,12 +50,12 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
-import org.tron.core.config.args.Args;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.StorageMarket;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.VMTimeOutException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
@@ -65,7 +65,6 @@ import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
 @Slf4j(topic = "Runtime")
 public class Runtime {
@@ -277,30 +276,23 @@ public class Runtime {
     }
   }
 
-  private double getThisTxCPULimitInUsRatio() {
+  private long getThisTxCPULimitInUs() {
 
-    double thisTxCPULimitInUsRatio;
+    long thisTxCPULimitInUs;
 
-    if (ET_NORMAL_TYPE == executorType) {
-      // self witness 2
-      if (this.blockCap != null && blockCap.generatedByMyself &&
-          this.blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
-        thisTxCPULimitInUsRatio = 1.0;
-      } else
-      // self witness 3, other witness 3, fullnode 2
-      {
-        if (trx.getRet(0).getContractRet() == contractResult.OUT_OF_TIME) {
-          thisTxCPULimitInUsRatio = Args.getInstance().getMinTimeRatio();
-        } else {
-          thisTxCPULimitInUsRatio = Args.getInstance().getMaxTimeRatio();
-        }
+    if (ET_NORMAL_TYPE == executorType && null != this.blockCap) {
+      if (this.blockCap.generatedByMyself && this.blockCap.getInstance().getBlockHeader()
+          .getWitnessSignature().isEmpty()) {
+        thisTxCPULimitInUs = deposit.getDbManager().getDynamicPropertiesStore()
+            .getMaxCpuTimeOfOneTX() * 1000 * 2;
+      } else {
+        thisTxCPULimitInUs = VMConfig.MAX_TIME_ON_TX_WHEN_PUSH_BLOCK;
       }
     } else {
-      // self witness 1, other witness 1, fullnode 1
-      thisTxCPULimitInUsRatio = 1.0;
+      thisTxCPULimitInUs = deposit.getDbManager().getDynamicPropertiesStore()
+          .getMaxCpuTimeOfOneTX() * 1000;
     }
-
-    return thisTxCPULimitInUsRatio;
+    return thisTxCPULimitInUs;
   }
 
   /*
@@ -351,18 +343,8 @@ public class Runtime {
 
       AccountCapsule creator = this.deposit
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
-      // if (executorType == ET_NORMAL_TYPE) {
-      //   long blockENERGYLeftInUs = getBlockENERGYLeftInUs().longValueExact();
-      //   thisTxENERGYLimitInUs = min(blockENERGYLeftInUs,
-      //       Constant.ENERGY_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
-      // } else {
-      //   thisTxENERGYLimitInUs = Constant.ENERGY_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT;
-      // }
 
-      long MAX_CPU_TIME_OF_ONE_TX = deposit.getDbManager().getDynamicPropertiesStore()
-          .getMaxCpuTimeOfOneTX() * 1000;
-
-      long thisTxCPULimitInUs = (long) (MAX_CPU_TIME_OF_ONE_TX * getThisTxCPULimitInUsRatio());
+      long thisTxCPULimitInUs = getThisTxCPULimitInUs();
 
       long vmStartInUs = System.nanoTime() / 1000;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
@@ -442,11 +424,7 @@ public class Runtime {
           deployedContract.getInstance()
               .getOriginAddress().toByteArray());
 
-      long MAX_CPU_TIME_OF_ONE_TX = deposit.getDbManager().getDynamicPropertiesStore()
-          .getMaxCpuTimeOfOneTX() * 1000;
-      long thisTxCPULimitInUs =
-          (long) (MAX_CPU_TIME_OF_ONE_TX * getThisTxCPULimitInUsRatio());
-
+      long thisTxCPULimitInUs = getThisTxCPULimitInUs();
       long vmStartInUs = System.nanoTime() / 1000;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
 
@@ -487,20 +465,8 @@ public class Runtime {
 
   }
 
-  public void go() {
+  public void go() throws VMTimeOutException {
     try {
-
-      TransactionCapsule trxCap = new TransactionCapsule(trx);
-      if (null != blockCap && blockCap.generatedByMyself && null != trxCap.getContractRet()
-          && contractResult.OUT_OF_TIME
-          .equals(trxCap.getContractRet())) {
-        result = program.getResult();
-        program.spendAllEnergy();
-        runtimeError = "Haven Time Out";
-        result.setException(Program.Exception.notEnoughTime("Haven Time Out"));
-        throw Program.Exception.notEnoughTime("Haven Time Out");
-      }
-
       if (vm != null) {
         vm.play(program);
 
@@ -561,6 +527,9 @@ public class Runtime {
       result.setException(e);
       runtimeError = result.getException().getMessage();
       logger.error("runtime error is :{}", result.getException().getMessage());
+      throw new VMTimeOutException(e.getMessage());
+    } catch (ContractValidateException e) {
+      logger.error("when call isCallConstant(), have error: {}", e.getMessage());
     } catch (Throwable e) {
       program.spendAllEnergy();
       result = program.getResult();

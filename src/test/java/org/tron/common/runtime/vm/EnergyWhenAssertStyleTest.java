@@ -26,6 +26,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMTimeOutException;
 import org.tron.protos.Protocol.AccountType;
 
 
@@ -82,7 +83,7 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void outOfIndexTest()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException, VMTimeOutException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -127,7 +128,7 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void bytesNTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -171,7 +172,7 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void divZeroTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -216,7 +217,7 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void shiftByNegativeTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -262,7 +263,7 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void enumTypeTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -306,7 +307,7 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void functionPointerTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -350,7 +351,7 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void assertTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -401,7 +402,7 @@ public class EnergyWhenAssertStyleTest {
 
   //@Test
   public void systemPrecompileTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
@@ -449,7 +450,7 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void outOfMemTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException, VMTimeOutException {
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
