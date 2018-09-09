@@ -1066,7 +1066,6 @@ public class Manager {
 
     return true;
   }
-}
 
 
   /**
