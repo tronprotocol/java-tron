@@ -56,6 +56,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.StorageMarket;
 import org.tron.core.db.TransactionTrace;
+import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
@@ -195,7 +196,8 @@ public class Runtime {
 
   }
 
-  public void execute() throws ContractValidateException, ContractExeException {
+  public void execute()
+      throws ContractValidateException, ContractExeException, BadTransactionException {
     switch (trxType) {
       case TRX_PRECOMPILED_TYPE:
         precompiled();
@@ -304,7 +306,7 @@ public class Runtime {
   /*
    **/
   private void create()
-      throws ContractValidateException {
+      throws ContractValidateException, BadTransactionException {
     if (!deposit.getDbManager().getDynamicPropertiesStore().supportVM()) {
       logger.error("vm work is off, need to be opened by the committee");
       throw new ContractValidateException("vm work is off, need to be opened by the committee");
@@ -317,7 +319,7 @@ public class Runtime {
     SmartContract newSmartContract = contract.getNewContract();
     if (!contract.getOwnerAddress().equals(newSmartContract.getOriginAddress())) {
       logger.error("OwnerAddress not equals OriginAddress");
-      throw new ContractValidateException("OwnerAddress not equals OriginAddress");
+      throw new BadTransactionException("OwnerAddress not equals OriginAddress");
     }
     byte[] code = newSmartContract.getBytecode().toByteArray();
     byte[] contractAddress = Wallet.generateContractAddress(trx);
