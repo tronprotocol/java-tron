@@ -2,10 +2,7 @@ package org.tron.core.net.node;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
@@ -14,6 +11,7 @@ import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
@@ -29,6 +27,7 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
@@ -37,13 +36,13 @@ import java.util.concurrent.ExecutorService;
 public class HandleTransactionTest {
 
     private static TronApplicationContext context;
-    private NodeImpl node;
+    private static NodeImpl node;
     RpcApiService rpcApiService;
-    PeerClient peerClient;
+    private static PeerClient peerClient;
     ChannelManager channelManager;
     SyncPool pool;
-    Application appT;
-    Manager dbManager;
+    private static Application appT;
+    private static Manager dbManager;
 
     private static final String dbPath = "output-HandleTransactionTest";
     private static final String dbDirectory = "db_HandleTransaction_test";
@@ -176,16 +175,16 @@ public class HandleTransactionTest {
         }
     }
 
-    @After
-    public void removeDb() {
+    @AfterClass
+    public static void destroy() {
         Args.clearParam();
-
-        File dbFolder = new File(dbPath);
-        if (deleteFolder(dbFolder)) {
-            logger.info("Release resources successful.");
-        } else {
-            logger.info("Release resources failure.");
+        Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(node, "getActivePeer");
+        for (PeerConnection peer : peerConnections) {
+            peer.close();
         }
+        peerClient.close();
+        appT.shutdownServices();
+        appT.shutdown();
         context.destroy();
         dbManager.getSession().reset();
         try {
@@ -193,5 +192,6 @@ public class HandleTransactionTest {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        FileUtil.deleteDir(new File(dbPath));
     }
 }

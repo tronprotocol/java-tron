@@ -34,16 +34,19 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
+import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 
 @Slf4j
 public class LevelDbDataSourceImplTest {
 
   private static final String dbPath = "output-levelDb-test";
-  LevelDbDataSourceImpl dataSourceTest;
+  private static  LevelDbDataSourceImpl dataSourceTest;
+
   private byte[] value1 = "10000".getBytes();
   private byte[] value2 = "20000".getBytes();
   private byte[] value3 = "30000".getBytes();

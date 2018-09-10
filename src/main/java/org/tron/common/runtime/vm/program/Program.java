@@ -44,7 +44,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.runtime.config.SystemProperties;
+import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.EnergyCost;
 import org.tron.common.runtime.vm.MessageCall;
@@ -148,7 +148,7 @@ public class Program {
 
   private ProgramPrecompile programPrecompile;
 
-  private final SystemProperties config;
+  private final VMConfig config;
 
   //private byte[] transactionHash;
 
@@ -157,16 +157,16 @@ public class Program {
   }
 
   public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction transaction) {
-    this(ops, programInvoke, transaction, SystemProperties.getInstance(), null);
+    this(ops, programInvoke, transaction, VMConfig.getInstance(), null);
   }
 
   public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction transaction,
-      SystemProperties config, BlockCapsule blockCap) {
+      VMConfig config, BlockCapsule blockCap) {
     this(null, ops, programInvoke, transaction, config, blockCap);
   }
 
   public Program(byte[] codeHash, byte[] ops, ProgramInvoke programInvoke,
-      InternalTransaction transaction, SystemProperties config, BlockCapsule blockCap) {
+      InternalTransaction transaction, VMConfig config, BlockCapsule blockCap) {
     this.config = config;
     this.invoke = programInvoke;
     this.transaction = transaction;
@@ -179,6 +179,7 @@ public class Program {
     this.stack = setupProgramListener(new Stack());
     this.contractState = setupProgramListener(new ContractState(programInvoke));
     this.trace = new ProgramTrace(config, programInvoke);
+    this.nonce = transaction.getNonce();
 
     //this.transactionHash = transaction.getHash();
   }
@@ -196,7 +197,7 @@ public class Program {
 
   private InternalTransaction addInternalTx(DataWord energyLimit, byte[] senderAddress,
       byte[] receiveAddress,
-      long value, byte[] data, String note) {
+      long value, byte[] data, String note, long nonce) {
 
     // todo: now, internal transaction needn't energylimit
     InternalTransaction result = null;
@@ -205,7 +206,7 @@ public class Program {
       //result = getResult().addInternalTransaction(transaction.getHash(), getCallDeep(),
       //        getEnergyPrice(), energyLimit, senderAddress, receiveAddress, value.toByteArray(), data, note);
       result = getResult().addInternalTransaction(transaction.getHash(), getCallDeep(),
-          senderAddress, receiveAddress, value, data, note);
+          senderAddress, receiveAddress, value, data, note, nonce);
     }
 
     return result;
@@ -416,7 +417,8 @@ public class Program {
           balance);
     }
 
-    addInternalTx(null, owner, obtainer, balance, null, "suicide");
+    increaseNonce();
+    addInternalTx(null, owner, obtainer, balance, null, "suicide", nonce);
 
     if (FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0) {
       // if owner == obtainer just zeroing account according to Yellow Paper
@@ -445,7 +447,7 @@ public class Program {
     }
 
     byte[] senderAddress = convertToTronAddress(this.getOwnerAddress().getLast20Bytes());
-    // todo: need check the value > 0?
+
     long endowment = value.value().longValueExact();
     if (getContractState().getBalance(senderAddress) < endowment) {
       stackPushZero();
@@ -466,7 +468,7 @@ public class Program {
 
 //    byte[] privKey = Sha256Hash.hash(getOwnerAddress().getData());
 //    ECKey ecKey = ECKey.fromPrivate(privKey);
-    increaseNonce();
+
     //this.transactionHash = Sha256Hash.hash(transactionHash);
     byte[] newAddress = Wallet
         .generateContractAddress(rootTransactionId, nonce);
@@ -484,7 +486,7 @@ public class Program {
         }
         */
 
-    Deposit deposit = getContractState();
+    Deposit deposit = getContractState().newDepositChild();
 
     //In case of hashing collisions, check for any balance before createAccount()
     long oldBalance = deposit.getBalance(newAddress);
@@ -514,9 +516,10 @@ public class Program {
     DataWord energyLimit = this.getCreateEnergy(getEnergyLimitLeft());
     spendEnergy(energyLimit.longValue(), "internal call");
 
+    increaseNonce();
     // [5] COOK THE INVOKE AND EXECUTE
     InternalTransaction internalTx = addInternalTx(null, senderAddress, null, endowment,
-        programCode, "create");
+        programCode, "create", nonce);
     long vmStartInUs = System.nanoTime() / 1000;
     ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
         this, new DataWord(newAddress), getOwnerAddress(), value,
@@ -526,7 +529,6 @@ public class Program {
     ProgramResult result = ProgramResult.createEmpty();
 
     if (contractAlreadyExists) {
-      // todo: this exception must lead to rollback this function modification at least
       result.setException(new BytecodeExecutionException(
           "Trying to create a contract with existing contract address: 0x" + Hex
               .toHexString(newAddress)));
@@ -535,7 +537,6 @@ public class Program {
       Program program = new Program(programCode, programInvoke, internalTx, config, this.blockCap);
       program.setRootTransactionId(this.rootTransactionId);
       program.setRootCallConstant(this.isRootCallConstant);
-      program.nonce = this.nonce;
       vm.play(program);
       result = program.getResult();
       getTrace().merge(program.getTrace());
@@ -640,7 +641,6 @@ public class Program {
     Deposit deposit = getContractState().newDepositChild();
 
     // 2.1 PERFORM THE VALUE (endowment) PART
-    // todo: need to check value >= 0?
     long endowment = msg.getEndowment().value().longValueExact();
     long senderBalance = deposit.getBalance(senderAddress);
     if (senderBalance < endowment) {
@@ -674,8 +674,9 @@ public class Program {
     }
 
     // CREATE CALL INTERNAL TRANSACTION
+    increaseNonce();
     InternalTransaction internalTx = addInternalTx(null, senderAddress, contextAddress,
-        endowment, data, "call");
+        endowment, data, "call" , nonce);
 
     ProgramResult result = null;
     if (isNotEmpty(programCode)) {
@@ -686,13 +687,11 @@ public class Program {
           msg.getType().callIsDelegate() ? getCallValue() : msg.getEndowment(),
           contextBalance, data, deposit, msg.getType().callIsStatic() || isStaticCall(),
           byTestingSuite(), vmStartInUs, getVmShouldEndInUs(), msg.getEnergy().longValueSafe());
-
       VM vm = new VM(config);
       Program program = new Program(null, programCode, programInvoke, internalTx, config,
           this.blockCap);
       program.setRootTransactionId(this.rootTransactionId);
       program.setRootCallConstant(this.isRootCallConstant);
-      program.nonce = this.nonce;
       vm.play(program);
       result = program.getResult();
 
@@ -778,10 +777,7 @@ public class Program {
   }
 
   public void checkCPUTimeLimit(String opName) {
-    // if (this.blockCap != null && this.blockCap.generatedByMyself &&
-    //     !this.blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
-    //   return;
-    // }
+
     if (Args.getInstance().isDebug()) {
       return;
     }
@@ -790,6 +786,10 @@ public class Program {
     }
     long vmNowInUs = System.nanoTime() / 1000;
     if (vmNowInUs > getVmShouldEndInUs()) {
+      logger.error("minTimeRatio: {}", Args.getInstance().getMinTimeRatio());
+      logger.error("maxTimeRatio: {}", Args.getInstance().getMaxTimeRatio());
+      logger.error("vm should end time in us: {}", getVmShouldEndInUs());
+      logger.error("vm start time in us: {}", getVmStartInUs());
       throw Exception.notEnoughTime(opName);
     }
 

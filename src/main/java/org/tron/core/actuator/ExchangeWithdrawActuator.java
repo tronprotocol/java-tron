@@ -3,6 +3,7 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
@@ -173,24 +174,47 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
           + "the exchange has been closed");
     }
 
-    BigInteger bigFirstTokenBalance = new BigInteger(String.valueOf(firstTokenBalance));
-    BigInteger bigSecondTokenBalance = new BigInteger(String.valueOf(secondTokenBalance));
-    BigInteger bigTokenQuant = new BigInteger(String.valueOf(tokenQuant));
+    BigDecimal bigFirstTokenBalance = new BigDecimal(String.valueOf(firstTokenBalance));
+    BigDecimal bigSecondTokenBalance = new BigDecimal(String.valueOf(secondTokenBalance));
+    BigDecimal bigTokenQuant = new BigDecimal(String.valueOf(tokenQuant));
     if (Arrays.equals(tokenID, firstTokenID)) {
 //      anotherTokenQuant = Math
 //          .floorDiv(Math.multiplyExact(secondTokenBalance, tokenQuant), firstTokenBalance);
       anotherTokenQuant = bigSecondTokenBalance.multiply(bigTokenQuant)
-          .divide(bigFirstTokenBalance).longValueExact();
+          .divideToIntegralValue(bigFirstTokenBalance).longValueExact();
       if (firstTokenBalance < tokenQuant || secondTokenBalance < anotherTokenQuant) {
         throw new ContractValidateException("exchange balance is not enough");
       }
+
+      if (anotherTokenQuant <= 0) {
+        throw new ContractValidateException("withdraw another token quant must greater than zero");
+      }
+
+      double remainder = bigSecondTokenBalance.multiply(bigTokenQuant)
+          .divide(bigFirstTokenBalance, 4, BigDecimal.ROUND_HALF_UP).doubleValue()
+          - anotherTokenQuant;
+      if (remainder / anotherTokenQuant > 0.0001) {
+        throw new ContractValidateException("Not precise enough");
+      }
+
     } else {
 //      anotherTokenQuant = Math
 //          .floorDiv(Math.multiplyExact(firstTokenBalance, tokenQuant), secondTokenBalance);
       anotherTokenQuant = bigFirstTokenBalance.multiply(bigTokenQuant)
-          .divide(bigSecondTokenBalance).longValueExact();
+          .divideToIntegralValue(bigSecondTokenBalance).longValueExact();
       if (secondTokenBalance < tokenQuant || firstTokenBalance < anotherTokenQuant) {
         throw new ContractValidateException("exchange balance is not enough");
+      }
+
+      if (anotherTokenQuant <= 0) {
+        throw new ContractValidateException("withdraw another token quant must greater than zero");
+      }
+
+      double remainder = bigFirstTokenBalance.multiply(bigTokenQuant)
+          .divide(bigSecondTokenBalance, 4, BigDecimal.ROUND_HALF_UP).doubleValue()
+          - anotherTokenQuant;
+      if (remainder / anotherTokenQuant > 0.0001) {
+        throw new ContractValidateException("Not precise enough");
       }
     }
 

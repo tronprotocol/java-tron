@@ -8,6 +8,8 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.utils.TransactionUtil;
+import org.tron.core.db.AccountIdIndexStore;
+import org.tron.core.db.AccountIndexStore;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
@@ -36,12 +38,13 @@ public class UpdateAccountActuator extends AbstractActuator {
 
     byte[] ownerAddress = accountUpdateContract.getOwnerAddress().toByteArray();
     AccountStore accountStore = dbManager.getAccountStore();
-//    AccountIdIndexStore accountIndexStore = dbManager.getAccountIdIndexStore();
+    AccountIndexStore accountIndexStore = dbManager.getAccountIndexStore();
     AccountCapsule account = accountStore.get(ownerAddress);
 
     account.setAccountName(accountUpdateContract.getAccountName().toByteArray());
     accountStore.put(ownerAddress, account);
-//    accountIndexStore.put(account);
+    accountIndexStore.put(account);
+
     ret.setStatus(fee, code.SUCESS);
 
     return true;
@@ -79,6 +82,16 @@ public class UpdateAccountActuator extends AbstractActuator {
     AccountCapsule account = dbManager.getAccountStore().get(ownerAddress);
     if (account == null) {
       throw new ContractValidateException("Account has not existed");
+    }
+
+    if (account.getAccountName() != null && !account.getAccountName().isEmpty()
+        && dbManager.getDynamicPropertiesStore().getAllowUpdateAccountName() == 0) {
+      throw new ContractValidateException("This account name already exist");
+    }
+
+    if (dbManager.getAccountIndexStore().has(accountName)
+        && dbManager.getDynamicPropertiesStore().getAllowUpdateAccountName() == 0) {
+      throw new ContractValidateException("This name has existed");
     }
 
     return true;

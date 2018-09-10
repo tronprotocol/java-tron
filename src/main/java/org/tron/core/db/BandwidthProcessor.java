@@ -12,7 +12,6 @@ import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TooBigTransactionResultException;
@@ -50,8 +49,7 @@ public class BandwidthProcessor extends ResourceProcessor {
   }
 
   @Override
-  public void consume(TransactionCapsule trx, TransactionResultCapsule ret,
-      TransactionTrace trace)
+  public void consume(TransactionCapsule trx, TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException {
     List<Contract> contracts = trx.getInstance().getRawData().getContractList();
     if (trx.getResultSerializedSize() > Constant.MAX_RESULT_SIZE_IN_TX * contracts.size()) {
@@ -60,10 +58,7 @@ public class BandwidthProcessor extends ResourceProcessor {
 
     long bytesSize;
     if (dbManager.getDynamicPropertiesStore().supportVM()) {
-      TransactionCapsule txCapForEstimateBandWidth = new TransactionCapsule(
-          trx.getInstance().getRawData(),
-          trx.getInstance().getSignatureList());
-      bytesSize = txCapForEstimateBandWidth.getSerializedSize();
+      bytesSize = trx.getInstance().toBuilder().clearRet().build().getSerializedSize();
     } else {
       bytesSize = trx.getSerializedSize();
     }
@@ -83,8 +78,7 @@ public class BandwidthProcessor extends ResourceProcessor {
       long now = dbManager.getWitnessController().getHeadSlot();
 
       if (contractCreateNewAccount(contract)) {
-        consumeForCreateNewAccount(accountCapsule, bytesSize, now, ret);
-        trace.setNetBill(0, ret.getFee());
+        consumeForCreateNewAccount(accountCapsule, bytesSize, now, trace);
         continue;
       }
 
@@ -102,8 +96,7 @@ public class BandwidthProcessor extends ResourceProcessor {
         continue;
       }
 
-      if (useTransactionFee(accountCapsule, bytesSize, ret)) {
-        trace.setNetBill(0, ret.getFee());
+      if (useTransactionFee(accountCapsule, bytesSize, trace)) {
         continue;
       }
 
@@ -115,10 +108,10 @@ public class BandwidthProcessor extends ResourceProcessor {
   }
 
   private boolean useTransactionFee(AccountCapsule accountCapsule, long bytes,
-      TransactionResultCapsule ret) {
+      TransactionTrace trace) {
     long fee = dbManager.getDynamicPropertiesStore().getTransactionFee() * bytes;
     if (consumeFee(accountCapsule, fee)) {
-      ret.addFee(fee);
+      trace.setNetBill(0, fee);
       dbManager.getDynamicPropertiesStore().addTotalTransactionCost(fee);
       return true;
     } else {
@@ -127,12 +120,12 @@ public class BandwidthProcessor extends ResourceProcessor {
   }
 
   private void consumeForCreateNewAccount(AccountCapsule accountCapsule, long bytes,
-      long now, TransactionResultCapsule resultCapsule)
+      long now, TransactionTrace trace)
       throws AccountResourceInsufficientException {
     boolean ret = consumeBandwidthForCreateNewAccount(accountCapsule, bytes, now);
 
     if (!ret) {
-      ret = consumeFeeForCreateNewAccount(accountCapsule, resultCapsule);
+      ret = consumeFeeForCreateNewAccount(accountCapsule, trace);
       if (!ret) {
         throw new AccountResourceInsufficientException();
       }
@@ -166,10 +159,10 @@ public class BandwidthProcessor extends ResourceProcessor {
   }
 
   public boolean consumeFeeForCreateNewAccount(AccountCapsule accountCapsule,
-      TransactionResultCapsule ret) {
+      TransactionTrace trace) {
     long fee = dbManager.getDynamicPropertiesStore().getCreateAccountFee();
     if (consumeFee(accountCapsule, fee)) {
-      ret.addFee(fee);
+      trace.setNetBill(0, fee);
       dbManager.getDynamicPropertiesStore().addTotalCreateAccountCost(fee);
       return true;
     } else {

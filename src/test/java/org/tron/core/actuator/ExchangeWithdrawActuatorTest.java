@@ -74,12 +74,12 @@ public class ExchangeWithdrawActuatorTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
+    context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {
       logger.info("Release resources failure.");
     }
-    context.destroy();
   }
 
   /**
@@ -115,6 +115,14 @@ public class ExchangeWithdrawActuatorTest {
             "_".getBytes(),
             "def".getBytes());
     exchangeCapsule2.setBalance(1_000_000_000000L, 10_000_000L);
+    ExchangeCapsule exchangeCapsule3 =
+        new ExchangeCapsule(
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
+            3,
+            1000000,
+            "abc".getBytes(),
+            "def".getBytes());
+    exchangeCapsule3.setBalance(903L, 737L);
 
     dbManager.getAccountStore()
         .put(ownerAccountFirstCapsule.getAddress().toByteArray(), ownerAccountFirstCapsule);
@@ -124,6 +132,8 @@ public class ExchangeWithdrawActuatorTest {
         .put(exchangeCapsule.createDbKey(), exchangeCapsule);
     dbManager.getExchangeStore()
         .put(exchangeCapsule2.createDbKey(), exchangeCapsule2);
+    dbManager.getExchangeStore()
+        .put(exchangeCapsule3.createDbKey(), exchangeCapsule3);
 
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000000);
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(10);
@@ -326,7 +336,7 @@ public class ExchangeWithdrawActuatorTest {
    */
   @Test
   public void exchangeNotExist() {
-    long exchangeId = 3;
+    long exchangeId = 4;
     String firstTokenId = "abc";
     long firstTokenQuant = 100000000L;
     String secondTokenId = "def";
@@ -350,7 +360,7 @@ public class ExchangeWithdrawActuatorTest {
       fail("Exchange not exists");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Exchange[3] not exists",
+      Assert.assertEquals("Exchange[4] not exists",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -507,6 +517,134 @@ public class ExchangeWithdrawActuatorTest {
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
+  }
+
+  /**
+   * withdraw another token quant must greater than zero
+   */
+  @Test
+  public void anotherTokenQuantLessThanZero() {
+    long exchangeId = 1;
+    String firstTokenId = "abc";
+    long quant = 1L;
+    String secondTokenId = "def";
+    long secondTokenQuant = 400000000L;
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.addAssetAmount(firstTokenId.getBytes(), 1000L);
+    accountCapsule.addAssetAmount(secondTokenId.getBytes(), secondTokenQuant);
+    accountCapsule.setBalance(10000_000000L);
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, quant),
+        dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail();
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("withdraw another token quant must greater than zero",
+          e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  /**
+   * Not precise enough
+   */
+  @Test
+  public void notPreciseEnough() {
+    long exchangeId = 1;
+    String firstTokenId = "abc";
+    long quant = 9991L;
+    String secondTokenId = "def";
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, quant),
+        dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail();
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Not precise enough",
+          e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+
+    quant = 10001;
+    actuator = new ExchangeWithdrawActuator(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, quant),
+        dbManager);
+    ret = new TransactionResultCapsule();
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+      Assert.assertEquals("Not precise enough",
+          e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+
+  }
+
+  /**
+   * Not precise enough
+   */
+  @Test
+  public void notPreciseEnough2() {
+    long exchangeId = 3;
+    String firstTokenId = "abc";
+    long quant = 1L;
+    String secondTokenId = "def";
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, quant),
+        dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail();
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("withdraw another token quant must greater than zero",
+          e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+
+    quant = 11;
+    actuator = new ExchangeWithdrawActuator(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, quant),
+        dbManager);
+    ret = new TransactionResultCapsule();
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Not precise enough",
+          e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+
   }
 
   /**

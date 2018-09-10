@@ -231,6 +231,7 @@ public class UpdateAccountActuatorTest {
    * Account name need 8 - 32 bytes.
    */
   public void invalidName() {
+    dbManager.getDynamicPropertiesStore().saveAllowUpdateAccountName(1);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     //Just OK 32 bytes is OK
     try {
@@ -348,11 +349,11 @@ public class UpdateAccountActuatorTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
+    context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {
       logger.info("Release resources failure.");
     }
-    context.destroy();
   }
 }

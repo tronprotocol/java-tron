@@ -1,7 +1,6 @@
 package org.tron.core.net.peer;
 
 import static org.tron.core.config.Parameter.NetConstants.MAX_INVENTORY_SIZE_IN_MINUTES;
-import static org.tron.core.config.Parameter.NetConstants.NET_MAX_TRX_PER_SECOND;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -28,6 +27,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NodeConstant;
+import org.tron.core.config.args.Args;
 import org.tron.core.net.node.Item;
 
 @Slf4j
@@ -178,7 +178,9 @@ public class PeerConnection extends Channel {
   }
 
   public boolean isAdvInvFull() {
-    return advObjSpreadToUs.size() > MAX_INVENTORY_SIZE_IN_MINUTES * 60 * NET_MAX_TRX_PER_SECOND;
+    return advObjSpreadToUs.size() > MAX_INVENTORY_SIZE_IN_MINUTES
+        * 60
+        * Args.getInstance().getNetMaxTrxPerSecond();
   }
 
   public boolean isBanned() {

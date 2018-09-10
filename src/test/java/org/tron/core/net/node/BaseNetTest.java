@@ -20,6 +20,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.application.Application;
@@ -40,7 +41,7 @@ import org.tron.core.services.WitnessService;
 public abstract class BaseNetTest {
 
   protected static TronApplicationContext context;
-  protected NodeImpl node;
+  protected static NodeImpl node;
   protected RpcApiService rpcApiService;
   protected PeerClient peerClient;
   protected ChannelManager channelManager;
@@ -48,13 +49,13 @@ public abstract class BaseNetTest {
   protected Manager manager;
   private Application appT;
 
-  private String dbPath;
+  private static String dbPath;
   private String dbDirectory;
   private String indexDirectory;
 
   private int port;
 
-  private ExecutorService executorService = Executors.newFixedThreadPool(1);
+  private static ExecutorService executorService = Executors.newFixedThreadPool(1);
 
   public BaseNetTest(String dbPath, String dbDirectory, String indexDirectory, int port) {
     this.dbPath = dbPath;
@@ -159,14 +160,15 @@ public abstract class BaseNetTest {
   public void destroy() {
     executorService.shutdownNow();
     Args.clearParam();
-    FileUtil.deleteDir(new File(dbPath));
     Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(node, "getActivePeer");
     for (PeerConnection peer : peerConnections) {
       peer.close();
     }
     peerClient.close();
+    context.destroy();
     node.shutDown();
     appT.shutdownServices();
     appT.shutdown();
+    FileUtil.deleteDir(new File(dbPath));
   }
 }

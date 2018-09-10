@@ -1,22 +1,18 @@
 package org.tron.core.net.node;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import com.google.protobuf.ByteString;
-import java.io.File;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
@@ -31,6 +27,12 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.Inventory.InventoryType;
+
+import java.io.File;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 
 @Slf4j
@@ -51,49 +53,8 @@ public class NodeImplTest {
     appT = ApplicationFactory.create(context);
   }
 
-  /**
-   * init db.
-   */
-  @BeforeClass
-  public static void init() {
-    nodeImpl = context.getBean(NodeImpl.class);
-    dbManager = context.getBean(Manager.class);
-    nodeDelegate = new NodeDelegateImpl(dbManager);
-    nodeImpl.setNodeDelegate(nodeDelegate);
-  }
-
-  /**
-   * remo db when after test.
-   */
-  @AfterClass
-  public static void removeDb() {
-    Args.clearParam();
-
-    File dbFolder = new File(dbPath);
-    if (deleteFolder(dbFolder)) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
-    context.destroy();
-    appT.shutdownServices();
-    appT.shutdown();
-  }
-
-  private static Boolean deleteFolder(File index) {
-    if (!index.isDirectory() || index.listFiles().length <= 0) {
-      return index.delete();
-    }
-    for (File file : index.listFiles()) {
-      if (null != file && !deleteFolder(file)) {
-        return false;
-      }
-    }
-    return index.delete();
-  }
-
   @Test
-  public void testSyncBlockMessage() throws Exception {
+  public void testSyncBlockMessage() {
     PeerConnection peer = new PeerConnection();
     BlockCapsule genesisBlockCapsule = BlockUtil.newGenesisBlockCapsule();
 
@@ -125,7 +86,7 @@ public class NodeImplTest {
   }
 
   @Test
-  public void testAdvBlockMessage() throws Exception {
+  public void testAdvBlockMessage(){
     PeerConnection peer = new PeerConnection();
     BlockCapsule genesisBlockCapsule = BlockUtil.newGenesisBlockCapsule();
 
@@ -222,5 +183,22 @@ public class NodeImplTest {
     } catch (RuntimeException e) {
       fail("should not disconnect!");
     }
+  }
+
+  @BeforeClass
+  public static void init() {
+    nodeImpl = context.getBean(NodeImpl.class);
+    dbManager = context.getBean(Manager.class);
+    nodeDelegate = new NodeDelegateImpl(dbManager);
+    nodeImpl.setNodeDelegate(nodeDelegate);
+  }
+
+  @AfterClass
+  public static void destroy(){
+    Args.clearParam();
+    context.destroy();
+    appT.shutdownServices();
+    appT.shutdown();
+    FileUtil.deleteDir(new File(dbPath));
   }
 }

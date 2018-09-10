@@ -78,7 +78,7 @@ public class EnergyWhenTimeoutStyleTest {
       throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
 
     long value = 0;
-    long feeLimit = 20000000000000L;
+    long feeLimit = 1000_000_000L;
     long consumeUserResourcePercent = 0;
     TVMTestResult result = deployEndlessLoopContract(value, feeLimit,
         consumeUserResourcePercent);
@@ -121,11 +121,11 @@ public class EnergyWhenTimeoutStyleTest {
   @After
   public void destroy() {
     Args.clearParam();
+    context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {
       logger.info("Release resources failure.");
     }
-    context.destroy();
   }
 }

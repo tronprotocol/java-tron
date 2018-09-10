@@ -132,6 +132,9 @@ public class ReceiptCapsule {
             StringUtil.createReadableString(account.createDbKey()) + " insufficient balance");
       }
       account.setBalance(balance - energyFee);
+
+      manager.adjustBalance(manager.getAccountStore().getBlackhole().getAddress().toByteArray(),
+          energyFee);//send to blackhole
     }
 
     manager.getAccountStore().put(account.getAddress().toByteArray(), account);

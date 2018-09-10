@@ -11,6 +11,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.ExchangeCreateContract;
@@ -37,7 +38,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
       long firstTokenBalance = exchangeCreateContract.getFirstTokenBalance();
       long secondTokenBalance = exchangeCreateContract.getSecondTokenBalance();
 
-      long newBalance = accountCapsule.getBalance() - calcFee();
+      long newBalance = accountCapsule.getBalance() - fee;
 
       accountCapsule.setBalance(newBalance);
 
@@ -70,7 +71,13 @@ public class ExchangeCreateActuator extends AbstractActuator {
       dbManager.getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
       dbManager.getDynamicPropertiesStore().saveLatestExchangeNum(id);
 
+      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
+
       ret.setStatus(fee, code.SUCESS);
+    } catch (BalanceInsufficientException e) {
+      logger.debug(e.getMessage(), e);
+      ret.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);

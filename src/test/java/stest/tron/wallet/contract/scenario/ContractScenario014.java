@@ -26,22 +26,22 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class ContractScenario014 {
 
-  //testng001、testng002、testng003、testng004
-  private final String testKey002 =
-      "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
+  private final String testKey002 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
+  private Long maxFeeLimit = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.maxFeeLimit");
 
   byte[] contractAddress1 = null;
   byte[] contractAddress2 = null;
   byte[] contractAddress3 = null;
   String txid = "";
   Optional<TransactionInfo> infoById = null;
-  Long maxFeeLimit = 100000000L;
   String contractName = "";
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
@@ -117,7 +117,6 @@ public class ContractScenario014 {
         blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(contractAddress3,1000000L,fromAddress,testKey002,
         blockingStubFull));
-
 
     //Test contract2 trigger contract1 to test call function
     Account contract2AccountInfo = PublicMethed.queryAccount(contractAddress2,blockingStubFull);
