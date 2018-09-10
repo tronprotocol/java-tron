@@ -55,7 +55,6 @@ import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
-import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.Parameter.ChainConstant;
@@ -115,6 +114,8 @@ public class Manager {
   private BlockIndexStore blockIndexStore;
   @Autowired
   private AccountIdIndexStore accountIdIndexStore;
+  @Autowired
+  private AccountIndexStore accountIndexStore;
   @Autowired
   private WitnessScheduleStore witnessScheduleStore;
   @Autowired
@@ -321,6 +322,10 @@ public class Manager {
       () -> {
         while (isRunRepushThread) {
           try {
+            if (isGeneratingBlock()) {
+              TimeUnit.MILLISECONDS.sleep(10L);
+              continue;
+            }
             TransactionCapsule tx = this.getRepushTransactions().poll(1, TimeUnit.SECONDS);
             if (tx != null) {
               this.rePush(tx);
@@ -607,18 +612,10 @@ public class Manager {
   }
 
 
-  public void consumeBandwidth(TransactionCapsule trx, TransactionResultCapsule ret,
-      TransactionTrace trace)
+  public void consumeBandwidth(TransactionCapsule trx, TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException {
     BandwidthProcessor processor = new BandwidthProcessor(this);
-    processor.consume(trx, ret, trace);
-  }
-
-  public void consumeEnergy(TransactionCapsule trx, TransactionResultCapsule ret,
-      TransactionTrace trace)
-      throws ContractValidateException, AccountResourceInsufficientException {
-    EnergyProcessor processor = new EnergyProcessor(this);
-    processor.consume(trx, ret, trace);
+    processor.consume(trx, trace);
   }
 
   @Deprecated
@@ -668,9 +665,7 @@ public class Manager {
       revokingStore.pop();
       logger.info("end to erase block:" + oldHeadBlock);
       popedTransactions.addAll(oldHeadBlock.getTransactions());
-      // todo: need add ??
-      // repushTransactions.addAll(oldHeadBlock.getTransactions());
-      //
+
     } catch (ItemNotFoundException | BadItemException e) {
       logger.warn(e.getMessage(), e);
     }
@@ -1038,40 +1033,22 @@ public class Manager {
     }
 
     TransactionTrace trace = new TransactionTrace(trxCap, this);
+    trxCap.setTrxTrace(trace);
 
-// TODO vm switch
-//    if (!this.dynamicPropertiesStore.supportVM() && trace.needVM()) {
-//      throw new VMIllegalException("this node doesn't support vm, trx id: " + trxCap.getTransactionId().toString());
-//    }
+    consumeBandwidth(trxCap, trace);
 
     DepositImpl deposit = DepositImpl.createRoot(this);
     Runtime runtime = new Runtime(trace, blockCap, deposit, new ProgramInvokeFactoryImpl());
     if (runtime.isCallConstant()) {
-      // Fixme Wrong exception
       throw new VMIllegalException("cannot call constant method ");
     }
-    // if (getDynamicPropertiesStore().supportVM()) {
-    //   if(trxCap.getInstance().getRetCount()<=0){
-    //     trxCap.setResult(new TransactionResultCapsule(contractResult.UNKNOWN));
-    //   }
-    // }
-
-    consumeBandwidth(trxCap, runtime.getResult().getRet(), trace);
 
     trace.init();
-
-    // if (blockCap != null && blockCap.generatedByMyself &&
-    //     !blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty() &&
-    //     trxCap.getInstance().getRet(0).getContractRet() != contractResult.SUCCESS) {
-    // setBill(energyUsage);
-    // } else {
-    // }
-
     trace.exec(runtime);
 
     if (Objects.nonNull(blockCap)) {
       trace.setResult(runtime);
-      if (!blockCap.generatedByMyself) {
+      if (!blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
         trace.check();
       }
     }
@@ -1085,6 +1062,7 @@ public class Manager {
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
 
     ReceiptCapsule traceReceipt = trace.getReceipt();
+
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
         .buildInstance(trxCap, blockCap, runtime, traceReceipt);
 
@@ -1109,10 +1087,20 @@ public class Manager {
    * Generate a block.
    */
   public synchronized BlockCapsule generateBlock(
-      final WitnessCapsule witnessCapsule, final long when, final byte[] privateKey)
+      final WitnessCapsule witnessCapsule, final long when, final byte[] privateKey,
+      Boolean lastHeadBlockIsMaintenanceBefore)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
+      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
+      TransactionTraceException {
 
-      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, TransactionTraceException {
+    //check that the first block after the maintenance period has just been processed
+    if (lastHeadBlockIsMaintenanceBefore != lastHeadBlockIsMaintenance()) {
+      if (!witnessController.validateWitnessSchedule(witnessCapsule.getAddress(), when)) {
+        logger.info("It's not my turn, "
+            + "and the first block after the maintenance period has just been processed");
+        return null;
+      }
+    }
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
@@ -1135,7 +1123,8 @@ public class Manager {
     while (iterator.hasNext()) {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
       if (DateTime.now().getMillis() - when
-          > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5 * ChainConstant.BLOCK_PRODUCED_TIME_OUT
+          > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5
+          * Args.getInstance().getBlockProducedTimeOut()
           / 100) {
         logger.warn("Processing transaction time exceeds the 50% producing time。");
         break;
@@ -1200,7 +1189,7 @@ public class Manager {
 
     logger.info(
         "postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTransactions.size()
-            + "]");
+            + "],repushTrxCount[" + repushTransactions.size() + "]");
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(privateKey);
 
@@ -1470,12 +1459,21 @@ public class Manager {
     this.accountIdIndexStore = indexStore;
   }
 
+  public AccountIndexStore getAccountIndexStore() {
+    return this.accountIndexStore;
+  }
+
+  public void setAccountIndexStore(AccountIndexStore indexStore) {
+    this.accountIndexStore = indexStore;
+  }
+
   public void closeAllStore() {
     System.err.println("******** begin to close db ********");
     closeOneStore(accountStore);
     closeOneStore(blockStore);
     closeOneStore(blockIndexStore);
     closeOneStore(accountIdIndexStore);
+    closeOneStore(accountIndexStore);
     closeOneStore(witnessStore);
     closeOneStore(witnessScheduleStore);
     closeOneStore(assetIssueStore);
@@ -1484,6 +1482,12 @@ public class Manager {
     closeOneStore(codeStore);
     closeOneStore(contractStore);
     closeOneStore(storageRowStore);
+    closeOneStore(exchangeStore);
+    closeOneStore(peersStore);
+    closeOneStore(proposalStore);
+    closeOneStore(recentBlockStore);
+    closeOneStore(transactionHistoryStore);
+    closeOneStore(votesStore);
     System.err.println("******** end to close db ********");
   }
 

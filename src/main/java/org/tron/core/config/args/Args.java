@@ -41,6 +41,7 @@ import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.ChainConstant;
+import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.db.AccountStore;
 import org.tron.keystore.CipherException;
 import org.tron.keystore.Credentials;
@@ -87,6 +88,11 @@ public class Args {
   @Setter
   @Parameter(names = {"--max-time-ratio"})
   private double maxTimeRatio = calcMaxTimeRatio();
+
+  @Getter
+  @Setter
+  @Parameter(names = {"--long-running-time"})
+  private int longRunningTime = 10;
 
   @Getter
   @Parameter(description = "--seed-nodes")
@@ -235,6 +241,14 @@ public class Args {
 
   @Getter
   @Setter
+  private int blockProducedTimeOut;
+
+  @Getter
+  @Setter
+  private long netMaxTrxPerSecond;
+
+  @Getter
+  @Setter
   private long maxConnectionAgeInMillis;
 
   @Getter
@@ -375,6 +389,7 @@ public class Args {
     INSTANCE.debug = false;
     INSTANCE.minTimeRatio = 0.6;
     INSTANCE.maxTimeRatio = 5.0;
+    INSTANCE.longRunningTime = 10;
   }
 
   /**
@@ -446,6 +461,10 @@ public class Args {
 
     if (config.hasPath("vm.maxTimeRatio")) {
       INSTANCE.maxTimeRatio = config.getDouble("vm.maxTimeRatio");
+    }
+
+    if (config.hasPath("vm.longRunningTime")) {
+      INSTANCE.longRunningTime = config.getInt("vm.longRunningTime");
     }
 
     INSTANCE.storage = new Storage();
@@ -567,6 +586,12 @@ public class Args {
 
     INSTANCE.maxConnectionIdleInMillis = config.hasPath("node.rpc.maxConnectionIdleInMillis") ?
         config.getLong("node.rpc.maxConnectionIdleInMillis") : Long.MAX_VALUE;
+
+    INSTANCE.blockProducedTimeOut = config.hasPath("node.blockProducedTimeOut") ?
+        config.getInt("node.blockProducedTimeOut") : ChainConstant.BLOCK_PRODUCED_TIME_OUT;
+
+    INSTANCE.netMaxTrxPerSecond = config.hasPath("node.netMaxTrxPerSecond") ?
+        config.getInt("node.netMaxTrxPerSecond") : NetConstants.NET_MAX_TRX_PER_SECOND;
 
     INSTANCE.maxConnectionAgeInMillis = config.hasPath("node.rpc.maxConnectionAgeInMillis") ?
         config.getLong("node.rpc.maxConnectionAgeInMillis") : Long.MAX_VALUE;

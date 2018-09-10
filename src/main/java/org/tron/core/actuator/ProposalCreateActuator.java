@@ -190,6 +190,20 @@ public class ProposalCreateActuator extends AbstractActuator {
               "Bad chain parameter value,valid range is [10,100]");
         }
         break;
+      case (14): {
+        if (entry.getValue() != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_UPDATE_ACCOUNT_NAME] is only allowed to be 1");
+        }
+        break;
+      }
+      case (15): {
+        if (entry.getValue() != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_SAME_TOKEN_NAME] is only allowed to be 1");
+        }
+        break;
+      }
       default:
         break;
     }

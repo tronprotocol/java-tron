@@ -4,10 +4,7 @@ import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
@@ -44,12 +41,12 @@ import java.util.stream.IntStream;
 @Slf4j
 public class GetBlockChainSummaryTest{
     private static TronApplicationContext context;
-    private NodeImpl node;
+    private static NodeImpl node;
     RpcApiService rpcApiService;
-    PeerClient peerClient;
+    private static PeerClient peerClient;
     ChannelManager channelManager;
     SyncPool pool;
-    Application appT;
+    private static Application appT;
     Manager dbManager;
 
     private static final String dbPath = "output-GetBlockChainSummary";
@@ -298,10 +295,9 @@ public class GetBlockChainSummaryTest{
         }
     }
 
-    @After
-    public void removeDb() {
+    @AfterClass
+    public static void destroy() {
         Args.clearParam();
-        FileUtil.deleteDir(new File(dbPath));
         Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(node, "getActivePeer");
         for (PeerConnection peer : peerConnections) {
             peer.close();
@@ -310,5 +306,6 @@ public class GetBlockChainSummaryTest{
         appT.shutdownServices();
         appT.shutdown();
         context.destroy();
+        FileUtil.deleteDir(new File(dbPath));
     }
 }

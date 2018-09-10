@@ -119,6 +119,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   //This value is only allowed to be 0, 1, -1
   private static final byte[] REMOVE_THE_POWER_OF_THE_GR = "REMOVE_THE_POWER_OF_THE_GR".getBytes();
 
+  //This value is only allowed to be 0, 1, -1
+  private static final byte[] ALLOW_UPDATE_ACCOUNT_NAME = "ALLOW_UPDATE_ACCOUNT_NAME".getBytes();
+
+  //This value is only allowed to be 0, 1, -1
+  private static final byte[] ALLOW_SAME_TOKEN_NAME = " ALLOW_SAME_TOKEN_NAME".getBytes();
+
   //If the parameter is larger than 0, the contract is allowed to be created.
   private static final byte[] ALLOW_CREATION_OF_CONTRACTS = "ALLOW_CREATION_OF_CONTRACTS"
       .getBytes();
@@ -390,6 +396,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getRemoveThePowerOfTheGr();
     } catch (IllegalArgumentException e) {
       this.saveRemoveThePowerOfTheGr(0);
+    }
+
+    try {
+      this.getAllowSameTokenName();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowSameTokenName(0);
+    }
+
+    try {
+      this.getAllowUpdateAccountName();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowUpdateAccountName(0);
     }
 
     try {
@@ -927,7 +945,31 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found REMOVE_THE_POWER_OF_THE_GR"));
   }
 
+  public void saveAllowUpdateAccountName(long rate) {
+    this.put(ALLOW_UPDATE_ACCOUNT_NAME,
+        new BytesCapsule(ByteArray.fromLong(rate)));
+  }
 
+  public long getAllowUpdateAccountName() {
+    return Optional.ofNullable(getUnchecked(ALLOW_UPDATE_ACCOUNT_NAME))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_UPDATE_ACCOUNT_NAME"));
+  }
+
+  public void saveAllowSameTokenName(long rate) {
+    this.put(ALLOW_SAME_TOKEN_NAME,
+        new BytesCapsule(ByteArray.fromLong(rate)));
+  }
+
+  public long getAllowSameTokenName() {
+    return Optional.ofNullable(getUnchecked(ALLOW_SAME_TOKEN_NAME))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_SAME_TOKEN_NAME"));
+  }
 
   public void saveAllowCreationOfContracts(long allowCreationOfContracts) {
     this.put(DynamicPropertiesStore.ALLOW_CREATION_OF_CONTRACTS,

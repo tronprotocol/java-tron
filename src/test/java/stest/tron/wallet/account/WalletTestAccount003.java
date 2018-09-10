@@ -116,7 +116,7 @@ public class WalletTestAccount003 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testUpdateAccount() {
     Assert.assertFalse(updateAccount(lowBalAddress,
         mostLongNamePlusOneChar.getBytes(), lowBalTest));

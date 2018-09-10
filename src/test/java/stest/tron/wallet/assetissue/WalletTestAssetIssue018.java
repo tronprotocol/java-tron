@@ -78,7 +78,7 @@ public class WalletTestAssetIssue018 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -89,7 +89,7 @@ public class WalletTestAssetIssue018 {
     PublicMethed.printAddress(assetAccount3Key);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testSameAssetissueName() {
     logger.info(name);
     logger.info("total supply is " + Long.toString(totalSupply));
@@ -167,7 +167,7 @@ public class WalletTestAssetIssue018 {
 
   }
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
