@@ -49,14 +49,13 @@ public class SolidityNodeTest {
   public static void removeDb() {
     Args.clearParam();
     rpcApiService.stop();
-
+    context.destroy();
     File dbFolder = new File(dbPath);
     if (deleteFolder(dbFolder)) {
       logger.info("Release resources successful.");
     } else {
       logger.info("Release resources failure.");
     }
-    context.destroy();
   }
 
   private static Boolean deleteFolder(File index) {

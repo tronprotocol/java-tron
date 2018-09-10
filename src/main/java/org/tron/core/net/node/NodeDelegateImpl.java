@@ -149,18 +149,18 @@ public class NodeDelegateImpl implements NodeDelegate {
       logger.info("AccountResourceInsufficientException" + e.getMessage());
       return false;
     } catch (DupTransactionException e) {
-      logger.info("dup trans" + e.getMessage());
+      logger.info("Dup trans" + e.getMessage());
       return false;
     } catch (TaposException e) {
-      logger.info("tapos error" + e.getMessage());
+      logger.info("Tapos error" + e.getMessage());
       return false;
     } catch (ReceiptException e) {
       logger.info("Receipt exception," + e.getMessage());
     } catch (TooBigTransactionException e) {
-      logger.info("too big transaction" + e.getMessage());
+      logger.info("Too big transaction" + e.getMessage());
       return false;
     } catch (TransactionExpirationException e) {
-      logger.info("expiration transaction" + e.getMessage());
+      logger.info("Expiration transaction" + e.getMessage());
       return false;
     } catch (TransactionTraceException e) {
       logger.info("TransactionTrace Exception" + e.getMessage());
@@ -172,7 +172,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       logger.warn(e.getMessage());
       throw new BadTransactionException();
     } catch (TooBigTransactionResultException e) {
-      logger.info("too big transactionresult" + e.getMessage());
+      logger.info("Too big transactionresult" + e.getMessage());
       return false;
     }
 
