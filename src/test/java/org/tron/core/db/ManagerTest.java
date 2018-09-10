@@ -85,8 +85,8 @@ public class ManagerTest {
   @After
   public void removeDb() {
     Args.clearParam();
-    FileUtil.deleteDir(new File(dbPath));
     context.destroy();
+    FileUtil.deleteDir(new File(dbPath));
   }
 
   @Test

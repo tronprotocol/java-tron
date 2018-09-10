@@ -38,12 +38,12 @@ import java.util.stream.IntStream;
 @Slf4j
 public class GetLostBlockIdsTest {
     private static TronApplicationContext context;
-    private NodeImpl node;
+    private static NodeImpl node;
     RpcApiService rpcApiService;
-    PeerClient peerClient;
+    private static PeerClient peerClient;
     ChannelManager channelManager;
     SyncPool pool;
-    Application appT;
+    private static Application appT;
     Manager dbManager;
 
     private static final String dbPath = "output-GetLostBlockIdsTest";
@@ -279,10 +279,9 @@ public class GetLostBlockIdsTest {
         }
     }
 
-    @After
-    public void removeDb() {
+    @AfterClass
+    public static void destroy() {
         Args.clearParam();
-        FileUtil.deleteDir(new File(dbPath));
         Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(node, "getActivePeer");
         for (PeerConnection peer : peerConnections) {
             peer.close();
@@ -291,5 +290,6 @@ public class GetLostBlockIdsTest {
         appT.shutdownServices();
         appT.shutdown();
         context.destroy();
+        FileUtil.deleteDir(new File(dbPath));
     }
 }
