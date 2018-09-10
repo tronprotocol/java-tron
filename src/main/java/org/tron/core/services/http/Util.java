@@ -124,8 +124,10 @@ public class Util {
   public static String printTransactionSignWeight(TransactionSignWeight transactionSignWeight) {
     String string = JsonFormat.printToString(transactionSignWeight);
     JSONObject jsonObject = JSONObject.parseObject(string);
-    jsonObject
-        .put("transaction", printTransactionExtention(transactionSignWeight.getTransaction()));
+    JSONObject jsonObjectExt = jsonObject.getJSONObject("transaction");
+    jsonObjectExt
+        .put("transaction", printTransactionToJSON(transactionSignWeight.getTransaction().getTransaction()));
+    jsonObject.put("transaction",jsonObjectExt);
     return jsonObject.toJSONString();
   }
 
