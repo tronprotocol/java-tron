@@ -495,18 +495,19 @@ public class Runtime {
   public void go() {
     try {
 
-      TransactionCapsule trxCap = new TransactionCapsule(trx);
-      if (null != blockCap && blockCap.generatedByMyself && null != trxCap.getContractRet()
-          && contractResult.OUT_OF_TIME
-          .equals(trxCap.getContractRet())) {
-        result = program.getResult();
-        program.spendAllEnergy();
-        runtimeError = "Haven Time Out";
-        result.setException(Program.Exception.notEnoughTime("Haven Time Out"));
-        throw Program.Exception.notEnoughTime("Haven Time Out");
-      }
-
       if (vm != null) {
+
+        TransactionCapsule trxCap = new TransactionCapsule(trx);
+        if (null != blockCap && blockCap.generatedByMyself && null != trxCap.getContractRet()
+            && contractResult.OUT_OF_TIME
+            .equals(trxCap.getContractRet())) {
+          result = program.getResult();
+          program.spendAllEnergy();
+          runtimeError = "Haven Time Out";
+          result.setException(Program.Exception.notEnoughTime("Haven Time Out"));
+          throw Program.Exception.notEnoughTime("Haven Time Out");
+        }
+
         vm.play(program);
 
         result = program.getResult();
