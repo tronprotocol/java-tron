@@ -123,6 +123,10 @@ public class FullNodeHttpApiService implements Service {
   private GetChainParametersServlet getChainParametersServlet;
   @Autowired
   private GetAccountResourceServlet getAccountResourceServlet;
+  @Autowired
+  private AddTransactionSignServlet addTransactionSignServlet;
+  @Autowired
+  private GetTransactionSignWeightServlet getTransactionSignWeightServlet;
 
   @Override
   public void init() {
@@ -197,6 +201,9 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(listExchangesServlet), "/listexchanges");
       context.addServlet(new ServletHolder(getChainParametersServlet), "/getchainparameters");
       context.addServlet(new ServletHolder(getAccountResourceServlet), "/getaccountresource");
+      context.addServlet(new ServletHolder(addTransactionSignServlet), "/addtransactionsign");
+      context.addServlet(new ServletHolder(getTransactionSignWeightServlet), "/getsignweight");
+
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());
