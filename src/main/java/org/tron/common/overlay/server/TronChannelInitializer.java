@@ -39,58 +39,58 @@ import org.tron.core.net.peer.PeerConnection;
 @Scope("prototype")
 public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel> {
 
-    private static final Logger logger = LoggerFactory.getLogger("TronChannelInitializer");
+  private static final Logger logger = LoggerFactory.getLogger("TronChannelInitializer");
 
-    @Autowired
-    private ApplicationContext ctx;
+  @Autowired
+  private ApplicationContext ctx;
 
-    @Autowired
-    ChannelManager channelManager;
+  @Autowired
+  ChannelManager channelManager;
 
-    private NodeImpl p2pNode;
+  private NodeImpl p2pNode;
 
-    private String remoteId;
+  private String remoteId;
 
-    private boolean peerDiscoveryMode = false;
+  private boolean peerDiscoveryMode = false;
 
-    public TronChannelInitializer(String remoteId) {
-        this.remoteId = remoteId;
-    }
+  public TronChannelInitializer(String remoteId) {
+    this.remoteId = remoteId;
+  }
 
-    @Override
-    public void initChannel(NioSocketChannel ch) throws Exception {
-        try {
-            final Channel channel = ctx.getBean(PeerConnection.class);
+  @Override
+  public void initChannel(NioSocketChannel ch) throws Exception {
+    try {
+      final Channel channel = ctx.getBean(PeerConnection.class);
 
-            channel.init(ch.pipeline(), remoteId, peerDiscoveryMode, channelManager, p2pNode);
-            
-            // limit the size of receiving buffer to 1024
-            ch.config().setRecvByteBufAllocator(new FixedRecvByteBufAllocator(256 * 1024));
-            ch.config().setOption(ChannelOption.SO_RCVBUF, 256 * 1024);
-            ch.config().setOption(ChannelOption.SO_BACKLOG, 1024);
+      channel.init(ch.pipeline(), remoteId, peerDiscoveryMode, channelManager, p2pNode);
 
-            // be aware of channel closing
-            ch.closeFuture().addListener((ChannelFutureListener) future -> {
-                logger.info("Close channel:" + channel);
-                if (!peerDiscoveryMode) {
-                    channelManager.notifyDisconnect(channel);
-                }
-            });
+      // limit the size of receiving buffer to 1024
+      ch.config().setRecvByteBufAllocator(new FixedRecvByteBufAllocator(256 * 1024));
+      ch.config().setOption(ChannelOption.SO_RCVBUF, 256 * 1024);
+      ch.config().setOption(ChannelOption.SO_BACKLOG, 1024);
 
-        } catch (Exception e) {
-            logger.error("Unexpected error: ", e);
+      // be aware of channel closing
+      ch.closeFuture().addListener((ChannelFutureListener) future -> {
+        logger.info("Close channel:" + channel);
+        if (!peerDiscoveryMode) {
+          channelManager.notifyDisconnect(channel);
         }
-    }
+      });
 
-    private boolean isInbound() {
-        return remoteId == null || remoteId.isEmpty();
+    } catch (Exception e) {
+      logger.error("Unexpected error: ", e);
     }
+  }
 
-    public void setPeerDiscoveryMode(boolean peerDiscoveryMode) {
-        this.peerDiscoveryMode = peerDiscoveryMode;
-    }
+  private boolean isInbound() {
+    return remoteId == null || remoteId.isEmpty();
+  }
 
-    public void setNodeImpl(NodeImpl p2pNode) {
-        this.p2pNode = p2pNode;
-    }
+  public void setPeerDiscoveryMode(boolean peerDiscoveryMode) {
+    this.peerDiscoveryMode = peerDiscoveryMode;
+  }
+
+  public void setNodeImpl(NodeImpl p2pNode) {
+    this.p2pNode = p2pNode;
+  }
 }
