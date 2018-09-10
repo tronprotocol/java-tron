@@ -7,6 +7,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.storage.DepositImpl;
@@ -28,6 +30,7 @@ public class InternalTransactionComplexTest {
   private static Runtime runtime;
   private static Manager dbManager;
   private static TronApplicationContext context;
+  private static Application appT;
   private static DepositImpl deposit;
   private static final String dbPath = "output_InternalTransactionComplexTest";
   private static final String OWNER_ADDRESS;
@@ -36,6 +39,7 @@ public class InternalTransactionComplexTest {
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug", "--support-constant"},
         Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
+    appT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   }
 
@@ -168,6 +172,8 @@ public class InternalTransactionComplexTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
+    appT.shutdownServices();
+    appT.shutdown();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
