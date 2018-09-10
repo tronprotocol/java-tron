@@ -25,7 +25,7 @@ public class PendingManager implements AutoCloseable {
   @Override
   public void close() {
 
-    for (TransactionCapsule tx : this.tmpTransactions) {
+    for (TransactionCapsule tx : PendingManager.tmpTransactions) {
       try {
         if (tx.getTrxTrace().getTimeResultType().equals(TimeResultType.NORMAL)) {
           dbManager.getRepushTransactions().put(tx);
@@ -48,6 +48,5 @@ public class PendingManager implements AutoCloseable {
       }
     }
     dbManager.getPoppedTransactions().clear();
-    
   }
 }
