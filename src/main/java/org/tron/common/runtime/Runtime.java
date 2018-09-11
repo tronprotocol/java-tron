@@ -86,6 +86,7 @@ public class Runtime {
   private EnergyProcessor energyProcessor = null;
   private StorageMarket storageMarket = null;
   PrecompiledContracts.PrecompiledContract precompiledContract = null;
+
   private ProgramResult result = new ProgramResult();
 
 
