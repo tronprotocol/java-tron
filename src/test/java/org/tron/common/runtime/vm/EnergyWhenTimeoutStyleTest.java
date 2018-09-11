@@ -7,6 +7,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TVMTestUtils;
@@ -29,6 +31,7 @@ public class EnergyWhenTimeoutStyleTest {
 
   private Manager dbManager;
   private TronApplicationContext context;
+  private Application appT;
   private DepositImpl deposit;
   private String dbPath = "output_CPUTimeTest";
   private String OWNER_ADDRESS;
@@ -42,6 +45,7 @@ public class EnergyWhenTimeoutStyleTest {
     Args.setParam(new String[]{"--output-directory", dbPath},
         Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
+    appT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     dbManager = context.getBean(Manager.class);
     deposit = DepositImpl.createRoot(dbManager);
@@ -121,6 +125,8 @@ public class EnergyWhenTimeoutStyleTest {
   @After
   public void destroy() {
     Args.clearParam();
+    appT.shutdownServices();
+    appT.shutdown();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
