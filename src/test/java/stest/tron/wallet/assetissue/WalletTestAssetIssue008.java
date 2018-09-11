@@ -110,7 +110,7 @@ public class WalletTestAssetIssue008 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testGetAllAssetIssueFromSolidity() {
     GrpcAPI.AssetIssueList assetIssueList = blockingStubSolidity
         .getAssetIssueList(GrpcAPI.EmptyMessage.newBuilder().build());
@@ -161,7 +161,7 @@ public class WalletTestAssetIssue008 {
 
   }
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
