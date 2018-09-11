@@ -184,6 +184,8 @@ public class TransactionTraceTest {
       e.printStackTrace();
     } catch (BalanceInsufficientException e) {
       e.printStackTrace();
+    } catch (VMIllegalException e) {
+      e.printStackTrace();
     }
   }
 
