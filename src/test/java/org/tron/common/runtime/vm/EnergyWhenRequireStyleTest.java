@@ -8,7 +8,10 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.support.ApplicationObjectSupport;
 import org.testng.Assert;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TVMTestUtils;
@@ -32,6 +35,7 @@ public class EnergyWhenRequireStyleTest {
 
   private Manager dbManager;
   private AnnotationConfigApplicationContext context;
+  private Application appT;
   private DepositImpl deposit;
   private String dbPath = "output_EnergyWhenRequireStyleTest";
   private String OWNER_ADDRESS;
@@ -45,6 +49,7 @@ public class EnergyWhenRequireStyleTest {
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     // context = new AnnotationConfigApplicationContext(DefaultConfig.class);
     context = new TronApplicationContext(DefaultConfig.class);
+    appT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     dbManager = context.getBean(Manager.class);
     deposit = DepositImpl.createRoot(dbManager);
@@ -453,6 +458,8 @@ public class EnergyWhenRequireStyleTest {
   @After
   public void destroy() {
     Args.clearParam();
+    appT.shutdownServices();
+    appT.shutdown();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
