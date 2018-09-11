@@ -27,7 +27,7 @@ public class VM {
   private static final String logString = "{}    Op: [{}]  Energy: [{}] Deep: [{}]  Hint: [{}]";
 
   // 3MB
-  private static final BigInteger MEM_LIMIT = BigInteger.valueOf(3 * 1024 * 1024);
+  private static final BigInteger MEM_LIMIT = BigInteger.valueOf(3L * 1024 * 1024);
 
   private final VMConfig config;
 
