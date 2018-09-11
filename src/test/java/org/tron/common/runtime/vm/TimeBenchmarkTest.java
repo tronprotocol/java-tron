@@ -36,6 +36,7 @@ public class TimeBenchmarkTest {
   private String dbPath = "output_TimeBenchmarkTest";
   private String OWNER_ADDRESS;
   private Application AppT;
+  private long totalBalance = 30_000_000_000_000L;
 
 
   /**
@@ -51,7 +52,7 @@ public class TimeBenchmarkTest {
     dbManager = context.getBean(Manager.class);
     deposit = DepositImpl.createRoot(dbManager);
     deposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
-    deposit.addBalance(Hex.decode(OWNER_ADDRESS), 30000000000000L);
+    deposit.addBalance(Hex.decode(OWNER_ADDRESS), totalBalance);
     deposit.commit();
   }
 
@@ -91,7 +92,7 @@ public class TimeBenchmarkTest {
   public void timeBenchmark()
       throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 200_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "timeBenchmark";
@@ -104,21 +105,27 @@ public class TimeBenchmarkTest {
         .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
             value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            deposit, null);
+            dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 129);
+    long expectEnergyUsageTotal = 88529;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
     byte[] triggerData = TVMTestUtils.parseABI("fibonacciNotify(uint)", "");
     result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, feeLimit, deposit, null);
+            contractAddress, triggerData, 0, feeLimit, dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 110);
+    long expectEnergyUsageTotal2 = 110;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), true);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() == null);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
   }
 
   /**

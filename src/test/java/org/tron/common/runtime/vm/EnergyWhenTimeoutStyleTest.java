@@ -35,6 +35,7 @@ public class EnergyWhenTimeoutStyleTest {
   private String dbPath = "output_CPUTimeTest";
   private String OWNER_ADDRESS;
   private Application AppT;
+  private long totalBalance = 30_000_000_000_000L;
 
 
   /**
@@ -50,7 +51,7 @@ public class EnergyWhenTimeoutStyleTest {
     dbManager = context.getBean(Manager.class);
     deposit = DepositImpl.createRoot(dbManager);
     deposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
-    deposit.addBalance(Hex.decode(OWNER_ADDRESS), 30000000000000L);
+    deposit.addBalance(Hex.decode(OWNER_ADDRESS), totalBalance);
     deposit.commit();
   }
 
@@ -83,12 +84,15 @@ public class EnergyWhenTimeoutStyleTest {
 
     long value = 0;
     long feeLimit = 1000_000_000L;
+    byte[] address = Hex.decode(OWNER_ADDRESS);
     long consumeUserResourcePercent = 0;
     TVMTestResult result = deployEndlessLoopContract(value, feeLimit,
         consumeUserResourcePercent);
-    Assert.assertEquals(result.getReceipt().getEnergyUsage(), 0);
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 55107);
-    Assert.assertEquals(result.getReceipt().getOriginEnergyUsage(), 0);
+
+    long expectEnergyUsageTotal = 55107;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - expectEnergyUsageTotal * 100);
 
     byte[] contractAddress = result.getContractAddress();
 
@@ -98,9 +102,14 @@ public class EnergyWhenTimeoutStyleTest {
     boolean haveException = false;
     result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS), contractAddress,
-            triggerData, value, feeLimit, deposit, null);
+            triggerData, value, feeLimit, dbManager, null);
+
+    long expectEnergyUsageTotal2 = feeLimit / 100;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
     Exception exception = result.getRuntime().getResult().getException();
     Assert.assertTrue(exception instanceof OutOfResourceException);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
   }
 
   public TVMTestResult deployEndlessLoopContract(long value, long feeLimit,
@@ -116,7 +125,7 @@ public class EnergyWhenTimeoutStyleTest {
         .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
             value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            deposit, null);
+            dbManager, null);
   }
 
   /**
