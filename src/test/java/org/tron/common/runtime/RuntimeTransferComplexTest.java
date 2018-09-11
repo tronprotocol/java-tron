@@ -22,7 +22,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
-import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.utils.DataWord;
@@ -68,7 +68,7 @@ public class RuntimeTransferComplexTest {
    */
   @Test
   public void TransferTrxToContractAccountWhenDeployAContract()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     String contractName = "TransferWhenDeployContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
@@ -94,7 +94,7 @@ public class RuntimeTransferComplexTest {
 
   @Test
   public void TransferTrxToContractAccountFailIfNotPayable()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     String contractName = "TransferWhenDeployContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
@@ -122,7 +122,7 @@ public class RuntimeTransferComplexTest {
    */
   @Test
   public void TransferTrxToContractAccountWhenTriggerAContract()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     String contractName = "TransferWhenDeployContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
@@ -201,7 +201,7 @@ public class RuntimeTransferComplexTest {
 
   @Test
   public void TransferCallValueTestWhenUsingCallAndCreate()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     byte[] msgSenderAddress = Hex.decode(OWNER_ADDRESS);
     byte[] calledAddress = deployCalledContract();
     byte[] callerAddress = deployCallerContract(calledAddress);
@@ -335,7 +335,7 @@ public class RuntimeTransferComplexTest {
 
 
   private byte[] deployCalledContract()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     String contractName = "TransferWhenDeployContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI =
@@ -363,7 +363,7 @@ public class RuntimeTransferComplexTest {
   }
 
   private byte[] deployCallerContract(byte[] calledAddress)
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     String contractName = "callerContract";
     byte[] callerAddress = Hex.decode(OWNER_ADDRESS);
     String callerABI =
