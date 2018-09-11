@@ -31,7 +31,6 @@ import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.ReceiptCheckErrException;
-import org.tron.core.exception.ReceiptException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
@@ -101,8 +100,6 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("TooBigTransaction exception," + e.getMessage());
     } catch (TransactionExpirationException e) {
       throw new BadBlockException("Expiration exception," + e.getMessage());
-    } catch (ReceiptException e) {
-      throw new BadBlockException("Receipt exception," + e.getMessage());
     } catch (BadNumberBlockException e) {
       throw new BadBlockException("bad number exception," + e.getMessage());
     } catch (ReceiptCheckErrException e) {
@@ -151,8 +148,6 @@ public class NodeDelegateImpl implements NodeDelegate {
     } catch (TaposException e) {
       logger.info("Tapos error" + e.getMessage());
       return false;
-    } catch (ReceiptException e) {
-      logger.info("Receipt exception," + e.getMessage());
     } catch (TooBigTransactionException e) {
       logger.info("Too big transaction" + e.getMessage());
       return false;
