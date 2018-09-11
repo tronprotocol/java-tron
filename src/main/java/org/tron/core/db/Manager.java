@@ -2,8 +2,6 @@ package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
-import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
-import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -46,7 +44,6 @@ import org.tron.common.utils.ForkController;
 import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
-import org.tron.common.utils.Time;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -73,11 +70,9 @@ import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
-import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.ReceiptCheckErrException;
-import org.tron.core.exception.ReceiptException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TooBigTransactionResultException;
@@ -90,7 +85,6 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
-import org.tron.protos.Protocol.Transaction;
 
 
 @Slf4j
@@ -558,7 +552,7 @@ public class Manager {
   public boolean pushTransaction(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, DupTransactionException, TaposException,
-      TooBigTransactionException, TransactionExpirationException, ReceiptException,
+      TooBigTransactionException, TransactionExpirationException,
       TransactionTraceException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
 
     if (!trx.validateSignature()) {
@@ -608,7 +602,7 @@ public class Manager {
 
   public void pushVerifiedBlock(BlockCapsule block) throws ContractValidateException,
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
-      TransactionExpirationException, TooBigTransactionException, DupTransactionException, ReceiptException,
+      TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, TransactionTraceException, ReceiptCheckErrException,
       VMIllegalException, TooBigTransactionResultException {
     block.generatedByMyself = true;
@@ -617,7 +611,7 @@ public class Manager {
 
   private void applyBlock(BlockCapsule block) throws ContractValidateException,
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
-      TransactionExpirationException, TooBigTransactionException, DupTransactionException, ReceiptException,
+      TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, TransactionTraceException, ReceiptCheckErrException,
       VMIllegalException, TooBigTransactionResultException {
     processBlock(block);
@@ -630,7 +624,7 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       ValidateScheduleException, AccountResourceInsufficientException, TaposException,
       TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TransactionExpirationException,
-      NonCommonBlockException, ReceiptException, TransactionTraceException, ReceiptCheckErrException,
+      NonCommonBlockException, TransactionTraceException, ReceiptCheckErrException,
       VMIllegalException {
     Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
     try {
@@ -673,7 +667,6 @@ public class Manager {
             | DupTransactionException
             | TransactionExpirationException
             | TransactionTraceException
-            | ReceiptException
             | ReceiptCheckErrException
             | TooBigTransactionException
             | TooBigTransactionResultException
@@ -729,7 +722,7 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
       TaposException, TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TransactionExpirationException,
-      BadNumberBlockException, BadBlockException, NonCommonBlockException, ReceiptException, TransactionTraceException,
+      BadNumberBlockException, BadBlockException, NonCommonBlockException, TransactionTraceException,
       ReceiptCheckErrException, VMIllegalException {
     try (PendingManager pm = new PendingManager(this)) {
 
@@ -941,7 +934,7 @@ public class Manager {
    * Process transaction.
    */
   public boolean processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, ReceiptException,
+      throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, TooBigTransactionResultException,
       DupTransactionException, TaposException, TransactionTraceException, ReceiptCheckErrException, VMIllegalException {
     if (trxCap == null) {
@@ -1100,9 +1093,6 @@ public class Manager {
       } catch (ValidateSignatureException e) {
         logger.info("contract not processed during ValidateSignatureException");
         logger.debug(e.getMessage(), e);
-      } catch (ReceiptException e) {
-        logger.info("receipt exception: {}", e.getMessage());
-        logger.debug(e.getMessage(), e);
       } catch (ReceiptCheckErrException e) {
         logger.info("OutOfSlotTime exception: {}", e.getMessage());
         logger.debug(e.getMessage(), e);
@@ -1140,9 +1130,6 @@ public class Manager {
       logger.info("block exception");
     } catch (NonCommonBlockException e) {
       logger.info("non common exception");
-    } catch (ReceiptException e) {
-      logger.info("receipt exception: {}", e.getMessage());
-      logger.debug(e.getMessage(), e);
     } catch (ReceiptCheckErrException e) {
       logger.info("OutOfSlotTime exception: {}", e.getMessage());
       logger.debug(e.getMessage(), e);
@@ -1156,11 +1143,9 @@ public class Manager {
   }
 
 
-
   public TransactionStore getTransactionStore() {
     return this.transactionStore;
   }
-
 
 
   public TransactionHistoryStore getTransactionHistoryStore() {
@@ -1179,7 +1164,7 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
       DupTransactionException, TransactionExpirationException, ValidateScheduleException,
-      ReceiptException, TransactionTraceException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
+      TransactionTraceException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
     // todo set revoking db max size.
 
     // checkWitness
@@ -1508,8 +1493,6 @@ public class Manager {
       logger.debug("pending manager: tapos exception", e);
     } catch (TooBigTransactionException e) {
       logger.debug("too big transaction");
-    } catch (ReceiptException e) {
-      logger.info("Receipt exception," + e.getMessage());
     } catch (TransactionExpirationException e) {
       logger.debug("expiration transaction");
     } catch (TransactionTraceException e) {
