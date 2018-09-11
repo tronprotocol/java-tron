@@ -118,13 +118,6 @@ public class ContractState implements Deposit, ProgramListenerAware {
     return deposit.getCode(addr);
   }
 
-    /*
-    @Override
-    public byte[] getCodeHash(byte[] addr) {
-        return deposit.getCodeHash(addr);
-    }
-    */
-
   @Override
   public void putStorageValue(byte[] addr, DataWord key, DataWord value) {
     if (canListenTrace(addr)) {
@@ -166,11 +159,6 @@ public class ContractState implements Deposit, ProgramListenerAware {
   public void commit() {
     deposit.commit();
   }
-
-//  @Override
-//  public StorageCapsule getContractState(byte[] address) {
-//    return deposit.getContractState(address);
-//  }
 
   @Override
   public Storage getStorage(byte[] address) {
