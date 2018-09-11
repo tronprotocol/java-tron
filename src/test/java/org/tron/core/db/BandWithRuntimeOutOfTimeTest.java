@@ -250,6 +250,7 @@ public class BandWithRuntimeOutOfTimeTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
+    dbManager.stopRepushThread();
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }
