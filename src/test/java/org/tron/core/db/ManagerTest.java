@@ -40,7 +40,6 @@ import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.exception.TransactionExpirationException;
-import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
@@ -92,7 +91,7 @@ public class ManagerTest {
   @Test
   public void setBlockReference()
       throws ContractExeException, UnLinkedBlockException, ValidateScheduleException, BadBlockException,
-      ContractValidateException, ValidateSignatureException, BadItemException, ItemNotFoundException, AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException, BadNumberBlockException, NonCommonBlockException, ReceiptException, TransactionTraceException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
+      ContractValidateException, ValidateSignatureException, BadItemException, ItemNotFoundException, AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException, BadNumberBlockException, NonCommonBlockException, ReceiptException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
 
     BlockCapsule blockCapsule =
         new BlockCapsule(
@@ -219,8 +218,7 @@ public class ManagerTest {
       UnLinkedBlockException, ValidateScheduleException, BadItemException, ReceiptException,
       ItemNotFoundException, HeaderNotFound, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
-      BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
-      TransactionTraceException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
+      BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
@@ -288,7 +286,7 @@ public class ManagerTest {
       ItemNotFoundException, HeaderNotFound, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException,
       DupTransactionException, BadBlockException,
-      TaposException, BadNumberBlockException, NonCommonBlockException, TransactionTraceException,
+      TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
@@ -383,8 +381,7 @@ public class ManagerTest {
           UnLinkedBlockException, ValidateScheduleException, BadItemException, ReceiptException,
           ItemNotFoundException, HeaderNotFound, AccountResourceInsufficientException,
           TransactionExpirationException, TooBigTransactionException, DupTransactionException,
-          BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
-          TransactionTraceException, ReceiptCheckErrException, VMIllegalException,
+          BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException, ReceiptCheckErrException, VMIllegalException,
           TooBigTransactionResultException {
     Args.setParam(new String[] {"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
@@ -411,8 +408,7 @@ public class ManagerTest {
       UnLinkedBlockException, ValidateScheduleException, BadItemException, ReceiptException,
       ItemNotFoundException, HeaderNotFound, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
-      BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
-      TransactionTraceException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
+      BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");

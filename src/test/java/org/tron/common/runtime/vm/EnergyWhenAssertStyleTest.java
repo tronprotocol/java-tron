@@ -7,8 +7,9 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.testng.Assert;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TVMTestUtils;
@@ -25,7 +26,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
-import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Protocol.AccountType;
 
 
@@ -34,10 +35,11 @@ import org.tron.protos.Protocol.AccountType;
 public class EnergyWhenAssertStyleTest {
 
   private Manager dbManager;
-  private AnnotationConfigApplicationContext context;
+  private TronApplicationContext context;
   private DepositImpl deposit;
   private String dbPath = "output_EnergyWhenAssertStyleTest";
   private String OWNER_ADDRESS;
+  private Application AppT;
 
 
   /**
@@ -46,8 +48,8 @@ public class EnergyWhenAssertStyleTest {
   @Before
   public void init() {
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
-    // context = new AnnotationConfigApplicationContext(DefaultConfig.class);
     context = new TronApplicationContext(DefaultConfig.class);
+    AppT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     dbManager = context.getBean(Manager.class);
     deposit = DepositImpl.createRoot(dbManager);
@@ -82,7 +84,7 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void outOfIndexTest()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -127,7 +129,7 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void bytesNTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -171,7 +173,7 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void divZeroTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -216,7 +218,7 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void shiftByNegativeTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -262,7 +264,7 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void enumTypeTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -306,7 +308,7 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void functionPointerTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -350,7 +352,7 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void assertTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -401,7 +403,7 @@ public class EnergyWhenAssertStyleTest {
 
   //@Test
   public void systemPrecompileTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
@@ -449,7 +451,7 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void outOfMemTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
@@ -483,7 +485,7 @@ public class EnergyWhenAssertStyleTest {
   @Test
   @Ignore
   public void overflowTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException {
     // done in ChargeTest
   }
 
@@ -493,6 +495,8 @@ public class EnergyWhenAssertStyleTest {
   @After
   public void destroy() {
     Args.clearParam();
+    AppT.shutdownServices();
+    AppT.shutdown();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");

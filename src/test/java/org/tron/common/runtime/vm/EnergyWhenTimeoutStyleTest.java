@@ -7,6 +7,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TVMTestUtils;
@@ -21,7 +23,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
-import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
@@ -32,6 +34,7 @@ public class EnergyWhenTimeoutStyleTest {
   private DepositImpl deposit;
   private String dbPath = "output_CPUTimeTest";
   private String OWNER_ADDRESS;
+  private Application AppT;
 
 
   /**
@@ -42,6 +45,7 @@ public class EnergyWhenTimeoutStyleTest {
     Args.setParam(new String[]{"--output-directory", dbPath},
         Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
+    AppT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     dbManager = context.getBean(Manager.class);
     deposit = DepositImpl.createRoot(dbManager);
@@ -75,7 +79,7 @@ public class EnergyWhenTimeoutStyleTest {
 
   @Test
   public void endlessLoopTest()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
 
     long value = 0;
     long feeLimit = 1000_000_000L;
@@ -101,7 +105,7 @@ public class EnergyWhenTimeoutStyleTest {
 
   public TVMTestResult deployEndlessLoopContract(long value, long feeLimit,
       long consumeUserResourcePercent)
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     String contractName = "EndlessLoopContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"getVote\",\"outputs\":[{\"name\":\"_vote\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_vote\",\"type\":\"uint256\"}],\"name\":\"setVote\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]";
@@ -121,6 +125,8 @@ public class EnergyWhenTimeoutStyleTest {
   @After
   public void destroy() {
     Args.clearParam();
+    AppT.shutdownServices();
+    AppT.shutdown();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
@@ -128,4 +134,5 @@ public class EnergyWhenTimeoutStyleTest {
       logger.info("Release resources failure.");
     }
   }
+
 }

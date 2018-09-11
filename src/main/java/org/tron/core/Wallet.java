@@ -92,6 +92,7 @@ import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
@@ -862,7 +863,7 @@ public class Wallet {
   public Transaction triggerContract(TriggerSmartContract triggerSmartContract,
       TransactionCapsule trxCap, Builder builder,
       Return.Builder retBuilder)
-      throws ContractValidateException, ContractExeException, HeaderNotFound, BadTransactionException {
+      throws ContractValidateException, ContractExeException, HeaderNotFound {
 
     ContractStore contractStore = dbManager.getContractStore();
     byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
@@ -891,7 +892,11 @@ public class Wallet {
 
       Runtime runtime = new Runtime(trxCap.getInstance(), new BlockCapsule(headBlock), deposit,
           new ProgramInvokeFactoryImpl(), true);
-      runtime.execute();
+      try {
+        runtime.execute();
+      } catch (VMIllegalException e) {
+        throw new ContractValidateException(e.getMessage());
+      }
       runtime.go();
       runtime.finalization();
       // TODO exception

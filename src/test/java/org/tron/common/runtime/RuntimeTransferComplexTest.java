@@ -18,7 +18,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
-import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 
@@ -63,7 +63,7 @@ public class RuntimeTransferComplexTest {
    */
   @Test
   public void TransferTrxToContractAccountWhenDeployAContract()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     String contractName = "TransferWhenDeployContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
@@ -93,7 +93,7 @@ public class RuntimeTransferComplexTest {
 
   @Test
   public void TransferTrxToContractAccountFailIfNotPayable()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     String contractName = "TransferWhenDeployContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
@@ -124,7 +124,7 @@ public class RuntimeTransferComplexTest {
    */
   @Test
   public void TransferTrxToContractAccountWhenTriggerAContract()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     String contractName = "TransferWhenDeployContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);

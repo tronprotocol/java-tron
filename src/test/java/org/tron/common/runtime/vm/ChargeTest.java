@@ -8,6 +8,8 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TVMTestUtils;
@@ -21,7 +23,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
-import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
@@ -33,6 +35,7 @@ public class ChargeTest {
   private DepositImpl deposit;
   private String dbPath = "output_ChargeTest";
   private String OWNER_ADDRESS;
+  private Application AppT;
 
 
   /**
@@ -43,6 +46,7 @@ public class ChargeTest {
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"},
         Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
+    AppT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     dbManager = context.getBean(Manager.class);
     deposit = DepositImpl.createRoot(dbManager);
@@ -66,7 +70,7 @@ public class ChargeTest {
 
   @Test
   public void testOverflow()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
@@ -116,7 +120,7 @@ public class ChargeTest {
 
   @Test
   public void testNegative()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
@@ -165,7 +169,7 @@ public class ChargeTest {
   @Test
   @Ignore
   public void testFallback()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, ContractValidateException, ReceiptCheckErrException {
     // done in EnergyWhenSendAndTransferTest.java
 
   }
@@ -185,7 +189,7 @@ public class ChargeTest {
 
   @Test
   public void testCallDepth()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
@@ -262,7 +266,7 @@ public class ChargeTest {
 
   @Test
   public void testCallDepthAndWidth()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
@@ -298,7 +302,7 @@ public class ChargeTest {
 
   @Test
   public void testCreateDepthAndWidth()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
@@ -338,6 +342,8 @@ public class ChargeTest {
   @After
   public void destroy() {
     Args.clearParam();
+    AppT.shutdownServices();
+    AppT.shutdown();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");

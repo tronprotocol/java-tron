@@ -78,7 +78,6 @@ import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.exception.TransactionExpirationException;
-import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
@@ -554,7 +553,7 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, DupTransactionException, TaposException,
       TooBigTransactionException, TransactionExpirationException, ReceiptException,
-      TransactionTraceException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
+      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
 
     if (!trx.validateSignature()) {
       throw new ValidateSignatureException("trans sig validate failed");
@@ -604,7 +603,7 @@ public class Manager {
   public void pushVerifiedBlock(BlockCapsule block) throws ContractValidateException,
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException, ReceiptException,
-      TaposException, ValidateScheduleException, TransactionTraceException, ReceiptCheckErrException,
+      TaposException, ValidateScheduleException, ReceiptCheckErrException,
       VMIllegalException, TooBigTransactionResultException {
     block.generatedByMyself = true;
     applyBlock(block);
@@ -613,7 +612,7 @@ public class Manager {
   private void applyBlock(BlockCapsule block) throws ContractValidateException,
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException, ReceiptException,
-      TaposException, ValidateScheduleException, TransactionTraceException, ReceiptCheckErrException,
+      TaposException, ValidateScheduleException, ReceiptCheckErrException,
       VMIllegalException, TooBigTransactionResultException {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
@@ -625,7 +624,7 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       ValidateScheduleException, AccountResourceInsufficientException, TaposException,
       TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TransactionExpirationException,
-      NonCommonBlockException, ReceiptException, TransactionTraceException, ReceiptCheckErrException,
+      NonCommonBlockException, ReceiptException, ReceiptCheckErrException,
       VMIllegalException {
     Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
     try {
@@ -667,7 +666,6 @@ public class Manager {
             | TaposException
             | DupTransactionException
             | TransactionExpirationException
-            | TransactionTraceException
             | ReceiptException
             | ReceiptCheckErrException
             | TooBigTransactionException
@@ -724,7 +722,7 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
       TaposException, TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TransactionExpirationException,
-      BadNumberBlockException, BadBlockException, NonCommonBlockException, ReceiptException, TransactionTraceException,
+      BadNumberBlockException, BadBlockException, NonCommonBlockException, ReceiptException,
       ReceiptCheckErrException, VMIllegalException {
     try (PendingManager pm = new PendingManager(this)) {
 
@@ -938,7 +936,7 @@ public class Manager {
   public boolean processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
       throws ValidateSignatureException, ContractValidateException, ContractExeException, ReceiptException,
       AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, TooBigTransactionResultException,
-      DupTransactionException, TaposException, TransactionTraceException, ReceiptCheckErrException, VMIllegalException {
+      DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException {
     if (trxCap == null) {
       return false;
     }
@@ -1016,8 +1014,7 @@ public class Manager {
       final WitnessCapsule witnessCapsule, final long when, final byte[] privateKey,
       Boolean lastHeadBlockIsMaintenanceBefore)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
-      TransactionTraceException {
+      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException {
 
     //check that the first block after the maintenance period has just been processed
     if (lastHeadBlockIsMaintenanceBefore != lastHeadBlockIsMaintenance()) {
@@ -1174,7 +1171,7 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
       DupTransactionException, TransactionExpirationException, ValidateScheduleException,
-      ReceiptException, TransactionTraceException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
+      ReceiptException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
     // todo set revoking db max size.
 
     // checkWitness
@@ -1507,8 +1504,6 @@ public class Manager {
       logger.info("Receipt exception," + e.getMessage());
     } catch (TransactionExpirationException e) {
       logger.debug("expiration transaction");
-    } catch (TransactionTraceException e) {
-      logger.debug("transactionTrace transaction");
     } catch (ReceiptCheckErrException e) {
       logger.debug("outOfSlotTime transaction");
     } catch (VMIllegalException e) {

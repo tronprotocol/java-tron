@@ -18,7 +18,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
-import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
@@ -67,7 +67,7 @@ public class InheritanceTest {
    */
   @Test
   public void inheritanceTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     String contractName = "barContract";
     byte[] callerAddress = Hex.decode(OWNER_ADDRESS);
     String ABI = "[{\"constant\":false,\"inputs\":[],\"name\":\"getName\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],"

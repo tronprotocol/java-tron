@@ -7,8 +7,9 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.testng.Assert;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TVMTestUtils;
@@ -23,7 +24,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
-import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
@@ -31,10 +32,11 @@ import org.tron.protos.Protocol.AccountType;
 public class EnergyWhenRequireStyleTest {
 
   private Manager dbManager;
-  private AnnotationConfigApplicationContext context;
+  private TronApplicationContext context;
   private DepositImpl deposit;
   private String dbPath = "output_EnergyWhenRequireStyleTest";
   private String OWNER_ADDRESS;
+  private Application AppT;
 
 
   /**
@@ -43,8 +45,8 @@ public class EnergyWhenRequireStyleTest {
   @Before
   public void init() {
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
-    // context = new AnnotationConfigApplicationContext(DefaultConfig.class);
     context = new TronApplicationContext(DefaultConfig.class);
+    AppT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     dbManager = context.getBean(Manager.class);
     deposit = DepositImpl.createRoot(dbManager);
@@ -76,7 +78,7 @@ public class EnergyWhenRequireStyleTest {
 
   @Test
   public void throwTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -121,7 +123,7 @@ public class EnergyWhenRequireStyleTest {
 
   @Test
   public void requireTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -171,7 +173,7 @@ public class EnergyWhenRequireStyleTest {
 
   @Test
   public void thisFunctionViaMessageCallTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -230,7 +232,7 @@ public class EnergyWhenRequireStyleTest {
 
   @Test
   public void thatFunctionViaMessageCallTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -282,7 +284,7 @@ public class EnergyWhenRequireStyleTest {
 
   @Test
   public void newContractTest1()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -341,7 +343,7 @@ public class EnergyWhenRequireStyleTest {
 
   @Test
   public void receiveTrxWithoutPayableTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     long value = 10;
     long feeLimit = 1000_000_000L; // sun
@@ -387,7 +389,7 @@ public class EnergyWhenRequireStyleTest {
   @Test
   @Ignore
   public void transferTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException {
     // done in EnergyWhenSendAndTransferTest
 
   }
@@ -408,7 +410,7 @@ public class EnergyWhenRequireStyleTest {
 
   @Test
   public void revertTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     long value = 0;
     long feeLimit = 1000_000_000L; // sun
@@ -453,6 +455,8 @@ public class EnergyWhenRequireStyleTest {
   @After
   public void destroy() {
     Args.clearParam();
+    AppT.shutdownServices();
+    AppT.shutdown();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
@@ -460,5 +464,6 @@ public class EnergyWhenRequireStyleTest {
       logger.info("Release resources failure.");
     }
   }
+
 }
 

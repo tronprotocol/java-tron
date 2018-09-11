@@ -59,6 +59,7 @@ import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
@@ -197,7 +198,7 @@ public class Runtime {
   }
 
   public void execute()
-      throws ContractValidateException, ContractExeException, BadTransactionException {
+      throws ContractValidateException, ContractExeException, VMIllegalException {
     switch (trxType) {
       case TRX_PRECOMPILED_TYPE:
         precompiled();
@@ -306,7 +307,7 @@ public class Runtime {
   /*
    **/
   private void create()
-      throws ContractValidateException, BadTransactionException {
+      throws ContractValidateException, VMIllegalException {
     if (!deposit.getDbManager().getDynamicPropertiesStore().supportVM()) {
       logger.error("vm work is off, need to be opened by the committee");
       throw new ContractValidateException("vm work is off, need to be opened by the committee");
@@ -319,7 +320,7 @@ public class Runtime {
     SmartContract newSmartContract = contract.getNewContract();
     if (!contract.getOwnerAddress().equals(newSmartContract.getOriginAddress())) {
       logger.error("OwnerAddress not equals OriginAddress");
-      throw new BadTransactionException("OwnerAddress not equals OriginAddress");
+      throw new VMIllegalException("OwnerAddress is not equals OriginAddress");
     }
     byte[] code = newSmartContract.getBytecode().toByteArray();
     byte[] contractAddress = Wallet.generateContractAddress(trx);
@@ -562,14 +563,16 @@ public class Runtime {
       result = program.getResult();
       result.setException(e);
       runtimeError = result.getException().getMessage();
-      logger.error("runtime error is :{}", result.getException().getMessage());
+      logger.error("JVMStackOverFlowException: {}", result.getException().getMessage());
     } catch (OutOfResourceException e) {
       program.spendAllEnergy();
       result = program.getResult();
       result.setException(e);
       runtimeError = result.getException().getMessage();
-      logger.error("runtime error is :{}", result.getException().getMessage());
-    } catch (Throwable e) {
+      logger.error("timeout: {}", result.getException().getMessage());
+    } catch (ContractValidateException e) {
+      logger.error("when check constant, {}", e.getMessage());
+    }catch (Throwable e) {
       program.spendAllEnergy();
       result = program.getResult();
       if (Objects.isNull(result.getException())) {

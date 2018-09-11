@@ -43,6 +43,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Account;
@@ -162,6 +163,8 @@ public class TransactionTraceTest {
       e.printStackTrace();
     } catch (ContractValidateException e) {
       e.printStackTrace();
+    } catch (VMIllegalException e) {
+      e.printStackTrace();
     }
   }
 
@@ -196,6 +199,8 @@ public class TransactionTraceTest {
     } catch (ContractValidateException e) {
       e.printStackTrace();
     } catch (BalanceInsufficientException e) {
+      e.printStackTrace();
+    } catch (VMIllegalException e) {
       e.printStackTrace();
     }
   }
