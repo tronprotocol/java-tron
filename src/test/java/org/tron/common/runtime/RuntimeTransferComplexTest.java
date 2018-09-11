@@ -201,7 +201,7 @@ public class RuntimeTransferComplexTest {
 
   @Test
   public void TransferCallValueTestWhenUsingCallAndCreate()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     byte[] msgSenderAddress = Hex.decode(OWNER_ADDRESS);
     byte[] calledAddress = deployCalledContract();
     byte[] callerAddress = deployCallerContract(calledAddress);
@@ -335,7 +335,7 @@ public class RuntimeTransferComplexTest {
 
 
   private byte[] deployCalledContract()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     String contractName = "TransferWhenDeployContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI =
@@ -363,7 +363,7 @@ public class RuntimeTransferComplexTest {
   }
 
   private byte[] deployCallerContract(byte[] calledAddress)
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     String contractName = "callerContract";
     byte[] callerAddress = Hex.decode(OWNER_ADDRESS);
     String callerABI =

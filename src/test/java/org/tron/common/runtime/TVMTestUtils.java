@@ -98,7 +98,7 @@ public class TVMTestUtils {
     //exec
     trace.exec(runtime);
 
-    trace.finalization(runtime);
+    // trace.finalization(runtime);
 
     return runtime;
   }
