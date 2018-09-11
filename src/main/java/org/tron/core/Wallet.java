@@ -863,7 +863,7 @@ public class Wallet {
   public Transaction triggerContract(TriggerSmartContract triggerSmartContract,
       TransactionCapsule trxCap, Builder builder,
       Return.Builder retBuilder)
-      throws ContractValidateException, ContractExeException, HeaderNotFound {
+      throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
     ContractStore contractStore = dbManager.getContractStore();
     byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
@@ -892,11 +892,7 @@ public class Wallet {
 
       Runtime runtime = new Runtime(trxCap.getInstance(), new BlockCapsule(headBlock), deposit,
           new ProgramInvokeFactoryImpl(), true);
-      try {
-        runtime.execute();
-      } catch (VMIllegalException e) {
-        throw new ContractValidateException(e.getMessage());
-      }
+      runtime.execute();
       runtime.go();
       runtime.finalization();
       // TODO exception
