@@ -29,6 +29,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
@@ -81,7 +82,7 @@ public class BandWithRuntimeTest {
         },
         "config-test-mainnet.conf"
     );
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    context = new TronApplicationContext(DefaultConfig.class);
   }
 
   /**
@@ -251,7 +252,6 @@ public class BandWithRuntimeTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    dbManager.stopRepushThread();
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }
