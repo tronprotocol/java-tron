@@ -625,8 +625,10 @@ public class Runtime {
   }
 
   public void finalization() {
-    for (DataWord contract : result.getDeleteAccounts()) {
-      deposit.deleteContract(convertToTronAddress((contract.getLast20Bytes())));
+    if (StringUtils.isEmpty(runtimeError)) {
+      for (DataWord contract : result.getDeleteAccounts()) {
+        deposit.deleteContract(convertToTronAddress((contract.getLast20Bytes())));
+      }
     }
 
     if (config.vmTrace() && program != null && result != null) {
