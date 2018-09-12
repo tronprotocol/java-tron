@@ -8,7 +8,7 @@ public class DisconnectMessage extends P2pMessage {
 
   private Protocol.DisconnectMessage disconnectMessage;
 
-  public DisconnectMessage(byte type, byte[] rawData) throws Exception{
+  public DisconnectMessage(byte type, byte[] rawData) throws Exception {
     super(type, rawData);
     this.disconnectMessage = Protocol.DisconnectMessage.parseFrom(this.data);
   }
@@ -32,7 +32,8 @@ public class DisconnectMessage extends P2pMessage {
 
   @Override
   public String toString() {
-    return new StringBuilder().append(super.toString()).append("reason: ").append(this.disconnectMessage.getReason()).toString();
+    return new StringBuilder().append(super.toString()).append("reason: ")
+        .append(this.disconnectMessage.getReason()).toString();
   }
 
   @Override
