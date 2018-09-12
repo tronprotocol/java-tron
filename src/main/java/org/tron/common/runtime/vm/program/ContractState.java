@@ -270,13 +270,4 @@ public class ContractState implements Deposit, ProgramListenerAware {
     return this.deposit.getBlock(blockHash);
   }
 
-  @Override
-  public long computeAfterRunStorageSize() {
-    return this.deposit.computeAfterRunStorageSize();
-  }
-
-  @Override
-  public long getBeforeRunStorageSize() {
-    return this.deposit.getBeforeRunStorageSize();
-  }
 }

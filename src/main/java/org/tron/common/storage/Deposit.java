@@ -102,8 +102,4 @@ public interface Deposit {
 
   BlockCapsule getBlock(byte[] blockHash);
 
-  long computeAfterRunStorageSize();
-
-  long getBeforeRunStorageSize();
-
 }
