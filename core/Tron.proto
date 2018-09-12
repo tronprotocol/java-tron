@@ -128,9 +128,9 @@ message Account {
     int64 latest_consume_time_for_energy = 3;
 
     //Frozen balance provided by other accounts to this account
-    int64 acquired_delegated_frozen_balance_for_cpu = 4;
+    int64 acquired_delegated_frozen_balance_for_energy = 4;
     //Frozen balances provided to other accounts
-    int64 delegated_frozen_balance_for_cpu = 5;
+    int64 delegated_frozen_balance_for_energy = 5;
 
     // storage resource, get from market
     int64 storage_limit = 6;
@@ -148,7 +148,7 @@ message  DelegatedResource{
   bytes from = 1;
   bytes to = 2;
   int64 frozen_balance_for_bandwidth = 3;
-  int64 frozen_balance_for_cpu = 4;
+  int64 frozen_balance_for_energy = 4;
   int64 expire_time = 5;
 }
 
