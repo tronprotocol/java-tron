@@ -22,7 +22,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
-import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.common.runtime.Runtime;
@@ -126,7 +126,7 @@ public class StorageTest {
 */
   @Test
   public void contractWriteAndDeleteStorage()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     String contractName = "contractWriteAndDeleteStorage";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"int2str\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"i\",\"type\":\"uint256\"}],\"name\":\"testDelete\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"i\",\"type\":\"uint256\"},{\"name\":\"s\",\"type\":\"string\"}],\"name\":\"testPut\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]\n";
@@ -148,9 +148,9 @@ public class StorageTest {
     String params1 = "0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000036162630000000000000000000000000000000000000000000000000000000000";
     String params2 = "0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000033132330000000000000000000000000000000000000000000000000000000000";
     byte[] triggerData = TVMTestUtils.parseABI("testPut(uint256,string)", params1);
-    TVMTestResult result = TVMTestUtils
+    TVMTestResult result =  TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, fee, DepositImpl.createRoot(manager), null);
+            contractAddress, triggerData, 0, fee, manager, null);
 
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
@@ -160,7 +160,7 @@ public class StorageTest {
     triggerData = TVMTestUtils.parseABI("testPut(uint256,string)", params1);
     result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, fee, DepositImpl.createRoot(manager), null);
+            contractAddress, triggerData, 0, fee, manager, null);
 
     Assert.assertNull(result.getRuntime().getRuntimeError());
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 10855);
@@ -172,7 +172,7 @@ public class StorageTest {
     triggerData = TVMTestUtils.parseABI("testPut(uint256,string)", params2);
     result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, fee, DepositImpl.createRoot(manager), null);
+            contractAddress, triggerData, 0, fee, manager, null);
 
     Assert.assertNull(result.getRuntime().getRuntimeError());
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 10855);
@@ -182,7 +182,7 @@ public class StorageTest {
     triggerData = TVMTestUtils.parseABI("testDelete(uint256)", "0000000000000000000000000000000000000000000000000000000000000001");
     result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, fee, DepositImpl.createRoot(manager), null);
+            contractAddress, triggerData, 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
     Assert.assertNull(result.getRuntime().getResult().getException());
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 5389);
