@@ -66,35 +66,39 @@ public class PermissionAddKeyActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
     byte[] ownerAddress = permissionAddKeyContract.getOwnerAddress().toByteArray();
-    AccountStore accountStore = dbManager.getAccountStore();
-    AccountCapsule account = accountStore.get(ownerAddress);
+    ByteString keyAddress = permissionAddKeyContract.getKey().getAddress();
+    if (!Wallet.addressValid(ownerAddress)) {
+      throw new ContractValidateException("invalidate ownerAddress");
+    }
+    AccountCapsule account = dbManager.getAccountStore().get(ownerAddress);
+    if (account == null) {
+      throw new ContractValidateException("ownerAddress account does not exist");
+    }
+    if (dbManager.getAccountStore().get(keyAddress.toByteArray()) == null) {
+      throw new ContractValidateException("key account does not exist");
+    }
     String name = permissionAddKeyContract.getPermissionName();
     if (!name.equalsIgnoreCase("owner") &&
         !name.equalsIgnoreCase("active")) {
       throw new ContractValidateException("permission name should be owner or active");
     }
-    Permission permission = account.getPermissionByName(name);
-    if (permission == null) {
-      throw new ContractValidateException("you have not set permission with the name " + name);
-    }
-    if (!Wallet.addressValid(ownerAddress)) {
-      throw new ContractValidateException("invalidate ownerAddress");
-    }
     if (name.isEmpty()) {
-      throw new ContractValidateException("permission name should be not empty");
+      throw new ContractValidateException("permission name should not be empty");
     }
     if (!permissionAddKeyContract.getKey().isInitialized()) {
       throw new ContractValidateException("key should be initialized");
     }
-    if (!Wallet.addressValid(permissionAddKeyContract.getKey().getAddress().toByteArray())) {
+    if (!Wallet.addressValid(keyAddress.toByteArray())) {
       throw new ContractValidateException("address in key is invalidate");
     }
-    for (Key key : permission.getKeysList()) {
-      String address = Wallet
-          .encode58Check(permissionAddKeyContract.getKey().getAddress().toByteArray());
-      if (key.getAddress().equals(permissionAddKeyContract.getKey().getAddress())) {
-        throw new ContractValidateException("address " + address + " is already in permission "
-            + name);
+    Permission permission = account.getPermissionByName(name);
+    if (permission != null) {
+      for (Key key : permission.getKeysList()) {
+        String address = Wallet.encode58Check(keyAddress.toByteArray());
+        if (key.getAddress().equals(keyAddress)) {
+          throw new ContractValidateException("address " + address + " is already in permission "
+              + name);
+        }
       }
     }
     if (permissionAddKeyContract.getKey().getWeight() <= 0) {

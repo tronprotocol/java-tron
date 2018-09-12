@@ -69,8 +69,13 @@ public class PermissionUpdateKeyActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
     byte[] ownerAddress = permissionUpdateKeyContract.getOwnerAddress().toByteArray();
-    AccountStore accountStore = dbManager.getAccountStore();
-    AccountCapsule account = accountStore.get(ownerAddress);
+    if (!Wallet.addressValid(ownerAddress)) {
+      throw new ContractValidateException("invalidate ownerAddress");
+    }
+    AccountCapsule account = dbManager.getAccountStore().get(ownerAddress);
+    if (account == null) {
+      throw new ContractValidateException("ownerAddress account does not exist");
+    }
     String name = permissionUpdateKeyContract.getPermissionName();
     if (!name.equalsIgnoreCase("owner") &&
         !name.equalsIgnoreCase("active")) {

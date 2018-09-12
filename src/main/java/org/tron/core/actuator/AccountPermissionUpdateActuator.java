@@ -73,6 +73,10 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
     if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("invalidate ownerAddress");
     }
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    if (accountCapsule == null) {
+      throw new ContractValidateException("ownerAddress account does not exist");
+    }
     if (accountPermissionUpdateContract.getPermissionsCount() == 0) {
       throw new ContractValidateException("permission's count should be greater than 0");
     }
@@ -107,6 +111,9 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
       for (Key key : permission.getKeysList()) {
         if (!Wallet.addressValid(key.getAddress().toByteArray())) {
           throw new ContractValidateException("key is not a validate address");
+        }
+        if (dbManager.getAccountStore().get(key.getAddress().toByteArray()) == null) {
+          throw new ContractValidateException("key address does not exist");
         }
         if (key.getWeight() <= 0) {
           throw new ContractValidateException("key's weight should be greater than 0");

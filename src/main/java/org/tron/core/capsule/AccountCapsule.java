@@ -593,15 +593,33 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void permissionAddKey(Key addKey, String permissionName) {
-    List<Permission> permissions = new ArrayList<>();
-    for (Permission permission : this.account.getPermissionsList()) {
-      if (permission.getName().equalsIgnoreCase(permissionName)) {
-        permissions.add(permission.toBuilder().addKeys(addKey).build());
+    if (permissionName.equalsIgnoreCase("active") ||
+        permissionName.equalsIgnoreCase("owner")) {
+      List<Permission> permissions = new ArrayList<>();
+      if (this.account.getPermissionsCount() == 0) {
+        Permission.Builder builder = Permission.newBuilder();
+        builder.setThreshold(1);
+        if (permissionName.equalsIgnoreCase("owner")) {
+          builder.setParent("");
+        } else {
+          builder.setParent("owner");
+        }
+        builder.setName(permissionName);
+        builder.addKeys(addKey);
+        List<Permission> list = new ArrayList<>();
+        list.add(builder.build());
+        updatePermissions(list);
       } else {
-        permissions.add(permission);
+        for (Permission permission : this.account.getPermissionsList()) {
+          if (permission.getName().equalsIgnoreCase(permissionName)) {
+            permissions.add(permission.toBuilder().addKeys(addKey).build());
+          } else {
+            permissions.add(permission);
+          }
+        }
+        updatePermissions(permissions);
       }
     }
-    updatePermissions(permissions);
   }
 
   public void permissionUpdateKey(Key updateKey, String permissionName) {
