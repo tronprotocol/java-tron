@@ -1024,7 +1024,7 @@ public class Manager {
   }
 
   private void sendEventLog(byte[] contractAddress, List<org.tron.protos.Protocol.TransactionInfo.Log> logList, Block block, TransactionInfoCapsule transactionInfoCapsule) {
-    if (block == null) {
+    if (block == null || block.getBlockHeader().getWitnessSignature().isEmpty()) {
       return;
     }
     try {
@@ -1042,15 +1042,16 @@ public class Manager {
           if (abiEntry.getType() != Protocol.SmartContract.ABI.Entry.EntryType.Event) {
             return;
           }
+          //parse abi
           String entryName = abiEntry.getName();
           List<TypeReference<?>> typeList = new ArrayList<>();
           List<String> nameList = new ArrayList<>();
           List<Boolean> hasIndexList = new ArrayList<>();
           abiEntry.getInputsList().forEach(input -> {
             nameList.add(input.getName());
-            hasIndexList.add(input.getIndexed());
             TypeReference<?> tr = AbiTypes.getTypeReference(input.getType());
             typeList.add(tr);
+            hasIndexList.add(input.getIndexed());
           });
           Event event = new Event(entryName, typeList);
           String encodeEventHexString = EventEncoder.encode(event);
