@@ -79,7 +79,7 @@ public class WalletTestAssetIssue007 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(testKeyForAssetIssue007);
     PublicMethed.printAddress(participateAssetCreateKey);
@@ -90,7 +90,7 @@ public class WalletTestAssetIssue007 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testParticipateAssetIssueUseParticipaterBandwidth() {
     Assert.assertTrue(PublicMethed
         .sendcoin(asset007Address, sendAmount, fromAddress, testKey002, blockingStubFull));
@@ -169,7 +169,7 @@ public class WalletTestAssetIssue007 {
     Assert.assertTrue(beforeBalance  - trxNum*1*icoNum  >= afterBalance);
   }
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.common.overlay.discover.node;
 
 import com.google.common.cache.Cache;
@@ -147,15 +148,15 @@ public class NodeManager implements EventHandler {
   }
 
   public boolean isNodeAlive(NodeHandler nodeHandler) {
-    return nodeHandler.getState().equals(State.Alive) ||
-        nodeHandler.getState().equals(State.Active) ||
-        nodeHandler.getState().equals(State.EvictCandidate);
+    return nodeHandler.getState().equals(State.Alive)
+        || nodeHandler.getState().equals(State.Active)
+        || nodeHandler.getState().equals(State.EvictCandidate);
   }
 
   private void dbRead() {
-    Set<Node> Nodes = this.dbManager.readNeighbours();
-    logger.info("Reading Node statistics from PeersStore: " + Nodes.size() + " nodes.");
-    Nodes.forEach(node -> getNodeHandler(node).getNodeStatistics()
+    Set<Node> nodes = this.dbManager.readNeighbours();
+    logger.info("Reading Node statistics from PeersStore: " + nodes.size() + " nodes.");
+    nodes.forEach(node -> getNodeHandler(node).getNodeStatistics()
         .setPersistedReputation(node.getReputation()));
   }
 
@@ -251,6 +252,8 @@ public class NodeManager implements EventHandler {
         break;
       case DISCOVER_NEIGHBORS:
         nodeHandler.handleNeighbours((NeighborsMessage) m);
+        break;
+      default:
         break;
     }
   }
