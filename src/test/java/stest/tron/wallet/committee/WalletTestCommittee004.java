@@ -94,11 +94,21 @@ public class WalletTestCommittee004 {
 
   @Test(enabled = true)
   public void testDeleteProposal() {
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
     //Create a proposal and approval it
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
     proposalMap.put(1L, 99999L);
     Assert.assertTrue(PublicMethed.createProposal(witness001Address,witnessKey001,
         proposalMap,blockingStubFull));
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
     //Get proposal list
     ProposalList proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
     Optional<ProposalList> listProposals =  Optional.ofNullable(proposalList);
@@ -189,7 +199,7 @@ public class WalletTestCommittee004 {
       logger.info(getChainParameters.get().getChainParameter(i).getKey());
       logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
     }
-    Assert.assertTrue(getChainParameters.get().getChainParameterCount() == 9);
+    Assert.assertTrue(getChainParameters.get().getChainParameterCount() >= 10);
     Assert.assertTrue(getChainParameters.get()
         .getChainParameter(1).getValue() == 9999000000L);
     Assert.assertTrue(getChainParameters.get().getChainParameter(4)

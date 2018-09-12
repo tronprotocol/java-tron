@@ -8,11 +8,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.junit.*;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.overlay.client.PeerClient;
@@ -37,14 +34,14 @@ import org.tron.protos.Protocol;
 @Slf4j
 public class StartFetchSyncBlockTest {
 
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
   private NodeImpl node;
   RpcApiService rpcApiService;
   PeerClient peerClient;
   ChannelManager channelManager;
   SyncPool pool;
-  Application appT;
-  private static final String dbPath = "output-nodeImplTest/startFetchSyncBlockTest";
+  private static Application appT;
+  private static final String dbPath = "output-nodeImplTest-startFetchSyncBlockTest";
   private static final String dbDirectory = "db_StartFetchSyncBlock_test";
   private static final String indexDirectory = "index_StartFetchSyncBlock_test";
 
@@ -150,7 +147,7 @@ public class StartFetchSyncBlockTest {
         cfgArgs.setNeedSyncCheck(false);
         cfgArgs.setNodeExternalIp("127.0.0.1");
 
-        context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+        context = new TronApplicationContext(DefaultConfig.class);
 
         if (cfgArgs.isHelp()) {
           logger.info("Here is the help message.");
@@ -227,16 +224,12 @@ public class StartFetchSyncBlockTest {
     }
   }
 
-  @After
-  public void destroy() {
+  @AfterClass
+  public static void destroy() {
     Args.clearParam();
-    FileUtil.deleteDir(new File("output-nodeImplTest"));
-    Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(node, "getActivePeer");
-    for (PeerConnection peer : peerConnections) {
-      peer.close();
-    }
-    peerClient.close();
+    context.destroy();
     appT.shutdownServices();
     appT.shutdown();
+    FileUtil.deleteDir(new File(dbPath));
   }
 }

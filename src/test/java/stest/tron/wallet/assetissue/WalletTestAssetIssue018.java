@@ -78,7 +78,7 @@ public class WalletTestAssetIssue018 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -89,7 +89,7 @@ public class WalletTestAssetIssue018 {
     PublicMethed.printAddress(assetAccount3Key);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testSameAssetissueName() {
     logger.info(name);
     logger.info("total supply is " + Long.toString(totalSupply));
@@ -102,17 +102,17 @@ public class WalletTestAssetIssue018 {
         testKey002,blockingStubFull));
 
     //Create 3 the same name token.
-    Long start = System.currentTimeMillis() + 3000;
+    Long start = System.currentTimeMillis() + 2000;
     Long end = System.currentTimeMillis() + 1000000000;
     Assert.assertTrue(PublicMethed.createAssetIssue(assetAccount1Address,
         name, totalSupply, 1, 1, start, end, 1, description, url,
         2000L,2000L, 1L,1L,assetAccount1Key,blockingStubFull));
-    start = System.currentTimeMillis() + 3000;
+    start = System.currentTimeMillis() + 2000;
     end = System.currentTimeMillis() + 1000000000;
     Assert.assertTrue(PublicMethed.createAssetIssue(assetAccount2Address,
         name, totalSupply + 1, 2, 2, start, end, 2, description, url,
         3000L,3000L, 2L,2L,assetAccount2Key,blockingStubFull));
-    start = System.currentTimeMillis() + 3000;
+    start = System.currentTimeMillis() + 2000;
     end = System.currentTimeMillis() + 1000000000;
     Assert.assertTrue(PublicMethed.createAssetIssue(assetAccount3Address,
         name, totalSupply + 2, 3, 3, start, end, 3, description, url,
@@ -149,7 +149,7 @@ public class WalletTestAssetIssue018 {
         asset3Name.getBytes(),3L,assetAccount3Address,assetAccount3Key,blockingStubFull));
 
     try {
-      Thread.sleep(10000);
+      Thread.sleep(5000);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
@@ -167,7 +167,7 @@ public class WalletTestAssetIssue018 {
 
   }
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

@@ -178,11 +178,11 @@ public class FreezeBalanceActuator extends AbstractActuator {
     switch (freezeBalanceContract.getResource()) {
       case BANDWIDTH:
         break;
-      case CPU:
+      case ENERGY:
         break;
       default:
         throw new ContractValidateException(
-            "ResourceCode error,valid ResourceCode[BANDWIDTH、CPU]");
+            "ResourceCode error,valid ResourceCode[BANDWIDTH、ENERGY]");
     }
 
     byte[] receiverAddress = freezeBalanceContract.getReceiverAddress().toByteArray();

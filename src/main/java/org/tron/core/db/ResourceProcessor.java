@@ -2,11 +2,11 @@ package org.tron.core.db;
 
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.TooBigTransactionResultException;
 
 abstract class ResourceProcessor {
 
@@ -22,8 +22,8 @@ abstract class ResourceProcessor {
 
   abstract void updateUsage(AccountCapsule accountCapsule);
 
-  abstract void consume(TransactionCapsule trx, TransactionResultCapsule ret)
-      throws ContractValidateException, AccountResourceInsufficientException;
+  abstract void consume(TransactionCapsule trx, TransactionTrace trace)
+      throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException;
 
   protected long increase(long lastUsage, long usage, long lastTime, long now) {
     long averageLastUsage = divideCeil(lastUsage * precision, windowSize);

@@ -63,7 +63,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
     return hash;
   }
 
-  public long getBlockNum(){
+  public long getBlockNum() {
     return blockNum;
   }
 

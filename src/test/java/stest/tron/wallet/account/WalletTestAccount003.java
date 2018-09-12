@@ -38,21 +38,12 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 @Slf4j
 public class WalletTestAccount003 {
 
-  //testng001、testng002、testng003、testng004
-  private final String testKey002 =
-      "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
-  private final String testKey003 =
-      "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
-
-  /*  //testng001、testng002、testng003、testng004
-  private static final byte[] fromAddress = Base58
-      .decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");
-  private static final byte[] toAddress = Base58
-      .decodeFromBase58Check("TV75jZpdmP2juMe1dRwGrwpV6AMU6mr1EU");*/
-
+  private final String testKey002 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key1");
+  private final String testKey003 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-
 
   private static final long now = System.currentTimeMillis();
   private static final String name = "testAssetIssue_" + Long.toString(now);
@@ -63,8 +54,10 @@ public class WalletTestAccount003 {
   String mostLongName = "abcdeabcdefabcdefg1abcdefg10o0og1abcdefg10o0oabcd"
       + "efabcdefg1abcdefg10o0og1abcdefg10o0oabcdefabcdefg1abcdefg10o0og1abcdefg10o0oab"
       + "cdefabcdefg1abcdefg10o0og1abcdefg10o0ofabcdefg1abcdefg10o0og1abcdefg10o0o";
-  String description = "just-test";
-  String url = "https://github.com/tronprotocol/wallet-cli/";
+  String description = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.assetDescription");
+  String url = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.assetUrl");
 
   //get account
   ECKey ecKey = new ECKey(Utils.getRandom());
@@ -99,59 +92,46 @@ public class WalletTestAccount003 {
   @Test
   public void testCreateAccount() {
     Account noCreateAccount = queryAccount(lowBalTest, blockingStubFull);
-    if (noCreateAccount.getAccountName().isEmpty()) {
-      Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 10000000, 3, testKey002,
-          blockingStubFull));
-      Assert.assertTrue(sendCoin(lowBalAddress, 1L, fromAddress, testKey002));
-      //Assert.assertTrue(Sendcoin(Low_Bal_ADDRESS, 1000000L, fromAddress, testKey002));
+    while (noCreateAccount.getBalance() != 0) {
+      ecKey = new ECKey(Utils.getRandom());
+      lowBalAddress = ecKey.getAddress();
+      lowBalTest = ByteArray.toHexString(ecKey.getPrivKeyBytes());
       noCreateAccount = queryAccount(lowBalTest, blockingStubFull);
-      logger.info(Long.toString(noCreateAccount.getBalance()));
-      Assert.assertTrue(noCreateAccount.getBalance() == 1);
-
-      //TestVoteToNonWitnessAccount
-      HashMap<String, String> voteToNonWitnessAccount = new HashMap<String, String>();
-      voteToNonWitnessAccount.put("27dUQbeRLz6BavhUJE6UbNp5AtAtPuzNZv6", "3");
-      HashMap<String, String> voteToInvaildAddress = new HashMap<String, String>();
-      voteToInvaildAddress.put("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48", "4");
-      Assert.assertTrue(freezeBalance(fromAddress, 10000000L, 3L, testKey002));
-      voteWitness(voteToNonWitnessAccount, fromAddress, testKey002);
-      Assert.assertFalse(voteWitness(voteToNonWitnessAccount, fromAddress, testKey002));
-      Assert.assertFalse(voteWitness(voteToInvaildAddress, fromAddress, testKey002));
-
-      logger.info("vote to non witness account ok!!!");
-
-    } else {
-      logger.info(
-          "Please confirm wither the create account test is pass, or you will do it by manual");
     }
+
+    Assert.assertTrue(sendCoin(lowBalAddress, 1L, fromAddress, testKey002));
+    noCreateAccount = queryAccount(lowBalTest, blockingStubFull);
+    logger.info(Long.toString(noCreateAccount.getBalance()));
+    Assert.assertTrue(noCreateAccount.getBalance() == 1);
+
+    //TestVoteToNonWitnessAccount
+    HashMap<String, String> voteToNonWitnessAccount = new HashMap<String, String>();
+    voteToNonWitnessAccount.put("27dUQbeRLz6BavhUJE6UbNp5AtAtPuzNZv6", "3");
+    HashMap<String, String> voteToInvaildAddress = new HashMap<String, String>();
+    voteToInvaildAddress.put("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48", "4");
+    Assert.assertTrue(freezeBalance(fromAddress, 10000000L, 3L, testKey002));
+    voteWitness(voteToNonWitnessAccount, fromAddress, testKey002);
+    Assert.assertFalse(voteWitness(voteToNonWitnessAccount, fromAddress, testKey002));
+    Assert.assertFalse(voteWitness(voteToInvaildAddress, fromAddress, testKey002));
+
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testUpdateAccount() {
+    Assert.assertFalse(updateAccount(lowBalAddress,
+        mostLongNamePlusOneChar.getBytes(), lowBalTest));
+    Assert.assertTrue(updateAccount(lowBalAddress, "".getBytes(), lowBalTest));
+    Assert.assertTrue(updateAccount(lowBalAddress, mostLongName.getBytes(), lowBalTest));
     Account tryToUpdateAccount = queryAccount(lowBalTest, blockingStubFull);
-    if (tryToUpdateAccount.getAccountName().isEmpty()) {
-      //Assert.assertFalse(updateAccount(lowBalAddress, "".getBytes(), lowBalTest));
-      Assert.assertFalse(
-          updateAccount(lowBalAddress, mostLongNamePlusOneChar.getBytes(),
-              lowBalTest));
-
-      Assert.assertTrue(updateAccount(lowBalAddress, "".getBytes(), lowBalTest));
-      Assert.assertTrue(updateAccount(lowBalAddress, mostLongName.getBytes(), lowBalTest));
-      tryToUpdateAccount = queryAccount(lowBalTest, blockingStubFull);
-      Assert.assertFalse(tryToUpdateAccount.getAccountName().isEmpty());
-      Assert.assertTrue(updateAccount(lowBalAddress, "secondUpdateName".getBytes(), lowBalTest));
-    }
+    tryToUpdateAccount = queryAccount(lowBalTest, blockingStubFull);
+    Assert.assertFalse(tryToUpdateAccount.getAccountName().isEmpty());
+    Assert.assertTrue(updateAccount(lowBalAddress, "secondUpdateName".getBytes(), lowBalTest));
   }
 
   @Test(enabled = true)
   public void testNoBalanceCreateAssetIssue() {
     Account lowaccount = queryAccount(lowBalTest, blockingStubFull);
     if (lowaccount.getBalance() > 0) {
-      /*            try {
-                Thread.sleep(10000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }*/
       Assert.assertTrue(sendCoin(toAddress, lowaccount.getBalance(), lowBalAddress, lowBalTest));
     }
     //Create AssetIssue failed when there is no enough balance.

@@ -86,7 +86,7 @@ public class fuzzytest {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -137,7 +137,7 @@ public class fuzzytest {
       blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
       GrpcAPI.NodeList nodeList = blockingStubFull
           .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
-      if (i%100 == 0) {
+      if (i % 100 == 0) {
         logger.info(Integer.toString(i));
       }
 
@@ -147,9 +147,9 @@ public class fuzzytest {
 
   }
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
-/*    if (channelFull != null) {
+    /*    if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
     if (channelSolidity != null) {

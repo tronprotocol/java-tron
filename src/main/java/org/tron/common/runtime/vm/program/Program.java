@@ -29,6 +29,7 @@ import static org.tron.common.runtime.utils.MUtil.transfer;
 import static org.tron.common.utils.BIUtil.isPositive;
 import static org.tron.common.utils.BIUtil.toBI;
 
+import com.google.protobuf.ByteString;
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -36,15 +37,16 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
+import java.util.Objects;
 import java.util.TreeSet;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.runtime.config.SystemProperties;
+import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.vm.EnergyCost;
 import org.tron.common.runtime.vm.MessageCall;
 import org.tron.common.runtime.vm.OpCode;
 import org.tron.common.runtime.vm.PrecompiledContracts;
@@ -58,17 +60,19 @@ import org.tron.common.runtime.vm.program.listener.ProgramStorageChangeListener;
 import org.tron.common.runtime.vm.trace.ProgramTrace;
 import org.tron.common.runtime.vm.trace.ProgramTraceListener;
 import org.tron.common.storage.Deposit;
-import org.tron.common.utils.ByteArraySet;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
+import org.tron.core.Wallet;
 import org.tron.core.actuator.TransferActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.TronException;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.SmartContract;
 
 /**
  * @author Roman Mandeleil
@@ -76,14 +80,41 @@ import org.tron.protos.Protocol;
  */
 
 @Slf4j(topic = "Program")
-
 public class Program {
 
-  // private static final Logger logger = LoggerFactory.getLogger("VM");
-
-  private static final int MAX_DEPTH = 1024;
+  private static final int MAX_DEPTH = 64;
   //Max size for stack checks
   private static final int MAX_STACKSIZE = 1024;
+
+  private BlockCapsule blockCap;
+
+  public byte[] getRootTransactionId() {
+    return rootTransactionId.clone();
+  }
+
+  public void setRootTransactionId(byte[] rootTransactionId) {
+    this.rootTransactionId = rootTransactionId.clone();
+  }
+
+  public long getNonce() {
+    return nonce;
+  }
+
+  public void setNonce(long nonceValue) {
+    nonce = nonceValue;
+  }
+
+  public Boolean getRootCallConstant() {
+    return isRootCallConstant;
+  }
+
+  public void setRootCallConstant(Boolean rootCallConstant) {
+    isRootCallConstant = rootCallConstant;
+  }
+
+  private long nonce = 0;
+  private byte[] rootTransactionId = null;
+  private Boolean isRootCallConstant = null;
 
   private InternalTransaction transaction;
 
@@ -97,70 +128,54 @@ public class Program {
 
   private Stack stack;
   private Memory memory;
-  private Storage storage;
+  private ContractState contractState;
   private byte[] returnDataBuffer;
 
   private ProgramResult result = new ProgramResult();
   private ProgramTrace trace = new ProgramTrace();
 
-  //private byte[] codeHash;
   private byte[] ops;
   private int pc;
   private byte lastOp;
   private byte previouslyExecutedOp;
   private boolean stopped;
-  private ByteArraySet touchedAccounts = new ByteArraySet();
 
   private ProgramPrecompile programPrecompile;
 
-  private final SystemProperties config;
+  private final VMConfig config;
 
   public Program(byte[] ops, ProgramInvoke programInvoke) {
     this(ops, programInvoke, null);
   }
 
   public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction transaction) {
-    this(ops, programInvoke, transaction, SystemProperties.getDefault());
+    this(ops, programInvoke, transaction, VMConfig.getInstance(), null);
   }
 
   public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction transaction,
-      SystemProperties config) {
-    this(null, ops, programInvoke, transaction, config);
+      VMConfig config, BlockCapsule blockCap) {
+    this(null, ops, programInvoke, transaction, config, blockCap);
   }
 
   public Program(byte[] codeHash, byte[] ops, ProgramInvoke programInvoke,
-      InternalTransaction transaction, SystemProperties config) {
+      InternalTransaction transaction, VMConfig config, BlockCapsule blockCap) {
     this.config = config;
     this.invoke = programInvoke;
     this.transaction = transaction;
-
-    //this.codeHash = codeHash;
+    this.blockCap = blockCap;
     this.ops = nullToEmpty(ops);
 
-    //traceListener = new ProgramTraceListener(config.vmTrace());
+    traceListener = new ProgramTraceListener(config.vmTrace());
     this.memory = setupProgramListener(new Memory());
     this.stack = setupProgramListener(new Stack());
-    this.storage = setupProgramListener(new Storage(programInvoke));
-    //this.trace = new ProgramTrace(config, programInvoke);
+    this.contractState = setupProgramListener(new ContractState(programInvoke));
+    this.trace = new ProgramTrace(config, programInvoke);
+    this.nonce = transaction.getNonce();
   }
 
   public ProgramPrecompile getProgramPrecompile() {
     if (programPrecompile == null) {
-            /*
-            if (codeHash != null && commonConfig.precompileSource() != null) {
-                programPrecompile = commonConfig.precompileSource().get(codeHash);
-            }
-            */
-      if (programPrecompile == null) {
-        programPrecompile = ProgramPrecompile.compile(ops);
-
-                /*
-                if (codeHash != null && commonConfig.precompileSource() != null) {
-                    commonConfig.precompileSource().put(codeHash, programPrecompile);
-                }
-                */
-      }
-
+      programPrecompile = ProgramPrecompile.compile(ops);
     }
     return programPrecompile;
   }
@@ -169,18 +184,15 @@ public class Program {
     return invoke.getCallDeep();
   }
 
-  private InternalTransaction addInternalTx(DataWord gasLimit, byte[] senderAddress,
+  private InternalTransaction addInternalTx(DataWord energyLimit, byte[] senderAddress,
       byte[] receiveAddress,
-      long value, byte[] data, String note) {
+      long value, byte[] data, String note, long nonce) {
 
-    // todo: now, internal transaction needn't gaslimit
+    // todo: now, internal transaction needn't energylimit
     InternalTransaction result = null;
     if (transaction != null) {
-      //data = config.recordInternalTransactionsData() ? data : null;
-      //result = getResult().addInternalTransaction(transaction.getHash(), getCallDeep(),
-      //        getGasPrice(), gasLimit, senderAddress, receiveAddress, value.toByteArray(), data, note);
       result = getResult().addInternalTransaction(transaction.getHash(), getCallDeep(),
-          senderAddress, receiveAddress, value, data, note);
+          senderAddress, receiveAddress, value, data, note, nonce);
     }
 
     return result;
@@ -188,7 +200,7 @@ public class Program {
 
   private <T extends ProgramListenerAware> T setupProgramListener(T programListenerAware) {
     if (programListener.isEmpty()) {
-      //programListener.addListener(traceListener);
+      programListener.addListener(traceListener);
       programListener.addListener(storageDiffListener);
     }
 
@@ -379,12 +391,11 @@ public class Program {
   }
 
 
-  public void suicide(DataWord obtainerAddress)
-      throws ContractValidateException {
+  public void suicide(DataWord obtainerAddress) {
 
     byte[] owner = convertToTronAddress(getOwnerAddress().getLast20Bytes());
     byte[] obtainer = convertToTronAddress(obtainerAddress.getLast20Bytes());
-    long balance = getStorage().getBalance(owner);
+    long balance = getContractState().getBalance(owner);
 
     if (logger.isInfoEnabled()) {
       logger.info("Transfer to: [{}] heritage: [{}]",
@@ -392,24 +403,28 @@ public class Program {
           balance);
     }
 
-    addInternalTx(null, owner, obtainer, balance, null, "suicide");
+    increaseNonce();
+    addInternalTx(null, owner, obtainer, balance, null, "suicide", nonce);
 
     if (FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0) {
       // if owner == obtainer just zeroing account according to Yellow Paper
-      getStorage().addBalance(owner, -balance);
+      getContractState().addBalance(owner, -balance);
     } else {
-      transfer(getStorage(), owner, obtainer, balance);
+      try {
+        transfer(getContractState(), owner, obtainer, balance);
+      } catch (ContractValidateException e) {
+        throw new BytecodeExecutionException("transfer failure");
+      }
     }
     getResult().addDeleteAccount(this.getOwnerAddress());
   }
 
-  public Deposit getStorage() {
-    return this.storage;
+  public Deposit getContractState() {
+    return this.contractState;
   }
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-  public void createContract(DataWord value, DataWord memStart, DataWord memSize)
-      throws ContractValidateException {
+  public void createContract(DataWord value, DataWord memStart, DataWord memSize) {
     returnDataBuffer = null; // reset return buffer right before the call
 
     if (getCallDeep() == MAX_DEPTH) {
@@ -418,11 +433,10 @@ public class Program {
     }
 
     byte[] senderAddress = convertToTronAddress(this.getOwnerAddress().getLast20Bytes());
-    // todo: need check the value > 0?
-    long endowment = value.value().longValue();
-    if (getStorage().getBalance(senderAddress) < endowment) {
+
+    long endowment = value.value().longValueExact();
+    if (getContractState().getBalance(senderAddress) < endowment) {
       stackPushZero();
-      // todo: need inform to outside?
       return;
     }
 
@@ -434,89 +448,88 @@ public class Program {
           Hex.toHexString(senderAddress));
     }
 
-    // [2] CREATE THE CONTRACT ADDRESS
-    // byte[] newAddress = HashUtil.calcNewAddr(getOwnerAddress().getLast20Bytes() nonce);
-    // todo: modify this contract generate way
-    byte[] privKey = Sha256Hash.hash(getOwnerAddress().getData());
-    ECKey ecKey = ECKey.fromPrivate(privKey);
-    byte[] newAddress = ecKey.getAddress();
+    byte[] newAddress = Wallet
+        .generateContractAddress(rootTransactionId, nonce);
 
-    AccountCapsule existingAddr = getStorage().getAccount(newAddress);
-    //boolean contractAlreadyExists = existingAddr != null && existingAddr.isContractExist(blockchainConfig);
+    AccountCapsule existingAddr = getContractState().getAccount(newAddress);
     boolean contractAlreadyExists = existingAddr != null;
 
-        /*
-        if (byTestingSuite()) {
-            // This keeps track of the contracts created for a test
-            getResult().addCallCreate(programCode, EMPTY_BYTE_ARRAY,
-                    gasLimit.getNoLeadZeroesData(),
-                    value.getNoLeadZeroesData());
-        }
-        */
-
-    Deposit deposit = getStorage();
+    Deposit deposit = getContractState().newDepositChild();
 
     //In case of hashing collisions, check for any balance before createAccount()
     long oldBalance = deposit.getBalance(newAddress);
-    deposit.createAccount(newAddress, Protocol.AccountType.Contract);
-    deposit.addBalance(newAddress, oldBalance);
 
+    SmartContract newSmartContract = SmartContract.newBuilder()
+        .setContractAddress(ByteString.copyFrom(newAddress)).setConsumeUserResourcePercent(100)
+        .setOriginAddress(ByteString.copyFrom(senderAddress)).build();
+    deposit.createContract(newAddress, new ContractCapsule(newSmartContract));
+    deposit.createAccount(newAddress, "CreatedByContract",
+        Protocol.AccountType.Contract);
+
+    deposit.addBalance(newAddress, oldBalance);
     // [4] TRANSFER THE BALANCE
     long newBalance = 0L;
-    if (!byTestingSuite()) {
-      TransferActuator.validate(deposit, senderAddress, newAddress, endowment);
+    if (!byTestingSuite() && endowment > 0) {
+      try {
+        TransferActuator.validateForSmartContract(deposit, senderAddress, newAddress, endowment);
+      } catch (ContractValidateException e) {
+        throw new BytecodeExecutionException("validateForSmartContract failure");
+      }
       deposit.addBalance(senderAddress, -endowment);
       newBalance = deposit.addBalance(newAddress, endowment);
     }
 
-    // BlockchainConfig blockchainConfig = config.getBlockchainConfig().getConfigForBlock(getNumber().longValue());
-    // actual gas subtract
-    DataWord gasLimit = this.getCreateGas(getGasLimitLeft());
-    spendGas(gasLimit.longValue(), "internal call");
+    // actual energy subtract
+    DataWord energyLimit = this.getCreateEnergy(getEnergyLimitLeft());
+    spendEnergy(energyLimit.longValue(), "internal call");
 
+    increaseNonce();
     // [5] COOK THE INVOKE AND EXECUTE
     InternalTransaction internalTx = addInternalTx(null, senderAddress, null, endowment,
-        programCode, "create");
+        programCode, "create", nonce);
     long vmStartInUs = System.nanoTime() / 1000;
     ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
         this, new DataWord(newAddress), getOwnerAddress(), value,
         newBalance, null, deposit, false, byTestingSuite(), vmStartInUs,
-        getVmShouldEndInUs(), gasLimit.longValueSafe());
+        getVmShouldEndInUs(), energyLimit.longValueSafe());
 
     ProgramResult result = ProgramResult.createEmpty();
 
     if (contractAlreadyExists) {
-      // todo: this exception must lead to rollback this function modification at least
       result.setException(new BytecodeExecutionException(
           "Trying to create a contract with existing contract address: 0x" + Hex
               .toHexString(newAddress)));
     } else if (isNotEmpty(programCode)) {
       VM vm = new VM(config);
-      Program program = new Program(programCode, programInvoke, internalTx, config);
+      Program program = new Program(programCode, programInvoke, internalTx, config, this.blockCap);
+      program.setRootTransactionId(this.rootTransactionId);
+      program.setRootCallConstant(this.isRootCallConstant);
       vm.play(program);
       result = program.getResult();
+      getTrace().merge(program.getTrace());
+      // always commit nonce
+      this.nonce = program.nonce;
 
-      getResult().merge(result);
     }
 
     // 4. CREATE THE CONTRACT OUT OF RETURN
     byte[] code = result.getHReturn();
 
-    //long storageCost = getLength(code) * getBlockchainConfig().getGasCost().getCREATE_DATA();
-    // todo: delete this gas, because this is not relative to the cpu time, but need add to storage cost
-    // long storageCost = getLength(code) * GasCost.getInstance().getCREATE_DATA();
-    // // long afterSpend = programInvoke.getDroplimit().longValue() - storageCost - result.getDropUsed();
-    // if (getLength(code) > DefaultConfig.getMaxCodeLength()) {
-    //   result.setException(Exception
-    //       .notEnoughSpendingGas("Contract size too large: " + getLength(result.getHReturn()),
-    //           storageCost, this));
-    // } else if (!result.isRevert()) {
-    //   result.spendDrop(storageCost);
-    //   deposit.saveCode(newAddress, code);
-    // }
+    long saveCodeEnergy = getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
+
+    long afterSpend = programInvoke.getEnergyLimit() - result.getEnergyUsed() - saveCodeEnergy;
     if (!result.isRevert()) {
-      deposit.saveCode(newAddress, code);
+      if (afterSpend < 0) {
+        result.setException(
+            Program.Exception.notEnoughSpendEnergy("No energy to save just created contract code",
+                saveCodeEnergy, programInvoke.getEnergyLimit() - result.getEnergyUsed()));
+      } else {
+        result.spendEnergy(saveCodeEnergy);
+        deposit.saveCode(newAddress, code);
+      }
     }
+
+    getResult().merge(result);
 
     if (result.getException() != null || result.isRevert()) {
       logger.debug("contract run halted by Exception: contract: [{}], exception: [{}]",
@@ -526,11 +539,9 @@ public class Program {
       internalTx.reject();
       result.rejectInternalTransactions();
 
-      // deposit.rollback();
       stackPushZero();
 
       if (result.getException() != null) {
-        refundGasAfterVM(gasLimit, result);
         return;
       } else {
         returnDataBuffer = result.getHReturn();
@@ -544,19 +555,19 @@ public class Program {
       stackPush(new DataWord(newAddress));
     }
 
-    // 5. REFUND THE REMAIN GAS
-    refundGasAfterVM(gasLimit, result);
+    // 5. REFUND THE REMAIN Energy
+    refundEnergyAfterVM(energyLimit, result);
   }
 
-  public void refundGasAfterVM(DataWord gasLimit, ProgramResult result) {
+  public void refundEnergyAfterVM(DataWord energyLimit, ProgramResult result) {
 
-    long refundGas = gasLimit.longValueSafe() - result.getGasUsed();
-    if (refundGas > 0) {
-      refundGas(refundGas, "remain gas from the internal call");
+    long refundEnergy = energyLimit.longValueSafe() - result.getEnergyUsed();
+    if (refundEnergy > 0) {
+      refundEnergy(refundEnergy, "remain energy from the internal call");
       if (logger.isInfoEnabled()) {
-        logger.info("The remaining gas is refunded, account: [{}], gas: [{}] ",
+        logger.info("The remaining energy is refunded, account: [{}], energy: [{}] ",
             Hex.toHexString(convertToTronAddress(getOwnerAddress().getLast20Bytes())),
-            refundGas);
+            refundEnergy);
       }
     }
   }
@@ -569,13 +580,12 @@ public class Program {
    *
    * @param msg is the message call object
    */
-  public void callToAddress(MessageCall msg)
-      throws ContractValidateException {
+  public void callToAddress(MessageCall msg) {
     returnDataBuffer = null; // reset return buffer right before the call
 
     if (getCallDeep() == MAX_DEPTH) {
       stackPushZero();
-      refundGas(msg.getGas().longValue(), " call deep limit reach");
+      refundEnergy(msg.getEnergy().longValue(), " call deep limit reach");
       return;
     }
 
@@ -593,40 +603,46 @@ public class Program {
           msg.getOutDataSize().longValue());
     }
 
-    //Repository track = getStorage().startTracking();
-    Deposit deposit = getStorage().newDepositChild();
+    //Repository track = getContractState().startTracking();
+    Deposit deposit = getContractState().newDepositChild();
 
     // 2.1 PERFORM THE VALUE (endowment) PART
-    // todo: need to check value >= 0?
-    long endowment = msg.getEndowment().value().longValue();
+    long endowment = msg.getEndowment().value().longValueExact();
     long senderBalance = deposit.getBalance(senderAddress);
     if (senderBalance < endowment) {
       stackPushZero();
-      refundGas(msg.getGas().longValue(), "refund gas from message call");
+      refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
       return;
     }
 
     // FETCH THE CODE
-    AccountCapsule accountCapsule = getStorage().getAccount(codeAddress);
+    AccountCapsule accountCapsule = getContractState().getAccount(codeAddress);
 
     byte[] programCode =
-        accountCapsule != null ? getStorage().getCode(codeAddress) : EMPTY_BYTE_ARRAY;
+        accountCapsule != null ? getContractState().getCode(codeAddress) : EMPTY_BYTE_ARRAY;
 
     long contextBalance = 0L;
     if (byTestingSuite()) {
       // This keeps track of the calls created for a test
       getResult().addCallCreate(data, contextAddress,
-          msg.getGas().getNoLeadZeroesData(),
+          msg.getEnergy().getNoLeadZeroesData(),
           msg.getEndowment().getNoLeadZeroesData());
-    } else if(!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress) && senderAddress != contextAddress && endowment > 0) {
-      TransferActuator.validate(deposit, senderAddress, contextAddress, endowment);
+    } else if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
+        && senderAddress != contextAddress && endowment > 0) {
+      try {
+        TransferActuator
+            .validateForSmartContract(deposit, senderAddress, contextAddress, endowment);
+      } catch (ContractValidateException e) {
+        throw new BytecodeExecutionException("validateForSmartContract failure");
+      }
       deposit.addBalance(senderAddress, -endowment);
       contextBalance = deposit.addBalance(contextAddress, endowment);
     }
 
     // CREATE CALL INTERNAL TRANSACTION
+    increaseNonce();
     InternalTransaction internalTx = addInternalTx(null, senderAddress, contextAddress,
-        endowment, data, "call");
+        endowment, data, "call", nonce);
 
     ProgramResult result = null;
     if (isNotEmpty(programCode)) {
@@ -636,15 +652,19 @@ public class Program {
           msg.getType().callIsDelegate() ? getCallerAddress() : getOwnerAddress(),
           msg.getType().callIsDelegate() ? getCallValue() : msg.getEndowment(),
           contextBalance, data, deposit, msg.getType().callIsStatic() || isStaticCall(),
-          byTestingSuite(), vmStartInUs, getVmShouldEndInUs(), msg.getGas().longValueSafe());
-
+          byTestingSuite(), vmStartInUs, getVmShouldEndInUs(), msg.getEnergy().longValueSafe());
       VM vm = new VM(config);
-      Program program = new Program(null, programCode, programInvoke, internalTx, config);
+      Program program = new Program(null, programCode, programInvoke, internalTx, config,
+          this.blockCap);
+      program.setRootTransactionId(this.rootTransactionId);
+      program.setRootCallConstant(this.isRootCallConstant);
       vm.play(program);
       result = program.getResult();
 
       getTrace().merge(program.getTrace());
       getResult().merge(result);
+      // always commit nonce
+      this.nonce = program.nonce;
 
       if (result.getException() != null || result.isRevert()) {
         logger.debug("contract run halted by Exception: contract: [{}], exception: [{}]",
@@ -658,7 +678,6 @@ public class Program {
         stackPushZero();
 
         if (result.getException() != null) {
-          refundGasAfterVM(msg.getGas(), result);
           return;
         }
       } else {
@@ -670,9 +689,9 @@ public class Program {
       if (byTestingSuite()) {
         logger.info("Testing run, skipping storage diff listener");
       }
-//      else if (Arrays.equals(transaction.getReceiveAddress(), internalTx.getReceiveAddress())) {
-//        storageDiffListener.merge(program.getStorageDiff());
-//      }
+      // else if (Arrays.equals(transaction.getReceiveAddress(), internalTx.getReceiveAddress())) {
+      //   storageDiffListener.merge(program.getStorageDiff());
+      // }
     } else {
       // 4. THE FLAG OF SUCCESS IS ONE PUSHED INTO THE STACK
       deposit.commit();
@@ -690,53 +709,70 @@ public class Program {
       returnDataBuffer = buffer;
     }
 
-    // 5. REFUND THE REMAIN GAS
+    // 5. REFUND THE REMAIN ENERGY
     if (result != null) {
-      BigInteger refundGas = msg.getGas().value().subtract(toBI(result.getGasUsed()));
-      if (isPositive(refundGas)) {
-        refundGas(refundGas.longValue(), "remaining gas from the internal call");
+      BigInteger refundEnergy = msg.getEnergy().value().subtract(toBI(result.getEnergyUsed()));
+      if (isPositive(refundEnergy)) {
+        refundEnergy(refundEnergy.longValueExact(), "remaining energy from the internal call");
         if (logger.isInfoEnabled()) {
-          logger.info("The remaining gas refunded, account: [{}], gas: [{}] ",
+          logger.info("The remaining energy refunded, account: [{}], energy: [{}] ",
               Hex.toHexString(senderAddress),
-              refundGas.toString());
+              refundEnergy.toString());
         }
       }
     } else {
-      refundGas(msg.getGas().longValue(), "remaining gas from the internal call");
+      refundEnergy(msg.getEnergy().longValue(), "remaining esnergy from the internal call");
+    }
+  }
+
+  public void increaseNonce() {
+    nonce++;
+  }
+
+  public void resetNonce() {
+    nonce = 0;
+  }
+
+  public void spendEnergy(long energyValue, String opName) {
+    if (getEnergylimitLeftLong() < energyValue) {
+      throw new OutOfEnergyException(
+          "Not enough energy for '%s' operation executing: curInvokeEnergyLimit[%d], curOpEnergy[%d], usedEnergy[%d]",
+          opName, invoke.getEnergyLimit(), energyValue, getResult().getEnergyUsed());
+    }
+    getResult().spendEnergy(energyValue);
+  }
+
+  public void checkCPUTimeLimit(String opName) {
+
+    if (Args.getInstance().isDebug()) {
+      return;
+    }
+    if (Args.getInstance().isSolidityNode()) {
+      return;
+    }
+    long vmNowInUs = System.nanoTime() / 1000;
+    if (vmNowInUs > getVmShouldEndInUs()) {
+      logger.error("minTimeRatio: {}", Args.getInstance().getMinTimeRatio());
+      logger.error("maxTimeRatio: {}", Args.getInstance().getMaxTimeRatio());
+      logger.error("vm should end time in us: {}", getVmShouldEndInUs());
+      logger.error("vm start time in us: {}", getVmStartInUs());
+      throw Exception.notEnoughTime(opName);
     }
 
   }
 
-  public void spendGas(long gasValue, String opName) {
-    if (getGaslimitLeftLong() < gasValue) {
-      throw new OutOfGasException(
-          "Not enough gas for '%s' operation executing: curInvokeGasLimit[%d], curOpgas[%d], usedGas[%d]",
-          opName, invoke.getGasLimit(), gasValue, getResult().getGasUsed());
-    }
-    getResult().spendGas(gasValue);
+  public void spendAllEnergy() {
+    spendEnergy(getEnergyLimitLeft().longValue(), "Spending all remaining");
   }
 
-  public void checkCPULimit(String opName) {
-    if (!Args.getInstance().isDebug()) {
-      long vmNowInUs = System.nanoTime() / 1000;
-      if (vmNowInUs > getVmShouldEndInUs()) {
-        throw Exception.notEnoughCPU(opName);
-      }
-    }
+  public void refundEnergy(long energyValue, String cause) {
+    logger.info("[{}] Refund for cause: [{}], energy: [{}]", invoke.hashCode(), cause, energyValue);
+    getResult().refundEnergy(energyValue);
   }
 
-  public void spendAllGas() {
-    spendGas(getGasLimitLeft().longValue(), "Spending all remaining");
-  }
-
-  public void refundGas(long gasValue, String cause) {
-    logger.info("[{}] Refund for cause: [{}], gas: [{}]", invoke.hashCode(), cause, gasValue);
-    getResult().refundGas(gasValue);
-  }
-
-  public void futureRefundGas(long gasValue) {
-    logger.info("Future refund added: [{}]", gasValue);
-    getResult().addFutureRefund(gasValue);
+  public void futureRefundEnergy(long energyValue) {
+    logger.info("Future refund added: [{}]", energyValue);
+    getResult().addFutureRefund(energyValue);
   }
 
   public void resetFutureRefund() {
@@ -744,20 +780,12 @@ public class Program {
   }
 
   public void storageSave(DataWord word1, DataWord word2) {
-    //storageSave(word1.getData(), word2.getData());
     DataWord keyWord = word1.clone();
     DataWord valWord = word2.clone();
-    getStorage().addStorageValue(convertToTronAddress(getOwnerAddress().getLast20Bytes()), keyWord,
-        valWord);
+    getContractState()
+        .putStorageValue(convertToTronAddress(getOwnerAddress().getLast20Bytes()), keyWord,
+            valWord);
   }
-
-    /*
-    public void storageSave(byte[] key, byte[] val) {
-        DataWord keyWord = new DataWord(key);
-        DataWord valWord = new DataWord(val);
-        getStorage().addStorageRow(getOwnerAddress().getLast20Bytes(), keyWord, valWord);
-    }
-    */
 
   public byte[] getCode() {
     return ops;
@@ -773,15 +801,11 @@ public class Program {
   }
 
   public DataWord getBlockHash(int index) {
-        /*
-        return index < this.getNumber().longValue() && index >= Math.max(256, this.getNumber().intValue()) - 256 ?
-                new DataWord(this.invoke.getBlockStore().getBlockHashByNumber(index, getPrevHash().getData())).clone() :
-                DataWord.ZERO.clone();
-        */
     if (index < this.getNumber().longValue()
         && index >= Math.max(256, this.getNumber().longValue()) - 256) {
 
-      List<BlockCapsule> blocks = this.invoke.getBlockStore().getBlockByLatestNum(1);
+      List<BlockCapsule> blocks = this.invoke.getBlockStore().getBlockByLatestNum(index);
+
       if (CollectionUtils.isNotEmpty(blocks)) {
         BlockCapsule blockCapsule = blocks.get(0);
         return new DataWord(blockCapsule.getBlockId().getBytes());
@@ -795,7 +819,7 @@ public class Program {
   }
 
   public DataWord getBalance(DataWord address) {
-    long balance = getStorage().getBalance(convertToTronAddress(address.getLast20Bytes()));
+    long balance = getContractState().getBalance(convertToTronAddress(address.getLast20Bytes()));
     return new DataWord(balance);
   }
 
@@ -811,12 +835,12 @@ public class Program {
     return new DataWord(1);
   }
 
-  public long getGaslimitLeftLong() {
-    return invoke.getGasLimit() - getResult().getGasUsed();
+  public long getEnergylimitLeftLong() {
+    return invoke.getEnergyLimit() - getResult().getEnergyUsed();
   }
 
-  public DataWord getGasLimitLeft() {
-    return new DataWord(invoke.getGasLimit() - getResult().getGasUsed());
+  public DataWord getEnergyLimitLeft() {
+    return new DataWord(invoke.getEnergyLimit() - getResult().getEnergyUsed());
   }
 
   public long getVmShouldEndInUs() {
@@ -857,7 +881,7 @@ public class Program {
   }
 
   public DataWord storageLoad(DataWord key) {
-    DataWord ret = getStorage()
+    DataWord ret = getContractState()
         .getStorageValue(convertToTronAddress(getOwnerAddress().getLast20Bytes()), key.clone());
     return ret == null ? null : ret.clone();
   }
@@ -879,7 +903,7 @@ public class Program {
   }
 
   public DataWord getDifficulty() {
-    return new DataWord(0); //invoke.getDifficulty().clone();
+    return invoke.getDifficulty().clone();
   }
 
   public boolean isStaticCall() {
@@ -899,7 +923,6 @@ public class Program {
   }
 
   public void fullTrace() {
-
     if (logger.isTraceEnabled() || listener != null) {
 
       StringBuilder stackData = new StringBuilder();
@@ -966,10 +989,10 @@ public class Program {
       logger.trace(" -- OPS --     {}", opsString);
       logger.trace(" -- STACK --   {}", stackData);
       logger.trace(" -- MEMORY --  {}", memoryData);
-      logger.trace("\n  Spent Drop: [{}]/[{}]\n  Left Gas:  [{}]\n",
-          getResult().getGasUsed(),
-          invoke.getGasLimit(),
-          getGasLimitLeft().longValue());
+      logger.trace("\n  Spent Drop: [{}]/[{}]\n  Left Energy:  [{}]\n",
+          getResult().getEnergyUsed(),
+          invoke.getEnergyLimit(),
+          getEnergyLimitLeft().longValue());
 
       StringBuilder globalOutput = new StringBuilder("\n");
       if (stackData.length() > 0) {
@@ -995,7 +1018,7 @@ public class Program {
       if (!Arrays.equals(txData, ops)) {
         globalOutput.append("\n  msg.data: ").append(Hex.toHexString(txData));
       }
-      globalOutput.append("\n\n  Spent Gas: ").append(getResult().getGasUsed());
+      globalOutput.append("\n\n  Spent Energy: ").append(getResult().getEnergyUsed());
 
       if (listener != null) {
         listener.output(globalOutput.toString());
@@ -1005,7 +1028,7 @@ public class Program {
 
   public void saveOpTrace() {
     if (this.pc < ops.length) {
-      trace.addOp(ops[pc], pc, getCallDeep(), getGasLimitLeft(), traceListener.resetActions());
+      trace.addOp(ops[pc], pc, getCallDeep(), getEnergyLimitLeft(), traceListener.resetActions());
     }
   }
 
@@ -1210,29 +1233,28 @@ public class Program {
   }
 
   public void callToPrecompiledAddress(MessageCall msg,
-      PrecompiledContracts.PrecompiledContract contract)
-      throws ContractValidateException {
+      PrecompiledContracts.PrecompiledContract contract) {
     returnDataBuffer = null; // reset return buffer right before the call
 
     if (getCallDeep() == MAX_DEPTH) {
       stackPushZero();
-      this.refundGas(msg.getGas().longValue(), " call deep limit reach");
+      this.refundEnergy(msg.getEnergy().longValue(), " call deep limit reach");
       return;
     }
 
-    // Repository track = getStorage().startTracking();
-    Deposit deposit = getStorage();
+    // Repository track = getContractState().startTracking();
+    Deposit deposit = getContractState().newDepositChild();
 
     byte[] senderAddress = convertToTronAddress(this.getOwnerAddress().getLast20Bytes());
     byte[] codeAddress = convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
     byte[] contextAddress = msg.getType().callIsStateless() ? senderAddress : codeAddress;
 
     // todo: need check endowment > 0 and not exceed?? because of "senderBalance < endowment"
-    long endowment = msg.getEndowment().value().longValue();
+    long endowment = msg.getEndowment().value().longValueExact();
     long senderBalance = deposit.getBalance(senderAddress);
     if (senderBalance < endowment) {
       stackPushZero();
-      this.refundGas(msg.getGas().longValue(), "refund gas from message call");
+      this.refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
       return;
     }
 
@@ -1240,35 +1262,45 @@ public class Program {
         msg.getInDataSize().intValue());
 
     // Charge for endowment - is not reversible by rollback
-    if(!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress) && senderAddress != contextAddress && msg.getEndowment().value().longValue() > 0) {
-      transfer(deposit, senderAddress, contextAddress, msg.getEndowment().value().longValue());
+    if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
+        && senderAddress != contextAddress && msg.getEndowment().value().longValueExact() > 0) {
+      try {
+        transfer(deposit, senderAddress, contextAddress,
+            msg.getEndowment().value().longValueExact());
+      } catch (ContractValidateException e) {
+        throw new BytecodeExecutionException("transfer failure");
+      }
     }
 
-    long requiredGas = contract.getGasForData(data);
-    if (requiredGas > msg.getGas().longValue()) {
+    long requiredEnergy = contract.getEnergyForData(data);
+    if (requiredEnergy > msg.getEnergy().longValue()) {
       // todo: new throw?? because it has done nothing, but outside don't know this
-      // regard as consumed the gas
-      this.refundGas(0, "call pre-compiled"); //matches cpp logic
+      // regard as consumed the energy
+      this.refundEnergy(0, "call pre-compiled"); //matches cpp logic
       this.stackPushZero();
       // deposit.rollback();
     } else {
       // Delegate or not. if is delegated, we will use msg sender, otherwise use contract address
       contract.setCallerAddress(convertToTronAddress(msg.getType().callIsDelegate() ?
           getCallerAddress().getLast20Bytes() : getOwnerAddress().getLast20Bytes()));
-      // this is the depositImpl, not storage as above
-      contract.setDeposit(this.invoke.getDeposit());
+      // this is the depositImpl, not contractState as above
+      contract.setDeposit(deposit);
       contract.setResult(this.result);
+      contract.setRootCallConstant(getRootCallConstant().booleanValue());
       Pair<Boolean, byte[]> out = contract.execute(data);
 
       if (out.getLeft()) { // success
-        this.refundGas(msg.getGas().longValue() - requiredGas, "call pre-compiled");
+        this.refundEnergy(msg.getEnergy().longValue() - requiredEnergy, "call pre-compiled");
         this.stackPushOne();
         returnDataBuffer = out.getRight();
         deposit.commit();
       } else {
-        // spend all gas on failure, push zero and revert state changes
-        this.refundGas(0, "call pre-compiled");
+        // spend all energy on failure, push zero and revert state changes
+        this.refundEnergy(0, "call pre-compiled");
         this.stackPushZero();
+        if (Objects.nonNull(this.result.getException())) {
+          throw result.getException();
+        }
         // deposit.rollback();
       }
 
@@ -1299,9 +1331,9 @@ public class Program {
   }
 
   @SuppressWarnings("serial")
-  public static class OutOfGasException extends BytecodeExecutionException {
+  public static class OutOfEnergyException extends BytecodeExecutionException {
 
-    public OutOfGasException(String message, Object... args) {
+    public OutOfEnergyException(String message, Object... args) {
       super(format(message, args));
     }
   }
@@ -1326,6 +1358,14 @@ public class Program {
   public static class OutOfStorageException extends BytecodeExecutionException {
 
     public OutOfStorageException(String message, Object... args) {
+      super(format(message, args));
+    }
+  }
+
+  @SuppressWarnings("serial")
+  public static class PrecompiledContractException extends BytecodeExecutionException {
+
+    public PrecompiledContractException(String message, Object... args) {
       super(format(message, args));
     }
   }
@@ -1367,6 +1407,14 @@ public class Program {
   }
 
   @SuppressWarnings("serial")
+  public static class JVMStackOverFlowException extends BytecodeExecutionException {
+
+    public JVMStackOverFlowException() {
+      super("StackOverflowError:  exceed default JVM stack size!");
+    }
+  }
+
+  @SuppressWarnings("serial")
   public static class StaticCallModificationException extends BytecodeExecutionException {
 
     public StaticCallModificationException() {
@@ -1376,35 +1424,53 @@ public class Program {
 
   public static class Exception {
 
-    public static OutOfGasException notEnoughOpGas(OpCode op, long opGas, long programGas) {
-      return new OutOfGasException(
-          "Not enough gas for '%s' operation executing: opGas[%d], programGas[%d];", op, opGas,
-          programGas);
+    public static OutOfEnergyException notEnoughOpEnergy(OpCode op, long opEnergy,
+        long programEnergy) {
+      return new OutOfEnergyException(
+          "Not enough energy for '%s' operation executing: opEnergy[%d], programEnergy[%d];", op,
+          opEnergy,
+          programEnergy);
     }
 
-    public static OutOfGasException notEnoughOpGas(OpCode op, DataWord opGas,
-        DataWord programGas) {
-      return notEnoughOpGas(op, opGas.longValue(), programGas.longValue());
+    public static OutOfEnergyException notEnoughSpendEnergy(String hint, long needEnergy,
+        long leftEnergy) {
+      return new OutOfEnergyException(
+          "Not enough energy for '%s' executing: needEnergy[%d], leftEnergy[%d];", hint, needEnergy,
+          leftEnergy);
+    }
+
+    public static OutOfEnergyException notEnoughOpEnergy(OpCode op, DataWord opEnergy,
+        DataWord programEnergy) {
+      return notEnoughOpEnergy(op, opEnergy.longValue(), programEnergy.longValue());
     }
 
 
-    public static OutOfResourceException notEnoughCPU(String op) {
+    public static OutOfResourceException notEnoughTime(String op) {
       return new OutOfResourceException(
           "CPU timeout for '%s' operation executing", op);
     }
 
 
     public static OutOfMemoryException memoryOverflow(OpCode op) {
-      return new OutOfMemoryException("Out of Memory when '%s' operation executing", op);
+      return new OutOfMemoryException("Out of Memory when '%s' operation executing", op.name());
     }
 
     public static OutOfStorageException notEnoughStorage() {
-      return new OutOfStorageException("Not enough Storage resource");
+      return new OutOfStorageException("Not enough ContractState resource");
     }
 
-    public static OutOfGasException gasOverflow(BigInteger actualGas, BigInteger gasLimit) {
-      return new OutOfGasException("Gas value overflow: actualGas[%d], gasLimit[%d];",
-          actualGas.longValue(), gasLimit.longValue());
+    public static PrecompiledContractException contractValidateException(TronException e) {
+      return new PrecompiledContractException(e.getMessage());
+    }
+
+    public static PrecompiledContractException contractExecuteException(TronException e) {
+      return new PrecompiledContractException(e.getMessage());
+    }
+
+    public static OutOfEnergyException energyOverflow(BigInteger actualEnergy,
+        BigInteger energyLimit) {
+      return new OutOfEnergyException("Energy value overflow: actualEnergy[%d], energyLimit[%d];",
+          actualEnergy.longValueExact(), energyLimit.longValueExact());
     }
 
     public static IllegalOperationException invalidOpCode(byte... opCode) {
@@ -1430,20 +1496,12 @@ public class Program {
     }
   }
 
-  public DataWord getCallGas(OpCode op, DataWord requestedGas, DataWord availableGas) {
-
-    // if (requestedGas.compareTo(availableGas) > 0) {
-    //   throw new Program.OutOfGasException(
-    //       "Not enough gas for '%s' operation executing: opGas[%d], programGas[%d]", op.name(),
-    //       requestedGas, availableGas);
-    // }
-    //
-    // return requestedGas.clone();
-    return requestedGas.compareTo(availableGas) > 0 ? availableGas : requestedGas;
+  public DataWord getCallEnergy(OpCode op, DataWord requestedEnergy, DataWord availableEnergy) {
+    return requestedEnergy.compareTo(availableEnergy) > 0 ? availableEnergy : requestedEnergy;
   }
 
-  public DataWord getCreateGas(DataWord availableGas) {
-    return availableGas;
+  public DataWord getCreateEnergy(DataWord availableEnergy) {
+    return availableEnergy;
   }
 
   /**

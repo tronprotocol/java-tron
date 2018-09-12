@@ -41,11 +41,13 @@ public class ProposalController {
             .get(ProposalCapsule.calculateDbKey(proposalNum));
       } catch (Exception ex) {
         logger.error("", ex);
+        continue;
       }
 
       if (proposalCapsule.hasProcessed()) {
         logger
-            .info("Proposal has processed，id:[{}],skip it and before it", proposalCapsule.getID());
+            .info("Proposal has processed，id:[{}],skip it and before it",
+                proposalCapsule.getID());
         //proposals with number less than this one, have been processed before
         break;
       }
@@ -74,14 +76,17 @@ public class ProposalController {
     List<ByteString> activeWitnesses = this.manager.getWitnessScheduleStore().getActiveWitnesses();
     if (proposalCapsule.hasMostApprovals(activeWitnesses)) {
       logger.info(
-          "Processing proposal,id:{},it has received most approvals ,begin to set dynamic parameter,{},and set  proposal state as DISAPPROVED",
+          "Processing proposal,id:{},it has received most approvals, "
+              + "begin to set dynamic parameter:{}, "
+              + "and set proposal state as APPROVED",
           proposalCapsule.getID(), proposalCapsule.getParameters());
       setDynamicParameters(proposalCapsule);
       proposalCapsule.setState(State.APPROVED);
       manager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
     } else {
       logger.info(
-          "Processing proposal,id:{},it has not received enough approvals,set proposal state as DISAPPROVED",
+          "Processing proposal,id:{}, "
+              + "it has not received enough approvals, set proposal state as DISAPPROVED",
           proposalCapsule.getID());
       proposalCapsule.setState(State.DISAPPROVED);
       manager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
@@ -128,6 +133,36 @@ public class ProposalController {
         }
         case (8): {
           manager.getDynamicPropertiesStore().saveCreateNewAccountBandwidthRate(entry.getValue());
+          break;
+        }
+        case (9): {
+          manager.getDynamicPropertiesStore().saveAllowCreationOfContracts(entry.getValue());
+          break;
+        }
+        case (10): {
+          if (manager.getDynamicPropertiesStore().getRemoveThePowerOfTheGr() == 0) {
+            manager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(entry.getValue());
+          }
+          break;
+        }
+        case (11): {
+          manager.getDynamicPropertiesStore().saveEnergyFee(entry.getValue());
+          break;
+        }
+        case (12): {
+          manager.getDynamicPropertiesStore().saveExchangeCreateFee(entry.getValue());
+          break;
+        }
+        case (13): {
+          manager.getDynamicPropertiesStore().saveMaxCpuTimeOfOneTX(entry.getValue());
+          break;
+        }
+        case (14): {
+          manager.getDynamicPropertiesStore().saveAllowUpdateAccountName(entry.getValue());
+          break;
+        }
+        case (15): {
+          manager.getDynamicPropertiesStore().saveAllowSameTokenName(entry.getValue());
           break;
         }
         default:

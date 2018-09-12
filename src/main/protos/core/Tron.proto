@@ -47,6 +47,17 @@ message Proposal {
   State state = 7;
 }
 
+// Exchange
+message Exchange {
+  int64 exchange_id = 1;
+  bytes creator_address = 2;
+  int64 create_time = 3;
+  bytes first_token_id = 6;
+  int64 first_token_balance = 7;
+  bytes second_token_id = 8;
+  int64 second_token_balance = 9;
+}
+
 message ChainParameters {
   repeated ChainParameter chainParameter = 1;
   message ChainParameter {
@@ -62,6 +73,7 @@ message Account {
     int64 frozen_balance = 1; // the frozen trx balance
     int64 expire_time = 2; // the expire time
   }
+  // account nick name
   bytes account_name = 1;
   AccountType type = 2;
   // the create address
@@ -72,8 +84,6 @@ message Account {
   repeated Vote votes = 5;
   // the other asset owned by this account
   map<string, int64> asset = 6;
-
-  // latest asset operation time
 
   // the frozen balance for bandwidth
   repeated Frozen frozen = 7;
@@ -107,14 +117,15 @@ message Account {
   int64 latest_consume_time = 21;
   int64 latest_consume_free_time = 22;
 
+  // the identity of this account, case insensitive
   bytes account_id = 23;
 
   message AccountResource {
-    // cpu resource, get from frozen
-    int64 cpu_usage = 1;
-    // the frozen balance for cpu
-    Frozen frozen_balance_for_cpu = 2;
-    int64 latest_consume_time_for_cpu = 3;
+    // energy resource, get from frozen
+    int64 energy_usage = 1;
+    // the frozen balance for energy
+    Frozen frozen_balance_for_energy = 2;
+    int64 latest_consume_time_for_energy = 3;
 
     //Frozen balance provided by other accounts to this account
     int64 acquired_delegated_frozen_balance_for_cpu = 4;
@@ -192,16 +203,13 @@ message TXOutputs {
 }
 
 message ResourceReceipt {
-  enum code {
-    SUCCESS = 0;
-    FAILED = 1;
-  }
-  int64 cpu_usage = 1;
-  int64 cpu_fee = 2;
-  int64 net_usage = 3;
-  int64 net_fee = 4;
-  int64 storage_delta = 5;
-  int64 storage_fee = 6;
+  int64 energy_usage = 1;
+  int64 energy_fee = 2;
+  int64 origin_energy_usage = 3;
+  int64 energy_usage_total = 4;
+  int64 net_usage = 5;
+  int64 net_fee = 6;
+  Transaction.Result.contractResult result = 7;
 }
 
 message Transaction {
@@ -227,19 +235,22 @@ message Transaction {
       ProposalDeleteContract = 18;
       SetAccountIdContract = 19;
       CustomContract = 20;
-      BuyStorageContract = 21;
-      BuyStorageBytesContract = 22;
-      SellStorageContract = 23;
+      // BuyStorageContract = 21;
+      // BuyStorageBytesContract = 22;
+      // SellStorageContract = 23;
       CreateSmartContract = 30;
       TriggerSmartContract = 31;
       GetContract = 32;
       UpdateSettingContract = 33;
+      ExchangeCreateContract = 41;
+      ExchangeInjectContract = 42;
+      ExchangeWithdrawContract = 43;
+      ExchangeTransactionContract = 44;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
     bytes provider = 3;
     bytes ContractName = 4;
-
   }
 
   message Result {
@@ -247,8 +258,25 @@ message Transaction {
       SUCESS = 0;
       FAILED = 1;
     }
+    enum contractResult {
+      DEFAULT = 0;
+      SUCCESS = 1;
+      REVERT = 2;
+      BAD_JUMP_DESTINATION = 3;
+      OUT_OF_MEMORY = 4;
+      PRECOMPILED_CONTRACT = 5;
+      STACK_TOO_SMALL = 6;
+      STACK_TOO_LARGE = 7;
+      ILLEGAL_OPERATION = 8;
+      STACK_OVERFLOW = 9;
+      OUT_OF_ENERGY = 10;
+      OUT_OF_TIME = 11;
+      JVM_STACK_OVER_FLOW = 12;
+      UNKNOWN = 13;
+    }
     int64 fee = 1;
     code ret = 2;
+    contractResult contractRet = 3;
 
     int64 withdraw_amount = 15;
     int64 unfreeze_amount = 16;
@@ -320,6 +348,7 @@ message BlockHeader {
     int64 number = 7;
     int64 witness_id = 8;
     bytes witness_address = 9;
+    int32 version = 10;
   }
   raw raw_data = 1;
   bytes witness_signature = 2;
@@ -428,12 +457,6 @@ message HelloMessage {
   BlockId solidBlockId = 5;
   BlockId headBlockId = 6;
 }
-
-message StorageItem {
-  bytes contract_address = 1;
-  map<string, bytes> items = 2;
-}
-
 
 message SmartContract {
   message ABI {

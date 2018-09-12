@@ -20,8 +20,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.overlay.client.PeerClient;
@@ -39,8 +40,8 @@ import org.tron.core.services.WitnessService;
 @Slf4j
 public abstract class BaseNetTest {
 
-  protected static AnnotationConfigApplicationContext context;
-  protected NodeImpl node;
+  protected static TronApplicationContext context;
+  protected static NodeImpl node;
   protected RpcApiService rpcApiService;
   protected PeerClient peerClient;
   protected ChannelManager channelManager;
@@ -48,13 +49,13 @@ public abstract class BaseNetTest {
   protected Manager manager;
   private Application appT;
 
-  private String dbPath;
+  private static String dbPath;
   private String dbDirectory;
   private String indexDirectory;
 
   private int port;
 
-  private ExecutorService executorService = Executors.newFixedThreadPool(1);
+  private static ExecutorService executorService = Executors.newFixedThreadPool(1);
 
   public BaseNetTest(String dbPath, String dbDirectory, String indexDirectory, int port) {
     this.dbPath = dbPath;
@@ -84,7 +85,7 @@ public abstract class BaseNetTest {
         cfgArgs.setNeedSyncCheck(false);
         cfgArgs.setNodeExternalIp("127.0.0.1");
 
-        context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+        context = new TronApplicationContext(DefaultConfig.class);
 
         if (cfgArgs.isHelp()) {
           logger.info("Here is the help message.");
@@ -159,14 +160,15 @@ public abstract class BaseNetTest {
   public void destroy() {
     executorService.shutdownNow();
     Args.clearParam();
-    FileUtil.deleteDir(new File(dbPath));
     Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(node, "getActivePeer");
     for (PeerConnection peer : peerConnections) {
       peer.close();
     }
     peerClient.close();
+    context.destroy();
     node.shutDown();
     appT.shutdownServices();
     appT.shutdown();
+    FileUtil.deleteDir(new File(dbPath));
   }
 }

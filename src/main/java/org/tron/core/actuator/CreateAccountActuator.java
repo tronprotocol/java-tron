@@ -28,12 +28,14 @@ public class CreateAccountActuator extends AbstractActuator {
     long fee = calcFee();
     try {
       AccountCreateContract accountCreateContract = contract.unpack(AccountCreateContract.class);
-      AccountCapsule accountCapsule = new AccountCapsule(accountCreateContract,
-          dbManager.getHeadBlockTimeStamp());
-      dbManager.getAccountStore()
-          .put(accountCreateContract.getAccountAddress().toByteArray(), accountCapsule);
+      AccountCapsule accountCapsule = new AccountCapsule(accountCreateContract, dbManager.getHeadBlockTimeStamp());
+
+      dbManager.getAccountStore().put(accountCreateContract.getAccountAddress().toByteArray(), accountCapsule);
 
       dbManager.adjustBalance(accountCreateContract.getOwnerAddress().toByteArray(), -fee);
+      // Add to blackhole address
+      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
+
       ret.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);

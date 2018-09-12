@@ -4,24 +4,39 @@ import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_PRECOMPILED_TYPE;
 
+import java.util.Objects;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.InternalTransaction;
+import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
+import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
+import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
+import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
+import org.tron.common.runtime.vm.program.Program.OutOfMemoryException;
+import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
+import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
+import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
+import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.args.Args;
+import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.OutOfSlotTimeException;
-import org.tron.core.exception.TransactionTraceException;
-import org.tron.protos.Contract.CreateSmartContract;
+import org.tron.core.exception.ReceiptCheckErrException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Contract.TriggerSmartContract;
-import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
+@Slf4j(topic = "TransactionTrace")
 public class TransactionTrace {
 
   private TransactionCapsule trx;
@@ -30,15 +45,25 @@ public class TransactionTrace {
 
   private Manager dbManager;
 
-  private CpuProcessor cpuProcessor;
-
-  private StorageMarket storageMarket;
+  private EnergyProcessor energyProcessor;
 
   private InternalTransaction.TrxType trxType;
+
+  private long txStartTimeInMs;
 
   public TransactionCapsule getTrx() {
     return trx;
   }
+
+  public enum TimeResultType {
+    NORMAL,
+    LONG_RUNNING,
+    OUT_OF_TIME
+  }
+
+  @Getter
+  @Setter
+  private TimeResultType timeResultType = TimeResultType.NORMAL;
 
   public TransactionTrace(TransactionCapsule trx, Manager dbManager) {
     this.trx = trx;
@@ -55,72 +80,19 @@ public class TransactionTrace {
         trxType = TRX_PRECOMPILED_TYPE;
     }
 
-    //TODO: set bill owner
-    receipt = new ReceiptCapsule(Sha256Hash.ZERO_HASH);
     this.dbManager = dbManager;
     this.receipt = new ReceiptCapsule(Sha256Hash.ZERO_HASH);
 
-    this.cpuProcessor = new CpuProcessor(this.dbManager);
-    this.storageMarket = new StorageMarket(this.dbManager);
+    this.energyProcessor = new EnergyProcessor(this.dbManager);
   }
 
-  private void checkForSmartContract() throws TransactionTraceException {
-
-    //todo remove maxCpuInUsBySender
-    long maxCpuUsageInUs = 100000;
-    long value;
-    long limitInDrop = trx.getInstance().getRawData().getFeeLimit(); // in drop
-    if (TRX_CONTRACT_CREATION_TYPE == trxType) {
-      CreateSmartContract contract = ContractCapsule
-          .getSmartContractFromTransaction(trx.getInstance());
-      SmartContract smartContract = contract.getNewContract();
-      // todo modify later
-      value = smartContract.getCallValue();
-    } else if (TRX_CONTRACT_CALL_TYPE == trxType) {
-      TriggerSmartContract contract = ContractCapsule
-          .getTriggerContractFromTransaction(trx.getInstance());
-      // todo modify later
-      value = contract.getCallValue();
-    } else {
-      return;
-    }
-    AccountCapsule owner = dbManager.getAccountStore()
-        .get(TransactionCapsule.getOwner(trx.getInstance().getRawData().getContract(0)));
-    long balance = owner.getBalance();
-
-    CpuProcessor cpuProcessor = new CpuProcessor(this.dbManager);
-    long cpuInUsFromFreeze = cpuProcessor.getAccountLeftCpuInUsFromFreeze(owner);
-
-    checkAccountInputLimitAndMaxWithinBalance(maxCpuUsageInUs, value,
-        balance, limitInDrop, cpuInUsFromFreeze, Constant.SUN_PER_GAS);
-  }
-
-  private boolean checkAccountInputLimitAndMaxWithinBalance(long maxCpuUsageInUs, long value,
-      long balance, long limitInDrop, long cpuInUsFromFreeze, long dropPerCpuUs)
-      throws TransactionTraceException {
-
-    if (balance < Math.addExact(limitInDrop, value)) {
-      throw new TransactionTraceException("balance < limitInDrop + value");
-    }
-    long CpuInUsFromDrop = Math.floorDiv(limitInDrop, dropPerCpuUs);
-    long cpuNeedDrop;
-    if (CpuInUsFromDrop > cpuInUsFromFreeze) {
-      // prior to use freeze, so not include "="
-      cpuNeedDrop = maxCpuUsageInUs * dropPerCpuUs;
-    } else {
-      cpuNeedDrop = 0;
-    }
-
-    if (limitInDrop < cpuNeedDrop) {
-      throw new TransactionTraceException("limitInDrop < cpuNeedDrop");
-    }
-
-    return true;
+  public boolean needVM() {
+    return this.trxType == TRX_CONTRACT_CALL_TYPE || this.trxType == TRX_CONTRACT_CREATION_TYPE;
   }
 
   //pre transaction check
-  public void init() throws TransactionTraceException {
-
+  public void init() {
+    txStartTimeInMs = System.currentTimeMillis();
     // switch (trxType) {
     //   case TRX_PRECOMPILED_TYPE:
     //     break;
@@ -135,29 +107,49 @@ public class TransactionTrace {
   }
 
   //set bill
-  public void setBill(long cpuUseage, long storageUseage) {
-    receipt.setCpuUsage(cpuUseage);
-    receipt.setStorageDelta(storageUseage);
+  public void setBill(long energyUsage) {
+    if (energyUsage < 0) {
+      energyUsage = 0L;
+    }
+    receipt.setEnergyUsageTotal(energyUsage);
   }
 
-
-  private void checkStorage() {
-    //TODO if not enough buy some storage auto
-    receipt.buyStorage(0);
+  //set net bill
+  public void setNetBill(long netUsage, long netFee) {
+    receipt.setNetUsage(netUsage);
+    receipt.setNetFee(netFee);
   }
 
   public void exec(Runtime runtime)
-      throws ContractExeException, ContractValidateException, OutOfSlotTimeException {
+      throws ContractExeException, ContractValidateException, VMIllegalException {
     /**  VM execute  **/
-    runtime.init();
     runtime.execute();
     runtime.go();
+
+    if (TRX_PRECOMPILED_TYPE != runtime.getTrxType()) {
+      if (contractResult.OUT_OF_TIME
+          .equals(receipt.getResult())) {
+        setTimeResultType(TimeResultType.OUT_OF_TIME);
+      } else if (System.currentTimeMillis() - txStartTimeInMs
+          > Args.getInstance().getLongRunningTime()) {
+        setTimeResultType(TimeResultType.LONG_RUNNING);
+      }
+    }
+  }
+
+  public void finalization(Runtime runtime) throws ContractExeException {
+    try {
+      pay();
+    } catch (BalanceInsufficientException e) {
+      throw new ContractExeException(e.getMessage());
+    }
+    runtime.finalization();
   }
 
   /**
-   * pay actually bill(include CPU and storage).
+   * pay actually bill(include ENERGY and storage).
    */
-  public void pay() {
+  public void pay() throws BalanceInsufficientException {
     byte[] originAccount;
     byte[] callerAccount;
     long percent = 0;
@@ -184,18 +176,84 @@ public class TransactionTrace {
     // originAccount Percent = 30%
     AccountCapsule origin = dbManager.getAccountStore().get(originAccount);
     AccountCapsule caller = dbManager.getAccountStore().get(callerAccount);
-    receipt.payCpuBill(
+    receipt.payEnergyBill(
         dbManager,
         origin,
         caller,
         percent,
-        cpuProcessor,
+        energyProcessor,
         dbManager.getWitnessController().getHeadSlot());
+  }
 
-    receipt.payStorageBill(dbManager, origin, caller, percent, storageMarket);
+  public void check() throws ReceiptCheckErrException {
+    if (!needVM()) {
+      return;
+    }
+    if (Objects.isNull(trx.getContractRet())) {
+      throw new ReceiptCheckErrException("null resultCode");
+    }
+    if (!trx.getContractRet().equals(receipt.getResult())) {
+      logger.info("this tx resultCode in received block: {}", trx.getContractRet());
+      logger.info("this tx resultCode in self: {}", receipt.getResult());
+      throw new ReceiptCheckErrException("Different resultCode");
+    }
   }
 
   public ReceiptCapsule getReceipt() {
     return receipt;
+  }
+
+  public void setResult(Runtime runtime) {
+    if (!needVM()) {
+      return;
+    }
+    RuntimeException exception = runtime.getResult().getException();
+    if (Objects.isNull(exception) && StringUtils
+        .isEmpty(runtime.getRuntimeError()) && !runtime.getResult().isRevert()) {
+      receipt.setResult(contractResult.SUCCESS);
+      return;
+    }
+    if (runtime.getResult().isRevert()) {
+      receipt.setResult(contractResult.REVERT);
+      return;
+    }
+    if (exception instanceof IllegalOperationException) {
+      receipt.setResult(contractResult.ILLEGAL_OPERATION);
+      return;
+    }
+    if (exception instanceof OutOfEnergyException) {
+      receipt.setResult(contractResult.OUT_OF_ENERGY);
+      return;
+    }
+    if (exception instanceof BadJumpDestinationException) {
+      receipt.setResult(contractResult.BAD_JUMP_DESTINATION);
+      return;
+    }
+    if (exception instanceof OutOfResourceException) {
+      receipt.setResult(contractResult.OUT_OF_TIME);
+      return;
+    }
+    if (exception instanceof OutOfMemoryException) {
+      receipt.setResult(contractResult.OUT_OF_MEMORY);
+      return;
+    }
+    if (exception instanceof PrecompiledContractException) {
+      receipt.setResult(contractResult.PRECOMPILED_CONTRACT);
+      return;
+    }
+    if (exception instanceof StackTooSmallException) {
+      receipt.setResult(contractResult.STACK_TOO_SMALL);
+      return;
+    }
+    if (exception instanceof StackTooLargeException) {
+      receipt.setResult(contractResult.STACK_TOO_LARGE);
+      return;
+    }
+    if (exception instanceof JVMStackOverFlowException) {
+      receipt.setResult(contractResult.JVM_STACK_OVER_FLOW);
+      return;
+    }
+    receipt.setResult(contractResult.UNKNOWN);
+    return;
   }
 }

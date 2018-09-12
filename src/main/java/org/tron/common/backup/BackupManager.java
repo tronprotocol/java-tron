@@ -7,37 +7,22 @@ import static org.tron.common.net.udp.message.UdpMessageTypeEnum.BACKUP_KEEP_ALI
 
 import io.netty.util.internal.ConcurrentSet;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.Timer;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.net.udp.handler.EventHandler;
 import org.tron.common.net.udp.handler.MessageHandler;
 import org.tron.common.net.udp.handler.UdpEvent;
 import org.tron.common.net.udp.message.Message;
 import org.tron.common.net.udp.message.backup.KeepAliveMessage;
-import org.tron.common.net.udp.message.discover.FindNodeMessage;
-import org.tron.common.net.udp.message.discover.NeighborsMessage;
-import org.tron.common.net.udp.message.discover.PingMessage;
-import org.tron.common.net.udp.message.discover.PongMessage;
-import org.tron.common.overlay.discover.node.Node;
-import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.core.config.args.Args;
 
 @Component
 public class BackupManager implements EventHandler{
-
   private static final Logger logger = LoggerFactory.getLogger("BackupManager");
 
   private Args args = Args.getInstance();
@@ -112,7 +97,7 @@ public class BackupManager implements EventHandler{
         members.forEach(member -> messageHandler.accept(new UdpEvent(new KeepAliveMessage(status.equals(MASTER), priority),
             new InetSocketAddress(member, port))));
       } catch (Throwable t) {
-        logger.error("Exception in send keep alive message.", t.getMessage());
+        logger.error("Exception in send keep alive message:{}" , t.getMessage());
       }
     }, 1, 1, TimeUnit.SECONDS);
   }
@@ -134,18 +119,15 @@ public class BackupManager implements EventHandler{
 
     KeepAliveMessage keepAliveMessage = (KeepAliveMessage) msg;
 
-    if (status.equals(MASTER)){
-      if (keepAliveMessage.getFlag() && keepAliveMessage.getPriority() > priority){
-        setStatus(SLAVER);
-        return;
-      }
+    if (status.equals(MASTER) && (keepAliveMessage.getFlag() &&
+        keepAliveMessage.getPriority() > priority)){
+      setStatus(SLAVER);
+      return;
     }
 
-    if (status.equals(INIT)){
-      if (keepAliveMessage.getFlag() || keepAliveMessage.getPriority() > priority){
+    if (status.equals(INIT) &&
+        (keepAliveMessage.getFlag() || keepAliveMessage.getPriority() > priority)){
         setStatus(SLAVER);
-        return;
-      }
     }
   }
 

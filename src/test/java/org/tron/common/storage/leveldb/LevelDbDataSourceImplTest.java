@@ -34,16 +34,19 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
+import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 
 @Slf4j
 public class LevelDbDataSourceImplTest {
 
   private static final String dbPath = "output-levelDb-test";
-  LevelDbDataSourceImpl dataSourceTest;
+  private static  LevelDbDataSourceImpl dataSourceTest;
+
   private byte[] value1 = "10000".getBytes();
   private byte[] value2 = "20000".getBytes();
   private byte[] value3 = "30000".getBytes();
@@ -90,7 +93,7 @@ public class LevelDbDataSourceImplTest {
     assertNotNull(dataSourceTest.getData(key));
     assertEquals(1, dataSourceTest.allKeys().size());
     assertEquals("50000", ByteArray.toStr(dataSourceTest.getData(key1.getBytes())));
-
+    dataSourceTest.closeDB();
   }
 
   @Test
@@ -99,7 +102,7 @@ public class LevelDbDataSourceImplTest {
         Args.getInstance().getOutputDirectory(), "test_reset");
     dataSource.resetDb();
     assertEquals(0, dataSource.allKeys().size());
-    //dataSource.closeDB();
+    dataSource.closeDB();
   }
 
   @Test
@@ -122,6 +125,7 @@ public class LevelDbDataSourceImplTest {
     assertEquals("50000", ByteArray.toStr(dataSource.getData(key1.getBytes())));
     assertEquals("10000", ByteArray.toStr(dataSource.getData(key2.getBytes())));
     assertEquals(2, dataSource.allKeys().size());
+    dataSource.closeDB();
   }
 
   @Test
@@ -135,7 +139,7 @@ public class LevelDbDataSourceImplTest {
     byte[] value = dataSource.getData(key);
     String s = ByteArray.toStr(value);
     assertNull(s);
-
+    dataSource.closeDB();
   }
 
   @Test
@@ -161,6 +165,7 @@ public class LevelDbDataSourceImplTest {
     dataSource.putData(key2, value2);
     assertEquals(2, dataSource.allKeys().size());
     dataSource.resetDb();
+    dataSource.closeDB();
   }
 
   @Test(timeout = 1000)
@@ -195,6 +200,7 @@ public class LevelDbDataSourceImplTest {
     });
     assertEquals(2, dataSource.allKeys().size());
     dataSource.resetDb();
+    dataSource.closeDB();
   }
 
   private void putSomeKeyValue(LevelDbDataSourceImpl dataSource) {
@@ -228,6 +234,7 @@ public class LevelDbDataSourceImplTest {
 
     putSomeKeyValue(dataSource);
     dataSource.resetDb();
+    dataSource.closeDB();
   }
 
   @Test
@@ -244,6 +251,7 @@ public class LevelDbDataSourceImplTest {
       Assert.assertTrue("getValuesNext", hashSet.contains(ByteArray.toStr(valeu)));
     });
     dataSource.resetDb();
+    dataSource.closeDB();
   }
 
   @Test
@@ -262,5 +270,6 @@ public class LevelDbDataSourceImplTest {
     seekKeyLimitNext = dataSource.getValuesPrev("0000000100".getBytes(), 2);
     Assert.assertEquals("getValuesPrev2", 0, seekKeyLimitNext.size());
     dataSource.resetDb();
+    dataSource.closeDB();
   }
 }

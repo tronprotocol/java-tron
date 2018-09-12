@@ -82,7 +82,7 @@ public class WallettestP0002 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     logger.info("this is before class");
     walletClient = new WalletClient(testKey002);
@@ -94,7 +94,7 @@ public class WallettestP0002 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testAssetIssue() {
 
     ByteString addressBS1 = ByteString.copyFrom(fromAddress);
@@ -122,7 +122,7 @@ public class WallettestP0002 {
     Assert.assertTrue(ret.getOwnerAddress() != null);
   }*/
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testTransferAsset() {
     //byte assertName[] = name.getBytes();
     //logger.info(Long.toString(walletClient.getAssetIssueByName(name).getTotalSupply()));
@@ -144,7 +144,7 @@ public class WallettestP0002 {
     Assert.assertTrue(result.get().getAssetIssueCount() == 1);
   }*/
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testGetAssetIssueList() {
     Optional<GrpcAPI.AssetIssueList> result = walletClient.getAssetIssueList();
     GrpcAPI.AssetIssueList getAssetIssueList = result.get();
@@ -168,7 +168,7 @@ public class WallettestP0002 {
     logger.info("This is TestGetAssetIssueByTimestamp.");
   }*/
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testParticipateAssetIssue() {
     Contract.ParticipateAssetIssueContract result = walletClient.participateAssetIssueContract(
         toAddress, name.getBytes(), fromAddress, AMOUNT);
@@ -176,7 +176,7 @@ public class WallettestP0002 {
     Assert.assertTrue(result.getAmount() == AMOUNT);
   }
 
-  @AfterClass
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

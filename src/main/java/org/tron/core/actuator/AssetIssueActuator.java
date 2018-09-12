@@ -138,7 +138,7 @@ public class AssetIssueActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid assetName");
     }
     if ((!assetIssueContract.getAbbr().isEmpty()) && !TransactionUtil
-    	.validTokenAbbrName(assetIssueContract.getAbbr().toByteArray())) {
+        .validAssetName(assetIssueContract.getAbbr().toByteArray())) {
       throw new ContractValidateException("Invalid abbreviation for token");
     }
     if (!TransactionUtil.validUrl(assetIssueContract.getUrl().toByteArray())) {
@@ -162,12 +162,10 @@ public class AssetIssueActuator extends AbstractActuator {
       throw new ContractValidateException("Start time should be greater than HeadBlockTime");
     }
 
-    /*
     if (this.dbManager.getAssetIssueStore().get(assetIssueContract.getName().toByteArray())
-        != null) {
+        != null && this.dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       throw new ContractValidateException("Token exists");
     }
-    */
 
     if (assetIssueContract.getTotalSupply() <= 0) {
       throw new ContractValidateException("TotalSupply must greater than 0!");

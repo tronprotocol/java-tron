@@ -26,75 +26,78 @@ import org.tron.protos.Protocol.ReasonCode;
 @Component
 public class PeerClient {
 
-    private static final Logger logger = LoggerFactory.getLogger("PeerClient");
+  private static final Logger logger = LoggerFactory.getLogger("PeerClient");
 
-    @Autowired
-    private ApplicationContext ctx;
+  @Autowired
+  private ApplicationContext ctx;
 
-    @Autowired
-    @Lazy
-    private NodeImpl node;
+  @Autowired
+  @Lazy
+  private NodeImpl node;
 
-    private EventLoopGroup workerGroup;
+  private EventLoopGroup workerGroup;
 
-    public PeerClient() {
-        workerGroup = new NioEventLoopGroup(0, new ThreadFactory() {
-            AtomicInteger cnt = new AtomicInteger(0);
-            @Override
-            public Thread newThread(Runnable r) {
-                return new Thread(r, "TronJClientWorker-" + cnt.getAndIncrement());
-            }
+  public PeerClient() {
+    workerGroup = new NioEventLoopGroup(0, new ThreadFactory() {
+      AtomicInteger cnt = new AtomicInteger(0);
+
+      @Override
+      public Thread newThread(Runnable r) {
+        return new Thread(r, "TronJClientWorker-" + cnt.getAndIncrement());
+      }
+    });
+  }
+
+  public void connect(String host, int port, String remoteId) {
+    try {
+      ChannelFuture f = connectAsync(host, port, remoteId, false);
+      f.sync().channel().closeFuture().sync();
+    } catch (Exception e) {
+      logger
+          .info("PeerClient: Can't connect to " + host + ":" + port + " (" + e.getMessage() + ")");
+    }
+  }
+
+  public ChannelFuture connectAsync(NodeHandler nodeHandler, boolean discoveryMode) {
+    Node node = nodeHandler.getNode();
+    return connectAsync(node.getHost(), node.getPort(), node.getHexId(), discoveryMode)
+        .addListener((ChannelFutureListener) future -> {
+          if (!future.isSuccess()) {
+            logger.error("connect to {}:{} fail,cause:{}", node.getHost(), node.getPort(),
+                future.cause().getMessage());
+            nodeHandler.getNodeStatistics().nodeDisconnectedLocal(ReasonCode.CONNECT_FAIL);
+            nodeHandler.getNodeStatistics().notifyDisconnect();
+            future.channel().close();
+          }
         });
-    }
+  }
 
-    public void connect(String host, int port, String remoteId) {
-        try {
-            ChannelFuture f = connectAsync(host, port, remoteId, false);
-            f.sync().channel().closeFuture().sync();
-        } catch (Exception e) {
-            logger.info("PeerClient: Can't connect to " + host + ":" + port + " (" + e.getMessage() + ")");
-        }
-    }
+  public ChannelFuture connectAsync(String host, int port, String remoteId, boolean discoveryMode) {
 
-    public ChannelFuture connectAsync(NodeHandler nodeHandler, boolean discoveryMode) {
-        Node node = nodeHandler.getNode();
-        return connectAsync(node.getHost(), node.getPort(), node.getHexId(), discoveryMode)
-            .addListener((ChannelFutureListener) future -> {
-                if (!future.isSuccess()) {
-                    logger.error("connect to {}:{} fail,cause:{}", node.getHost(), node.getPort(),
-                        future.cause().getMessage());
-                    nodeHandler.getNodeStatistics().nodeDisconnectedLocal(ReasonCode.CONNECT_FAIL);
-                    nodeHandler.getNodeStatistics().notifyDisconnect();
-                    future.channel().close();
-                }
-            });
-    }
+    logger.info("connect peer {} {} {}", host, port, remoteId);
 
-    public ChannelFuture connectAsync(String host, int port, String remoteId, boolean discoveryMode) {
+    TronChannelInitializer tronChannelInitializer = ctx
+        .getBean(TronChannelInitializer.class, remoteId);
+    tronChannelInitializer.setPeerDiscoveryMode(discoveryMode);
+    tronChannelInitializer.setNodeImpl(node);
 
-        logger.info("connect peer {} {} {}", host, port, remoteId);
+    Bootstrap b = new Bootstrap();
+    b.group(workerGroup);
+    b.channel(NioSocketChannel.class);
 
-        TronChannelInitializer tronChannelInitializer = ctx.getBean(TronChannelInitializer.class, remoteId);
-        tronChannelInitializer.setPeerDiscoveryMode(discoveryMode);
-        tronChannelInitializer.setNodeImpl(node);
+    b.option(ChannelOption.SO_KEEPALIVE, true);
+    b.option(ChannelOption.MESSAGE_SIZE_ESTIMATOR, DefaultMessageSizeEstimator.DEFAULT);
+    b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Args.getInstance().getNodeConnectionTimeout());
+    b.remoteAddress(host, port);
 
-        Bootstrap b = new Bootstrap();
-        b.group(workerGroup);
-        b.channel(NioSocketChannel.class);
+    b.handler(tronChannelInitializer);
 
-        b.option(ChannelOption.SO_KEEPALIVE, true);
-        b.option(ChannelOption.MESSAGE_SIZE_ESTIMATOR, DefaultMessageSizeEstimator.DEFAULT);
-        b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Args.getInstance().getNodeConnectionTimeout());
-        b.remoteAddress(host, port);
+    // Start the client.
+    return b.connect();
+  }
 
-        b.handler(tronChannelInitializer);
-
-        // Start the client.
-        return b.connect();
-    }
-
-    public void close() {
-        workerGroup.shutdownGracefully();
-        workerGroup.terminationFuture().syncUninterruptibly();
-    }
+  public void close() {
+    workerGroup.shutdownGracefully();
+    workerGroup.terminationFuture().syncUninterruptibly();
+  }
 }

@@ -5,7 +5,7 @@ import io.grpc.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.junit.*;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.crypto.ECKey;
@@ -37,13 +37,13 @@ import java.util.stream.IntStream;
 
 @Slf4j
 public class GetLostBlockIdsTest {
-    private static AnnotationConfigApplicationContext context;
-    private NodeImpl node;
+    private static TronApplicationContext context;
+    private static NodeImpl node;
     RpcApiService rpcApiService;
-    PeerClient peerClient;
+    private static PeerClient peerClient;
     ChannelManager channelManager;
     SyncPool pool;
-    Application appT;
+    private static Application appT;
     Manager dbManager;
 
     private static final String dbPath = "output-GetLostBlockIdsTest";
@@ -64,7 +64,7 @@ public class GetLostBlockIdsTest {
         BlockCapsule capsule = null;
         for (int i = 0; i<5; i++) {
             number = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1;
-            capsule = createTestBlockCapsule(number, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(), addressToProvateKeys);
+            capsule = createTestBlockCapsule(1533529947843L + 3000L * i ,number, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(), addressToProvateKeys);
             try {
                 dbManager.pushBlock(capsule);
             } catch (Exception e) {
@@ -72,7 +72,7 @@ public class GetLostBlockIdsTest {
             }
         }
 
-        //blockChainSummary 为空
+        //blockChainSummary is empty
         try {
             blockChainSummary = new ArrayList<BlockId>();
             blockIds = del.getLostBlockIds(blockChainSummary);
@@ -81,7 +81,7 @@ public class GetLostBlockIdsTest {
         }
         Assert.assertTrue(blockIds.size() == 6);
 
-        //blockChainSummary 为创世块
+        //blockChainSummary only have a genesis block
         try {
             blockChainSummary = new ArrayList<BlockId>();
             blockChainSummary.add(dbManager.getGenesisBlockId());
@@ -91,7 +91,7 @@ public class GetLostBlockIdsTest {
         }
         Assert.assertTrue(blockIds.size() == 6);
 
-        //blockChainSummary 为创世块、第2块、第3块
+        //blockChainSummary have genesis block、2nd block、3rd block
         BlockId except_first_block = null;
         try {
             blockChainSummary = new ArrayList<BlockId>();
@@ -105,7 +105,7 @@ public class GetLostBlockIdsTest {
         }
         Assert.assertTrue(blockIds.size() == 3 && Arrays.equals(blockIds.peekFirst().getBytes(), except_first_block.getBytes()));
 
-        //blockChainSummary 为支链上的第2块、第4块，并且都不在主链
+        //blockChainSummary have 2nd block、4th block，and they are on fork chain
         try {
             BlockCapsule capsule2 = new BlockCapsule(2,
                     Sha256Hash.wrap(ByteString.copyFrom(
@@ -124,7 +124,7 @@ public class GetLostBlockIdsTest {
         }
         Assert.assertTrue(blockIds.size() == 0);
 
-        //blockChainSummary 为支链上的第2块、第4块，第2块在主链
+        //blockChainSummary have 2nd block(main chain)、4th block(fork chain)
         try {
             BlockCapsule capsule4 = new BlockCapsule(4,
                     Sha256Hash.wrap(ByteString.copyFrom(
@@ -167,6 +167,10 @@ public class GetLostBlockIdsTest {
     private BlockCapsule createTestBlockCapsule(
             long number, ByteString hash, Map<ByteString, String> addressToProvateKeys) {
         long time = System.currentTimeMillis();
+        return createTestBlockCapsule(time,number,hash,addressToProvateKeys);
+    }
+    private BlockCapsule createTestBlockCapsule(long time ,
+        long number, ByteString hash, Map<ByteString, String> addressToProvateKeys) {
         WitnessController witnessController = dbManager.getWitnessController();
         ByteString witnessAddress =
                 witnessController.getScheduledWitness(witnessController.getSlotAtTime(time));
@@ -198,7 +202,7 @@ public class GetLostBlockIdsTest {
                 cfgArgs.setNeedSyncCheck(false);
                 cfgArgs.setNodeExternalIp("127.0.0.1");
 
-                context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+                context = new TronApplicationContext(DefaultConfig.class);
 
                 if (cfgArgs.isHelp()) {
                     logger.info("Here is the help message.");
@@ -275,10 +279,9 @@ public class GetLostBlockIdsTest {
         }
     }
 
-    @After
-    public void removeDb() {
+    @AfterClass
+    public static void destroy() {
         Args.clearParam();
-        FileUtil.deleteDir(new File(dbPath));
         Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(node, "getActivePeer");
         for (PeerConnection peer : peerConnections) {
             peer.close();
@@ -287,5 +290,6 @@ public class GetLostBlockIdsTest {
         appT.shutdownServices();
         appT.shutdown();
         context.destroy();
+        FileUtil.deleteDir(new File(dbPath));
     }
 }

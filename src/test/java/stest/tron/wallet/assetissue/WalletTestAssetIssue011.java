@@ -71,7 +71,7 @@ public class WalletTestAssetIssue011 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(testKeyForAssetIssue011);
     PublicMethed.printAddress(transferAssetCreateKey);
@@ -108,7 +108,7 @@ public class WalletTestAssetIssue011 {
     }
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testTransferAssetCreateAccount() {
     //Transfer asset to create an account.
     Assert.assertTrue(PublicMethed
@@ -128,7 +128,7 @@ public class WalletTestAssetIssue011 {
   }
 
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

@@ -72,17 +72,20 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
               .clearFrozen().addAllFrozen(frozenList).build());
 
           break;
-        case CPU:
-          unfreezeBalance = accountCapsule.getAccountResource().getFrozenBalanceForCpu()
+        case ENERGY:
+          unfreezeBalance = accountCapsule.getAccountResource().getFrozenBalanceForEnergy()
               .getFrozenBalance();
 
           AccountResource newAccountResource = accountCapsule.getAccountResource().toBuilder()
-              .clearFrozenBalanceForCpu().build();
+              .clearFrozenBalanceForEnergy().build();
           accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
               .setBalance(oldBalance + unfreezeBalance)
               .setAccountResource(newAccountResource).build());
 
           break;
+          default:
+              //this should never happen
+              break;
       }
       dbManager.getDynamicPropertiesStore().addTotalNetWeight(-unfreezeBalance / 1000_000L);
     } else {
@@ -107,6 +110,10 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           receiverCapsule.addAcquiredDelegatedFrozenBalanceForCpu(-unfreezeBalance);
           accountCapsule.addDelegatedFrozenBalanceForCpu(-unfreezeBalance);
           break;
+
+          default:
+              //this should never happen
+              break;
       }
       accountCapsule.setBalance(oldBalance + unfreezeBalance);
 

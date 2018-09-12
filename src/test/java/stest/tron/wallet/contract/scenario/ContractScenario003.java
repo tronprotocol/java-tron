@@ -23,15 +23,16 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class ContractScenario003 {
 
-  //testng001、testng002、testng003、testng004
-  private final String testKey002 =
-      "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
+  private final String testKey002 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
+  private Long maxFeeLimit = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.maxFeeLimit");
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] contract003Address = ecKey1.getAddress();
@@ -50,31 +51,23 @@ public class ContractScenario003 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(contract003Address,20000000L,fromAddress,
+    Assert.assertTrue(PublicMethed.sendcoin(contract003Address,200000000L,fromAddress,
         testKey002,blockingStubFull));
     logger.info(Long.toString(PublicMethed.queryAccount(contract003Key,blockingStubFull)
         .getBalance()));
-    Assert.assertTrue(PublicMethed.freezeBalanceGetCpu(contract003Address,1000000L,
-        3,1,contract003Key,blockingStubFull));
-    Assert.assertTrue(PublicMethed.buyStorage(5000000L,contract003Address,contract003Key,
-        blockingStubFull));
-
   }
 
   @Test(enabled = true)
   public void deployErc223() {
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract003Address, 10000000L,
+        3,1,contract003Key,blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract003Address,
         blockingStubFull);
-    Long cpuLimit = accountResource.getCpuLimit();
-    Long storageLimit = accountResource.getStorageLimit();
-    Long cpuUsage = accountResource.getCpuUsed();
-    Long storageUsage = accountResource.getStorageUsed();
+    Long energyLimit = accountResource.getEnergyLimit();
+    Long energyUsage = accountResource.getEnergyUsed();
 
-    logger.info("before cpu limit is " + Long.toString(cpuLimit));
-    logger.info("before cpu usage is " + Long.toString(cpuUsage));
-    logger.info("before storage limit is " + Long.toString(storageLimit));
-    logger.info("before storage usaged is " + Long.toString(storageUsage));
-    Long maxFeeLimit = 5000000L;
+    logger.info("before energy limit is " + Long.toString(energyLimit));
+    logger.info("before energy usage is " + Long.toString(energyUsage));
     String contractName = "ERC223";
     String code = "60c0604052600560808190527f546f6b656e0000000000000000000000000000000000000000000"
         + "0000000000060a090815261003e91600191906100f5565b506040805180820190915260038082527f544b4e"
@@ -184,22 +177,14 @@ public class ContractScenario003 {
     Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
     Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
     Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
-    //logger.info(smartContract.getName());
-    //logger.info(smartContract.getAbi().toString());
     accountResource = PublicMethed.getAccountResource(contract003Address,blockingStubFull);
-    cpuLimit = accountResource.getCpuLimit();
-    storageLimit = accountResource.getStorageLimit();
-    cpuUsage = accountResource.getCpuUsed();
-    storageUsage = accountResource.getStorageUsed();
-    Assert.assertTrue(storageUsage > 0);
-    Assert.assertTrue(storageLimit > 0);
-    Assert.assertTrue(cpuLimit > 0);
-    Assert.assertTrue(cpuUsage > 0);
+    energyLimit = accountResource.getEnergyLimit();
+    energyUsage = accountResource.getEnergyUsed();
+    Assert.assertTrue(energyLimit > 0);
+    Assert.assertTrue(energyUsage > 0);
 
-    logger.info("after cpu limit is " + Long.toString(cpuLimit));
-    logger.info("after cpu usage is " + Long.toString(cpuUsage));
-    logger.info("after storage limit is " + Long.toString(storageLimit));
-    logger.info("after storage usaged is " + Long.toString(storageUsage));
+    logger.info("after energy limit is " + Long.toString(energyLimit));
+    logger.info("after energy usage is " + Long.toString(energyUsage));
   }
 
   @AfterClass
