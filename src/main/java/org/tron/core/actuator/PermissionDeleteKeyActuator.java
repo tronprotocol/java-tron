@@ -69,8 +69,13 @@ public class PermissionDeleteKeyActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
     byte[] ownerAddress = permissionDeleteKeyContract.getOwnerAddress().toByteArray();
-    AccountStore accountStore = dbManager.getAccountStore();
-    AccountCapsule account = accountStore.get(ownerAddress);
+    if (!Wallet.addressValid(ownerAddress)) {
+      throw new ContractValidateException("invalidate ownerAddress");
+    }
+    AccountCapsule account = dbManager.getAccountStore().get(ownerAddress);
+    if (account == null) {
+      throw new ContractValidateException("ownerAddress account does not exist");
+    }
     String name = permissionDeleteKeyContract.getPermissionName();
     if (!name.equalsIgnoreCase("owner") &&
         !name.equalsIgnoreCase("active")) {
@@ -80,9 +85,7 @@ public class PermissionDeleteKeyActuator extends AbstractActuator {
     if (permission == null) {
       throw new ContractValidateException("you have not set permission with the name " + name);
     }
-    if (!Wallet.addressValid(ownerAddress)) {
-      throw new ContractValidateException("invalidate ownerAddress");
-    }
+
     if (name.isEmpty()) {
       throw new ContractValidateException("permission name should be not empty");
     }
