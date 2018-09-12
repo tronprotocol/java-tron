@@ -967,7 +967,18 @@ public class Manager {
 
     trace.init();
     trace.exec(runtime);
-
+    if (Objects.nonNull(blockCap) && !blockCap.getInstance().getBlockHeader().getWitnessSignature()
+        .isEmpty()) {
+      if (trace.checkNeedRetry()) {
+        deposit = DepositImpl.createRoot(this);
+        runtime = new Runtime(trace, blockCap, deposit, new ProgramInvokeFactoryImpl());
+        if (runtime.isCallConstant()) {
+          throw new VMIllegalException("cannot call constant method ");
+        }
+        trace.init();
+        trace.exec(runtime);
+      }
+    }
     if (Objects.nonNull(blockCap)) {
       trace.setResult(runtime);
       if (!blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {

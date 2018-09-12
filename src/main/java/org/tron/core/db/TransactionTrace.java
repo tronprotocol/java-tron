@@ -185,6 +185,21 @@ public class TransactionTrace {
         dbManager.getWitnessController().getHeadSlot());
   }
 
+  public boolean checkNeedRetry() {
+    if (!needVM()) {
+      return false;
+    }
+    if (Objects.isNull(trx.getContractRet())) {
+      return true;
+    }
+    if (!trx.getContractRet().equals(receipt.getResult())) {
+      logger.info("this tx resultCode in received block: {}", trx.getContractRet());
+      logger.info("this tx resultCode in self: {}", receipt.getResult());
+      return true;
+    }
+    return false;
+  }
+
   public void check() throws ReceiptCheckErrException {
     if (!needVM()) {
       return;
