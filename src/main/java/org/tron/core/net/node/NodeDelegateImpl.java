@@ -62,7 +62,6 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("block size over limit");
     }
 
-    // TODO timestamp should be consistent.
     long gap = block.getTimeStamp() - System.currentTimeMillis();
     if (gap >= BLOCK_PRODUCED_INTERVAL) {
       throw new BadBlockException("block time error");
@@ -171,8 +170,7 @@ public class NodeDelegateImpl implements NodeDelegate {
   @Override
   public LinkedList<BlockId> getLostBlockIds(List<BlockId> blockChainSummary)
       throws StoreException {
-    //todo: return the remain block count.
-    //todo: return the blocks it should be have.
+
     if (dbManager.getHeadBlockNum() == 0) {
       return new LinkedList<>();
     }
@@ -187,7 +185,7 @@ public class NodeDelegateImpl implements NodeDelegate {
         && blockChainSummary.get(0).getNum() == 0) {
       return new LinkedList(Arrays.asList(dbManager.getGenesisBlockId()));
     } else {
-      //todo: find a block we all know between the summary and my db.
+
       Collections.reverse(blockChainSummary);
       unForkedBlockId = blockChainSummary.stream()
           .filter(blockId -> containBlockInMainChain(blockId))
@@ -195,10 +193,8 @@ public class NodeDelegateImpl implements NodeDelegate {
       if (unForkedBlockId == null) {
         return new LinkedList<>();
       }
-      //todo: can not find any same block form peer's summary and my db.
     }
 
-    //todo: limit the count of block to send peer by one time.
     long unForkedBlockIdNum = unForkedBlockId.getNum();
     long len = Longs
         .min(dbManager.getHeadBlockNum(), unForkedBlockIdNum + NodeConstant.SYNC_FETCH_BATCH_NUM);
@@ -291,6 +287,7 @@ public class NodeDelegateImpl implements NodeDelegate {
         } catch (BadItemException e) {
           logger.debug(e.getMessage());
         } catch (ItemNotFoundException e) {
+
           logger.debug(e.getMessage());
         } catch (Exception e) {
           logger.error("new BlockMessage fail", e);
@@ -317,7 +314,6 @@ public class NodeDelegateImpl implements NodeDelegate {
       logger.info("Sync Block Completed !!!");
     }
     dbManager.setSyncMode(unSyncNum == 0);
-    //TODO: notify cli know how many block we need to sync
   }
 
   @Override
@@ -361,7 +357,6 @@ public class NodeDelegateImpl implements NodeDelegate {
     if (type.equals(MessageTypes.BLOCK)) {
       return dbManager.containBlock(hash);
     } else if (type.equals(MessageTypes.TRX)) {
-      //TODO: check it
       return dbManager.getTransactionStore().has(hash.getBytes());
     }
     return false;
@@ -369,20 +364,9 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
   public BlockCapsule getGenesisBlock() {
-    //TODO return a genesisBlock
     return dbManager.getGenesisBlock();
   }
 
-  //  @Override
-//  public long getLatestSolidifiedBlockNum() {
-//    return dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
-//  }
-//
-//  @Override
-//  public long getSyncBeginNumber() {
-//    return dbManager.getSyncBeginNumber();
-//  }
-//
   @Override
   public boolean canChainRevoke(long num) {
     return num >= dbManager.getSyncBeginNumber();

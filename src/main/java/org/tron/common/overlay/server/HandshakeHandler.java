@@ -37,7 +37,6 @@ import org.tron.common.overlay.message.P2pMessage;
 import org.tron.common.overlay.message.P2pMessageFactory;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -57,7 +56,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
   private Manager manager;
 
-  private  P2pMessageFactory messageFactory = new P2pMessageFactory();
+  private P2pMessageFactory messageFactory = new P2pMessageFactory();
 
   @Autowired
   private SyncPool syncPool;
@@ -81,7 +80,8 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   }
 
   @Override
-  protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> out) throws Exception {
+  protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> out)
+      throws Exception {
     byte[] encoded = new byte[buffer.readableBytes()];
     buffer.readBytes(encoded);
     P2pMessage msg = messageFactory.create(encoded);
@@ -90,10 +90,10 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
     switch (msg.getType()) {
       case P2P_HELLO:
-        handleHelloMsg(ctx, (HelloMessage)msg);
+        handleHelloMsg(ctx, (HelloMessage) msg);
         break;
       case P2P_DISCONNECT:
-        if (channel.getNodeStatistics() != null){
+        if (channel.getNodeStatistics() != null) {
           channel.getNodeStatistics()
               .nodeDisconnectedRemote(((DisconnectMessage) msg).getReasonCode());
         }
@@ -115,10 +115,10 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     this.remoteId = Hex.decode(remoteId);
   }
 
-  private void sendHelloMsg(ChannelHandlerContext ctx, long time){
+  private void sendHelloMsg(ChannelHandlerContext ctx, long time) {
 
     HelloMessage message = new HelloMessage(nodeManager.getPublicHomeNode(), time,
-            manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId());
+        manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId());
     ctx.writeAndFlush(message.getSendData());
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(message);
     logger.info("Handshake Send to {}, {} ", ctx.channel().remoteAddress(), message);
@@ -127,7 +127,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   private void handleHelloMsg(ChannelHandlerContext ctx, HelloMessage msg) {
     if (remoteId.length != 64) {
       channel.initNode(msg.getFrom().getId(), msg.getFrom().getPort());
-      InetAddress address = ((InetSocketAddress)ctx.channel().remoteAddress()).getAddress();
+      InetAddress address = ((InetSocketAddress) ctx.channel().remoteAddress()).getAddress();
       if (!channelManager.getTrustPeers().keySet().contains(address) && !syncPool.isCanConnect()) {
         channel.disconnect(ReasonCode.TOO_MANY_PEERS);
         return;
@@ -136,26 +136,29 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
     if (msg.getVersion() != Args.getInstance().getNodeP2pVersion()) {
       logger.info("Peer {} different p2p version, peer->{}, me->{}",
-              ctx.channel().remoteAddress(), msg.getVersion(), Args.getInstance().getNodeP2pVersion());
+          ctx.channel().remoteAddress(), msg.getVersion(), Args.getInstance().getNodeP2pVersion());
       channel.disconnect(ReasonCode.INCOMPATIBLE_VERSION);
       return;
     }
 
-    if (!Arrays.equals(manager.getGenesisBlockId().getBytes(), msg.getGenesisBlockId().getBytes())){
-      logger.info("Peer {} different genesis block, peer->{}, me->{}", ctx.channel().remoteAddress(),
+    if (!Arrays
+        .equals(manager.getGenesisBlockId().getBytes(), msg.getGenesisBlockId().getBytes())) {
+      logger
+          .info("Peer {} different genesis block, peer->{}, me->{}", ctx.channel().remoteAddress(),
               msg.getGenesisBlockId().getString(), manager.getGenesisBlockId().getString());
       channel.disconnect(ReasonCode.INCOMPATIBLE_CHAIN);
       return;
     }
 
-    if (manager.getSolidBlockId().getNum() >= msg.getSolidBlockId().getNum() && !manager.containBlockInMainChain(msg.getSolidBlockId())){
+    if (manager.getSolidBlockId().getNum() >= msg.getSolidBlockId().getNum() && !manager
+        .containBlockInMainChain(msg.getSolidBlockId())) {
       logger.info("Peer {} different solid block, peer->{}, me->{}", ctx.channel().remoteAddress(),
-              msg.getSolidBlockId().getString(), manager.getSolidBlockId().getString());
+          msg.getSolidBlockId().getString(), manager.getSolidBlockId().getString());
       channel.disconnect(ReasonCode.FORKED);
       return;
     }
 
-    ((PeerConnection)channel).setHelloMessage(msg);
+    ((PeerConnection) channel).setHelloMessage(msg);
 
     channel.getNodeStatistics().messageStatistics.addTcpInMessage(msg);
 
