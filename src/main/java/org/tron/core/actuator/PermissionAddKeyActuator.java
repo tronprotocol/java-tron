@@ -73,15 +73,11 @@ public class PermissionAddKeyActuator extends AbstractActuator {
         !name.equalsIgnoreCase("active")) {
       throw new ContractValidateException("permission name should be owner or active");
     }
-    Permission permission = account.getPermissionByName(name);
-    if (permission == null) {
-      throw new ContractValidateException("you have not set permission with the name " + name);
-    }
     if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("invalidate ownerAddress");
     }
     if (name.isEmpty()) {
-      throw new ContractValidateException("permission name should be not empty");
+      throw new ContractValidateException("permission name should not be empty");
     }
     if (!permissionAddKeyContract.getKey().isInitialized()) {
       throw new ContractValidateException("key should be initialized");
@@ -89,12 +85,15 @@ public class PermissionAddKeyActuator extends AbstractActuator {
     if (!Wallet.addressValid(permissionAddKeyContract.getKey().getAddress().toByteArray())) {
       throw new ContractValidateException("address in key is invalidate");
     }
-    for (Key key : permission.getKeysList()) {
-      String address = Wallet
-          .encode58Check(permissionAddKeyContract.getKey().getAddress().toByteArray());
-      if (key.getAddress().equals(permissionAddKeyContract.getKey().getAddress())) {
-        throw new ContractValidateException("address " + address + " is already in permission "
-            + name);
+    Permission permission = account.getPermissionByName(name);
+    if (permission != null) {
+      for (Key key : permission.getKeysList()) {
+        String address = Wallet
+            .encode58Check(permissionAddKeyContract.getKey().getAddress().toByteArray());
+        if (key.getAddress().equals(permissionAddKeyContract.getKey().getAddress())) {
+          throw new ContractValidateException("address " + address + " is already in permission "
+              + name);
+        }
       }
     }
     if (permissionAddKeyContract.getKey().getWeight() <= 0) {
