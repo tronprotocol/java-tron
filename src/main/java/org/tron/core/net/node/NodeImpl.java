@@ -1130,8 +1130,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         peer.getSyncBlockToFetch().addAll(blockIdWeGet);
         synchronized (freshBlockId) {
           while (!peer.getSyncBlockToFetch().isEmpty()
-              && freshBlockId.contains(peer.getSyncBlockToFetch().peek())
-              && del.containBlock(peer.getSyncBlockToFetch().peek())) {
+              && freshBlockId.contains(peer.getSyncBlockToFetch().peek())) {
             BlockId blockId = peer.getSyncBlockToFetch().pop();
             updateBlockWeBothHave(peer, blockId);
             logger.info("Block {} from {} is processed", blockId.getString(),
