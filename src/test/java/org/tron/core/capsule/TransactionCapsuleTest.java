@@ -171,6 +171,41 @@ public class TransactionCapsuleTest {
     dbManager.getAccountStore().put(address, new AccountCapsule(builder.build()));
   }
 
+  public List<Permission> buildPermissions(){
+    Permission.Builder builder1 = Permission.newBuilder();
+    Key.Builder key11 = Key.newBuilder();
+    Key.Builder key12 = Key.newBuilder();
+    Key.Builder key13 = Key.newBuilder();
+    key11.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_11))).setWeight(1);
+    key12.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_12))).setWeight(1);
+    key13.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_13))).setWeight(1);
+    builder1.setName("owner").setThreshold(2).setParent("").addKeys(key11).addKeys(key12)
+        .addKeys(key13);
+    Permission.Builder builder2 = Permission.newBuilder();
+    Key.Builder key21 = Key.newBuilder();
+    Key.Builder key22 = Key.newBuilder();
+    Key.Builder key23 = Key.newBuilder();
+    key21.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_21))).setWeight(1);
+    key22.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_22))).setWeight(1);
+    key23.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_23))).setWeight(1);
+    builder2.setName("active").setThreshold(2).setParent("").addKeys(key21).addKeys(key22)
+        .addKeys(key23);
+    Permission.Builder builder3 = Permission.newBuilder();
+    Key.Builder key31 = Key.newBuilder();
+    Key.Builder key32 = Key.newBuilder();
+    Key.Builder key33 = Key.newBuilder();
+    key31.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_31))).setWeight(1);
+    key32.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_32))).setWeight(1);
+    key33.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_33))).setWeight(1);
+    builder3.setName("other").setThreshold(2).setParent("").addKeys(key31).addKeys(key32)
+        .addKeys(key33);
+    List<Permission> list = new ArrayList<>();
+    list.add(builder1.build());
+    list.add(builder2.build());
+    list.add(builder3.build());
+    return list;
+  }
+
   @Test
   public void getPermission() {
     byte[] to = ByteArray.fromHexString(TO_ADDRESS);
@@ -218,43 +253,15 @@ public class TransactionCapsuleTest {
       Assert.assertFalse(true);
     }
     //Add 3 permission : owner active other
-    Permission.Builder builder1 = Permission.newBuilder();
-    Key.Builder key11 = Key.newBuilder();
-    Key.Builder key12 = Key.newBuilder();
-    Key.Builder key13 = Key.newBuilder();
-    key11.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_11))).setWeight(1);
-    key12.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_12))).setWeight(1);
-    key13.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_13))).setWeight(1);
-    builder1.setName("owner").setThreshold(2).setParent("").addKeys(key11).addKeys(key12)
-        .addKeys(key13);
-    Permission.Builder builder2 = Permission.newBuilder();
-    Key.Builder key21 = Key.newBuilder();
-    Key.Builder key22 = Key.newBuilder();
-    Key.Builder key23 = Key.newBuilder();
-    key21.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_21))).setWeight(1);
-    key22.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_22))).setWeight(1);
-    key23.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_23))).setWeight(1);
-    builder2.setName("active").setThreshold(2).setParent("").addKeys(key21).addKeys(key22)
-        .addKeys(key23);
-    Permission.Builder builder3 = Permission.newBuilder();
-    Key.Builder key31 = Key.newBuilder();
-    Key.Builder key32 = Key.newBuilder();
-    Key.Builder key33 = Key.newBuilder();
-    key31.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_31))).setWeight(1);
-    key32.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_32))).setWeight(1);
-    key33.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_33))).setWeight(1);
-    builder3.setName("other").setThreshold(2).setParent("").addKeys(key31).addKeys(key32)
-        .addKeys(key33);
-    List<Permission> list = new ArrayList<>();
-    list.add(builder1.build());
-    list.add(builder2.build());
-    list.add(builder3.build());
-    updatePermission(list, ByteArray.fromHexString(OWNER_ADDRESS));
+    List<Permission> permissions = buildPermissions();
+    updatePermission(permissions, owner);
+    Permission permission1 = permissions.get(0);
+    Permission permission2 = permissions.get(1);
 
     try {
       Permission permission = TransactionCapsule
           .getPermission(dbManager.getAccountStore(), contract_owner);
-      Assert.assertEquals(permission, builder1.build());
+      Assert.assertEquals(permission, permission1);
     } catch (PermissionException e) {
       Assert.assertFalse(true);
     }
@@ -262,10 +269,47 @@ public class TransactionCapsuleTest {
     try {
       Permission permission = TransactionCapsule
           .getPermission(dbManager.getAccountStore(), contract_active);
-      Assert.assertEquals(permission, builder2.build());
+      Assert.assertEquals(permission, permission2);
     } catch (PermissionException e) {
       Assert.assertFalse(true);
     }
+  }
+
+  @Test
+  public void getWeight() {
+    List<Permission> permissions = buildPermissions();
+    Permission permission1 = permissions.get(0);
+    Permission permission2 = permissions.get(1);
+    Permission permission3 = permissions.get(2);
+    Assert.assertEquals(1, TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_11)));
+    Assert.assertEquals(1, TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_12)));
+    Assert.assertEquals(1, TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_13)));
+    Assert.assertEquals(0, TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_21)));
+    Assert.assertEquals(0, TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_22)));
+    Assert.assertEquals(0, TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_23)));
+    Assert.assertEquals(0, TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_31)));
+    Assert.assertEquals(0, TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_32)));
+    Assert.assertEquals(0, TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_33)));
+
+    Assert.assertEquals(0, TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_11)));
+    Assert.assertEquals(0, TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_12)));
+    Assert.assertEquals(0, TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_13)));
+    Assert.assertEquals(1, TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_21)));
+    Assert.assertEquals(1, TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_22)));
+    Assert.assertEquals(1, TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_23)));
+    Assert.assertEquals(0, TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_31)));
+    Assert.assertEquals(0, TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_32)));
+    Assert.assertEquals(0, TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_33)));
+
+    Assert.assertEquals(0, TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_11)));
+    Assert.assertEquals(0, TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_12)));
+    Assert.assertEquals(0, TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_13)));
+    Assert.assertEquals(0, TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_21)));
+    Assert.assertEquals(0, TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_22)));
+    Assert.assertEquals(0, TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_23)));
+    Assert.assertEquals(1, TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_31)));
+    Assert.assertEquals(1, TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_32)));
+    Assert.assertEquals(1, TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_33)));
   }
 
 }
