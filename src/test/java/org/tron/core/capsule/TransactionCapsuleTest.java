@@ -3,6 +3,7 @@ package org.tron.core.capsule;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
@@ -45,6 +46,15 @@ public class TransactionCapsuleTest {
   private static String OWNER_ADDRESS;
   private static String TO_ADDRESS;
   private static String OWNER_ACCOUNT_NOT_Exist;
+  private static String KEY_ADDRESS_11;
+  private static String KEY_ADDRESS_12;
+  private static String KEY_ADDRESS_13;
+  private static String KEY_ADDRESS_21;
+  private static String KEY_ADDRESS_22;
+  private static String KEY_ADDRESS_23;
+  private static String KEY_ADDRESS_31;
+  private static String KEY_ADDRESS_32;
+  private static String KEY_ADDRESS_33;
 
   @BeforeClass
   public static void init() {
@@ -56,6 +66,17 @@ public class TransactionCapsuleTest {
     TO_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ACCOUNT_NOT_Exist =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";
+    KEY_ADDRESS_11 = Wallet.getAddressPreFixString() + "19E7E376E7C213B7E7E7E46CC70A5DD086DAFF2A";
+    KEY_ADDRESS_12 = Wallet.getAddressPreFixString() + "1C5A77D9FA7EF466951B2F01F724BCA3A5820B63";
+    KEY_ADDRESS_13 = Wallet.getAddressPreFixString() + "03A1BBA60B5AA37094CF16123ADD674C01589488";
+
+    KEY_ADDRESS_21 = Wallet.getAddressPreFixString() + "2BD0C9FE079C8FCA0E3352EB3D02839C371E5C41";
+    KEY_ADDRESS_22 = Wallet.getAddressPreFixString() + "1563915E194D8CFBA1943570603F7606A3115508";
+    KEY_ADDRESS_23 = Wallet.getAddressPreFixString() + "D3E442496EB66A4748912EC4A3B7A111D0B855D6";
+
+    KEY_ADDRESS_31 = Wallet.getAddressPreFixString() + "77952CE83CA3CAD9F7ADCFABEDA85BD2F1F52008";
+    KEY_ADDRESS_32 = Wallet.getAddressPreFixString() + "94622CC2A5B64A58C25A129D48A2BEEC4B65B779";
+    KEY_ADDRESS_33 = Wallet.getAddressPreFixString() + "5CBDD86A2FA8DC4BDDD8A8F69DBA48572EEC07FB";
   }
 
   /**
@@ -141,10 +162,10 @@ public class TransactionCapsuleTest {
     return contractBuilder.build();
   }
 
-  public void updatePermission(List<Permission> permissions, byte[] address){
+  public void updatePermission(List<Permission> permissions, byte[] address) {
     Account account = dbManager.getAccountStore().get(address).getInstance();
     Account.Builder builder = account.toBuilder();
-    for(Permission permission:permissions){
+    for (Permission permission : permissions) {
       builder.addPermissions(permission);
     }
     dbManager.getAccountStore().put(address, new AccountCapsule(builder.build()));
@@ -169,12 +190,12 @@ public class TransactionCapsuleTest {
     //Default "active" permission
     byte[] owner = ByteArray.fromHexString(OWNER_ADDRESS);
     transferContract = createTransferContract(to, owner, 1);
-    contract = Contract.newBuilder()
+    Contract contract_active = Contract.newBuilder()
         .setType(ContractType.TransferContract).setParameter(
             Any.pack(transferContract)).build();
     try {
       Permission permission = TransactionCapsule
-          .getPermission(dbManager.getAccountStore(), contract);
+          .getPermission(dbManager.getAccountStore(), contract_active);
       Permission permission1 = TransactionCapsule
           .getDefaultPermission(ByteString.copyFrom(owner), "active");
       Assert.assertEquals(permission, permission1);
@@ -184,20 +205,67 @@ public class TransactionCapsuleTest {
     //Default "owner" permission
     PermissionAddKeyContract permissionAddKeyContract =
         createPermissionAddKeyContract(owner, "test", to, 1);
-    contract = Contract.newBuilder()
+    Contract contract_owner = Contract.newBuilder()
         .setType(ContractType.PermissionAddKeyContract).setParameter(
             Any.pack(permissionAddKeyContract)).build();
     try {
       Permission permission = TransactionCapsule
-          .getPermission(dbManager.getAccountStore(), contract);
+          .getPermission(dbManager.getAccountStore(), contract_owner);
       Permission permission1 = TransactionCapsule
           .getDefaultPermission(ByteString.copyFrom(owner), "owner");
       Assert.assertEquals(permission, permission1);
     } catch (PermissionException e) {
       Assert.assertFalse(true);
     }
+    //Add 3 permission : owner active other
+    Permission.Builder builder1 = Permission.newBuilder();
+    Key.Builder key11 = Key.newBuilder();
+    Key.Builder key12 = Key.newBuilder();
+    Key.Builder key13 = Key.newBuilder();
+    key11.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_11))).setWeight(1);
+    key12.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_12))).setWeight(1);
+    key13.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_13))).setWeight(1);
+    builder1.setName("owner").setThreshold(2).setParent("").addKeys(key11).addKeys(key12)
+        .addKeys(key13);
+    Permission.Builder builder2 = Permission.newBuilder();
+    Key.Builder key21 = Key.newBuilder();
+    Key.Builder key22 = Key.newBuilder();
+    Key.Builder key23 = Key.newBuilder();
+    key21.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_21))).setWeight(1);
+    key22.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_22))).setWeight(1);
+    key23.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_23))).setWeight(1);
+    builder2.setName("active").setThreshold(2).setParent("").addKeys(key21).addKeys(key22)
+        .addKeys(key23);
+    Permission.Builder builder3 = Permission.newBuilder();
+    Key.Builder key31 = Key.newBuilder();
+    Key.Builder key32 = Key.newBuilder();
+    Key.Builder key33 = Key.newBuilder();
+    key31.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_31))).setWeight(1);
+    key32.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_32))).setWeight(1);
+    key33.setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_33))).setWeight(1);
+    builder3.setName("other").setThreshold(2).setParent("").addKeys(key31).addKeys(key32)
+        .addKeys(key33);
+    List<Permission> list = new ArrayList<>();
+    list.add(builder1.build());
+    list.add(builder2.build());
+    list.add(builder3.build());
+    updatePermission(list, ByteArray.fromHexString(OWNER_ADDRESS));
 
+    try {
+      Permission permission = TransactionCapsule
+          .getPermission(dbManager.getAccountStore(), contract_owner);
+      Assert.assertEquals(permission, builder1.build());
+    } catch (PermissionException e) {
+      Assert.assertFalse(true);
+    }
 
+    try {
+      Permission permission = TransactionCapsule
+          .getPermission(dbManager.getAccountStore(), contract_active);
+      Assert.assertEquals(permission, builder2.build());
+    } catch (PermissionException e) {
+      Assert.assertFalse(true);
+    }
   }
 
 }
