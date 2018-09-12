@@ -83,7 +83,6 @@ public class InternalTransaction {
 
   public InternalTransaction(byte[] parentHash, int deep, int index,
       byte[] sendAddress, byte[] receiveAddress, long value, byte[] data, String note, long nonce) {
-
     this.parentHash = parentHash;
     this.deep = deep;
     this.index = index;
@@ -121,35 +120,35 @@ public class InternalTransaction {
   }
 
   public String getNote() {
-    if(note == null){
+    if (note == null) {
       return "";
     }
     return note;
   }
 
   public byte[] getSender() {
-    if(sendAddress == null){
+    if (sendAddress == null) {
       return EMPTY_BYTE_ARRAY;
     }
     return sendAddress;
   }
 
   public byte[] getParentHash() {
-    if(parentHash == null){
+    if (parentHash == null) {
       return EMPTY_BYTE_ARRAY;
     }
     return parentHash;
   }
 
   public long getValue() {
-    if(data == null){
+    if (data == null) {
       return 0;
     }
     return value;
   }
 
   public byte[] getData() {
-    if(data == null){
+    if (data == null) {
       return EMPTY_BYTE_ARRAY;
     }
     return data.clone();
@@ -160,7 +159,7 @@ public class InternalTransaction {
   }
 
   public byte[] getReceiveAddress() {
-    if (receiveAddress == null){
+    if (receiveAddress == null) {
       return EMPTY_BYTE_ARRAY;
     }
     return receiveAddress.clone();
@@ -181,7 +180,7 @@ public class InternalTransaction {
     return Arrays.copyOf(hash, hash.length);
   }
 
-  public long getNonce(){
+  public long getNonce() {
     return nonce;
   }
 
@@ -194,7 +193,8 @@ public class InternalTransaction {
     byte[] raw = new byte[this.receiveAddress.length + this.data.length + valueByte.length];
     System.arraycopy(this.receiveAddress, 0, raw, 0, this.receiveAddress.length);
     System.arraycopy(this.data, 0, raw, this.receiveAddress.length, this.data.length);
-    System.arraycopy(valueByte, 0, raw, this.receiveAddress.length + this.data.length, valueByte.length);
+    System.arraycopy(valueByte, 0, raw, this.receiveAddress.length + this.data.length,
+        valueByte.length);
     this.protoEncoded = raw;
     return protoEncoded.clone();
   }

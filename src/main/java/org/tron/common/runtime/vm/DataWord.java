@@ -59,10 +59,10 @@ public class DataWord implements Comparable<DataWord> {
     }
 
     private DataWord(ByteBuffer buffer) {
-        final ByteBuffer data = ByteBuffer.allocate(32);
+        final ByteBuffer targetByteBuffer = ByteBuffer.allocate(32);
         final byte[] array = buffer.array();
-        System.arraycopy(array, 0, data.array(), 32 - array.length, array.length);
-        this.data = data.array();
+        System.arraycopy(array, 0, targetByteBuffer.array(), 32 - array.length, array.length);
+        this.data = targetByteBuffer.array();
     }
 
     @JsonCreator
@@ -75,14 +75,15 @@ public class DataWord implements Comparable<DataWord> {
     }
 
     public DataWord(byte[] data) {
-        if (data == null)
+        if (data == null) {
             this.data = ByteUtil.EMPTY_BYTE_ARRAY;
-        else if (data.length == 32)
+        } else if (data.length == 32) {
             this.data = data;
-        else if (data.length <= 32)
+        } else if (data.length <= 32) {
             System.arraycopy(data, 0, this.data, 32 - data.length, data.length);
-        else
+        } else {
             throw new RuntimeException("Data word can't exceed 32 bytes: " + data);
+        }
     }
 
     public byte[] getData() {
