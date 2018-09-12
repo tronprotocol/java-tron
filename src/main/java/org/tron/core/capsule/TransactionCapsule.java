@@ -80,7 +80,6 @@ import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.UpdateAssetContract;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
-import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction;
@@ -285,9 +284,13 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   public static Permission getPermission(AccountStore accountStore, Transaction.Contract contract)
       throws PermissionException {
     byte[] owner = TransactionCapsule.getOwner(contract);
-    Account account = accountStore.get(owner).getInstance();
+    AccountCapsule account = accountStore.get(owner);
+    if (account == null) {
+      throw new PermissionException("Account is not exist!");
+    }
+
     String permissionName = getPermissionName(contract);
-    List<Permission> list = account.getPermissionsList();
+    List<Permission> list = account.getInstance().getPermissionsList();
     if (list.isEmpty()) {
       return getDefaultPermission(account.getAddress(), permissionName);
     }
