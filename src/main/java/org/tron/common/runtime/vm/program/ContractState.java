@@ -26,8 +26,12 @@ import org.tron.common.storage.Key;
 import org.tron.common.storage.Value;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.VotesCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
@@ -70,6 +74,26 @@ public class ContractState implements Deposit, ProgramListenerAware {
   }
 
   @Override
+  public WitnessCapsule getWitness(byte[] address) {
+    return deposit.getWitness(address);
+  }
+
+  @Override
+  public VotesCapsule getVotesCapsule(byte[] address) {
+    return deposit.getVotesCapsule(address);
+  }
+
+  @Override
+  public ProposalCapsule getProposalCapsule(byte[] id) {
+    return deposit.getProposalCapsule(id);
+  }
+
+  @Override
+  public BytesCapsule getDynamic(byte[] bytesKey) {
+    return deposit.getDynamic(bytesKey);
+  }
+
+  @Override
   public void deleteContract(byte[] address) {
     deposit.deleteContract(address);
   }
@@ -93,13 +117,6 @@ public class ContractState implements Deposit, ProgramListenerAware {
   public byte[] getCode(byte[] addr) {
     return deposit.getCode(addr);
   }
-
-    /*
-    @Override
-    public byte[] getCodeHash(byte[] addr) {
-        return deposit.getCodeHash(addr);
-    }
-    */
 
   @Override
   public void putStorageValue(byte[] addr, DataWord key, DataWord value) {
@@ -142,11 +159,6 @@ public class ContractState implements Deposit, ProgramListenerAware {
   public void commit() {
     deposit.commit();
   }
-
-//  @Override
-//  public StorageCapsule getContractState(byte[] address) {
-//    return deposit.getContractState(address);
-//  }
 
   @Override
   public Storage getStorage(byte[] address) {
@@ -194,6 +206,16 @@ public class ContractState implements Deposit, ProgramListenerAware {
   }
 
   @Override
+  public void putProposal(Key key, Value value) {
+    deposit.putProposal(key, value);
+  }
+
+  @Override
+  public void putDynamicProperties(Key key, Value value) {
+    deposit.putDynamicProperties(key, value);
+  }
+
+  @Override
   public void setParent(Deposit deposit) {
     this.deposit.setParent(deposit);
   }
@@ -204,13 +226,43 @@ public class ContractState implements Deposit, ProgramListenerAware {
   }
 
   @Override
-  // Do nothing
-  public void syncCacheFromAccountStore(byte[] address) {
+  public void putAccountValue(byte[] address, AccountCapsule accountCapsule) {
+    this.deposit.putAccountValue(address,accountCapsule);
   }
 
   @Override
-  // Do nothing
-  public void syncCacheFromVotesStore(byte[] address) {
+  public void putVoteValue(byte[] address, VotesCapsule votesCapsule) {
+    this.deposit.putVoteValue(address,votesCapsule);
+  }
+
+  @Override
+  public void putProposalValue(byte[] address, ProposalCapsule proposalCapsule) {
+    deposit.putProposalValue(address, proposalCapsule);
+  }
+
+  @Override
+  public void putDynamicPropertiesWithLatestProposalNum(long num) {
+    deposit.putDynamicPropertiesWithLatestProposalNum(num);
+  }
+
+  @Override
+  public long getLatestProposalNum() {
+    return deposit.getLatestProposalNum();
+  }
+
+  @Override
+  public long getWitnessAllowanceFrozenTime() {
+    return  deposit.getWitnessAllowanceFrozenTime();
+  }
+
+  @Override
+  public long getMaintenanceTimeInterval() {
+    return deposit.getMaintenanceTimeInterval();
+  }
+
+  @Override
+  public long getNextMaintenanceTime() {
+    return deposit.getNextMaintenanceTime();
   }
 
   @Override
@@ -218,13 +270,4 @@ public class ContractState implements Deposit, ProgramListenerAware {
     return this.deposit.getBlock(blockHash);
   }
 
-  @Override
-  public long computeAfterRunStorageSize() {
-    return this.deposit.computeAfterRunStorageSize();
-  }
-
-  @Override
-  public long getBeforeRunStorageSize() {
-    return this.deposit.getBeforeRunStorageSize();
-  }
 }

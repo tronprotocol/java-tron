@@ -76,7 +76,7 @@ public class Creatasset {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     logger.info(testKeyForAssetIssue016);
     logger.info(transferAssetCreateKey);
@@ -86,7 +86,7 @@ public class Creatasset {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  //@Test(enabled = true)
+  //@Test(enabled = false)
   @Test(enabled = false,threadPoolSize = 20, invocationCount = 20)
   public void createAssetissue() throws InterruptedException {
 
@@ -186,7 +186,7 @@ public class Creatasset {
     }
   }
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     /*    if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

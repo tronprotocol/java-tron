@@ -35,8 +35,8 @@ public class ChannelManager {
   private Cache<InetAddress, ReasonCode> badPeers = CacheBuilder.newBuilder().maximumSize(10000)
       .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
 
-  private Cache<InetAddress, ReasonCode> recentlyDisconnected = CacheBuilder.newBuilder().maximumSize(1000)
-      .expireAfterWrite(30, TimeUnit.SECONDS).recordStats().build();
+  private Cache<InetAddress, ReasonCode> recentlyDisconnected = CacheBuilder.newBuilder()
+      .maximumSize(1000).expireAfterWrite(30, TimeUnit.SECONDS).recordStats().build();
 
   @Getter
   private Map<InetAddress, Node> trustPeers = new ConcurrentHashMap();
@@ -64,18 +64,18 @@ public class ChannelManager {
           "PeerServerThread").start();
     }
 
-    for (Node node : args.getPassiveNodes()){
-      trustPeers.put(new InetSocketAddress(node.getHost(), node.getPort()).getAddress() , node);
+    for (Node node : args.getPassiveNodes()) {
+      trustPeers.put(new InetSocketAddress(node.getHost(), node.getPort()).getAddress(), node);
     }
     logger.info("Trust peer size {}", trustPeers.size());
   }
 
-  public void processDisconnect(Channel channel, ReasonCode reason){
+  public void processDisconnect(Channel channel, ReasonCode reason) {
     InetAddress inetAddress = channel.getInetAddress();
-    if (inetAddress == null){
+    if (inetAddress == null) {
       return;
     }
-    switch (reason){
+    switch (reason) {
       case BAD_PROTOCOL:
       case BAD_BLOCK:
       case BAD_TX:
@@ -95,7 +95,7 @@ public class ChannelManager {
         channel.getNodeStatistics().notifyDisconnect();
       }
       InetAddress inetAddress = channel.getInetAddress();
-      if (inetAddress != null && recentlyDisconnected.getIfPresent(inetAddress) == null){
+      if (inetAddress != null && recentlyDisconnected.getIfPresent(inetAddress) == null) {
         recentlyDisconnected.put(channel.getInetAddress(), UNKNOWN);
       }
     }
@@ -103,8 +103,8 @@ public class ChannelManager {
 
   public synchronized boolean processPeer(Channel peer) {
 
-    if (!trustPeers.containsKey(peer.getInetAddress())){
-      if (recentlyDisconnected.getIfPresent(peer) != null){
+    if (!trustPeers.containsKey(peer.getInetAddress())) {
+      if (recentlyDisconnected.getIfPresent(peer) != null) {
         logger.info("Peer {} recently disconnected.", peer.getInetAddress());
         return false;
       }
@@ -119,7 +119,7 @@ public class ChannelManager {
         return false;
       }
 
-      if (getConnectionNum(peer.getInetAddress()) >= getMaxActivePeersWithSameIp){
+      if (getConnectionNum(peer.getInetAddress()) >= getMaxActivePeersWithSameIp) {
         peer.disconnect(TOO_MANY_PEERS_WITH_SAME_IP);
         return false;
       }
@@ -140,10 +140,10 @@ public class ChannelManager {
     return true;
   }
 
-  public int getConnectionNum(InetAddress inetAddress){
+  public int getConnectionNum(InetAddress inetAddress) {
     int cnt = 0;
-    for (Channel channel: activePeers.values()){
-      if (channel.getInetAddress().equals(inetAddress)){
+    for (Channel channel : activePeers.values()) {
+      if (channel.getInetAddress().equals(inetAddress)) {
         cnt++;
       }
     }
@@ -154,11 +154,11 @@ public class ChannelManager {
     return activePeers.values();
   }
 
-  public Cache<InetAddress, ReasonCode> getRecentlyDisconnected(){
+  public Cache<InetAddress, ReasonCode> getRecentlyDisconnected() {
     return this.recentlyDisconnected;
   }
 
-  public Cache<InetAddress, ReasonCode> getBadPeers(){
+  public Cache<InetAddress, ReasonCode> getBadPeers() {
     return this.badPeers;
   }
 

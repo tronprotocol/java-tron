@@ -70,4 +70,6 @@ public interface ProgramInvoke {
   long getVmStartInUs();
 
   long getEnergyLimit();
+
+  void setStaticCall();
 }

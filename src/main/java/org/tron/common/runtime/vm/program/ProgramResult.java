@@ -32,7 +32,6 @@ public class ProgramResult {
 
   private TransactionResultCapsule ret = new TransactionResultCapsule();
 
-
   /*
    * for testing runs ,
    * call/create is not executed
@@ -160,9 +159,9 @@ public class ProgramResult {
   }
 
   public InternalTransaction addInternalTransaction(byte[] parentHash, int deep,
-      byte[] senderAddress, byte[] receiveAddress, long value, byte[] data, String note) {
+      byte[] senderAddress, byte[] receiveAddress, long value, byte[] data, String note, long nonce) {
     InternalTransaction transaction = new InternalTransaction(parentHash, deep,
-        size(internalTransactions), senderAddress, receiveAddress, value, data, note);
+        size(internalTransactions), senderAddress, receiveAddress, value, data, note, nonce);
     getInternalTransactions().add(transaction);
     return transaction;
   }

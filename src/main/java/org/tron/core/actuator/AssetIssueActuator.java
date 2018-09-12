@@ -162,12 +162,10 @@ public class AssetIssueActuator extends AbstractActuator {
       throw new ContractValidateException("Start time should be greater than HeadBlockTime");
     }
 
-    /*
     if (this.dbManager.getAssetIssueStore().get(assetIssueContract.getName().toByteArray())
-        != null) {
+        != null && this.dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       throw new ContractValidateException("Token exists");
     }
-    */
 
     if (assetIssueContract.getTotalSupply() <= 0) {
       throw new ContractValidateException("TotalSupply must greater than 0!");
