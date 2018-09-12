@@ -42,10 +42,9 @@ import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.TooBigTransactionResultException;
-import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.TronException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.AccountType;
@@ -196,7 +195,7 @@ public class BandWithRuntimeTest {
   }
 
   private byte[] createContract()
-      throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException, HeaderNotFound, TransactionTraceException, ContractExeException {
+      throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException, ContractExeException, VMIllegalException {
     AccountCapsule owner = dbManager.getAccountStore()
         .get(Wallet.decodeFromBase58Check(OwnerAddress));
     long energy = owner.getEnergyUsage();
