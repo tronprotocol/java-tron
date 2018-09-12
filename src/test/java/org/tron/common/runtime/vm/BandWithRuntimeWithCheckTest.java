@@ -55,6 +55,21 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.Transaction.raw;
 
+/**
+ * pragma solidity ^0.4.2;
+ *
+ * contract Fibonacci {
+ *
+ * event Notify(uint input, uint result);
+ *
+ * function fibonacci(uint number) constant returns(uint result) { if (number == 0) { return 0; }
+ * else if (number == 1) { return 1; } else { uint256 first = 0; uint256 second = 1; uint256 ret =
+ * 0; for(uint256 i = 2; i <= number; i++) { ret = first + second; first = second; second = ret; }
+ * return ret; } }
+ *
+ * function fibonacciNotify(uint number) returns(uint result) { result = fibonacci(number);
+ * Notify(number, result); } }
+ */
 public class BandWithRuntimeWithCheckTest {
 
   public static final long totalBalance = 1000_0000_000_000L;

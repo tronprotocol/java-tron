@@ -53,6 +53,16 @@ import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.raw;
 
+/**
+ * pragma solidity ^0.4.24;
+ *
+ * contract ForI{
+ *
+ * uint256 public balances;
+ *
+ * function setCoin(uint receiver) public { for(uint i=0;i<receiver;i++){ balances = balances++; } }
+ * }
+ */
 public class BandWithRuntimeTest {
 
   public static final long totalBalance = 1000_0000_000_000L;
