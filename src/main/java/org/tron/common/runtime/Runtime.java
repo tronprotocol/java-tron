@@ -4,6 +4,7 @@ import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static org.apache.commons.lang3.ArrayUtils.getLength;
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
+import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.utils.MUtil.transfer;
 import static org.tron.common.runtime.vm.VMUtils.saveProgramTraceFile;
@@ -73,8 +74,6 @@ import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
 @Slf4j(topic = "Runtime")
 public class Runtime {
-
-
   private VMConfig config = VMConfig.getInstance();
 
   private Transaction trx;
@@ -84,9 +83,6 @@ public class Runtime {
   private String runtimeError;
 
   private EnergyProcessor energyProcessor = null;
-  private StorageMarket storageMarket = null;
-  PrecompiledContracts.PrecompiledContract precompiledContract = null;
-
   private ProgramResult result = new ProgramResult();
 
 
@@ -100,7 +96,6 @@ public class Runtime {
 
   //tx trace
   private TransactionTrace trace;
-
 
   /**
    * For blockCap's trx run
@@ -120,7 +115,6 @@ public class Runtime {
     this.deposit = deposit;
     this.programInvokeFactory = programInvokeFactory;
     this.energyProcessor = new EnergyProcessor(deposit.getDbManager());
-    this.storageMarket = new StorageMarket(deposit.getDbManager());
 
     Transaction.Contract.ContractType contractType = this.trx.getRawData().getContract(0).getType();
     switch (contractType.getNumber()) {
@@ -154,7 +148,6 @@ public class Runtime {
     this.executorType = ET_PRE_TYPE;
     this.blockCap = block;
     this.energyProcessor = new EnergyProcessor(deposit.getDbManager());
-    this.storageMarket = new StorageMarket(deposit.getDbManager());
     Transaction.Contract.ContractType contractType = tx.getRawData().getContract(0).getType();
     switch (contractType.getNumber()) {
       case Transaction.Contract.ContractType.TriggerSmartContract_VALUE:
@@ -264,7 +257,6 @@ public class Runtime {
     // creatorEnergyFromFreeze
     long creatorEnergyLimit = energyProcessor.getAccountLeftEnergyFromFreeze(creator);
 
-
     SmartContract smartContract = this.deposit
         .getContract(contract.getContractAddress().toByteArray()).getInstance();
     long consumeUserResourcePercent = smartContract.getConsumeUserResourcePercent();
@@ -288,9 +280,8 @@ public class Runtime {
       if (this.blockCap != null && blockCap.generatedByMyself &&
           this.blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
         thisTxCPULimitInUsRatio = 1.0;
-      } else
-      // self witness 3, other witness 3, fullnode 2
-      {
+      } else {
+        // self witness 3, other witness 3, fullnode 2
         if (trx.getRet(0).getContractRet() == contractResult.OUT_OF_TIME) {
           thisTxCPULimitInUsRatio = Args.getInstance().getMinTimeRatio();
         } else {
@@ -310,7 +301,6 @@ public class Runtime {
   private void create()
       throws ContractValidateException, VMIllegalException {
     if (!deposit.getDbManager().getDynamicPropertiesStore().supportVM()) {
-      logger.error("vm work is off, need to be opened by the committee");
       throw new ContractValidateException("vm work is off, need to be opened by the committee");
     }
 
@@ -325,24 +315,19 @@ public class Runtime {
     }
     byte[] code = newSmartContract.getBytecode().toByteArray();
     byte[] contractAddress = Wallet.generateContractAddress(trx);
-    byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
     byte[] contractName = newSmartContract.getName().getBytes();
 
     if (contractName.length > 32) {
-      logger.error("contractName's length mustn't be greater than 32");
-      throw new ContractValidateException("contractName's length mustn't be greater than 32");
+      throw new ContractValidateException("contractName's length cannot be greater than 32");
     }
 
     long percent = contract.getNewContract().getConsumeUserResourcePercent();
     if (percent < 0 || percent > 100) {
-      logger.error("percent must be >= 0 and <= 100");
       throw new ContractValidateException("percent must be >= 0 and <= 100");
     }
 
     // insure the new contract address haven't exist
     if (deposit.getAccount(contractAddress) != null) {
-      logger.error("Trying to create a contract with existing contract address: " + Wallet
-          .encode58Check(contractAddress));
       throw new ContractValidateException(
           "Trying to create a contract with existing contract address: " + Wallet
               .encode58Check(contractAddress));
@@ -356,13 +341,6 @@ public class Runtime {
 
       AccountCapsule creator = this.deposit
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
-      // if (executorType == ET_NORMAL_TYPE) {
-      //   long blockENERGYLeftInUs = getBlockENERGYLeftInUs().longValueExact();
-      //   thisTxENERGYLimitInUs = min(blockENERGYLeftInUs,
-      //       Constant.ENERGY_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT);
-      // } else {
-      //   thisTxENERGYLimitInUs = Constant.ENERGY_LIMIT_IN_ONE_TX_OF_SMART_CONTRACT;
-      // }
 
       long MAX_CPU_TIME_OF_ONE_TX = deposit.getDbManager().getDynamicPropertiesStore()
           .getMaxCpuTimeOfOneTX() * 1000;
@@ -402,7 +380,6 @@ public class Runtime {
 
     deposit.createContract(contractAddress, new ContractCapsule(newSmartContract));
     deposit.saveCode(contractAddress, ProgramPrecompile.getCode(code));
-    // deposit.createContractByNormalAccountIndex(ownerAddress, new BytesCapsule(contractAddress));
 
     // transfer from callerAddress to contractAddress according to callValue
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
@@ -429,7 +406,7 @@ public class Runtime {
       return;
     }
 
-    if(contract.getContractAddress() == null){
+    if(contract.getContractAddress() == null) {
       throw new ContractValidateException("Cannot get contract address from TriggerContract");
     }
 
@@ -442,10 +419,7 @@ public class Runtime {
     }
     byte[] code = this.deposit.getCode(contractAddress);
     long callValue = contract.getCallValue();
-    if (isEmpty(code)) {
-
-    } else {
-
+    if (isNotEmpty(code)) {
       AccountCapsule caller = this.deposit.getAccount(contract.getOwnerAddress().toByteArray());
       AccountCapsule creator = this.deposit.getAccount(
           deployedContract.getInstance()
@@ -498,7 +472,6 @@ public class Runtime {
 
   public void go() {
     try {
-
       if (vm != null) {
 
         TransactionCapsule trxCap = new TransactionCapsule(trx);
@@ -513,7 +486,6 @@ public class Runtime {
         }
 
         vm.play(program);
-
         result = program.getResult();
 
         if (isCallConstant()) {
@@ -530,14 +502,12 @@ public class Runtime {
           long afterSpend = program.getEnergyLimitLeft().longValue() - saveCodeEnergy;
           if (afterSpend < 0) {
             if (null == result.getException()) {
-              result.setException(
-                  Program.Exception
+              result.setException(Program.Exception
                       .notEnoughSpendEnergy("save just created contract code",
                           saveCodeEnergy, program.getEnergyLimitLeft().longValue()));
             }
           } else {
             result.spendEnergy(saveCodeEnergy);
-            // have saveCode in create()
           }
         }
 
@@ -638,18 +608,18 @@ public class Runtime {
       }
     }
 
-    if (config.vmTrace() && program != null && result != null) {
-      String trace = program.getTrace()
+    if (config.vmTrace() && program != null) {
+      String traceContent = program.getTrace()
           .result(result.getHReturn())
           .error(result.getException())
           .toString();
 
       if (config.vmTraceCompressed()) {
-        trace = zipAndEncode(trace);
+        traceContent = zipAndEncode(traceContent);
       }
 
       String txHash = Hex.toHexString(new InternalTransaction(trx).getHash());
-      saveProgramTraceFile(config, txHash, trace);
+      saveProgramTraceFile(config, txHash, traceContent);
     }
 
   }
