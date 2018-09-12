@@ -609,7 +609,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return;
   }
 
-  private void setResultCode(contractResult code) {
+  public void setResultCode(contractResult code) {
     Result ret = Result.newBuilder().setContractRet(code).build();
     if (this.transaction.getRetCount() > 0) {
       ret = this.transaction.getRet(0).toBuilder().setContractRet(code).build();
