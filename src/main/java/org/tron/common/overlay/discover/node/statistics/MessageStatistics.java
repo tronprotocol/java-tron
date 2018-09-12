@@ -69,42 +69,58 @@ public class MessageStatistics {
   public final MessageCount tronOutBlock = new MessageCount();
   public final MessageCount tronOutAdvBlock = new MessageCount();
 
-  public void addUdpInMessage(UdpMessageTypeEnum type){
+  public void addUdpInMessage(UdpMessageTypeEnum type) {
     addUdpMessage(type, true);
   }
 
-  public void addUdpOutMessage(UdpMessageTypeEnum type){
+  public void addUdpOutMessage(UdpMessageTypeEnum type) {
     addUdpMessage(type, false);
   }
 
-  public void addTcpInMessage(Message msg){
+  public void addTcpInMessage(Message msg) {
     addTcpMessage(msg, true);
   }
 
-  public void addTcpOutMessage(Message msg){
+  public void addTcpOutMessage(Message msg) {
     addTcpMessage(msg, false);
   }
 
-  private void addUdpMessage(UdpMessageTypeEnum type, boolean flag){
-    switch (type){
+  private void addUdpMessage(UdpMessageTypeEnum type, boolean flag) {
+    switch (type) {
       case DISCOVER_PING:
-        if (flag) discoverInPing.add(); else discoverOutPing.add();
+        if (flag) {
+          discoverInPing.add();
+        } else {
+          discoverOutPing.add();
+        }
         break;
       case DISCOVER_PONG:
-        if (flag) discoverInPong.add(); else discoverOutPong.add();
+        if (flag) {
+          discoverInPong.add();
+        } else {
+          discoverOutPong.add();
+        }
         break;
       case DISCOVER_FIND_NODE:
-        if (flag) discoverInFindNode.add(); else discoverOutFindNode.add();
+        if (flag) {
+          discoverInFindNode.add();
+        } else {
+          discoverOutFindNode.add();
+        }
         break;
       case DISCOVER_NEIGHBORS:
-        if (flag) discoverInNeighbours.add(); else discoverOutNeighbours.add();
+        if (flag) {
+          discoverInNeighbours.add();
+        } else {
+          discoverOutNeighbours.add();
+        }
         break;
       default:
         break;
     }
   }
 
-  private void addTcpMessage(Message msg, boolean flag){
+  private void addTcpMessage(Message msg, boolean flag) {
 
     if (flag) {
       tronInMessage.add();
@@ -112,41 +128,65 @@ public class MessageStatistics {
       tronOutMessage.add();
     }
 
-    switch (msg.getType()){
+    switch (msg.getType()) {
       case P2P_HELLO:
-        if (flag) p2pInHello.add(); else p2pOutHello.add();
+        if (flag) {
+          p2pInHello.add();
+        } else {
+          p2pOutHello.add();
+        }
         break;
       case P2P_PING:
-        if (flag) p2pInPing.add(); else p2pOutPing.add();
+        if (flag) {
+          p2pInPing.add();
+        } else {
+          p2pOutPing.add();
+        }
         break;
       case P2P_PONG:
-        if (flag) p2pInPong.add(); else p2pOutPong.add();
+        if (flag) {
+          p2pInPong.add();
+        } else {
+          p2pOutPong.add();
+        }
         break;
       case P2P_DISCONNECT:
-        if (flag) p2pInDisconnect.add(); else p2pOutDisconnect.add();
+        if (flag) {
+          p2pInDisconnect.add();
+        } else {
+          p2pOutDisconnect.add();
+        }
         break;
       case SYNC_BLOCK_CHAIN:
-        if (flag) tronInSyncBlockChain.add(); else tronOutSyncBlockChain.add();
+        if (flag) {
+          tronInSyncBlockChain.add();
+        } else {
+          tronOutSyncBlockChain.add();
+        }
         break;
       case BLOCK_CHAIN_INVENTORY:
-        if (flag) tronInBlockChainInventory.add(); else tronOutBlockChainInventory.add();
+        if (flag) {
+          tronInBlockChainInventory.add();
+        } else {
+          tronOutBlockChainInventory.add();
+        }
         break;
       case INVENTORY:
         InventoryMessage inventoryMessage = (InventoryMessage) msg;
         int inventorySize = inventoryMessage.getInventory().getIdsCount();
         if (flag) {
-          if (inventoryMessage.getInvMessageType() == MessageTypes.TRX){
+          if (inventoryMessage.getInvMessageType() == MessageTypes.TRX) {
             tronInTrxInventory.add();
             tronInTrxInventoryElement.add(inventorySize);
-          }else {
+          } else {
             tronInBlockInventory.add();
             tronInBlockInventoryElement.add(inventorySize);
           }
         } else {
-          if (inventoryMessage.getInvMessageType() == MessageTypes.TRX){
+          if (inventoryMessage.getInvMessageType() == MessageTypes.TRX) {
             tronOutTrxInventory.add();
             tronOutTrxInventoryElement.add(inventorySize);
-          }else {
+          } else {
             tronOutBlockInventory.add();
             tronOutBlockInventoryElement.add(inventorySize);
           }
@@ -156,25 +196,25 @@ public class MessageStatistics {
         FetchInvDataMessage fetchInvDataMessage = (FetchInvDataMessage) msg;
         int fetchSize = fetchInvDataMessage.getInventory().getIdsCount();
         if (flag) {
-          if (fetchInvDataMessage.getInvMessageType() == MessageTypes.TRX){
+          if (fetchInvDataMessage.getInvMessageType() == MessageTypes.TRX) {
             tronInTrxFetchInvData.add();
             tronInTrxFetchInvDataElement.add(fetchSize);
-          }else {
+          } else {
             tronInBlockFetchInvData.add();
             tronInBlockFetchInvDataElement.add(fetchSize);
           }
         } else {
-          if (fetchInvDataMessage.getInvMessageType() == MessageTypes.TRX){
+          if (fetchInvDataMessage.getInvMessageType() == MessageTypes.TRX) {
             tronOutTrxFetchInvData.add();
             tronOutTrxFetchInvDataElement.add(fetchSize);
-          }else {
+          } else {
             tronOutBlockFetchInvData.add();
             tronOutBlockFetchInvDataElement.add(fetchSize);
           }
         }
         break;
       case TRXS:
-        TransactionsMessage transactionsMessage = (TransactionsMessage)msg;
+        TransactionsMessage transactionsMessage = (TransactionsMessage) msg;
         if (flag) {
           tronInTrxs.add();
           tronInTrx.add(transactionsMessage.getTransactions().getTransactionsCount());
@@ -184,10 +224,17 @@ public class MessageStatistics {
         }
         break;
       case TRX:
-        if (flag) tronInMessage.add(); else tronOutMessage.add();
+        if (flag) {
+          tronInMessage.add();
+        } else {
+          tronOutMessage.add();
+        }
         break;
       case BLOCK:
-        if (flag) tronInBlock.add(); tronOutBlock.add();
+        if (flag) {
+          tronInBlock.add();
+        }
+        tronOutBlock.add();
         break;
       default:
         break;

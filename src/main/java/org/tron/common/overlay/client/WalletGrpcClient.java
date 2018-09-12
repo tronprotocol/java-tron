@@ -42,8 +42,8 @@ public class WalletGrpcClient {
   }
 
   public Account queryAccount(byte[] address) {
-    ByteString addressBS = ByteString.copyFrom(address);
-    Account request = Account.newBuilder().setAddress(addressBS).build();
+    ByteString addressByteString = ByteString.copyFrom(address);
+    Account request = Account.newBuilder().setAddress(addressByteString).build();
     return walletBlockingStub.getAccount(request);
   }
 
@@ -96,8 +96,8 @@ public class WalletGrpcClient {
   }
 
   public Optional<AssetIssueList> getAssetIssueByAccount(byte[] address) {
-    ByteString addressBS = ByteString.copyFrom(address);
-    Account request = Account.newBuilder().setAddress(addressBS).build();
+    ByteString addressByteString = ByteString.copyFrom(address);
+    Account request = Account.newBuilder().setAddress(addressByteString).build();
     AssetIssueList assetIssueList = walletBlockingStub
         .getAssetIssueByAccount(request);
     if (assetIssueList != null) {

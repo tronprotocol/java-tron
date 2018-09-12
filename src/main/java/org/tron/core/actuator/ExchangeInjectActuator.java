@@ -64,6 +64,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
       }
 
       long newBalance = accountCapsule.getBalance() - calcFee();
+      accountCapsule.setBalance(newBalance);
 
       if (Arrays.equals(tokenID, "_".getBytes())) {
         accountCapsule.setBalance(newBalance - tokenQuant);

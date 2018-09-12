@@ -39,6 +39,8 @@ public class TestExceptionCodeAndAbi {
   //"FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
   //"BC70ADC5A0971BA3F7871FBB7249E345D84CE7E5458828BE1E28BF8F98F2795B";
   private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
+  private Long maxFeeLimit = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.maxFeeLimit");
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -87,7 +89,7 @@ public class TestExceptionCodeAndAbi {
 
   @BeforeClass(enabled = false)
   public void beforeClass() {
-    PublicMethed.printAddress(testNetAccountKey);
+    PublicMethed.printAddress(testKeyForAssetIssue016);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
@@ -119,10 +121,12 @@ public class TestExceptionCodeAndAbi {
 
     logger.info(Long.toString(PublicMethed.queryAccount(testNetAccountKey,blockingStubFull)
         .getBalance()));
-    PublicMethed.sendcoin(asset016Address,10000000000L,testNetAccountAddress,testNetAccountKey,blockingStubFull);
-    //Assert.assertTrue(PublicMethed.freezeBalance(asset016Address,1000000L,3,testKeyForAssetIssue016,blockingStubFull));
-    //Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(asset016Address,1000000L,
-    //    3,1,testKeyForAssetIssue016,blockingStubFull));
+    PublicMethed.sendcoin(asset016Address,10000000000000L,testNetAccountAddress,
+        testNetAccountKey,blockingStubFull);
+    Assert.assertTrue(PublicMethed.freezeBalance(asset016Address,1000000L,3,
+        testKeyForAssetIssue016,blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(asset016Address,3000000000L,
+        3,1,testKeyForAssetIssue016,blockingStubFull));
   }
 
   @Test(enabled = false)
@@ -191,16 +195,17 @@ public class TestExceptionCodeAndAbi {
     String contractName = "timeout";
     String code = "6080604052600060035534801561001557600080fd5b5061027b806100256000396000f3006080604052600436106100825763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416633755cd3c81146100875780637d965688146100b1578063a05b2577146100c9578063b0d6304d146100e1578063bbe1d75b14610115578063f8a8fd6d1461012a578063fe75faab14610141575b600080fd5b34801561009357600080fd5b5061009f600435610159565b60408051918252519081900360200190f35b3480156100bd57600080fd5b5061009f600435610178565b3480156100d557600080fd5b5061009f600435610198565b3480156100ed57600080fd5b5061009f73ffffffffffffffffffffffffffffffffffffffff600435811690602435166101e2565b34801561012157600080fd5b5061009f6101ff565b34801561013657600080fd5b5061013f610205565b005b34801561014d57600080fd5b5061009f600435610218565b600080548290811061016757fe5b600091825260209091200154905081565b600080805b83811015610191576001918201910161017d565b5092915050565b600080805b838110156101915760008054600181810183559180527f290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e56301829055918201910161019d565b600260209081526000928352604080842090915290825290205481565b60015481565b600380546001019055610216610205565b565b60006102238261022e565b600181905592915050565b600061023c6002830361022e565b6102486001840361022e565b01929150505600a165627a7a7230582077fd7ac1cd0908622d05db388922d485d6f8e3a546590b97ec8398f87f0c8a580029";
     String abi = "[{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"iarray\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"a\",\"type\":\"uint256\"}],\"name\":\"testUseCpu\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"a\",\"type\":\"uint256\"}],\"name\":\"testUseStorage\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"address\"}],\"name\":\"m\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"calculatedFibNumber\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"test\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"n\",\"type\":\"uint256\"}],\"name\":\"setFibonacci\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
-    contractAddress = PublicMethed.deployContract(contractName,abi,code,"",
-        1000000000L, 0L, 100,null,testKeyForAssetIssue016,asset016Address,blockingStubFull);
+    contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit, 0L, 
+        100,null,testKeyForAssetIssue016,asset016Address,blockingStubFull);
     Optional<TransactionInfo> infoById = null;
-    Integer triggerNum = 10;
+    Integer triggerNum = 10000000;
     Long energy;
     Integer times = 0;
     Account info = PublicMethed.queryAccount(testKeyForAssetIssue016,blockingStubFull);
     Long beforeBalance;
     Long beforeNetLimit;
     Long beforeFreeNetLimit;
+    Long beforeFreeNetUsed;
     Long beforeNetUsed;
     Long beforeEnergyLimit;
     Long beforeEnergyUsed;
@@ -208,6 +213,7 @@ public class TestExceptionCodeAndAbi {
     Long afterBalance;
     Long afterNetLimit;
     Long afterFreeNetLimit;
+    Long afterFreeNetUsed;
     Long afterNetUsed;
     Long afterEnergyLimit;
     Long afterEnergyUsed;
@@ -224,7 +230,7 @@ public class TestExceptionCodeAndAbi {
         blockingStubFull);
 
 
-    while (times++ < 1) {
+    while (times++ < 10000) {
       info = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull);
       beforeBalance = info.getBalance();
       beforeEnergyLimit = resourceInfo.getEnergyLimit();
@@ -232,24 +238,31 @@ public class TestExceptionCodeAndAbi {
       beforeFreeNetLimit = resourceInfo.getFreeNetLimit();
       beforeNetLimit = resourceInfo.getNetLimit();
       beforeNetUsed = resourceInfo.getNetUsed();
+      beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
+      logger.info("beofre free net used:" + Long.toString(beforeFreeNetUsed));
 
-      logger.info("before in 1 the balance is " + PublicMethed.queryAccount(asset016Address,blockingStubFull1).getBalance());
-      logger.info("before in 2 the balance is " + PublicMethed.queryAccount(asset016Address,blockingStubFull2).getBalance());
-      logger.info("before in 3 the balance is " + PublicMethed.queryAccount(asset016Address,blockingStubFull3).getBalance());
-      logger.info("before in 4 the balance is " + PublicMethed.queryAccount(asset016Address,blockingStubFull4).getBalance());
-      logger.info("before in 5 the balance is " + PublicMethed.queryAccount(asset016Address,blockingStubFull5).getBalance());
+      logger.info("before in 1 the balance is " + PublicMethed.queryAccount(asset016Address,
+          blockingStubFull1).getBalance());
+      logger.info("before in 2 the balance is " + PublicMethed.queryAccount(asset016Address,
+          blockingStubFull2).getBalance());
+      logger.info("before in 3 the balance is " + PublicMethed.queryAccount(asset016Address,
+          blockingStubFull3).getBalance());
+      logger.info("before in 4 the balance is " + PublicMethed.queryAccount(asset016Address,
+          blockingStubFull4).getBalance());
+      logger.info("before in 5 the balance is " + PublicMethed.queryAccount(asset016Address,
+          blockingStubFull5).getBalance());
 
 
       txid = PublicMethed.triggerContract(contractAddress,
           "testUseCpu(uint256)", triggerNum.toString(), false,
-          0, 1000000000L, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+          0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
       try {
-        Thread.sleep(300);
+        Thread.sleep(10000);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
 
-      infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+      infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull2);
       energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
       fee = infoById.get().getFee();
       energyFee = infoById.get().getReceipt().getEnergyFee();
@@ -257,7 +270,7 @@ public class TestExceptionCodeAndAbi {
       energyUsed = infoById.get().getReceipt().getEnergyUsage();
       netFee = infoById.get().getReceipt().getNetFee();
 
-      info = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull);
+      info = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull3);
       afterBalance = info.getBalance();
       afterEnergyLimit = resourceInfo.getEnergyLimit();
       afterEnergyUsed = resourceInfo.getEnergyUsed();
@@ -265,26 +278,40 @@ public class TestExceptionCodeAndAbi {
       afterNetLimit = resourceInfo.getNetLimit();
       afterNetUsed = resourceInfo.getNetUsed();
       minBalance = beforeBalance - afterBalance;
+      resourceInfo = PublicMethed.getAccountResource(asset016Address,
+          blockingStubFull2);
+      afterFreeNetUsed = resourceInfo.getFreeNetUsed();
+
 
       serachInfo(txid,blockingStubFull1);
       serachInfo(txid,blockingStubFull2);
       serachInfo(txid,blockingStubFull3);
       serachInfo(txid,blockingStubFull4);
       serachInfo(txid,blockingStubFull5);
+      logger.info("after free net used:" + Long.toString(afterFreeNetUsed));
 
-      logger.info("after in 1 the balance is " + PublicMethed.queryAccount(asset016Address,blockingStubFull1).getBalance());
-      logger.info("after in 2 the balance is " + PublicMethed.queryAccount(asset016Address,blockingStubFull2).getBalance());
-      logger.info("after in 3 the balance is " + PublicMethed.queryAccount(asset016Address,blockingStubFull3).getBalance());
-      logger.info("after in 4 the balance is " + PublicMethed.queryAccount(asset016Address,blockingStubFull4).getBalance());
-      logger.info("after in 5 the balance is " + PublicMethed.queryAccount(asset016Address,blockingStubFull5).getBalance());
+      logger.info("after in 1 the balance is " + PublicMethed.queryAccount(asset016Address,
+          blockingStubFull1).getBalance());
+      logger.info("after in 2 the balance is " + PublicMethed.queryAccount(asset016Address,
+          blockingStubFull2).getBalance());
+      logger.info("after in 3 the balance is " + PublicMethed.queryAccount(asset016Address,
+          blockingStubFull3).getBalance());
+      logger.info("after in 4 the balance is " + PublicMethed.queryAccount(asset016Address,
+          blockingStubFull4).getBalance());
+      logger.info("after in 5 the balance is " + PublicMethed.queryAccount(asset016Address,
+          blockingStubFull5).getBalance());
 
 
 
 
-      writeCsv(minBalance.toString(),beforeBalance.toString(),beforeNetLimit.toString(),beforeFreeNetLimit.toString(),beforeNetUsed.toString(),
-          beforeEnergyLimit.toString(),beforeEnergyUsed.toString(),energyUsageTotal.toString(),fee.toString(),energyFee.toString(),
-          netUsed.toString(),energyUsed.toString(),netFee.toString(),afterBalance.toString(),afterEnergyLimit.toString(),
-          afterEnergyUsed.toString(),afterFreeNetLimit.toString(),afterNetLimit.toString(),afterNetUsed.toString(),txid,testKeyForAssetIssue016);
+      writeCsv(minBalance.toString(),beforeBalance.toString(),beforeNetLimit.toString(),
+          beforeFreeNetLimit.toString(),beforeNetUsed.toString(),
+          beforeEnergyLimit.toString(),beforeEnergyUsed.toString(),beforeFreeNetUsed.toString(),
+          energyUsageTotal.toString(),fee.toString(),energyFee.toString(),
+          netUsed.toString(),energyUsed.toString(),netFee.toString(),afterBalance.toString(),
+          afterEnergyLimit.toString(), afterEnergyUsed.toString(),afterFreeNetUsed.toString(),
+          afterFreeNetLimit.toString(),afterNetLimit.toString(),afterNetUsed.toString(),txid,
+          testKeyForAssetIssue016);
     }
 
 
@@ -300,7 +327,8 @@ public class TestExceptionCodeAndAbi {
   }
 
   public static void serachInfo(String txid, WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Optional<TransactionInfo> infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Optional<TransactionInfo> infoById = PublicMethed.getTransactionInfoById(txid, 
+        blockingStubFull);
     logger.info("---------------------------------------------");
 
     logger.info("fee is " + infoById.get().getFee());
@@ -329,19 +357,32 @@ public class TestExceptionCodeAndAbi {
 
 
 
-  public static void writeCsv(String minBalance, String beforeBalance,String beforeNetLimit,String beforeFreeNet,
-      String beforeNetUsed, String beforeEnergyLimit,String beforeEnergyUsed,String energyUsageTotal,
-      String fee,String energyFee, String netUsed, String energyUsed, String netFee, String afterBalance,
-      String afterEnergyLimit, String afterEnergyUsed, String afterFreeNet, String afterNetLimit,
+  public static void writeCsv(String minBalance, String beforeBalance,String beforeNetLimit,
+      String beforeFreeNet, String beforeNetUsed, String beforeEnergyLimit,String beforeEnergyUsed, 
+      String beforeFreeNetUsed, String energyUsageTotal, String fee,String energyFee, 
+      String netUsed, String energyUsed, 
+      String netFee, String afterBalance, String afterEnergyLimit, String afterEnergyUsed, 
+      String afterFreeNetUsed, String afterFreeNet, String afterNetLimit,
       String afterNetUsed, String txid, String testKeyForAssetIssue016) {
     try {
       File csv = new File("/Users/wangzihe/Documents/costFee.csv");
       String time = Long.toString(System.currentTimeMillis());
       BufferedWriter bw = new BufferedWriter(new FileWriter(csv, true));
-      bw.write(time + "," + minBalance + "," + beforeBalance + "," + beforeNetLimit + "," + beforeFreeNet + "," + beforeNetUsed
-          + "," + beforeEnergyLimit + "," + beforeEnergyUsed + "," + energyUsageTotal + "," + fee + "," + energyFee + ","
-          + netUsed + "," + energyUsed + "," + netFee + "," + afterBalance + "," + afterEnergyLimit + ","
-          + afterEnergyUsed + "," + afterFreeNet + "," + afterNetLimit + "," + afterNetUsed + "," + txid + "," + testKeyForAssetIssue016);
+      bw.write("TestTimeoutusefeelimit:(HaveEnergyAndHaveFreezeNet)" + "," + "timestamp" + time 
+          + "," + "min:" + minBalance + "," + "beforeBalance:" + beforeBalance + "," 
+          + "beforeNetLimit:" 
+          + beforeNetLimit + "," + "beforeFreeNet:" +  beforeFreeNet + "," + "beforeNetused:" 
+          + beforeNetUsed
+          + "," + "beforeEnergyLimit:" + beforeEnergyLimit + "," + "beforeEnergyUsed:" 
+          + beforeEnergyUsed 
+          + "," + "beforeFreeNetUsed" + beforeFreeNetUsed + "," + "energyUsageTotal:" 
+          + energyUsageTotal 
+          + "," + "fee:" + fee + "," + "energyFee:" + energyFee + "," + "netUsed:" + netUsed + "," 
+          + "energyUsed:" + energyUsed + "," + "netFee:" + netFee + "," + "afterBalance:" 
+          + afterBalance + "," + "afterEnergyLimit:" + afterEnergyLimit + ","
+          + "afterEnergyUsed:" + afterEnergyUsed + "," + "afterFreeNetUsed:" + afterFreeNetUsed 
+          + "," + "afterFreeNet:" + afterFreeNet + "," + "afterNetLimit:" + afterNetLimit + "," 
+          + "afterNetUsed:" + afterNetUsed + "," + txid + "," + testKeyForAssetIssue016);
       bw.newLine();
       bw.close();
     } catch (FileNotFoundException e) {

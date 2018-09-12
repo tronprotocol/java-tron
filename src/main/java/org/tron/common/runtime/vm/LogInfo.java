@@ -19,10 +19,9 @@ package org.tron.common.runtime.vm;
 
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
-import org.spongycastle.util.encoders.Hex;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.protos.Protocol.TransactionInfo.Log;
 
 /**
@@ -31,116 +30,55 @@ import org.tron.protos.Protocol.TransactionInfo.Log;
  */
 public class LogInfo {
 
-    byte[] address = new byte[]{};
-    List<DataWord> topics = new ArrayList<>();
-    byte[] data = new byte[]{};
+  byte[] address = new byte[]{};
+  List<DataWord> topics = new ArrayList<>();
+  byte[] data = new byte[]{};
 
-    /* Log info in encoded form */
-    private byte[] rlpEncoded;
+  public LogInfo(byte[] address, List<DataWord> topics, byte[] data) {
+    this.address = (address != null) ? address : new byte[]{};
+    this.topics = (topics != null) ? topics : new ArrayList<DataWord>();
+    this.data = (data != null) ? data : new byte[]{};
+  }
 
-    public LogInfo(byte[] rlp) {
+  public byte[] getAddress() {
+    return address;
+  }
 
-        /*
-        RLPList params = RLP.decode2(rlp);
-        RLPList logInfo = (RLPList) params.get(0);
+  public List<DataWord> getTopics() {
+    return topics;
+  }
 
-        RLPItem address = (RLPItem) logInfo.get(0);
-        RLPList topics = (RLPList) logInfo.get(1);
-        RLPItem data = (RLPItem) logInfo.get(2);
+  public byte[] getData() {
+    return data;
+  }
 
-        this.address = address.getRLPData() != null ? address.getRLPData() : new byte[]{};
-        this.data = data.getRLPData() != null ? data.getRLPData() : new byte[]{};
+  @Override
+  public String toString() {
 
-        for (RLPElement topic1 : topics) {
-            byte[] topic = topic1.getRLPData();
-            this.topics.add(new DataWord(topic));
-        }
-        */
+    StringBuilder topicsStr = new StringBuilder();
+    topicsStr.append("[");
 
-        rlpEncoded = rlp;
+    for (DataWord topic : topics) {
+      String topicStr = Hex.toHexString(topic.getData());
+      topicsStr.append(topicStr).append(" ");
     }
+    topicsStr.append("]");
 
-    public LogInfo(byte[] address, List<DataWord> topics, byte[] data) {
-        this.address = (address != null) ? address : new byte[]{};
-        this.topics = (topics != null) ? topics : new ArrayList<DataWord>();
-        this.data = (data != null) ? data : new byte[]{};
-    }
+    return "LogInfo{"
+        + "address=" + Hex.toHexString(address)
+        + ", topics=" + topicsStr
+        + ", data=" + Hex.toHexString(data)
+        + '}';
+  }
 
-    public byte[] getAddress() {
-        return address;
-    }
-
-    public List<DataWord> getTopics() {
-        return topics;
-    }
-
-    public byte[] getData() {
-        return data;
-    }
-
-    /*  [address, [topic, topic ...] data] */
-    public byte[] getEncoded() {
-
-        /*
-        byte[] addressEncoded = RLP.encodeElement(this.address);
-
-        byte[][] topicsEncoded = null;
-        if (topics != null) {
-            topicsEncoded = new byte[topics.size()][];
-            int i = 0;
-            for (DataWord topic : topics) {
-                byte[] topicData = topic.getData();
-                topicsEncoded[i] = RLP.encodeElement(topicData);
-                ++i;
-            }
-        }
-
-        byte[] dataEncoded = RLP.encodeElement(data);
-        return RLP.encodeList(addressEncoded, RLP.encodeList(topicsEncoded), dataEncoded);
-        */
-        return null;
-    }
-
-    /*
-    public Bloom getBloom() {
-        Bloom ret = Bloom.create(HashUtil.sha3(address));
-        for (DataWord topic : topics) {
-            byte[] topicData = topic.getData();
-            ret.or(Bloom.create(HashUtil.sha3(topicData)));
-        }
-        return ret;
-    }
-    */
-
-    @Override
-    public String toString() {
-
-        StringBuilder topicsStr = new StringBuilder();
-        topicsStr.append("[");
-
-        for (DataWord topic : topics) {
-            String topicStr = Hex.toHexString(topic.getData());
-            topicsStr.append(topicStr).append(" ");
-        }
-        topicsStr.append("]");
-
-
-        return "LogInfo{" +
-                "address=" + Hex.toHexString(address) +
-                ", topics=" + topicsStr +
-                ", data=" + Hex.toHexString(data) +
-                '}';
-    }
-
-    public static Log buildLog(LogInfo logInfo) {
-        List<ByteString> topics = Lists.newArrayList();
-        logInfo.getTopics().forEach(topic -> {
-            topics.add(ByteString.copyFrom(topic.getData()));
-        });
-        ByteString address = ByteString.copyFrom(logInfo.getAddress());
-        ByteString data = ByteString.copyFrom(logInfo.getData());
-        return Log.newBuilder().setAddress(address).addAllTopics(topics).setData(data).build();
-    }
-
+  public static Log buildLog(LogInfo logInfo) {
+    List<ByteString> topics = Lists.newArrayList();
+    logInfo.getTopics().forEach(topic -> {
+      topics.add(ByteString.copyFrom(topic.getData()));
+    });
+    ByteString address = ByteString.copyFrom(logInfo.getAddress());
+    ByteString data = ByteString.copyFrom(logInfo.getData());
+    return Log.newBuilder().setAddress(address).addAllTopics(topics).setData(data).build();
+  }
 
 }

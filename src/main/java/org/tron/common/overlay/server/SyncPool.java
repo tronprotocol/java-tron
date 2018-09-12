@@ -235,7 +235,7 @@ public class SyncPool {
         return false;
       }
 
-      if (handler.getNodeStatistics().getReputation() >= NodeStatistics.REPUTATION_PREDEFINED){
+      if (handler.getNodeStatistics().getReputation() >= NodeStatistics.REPUTATION_PREDEFINED) {
         return true;
       }
 
@@ -246,7 +246,7 @@ public class SyncPool {
       if (channelManager.getBadPeers().getIfPresent(inetAddress) != null) {
         return false;
       }
-      if (channelManager.getConnectionNum(inetAddress) >= getMaxActivePeersWithSameIp){
+      if (channelManager.getConnectionNum(inetAddress) >= getMaxActivePeersWithSameIp) {
         return false;
       }
 
