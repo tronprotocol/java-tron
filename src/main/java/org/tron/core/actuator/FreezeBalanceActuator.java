@@ -187,6 +187,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
             "ResourceCode error,valid ResourceCode[BANDWIDTH、ENERGY]");
     }
 
+    //todo：need version control and config for delegating resource
     byte[] receiverAddress = freezeBalanceContract.getReceiverAddress().toByteArray();
     //If the receiver is included in the contract, the receiver will receive the resource.
     if (receiverAddress.length != 0) {
