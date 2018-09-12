@@ -10,6 +10,7 @@ import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionList;
+import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -117,6 +118,16 @@ public class Util {
     if (transactionExtention.getResult().getResult()) {
       jsonObject.put("transaction", printTransactionToJSON(transactionExtention.getTransaction()));
     }
+    return jsonObject.toJSONString();
+  }
+
+  public static String printTransactionSignWeight(TransactionSignWeight transactionSignWeight) {
+    String string = JsonFormat.printToString(transactionSignWeight);
+    JSONObject jsonObject = JSONObject.parseObject(string);
+    JSONObject jsonObjectExt = jsonObject.getJSONObject("transaction");
+    jsonObjectExt
+        .put("transaction", printTransactionToJSON(transactionSignWeight.getTransaction().getTransaction()));
+    jsonObject.put("transaction",jsonObjectExt);
     return jsonObject.toJSONString();
   }
 
