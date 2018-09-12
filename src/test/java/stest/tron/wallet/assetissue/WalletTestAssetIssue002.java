@@ -66,7 +66,7 @@ public class WalletTestAssetIssue002 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -98,7 +98,7 @@ public class WalletTestAssetIssue002 {
     }
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testParticipateAssetissue() {
     try {
       Thread.sleep(3000);
@@ -134,7 +134,7 @@ public class WalletTestAssetIssue002 {
         toAddress, testKey003,blockingStubFull));
   }
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
