@@ -560,19 +560,43 @@ service Wallet {
   }
 
   rpc AccountPermissionUpdate (AccountPermissionUpdateContract) returns (TransactionExtention) {
-
+    option (google.api.http) = {
+      post: "/wallet/accountpermissionupdate"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/accountpermissionupdate"
+      }
+    };
   }
 
   rpc PermissionAddKey (PermissionAddKeyContract) returns (TransactionExtention) {
-
+    option (google.api.http) = {
+      post: "/wallet/permissionaddkey"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/permissionaddkey"
+      }
+    };
   }
 
   rpc PermissionUpdateKey (PermissionUpdateKeyContract) returns (TransactionExtention) {
-
+    option (google.api.http) = {
+      post: "/wallet/permissionupdatekey"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/permissionupdatekey"
+      }
+    };
   }
 
   rpc PermissionDeleteKey (PermissionDeleteKeyContract) returns (TransactionExtention) {
-
+    option (google.api.http) = {
+      post: "/wallet/permissiondeletekey"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/permissiondeletekey"
+      }
+    };
   }
 
   rpc AddSign (TransactionSign) returns (TransactionExtention) {

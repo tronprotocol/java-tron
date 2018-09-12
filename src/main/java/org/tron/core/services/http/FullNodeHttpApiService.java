@@ -127,6 +127,14 @@ public class FullNodeHttpApiService implements Service {
   private AddTransactionSignServlet addTransactionSignServlet;
   @Autowired
   private GetTransactionSignWeightServlet getTransactionSignWeightServlet;
+  @Autowired
+  private AccountPermissionUpdateServlet accountPermissionUpdateServlet;
+  @Autowired
+  private PermissionAddKeyServlet permissionAddKeyServlet;
+  @Autowired
+  private PermissionDeleteKeyServlet permissionDeleteKeyServlet;
+  @Autowired
+  private PermissionUpdateKeyServlet permissionUpdateKeyServlet;
 
   @Override
   public void init() {
@@ -203,6 +211,10 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getAccountResourceServlet), "/getaccountresource");
       context.addServlet(new ServletHolder(addTransactionSignServlet), "/addtransactionsign");
       context.addServlet(new ServletHolder(getTransactionSignWeightServlet), "/getsignweight");
+      context.addServlet(new ServletHolder(accountPermissionUpdateServlet), "/accountpermissionupdate");
+      context.addServlet(new ServletHolder(permissionAddKeyServlet), "/permissionaddkey");
+      context.addServlet(new ServletHolder(permissionDeleteKeyServlet), "/permissiondeletekey");
+      context.addServlet(new ServletHolder(permissionUpdateKeyServlet), "/permissionupdatekey");
 
       server.start();
     } catch (Exception e) {

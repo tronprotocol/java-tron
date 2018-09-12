@@ -41,6 +41,7 @@ import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Contract.WitnessUpdateContract;
+import org.tron.protos.Contract.PermissionAddKeyContract;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
@@ -278,6 +279,12 @@ public class Util {
             contractJson = JSONObject
                 .parseObject(JsonFormat.printToString(exchangeTransactionContract));
             break;
+          case PermissionAddKeyContract:
+            PermissionAddKeyContract permissionAddKeyContract = contractParameter
+                    .unpack(PermissionAddKeyContract.class);
+            contractJson = JSONObject
+                    .parseObject(JsonFormat.printToString(permissionAddKeyContract));
+            break;
           // todo add other contract
           default:
         }
@@ -493,6 +500,14 @@ public class Util {
                 .merge(parameter.getJSONObject("value").toJSONString(),
                     ProposalDeleteContractBuilder);
             any = Any.pack(ProposalDeleteContractBuilder.build());
+            break;
+          case "PermissionAddKeyContract":
+            PermissionAddKeyContract.Builder PermissionAddKeyContractBuilder = PermissionAddKeyContract
+                    .newBuilder();
+            JsonFormat
+                    .merge(parameter.getJSONObject("value").toJSONString(),
+                            PermissionAddKeyContractBuilder);
+            any = Any.pack(PermissionAddKeyContractBuilder.build());
             break;
           // todo add other contract
           default:
