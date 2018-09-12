@@ -159,11 +159,8 @@ public class UnfreezeBalanceActuatorTest {
     UnfreezeBalanceActuator actuator = new UnfreezeBalanceActuator(
         getContractForBandwidth(OWNER_ADDRESS), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
-//    try {
-//      Thread.sleep(10);
-//    } catch (InterruptedException e) {
-//      fail("Interrupted exception in sleep.");
-//    }
+
+    long totalNetWeightBefore = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
 
     try {
       actuator.validate();
@@ -175,6 +172,10 @@ public class UnfreezeBalanceActuatorTest {
       Assert.assertEquals(owner.getBalance(), initBalance + frozenBalance);
       Assert.assertEquals(owner.getFrozenBalance(), 0);
       Assert.assertEquals(owner.getTronPower(), 0L);
+
+      long totalNetWeightAfter = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
+      Assert.assertEquals(totalNetWeightBefore, totalNetWeightAfter + frozenBalance/1000_000L);
+
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -185,7 +186,7 @@ public class UnfreezeBalanceActuatorTest {
 
 
   @Test
-  public void testUnfreezeBalanceForCpu() {
+  public void testUnfreezeBalanceForEnergy() {
     long now = System.currentTimeMillis();
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
 
@@ -199,6 +200,8 @@ public class UnfreezeBalanceActuatorTest {
     UnfreezeBalanceActuator actuator = new UnfreezeBalanceActuator(
         getContractForCpu(OWNER_ADDRESS), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    long totalEnergyWeightBefore = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -209,6 +212,8 @@ public class UnfreezeBalanceActuatorTest {
       Assert.assertEquals(owner.getBalance(), initBalance + frozenBalance);
       Assert.assertEquals(owner.getEnergyFrozenBalance() , 0);
       Assert.assertEquals(owner.getTronPower(), 0L);
+      long totalEnergyWeightAfter = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
+      Assert.assertEquals(totalEnergyWeightBefore, totalEnergyWeightAfter + frozenBalance/1000_000L);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {

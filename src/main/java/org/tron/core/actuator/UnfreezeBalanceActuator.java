@@ -87,7 +87,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
               //this should never happen
               break;
       }
-      dbManager.getDynamicPropertiesStore().addTotalNetWeight(-unfreezeBalance / 1000_000L);
+
     } else {
       byte[] key = DelegatedResourceCapsule
           .createDbKey(unfreezeBalanceContract.getOwnerAddress().toByteArray(),
@@ -106,12 +106,10 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           break;
         case ENERGY:
           unfreezeBalance = delegatedResourceCapsule.getFrozenBalanceForEnergy();
-          unfreezeBalance = delegatedResourceCapsule.getFrozenBalanceForEnergy();
           delegatedResourceCapsule.setFrozenBalanceForEnergy(0);
           receiverCapsule.addAcquiredDelegatedFrozenBalanceForEnergy(-unfreezeBalance);
           accountCapsule.addDelegatedFrozenBalanceForEnergy(-unfreezeBalance);
           break;
-
           default:
               //this should never happen
               break;
@@ -120,8 +118,6 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
       dbManager.getAccountStore().put(receiverCapsule.createDbKey(), receiverCapsule);
 
-      dbManager.getDynamicPropertiesStore().addTotalEnergyWeight(-unfreezeBalance / 1000_000L);
-
       if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() == 0
           && delegatedResourceCapsule.getFrozenBalanceForEnergy() == 0) {
         dbManager.getDelegatedResourceStore().delete(key);
@@ -129,6 +125,18 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
         dbManager.getDelegatedResourceStore().put(key, delegatedResourceCapsule);
       }
 
+    }
+
+    switch (unfreezeBalanceContract.getResource()) {
+      case BANDWIDTH:
+        dbManager.getDynamicPropertiesStore().addTotalNetWeight(-unfreezeBalance / 1000_000L);
+        break;
+      case ENERGY:
+        dbManager.getDynamicPropertiesStore().addTotalEnergyWeight(-unfreezeBalance / 1000_000L);
+        break;
+        default:
+        //this should never happen
+        break;
     }
 
     VotesCapsule votesCapsule;

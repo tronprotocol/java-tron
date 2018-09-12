@@ -199,6 +199,8 @@ public class FreezeBalanceActuatorTest {
     FreezeBalanceActuator actuator = new FreezeBalanceActuator(
         getDelegatedContractForBandwidth(OWNER_ADDRESS, RECEIVER_ADDRESS, frozenBalance, duration), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
+    long totalNetWeightBefore= dbManager.getDynamicPropertiesStore().getTotalNetWeight();
+
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -224,7 +226,8 @@ public class FreezeBalanceActuatorTest {
                   ByteArray.fromHexString(RECEIVER_ADDRESS)));
 
       Assert.assertEquals(frozenBalance, delegatedResourceCapsule.getFrozenBalanceForBandwidth());
-
+      long totalNetWeightAfter = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
+      Assert.assertEquals(totalNetWeightBefore + frozenBalance/1000_000L,totalNetWeightAfter);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -239,6 +242,7 @@ public class FreezeBalanceActuatorTest {
     FreezeBalanceActuator actuator = new FreezeBalanceActuator(
         getDelegatedContractForCpu(OWNER_ADDRESS, RECEIVER_ADDRESS, frozenBalance, duration), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
+    long totalEnergyWeightBefore = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -266,6 +270,9 @@ public class FreezeBalanceActuatorTest {
 
       Assert.assertEquals(0L, delegatedResourceCapsule.getFrozenBalanceForBandwidth());
       Assert.assertEquals(frozenBalance, delegatedResourceCapsule.getFrozenBalanceForEnergy());
+
+      long totalEnergyWeightAfter = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
+      Assert.assertEquals(totalEnergyWeightBefore + frozenBalance/1000_000L,totalEnergyWeightAfter);
 
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
