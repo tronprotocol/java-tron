@@ -20,7 +20,7 @@ public class HelloMessage extends P2pMessage {
   }
 
   public HelloMessage(Node from, long timestamp, BlockCapsule.BlockId genesisBlockId,
-                      BlockCapsule.BlockId solidBlockId, BlockCapsule.BlockId headBlockId){
+                      BlockCapsule.BlockId solidBlockId, BlockCapsule.BlockId headBlockId) {
 
     Endpoint fromEndpoint = Endpoint.newBuilder()
         .setNodeId(ByteString.copyFrom(from.getId()))
@@ -61,7 +61,7 @@ public class HelloMessage extends P2pMessage {
     return this.helloMessage.getVersion();
   }
 
-  public long getTimestamp(){
+  public long getTimestamp() {
     return this.helloMessage.getTimestamp();
   }
 
@@ -71,17 +71,17 @@ public class HelloMessage extends P2pMessage {
             ByteArray.toStr(from.getAddress().toByteArray()), from.getPort());
   }
 
-  public BlockCapsule.BlockId getGenesisBlockId(){
+  public BlockCapsule.BlockId getGenesisBlockId() {
     return new BlockCapsule.BlockId(this.helloMessage.getGenesisBlockId().getHash(),
             this.helloMessage.getGenesisBlockId().getNumber());
   }
 
-  public BlockCapsule.BlockId getSolidBlockId(){
+  public BlockCapsule.BlockId getSolidBlockId() {
     return new BlockCapsule.BlockId(this.helloMessage.getSolidBlockId().getHash(),
             this.helloMessage.getSolidBlockId().getNumber());
   }
 
-  public BlockCapsule.BlockId getHeadBlockId(){
+  public BlockCapsule.BlockId getHeadBlockId() {
     return new BlockCapsule.BlockId(this.helloMessage.getHeadBlockId().getHash(),
             this.helloMessage.getHeadBlockId().getNumber());
   }
