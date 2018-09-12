@@ -114,7 +114,7 @@ public class FreezeBalanceActuatorTest {
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
             .setFrozenBalance(frozenBalance)
             .setFrozenDuration(duration)
-            .setResource(ResourceCode .CPU)
+            .setResource(ResourceCode .ENERGY)
             .build());
   }
 
@@ -137,7 +137,7 @@ public class FreezeBalanceActuatorTest {
             .setReceiverAddress(ByteString.copyFrom(ByteArray.fromHexString(receiverAddress)))
             .setFrozenBalance(frozenBalance)
             .setFrozenDuration(duration)
-            .setResource(ResourceCode .CPU)
+            .setResource(ResourceCode .ENERGY)
             .build());
   }
 
@@ -183,7 +183,7 @@ public class FreezeBalanceActuatorTest {
       Assert.assertEquals(owner.getBalance(), initBalance - frozenBalance
           - ChainConstant.TRANSFER_FEE);
       Assert.assertEquals(0L,owner.getFrozenBalance());
-      Assert.assertEquals(frozenBalance,owner.getCpuFrozenBalance());
+      Assert.assertEquals(frozenBalance,owner.getEnergyUsage() );
       Assert.assertEquals(frozenBalance, owner.getTronPower());
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -215,7 +215,7 @@ public class FreezeBalanceActuatorTest {
       AccountCapsule receiver =
           dbManager.getAccountStore().get(ByteArray.fromHexString(RECEIVER_ADDRESS));
       Assert.assertEquals(frozenBalance, receiver.getAcquiredDelegatedFrozenBalanceForBandwidth());
-      Assert.assertEquals(0L, receiver.getAcquiredDelegatedFrozenBalanceForCpu());
+      Assert.assertEquals(0L, receiver.getAcquiredDelegatedFrozenBalanceForEnergy());
       Assert.assertEquals(0L, receiver.getTronPower());
 
       DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
@@ -250,13 +250,13 @@ public class FreezeBalanceActuatorTest {
           - ChainConstant.TRANSFER_FEE);
       Assert.assertEquals(0L, owner.getFrozenBalance());
       Assert.assertEquals(0L, owner.getDelegatedFrozenBalanceForBandwidth());
-      Assert.assertEquals(frozenBalance, owner.getDelegatedFrozenBalanceForCpu());
+      Assert.assertEquals(frozenBalance, owner.getDelegatedFrozenBalanceForEnergy());
       Assert.assertEquals(frozenBalance, owner.getTronPower());
 
       AccountCapsule receiver =
           dbManager.getAccountStore().get(ByteArray.fromHexString(RECEIVER_ADDRESS));
       Assert.assertEquals(0L, receiver.getAcquiredDelegatedFrozenBalanceForBandwidth());
-      Assert.assertEquals(frozenBalance, receiver.getAcquiredDelegatedFrozenBalanceForCpu());
+      Assert.assertEquals(frozenBalance, receiver.getAcquiredDelegatedFrozenBalanceForEnergy());
       Assert.assertEquals(0L, receiver.getTronPower());
 
       DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
@@ -265,7 +265,7 @@ public class FreezeBalanceActuatorTest {
                   ByteArray.fromHexString(RECEIVER_ADDRESS)));
 
       Assert.assertEquals(0L, delegatedResourceCapsule.getFrozenBalanceForBandwidth());
-      Assert.assertEquals(frozenBalance, delegatedResourceCapsule.getFrozenBalanceForCpu());
+      Assert.assertEquals(frozenBalance, delegatedResourceCapsule.getFrozenBalanceForEnergy());
 
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);

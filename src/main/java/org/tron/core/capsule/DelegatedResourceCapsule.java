@@ -22,12 +22,12 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
     }
   }
 
-  public DelegatedResourceCapsule(ByteString from, ByteString to, long cpu, long bandwidth,
+  public DelegatedResourceCapsule(ByteString from, ByteString to, long energy, long bandwidth,
       long expireTime) {
     this.delegatedResource = DelegatedResource.newBuilder()
         .setFrom(from)
         .setTo(to)
-        .setFrozenBalanceForCpu(cpu)
+        .setFrozenBalanceForEnergy(energy)
         .setFrozenBalanceForBandwidth(bandwidth)
         .setExpireTime(expireTime)
         .build();
@@ -42,17 +42,17 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
     return this.delegatedResource.getTo();
   }
 
-  public long getFrozenBalanceForCpu() {
-    return this.delegatedResource.getFrozenBalanceForCpu();
+  public long getFrozenBalanceForEnergy() {
+    return this.delegatedResource.getFrozenBalanceForEnergy();
   }
 
-  public void setFrozenBalanceForCpu(long cpu) {
-    this.delegatedResource = this.delegatedResource.toBuilder().setFrozenBalanceForCpu(cpu).build();
+  public void setFrozenBalanceForEnergy(long energy) {
+    this.delegatedResource = this.delegatedResource.toBuilder().setFrozenBalanceForEnergy(energy).build();
   }
 
-  public void addFrozenBalanceForCpu(long cpu) {
+  public void addFrozenBalanceForEnergy(long energy) {
     this.delegatedResource = this.delegatedResource.toBuilder()
-        .setFrozenBalanceForCpu(this.delegatedResource.getFrozenBalanceForCpu() + cpu).build();
+        .setFrozenBalanceForEnergy(this.delegatedResource.getFrozenBalanceForEnergy() + energy).build();
   }
 
   public long getFrozenBalanceForBandwidth() {
@@ -68,10 +68,10 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
         .setFrozenBalanceForBandwidth(this.delegatedResource.getFrozenBalanceForBandwidth() + Bandwidth).build();
   }
 
-  public void addResource(long Bandwidth, long cpu, long ExpireTime) {
+  public void addResource(long Bandwidth, long energy, long ExpireTime) {
     this.delegatedResource = this.delegatedResource.toBuilder()
         .setFrozenBalanceForBandwidth(this.delegatedResource.getFrozenBalanceForBandwidth() + Bandwidth)
-        .setFrozenBalanceForCpu(this.delegatedResource.getFrozenBalanceForCpu() + cpu)
+        .setFrozenBalanceForEnergy(this.delegatedResource.getFrozenBalanceForEnergy() + energy)
         .setExpireTime(ExpireTime).build();
   }
 

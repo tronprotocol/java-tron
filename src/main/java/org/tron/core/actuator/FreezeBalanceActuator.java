@@ -44,15 +44,15 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
     long newBalance = accountCapsule.getBalance() - freezeBalanceContract.getFrozenBalance();
 
-    long frozenBalanceForCpu = 0;
+    long frozenBalanceForEnergy = 0;
     long frozenBalanceForBandwidth = 0;
     long expireTime = now + duration;
     switch (freezeBalanceContract.getResource()) {
       case BANDWIDTH:
         frozenBalanceForBandwidth = freezeBalanceContract.getFrozenBalance();
         break;
-      case CPU:
-        frozenBalanceForCpu = freezeBalanceContract.getFrozenBalance();
+      case ENERGY:
+        frozenBalanceForEnergy = freezeBalanceContract.getFrozenBalance();
         break;
     }
 
@@ -60,14 +60,14 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
     if (receiverAddress.length == 0) {
       //If the receiver is not included in the contract, the owner will receive the resource.
-      long newFrozenBalanceForCpu =
-          frozenBalanceForCpu + accountCapsule.getAccountResource()
-              .getFrozenBalanceForCpu()
+      long newFrozenBalanceForEnergy =
+          frozenBalanceForEnergy + accountCapsule.getAccountResource()
+              .getFrozenBalanceForEnergy()
               .getFrozenBalance();
       long newFrozenBalanceForBandwidth =
           frozenBalanceForBandwidth + accountCapsule.getFrozenBalance();
 
-      accountCapsule.setFrozenForCpu(newFrozenBalanceForCpu, expireTime);
+      accountCapsule.setFrozenForEnergy(newFrozenBalanceForEnergy, expireTime);
       accountCapsule.setFrozenForBandwidth(newFrozenBalanceForBandwidth, expireTime);
     } else {
       //If the receiver is included in the contract, the receiver will receive the resource.
@@ -78,12 +78,12 @@ public class FreezeBalanceActuator extends AbstractActuator {
           .get(key);
       if (delegatedResourceCapsule != null) {
         delegatedResourceCapsule
-            .addResource(frozenBalanceForBandwidth, frozenBalanceForCpu, expireTime);
+            .addResource(frozenBalanceForBandwidth, frozenBalanceForEnergy, expireTime);
       } else {
         delegatedResourceCapsule = new DelegatedResourceCapsule(
             freezeBalanceContract.getOwnerAddress(),
             freezeBalanceContract.getReceiverAddress(),
-            frozenBalanceForCpu,
+            frozenBalanceForEnergy,
             frozenBalanceForBandwidth,
             expireTime
         );
@@ -91,11 +91,11 @@ public class FreezeBalanceActuator extends AbstractActuator {
       dbManager.getDelegatedResourceStore().put(key, delegatedResourceCapsule);
 
       AccountCapsule receiverCapsule = dbManager.getAccountStore().get(receiverAddress);
-      receiverCapsule.addAcquiredDelegatedFrozenBalanceForCpu(frozenBalanceForCpu);
+      receiverCapsule.addAcquiredDelegatedFrozenBalanceForEnergy(frozenBalanceForEnergy);
       receiverCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(frozenBalanceForBandwidth);
       dbManager.getAccountStore().put(receiverCapsule.createDbKey(), receiverCapsule);
 
-      accountCapsule.addDelegatedFrozenBalanceForCpu(frozenBalanceForCpu);
+      accountCapsule.addDelegatedFrozenBalanceForEnergy(frozenBalanceForEnergy);
       accountCapsule.addDelegatedFrozenBalanceForBandwidth(frozenBalanceForBandwidth);
     }
 

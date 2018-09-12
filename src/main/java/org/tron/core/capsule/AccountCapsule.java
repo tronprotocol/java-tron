@@ -226,12 +226,12 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
-  public long getAcquiredDelegatedFrozenBalanceForCpu() {
-    return getAccountResource().getAcquiredDelegatedFrozenBalanceForCpu();
+  public long getAcquiredDelegatedFrozenBalanceForEnergy() {
+    return getAccountResource().getAcquiredDelegatedFrozenBalanceForEnergy();
   }
 
-  public long getDelegatedFrozenBalanceForCpu() {
-    return getAccountResource().getDelegatedFrozenBalanceForCpu();
+  public long getDelegatedFrozenBalanceForEnergy() {
+    return getAccountResource().getDelegatedFrozenBalanceForEnergy();
   }
 
   public long getDelegatedFrozenBalanceForBandwidth() {
@@ -244,20 +244,20 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
-  public void addAcquiredDelegatedFrozenBalanceForCpu(long balance) {
+  public void addAcquiredDelegatedFrozenBalanceForEnergy(long balance) {
     AccountResource newAccountResource = getAccountResource().toBuilder()
-        .setAcquiredDelegatedFrozenBalanceForCpu(
-            getAccountResource().getAcquiredDelegatedFrozenBalanceForCpu() + balance).build();
+        .setAcquiredDelegatedFrozenBalanceForEnergy(
+            getAccountResource().getAcquiredDelegatedFrozenBalanceForEnergy() + balance).build();
 
     this.account = this.account.toBuilder()
         .setAccountResource(newAccountResource)
         .build();
   }
 
-  public void addDelegatedFrozenBalanceForCpu(long balance) {
+  public void addDelegatedFrozenBalanceForEnergy(long balance) {
     AccountResource newAccountResource = getAccountResource().toBuilder()
-        .setDelegatedFrozenBalanceForCpu(
-            getAccountResource().getDelegatedFrozenBalanceForCpu() + balance).build();
+        .setDelegatedFrozenBalanceForEnergy(
+            getAccountResource().getDelegatedFrozenBalanceForEnergy() + balance).build();
 
     this.account = this.account.toBuilder()
         .setAccountResource(newAccountResource)
@@ -312,7 +312,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
     tp += account.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance();
     tp += account.getDelegatedFrozenBalanceForBandwidth();
-    tp += account.getAccountResource().getDelegatedFrozenBalanceForCpu();
+    tp += account.getAccountResource().getDelegatedFrozenBalanceForEnergy();
     return tp;
   }
 
@@ -556,8 +556,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   public long getEnergyUsage() {
     return this.account.getAccountResource().getEnergyUsage();
   }
-  public long getAllFrozenBalanceForCpu() {
-    return getCpuFrozenBalance() + getAcquiredDelegatedFrozenBalanceForCpu();
+  public long getAllFrozenBalanceForEnergy() {
+    return getEnergyFrozenBalance() + getAcquiredDelegatedFrozenBalanceForEnergy();
   }
 
 

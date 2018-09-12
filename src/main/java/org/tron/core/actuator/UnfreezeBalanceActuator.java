@@ -104,11 +104,12 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           receiverCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(-unfreezeBalance);
           accountCapsule.addDelegatedFrozenBalanceForBandwidth(-unfreezeBalance);
           break;
-        case CPU:
-          unfreezeBalance = delegatedResourceCapsule.getFrozenBalanceForCpu();
-          delegatedResourceCapsule.setFrozenBalanceForCpu(0);
-          receiverCapsule.addAcquiredDelegatedFrozenBalanceForCpu(-unfreezeBalance);
-          accountCapsule.addDelegatedFrozenBalanceForCpu(-unfreezeBalance);
+        case ENERGY:
+          unfreezeBalance = delegatedResourceCapsule.getFrozenBalanceForEnergy();
+          unfreezeBalance = delegatedResourceCapsule.getFrozenBalanceForEnergy();
+          delegatedResourceCapsule.setFrozenBalanceForEnergy(0);
+          receiverCapsule.addAcquiredDelegatedFrozenBalanceForEnergy(-unfreezeBalance);
+          accountCapsule.addDelegatedFrozenBalanceForEnergy(-unfreezeBalance);
           break;
 
           default:
@@ -119,10 +120,10 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
       dbManager.getAccountStore().put(receiverCapsule.createDbKey(), receiverCapsule);
 
-      dbManager.getDynamicPropertiesStore().addTotalCpuWeight(-unfreezeBalance / 1000_000L);
+      dbManager.getDynamicPropertiesStore().addTotalEnergyWeight(-unfreezeBalance / 1000_000L);
 
       if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() == 0
-          && delegatedResourceCapsule.getFrozenBalanceForCpu() == 0) {
+          && delegatedResourceCapsule.getFrozenBalanceForEnergy() == 0) {
         dbManager.getDelegatedResourceStore().delete(key);
       } else {
         dbManager.getDelegatedResourceStore().put(key, delegatedResourceCapsule);
@@ -200,19 +201,19 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
             throw new ContractValidateException("It's not time to unfreeze(BANDWIDTH).");
           }
           break;
-        case CPU:
-          Frozen frozenBalanceForCpu = accountCapsule.getAccountResource().getFrozenBalanceForCpu();
-          if (frozenBalanceForCpu.getFrozenBalance() <= 0) {
-            throw new ContractValidateException("no frozenBalance(CPU)");
+        case ENERGY:
+          Frozen frozenBalanceForEnergy = accountCapsule.getAccountResource().getFrozenBalanceForEnergy();
+          if (frozenBalanceForEnergy.getFrozenBalance() <= 0) {
+            throw new ContractValidateException("no frozenBalance(Energy)");
           }
-          if (frozenBalanceForCpu.getExpireTime() > now) {
-            throw new ContractValidateException("It's not time to unfreeze(CPU).");
+          if (frozenBalanceForEnergy.getExpireTime() > now) {
+            throw new ContractValidateException("It's not time to unfreeze(Energy).");
           }
 
           break;
         default:
           throw new ContractValidateException(
-              "ResourceCode error.valid ResourceCode[BANDWIDTH、CPU]");
+              "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]");
       }
     } else {
       if (Arrays.equals(receiverAddress, ownerAddress)) {
@@ -259,22 +260,22 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
                     + "],this should never happen");
           }
           break;
-        case CPU:
-          if (delegatedResourceCapsule.getFrozenBalanceForCpu() <= 0) {
-            throw new ContractValidateException("no delegateFrozenBalance(CPU)");
+        case ENERGY:
+          if (delegatedResourceCapsule.getFrozenBalanceForEnergy() <= 0) {
+            throw new ContractValidateException("no delegateFrozenBalance(Energy)");
           }
-          if (receiverCapsule.getAcquiredDelegatedFrozenBalanceForCpu()
-              < delegatedResourceCapsule.getFrozenBalanceForCpu()) {
+          if (receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
+              < delegatedResourceCapsule.getFrozenBalanceForEnergy()) {
             throw new ContractValidateException(
-                "AcquiredDelegatedFrozenBalanceForCpu[" + receiverCapsule
-                    .getAcquiredDelegatedFrozenBalanceForCpu() + "] < delegatedCpu["
-                    + delegatedResourceCapsule.getFrozenBalanceForCpu() +
+                "AcquiredDelegatedFrozenBalanceForEnergy[" + receiverCapsule
+                    .getAcquiredDelegatedFrozenBalanceForEnergy() + "] < delegatedEnergy["
+                    + delegatedResourceCapsule.getFrozenBalanceForEnergy() +
                     "],this should never happen");
           }
           break;
         default:
           throw new ContractValidateException(
-              "ResourceCode error.valid ResourceCode[BANDWIDTH、CPU]");
+              "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]");
       }
 
     }
