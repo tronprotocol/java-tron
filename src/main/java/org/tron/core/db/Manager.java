@@ -127,6 +127,7 @@ public class Manager {
   private ContractStore contractStore;
   @Autowired
   private DelegatedResourceStore delegatedResourceStore;
+  @Autowired
   @Getter
   private StorageRowStore storageRowStore;
 
