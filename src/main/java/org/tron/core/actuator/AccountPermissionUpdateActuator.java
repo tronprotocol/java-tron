@@ -80,6 +80,8 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
     if (accountPermissionUpdateContract.getPermissionsCount() == 0) {
       throw new ContractValidateException("permission's count should be greater than 0");
     }
+    boolean containOwner = false;
+    boolean containActive = false;
     for (Permission permission : accountPermissionUpdateContract.getPermissionsList()) {
       if (permission.getKeysCount() == 0) {
         throw new ContractValidateException("key's count should be greater than 0");
@@ -91,6 +93,12 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
         throw new ContractValidateException("permission's name should not be empty");
       }
       String name = permission.getName();
+      if (name.equalsIgnoreCase("owner")) {
+        containOwner = true;
+      }
+      if (name.equalsIgnoreCase("active")) {
+        containActive = true;
+      }
       if (!name.equalsIgnoreCase("owner") && !name.equalsIgnoreCase("active")) {
         throw new ContractValidateException("permission's name should be owner or active");
       }
@@ -122,8 +130,14 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
       }
       if (weightSum < permission.getThreshold()) {
         throw new ContractValidateException(
-            "sum of all key's weight should not be less than threshold");
+            "sum of all key's weight should not be less than threshold in permission " + name);
       }
+    }
+    if (!containActive) {
+      throw new ContractValidateException("active permission is missed");
+    }
+    if (!containOwner) {
+      throw new ContractValidateException("owner permission is missed");
     }
     return true;
   }

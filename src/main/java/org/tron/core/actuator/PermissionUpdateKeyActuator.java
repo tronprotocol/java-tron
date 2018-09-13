@@ -81,6 +81,10 @@ public class PermissionUpdateKeyActuator extends AbstractActuator {
         !name.equalsIgnoreCase("active")) {
       throw new ContractValidateException("permission name should be owner or active");
     }
+    Permission ownerPermission = account.getPermissionByName("owner");
+    if (ownerPermission == null) {
+      throw new ContractValidateException("you have not set owner permission");
+    }
     Permission permission = account.getPermissionByName(name);
     if (permission == null) {
       throw new ContractValidateException("you have not set permission with the name " + name);

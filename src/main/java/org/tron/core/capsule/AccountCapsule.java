@@ -592,22 +592,69 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
+  private Permission getDefaultOwnerPermission() {
+    Permission.Builder defaultOwnerBuilder = Permission.newBuilder();
+    defaultOwnerBuilder.setThreshold(1);
+    defaultOwnerBuilder.setParent("");
+    defaultOwnerBuilder.setName("owner");
+    Key.Builder keyBuilderForOwner = Key.newBuilder();
+    keyBuilderForOwner.setAddress(this.account.getAddress());
+    keyBuilderForOwner.setWeight(1);
+    defaultOwnerBuilder.addKeys(keyBuilderForOwner.build());
+    return defaultOwnerBuilder.build();
+  }
+
+  private Permission getDefaultActivePermission() {
+    Permission.Builder defaultActiveBuilder = Permission.newBuilder();
+    defaultActiveBuilder.setThreshold(1);
+    defaultActiveBuilder.setParent("owner");
+    defaultActiveBuilder.setName("active");
+    Key.Builder keyBuilderForActive = Key.newBuilder();
+    keyBuilderForActive.setAddress(this.account.getAddress());
+    keyBuilderForActive.setWeight(1);
+    defaultActiveBuilder.addKeys(keyBuilderForActive.build());
+    return defaultActiveBuilder.build();
+  }
+
   public void permissionAddKey(Key addKey, String permissionName) {
     if (permissionName.equalsIgnoreCase("active") ||
         permissionName.equalsIgnoreCase("owner")) {
       List<Permission> permissions = new ArrayList<>();
       if (this.account.getPermissionsCount() == 0) {
-        Permission.Builder builder = Permission.newBuilder();
-        builder.setThreshold(1);
-        if (permissionName.equalsIgnoreCase("owner")) {
-          builder.setParent("");
-        } else {
-          builder.setParent("owner");
-        }
-        builder.setName(permissionName);
-        builder.addKeys(addKey);
         List<Permission> list = new ArrayList<>();
-        list.add(builder.build());
+        Permission ownerPermission = getDefaultOwnerPermission();
+        Permission activePermission = getDefaultActivePermission();
+        if (addKey.getAddress().equals(this.account.getAddress())) {
+          if (permissionName.equalsIgnoreCase("owner")) {
+            ownerPermission = ownerPermission
+                .toBuilder()
+                .clearKeys()
+                .addKeys(addKey)
+                .build();
+          }
+          if (permissionName.equalsIgnoreCase("active")) {
+            activePermission = activePermission
+                .toBuilder()
+                .clearKeys()
+                .addKeys(addKey)
+                .build();
+          }
+        } else {
+          if (permissionName.equalsIgnoreCase("owner")) {
+            ownerPermission = ownerPermission
+                .toBuilder()
+                .addKeys(addKey)
+                .build();
+          }
+          if (permissionName.equalsIgnoreCase("active")) {
+            activePermission = activePermission
+                .toBuilder()
+                .addKeys(addKey)
+                .build();
+          }
+        }
+        list.add(ownerPermission);
+        list.add(activePermission);
         updatePermissions(list);
       } else {
         for (Permission permission : this.account.getPermissionsList()) {
