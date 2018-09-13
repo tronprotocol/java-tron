@@ -4,6 +4,7 @@ jdk: oraclejdk8
 addons:
   ssh_known_hosts:
   - 47.93.9.236:22008
+  - 39.106.62.219:22008
   sonarcloud:
     organization: tron-zhaohong
     token:
