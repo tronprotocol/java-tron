@@ -32,7 +32,8 @@ public class AccountPermissionUpdateServlet extends HttpServlet {
       AccountPermissionUpdateContract.Builder build = AccountPermissionUpdateContract.newBuilder();
       JsonFormat.merge(contract, build);
 
-      Transaction tx = wallet.createTransactionCapsule(build.build(), ContractType.AccountPermissionUpdateContract)
+      Transaction tx = wallet
+          .createTransactionCapsule(build.build(), ContractType.AccountPermissionUpdateContract)
           .getInstance();
       response.getWriter().println(Util.printTransaction(tx));
     } catch (Exception e) {

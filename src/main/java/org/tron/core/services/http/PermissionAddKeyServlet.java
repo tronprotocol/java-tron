@@ -32,7 +32,8 @@ public class PermissionAddKeyServlet extends HttpServlet {
       PermissionAddKeyContract.Builder build = PermissionAddKeyContract.newBuilder();
       JsonFormat.merge(contract, build);
 
-      Transaction tx = wallet.createTransactionCapsule(build.build(), ContractType.PermissionAddKeyContract)
+      Transaction tx = wallet
+          .createTransactionCapsule(build.build(), ContractType.PermissionAddKeyContract)
           .getInstance();
       response.getWriter().println(Util.printTransaction(tx));
     } catch (Exception e) {

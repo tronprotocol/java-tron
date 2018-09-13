@@ -32,7 +32,8 @@ public class PermissionDeleteKeyServlet extends HttpServlet {
       PermissionDeleteKeyContract.Builder build = PermissionDeleteKeyContract.newBuilder();
       JsonFormat.merge(contract, build);
 
-      Transaction tx = wallet.createTransactionCapsule(build.build(), ContractType.PermissionDeleteKeyContract)
+      Transaction tx = wallet
+          .createTransactionCapsule(build.build(), ContractType.PermissionDeleteKeyContract)
           .getInstance();
       response.getWriter().println(Util.printTransaction(tx));
     } catch (Exception e) {

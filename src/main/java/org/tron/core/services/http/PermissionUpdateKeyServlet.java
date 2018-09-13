@@ -18,30 +18,31 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 @Slf4j
 public class PermissionUpdateKeyServlet extends HttpServlet {
 
-    @Autowired
-    private Wallet wallet;
+  @Autowired
+  private Wallet wallet;
 
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+  protected void doGet(HttpServletRequest request, HttpServletResponse response) {
 
+  }
+
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+    try {
+      String contract = request.getReader().lines()
+          .collect(Collectors.joining(System.lineSeparator()));
+      PermissionUpdateKeyContract.Builder build = PermissionUpdateKeyContract.newBuilder();
+      JsonFormat.merge(contract, build);
+
+      Transaction tx = wallet
+          .createTransactionCapsule(build.build(), ContractType.PermissionUpdateKeyContract)
+          .getInstance();
+      response.getWriter().println(Util.printTransaction(tx));
+    } catch (Exception e) {
+      logger.debug("Exception: {}", e.getMessage());
+      try {
+        response.getWriter().println(Util.printErrorMsg(e));
+      } catch (IOException ioe) {
+        logger.debug("IOException: {}", ioe.getMessage());
+      }
     }
-
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-        try {
-            String contract = request.getReader().lines()
-                    .collect(Collectors.joining(System.lineSeparator()));
-            PermissionUpdateKeyContract.Builder build = PermissionUpdateKeyContract.newBuilder();
-            JsonFormat.merge(contract, build);
-
-            Transaction tx = wallet.createTransactionCapsule(build.build(), ContractType.PermissionUpdateKeyContract)
-                    .getInstance();
-            response.getWriter().println(Util.printTransaction(tx));
-        } catch (Exception e) {
-            logger.debug("Exception: {}", e.getMessage());
-            try {
-                response.getWriter().println(Util.printErrorMsg(e));
-            } catch (IOException ioe) {
-                logger.debug("IOException: {}", ioe.getMessage());
-            }
-        }
-    }
+  }
 }
