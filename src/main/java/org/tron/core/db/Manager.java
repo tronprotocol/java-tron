@@ -4,6 +4,7 @@ import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
 
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
@@ -1046,44 +1047,63 @@ public class Manager {
           String entryName = abiEntry.getName();
           List<TypeReference<?>> typeList = new ArrayList<>();
           List<String> nameList = new ArrayList<>();
-          List<Boolean> hasIndexList = new ArrayList<>();
           abiEntry.getInputsList().forEach(input -> {
             nameList.add(input.getName());
-            TypeReference<?> tr = AbiTypes.getTypeReference(input.getType());
+            TypeReference<?> tr = AbiTypes.getTypeReference(input.getType(), input.getIndexed());
             typeList.add(tr);
-            hasIndexList.add(input.getIndexed());
           });
+          JSONObject resultJsonObject = new JSONObject();
+          JSONObject rawJsonObject = new JSONObject();
+
+          String eventHexString = Hex.toHexString(log.getTopicsList().get(0).toByteArray());
+          JSONArray rawTopicsJsonArray = new JSONArray();
+          rawTopicsJsonArray.add(eventHexString);
+
           Event event = new Event(entryName, typeList);
-          String encodeEventHexString = EventEncoder.encode(event);
-          log.getTopicsList().forEach(topic -> {
-            String topicHexString = Hex.toHexString(topic.toByteArray());
-            if (StringUtils.equalsIgnoreCase(encodeEventHexString, topicHexString)) {
+          String rawLogData = ByteArray.toHexString(log.getData().toByteArray());
+          List<Type> nonIndexedValues = FunctionReturnDecoder.decode(rawLogData, event.getNonIndexedParameters());
+          List<Type> indexedValues = new ArrayList<>();
 
-              List<Type> results = FunctionReturnDecoder.decode(
-                  ByteArray.toHexString(log.getData().toByteArray()), event.getNonIndexedParameters());
-              JSONArray resultJsonArray = new JSONArray();
-              for (Type result : results) {
-                resultJsonArray.add(result.getValue());
-              }
-
-              long blockNumber = block.getBlockHeader().getRawData().getNumber();
-              long blockTimestamp = block.getBlockHeader().getRawData().getTimestamp();
-              MessageProperties someProperties = new MessageProperties();
-//              amqpTemplate.send(org.tron.mq.Constant.EXCHANGE, contractAddressHexString + "." + entryName,
-//                      new Message(resultJsonArray.toJSONString().getBytes(), someProperties));
-
-              EventLogEntity eventLogEntity = new EventLogEntity(blockNumber, blockTimestamp,
-                  Wallet.encode58Check(contractAddress), entryName, resultJsonArray,
-                  Hex.toHexString(transactionInfoCapsule.getId()));
-              // 事件日志写入MongoDB
-              eventLogService.insertEventLog(eventLogEntity);
-
+          List<TypeReference<Type>> indexedParameters = event.getIndexedParameters();
+          for (int i = 0; i < indexedParameters.size(); i++) {
+            String topicHexString = Hex.toHexString(log.getTopicsList().get(i + 1).toByteArray());
+            rawTopicsJsonArray.add(topicHexString);
+            Type value = FunctionReturnDecoder.decodeIndexedValue(topicHexString, indexedParameters.get(i));
+            indexedValues.add(value);
+          }
+          int counter = 0;
+          int indexedCounter = 0;
+          int nonIndexedCounter = 0;
+          for (TypeReference<?> typeReference : typeList) {
+            if(typeReference.isIndexed()) {
+              resultJsonObject.put(nameList.get(counter), indexedValues.get(indexedCounter).getValue());
+              indexedCounter++;
+            } else {
+              resultJsonObject.put(nameList.get(counter), nonIndexedValues.get(nonIndexedCounter).getValue());
+              nonIndexedCounter++;
             }
-          });
+            counter++;
+          }
+
+          rawJsonObject.put("topics", rawTopicsJsonArray);
+          rawJsonObject.put("data", rawLogData);
+
+          long blockNumber = block.getBlockHeader().getRawData().getNumber();
+          long blockTimestamp = block.getBlockHeader().getRawData().getTimestamp();
+//          logger.info("Event blockNumber:{} blockTimestamp:{} contractAddress:{} eventName:{} returnValues:{} raw:{} txId:{}",
+//                  blockNumber, blockTimestamp,
+//                  Wallet.encode58Check(contractAddress), entryName, resultJsonObject, rawJsonObject,
+//                  Hex.toHexString(transactionInfoCapsule.getId()));
+
+          EventLogEntity eventLogEntity = new EventLogEntity(blockNumber, blockTimestamp,
+                  Wallet.encode58Check(contractAddress), entryName, resultJsonObject, rawJsonObject,
+                  Hex.toHexString(transactionInfoCapsule.getId()));
+          // 事件日志写入MongoDB
+          eventLogService.insertEventLog(eventLogEntity);
         });
       });
     } catch (Exception e) {
-      logger.error("SendEventToMQ Failed {}", e);
+      logger.error("sendEventLog Failed {}", e);
     }
   }
 
