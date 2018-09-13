@@ -15,12 +15,14 @@
 
 package org.tron.core.config.args;
 
+import java.io.File;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.Options;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
 
+import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 
 public class StorageTest {
@@ -35,6 +37,7 @@ public class StorageTest {
   @AfterClass
   public static void cleanup() {
     Args.clearParam();
+    FileUtil.deleteDir(new File("test_path"));
   }
 
   @Test

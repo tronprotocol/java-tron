@@ -58,7 +58,11 @@ public class DeployContractServlet extends HttpServlet {
         smartBuilder.setOriginAddress(ByteString.copyFrom(ownerAddress));
       }
 
-      byte[] byteCode = ByteArray.fromHexString(jsonObject.getString("bytecode"));
+      String jsonByteCode = jsonObject.getString("bytecode");
+      if (jsonObject.containsKey("parameter")) {
+        jsonByteCode += jsonObject.getString("parameter");
+      }
+      byte[] byteCode = ByteArray.fromHexString(jsonByteCode);
       if (!ArrayUtils.isEmpty(byteCode)) {
         smartBuilder.setBytecode(ByteString.copyFrom(byteCode));
       }

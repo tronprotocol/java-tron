@@ -29,10 +29,7 @@ public class ApplicationFactory {
   /**
    * Build a new cli application.
    */
-  //public CliApplication buildCli() {
-  //  return new CliApplication(buildGuice());
   public static Application create(ApplicationContext ctx) {
     return ctx.getBean(ApplicationImpl.class);
-    //return new ApplicationImpl();
   }
 }

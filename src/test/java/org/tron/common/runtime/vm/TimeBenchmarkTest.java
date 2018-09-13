@@ -8,6 +8,8 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TVMTestUtils;
@@ -21,7 +23,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
-import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
@@ -33,6 +35,8 @@ public class TimeBenchmarkTest {
   private DepositImpl deposit;
   private String dbPath = "output_TimeBenchmarkTest";
   private String OWNER_ADDRESS;
+  private Application AppT;
+  private long totalBalance = 30_000_000_000_000L;
 
 
   /**
@@ -43,11 +47,12 @@ public class TimeBenchmarkTest {
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"},
         Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
+    AppT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     dbManager = context.getBean(Manager.class);
     deposit = DepositImpl.createRoot(dbManager);
     deposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
-    deposit.addBalance(Hex.decode(OWNER_ADDRESS), 30000000000000L);
+    deposit.addBalance(Hex.decode(OWNER_ADDRESS), totalBalance);
     deposit.commit();
   }
 
@@ -85,9 +90,9 @@ public class TimeBenchmarkTest {
 
   @Test
   public void timeBenchmark()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 200_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "timeBenchmark";
@@ -100,21 +105,27 @@ public class TimeBenchmarkTest {
         .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
             value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            deposit, null);
+            dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 129);
+    long expectEnergyUsageTotal = 88529;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
     byte[] triggerData = TVMTestUtils.parseABI("fibonacciNotify(uint)", "");
     result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, feeLimit, deposit, null);
+            contractAddress, triggerData, 0, feeLimit, dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 110);
+    long expectEnergyUsageTotal2 = 110;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), true);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() == null);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
   }
 
   /**
@@ -123,11 +134,13 @@ public class TimeBenchmarkTest {
   @After
   public void destroy() {
     Args.clearParam();
+    AppT.shutdownServices();
+    AppT.shutdown();
+    context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {
       logger.info("Release resources failure.");
     }
-    context.destroy();
   }
 }

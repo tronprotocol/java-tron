@@ -31,13 +31,11 @@ import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.ReceiptCheckErrException;
-import org.tron.core.exception.ReceiptException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.exception.TransactionExpirationException;
-import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.VMIllegalException;
@@ -64,7 +62,6 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("block size over limit");
     }
 
-    // TODO timestamp should be consistent.
     long gap = block.getTimeStamp() - System.currentTimeMillis();
     if (gap >= BLOCK_PRODUCED_INTERVAL) {
       throw new BadBlockException("block time error");
@@ -102,12 +99,8 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("TooBigTransaction exception," + e.getMessage());
     } catch (TransactionExpirationException e) {
       throw new BadBlockException("Expiration exception," + e.getMessage());
-    } catch (ReceiptException e) {
-      throw new BadBlockException("Receipt exception," + e.getMessage());
     } catch (BadNumberBlockException e) {
       throw new BadBlockException("bad number exception," + e.getMessage());
-    } catch (TransactionTraceException e) {
-      throw new BadBlockException("TransactionTrace Exception," + e.getMessage());
     } catch (ReceiptCheckErrException e) {
       throw new BadBlockException("TransactionTrace Exception," + e.getMessage());
     } catch (VMIllegalException e) {
@@ -149,21 +142,16 @@ public class NodeDelegateImpl implements NodeDelegate {
       logger.info("AccountResourceInsufficientException" + e.getMessage());
       return false;
     } catch (DupTransactionException e) {
-      logger.info("dup trans" + e.getMessage());
+      logger.info("Dup trans" + e.getMessage());
       return false;
     } catch (TaposException e) {
-      logger.info("tapos error" + e.getMessage());
+      logger.info("Tapos error" + e.getMessage());
       return false;
-    } catch (ReceiptException e) {
-      logger.info("Receipt exception," + e.getMessage());
     } catch (TooBigTransactionException e) {
-      logger.info("too big transaction" + e.getMessage());
+      logger.info("Too big transaction" + e.getMessage());
       return false;
     } catch (TransactionExpirationException e) {
-      logger.info("expiration transaction" + e.getMessage());
-      return false;
-    } catch (TransactionTraceException e) {
-      logger.info("TransactionTrace Exception" + e.getMessage());
+      logger.info("Expiration transaction" + e.getMessage());
       return false;
     } catch (ReceiptCheckErrException e) {
       logger.info("ReceiptCheckErrException Exception" + e.getMessage());
@@ -172,7 +160,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       logger.warn(e.getMessage());
       throw new BadTransactionException();
     } catch (TooBigTransactionResultException e) {
-      logger.info("too big transactionresult" + e.getMessage());
+      logger.info("Too big transactionresult" + e.getMessage());
       return false;
     }
 
@@ -182,8 +170,7 @@ public class NodeDelegateImpl implements NodeDelegate {
   @Override
   public LinkedList<BlockId> getLostBlockIds(List<BlockId> blockChainSummary)
       throws StoreException {
-    //todo: return the remain block count.
-    //todo: return the blocks it should be have.
+
     if (dbManager.getHeadBlockNum() == 0) {
       return new LinkedList<>();
     }
@@ -198,7 +185,7 @@ public class NodeDelegateImpl implements NodeDelegate {
         && blockChainSummary.get(0).getNum() == 0) {
       return new LinkedList(Arrays.asList(dbManager.getGenesisBlockId()));
     } else {
-      //todo: find a block we all know between the summary and my db.
+
       Collections.reverse(blockChainSummary);
       unForkedBlockId = blockChainSummary.stream()
           .filter(blockId -> containBlockInMainChain(blockId))
@@ -206,10 +193,8 @@ public class NodeDelegateImpl implements NodeDelegate {
       if (unForkedBlockId == null) {
         return new LinkedList<>();
       }
-      //todo: can not find any same block form peer's summary and my db.
     }
 
-    //todo: limit the count of block to send peer by one time.
     long unForkedBlockIdNum = unForkedBlockId.getNum();
     long len = Longs
         .min(dbManager.getHeadBlockNum(), unForkedBlockIdNum + NodeConstant.SYNC_FETCH_BATCH_NUM);
@@ -302,6 +287,7 @@ public class NodeDelegateImpl implements NodeDelegate {
         } catch (BadItemException e) {
           logger.debug(e.getMessage());
         } catch (ItemNotFoundException e) {
+
           logger.debug(e.getMessage());
         } catch (Exception e) {
           logger.error("new BlockMessage fail", e);
@@ -328,7 +314,6 @@ public class NodeDelegateImpl implements NodeDelegate {
       logger.info("Sync Block Completed !!!");
     }
     dbManager.setSyncMode(unSyncNum == 0);
-    //TODO: notify cli know how many block we need to sync
   }
 
   @Override
@@ -372,7 +357,6 @@ public class NodeDelegateImpl implements NodeDelegate {
     if (type.equals(MessageTypes.BLOCK)) {
       return dbManager.containBlock(hash);
     } else if (type.equals(MessageTypes.TRX)) {
-      //TODO: check it
       return dbManager.getTransactionStore().has(hash.getBytes());
     }
     return false;
@@ -380,20 +364,9 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
   public BlockCapsule getGenesisBlock() {
-    //TODO return a genesisBlock
     return dbManager.getGenesisBlock();
   }
 
-  //  @Override
-//  public long getLatestSolidifiedBlockNum() {
-//    return dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
-//  }
-//
-//  @Override
-//  public long getSyncBeginNumber() {
-//    return dbManager.getSyncBeginNumber();
-//  }
-//
   @Override
   public boolean canChainRevoke(long num) {
     return num >= dbManager.getSyncBeginNumber();

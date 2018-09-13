@@ -29,21 +29,17 @@ public class ApplicationImpl implements Application {
 
   private void resetP2PNode() {
     p2pNode.listen();
-    //p2pNode.connectToP2PNetWork();
     p2pNode.syncFrom(null);
   }
 
   @Override
   public void setOptions(Args args) {
-
+    // not used
   }
 
   @Override
   @Autowired
   public void init(Args args) {
-    //p2pNode = new NodeImpl();
-    //p2pNode = ctx.getBean(NodeImpl.class);
-//    dbManager.init();
     blockStoreDb = dbManager.getBlockStore();
     services = new ServiceContainer();
     nodeDelegate = new NodeDelegateImpl(dbManager);
@@ -69,14 +65,14 @@ public class ApplicationImpl implements Application {
 
   @Override
   public void shutdown() {
-    System.err.println("******** begin to shutdown ********");
+    logger.info("******** begin to shutdown ********");
     synchronized (dbManager.getRevokingStore()) {
       closeRevokingStore();
       closeAllStore();
     }
     closeConnection();
     dbManager.stopRepushThread();
-    System.err.println("******** end to shutdown ********");
+    logger.info("******** end to shutdown ********");
   }
 
   @Override
@@ -113,13 +109,13 @@ public class ApplicationImpl implements Application {
   }
 
   private void closeConnection() {
-    System.err.println("******** begin to shutdown connection ********");
+    logger.info("******** begin to shutdown connection ********");
     try {
       p2pNode.close();
     } catch (Exception e) {
-      System.err.println("failed to close p2pNode. " + e);
+      logger.info("failed to close p2pNode. " + e);
     } finally {
-      System.err.println("******** end to shutdown connection ********");
+      logger.info("******** end to shutdown connection ********");
     }
   }
 
