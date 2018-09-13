@@ -18,6 +18,7 @@ package org.tron.common.runtime.vm;
 import static org.junit.Assert.assertTrue;
 
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
 import org.junit.Test;
 import java.io.*;
 import org.tron.protos.Protocol.Transaction;
@@ -51,6 +52,84 @@ public class InterpreterTest {
         vm.step(program);
       }
     } catch (Exception e) {
+      result = true;
+    }
+
+    assertTrue(result);
+  }
+
+  @Test
+  public void JumpSingleOperation() {
+    VM vm = new VM();
+    invoke = new ProgramInvokeMockImpl();
+    byte[] op = { 0x56 };
+    // 0x56      - JUMP
+    Transaction trx = Transaction.getDefaultInstance();
+    InternalTransaction interTrx = new InternalTransaction(trx);
+    program = new Program(op, invoke, interTrx);
+
+    boolean result = false;
+
+    try {
+      while (!program.isStopped()) {
+        vm.step(program);
+      }
+    } catch (Program.StackTooSmallException e) {
+      // except to get stack too small exception for Jump
+      result = true;
+    }
+
+    assertTrue(result);
+  }
+
+  @Test
+  public void JumpToInvalidDestination() {
+    VM vm = new VM();
+    invoke = new ProgramInvokeMockImpl();
+    byte[] op = { 0x60, 0x20,0x56 };
+    // 0x60      - PUSH1
+    // 0x20      - 20
+    // 0x56      - JUMP
+    Transaction trx = Transaction.getDefaultInstance();
+    InternalTransaction interTrx = new InternalTransaction(trx);
+    program = new Program(op, invoke, interTrx);
+
+    boolean result = false;
+
+    try {
+      while (!program.isStopped()) {
+        vm.step(program);
+      }
+    } catch (Program.BadJumpDestinationException e) {
+      // except to get BadJumpDestinationException for Jump
+      Assert.assertTrue(e.getMessage().contains("Operation with pc isn't 'JUMPDEST': PC[32];"));
+      result = true;
+    }
+
+    assertTrue(result);
+  }
+
+  @Test
+  public void JumpToLargeNumberDestination() {
+    VM vm = new VM();
+    invoke = new ProgramInvokeMockImpl();
+    byte[] op = { 0x64, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f,0x56 };
+    // 0x60              - PUSH5
+    // 0x7F7F7F7F7F      - 547599908735
+    // 0x56              - JUMP
+    Transaction trx = Transaction.getDefaultInstance();
+    InternalTransaction interTrx = new InternalTransaction(trx);
+    program = new Program(op, invoke, interTrx);
+
+    boolean result = false;
+
+    try {
+      while (!program.isStopped()) {
+        vm.step(program);
+      }
+    } catch (Program.BadJumpDestinationException e) {
+      // except to get BadJumpDestinationException for Jump
+      Assert.assertTrue(e.getMessage().contains("Operation with pc isn't 'JUMPDEST': PC[-1];"));
       result = true;
     }
 
