@@ -25,6 +25,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -319,6 +320,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     if (signature.size() % 65 != 0) {
       throw new SignatureFormatException("Signature size is " + signature.size());
     }
+    if (signature.size() / 65 > permission.getKeysCount()) {
+      throw new PermissionException(
+          "Signature count is " + (signature.size() / 65) + " more than key counts of permission : "
+              + permission.getKeysCount());
+    }
+    HashMap addMap = new HashMap();
     for (int i = 0; i < signature.size(); i += 65) {
       ByteString sub = signature.substring(i, i + 65);
       String base64 = TransactionCapsule.getBase64FromByteString(sub);
@@ -329,6 +336,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
             ByteArray.toHexString(sub.toByteArray()) + " is signed by " + Wallet
                 .encode58Check(address) + " but it is not contained of permission.");
       }
+      if (addMap.containsKey(base64)) {
+        throw new PermissionException(Wallet.encode58Check(address) + " has sign twices!");
+      }
+      addMap.put(base64, weight);
       if (approveList != null) {
         approveList.add(ByteString.copyFrom(address)); //out put approve list.
       }
