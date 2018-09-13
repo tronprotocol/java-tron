@@ -3,8 +3,10 @@ package org.tron.core.capsule;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -12,8 +14,11 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -21,6 +26,7 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.PermissionException;
+import org.tron.core.exception.SignatureFormatException;
 import org.tron.protos.Contract.PermissionAddKeyContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Account;
@@ -46,6 +52,16 @@ public class TransactionCapsuleTest {
   private static String OWNER_ADDRESS;
   private static String TO_ADDRESS;
   private static String OWNER_ACCOUNT_NOT_Exist;
+  private static String KEY_11 = "1111111111111111111111111111111111111111111111111111111111111111";
+  private static String KEY_12 = "1212121212121212121212121212121212121212121212121212121212121212";
+  private static String KEY_13 = "1313131313131313131313131313131313131313131313131313131313131313";
+  private static String KEY_21 = "2121212121212121212121212121212121212121212121212121212121212121";
+  private static String KEY_22 = "2222222222222222222222222222222222222222222222222222222222222222";
+  private static String KEY_23 = "2323232323232323232323232323232323232323232323232323232323232323";
+  private static String KEY_31 = "3131313131313131313131313131313131313131313131313131313131313131";
+  private static String KEY_32 = "3232323232323232323232323232323232323232323232323232323232323232";
+  private static String KEY_33 = "3333333333333333333333333333333333333333333333333333333333333333";
+
   private static String KEY_ADDRESS_11;
   private static String KEY_ADDRESS_12;
   private static String KEY_ADDRESS_13;
@@ -171,7 +187,7 @@ public class TransactionCapsuleTest {
     dbManager.getAccountStore().put(address, new AccountCapsule(builder.build()));
   }
 
-  public List<Permission> buildPermissions(){
+  public List<Permission> buildPermissions() {
     Permission.Builder builder1 = Permission.newBuilder();
     Key.Builder key11 = Key.newBuilder();
     Key.Builder key12 = Key.newBuilder();
@@ -281,35 +297,202 @@ public class TransactionCapsuleTest {
     Permission permission1 = permissions.get(0);
     Permission permission2 = permissions.get(1);
     Permission permission3 = permissions.get(2);
-    Assert.assertEquals(1, TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_11)));
-    Assert.assertEquals(1, TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_12)));
-    Assert.assertEquals(1, TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_13)));
-    Assert.assertEquals(0, TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_21)));
-    Assert.assertEquals(0, TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_22)));
-    Assert.assertEquals(0, TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_23)));
-    Assert.assertEquals(0, TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_31)));
-    Assert.assertEquals(0, TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_32)));
-    Assert.assertEquals(0, TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_33)));
+    Assert.assertEquals(1,
+        TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_11)));
+    Assert.assertEquals(1,
+        TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_12)));
+    Assert.assertEquals(1,
+        TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_13)));
+    Assert.assertEquals(0,
+        TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_21)));
+    Assert.assertEquals(0,
+        TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_22)));
+    Assert.assertEquals(0,
+        TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_23)));
+    Assert.assertEquals(0,
+        TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_31)));
+    Assert.assertEquals(0,
+        TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_32)));
+    Assert.assertEquals(0,
+        TransactionCapsule.getWeight(permission1, ByteArray.fromHexString(KEY_ADDRESS_33)));
 
-    Assert.assertEquals(0, TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_11)));
-    Assert.assertEquals(0, TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_12)));
-    Assert.assertEquals(0, TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_13)));
-    Assert.assertEquals(1, TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_21)));
-    Assert.assertEquals(1, TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_22)));
-    Assert.assertEquals(1, TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_23)));
-    Assert.assertEquals(0, TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_31)));
-    Assert.assertEquals(0, TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_32)));
-    Assert.assertEquals(0, TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_33)));
+    Assert.assertEquals(0,
+        TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_11)));
+    Assert.assertEquals(0,
+        TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_12)));
+    Assert.assertEquals(0,
+        TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_13)));
+    Assert.assertEquals(1,
+        TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_21)));
+    Assert.assertEquals(1,
+        TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_22)));
+    Assert.assertEquals(1,
+        TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_23)));
+    Assert.assertEquals(0,
+        TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_31)));
+    Assert.assertEquals(0,
+        TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_32)));
+    Assert.assertEquals(0,
+        TransactionCapsule.getWeight(permission2, ByteArray.fromHexString(KEY_ADDRESS_33)));
 
-    Assert.assertEquals(0, TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_11)));
-    Assert.assertEquals(0, TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_12)));
-    Assert.assertEquals(0, TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_13)));
-    Assert.assertEquals(0, TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_21)));
-    Assert.assertEquals(0, TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_22)));
-    Assert.assertEquals(0, TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_23)));
-    Assert.assertEquals(1, TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_31)));
-    Assert.assertEquals(1, TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_32)));
-    Assert.assertEquals(1, TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_33)));
+    Assert.assertEquals(0,
+        TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_11)));
+    Assert.assertEquals(0,
+        TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_12)));
+    Assert.assertEquals(0,
+        TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_13)));
+    Assert.assertEquals(0,
+        TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_21)));
+    Assert.assertEquals(0,
+        TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_22)));
+    Assert.assertEquals(0,
+        TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_23)));
+    Assert.assertEquals(1,
+        TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_31)));
+    Assert.assertEquals(1,
+        TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_32)));
+    Assert.assertEquals(1,
+        TransactionCapsule.getWeight(permission3, ByteArray.fromHexString(KEY_ADDRESS_33)));
   }
 
+  public ByteString sign(List<byte[]> priKeys, byte[] hash) {
+    ByteString result = ByteString.EMPTY;
+    for (byte[] priKey : priKeys) {
+      ECKey ecKey = ECKey.fromPrivate(priKey);
+      ECDSASignature signature = ecKey.sign(hash);
+      result = result.concat(ByteString.copyFrom(signature.toByteArray()));
+    }
+    return result;
+  }
+
+  @Test
+  public void checkWeight() {
+    List<Permission> permissions = buildPermissions();
+    Permission permission = permissions.get(0);
+    byte[] hash = Sha256Hash.hash("test".getBytes());
+
+    //SignatureFormatException
+    ByteString test = ByteString.copyFromUtf8("test");
+    try {
+      TransactionCapsule.checkWeight(permission, test, hash, null);
+      Assert.assertFalse(true);
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (PermissionException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureFormatException e) {
+      Assert.assertEquals(e.getMessage(), "Signature size is " + test.size());
+    }
+    //SignatureException: Header byte out of range:
+    //Ignore more exception case.
+    byte[] rand = new byte[65];
+    new Random().nextBytes(rand);
+    rand[64] = 8;  // v = 8 < 27 v += 35 > 35
+    try {
+      TransactionCapsule.checkWeight(permission, ByteString.copyFrom(rand), hash, null);
+      Assert.assertFalse(true);
+    } catch (SignatureException e) {
+      Assert.assertEquals(e.getMessage(), "Header byte out of range: 35");
+    } catch (PermissionException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
+    }
+    //Permission is not contain KEY
+    List<byte[]> prikeys = new ArrayList<>();
+    prikeys.add(ByteArray.fromHexString(KEY_11));
+    prikeys.add(ByteArray.fromHexString(KEY_21));
+    ByteString sign11_21 = sign(prikeys, hash);
+    try {
+      TransactionCapsule.checkWeight(permission, sign11_21, hash, null);
+      Assert.assertFalse(true);
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (PermissionException e) {
+      ByteString sign21 = sign11_21.substring(65, 130);
+      Assert.assertEquals(e.getMessage(),
+          ByteArray.toHexString(sign21.toByteArray()) + " is signed by " + Wallet
+              .encode58Check(ByteArray.fromHexString(KEY_ADDRESS_21))
+              + " but it is not contained of permission.");
+    } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
+    }
+
+    //Sign twices by same key
+    prikeys = new ArrayList<>();
+    prikeys.add(ByteArray.fromHexString(KEY_11));
+    prikeys.add(ByteArray.fromHexString(KEY_12));
+    prikeys.add(ByteArray.fromHexString(KEY_11));
+    ByteString sign11_12_11 = sign(prikeys, hash);
+    try {
+      TransactionCapsule.checkWeight(permission, sign11_12_11, hash, null);
+      Assert.assertFalse(true);
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (PermissionException e) {
+      Assert.assertEquals(e.getMessage(),
+          Wallet.encode58Check(ByteArray.fromHexString(KEY_ADDRESS_11)) + " has sign twices!");
+    } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
+    }
+
+    //
+    prikeys = new ArrayList<>();
+    List<ByteString> approveList = new ArrayList<>();
+    prikeys.add(ByteArray.fromHexString(KEY_11));
+    ByteString sign11 = sign(prikeys, hash);
+    try {
+      long weight = TransactionCapsule.checkWeight(permission, sign11, hash, approveList);
+      Assert.assertEquals(weight, 1);
+      Assert.assertEquals(approveList.size(), 1);
+      Assert.assertEquals(approveList.get(0),
+          ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_11)));
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (PermissionException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
+    }
+
+    approveList = new ArrayList<>();
+    prikeys.add(ByteArray.fromHexString(KEY_12));
+    ByteString sign11_12 = sign(prikeys, hash);
+    try {
+      long weight = TransactionCapsule.checkWeight(permission, sign11_12, hash, approveList);
+      Assert.assertEquals(weight, 2);
+      Assert.assertEquals(approveList.size(), 2);
+      Assert.assertEquals(approveList.get(0),
+          ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_11)));
+      Assert.assertEquals(approveList.get(1),
+          ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_12)));
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (PermissionException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
+    }
+
+    approveList = new ArrayList<>();
+    prikeys.add(ByteArray.fromHexString(KEY_13));
+    ByteString sign11_12_13 = sign(prikeys, hash);
+    try {
+      long weight = TransactionCapsule.checkWeight(permission, sign11_12_13, hash, approveList);
+      Assert.assertEquals(weight, 3);
+      Assert.assertEquals(approveList.size(), 3);
+      Assert.assertEquals(approveList.get(0),
+          ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_11)));
+      Assert.assertEquals(approveList.get(1),
+          ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_12)));
+      Assert.assertEquals(approveList.get(2),
+          ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_13)));
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (PermissionException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
+    }
+  }
 }
