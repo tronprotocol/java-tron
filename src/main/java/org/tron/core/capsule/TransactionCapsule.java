@@ -320,6 +320,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     if (signature.size() % 65 != 0) {
       throw new SignatureFormatException("Signature size is " + signature.size());
     }
+    if (signature.size() / 65 > permission.getKeysCount()) {
+      throw new PermissionException(
+          "Signature count is " + (signature.size() / 65) + " more than key counts of permission : "
+              + permission.getKeysCount());
+    }
     HashMap addMap = new HashMap();
     for (int i = 0; i < signature.size(); i += 65) {
       ByteString sub = signature.substring(i, i + 65);

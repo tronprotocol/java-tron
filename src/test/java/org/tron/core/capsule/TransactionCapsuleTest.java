@@ -417,6 +417,23 @@ public class TransactionCapsuleTest {
     } catch (SignatureFormatException e) {
       Assert.assertFalse(true);
     }
+    //Too many signature
+    prikeys.add(ByteArray.fromHexString(KEY_12));
+    prikeys.add(ByteArray.fromHexString(KEY_13));
+    ByteString sign11_21_12_13 = sign(prikeys, hash);
+    try {
+      TransactionCapsule.checkWeight(permission, sign11_21_12_13, hash, null);
+      Assert.assertFalse(true);
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (PermissionException e) {
+      ByteString sign21 = sign11_21.substring(65, 130);
+      Assert.assertEquals(e.getMessage(),
+          "Signature count is " + prikeys.size() + " more than key counts of permission : "
+              + permission.getKeysCount());
+    } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
+    }
 
     //Sign twices by same key
     prikeys = new ArrayList<>();
