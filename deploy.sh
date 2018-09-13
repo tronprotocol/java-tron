@@ -1,12 +1,16 @@
 #!/bin/bash
 
+
+
+
 echo "$TRAVIS_BRANCH"
 
-if [ "$TRAVIS_BRANCH" = "develop" ];then
+if [ "$TRAVIS_BRANCH" = "transfer_stest_to_docker" ];then
   echo "init env"
-  ssh tron@47.93.9.236 -p 22008 sh /home/tron/workspace/deploy_all.sh
+  ssh tron@39.106.62.219 -p 22008 sh /data/workspace/docker_workspace/stest.sh >stest.log 2>&1
   echo "stest start"
-  ./gradlew stest | tee stest.log
+  cat stest.log | grep "Stest result is:" -A 10000
+  #./gradlew stest | tee stest.log
   echo "stest end"
 
   echo $?
@@ -14,10 +18,11 @@ if [ "$TRAVIS_BRANCH" = "develop" ];then
 
   if [ $ret != 0 ];then
     echo $ret
+    rm -f stest.log
     exit 1
   fi
 
 fi
 echo "bye bye"
-
+rm -f stest.log
 exit 0
