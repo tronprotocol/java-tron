@@ -60,7 +60,7 @@ public class InterpreterTest {
       while (!program.isStopped()) {
         vm.step(program);
       }
-    } catch (Exception e) {
+    } catch (Program.OutOfEnergyException e) {
       result = true;
     }
 
