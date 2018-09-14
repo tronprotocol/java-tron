@@ -281,6 +281,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     builder.addKeys(key);
     builder.setThreshold(1);
     builder.setName(name);
+    if (!"owner".equalsIgnoreCase(name)){
+      builder.setParent("owner");
+    }
     return builder.build();
   }
 

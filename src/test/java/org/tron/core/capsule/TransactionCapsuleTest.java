@@ -145,7 +145,11 @@ public class TransactionCapsuleTest {
           .getDefaultPermission(address, name);
       Assert.assertEquals(permission.getName(), name);
       Assert.assertEquals(permission.getThreshold(), 1);
-      Assert.assertEquals(permission.getParent(), "");
+      if ("owner".equalsIgnoreCase(name)) {
+        Assert.assertEquals(permission.getParent(), "");
+      } else {
+        Assert.assertEquals(permission.getParent(), "owner");
+      }
       Assert.assertEquals(permission.getKeysCount(), 1);
       Key key = permission.getKeys(0);
       Assert.assertEquals(key.getAddress(), address);
@@ -764,7 +768,8 @@ public class TransactionCapsuleTest {
     ByteString sign = sign(prikeys, Sha256Hash.hash(rawBuilder.build().toByteArray()));
     //Accout not exist
     try {
-      TransactionCapsule.validateSignature(contractBuilder.build(), sign, Sha256Hash.hash(trxBuilder.getRawData().toByteArray()), accountStore);
+      TransactionCapsule.validateSignature(contractBuilder.build(), sign,
+          Sha256Hash.hash(trxBuilder.getRawData().toByteArray()), accountStore);
       Assert.assertFalse(true);
     } catch (SignatureException e) {
       Assert.assertFalse(true);
