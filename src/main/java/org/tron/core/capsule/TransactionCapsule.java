@@ -25,6 +25,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -352,15 +353,21 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       throws PermissionException, SignatureException, SignatureFormatException {
     Permission permission = getPermission(accountStore,
         this.transaction.getRawData().getContract(0));
-    if (this.transaction.getSignatureCount() > 0) {
-      checkWeight(permission, this.transaction.getSignature(0), this.getRawHash().getBytes(), null);
-    }
+    List<ByteString> approveList = new ArrayList<>();
     ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
+    if (this.transaction.getSignatureCount() > 0) {
+      checkWeight(permission, this.transaction.getSignature(0), this.getRawHash().getBytes(),
+          approveList);
+      if (approveList.contains(ByteString.copyFrom(address))) {
+        throw new PermissionException(Wallet.encode58Check(address) + " had signed!");
+      }
+    }
+
     long weight = getWeight(permission, address);
     if (weight == 0) {
       throw new PermissionException(
-          ByteArray.toHexString(privateKey) + " 's add is " + Wallet
+          ByteArray.toHexString(privateKey) + "'s address is " + Wallet
               .encode58Check(address) + " but it is not contained of permission.");
     }
     ECDSASignature signature = ecKey.sign(getRawHash().getBytes());

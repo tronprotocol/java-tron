@@ -5,9 +5,9 @@ import com.google.protobuf.ByteString;
 import java.io.File;
 import java.security.SignatureException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import javax.print.DocFlavor.BYTE_ARRAY;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -46,6 +46,7 @@ public class TransactionCapsuleTest {
   private static TronApplicationContext context;
   private static String dbPath = "output_transactioncapsule_test";
   private static String OWNER_ADDRESS;
+  private static String OWNER_KEY = "bfa67cb3dc6609b3a0c98e717d66f38ed1a159b5b3421678dfab85961c40de2f";
   private static String TO_ADDRESS;
   private static String OWNER_ACCOUNT_NOT_Exist;
   private static String KEY_11 = "1111111111111111111111111111111111111111111111111111111111111111";
@@ -74,7 +75,7 @@ public class TransactionCapsuleTest {
         Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     dbManager = context.getBean(Manager.class);
-    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "03702350064AD5C1A8AA6B4D74B051199CFF8EA7";
     TO_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ACCOUNT_NOT_Exist =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";
@@ -101,7 +102,7 @@ public class TransactionCapsuleTest {
             ByteString.copyFromUtf8("owner"),
             StringUtil.hexString2ByteString(OWNER_ADDRESS),
             AccountType.Normal,
-            0);
+            10_000_000_000L);
     dbManager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
   }
 
@@ -516,14 +517,230 @@ public class TransactionCapsuleTest {
     TransferContract transferContract = createTransferContract(to, owner, 1);
     AccountStore accountStore = dbManager.getAccountStore();
     TransactionCapsule transactionCapsule = new TransactionCapsule(transferContract, accountStore);
+    //Defalut permission
     try {
       transactionCapsule.addSign(ByteArray.fromHexString(KEY_11), accountStore);
+      Assert.assertFalse(true);
     } catch (PermissionException e) {
-      e.printStackTrace();
+      Assert.assertEquals(e.getMessage(),
+          KEY_11 + "'s address is " + Wallet.encode58Check(ByteArray.fromHexString(KEY_ADDRESS_11))
+              + " but it is not contained of permission.");
     } catch (SignatureException e) {
-      e.printStackTrace();
+      Assert.assertFalse(true);
     } catch (SignatureFormatException e) {
-      e.printStackTrace();
+      Assert.assertFalse(true);
+    }
+
+    try {
+      transactionCapsule.addSign(ByteArray.fromHexString(OWNER_KEY), accountStore);
+      Assert.assertEquals(transactionCapsule.getInstance().getSignatureCount(), 1);
+      ByteString signature = transactionCapsule.getInstance().getSignature(0);
+      Assert.assertEquals(signature.size(), 65);
+      byte[] sign = signature.toByteArray();
+      byte[] r = ByteArray.subArray(sign, 0, 32);
+      byte[] s = ByteArray.subArray(sign, 32, 64);
+      byte v = sign[64];
+      ECDSASignature ecdsaSignature = ECDSASignature.fromComponents(r, s, (byte) (v + 27));
+      byte[] address = ECKey
+          .signatureToAddress(transactionCapsule.getTransactionId().getBytes(), ecdsaSignature);
+      Assert.assertTrue(Arrays.equals(address, ByteArray.fromHexString(OWNER_ADDRESS)));
+    } catch (PermissionException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
+    }
+    // Sign twice
+    try {
+      transactionCapsule.addSign(ByteArray.fromHexString(OWNER_KEY), accountStore);
+      Assert.assertFalse(true);
+    } catch (PermissionException e) {
+      Assert.assertEquals(e.getMessage(),
+          Wallet.encode58Check(ByteArray.fromHexString(OWNER_ADDRESS)) + " had signed!");
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
+    }
+    //Update permission, can signed by key21 key22 key23
+    List<Permission> permissions = buildPermissions();
+    Account account = accountStore.get(ByteArray.fromHexString(OWNER_ADDRESS)).getInstance();
+    Account.Builder builder = account.toBuilder();
+    builder.addPermissions(permissions.get(0));
+    builder.addPermissions(permissions.get(1));
+    builder.addPermissions(permissions.get(2));
+    accountStore.put(ByteArray.fromHexString(OWNER_ADDRESS), new AccountCapsule(builder.build()));
+
+    transactionCapsule = new TransactionCapsule(transferContract, accountStore);
+    try {
+      transactionCapsule.addSign(ByteArray.fromHexString(OWNER_KEY), accountStore);
+      Assert.assertFalse(true);
+    } catch (PermissionException e) {
+      Assert.assertEquals(e.getMessage(),
+          OWNER_KEY + "'s address is " + Wallet
+              .encode58Check(ByteArray.fromHexString(OWNER_ADDRESS))
+              + " but it is not contained of permission.");
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
+    }
+    //Sign KEY_21
+    try {
+      transactionCapsule.addSign(ByteArray.fromHexString(KEY_21), accountStore);
+      Assert.assertEquals(transactionCapsule.getInstance().getSignatureCount(), 1);
+      ByteString signature = transactionCapsule.getInstance().getSignature(0);
+      Assert.assertEquals(signature.size(), 65);
+      byte[] sign = signature.toByteArray();
+      byte[] r = ByteArray.subArray(sign, 0, 32);
+      byte[] s = ByteArray.subArray(sign, 32, 64);
+      byte v = sign[64];
+      ECDSASignature ecdsaSignature = ECDSASignature.fromComponents(r, s, (byte) (v + 27));
+      byte[] address = ECKey
+          .signatureToAddress(transactionCapsule.getTransactionId().getBytes(), ecdsaSignature);
+      Assert.assertTrue(Arrays.equals(address, ByteArray.fromHexString(KEY_ADDRESS_21)));
+    } catch (PermissionException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
+    }
+    //Sign KEY_12
+    try {
+      transactionCapsule.addSign(ByteArray.fromHexString(KEY_22), accountStore);
+      Assert.assertEquals(transactionCapsule.getInstance().getSignatureCount(), 1);
+      ByteString signature = transactionCapsule.getInstance().getSignature(0);
+      Assert.assertEquals(signature.size(), 130);
+      byte[] sign = signature.toByteArray();
+      byte[] r21 = ByteArray.subArray(sign, 0, 32);
+      byte[] s21 = ByteArray.subArray(sign, 32, 64);
+      byte v21 = sign[64];
+      ECDSASignature ecdsaSignature11 = ECDSASignature.fromComponents(r21, s21, (byte) (v21 + 27));
+      byte[] address21 = ECKey
+          .signatureToAddress(transactionCapsule.getTransactionId().getBytes(), ecdsaSignature11);
+      Assert.assertTrue(Arrays.equals(address21, ByteArray.fromHexString(KEY_ADDRESS_21)));
+
+      byte[] r22 = ByteArray.subArray(sign, 65, 97);
+      byte[] s22 = ByteArray.subArray(sign, 97, 129);
+      byte v22 = sign[129];
+      ECDSASignature ecdsaSignature12 = ECDSASignature.fromComponents(r22, s22, (byte) (v22 + 27));
+      byte[] address22 = ECKey
+          .signatureToAddress(transactionCapsule.getTransactionId().getBytes(), ecdsaSignature12);
+      Assert.assertTrue(Arrays.equals(address22, ByteArray.fromHexString(KEY_ADDRESS_22)));
+    } catch (PermissionException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
+    }
+    //Sign KEY_23
+    try {
+      transactionCapsule.addSign(ByteArray.fromHexString(KEY_23), accountStore);
+      Assert.assertEquals(transactionCapsule.getInstance().getSignatureCount(), 1);
+      ByteString signature = transactionCapsule.getInstance().getSignature(0);
+      Assert.assertEquals(signature.size(), 195);
+      byte[] sign = signature.toByteArray();
+      byte[] r21 = ByteArray.subArray(sign, 0, 32);
+      byte[] s21 = ByteArray.subArray(sign, 32, 64);
+      byte v21 = sign[64];
+      ECDSASignature ecdsaSignature21 = ECDSASignature.fromComponents(r21, s21, (byte) (v21 + 27));
+      byte[] address21 = ECKey
+          .signatureToAddress(transactionCapsule.getTransactionId().getBytes(), ecdsaSignature21);
+      Assert.assertTrue(Arrays.equals(address21, ByteArray.fromHexString(KEY_ADDRESS_21)));
+
+      byte[] r22 = ByteArray.subArray(sign, 65, 97);
+      byte[] s22 = ByteArray.subArray(sign, 97, 129);
+      byte v22 = sign[129];
+      ECDSASignature ecdsaSignature22 = ECDSASignature.fromComponents(r22, s22, (byte) (v22 + 27));
+      byte[] address22 = ECKey
+          .signatureToAddress(transactionCapsule.getTransactionId().getBytes(), ecdsaSignature22);
+      Assert.assertTrue(Arrays.equals(address22, ByteArray.fromHexString(KEY_ADDRESS_22)));
+
+      byte[] r23 = ByteArray.subArray(sign, 130, 162);
+      byte[] s23 = ByteArray.subArray(sign, 162, 194);
+      byte v23 = sign[194];
+      ECDSASignature ecdsaSignature23 = ECDSASignature.fromComponents(r23, s23, (byte) (v23 + 27));
+      byte[] address23 = ECKey
+          .signatureToAddress(transactionCapsule.getTransactionId().getBytes(), ecdsaSignature23);
+      Assert.assertTrue(Arrays.equals(address23, ByteArray.fromHexString(KEY_ADDRESS_23)));
+    } catch (PermissionException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
+    }
+    //Sign KEY_11, throw exception
+    try {
+      transactionCapsule.addSign(ByteArray.fromHexString(KEY_11), accountStore);
+      Assert.assertFalse(true);
+    } catch (PermissionException e) {
+      Assert.assertEquals(e.getMessage(),
+          KEY_11 + "'s address is " + Wallet
+              .encode58Check(ByteArray.fromHexString(KEY_ADDRESS_11))
+              + " but it is not contained of permission.");
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
+    }
+    //invalidate signature
+    transactionCapsule = new TransactionCapsule(transferContract, accountStore);
+    Transaction.Builder builder1 = transactionCapsule.getInstance().toBuilder();
+    builder1.addSignature(ByteString.copyFromUtf8("test"));
+    transactionCapsule = new TransactionCapsule(builder1.build());
+    //Sign KEY_21, throw exception
+    try {
+      transactionCapsule.addSign(ByteArray.fromHexString(KEY_11), accountStore);
+      Assert.assertFalse(true);
+    } catch (PermissionException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureFormatException e) {
+      Assert.assertEquals(e.getMessage(), "Signature size is " + "test".length());
+    }
+
+    //invalidate signature
+    transactionCapsule = new TransactionCapsule(transferContract, accountStore);
+    builder1 = transactionCapsule.getInstance().toBuilder();
+    builder1.addSignature(ByteString.copyFromUtf8("test"));
+    transactionCapsule = new TransactionCapsule(builder1.build());
+    //Sign KEY_21, throw exception
+    try {
+      transactionCapsule.addSign(ByteArray.fromHexString(KEY_11), accountStore);
+      Assert.assertFalse(true);
+    } catch (PermissionException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureFormatException e) {
+      Assert.assertEquals(e.getMessage(), "Signature size is " + "test".length());
+    }
+    //Befor addSing transaction had a signature add by key that not contained of permission.
+    transactionCapsule = new TransactionCapsule(transferContract, accountStore);
+    List<byte[]> prikeys = new ArrayList<>();
+    prikeys.add(ByteArray.fromHexString(KEY_11));
+    ByteString sign11 = sign(prikeys, transactionCapsule.getTransactionId().getBytes());
+    builder1 = transactionCapsule.getInstance().toBuilder();
+    builder1.addSignature(sign11);
+    transactionCapsule = new TransactionCapsule(builder1.build());
+
+    try {
+      transactionCapsule.addSign(ByteArray.fromHexString(KEY_21), accountStore);
+      Assert.assertFalse(true);
+    } catch (PermissionException e) {
+      Assert.assertEquals(e.getMessage(),
+          ByteArray.toHexString(sign11.toByteArray()) + " is signed by " + Wallet
+              .encode58Check(ByteArray.fromHexString(KEY_ADDRESS_11))
+              + " but it is not contained of permission.");
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
     }
   }
 
