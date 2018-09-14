@@ -7,6 +7,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.storage.DepositImpl;
@@ -19,7 +21,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
-import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
@@ -28,6 +30,7 @@ public class InternalTransactionComplexTest {
   private static Runtime runtime;
   private static Manager dbManager;
   private static TronApplicationContext context;
+  private static Application appT;
   private static DepositImpl deposit;
   private static final String dbPath = "output_InternalTransactionComplexTest";
   private static final String OWNER_ADDRESS;
@@ -36,6 +39,7 @@ public class InternalTransactionComplexTest {
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug", "--support-constant"},
         Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
+    appT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   }
 
@@ -72,7 +76,7 @@ public class InternalTransactionComplexTest {
    */
   @Test
   public void internalTransactionAsInstanceTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     byte[] calledContractAddress = deployCalledContractandGetItsAddress();
     byte[] callerContractAddress = deployCallerContractAndGetItsAddress(calledContractAddress);
 
@@ -104,7 +108,7 @@ public class InternalTransactionComplexTest {
 
   // Just for the caller/called example above
   private byte[] deployCalledContractandGetItsAddress()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     String contractName = "calledContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI =
@@ -129,7 +133,7 @@ public class InternalTransactionComplexTest {
 
   // Just for the caller/called example above
   private byte[] deployCallerContractAndGetItsAddress(byte[] calledContractAddress)
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     String contractName = "calledContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI =
@@ -168,6 +172,8 @@ public class InternalTransactionComplexTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
+    appT.shutdownServices();
+    appT.shutdown();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");

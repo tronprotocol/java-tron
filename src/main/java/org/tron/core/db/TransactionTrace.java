@@ -30,7 +30,7 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
-import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -91,7 +91,7 @@ public class TransactionTrace {
   }
 
   //pre transaction check
-  public void init() throws TransactionTraceException {
+  public void init() {
     txStartTimeInMs = System.currentTimeMillis();
     // switch (trxType) {
     //   case TRX_PRECOMPILED_TYPE:
@@ -121,7 +121,7 @@ public class TransactionTrace {
   }
 
   public void exec(Runtime runtime)
-      throws ContractExeException, ContractValidateException {
+      throws ContractExeException, ContractValidateException, VMIllegalException {
     /**  VM execute  **/
     runtime.execute();
     runtime.go();
@@ -185,6 +185,17 @@ public class TransactionTrace {
         dbManager.getWitnessController().getHeadSlot());
   }
 
+  public boolean checkNeedRetry() {
+    if (!needVM()) {
+      return false;
+    }
+    if (!trx.getContractRet().equals(contractResult.OUT_OF_TIME)
+        && receipt.getResult().equals(contractResult.OUT_OF_TIME)) {
+      return true;
+    }
+    return false;
+  }
+
   public void check() throws ReceiptCheckErrException {
     if (!needVM()) {
       return;
@@ -193,8 +204,9 @@ public class TransactionTrace {
       throw new ReceiptCheckErrException("null resultCode");
     }
     if (!trx.getContractRet().equals(receipt.getResult())) {
-      logger.info("this tx resultCode in received block: {}", trx.getContractRet());
-      logger.info("this tx resultCode in self: {}", receipt.getResult());
+      logger.info(
+          "this tx resultCode in received block: {}\nthis tx resultCode in self: {}",
+          trx.getContractRet(), receipt.getResult());
       throw new ReceiptCheckErrException("Different resultCode");
     }
   }

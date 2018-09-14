@@ -37,7 +37,7 @@ public class MessageCodec extends ByteToMessageDecoder {
     this.channel = channel;
   }
 
-  private Message createMessage(byte[] encoded) throws Exception{
+  private Message createMessage(byte[] encoded) throws Exception {
     byte type = encoded[0];
     if (MessageTypes.inP2pRange(type)) {
       return p2pMessageFactory.create(encoded);

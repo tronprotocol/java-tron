@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.program.Program;
@@ -22,25 +21,13 @@ import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
 import org.tron.common.runtime.vm.program.Stack;
 
 @Slf4j(topic = "VM")
-
 public class VM {
 
-  // private static final Logger logger = LoggerFactory.getLogger("TronVM");
-  private static BigInteger _32_ = BigInteger.valueOf(32);
+  private static final BigInteger _32_ = BigInteger.valueOf(32);
   private static final String logString = "{}    Op: [{}]  Energy: [{}] Deep: [{}]  Hint: [{}]";
 
-  // max mem size which couldn't be paid for ever
-  // used to reduce expensive BigInt arithmetic
-  private static BigInteger MAX_MEM_SIZE = BigInteger.valueOf(Integer.MAX_VALUE);
-
   // 3MB
-  private static BigInteger MEM_LIMIT = BigInteger.valueOf(3 * 1024 * 1024);
-
-
-  /* Keeps track of the number of steps performed in this VM */
-  private int vmCounter = 0;
-  private boolean vmTrace;
-  // private long dumpBlock;
+  private static final BigInteger MEM_LIMIT = BigInteger.valueOf(3L * 1024 * 1024);
 
   private final VMConfig config;
 
@@ -48,25 +35,18 @@ public class VM {
     config = VMConfig.getInstance();
   }
 
-  @Autowired
   public VM(VMConfig config) {
     this.config = config;
-    // vmTrace = config.vmTrace();
-    // dumpBlock = config.dumpBlock();
   }
 
   private void checkMemorySize(OpCode op, BigInteger newMemSize) {
-    // todo: add TVMruntime error
     if (newMemSize.compareTo(MEM_LIMIT) > 0) {
       throw Program.Exception.memoryOverflow(op);
     }
   }
 
-
   private long calcMemEnergy(EnergyCost energyCosts, long oldMemSize, BigInteger newMemSize,
       long copySize, OpCode op) {
-    //todo: simpfy this calc, just use energy relative to energy time
-
     long energyCost = 0;
 
     checkMemorySize(op, newMemSize);
@@ -108,7 +88,6 @@ public class VM {
       Stack stack = program.getStack();
 
       String hint = "";
-      long callEnergy = 0, memWords = 0; // parameters for logging
       long energyCost = op.getTier().asInt();
       EnergyCost energyCosts = EnergyCost.getInstance();
       DataWord adjustedCallEnergy = null;
@@ -203,12 +182,10 @@ public class VM {
         case DELEGATECALL:
         case STATICCALL:
           // here, contract call an other contract, or a library, and so on
-          // todo: check the callvalue here
           energyCost = energyCosts.getCALL();
           DataWord callEnergyWord = stack.get(stack.size() - 1);
           DataWord callAddressWord = stack.get(stack.size() - 2);
-          DataWord value = op.callHasValue() ?
-              stack.get(stack.size() - 3) : DataWord.ZERO;
+          DataWord value = op.callHasValue() ? stack.get(stack.size() - 3) : DataWord.ZERO;
 
           //check to see if account does not exist and is not a precompiled contract
           if (op == CALL) {
@@ -261,12 +238,10 @@ public class VM {
                 op.name(),
                 dataCost.longValueExact(), program.getEnergyLimitLeft().longValueSafe());
           }
-          energyCost = energyCosts.getLOG_ENERGY() +
-              energyCosts.getLOG_TOPIC_ENERGY() * nTopics +
-              energyCosts.getLOG_DATA_ENERGY() * stack.get(stack.size() - 2).longValue() +
-              calcMemEnergy(energyCosts, oldMemSize,
-                  memNeeded(stack.peek(), stack.get(stack.size() - 2)),
-                  0, op);
+          energyCost = energyCosts.getLOG_ENERGY()
+              + energyCosts.getLOG_TOPIC_ENERGY() * nTopics
+              + energyCosts.getLOG_DATA_ENERGY() * stack.get(stack.size() - 2).longValue()
+              + calcMemEnergy(energyCosts, oldMemSize, memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0, op);
 
           checkMemorySize(op, memNeeded(stack.peek(), stack.get(stack.size() - 2)));
           break;
@@ -281,10 +256,8 @@ public class VM {
           break;
       }
 
-      // DEBUG System.out.println(" OP IS " + op.name() + " ENERGYCOST IS " + energyCost + " NUM IS " + op.asInt());
       program.spendEnergy(energyCost, op.name());
       program.checkCPUTimeLimit(op.name());
-      // logger.info("after opName: {}, {}", op.name(), System.nanoTime() / 1000 - lastTime);
 
       // Execute operation
       switch (op) {
@@ -814,8 +787,8 @@ public class VM {
           int lengthData = program.stackPop().intValueSafe();
 
           int sizeToBeCopied =
-              (long) codeOffset + lengthData > fullCode.length ?
-                  (fullCode.length < codeOffset ? 0 : fullCode.length - codeOffset)
+              (long) codeOffset + lengthData > fullCode.length
+                  ? (fullCode.length < codeOffset ? 0 : fullCode.length - codeOffset)
                   : lengthData;
 
           byte[] codeCopy = new byte[lengthData];
@@ -1185,18 +1158,9 @@ public class VM {
           if (program.isStaticCall()) {
             throw new Program.StaticCallModificationException();
           }
-
           DataWord value = program.stackPop();
           DataWord inOffset = program.stackPop();
           DataWord inSize = program.stackPop();
-
-                    /*
-                    if (logger.isInfoEnabled())
-                        logger.info(logString, String.format("%5s", "[" + program.getPC() + "]"),
-                                String.format("%-12s", op.name()),
-                                program.getDroplimit().value(),
-                                program.getCallDeep(), hint);
-                    */
           program.createContract(value, inOffset, inSize);
 
           program.step();
@@ -1209,8 +1173,7 @@ public class VM {
           program.stackPop(); // use adjustedCallEnergy instead of requested
           DataWord codeAddress = program.stackPop();
 
-          DataWord value = op.callHasValue() ?
-              program.stackPop() : DataWord.ZERO;
+          DataWord value = op.callHasValue() ? program.stackPop() : DataWord.ZERO;
 
           if (program.isStaticCall() && op == CALL && !value.isZero()) {
             throw new Program.StaticCallModificationException();
@@ -1302,14 +1265,6 @@ public class VM {
       }
 
       program.setPreviouslyExecutedOp(op.val());
-            /*
-            if (logger.isInfoEnabled() && !op.isCall())
-                logger.info(logString, String.format("%5s", "[" + program.getPC() + "]"),
-                        String.format("%-12s",
-                                op.name()), program.getDroplimit().value(),
-                        program.getCallDeep(), hint);
-            */
-      vmCounter++;
     } catch (RuntimeException e) {
       logger.warn("VM halted: [{}]", e.getMessage());
       program.spendAllEnergy();
@@ -1331,9 +1286,7 @@ public class VM {
         this.step(program);
       }
 
-    } catch (JVMStackOverFlowException e) {
-      throw e;
-    } catch (OutOfResourceException e) {
+    } catch (JVMStackOverFlowException | OutOfResourceException e) {
       throw e;
     } catch (RuntimeException e) {
       if (StringUtils.isEmpty(e.getMessage())) {
@@ -1345,8 +1298,6 @@ public class VM {
       logger
           .error("\n !!! StackOverflowError: update your java run command with -Xss !!!\n", soe);
       throw new JVMStackOverFlowException();
-    } finally {
-
     }
   }
 
