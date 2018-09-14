@@ -51,9 +51,7 @@ import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadBlockException;
-import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BadTransactionException;
-import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TraitorPeerException;
@@ -1225,7 +1223,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     } catch (TraitorPeerException e) {
       logger.error(e.getMessage());
       banTraitorPeer(peer, ReasonCode.BAD_PROTOCOL);
-    } catch (BadItemException)
+    } catch (StoreException e) {
+      //we try update our both known block but this block is null
+      //because when we try to switch to this block's fork then fail.
+      //The reason only is we get a bad block which peer broadcast to us.
+      logger.error(e.getMessage());
+      banTraitorPeer(peer, ReasonCode.BAD_BLOCK);
+    }
   }
 
   private void startFetchItem() {
@@ -1291,7 +1295,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void updateBlockWeBothHave(PeerConnection peer, BlockId blockId)
-      throws BadItemException, ItemNotFoundException {
+      throws StoreException {
     logger.info("update peer {} block both we have, {}", peer.getNode().getHost(),
         blockId.getString());
     peer.setHeadBlockWeBothHave(blockId);
