@@ -1001,14 +1001,14 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
 
       if (msg == null) {
-        msg = del.getData(hash, type);
-      }
-
-      if (msg == null) {
-        logger.error("fetch message {} {} failed.", type, hash);
-        peer.sendMessage(new ItemNotFound());
-        //todo,should be disconnect?
-        return;
+        try {
+          msg = del.getData(hash, type);
+        } catch (StoreException e) {
+          logger.error("fetch message {} {} failed.", type, hash);
+          peer.sendMessage(new ItemNotFound());
+          //todo,should be disconnect?
+          return;
+        }
       }
 
       if (type.equals(MessageTypes.BLOCK)) {
@@ -1174,6 +1174,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     } catch (TraitorPeerException e) {
       logger.error(e.getMessage());
       banTraitorPeer(peer, ReasonCode.BAD_PROTOCOL);
+    } catch (StoreException e) {
+      //we try update our both known block but this block is null
+      //because when we try to switch to this block's fork then fail.
+      //The reason only is we get a bad block which peer broadcast to us.
+      logger.error(e.getMessage());
+      banTraitorPeer(peer, ReasonCode.BAD_BLOCK);
     }
   }
 
@@ -1236,7 +1242,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     peer.setHeadBlockTimeWeBothHave(block.getTimeStamp());
   }
 
-  private void updateBlockWeBothHave(PeerConnection peer, BlockId blockId) {
+  private void updateBlockWeBothHave(PeerConnection peer, BlockId blockId)
+      throws StoreException {
     logger.info("update peer {} block both we have, {}", peer.getNode().getHost(),
         blockId.getString());
     peer.setHeadBlockWeBothHave(blockId);
