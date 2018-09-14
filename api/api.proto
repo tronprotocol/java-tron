@@ -435,7 +435,15 @@ service Wallet {
       }
     };
   };
-
+  rpc GetPaginatedExchangeList (PaginatedMessage) returns (ExchangeList) {
+      option (google.api.http) = {
+          post: "/wallet/getpaginatedxxchangelist"
+          body: "*"
+          additional_bindings {
+            get: "/wallet/getpaginatedxxchangelist"
+          }
+        };
+    }
   rpc GetExchangeById (BytesMessage) returns (Exchange) {
     option (google.api.http) = {
         post: "/wallet/getexchangebyid"
@@ -474,6 +482,8 @@ service Wallet {
         }
       };
   }
+
+
   rpc TotalTransaction (EmptyMessage) returns (NumberMessage) {
     option (google.api.http) = {
       post: "/wallet/totaltransaction"
