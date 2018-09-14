@@ -15,6 +15,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.PermissionUpdateKeyContract;
+import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -112,6 +113,17 @@ public class PermissionUpdateKeyActuator extends AbstractActuator {
     if (permissionUpdateKeyContract.getKey().getWeight() <= 0) {
       throw new ContractValidateException("key weight should be greater than 0");
     }
+    int weightSum = 0;
+    for (Key key : permission.getKeysList()) {
+      if (!key.getAddress().equals(permissionUpdateKeyContract.getKey().getAddress())) {
+        weightSum += key.getWeight();
+      }
+    }
+    weightSum += permissionUpdateKeyContract.getKey().getWeight();
+    if (weightSum < permission.getThreshold()) {
+      throw new ContractValidateException("sum of all keys weight should not be less that threshold");
+    }
+
     return true;
   }
 
