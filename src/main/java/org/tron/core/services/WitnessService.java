@@ -224,22 +224,26 @@ public class WitnessService implements Service {
       controller.getManager().lastHeadBlockIsMaintenance();
 
       controller.setGeneratingBlock(true);
-      BlockCapsule block = generateBlock(scheduledTime, scheduledWitness,
-          controller.lastHeadBlockIsMaintenance());
+      BlockCapsule block;
+      synchronized (tronApp.getDbManager()) {
+        block = generateBlock(scheduledTime, scheduledWitness,
+            controller.lastHeadBlockIsMaintenance());
 
-      if (block == null) {
-        logger.warn("exception when generate block");
-        return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
-      }
+        if (block == null) {
+          logger.warn("exception when generate block");
+          return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
+        }
 
-      int blockProducedTimeOut = Args.getInstance().getBlockProducedTimeOut();
+        int blockProducedTimeOut = Args.getInstance().getBlockProducedTimeOut();
 
-      if (DateTime.now().getMillis() - now
-          > ChainConstant.BLOCK_PRODUCED_INTERVAL * blockProducedTimeOut / 100) {
-        logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}",
-            ChainConstant.BLOCK_PRODUCED_INTERVAL * blockProducedTimeOut / 100,
-            new DateTime(now), DateTime.now());
-        return BlockProductionCondition.TIME_OUT;
+        if (DateTime.now().getMillis() - now
+            > ChainConstant.BLOCK_PRODUCED_INTERVAL * blockProducedTimeOut / 100) {
+          logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}",
+              ChainConstant.BLOCK_PRODUCED_INTERVAL * blockProducedTimeOut / 100,
+              new DateTime(now), DateTime.now());
+          tronApp.getDbManager().eraseBlock();
+          return BlockProductionCondition.TIME_OUT;
+        }
       }
 
       logger.info(
