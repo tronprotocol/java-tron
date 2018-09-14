@@ -189,7 +189,7 @@ public class TransactionTrace {
     if (!needVM()) {
       return false;
     }
-    if (trx.getContractRet().equals(contractResult.SUCCESS)
+    if (!trx.getContractRet().equals(contractResult.OUT_OF_TIME)
         && receipt.getResult().equals(contractResult.OUT_OF_TIME)) {
       return true;
     }
