@@ -7,6 +7,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -77,6 +78,10 @@ public class PermissionDeleteKeyActuator extends AbstractActuator {
       throw new ContractValidateException("ownerAddress account does not exist");
     }
     String name = permissionDeleteKeyContract.getPermissionName();
+    if (StringUtils.isEmpty(name)) {
+      throw new ContractValidateException("permission name should be not empty");
+    }
+
     if (!name.equalsIgnoreCase("owner") &&
         !name.equalsIgnoreCase("active")) {
       throw new ContractValidateException("permission name should be owner or active");
@@ -86,9 +91,6 @@ public class PermissionDeleteKeyActuator extends AbstractActuator {
       throw new ContractValidateException("you have not set permission with the name " + name);
     }
 
-    if (name.isEmpty()) {
-      throw new ContractValidateException("permission name should be not empty");
-    }
     if (!Wallet.addressValid(permissionDeleteKeyContract.getKeyAddress().toByteArray())) {
       throw new ContractValidateException("address in key is invalidate");
     }
