@@ -285,8 +285,11 @@ public class NodeDelegateImpl implements NodeDelegate {
       case BLOCK:
         return new BlockMessage(dbManager.getBlockById(hash));
       case TRX:
-        return new TransactionMessage(
-              dbManager.getTransactionStore().get(hash.getBytes()).getData());
+        TransactionCapsule tx = dbManager.getTransactionStore().get(hash.getBytes());
+        if (tx != null) {
+          return new TransactionMessage(tx.getData());
+        }
+        throw new ItemNotFoundException("transaction is not found");
       default:
         throw new BadItemException("message type not block or trx.");
     }
