@@ -44,6 +44,7 @@ import org.springframework.stereotype.Component;
 import org.tron.abi.EventEncoder;
 import org.tron.abi.FunctionReturnDecoder;
 import org.tron.abi.TypeReference;
+import org.tron.abi.datatypes.BytesType;
 import org.tron.abi.datatypes.Event;
 import org.tron.abi.datatypes.Type;
 import org.tron.abi.datatypes.generated.AbiTypes;
@@ -1076,10 +1077,15 @@ public class Manager {
           int nonIndexedCounter = 0;
           for (TypeReference<?> typeReference : typeList) {
             if(typeReference.isIndexed()) {
-              resultJsonObject.put(nameList.get(counter), indexedValues.get(indexedCounter).getValue());
+              resultJsonObject.put(nameList.get(counter),
+                  (indexedValues.get(indexedCounter) instanceof BytesType)
+                      ? Hex.toHexString((byte[]) indexedValues.get(indexedCounter).getValue())
+                      : indexedValues.get(indexedCounter).getValue());
               indexedCounter++;
             } else {
-              resultJsonObject.put(nameList.get(counter), nonIndexedValues.get(nonIndexedCounter).getValue());
+              resultJsonObject.put(nameList.get(counter), (nonIndexedValues.get(nonIndexedCounter) instanceof BytesType)
+                  ? Hex.toHexString((byte[]) nonIndexedValues.get(nonIndexedCounter).getValue())
+                  : nonIndexedValues.get(nonIndexedCounter).getValue());
               nonIndexedCounter++;
             }
             counter++;
