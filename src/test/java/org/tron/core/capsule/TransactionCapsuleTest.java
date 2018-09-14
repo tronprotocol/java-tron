@@ -424,7 +424,6 @@ public class TransactionCapsuleTest {
     } catch (SignatureException e) {
       Assert.assertFalse(true);
     } catch (PermissionException e) {
-      ByteString sign21 = sign11_21.substring(65, 130);
       Assert.assertEquals(e.getMessage(),
           "Signature count is " + prikeys.size() + " more than key counts of permission : "
               + permission.getKeysCount());
@@ -745,7 +744,152 @@ public class TransactionCapsuleTest {
   }
 
   @Test
-  public void validateSignature() {
+  // test   public static boolean validateSignature(Transaction.Contract contract, ByteString sigs, byte[] hash, AccountStore accountStore)
+  public void validateSignature0() {
+    //Update permission, can signed by key21 key22 key23
+    AccountStore accountStore = dbManager.getAccountStore();
+    List<Permission> permissions = buildPermissions();
+    Account account = accountStore.get(ByteArray.fromHexString(OWNER_ADDRESS)).getInstance();
+    Account.Builder builder = account.toBuilder();
+    builder.clearPermissions();
+    builder.addPermissions(permissions.get(0));
+    builder.addPermissions(permissions.get(1));
+    builder.addPermissions(permissions.get(2));
+    accountStore.put(ByteArray.fromHexString(OWNER_ADDRESS), new AccountCapsule(builder.build()));
+    byte[] hash = Sha256Hash.hash("test".getBytes());
 
+    byte[] to = ByteArray.fromHexString(TO_ADDRESS);
+    byte[] owner = ByteArray.fromHexString(OWNER_ADDRESS);
+    TransferContract transferContract = createTransferContract(to, owner, 1);
+    Contract.Builder contractBuilder = Contract.newBuilder();
+    contractBuilder.setParameter(Any.pack(transferContract)).setType(ContractType.TransferContract);
+
+    //SignatureFormatException
+    ByteString test = ByteString.copyFromUtf8("test");
+    try {
+      TransactionCapsule.validateSignature(contractBuilder.build(), test, hash, accountStore);
+      Assert.assertFalse(true);
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (PermissionException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureFormatException e) {
+      Assert.assertEquals(e.getMessage(), "Signature size is " + test.size());
+    }
+    //SignatureException: Header byte out of range:
+    //Ignore more exception case.
+    byte[] rand = new byte[65];
+    new Random().nextBytes(rand);
+    rand[64] = 8;  // v = 8 < 27 v += 35 > 35
+    try {
+      TransactionCapsule.validateSignature(contractBuilder.build(), ByteString.copyFrom(rand), hash,
+          accountStore);
+      Assert.assertFalse(true);
+    } catch (SignatureException e) {
+      Assert.assertEquals(e.getMessage(), "Header byte out of range: 35");
+    } catch (PermissionException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
+    }
+    //Permission is not contain KEY
+    List<byte[]> prikeys = new ArrayList<>();
+    prikeys.add(ByteArray.fromHexString(KEY_21));
+    prikeys.add(ByteArray.fromHexString(KEY_11));
+    ByteString sign21_11 = sign(prikeys, hash);
+    try {
+      TransactionCapsule.validateSignature(contractBuilder.build(), sign21_11, hash, accountStore);
+      Assert.assertFalse(true);
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (PermissionException e) {
+      ByteString sign21 = sign21_11.substring(65, 130);
+      Assert.assertEquals(e.getMessage(),
+          ByteArray.toHexString(sign21.toByteArray()) + " is signed by " + Wallet
+              .encode58Check(ByteArray.fromHexString(KEY_ADDRESS_11))
+              + " but it is not contained of permission.");
+    } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
+    }
+    //Too many signature
+    prikeys.add(ByteArray.fromHexString(KEY_22));
+    prikeys.add(ByteArray.fromHexString(KEY_23));
+    ByteString sign21_11_22_23 = sign(prikeys, hash);
+    try {
+      TransactionCapsule
+          .validateSignature(contractBuilder.build(), sign21_11_22_23, hash, accountStore);
+      Assert.assertFalse(true);
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (PermissionException e) {
+      Assert.assertEquals(e.getMessage(),
+          "Signature count is " + prikeys.size() + " more than key counts of permission : "
+              + permissions.get(1).getKeysCount());
+    } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
+    }
+
+    //Sign twices by same key
+    prikeys = new ArrayList<>();
+    prikeys.add(ByteArray.fromHexString(KEY_21));
+    prikeys.add(ByteArray.fromHexString(KEY_22));
+    prikeys.add(ByteArray.fromHexString(KEY_21));
+    ByteString sign21_22_21 = sign(prikeys, hash);
+    try {
+      TransactionCapsule
+          .validateSignature(contractBuilder.build(), sign21_22_21, hash, accountStore);
+      Assert.assertFalse(true);
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (PermissionException e) {
+      Assert.assertEquals(e.getMessage(),
+          Wallet.encode58Check(ByteArray.fromHexString(KEY_ADDRESS_21)) + " has sign twices!");
+    } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
+    }
+
+    //
+    prikeys = new ArrayList<>();
+    prikeys.add(ByteArray.fromHexString(KEY_21));
+    ByteString sign21 = sign(prikeys, hash);
+    try {
+      boolean result = TransactionCapsule
+          .validateSignature(contractBuilder.build(), sign21, hash, accountStore);
+      Assert.assertFalse(result);
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (PermissionException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
+    }
+
+    prikeys.add(ByteArray.fromHexString(KEY_22));
+    ByteString sign21_22 = sign(prikeys, hash);
+    try {
+      boolean result = TransactionCapsule
+          .validateSignature(contractBuilder.build(), sign21_22, hash, accountStore);
+      Assert.assertTrue(result);
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (PermissionException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
+    }
+
+    prikeys.add(ByteArray.fromHexString(KEY_23));
+    ByteString sign21_22_23 = sign(prikeys, hash);
+    try {
+      boolean result = TransactionCapsule
+          .validateSignature(contractBuilder.build(), sign21_22_23, hash, accountStore);
+      Assert.assertTrue(result);
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (PermissionException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
+    }
   }
 }
