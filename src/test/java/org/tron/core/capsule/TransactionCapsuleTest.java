@@ -7,6 +7,7 @@ import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import javax.print.DocFlavor.BYTE_ARRAY;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -24,6 +25,7 @@ import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.SignatureFormatException;
@@ -40,12 +42,6 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 @Slf4j
 public class TransactionCapsuleTest {
 
-  //  private static BlockCapsule blockCapsule0 = new BlockCapsule(1,
-//      Sha256Hash.wrap(ByteString
-//          .copyFrom(ByteArray
-//              .fromHexString("9938a342238077182498b464ac0292229938a342238077182498b464ac029222"))),
-//      1234,
-//      ByteString.copyFrom("1234567".getBytes()));
   private static Manager dbManager;
   private static TronApplicationContext context;
   private static String dbPath = "output_transactioncapsule_test";
@@ -511,5 +507,28 @@ public class TransactionCapsuleTest {
     } catch (SignatureFormatException e) {
       Assert.assertFalse(true);
     }
+  }
+
+  @Test
+  public void addSign() {
+    byte[] to = ByteArray.fromHexString(TO_ADDRESS);
+    byte[] owner = ByteArray.fromHexString(OWNER_ADDRESS);
+    TransferContract transferContract = createTransferContract(to, owner, 1);
+    AccountStore accountStore = dbManager.getAccountStore();
+    TransactionCapsule transactionCapsule = new TransactionCapsule(transferContract, accountStore);
+    try {
+      transactionCapsule.addSign(ByteArray.fromHexString(KEY_11), accountStore);
+    } catch (PermissionException e) {
+      e.printStackTrace();
+    } catch (SignatureException e) {
+      e.printStackTrace();
+    } catch (SignatureFormatException e) {
+      e.printStackTrace();
+    }
+  }
+
+  @Test
+  public void validateSignature() {
+
   }
 }
