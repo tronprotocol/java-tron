@@ -29,6 +29,7 @@ import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.SignatureFormatException;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract.PermissionAddKeyContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Account;
@@ -889,6 +890,176 @@ public class TransactionCapsuleTest {
     } catch (PermissionException e) {
       Assert.assertFalse(true);
     } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
+    }
+  }
+
+  @Test
+  // test   public boolean validateSignature(AccountStore accountStore)
+  public void validateSignature1() {
+    //Update permission, can signed by key21 key22 key23
+    AccountStore accountStore = dbManager.getAccountStore();
+    List<Permission> permissions = buildPermissions();
+    Account account = accountStore.get(ByteArray.fromHexString(OWNER_ADDRESS)).getInstance();
+    Account.Builder builder = account.toBuilder();
+    builder.clearPermissions();
+    builder.addPermissions(permissions.get(0));
+    builder.addPermissions(permissions.get(1));
+    builder.addPermissions(permissions.get(2));
+    accountStore.put(ByteArray.fromHexString(OWNER_ADDRESS), new AccountCapsule(builder.build()));
+
+    List<byte[]> prikeys = new ArrayList<>();
+    // no contract
+    prikeys.add(ByteArray.fromHexString(KEY_21));
+    Transaction.Builder trxBuilder = Transaction.newBuilder();
+    Transaction.raw.Builder rawBuilder = Transaction.raw.newBuilder();
+    rawBuilder.setTimestamp(System.currentTimeMillis());
+    trxBuilder.setRawData(rawBuilder);
+    ByteString sign = sign(prikeys, Sha256Hash.hash(rawBuilder.build().toByteArray()));
+    trxBuilder.addSignature(sign);
+    TransactionCapsule transactionCapsule = new TransactionCapsule(trxBuilder.build());
+    try {
+      transactionCapsule.validateSignature(accountStore);
+      Assert.assertFalse(true);
+    } catch (ValidateSignatureException e) {
+      Assert.assertEquals(e.getMessage(), "miss sig or contract");
+    }
+    // no sign
+    byte[] to = ByteArray.fromHexString(TO_ADDRESS);
+    byte[] owner = ByteArray.fromHexString(OWNER_ADDRESS);
+    TransferContract transferContract = createTransferContract(to, owner, 1);
+    transactionCapsule = new TransactionCapsule(transferContract, accountStore);
+    try {
+      transactionCapsule.validateSignature(accountStore);
+      Assert.assertFalse(true);
+    } catch (ValidateSignatureException e) {
+      Assert.assertEquals(e.getMessage(), "miss sig or contract");
+    }
+    // contract cont != sign count
+    trxBuilder = transactionCapsule.getInstance().toBuilder();
+    trxBuilder.addSignature(sign);
+    trxBuilder.addSignature(sign);
+    transactionCapsule = new TransactionCapsule(trxBuilder.build());
+    try {
+      transactionCapsule.validateSignature(accountStore);
+      Assert.assertFalse(true);
+    } catch (ValidateSignatureException e) {
+      Assert.assertEquals(e.getMessage(), "miss sig or contract");
+    }
+
+    transactionCapsule = new TransactionCapsule(transferContract, accountStore);
+    byte[] hash = transactionCapsule.getTransactionId().getBytes();
+    //SignatureFormatException
+    ByteString test = ByteString.copyFromUtf8("test");
+    trxBuilder.clearSignature();
+    trxBuilder.addSignature(test);
+    transactionCapsule = new TransactionCapsule(trxBuilder.build());
+    try {
+      transactionCapsule.validateSignature(accountStore);
+      Assert.assertFalse(true);
+    } catch (ValidateSignatureException e) {
+      Assert.assertEquals(e.getMessage(), "Signature size is " + test.size());
+    }
+    //SignatureException: Header byte out of range:
+    //Ignore more exception case.
+    byte[] rand = new byte[65];
+    new Random().nextBytes(rand);
+    rand[64] = 8;  // v = 8 < 27 v += 35 > 35
+    trxBuilder.clearSignature();
+    trxBuilder.addSignature(ByteString.copyFrom(rand));
+    transactionCapsule = new TransactionCapsule(trxBuilder.build());
+    try {
+      transactionCapsule.validateSignature(accountStore);
+      Assert.assertFalse(true);
+    } catch (ValidateSignatureException e) {
+      Assert.assertEquals(e.getMessage(), "Header byte out of range: 35");
+    }
+    //Permission is not contain KEY
+    prikeys.clear();
+    prikeys.add(ByteArray.fromHexString(KEY_21));
+    prikeys.add(ByteArray.fromHexString(KEY_11));
+    ByteString sign21_11 = sign(prikeys, hash);
+    trxBuilder.clearSignature();
+    trxBuilder.addSignature(sign21_11);
+    transactionCapsule = new TransactionCapsule(trxBuilder.build());
+    try {
+      transactionCapsule.validateSignature(accountStore);
+      Assert.assertFalse(true);
+    } catch (ValidateSignatureException e) {
+      ByteString sign21 = sign21_11.substring(65, 130);
+      Assert.assertEquals(e.getMessage(),
+          ByteArray.toHexString(sign21.toByteArray()) + " is signed by " + Wallet
+              .encode58Check(ByteArray.fromHexString(KEY_ADDRESS_11))
+              + " but it is not contained of permission.");
+    }
+    //Too many signature
+    prikeys.add(ByteArray.fromHexString(KEY_22));
+    prikeys.add(ByteArray.fromHexString(KEY_23));
+    ByteString sign21_11_22_23 = sign(prikeys, hash);
+    trxBuilder.clearSignature();
+    trxBuilder.addSignature(sign21_11_22_23);
+    transactionCapsule = new TransactionCapsule(trxBuilder.build());
+    try {
+      transactionCapsule.validateSignature(accountStore);
+      Assert.assertFalse(true);
+    } catch (ValidateSignatureException e) {
+      Assert.assertEquals(e.getMessage(),
+          "Signature count is " + prikeys.size() + " more than key counts of permission : "
+              + permissions.get(1).getKeysCount());
+    }
+
+    //Sign twices by same key
+    prikeys = new ArrayList<>();
+    prikeys.add(ByteArray.fromHexString(KEY_21));
+    prikeys.add(ByteArray.fromHexString(KEY_22));
+    prikeys.add(ByteArray.fromHexString(KEY_21));
+    ByteString sign21_22_21 = sign(prikeys, hash);
+    trxBuilder.clearSignature();
+    trxBuilder.addSignature(sign21_22_21);
+    transactionCapsule = new TransactionCapsule(trxBuilder.build());
+    try {
+      transactionCapsule.validateSignature(accountStore);
+      Assert.assertFalse(true);
+    } catch (ValidateSignatureException e) {
+      Assert.assertEquals(e.getMessage(),
+          Wallet.encode58Check(ByteArray.fromHexString(KEY_ADDRESS_21)) + " has sign twices!");
+    }
+
+    //
+    prikeys = new ArrayList<>();
+    prikeys.add(ByteArray.fromHexString(KEY_21));
+    ByteString sign21 = sign(prikeys, hash);
+    trxBuilder.clearSignature();
+    trxBuilder.addSignature(sign21);
+    transactionCapsule = new TransactionCapsule(trxBuilder.build());
+    try {
+      transactionCapsule.validateSignature(accountStore);
+      Assert.assertFalse(true);
+    } catch (ValidateSignatureException e) {
+      Assert.assertEquals(e.getMessage(), "sig error");
+    }
+
+    prikeys.add(ByteArray.fromHexString(KEY_22));
+    ByteString sign21_22 = sign(prikeys, hash);
+    trxBuilder.clearSignature();
+    trxBuilder.addSignature(sign21_22);
+    transactionCapsule = new TransactionCapsule(trxBuilder.build());
+    try {
+      boolean result = transactionCapsule.validateSignature(accountStore);
+      Assert.assertTrue(result);
+    } catch (ValidateSignatureException e) {
+      Assert.assertFalse(true);
+    }
+
+    prikeys.add(ByteArray.fromHexString(KEY_23));
+    ByteString sign21_22_23 = sign(prikeys, hash);
+    trxBuilder.clearSignature();
+    trxBuilder.addSignature(sign21_22_23);
+    transactionCapsule = new TransactionCapsule(trxBuilder.build());
+    try {
+      boolean result = transactionCapsule.validateSignature(accountStore);
+      Assert.assertTrue(result);
+    } catch (ValidateSignatureException e) {
       Assert.assertFalse(true);
     }
   }
