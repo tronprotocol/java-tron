@@ -63,8 +63,6 @@ public class EnergyCost {
   private final int EXT_CODE_COPY = 20;
   private final int NEW_ACCT_SUICIDE = 0;
 
-  // private final int CREATE_DATA = 600;
-
   public int getSTEP() {
     return STEP;
   }

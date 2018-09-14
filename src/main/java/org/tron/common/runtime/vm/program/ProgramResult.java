@@ -32,7 +32,6 @@ public class ProgramResult {
 
   private TransactionResultCapsule ret = new TransactionResultCapsule();
 
-
   /*
    * for testing runs ,
    * call/create is not executed

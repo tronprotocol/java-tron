@@ -38,8 +38,8 @@ public class MessageQueue {
 
   private BlockingQueue<Message> msgQueue = new LinkedBlockingQueue<>();
 
-  private static ScheduledExecutorService sendTimer =
-          Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "sendTimer"));
+  private static ScheduledExecutorService sendTimer = Executors.
+      newSingleThreadScheduledExecutor(r -> new Thread(r, "sendTimer"));
 
   private ScheduledFuture<?> sendTask;
 
@@ -52,7 +52,7 @@ public class MessageQueue {
 
     sendTask = sendTimer.scheduleAtFixedRate(() -> {
       try {
-        if (sendMsgFlag){
+        if (sendMsgFlag) {
           send();
         }
       } catch (Exception e) {
@@ -60,23 +60,24 @@ public class MessageQueue {
       }
     }, 10, 10, TimeUnit.MILLISECONDS);
 
-    sendMsgThread = new Thread(()->{
-     while (sendMsgFlag) {
-       try {
-         if (msgQueue.isEmpty()){
-           Thread.sleep(10);
-           continue;
-         }
-         Message msg = msgQueue.take();
-         ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
-           if (!future.isSuccess()) {
-             logger.error("Fail send to {}, {}", ctx.channel().remoteAddress(),  msg);
-           }
-         });
-       }catch (Exception e) {
-         logger.error("Fail send to {}, error info: {}", ctx.channel().remoteAddress(), e.getMessage());
-       }
-     }
+    sendMsgThread = new Thread(() -> {
+      while (sendMsgFlag) {
+        try {
+          if (msgQueue.isEmpty()) {
+            Thread.sleep(10);
+            continue;
+          }
+          Message msg = msgQueue.take();
+          ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
+            if (!future.isSuccess()) {
+              logger.error("Fail send to {}, {}", ctx.channel().remoteAddress(), msg);
+            }
+          });
+        } catch (Exception e) {
+          logger.error("Fail send to {}, error info: {}", ctx.channel().remoteAddress(),
+              e.getMessage());
+        }
+      }
     });
     sendMsgThread.setName("sendMsgThread-" + ctx.channel().remoteAddress());
     sendMsgThread.start();
@@ -87,40 +88,41 @@ public class MessageQueue {
   }
 
   public boolean sendMessage(Message msg) {
-    if (msg instanceof PingMessage && sendTime > System.currentTimeMillis() - 10_000){
+    if (msg instanceof PingMessage && sendTime > System.currentTimeMillis() - 10_000) {
       return false;
     }
     logger.info("Send to {}, {} ", ctx.channel().remoteAddress(), msg);
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(msg);
     sendTime = System.currentTimeMillis();
-    if (msg.getAnswerMessage() != null){
+    if (msg.getAnswerMessage() != null) {
       requestQueue.add(new MessageRoundtrip(msg));
-    }else {
+    } else {
       msgQueue.offer(msg);
     }
     return true;
   }
 
-  public void receivedMessage(Message msg){
+  public void receivedMessage(Message msg) {
     logger.info("Receive from {}, {}", ctx.channel().remoteAddress(), msg);
     channel.getNodeStatistics().messageStatistics.addTcpInMessage(msg);
     MessageRoundtrip messageRoundtrip = requestQueue.peek();
-    if (messageRoundtrip != null && messageRoundtrip.getMsg().getAnswerMessage() == msg.getClass()){
+    if (messageRoundtrip != null && messageRoundtrip.getMsg().getAnswerMessage() == msg
+        .getClass()) {
       requestQueue.remove();
     }
   }
 
   public void close() {
     sendMsgFlag = false;
-    if(sendTask != null && !sendTask.isCancelled()){
+    if (sendTask != null && !sendTask.isCancelled()) {
       sendTask.cancel(false);
       sendTask = null;
     }
-    if (sendMsgThread != null){
-      try{
+    if (sendMsgThread != null) {
+      try {
         sendMsgThread.join(20);
         sendMsgThread = null;
-      }catch (Exception e){
+      } catch (Exception e) {
         logger.warn("Join send thread failed, peer {}", ctx.channel().remoteAddress());
       }
     }
@@ -128,15 +130,17 @@ public class MessageQueue {
 
   private void send() {
     MessageRoundtrip messageRoundtrip = requestQueue.peek();
-    if (!sendMsgFlag || messageRoundtrip == null){
+    if (!sendMsgFlag || messageRoundtrip == null) {
       return;
     }
-    if (messageRoundtrip.getRetryTimes() > 0 && !messageRoundtrip.hasToRetry()){
+    if (messageRoundtrip.getRetryTimes() > 0 && !messageRoundtrip.hasToRetry()) {
       return;
     }
-    if (messageRoundtrip.getRetryTimes() > 0){
+    if (messageRoundtrip.getRetryTimes() > 0) {
       channel.getNodeStatistics().nodeDisconnectedLocal(ReasonCode.PING_TIMEOUT);
-      logger.warn("Wait {} timeout. close channel {}.", messageRoundtrip.getMsg().getAnswerMessage(), ctx.channel().remoteAddress());
+      logger
+          .warn("Wait {} timeout. close channel {}.", messageRoundtrip.getMsg().getAnswerMessage(),
+              ctx.channel().remoteAddress());
       channel.close();
       return;
     }

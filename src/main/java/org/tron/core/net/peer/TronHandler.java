@@ -23,15 +23,13 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
   }
 
   @Override
-  public void channelRead0(final ChannelHandlerContext ctx, TronMessage msg)
-      throws InterruptedException {
+  public void channelRead0(final ChannelHandlerContext ctx, TronMessage msg) {
     msgQueue.receivedMessage(msg);
-    //handle message
     peerDel.onMessage(peer, msg);
   }
 
   @Override
-  public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+  public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
     peer.processException(cause);
   }
 
