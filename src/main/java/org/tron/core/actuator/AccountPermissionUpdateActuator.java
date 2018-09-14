@@ -49,6 +49,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
   }
 
   @Override
+  //need update active and owner
   public boolean validate() throws ContractValidateException {
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
@@ -77,12 +78,14 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
     if (accountCapsule == null) {
       throw new ContractValidateException("ownerAddress account does not exist");
     }
-    if (accountPermissionUpdateContract.getPermissionsCount() == 0) {
-      throw new ContractValidateException("permission's count should be greater than 0");
+    //Only support active and owner
+    if (accountPermissionUpdateContract.getPermissionsCount() == 2) {
+      throw new ContractValidateException("permission's count should be 2.");
     }
     boolean containOwner = false;
     boolean containActive = false;
     for (Permission permission : accountPermissionUpdateContract.getPermissionsList()) {
+      //TODO : need assert max keysCount.
       if (permission.getKeysCount() == 0) {
         throw new ContractValidateException("key's count should be greater than 0");
       }

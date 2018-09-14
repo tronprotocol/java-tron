@@ -74,9 +74,9 @@ public class PermissionAddKeyActuator extends AbstractActuator {
     if (account == null) {
       throw new ContractValidateException("ownerAddress account does not exist");
     }
-    if (dbManager.getAccountStore().get(keyAddress.toByteArray()) == null) {
-      throw new ContractValidateException("key account does not exist");
-    }
+//    if (dbManager.getAccountStore().get(keyAddress.toByteArray()) == null) {
+//      throw new ContractValidateException("key account does not exist");
+//    }
     String name = permissionAddKeyContract.getPermissionName();
     if (!name.equalsIgnoreCase("owner") &&
         !name.equalsIgnoreCase("active")) {
