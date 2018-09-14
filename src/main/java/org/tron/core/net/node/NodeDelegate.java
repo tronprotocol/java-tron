@@ -9,7 +9,9 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.BadBlockException;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BadTransactionException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TronException;
@@ -28,7 +30,7 @@ public interface NodeDelegate {
   Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, Deque<BlockId> blockIds)
       throws TronException;
 
-  Message getData(Sha256Hash msgId, MessageTypes type);
+  Message getData(Sha256Hash msgId, MessageTypes type) throws BadItemException, ItemNotFoundException;
 
   void syncToCli(long unSyncNum);
 
