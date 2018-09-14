@@ -1363,6 +1363,24 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getPaginatedProposalList(PaginatedMessage request,
+        StreamObserver<ProposalList> responseObserver) {
+      responseObserver
+          .onNext(wallet.getPaginatedProposalList(request.getOffset(), request.getLimit()));
+      responseObserver.onCompleted();
+
+    }
+
+    @Override
+    public void getPaginatedExchangeList(PaginatedMessage request,
+        StreamObserver<ExchangeList> responseObserver) {
+      responseObserver
+          .onNext(wallet.getPaginatedExchangeList(request.getOffset(), request.getLimit()));
+      responseObserver.onCompleted();
+
+    }
+
+    @Override
     public void listExchanges(EmptyMessage request,
         StreamObserver<ExchangeList> responseObserver) {
       responseObserver.onNext(wallet.getExchangeList());

@@ -18,6 +18,10 @@
 
 package org.tron.core;
 
+import com.google.common.collect.ContiguousSet;
+import com.google.common.collect.DiscreteDomain;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Range;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
@@ -83,7 +87,6 @@ import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.db.PendingManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
-import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
@@ -944,9 +947,9 @@ public class Wallet {
     return ret;
   }
 
-  private static boolean isConstant(SmartContract.ABI abi, byte[] selector)  {
+  private static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
 
-    if (selector == null || selector.length != 4 ||  abi.getEntrysList().size() == 0) {
+    if (selector == null || selector.length != 4 || abi.getEntrysList().size() == 0) {
       return false;
     }
 
@@ -983,5 +986,30 @@ public class Wallet {
 
     return false;
   }
+
+
+  public ProposalList getPaginatedProposalList(long offset, long limit) {
+    ProposalList.Builder builder = ProposalList.newBuilder();
+    ImmutableList<Long> rangeList = ContiguousSet
+        .create(Range.closedOpen(offset, offset + limit), DiscreteDomain.longs()).asList();
+    rangeList.stream().map(ProposalCapsule::calculateDbKey).map(key -> {
+      try {
+        return dbManager.getProposalStore().get(key);
+      } catch (Exception ex) {
+        return null;
+      }
+    }).filter(Objects::nonNull)
+        .forEach(proposalCapsule -> builder.addProposals(proposalCapsule.getInstance()));
+    return builder.build();
+  }
+
+  public ExchangeList getPaginatedExchangeList(long offset, long limit) {
+    ExchangeList.Builder builder = ExchangeList.newBuilder();
+    List<ExchangeCapsule> exchangeCapsuleList = dbManager.getExchangeStore().getAllExchanges();
+    exchangeCapsuleList
+        .forEach(exchangeCapsule -> builder.addExchanges(exchangeCapsule.getInstance()));
+    return builder.build();
+  }
+
 
 }

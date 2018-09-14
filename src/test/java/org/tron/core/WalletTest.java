@@ -32,15 +32,17 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
+import org.tron.api.GrpcAPI.ProposalList;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Utils;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -50,6 +52,7 @@ import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.BlockHeader.raw;
+import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -196,11 +199,22 @@ public class WalletTest {
   }
 
 
-  private static void buildAssetIssue(){
+  private static void buildAssetIssue() {
     AssetIssueContract.Builder builder = AssetIssueContract.newBuilder();
     builder.setName(ByteString.copyFromUtf8("Asset1"));
     Asset1 = new AssetIssueCapsule(builder.build());
     manager.getAssetIssueStore().put(Asset1.createDbKey(), Asset1);
+  }
+
+  private static void buildProposal() {
+    Proposal.Builder builder = Proposal.newBuilder();
+    builder.setProposalId(1L).setProposerAddress(ByteString.copyFromUtf8("Address1"));
+    ProposalCapsule proposalCapsule = new ProposalCapsule(builder.build());
+    manager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
+
+    builder.setProposalId(2L).setProposerAddress(ByteString.copyFromUtf8("Address2"));
+    proposalCapsule = new ProposalCapsule(builder.build());
+    manager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
   }
 
   @AfterClass
@@ -318,21 +332,32 @@ public class WalletTest {
   }
 
   @Test
-  public  void getPaginatedAssetIssueList(){
+  public void getPaginatedAssetIssueList() {
     buildAssetIssue();
-    AssetIssueList assetList1 = wallet.getAssetIssueList(0,100);
-    Assert.assertTrue("get Asset1",assetList1.getAssetIssue(0).getName().equals(Asset1.getName()));
+    AssetIssueList assetList1 = wallet.getAssetIssueList(0, 100);
+    Assert.assertTrue("get Asset1", assetList1.getAssetIssue(0).getName().equals(Asset1.getName()));
     try {
       assetList1.getAssetIssue(1);
-    }catch (Exception e){
-      Assert.assertTrue("AssetIssueList1 size should be 1",true);
+    } catch (Exception e) {
+      Assert.assertTrue("AssetIssueList1 size should be 1", true);
     }
 
-    AssetIssueList assetList2 = wallet.getAssetIssueList(0,0);
+    AssetIssueList assetList2 = wallet.getAssetIssueList(0, 0);
     try {
       assetList2.getAssetIssue(0);
-    }catch (Exception e){
-      Assert.assertTrue("AssetIssueList2 size should be 0",true);
+    } catch (Exception e) {
+      Assert.assertTrue("AssetIssueList2 size should be 0", true);
     }
   }
+
+  @Test
+  public void getPaginatedProposalList() {
+    buildProposal();
+    ProposalList assetList1 = wallet.getPaginatedProposalList(0, 100);
+    Assert.assertEquals("Address1",
+        assetList1.getProposalsList().get(0).getProposerAddress().toStringUtf8());
+    Assert.assertEquals("Address2",
+        assetList1.getProposalsList().get(1).getProposerAddress().toStringUtf8());
+  }
+
 }
