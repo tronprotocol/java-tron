@@ -74,9 +74,9 @@ public class PermissionAddKeyActuator extends AbstractActuator {
     if (account == null) {
       throw new ContractValidateException("ownerAddress account does not exist");
     }
-    if (dbManager.getAccountStore().get(keyAddress.toByteArray()) == null) {
-      throw new ContractValidateException("key account does not exist");
-    }
+//    if (dbManager.getAccountStore().get(keyAddress.toByteArray()) == null) {
+//      throw new ContractValidateException("key account does not exist");
+//    }
     String name = permissionAddKeyContract.getPermissionName();
     if (!name.equalsIgnoreCase("owner") &&
         !name.equalsIgnoreCase("active")) {
@@ -85,9 +85,9 @@ public class PermissionAddKeyActuator extends AbstractActuator {
     if (name.isEmpty()) {
       throw new ContractValidateException("permission name should not be empty");
     }
-    if (!permissionAddKeyContract.getKey().isInitialized()) {
-      throw new ContractValidateException("key should be initialized");
-    }
+//    if (!permissionAddKeyContract.getKey().isInitialized()) {
+//      throw new ContractValidateException("key should be initialized");
+//    }
     if (!Wallet.addressValid(keyAddress.toByteArray())) {
       throw new ContractValidateException("address in key is invalidate");
     }
@@ -101,6 +101,7 @@ public class PermissionAddKeyActuator extends AbstractActuator {
         }
       }
     }
+    //TODO : need check max KeysCount
     if (permissionAddKeyContract.getKey().getWeight() <= 0) {
       throw new ContractValidateException("key weight should be greater than 0");
     }
