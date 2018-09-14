@@ -1,5 +1,7 @@
 package org.tron.common.runtime;
 
+import static stest.tron.wallet.common.client.utils.PublicMethed.jsonStr2Abi;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -15,18 +17,21 @@ import org.tron.common.storage.DepositImpl;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
-import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
+import stest.tron.wallet.common.client.utils.AbiUtil;
 
 
 /**
@@ -41,7 +46,7 @@ public class TVMTestUtils {
       byte[] callerAddress,
       String ABI, String code, long value, long feeLimit, long consumeUserResourcePercent,
       String libraryAddressPair, DepositImpl deposit, BlockCapsule block)
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     Transaction trx = generateDeploySmartContractAndGetTransaction(contractName, callerAddress, ABI,
         code, value, feeLimit, consumeUserResourcePercent, libraryAddressPair);
     processTransactionAndReturnRuntime(trx, deposit, block);
@@ -51,7 +56,7 @@ public class TVMTestUtils {
   public static Runtime triggerContractWholeProcessReturnContractAddress(byte[] callerAddress,
       byte[] contractAddress, byte[] data, long callValue, long feeLimit, DepositImpl deposit,
       BlockCapsule block)
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     Transaction trx = generateTriggerSmartContractAndGetTransaction(callerAddress, contractAddress,
         data, callValue, feeLimit);
     return processTransactionAndReturnRuntime(trx, deposit, block);
@@ -86,7 +91,7 @@ public class TVMTestUtils {
 
   public static Runtime processTransactionAndReturnRuntime(Transaction trx,
       DepositImpl deposit, BlockCapsule block)
-      throws TransactionTraceException, ContractExeException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
     TransactionTrace trace = new TransactionTrace(trxCap, deposit.getDbManager());
     Runtime runtime = new Runtime(trace, block, deposit,
@@ -97,7 +102,7 @@ public class TVMTestUtils {
     //exec
     trace.exec(runtime);
 
-    runtime.finalization();
+    trace.finalization(runtime);
 
     return runtime;
   }
@@ -106,33 +111,34 @@ public class TVMTestUtils {
   public static TVMTestResult deployContractAndReturnTVMTestResult(String contractName,
       byte[] callerAddress,
       String ABI, String code, long value, long feeLimit, long consumeUserResourcePercent,
-      String libraryAddressPair, DepositImpl deposit, BlockCapsule blockCap)
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      String libraryAddressPair, Manager dbManager, BlockCapsule blockCap)
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     Transaction trx = generateDeploySmartContractAndGetTransaction(contractName, callerAddress, ABI,
         code, value, feeLimit, consumeUserResourcePercent, libraryAddressPair);
 
     byte[] contractAddress = Wallet.generateContractAddress(trx);
 
-    return processTransactionAndReturnTVMTestResult(trx, deposit, blockCap)
+    return processTransactionAndReturnTVMTestResult(trx, dbManager, blockCap)
         .setContractAddress(Wallet.generateContractAddress(trx));
   }
 
   public static TVMTestResult triggerContractAndReturnTVMTestResult(byte[] callerAddress,
-      byte[] contractAddress, byte[] data, long callValue, long feeLimit, DepositImpl deposit,
+      byte[] contractAddress, byte[] data, long callValue, long feeLimit, Manager dbManager,
       BlockCapsule blockCap)
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     Transaction trx = generateTriggerSmartContractAndGetTransaction(callerAddress, contractAddress,
         data, callValue, feeLimit);
-    return processTransactionAndReturnTVMTestResult(trx, deposit, blockCap)
+    return processTransactionAndReturnTVMTestResult(trx, dbManager, blockCap)
         .setContractAddress(contractAddress);
   }
 
 
   public static TVMTestResult processTransactionAndReturnTVMTestResult(Transaction trx,
-      DepositImpl deposit, BlockCapsule blockCap)
-      throws TransactionTraceException, ContractExeException, ContractValidateException, ReceiptCheckErrException {
+      Manager dbManager, BlockCapsule blockCap)
+      throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
-    TransactionTrace trace = new TransactionTrace(trxCap, deposit.getDbManager());
+    TransactionTrace trace = new TransactionTrace(trxCap, dbManager);
+    DepositImpl deposit = DepositImpl.createRoot(dbManager);
     Runtime runtime = new Runtime(trace, blockCap, deposit,
         new ProgramInvokeFactoryImpl());
 
@@ -141,7 +147,7 @@ public class TVMTestUtils {
     //exec
     trace.exec(runtime);
 
-    runtime.finalization();
+    trace.finalization(runtime);
 
     return new TVMTestResult(runtime, trace.getReceipt(), null);
   }
@@ -375,4 +381,43 @@ public class TVMTestUtils {
     return triggerData;
   }
 
+  public static CreateSmartContract createSmartContract(byte[] owner, String contractName,
+      String abiString, String code, long value, long consumeUserResourcePercent) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+
+    SmartContract.ABI abi = jsonStr2Abi(abiString);
+    if (abi == null) {
+      return null;
+    }
+    byte[] codeBytes = Hex.decode(code);
+    SmartContract.Builder builder = SmartContract.newBuilder();
+    builder.setName(contractName);
+    builder.setOriginAddress(ByteString.copyFrom(owner));
+    builder.setBytecode(ByteString.copyFrom(codeBytes));
+    builder.setAbi(abi);
+    builder.setConsumeUserResourcePercent(consumeUserResourcePercent);
+    if (value != 0) {
+      builder.setCallValue(value);
+    }
+    CreateSmartContract contractDeployContract = CreateSmartContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(owner)).setNewContract(builder.build()).build();
+    return contractDeployContract;
+  }
+
+  public static TriggerSmartContract createTriggerContract(byte[] contractAddress, String method,
+      String argsStr,
+      Boolean isHex, long callValue, byte[] ownerAddress) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+
+    byte[] owner = ownerAddress;
+    byte[] input = Hex.decode(AbiUtil.parseMethod(method, argsStr, isHex));
+
+    TriggerSmartContract.Builder builder = TriggerSmartContract
+        .newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner));
+    builder.setContractAddress(ByteString.copyFrom(contractAddress));
+    builder.setData(ByteString.copyFrom(input));
+    builder.setCallValue(callValue);
+    return builder.build();
+  }
 }

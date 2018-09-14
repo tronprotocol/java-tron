@@ -67,7 +67,6 @@ public class PeerConnectionCheckService {
             && System.currentTimeMillis() - peerConnection.getStartTime() >= CHECK_TIME
             && !peerConnection.isTrustPeer()
             && !nodeStatistics.isPredefined()) {
-          //&& !peerConnection.isActive()
           //if xxx minutes not have data transfer,disconnect the peer,exclude trust peer and active peer
           willDisconnectPeerList.add(peerConnection);
         }
@@ -82,14 +81,6 @@ public class PeerConnectionCheckService {
           willDisconnectPeerList.get(i).disconnect(ReasonCode.TOO_MANY_PEERS);
         }
       }
-//      else if (willDisconnectPeerList.size() == peerConnectionList.size()) {
-//        for (int i = 0; i < willDisconnectPeerList.size(); i++) {
-//          logger.error("all peer not have data transfer, disconnect the peer {}",
-//              willDisconnectPeerList.get(i).getInetAddress());
-//          willDisconnectPeerList.get(i).disconnect(ReasonCode.RESET);
-//          willDisconnectPeerList.get(i).cleanAll();
-//        }
-//      }
     }
   }
 

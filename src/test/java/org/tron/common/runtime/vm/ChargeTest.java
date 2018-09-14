@@ -8,6 +8,8 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TVMTestUtils;
@@ -21,7 +23,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
-import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
@@ -33,6 +35,8 @@ public class ChargeTest {
   private DepositImpl deposit;
   private String dbPath = "output_ChargeTest";
   private String OWNER_ADDRESS;
+  private Application AppT;
+  private long totalBalance = 100_000_000_000_000L;
 
 
   /**
@@ -43,11 +47,12 @@ public class ChargeTest {
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"},
         Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
+    AppT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     dbManager = context.getBean(Manager.class);
     deposit = DepositImpl.createRoot(dbManager);
     deposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
-    deposit.addBalance(Hex.decode(OWNER_ADDRESS), 100000000000000L);
+    deposit.addBalance(Hex.decode(OWNER_ADDRESS), totalBalance);
     deposit.commit();
   }
 
@@ -66,9 +71,9 @@ public class ChargeTest {
 
   @Test
   public void testOverflow()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
     long value = 0;
-    long feeLimit = 1000_000_000L; // sun
+    long feeLimit = 1_000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "testOverflow";
@@ -81,21 +86,25 @@ public class ChargeTest {
         .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
             value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            deposit, null);
+            dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 51293);
+    long expectEnergyUsageTotal = 51293; // 200 * code.length() + 93
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
     byte[] triggerData = TVMTestUtils.parseABI("testOverflow()", "");
     result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 20000000000L, feeLimit, deposit, null);
+            contractAddress, triggerData, 20_000_000_000L, feeLimit, dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 10_000_000L);
+    long expectEnergyUsageTotal2 = feeLimit / 100;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() instanceof ArithmeticException);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
   }
 
   // pragma solidity ^0.4.16;
@@ -116,9 +125,9 @@ public class ChargeTest {
 
   @Test
   public void testNegative()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
     long value = 0;
-    long feeLimit = 1000_000_000L; // sun
+    long feeLimit = 1_000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "testNegative";
@@ -131,41 +140,48 @@ public class ChargeTest {
         .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
             value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            deposit, null);
+            dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 68111);
+    long expectEnergyUsageTotal = 68111;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     /* ======================================CALL testNegative() with 0 callvalue ================================ */
     byte[] triggerData = TVMTestUtils.parseABI("testNegative()", "");
     result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, value, feeLimit, deposit, null);
+            contractAddress, triggerData, value, feeLimit, dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 10_000_000L);
+    long expectEnergyUsageTotal2 = feeLimit / 100;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() instanceof ArithmeticException);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
+
 
     /* ======================================CALL testNegative() with -100 callvalue ================================ */
     triggerData = TVMTestUtils.parseABI("testNegative()", "");
     result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, -100, feeLimit, deposit, null);
+            contractAddress, triggerData, -100, feeLimit, dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 10_000_000L);
+    long expectEnergyUsageTotal3 = feeLimit / 100;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal3);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() instanceof ArithmeticException);
-
-    Assert.assertEquals(deposit.getBalance(address), 100000000000000L);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2 + expectEnergyUsageTotal3) * 100);
 
   }
 
   @Test
   @Ignore
   public void testFallback()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, ContractValidateException, ReceiptCheckErrException {
     // done in EnergyWhenSendAndTransferTest.java
 
   }
@@ -185,9 +201,9 @@ public class ChargeTest {
 
   @Test
   public void testCallDepth()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
     long value = 0;
-    long feeLimit = 1000_000_000L; // sun
+    long feeLimit = 1_000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "testCallDepth";
@@ -200,9 +216,12 @@ public class ChargeTest {
         .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
             value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            deposit, null);
+            dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 74517);
+    long expectEnergyUsageTotal = 74517;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
@@ -211,11 +230,14 @@ public class ChargeTest {
     byte[] triggerData = TVMTestUtils.parseABI("Call(int256)", params);
     result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, value, feeLimit, deposit, null);
+            contractAddress, triggerData, value, feeLimit, dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 27743);
+    long expectEnergyUsageTotal2 = 27743;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), true);
     Assert.assertEquals(result.getRuntime().getResult().getException(), null);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - (expectEnergyUsageTotal +  expectEnergyUsageTotal2) * 100);
 
   }
 
@@ -262,9 +284,9 @@ public class ChargeTest {
 
   @Test
   public void testCallDepthAndWidth()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
     long value = 0;
-    long feeLimit = 1000_000_000L; // sun
+    long feeLimit = 1_000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "testCallDepthAndWidth";
@@ -277,9 +299,12 @@ public class ChargeTest {
         .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
             value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            deposit, null);
+            dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 286450);
+    long expectEnergyUsageTotal = 286450;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
@@ -288,19 +313,22 @@ public class ChargeTest {
     byte[] triggerData = TVMTestUtils.parseABI("Call(uint256)", params);
     result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, value, feeLimit, deposit, null);
+            contractAddress, triggerData, value, feeLimit, dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 243698);
+    long expectEnergyUsageTotal2 = 243698;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertEquals(result.getRuntime().getResult().getException(), null);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - (expectEnergyUsageTotal +  expectEnergyUsageTotal2) * 100);
 
   }
 
   @Test
   public void testCreateDepthAndWidth()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
     long value = 0;
-    long feeLimit = 1000_000_000L; // sun
+    long feeLimit = 1_000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "testCallDepthAndWidth";
@@ -313,9 +341,12 @@ public class ChargeTest {
         .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
             value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            deposit, null);
+            dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 201839);
+    long expectEnergyUsageTotal = 201839;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
@@ -324,11 +355,14 @@ public class ChargeTest {
     byte[] triggerData = TVMTestUtils.parseABI("testCreate(uint256)", params);
     result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, value, feeLimit, deposit, null);
+            contractAddress, triggerData, value, feeLimit, dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 4481164);
+    long expectEnergyUsageTotal2 = 4481164;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertEquals(result.getRuntime().getResult().getException(), null);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - (expectEnergyUsageTotal +  expectEnergyUsageTotal2) * 100);
 
   }
 
@@ -338,6 +372,8 @@ public class ChargeTest {
   @After
   public void destroy() {
     Args.clearParam();
+    AppT.shutdownServices();
+    AppT.shutdown();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");

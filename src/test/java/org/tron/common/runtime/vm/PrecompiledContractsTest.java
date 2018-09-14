@@ -17,6 +17,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.spongycastle.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.vm.PrecompiledContracts.PrecompiledContract;
 import org.tron.common.runtime.vm.program.ProgramResult;
@@ -68,6 +70,7 @@ public class PrecompiledContractsTest {
       "0000000000000000000000000000000000000000000000000000000000010009");
 
   private static TronApplicationContext context;
+  private static Application appT;
   private static Manager dbManager;
   private static final String dbPath = "output_PrecompiledContracts_test";
   private static final String ACCOUNT_NAME = "account";
@@ -84,6 +87,7 @@ public class PrecompiledContractsTest {
   static {
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
+    appT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     WITNESS_ADDRESS = Wallet.getAddressPreFixString() + WITNESS_ADDRESS_BASE;
 
@@ -324,6 +328,8 @@ public class PrecompiledContractsTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
+    appT.shutdownServices();
+    appT.shutdown();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");

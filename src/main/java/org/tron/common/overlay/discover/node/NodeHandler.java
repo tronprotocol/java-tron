@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.common.overlay.discover.node;
 
 import java.net.InetSocketAddress;
@@ -35,7 +36,7 @@ import org.tron.core.config.args.Args;
 /**
  * The instance of this class responsible for discovery messages exchange with the specified Node It
  * also manages itself regarding inclusion/eviction from Kademlia table
- */
+ **/
 public class NodeHandler {
 
   private static final Logger logger = LoggerFactory.getLogger("NodeHandler");
@@ -139,9 +140,9 @@ public class NodeHandler {
   public void changeState(State newState) {
     State oldState = state;
     if (newState == State.Discovered) {
-      if (sourceNode != null && sourceNode.getPort() != node.getPort()){
+      if (sourceNode != null && sourceNode.getPort() != node.getPort()) {
         changeState(State.Dead);
-      }else {
+      } else {
         sendPing();
       }
     }
@@ -194,9 +195,9 @@ public class NodeHandler {
     if (!nodeManager.getTable().getNode().equals(node)) {
       sendPong();
     }
-    if (msg.getVersion() != Args.getInstance().getNodeP2pVersion()){
+    if (msg.getVersion() != Args.getInstance().getNodeP2pVersion()) {
       changeState(State.NonActive);
-    }else if (state.equals(State.NonActive) || state.equals(State.Dead)) {
+    } else if (state.equals(State.NonActive) || state.equals(State.Dead)) {
       changeState(State.Discovered);
     }
   }
@@ -217,7 +218,7 @@ public class NodeHandler {
   }
 
   public void handleNeighbours(NeighborsMessage msg) {
-    if (!waitForNeighbors){
+    if (!waitForNeighbors) {
       logger.warn("Receive neighbors from {} without send find nodes.", node.getHost());
       return;
     }

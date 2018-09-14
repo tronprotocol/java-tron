@@ -45,6 +45,8 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
     this.msgData = msgDataRaw;
   }
 
+  private long energyLimit = 50;
+
   public ProgramInvokeMockImpl() {
 
     // this.repository = new RepositoryRoot(new HashMapDB<byte[]>());
@@ -220,7 +222,11 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
 
   @Override
   public long getEnergyLimit() {
-    return 0;
+    return energyLimit;
+  }
+
+  public void setEnergyLimit(long customizedEnergyLimit) {
+    energyLimit = customizedEnergyLimit;
   }
 
   @Override

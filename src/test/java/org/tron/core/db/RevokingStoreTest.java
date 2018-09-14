@@ -12,6 +12,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.FileUtil;
@@ -27,18 +29,25 @@ import org.tron.core.exception.RevokingStoreIllegalStateException;
 public class RevokingStoreTest {
 
   private AbstractRevokingStore revokingDatabase;
+  private  TronApplicationContext context;
+  private Application appT;
 
   @Before
   public void init() {
-    revokingDatabase = new TestRevokingTronDatabase();
-    revokingDatabase.enable();
     Args.setParam(new String[]{"-d", "output_revokingStore_test"},
         Constant.TEST_CONF);
+    context = new TronApplicationContext(DefaultConfig.class);
+    appT = ApplicationFactory.create(context);
+    revokingDatabase = new TestRevokingTronDatabase();
+    revokingDatabase.enable();
   }
 
   @After
   public void removeDb() {
     Args.clearParam();
+    appT.shutdownServices();
+    appT.shutdown();
+    context.destroy();
     FileUtil.deleteDir(new File("output_revokingStore_test"));
   }
 
@@ -122,6 +131,8 @@ public class RevokingStoreTest {
       revokingDatabase.pop();
       Assert.assertEquals(10 - i, revokingDatabase.getStack().size());
     }
+
+    tronDatabase.close();
 
     Assert.assertEquals(revokingDatabase.getStack().size(), 0);
   }
