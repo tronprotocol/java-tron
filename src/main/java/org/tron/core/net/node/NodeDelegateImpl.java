@@ -295,7 +295,7 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
   public Message getData(Sha256Hash hash, MessageTypes type)
-      throws BadItemException, ItemNotFoundException {
+      throws StoreException {
     switch (type) {
       case BLOCK:
         return new BlockMessage(dbManager.getBlockById(hash));

@@ -51,7 +51,9 @@ import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadBlockException;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BadTransactionException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TraitorPeerException;
@@ -1035,14 +1037,14 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
 
       if (msg == null) {
-        msg = del.getData(hash, type);
-      }
-
-      if (msg == null) {
-        logger.error("fetch message {} {} failed.", type, hash);
-        peer.sendMessage(new ItemNotFound());
-        //todo,should be disconnect?
-        return;
+        try {
+          msg = del.getData(hash, type);
+        } catch (StoreException e) {
+          logger.error("fetch message {} {} failed.", type, hash);
+          peer.sendMessage(new ItemNotFound());
+          //todo,should be disconnect?
+          return;
+        }
       }
 
       if (type.equals(MessageTypes.BLOCK)) {
@@ -1223,7 +1225,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     } catch (TraitorPeerException e) {
       logger.error(e.getMessage());
       banTraitorPeer(peer, ReasonCode.BAD_PROTOCOL);
-    }
+    } catch (BadItemException)
   }
 
   private void startFetchItem() {
@@ -1288,7 +1290,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     peer.setHeadBlockTimeWeBothHave(block.getTimeStamp());
   }
 
-  private void updateBlockWeBothHave(PeerConnection peer, BlockId blockId) {
+  private void updateBlockWeBothHave(PeerConnection peer, BlockId blockId)
+      throws BadItemException, ItemNotFoundException {
     logger.info("update peer {} block both we have, {}", peer.getNode().getHost(),
         blockId.getString());
     peer.setHeadBlockWeBothHave(blockId);
