@@ -719,7 +719,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void processAdvBlock(PeerConnection peer, BlockCapsule block) {
-    synchronized (freshBlockId){
+    synchronized (freshBlockId) {
       if (!freshBlockId.contains(block.getBlockId())) {
         try {
           LinkedList<Sha256Hash> trxIds = null;
@@ -1054,13 +1054,15 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
           if (peer.getSyncChainRequested().getKey().isEmpty()) {
             if (blockIdWeGet.peek().getNum() != 1) {
-              throw new TraitorPeerException("We want a block inv starting from beginning from " + peer);
+              throw new TraitorPeerException(
+                  "We want a block inv starting from beginning from " + peer);
             }
           } else {
             if (!peer.getSyncChainRequested().getKey().contains(blockIdWeGet.peek())) {
               throw new TraitorPeerException(String.format(
                   "We get a unlinked block chain from " + peer
-                      + "\n Our head is " + peer.getSyncChainRequested().getKey().getLast().getString()
+                      + "\n Our head is " + peer.getSyncChainRequested().getKey().getLast()
+                      .getString()
                       + "\n Peer give us is " + blockIdWeGet.peek().getString()));
             }
           }
