@@ -1005,10 +1005,18 @@ public class Wallet {
 
   public ExchangeList getPaginatedExchangeList(long offset, long limit) {
     ExchangeList.Builder builder = ExchangeList.newBuilder();
-    List<ExchangeCapsule> exchangeCapsuleList = dbManager.getExchangeStore().getAllExchanges();
-    exchangeCapsuleList
+    ImmutableList<Long> rangeList = ContiguousSet
+        .create(Range.closedOpen(offset, offset + limit), DiscreteDomain.longs()).asList();
+    rangeList.stream().map(ExchangeCapsule::calculateDbKey).map(key -> {
+      try {
+        return dbManager.getExchangeStore().get(key);
+      } catch (Exception ex) {
+        return null;
+      }
+    }).filter(Objects::nonNull)
         .forEach(exchangeCapsule -> builder.addExchanges(exchangeCapsule.getInstance()));
     return builder.build();
+
   }
 
 

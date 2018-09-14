@@ -34,6 +34,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
+import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
@@ -42,6 +43,7 @@ import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Utils;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -52,6 +54,7 @@ import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.BlockHeader.raw;
+import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -217,6 +220,17 @@ public class WalletTest {
     manager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
   }
 
+  private static void buildExchange() {
+    Exchange.Builder builder = Exchange.newBuilder();
+    builder.setExchangeId(1L).setCreatorAddress(ByteString.copyFromUtf8("Address1"));
+    ExchangeCapsule ExchangeCapsule = new ExchangeCapsule(builder.build());
+    manager.getExchangeStore().put(ExchangeCapsule.createDbKey(), ExchangeCapsule);
+
+    builder.setExchangeId(2L).setCreatorAddress(ByteString.copyFromUtf8("Address2"));
+    ExchangeCapsule = new ExchangeCapsule(builder.build());
+    manager.getExchangeStore().put(ExchangeCapsule.createDbKey(), ExchangeCapsule);
+  }
+
   @AfterClass
   public static void removeDb() {
     Args.clearParam();
@@ -353,11 +367,21 @@ public class WalletTest {
   @Test
   public void getPaginatedProposalList() {
     buildProposal();
-    ProposalList assetList1 = wallet.getPaginatedProposalList(0, 100);
+    ProposalList proposalList = wallet.getPaginatedProposalList(0, 100);
     Assert.assertEquals("Address1",
-        assetList1.getProposalsList().get(0).getProposerAddress().toStringUtf8());
+        proposalList.getProposalsList().get(0).getProposerAddress().toStringUtf8());
     Assert.assertEquals("Address2",
-        assetList1.getProposalsList().get(1).getProposerAddress().toStringUtf8());
+        proposalList.getProposalsList().get(1).getProposerAddress().toStringUtf8());
+  }
+
+  @Test
+  public void getPaginatedExchangeList() {
+    buildExchange();
+    ExchangeList exchangeList = wallet.getPaginatedExchangeList(0, 100);
+    Assert.assertEquals("Address1",
+        exchangeList.getExchangesList().get(0).getCreatorAddress().toStringUtf8());
+    Assert.assertEquals("Address2",
+        exchangeList.getExchangesList().get(1).getCreatorAddress().toStringUtf8());
   }
 
 }
