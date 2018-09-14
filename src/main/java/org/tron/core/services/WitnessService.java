@@ -247,7 +247,7 @@ public class WitnessService implements Service {
           block.getNum(), controller.getAbSlotAtTime(now), block.getBlockId(),
           block.getTransactions().size(),
           new DateTime(block.getTimeStamp()),
-          this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderHash());
+          block.getParentHash());
       broadcastBlock(block);
 
       return BlockProductionCondition.PRODUCED;
