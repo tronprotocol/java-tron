@@ -222,29 +222,11 @@ public class TransactionCapsuleTest {
 
   @Test
   public void getPermission() {
-    byte[] to = ByteArray.fromHexString(TO_ADDRESS);
-    //Owner Account is not exist.
-    byte[] owner_not_exist = ByteArray.fromHexString(OWNER_ACCOUNT_NOT_Exist);
-    TransferContract transferContract = createTransferContract(to, owner_not_exist, 1);
-    Contract contract = Contract.newBuilder()
-        .setType(ContractType.TransferContract).setParameter(
-            Any.pack(transferContract)).build();
-    try {
-      Permission permission = TransactionCapsule
-          .getPermission(dbManager.getAccountStore(), contract);
-      Assert.assertFalse(true);
-    } catch (PermissionException e) {
-      Assert.assertEquals(e.getMessage(), "Account is not exist!");
-    }
     //Default "active" permission
     byte[] owner = ByteArray.fromHexString(OWNER_ADDRESS);
-    transferContract = createTransferContract(to, owner, 1);
-    Contract contract_active = Contract.newBuilder()
-        .setType(ContractType.TransferContract).setParameter(
-            Any.pack(transferContract)).build();
+    Account account = dbManager.getAccountStore().get(owner).getInstance();
     try {
-      Permission permission = TransactionCapsule
-          .getPermission(dbManager.getAccountStore(), contract_active);
+      Permission permission = TransactionCapsule.getPermission(account, "active");
       Permission permission1 = TransactionCapsule
           .getDefaultPermission(ByteString.copyFrom(owner), "active");
       Assert.assertEquals(permission, permission1);
@@ -252,14 +234,8 @@ public class TransactionCapsuleTest {
       Assert.assertFalse(true);
     }
     //Default "owner" permission
-    PermissionAddKeyContract permissionAddKeyContract =
-        createPermissionAddKeyContract(owner, "test", to, 1);
-    Contract contract_owner = Contract.newBuilder()
-        .setType(ContractType.PermissionAddKeyContract).setParameter(
-            Any.pack(permissionAddKeyContract)).build();
     try {
-      Permission permission = TransactionCapsule
-          .getPermission(dbManager.getAccountStore(), contract_owner);
+      Permission permission = TransactionCapsule.getPermission(account, "owner");
       Permission permission1 = TransactionCapsule
           .getDefaultPermission(ByteString.copyFrom(owner), "owner");
       Assert.assertEquals(permission, permission1);
@@ -271,18 +247,16 @@ public class TransactionCapsuleTest {
     updatePermission(permissions, owner);
     Permission permission1 = permissions.get(0);
     Permission permission2 = permissions.get(1);
-
+    account = dbManager.getAccountStore().get(owner).getInstance();
     try {
-      Permission permission = TransactionCapsule
-          .getPermission(dbManager.getAccountStore(), contract_owner);
+      Permission permission = TransactionCapsule.getPermission(account, "owner");
       Assert.assertEquals(permission, permission1);
     } catch (PermissionException e) {
       Assert.assertFalse(true);
     }
 
     try {
-      Permission permission = TransactionCapsule
-          .getPermission(dbManager.getAccountStore(), contract_active);
+      Permission permission = TransactionCapsule.getPermission(account, "active");
       Assert.assertEquals(permission, permission2);
     } catch (PermissionException e) {
       Assert.assertFalse(true);
@@ -512,11 +486,34 @@ public class TransactionCapsuleTest {
 
   @Test
   public void addSign() {
+
     byte[] to = ByteArray.fromHexString(TO_ADDRESS);
-    byte[] owner = ByteArray.fromHexString(OWNER_ADDRESS);
-    TransferContract transferContract = createTransferContract(to, owner, 1);
+    byte[] owner_not_exist = ByteArray.fromHexString(OWNER_ACCOUNT_NOT_Exist);
+    TransferContract transferContract = createTransferContract(to, owner_not_exist, 1);
+    Transaction.Builder trxBuilder = Transaction.newBuilder();
+    Transaction.raw.Builder rawBuilder = Transaction.raw.newBuilder();
+    Contract.Builder contractBuilder = Contract.newBuilder();
+    contractBuilder.setType(ContractType.TransferContract).setParameter(Any.pack(transferContract))
+        .build();
+    rawBuilder.addContract(contractBuilder);
+    trxBuilder.setRawData(rawBuilder);
     AccountStore accountStore = dbManager.getAccountStore();
-    TransactionCapsule transactionCapsule = new TransactionCapsule(transferContract, accountStore);
+    TransactionCapsule transactionCapsule = new TransactionCapsule(trxBuilder.build());
+    //Accout not exist
+    try {
+      transactionCapsule.addSign(ByteArray.fromHexString(KEY_11), accountStore);
+      Assert.assertFalse(true);
+    } catch (PermissionException e) {
+      Assert.assertEquals(e.getMessage(), "Account is not exist!");
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
+    }
+
+    byte[] owner = ByteArray.fromHexString(OWNER_ADDRESS);
+    transferContract = createTransferContract(to, owner, 1);
+    transactionCapsule = new TransactionCapsule(transferContract, accountStore);
     //Defalut permission
     try {
       transactionCapsule.addSign(ByteArray.fromHexString(KEY_11), accountStore);
@@ -750,6 +747,33 @@ public class TransactionCapsuleTest {
     //Update permission, can signed by key21 key22 key23
     AccountStore accountStore = dbManager.getAccountStore();
     List<Permission> permissions = buildPermissions();
+
+    byte[] to = ByteArray.fromHexString(TO_ADDRESS);
+    byte[] owner_not_exist = ByteArray.fromHexString(OWNER_ACCOUNT_NOT_Exist);
+    TransferContract transferContract = createTransferContract(to, owner_not_exist, 1);
+    Transaction.Builder trxBuilder = Transaction
+        .newBuilder();
+    Transaction.raw.Builder rawBuilder = Transaction.raw.newBuilder();
+    Contract.Builder contractBuilder = Contract.newBuilder();
+    contractBuilder.setType(ContractType.TransferContract).setParameter(Any.pack(transferContract))
+        .build();
+    rawBuilder.addContract(contractBuilder);
+    trxBuilder.setRawData(rawBuilder);
+    List<byte[]> prikeys = new ArrayList<>();
+    prikeys.add(ByteArray.fromHexString(KEY_21));
+    ByteString sign = sign(prikeys, Sha256Hash.hash(rawBuilder.build().toByteArray()));
+    //Accout not exist
+    try {
+      TransactionCapsule.validateSignature(contractBuilder.build(), sign, Sha256Hash.hash(trxBuilder.getRawData().toByteArray()), accountStore);
+      Assert.assertFalse(true);
+    } catch (SignatureException e) {
+      Assert.assertFalse(true);
+    } catch (PermissionException e) {
+      Assert.assertEquals(e.getMessage(), "Account is not exist!");
+    } catch (SignatureFormatException e) {
+      Assert.assertFalse(true);
+    }
+
     Account account = accountStore.get(ByteArray.fromHexString(OWNER_ADDRESS)).getInstance();
     Account.Builder builder = account.toBuilder();
     builder.clearPermissions();
@@ -759,10 +783,9 @@ public class TransactionCapsuleTest {
     accountStore.put(ByteArray.fromHexString(OWNER_ADDRESS), new AccountCapsule(builder.build()));
     byte[] hash = Sha256Hash.hash("test".getBytes());
 
-    byte[] to = ByteArray.fromHexString(TO_ADDRESS);
     byte[] owner = ByteArray.fromHexString(OWNER_ADDRESS);
-    TransferContract transferContract = createTransferContract(to, owner, 1);
-    Contract.Builder contractBuilder = Contract.newBuilder();
+    transferContract = createTransferContract(to, owner, 1);
+    contractBuilder = Contract.newBuilder();
     contractBuilder.setParameter(Any.pack(transferContract)).setType(ContractType.TransferContract);
 
     //SignatureFormatException
@@ -794,7 +817,8 @@ public class TransactionCapsuleTest {
       Assert.assertFalse(true);
     }
     //Permission is not contain KEY
-    List<byte[]> prikeys = new ArrayList<>();
+    prikeys = new ArrayList<>();
+    prikeys.clear();
     prikeys.add(ByteArray.fromHexString(KEY_21));
     prikeys.add(ByteArray.fromHexString(KEY_11));
     ByteString sign21_11 = sign(prikeys, hash);
@@ -908,16 +932,40 @@ public class TransactionCapsuleTest {
     builder.addPermissions(permissions.get(2));
     accountStore.put(ByteArray.fromHexString(OWNER_ADDRESS), new AccountCapsule(builder.build()));
 
-    List<byte[]> prikeys = new ArrayList<>();
-    // no contract
-    prikeys.add(ByteArray.fromHexString(KEY_21));
+    byte[] to = ByteArray.fromHexString(TO_ADDRESS);
+    byte[] owner_not_exist = ByteArray.fromHexString(OWNER_ACCOUNT_NOT_Exist);
+    TransferContract transferContract = createTransferContract(to, owner_not_exist, 1);
     Transaction.Builder trxBuilder = Transaction.newBuilder();
     Transaction.raw.Builder rawBuilder = Transaction.raw.newBuilder();
-    rawBuilder.setTimestamp(System.currentTimeMillis());
+    Contract.Builder contractBuilder = Contract.newBuilder();
+    contractBuilder.setType(ContractType.TransferContract).setParameter(Any.pack(transferContract))
+        .build();
+    rawBuilder.addContract(contractBuilder);
     trxBuilder.setRawData(rawBuilder);
+    TransactionCapsule transactionCapsule = new TransactionCapsule(trxBuilder.build());
+    List<byte[]> prikeys = new ArrayList<>();
+    prikeys.add(ByteArray.fromHexString(KEY_21));
     ByteString sign = sign(prikeys, Sha256Hash.hash(rawBuilder.build().toByteArray()));
     trxBuilder.addSignature(sign);
-    TransactionCapsule transactionCapsule = new TransactionCapsule(trxBuilder.build());
+    transactionCapsule = new TransactionCapsule(trxBuilder.build());
+    //Accout not exist
+    try {
+      transactionCapsule.validateSignature(accountStore);
+      Assert.assertFalse(true);
+    } catch (ValidateSignatureException e) {
+      Assert.assertEquals(e.getMessage(), "Account is not exist!");
+    }
+
+    // no contract
+    prikeys.clear();
+    prikeys.add(ByteArray.fromHexString(KEY_21));
+    trxBuilder = Transaction.newBuilder();
+    rawBuilder = Transaction.raw.newBuilder();
+    rawBuilder.setTimestamp(System.currentTimeMillis());
+    trxBuilder.setRawData(rawBuilder);
+    sign = sign(prikeys, Sha256Hash.hash(rawBuilder.build().toByteArray()));
+    trxBuilder.addSignature(sign);
+    transactionCapsule = new TransactionCapsule(trxBuilder.build());
     try {
       transactionCapsule.validateSignature(accountStore);
       Assert.assertFalse(true);
@@ -925,9 +973,8 @@ public class TransactionCapsuleTest {
       Assert.assertEquals(e.getMessage(), "miss sig or contract");
     }
     // no sign
-    byte[] to = ByteArray.fromHexString(TO_ADDRESS);
     byte[] owner = ByteArray.fromHexString(OWNER_ADDRESS);
-    TransferContract transferContract = createTransferContract(to, owner, 1);
+    transferContract = createTransferContract(to, owner, 1);
     transactionCapsule = new TransactionCapsule(transferContract, accountStore);
     try {
       transactionCapsule.validateSignature(accountStore);
