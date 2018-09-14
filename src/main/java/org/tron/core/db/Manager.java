@@ -610,7 +610,7 @@ public class Manager {
   /**
    * when switch fork need erase blocks on fork branch.
    */
-  public void eraseBlock() {
+  public synchronized void eraseBlock() {
     session.reset();
     try {
       BlockCapsule oldHeadBlock = getBlockById(
@@ -991,13 +991,23 @@ public class Manager {
     if (runtime.isCallConstant()) {
       throw new VMIllegalException("cannot call constant method ");
     }
-
     trace.init();
     trace.exec(runtime);
 
     if (Objects.nonNull(blockCap)) {
       trace.setResult(runtime);
       if (!blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
+        if (trace.checkNeedRetry()) {
+          String txId = Hex.toHexString(trxCap.getTransactionId().getBytes());
+          logger.info("Retry for tx id: {}", txId);
+          deposit = DepositImpl.createRoot(this);
+          runtime = new Runtime(trace, blockCap, deposit, new ProgramInvokeFactoryImpl());
+          trace.init();
+          trace.exec(runtime);
+          trace.setResult(runtime);
+          logger.info("Retry result for tx id: {}, tx resultCode in receipt: {}",
+              txId, trace.getReceipt().getResult());
+        }
         trace.check();
       }
     }

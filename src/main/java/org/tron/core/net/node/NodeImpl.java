@@ -719,36 +719,38 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void processAdvBlock(PeerConnection peer, BlockCapsule block) {
-    if (!freshBlockId.contains(block.getBlockId())) {
-      try {
-        LinkedList<Sha256Hash> trxIds = null;
-        trxIds = del.handleBlock(block, false);
-        freshBlockId.offer(block.getBlockId());
+    synchronized (freshBlockId) {
+      if (!freshBlockId.contains(block.getBlockId())) {
+        try {
+          LinkedList<Sha256Hash> trxIds = null;
+          trxIds = del.handleBlock(block, false);
+          freshBlockId.offer(block.getBlockId());
 
-        trxIds.forEach(trxId -> advObjToFetch.remove(trxId));
+          trxIds.forEach(trxId -> advObjToFetch.remove(trxId));
 
-        getActivePeer().stream()
-            .filter(p -> p.getAdvObjSpreadToUs().containsKey(block.getBlockId()))
-            .forEach(p -> updateBlockWeBothHave(p, block));
+          getActivePeer().stream()
+              .filter(p -> p.getAdvObjSpreadToUs().containsKey(block.getBlockId()))
+              .forEach(p -> updateBlockWeBothHave(p, block));
 
-        broadcast(new BlockMessage(block));
+          broadcast(new BlockMessage(block));
 
-      } catch (BadBlockException e) {
-        logger.error("We get a bad block {}, from {}, reason is {} ",
-            block.getBlockId().getString(), peer.getNode().getHost(), e.getMessage());
-        disconnectPeer(peer, ReasonCode.BAD_BLOCK);
-      } catch (UnLinkedBlockException e) {
-        logger.error("We get a unlinked block {}, from {}, head is {}",
-            block.getBlockId().getString(), peer.getNode().getHost(),
-            del.getHeadBlockId().getString());
-        startSyncWithPeer(peer);
-      } catch (NonCommonBlockException e) {
-        logger.error(
-            "We get a block {} that do not have the most recent common ancestor with the main chain, from {}, reason is {} ",
-            block.getBlockId().getString(), peer.getNode().getHost(), e.getMessage());
-        disconnectPeer(peer, ReasonCode.FORKED);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
+        } catch (BadBlockException e) {
+          logger.error("We get a bad block {}, from {}, reason is {} ",
+              block.getBlockId().getString(), peer.getNode().getHost(), e.getMessage());
+          disconnectPeer(peer, ReasonCode.BAD_BLOCK);
+        } catch (UnLinkedBlockException e) {
+          logger.error("We get a unlinked block {}, from {}, head is {}",
+              block.getBlockId().getString(), peer.getNode().getHost(),
+              del.getHeadBlockId().getString());
+          startSyncWithPeer(peer);
+        } catch (NonCommonBlockException e) {
+          logger.error(
+              "We get a block {} that do not have the most recent common ancestor with the main chain, from {}, reason is {} ",
+              block.getBlockId().getString(), peer.getNode().getHost(), e.getMessage());
+          disconnectPeer(peer, ReasonCode.FORKED);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
       }
     }
   }
@@ -999,14 +1001,14 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
 
       if (msg == null) {
-        msg = del.getData(hash, type);
-      }
-
-      if (msg == null) {
-        logger.error("fetch message {} {} failed.", type, hash);
-        peer.sendMessage(new ItemNotFound());
-        //todo,should be disconnect?
-        return;
+        try {
+          msg = del.getData(hash, type);
+        } catch (StoreException e) {
+          logger.error("fetch message {} {} failed.", type, hash);
+          peer.sendMessage(new ItemNotFound());
+          //todo,should be disconnect?
+          return;
+        }
       }
 
       if (type.equals(MessageTypes.BLOCK)) {
@@ -1052,13 +1054,15 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
           if (peer.getSyncChainRequested().getKey().isEmpty()) {
             if (blockIdWeGet.peek().getNum() != 1) {
-              throw new TraitorPeerException("We want a block inv starting from beginning from " + peer);
+              throw new TraitorPeerException(
+                  "We want a block inv starting from beginning from " + peer);
             }
           } else {
             if (!peer.getSyncChainRequested().getKey().contains(blockIdWeGet.peek())) {
               throw new TraitorPeerException(String.format(
                   "We get a unlinked block chain from " + peer
-                      + "\n Our head is " + peer.getSyncChainRequested().getKey().getLast().getString()
+                      + "\n Our head is " + peer.getSyncChainRequested().getKey().getLast()
+                      .getString()
                       + "\n Peer give us is " + blockIdWeGet.peek().getString()));
             }
           }
@@ -1170,6 +1174,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     } catch (TraitorPeerException e) {
       logger.error(e.getMessage());
       banTraitorPeer(peer, ReasonCode.BAD_PROTOCOL);
+    } catch (StoreException e) {
+      //we try update our both known block but this block is null
+      //because when we try to switch to this block's fork then fail.
+      //The reason only is we get a bad block which peer broadcast to us.
+      logger.error(e.getMessage());
+      banTraitorPeer(peer, ReasonCode.BAD_BLOCK);
     }
   }
 
@@ -1232,7 +1242,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     peer.setHeadBlockTimeWeBothHave(block.getTimeStamp());
   }
 
-  private void updateBlockWeBothHave(PeerConnection peer, BlockId blockId) {
+  private void updateBlockWeBothHave(PeerConnection peer, BlockId blockId)
+      throws StoreException {
     logger.info("update peer {} block both we have, {}", peer.getNode().getHost(),
         blockId.getString());
     peer.setHeadBlockWeBothHave(blockId);

@@ -329,6 +329,10 @@ public class Args {
   @Setter
   private boolean isOpenFullTcpDisconnect;
 
+  @Getter
+  @Setter
+  private String logLevel;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -645,6 +649,7 @@ public class Args {
         config.getLong("node.receiveTcpMinDataLength") : 2048;
     INSTANCE.isOpenFullTcpDisconnect = config.hasPath("node.isOpenFullTcpDisconnect") && config
         .getBoolean("node.isOpenFullTcpDisconnect");
+    INSTANCE.logLevel = config.hasPath("log.level.root") ? config.getString("log.level.root") : "INFO";
 
     initBackupProperty(config);
 
