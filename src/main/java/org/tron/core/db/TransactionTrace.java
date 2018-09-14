@@ -189,14 +189,8 @@ public class TransactionTrace {
     if (!needVM()) {
       return false;
     }
-    if (Objects.isNull(trx.getContractRet())) {
-      return true;
-    }
-    if (trx.getContractRet().equals(contractResult.SUCCESS) && receipt.getResult()
-        .equals(contractResult.OUT_OF_TIME)) {
-      logger.info(
-          "this tx resultCode in received block: {}\nthis tx resultCode in self: {}\n then Retry ...",
-          trx.getContractRet(), receipt.getResult());
+    if (trx.getContractRet().equals(contractResult.SUCCESS)
+        && receipt.getResult().equals(contractResult.OUT_OF_TIME)) {
       return true;
     }
     return false;
