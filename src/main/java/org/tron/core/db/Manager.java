@@ -590,7 +590,7 @@ public class Manager {
           getDynamicPropertiesStore().getLatestBlockHeaderHash());
       logger.info("begin to erase block:" + oldHeadBlock);
       khaosDb.pop();
-      revokingStore.pop();
+      revokingStore.fastPop();
       logger.info("end to erase block:" + oldHeadBlock);
       popedTransactions.addAll(oldHeadBlock.getTransactions());
 
@@ -1025,13 +1025,17 @@ public class Manager {
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException {
 
     //check that the first block after the maintenance period has just been processed
-    if (lastHeadBlockIsMaintenanceBefore != lastHeadBlockIsMaintenance()) {
+   // if (lastHeadBlockIsMaintenanceBefore != lastHeadBlockIsMaintenance()) {
       if (!witnessController.validateWitnessSchedule(witnessCapsule.getAddress(), when)) {
         logger.info("It's not my turn, "
             + "and the first block after the maintenance period has just been processed");
+        
+        logger.info("when:{},lastHeadBlockIsMaintenanceBefore:{},lastHeadBlockIsMaintenanceAfter:{}",
+                when, lastHeadBlockIsMaintenanceBefore,lastHeadBlockIsMaintenance() );
+        
         return null;
       }
-    }
+   // }
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();

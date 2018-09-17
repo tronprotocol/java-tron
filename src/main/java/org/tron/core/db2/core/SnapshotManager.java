@@ -131,6 +131,11 @@ public class SnapshotManager implements RevokingDatabase {
     }
   }
 
+  @Override
+  public void fastPop() throws RevokingStoreIllegalStateException {
+    pop();
+  }
+
   public synchronized void enable() {
     disabled = false;
   }
