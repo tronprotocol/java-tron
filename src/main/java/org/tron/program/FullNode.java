@@ -1,6 +1,9 @@
 package org.tron.program;
 
+import ch.qos.logback.classic.Level;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
@@ -22,6 +25,9 @@ public class FullNode {
     logger.info("Full node running.");
     Args.setParam(args, Constant.TESTNET_CONF);
     Args cfgArgs = Args.getInstance();
+
+    ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+    root.setLevel(Level.toLevel(cfgArgs.getLogLevel()));
 
     if (cfgArgs.isHelp()) {
       logger.info("Here is the help message.");

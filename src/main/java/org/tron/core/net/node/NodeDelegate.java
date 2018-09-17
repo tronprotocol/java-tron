@@ -28,7 +28,7 @@ public interface NodeDelegate {
   Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, Deque<BlockId> blockIds)
       throws TronException;
 
-  Message getData(Sha256Hash msgId, MessageTypes type);
+  Message getData(Sha256Hash msgId, MessageTypes type) throws StoreException;
 
   void syncToCli(long unSyncNum);
 
