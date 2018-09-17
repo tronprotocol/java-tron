@@ -76,18 +76,19 @@ public class WalletExchange001 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(exchange001Address,10240000000L,fromAddress,
-        testKey002,blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(secondExchange001Address,10240000000L,fromAddress,
-        testKey002,blockingStubFull));
   }
 
   @Test(enabled = true)
   public void test1CreateUsedAsset() {
-    Assert.assertTrue(PublicMethed.freezeBalance(exchange001Address, 1000000L,
-        3,exchange001Key,blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalance(secondExchange001Address, 1000000L,
-        3,secondExchange001Key,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(exchange001Address,10240000000L,fromAddress,
+        testKey002,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(secondExchange001Address,10240000000L,fromAddress,
+        testKey002,blockingStubFull));
+
+    //Assert.assertTrue(PublicMethed.freezeBalance(exchange001Address, 1000000L,
+    //    3,exchange001Key,blockingStubFull));
+    //Assert.assertTrue(PublicMethed.freezeBalance(secondExchange001Address, 1000000L,
+    //    3,secondExchange001Key,blockingStubFull));
     Long start = System.currentTimeMillis() + 5000L;
     Long end = System.currentTimeMillis() + 5000000L;
     Assert.assertTrue(PublicMethed.createAssetIssue(exchange001Address, name1, totalSupply, 1,
