@@ -592,37 +592,15 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
-  private Permission getDefaultOwnerPermission() {
-    Permission.Builder defaultOwnerBuilder = Permission.newBuilder();
-    defaultOwnerBuilder.setThreshold(1);
-    defaultOwnerBuilder.setParent("");
-    defaultOwnerBuilder.setName("owner");
-    Key.Builder keyBuilderForOwner = Key.newBuilder();
-    keyBuilderForOwner.setAddress(this.account.getAddress());
-    keyBuilderForOwner.setWeight(1);
-    defaultOwnerBuilder.addKeys(keyBuilderForOwner.build());
-    return defaultOwnerBuilder.build();
-  }
-
-  private Permission getDefaultActivePermission() {
-    Permission.Builder defaultActiveBuilder = Permission.newBuilder();
-    defaultActiveBuilder.setThreshold(1);
-    defaultActiveBuilder.setParent("owner");
-    defaultActiveBuilder.setName("active");
-    Key.Builder keyBuilderForActive = Key.newBuilder();
-    keyBuilderForActive.setAddress(this.account.getAddress());
-    keyBuilderForActive.setWeight(1);
-    defaultActiveBuilder.addKeys(keyBuilderForActive.build());
-    return defaultActiveBuilder.build();
-  }
-
   public void permissionAddKey(Key addKey, String permissionName) {
     if (permissionName.equalsIgnoreCase("active") ||
         permissionName.equalsIgnoreCase("owner")) {
       if (this.account.getPermissionsCount() == 0) {
         List<Permission> list = new ArrayList<>();
-        Permission ownerPermission = getDefaultOwnerPermission();
-        Permission activePermission = getDefaultActivePermission();
+        Permission ownerPermission = TransactionCapsule
+            .getDefaultPermission(this.getAddress(), "owner");
+        Permission activePermission = TransactionCapsule
+            .getDefaultPermission(this.getAddress(), "active");
         if (addKey.getAddress().equals(this.account.getAddress())) {
           if (permissionName.equalsIgnoreCase("owner")) {
             ownerPermission = ownerPermission

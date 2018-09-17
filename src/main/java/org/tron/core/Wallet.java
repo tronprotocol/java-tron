@@ -88,7 +88,6 @@ import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.db.PendingManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
-import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
@@ -117,6 +116,7 @@ import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.SmartContract.ABI.Entry.StateMutabilityType;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.Protocol.TransactionSign;
@@ -498,8 +498,15 @@ public class Wallet {
     tswBuilder.setTransaction(trxExBuilder);
     Result.Builder resultBuilder = Result.newBuilder();
     try {
+      Contract contract = trx.getRawData().getContract(0);
+      byte[] owner = TransactionCapsule.getOwner(contract);
+      AccountCapsule account = dbManager.getAccountStore().get(owner);
+      if (account == null) {
+        throw new PermissionException("Account is not exist!");
+      }
+      String permissionName = TransactionCapsule.getPermissionName(contract);
       Permission permission = TransactionCapsule
-          .getPermission(dbManager.getAccountStore(), trx.getRawData().getContract(0));
+          .getPermission(account.getInstance(), permissionName);
       tswBuilder.setPermission(permission);
       if (trx.getSignatureCount() > 0) {
         List<ByteString> approveList = new ArrayList<ByteString>();

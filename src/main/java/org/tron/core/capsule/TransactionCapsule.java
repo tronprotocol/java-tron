@@ -82,6 +82,7 @@ import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.UpdateAssetContract;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
+import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction;
@@ -280,28 +281,24 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     builder.addKeys(key);
     builder.setThreshold(1);
     builder.setName(name);
+    if (!"owner".equalsIgnoreCase(name)){
+      builder.setParent("owner");
+    }
     return builder.build();
   }
 
-  public static Permission getPermission(AccountStore accountStore, Transaction.Contract contract)
+  public static Permission getPermission(Account account, String name)
       throws PermissionException {
-    byte[] owner = TransactionCapsule.getOwner(contract);
-    AccountCapsule account = accountStore.get(owner);
-    if (account == null) {
-      throw new PermissionException("Account is not exist!");
-    }
-
-    String permissionName = getPermissionName(contract);
-    List<Permission> list = account.getInstance().getPermissionsList();
+    List<Permission> list = account.getPermissionsList();
     if (list.isEmpty()) {
-      return getDefaultPermission(account.getAddress(), permissionName);
+      return getDefaultPermission(account.getAddress(), name);
     }
     for (Permission permission : list) {
-      if (permissionName.equalsIgnoreCase(permission.getName())) {
+      if (name.equalsIgnoreCase(permission.getName())) {
         return permission;
       }
     }
-    throw new PermissionException("Permission of " + permissionName + " is null.");
+    throw new PermissionException("Permission of " + name + " is null.");
   }
 
   public static long getWeight(Permission permission, byte[] address) {
@@ -351,8 +348,14 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   public void addSign(byte[] privateKey, AccountStore accountStore)
       throws PermissionException, SignatureException, SignatureFormatException {
-    Permission permission = getPermission(accountStore,
-        this.transaction.getRawData().getContract(0));
+    Transaction.Contract contract = this.transaction.getRawData().getContract(0);
+    String permissionName = getPermissionName(contract);
+    byte[] owner = getOwner(contract);
+    AccountCapsule account = accountStore.get(owner);
+    if (account == null) {
+      throw new PermissionException("Account is not exist!");
+    }
+    Permission permission = getPermission(account.getInstance(), permissionName);
     List<ByteString> approveList = new ArrayList<>();
     ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
@@ -564,7 +567,13 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   public static boolean validateSignature(Transaction.Contract contract, ByteString sigs,
       byte[] hash, AccountStore accountStore)
       throws PermissionException, SignatureException, SignatureFormatException {
-    Permission permission = getPermission(accountStore, contract);
+    String permissionName = getPermissionName(contract);
+    byte[] owner = getOwner(contract);
+    AccountCapsule account = accountStore.get(owner);
+    if (account == null) {
+      throw new PermissionException("Account is not exist!");
+    }
+    Permission permission = getPermission(account.getInstance(), permissionName);
     long weight = checkWeight(permission, sigs, hash, null);
     if (weight >= permission.getThreshold()) {
       return true;
