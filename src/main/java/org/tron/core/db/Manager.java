@@ -603,9 +603,10 @@ public class Manager {
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
-      VMIllegalException, TooBigTransactionResultException {
+      VMIllegalException, TooBigTransactionResultException, UnLinkedBlockException,
+      NonCommonBlockException, BadNumberBlockException, BadBlockException {
     block.generatedByMyself = true;
-    applyBlock(block);
+    pushBlock(block);
   }
 
   private void applyBlock(BlockCapsule block) throws ContractValidateException,
