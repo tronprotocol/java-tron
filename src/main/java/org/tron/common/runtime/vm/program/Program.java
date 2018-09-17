@@ -752,10 +752,11 @@ public class Program {
     }
     long vmNowInUs = System.nanoTime() / 1000;
     if (vmNowInUs > getVmShouldEndInUs()) {
-      logger.error("minTimeRatio: {}", Args.getInstance().getMinTimeRatio());
-      logger.error("maxTimeRatio: {}", Args.getInstance().getMaxTimeRatio());
-      logger.error("vm should end time in us: {}", getVmShouldEndInUs());
-      logger.error("vm start time in us: {}", getVmStartInUs());
+      logger.error(
+          "minTimeRatio: {}, maxTimeRatio: {}, vm should end time in us: {}, " +
+              "vm now time in us: {}, vm start time in us: {}",
+          Args.getInstance().getMinTimeRatio(), Args.getInstance().getMaxTimeRatio(),
+          getVmShouldEndInUs(), vmNowInUs, getVmStartInUs());
       throw Exception.notEnoughTime(opName);
     }
 
