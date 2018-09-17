@@ -18,6 +18,9 @@
 
 package org.tron.core;
 
+import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
+import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
+
 import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.ImmutableList;
@@ -987,11 +990,29 @@ public class Wallet {
     return false;
   }
 
-
+  /*
+  input
+  offset:100,limit:10
+  return
+  id: 101~110
+   */
   public ProposalList getPaginatedProposalList(long offset, long limit) {
+
+    if (limit < 0 || offset < 0) {
+      return null;
+    }
+
+    long latestProposalNum = dbManager.getDynamicPropertiesStore().getLatestProposalNum();
+    if (latestProposalNum <= offset) {
+      return null;
+    }
+    limit = limit > PROPOSAL_COUNT_LIMIT_MAX ? PROPOSAL_COUNT_LIMIT_MAX : limit;
+    long end = offset + limit;
+    end = end > latestProposalNum ? latestProposalNum : end;
     ProposalList.Builder builder = ProposalList.newBuilder();
+
     ImmutableList<Long> rangeList = ContiguousSet
-        .create(Range.closedOpen(offset, offset + limit), DiscreteDomain.longs()).asList();
+        .create(Range.openClosed(offset, end), DiscreteDomain.longs()).asList();
     rangeList.stream().map(ProposalCapsule::calculateDbKey).map(key -> {
       try {
         return dbManager.getProposalStore().get(key);
@@ -1004,9 +1025,22 @@ public class Wallet {
   }
 
   public ExchangeList getPaginatedExchangeList(long offset, long limit) {
+
+    if (limit < 0 || offset < 0) {
+      return null;
+    }
+
+    long latestExchangeNum = dbManager.getDynamicPropertiesStore().getLatestExchangeNum();
+    if (latestExchangeNum <= offset) {
+      return null;
+    }
+    limit = limit > EXCHANGE_COUNT_LIMIT_MAX ? EXCHANGE_COUNT_LIMIT_MAX : limit;
+    long end = offset + limit;
+    end = end > latestExchangeNum ? latestExchangeNum : end;
+
     ExchangeList.Builder builder = ExchangeList.newBuilder();
     ImmutableList<Long> rangeList = ContiguousSet
-        .create(Range.closedOpen(offset, offset + limit), DiscreteDomain.longs()).asList();
+        .create(Range.openClosed(offset, end), DiscreteDomain.longs()).asList();
     rangeList.stream().map(ExchangeCapsule::calculateDbKey).map(key -> {
       try {
         return dbManager.getExchangeStore().get(key);

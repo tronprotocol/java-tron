@@ -218,6 +218,7 @@ public class WalletTest {
     builder.setProposalId(2L).setProposerAddress(ByteString.copyFromUtf8("Address2"));
     proposalCapsule = new ProposalCapsule(builder.build());
     manager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
+    manager.getDynamicPropertiesStore().saveLatestProposalNum(2L);
   }
 
   private static void buildExchange() {
@@ -229,6 +230,9 @@ public class WalletTest {
     builder.setExchangeId(2L).setCreatorAddress(ByteString.copyFromUtf8("Address2"));
     ExchangeCapsule = new ExchangeCapsule(builder.build());
     manager.getExchangeStore().put(ExchangeCapsule.createDbKey(), ExchangeCapsule);
+
+    manager.getDynamicPropertiesStore().saveLatestExchangeNum(2L);
+
   }
 
   @AfterClass
@@ -367,11 +371,34 @@ public class WalletTest {
   @Test
   public void getPaginatedProposalList() {
     buildProposal();
+    //
     ProposalList proposalList = wallet.getPaginatedProposalList(0, 100);
+
+    Assert.assertEquals(2, proposalList.getProposalsCount());
     Assert.assertEquals("Address1",
         proposalList.getProposalsList().get(0).getProposerAddress().toStringUtf8());
     Assert.assertEquals("Address2",
         proposalList.getProposalsList().get(1).getProposerAddress().toStringUtf8());
+
+    //
+    proposalList = wallet.getPaginatedProposalList(1, 100);
+
+    Assert.assertEquals(1, proposalList.getProposalsCount());
+    Assert.assertEquals("Address2",
+        proposalList.getProposalsList().get(0).getProposerAddress().toStringUtf8());
+
+    //
+    proposalList = wallet.getPaginatedProposalList(-1, 100);
+    Assert.assertNull(proposalList);
+
+    //
+    proposalList = wallet.getPaginatedProposalList(0, -1);
+    Assert.assertNull(proposalList);
+
+    //
+    proposalList = wallet.getPaginatedProposalList(0, 1000000000L);
+    Assert.assertEquals(2, proposalList.getProposalsCount());
+
   }
 
   @Test
