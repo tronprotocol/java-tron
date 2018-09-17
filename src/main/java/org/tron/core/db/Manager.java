@@ -605,7 +605,13 @@ public class Manager {
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
       VMIllegalException, TooBigTransactionResultException {
     block.generatedByMyself = true;
-    applyBlock(block);
+    try (ISession tmpSession = revokingStore.buildSession()) {
+      applyBlock(block);
+      tmpSession.commit();
+    } catch (Throwable throwable) {
+      logger.error(throwable.getMessage(), throwable);
+      throw throwable;
+    }
   }
 
   private void applyBlock(BlockCapsule block) throws ContractValidateException,
