@@ -9,7 +9,7 @@ for i in ${testnet[@]}; do
   echo $docker_num
   docker_num=`echo $docker_num | tr -d "\r"`
   echo $docker_num
-  if [[ ${docker_num} -le 6 ]];
+  if [[ ${docker_num} -le 4 ]];
   then
   stest_server=$i
   echo $stest_server
@@ -21,14 +21,14 @@ done
 if [ "$stest_server" = "" ]
 then
 echo "All docker server is busy, stest FAILED"
-exit 1
+exit 0
 fi
 
 
 
 echo "$TRAVIS_BRANCH"
 
-if [ "$TRAVIS_BRANCH" = "transfer_stest_to_docker" ];then
+if [ "$TRAVIS_BRANCH" = "develop" ];then
   echo "init env"
   ssh java-tron@$stest_server -p 22008 sh /data/workspace/docker_workspace/stest.sh >stest.log 2>&1
   echo "stest start"
@@ -42,7 +42,7 @@ if [ "$TRAVIS_BRANCH" = "transfer_stest_to_docker" ];then
   if [ $ret != 0 ];then
     echo $ret
     rm -f stest.log
-    exit 1
+    exit 0
   fi
 
 fi
