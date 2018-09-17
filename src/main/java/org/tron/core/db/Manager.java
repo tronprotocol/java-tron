@@ -603,15 +603,10 @@ public class Manager {
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
-      VMIllegalException, TooBigTransactionResultException {
+      VMIllegalException, TooBigTransactionResultException, UnLinkedBlockException,
+      NonCommonBlockException, BadNumberBlockException, BadBlockException {
     block.generatedByMyself = true;
-    try (ISession tmpSession = revokingStore.buildSession()) {
-      applyBlock(block);
-      tmpSession.commit();
-    } catch (Throwable throwable) {
-      logger.error(throwable.getMessage(), throwable);
-      throw throwable;
-    }
+    pushBlock(block);
   }
 
   private void applyBlock(BlockCapsule block) throws ContractValidateException,
