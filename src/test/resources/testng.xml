@@ -21,11 +21,11 @@
   </test>
   <test name="Stest block,node,witness">
     <packages>
-      <package name="stest.tron.wallet.block">
-      </package>
       <package name="stest.tron.wallet.node">
       </package>
       <package name="stest.tron.wallet.witness">
+      </package>
+      <package name="stest.tron.wallet.block">
       </package>
     </packages>
   </test>
