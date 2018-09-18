@@ -132,14 +132,14 @@ public class Benchmark {
 
     for (int i = 0; i < repeatCount; i++) {
       long curDuration = triggerContractAndReturnDuration(contractAddress, feeLimit);
-      System.out.println(String.format("count: %d, duration: %d", i, curDuration));
+      // System.out.println(String.format("count: %d, duration: %d", i, curDuration));
       if (i >= 2) {
         totalDuration += curDuration;
       }
       Thread.sleep(10);
     }
     long avgDuration = totalDuration / (repeatCount - 2);
-    System.out.println(String.format("avg duration: %d", avgDuration));
+    // System.out.println(String.format("avg duration: %d", avgDuration));
 
     double defaultMinTimeRatio = 0.0;
     double defaultMaxTimeRatio = 5.0;
