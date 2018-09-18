@@ -1,6 +1,14 @@
 package org.tron.program;
 
+import static org.eclipse.jetty.util.IO.copy;
+
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.application.Application;
@@ -196,6 +204,26 @@ public class Benchmark {
     }
   }
 
+  public static String readFile(String fileName) throws IOException {
+
+    File file = new File(fileName);
+    if (null != file && file.canRead()) {
+      Reader in = new FileReader(file);
+      StringWriter out = new StringWriter();
+      copy(in,out);
+      return out.toString();
+    }
+    return "";
+  }
+
+  public static void writeFile(String content, String fileName) throws IOException {
+
+    File file = new File(fileName);
+    Writer writer = new FileWriter(file);
+    writer.write(content);
+    writer.close();
+  }
+
   public static void main(String[] args) {
 
     boolean checkVersion = checkJavaVersion();
@@ -203,11 +231,19 @@ public class Benchmark {
     if (checkVersion) {
       System.out.println("1. JAVA VERSION:\nsatisfied");
     } else {
-      System.out.println("1. JAVA VERSION:\nMUST be oracle jdk, and version >= 1.8");
+      System.out.println("1. JAVA VERSION:\njava MUST be oracle jdk, and version >= 1.8");
     }
 
-    long mem = getMem();
-    System.out.println("2. MEMORY:\nwhen setup java, recommend to use: java -Xmx" + mem + "m");
+    try {
+      long mem = getMem();
+      String content = readFile("start.sh");
+      String newContent = content.replaceAll("java -jar", "java -Xmx" + mem + "m -jar");
+      String newFileName = "start-recommend.sh";
+      writeFile(newContent, newFileName);
+      System.out.println("2. MEMORY:\nwhen setup java, recommend to use: java -Xmx" + mem + "m\ncan see also " + newFileName);
+    } catch (IOException e) {
+      logger.info(e.getMessage());
+    }
 
     initData();
 
@@ -221,18 +257,30 @@ public class Benchmark {
       logger.info(e.getMessage());
     }
     if (null != timeResult) {
-      String str = String
-          .format("3. VMCONFIG:\nvm = {\n"
-                  + "        supportConstant = false\n"
-                  + "        minTimeRatio = %.1f\n"
-                  + "        maxTimeRatio = %.1f\n}",
-              timeResult.minTimeRatio, timeResult.maxTimeRatio);
-      System.out.println(str);
+      try {
+        String content = readFile("src/main/resources/config.conf");
+        String newContent = content
+            .replaceAll("minTimeRatio = \\d+?\\.\\d+?\n", String.format("minTimeRatio = %.1f\n", timeResult.minTimeRatio));
+        newContent = newContent
+            .replaceAll("maxTimeRatio = \\d+?\\.\\d+?\n", String.format("maxTimeRatio = %.1f\n", timeResult.maxTimeRatio));
+        String newFileName = "src/main/resources/config-recommend.conf";
+        writeFile(newContent, newFileName);
+        String str = String
+            .format("3. VMCONFIG:\nvm = {\n"
+                    + "        supportConstant = false\n"
+                    + "        minTimeRatio = %.1f\n"
+                    + "        maxTimeRatio = %.1f\n}\n"
+                    + "can see also " + newFileName,
+                timeResult.minTimeRatio, timeResult.maxTimeRatio);
+        System.out.println(str);
+      } catch (IOException e) {
+        logger.info(e.getMessage());
+      }
+
     }
     destroyData();
 
     System.exit(0);
-
   }
 
   public static void destroyData() {
