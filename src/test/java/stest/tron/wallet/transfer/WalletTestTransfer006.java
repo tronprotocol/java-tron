@@ -78,13 +78,14 @@ public class WalletTestTransfer006 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     blockingStubExtension = WalletExtensionGrpc.newBlockingStub(channelSolidity);
 
-    //Create a transfer.
-    Assert.assertTrue(PublicMethed.sendcoin(toAddress,1000000,fromAddress,
-        testKey002,blockingStubFull));
+
   }
 
   @Test(enabled = true)
   public void testgetTransactionsToThis() {
+    //Create a transfer.
+    Assert.assertTrue(PublicMethed.sendcoin(toAddress,1000000,fromAddress,
+        testKey002,blockingStubFull));
 
 
 

@@ -87,14 +87,16 @@ public class WalletTestCommittee004 {
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
-    Assert.assertTrue(PublicMethed.sendcoin(witness001Address,1000000L,
-        toAddress,testKey003,blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(witness002Address,1000000L,
-        toAddress,testKey003,blockingStubFull));
   }
 
   @Test(enabled = true)
   public void testDeleteProposal() {
+    Assert.assertTrue(PublicMethed.sendcoin(witness001Address,1000000L,
+        toAddress,testKey003,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(witness002Address,1000000L,
+        toAddress,testKey003,blockingStubFull));
+
+
     try {
       Thread.sleep(1000);
     } catch (InterruptedException e) {

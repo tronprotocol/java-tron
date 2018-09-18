@@ -43,6 +43,7 @@ public class WalletTestBlock001 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  @Test(enabled = false)
   @BeforeClass
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -56,7 +57,7 @@ public class WalletTestBlock001 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test
+  @Test(enabled = false)
   public void testCurrentBlock() {
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Assert.assertTrue(currentBlock.hasBlockHeader());
@@ -78,7 +79,7 @@ public class WalletTestBlock001 {
     newBlock.getTransactionsList();
   }
 
-  @Test
+  @Test(enabled = false)
   public void testCurrentBlockFromSolidity() {
     Block currentBlock = blockingStubSolidity
         .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());

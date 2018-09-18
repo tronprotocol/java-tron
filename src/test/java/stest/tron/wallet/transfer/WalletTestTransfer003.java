@@ -105,13 +105,14 @@ public class WalletTestTransfer003 {
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     blockingStubExtension = WalletExtensionGrpc.newBlockingStub(channelSolidity);
-    Assert.assertTrue(PublicMethed.sendcoin(sendCoinAddress,200000L,
-        fromAddress,testKey002,blockingStubFull));
+
   }
 
 
   @Test(enabled = true)
   public void atestUseFeeOrNet() {
+    Assert.assertTrue(PublicMethed.sendcoin(sendCoinAddress,200000L,
+        fromAddress,testKey002,blockingStubFull));
     Long feeNum = 0L;
     Long netNum = 0L;
     Long sendNum = 0L;

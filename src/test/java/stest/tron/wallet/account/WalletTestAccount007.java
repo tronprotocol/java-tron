@@ -74,13 +74,12 @@ public class WalletTestAccount007 {
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
-    Assert.assertTrue(PublicMethed.sendcoin(account007Address,10000000,
-        fromAddress,testKey002,blockingStubFull));
-
   }
 
   @Test(enabled = true)
   public void testCreateAccount() {
+    Assert.assertTrue(PublicMethed.sendcoin(account007Address,10000000,
+        fromAddress,testKey002,blockingStubFull));
     Account accountInfo = PublicMethed.queryAccount(account007Key,blockingStubFull);
     final Long beforeBalance = accountInfo.getBalance();
 
