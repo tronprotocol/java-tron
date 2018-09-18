@@ -25,7 +25,7 @@ import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
 
-public class RecommendProperties {
+public class Benchmark {
 
   private static Manager dbManager;
   private static TronApplicationContext context;
@@ -38,7 +38,7 @@ public class RecommendProperties {
   public static void initData() {
     Args.setParam(
         new String[]{"--output-directory", dbPath, "--debug",},
-        "config-localtest.conf");
+        "config.conf");
     Args.getInstance().setAllowCreationOfContracts(1);
     context = new TronApplicationContext(DefaultConfig.class);
     AppT = ApplicationFactory.create(context);
