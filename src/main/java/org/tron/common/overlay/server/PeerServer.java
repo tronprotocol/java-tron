@@ -36,78 +36,78 @@ import org.tron.core.net.node.NodeImpl;
 @Component
 public class PeerServer {
 
-    private static final Logger logger = LoggerFactory.getLogger("PeerServer");
+  private static final Logger logger = LoggerFactory.getLogger("PeerServer");
 
-    private Args args = Args.getInstance();
+  private Args args = Args.getInstance();
 
-    private ApplicationContext ctx;
+  private ApplicationContext ctx;
 
-    public TronChannelInitializer tronChannelInitializer;
+  public TronChannelInitializer tronChannelInitializer;
 
-    private boolean listening;
+  private boolean listening;
 
-    @Autowired
-    private NodeImpl p2pNode;
+  @Autowired
+  private NodeImpl p2pNode;
 
-    EventLoopGroup bossGroup;
-    EventLoopGroup workerGroup;
-    ChannelFuture channelFuture;
+  EventLoopGroup bossGroup;
+  EventLoopGroup workerGroup;
+  ChannelFuture channelFuture;
 
-    @Autowired
-    public PeerServer(final Args args, final ApplicationContext ctx) {
-        this.ctx = ctx;
+  @Autowired
+  public PeerServer(final Args args, final ApplicationContext ctx) {
+    this.ctx = ctx;
+  }
+
+  public void start(int port) {
+
+    bossGroup = new NioEventLoopGroup(1);
+    workerGroup = new NioEventLoopGroup(args.getTcpNettyWorkThreadNum());
+    tronChannelInitializer = ctx.getBean(TronChannelInitializer.class, "");
+
+    tronChannelInitializer.setNodeImpl(p2pNode);
+
+    try {
+      ServerBootstrap b = new ServerBootstrap();
+
+      b.group(bossGroup, workerGroup);
+      b.channel(NioServerSocketChannel.class);
+
+      b.option(ChannelOption.SO_KEEPALIVE, true);
+      b.option(ChannelOption.MESSAGE_SIZE_ESTIMATOR, DefaultMessageSizeEstimator.DEFAULT);
+      b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, this.args.getNodeConnectionTimeout());
+
+      b.handler(new LoggingHandler());
+      b.childHandler(tronChannelInitializer);
+
+      // Start the client.
+      logger.info("TCP listener started, bind port {}", port);
+
+      channelFuture = b.bind(port).sync();
+
+      listening = true;
+
+      // Wait until the connection is closed.
+      channelFuture.channel().closeFuture().sync();
+
+      logger.info("TCP listener is closed");
+
+    } catch (Exception e) {
+      logger.error("Start TCP server failed.", e);
+    } finally {
+      workerGroup.shutdownGracefully();
+      bossGroup.shutdownGracefully();
+      listening = false;
     }
+  }
 
-    public void start(int port) {
-
-        bossGroup = new NioEventLoopGroup(1);
-        workerGroup = new NioEventLoopGroup(args.getTcpNettyWorkThreadNum());
-        tronChannelInitializer = ctx.getBean(TronChannelInitializer.class, "");
-
-        tronChannelInitializer.setNodeImpl(p2pNode);
-
-        try {
-            ServerBootstrap b = new ServerBootstrap();
-
-            b.group(bossGroup, workerGroup);
-            b.channel(NioServerSocketChannel.class);
-
-            b.option(ChannelOption.SO_KEEPALIVE, true);
-            b.option(ChannelOption.MESSAGE_SIZE_ESTIMATOR, DefaultMessageSizeEstimator.DEFAULT);
-            b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, this.args.getNodeConnectionTimeout());
-
-            b.handler(new LoggingHandler());
-            b.childHandler(tronChannelInitializer);
-
-            // Start the client.
-            logger.info("TCP listener started, bind port {}", port);
-
-            channelFuture = b.bind(port).sync();
-
-            listening = true;
-
-            // Wait until the connection is closed.
-            channelFuture.channel().closeFuture().sync();
-
-            logger.info("TCP listener is closed");
-
-        } catch (Exception e) {
-            logger.error("Start TCP server failed.", e);
-        } finally {
-            workerGroup.shutdownGracefully();
-            bossGroup.shutdownGracefully();
-            listening = false;
-        }
+  public void close() {
+    if (listening && channelFuture != null && channelFuture.channel().isOpen()) {
+      try {
+        logger.info("Closing TCP server...");
+        channelFuture.channel().close().sync();
+      } catch (Exception e) {
+        logger.warn("Closing TCP server failed.", e);
+      }
     }
-
-    public void close() {
-        if (listening && channelFuture != null && channelFuture.channel().isOpen()) {
-            try {
-                logger.info("Closing TCP server...");
-                channelFuture.channel().close().sync();
-            } catch (Exception e) {
-                logger.warn("Closing TCP server failed.", e);
-            }
-        }
-    }
+  }
 }

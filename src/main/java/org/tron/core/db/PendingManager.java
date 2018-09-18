@@ -5,6 +5,7 @@ import java.util.List;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.db.TransactionTrace.TimeResultType;
 
 @Slf4j
 public class PendingManager implements AutoCloseable {
@@ -24,9 +25,12 @@ public class PendingManager implements AutoCloseable {
   @Override
   public void close() {
 
-    for (TransactionCapsule tx : this.tmpTransactions) {
+    for (TransactionCapsule tx : PendingManager.tmpTransactions) {
       try {
-        dbManager.getRepushTransactions().put(tx);
+        if (tx.getTrxTrace() != null &&
+            tx.getTrxTrace().getTimeResultType().equals(TimeResultType.NORMAL)) {
+          dbManager.getRepushTransactions().put(tx);
+        }
       } catch (InterruptedException e) {
         logger.error(e.getMessage());
         Thread.currentThread().interrupt();
@@ -36,13 +40,15 @@ public class PendingManager implements AutoCloseable {
 
     for (TransactionCapsule tx : dbManager.getPoppedTransactions()) {
       try {
-        dbManager.getRepushTransactions().put(tx);
+        if (tx.getTrxTrace() != null &&
+            tx.getTrxTrace().getTimeResultType().equals(TimeResultType.NORMAL)) {
+          dbManager.getRepushTransactions().put(tx);
+        }
       } catch (InterruptedException e) {
         logger.error(e.getMessage());
         Thread.currentThread().interrupt();
       }
     }
     dbManager.getPoppedTransactions().clear();
-    
   }
 }

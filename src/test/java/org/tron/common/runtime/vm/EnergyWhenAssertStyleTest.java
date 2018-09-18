@@ -7,12 +7,15 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.testng.Assert;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TVMTestUtils;
 import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
+import org.tron.common.runtime.vm.program.Program.OutOfMemoryException;
+import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -23,20 +26,21 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
-import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Protocol.AccountType;
 
 
 @Slf4j
-@Ignore
 
 public class EnergyWhenAssertStyleTest {
 
   private Manager dbManager;
-  private AnnotationConfigApplicationContext context;
+  private TronApplicationContext context;
   private DepositImpl deposit;
   private String dbPath = "output_EnergyWhenAssertStyleTest";
   private String OWNER_ADDRESS;
+  private Application AppT;
+  private long totalBalance = 30_000_000_000_000L;
 
 
   /**
@@ -45,13 +49,13 @@ public class EnergyWhenAssertStyleTest {
   @Before
   public void init() {
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
-    // context = new AnnotationConfigApplicationContext(DefaultConfig.class);
     context = new TronApplicationContext(DefaultConfig.class);
+    AppT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     dbManager = context.getBean(Manager.class);
     deposit = DepositImpl.createRoot(dbManager);
     deposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
-    deposit.addBalance(Hex.decode(OWNER_ADDRESS), 30000000000000L);
+    deposit.addBalance(Hex.decode(OWNER_ADDRESS), totalBalance);
     deposit.commit();
   }
 
@@ -66,6 +70,7 @@ public class EnergyWhenAssertStyleTest {
   // If you call assert with an argument that evaluates to false.
   // If you call a system precompile contract and fail.
   // If you out of memory
+  // If you overflow
 
   // pragma solidity ^0.4.0;
   //
@@ -80,10 +85,10 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void outOfIndexTest()
-      throws ContractExeException, TransactionTraceException, ContractValidateException, ReceiptCheckErrException {
+      throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
 
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1_000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "test";
@@ -96,20 +101,25 @@ public class EnergyWhenAssertStyleTest {
         .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
             value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            deposit, null);
+            dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 87);
+    long expectEnergyUsageTotal = 39487;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     byte[] triggerData = TVMTestUtils.parseABI("testOutOfIndex()", null);
     result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, feeLimit, deposit, null);
+            contractAddress, triggerData, 0, feeLimit, dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 200000000000L);
+    long expectEnergyUsageTotal2 = feeLimit / 100;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() instanceof IllegalOperationException);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
   }
 
   // pragma solidity ^0.4.0;
@@ -125,10 +135,10 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void bytesNTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1_000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "test";
@@ -141,20 +151,25 @@ public class EnergyWhenAssertStyleTest {
         .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
             value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            deposit, null);
+            dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 75);
+    long expectEnergyUsageTotal = 31875;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     byte[] triggerData = TVMTestUtils.parseABI("testbytesN()", null);
     result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, feeLimit, deposit, null);
+            contractAddress, triggerData, 0, feeLimit, dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 200000000000L);
+    long expectEnergyUsageTotal2 = feeLimit / 100;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() instanceof IllegalOperationException);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
   }
 
   // pragma solidity ^0.4.0;
@@ -169,10 +184,10 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void divZeroTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1_000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "test";
@@ -185,20 +200,25 @@ public class EnergyWhenAssertStyleTest {
         .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
             value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            deposit, null);
+            dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 75);
+    long expectEnergyUsageTotal = 27875;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     byte[] triggerData = TVMTestUtils.parseABI("testDivZero()", null);
     result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, feeLimit, deposit, null);
+            contractAddress, triggerData, 0, feeLimit, dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 200000000000L);
+    long expectEnergyUsageTotal2 = feeLimit / 100;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() instanceof IllegalOperationException);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
   }
 
   // pragma solidity ^0.4.0;
@@ -214,10 +234,10 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void shiftByNegativeTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1_000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "test";
@@ -230,20 +250,25 @@ public class EnergyWhenAssertStyleTest {
         .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
             value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            deposit, null);
+            dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 75);
+    long expectEnergyUsageTotal = 28475;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     byte[] triggerData = TVMTestUtils.parseABI("testShiftByNegative()", null);
     result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, feeLimit, deposit, null);
+            contractAddress, triggerData, 0, feeLimit, dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 200000000000L);
+    long expectEnergyUsageTotal2 = feeLimit / 100;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() instanceof IllegalOperationException);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
   }
 
   // pragma solidity ^0.4.0;
@@ -260,10 +285,10 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void enumTypeTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1_000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "test";
@@ -276,20 +301,25 @@ public class EnergyWhenAssertStyleTest {
         .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
             value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            deposit, null);
+            dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 75);
+    long expectEnergyUsageTotal = 27475;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     byte[] triggerData = TVMTestUtils.parseABI("testEnumType()", null);
     result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, feeLimit, deposit, null);
+            contractAddress, triggerData, 0, feeLimit, dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 200000000000L);
+    long expectEnergyUsageTotal2 = feeLimit / 100;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() instanceof IllegalOperationException);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
   }
 
   // pragma solidity ^0.4.0;
@@ -304,10 +334,10 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void functionPointerTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1_000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "test";
@@ -320,20 +350,25 @@ public class EnergyWhenAssertStyleTest {
         .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
             value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            deposit, null);
+            dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 75);
+    long expectEnergyUsageTotal = 30475;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     byte[] triggerData = TVMTestUtils.parseABI("testFunctionPointer()", null);
     result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, feeLimit, deposit, null);
+            contractAddress, triggerData, 0, feeLimit, dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 200000000000L);
+    long expectEnergyUsageTotal2 = feeLimit / 100;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() instanceof IllegalOperationException);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
   }
 
   // pragma solidity ^0.4.0;
@@ -348,10 +383,10 @@ public class EnergyWhenAssertStyleTest {
 
   @Test
   public void assertTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
 
     long value = 0;
-    long feeLimit = 20000000000000L; // sun
+    long feeLimit = 1_000_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "test";
@@ -364,36 +399,140 @@ public class EnergyWhenAssertStyleTest {
         .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
             value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            deposit, null);
+            dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 75);
+    long expectEnergyUsageTotal = 26675;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     byte[] triggerData = TVMTestUtils.parseABI("testAssert()", null);
     result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, feeLimit, deposit, null);
+            contractAddress, triggerData, 0, feeLimit, dbManager, null);
 
-    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 200000000000L);
+    long expectEnergyUsageTotal2 = feeLimit / 100;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() instanceof IllegalOperationException);
-
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
 
   }
 
-  @Test
+  // pragma solidity ^0.4.0;
+  //
+  // contract TronNative{
+  //
+  //   address public voteContractAddress= 0x10001;
+  //
+  //   function voteForSingleWitness (address witnessAddr, uint256 voteValue) public{
+  //     if (!voteContractAddress.delegatecall(witnessAddr,voteValue)){
+  //       revert();
+  //     }
+  //   }
+  //
+  //
+  // }
+
+  //@Test
   public void systemPrecompileTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
-    // todo
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
+    long value = 0;
+    long feeLimit = 1_000_000_000L; // sun
+    long consumeUserResourcePercent = 100;
+
+    String contractName = "test";
+    byte[] address = Hex.decode(OWNER_ADDRESS);
+    String ABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"voteContractAddress\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"witnessAddr\",\"type\":\"address\"},{\"name\":\"voteValue\",\"type\":\"uint256\"}],\"name\":\"voteForSingleWitness\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
+    String code = "608060405260008054600160a060020a0319166201000117905534801561002557600080fd5b50610159806100356000396000f30060806040526004361061004b5763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663906fbec98114610050578063cee14bb41461008e575b600080fd5b34801561005c57600080fd5b506100656100c1565b6040805173ffffffffffffffffffffffffffffffffffffffff9092168252519081900360200190f35b34801561009a57600080fd5b506100bf73ffffffffffffffffffffffffffffffffffffffff600435166024356100dd565b005b60005473ffffffffffffffffffffffffffffffffffffffff1681565b600080546040805173ffffffffffffffffffffffffffffffffffffffff868116825260208201869052825193169381830193909290918290030181855af4915050151561012957600080fd5b50505600a165627a7a723058206090aa7a8ac0e45fac642652417495e81dad6f1592343bff8cfe97f61cf74e880029";
+    String libraryAddressPair = null;
+
+    TVMTestResult result = TVMTestUtils
+        .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
+            value,
+            feeLimit, consumeUserResourcePercent, libraryAddressPair,
+            dbManager, null);
+
+    long expectEnergyUsageTotal = 89214;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
+    byte[] contractAddress = result.getContractAddress();
+
+    String params =
+        Hex.toHexString(new DataWord(new DataWord(contractAddress).getLast20Bytes()).getData())
+            + "0000000000000000000000000000000000000000000000000000000000000003";
+
+    byte[] triggerData = TVMTestUtils.parseABI("voteForSingleWitness(address,uint256)", params);
+    result = TVMTestUtils
+        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+            contractAddress, triggerData, 0, feeLimit, dbManager, null);
+
+    long expectEnergyUsageTotal2 = feeLimit / 100;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
+    Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
+    Assert.assertTrue(
+        result.getRuntime().getResult().getException() instanceof PrecompiledContractException);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
   }
+
+  // pragma solidity ^0.4.0;
+  //
+  // contract TestMemContract{
+  //
+  //   function testMem(uint256 end) public {
+  //     for (uint256 i = 0; i < end; i++) {
+  //       uint256[] memory theArray = new uint256[](1024 * 1024 * 3 + 1024);
+  //     }
+  //   }
+  // }
 
   @Test
   public void outOfMemTest()
-      throws ContractExeException, ReceiptCheckErrException, TransactionTraceException, ContractValidateException {
-    // todo
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
+    long value = 0;
+    long feeLimit = 1_000_000_000L; // sun
+    long consumeUserResourcePercent = 100;
+
+    String contractName = "test";
+    byte[] address = Hex.decode(OWNER_ADDRESS);
+    String ABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"end\",\"type\":\"uint256\"}],\"name\":\"testMem\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
+    String code = "608060405234801561001057600080fd5b5060ca8061001f6000396000f300608060405260043610603e5763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663e31fcf3c81146043575b600080fd5b348015604e57600080fd5b506058600435605a565b005b600060605b828210156099576040805162300400808252630600802082019092529060208201630600800080388339019050506001909201919050605f565b5050505600a165627a7a723058209e5d294a7bf5133b304bc6851c749cd5e1f4748230405755e6bd2e31549ae1d00029";
+    String libraryAddressPair = null;
+
+    TVMTestResult result = TVMTestUtils
+        .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
+            value,
+            feeLimit, consumeUserResourcePercent, libraryAddressPair,
+            dbManager, null);
+
+    long expectEnergyUsageTotal = 40487;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
+    byte[] contractAddress = result.getContractAddress();
+    String params = "0000000000000000000000000000000000000000000000000000000000000001";
+    byte[] triggerData = TVMTestUtils.parseABI("testMem(uint256)", params);
+    result = TVMTestUtils
+        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+            contractAddress, triggerData, 0, feeLimit, dbManager, null);
+
+    long expectEnergyUsageTotal2 = feeLimit / 100;
+    Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
+    Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
+    Assert.assertTrue(
+        result.getRuntime().getResult().getException() instanceof OutOfMemoryException);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
   }
 
+  @Test
+  @Ignore
+  public void overflowTest()
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException {
+    // done in ChargeTest
+  }
 
   /**
    * Release resources.
@@ -401,12 +540,14 @@ public class EnergyWhenAssertStyleTest {
   @After
   public void destroy() {
     Args.clearParam();
+    AppT.shutdownServices();
+    AppT.shutdown();
+    context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {
       logger.info("Release resources failure.");
     }
-    context.destroy();
   }
 }
 

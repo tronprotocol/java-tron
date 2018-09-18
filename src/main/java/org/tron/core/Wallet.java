@@ -83,6 +83,7 @@ import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.db.PendingManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
+import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
@@ -91,6 +92,7 @@ import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
@@ -861,7 +863,7 @@ public class Wallet {
   public Transaction triggerContract(TriggerSmartContract triggerSmartContract,
       TransactionCapsule trxCap, Builder builder,
       Return.Builder retBuilder)
-      throws ContractValidateException, ContractExeException, HeaderNotFound {
+      throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
     ContractStore contractStore = dbManager.getContractStore();
     byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
@@ -889,14 +891,15 @@ public class Wallet {
       }
 
       Runtime runtime = new Runtime(trxCap.getInstance(), new BlockCapsule(headBlock), deposit,
-          new ProgramInvokeFactoryImpl());
+          new ProgramInvokeFactoryImpl(), true);
       runtime.execute();
       runtime.go();
       runtime.finalization();
       // TODO exception
       if (runtime.getResult().getException() != null) {
-//          runtime.getResult().getException().printStackTrace();
-        throw new RuntimeException("Runtime exe failed!");
+        RuntimeException e = runtime.getResult().getException();
+        logger.warn("Constant call has error {}", e.getMessage());
+        throw e;
       }
 
       ProgramResult result = runtime.getResult();

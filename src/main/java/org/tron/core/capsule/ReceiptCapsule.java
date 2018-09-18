@@ -90,7 +90,7 @@ public class ReceiptCapsule {
    */
   public void payEnergyBill(Manager manager, AccountCapsule origin, AccountCapsule caller,
       long percent, EnergyProcessor energyProcessor, long now) throws BalanceInsufficientException {
-    if (0 == receipt.getEnergyUsageTotal()) {
+    if (receipt.getEnergyUsageTotal() <= 0) {
       return;
     }
 
@@ -132,6 +132,9 @@ public class ReceiptCapsule {
             StringUtil.createReadableString(account.createDbKey()) + " insufficient balance");
       }
       account.setBalance(balance - energyFee);
+
+      manager.adjustBalance(manager.getAccountStore().getBlackhole().getAddress().toByteArray(),
+          energyFee);//send to blackhole
     }
 
     manager.getAccountStore().put(account.getAddress().toByteArray(), account);

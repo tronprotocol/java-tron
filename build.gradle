@@ -275,6 +275,9 @@ task stest(type: Test) {
 
     useTestNG {
         suites(file('src/test/resources/testng.xml'))
+        parallel 'tests'
+        threadCount 4
+
     }
 
     testLogging {

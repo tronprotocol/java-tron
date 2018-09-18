@@ -5,6 +5,8 @@ import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_PRECOMPILED_TYPE;
 
 import java.util.Objects;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.Runtime;
@@ -23,11 +25,12 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
-import org.tron.core.exception.TransactionTraceException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -46,9 +49,21 @@ public class TransactionTrace {
 
   private InternalTransaction.TrxType trxType;
 
+  private long txStartTimeInMs;
+
   public TransactionCapsule getTrx() {
     return trx;
   }
+
+  public enum TimeResultType {
+    NORMAL,
+    LONG_RUNNING,
+    OUT_OF_TIME
+  }
+
+  @Getter
+  @Setter
+  private TimeResultType timeResultType = TimeResultType.NORMAL;
 
   public TransactionTrace(TransactionCapsule trx, Manager dbManager) {
     this.trx = trx;
@@ -76,8 +91,8 @@ public class TransactionTrace {
   }
 
   //pre transaction check
-  public void init() throws TransactionTraceException {
-
+  public void init() {
+    txStartTimeInMs = System.currentTimeMillis();
     // switch (trxType) {
     //   case TRX_PRECOMPILED_TYPE:
     //     break;
@@ -93,6 +108,9 @@ public class TransactionTrace {
 
   //set bill
   public void setBill(long energyUsage) {
+    if (energyUsage < 0) {
+      energyUsage = 0L;
+    }
     receipt.setEnergyUsageTotal(energyUsage);
   }
 
@@ -103,10 +121,20 @@ public class TransactionTrace {
   }
 
   public void exec(Runtime runtime)
-      throws ContractExeException, ContractValidateException {
+      throws ContractExeException, ContractValidateException, VMIllegalException {
     /**  VM execute  **/
     runtime.execute();
     runtime.go();
+
+    if (TRX_PRECOMPILED_TYPE != runtime.getTrxType()) {
+      if (contractResult.OUT_OF_TIME
+          .equals(receipt.getResult())) {
+        setTimeResultType(TimeResultType.OUT_OF_TIME);
+      } else if (System.currentTimeMillis() - txStartTimeInMs
+          > Args.getInstance().getLongRunningTime()) {
+        setTimeResultType(TimeResultType.LONG_RUNNING);
+      }
+    }
   }
 
   public void finalization(Runtime runtime) throws ContractExeException {
@@ -157,6 +185,17 @@ public class TransactionTrace {
         dbManager.getWitnessController().getHeadSlot());
   }
 
+  public boolean checkNeedRetry() {
+    if (!needVM()) {
+      return false;
+    }
+    if (!trx.getContractRet().equals(contractResult.OUT_OF_TIME)
+        && receipt.getResult().equals(contractResult.OUT_OF_TIME)) {
+      return true;
+    }
+    return false;
+  }
+
   public void check() throws ReceiptCheckErrException {
     if (!needVM()) {
       return;
@@ -165,8 +204,9 @@ public class TransactionTrace {
       throw new ReceiptCheckErrException("null resultCode");
     }
     if (!trx.getContractRet().equals(receipt.getResult())) {
-      logger.info("this tx resultCode in received block: {}", trx.getContractRet());
-      logger.info("this tx resultCode in self: {}", receipt.getResult());
+      logger.info(
+          "this tx resultCode in received block: {}\nthis tx resultCode in self: {}",
+          trx.getContractRet(), receipt.getResult());
       throw new ReceiptCheckErrException("Different resultCode");
     }
   }

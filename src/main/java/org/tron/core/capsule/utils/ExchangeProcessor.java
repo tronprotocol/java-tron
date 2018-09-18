@@ -12,12 +12,12 @@ public class ExchangeProcessor {
   }
 
   private long exchange_to_supply(long balance, long quant) {
-    logger.info("balance: " + balance);
+    logger.debug("balance: " + balance);
     long newBalance = balance + quant;
-    logger.info("balance + quant: " + newBalance);
+    logger.debug("balance + quant: " + newBalance);
 
     double issuedSupply = -supply * (1.0 - Math.pow(1.0 + (double) quant / newBalance, 0.0005));
-    logger.info("issuedSupply: " + issuedSupply);
+    logger.debug("issuedSupply: " + issuedSupply);
     long out = (long) issuedSupply;
     supply += out;
 
@@ -25,12 +25,12 @@ public class ExchangeProcessor {
   }
 
   private long exchange_to_supply2(long balance, long quant) {
-    logger.info("balance: " + balance);
+    logger.debug("balance: " + balance);
     long newBalance = balance - quant;
-    logger.info("balance - quant: " + (balance - quant));
+    logger.debug("balance - quant: " + (balance - quant));
 
     double issuedSupply = -supply * (1.0 - Math.pow(1.0 + (double) quant / newBalance, 0.0005));
-    logger.info("issuedSupply: " + issuedSupply);
+    logger.debug("issuedSupply: " + issuedSupply);
     long out = (long) issuedSupply;
     supply += out;
 
@@ -42,7 +42,7 @@ public class ExchangeProcessor {
 
     double exchangeBalance =
         balance * (Math.pow(1.0 + (double) supplyQuant / supply, 2000.0) - 1.0);
-    logger.info("exchangeBalance: " + exchangeBalance);
+    logger.debug("exchangeBalance: " + exchangeBalance);
     long out = (long) exchangeBalance;
     long newBalance = balance - out;
 

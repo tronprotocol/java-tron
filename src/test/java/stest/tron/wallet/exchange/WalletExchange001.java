@@ -29,8 +29,8 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class WalletExchange001 {
 
-  private final String testKey002 =
-      "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
+  private final String testKey002 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
   private ManagedChannel channelFull = null;
@@ -76,18 +76,19 @@ public class WalletExchange001 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(exchange001Address,10240000000L,fromAddress,
-        testKey002,blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(secondExchange001Address,10240000000L,fromAddress,
-        testKey002,blockingStubFull));
   }
 
   @Test(enabled = true)
   public void test1CreateUsedAsset() {
-    Assert.assertTrue(PublicMethed.freezeBalance(exchange001Address, 1000000L,
-        3,exchange001Key,blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalance(secondExchange001Address, 1000000L,
-        3,secondExchange001Key,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(exchange001Address,10240000000L,fromAddress,
+        testKey002,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(secondExchange001Address,10240000000L,fromAddress,
+        testKey002,blockingStubFull));
+
+    //Assert.assertTrue(PublicMethed.freezeBalance(exchange001Address, 1000000L,
+    //    3,exchange001Key,blockingStubFull));
+    //Assert.assertTrue(PublicMethed.freezeBalance(secondExchange001Address, 1000000L,
+    //    3,secondExchange001Key,blockingStubFull));
     Long start = System.currentTimeMillis() + 5000L;
     Long end = System.currentTimeMillis() + 5000000L;
     Assert.assertTrue(PublicMethed.createAssetIssue(exchange001Address, name1, totalSupply, 1,
@@ -267,7 +268,7 @@ public class WalletExchange001 {
     logger.info("before token 1 balance is " + Long.toString(beforeToken1Balance));
     logger.info("before token 2 balance is " + Long.toString(beforeToken2Balance));
     Integer transactionNum = 50;
-    Assert.assertTrue(PublicMethed.exchangeTransaction(exchangeId,name1.getBytes(),transactionNum,
+    Assert.assertTrue(PublicMethed.exchangeTransaction(exchangeId,name1.getBytes(),transactionNum,1,
         exchange001Address,exchange001Key,blockingStubFull));
     firstAccount = PublicMethed.queryAccount(exchange001Address, blockingStubFull);
     Long afterToken1Balance = 0L;

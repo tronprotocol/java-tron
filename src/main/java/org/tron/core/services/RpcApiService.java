@@ -69,6 +69,7 @@ import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.StoreException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
@@ -1313,16 +1314,21 @@ public class RpcApiService implements Service {
         trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
         retBuilder.setResult(true).setCode(response_code.SUCCESS);
         trxExtBuilder.setResult(retBuilder);
-      } catch (ContractValidateException e) {
+      } catch (ContractValidateException | VMIllegalException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()));
         trxExtBuilder.setResult(retBuilder);
         logger.warn("ContractValidateException: {}", e.getMessage());
+      } catch (RuntimeException e) {
+        retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+        trxExtBuilder.setResult(retBuilder);
+        logger.warn("When run constant call in VM, have RuntimeException: " + e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
         trxExtBuilder.setResult(retBuilder);
-        logger.warn("unknown exception caught" + e.getMessage(), e);
+        logger.warn("unknown exception caught: " + e.getMessage(), e);
       } finally {
         responseObserver.onNext(trxExtBuilder.build());
         responseObserver.onCompleted();

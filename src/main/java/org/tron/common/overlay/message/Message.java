@@ -28,19 +28,19 @@ public abstract class Message {
     this.data = packed;
   }
 
-  public ByteBuf getSendData(){
-     return Unpooled.wrappedBuffer(ArrayUtils.add(this.getData(), 0 ,type));
+  public ByteBuf getSendData() {
+    return Unpooled.wrappedBuffer(ArrayUtils.add(this.getData(), 0, type));
   }
 
   public Sha256Hash getMessageId() {
     return Sha256Hash.of(getData());
   }
 
-  public byte[] getData(){
+  public byte[] getData() {
     return this.data;
   }
 
-  public MessageTypes getType(){
+  public MessageTypes getType() {
     return MessageTypes.fromByte(this.type);
   }
 

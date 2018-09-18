@@ -3,11 +3,9 @@ package org.tron.common.runtime.vm.program;
 import static java.lang.System.arraycopy;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.StorageRowCapsule;
-import org.tron.core.db.Manager;
 import org.tron.core.db.StorageRowStore;
 
 public class Storage {
@@ -15,7 +13,6 @@ public class Storage {
   private byte[] addrHash;  // contract address
   private StorageRowStore store;
   private final Map<DataWord, StorageRowCapsule> rowCache = new HashMap<>();
-  private long beforeUseSize = 0;
 
   private static final int PREFIX_BYTES = 16;
 
@@ -31,8 +28,6 @@ public class Storage {
       StorageRowCapsule row = store.get(compose(key.getData(), addrHash));
       if (row == null || row.getInstance() == null) {
         return null;
-      } else {
-        beforeUseSize += row.getInstance().length;
       }
       rowCache.put(key, row);
       return row.getValue();
@@ -44,13 +39,7 @@ public class Storage {
       rowCache.get(key).setValue(value);
     } else {
       byte[] rowKey = compose(key.getData(), addrHash);
-      StorageRowCapsule row = store.get(rowKey);
-      if (row == null || row.getInstance() == null) {
-        row = new StorageRowCapsule(rowKey, value.getData());
-      } else {
-        row.setValue(value);
-        beforeUseSize += row.getInstance().length;
-      }
+      StorageRowCapsule row = new StorageRowCapsule(rowKey, value.getData());
       rowCache.put(key, row);
     }
   }
@@ -65,20 +54,6 @@ public class Storage {
   // 32 bytes
   private static byte[] addrHash(byte[] address) {
     return Hash.sha3(address);
-  }
-
-  public long computeSize() {
-    AtomicLong size = new AtomicLong();
-    rowCache.forEach((key, value) -> {
-      if (!value.getValue().isZero()) {
-        size.getAndAdd(value.getInstance().length);
-      }
-    });
-    return size.get();
-  }
-
-  public long getBeforeUseSize() {
-    return this.beforeUseSize;
   }
 
   public void commit() {
