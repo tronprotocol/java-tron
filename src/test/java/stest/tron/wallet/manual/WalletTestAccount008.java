@@ -1,4 +1,4 @@
-package stest.tron.wallet.account;
+package stest.tron.wallet.manual;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -9,6 +9,7 @@ import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.AccountNetMessage;
 import org.tron.api.WalletGrpc;
@@ -42,14 +43,13 @@ public class WalletTestAccount008 {
   private static final long FREENETLIMIT = 5000L;
   private static final long BASELINE = 4800L;
 
-
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -58,7 +58,7 @@ public class WalletTestAccount008 {
 
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testSetAccountId() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     byte[] account008Address = ecKey1.getAddress();
@@ -122,7 +122,7 @@ public class WalletTestAccount008 {
 
   }
 
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

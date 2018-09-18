@@ -98,7 +98,6 @@ public class WalletTestAccount003 {
       lowBalTest = ByteArray.toHexString(ecKey.getPrivKeyBytes());
       noCreateAccount = queryAccount(lowBalTest, blockingStubFull);
     }
-
     Assert.assertTrue(sendCoin(lowBalAddress, 1L, fromAddress, testKey002));
     noCreateAccount = queryAccount(lowBalTest, blockingStubFull);
     logger.info(Long.toString(noCreateAccount.getBalance()));
@@ -116,16 +115,15 @@ public class WalletTestAccount003 {
 
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testUpdateAccount() {
     Assert.assertFalse(updateAccount(lowBalAddress,
         mostLongNamePlusOneChar.getBytes(), lowBalTest));
-    Assert.assertTrue(updateAccount(lowBalAddress, "".getBytes(), lowBalTest));
-    Assert.assertTrue(updateAccount(lowBalAddress, mostLongName.getBytes(), lowBalTest));
+    Assert.assertFalse(updateAccount(lowBalAddress, "".getBytes(), lowBalTest));
+    Assert.assertFalse(updateAccount(lowBalAddress, mostLongName.getBytes(), lowBalTest));
     Account tryToUpdateAccount = queryAccount(lowBalTest, blockingStubFull);
-    tryToUpdateAccount = queryAccount(lowBalTest, blockingStubFull);
-    Assert.assertFalse(tryToUpdateAccount.getAccountName().isEmpty());
-    Assert.assertTrue(updateAccount(lowBalAddress, "secondUpdateName".getBytes(), lowBalTest));
+    Assert.assertTrue(tryToUpdateAccount.getAccountName().isEmpty());
+    Assert.assertFalse(updateAccount(lowBalAddress, "secondUpdateName".getBytes(), lowBalTest));
   }
 
   @Test(enabled = true)
@@ -163,21 +161,6 @@ public class WalletTestAccount003 {
       logger.info("This account has freeze balance, please test this case for manual");
     }
   }
-
-
-  /*    @Test
-    public void TestVoteToNonWitnessAccount(){
-        HashMap<String,String> vote_to_non_witness_account=new HashMap<String,String>();
-        vote_to_non_witness_account.put("27XeWZUtufGk8jdjF3m1tuPnnRqqKgzS3pT", "1");
-        HashMap<String,String> vote_to_invaild_address=new HashMap<String,String>();
-        vote_to_invaild_address.put("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48", "1");
-        Assert.assertTrue(FreezeBalance(fromAddress,10000000L, 3L,testKey002));
-        Assert.assertFalse(VoteWitness(vote_to_non_witness_account,fromAddress,testKey002));
-        Assert.assertFalse(VoteWitness(vote_to_invaild_address,fromAddress,testKey002));
-
-        logger.info("vote to non witness account ok!!!");
-
-    }*/
 
   @AfterClass
   public void shutdown() throws InterruptedException {

@@ -11,10 +11,8 @@
         </package>
       </packages>
     </test>
-  <test name="Stest assetissue,account">
+  <test name="Stest account">
     <packages>
-      <package name="stest.tron.wallet.assetissue">
-      </package>
       <package name="stest.tron.wallet.account">
       </package>
     </packages>
@@ -39,7 +37,13 @@
       </package>
     </packages>
 <!--      <classes>
-        <class name="stest.tron.wallet.contract.scenario.ContractScenario011"/>
-      </classes>-->
+        <class name="stest.tron.wallet.account.WalletTestAccount003"/>
+      </classes>
+      <packages>
+        <package name="stest.tron.wallet.assetissue">
+        </package>
+        <package name="stest.tron.wallet.manual">
+        </package>
+      </packages>-->
   </test>
 </suite>

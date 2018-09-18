@@ -1,4 +1,4 @@
-package stest.tron.wallet.transfer;
+package stest.tron.wallet.manual;
 
 import com.google.protobuf.ByteString;
 import com.googlecode.cqengine.query.simple.In;
@@ -118,7 +118,7 @@ public class WalletTestTransfer006 {
     }
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testgetTransactionsToThisByInvaildAddress() {
     //Invaild address.
     ByteString addressBs = ByteString.copyFrom(INVAILD_ADDRESS);
