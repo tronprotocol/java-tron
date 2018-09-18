@@ -178,8 +178,7 @@ public class Benchmark {
         java.lang.management.ManagementFactory.getOperatingSystemMXBean();
     long physicalMemorySize = os.getTotalPhysicalMemorySize();
 
-    double mem = physicalMemorySize / 1024 / 1024 * 0.8;
-    return (long)mem;
+    return (long)(physicalMemorySize * 1.0 / 1024 / 1024 * 0.8);
   }
 
   public static boolean checkJavaVersion() {
