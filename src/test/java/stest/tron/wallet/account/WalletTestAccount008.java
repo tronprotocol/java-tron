@@ -49,7 +49,7 @@ public class WalletTestAccount008 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -58,7 +58,7 @@ public class WalletTestAccount008 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testSetAccountId() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     byte[] account008Address = ecKey1.getAddress();
@@ -122,7 +122,7 @@ public class WalletTestAccount008 {
 
   }
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
