@@ -204,24 +204,32 @@ public class Benchmark {
     }
   }
 
-  public static String readFile(String fileName) throws IOException {
+  public static String readFile(String fileName) {
 
     File file = new File(fileName);
     if (null != file && file.canRead()) {
-      Reader in = new FileReader(file);
-      StringWriter out = new StringWriter();
-      copy(in,out);
-      return out.toString();
+      try {
+        Reader in = new FileReader(file);
+        StringWriter out = new StringWriter();
+        copy(in, out);
+        return out.toString();
+      } catch(IOException e) {
+        logger.info(e.getMessage());
+      }
     }
-    return "";
+    return null;
   }
 
-  public static void writeFile(String content, String fileName) throws IOException {
+  public static void writeFile(String content, String fileName) {
 
-    File file = new File(fileName);
-    Writer writer = new FileWriter(file);
-    writer.write(content);
-    writer.close();
+    try {
+      File file = new File(fileName);
+      Writer writer = new FileWriter(file);
+      writer.write(content);
+      writer.close();
+    } catch (IOException e) {
+      logger.info(e.getMessage());
+    }
   }
 
   public static void main(String[] args) {
@@ -238,10 +246,10 @@ public class Benchmark {
       long mem = getMem();
       String content = readFile("start.sh");
       String newContent = content.replaceAll("java -jar", "java -Xmx" + mem + "m -jar");
-      String newFileName = "start-recommend.sh";
+      String newFileName = "build/libs/start-recommend.sh";
       writeFile(newContent, newFileName);
       System.out.println("2. MEMORY:\nwhen setup java, recommend to use: java -Xmx" + mem + "m\ncan see also " + newFileName);
-    } catch (IOException e) {
+    } catch (Exception e) {
       logger.info(e.getMessage());
     }
 
@@ -263,7 +271,7 @@ public class Benchmark {
             .replaceAll("minTimeRatio = \\d+?\\.\\d+?\n", String.format("minTimeRatio = %.1f\n", timeResult.minTimeRatio));
         newContent = newContent
             .replaceAll("maxTimeRatio = \\d+?\\.\\d+?\n", String.format("maxTimeRatio = %.1f\n", timeResult.maxTimeRatio));
-        String newFileName = "src/main/resources/config-recommend.conf";
+        String newFileName = "build/libs/config-recommend.conf";
         writeFile(newContent, newFileName);
         String str = String
             .format("3. VMCONFIG:\nvm = {\n"
@@ -273,7 +281,7 @@ public class Benchmark {
                     + "can see also " + newFileName,
                 timeResult.minTimeRatio, timeResult.maxTimeRatio);
         System.out.println(str);
-      } catch (IOException e) {
+      } catch (Exception e) {
         logger.info(e.getMessage());
       }
 
