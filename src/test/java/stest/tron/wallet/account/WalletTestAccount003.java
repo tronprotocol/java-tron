@@ -105,14 +105,15 @@ public class WalletTestAccount003 {
     Assert.assertTrue(noCreateAccount.getBalance() == 1);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void test2UpdateAccount() {
     Assert.assertFalse(updateAccount(lowBalAddress,
         mostLongNamePlusOneChar.getBytes(), lowBalTest));
     //Assert.assertFalse(updateAccount(lowBalAddress, "".getBytes(), lowBalTest));
-    Assert.assertFalse(updateAccount(lowBalAddress, mostLongName.getBytes(), lowBalTest));
+    String mostLongName = getRandomStr(33);
+    Assert.assertTrue(updateAccount(lowBalAddress, mostLongName.getBytes(), lowBalTest));
     String firstUpdateName = getRandomStr(32);
-    Assert.assertTrue(updateAccount(lowBalAddress, firstUpdateName.getBytes(), lowBalTest));
+    Assert.assertFalse(updateAccount(lowBalAddress, firstUpdateName.getBytes(), lowBalTest));
     String secondUpdateName = getRandomStr(15);
     Assert.assertFalse(updateAccount(lowBalAddress, secondUpdateName.getBytes(), lowBalTest));
   }
