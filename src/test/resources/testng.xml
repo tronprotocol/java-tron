@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 
-<suite name="Stest suite" parallel="tests" thread-count="2" >
+<suite name="Stest suite" parallel="tests" thread-count="4" >
   <listeners>
     <listener class-name="stest.tron.wallet.common.client.utils.RetryListener"/>
   </listeners>
@@ -38,5 +38,8 @@
       <package name="stest.tron.wallet.committee">
       </package>
     </packages>
+<!--      <classes>
+        <class name="stest.tron.wallet.contract.scenario.ContractScenario011"/>
+      </classes>-->
   </test>
 </suite>
