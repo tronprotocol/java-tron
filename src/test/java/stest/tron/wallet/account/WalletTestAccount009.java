@@ -70,6 +70,10 @@ public class WalletTestAccount009 {
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
+  }
+
+  @Test(enabled = true)
+  public void testGetEnergy() {
     Assert.assertTrue(PublicMethed.sendcoin(account009Address,10000000,
         fromAddress,testKey002,blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(account009SecondAddress,10000000,
@@ -77,10 +81,7 @@ public class WalletTestAccount009 {
     Assert.assertTrue(PublicMethed.sendcoin(account009InvalidAddress,10000000,
         fromAddress,testKey002,blockingStubFull));
 
-  }
 
-  @Test(enabled = true)
-  public void testGetEnergy() {
     Account account009Info = PublicMethed.queryAccount(account009Key,blockingStubFull);
     Assert.assertTrue(account009Info.getAccountResource().getEnergyUsage() == 0);
     Assert.assertTrue(account009Info.getAccountResource().getFrozenBalanceForEnergy()

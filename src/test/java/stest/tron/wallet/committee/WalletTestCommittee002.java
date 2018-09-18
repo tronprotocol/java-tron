@@ -81,14 +81,15 @@ public class WalletTestCommittee002 {
     channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
         .usePlaintext(true)
         .build();
-    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
-    Assert.assertTrue(PublicMethed.sendcoin(witness001Address,10000000L,
-        toAddress,testKey003,blockingStubFull));
   }
 
 
   @Test(enabled = true)
   public void testCreateProposalMaintenanceTimeInterval() {
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+    Assert.assertTrue(PublicMethed.sendcoin(witness001Address,10000000L,
+        toAddress,testKey003,blockingStubFull));
+
     //0:MAINTENANCE_TIME_INTERVAL,[3*27s,24h]
     //Minimum interval
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
