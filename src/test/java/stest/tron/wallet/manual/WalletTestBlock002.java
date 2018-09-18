@@ -1,4 +1,4 @@
-package stest.tron.wallet.block;
+package stest.tron.wallet.manual;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -43,7 +43,7 @@ public class WalletTestBlock002 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   @BeforeClass
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -58,7 +58,7 @@ public class WalletTestBlock002 {
   }
 
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testGetBlockByNum() {
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
@@ -101,7 +101,7 @@ public class WalletTestBlock002 {
     Assert.assertTrue(lastSecondBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testGetBlockByNumFromSolidity() {
     Block currentBlock = blockingStubSolidity
         .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
@@ -146,7 +146,7 @@ public class WalletTestBlock002 {
     Assert.assertTrue(lastSecondBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
     logger.info("Last second test from solidity succesfully");
   }
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testGetBlockById() {
 
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());

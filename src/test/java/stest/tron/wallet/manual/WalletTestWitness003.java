@@ -1,4 +1,4 @@
-package stest.tron.wallet.witness;
+package stest.tron.wallet.manual;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -84,12 +84,12 @@ public class WalletTestWitness003 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testInvaildToApplyBecomeWitness() {
     Assert.assertFalse(createWitness(INVAILD_ADDRESS, createUrl, testKey002));
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testCreateWitness() {
     //If you are already is witness, apply failed
     //createWitness(fromAddress, createUrl, testKey002);
@@ -111,7 +111,7 @@ public class WalletTestWitness003 {
     }
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testUpdateWitness() {
     GrpcAPI.WitnessList witnesslist = blockingStubFull
         .listWitnesses(GrpcAPI.EmptyMessage.newBuilder().build());
