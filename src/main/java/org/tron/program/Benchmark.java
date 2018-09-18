@@ -132,14 +132,14 @@ public class Benchmark {
 
     for (int i = 0; i < repeatCount; i++) {
       long curDuration = triggerContractAndReturnDuration(contractAddress, feeLimit);
-      // System.out.println(String.format("count: %d, duration: %d", i, curDuration));
+      System.out.println(String.format("count: %d, duration: %d", i, curDuration));
       if (i >= 2) {
         totalDuration += curDuration;
       }
       Thread.sleep(10);
     }
     long avgDuration = totalDuration / (repeatCount - 2);
-    // System.out.println(String.format("avg duration: %d", avgDuration));
+    System.out.println(String.format("avg duration: %d", avgDuration));
 
     double defaultMinTimeRatio = 0.0;
     double defaultMaxTimeRatio = 5.0;
@@ -178,7 +178,7 @@ public class Benchmark {
         java.lang.management.ManagementFactory.getOperatingSystemMXBean();
     long physicalMemorySize = os.getTotalPhysicalMemorySize();
 
-    return (long) (physicalMemorySize / 1024 / 1024 * 0.8);
+    return (long) (physicalMemorySize / 1024f / 1024f * 0.8f);
   }
 
   public static boolean checkJavaVersion() {
@@ -214,25 +214,21 @@ public class Benchmark {
     TimeBenchmarkResult timeResult = null;
     try {
       timeResult = getTimeRatio();
-    } catch (ContractExeException e) {
-      e.printStackTrace();
-    } catch (ReceiptCheckErrException e) {
-      e.printStackTrace();
-    } catch (VMIllegalException e) {
-      e.printStackTrace();
-    } catch (ContractValidateException e) {
-      e.printStackTrace();
+    } catch (ContractExeException | ReceiptCheckErrException | VMIllegalException | ContractValidateException e) {
+      logger.info(e.getMessage());
     } catch (InterruptedException e) {
-      e.printStackTrace();
+      Thread.currentThread().interrupt();
+      logger.info(e.getMessage());
     }
-    String str = String
-        .format("3. VMCONFIG:\nvm = {\n"
-                + "        supportConstant = false\n"
-                + "        minTimeRatio = %.1f\n"
-                + "        maxTimeRatio = %.1f\n}",
-            timeResult.minTimeRatio, timeResult.maxTimeRatio);
-    System.out.println(str);
-
+    if (null != timeResult) {
+      String str = String
+          .format("3. VMCONFIG:\nvm = {\n"
+                  + "        supportConstant = false\n"
+                  + "        minTimeRatio = %.1f\n"
+                  + "        maxTimeRatio = %.1f\n}",
+              timeResult.minTimeRatio, timeResult.maxTimeRatio);
+      System.out.println(str);
+    }
     destroyData();
 
     System.exit(0);

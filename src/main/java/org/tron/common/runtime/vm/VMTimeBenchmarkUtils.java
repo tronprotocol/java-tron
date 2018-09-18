@@ -335,11 +335,11 @@ public class VMTimeBenchmarkUtils {
     private byte[] contractAddress;
 
     public byte[] getContractAddress() {
-      return contractAddress;
+      return contractAddress.clone();
     }
 
     public TVMResult setContractAddress(byte[] contractAddress) {
-      this.contractAddress = contractAddress;
+      this.contractAddress = contractAddress.clone();
       return this;
     }
 
@@ -364,7 +364,11 @@ public class VMTimeBenchmarkUtils {
     public TVMResult(Runtime runtime, long duration, byte[] contractAddress) {
       this.runtime = runtime;
       this.duration = duration;
-      this.contractAddress = contractAddress;
+      if (null != contractAddress) {
+        this.contractAddress = contractAddress.clone();
+      } else {
+        this.contractAddress = null;
+      }
     }
 
   }
