@@ -157,9 +157,9 @@ public class RpcApiService implements Service {
     logger.info("RpcApiService started, listening on " + port);
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      System.err.println("*** shutting down gRPC server since JVM is shutting down");
+      logger.info("*** shutting down gRPC server since JVM is shutting down");
       //server.this.stop();
-      System.err.println("*** server shut down");
+      logger.info("*** server shut down");
     }));
   }
 

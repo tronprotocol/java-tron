@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<configuration>
+<configuration debug="false">
 
   <!-- Be sure to flush latest logs on exit -->
-  <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook"/>
+  <shutdownHook class="org.tron.common.utils.TronLogBackDelayingShutdownHook"/>
 
   <!--<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">-->
   <!--<encoder>-->

@@ -305,8 +305,8 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   public synchronized void shutdown() {
-    System.err.println("******** begin to pop revokingDb ********");
-    System.err.println("******** before revokingDb size:" + size());
+    logger.info("******** begin to pop revokingDb ********");
+    logger.info("******** before revokingDb size:" + size());
     try {
       disable();
       boolean exit = false;
@@ -326,11 +326,11 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
         }
       }
     } catch (Exception e) {
-      System.err.println("******** failed to pop revokingStore. " + e);
+      logger.info("******** failed to pop revokingStore. " + e);
     } finally {
-      System.err.println("******** after revokingStore size:" + stack.size());
-      System.err.println("******** after revokingStore contains:" + stack);
-      System.err.println("******** end to pop revokingStore ********");
+      logger.info("******** after revokingStore size:" + stack.size());
+      logger.info("******** after revokingStore contains:" + stack);
+      logger.info("******** end to pop revokingStore ********");
     }
   }
 
