@@ -18,6 +18,7 @@
 
 package org.tron.core;
 
+import com.google.common.base.CaseFormat;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
@@ -83,7 +84,6 @@ import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.db.PendingManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
-import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
@@ -525,88 +525,27 @@ public class Wallet {
 
   public Protocol.ChainParameters getChainParameters() {
     Protocol.ChainParameters.Builder builder = Protocol.ChainParameters.newBuilder();
-    DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
 
-    Protocol.ChainParameters.ChainParameter.Builder builder1
-        = Protocol.ChainParameters.ChainParameter.newBuilder();
+    Arrays.stream(ChainParameters.values()).forEach(parameters -> {
+      try {
+        String methodName = Wallet.makeUpperCamelMethod(parameters.name());
+        builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey(methodName)
+            .setValue((Long) DynamicPropertiesStore.class.getDeclaredMethod(methodName)
+                .invoke(dbManager.getDynamicPropertiesStore()))
+            .build());
+      } catch (Exception ex) {
+        logger.error("get chainParameter error,", ex);
+      }
 
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.MAINTENANCE_TIME_INTERVAL.name())
-        .setValue(
-            dynamicPropertiesStore.getMaintenanceTimeInterval())
-        .build());
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.ACCOUNT_UPGRADE_COST.name())
-        .setValue(
-            dynamicPropertiesStore.getAccountUpgradeCost())
-        .build());
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.CREATE_ACCOUNT_FEE.name())
-        .setValue(
-            dynamicPropertiesStore.getCreateAccountFee())
-        .build());
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.TRANSACTION_FEE.name())
-        .setValue(
-            dynamicPropertiesStore.getTransactionFee())
-        .build());
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.ASSET_ISSUE_FEE.name())
-        .setValue(
-            dynamicPropertiesStore.getAssetIssueFee())
-        .build());
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.WITNESS_PAY_PER_BLOCK.name())
-        .setValue(
-            dynamicPropertiesStore.getWitnessPayPerBlock())
-        .build());
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.WITNESS_STANDBY_ALLOWANCE.name())
-        .setValue(
-            dynamicPropertiesStore.getWitnessStandbyAllowance())
-        .build());
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT.name())
-        .setValue(
-            dynamicPropertiesStore.getCreateNewAccountFeeInSystemContract())
-        .build());
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.CREATE_NEW_ACCOUNT_BANDWIDTH_RATE.name())
-        .setValue(
-            dynamicPropertiesStore.getCreateNewAccountBandwidthRate())
-        .build());
-
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.ALLOW_CREATION_OF_CONTRACTS.name())
-        .setValue(
-            dynamicPropertiesStore.getAllowCreationOfContracts())
-        .build());
-
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.REMOVE_THE_POWER_OF_THE_GR.name())
-        .setValue(
-            dynamicPropertiesStore.getRemoveThePowerOfTheGr())
-        .build());
-
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.ENERGY_FEE.name())
-        .setValue(
-            dynamicPropertiesStore.getEnergyFee())
-        .build());
-
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.EXCHANGE_CREATE_FEE.name())
-        .setValue(
-            dynamicPropertiesStore.getExchangeCreateFee())
-        .build());
-
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.MAX_CPU_TIME_OF_ONE_TX.name())
-        .setValue(
-            dynamicPropertiesStore.getMaxCpuTimeOfOneTX())
-        .build());
+    });
 
     return builder.build();
+  }
+
+  public static String makeUpperCamelMethod(String originName) {
+    return "get" + CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, originName)
+        .replace("_", "");
   }
 
   public AssetIssueList getAssetIssueList() {
@@ -944,9 +883,9 @@ public class Wallet {
     return ret;
   }
 
-  private static boolean isConstant(SmartContract.ABI abi, byte[] selector)  {
+  private static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
 
-    if (selector == null || selector.length != 4 ||  abi.getEntrysList().size() == 0) {
+    if (selector == null || selector.length != 4 || abi.getEntrysList().size() == 0) {
       return false;
     }
 

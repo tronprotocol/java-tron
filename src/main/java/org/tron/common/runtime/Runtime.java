@@ -3,7 +3,6 @@ package org.tron.common.runtime;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static org.apache.commons.lang3.ArrayUtils.getLength;
-import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.utils.MUtil.transfer;
@@ -31,7 +30,6 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.EnergyCost;
-import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.runtime.vm.VM;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType;
@@ -55,9 +53,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.EnergyProcessor;
-import org.tron.core.db.StorageMarket;
 import org.tron.core.db.TransactionTrace;
-import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.VMIllegalException;
@@ -343,7 +339,7 @@ public class Runtime {
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
 
       long MAX_CPU_TIME_OF_ONE_TX = deposit.getDbManager().getDynamicPropertiesStore()
-          .getMaxCpuTimeOfOneTX() * 1000;
+          .getMaxCpuTimeOfOneTx() * 1000;
 
       long thisTxCPULimitInUs = (long) (MAX_CPU_TIME_OF_ONE_TX * getThisTxCPULimitInUsRatio());
 
@@ -426,7 +422,7 @@ public class Runtime {
               .getOriginAddress().toByteArray());
 
       long MAX_CPU_TIME_OF_ONE_TX = deposit.getDbManager().getDynamicPropertiesStore()
-          .getMaxCpuTimeOfOneTX() * 1000;
+          .getMaxCpuTimeOfOneTx() * 1000;
       long thisTxCPULimitInUs =
           (long) (MAX_CPU_TIME_OF_ONE_TX * getThisTxCPULimitInUsRatio());
 
