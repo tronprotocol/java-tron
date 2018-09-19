@@ -202,6 +202,11 @@ public class Benchmark {
     }
   }
 
+  public int checkCPUCore() {
+    return Runtime.getRuntime().availableProcessors();
+  }
+
+
   public String readFile(String fileName) {
 
     try (BufferedReader br = new BufferedReader(new InputStreamReader(Benchmark.class.getResourceAsStream(fileName)))) {
@@ -227,29 +232,50 @@ public class Benchmark {
 
     Benchmark benchmark = new Benchmark();
     boolean checkVersion = benchmark.checkJavaVersion();
+    int systemExit = 0;
 
     if (checkVersion) {
       System.out.println("1. JAVA VERSION:\nsatisfied");
     } else {
-      System.out.println("1. JAVA VERSION:\njava MUST be oracle jdk, and version >= 1.8");
+      System.out.println("1. JAVA VERSION:\nbefore run java-tron, java MUST be oracle jdk, and version >= 1.8");
+      systemExit = 1;
     }
 
+    int cpuCore = benchmark.checkCPUCore();
+    int minCpuCore = 16;
+    if (cpuCore >= minCpuCore) {
+      System.out.println("2. CPU CORE:\nsatisfied");
+    } else {
+      System.out.println("2. CPU CORE:\ndo not update new verson java-tron, because of too few CPU cores, "
+          + "it needs at least " + minCpuCore + " cores");
+      systemExit = 1;
+    }
+
+    long minMem = 32 * 1024; // 32G
     try {
       long mem = benchmark.getMem();
-      String content = "#!/bin/bash\n"
-          + "kill -9 `cat /home/tron/pid.txt`\n"
-          + "nohup  java -jar /home/tron/java-tron/java-tron.jar -p $LOCAL_WITNESS_PRIVATE_KEY "
-          + "--witness -c /home/tron/config.conf > /home/tron/tron-shell.log 2>&1 & echo $! >/home/tron/pid.txt";
-      String newContent = content.replaceAll("java -jar", "java -Xmx" + mem + "m -jar");
-      String newFileName = "start-recommend.sh";
-      benchmark.writeFile(newContent, newFileName);
-      System.out.println(
-          "2. MEMORY:\nwhen setup java, recommend to use: java -Xmx" + mem + "m\ncan see also " + newFileName);
+      if (mem >= minMem) {
+        String content = "#!/bin/bash\n"
+            + "kill -9 `cat /home/tron/pid.txt`\n"
+            + "nohup  java -jar /home/tron/java-tron/java-tron.jar -p $LOCAL_WITNESS_PRIVATE_KEY "
+            + "--witness -c /home/tron/config.conf > /home/tron/tron-shell.log 2>&1 & echo $! >/home/tron/pid.txt";
+        String newContent = content.replaceAll("java -jar", "java -Xmx" + mem + "m -jar");
+        String newFileName = "start-recommend.sh";
+        benchmark.writeFile(newContent, newFileName);
+        System.out.println(
+            "3. MEMORY:\nwhen setup java, recommend to use: java -Xmx" + mem + "m\ncan see also "
+                + newFileName);
+      } else {
+        System.out.println("3. MEMORY:\ndo not update new verson java-tron, because of too few memory, "
+        + "it needs at least " + minMem / 1024 + "GB memory");
+        systemExit = 1;
+      }
 
     } catch (Exception e) {
       logger.info(e.getMessage());
     }
 
+    double maxTimeRatioMax = 20.0;
     benchmark.initData();
 
     TimeBenchmarkResult timeResult = null;
@@ -263,24 +289,30 @@ public class Benchmark {
     }
     if (null != timeResult) {
       try {
-        String content = benchmark.readFile("/config.conf");
-        if (null != content) {
-          String newContent = content
-              .replaceAll("minTimeRatio = \\d+?\\.\\d+?\n",
-                  String.format("minTimeRatio = %.1f\n", timeResult.minTimeRatio));
-          newContent = newContent
-              .replaceAll("maxTimeRatio = \\d+?\\.\\d+?\n",
-                  String.format("maxTimeRatio = %.1f\n", timeResult.maxTimeRatio));
-          String newFileName = "config-recommend.conf";
-          benchmark.writeFile(newContent, newFileName);
-          String str = String
-              .format("3. VMCONFIG:\nvm = {\n"
-                      + "        supportConstant = false\n"
-                      + "        minTimeRatio = %.1f\n"
-                      + "        maxTimeRatio = %.1f\n}\n"
-                      + "can see also " + newFileName,
-                  timeResult.minTimeRatio, timeResult.maxTimeRatio);
-          System.out.println(str);
+        if (timeResult.maxTimeRatio <= maxTimeRatioMax) {
+          String content = benchmark.readFile("/config.conf");
+          if (null != content) {
+            String newContent = content
+                .replaceAll("minTimeRatio = \\d+?\\.\\d+?\n",
+                    String.format("minTimeRatio = %.1f\n", timeResult.minTimeRatio));
+            newContent = newContent
+                .replaceAll("maxTimeRatio = \\d+?\\.\\d+?\n",
+                    String.format("maxTimeRatio = %.1f\n", timeResult.maxTimeRatio));
+            String newFileName = "config-recommend.conf";
+            benchmark.writeFile(newContent, newFileName);
+            String str = String
+                .format("4. VMCONFIG:\nvm = {\n"
+                        + "        supportConstant = false\n"
+                        + "        minTimeRatio = %.1f\n"
+                        + "        maxTimeRatio = %.1f\n}\n"
+                        + "can see also " + newFileName,
+                    timeResult.minTimeRatio, timeResult.maxTimeRatio);
+            System.out.println(str);
+          }
+        } else {
+          System.out.println("4. VMCONFIG:\ndo not update new verson java-tron, because of too slow time_benchmark, "
+              + "it can not beyond 1 second");
+          systemExit = 1;
         }
       } catch (Exception e) {
         logger.info(e.getMessage());
@@ -289,7 +321,7 @@ public class Benchmark {
     }
     benchmark.destroyData();
 
-    System.exit(0);
+    System.exit(systemExit);
   }
 
   public void destroyData() {
