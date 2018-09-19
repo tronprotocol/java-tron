@@ -346,15 +346,15 @@ public class WalletTest {
     Protocol.ChainParameters.Builder builder = Protocol.ChainParameters.newBuilder();
 
     Arrays.stream(ChainParameters.values()).forEach(parameters -> {
+      String methodName = Wallet.makeUpperCamelMethod(parameters.name());
       try {
-        String methodName = Wallet.makeUpperCamelMethod(parameters.name());
         builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey(methodName)
             .setValue((long) DynamicPropertiesStore.class.getDeclaredMethod(methodName)
                 .invoke(manager.getDynamicPropertiesStore()))
             .build());
       } catch (Exception ex) {
-        logger.error("get chainParameter error,", ex);
+        Assert.fail("get chainParameter : " + methodName + ", error : " + ex.getMessage());
       }
 
     });
