@@ -5,6 +5,8 @@ import static junit.framework.TestCase.fail;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -17,6 +19,7 @@ import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -139,42 +142,46 @@ public class PermissionAddKeyActuatorTest {
             .build());
   }
 
-  // TODO: use Key.equals to check result?
-  private void checkResult(
-      String ownerAddress, String permissionName, String keyAddress, long keyWeight) {
-    boolean checked = false;
-    AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(ownerAddress));
-    Permission permission = owner.getPermissionByName(permissionName);
-    if (permission != null) {
-      for (Key key : permission.getKeysList()) {
-        if (key.getAddress().equals(ByteString.copyFrom(ByteArray.fromHexString(keyAddress)))) {
-          if (!checked) {
-            checked = true;
-          } else {
-            Assert.assertFalse(checked);
-          }
-          Assert.assertEquals(key.getWeight(), keyWeight);
-        }
-      }
-    }
+  @Test
+  public void successFistAddPermissionKey() {
+    PermissionAddKeyActuator actuator = new PermissionAddKeyActuator(getContract(), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    Assert.assertTrue(checked);
-  }
+    String ownerAddress = OWNER_ADDRESS;
+    byte[] owner_name_array = ByteArray.fromHexString(ownerAddress);
 
-  private void processAndCheckResult(
-      PermissionAddKeyActuator actuator,
-      TransactionResultCapsule ret,
-      String ownerAddress,
-      String permissionName,
-      String keyAddress,
-      long keyWeight) {
     try {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
 
-      checkResult(ownerAddress, permissionName, keyAddress, keyWeight);
+      AccountCapsule owner = dbManager.getAccountStore().get(owner_name_array);
 
+      List<Permission> expectedPermissions = new ArrayList<>();
+      Permission ownerPermission =
+          TransactionCapsule.getDefaultPermission(ByteString.copyFrom(owner_name_array), "owner");
+      Permission activePermission =
+          Permission.newBuilder()
+              .setName("active")
+              .setThreshold(1)
+              .setParent("owner")
+              .addKeys(
+                  Key.newBuilder()
+                      .setAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
+                      .setWeight(1)
+                      .build())
+              .addKeys(
+                  Key.newBuilder()
+                      .setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS)))
+                      .setWeight(KEY_WEIGHT)
+                      .build())
+              .build();
+      expectedPermissions.add(ownerPermission);
+      expectedPermissions.add(activePermission);
+
+      List<Permission> ownerPermissions = owner.getPermissions();
+
+      Assert.assertEquals(expectedPermissions, ownerPermissions);
       Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -184,17 +191,8 @@ public class PermissionAddKeyActuatorTest {
   }
 
   @Test
-  public void successFistAddPermissionKey() {
-    PermissionAddKeyActuator actuator = new PermissionAddKeyActuator(getContract(), dbManager);
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-
-    processAndCheckResult(actuator, ret, OWNER_ADDRESS, PERMISSION_NAME, KEY_ADDRESS, KEY_WEIGHT);
-  }
-
-  @Test
   public void successSecondAddPermissionKey() {
     // init
-    String permissionName = "owner";
     long keyWeight = 2;
 
     byte[] owner_name_array = ByteArray.fromHexString(OWNER_ADDRESS);
@@ -204,11 +202,60 @@ public class PermissionAddKeyActuatorTest {
 
     PermissionAddKeyActuator actuator =
         new PermissionAddKeyActuator(
-            getContract(OWNER_ADDRESS, SECOND_KEY_ADDRESS, keyWeight, permissionName), dbManager);
+            getContract(OWNER_ADDRESS, SECOND_KEY_ADDRESS, keyWeight, "owner"), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    processAndCheckResult(
-        actuator, ret, OWNER_ADDRESS, permissionName, SECOND_KEY_ADDRESS, keyWeight);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+
+      AccountCapsule owner = dbManager.getAccountStore().get(owner_name_array);
+
+      List<Permission> expectedPermissions = new ArrayList<>();
+      Permission ownerPermission =
+          Permission.newBuilder()
+              .setName("owner")
+              .setThreshold(1)
+              .addKeys(
+                  Key.newBuilder()
+                      .setAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+                      .setWeight(1)
+                      .build())
+              .addKeys(
+                  Key.newBuilder()
+                      .setAddress(ByteString.copyFrom(ByteArray.fromHexString(SECOND_KEY_ADDRESS)))
+                      .setWeight(keyWeight)
+                      .build())
+              .build();
+      Permission activePermission =
+          Permission.newBuilder()
+              .setName("active")
+              .setThreshold(1)
+              .setParent("owner")
+              .addKeys(
+                  Key.newBuilder()
+                      .setAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+                      .setWeight(1)
+                      .build())
+              .addKeys(
+                  Key.newBuilder()
+                      .setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS)))
+                      .setWeight(KEY_WEIGHT)
+                      .build())
+              .build();
+      expectedPermissions.add(ownerPermission);
+      expectedPermissions.add(activePermission);
+
+      List<Permission> ownerPermissions = owner.getPermissions();
+
+      Assert.assertEquals(expectedPermissions, ownerPermissions);
+      Assert.assertTrue(true);
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
   }
 
   @Test
@@ -220,7 +267,48 @@ public class PermissionAddKeyActuatorTest {
             getContract(OWNER_ADDRESS, OWNER_ADDRESS, keyWeight, permissionName), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    processAndCheckResult(actuator, ret, OWNER_ADDRESS, permissionName, OWNER_ADDRESS, keyWeight);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+
+      AccountCapsule owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+
+      List<Permission> expectedPermissions = new ArrayList<>();
+      Permission ownerPermission =
+          Permission.newBuilder()
+              .setName("owner")
+              .setThreshold(1)
+              .addKeys(
+                  Key.newBuilder()
+                      .setAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+                      .setWeight(keyWeight)
+                      .build())
+              .build();
+      Permission activePermission =
+          Permission.newBuilder()
+              .setName("active")
+              .setThreshold(1)
+              .setParent("owner")
+              .addKeys(
+                  Key.newBuilder()
+                      .setAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+                      .setWeight(1)
+                      .build())
+              .build();
+      expectedPermissions.add(ownerPermission);
+      expectedPermissions.add(activePermission);
+
+      List<Permission> ownerPermissions = owner.getPermissions();
+
+      Assert.assertEquals(expectedPermissions, ownerPermissions);
+      Assert.assertTrue(true);
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
   }
 
   @Test
