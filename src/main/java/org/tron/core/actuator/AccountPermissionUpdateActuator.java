@@ -79,7 +79,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
       throw new ContractValidateException("ownerAddress account does not exist");
     }
     //Only support active and owner
-    if (accountPermissionUpdateContract.getPermissionsCount() == 2) {
+    if (accountPermissionUpdateContract.getPermissionsCount() != 2) {
       throw new ContractValidateException("permission's count should be 2.");
     }
     boolean containOwner = false;
