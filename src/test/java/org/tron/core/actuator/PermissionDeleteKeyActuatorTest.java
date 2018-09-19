@@ -151,7 +151,7 @@ public class PermissionDeleteKeyActuatorTest {
     addValidPermissionKey();
 
     // step2, check init data
-    byte[] owner_name_array = ByteArray.fromHexString(OWNER_ADDRESS);
+    byte[] owner_name_array = ByteArray.fromHexString(ownerAddress);
     AccountCapsule owner = dbManager.getAccountStore().get(owner_name_array);
     Permission ownerPermission =
         TransactionCapsule.getDefaultPermission(ByteString.copyFrom(owner_name_array), "owner");
