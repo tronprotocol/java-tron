@@ -6,15 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Writer;
-import java.lang.management.ManagementFactory;
 import java.util.stream.Collectors;
-import javax.management.AttributeNotFoundException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-import javax.management.ReflectionException;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.application.Application;
@@ -193,24 +185,6 @@ public class Benchmark {
     long physicalMemorySize = os.getTotalPhysicalMemorySize();
     System.out.println("old way memory: "+ physicalMemorySize / 1024 / 1024 +" MB");
 
-    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-    Object attribute = null;
-    try {
-      attribute = mBeanServer.getAttribute(new ObjectName("java.lang","type","OperatingSystem"), "TotalPhysicalMemorySize");
-      long i = (Long) attribute;
-      System.out.println("new way memory: "+ i / 1024 / 1024 +" MB");
-    } catch (MBeanException e) {
-      e.printStackTrace();
-    } catch (AttributeNotFoundException e) {
-      e.printStackTrace();
-    } catch (InstanceNotFoundException e) {
-      e.printStackTrace();
-    } catch (ReflectionException e) {
-      e.printStackTrace();
-    } catch (MalformedObjectNameException e) {
-      e.printStackTrace();
-    }
-
     return (long)(physicalMemorySize * 1.0 / 1024 / 1024);
   }
 
@@ -282,15 +256,16 @@ public class Benchmark {
     try {
       long mem = benchmark.getMem();
       if (mem >= minMem) {
+        long recommendMem = (long)(mem * 0.8);
         String content = "#!/bin/bash\n"
             + "kill -9 `cat /home/tron/pid.txt`\n"
             + "nohup  java -jar /home/tron/java-tron/java-tron.jar -p $LOCAL_WITNESS_PRIVATE_KEY "
             + "--witness -c /home/tron/config.conf > /home/tron/tron-shell.log 2>&1 & echo $! >/home/tron/pid.txt";
-        String newContent = content.replaceAll("java -jar", "java -Xmx" + mem + "m -jar");
+        String newContent = content.replaceAll("java -jar", "java -Xmx" + recommendMem + "m -jar");
         String newFileName = "start-recommend.sh";
         benchmark.writeFile(newContent, newFileName);
         System.out.println(
-            "3. MEMORY:\nwhen setup java, recommend to use: java -Xmx" + mem * 0.8 + "m\ncan see also "
+            "3. MEMORY:\nsatisfied\nwhen setup java, recommend to use: java -Xmx" + recommendMem + "m\ncan see also "
                 + newFileName);
       } else {
         System.out.println("3. MEMORY:\ndo not update new verson java-tron, because of too few memory, "
@@ -328,7 +303,7 @@ public class Benchmark {
             String newFileName = "config-recommend.conf";
             benchmark.writeFile(newContent, newFileName);
             String str = String
-                .format("4. VMCONFIG:\nvm = {\n"
+                .format("4. VMCONFIG:\nsatisfied\nvm = {\n"
                         + "        supportConstant = false\n"
                         + "        minTimeRatio = %.1f\n"
                         + "        maxTimeRatio = %.1f\n}\n"
