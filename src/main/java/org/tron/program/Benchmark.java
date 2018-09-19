@@ -1,14 +1,12 @@
 package org.tron.program;
 
-import static org.eclipse.jetty.util.IO.copy;
-
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Reader;
-import java.io.StringWriter;
+import java.io.InputStreamReader;
 import java.io.Writer;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.application.Application;
@@ -35,15 +33,15 @@ import org.tron.protos.Protocol.AccountType;
 
 public class Benchmark {
 
-  private static Manager dbManager;
-  private static TronApplicationContext context;
-  private static DepositImpl deposit;
-  private static String dbPath = "output_TimeBenchmarkTest";
-  private static String OWNER_ADDRESS;
-  private static Application AppT;
-  private static long totalBalance = 30_000_000_000_000L;
+  private Manager dbManager;
+  private TronApplicationContext context;
+  private DepositImpl deposit;
+  private String dbPath = "output_TimeBenchmarkTest";
+  private String OWNER_ADDRESS;
+  private Application AppT;
+  private long totalBalance = 30_000_000_000_000L;
 
-  public static void initData() {
+  public void initData() {
     Args.setParam(
         new String[]{"--output-directory", dbPath, "--debug",},
         "config.conf");
@@ -115,7 +113,7 @@ public class Benchmark {
   //   }
   // }
 
-  public static TimeBenchmarkResult timeBenchmark()
+  public TimeBenchmarkResult timeBenchmark()
       throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException, InterruptedException {
     long value = 0;
     long feeLimit = 200_000_000L; // sun
@@ -157,7 +155,7 @@ public class Benchmark {
 
   }
 
-  public static long triggerContractAndReturnDuration(byte[] contractAddress, long feeLimit)
+  public long triggerContractAndReturnDuration(byte[] contractAddress, long feeLimit)
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
     /* ====================================================================== */
     String params = "0000000000000000000000000000000000000000000000000000000000004e20" +
@@ -172,7 +170,7 @@ public class Benchmark {
     return result.getDuration();
   }
 
-  public static TimeBenchmarkResult getTimeRatio()
+  public TimeBenchmarkResult getTimeRatio()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException, InterruptedException {
 
     TimeBenchmarkResult result = timeBenchmark();
@@ -180,7 +178,7 @@ public class Benchmark {
     return result;
   }
 
-  public static long getMem() {
+  public long getMem() {
 
     com.sun.management.OperatingSystemMXBean os = (com.sun.management.OperatingSystemMXBean)
         java.lang.management.ManagementFactory.getOperatingSystemMXBean();
@@ -189,7 +187,7 @@ public class Benchmark {
     return (long)(physicalMemorySize * 1.0 / 1024 / 1024 * 0.8);
   }
 
-  public static boolean checkJavaVersion() {
+  public boolean checkJavaVersion() {
     String name = System.getProperty("java.runtime.name").toLowerCase();
     if (name.indexOf("openjdk") != -1) {
       return false;
@@ -204,23 +202,18 @@ public class Benchmark {
     }
   }
 
-  public static String readFile(String fileName) {
+  public String readFile(String fileName) {
 
-    File file = new File(fileName);
-    if (null != file && file.canRead()) {
-      try (Reader in = new FileReader(file)){
-        StringWriter out = new StringWriter();
-        copy(in, out);
-        in.close();
-        return out.toString();
-      } catch(IOException e) {
-        logger.info(e.getMessage());
-      }
+    try (BufferedReader br = new BufferedReader(new InputStreamReader(Benchmark.class.getResourceAsStream(fileName)))) {
+      return br.lines().collect(Collectors.joining(System.lineSeparator()));
+    } catch(IOException e) {
+      logger.info(e.getMessage());
+      return null;
     }
-    return null;
+
   }
 
-  public static void writeFile(String content, String fileName) {
+  public void writeFile(String content, String fileName) {
 
     File file = new File(fileName);
     try (Writer writer = new FileWriter(file)){
@@ -232,7 +225,8 @@ public class Benchmark {
 
   public static void main(String[] args) {
 
-    boolean checkVersion = checkJavaVersion();
+    Benchmark benchmark = new Benchmark();
+    boolean checkVersion = benchmark.checkJavaVersion();
 
     if (checkVersion) {
       System.out.println("1. JAVA VERSION:\nsatisfied");
@@ -241,25 +235,26 @@ public class Benchmark {
     }
 
     try {
-      long mem = getMem();
-      String content = readFile("start.sh");
-      if (null != content) {
-        String newContent = content.replaceAll("java -jar", "java -Xmx" + mem + "m -jar");
-        String newFileName = "build/libs/start-recommend.sh";
-        writeFile(newContent, newFileName);
-        System.out.println(
-            "2. MEMORY:\nwhen setup java, recommend to use: java -Xmx" + mem + "m\ncan see also "
-                + newFileName);
-      }
+      long mem = benchmark.getMem();
+      String content = "#!/bin/bash\n"
+          + "kill -9 `cat /home/tron/pid.txt`\n"
+          + "nohup  java -jar /home/tron/java-tron/java-tron.jar -p $LOCAL_WITNESS_PRIVATE_KEY "
+          + "--witness -c /home/tron/config.conf > /home/tron/tron-shell.log 2>&1 & echo $! >/home/tron/pid.txt";
+      String newContent = content.replaceAll("java -jar", "java -Xmx" + mem + "m -jar");
+      String newFileName = "start-recommend.sh";
+      benchmark.writeFile(newContent, newFileName);
+      System.out.println(
+          "2. MEMORY:\nwhen setup java, recommend to use: java -Xmx" + mem + "m\ncan see also " + newFileName);
+
     } catch (Exception e) {
       logger.info(e.getMessage());
     }
 
-    initData();
+    benchmark.initData();
 
     TimeBenchmarkResult timeResult = null;
     try {
-      timeResult = getTimeRatio();
+      timeResult = benchmark.getTimeRatio();
     } catch (ContractExeException | ReceiptCheckErrException | VMIllegalException | ContractValidateException e) {
       logger.info(e.getMessage());
     } catch (InterruptedException e) {
@@ -268,7 +263,7 @@ public class Benchmark {
     }
     if (null != timeResult) {
       try {
-        String content = readFile("src/main/resources/config.conf");
+        String content = benchmark.readFile("/config.conf");
         if (null != content) {
           String newContent = content
               .replaceAll("minTimeRatio = \\d+?\\.\\d+?\n",
@@ -276,8 +271,8 @@ public class Benchmark {
           newContent = newContent
               .replaceAll("maxTimeRatio = \\d+?\\.\\d+?\n",
                   String.format("maxTimeRatio = %.1f\n", timeResult.maxTimeRatio));
-          String newFileName = "build/libs/config-recommend.conf";
-          writeFile(newContent, newFileName);
+          String newFileName = "config-recommend.conf";
+          benchmark.writeFile(newContent, newFileName);
           String str = String
               .format("3. VMCONFIG:\nvm = {\n"
                       + "        supportConstant = false\n"
@@ -292,12 +287,12 @@ public class Benchmark {
       }
 
     }
-    destroyData();
+    benchmark.destroyData();
 
     System.exit(0);
   }
 
-  public static void destroyData() {
+  public void destroyData() {
     Args.clearParam();
     AppT.shutdownServices();
     AppT.shutdown();
