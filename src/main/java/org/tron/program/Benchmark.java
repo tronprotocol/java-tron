@@ -183,7 +183,6 @@ public class Benchmark {
     com.sun.management.OperatingSystemMXBean os = (com.sun.management.OperatingSystemMXBean)
         java.lang.management.ManagementFactory.getOperatingSystemMXBean();
     long physicalMemorySize = os.getTotalPhysicalMemorySize();
-    System.out.println("old way memory: "+ physicalMemorySize / 1024 / 1024 +" MB");
 
     return (long)(physicalMemorySize * 1.0 / 1024 / 1024);
   }
