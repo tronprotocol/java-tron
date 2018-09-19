@@ -395,8 +395,8 @@ public class Program {
     byte[] obtainer = convertToTronAddress(obtainerAddress.getLast20Bytes());
     long balance = getContractState().getBalance(owner);
 
-    if (logger.isInfoEnabled()) {
-      logger.info("Transfer to: [{}] heritage: [{}]",
+    if (logger.isDebugEnabled()) {
+      logger.debug("Transfer to: [{}] heritage: [{}]",
           Hex.toHexString(obtainer),
           balance);
     }
@@ -441,8 +441,8 @@ public class Program {
     // [1] FETCH THE CODE FROM THE MEMORY
     byte[] programCode = memoryChunk(memStart.intValue(), memSize.intValue());
 
-    if (logger.isInfoEnabled()) {
-      logger.info("creating a new contract inside contract run: [{}]",
+    if (logger.isDebugEnabled()) {
+      logger.debug("creating a new contract inside contract run: [{}]",
           Hex.toHexString(senderAddress));
     }
 
@@ -562,8 +562,8 @@ public class Program {
     long refundEnergy = energyLimit.longValueSafe() - result.getEnergyUsed();
     if (refundEnergy > 0) {
       refundEnergy(refundEnergy, "remain energy from the internal call");
-      if (logger.isInfoEnabled()) {
-        logger.info("The remaining energy is refunded, account: [{}], energy: [{}] ",
+      if (logger.isDebugEnabled()) {
+        logger.debug("The remaining energy is refunded, account: [{}], energy: [{}] ",
             Hex.toHexString(convertToTronAddress(getOwnerAddress().getLast20Bytes())),
             refundEnergy);
       }
@@ -594,8 +594,8 @@ public class Program {
     byte[] senderAddress = convertToTronAddress(getOwnerAddress().getLast20Bytes());
     byte[] contextAddress = msg.getType().callIsStateless() ? senderAddress : codeAddress;
 
-    if (logger.isInfoEnabled()) {
-      logger.info(msg.getType().name()
+    if (logger.isDebugEnabled()) {
+      logger.debug(msg.getType().name()
               + " for existing contract: address: [{}], outDataOffs: [{}], outDataSize: [{}]  ",
           Hex.toHexString(contextAddress), msg.getOutDataOffs().longValue(),
           msg.getOutDataSize().longValue());
@@ -685,7 +685,7 @@ public class Program {
       }
 
       if (byTestingSuite()) {
-        logger.info("Testing run, skipping storage diff listener");
+        logger.debug("Testing run, skipping storage diff listener");
       }
       // else if (Arrays.equals(transaction.getReceiveAddress(), internalTx.getReceiveAddress())) {
       //   storageDiffListener.merge(program.getStorageDiff());
@@ -712,8 +712,8 @@ public class Program {
       BigInteger refundEnergy = msg.getEnergy().value().subtract(toBI(result.getEnergyUsed()));
       if (isPositive(refundEnergy)) {
         refundEnergy(refundEnergy.longValueExact(), "remaining energy from the internal call");
-        if (logger.isInfoEnabled()) {
-          logger.info("The remaining energy refunded, account: [{}], energy: [{}] ",
+        if (logger.isDebugEnabled()) {
+          logger.debug("The remaining energy refunded, account: [{}], energy: [{}] ",
               Hex.toHexString(senderAddress),
               refundEnergy.toString());
         }
@@ -750,10 +750,11 @@ public class Program {
     }
     long vmNowInUs = System.nanoTime() / 1000;
     if (vmNowInUs > getVmShouldEndInUs()) {
-      logger.error("minTimeRatio: {}", Args.getInstance().getMinTimeRatio());
-      logger.error("maxTimeRatio: {}", Args.getInstance().getMaxTimeRatio());
-      logger.error("vm should end time in us: {}", getVmShouldEndInUs());
-      logger.error("vm start time in us: {}", getVmStartInUs());
+      logger.info(
+          "minTimeRatio: {}, maxTimeRatio: {}, vm should end time in us: {}, " +
+              "vm now time in us: {}, vm start time in us: {}",
+          Args.getInstance().getMinTimeRatio(), Args.getInstance().getMaxTimeRatio(),
+          getVmShouldEndInUs(), vmNowInUs, getVmStartInUs());
       throw Exception.notEnoughTime(opName);
     }
 
@@ -764,12 +765,12 @@ public class Program {
   }
 
   public void refundEnergy(long energyValue, String cause) {
-    logger.info("[{}] Refund for cause: [{}], energy: [{}]", invoke.hashCode(), cause, energyValue);
+    logger.debug("[{}] Refund for cause: [{}], energy: [{}]", invoke.hashCode(), cause, energyValue);
     getResult().refundEnergy(energyValue);
   }
 
   public void futureRefundEnergy(long energyValue) {
-    logger.info("Future refund added: [{}]", energyValue);
+    logger.debug("Future refund added: [{}]", energyValue);
     getResult().addFutureRefund(energyValue);
   }
 
