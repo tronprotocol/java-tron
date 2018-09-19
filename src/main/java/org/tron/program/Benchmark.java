@@ -6,7 +6,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Writer;
+import java.lang.management.ManagementFactory;
 import java.util.stream.Collectors;
+import javax.management.AttributeNotFoundException;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import javax.management.ReflectionException;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.application.Application;
@@ -158,9 +166,9 @@ public class Benchmark {
   public long triggerContractAndReturnDuration(byte[] contractAddress, long feeLimit)
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
     /* ====================================================================== */
-    String params = "0000000000000000000000000000000000000000000000000000000000004e20" +
-        "00000000000000000000000000000000000000000000000000000000000007d0" +
-        "00000000000000000000000000000000000000000000000000000000000000c8";
+    String params = "0000000000000000000000000000000000000000000000000000000000002fa8" +
+        "00000000000000000000000000000000000000000000000000000000000004c4" +
+        "000000000000000000000000000000000000000000000000000000000000007a";
     byte[] triggerData = VMTimeBenchmarkUtils
         .parseABI("timeBenchmark(uint256,uint256,uint256)", params);
     TVMResult result = VMTimeBenchmarkUtils
@@ -183,8 +191,27 @@ public class Benchmark {
     com.sun.management.OperatingSystemMXBean os = (com.sun.management.OperatingSystemMXBean)
         java.lang.management.ManagementFactory.getOperatingSystemMXBean();
     long physicalMemorySize = os.getTotalPhysicalMemorySize();
+    System.out.println("old way memory: "+ physicalMemorySize / 1024 / 1024 +" MB");
 
-    return (long)(physicalMemorySize * 1.0 / 1024 / 1024 * 0.8);
+    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+    Object attribute = null;
+    try {
+      attribute = mBeanServer.getAttribute(new ObjectName("java.lang","type","OperatingSystem"), "TotalPhysicalMemorySize");
+      long i = (Long) attribute;
+      System.out.println("new way memory: "+ i / 1024 / 1024 +" MB");
+    } catch (MBeanException e) {
+      e.printStackTrace();
+    } catch (AttributeNotFoundException e) {
+      e.printStackTrace();
+    } catch (InstanceNotFoundException e) {
+      e.printStackTrace();
+    } catch (ReflectionException e) {
+      e.printStackTrace();
+    } catch (MalformedObjectNameException e) {
+      e.printStackTrace();
+    }
+
+    return (long)(physicalMemorySize * 1.0 / 1024 / 1024);
   }
 
   public boolean checkJavaVersion() {
@@ -251,7 +278,7 @@ public class Benchmark {
       systemExit = 1;
     }
 
-    long minMem = 32 * 1024; // 32G
+    long minMem = 30 * 1024; // 30G
     try {
       long mem = benchmark.getMem();
       if (mem >= minMem) {
@@ -263,7 +290,7 @@ public class Benchmark {
         String newFileName = "start-recommend.sh";
         benchmark.writeFile(newContent, newFileName);
         System.out.println(
-            "3. MEMORY:\nwhen setup java, recommend to use: java -Xmx" + mem + "m\ncan see also "
+            "3. MEMORY:\nwhen setup java, recommend to use: java -Xmx" + mem * 0.8 + "m\ncan see also "
                 + newFileName);
       } else {
         System.out.println("3. MEMORY:\ndo not update new verson java-tron, because of too few memory, "
