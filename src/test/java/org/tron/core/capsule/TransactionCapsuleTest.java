@@ -14,6 +14,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
@@ -45,6 +47,7 @@ public class TransactionCapsuleTest {
 
   private static Manager dbManager;
   private static TronApplicationContext context;
+  private static Application AppT;
   private static String dbPath = "output_transactioncapsule_test";
   private static String OWNER_ADDRESS;
   private static String OWNER_KEY = "bfa67cb3dc6609b3a0c98e717d66f38ed1a159b5b3421678dfab85961c40de2f";
@@ -75,6 +78,7 @@ public class TransactionCapsuleTest {
     Args.setParam(new String[]{"-d", dbPath},
         Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
+    AppT = ApplicationFactory.create(context);
     dbManager = context.getBean(Manager.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "03702350064AD5C1A8AA6B4D74B051199CFF8EA7";
     TO_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -111,6 +115,9 @@ public class TransactionCapsuleTest {
   @AfterClass
   public static void removeDb() {
     Args.clearParam();
+    AppT.shutdownServices();
+    AppT.shutdown();
+    context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }
 
