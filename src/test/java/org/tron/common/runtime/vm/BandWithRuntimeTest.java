@@ -23,6 +23,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TVMTestUtils;
@@ -248,6 +249,7 @@ public class BandWithRuntimeTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
+    ApplicationFactory.create(context).shutdown();
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }
