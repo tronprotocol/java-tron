@@ -281,7 +281,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     builder.addKeys(key);
     builder.setThreshold(1);
     builder.setName(name);
-    if (!"owner".equalsIgnoreCase(name)){
+    if (!"owner".equalsIgnoreCase(name)) {
       builder.setParent("owner");
     }
     return builder.build();
@@ -589,8 +589,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       return true;
     }
 
-    if (this.transaction.getSignatureCount() == 0
-        || this.transaction.getSignatureCount() != this.transaction.getRawData()
+    if (this.transaction.getSignatureCount() != this.transaction.getRawData()
         .getContractCount()) {
       throw new ValidateSignatureException("miss sig or contract");
     }
