@@ -67,7 +67,8 @@ public class WalletTestBlock001 {
     Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getNumber() > 0);
     Assert.assertFalse(currentBlock.getBlockHeader().getRawData().getParentHash().isEmpty());
     Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
-    logger.info("test getcurrentblock is " + Long.toString(currentBlock.getBlockHeader().getRawData().getNumber()));
+    logger.info("test getcurrentblock is " + Long.toString(currentBlock.getBlockHeader()
+        .getRawData().getNumber()));
 
     //Improve coverage.
     currentBlock.equals(currentBlock);
@@ -90,7 +91,8 @@ public class WalletTestBlock001 {
     Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getNumber() > 0);
     Assert.assertFalse(currentBlock.getBlockHeader().getRawData().getParentHash().isEmpty());
     Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
-    logger.info("test getcurrentblock in soliditynode is " + Long.toString(currentBlock.getBlockHeader().getRawData().getNumber()));
+    logger.info("test getcurrentblock in soliditynode is " + Long.toString(currentBlock
+        .getBlockHeader().getRawData().getNumber()));
   }
 
   @AfterClass
