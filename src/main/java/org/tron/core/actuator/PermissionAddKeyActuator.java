@@ -82,9 +82,6 @@ public class PermissionAddKeyActuator extends AbstractActuator {
         !name.equalsIgnoreCase("active")) {
       throw new ContractValidateException("permission name should be owner or active");
     }
-    if (name.isEmpty()) {
-      throw new ContractValidateException("permission name should not be empty");
-    }
 //    if (!permissionAddKeyContract.getKey().isInitialized()) {
 //      throw new ContractValidateException("key should be initialized");
 //    }
