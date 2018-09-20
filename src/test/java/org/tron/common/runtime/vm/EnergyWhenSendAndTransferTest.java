@@ -270,11 +270,10 @@ public class EnergyWhenSendAndTransferTest {
     AppT.shutdownServices();
     AppT.shutdown();
     context.destroy();
-
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {
-      logger.info("Release resources failure.");
+      logger.warn("Release resources failure.");
     }
   }
 

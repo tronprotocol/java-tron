@@ -326,7 +326,7 @@ public class Manager {
               this.rePush(tx);
             }
           } catch (InterruptedException ex) {
-            logger.error(ex.getMessage());
+            logger.info(ex.getMessage());
             Thread.currentThread().interrupt();
           } catch (Exception ex) {
             logger.error("unknown exception happened in repush loop", ex);
