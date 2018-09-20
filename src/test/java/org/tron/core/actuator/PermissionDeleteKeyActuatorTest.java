@@ -13,6 +13,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -38,6 +40,7 @@ public class PermissionDeleteKeyActuatorTest {
   private static Manager dbManager;
   private static final String dbPath = "output_transfer_test";
   private static TronApplicationContext context;
+  private static Application AppT;
 
   private static final String OWNER_ADDRESS;
   private static final String KEY_ADDRESS;
@@ -54,6 +57,7 @@ public class PermissionDeleteKeyActuatorTest {
   static {
     Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
+    AppT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     KEY_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
 
@@ -79,6 +83,8 @@ public class PermissionDeleteKeyActuatorTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
+    AppT.shutdownServices();
+    AppT.shutdown();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");

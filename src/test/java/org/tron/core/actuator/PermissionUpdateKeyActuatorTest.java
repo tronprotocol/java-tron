@@ -14,6 +14,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -39,6 +41,7 @@ public class PermissionUpdateKeyActuatorTest {
   private static Manager dbManager;
   private static final String dbPath = "output_transfer_test";
   private static TronApplicationContext context;
+  private static Application AppT;
 
   private static final String OWNER_ADDRESS;
   private static final String KEY_ADDRESS;
@@ -57,6 +60,7 @@ public class PermissionUpdateKeyActuatorTest {
   static {
     Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
+    AppT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     KEY_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
 
@@ -88,7 +92,10 @@ public class PermissionUpdateKeyActuatorTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
+    AppT.shutdownServices();
+    AppT.shutdown();
     context.destroy();
+
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {
@@ -297,22 +304,6 @@ public class PermissionUpdateKeyActuatorTest {
   }
 
   @Test
-  public void unpackError() {
-    // Any unpackContract = getUnpackContract();
-    // PermissionUpdateKeyActuator actuator =
-    //     new PermissionUpdateKeyActuator(unpackContract, dbManager);
-    // TransactionResultCapsule ret = new TransactionResultCapsule();
-    //
-    // processAndCheckInvalid(
-    //     actuator,
-    //     ret,
-    //     "contract type error",
-    //     "contract type error,expected type [PermissionUpdateKeyContract],real type["
-    //         + unpackContract.getClass()
-    //         + "]");
-  }
-
-  @Test
   public void invalidOwnerAddress() {
     PermissionUpdateKeyActuator actuator =
         new PermissionUpdateKeyActuator(
@@ -375,20 +366,6 @@ public class PermissionUpdateKeyActuatorTest {
         actuator, ret, "you have not set owner permission", "you have not set owner permission");
   }
 
-  /** cannot exec */
-  @Test
-  public void emptyPermissionName() {
-    // PermissionUpdateKeyActuator actuator =
-    //     new PermissionUpdateKeyActuator(getContract(OWNER_ADDRESS, VALID_KEY, ""), dbManager);
-    // TransactionResultCapsule ret = new TransactionResultCapsule();
-    //
-    // processAndCheckInvalid(
-    //     actuator,
-    //     ret,
-    //     "permission name should be not empty",
-    //     "permission name should be not empty");
-  }
-
   @Test
   public void nullPermissionWithName() {
     String ownerAddress = OWNER_ADDRESS;
@@ -414,39 +391,6 @@ public class PermissionUpdateKeyActuatorTest {
         ret,
         "no permission with given name",
         "you have not set permission with the name " + permissionName);
-  }
-
-  /** cannot exec */
-  @Test
-  public void keyNotInitialized() {
-    // String ownerAddress = OWNER_ADDRESS;
-    // String permissionName = "active";
-    //
-    // byte[] owner_name_array = ByteArray.fromHexString(ownerAddress);
-    // AccountCapsule owner = dbManager.getAccountStore().get(owner_name_array);
-    // Permission ownerPermission =
-    //     TransactionCapsule.getDefaultPermission(ByteString.copyFrom(owner_name_array), "owner");
-    // Permission activePermission =
-    //     TransactionCapsule.getDefaultPermission(ByteString.copyFrom(owner_name_array), "active");
-    // List<Permission> initPermissions = new ArrayList<>();
-    // initPermissions.add(ownerPermission);
-    // initPermissions.add(activePermission);
-    // owner.updatePermissions(initPermissions);
-    // dbManager.getAccountStore().put(owner_name_array, owner);
-    //
-    // // VALID_KEY.isInitialized();
-    //
-    // // check
-    // PermissionUpdateKeyActuator actuator =
-    //     new PermissionUpdateKeyActuator(
-    //         getContract(ownerAddress, VALID_KEY, permissionName), dbManager);
-    // TransactionResultCapsule ret = new TransactionResultCapsule();
-    //
-    // processAndCheckInvalid(
-    //     actuator,
-    //     ret,
-    //     "no permission with given name",
-    //     "you have not set permission with the name " + permissionName);
   }
 
   @Test

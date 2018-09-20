@@ -109,6 +109,11 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
       if (!parent.isEmpty() && !parent.equalsIgnoreCase("owner")) {
         throw new ContractValidateException("permission's parent should be owner");
       }
+
+      if (containActive && parent.isEmpty()) {
+        throw new ContractValidateException("active permission's parent should not be empty");
+      }
+
       long weightSum = 0;
       List<ByteString> addressList = permission.getKeysList()
           .stream()

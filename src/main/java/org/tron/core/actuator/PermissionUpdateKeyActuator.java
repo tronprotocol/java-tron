@@ -93,12 +93,6 @@ public class PermissionUpdateKeyActuator extends AbstractActuator {
     if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("invalidate ownerAddress");
     }
-    if (name.isEmpty()) {
-      throw new ContractValidateException("permission name should be not empty");
-    }
-    if (!permissionUpdateKeyContract.getKey().isInitialized()) {
-      throw new ContractValidateException("key should be initialized");
-    }
     if (!Wallet.addressValid(permissionUpdateKeyContract.getKey().getAddress().toByteArray())) {
       throw new ContractValidateException("address in key is invalidate");
     }

@@ -14,6 +14,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -39,6 +41,7 @@ public class AccountPermissionUpdateActuatorTest {
   private static Manager dbManager;
   private static final String dbPath = "output_transfer_test";
   private static TronApplicationContext context;
+  public static Application AppT;
 
   private static final String OWNER_ADDRESS;
   private static final String KEY_ADDRESS;
@@ -53,6 +56,7 @@ public class AccountPermissionUpdateActuatorTest {
   static {
     Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
+    AppT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     KEY_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
 
@@ -64,7 +68,6 @@ public class AccountPermissionUpdateActuatorTest {
             .setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS)))
             .setWeight(KEY_WEIGHT)
             .build();
-
   }
 
   /** Init data. */
@@ -77,6 +80,8 @@ public class AccountPermissionUpdateActuatorTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
+    AppT.shutdownServices();
+    AppT.shutdown();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
@@ -133,15 +138,6 @@ public class AccountPermissionUpdateActuatorTest {
     return Any.pack(contract);
   }
 
-  private Any getContract(String ownerAddress, Key Key, String permissionName) {
-    return Any.pack(
-        Contract.PermissionUpdateKeyContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
-            .setKey(Key)
-            .setPermissionName(permissionName)
-            .build());
-  }
-
   /** return a PermissionAddKeyContract as an invalid contract */
   private Any getInvalidContract() {
     return Any.pack(
@@ -157,6 +153,7 @@ public class AccountPermissionUpdateActuatorTest {
     AccountCapsule account = dbManager.getAccountStore().get(owner_name_array);
 
     List<Permission> initPermissions = new ArrayList<>();
+    //new String[] {"active", "owner"}
     for (String permissionName : Arrays.asList("owner", "active")) {
       Permission permission =
           TransactionCapsule.getDefaultPermission(
@@ -221,16 +218,17 @@ public class AccountPermissionUpdateActuatorTest {
             AccountType.Normal);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
 
-    ownerPermission = Permission.newBuilder()
-        .setName("owner")
-        .setThreshold(2)
-        .addKeys(Key.newBuilder().setAddress(address).setWeight(4).build())
-        .addKeys(
-            Key.newBuilder()
-                .setAddress(ByteString.copyFrom(ByteArray.fromHexString(keyAddress)))
-                .setWeight(5)
-                .build())
-        .build();
+    ownerPermission =
+        Permission.newBuilder()
+            .setName("owner")
+            .setThreshold(2)
+            .addKeys(Key.newBuilder().setAddress(address).setWeight(4).build())
+            .addKeys(
+                Key.newBuilder()
+                    .setAddress(ByteString.copyFrom(ByteArray.fromHexString(keyAddress)))
+                    .setWeight(5)
+                    .build())
+            .build();
     activePermission =
         Permission.newBuilder()
             .setName("active")
@@ -285,22 +283,6 @@ public class AccountPermissionUpdateActuatorTest {
         "contract type error,expected type [AccountPermissionUpdateContract],real type["
             + invalidContract.getClass()
             + "]");
-  }
-
-  @Test
-  public void unpackError() {
-    // Any unpackContract = getUnpackContract();
-    // PermissionUpdateKeyActuator actuator =
-    //     new PermissionUpdateKeyActuator(unpackContract, dbManager);
-    // TransactionResultCapsule ret = new TransactionResultCapsule();
-    //
-    // processAndCheckInvalid(
-    //     actuator,
-    //     ret,
-    //     "contract type error",
-    //     "contract type error,expected type [PermissionUpdateKeyContract],real type["
-    //         + unpackContract.getClass()
-    //         + "]");
   }
 
   @Test
