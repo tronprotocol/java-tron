@@ -69,7 +69,7 @@ public class WalletTestAssetIssue001 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(noBandwitch);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -101,7 +101,7 @@ public class WalletTestAssetIssue001 {
     }
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testTransferAssetBandwitchDecreaseWithin10Second() {
     Assert.assertTrue(
         transferAsset(toAddress, name.getBytes(), 100L, noBandwitchAddress, noBandwitch));
@@ -135,7 +135,7 @@ public class WalletTestAssetIssue001 {
 
   }
 
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

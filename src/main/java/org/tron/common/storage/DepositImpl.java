@@ -423,25 +423,6 @@ public class DepositImpl implements Deposit {
   }
 
   @Override
-  public long computeAfterRunStorageSize() {
-    AtomicLong afterRunStorageSize = new AtomicLong();
-    storageCache.forEach((key, value) -> {
-      afterRunStorageSize.getAndAdd(value.computeSize());
-    });
-    return afterRunStorageSize.get();
-  }
-
-  @Override
-  public long getBeforeRunStorageSize() {
-    AtomicLong beforeRunStorageSize = new AtomicLong();
-    storageCache.forEach((key, value) -> {
-      beforeRunStorageSize.getAndAdd(value.getBeforeUseSize());
-    });
-    return beforeRunStorageSize.get();
-  }
-
-
-  @Override
   public void putAccount(Key key, Value value) {
     accountCache.put(key, value);
   }

@@ -48,6 +48,7 @@ import org.tron.common.net.udp.message.discover.NeighborsMessage;
 import org.tron.common.net.udp.message.discover.PingMessage;
 import org.tron.common.net.udp.message.discover.PongMessage;
 import org.tron.common.overlay.discover.DiscoverListener;
+import org.tron.common.overlay.discover.RefreshTask;
 import org.tron.common.overlay.discover.node.NodeHandler.State;
 import org.tron.common.overlay.discover.node.statistics.MessageStatistics;
 import org.tron.common.overlay.discover.node.statistics.NodeStatistics;
@@ -94,8 +95,7 @@ public class NodeManager implements EventHandler {
     this.dbManager = dbManager;
     discoveryEnabled = args.isNodeDiscoveryEnable();
 
-    homeNode = new Node(Args.getInstance().getMyKey().getNodeId(), args.getNodeExternalIp(),
-        args.getNodeListenPort());
+    homeNode = new Node(RefreshTask.getNodeId(), args.getNodeExternalIp(), args.getNodeListenPort());
 
     for (String boot : args.getSeedNode().getIpList()) {
       bootNodes.add(Node.instanceOf(boot));
