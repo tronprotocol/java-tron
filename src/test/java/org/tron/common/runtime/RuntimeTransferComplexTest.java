@@ -55,7 +55,7 @@ public class RuntimeTransferComplexTest {
     dbManager = context.getBean(Manager.class);
     deposit = DepositImpl.createRoot(dbManager);
     deposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
-    deposit.addBalance(Hex.decode(OWNER_ADDRESS), 100000000);
+    deposit.addBalance(Hex.decode(OWNER_ADDRESS), 1000000000);
     deposit.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
     deposit.addBalance(Hex.decode(TRANSFER_TO), 10);
     deposit.commit();
