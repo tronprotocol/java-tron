@@ -37,7 +37,7 @@ public class WalletTestAssetIssue015 {
 
 
   //testng001、testng002、testng003、testng004
-/*  private static final byte[] fromAddress = Base58
+  /*  private static final byte[] fromAddress = Base58
       .decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");
   private static final byte[] toAddress = Base58
       .decodeFromBase58Check("TV75jZpdmP2juMe1dRwGrwpV6AMU6mr1EU");*/

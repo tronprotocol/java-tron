@@ -122,7 +122,7 @@ public class WalletTestAssetIssue018 {
     //Get asset issue by name
     String asset1Name = name;
     String asset2Name = name + "_1";
-    String asset3Name = name + "_2";
+    final String asset3Name = name + "_2";
     ByteString assetNameBs = ByteString.copyFrom(asset1Name.getBytes());
     GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
     Contract.AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request);
