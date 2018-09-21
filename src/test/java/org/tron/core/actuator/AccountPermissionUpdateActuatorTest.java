@@ -270,6 +270,32 @@ public class AccountPermissionUpdateActuatorTest {
   }
 
   @Test
+  public void nullContract() {
+    AccountPermissionUpdateActuator actuator =
+        new AccountPermissionUpdateActuator(null, dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    processAndCheckInvalid(
+        actuator,
+        ret,
+        "No contract!",
+        "No contract!");
+  }
+
+  @Test
+  public void nullDbManager() {
+    AccountPermissionUpdateActuator actuator =
+        new AccountPermissionUpdateActuator(getContract(OWNER_ADDRESS), null);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    processAndCheckInvalid(
+        actuator,
+        ret,
+        "No dbManager!",
+        "No dbManager!");
+  }
+
+  @Test
   public void invalidContract() {
     Any invalidContract = getInvalidContract();
     AccountPermissionUpdateActuator actuator =

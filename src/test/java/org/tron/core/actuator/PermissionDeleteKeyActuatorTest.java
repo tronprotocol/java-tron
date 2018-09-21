@@ -220,6 +220,24 @@ public class PermissionDeleteKeyActuatorTest {
   }
 
   @Test
+  public void nullContract() {
+    PermissionDeleteKeyActuator actuator = new PermissionDeleteKeyActuator(null, dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    processAndCheckInvalid(actuator, ret, "No contract!", "No contract!");
+  }
+
+  @Test
+  public void nullDbManager() {
+    PermissionDeleteKeyActuator actuator =
+        new PermissionDeleteKeyActuator(
+            getContract(OWNER_ADDRESS_INVALID, KEY_ADDRESS, "owner"), null);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    processAndCheckInvalid(actuator, ret, "No dbManager!", "No dbManager!");
+  }
+
+  @Test
   public void invalidContract() {
     Any invalidContract = getInvalidContract();
     PermissionDeleteKeyActuator actuator =

@@ -147,6 +147,24 @@ public class PermissionAddKeyActuatorTest {
             .build());
   }
 
+  private void processAndCheckInvalid(
+      PermissionAddKeyActuator actuator,
+      TransactionResultCapsule ret,
+      String failMsg,
+      String expectedMsg) {
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+
+      fail(failMsg);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(expectedMsg, e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
   @Test
   public void successFistAddPermissionKey() {
     PermissionAddKeyActuator actuator = new PermissionAddKeyActuator(getContract(), dbManager);
@@ -264,7 +282,7 @@ public class PermissionAddKeyActuatorTest {
   }
 
   @Test
-  public void addOwnerSelfKey() {
+  public void successAddOwnerSelfKey() {
     long keyWeight = 3;
     String permissionName = "owner";
     PermissionAddKeyActuator actuator =
@@ -317,26 +335,34 @@ public class PermissionAddKeyActuatorTest {
   }
 
   @Test
+  public void nullContract() {
+    PermissionAddKeyActuator actuator = new PermissionAddKeyActuator(null, dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    processAndCheckInvalid(actuator, ret, "No contract!", "No contract!");
+  }
+
+  @Test
+  public void nullDbManager() {
+    PermissionAddKeyActuator actuator = new PermissionAddKeyActuator(getContract(), null);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    processAndCheckInvalid(actuator, ret, "No dbManager!", "No dbManager!");
+  }
+
+  @Test
   public void invalidContract() {
     Any invalidContract = getInvalidContract();
     PermissionAddKeyActuator actuator = new PermissionAddKeyActuator(invalidContract, dbManager);
-
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    try {
-      actuator.validate();
-      actuator.execute(ret);
 
-      fail("contract type error");
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals(
-          "contract type error,expected type [PermissionAddKeyContract],real type["
-              + invalidContract.getClass()
-              + "]",
-          e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    }
+    processAndCheckInvalid(
+        actuator,
+        ret,
+        "contract type error",
+        "contract type error,expected type [PermissionAddKeyContract],real type["
+            + invalidContract.getClass()
+            + "]");
   }
 
   @Test
@@ -344,19 +370,9 @@ public class PermissionAddKeyActuatorTest {
     PermissionAddKeyActuator actuator =
         new PermissionAddKeyActuator(
             getContract(OWNER_ADDRESS_INVALID, VALID_KEY, "owner"), dbManager);
-
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    try {
-      actuator.validate();
-      actuator.execute(ret);
 
-      fail("invalidate ownerAddress");
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("invalidate ownerAddress", e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    }
+    processAndCheckInvalid(actuator, ret, "invalidate ownerAddress", "invalidate ownerAddress");
   }
 
   @Test
@@ -366,17 +382,11 @@ public class PermissionAddKeyActuatorTest {
             getContract(OWNER_ADDRESS_NOACCOUNT, VALID_KEY, "owner"), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-
-      fail("ownerAddress account does not exist");
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("ownerAddress account does not exist", e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    }
+    processAndCheckInvalid(
+        actuator,
+        ret,
+        "ownerAddress account does not exist",
+        "ownerAddress account does not exist");
   }
 
   @Test
@@ -387,17 +397,11 @@ public class PermissionAddKeyActuatorTest {
             dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-
-      fail("permission name should be owner or active");
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("permission name should be owner or active", e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    }
+    processAndCheckInvalid(
+        actuator,
+        ret,
+        "permission name should be owner or active",
+        "permission name should be owner or active");
   }
 
   @Test
@@ -408,17 +412,8 @@ public class PermissionAddKeyActuatorTest {
             dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-
-      fail("address in key is invalidate");
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("address in key is invalidate", e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    }
+    processAndCheckInvalid(
+        actuator, ret, "address in key is invalidate", "address in key is invalidate");
   }
 
   @Test
@@ -432,22 +427,15 @@ public class PermissionAddKeyActuatorTest {
     // check
     PermissionAddKeyActuator actuator = new PermissionAddKeyActuator(getContract(), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    try {
-      actuator.validate();
-      actuator.execute(ret);
 
-      fail("address already in permission");
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals(
-          "address "
-              + Wallet.encode58Check(ByteArray.fromHexString(KEY_ADDRESS))
-              + " is already in permission "
-              + PERMISSION_NAME,
-          e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    }
+    processAndCheckInvalid(
+        actuator,
+        ret,
+        "address already in permission",
+        "address "
+            + Wallet.encode58Check(ByteArray.fromHexString(KEY_ADDRESS))
+            + " is already in permission "
+            + PERMISSION_NAME);
   }
 
   @Test
@@ -458,16 +446,10 @@ public class PermissionAddKeyActuatorTest {
             dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-
-      fail("key weight should be greater than 0");
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("key weight should be greater than 0", e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    }
+    processAndCheckInvalid(
+        actuator,
+        ret,
+        "key weight should be greater than 0",
+        "key weight should be greater than 0");
   }
 }

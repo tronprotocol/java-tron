@@ -30,6 +30,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
+import org.tron.protos.Contract.PermissionUpdateKeyContract;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Permission;
@@ -285,6 +286,23 @@ public class PermissionUpdateKeyActuatorTest {
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
+  }
+
+  @Test
+  public void nullContract() {
+    PermissionUpdateKeyActuator actuator = new PermissionUpdateKeyActuator(null, dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    processAndCheckInvalid(actuator, ret, "No contract!", "No contract!");
+  }
+
+  @Test
+  public void nullDbManager() {
+    PermissionUpdateKeyActuator actuator =
+        new PermissionUpdateKeyActuator(getContract(OWNER_ADDRESS, VALID_KEY, "owner"), null);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    processAndCheckInvalid(actuator, ret, "No dbManager!", "No dbManager!");
   }
 
   @Test
