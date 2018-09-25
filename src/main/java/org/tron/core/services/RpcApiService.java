@@ -1369,7 +1369,7 @@ public class RpcApiService implements Service {
     public void getDelegatedResource(DelegatedResourceMessage request,
         StreamObserver<DelegatedResourceList> responseObserver) {
       responseObserver
-          .onNext(wallet.getDelegatedResource(request.getAddress(), request.getIsFrom()));
+          .onNext(wallet.getDelegatedResource(request.getFromAddress(), request.getToAddress()));
       responseObserver.onCompleted();
     }
 

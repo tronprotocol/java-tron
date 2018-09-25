@@ -38,6 +38,7 @@ import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
+import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
@@ -66,6 +67,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -514,19 +516,15 @@ public class Wallet {
     return builder.build();
   }
 
-  public DelegatedResourceList getDelegatedResource(ByteString address, boolean isFrom) {
+  public DelegatedResourceList getDelegatedResource(ByteString fromAddress, ByteString toAddress) {
     DelegatedResourceList.Builder builder = DelegatedResourceList.newBuilder();
-    List<DelegatedResourceCapsule> delegatedResourceCapsules = null;
-    if (isFrom) {
-      delegatedResourceCapsules = dbManager.getDelegatedResourceStore()
-          .getByFrom(address.toByteArray());
-    } else {
-      delegatedResourceCapsules = dbManager.getDelegatedResourceStore()
-          .getByFrom(address.toByteArray());
+    byte[] dbKey = DelegatedResourceCapsule
+        .createDbKey(fromAddress.toByteArray(), toAddress.toByteArray());
+    DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
+        .get(dbKey);
+    if (delegatedResourceCapsule != null) {
+      builder.addDelegatedResource(delegatedResourceCapsule.getInstance());
     }
-    delegatedResourceCapsules
-        .forEach(delegatedResourceCapsule -> builder
-            .addDelegatedResource(delegatedResourceCapsule.getInstance()));
     return builder.build();
   }
 
@@ -674,7 +672,8 @@ public class Wallet {
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
 
-    long netLimit = processor.calculateGlobalNetLimit(accountCapsule.getAllFrozenBalanceForBandwidth());
+    long netLimit = processor
+        .calculateGlobalNetLimit(accountCapsule.getAllFrozenBalanceForBandwidth());
     long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
     long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
@@ -712,7 +711,8 @@ public class Wallet {
     EnergyProcessor energyProcessor = new EnergyProcessor(dbManager);
     energyProcessor.updateUsage(accountCapsule);
 
-    long netLimit = processor.calculateGlobalNetLimit(accountCapsule.getAllFrozenBalanceForBandwidth());
+    long netLimit = processor
+        .calculateGlobalNetLimit(accountCapsule.getAllFrozenBalanceForBandwidth());
     long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
     long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
@@ -960,9 +960,9 @@ public class Wallet {
     return ret;
   }
 
-  private static boolean isConstant(SmartContract.ABI abi, byte[] selector)  {
+  private static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
 
-    if (selector == null || selector.length != 4 ||  abi.getEntrysList().size() == 0) {
+    if (selector == null || selector.length != 4 || abi.getEntrysList().size() == 0) {
       return false;
     }
 
