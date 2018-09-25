@@ -777,8 +777,8 @@ message TransactionList {
   repeated Transaction transaction = 1;
 }
 message DelegatedResourceMessage {
-  bytes address = 1;
-  bool isFrom = 2;
+  bytes fromAddress = 1;
+  bytes toAddress = 2;
 }
 message DelegatedResourceList {
   repeated DelegatedResource delegatedResource = 1;
