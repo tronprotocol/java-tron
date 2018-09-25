@@ -83,7 +83,6 @@ import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.db.PendingManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
-import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
@@ -514,6 +513,23 @@ public class Wallet {
         .forEach(proposalCapsule -> builder.addProposals(proposalCapsule.getInstance()));
     return builder.build();
   }
+
+  public DelegatedResourceList getDelegatedResource(ByteString address, boolean isFrom) {
+    DelegatedResourceList.Builder builder = DelegatedResourceList.newBuilder();
+    List<DelegatedResourceCapsule> delegatedResourceCapsules = null;
+    if (isFrom) {
+      delegatedResourceCapsules = dbManager.getDelegatedResourceStore()
+          .getByFrom(address.toByteArray());
+    } else {
+      delegatedResourceCapsules = dbManager.getDelegatedResourceStore()
+          .getByFrom(address.toByteArray());
+    }
+    delegatedResourceCapsules
+        .forEach(delegatedResourceCapsule -> builder
+            .addDelegatedResource(delegatedResourceCapsule.getInstance()));
+    return builder.build();
+  }
+
 
   public ExchangeList getExchangeList() {
     ExchangeList.Builder builder = ExchangeList.newBuilder();
