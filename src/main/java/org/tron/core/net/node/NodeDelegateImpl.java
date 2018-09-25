@@ -279,31 +279,19 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
-  public Message getData(Sha256Hash hash, MessageTypes type) {
+  public Message getData(Sha256Hash hash, MessageTypes type)
+      throws StoreException {
     switch (type) {
       case BLOCK:
-        try {
-          return new BlockMessage(dbManager.getBlockById(hash));
-        } catch (BadItemException e) {
-          logger.debug(e.getMessage());
-        } catch (ItemNotFoundException e) {
-
-          logger.debug(e.getMessage());
-        } catch (Exception e) {
-          logger.error("new BlockMessage fail", e);
-        }
-        return null;
+        return new BlockMessage(dbManager.getBlockById(hash));
       case TRX:
-        try {
-          return new TransactionMessage(
-              dbManager.getTransactionStore().get(hash.getBytes()).getData());
-        } catch (Exception e) {
-          logger.error("new TransactionMessage fail", e);
+        TransactionCapsule tx = dbManager.getTransactionStore().get(hash.getBytes());
+        if (tx != null) {
+          return new TransactionMessage(tx.getData());
         }
-        return null;
+        throw new ItemNotFoundException("transaction is not found");
       default:
-        logger.info("message type not block or trx.");
-        return null;
+        throw new BadItemException("message type not block or trx.");
     }
   }
 

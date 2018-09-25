@@ -590,14 +590,14 @@ public class Manager {
   /**
    * when switch fork need erase blocks on fork branch.
    */
-  public void eraseBlock() {
+  public synchronized void eraseBlock() {
     session.reset();
     try {
       BlockCapsule oldHeadBlock = getBlockById(
           getDynamicPropertiesStore().getLatestBlockHeaderHash());
       logger.info("begin to erase block:" + oldHeadBlock);
       khaosDb.pop();
-      revokingStore.pop();
+      revokingStore.fastPop();
       logger.info("end to erase block:" + oldHeadBlock);
       popedTransactions.addAll(oldHeadBlock.getTransactions());
 
@@ -610,9 +610,10 @@ public class Manager {
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
-      VMIllegalException, TooBigTransactionResultException {
+      VMIllegalException, TooBigTransactionResultException, UnLinkedBlockException,
+      NonCommonBlockException, BadNumberBlockException, BadBlockException {
     block.generatedByMyself = true;
-    applyBlock(block);
+    pushBlock(block);
   }
 
   private void applyBlock(BlockCapsule block) throws ContractValidateException,
@@ -971,13 +972,23 @@ public class Manager {
     if (runtime.isCallConstant()) {
       throw new VMIllegalException("cannot call constant method ");
     }
-
     trace.init();
     trace.exec(runtime);
 
     if (Objects.nonNull(blockCap)) {
       trace.setResult(runtime);
       if (!blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
+        if (trace.checkNeedRetry()) {
+          String txId = Hex.toHexString(trxCap.getTransactionId().getBytes());
+          logger.info("Retry for tx id: {}", txId);
+          deposit = DepositImpl.createRoot(this);
+          runtime = new Runtime(trace, blockCap, deposit, new ProgramInvokeFactoryImpl());
+          trace.init();
+          trace.exec(runtime);
+          trace.setResult(runtime);
+          logger.info("Retry result for tx id: {}, tx resultCode in receipt: {}",
+              txId, trace.getReceipt().getResult());
+        }
         trace.check();
       }
     }
@@ -1022,13 +1033,17 @@ public class Manager {
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException {
 
     //check that the first block after the maintenance period has just been processed
-    if (lastHeadBlockIsMaintenanceBefore != lastHeadBlockIsMaintenance()) {
+   // if (lastHeadBlockIsMaintenanceBefore != lastHeadBlockIsMaintenance()) {
       if (!witnessController.validateWitnessSchedule(witnessCapsule.getAddress(), when)) {
         logger.info("It's not my turn, "
             + "and the first block after the maintenance period has just been processed");
+        
+        logger.info("when:{},lastHeadBlockIsMaintenanceBefore:{},lastHeadBlockIsMaintenanceAfter:{}",
+                when, lastHeadBlockIsMaintenanceBefore,lastHeadBlockIsMaintenance() );
+        
         return null;
       }
-    }
+   // }
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();

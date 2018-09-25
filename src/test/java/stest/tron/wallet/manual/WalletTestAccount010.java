@@ -1,4 +1,4 @@
-package stest.tron.wallet.account;
+package stest.tron.wallet.manual;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -22,10 +22,12 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class WalletTestAccount010 {
-  private final String testKey002 =
-      "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
-
+  private final String testKey002 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final String testKey003 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key2");
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
   private static final long now = System.currentTimeMillis();
 
@@ -62,17 +64,18 @@ public class WalletTestAccount010 {
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
+
+
+  }
+
+  @Test(enabled = false)
+  public void testGetStorage() {
     Assert.assertTrue(PublicMethed.sendcoin(account010Address,100000000,
         fromAddress,testKey002,blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(account010SecondAddress,100000000,
         fromAddress,testKey002,blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(account010InvalidAddress,100000000,
         fromAddress,testKey002,blockingStubFull));
-
-  }
-
-  @Test(enabled = false)
-  public void testGetStorage() {
     Account account010Info = PublicMethed.queryAccount(account010Key,blockingStubFull);
     Assert.assertTrue(account010Info.getAccountResource().getStorageLimit() == 0);
     Assert.assertTrue(account010Info.getAccountResource().getLatestExchangeStorageTime() == 0);
@@ -118,7 +121,7 @@ public class WalletTestAccount010 {
 
 
 
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

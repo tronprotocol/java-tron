@@ -1,5 +1,7 @@
 package org.tron.common.runtime;
 
+import static stest.tron.wallet.common.client.utils.PublicMethed.jsonStr2Abi;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -27,7 +29,9 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
+import stest.tron.wallet.common.client.utils.AbiUtil;
 
 
 /**
@@ -98,7 +102,7 @@ public class TVMTestUtils {
     //exec
     trace.exec(runtime);
 
-    // trace.finalization(runtime);
+    trace.finalization(runtime);
 
     return runtime;
   }
@@ -377,4 +381,43 @@ public class TVMTestUtils {
     return triggerData;
   }
 
+  public static CreateSmartContract createSmartContract(byte[] owner, String contractName,
+      String abiString, String code, long value, long consumeUserResourcePercent) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+
+    SmartContract.ABI abi = jsonStr2Abi(abiString);
+    if (abi == null) {
+      return null;
+    }
+    byte[] codeBytes = Hex.decode(code);
+    SmartContract.Builder builder = SmartContract.newBuilder();
+    builder.setName(contractName);
+    builder.setOriginAddress(ByteString.copyFrom(owner));
+    builder.setBytecode(ByteString.copyFrom(codeBytes));
+    builder.setAbi(abi);
+    builder.setConsumeUserResourcePercent(consumeUserResourcePercent);
+    if (value != 0) {
+      builder.setCallValue(value);
+    }
+    CreateSmartContract contractDeployContract = CreateSmartContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(owner)).setNewContract(builder.build()).build();
+    return contractDeployContract;
+  }
+
+  public static TriggerSmartContract createTriggerContract(byte[] contractAddress, String method,
+      String argsStr,
+      Boolean isHex, long callValue, byte[] ownerAddress) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+
+    byte[] owner = ownerAddress;
+    byte[] input = Hex.decode(AbiUtil.parseMethod(method, argsStr, isHex));
+
+    TriggerSmartContract.Builder builder = TriggerSmartContract
+        .newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner));
+    builder.setContractAddress(ByteString.copyFrom(contractAddress));
+    builder.setData(ByteString.copyFrom(input));
+    builder.setCallValue(callValue);
+    return builder.build();
+  }
 }

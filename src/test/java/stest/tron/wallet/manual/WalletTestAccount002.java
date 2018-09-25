@@ -1,4 +1,4 @@
-package stest.tron.wallet.account;
+package stest.tron.wallet.manual;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -21,9 +21,13 @@ import org.tron.protos.Protocol.Block;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
+import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class WalletTestAccount002 {
+  private final String testKey002 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key1");
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
   private ManagedChannel channelFull = null;
   private ManagedChannel searchChannelFull = null;

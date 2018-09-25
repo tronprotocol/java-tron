@@ -13,6 +13,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.BytesMessage;
@@ -41,26 +42,15 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 @Slf4j
 public class WalletTestTransfer003 {
 
-  //testng001、testng002、testng003、testng004
-  private final String testKey002     =
-      "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
-  private final String testKey003     =
-      "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
-  private final String testKey004     =
-      "592BB6C9BB255409A6A43EFD18E6A74FECDDCCE93A40D96B70FBE334E6361E32";
-  private final String notexist01     =
-      "DCB620820121A866E4E25905DC37F5025BFA5420B781C69E1BC6E1D83038C88A";
-
-  /*  //testng001、testng002、testng003、testng004
-  private static final byte[] fromAddress    =
-      Base58.decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");
-  private static final byte[] toAddress      =
-      Base58.decodeFromBase58Check("TV75jZpdmP2juMe1dRwGrwpV6AMU6mr1EU");*/
+  private final String testKey002 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key1");
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final String testKey003 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key2");
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
   private static final byte[] INVAILD_ADDRESS =
       Base58.decodeFromBase58Check("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48");
 
-  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
   private final Long createUseFee = 100000L;
 
   private ManagedChannel channelFull = null;
@@ -91,11 +81,11 @@ public class WalletTestTransfer003 {
   byte[] newAccountAddress = ecKey2.getAddress();
   String testKeyForNewAccount = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
-  @BeforeSuite
+/*  @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+  }*/
 
   @BeforeClass
   public void beforeClass() {
@@ -115,12 +105,14 @@ public class WalletTestTransfer003 {
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     blockingStubExtension = WalletExtensionGrpc.newBlockingStub(channelSolidity);
-    Assert.assertTrue(PublicMethed.sendcoin(sendCoinAddress,200000L,
-        fromAddress,testKey002,blockingStubFull));
+
   }
+
 
   @Test(enabled = true)
   public void atestUseFeeOrNet() {
+    Assert.assertTrue(PublicMethed.sendcoin(sendCoinAddress,200000L,
+        fromAddress,testKey002,blockingStubFull));
     Long feeNum = 0L;
     Long netNum = 0L;
     Long sendNum = 0L;

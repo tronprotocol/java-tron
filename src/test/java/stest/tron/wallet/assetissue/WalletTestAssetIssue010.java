@@ -87,7 +87,7 @@ public class WalletTestAssetIssue010 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     logger.info(testKeyForAssetIssue010);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -126,7 +126,7 @@ public class WalletTestAssetIssue010 {
 
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testUpdateAssetIssue() {
     //Query the description and url,freeAssetNetLimit and publicFreeAssetNetLimit
     ByteString assetNameBs = ByteString.copyFrom(name.getBytes());
@@ -159,7 +159,7 @@ public class WalletTestAssetIssue010 {
         .assertTrue(assetIssueByName.getPublicFreeAssetNetLimit() == updatePublicFreeAssetNetLimit);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testUpdateAssetIssueExcption() {
     //Test update asset issue for wrong parameter
     //publicFreeAssetNetLimit is -1
@@ -200,7 +200,7 @@ public class WalletTestAssetIssue010 {
             publicFreeAssetNetLimit, testKeyForAssetIssue010, blockingStubFull));
   }
 
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     //Assert.assertTrue(PublicMethed.updateAsset(ASSET010ADDRESS,Description.getBytes(),
     // Url.getBytes(),freeAssetNetLimit,

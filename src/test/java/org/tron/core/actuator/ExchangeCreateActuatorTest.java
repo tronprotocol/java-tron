@@ -570,4 +570,39 @@ public class ExchangeCreateActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
+
+  /*
+   * not trx,ont token is ok, but the second one is not exist.
+   */
+  @Test
+  public void secondTokenNotExist() {
+    String firstTokenId = "abc";
+    long firstTokenBalance = 100_000_000_000000L;
+    String secondTokenId = "def";
+    long secondTokenBalance = 100_000_000L;
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.addAssetAmount(firstTokenId.getBytes(), firstTokenBalance);
+    accountCapsule.setBalance(10000_000000L);
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+
+    ExchangeCreateActuator actuator = new ExchangeCreateActuator(getContract(
+            OWNER_ADDRESS_FIRST, firstTokenId, firstTokenBalance, secondTokenId, secondTokenBalance),
+            dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestExchangeNum(), 0);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail();
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("second token balance is not enough",
+              e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
 }
