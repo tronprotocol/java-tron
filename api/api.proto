@@ -408,7 +408,7 @@ service Wallet {
   };
 
 
-  rpc GetDelegatedResource (BytesMessage,BytesMessage) returns (DelegatedResourceList) {
+  rpc GetDelegatedResource (DelegatedResourceMessage) returns (DelegatedResourceList) {
       option (google.api.http) = {
         post: "/wallet/getdelegatedresource"
         body: "*"
@@ -775,6 +775,10 @@ message BlockList {
 }
 message TransactionList {
   repeated Transaction transaction = 1;
+}
+message DelegatedResourceMessage {
+  bytes address = 1;
+  bool isFrom = 2;
 }
 message DelegatedResourceList {
   repeated DelegatedResource delegatedResource = 1;
