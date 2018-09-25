@@ -32,6 +32,7 @@ service Wallet {
     };
   };
 
+
   //Please use CreateTransaction2 instead of this function.
   rpc CreateTransaction (TransferContract) returns (Transaction) {
     option (google.api.http) = {
@@ -406,6 +407,17 @@ service Wallet {
     };
   };
 
+
+  rpc GetDelegatedResource (BytesMessage) returns (DelegatedResourceList) {
+      option (google.api.http) = {
+        post: "/wallet/getdelegatedresource"
+        body: "*"
+        additional_bindings {
+          get: "/wallet/getdelegatedresource"
+        }
+      };
+    };
+
   rpc ListProposals (EmptyMessage) returns (ProposalList) {
     option (google.api.http) = {
       post: "/wallet/listproposals"
@@ -763,6 +775,10 @@ message BlockList {
 message TransactionList {
   repeated Transaction transaction = 1;
 }
+message DelegatedResourceList {
+  repeated DelegatedResource delegatedResource = 1;
+}
+
 
 // Gossip node list
 message NodeList {
