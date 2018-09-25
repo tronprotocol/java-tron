@@ -190,12 +190,17 @@ public class InternalTransaction {
     if (protoEncoded != null) {
       return protoEncoded.clone();
     }
+    byte[] parentHashArray = parentHash.clone();
 
+    if (parentHashArray == null){
+      parentHashArray = EMPTY_BYTE_ARRAY;
+    }
     byte[] valueByte = Longs.toByteArray(this.value);
-    byte[] raw = new byte[this.receiveAddress.length + this.data.length + valueByte.length];
-    System.arraycopy(this.receiveAddress, 0, raw, 0, this.receiveAddress.length);
-    System.arraycopy(this.data, 0, raw, this.receiveAddress.length, this.data.length);
-    System.arraycopy(valueByte, 0, raw, this.receiveAddress.length + this.data.length,
+    byte[] raw = new byte[parentHashArray.length + this.receiveAddress.length + this.data.length + valueByte.length];
+    System.arraycopy(parentHashArray, 0, raw, 0, parentHashArray.length);
+    System.arraycopy(this.receiveAddress, 0, raw, parentHashArray.length, this.receiveAddress.length);
+    System.arraycopy(this.data, 0, raw, parentHashArray.length + this.receiveAddress.length, this.data.length);
+    System.arraycopy(valueByte, 0, raw, parentHashArray.length + this.receiveAddress.length + this.data.length,
         valueByte.length);
     this.protoEncoded = raw;
     return protoEncoded.clone();
