@@ -408,25 +408,16 @@ service Wallet {
   };
 
 
-  rpc GetDelegatedResourceByFrom (BytesMessage) returns (DelegatedResourceList) {
+  rpc GetDelegatedResource (BytesMessage,BytesMessage) returns (DelegatedResourceList) {
       option (google.api.http) = {
-        post: "/wallet/getdelegatedresourcebyfrom"
+        post: "/wallet/getdelegatedresource"
         body: "*"
         additional_bindings {
-          get: "/wallet/getdelegatedresourcebyfrom"
+          get: "/wallet/getdelegatedresource"
         }
       };
     };
 
-   rpc GetDelegatedResourceByTo (BytesMessage) returns (DelegatedResourceList) {
-        option (google.api.http) = {
-          post: "/wallet/getdelegatedresourcebyto"
-          body: "*"
-          additional_bindings {
-            get: "/wallet/getdelegatedresourcebyto"
-          }
-        };
-      };
 
   rpc ListProposals (EmptyMessage) returns (ProposalList) {
     option (google.api.http) = {
