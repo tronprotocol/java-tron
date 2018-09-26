@@ -25,6 +25,7 @@ import static org.junit.Assert.assertFalse;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
@@ -33,9 +34,9 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.api.GrpcAPI.AssetIssueList;
-import org.tron.api.GrpcAPI.BlockList;
+import org.tron.api.GrpcAPI.BlockList; 
 import org.tron.api.GrpcAPI.ExchangeList;
-import org.tron.api.GrpcAPI.ProposalList;
+import org.tron.api.GrpcAPI.ProposalList; 
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
@@ -47,10 +48,13 @@ import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
+import org.tron.core.config.Parameter.ChainParameters;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.BlockHeader.raw;
@@ -409,6 +413,26 @@ public class WalletTest {
         exchangeList.getExchangesList().get(0).getCreatorAddress().toStringUtf8());
     Assert.assertEquals("Address2",
         exchangeList.getExchangesList().get(1).getCreatorAddress().toStringUtf8());
+    
+  public void testChainParameters() {
+
+    Protocol.ChainParameters.Builder builder = Protocol.ChainParameters.newBuilder();
+
+    Arrays.stream(ChainParameters.values()).forEach(parameters -> {
+      String methodName = Wallet.makeUpperCamelMethod(parameters.name());
+      try {
+        builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey(methodName)
+            .setValue((long) DynamicPropertiesStore.class.getDeclaredMethod(methodName)
+                .invoke(manager.getDynamicPropertiesStore()))
+            .build());
+      } catch (Exception ex) {
+        Assert.fail("get chainParameter : " + methodName + ", error : " + ex.getMessage());
+      }
+
+    });
+
+    System.out.printf(builder.build().toString()); 
   }
 
 }

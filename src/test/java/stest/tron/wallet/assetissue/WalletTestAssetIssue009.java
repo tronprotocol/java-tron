@@ -72,7 +72,7 @@ public class WalletTestAssetIssue009 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -86,7 +86,7 @@ public class WalletTestAssetIssue009 {
   }
 
 
-  /*  @Test(enabled = false)
+  /*  @Test(enabled = true)
   public void testGetAssetIssueByAccountOrNameFromSolidity() {
     //By name
     ByteString addressBs = ByteString.copyFrom(fromAddress);
@@ -118,7 +118,7 @@ public class WalletTestAssetIssue009 {
     logger.info("TestGetAssetIssueByNameFromSolidity");
   }*/
 
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

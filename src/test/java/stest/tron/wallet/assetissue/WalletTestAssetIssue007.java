@@ -79,7 +79,7 @@ public class WalletTestAssetIssue007 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(testKeyForAssetIssue007);
     PublicMethed.printAddress(participateAssetCreateKey);
@@ -90,19 +90,19 @@ public class WalletTestAssetIssue007 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testParticipateAssetIssueUseParticipaterBandwidth() {
     Assert.assertTrue(PublicMethed
         .sendcoin(asset007Address, sendAmount, fromAddress, testKey002, blockingStubFull));
     //Assert.assertTrue(PublicMethed
     //    .freezeBalance(asset007Address, 100000000L, 3, testKeyForAssetIssue007,
-     //       blockingStubFull));
+    //       blockingStubFull));
     Long start = System.currentTimeMillis() + 2000;
     Long end = System.currentTimeMillis() + 1000000000;
     Assert.assertTrue(PublicMethed
-        .createAssetIssue(asset007Address, name, totalSupply, trxNum, icoNum, start, end, 1, description,
-            url, freeAssetNetLimit, publicFreeAssetNetLimit, 1L, 1L, testKeyForAssetIssue007,
-            blockingStubFull));
+        .createAssetIssue(asset007Address, name, totalSupply, trxNum, icoNum, start, end, 1,
+            description, url, freeAssetNetLimit, publicFreeAssetNetLimit, 1L, 1L,
+            testKeyForAssetIssue007, blockingStubFull));
 
     logger.info(name);
     Assert.assertTrue(PublicMethed.waitProduceNextBlock(blockingStubFull));
@@ -166,10 +166,10 @@ public class WalletTestAssetIssue007 {
     participateInfo = PublicMethed.queryAccount(participateAssetCreateKey,blockingStubFull);
     final Long afterBalance = participateInfo.getBalance();
 
-    Assert.assertTrue(beforeBalance  - trxNum*1*icoNum  >= afterBalance);
+    Assert.assertTrue(beforeBalance  - trxNum * 1 * icoNum  >= afterBalance);
   }
 
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

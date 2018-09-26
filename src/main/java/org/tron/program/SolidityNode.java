@@ -1,9 +1,12 @@
 package org.tron.program;
 
+import ch.qos.logback.classic.Level;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.StringUtils;
 import org.tron.common.application.Application;
@@ -23,14 +26,17 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
@@ -138,14 +144,16 @@ public class SolidityNode {
           throw new BadBlockException("too big exception result");
         } catch (TransactionExpirationException e) {
           throw new BadBlockException("expiration exception");
-//        } catch (BadNumberBlockException e) {
-//          throw new BadBlockException("bad number exception");
-//        } catch (NonCommonBlockException e) {
-//          throw new BadBlockException("non common exception");
+        } catch (BadNumberBlockException e) {
+          throw new BadBlockException("bad number exception");
+        } catch (NonCommonBlockException e) {
+          throw new BadBlockException("non common exception");
         } catch (ReceiptCheckErrException e) {
           throw new BadBlockException("OutOfSlotTime Exception");
         } catch (VMIllegalException e) {
           throw new BadBlockException(e.getMessage());
+        } catch (UnLinkedBlockException e) {
+          throw new BadBlockException("unLink exception");
         }
 
       } else {
@@ -175,6 +183,10 @@ public class SolidityNode {
     logger.info("Solidity node running.");
     Args.setParam(args, Constant.TESTNET_CONF);
     Args cfgArgs = Args.getInstance();
+
+    ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger)LoggerFactory
+        .getLogger(Logger.ROOT_LOGGER_NAME);
+    root.setLevel(Level.toLevel(cfgArgs.getLogLevel()));
 
     if (StringUtils.isEmpty(cfgArgs.getTrustNodeAddr())) {
       logger.error("Trust node not set.");

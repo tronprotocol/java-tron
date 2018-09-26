@@ -27,10 +27,12 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class WalletTestAccount006 {
-  private final String testKey002 =
-      "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
-
+  private final String testKey002 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final String testKey003 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key2");
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
   private static final long now = System.currentTimeMillis();
   private static String name = "AssetIssue012_" + Long.toString(now);
@@ -64,7 +66,10 @@ public class WalletTestAccount006 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+  }
 
+  @Test(enabled = true)
+  public void testGetAccountNet() {
     //Sendcoin to this account
     ByteString addressBS1 = ByteString.copyFrom(account006Address);
     Account request1 = Account.newBuilder().setAddress(addressBS1).build();
@@ -75,10 +80,7 @@ public class WalletTestAccount006 {
         blockingStubFull));
     Assert.assertTrue(PublicMethed
         .sendcoin(account006Address, sendAmount, fromAddress, testKey002, blockingStubFull));
-  }
 
-  @Test(enabled = true)
-  public void testGetAccountNet() {
     //Get new account net information.
     ByteString addressBs = ByteString.copyFrom(account006Address);
     Account request = Account.newBuilder().setAddress(addressBs).build();

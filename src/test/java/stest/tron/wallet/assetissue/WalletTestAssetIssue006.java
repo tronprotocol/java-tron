@@ -68,7 +68,7 @@ public class WalletTestAssetIssue006 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -92,7 +92,7 @@ public class WalletTestAssetIssue006 {
         1000L,1L,1L,queryAssetIssueKey,blockingStubFull));
   }
 
-  /*  @Test(enabled = false)
+  /*  @Test(enabled = true)
   public void testGetAssetIssueListByTimestamp() {
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Block solidityCurrentBlock = blockingStubSolidity.getNowBlock(GrpcAPI.EmptyMessage
@@ -136,7 +136,7 @@ public class WalletTestAssetIssue006 {
 
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testExceptionGetAssetIssueListByTimestamp() {
     //Time stamp is below zero.
     long time = -1000000000;
@@ -158,7 +158,7 @@ public class WalletTestAssetIssue006 {
 
   }*/
 
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

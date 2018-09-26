@@ -117,6 +117,7 @@ public class FileUtil {
       for (int i = 0; i < children.length; i++) {
         boolean success = deleteDir(new File(dir, children[i]));
         if (!success) {
+          logger.warn("can't delete dir:" + dir);
           return false;
         }
       }

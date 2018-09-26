@@ -72,7 +72,7 @@ public class WalletTestAssetIssue016 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     logger.info(testKeyForAssetIssue016);
     logger.info(transferAssetCreateKey);
@@ -106,7 +106,7 @@ public class WalletTestAssetIssue016 {
     }
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testGetAssetIssueNet() {
     AccountNetMessage assetIssueInfo = PublicMethed.getAccountNet(asset016Address,blockingStubFull);
     Assert.assertTrue(assetIssueInfo.getAssetNetLimitCount() == 1);
@@ -147,7 +147,7 @@ public class WalletTestAssetIssue016 {
   }
 
 
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
