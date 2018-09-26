@@ -73,9 +73,10 @@ public class InternalTransaction {
    */
   public InternalTransaction(Transaction trx) {
     this.transaction = trx;
-    this.protoEncoded = (new TransactionCapsule(trx)).getData();
+    TransactionCapsule trxCap = new TransactionCapsule(trx);
+    this.protoEncoded = trxCap.getData();
     this.nonce = 0;
-    this.hash = getHash();
+    this.hash = trxCap.getTransactionId().getBytes();
   }
 
   /**
