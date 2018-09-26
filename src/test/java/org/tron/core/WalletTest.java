@@ -413,7 +413,9 @@ public class WalletTest {
         exchangeList.getExchangesList().get(0).getCreatorAddress().toStringUtf8());
     Assert.assertEquals("Address2",
         exchangeList.getExchangesList().get(1).getCreatorAddress().toStringUtf8());
-    
+  }
+
+  @Test
   public void testChainParameters() {
 
     Protocol.ChainParameters.Builder builder = Protocol.ChainParameters.newBuilder();
