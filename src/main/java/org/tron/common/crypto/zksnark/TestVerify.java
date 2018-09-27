@@ -69,7 +69,7 @@ public class TestVerify {
     if (new BN128Opration().verify(new VerifyingKey(), input, proof) == 0) {
       System.out.println("Transaction successfully verified.");
     } else {
-      System.out.println("Transaction successfully verified.");
+      System.out.println("Transaction failed verified.");
     }
   }
 }
