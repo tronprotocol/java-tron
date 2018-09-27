@@ -71,28 +71,30 @@ public class BN128Opration {
   }
 
   public int verify(VerifyingKey vk, BigInteger[] input, Proof proof) {
-    assert (input.length + 1 == vk.IC.length);
+    assert (input.length + 1 == vk.getIC().length);
 
     G1Point vk_x = new G1Point(0, 0);
     for (int i = 0; i < input.length; i++) {
-      vk_x = vk_x.add(vk.IC[i + 1].mul(input[i]));
+      vk_x = vk_x.add(vk.getIC()[i + 1].mul(input[i]));
     }
-    vk_x = vk_x.add(vk.IC[0]);
+    vk_x = vk_x.add(vk.getIC()[0]);
     G2Point p2 = G2Point.P2();
-    if (!pairingProd2(proof.A, vk.A, proof.A_p.negate(), p2)) {
+    if (!pairingProd2(proof.getA(), vk.getA(), proof.getA_p().negate(), p2)) {
       return 1;
     }
-    if (!pairingProd2(vk.B, proof.B, proof.B_p.negate(), p2)) {
+    if (!pairingProd2(vk.getB(), proof.getB(), proof.getB_p().negate(), p2)) {
       return 2;
     }
-    if (!pairingProd2(proof.C, vk.C, proof.C_p.negate(), p2)) {
+    if (!pairingProd2(proof.getC(), vk.getC(), proof.getC_p().negate(), p2)) {
       return 3;
     }
-    if (!pairingProd3(proof.K, vk.gamma, (vk_x.add(proof.A.add(proof.C))).negate(), vk.gammaBeta2,
-        vk.gammaBeta1.negate(), proof.B)) {
+    if (!pairingProd3(proof.getK(), vk.getGamma(),
+        (vk_x.add(proof.getA().add(proof.getC()))).negate(), vk.getGammaBeta2(),
+        vk.getGammaBeta1().negate(), proof.getB())) {
       return 4;
     }
-    if (!pairingProd3(vk_x.add(proof.A), proof.B, proof.H.negate(), vk.Z, proof.H.negate(), p2)) {
+    if (!pairingProd3(vk_x.add(proof.getA()), proof.getB(), proof.getH().negate(), vk.getZ(),
+        proof.getH().negate(), p2)) {
       return 5;
     }
     return 0;

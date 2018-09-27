@@ -8,6 +8,8 @@ public class G2Point {
   private BigInteger[] y;
 
   public G2Point(BigInteger x1, BigInteger x2, BigInteger y1, BigInteger y2) {
+    x = new BigInteger[2];
+    y = new BigInteger[2];
     x[0] = x1;
     x[1] = x2;
     y[0] = y1;
@@ -16,7 +18,7 @@ public class G2Point {
 
   public BN128G2 toBN128G2() {
     return BN128G2
-        .create(x[0].toByteArray(), x[1].toByteArray(), y[0].toByteArray(), y[1].toByteArray());
+        .create(x[1].toByteArray(), x[0].toByteArray(), y[1].toByteArray(), y[0].toByteArray());
   }
 
   public static G2Point P2() {
