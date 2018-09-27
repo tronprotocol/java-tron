@@ -78,4 +78,41 @@ node {
 }
 ```
 
+## backup
+
+You can custom backup options in the `node.backup` part of `config.conf`, which looks like:
+```
+node.backup {
+    # my priority, each member should use different priority
+    priority = 
+    # members should use same port
+    port = 
+    # peer's ip list, can't contain mine
+    members = []
+}
+```
+
+E.g. create backups for node A(192.168.0.100) and node B(192.168.0.100 ):
+node A's configuration:
+```
+node.backup {
+    priority = 8 
+    port = 10001
+    members = [
+        "192.168.0.101"
+    ]
+}
+```
+
+node B's configuration:
+```
+node.backup {
+    priority = 5
+    port = 10001
+    members = [
+        "192.168.0.100"
+    ]
+}
+```
+
 You may refer to the source code of `io.grpc.netty.NettyServerBuilder` class to see details or just make a decision according to the brief comments above.  
