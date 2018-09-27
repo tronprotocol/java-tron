@@ -9,8 +9,6 @@
       <packages>
         <package name="stest.tron.wallet.transfer">
         </package>
-        <package name="stest.tron.wallet.contract.scenario">
-        </package>
       </packages>
     </test>
   <test name="Stest account">
@@ -31,7 +29,7 @@
   </test>
   <test name="Stest contract,exchange,committee">
     <packages>
-      <package name="stest.tron.wallet.contract.linkage">
+      <package name="stest.tron.wallet.contract">
       </package>
       <package name="stest.tron.wallet.exchange">
       </package>
