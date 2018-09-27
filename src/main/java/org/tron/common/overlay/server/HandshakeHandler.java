@@ -125,8 +125,10 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   }
 
   private void handleHelloMsg(ChannelHandlerContext ctx, HelloMessage msg) {
+
+    channel.initNode(msg.getFrom().getId(), msg.getFrom().getPort());
+
     if (remoteId.length != 64) {
-      channel.initNode(msg.getFrom().getId(), msg.getFrom().getPort());
       InetAddress address = ((InetSocketAddress) ctx.channel().remoteAddress()).getAddress();
       if (!channelManager.getTrustPeers().keySet().contains(address) && !syncPool.isCanConnect()) {
         channel.disconnect(ReasonCode.TOO_MANY_PEERS);

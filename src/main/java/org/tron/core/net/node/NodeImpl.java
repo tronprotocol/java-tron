@@ -98,6 +98,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private int maxTrxsCnt = 100;
 
+  private long blockUpdateTimeout = 20_000;
+
   @Getter
   class PriorItem implements java.lang.Comparable<PriorItem> {
 
@@ -598,6 +600,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     getActivePeer().forEach(peer -> {
       final boolean[] isDisconnected = {false};
+
+      if (peer.isNeedSyncFromPeer() && peer.getLastBlockUpdateTime() < System.currentTimeMillis() - blockUpdateTimeout){
+        logger.warn("Peer {} not sync for a long time.", peer.getInetAddress());
+        isDisconnected[0] = true;
+      }
 
       peer.getAdvObjWeRequested().values().stream()
           .filter(time -> time < Time.getCurrentMillis() - NetConstants.ADV_TIME_OUT)
@@ -1240,6 +1247,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         block.getBlockId().getString());
     peer.setHeadBlockWeBothHave(block.getBlockId());
     peer.setHeadBlockTimeWeBothHave(block.getTimeStamp());
+    peer.setLastBlockUpdateTime(System.currentTimeMillis());
   }
 
   private void updateBlockWeBothHave(PeerConnection peer, BlockId blockId)
@@ -1250,6 +1258,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     long time = ((BlockMessage) del.getData(blockId, MessageTypes.BLOCK)).getBlockCapsule()
         .getTimeStamp();
     peer.setHeadBlockTimeWeBothHave(time);
+    peer.setLastBlockUpdateTime(System.currentTimeMillis());
   }
 
   private Collection<PeerConnection> getActivePeer() {
