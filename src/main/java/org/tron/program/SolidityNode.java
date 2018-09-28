@@ -47,7 +47,7 @@ public class SolidityNode {
 
   private volatile long lastSolidityBlockNum;
 
-  private long startTime = System.currentTimeMillis() - 31554781;
+  private long startTime = System.currentTimeMillis();
 
   private volatile boolean syncFlag = true;
 
