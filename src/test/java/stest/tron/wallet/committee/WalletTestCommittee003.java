@@ -115,7 +115,7 @@ public class WalletTestCommittee003 {
 
     Assert.assertTrue(PublicMethed.approveProposal(witness002Address,witnessKey002,proposalId,
         true,blockingStubFull));
-        try {
+    try {
       Thread.sleep(2000);
     } catch (InterruptedException e) {
       e.printStackTrace();
