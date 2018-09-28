@@ -466,7 +466,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     advObjToFetch.values().stream().sorted(PriorItem::compareTo).forEach(idToFetch -> {
       Sha256Hash hash = idToFetch.getHash();
       if (idToFetch.getTime() < now - MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL) {
-        logger.info("This obj is too late to fetch: " + idToFetch);
+        logger.info("This obj is too late to fetch, type: {} hash: {}.", idToFetch.getType(), idToFetch.getHash());
         advObjToFetch.remove(hash);
         return;
       }
@@ -1049,6 +1049,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     try {
       if (peer.getSyncChainRequested() != null) {
         Deque<BlockId> blockIdWeGet = new LinkedList<>(msg.getBlockIds());
+        if (blockIdWeGet.size() > 0){
+          peer.setNeedSyncFromPeer(true);
+        }
 
         //check if the peer is a traitor
         if (!blockIdWeGet.isEmpty()) {
