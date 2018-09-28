@@ -924,106 +924,120 @@ public class Program {
   }
 
   public void fullTrace() {
-    if (logger.isTraceEnabled() || listener != null) {
+    if (!logger.isTraceEnabled() && listener == null) {
+      return;
+    }
+    StringBuilder stackData = dumpStack();
+    StringBuilder memoryData = dumpMemory();
+    StringBuilder opsString = dumpOps();
 
-      StringBuilder stackData = new StringBuilder();
-      for (int i = 0; i < stack.size(); ++i) {
-        stackData.append(" ").append(stack.get(i));
-        if (i < stack.size() - 1) {
-          stackData.append("\n");
-        }
-      }
+    logger.trace(" -- OPS --     {}", opsString);
+    logger.trace(" -- STACK --   {}", stackData);
+    logger.trace(" -- MEMORY --  {}", memoryData);
+    logger.trace("\n  Spent Drop: [{}]/[{}]\n  Left Energy:  [{}]\n",
+        getResult().getEnergyUsed(),
+        invoke.getEnergyLimit(),
+        getEnergyLimitLeft().longValue());
 
-      if (stackData.length() > 0) {
-        stackData.insert(0, "\n");
-      }
+    StringBuilder globalOutput = new StringBuilder("\n");
+    if (stackData.length() > 0) {
+      stackData.append("\n");
+    }
 
-      StringBuilder memoryData = new StringBuilder();
-      StringBuilder oneLine = new StringBuilder();
-      if (memory.size() > 320) {
-        memoryData.append("... Memory Folded.... ")
-            .append("(")
-            .append(memory.size())
-            .append(") bytes");
+    if (pc != 0) {
+      globalOutput.append("[Op: ").append(OpCode.code(lastOp).name()).append("]\n");
+    }
+
+    globalOutput.append(" -- OPS --     ").append(opsString).append("\n");
+    globalOutput.append(" -- STACK --   ").append(stackData).append("\n");
+    globalOutput.append(" -- MEMORY --  ").append(memoryData).append("\n");
+
+    if (getResult().getHReturn() != null) {
+      globalOutput.append("\n  HReturn: ").append(
+          Hex.toHexString(getResult().getHReturn()));
+    }
+
+    // sophisticated assumption that msg.data != codedata
+    // means we are calling the contract not creating it
+    byte[] txData = invoke.getDataCopy(DataWord.ZERO, getDataSize());
+    if (!Arrays.equals(txData, ops)) {
+      globalOutput.append("\n  msg.data: ").append(Hex.toHexString(txData));
+    }
+    globalOutput.append("\n\n  Spent Energy: ").append(getResult().getEnergyUsed());
+
+    if (listener != null) {
+      listener.output(globalOutput.toString());
+    }
+  }
+
+  private StringBuilder dumpOps() {
+    StringBuilder opsString = new StringBuilder();
+    for (int i = 0; i < ops.length; ++i) {
+
+      String tmpString = Integer.toString(ops[i] & 0xFF, 16);
+      tmpString = tmpString.length() == 1 ? "0" + tmpString : tmpString;
+
+      if (i != pc) {
+        opsString.append(tmpString);
       } else {
-        for (int i = 0; i < memory.size(); ++i) {
+        opsString.append(" >>").append(tmpString).append("");
+      }
 
-          byte value = memory.readByte(i);
-          oneLine.append(ByteUtil.oneByteToHexString(value)).append(" ");
+    }
+    if (pc >= ops.length) {
+      opsString.append(" >>");
+    }
+    if (opsString.length() > 0) {
+      opsString.insert(0, "\n ");
+    }
+    return opsString;
+  }
 
-          if ((i + 1) % 16 == 0) {
-            String tmp = format("[%4s]-[%4s]", Integer.toString(i - 15, 16),
-                Integer.toString(i, 16)).replace(" ", "0");
-            memoryData.append("").append(tmp).append(" ");
-            memoryData.append(oneLine);
-            if (i < memory.size()) {
-              memoryData.append("\n");
-            }
-            oneLine.setLength(0);
+  private StringBuilder dumpMemory() {
+    StringBuilder memoryData = new StringBuilder();
+    StringBuilder oneLine = new StringBuilder();
+    if (memory.size() > 320) {
+      memoryData.append("... Memory Folded.... ")
+          .append("(")
+          .append(memory.size())
+          .append(") bytes");
+    } else {
+      for (int i1 = 0; i1 < memory.size(); ++i1) {
+
+        byte value = memory.readByte(i1);
+        oneLine.append(ByteUtil.oneByteToHexString(value)).append(" ");
+
+        if ((i1 + 1) % 16 == 0) {
+          String tmp = format("[%4s]-[%4s]", Integer.toString(i1 - 15, 16),
+              Integer.toString(i1, 16)).replace(" ", "0");
+          memoryData.append("").append(tmp).append(" ");
+          memoryData.append(oneLine);
+          if (i1 < memory.size()) {
+            memoryData.append("\n");
           }
+          oneLine.setLength(0);
         }
       }
-      if (memoryData.length() > 0) {
-        memoryData.insert(0, "\n");
-      }
+    }
+    prependNewLine(memoryData);
+    return memoryData;
+  }
 
-      StringBuilder opsString = new StringBuilder();
-      for (int i = 0; i < ops.length; ++i) {
-
-        String tmpString = Integer.toString(ops[i] & 0xFF, 16);
-        tmpString = tmpString.length() == 1 ? "0" + tmpString : tmpString;
-
-        if (i != pc) {
-          opsString.append(tmpString);
-        } else {
-          opsString.append(" >>").append(tmpString).append("");
-        }
-
-      }
-      if (pc >= ops.length) {
-        opsString.append(" >>");
-      }
-      if (opsString.length() > 0) {
-        opsString.insert(0, "\n ");
-      }
-
-      logger.trace(" -- OPS --     {}", opsString);
-      logger.trace(" -- STACK --   {}", stackData);
-      logger.trace(" -- MEMORY --  {}", memoryData);
-      logger.trace("\n  Spent Drop: [{}]/[{}]\n  Left Energy:  [{}]\n",
-          getResult().getEnergyUsed(),
-          invoke.getEnergyLimit(),
-          getEnergyLimitLeft().longValue());
-
-      StringBuilder globalOutput = new StringBuilder("\n");
-      if (stackData.length() > 0) {
+  private StringBuilder dumpStack() {
+    StringBuilder stackData = new StringBuilder();
+    for (int i1 = 0; i1 < stack.size(); ++i1) {
+      stackData.append(" ").append(stack.get(i1));
+      if (i1 < stack.size() - 1) {
         stackData.append("\n");
       }
+    }
+    prependNewLine(stackData);
+    return stackData;
+  }
 
-      if (pc != 0) {
-        globalOutput.append("[Op: ").append(OpCode.code(lastOp).name()).append("]\n");
-      }
-
-      globalOutput.append(" -- OPS --     ").append(opsString).append("\n");
-      globalOutput.append(" -- STACK --   ").append(stackData).append("\n");
-      globalOutput.append(" -- MEMORY --  ").append(memoryData).append("\n");
-
-      if (getResult().getHReturn() != null) {
-        globalOutput.append("\n  HReturn: ").append(
-            Hex.toHexString(getResult().getHReturn()));
-      }
-
-      // sophisticated assumption that msg.data != codedata
-      // means we are calling the contract not creating it
-      byte[] txData = invoke.getDataCopy(DataWord.ZERO, getDataSize());
-      if (!Arrays.equals(txData, ops)) {
-        globalOutput.append("\n  msg.data: ").append(Hex.toHexString(txData));
-      }
-      globalOutput.append("\n\n  Spent Energy: ").append(getResult().getEnergyUsed());
-
-      if (listener != null) {
-        listener.output(globalOutput.toString());
-      }
+  private void prependNewLine(StringBuilder builder) {
+    if (builder.length() > 0) {
+      builder.insert(0, "\n");
     }
   }
 
