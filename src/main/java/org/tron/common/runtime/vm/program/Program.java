@@ -933,8 +933,8 @@ public class Program {
 
     logTrace(stackData, memoryData, opsString);
 
-    StringBuilder globalOutput = createGlobalOutput(stackData, memoryData, opsString);
     if (listener != null) {
+      StringBuilder globalOutput = createGlobalOutput(stackData, memoryData, opsString);
       listener.output(globalOutput.toString());
     }
   }
