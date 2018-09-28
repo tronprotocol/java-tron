@@ -71,7 +71,9 @@ public class ZkVerify {
   }
 
   public int verify(VerifyingKey vk, BigInteger[] input, Proof proof) {
-    assert (input.length + 1 == vk.getIC().length);
+    if (input.length + 1 == vk.getIC().length){
+      return -1;
+    }
 
     G1Point vk_x = new G1Point(0, 0);
     for (int i = 0; i < input.length; i++) {
