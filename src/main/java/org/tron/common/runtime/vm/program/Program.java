@@ -931,14 +931,15 @@ public class Program {
     StringBuilder memoryData = dumpMemory();
     StringBuilder opsString = dumpOps();
 
-    logger.trace(" -- OPS --     {}", opsString);
-    logger.trace(" -- STACK --   {}", stackData);
-    logger.trace(" -- MEMORY --  {}", memoryData);
-    logger.trace("\n  Spent Drop: [{}]/[{}]\n  Left Energy:  [{}]\n",
-        getResult().getEnergyUsed(),
-        invoke.getEnergyLimit(),
-        getEnergyLimitLeft().longValue());
+    traceToLogger(stackData, memoryData, opsString);
 
+    StringBuilder globalOutput = createGlobalOutput(stackData, memoryData, opsString);
+    if (listener != null) {
+      listener.output(globalOutput.toString());
+    }
+  }
+
+  private StringBuilder createGlobalOutput(StringBuilder stackData, StringBuilder memoryData, StringBuilder opsString) {
     StringBuilder globalOutput = new StringBuilder("\n");
     if (stackData.length() > 0) {
       stackData.append("\n");
@@ -948,13 +949,13 @@ public class Program {
       globalOutput.append("[Op: ").append(OpCode.code(lastOp).name()).append("]\n");
     }
 
-    globalOutput.append(" -- OPS --     ").append(opsString).append("\n");
+    globalOutput.append(" -- OPS --   ").append(opsString).append("\n");
     globalOutput.append(" -- STACK --   ").append(stackData).append("\n");
     globalOutput.append(" -- MEMORY --  ").append(memoryData).append("\n");
 
     if (getResult().getHReturn() != null) {
       globalOutput.append("\n  HReturn: ").append(
-          Hex.toHexString(getResult().getHReturn()));
+              Hex.toHexString(getResult().getHReturn()));
     }
 
     // sophisticated assumption that msg.data != codedata
@@ -964,10 +965,17 @@ public class Program {
       globalOutput.append("\n  msg.data: ").append(Hex.toHexString(txData));
     }
     globalOutput.append("\n\n  Spent Energy: ").append(getResult().getEnergyUsed());
+    return globalOutput;
+  }
 
-    if (listener != null) {
-      listener.output(globalOutput.toString());
-    }
+  private void traceToLogger(StringBuilder stackData, StringBuilder memoryData, StringBuilder opsString) {
+    logger.trace(" -- OPS --     {}", opsString);
+    logger.trace(" -- STACK --   {}", stackData);
+    logger.trace(" -- MEMORY --  {}", memoryData);
+    logger.trace("\n  Spent Drop: [{}]/[{}]\n  Left Energy:  [{}]\n",
+            getResult().getEnergyUsed(),
+            invoke.getEnergyLimit(),
+            getEnergyLimitLeft().longValue());
   }
 
   private StringBuilder dumpOps() {
@@ -998,9 +1006,9 @@ public class Program {
     StringBuilder oneLine = new StringBuilder();
     if (memory.size() > 320) {
       memoryData.append("... Memory Folded.... ")
-          .append("(")
-          .append(memory.size())
-          .append(") bytes");
+              .append("(")
+              .append(memory.size())
+              .append(") bytes");
     } else {
       for (int i1 = 0; i1 < memory.size(); ++i1) {
 
@@ -1009,7 +1017,7 @@ public class Program {
 
         if ((i1 + 1) % 16 == 0) {
           String tmp = format("[%4s]-[%4s]", Integer.toString(i1 - 15, 16),
-              Integer.toString(i1, 16)).replace(" ", "0");
+                  Integer.toString(i1, 16)).replace(" ", "0");
           memoryData.append("").append(tmp).append(" ");
           memoryData.append(oneLine);
           if (i1 < memory.size()) {
