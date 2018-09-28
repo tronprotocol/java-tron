@@ -10,7 +10,7 @@ public class TestVerify {
     tv.verifyTx();
   }
 
-  public void testPoint(){
+  public void testPoint() {
     G1Point H = new G1Point(new BigInteger(
         "12091046215835229523641173286701717671667447745509192321596954139357866668225"),
         new BigInteger(
@@ -25,10 +25,10 @@ public class TestVerify {
     BN128G1 h1 = H.toBN128G1();
     BN128G1 k1 = K.toBN128G1();
 
-    System.out.println(h==null?"h is null":"h is not null" );
-    System.out.println(k==null?"k is null":"k is not null" );
-    System.out.println(h1==null?"h1 is null":"h1 is not null" );
-    System.out.println(k1==null?"k1 is null":"k1 is not null" );
+    System.out.println(h == null ? "h is null" : "h is not null");
+    System.out.println(k == null ? "k is null" : "k is not null");
+    System.out.println(h1 == null ? "h1 is null" : "h1 is not null");
+    System.out.println(k1 == null ? "k1 is null" : "k1 is not null");
   }
 
   public void f() {
@@ -120,7 +120,7 @@ public class TestVerify {
 
     Proof proof = new Proof(A, A_p, B, B_p, C, C_p, H, K);
 
-    if (new BN128Opration().verify(new VerifyingKey(), input, proof) == 0) {
+    if (new ZkVerify().verify(VerifyingKey.getInstance(), input, proof) == 0) {
       System.out.println("Transaction successfully verified.");
     } else {
       System.out.println("Transaction failed verified.");

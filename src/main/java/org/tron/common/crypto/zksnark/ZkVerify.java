@@ -3,7 +3,7 @@ package org.tron.common.crypto.zksnark;
 import java.math.BigInteger;
 import org.apache.commons.lang3.ArrayUtils;
 
-public class BN128Opration {
+public class ZkVerify {
 
   public boolean pairing(G1Point[] g1, G2Point[] g2) {
     if (ArrayUtils.isEmpty(g1) || ArrayUtils.isEmpty(g2)) {
