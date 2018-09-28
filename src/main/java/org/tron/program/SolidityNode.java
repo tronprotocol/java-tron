@@ -24,12 +24,9 @@ import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.BadBlockException;
-import org.tron.core.exception.BadItemException;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.http.solidity.SolidityNodeHttpApiService;
 import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.DynamicProperties;
 
 @Slf4j
 public class SolidityNode {
@@ -169,7 +166,8 @@ public class SolidityNode {
         }
         blockQueue.put(block);
         ++lastSolidityBlockNum;
-      } catch (Exception e) {}
+      } catch (Exception e) {
+      }
     }
   }
 
@@ -179,7 +177,8 @@ public class SolidityNode {
         Block block = blockQueue.take();
         loopProcessBlock(block);
         blockBakQueue.put(block);
-        logger.info("Success to process block: {}, blockMapSize: {}, blockQueueSize: {}, blockBakQueue: {}, cost {}.",
+        logger.info(
+            "Success to process block: {}, blockMapSize: {}, blockQueueSize: {}, blockBakQueue: {}, cost {}.",
             block.getBlockHeader().getRawData().getNumber(),
             blockMap.size(),
             blockQueue.size(),
