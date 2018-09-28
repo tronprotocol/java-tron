@@ -931,7 +931,7 @@ public class Program {
     StringBuilder memoryData = dumpMemory();
     StringBuilder opsString = dumpOps();
 
-    traceToLogger(stackData, memoryData, opsString);
+    logTrace(stackData, memoryData, opsString);
 
     StringBuilder globalOutput = createGlobalOutput(stackData, memoryData, opsString);
     if (listener != null) {
@@ -955,7 +955,7 @@ public class Program {
 
     if (getResult().getHReturn() != null) {
       globalOutput.append("\n  HReturn: ").append(
-              Hex.toHexString(getResult().getHReturn()));
+          Hex.toHexString(getResult().getHReturn()));
     }
 
     // sophisticated assumption that msg.data != codedata
@@ -968,14 +968,14 @@ public class Program {
     return globalOutput;
   }
 
-  private void traceToLogger(StringBuilder stackData, StringBuilder memoryData, StringBuilder opsString) {
+  private void logTrace(StringBuilder stackData, StringBuilder memoryData, StringBuilder opsString) {
     logger.trace(" -- OPS --     {}", opsString);
     logger.trace(" -- STACK --   {}", stackData);
     logger.trace(" -- MEMORY --  {}", memoryData);
     logger.trace("\n  Spent Drop: [{}]/[{}]\n  Left Energy:  [{}]\n",
-            getResult().getEnergyUsed(),
-            invoke.getEnergyLimit(),
-            getEnergyLimitLeft().longValue());
+        getResult().getEnergyUsed(),
+        invoke.getEnergyLimit(),
+        getEnergyLimitLeft().longValue());
   }
 
   private StringBuilder dumpOps() {
@@ -1003,13 +1003,13 @@ public class Program {
 
   private StringBuilder dumpMemory() {
     StringBuilder memoryData = new StringBuilder();
-    StringBuilder oneLine = new StringBuilder();
     if (memory.size() > 320) {
       memoryData.append("... Memory Folded.... ")
-              .append("(")
-              .append(memory.size())
-              .append(") bytes");
+          .append("(")
+          .append(memory.size())
+          .append(") bytes");
     } else {
+      StringBuilder oneLine = new StringBuilder();
       for (int i1 = 0; i1 < memory.size(); ++i1) {
 
         byte value = memory.readByte(i1);
@@ -1017,7 +1017,7 @@ public class Program {
 
         if ((i1 + 1) % 16 == 0) {
           String tmp = format("[%4s]-[%4s]", Integer.toString(i1 - 15, 16),
-                  Integer.toString(i1, 16)).replace(" ", "0");
+              Integer.toString(i1, 16)).replace(" ", "0");
           memoryData.append("").append(tmp).append(" ");
           memoryData.append(oneLine);
           if (i1 < memory.size()) {
