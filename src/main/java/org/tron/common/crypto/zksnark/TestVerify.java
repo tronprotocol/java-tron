@@ -5,7 +5,61 @@ import java.math.BigInteger;
 public class TestVerify {
 
   public static void main(String[] args) {
-    new TestVerify().verifyTx();
+    TestVerify tv = new TestVerify();
+    //   tv.f();
+    tv.verifyTx();
+  }
+
+  public void testPoint(){
+    G1Point H = new G1Point(new BigInteger(
+        "12091046215835229523641173286701717671667447745509192321596954139357866668225"),
+        new BigInteger(
+            "14446807589950902476683545679847436767890904443411534435294953056557941441758"));
+    G1Point K = new G1Point(new BigInteger(
+        "21341087976609916409401737322664290631992568431163400450267978471171152600502"),
+        new BigInteger(
+            "2942165230690572858696920423896381470344658299915828986338281196715687693170"));
+
+    BN128<Fp> h = H.toBN128();
+    BN128<Fp> k = K.toBN128();
+    BN128G1 h1 = H.toBN128G1();
+    BN128G1 k1 = K.toBN128G1();
+
+    System.out.println(h==null?"h is null":"h is not null" );
+    System.out.println(k==null?"k is null":"k is not null" );
+    System.out.println(h1==null?"h1 is null":"h1 is not null" );
+    System.out.println(k1==null?"k1 is null":"k1 is not null" );
+  }
+
+  public void f() {
+    G1Point p1 = new G1Point(1, 2);
+    G1Point p2 = new G1Point(1, 2);
+    G1Point explict_sum = p1.add(p2);
+    G1Point scalar_prod = p1.mul(BigInteger.valueOf(2));
+    if (explict_sum.getX().equals(scalar_prod.getX()) && explict_sum.getY()
+        .equals(scalar_prod.getY())) {
+      System.out.println("f successfully");
+    } else {
+      System.out.println("f failed");
+    }
+
+  }
+
+  public void testMul() {
+    G1Point p = new G1Point(new BigInteger(
+        "14125296762497065001182820090155008161146766663259912659363835465243039841726"),
+        new BigInteger(
+            "16229134936871442251132173501211935676986397196799085184804749187146857848057"));
+    p = p.mul(new BigInteger(
+        "13986731495506593864492662381614386532349950841221768152838255933892789078521"));
+    if (p.getX().equals(new BigInteger(
+        "18256332256630856740336504687838346961237861778318632856900758565550522381207")) &&
+        p.getY().equals(new BigInteger(
+            "6976682127058094634733239494758371323697222088503263230319702770853579280803"))) {
+      System.out.println("testMul successfully");
+    } else {
+      System.out.println("testMul failed");
+    }
   }
 
   public void verifyTx() {

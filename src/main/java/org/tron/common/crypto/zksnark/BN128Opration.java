@@ -94,7 +94,7 @@ public class BN128Opration {
       return 4;
     }
     if (!pairingProd3(vk_x.add(proof.getA()), proof.getB(), proof.getH().negate(), vk.getZ(),
-        proof.getH().negate(), p2)) {
+        proof.getC().negate(), p2)) {
       return 5;
     }
     return 0;

@@ -43,8 +43,8 @@ public class Proof {
   private G1Point K;
   private G1Point H;
 
-  public Proof(G1Point A, G1Point A_p, G2Point B, G1Point B_p, G1Point C, G1Point C_p, G1Point K,
-      G1Point H) {
+  public Proof(G1Point A, G1Point A_p, G2Point B, G1Point B_p, G1Point C, G1Point C_p, G1Point H,
+      G1Point K) {
     this.A = A;
     this.A_p = A_p;
     this.B = B;
