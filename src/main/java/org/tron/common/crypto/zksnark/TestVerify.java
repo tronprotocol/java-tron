@@ -119,11 +119,12 @@ public class TestVerify {
     input[8] = new BigInteger("18066496933330839731877828156604");
 
     Proof proof = new Proof(A, A_p, B, B_p, C, C_p, H, K);
-
-    if (new ZkVerify().verify(VerifyingKey.getInstance(), input, proof) == 0) {
+    int result = new ZkVerify().verify(VerifyingKey.getInstance(), input, proof);
+    if (result == 0) {
       System.out.println("Transaction successfully verified.");
     } else {
       System.out.println("Transaction failed verified.");
+      System.out.printf("result = %d.\n", result);
     }
   }
 }

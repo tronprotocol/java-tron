@@ -71,7 +71,7 @@ public class ZkVerify {
   }
 
   public int verify(VerifyingKey vk, BigInteger[] input, Proof proof) {
-    if (input.length + 1 == vk.getIC().length){
+    if (input.length + 1 != vk.getIC().length){
       return -1;
     }
 
