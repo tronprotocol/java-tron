@@ -35,13 +35,13 @@ public class SolidityNode {
 
   private DatabaseGrpcClient databaseGrpcClient;
 
-  AtomicLong ID = new AtomicLong();
+  private AtomicLong ID = new AtomicLong();
 
-  Map<Long, Block> blockMap = Maps.newConcurrentMap();
+  private Map<Long, Block> blockMap = Maps.newConcurrentMap();
 
-  LinkedBlockingDeque<Block> blockQueue = new LinkedBlockingDeque(10000);
+  private LinkedBlockingDeque<Block> blockQueue = new LinkedBlockingDeque(10000);
 
-  LinkedBlockingDeque<Block> blockBakQueue = new LinkedBlockingDeque(10000);
+  private LinkedBlockingDeque<Block> blockBakQueue = new LinkedBlockingDeque(10000);
 
   private volatile long remoteLastSolidityBlockNum = 0;
 
