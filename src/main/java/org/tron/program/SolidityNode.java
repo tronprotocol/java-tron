@@ -179,7 +179,7 @@ public class SolidityNode {
         Block block = blockQueue.take();
         loopProcessBlock(block);
         blockBakQueue.put(block);
-        logger.warn("Success to process block: {}, blockMapSize: {}, blockQueueSize: {}, blockBakQueue: {}, cost {}.",
+        logger.info("Success to process block: {}, blockMapSize: {}, blockQueueSize: {}, blockBakQueue: {}, cost {}.",
             block.getBlockHeader().getRawData().getNumber(),
             blockMap.size(),
             blockQueue.size(),

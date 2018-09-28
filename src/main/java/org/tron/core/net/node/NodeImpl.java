@@ -1085,7 +1085,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             if (blockIdWeGet.peekLast().getNum() + msg.getRemainNum() > maxFutureNum) {
               throw new TraitorPeerException(
                   "Block num " + blockIdWeGet.peekLast().getNum() + "+" + msg.getRemainNum()
-                      + " is gt future max num " + maxFutureNum + " from " + peer);
+                      + " is gt future max num " + maxFutureNum + " from " + peer
+                      + ", maybe the local clock is not right.");
             }
           }
         }
