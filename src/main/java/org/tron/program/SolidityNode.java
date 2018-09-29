@@ -213,7 +213,7 @@ public class SolidityNode {
   }
 
   private void processTrx() {
-    while (true) {
+    while (flag) {
       try {
         Block block = blockBakQueue.take();
         BlockCapsule blockCapsule = new BlockCapsule(block);
