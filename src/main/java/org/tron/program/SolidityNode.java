@@ -51,6 +51,8 @@ public class SolidityNode {
 
   private volatile boolean syncFlag = true;
 
+  private volatile boolean flag = true;
+
   public SolidityNode(Manager dbManager) {
     this.dbManager = dbManager;
     lastSolidityBlockNum = dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
@@ -126,7 +128,7 @@ public class SolidityNode {
     }
     logger.warn("Get adv block thread start.");
     long blockNum = ID.incrementAndGet();
-    while (true) {
+    while (flag) {
       try {
         if (blockNum > remoteLastSolidityBlockNum) {
           sleep(3000);
@@ -157,7 +159,7 @@ public class SolidityNode {
   }
 
   private void pushBlock() {
-    while (true) {
+    while (flag) {
       try {
         Block block = blockMap.remove(lastSolidityBlockNum + 1);
         if (block == null) {
@@ -172,7 +174,7 @@ public class SolidityNode {
   }
 
   private void processBlock() {
-    while (true) {
+    while (flag) {
       try {
         Block block = blockQueue.take();
         loopProcessBlock(block);
