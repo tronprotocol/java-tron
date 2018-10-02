@@ -1,6 +1,6 @@
 buildscript {
     repositories {
-        maven { url 'http://mvnrepository.com' }
+        maven { url 'http://central.maven.org/maven2/' }
         mavenCentral()
         jcenter()
     }
