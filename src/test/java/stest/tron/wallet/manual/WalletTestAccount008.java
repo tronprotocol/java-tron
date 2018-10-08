@@ -1,4 +1,4 @@
-package stest.tron.wallet.account;
+package stest.tron.wallet.manual;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -9,6 +9,7 @@ import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.AccountNetMessage;
 import org.tron.api.WalletGrpc;
@@ -42,19 +43,6 @@ public class WalletTestAccount008 {
   private static final long FREENETLIMIT = 5000L;
   private static final long BASELINE = 4800L;
 
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] account008Address = ecKey1.getAddress();
-  String account008Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] account008SecondAddress = ecKey2.getAddress();
-  String account008SecondKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
-  ECKey ecKey3 = new ECKey(Utils.getRandom());
-  byte[] account008InvalidAddress = ecKey3.getAddress();
-  String account008InvalidKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
-
-
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
@@ -63,12 +51,29 @@ public class WalletTestAccount008 {
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
-    PublicMethed.printAddress(account008Key);
-    PublicMethed.printAddress(account008SecondKey);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+  }
+
+  @Test(enabled = true)
+  public void testSetAccountId() {
+    ECKey ecKey1 = new ECKey(Utils.getRandom());
+    byte[] account008Address = ecKey1.getAddress();
+    String account008Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
+    ECKey ecKey2 = new ECKey(Utils.getRandom());
+    byte[] account008SecondAddress = ecKey2.getAddress();
+    String account008SecondKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+
+    ECKey ecKey3 = new ECKey(Utils.getRandom());
+    byte[] account008InvalidAddress = ecKey3.getAddress();
+    String account008InvalidKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
+
+    PublicMethed.printAddress(account008Key);
+    PublicMethed.printAddress(account008SecondKey);
 
     Assert.assertTrue(PublicMethed.sendcoin(account008Address,10000000,
         fromAddress,testKey002,blockingStubFull));
@@ -77,10 +82,7 @@ public class WalletTestAccount008 {
     Assert.assertTrue(PublicMethed.sendcoin(account008InvalidAddress,10000000,
         fromAddress,testKey002,blockingStubFull));
 
-  }
 
-  @Test(enabled = true)
-  public void testSetAccountId() {
     String lessThan7Char = getRandomStr(7);
     String moreThan32Char = getRandomStr(33);
     String shortAccountId = getRandomStr(8);
@@ -111,17 +113,12 @@ public class WalletTestAccount008 {
     Assert.assertTrue(ByteArray.toStr(account008SecondInfo.getAccountId()
         .toByteArray()).length() == 32);
 
-  }
-
-  @Test(enabled = true)
-  public void testSetInvalidAccountId() {
     String hasSpaceAccountId = getRandomStr(4) + " " + getRandomStr(10);
     String hasChineseAccountId = getRandomStr(4) + "中文账户名称";
     Assert.assertFalse(PublicMethed.setAccountId(hasSpaceAccountId.getBytes(),
         account008InvalidAddress, account008InvalidKey,blockingStubFull));
     Assert.assertFalse(PublicMethed.setAccountId(hasChineseAccountId.getBytes(),
         account008InvalidAddress, account008InvalidKey,blockingStubFull));
-
 
   }
 
@@ -138,15 +135,11 @@ public class WalletTestAccount008 {
     int randomNum;
     char randomChar;
     Random random = new Random();
-    // StringBuffer类型的可以append增加字符
     StringBuffer str = new StringBuffer();
 
     for (int i = 0; i < length; i++) {
-      // 可生成[0,n)之间的整数，获得随机位置
       randomNum = random.nextInt(base.length());
-      // 获得随机位置对应的字符
       randomChar = base.charAt(randomNum);
-      // 组成一个随机字符串
       str.append(randomChar);
     }
     return str.toString();

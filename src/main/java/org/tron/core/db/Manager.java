@@ -299,7 +299,7 @@ public class Manager {
               this.rePush(tx);
             }
           } catch (InterruptedException ex) {
-            logger.error(ex.getMessage());
+            logger.info(ex.getMessage());
             Thread.currentThread().interrupt();
           } catch (Exception ex) {
             logger.error("unknown exception happened in repush loop", ex);
@@ -590,7 +590,7 @@ public class Manager {
           getDynamicPropertiesStore().getLatestBlockHeaderHash());
       logger.info("begin to erase block:" + oldHeadBlock);
       khaosDb.pop();
-      revokingStore.pop();
+      revokingStore.fastPop();
       logger.info("end to erase block:" + oldHeadBlock);
       popedTransactions.addAll(oldHeadBlock.getTransactions());
 
@@ -603,9 +603,10 @@ public class Manager {
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
-      VMIllegalException, TooBigTransactionResultException {
+      VMIllegalException, TooBigTransactionResultException, UnLinkedBlockException,
+      NonCommonBlockException, BadNumberBlockException, BadBlockException {
     block.generatedByMyself = true;
-    applyBlock(block);
+    pushBlock(block);
   }
 
   private void applyBlock(BlockCapsule block) throws ContractValidateException,
@@ -1025,13 +1026,17 @@ public class Manager {
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException {
 
     //check that the first block after the maintenance period has just been processed
-    if (lastHeadBlockIsMaintenanceBefore != lastHeadBlockIsMaintenance()) {
+   // if (lastHeadBlockIsMaintenanceBefore != lastHeadBlockIsMaintenance()) {
       if (!witnessController.validateWitnessSchedule(witnessCapsule.getAddress(), when)) {
         logger.info("It's not my turn, "
             + "and the first block after the maintenance period has just been processed");
+        
+        logger.info("when:{},lastHeadBlockIsMaintenanceBefore:{},lastHeadBlockIsMaintenanceAfter:{}",
+                when, lastHeadBlockIsMaintenanceBefore,lastHeadBlockIsMaintenance() );
+        
         return null;
       }
-    }
+   // }
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();

@@ -80,13 +80,13 @@ public class WalletTestTransfer001 {
         .usePlaintext(true)
         .build();
     searchBlockingStubFull = WalletGrpc.newBlockingStub(searchChannelFull);
-
-    Assert.assertTrue(PublicMethed.sendcoin(sendAccountAddress,90000000000L,
-        fromAddress,testKey002,blockingStubFull));
   }
 
   @Test
   public void testSendCoin() {
+    Assert.assertTrue(PublicMethed.sendcoin(sendAccountAddress,90000000000L,
+        fromAddress,testKey002,blockingStubFull));
+
     logger.info(receiptAccountKey);
     //Test send coin.
     Account sendAccount = PublicMethed.queryAccount(sendAccountKey,blockingStubFull);

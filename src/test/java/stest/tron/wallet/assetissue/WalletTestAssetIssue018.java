@@ -78,7 +78,7 @@ public class WalletTestAssetIssue018 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -89,7 +89,7 @@ public class WalletTestAssetIssue018 {
     PublicMethed.printAddress(assetAccount3Key);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testSameAssetissueName() {
     logger.info(name);
     logger.info("total supply is " + Long.toString(totalSupply));
@@ -122,7 +122,7 @@ public class WalletTestAssetIssue018 {
     //Get asset issue by name
     String asset1Name = name;
     String asset2Name = name + "_1";
-    String asset3Name = name + "_2";
+    final String asset3Name = name + "_2";
     ByteString assetNameBs = ByteString.copyFrom(asset1Name.getBytes());
     GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
     Contract.AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request);
@@ -167,7 +167,7 @@ public class WalletTestAssetIssue018 {
 
   }
 
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

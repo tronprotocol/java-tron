@@ -1,4 +1,5 @@
 #!/bin/bash
+stestlogname="`date +%Y%m%d%H%M%S`_stest.log"
 testnet=(
 47.94.231.67
 47.94.10.122
@@ -21,31 +22,42 @@ done
 if [ "$stest_server" = "" ]
 then
 echo "All docker server is busy, stest FAILED"
-exit 0
+exit 1
 fi
 
 
 
 echo "$TRAVIS_BRANCH"
 
-if [ "$TRAVIS_BRANCH" = "develop" ];then
+if [[ "$TRAVIS_BRANCH" = "develop" || "$TRAVIS_BRANCH" = "master" ]];then
   echo "init env"
-  ssh java-tron@$stest_server -p 22008 sh /data/workspace/docker_workspace/stest.sh >stest.log 2>&1
+  ssh java-tron@$stest_server -p 22008 sh /data/workspace/docker_workspace/stest.sh >$stestlogname 2>&1
+  if [[ `find $stestlogname -type f | xargs grep "Connection refused"` =~ "Connection refused" || `find $stestlogname -type f | xargs grep "stest FAILED"` =~ "stest FAILED" ]];
+  then
+    rm -f $stestlogname
+    echo "first if"
+    ssh java-tron@$stest_server -p 22008 sh /data/workspace/docker_workspace/stest.sh >$stestlogname 2>&1
+  fi
+  if [[ `find $stestlogname -type f | xargs grep "Connection refused"` =~ "Connection refused" || `find $stestlogname -type f | xargs grep "stest FAILED"` =~ "stest FAILED" ]];
+  then
+    rm -f $stestlogname
+    echo "second if"
+    ssh java-tron@$stest_server -p 22008 sh /data/workspace/docker_workspace/stest.sh >$stestlogname 2>&1
+  fi
   echo "stest start"
-  cat stest.log | grep "Stest result is:" -A 10000
-  #./gradlew stest | tee stest.log
+  cat $stestlogname | grep "Stest result is:" -A 10000
   echo "stest end"
 
   echo $?
-  ret=$(cat stest.log | grep "stest FAILED" | wc -l)
+  ret=$(cat $stestlogname | grep "stest FAILED" | wc -l)
 
   if [ $ret != 0 ];then
     echo $ret
-    rm -f stest.log
-    exit 0
+    rm -f $stestlogname
+    exit 1
   fi
 
 fi
 echo "bye bye"
-rm -f stest.log
+rm -f $stestlogname
 exit 0

@@ -66,7 +66,10 @@ public class WalletTestAccount006 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+  }
 
+  @Test(enabled = true)
+  public void testGetAccountNet() {
     //Sendcoin to this account
     ByteString addressBS1 = ByteString.copyFrom(account006Address);
     Account request1 = Account.newBuilder().setAddress(addressBS1).build();
@@ -77,10 +80,7 @@ public class WalletTestAccount006 {
         blockingStubFull));
     Assert.assertTrue(PublicMethed
         .sendcoin(account006Address, sendAmount, fromAddress, testKey002, blockingStubFull));
-  }
 
-  @Test(enabled = true)
-  public void testGetAccountNet() {
     //Get new account net information.
     ByteString addressBs = ByteString.copyFrom(account006Address);
     Account request = Account.newBuilder().setAddress(addressBs).build();

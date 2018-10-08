@@ -1,4 +1,4 @@
-package stest.tron.wallet.account;
+package stest.tron.wallet.manual;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -64,17 +64,18 @@ public class WalletTestAccount010 {
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
+
+
+  }
+
+  @Test(enabled = false)
+  public void testGetStorage() {
     Assert.assertTrue(PublicMethed.sendcoin(account010Address,100000000,
         fromAddress,testKey002,blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(account010SecondAddress,100000000,
         fromAddress,testKey002,blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(account010InvalidAddress,100000000,
         fromAddress,testKey002,blockingStubFull));
-
-  }
-
-  @Test(enabled = false)
-  public void testGetStorage() {
     Account account010Info = PublicMethed.queryAccount(account010Key,blockingStubFull);
     Assert.assertTrue(account010Info.getAccountResource().getStorageLimit() == 0);
     Assert.assertTrue(account010Info.getAccountResource().getLatestExchangeStorageTime() == 0);
@@ -120,7 +121,7 @@ public class WalletTestAccount010 {
 
 
 
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

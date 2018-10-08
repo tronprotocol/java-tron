@@ -23,6 +23,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TVMTestUtils;
@@ -69,12 +70,12 @@ import org.tron.protos.Protocol.Transaction.raw;
  * function fibonacciNotify(uint number) returns(uint result) { result = fibonacci(number);
  * Notify(number, result); } }
  */
-public class BandWithRuntimeOutOfTimeWithCheckTest {
+public class BandWidthRuntimeOutOfTimeWithCheckTest {
 
   public static final long totalBalance = 1000_0000_000_000L;
-  private static String dbPath = "output_BandWithRuntimeOutOfTimeTest_test";
-  private static String dbDirectory = "db_BandWithRuntimeOutOfTimeTest_test";
-  private static String indexDirectory = "index_BandWithRuntimeOutOfTimeTest_test";
+  private static String dbPath = "output_BandWidthRuntimeOutOfTimeTest_test";
+  private static String dbDirectory = "db_BandWidthRuntimeOutOfTimeTest_test";
+  private static String indexDirectory = "index_BandWidthRuntimeOutOfTimeTest_test";
   private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
 
@@ -213,6 +214,7 @@ public class BandWithRuntimeOutOfTimeWithCheckTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
+    ApplicationFactory.create(context).shutdown();
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }

@@ -83,14 +83,15 @@ public class WalletTestCommittee003 {
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
-    Assert.assertTrue(PublicMethed.sendcoin(witness001Address,1000000L,
-        toAddress,testKey003,blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(witness002Address,1000000L,
-        toAddress,testKey003,blockingStubFull));
   }
 
   @Test(enabled = true)
   public void testApproveProposal() {
+    Assert.assertTrue(PublicMethed.sendcoin(witness001Address,1000000L,
+        toAddress,testKey003,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(witness002Address,1000000L,
+        toAddress,testKey003,blockingStubFull));
+
     //Create a proposal
     try {
       Thread.sleep(2000);
@@ -114,7 +115,7 @@ public class WalletTestCommittee003 {
 
     Assert.assertTrue(PublicMethed.approveProposal(witness002Address,witnessKey002,proposalId,
         true,blockingStubFull));
-        try {
+    try {
       Thread.sleep(2000);
     } catch (InterruptedException e) {
       e.printStackTrace();

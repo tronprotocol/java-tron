@@ -1,4 +1,4 @@
-package stest.tron.wallet.block;
+package stest.tron.wallet.manual;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -43,6 +43,7 @@ public class WalletTestBlock001 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  @Test(enabled = true)
   @BeforeClass
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -56,7 +57,7 @@ public class WalletTestBlock001 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test
+  @Test(enabled = true)
   public void testCurrentBlock() {
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Assert.assertTrue(currentBlock.hasBlockHeader());
@@ -66,7 +67,8 @@ public class WalletTestBlock001 {
     Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getNumber() > 0);
     Assert.assertFalse(currentBlock.getBlockHeader().getRawData().getParentHash().isEmpty());
     Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
-    logger.info("test getcurrentblock is " + Long.toString(currentBlock.getBlockHeader().getRawData().getNumber()));
+    logger.info("test getcurrentblock is " + Long.toString(currentBlock.getBlockHeader()
+        .getRawData().getNumber()));
 
     //Improve coverage.
     currentBlock.equals(currentBlock);
@@ -78,7 +80,7 @@ public class WalletTestBlock001 {
     newBlock.getTransactionsList();
   }
 
-  @Test
+  @Test(enabled = true)
   public void testCurrentBlockFromSolidity() {
     Block currentBlock = blockingStubSolidity
         .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
@@ -89,7 +91,8 @@ public class WalletTestBlock001 {
     Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getNumber() > 0);
     Assert.assertFalse(currentBlock.getBlockHeader().getRawData().getParentHash().isEmpty());
     Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
-    logger.info("test getcurrentblock in soliditynode is " + Long.toString(currentBlock.getBlockHeader().getRawData().getNumber()));
+    logger.info("test getcurrentblock in soliditynode is " + Long.toString(currentBlock
+        .getBlockHeader().getRawData().getNumber()));
   }
 
   @AfterClass

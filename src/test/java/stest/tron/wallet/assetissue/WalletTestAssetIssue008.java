@@ -84,7 +84,7 @@ public class WalletTestAssetIssue008 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     logger.info(ByteArray.toHexString(ecKey.getPrivKeyBytes()));
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -110,7 +110,7 @@ public class WalletTestAssetIssue008 {
   }
 
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testGetAllAssetIssueFromSolidity() {
     GrpcAPI.AssetIssueList assetIssueList = blockingStubSolidity
         .getAssetIssueList(GrpcAPI.EmptyMessage.newBuilder().build());
@@ -161,7 +161,7 @@ public class WalletTestAssetIssue008 {
 
   }
 
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

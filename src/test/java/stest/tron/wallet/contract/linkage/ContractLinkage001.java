@@ -36,6 +36,7 @@ public class ContractLinkage001 {
       .getStringList("fullnode.ip.list").get(0);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
+  byte[] contractAddress = null;
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] linkage001Address = ecKey1.getAddress();
@@ -87,7 +88,7 @@ public class ContractLinkage001 {
     logger.info("before energy usage is " + Long.toString(energyUsage));
 
     Account account = PublicMethed.queryAccount(linkage001Key,blockingStubFull);
-    Long beforeAccountBalance = account.getBalance();
+    final Long beforeAccountBalance = account.getBalance();
     logger.info("before balance is " + Long.toString(account.getBalance()));
     //Value is 1
     txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName,payableAbi,payableCode,
@@ -95,7 +96,7 @@ public class ContractLinkage001 {
         linkage001Address,blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
-    byte[] contractAddress = infoById.get().getContractAddress().toByteArray();
+    contractAddress = infoById.get().getContractAddress().toByteArray();
 
     accountResource = PublicMethed.getAccountResource(linkage001Address,blockingStubFull);
     energyLimit = accountResource.getEnergyLimit();

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 
-<suite name="Stest suite" parallel="tests" thread-count="2" >
+<suite name="Stest suite" parallel="tests" thread-count="4" >
   <listeners>
     <listener class-name="stest.tron.wallet.common.client.utils.RetryListener"/>
   </listeners>
@@ -11,21 +11,19 @@
         </package>
       </packages>
     </test>
-  <test name="Stest assetissue,account">
+  <test name="Stest account">
     <packages>
-      <package name="stest.tron.wallet.assetissue">
-      </package>
       <package name="stest.tron.wallet.account">
       </package>
     </packages>
   </test>
   <test name="Stest block,node,witness">
     <packages>
-      <package name="stest.tron.wallet.block">
-      </package>
       <package name="stest.tron.wallet.node">
       </package>
       <package name="stest.tron.wallet.witness">
+      </package>
+      <package name="stest.tron.wallet.block">
       </package>
     </packages>
   </test>
@@ -38,5 +36,14 @@
       <package name="stest.tron.wallet.committee">
       </package>
     </packages>
+<!--      <classes>
+        <class name="stest.tron.wallet.account.WalletTestAccount003"/>
+      </classes>
+      <packages>
+        <package name="stest.tron.wallet.assetissue">
+        </package>
+        <package name="stest.tron.wallet.manual">
+        </package>
+      </packages>-->
   </test>
 </suite>
