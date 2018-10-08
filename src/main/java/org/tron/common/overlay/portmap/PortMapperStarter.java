@@ -31,6 +31,7 @@ public class PortMapperStarter {
   private Protocol tcp = Protocol.TCP;
   private Protocol udp = Protocol.UDP;
   private int port = Args.getInstance().getNodeListenPort();
+  private volatile boolean mapper = false;
 
   private ExecutorService executorService;
   private PortMapperService portMapperService;
@@ -47,10 +48,12 @@ public class PortMapperStarter {
   @PreDestroy
   public void destroy() {
     try {
-      portMapperService.deletePortForwardings(tcp, port);
-      portMapperService.deletePortForwardings(udp, port);
-//      portMapperService.destroy();
-      executorService.shutdown();
+      if (Args.getInstance().isOpenPortMapper() && mapper) {
+        portMapperService.deletePortForwardings(tcp, port);
+        portMapperService.deletePortForwardings(udp, port);
+//        portMapperService.destroy();
+        executorService.shutdown();
+      }
     } catch (Exception e) {
       logger.error("destroy the port mapper error!", e);
     }
@@ -62,6 +65,7 @@ public class PortMapperStarter {
       if (portMapperService.start()) {
         portMapperService.addPortForwarding(tcp, port, port, null, null);
         portMapperService.addPortForwarding(udp, port, port, null, null);
+        mapper = true;
         logger.info("port mapper success,port is {}", port);
       } else {
         logger.info("can not find the mapper device");

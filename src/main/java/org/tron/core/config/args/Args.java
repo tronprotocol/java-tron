@@ -399,6 +399,7 @@ public class Args {
     INSTANCE.maxTimeRatio = 5.0;
     INSTANCE.isOpenFullTcpDisconnect = true;
     INSTANCE.longRunningTime = 10;
+    INSTANCE.isOpenPortMapper = false;
   }
 
   /**
