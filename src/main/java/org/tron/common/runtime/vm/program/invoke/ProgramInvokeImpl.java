@@ -117,7 +117,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   }
 
   /*           ADDRESS op         */
-  public DataWord getOwnerAddress() {
+  public DataWord getContractAddress() {
     return address;
   }
 

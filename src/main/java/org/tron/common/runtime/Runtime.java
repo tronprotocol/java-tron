@@ -355,7 +355,7 @@ public class Runtime {
 
       long energyLimit = getEnergyLimit(creator, feeLimit, callValue);
       byte[] ops = newSmartContract.getBytecode().toByteArray();
-      InternalTransaction internalTransaction = new InternalTransaction(trx);
+      InternalTransaction internalTransaction = new InternalTransaction(trx, trxType);
 
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executorType, trx,
@@ -450,7 +450,7 @@ public class Runtime {
         programInvoke.setStaticCall();
       }
       this.vm = new VM(config);
-      InternalTransaction internalTransaction = new InternalTransaction(trx);
+      InternalTransaction internalTransaction = new InternalTransaction(trx, trxType);
       this.program = new Program(null, code, programInvoke, internalTransaction, config,
           this.blockCap);
       this.program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
@@ -614,7 +614,7 @@ public class Runtime {
         traceContent = zipAndEncode(traceContent);
       }
 
-      String txHash = Hex.toHexString(new InternalTransaction(trx).getHash());
+      String txHash = Hex.toHexString(new InternalTransaction(trx, trxType).getHash());
       saveProgramTraceFile(config, txHash, traceContent);
     }
 
