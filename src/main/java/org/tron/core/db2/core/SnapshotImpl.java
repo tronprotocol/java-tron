@@ -4,9 +4,13 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Stack;
+import java.util.concurrent.LinkedBlockingDeque;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.HashDB;
 import org.tron.core.db2.common.Key;
@@ -21,12 +25,17 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
 
   @Override
   public byte[] get(byte[] key) {
-    Value value = db.get(Key.of(key));
-    if (value != null) {
-      return value.getBytes();
-    } else {
-      return previous.get(key);
+    Snapshot snapshot = this;
+    Value value;
+    while (snapshot.getClass() == SnapshotImpl.class) {
+      if ((value = ((SnapshotImpl) snapshot).db.get(Key.of(key))) != null) {
+        return value.getBytes();
+      }
+
+      snapshot = snapshot.getPrevious();
     }
+
+    return snapshot.get(key);
   }
 
   @Override
@@ -41,7 +50,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
       operator = Value.Operator.MODIFY;
     }
 
-    db.put(Key.of(key), Value.of(operator, value));
+    db.put(Key.copyOf(key), Value.copyOf(operator, value));
   }
 
   @Override
@@ -80,7 +89,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
           if (value == null) {
             db.put(k, v);
           } else if (value.getOperator() == Value.Operator.DELETE) {
-            db.put(k, Value.of(Value.Operator.MODIFY, v.getBytes()));
+            db.put(k, Value.copyOf(Value.Operator.MODIFY, v.getBytes()));
           }
         });
 
@@ -93,7 +102,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
           if (value == null || value.getOperator() == Value.Operator.MODIFY) {
             db.put(k, v);
           } else if (value.getOperator() == Value.Operator.CREATE) {
-            db.put(k, Value.of(Value.Operator.CREATE, v.getBytes()));
+            db.put(k, Value.copyOf(Value.Operator.CREATE, v.getBytes()));
           }
         });
 
@@ -117,34 +126,48 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
 
   @Override
   public Snapshot getRoot() {
-    return previous.getRoot();
+    Snapshot root = this;
+    while (root.getClass() == SnapshotImpl.class) {
+      root = root.getPrevious();
+    }
+    return root;
   }
 
-  //todo need to resolve levelDB'iterator close
+  //TODO need to resolve levelDB'iterator close
   @Override
   public Iterator<Map.Entry<byte[],byte[]>> iterator() {
     Map<WrappedByteArray, WrappedByteArray> all = new HashMap<>();
     collect(all);
     return Iterators.concat(
-        Iterators.transform(all.entrySet().iterator(), e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes())),
-        Iterators.filter(getRoot().iterator(), e -> !all.containsKey(WrappedByteArray.of(e.getKey()))));
+        Iterators.transform(all.entrySet().iterator(),
+            e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes())),
+        Iterators.filter(getRoot().iterator(),
+            e -> !all.containsKey(WrappedByteArray.of(e.getKey()))));
   }
 
   void collect(Map<WrappedByteArray, WrappedByteArray> all) {
-    if (previous.getClass() == SnapshotImpl.class) {
-      ((SnapshotImpl) previous).collect(all);
+    Deque<Snapshot> stack = new LinkedBlockingDeque<>();
+    Snapshot snapshot = this;
+    while(snapshot.getClass() == SnapshotImpl.class) {
+      stack.push(snapshot);
+      snapshot = snapshot.getPrevious();
     }
 
-    Streams.stream(db).forEach(e -> all.put(WrappedByteArray.of(e.getKey().getBytes()), WrappedByteArray.of(e.getValue().getBytes())));
+    while(!stack.isEmpty()) {
+      snapshot = stack.pop();
+      Streams.stream(((SnapshotImpl) snapshot).db)
+          .forEach(e -> all.put(WrappedByteArray.of(e.getKey().getBytes()),
+              WrappedByteArray.of(e.getValue().getBytes())));
+    }
   }
 
   @Override
   public void close() {
-    previous.close();
+    getRoot().close();
   }
 
   @Override
   public void reset() {
-    previous.reset();
+    getRoot().reset();
   }
 }

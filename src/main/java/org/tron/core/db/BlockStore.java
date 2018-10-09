@@ -15,6 +15,7 @@
 
 package org.tron.core.db;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -56,13 +57,15 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
     return revokingDB.getlatestValues(getNum).stream()
         .map(bytes -> {
           try {
-            return new BlockCapsule(bytes);
+            BlockCapsule blockCapsule = new BlockCapsule(bytes);
+            return blockCapsule;
           } catch (BadItemException e) {
             e.printStackTrace();
           }
           return null;
         })
         .filter(Objects::nonNull)
+        .sorted(Comparator.comparing(BlockCapsule::getNum))
         .collect(Collectors.toList());
   }
 }

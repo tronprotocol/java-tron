@@ -1,15 +1,29 @@
 package org.tron.core.db.common;
 
 import lombok.Getter;
-import lombok.Value;
-
 import java.util.Arrays;
 
-@Value(staticConstructor = "of")
 public final class WrappedByteArray {
 
   @Getter
   private byte[] bytes;
+
+  public static WrappedByteArray of(byte[] bytes) {
+    return new WrappedByteArray(bytes);
+  }
+
+  public static WrappedByteArray copyOf(byte[] bytes) {
+    byte[] value = null;
+    if (bytes != null) {
+      value = Arrays.copyOf(bytes, bytes.length);
+    }
+
+    return new WrappedByteArray(value);
+  }
+
+  private WrappedByteArray(byte[] bytes) {
+    this.bytes = bytes;
+  }
 
   @Override
   public boolean equals(Object o) {

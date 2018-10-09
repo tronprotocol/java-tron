@@ -95,11 +95,14 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
     Set<byte[]> result = new HashSet<>();
     Snapshot snapshot = head;
     long tmp = limit;
-    for (; tmp > 0 && snapshot.getPrevious() != null; --tmp, snapshot = snapshot.getPrevious()) {
-      Streams.stream(((SnapshotImpl) snapshot).db)
-          .map(Map.Entry::getValue)
-          .map(Value::getBytes)
-          .forEach(result::add);
+    for (; tmp > 0 && snapshot.getPrevious() != null; snapshot = snapshot.getPrevious()) {
+      if (!((SnapshotImpl) snapshot).db.isEmpty()) {
+        --tmp;
+        Streams.stream(((SnapshotImpl) snapshot).db)
+            .map(Map.Entry::getValue)
+            .map(Value::getBytes)
+            .forEach(result::add);
+      }
     }
 
     if (snapshot.getPrevious() == null && tmp != 0) {
