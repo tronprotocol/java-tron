@@ -57,10 +57,8 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
     return revokingDB.getlatestValues(getNum).stream()
         .map(bytes -> {
           try {
-            BlockCapsule blockCapsule = new BlockCapsule(bytes);
-            return blockCapsule;
-          } catch (BadItemException e) {
-            e.printStackTrace();
+            return new BlockCapsule(bytes);
+          } catch (BadItemException ignored) {
           }
           return null;
         })
