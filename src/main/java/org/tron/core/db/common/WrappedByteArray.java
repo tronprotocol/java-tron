@@ -1,8 +1,11 @@
 package org.tron.core.db.common;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import java.util.Arrays;
 
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public final class WrappedByteArray {
 
   @Getter
@@ -19,10 +22,6 @@ public final class WrappedByteArray {
     }
 
     return new WrappedByteArray(value);
-  }
-
-  private WrappedByteArray(byte[] bytes) {
-    this.bytes = bytes;
   }
 
   @Override
