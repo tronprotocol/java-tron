@@ -1060,9 +1060,13 @@ public class Manager {
           List<TypeReference<?>> typeList = new ArrayList<>();
           List<String> nameList = new ArrayList<>();
           abiEntry.getInputsList().forEach(input -> {
-            nameList.add(input.getName());
-            TypeReference<?> tr = AbiTypes.getTypeReference(input.getType(), input.getIndexed());
-            typeList.add(tr);
+            try {
+              TypeReference<?> tr = AbiTypes.getTypeReference(input.getType(), input.getIndexed());
+              nameList.add(input.getName());
+              typeList.add(tr);
+            } catch (UnsupportedOperationException e) {
+              logger.error("Unable parse abi entry. {}", e.getMessage());
+            }
           });
           JSONObject resultJsonObject = new JSONObject();
           JSONObject rawJsonObject = new JSONObject();
@@ -1072,6 +1076,9 @@ public class Manager {
           rawTopicsJsonArray.add(eventHexString);
 
           Event event = new Event(entryName, typeList);
+          if (!StringUtils.equalsIgnoreCase(EventEncoder.encode(event), eventHexString)) {
+            return;
+          }
           String rawLogData = ByteArray.toHexString(log.getData().toByteArray());
           List<Type> nonIndexedValues = FunctionReturnDecoder.decode(rawLogData, event.getNonIndexedParameters());
           List<Type> indexedValues = new ArrayList<>();
