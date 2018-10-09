@@ -33,6 +33,8 @@ public class SolidityNode {
 
   private Manager dbManager;
 
+  private Args cfgArgs;
+
   private DatabaseGrpcClient databaseGrpcClient;
 
   private AtomicLong ID = new AtomicLong();
@@ -53,15 +55,17 @@ public class SolidityNode {
 
   private volatile boolean flag = true;
 
-  public SolidityNode(Manager dbManager) {
+  public SolidityNode(Manager dbManager, Args cfgArgs) {
     this.dbManager = dbManager;
+    this.cfgArgs = cfgArgs;
     lastSolidityBlockNum = dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
     ID.set(lastSolidityBlockNum);
+    databaseGrpcClient = new DatabaseGrpcClient(cfgArgs.getTrustNodeAddr());
+    remoteLastSolidityBlockNum = getLastSolidityBlockNum();
   }
 
-  private void start(Args cfgArgs) {
+  private void start() {
     try {
-      databaseGrpcClient = new DatabaseGrpcClient(cfgArgs.getTrustNodeAddr());
       for (int i = 0; i < 50; i++) {
         new Thread(() -> getSyncBlock()).start();
       }
@@ -69,7 +73,9 @@ public class SolidityNode {
       new Thread(() -> pushBlock()).start();
       new Thread(() -> processBlock()).start();
       new Thread(() -> processTrx()).start();
-      logger.warn("Success to start solid node, lastSolidityBlockNum: {}.", lastSolidityBlockNum);
+      logger.info(
+          "Success to start solid node, lastSolidityBlockNum: {}, ID: {}, remoteLastSolidityBlockNum: {}.",
+          lastSolidityBlockNum, ID.get(), remoteLastSolidityBlockNum);
     } catch (Exception e) {
       logger.error("Failed to start solid node, address: {}.", cfgArgs.getTrustNodeAddr());
       System.exit(0);
@@ -87,12 +93,13 @@ public class SolidityNode {
           sleep(1000);
           continue;
         }
-        blockMap.put(blockNum, databaseGrpcClient.getBlock(blockNum));
+        Block block = getBlockByNum(blockNum);
+        blockMap.put(blockNum, block);
         logger.info("Success to get sync block: {}.", blockNum);
         blockNum = getNextSyncBlockId();
       } catch (Exception e) {
         logger.error("Failed to get sync block {}.", blockNum);
-        sleep(100);
+        sleep(1000);
       }
     }
     logger.warn("Get sync block thread {} exit.", Thread.currentThread().getName());
@@ -135,14 +142,25 @@ public class SolidityNode {
           remoteLastSolidityBlockNum = getLastSolidityBlockNum();
           continue;
         }
-        blockMap.put(blockNum, databaseGrpcClient.getBlock(blockNum));
+        Block block = getBlockByNum(blockNum);
+        blockMap.put(blockNum, block);
         logger.info("Success to get adv block: {}.", blockNum);
         blockNum = ID.incrementAndGet();
       } catch (Exception e) {
         logger.error("Failed to get adv block {}.", blockNum);
-        sleep(100);
+        sleep(1000);
       }
     }
+  }
+
+  private Block getBlockByNum(long blockNum) throws Exception {
+    Block block = databaseGrpcClient.getBlock(blockNum);
+    if (block.getBlockHeader().getRawData().getNumber() != blockNum) {
+      logger.warn("Get adv block id not the same , {}, {}.", blockNum,
+          block.getBlockHeader().getRawData().getNumber());
+      throw new Exception();
+    }
+    return block;
   }
 
   private long getLastSolidityBlockNum() {
@@ -153,7 +171,7 @@ public class SolidityNode {
         return blockNum;
       } catch (Exception e) {
         logger.error("Failed to get last solid blockNum: {}.", remoteLastSolidityBlockNum);
-        sleep(100);
+        sleep(1000);
       }
     }
   }
@@ -289,8 +307,8 @@ public class SolidityNode {
     NodeManager nodeManager = context.getBean(NodeManager.class);
     nodeManager.close();
 
-    SolidityNode node = new SolidityNode(appT.getDbManager());
-    node.start(cfgArgs);
+    SolidityNode node = new SolidityNode(appT.getDbManager(), cfgArgs);
+    node.start();
 
     rpcApiService.blockUntilShutdown();
   }

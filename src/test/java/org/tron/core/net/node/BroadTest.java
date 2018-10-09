@@ -45,6 +45,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.Transaction;
 
+@Ignore
 @Slf4j
 public class BroadTest {
 

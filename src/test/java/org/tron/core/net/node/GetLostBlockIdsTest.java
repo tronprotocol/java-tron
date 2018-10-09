@@ -38,6 +38,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+@Ignore
 @Slf4j
 public class GetLostBlockIdsTest {
     private static TronApplicationContext context;

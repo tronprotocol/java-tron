@@ -36,7 +36,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
-
+@Ignore
 @Slf4j
 public class FinishProcessSyncBlockTest {
 
