@@ -12,6 +12,8 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -40,11 +42,13 @@ public class IndexHelperTest {
   private static IndexHelper indexHelper;
   private static TronApplicationContext context;
   private static String dbPath = "output_IndexHelper_test";
+  private static Application AppT;
 
   static {
     Args.setParam(new String[]{"-d", dbPath, "-w"}, "config-test-index.conf");
     Args.getInstance().setSolidityNode(true);
     context = new TronApplicationContext(DefaultConfig.class);
+    AppT = ApplicationFactory.create(context);
   }
 
   @BeforeClass
@@ -96,6 +100,8 @@ public class IndexHelperTest {
   @AfterClass
   public static void removeDb() {
     Args.clearParam();
+    AppT.shutdownServices();
+    AppT.shutdown();
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }

@@ -339,7 +339,7 @@ public class Runtime {
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
 
       long MAX_CPU_TIME_OF_ONE_TX = deposit.getDbManager().getDynamicPropertiesStore()
-          .getMaxCpuTimeOfOneTX() * 1000;
+          .getMaxCpuTimeOfOneTx() * 1000;
 
       long thisTxCPULimitInUs = (long) (MAX_CPU_TIME_OF_ONE_TX * getThisTxCPULimitInUsRatio());
 
@@ -422,7 +422,7 @@ public class Runtime {
               .getOriginAddress().toByteArray());
 
       long MAX_CPU_TIME_OF_ONE_TX = deposit.getDbManager().getDynamicPropertiesStore()
-          .getMaxCpuTimeOfOneTX() * 1000;
+          .getMaxCpuTimeOfOneTx() * 1000;
       long thisTxCPULimitInUs =
           (long) (MAX_CPU_TIME_OF_ONE_TX * getThisTxCPULimitInUsRatio());
 
