@@ -308,6 +308,7 @@ message TransactionInfo {
 
   int64 withdraw_amount = 15;
   int64 unfreeze_amount = 16;
+  repeated InternalTransaction internal_transactions = 17;
 }
 
 message Transactions {
@@ -482,4 +483,15 @@ message SmartContract {
   int64 consume_user_resource_percent = 6;
   string name = 7;
 
+}
+
+message InternalTransaction {
+  bytes hash = 1;
+  bytes caller_address = 2;
+  bytes transferTo_address = 3;
+  message InternalTransactionTransferInfo{
+    int64 callValue = 1;
+    bytes tokenName = 2;
+  }
+  repeated InternalTransactionTransferInfo transferInfo = 4;
 }

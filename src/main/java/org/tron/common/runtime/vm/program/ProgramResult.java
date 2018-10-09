@@ -166,6 +166,10 @@ public class ProgramResult {
     return transaction;
   }
 
+  public void addInternalTransaction(InternalTransaction internalTransaction) {
+    getInternalTransactions().add(internalTransaction);
+  }
+
   public void addInternalTransactions(List<InternalTransaction> internalTransactions) {
     getInternalTransactions().addAll(internalTransactions);
   }

@@ -49,7 +49,7 @@ public class InternalTransaction {
    * Initialization code for a new contract */
   private byte[] data;
   private long nonce;
-  private byte[] transferTargetAddress;
+  private byte[] transferToAddress;
 
   /*  Message sender address */
   protected byte[] sendAddress;
@@ -83,18 +83,25 @@ public class InternalTransaction {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
     this.protoEncoded = trxCap.getData();
     this.nonce = 0;
+    // outside transaction should not have deep. It will not count in vm trace. But it will be shown in program result
+    // this.deep = 0;
     if (trxType.equals(TrxType.TRX_CONTRACT_CREATION_TYPE)) {
       CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
       this.sendAddress = contract.getOwnerAddress().toByteArray();
       this.receiveAddress = EMPTY_BYTE_ARRAY;
-      this.transferTargetAddress = Wallet.generateContractAddress(trx);
+      this.transferToAddress = Wallet.generateContractAddress(trx);
+      this.note = "create";
+      this.value = contract.getNewContract().getCallValue();
     }
-    else{
+    else if(trxType.equals(TrxType.TRX_CONTRACT_CALL_TYPE)){
       TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
       this.sendAddress = contract.getOwnerAddress().toByteArray();
       this.receiveAddress = contract.getContractAddress().toByteArray();
-      this.transferTargetAddress = this.receiveAddress.clone();
+      this.transferToAddress = this.receiveAddress.clone();
+      this.note = "call";
+      this.value = contract.getCallValue();
     }
+    // TODO: Should consider unknown type?
     this.hash = trxCap.getTransactionId().getBytes();
   }
 
@@ -103,18 +110,18 @@ public class InternalTransaction {
    */
 
   public InternalTransaction(byte[] parentHash, int deep, int index,
-      byte[] sendAddress, byte[] transferAddress,  long value, byte[] data, String note, long nonce) {
+      byte[] sendAddress, byte[] transferToAddress,  long value, byte[] data, String note, long nonce) {
     this.parentHash = parentHash;
     this.deep = deep;
     this.index = index;
     this.note = note;
     this.sendAddress = nullToEmpty(sendAddress);
-    this.transferTargetAddress = nullToEmpty(transferAddress);
+    this.transferToAddress = nullToEmpty(transferToAddress);
     if(note.equalsIgnoreCase("create")){
       this.receiveAddress = EMPTY_BYTE_ARRAY;
     }
     else {
-      this.receiveAddress = nullToEmpty(transferAddress);
+      this.receiveAddress = nullToEmpty(transferToAddress);
     }
     this.value = value;
     this.data = nullToEmpty(data);
@@ -128,6 +135,10 @@ public class InternalTransaction {
 
   public void setTransaction(Transaction transaction) {
     this.transaction = transaction;
+  }
+
+  public byte[] getTransferToAddress() {
+    return transferToAddress;
   }
 
   public void reject() {
