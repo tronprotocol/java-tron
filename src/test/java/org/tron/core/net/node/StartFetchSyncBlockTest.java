@@ -34,7 +34,6 @@ import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
 import org.tron.protos.Protocol;
 
-@Ignore
 @Slf4j
 public class StartFetchSyncBlockTest {
 
