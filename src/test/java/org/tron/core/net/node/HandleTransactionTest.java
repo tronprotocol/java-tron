@@ -20,6 +20,9 @@ import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.TraitorPeerException;
 import org.tron.core.net.message.TransactionMessage;
+import org.tron.core.net.node.override.HandshakeHandlerTest;
+import org.tron.core.net.node.override.PeerClientTest;
+import org.tron.core.net.node.override.TronChannelInitializerTest;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
@@ -37,12 +40,14 @@ public class HandleTransactionTest {
 
     private static TronApplicationContext context;
     private static NodeImpl node;
-    RpcApiService rpcApiService;
-    private static PeerClient peerClient;
-    ChannelManager channelManager;
-    SyncPool pool;
+    private RpcApiService rpcApiService;
+    private static PeerClientTest peerClient;
+    private ChannelManager channelManager;
+    private SyncPool pool;
     private static Application appT;
     private static Manager dbManager;
+    private Node nodeEntity;
+    private static HandshakeHandlerTest handshakeHandlerTest;
 
     private static final String dbPath = "output-HandleTransactionTest";
     private static final String dbDirectory = "db_HandleTransaction_test";
@@ -85,6 +90,9 @@ public class HandleTransactionTest {
 
     @Before
     public void init() {
+        nodeEntity = new Node(
+            "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:17891");
+
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -120,10 +128,12 @@ public class HandleTransactionTest {
 //        appT.startServices();
 //        appT.startup();
                 node = context.getBean(NodeImpl.class);
-                peerClient = context.getBean(PeerClient.class);
+                peerClient = context.getBean(PeerClientTest.class);
                 channelManager = context.getBean(ChannelManager.class);
                 pool = context.getBean(SyncPool.class);
                 dbManager = context.getBean(Manager.class);
+                handshakeHandlerTest = context.getBean(HandshakeHandlerTest.class);
+                handshakeHandlerTest.setNode(nodeEntity);
                 NodeDelegate nodeDelegate = new NodeDelegateImpl(dbManager);
                 node.setNodeDelegate(nodeDelegate);
                 pool.init(node);
@@ -151,15 +161,21 @@ public class HandleTransactionTest {
             ExecutorService advertiseLoopThread = ReflectUtils.getFieldValue(node, "broadPool");
             advertiseLoopThread.shutdownNow();
 
+            peerClient.prepare(nodeEntity.getHexId());
+
             ReflectUtils.setFieldValue(node, "isAdvertiseActive", false);
             ReflectUtils.setFieldValue(node, "isFetchActive", false);
 
-            Node node = new Node(
-                    "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:17891");
+            TronChannelInitializerTest tronChannelInitializer = ReflectUtils
+                .getFieldValue(peerClient, "tronChannelInitializer");
+            tronChannelInitializer.prepare();
+            Channel channel = ReflectUtils.getFieldValue(tronChannelInitializer, "channel");
+            ReflectUtils.setFieldValue(channel, "handshakeHandler", handshakeHandlerTest);
+
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    peerClient.connect(node.getHost(), node.getPort(), node.getHexId());
+                    peerClient.connect(nodeEntity.getHost(), nodeEntity.getPort(), nodeEntity.getHexId());
                 }
             }).start();
             Thread.sleep(1000);
@@ -183,6 +199,7 @@ public class HandleTransactionTest {
             peer.close();
         }
         peerClient.close();
+        handshakeHandlerTest.close();
         appT.shutdownServices();
         appT.shutdown();
         context.destroy();
