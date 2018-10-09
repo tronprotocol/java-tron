@@ -35,7 +35,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
-
+@Ignore
 @Slf4j
 public class HandleBlockMessageTest {
 
