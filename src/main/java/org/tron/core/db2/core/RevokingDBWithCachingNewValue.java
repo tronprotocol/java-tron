@@ -2,11 +2,14 @@ package org.tron.core.db2.core;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
+import java.io.Serializable;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -132,7 +135,7 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
     levelDBMap.putAll(collection);
 
     return levelDBMap.entrySet().stream()
-        .filter(e -> ByteUtil.greaterOrEquals(e.getKey().getBytes(), key))
+        .sorted((e1, e2) -> ByteUtil.compare(e1.getKey().getBytes(), e2.getKey().getBytes()))
         .limit(limit)
         .map(Map.Entry::getValue)
         .map(WrappedByteArray::getBytes)

@@ -43,12 +43,12 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
         .map(bytes -> {
           try {
             return new BlockCapsule(bytes);
-          } catch (BadItemException e) {
-            e.printStackTrace();
+          } catch (BadItemException ignored) {
           }
           return null;
         })
         .filter(Objects::nonNull)
+        .sorted(Comparator.comparing(BlockCapsule::getNum))
         .collect(Collectors.toList());
   }
 
