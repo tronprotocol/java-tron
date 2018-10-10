@@ -98,6 +98,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private int maxTrxsCnt = 100;
 
+  private long blockUpdateTimeout = 20_000;
+
   @Getter
   class PriorItem implements java.lang.Comparable<PriorItem> {
 
@@ -464,7 +466,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     advObjToFetch.values().stream().sorted(PriorItem::compareTo).forEach(idToFetch -> {
       Sha256Hash hash = idToFetch.getHash();
       if (idToFetch.getTime() < now - MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL) {
-        logger.info("This obj is too late to fetch: " + idToFetch);
+        logger.info("This obj is too late to fetch, type: {} hash: {}.", idToFetch.getType(), idToFetch.getHash());
         advObjToFetch.remove(hash);
         return;
       }
@@ -598,6 +600,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
     getActivePeer().forEach(peer -> {
       final boolean[] isDisconnected = {false};
+
+      if (peer.isNeedSyncFromPeer() && peer.getLastBlockUpdateTime() < System.currentTimeMillis() - blockUpdateTimeout){
+        logger.warn("Peer {} not sync for a long time.", peer.getInetAddress());
+        isDisconnected[0] = true;
+      }
 
       peer.getAdvObjWeRequested().values().stream()
           .filter(time -> time < Time.getCurrentMillis() - NetConstants.ADV_TIME_OUT)
@@ -1042,6 +1049,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     try {
       if (peer.getSyncChainRequested() != null) {
         Deque<BlockId> blockIdWeGet = new LinkedList<>(msg.getBlockIds());
+        if (blockIdWeGet.size() > 0){
+          peer.setNeedSyncFromPeer(true);
+        }
 
         //check if the peer is a traitor
         if (!blockIdWeGet.isEmpty()) {
@@ -1075,7 +1085,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             if (blockIdWeGet.peekLast().getNum() + msg.getRemainNum() > maxFutureNum) {
               throw new TraitorPeerException(
                   "Block num " + blockIdWeGet.peekLast().getNum() + "+" + msg.getRemainNum()
-                      + " is gt future max num " + maxFutureNum + " from " + peer);
+                      + " is gt future max num " + maxFutureNum + " from " + peer
+                      + ", maybe the local clock is not right.");
             }
           }
         }
@@ -1240,6 +1251,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         block.getBlockId().getString());
     peer.setHeadBlockWeBothHave(block.getBlockId());
     peer.setHeadBlockTimeWeBothHave(block.getTimeStamp());
+    peer.setLastBlockUpdateTime(System.currentTimeMillis());
   }
 
   private void updateBlockWeBothHave(PeerConnection peer, BlockId blockId)
@@ -1250,6 +1262,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     long time = ((BlockMessage) del.getData(blockId, MessageTypes.BLOCK)).getBlockCapsule()
         .getTimeStamp();
     peer.setHeadBlockTimeWeBothHave(time);
+    peer.setLastBlockUpdateTime(System.currentTimeMillis());
   }
 
   private Collection<PeerConnection> getActivePeer() {
@@ -1278,7 +1291,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           new Pair<>(chainSummary, System.currentTimeMillis()));
       peer.sendMessage(new SyncBlockChainMessage((LinkedList<BlockId>) chainSummary));
     } catch (TronException e) {
-      logger.error("Peer {} sync next batch chainIds failed, error: {}", peer.getNode().getHost(),
+      logger.error("Peer {} sync next batch chainIds failed, error: {}.", peer.getNode().getHost(),
           e.getMessage());
       disconnectPeer(peer, ReasonCode.FORKED);
     }
