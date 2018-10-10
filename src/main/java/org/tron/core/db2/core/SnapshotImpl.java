@@ -11,15 +11,20 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Stack;
 import java.util.concurrent.LinkedBlockingDeque;
+import lombok.Getter;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.HashDB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
 
 public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
+  @Getter
+  protected Snapshot root;
 
   SnapshotImpl(Snapshot snapshot) {
+    root = snapshot.getRoot();
     previous = snapshot;
+    snapshot.setNext(this);
     db = new HashDB();
   }
 
@@ -122,15 +127,6 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   @Override
   public Snapshot retreat() {
     return previous;
-  }
-
-  @Override
-  public Snapshot getRoot() {
-    Snapshot root = this;
-    while (root.getClass() == SnapshotImpl.class) {
-      root = root.getPrevious();
-    }
-    return root;
   }
 
   //TODO need to resolve levelDB'iterator close
