@@ -1,4 +1,5 @@
 #!/bin/bash
+#if you can't ssh to the docker server, add your id_rsa.pub from dict "~/.ssh" to the server authorized_keys file.
 stestlogname="`date +%Y%m%d%H%M%S`_stest.log"
 testnet=(
 47.94.10.122
