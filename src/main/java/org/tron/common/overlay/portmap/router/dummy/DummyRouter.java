@@ -83,8 +83,9 @@ public class DummyRouter extends AbstractRouter {
       Thread.sleep(3000);
     } catch (final InterruptedException e) {
       // ignore
+      Thread.currentThread().interrupt();
     }
-    return mappings;
+    return new LinkedList<>(mappings);
   }
 
   @Override

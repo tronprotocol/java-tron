@@ -119,11 +119,11 @@ public class PortMappingPreset implements Cloneable, Serializable {
   }
 
   public List<SinglePortMapping> getPorts() {
-    return ports;
+    return new LinkedList<>(ports);
   }
 
   public void setPorts(final List<SinglePortMapping> ports) {
-    this.ports = ports;
+    this.ports = new LinkedList<>(ports);
   }
 
   public void setDescription(final String description) {

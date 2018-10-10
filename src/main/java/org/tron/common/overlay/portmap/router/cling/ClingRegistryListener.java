@@ -50,6 +50,7 @@ public class ClingRegistryListener extends DefaultRegistryListener {
       return foundServices.poll(timeout, unit);
     } catch (final InterruptedException e) {
       logger.warn("Interrupted when waiting for a service");
+      Thread.currentThread().interrupt();
       return null;
     }
   }

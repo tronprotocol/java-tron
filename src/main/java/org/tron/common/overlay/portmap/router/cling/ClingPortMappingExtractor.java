@@ -74,7 +74,7 @@ class ClingPortMappingExtractor {
 
     checkMaxNumPortMappingsReached();
 
-    return mappings;
+    return new LinkedList<>(mappings);
   }
 
   /**

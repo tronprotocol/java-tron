@@ -51,11 +51,11 @@ public class Settings implements Serializable {
   }
 
   public List<PortMappingPreset> getPresets() {
-    return presets;
+    return new ArrayList<>(presets);
   }
 
   public void setPresets(final List<PortMappingPreset> presets) {
-    this.presets = presets;
+    this.presets = new ArrayList<>(presets);
   }
 
   public void addPreset(final PortMappingPreset newPreset) {
