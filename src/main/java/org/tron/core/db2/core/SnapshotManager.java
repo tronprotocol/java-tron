@@ -203,6 +203,10 @@ public class SnapshotManager implements RevokingDatabase {
     Map<WrappedByteArray, WrappedByteArray> batch = new HashMap<>();
     for (RevokingDBWithCachingNewValue db : dbs) {
       Snapshot head = db.getHead();
+      if (head.getPrevious() == null) {
+        continue;
+      }
+
       while (head.getPrevious().getPrevious() != null) {
         head = head.getPrevious();
       }
@@ -213,7 +217,8 @@ public class SnapshotManager implements RevokingDatabase {
       for (Map.Entry<Key, Value> e : keyValueDB) {
         Key k = e.getKey();
         Value v = e.getValue();
-        batch.put(WrappedByteArray.of(Bytes.concat(simpleEncode(dbName), k.getBytes())), WrappedByteArray.of(v.encode()));
+        batch.put(WrappedByteArray.of(Bytes.concat(simpleEncode(dbName), k.getBytes())),
+            WrappedByteArray.of(v.encode()));
       }
     }
 
