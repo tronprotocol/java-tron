@@ -1,6 +1,5 @@
 buildscript {
     repositories {
-        maven { url 'http://mvnrepository.com' }
         maven { url 'http://4thline.org/m2' }
         mavenCentral()
         jcenter()
@@ -47,7 +46,6 @@ task sourceJar(type: Jar, dependsOn: classes) {
 }
 
 repositories {
-    maven { url 'http://mvnrepository.com' }
     mavenLocal()
     mavenCentral()
     maven { url 'http://repo.spring.io/plugins-release' }
