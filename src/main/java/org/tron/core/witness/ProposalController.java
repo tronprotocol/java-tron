@@ -154,7 +154,7 @@ public class ProposalController {
           break;
         }
         case (13): {
-          manager.getDynamicPropertiesStore().saveMaxCpuTimeOfOneTX(entry.getValue());
+          manager.getDynamicPropertiesStore().saveMaxCpuTimeOfOneTx(entry.getValue());
           break;
         }
         case (14): {

@@ -151,8 +151,8 @@ public class WalletTestAssetIssue003 {
           start, end, 2, description, url,10000L,10000L,
           1L, 3652L, testKey002,blockingStubFull));
       //The asset issue name is chinese name.
-      Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, chineseAssetIssuename, totalSupply, 1,
-          10, start, end, 2, description, url,10000L,
+      Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, chineseAssetIssuename,
+          totalSupply, 1, 10, start, end, 2, description, url,10000L,
           10000L,1L, 3652L, testKey002,blockingStubFull));
       //The URL is null.
       Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, name, totalSupply, 1, 10,
