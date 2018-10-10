@@ -36,7 +36,6 @@ public class SnapshotManager implements RevokingDatabase {
   private boolean disabled = true;
   private int activeSession = 0;
   private boolean unChecked = true;
-  private WriteOptions writeOptions = new WriteOptions().sync(true);
 
   public ISession buildSession() {
     return buildSession(false);
@@ -132,7 +131,7 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   @Override
-  public void fastPop() throws RevokingStoreIllegalStateException {
+  public void fastPop() {
     pop();
   }
 
