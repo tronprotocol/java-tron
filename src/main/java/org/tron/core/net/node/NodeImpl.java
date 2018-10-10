@@ -1291,7 +1291,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           new Pair<>(chainSummary, System.currentTimeMillis()));
       peer.sendMessage(new SyncBlockChainMessage((LinkedList<BlockId>) chainSummary));
     } catch (TronException e) {
-      logger.error("Peer {} sync next batch chainIds failed, error: {}", peer.getNode().getHost(),
+      logger.error("Peer {} sync next batch chainIds failed, error: {}.", peer.getNode().getHost(),
           e.getMessage());
       disconnectPeer(peer, ReasonCode.FORKED);
     }
