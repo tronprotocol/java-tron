@@ -22,7 +22,6 @@ import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 
 import com.google.common.primitives.Longs;
-import com.googlecode.cqengine.query.simple.In;
 import java.util.Arrays;
 import org.tron.common.crypto.Hash;
 import org.tron.core.Wallet;
