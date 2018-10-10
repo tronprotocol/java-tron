@@ -415,7 +415,15 @@ service Wallet {
       }
     };
   };
-
+ rpc GetPaginatedProposalList (PaginatedMessage) returns (ProposalList) {
+      option (google.api.http) = {
+          post: "/wallet/getpaginatedproposallist"
+          body: "*"
+          additional_bindings {
+            get: "/wallet/getpaginatedproposallist"
+          }
+        };
+    }
   rpc GetProposalById (BytesMessage) returns (Proposal) {
     option (google.api.http) = {
         post: "/wallet/getproposalbyid"
@@ -435,7 +443,15 @@ service Wallet {
       }
     };
   };
-
+  rpc GetPaginatedExchangeList (PaginatedMessage) returns (ExchangeList) {
+      option (google.api.http) = {
+          post: "/wallet/getpaginatedexchangelist"
+          body: "*"
+          additional_bindings {
+            get: "/wallet/getpaginatedexchangelist"
+          }
+        };
+    }
   rpc GetExchangeById (BytesMessage) returns (Exchange) {
     option (google.api.http) = {
         post: "/wallet/getexchangebyid"
@@ -474,6 +490,8 @@ service Wallet {
         }
       };
   }
+
+
   rpc TotalTransaction (EmptyMessage) returns (NumberMessage) {
     option (google.api.http) = {
       post: "/wallet/totaltransaction"
