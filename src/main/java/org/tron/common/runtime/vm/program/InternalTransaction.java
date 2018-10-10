@@ -137,7 +137,7 @@ public class InternalTransaction {
   }
 
   public byte[] getTransferToAddress() {
-    return transferToAddress;
+    return transferToAddress.clone();
   }
 
   public void reject() {
