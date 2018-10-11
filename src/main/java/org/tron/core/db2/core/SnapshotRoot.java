@@ -2,7 +2,9 @@ package org.tron.core.db2.core;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.tron.core.db.common.WrappedByteArray;
@@ -39,6 +41,18 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
             WrappedByteArray.of(e.getValue().getBytes())))
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     levelDB.flush(batch);
+  }
+
+  public void merge(List<Snapshot> snapshots) {
+    Map<WrappedByteArray, WrappedByteArray> batch = new HashMap<>();
+    for (Snapshot snapshot : snapshots) {
+      SnapshotImpl from = (SnapshotImpl) snapshot;
+      Streams.stream(from.db)
+          .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey().getBytes()),
+              WrappedByteArray.of(e.getValue().getBytes())))
+          .forEach(e -> batch.put(e.getKey(), e.getValue()));
+    }
+    ((LevelDB) db).flush(batch);
   }
 
   @Override

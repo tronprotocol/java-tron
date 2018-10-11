@@ -12,7 +12,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.config.args.Args;
@@ -27,6 +26,7 @@ import org.tron.core.exception.RevokingStoreIllegalStateException;
 @Slf4j
 public class SnapshotManager implements RevokingDatabase {
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
+  private static final int DEFAULT_FLUSH_COUNT = 10;
 
   private List<RevokingDBWithCachingNewValue> dbs = new ArrayList<>();
   @Getter
@@ -36,6 +36,9 @@ public class SnapshotManager implements RevokingDatabase {
   private boolean disabled = true;
   private int activeSession = 0;
   private boolean unChecked = true;
+
+  private Map<String, Snapshot> flushCursors = new HashMap<>();
+  private int flushCount = 0;
 
   public ISession buildSession() {
     return buildSession(false);
@@ -52,6 +55,7 @@ public class SnapshotManager implements RevokingDatabase {
     }
 
     while (size > maxSize.get()) {
+      logger.info("****size:" + size + ", maxsize:" + maxSize.get());
       flush();
     }
 
@@ -164,35 +168,67 @@ public class SnapshotManager implements RevokingDatabase {
     System.err.println("******** end to pop revokingDb ********");
   }
 
+  private void mark() {
+    ++flushCount;
+    logger.info("*****flushCount:" + flushCount);
+    dbs.forEach(db -> {
+      String dbName = db.getDbName();
+      Snapshot snapshot = flushCursors.get(dbName);
+      if (snapshot == null) {
+        flushCursors.put(dbName, db.getHead().getRoot().getNext());
+      } else {
+        flushCursors.put(dbName, snapshot.getNext());
+      }
+    });
+  }
+
+  private boolean shouldBeRefreshed() {
+    return flushCount >= DEFAULT_FLUSH_COUNT;
+  }
+
+  private void refresh() {
+    dbs.forEach(db -> {
+      if (db.getHead().getPrevious() == null) {
+        return;
+      }
+
+      List<Snapshot> snapshots = new ArrayList<>();
+      String dbName = db.getDbName();
+      Snapshot cursor = flushCursors.get(dbName);
+      Snapshot next = cursor.getRoot().getNext();
+      while (next != cursor.getNext()) {
+        snapshots.add(next);
+        next = next.getNext();
+      }
+
+      ((SnapshotRoot) cursor.getRoot()).merge(snapshots);
+
+      flushCursors.put(dbName, cursor.getRoot());
+      if (db.getHead() == cursor) {
+       db.setHead(cursor.getRoot());
+      } else {
+        cursor.getNext().setPrevious(cursor.getRoot());
+        cursor.getRoot().setNext(cursor.getNext());
+      }
+    });
+  }
+
   public void flush() {
     if (unChecked) {
       return;
     }
 
-    createCheckPoint();
+    mark();
 
-    dbs.forEach(db -> {
-      Snapshot head = db.getHead();
-      if (head.getPrevious() == null) {
-        return;
-      }
+    if (shouldBeRefreshed()) {
+      createCheckPoint();
 
-      if (head.getPrevious().getClass() == SnapshotRoot.class) {
-        head.getPrevious().merge(head);
-        db.setHead(head.getPrevious());
-        return;
-      }
+      refresh();
 
-      while (head.getPrevious().getPrevious().getClass() == SnapshotImpl.class) {
-        head = head.getPrevious();
-      }
-
-      head.getPrevious().getPrevious().merge(head.getPrevious());
-      head.setPrevious(head.getPrevious().getPrevious());
-    });
-
+      flushCount = 0;
+      deleteCheckPoint();
+    }
     --size;
-    deleteCheckPoint();
   }
 
   private void createCheckPoint() {
@@ -206,18 +242,19 @@ public class SnapshotManager implements RevokingDatabase {
         continue;
       }
 
-      while (head.getPrevious().getPrevious() != null) {
-        head = head.getPrevious();
-      }
-
-      SnapshotImpl snapshot = (SnapshotImpl) head;
-      DB<Key, Value> keyValueDB = snapshot.getDb();
       String dbName = db.getDbName();
-      for (Map.Entry<Key, Value> e : keyValueDB) {
-        Key k = e.getKey();
-        Value v = e.getValue();
-        batch.put(WrappedByteArray.of(Bytes.concat(simpleEncode(dbName), k.getBytes())),
-            WrappedByteArray.of(v.encode()));
+      Snapshot cursor = flushCursors.get(dbName);
+      Snapshot next = cursor.getRoot().getNext();
+      while (next != cursor.getNext()) {
+        SnapshotImpl snapshot = (SnapshotImpl) next;
+        DB<Key, Value> keyValueDB = snapshot.getDb();
+        for (Map.Entry<Key, Value> e : keyValueDB) {
+          Key k = e.getKey();
+          Value v = e.getValue();
+          batch.put(WrappedByteArray.of(Bytes.concat(simpleEncode(dbName), k.getBytes())),
+              WrappedByteArray.of(v.encode()));
+        }
+        next = next.getNext();
       }
     }
 

@@ -9,8 +9,11 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Stack;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.HashDB;
@@ -142,19 +145,16 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   }
 
   void collect(Map<WrappedByteArray, WrappedByteArray> all) {
-    Deque<Snapshot> stack = new LinkedBlockingDeque<>();
-    Snapshot snapshot = this;
-    while(snapshot.getClass() == SnapshotImpl.class) {
-      stack.push(snapshot);
-      snapshot = snapshot.getPrevious();
-    }
-
-    while(!stack.isEmpty()) {
-      snapshot = stack.pop();
-      Streams.stream(((SnapshotImpl) snapshot).db)
+    Snapshot next = getRoot().getNext();
+    while (next != null) {
+      Streams.stream(((SnapshotImpl) next).db)
           .forEach(e -> all.put(WrappedByteArray.of(e.getKey().getBytes()),
               WrappedByteArray.of(e.getValue().getBytes())));
+      next = next.getNext();
     }
+
+    all.entrySet()
+        .removeIf(entry -> entry.getValue() == null || entry.getValue().getBytes() == null);
   }
 
   @Override
