@@ -804,10 +804,9 @@ public class Program {
     if (index < this.getNumber().longValue()
         && index >= Math.max(256, this.getNumber().longValue()) - 256) {
 
-      List<BlockCapsule> blocks = this.invoke.getBlockStore().getBlockByLatestNum(index);
+      BlockCapsule blockCapsule = this.invoke.getBlockByNum(index);
 
-      if (CollectionUtils.isNotEmpty(blocks)) {
-        BlockCapsule blockCapsule = blocks.get(0);
+      if (Objects.nonNull(blockCapsule)) {
         return new DataWord(blockCapsule.getBlockId().getBytes());
       } else {
         return DataWord.ZERO.clone();
