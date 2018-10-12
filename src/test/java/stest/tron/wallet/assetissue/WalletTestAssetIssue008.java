@@ -96,7 +96,11 @@ public class WalletTestAssetIssue008 {
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+  }
 
+
+  @Test(enabled = true)
+  public void testGetAllAssetIssueFromSolidity() {
     Assert.assertTrue(PublicMethed.freezeBalance(fromAddress,10000000,3,testKey002,
         blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(queryAssetIssueFromSoliAddress,2048000000,fromAddress,
@@ -107,11 +111,6 @@ public class WalletTestAssetIssue008 {
     Assert.assertTrue(PublicMethed.createAssetIssue(queryAssetIssueFromSoliAddress, name,
         totalSupply, 1, 100, start, end, 1, description, url, 10000L,
         10000L,1L,1L,queryAssetIssueKey,blockingStubFull));
-  }
-
-
-  @Test(enabled = true)
-  public void testGetAllAssetIssueFromSolidity() {
     GrpcAPI.AssetIssueList assetIssueList = blockingStubSolidity
         .getAssetIssueList(GrpcAPI.EmptyMessage.newBuilder().build());
     logger.info(Long.toString(assetIssueList.getAssetIssueCount()));
