@@ -824,7 +824,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     return false;
   }
 
-  private void onHandleTransactionMessage(PeerConnection peer, TransactionMessage trxMsg) {
+  public void onHandleTransactionMessage(PeerConnection peer, TransactionMessage trxMsg) {
     try {
       Item item = new Item(trxMsg.getMessageId(), InventoryType.TRX);
       if (!peer.getAdvObjWeRequested().containsKey(item)) {
