@@ -28,7 +28,7 @@ import org.tron.core.db.BlockStore;
  */
 public interface ProgramInvoke {
 
-  DataWord getOwnerAddress();
+  DataWord getContractAddress();
 
   DataWord getBalance();
 

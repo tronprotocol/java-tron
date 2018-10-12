@@ -70,7 +70,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   }
 
   /*           ADDRESS op         */
-  public DataWord getOwnerAddress() {
+  public DataWord getContractAddress() {
     return new DataWord(ownerAddress);
   }
 

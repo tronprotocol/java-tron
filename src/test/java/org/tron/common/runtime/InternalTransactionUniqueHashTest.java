@@ -116,8 +116,8 @@ public class InternalTransactionUniqueHashTest {
             contractAAddress, triggerData1,
             0, 100000000, deposit, null);
     List<InternalTransaction> internalTransactionsList = runtime.getResult().getInternalTransactions();
-    // 15 internalTransactions in total
-    Assert.assertEquals(internalTransactionsList.size(),15);
+    // 15 internalTransactions in total and also a root call
+    Assert.assertEquals(internalTransactionsList.size(),16);
     List<String> hashList = new ArrayList<>();
     internalTransactionsList.forEach(internalTransaction ->hashList.add(Hex.toHexString(internalTransaction.getHash())));
     List<String> dupHash = hashList.stream().collect(Collectors.toMap(e -> e, e->1 , (a,b) -> a+b)).
