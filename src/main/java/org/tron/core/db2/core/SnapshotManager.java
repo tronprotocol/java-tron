@@ -26,7 +26,7 @@ import org.tron.core.exception.RevokingStoreIllegalStateException;
 @Slf4j
 public class SnapshotManager implements RevokingDatabase {
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
-  private static final int DEFAULT_FLUSH_COUNT = 10;
+  private static final int DEFAULT_FLUSH_COUNT = 200;
 
   private List<RevokingDBWithCachingNewValue> dbs = new ArrayList<>();
   @Getter
@@ -171,7 +171,12 @@ public class SnapshotManager implements RevokingDatabase {
   private void mark() {
     ++flushCount;
     logger.info("*****flushCount:" + flushCount);
-    dbs.forEach(db -> {
+    for (RevokingDBWithCachingNewValue db : dbs) {
+      if (db.getHead().getRoot().getNext() == null) {
+        --flushCount;
+        break;
+      }
+
       String dbName = db.getDbName();
       Snapshot snapshot = flushCursors.get(dbName);
       if (snapshot == null) {
@@ -179,7 +184,7 @@ public class SnapshotManager implements RevokingDatabase {
       } else {
         flushCursors.put(dbName, snapshot.getNext());
       }
-    });
+    }
   }
 
   private boolean shouldBeRefreshed() {
@@ -232,14 +237,11 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   private void createCheckPoint() {
-    LevelDbDataSourceImpl levelDbDataSource =
-        new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
-    levelDbDataSource.initDB();
     Map<WrappedByteArray, WrappedByteArray> batch = new HashMap<>();
     for (RevokingDBWithCachingNewValue db : dbs) {
       Snapshot head = db.getHead();
       if (head.getPrevious() == null) {
-        continue;
+        break;
       }
 
       String dbName = db.getDbName();
@@ -258,6 +260,9 @@ public class SnapshotManager implements RevokingDatabase {
       }
     }
 
+    LevelDbDataSourceImpl levelDbDataSource =
+        new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
+    levelDbDataSource.initDB();
     levelDbDataSource.updateByBatch(batch.entrySet().stream()
         .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
         .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll));
