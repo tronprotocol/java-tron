@@ -34,8 +34,12 @@ public class ContractScenario011 {
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private ManagedChannel channelFull1 = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
+  private String fullnode1 = Configuration.getByPath("testng.conf")
+      .getStringList("fullnode.ip.list").get(1);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
 
@@ -75,6 +79,10 @@ public class ContractScenario011 {
         testKey002, blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(triggerAddress, 50000000000L, fromAddress,
         testKey002, blockingStubFull));
+    channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
+        .usePlaintext(true)
+        .build();
+    blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
   }
 
   @Test(enabled = true)
@@ -306,16 +314,32 @@ public class ContractScenario011 {
 
   @Test(enabled = true)
   public void triggerUseTriggerEnergyUsage() {
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    Long beforeBalance = PublicMethed.queryAccount(triggerKey, blockingStubFull).getBalance();
+    logger.info("before balance is " + Long.toString(beforeBalance));
     txid = PublicMethed.triggerContract(kittyCoreContractAddress,
         "createGen0Auction(uint256)", "0", false,
         0, 100000000L, triggerAddress, triggerKey, blockingStubFull);
-    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull1);
+    logger.info("after originEnergyUsage is " + Long
+        .toString(infoById.get().getReceipt().getOriginEnergyUsage()));
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsage() == 0);
     Assert.assertTrue(infoById.get().getReceipt().getEnergyFee() > 10000);
     Assert.assertTrue(infoById.get().getReceipt().getOriginEnergyUsage() > 10000);
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal()
         == infoById.get().getReceipt().getEnergyFee() / 100 + infoById.get().getReceipt()
         .getOriginEnergyUsage());
+
+    Long fee = infoById.get().getFee();
+    Long afterBalance = PublicMethed.queryAccount(triggerKey, blockingStubFull1).getBalance();
+    logger.info("after balance is " + Long.toString(afterBalance));
+    logger.info("fee is " + Long.toString(fee));
+    Assert.assertTrue(beforeBalance == afterBalance + fee);
+
+
+
     logger.info("before EnergyUsage is " + infoById.get().getReceipt().getEnergyUsage());
     logger.info("before EnergyFee is " + infoById.get().getReceipt().getEnergyFee());
     logger.info("before OriginEnergyUsage is " + infoById.get().getReceipt()
@@ -324,14 +348,34 @@ public class ContractScenario011 {
 
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(triggerAddress,100000000L,
         3,1,triggerKey,blockingStubFull));
+    beforeBalance = PublicMethed.queryAccount(triggerKey, blockingStubFull).getBalance();
+    logger.info("before balance is " + Long.toString(beforeBalance));
+
+    AccountResourceMessage accountResource = PublicMethed
+        .getAccountResource(triggerAddress, blockingStubFull);
+    Long energyLimit = accountResource.getEnergyLimit();
+    logger.info("before EnergyLimit is " + Long.toString(energyLimit));
+
     txid = PublicMethed.triggerContract(kittyCoreContractAddress,
         "createGen0Auction(uint256)", "0", false,
         0, 100000000L, triggerAddress, triggerKey, blockingStubFull);
-    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull1);
     logger.info("after EnergyUsage is " + infoById.get().getReceipt().getEnergyUsage());
     logger.info("after EnergyFee is " + infoById.get().getReceipt().getEnergyFee());
     logger.info("after OriginEnergyUsage is " + infoById.get().getReceipt().getOriginEnergyUsage());
     logger.info("after EnergyTotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
+    fee = infoById.get().getFee();
+    afterBalance = PublicMethed.queryAccount(triggerKey, blockingStubFull1).getBalance();
+    logger.info("after balance is " + Long.toString(afterBalance));
+    logger.info("fee is " + Long.toString(fee));
+
+    accountResource = PublicMethed.getAccountResource(triggerAddress, blockingStubFull1);
+    energyLimit = accountResource.getEnergyLimit();
+
+    logger.info("after EnergyLimit is " + Long.toString(energyLimit));
+
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsage() > 10000);
     Assert.assertTrue(infoById.get().getReceipt().getEnergyFee() == 0);
     Assert.assertTrue(infoById.get().getReceipt().getOriginEnergyUsage() > 10000);
@@ -339,6 +383,8 @@ public class ContractScenario011 {
         .getReceipt().getEnergyUsage() + infoById.get().getReceipt().getOriginEnergyUsage());
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsage() == infoById.get()
         .getReceipt().getOriginEnergyUsage());
+
+    Assert.assertTrue(beforeBalance == afterBalance + fee);
   }
 
 

@@ -2,6 +2,7 @@ package stest.tron.wallet.contract.scenario;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -16,6 +17,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -24,13 +26,17 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 public class ContractScenario003 {
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key1");
+      .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private ManagedChannel channelFull1 = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
+  private String fullnode1 = Configuration.getByPath("testng.conf")
+      .getStringList("fullnode.ip.list").get(1);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
 
@@ -51,23 +57,30 @@ public class ContractScenario003 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(contract003Address,200000000L,fromAddress,
+    Assert.assertTrue(PublicMethed.sendcoin(contract003Address, 500000000L, fromAddress,
         testKey002,blockingStubFull));
     logger.info(Long.toString(PublicMethed.queryAccount(contract003Key,blockingStubFull)
         .getBalance()));
+    channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
+        .usePlaintext(true)
+        .build();
+    blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
   }
 
   @Test(enabled = true)
   public void deployErc223() {
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract003Address, 10000000L,
-        3,1,contract003Key,blockingStubFull));
+//    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract003Address, 10000000L,
+//        3,1,contract003Key,blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract003Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
     Long energyUsage = accountResource.getEnergyUsed();
+    Long balanceBefore = PublicMethed.queryAccount(contract003Key, blockingStubFull).getBalance();
 
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
+    logger.info("before balance is " + Long.toString(balanceBefore));
+
     String contractName = "ERC223";
     String code = "60c0604052600560808190527f546f6b656e0000000000000000000000000000000000000000000"
         + "0000000000060a090815261003e91600191906100f5565b506040805180820190915260038082527f544b4e"
@@ -170,21 +183,35 @@ public class ContractScenario003 {
         + "ype\":\"address\"},{\"indexed\":true,\"name\":\"_to\",\"type\":\"address\"},{\"indexed"
         + "\":false,\"name\":\"_value\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"_dat"
         + "a\",\"type\":\"bytes\"}],\"name\":\"Transfer\",\"type\":\"event\"}]";
-    byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
-        0L, 100,null,contract003Key,contract003Address,blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
 
+    String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code, "",
+        maxFeeLimit, 0L, 100, null, contract003Key, contract003Address, blockingStubFull);
+    logger.info(txid);
+    Optional<TransactionInfo> infoById = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
+    com.google.protobuf.ByteString contractAddress = infoById.get().getContractAddress();
+    SmartContract smartContract = PublicMethed
+        .getContract(contractAddress.toByteArray(), blockingStubFull);
+    Assert.assertTrue(smartContract.getAbi() != null);
     Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
     Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
     Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
-    accountResource = PublicMethed.getAccountResource(contract003Address,blockingStubFull);
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    accountResource = PublicMethed.getAccountResource(contract003Address, blockingStubFull1);
     energyLimit = accountResource.getEnergyLimit();
     energyUsage = accountResource.getEnergyUsed();
-    Assert.assertTrue(energyLimit > 0);
-    Assert.assertTrue(energyUsage > 0);
+    Long balanceAfter = PublicMethed.queryAccount(contract003Address, blockingStubFull1)
+        .getBalance();
 
     logger.info("after energy limit is " + Long.toString(energyLimit));
     logger.info("after energy usage is " + Long.toString(energyUsage));
+    logger.info("after balance is " + Long.toString(balanceAfter));
+    logger.info("transaction fee is " + Long.toString(infoById.get().getFee()));
+
+    Assert.assertTrue(energyLimit == 0);
+    Assert.assertTrue(energyUsage == 0);
+    Assert.assertTrue(balanceBefore == balanceAfter + infoById.get().getFee());
   }
 
   @AfterClass
