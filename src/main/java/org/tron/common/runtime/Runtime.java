@@ -525,7 +525,9 @@ public class Runtime {
           deposit.commit();
         }
       } else {
-        getResult().getInternalTransactions().add(0,rootInternalTransaction);
+        if (!trxType.equals(TRX_PRECOMPILED_TYPE)) {
+          getResult().getInternalTransactions().add(0,rootInternalTransaction);
+        }
         deposit.commit();
       }
     } catch (JVMStackOverFlowException e) {
