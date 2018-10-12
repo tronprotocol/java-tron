@@ -1,4 +1,4 @@
-package stest.tron.wallet.block;
+package stest.tron.wallet.newaddinterface2;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -23,10 +23,11 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
-import stest.tron.wallet.common.client.utils.Base58;
+
+//import stest.tron.wallet.common.client.AccountComparator;
 
 @Slf4j
-public class WalletTestBlock001 {
+public class GetNowBlock2Test {
 
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
@@ -57,8 +58,10 @@ public class WalletTestBlock001 {
   }
 
   @Test
-  public void testCurrentBlock() {
-    Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+  public void testCurrentBlock2() {
+    //Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    GrpcAPI.BlockExtention currentBlock = blockingStubFull
+        .getNowBlock2(GrpcAPI.EmptyMessage.newBuilder().build());
     Assert.assertTrue(currentBlock.hasBlockHeader());
     Assert.assertFalse(currentBlock.getBlockHeader().getWitnessSignature().isEmpty());
     Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getTimestamp() > 0);
@@ -66,22 +69,27 @@ public class WalletTestBlock001 {
     Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getNumber() > 0);
     Assert.assertFalse(currentBlock.getBlockHeader().getRawData().getParentHash().isEmpty());
     Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
-    logger.info("test getcurrentblock is " + Long.toString(currentBlock.getBlockHeader().getRawData().getNumber()));
+    logger.info("test getcurrentblock is " + Long
+        .toString(currentBlock.getBlockHeader().getRawData().getNumber()));
+    Assert.assertFalse(currentBlock.getBlockid().isEmpty());
 
     //Improve coverage.
     currentBlock.equals(currentBlock);
-    Block newBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    //Block newBlock = blockingStubFull.getNowBlock2(GrpcAPI.EmptyMessage.newBuilder().build());
+    GrpcAPI.BlockExtention newBlock = blockingStubFull
+        .getNowBlock2(GrpcAPI.EmptyMessage.newBuilder().build());
     newBlock.equals(currentBlock);
     newBlock.hashCode();
     newBlock.getSerializedSize();
     newBlock.getTransactionsCount();
     newBlock.getTransactionsList();
+    Assert.assertFalse(newBlock.getBlockid().isEmpty());
   }
 
   @Test
-  public void testCurrentBlockFromSolidity() {
-    Block currentBlock = blockingStubSolidity
-        .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+  public void testCurrentBlockFromSolidity2() {
+    GrpcAPI.BlockExtention currentBlock = blockingStubSolidity
+        .getNowBlock2(GrpcAPI.EmptyMessage.newBuilder().build());
     Assert.assertTrue(currentBlock.hasBlockHeader());
     Assert.assertFalse(currentBlock.getBlockHeader().getWitnessSignature().isEmpty());
     Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getTimestamp() > 0);
@@ -89,7 +97,8 @@ public class WalletTestBlock001 {
     Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getNumber() > 0);
     Assert.assertFalse(currentBlock.getBlockHeader().getRawData().getParentHash().isEmpty());
     Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
-    logger.info("test getcurrentblock in soliditynode is " + Long.toString(currentBlock.getBlockHeader().getRawData().getNumber()));
+    logger.info("test getcurrentblock in soliditynode is " + Long
+        .toString(currentBlock.getBlockHeader().getRawData().getNumber()));
   }
 
   @AfterClass

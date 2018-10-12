@@ -1,4 +1,4 @@
-package stest.tron.wallet.block;
+package stest.tron.wallet.newaddinterface2;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -23,10 +23,9 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
-import stest.tron.wallet.common.client.utils.Base58;
 
 @Slf4j
-public class WalletTestBlock002 {
+public class GetBlockByNum2Test {
 
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
@@ -58,8 +57,9 @@ public class WalletTestBlock002 {
 
 
   @Test(enabled = true)
-  public void testGetBlockByNum() {
-    Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+  public void testGetBlockByNum2() {
+    GrpcAPI.BlockExtention currentBlock = blockingStubFull
+        .getNowBlock2(GrpcAPI.EmptyMessage.newBuilder().build());
     Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
     Assert.assertFalse(currentBlockNum < 0);
     if (currentBlockNum == 1) {
@@ -74,10 +74,10 @@ public class WalletTestBlock002 {
     Block outOfCurrentBlock = blockingStubFull.getBlockByNum(builder1.build());
     Assert.assertFalse(outOfCurrentBlock.hasBlockHeader());*/
 
-    //Query the first block.
+    //Query the first block
     NumberMessage.Builder builder2 = NumberMessage.newBuilder();
     builder2.setNum(1);
-    Block firstBlock = blockingStubFull.getBlockByNum(builder2.build());
+    GrpcAPI.BlockExtention firstBlock = blockingStubFull.getBlockByNum2(builder2.build());
     Assert.assertTrue(firstBlock.hasBlockHeader());
     Assert.assertFalse(firstBlock.getBlockHeader().getWitnessSignature().isEmpty());
     Assert.assertTrue(firstBlock.getBlockHeader().getRawData().getTimestamp() > 0);
@@ -85,11 +85,38 @@ public class WalletTestBlock002 {
     Assert.assertTrue(firstBlock.getBlockHeader().getRawData().getNumber() == 1);
     Assert.assertFalse(firstBlock.getBlockHeader().getRawData().getParentHash().isEmpty());
     Assert.assertTrue(firstBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
+    Assert.assertFalse(firstBlock.getBlockid().isEmpty());
+
+    //Query the zero block
+    NumberMessage.Builder builder21 = NumberMessage.newBuilder();
+    builder2.setNum(0);
+    GrpcAPI.BlockExtention zeroBlock = blockingStubFull.getBlockByNum2(builder21.build());
+    Assert.assertTrue(zeroBlock.hasBlockHeader());
+    Assert.assertTrue(zeroBlock.getBlockHeader().getWitnessSignature().isEmpty());
+    Assert.assertFalse(zeroBlock.getBlockHeader().getRawData().getTimestamp() > 0);
+    Assert.assertFalse(zeroBlock.getBlockHeader().getRawData().getWitnessAddress().isEmpty());
+    Assert.assertFalse(zeroBlock.getBlockHeader().getRawData().getNumber() == 1);
+    Assert.assertFalse(zeroBlock.getBlockHeader().getRawData().getParentHash().isEmpty());
+    Assert.assertTrue(zeroBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
+    Assert.assertFalse(zeroBlock.getBlockid().isEmpty());
+
+    //Query the -1 block
+    NumberMessage.Builder builder22 = NumberMessage.newBuilder();
+    builder2.setNum(-1);
+    GrpcAPI.BlockExtention nagtiveBlock = blockingStubFull.getBlockByNum2(builder22.build());
+    Assert.assertTrue(nagtiveBlock.hasBlockHeader());
+    Assert.assertTrue(nagtiveBlock.getBlockHeader().getWitnessSignature().isEmpty());
+    Assert.assertFalse(nagtiveBlock.getBlockHeader().getRawData().getTimestamp() > 0);
+    Assert.assertFalse(nagtiveBlock.getBlockHeader().getRawData().getWitnessAddress().isEmpty());
+    Assert.assertFalse(nagtiveBlock.getBlockHeader().getRawData().getNumber() == 1);
+    Assert.assertFalse(nagtiveBlock.getBlockHeader().getRawData().getParentHash().isEmpty());
+    Assert.assertTrue(nagtiveBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
+    Assert.assertFalse(nagtiveBlock.getBlockid().isEmpty());
 
     //Query the second latest block.
     NumberMessage.Builder builder3 = NumberMessage.newBuilder();
     builder3.setNum(currentBlockNum - 1);
-    Block lastSecondBlock = blockingStubFull.getBlockByNum(builder3.build());
+    GrpcAPI.BlockExtention lastSecondBlock = blockingStubFull.getBlockByNum2(builder3.build());
     Assert.assertTrue(lastSecondBlock.hasBlockHeader());
     Assert.assertFalse(lastSecondBlock.getBlockHeader().getWitnessSignature().isEmpty());
     Assert.assertTrue(lastSecondBlock.getBlockHeader().getRawData().getTimestamp() > 0);
@@ -98,12 +125,13 @@ public class WalletTestBlock002 {
         lastSecondBlock.getBlockHeader().getRawData().getNumber() + 1 == currentBlockNum);
     Assert.assertFalse(lastSecondBlock.getBlockHeader().getRawData().getParentHash().isEmpty());
     Assert.assertTrue(lastSecondBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
+    Assert.assertFalse(lastSecondBlock.getBlockid().isEmpty());
   }
 
   @Test(enabled = true)
-  public void testGetBlockByNumFromSolidity() {
-    Block currentBlock = blockingStubSolidity
-        .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+  public void testGetBlockByNumFromSolidity2() {
+    GrpcAPI.BlockExtention currentBlock = blockingStubSolidity
+        .getNowBlock2(GrpcAPI.EmptyMessage.newBuilder().build());
     Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
     Assert.assertFalse(currentBlockNum < 0);
     if (currentBlockNum == 1) {
@@ -111,17 +139,10 @@ public class WalletTestBlock002 {
       Assert.assertTrue(currentBlockNum == 1);
     }
 
-    //The number is large than the currently number, there is no exception when query this number.
-    /*    Long outOfCurrentBlockNum = currentBlockNum + 10000L;
-    NumberMessage.Builder builder1 = NumberMessage.newBuilder();
-    builder1.setNum(outOfCurrentBlockNum);
-    Block outOfCurrentBlock = blockingStubSolidity.getBlockByNum(builder1.build());
-    Assert.assertFalse(outOfCurrentBlock.hasBlockHeader());*/
-
     //Query the first block.
     NumberMessage.Builder builder2 = NumberMessage.newBuilder();
     builder2.setNum(1);
-    Block firstBlock = blockingStubSolidity.getBlockByNum(builder2.build());
+    GrpcAPI.BlockExtention firstBlock = blockingStubSolidity.getBlockByNum2(builder2.build());
     Assert.assertTrue(firstBlock.hasBlockHeader());
     Assert.assertFalse(firstBlock.getBlockHeader().getWitnessSignature().isEmpty());
     Assert.assertTrue(firstBlock.getBlockHeader().getRawData().getTimestamp() > 0);
@@ -130,11 +151,12 @@ public class WalletTestBlock002 {
     Assert.assertFalse(firstBlock.getBlockHeader().getRawData().getParentHash().isEmpty());
     Assert.assertTrue(firstBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
     logger.info("firstblock test from solidity succesfully");
+    Assert.assertFalse(firstBlock.getBlockid().isEmpty());
 
     //Query the second latest block.
     NumberMessage.Builder builder3 = NumberMessage.newBuilder();
     builder3.setNum(currentBlockNum - 1);
-    Block lastSecondBlock = blockingStubSolidity.getBlockByNum(builder3.build());
+    GrpcAPI.BlockExtention lastSecondBlock = blockingStubSolidity.getBlockByNum2(builder3.build());
     Assert.assertTrue(lastSecondBlock.hasBlockHeader());
     Assert.assertFalse(lastSecondBlock.getBlockHeader().getWitnessSignature().isEmpty());
     Assert.assertTrue(lastSecondBlock.getBlockHeader().getRawData().getTimestamp() > 0);
@@ -144,11 +166,13 @@ public class WalletTestBlock002 {
     Assert.assertFalse(lastSecondBlock.getBlockHeader().getRawData().getParentHash().isEmpty());
     Assert.assertTrue(lastSecondBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
     logger.info("Last second test from solidity succesfully");
+    Assert.assertFalse(lastSecondBlock.getBlockid().isEmpty());
   }
-  @Test(enabled = true)
-  public void testGetBlockById() {
 
-    Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+  @Test(enabled = true)
+  public void testGetBlockById2() {
+    GrpcAPI.BlockExtention currentBlock = blockingStubFull
+        .getNowBlock2(GrpcAPI.EmptyMessage.newBuilder().build());
     ByteString currentHash = currentBlock.getBlockHeader().getRawData().getParentHash();
     GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder().setValue(currentHash).build();
     Block setIdOfBlock = blockingStubFull.getBlockById(request);
@@ -165,7 +189,6 @@ public class WalletTestBlock002 {
     Assert.assertTrue(setIdOfBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
     logger.info("By ID test succesfully");
   }
-
 
   @AfterClass
   public void shutdown() throws InterruptedException {
@@ -216,10 +239,11 @@ public class WalletTestBlock002 {
     return blockingStubFull.getAccount(request);
   }
 
-  public Block getBlock(long blockNum, WalletGrpc.WalletBlockingStub blockingStubFull) {
+  public GrpcAPI.BlockExtention getBlock2(long blockNum,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
     NumberMessage.Builder builder = NumberMessage.newBuilder();
     builder.setNum(blockNum);
-    return blockingStubFull.getBlockByNum(builder.build());
+    return blockingStubFull.getBlockByNum2(builder.build());
 
   }
 }

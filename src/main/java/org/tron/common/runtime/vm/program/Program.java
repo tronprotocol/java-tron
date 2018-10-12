@@ -182,15 +182,26 @@ public class Program {
     return invoke.getCallDeep();
   }
 
+  /**
+   *
+   * @param energyLimit
+   * @param senderAddress
+   * @param transferAddress the address send trx to.
+   * @param value           the trx value transferred in the internaltransaction
+   * @param data
+   * @param note
+   * @param nonce
+   * @return
+   */
   private InternalTransaction addInternalTx(DataWord energyLimit, byte[] senderAddress,
-      byte[] receiveAddress,
+      byte[] transferAddress,
       long value, byte[] data, String note, long nonce) {
 
     // todo: now, internal transaction needn't energylimit
     InternalTransaction result = null;
     if (transaction != null) {
       result = getResult().addInternalTransaction(transaction.getHash(), getCallDeep(),
-          senderAddress, receiveAddress, value, data, note, nonce);
+          senderAddress, transferAddress, value, data, note, nonce);
     }
 
     return result;
@@ -391,12 +402,12 @@ public class Program {
 
   public void suicide(DataWord obtainerAddress) {
 
-    byte[] owner = convertToTronAddress(getOwnerAddress().getLast20Bytes());
+    byte[] owner = convertToTronAddress(getContractAddress().getLast20Bytes());
     byte[] obtainer = convertToTronAddress(obtainerAddress.getLast20Bytes());
     long balance = getContractState().getBalance(owner);
 
-    if (logger.isInfoEnabled()) {
-      logger.info("Transfer to: [{}] heritage: [{}]",
+    if (logger.isDebugEnabled()) {
+      logger.debug("Transfer to: [{}] heritage: [{}]",
           Hex.toHexString(obtainer),
           balance);
     }
@@ -414,7 +425,7 @@ public class Program {
         throw new BytecodeExecutionException("transfer failure");
       }
     }
-    getResult().addDeleteAccount(this.getOwnerAddress());
+    getResult().addDeleteAccount(this.getContractAddress());
   }
 
   public Deposit getContractState() {
@@ -430,7 +441,7 @@ public class Program {
       return;
     }
 
-    byte[] senderAddress = convertToTronAddress(this.getOwnerAddress().getLast20Bytes());
+    byte[] senderAddress = convertToTronAddress(this.getContractAddress().getLast20Bytes());
 
     long endowment = value.value().longValueExact();
     if (getContractState().getBalance(senderAddress) < endowment) {
@@ -441,8 +452,8 @@ public class Program {
     // [1] FETCH THE CODE FROM THE MEMORY
     byte[] programCode = memoryChunk(memStart.intValue(), memSize.intValue());
 
-    if (logger.isInfoEnabled()) {
-      logger.info("creating a new contract inside contract run: [{}]",
+    if (logger.isDebugEnabled()) {
+      logger.debug("creating a new contract inside contract run: [{}]",
           Hex.toHexString(senderAddress));
     }
 
@@ -487,7 +498,7 @@ public class Program {
         programCode, "create", nonce);
     long vmStartInUs = System.nanoTime() / 1000;
     ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
-        this, new DataWord(newAddress), getOwnerAddress(), value,
+        this, new DataWord(newAddress), getContractAddress(), value,
         newBalance, null, deposit, false, byTestingSuite(), vmStartInUs,
         getVmShouldEndInUs(), energyLimit.longValueSafe());
 
@@ -562,9 +573,9 @@ public class Program {
     long refundEnergy = energyLimit.longValueSafe() - result.getEnergyUsed();
     if (refundEnergy > 0) {
       refundEnergy(refundEnergy, "remain energy from the internal call");
-      if (logger.isInfoEnabled()) {
-        logger.info("The remaining energy is refunded, account: [{}], energy: [{}] ",
-            Hex.toHexString(convertToTronAddress(getOwnerAddress().getLast20Bytes())),
+      if (logger.isDebugEnabled()) {
+        logger.debug("The remaining energy is refunded, account: [{}], energy: [{}] ",
+            Hex.toHexString(convertToTronAddress(getContractAddress().getLast20Bytes())),
             refundEnergy);
       }
     }
@@ -591,11 +602,11 @@ public class Program {
 
     // FETCH THE SAVED STORAGE
     byte[] codeAddress = convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
-    byte[] senderAddress = convertToTronAddress(getOwnerAddress().getLast20Bytes());
+    byte[] senderAddress = convertToTronAddress(getContractAddress().getLast20Bytes());
     byte[] contextAddress = msg.getType().callIsStateless() ? senderAddress : codeAddress;
 
-    if (logger.isInfoEnabled()) {
-      logger.info(msg.getType().name()
+    if (logger.isDebugEnabled()) {
+      logger.debug(msg.getType().name()
               + " for existing contract: address: [{}], outDataOffs: [{}], outDataSize: [{}]  ",
           Hex.toHexString(contextAddress), msg.getOutDataOffs().longValue(),
           msg.getOutDataSize().longValue());
@@ -647,7 +658,7 @@ public class Program {
       long vmStartInUs = System.nanoTime() / 1000;
       ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
           this, new DataWord(contextAddress),
-          msg.getType().callIsDelegate() ? getCallerAddress() : getOwnerAddress(),
+          msg.getType().callIsDelegate() ? getCallerAddress() : getContractAddress(),
           msg.getType().callIsDelegate() ? getCallValue() : msg.getEndowment(),
           contextBalance, data, deposit, msg.getType().callIsStatic() || isStaticCall(),
           byTestingSuite(), vmStartInUs, getVmShouldEndInUs(), msg.getEnergy().longValueSafe());
@@ -685,7 +696,7 @@ public class Program {
       }
 
       if (byTestingSuite()) {
-        logger.info("Testing run, skipping storage diff listener");
+        logger.debug("Testing run, skipping storage diff listener");
       }
       // else if (Arrays.equals(transaction.getReceiveAddress(), internalTx.getReceiveAddress())) {
       //   storageDiffListener.merge(program.getStorageDiff());
@@ -712,8 +723,8 @@ public class Program {
       BigInteger refundEnergy = msg.getEnergy().value().subtract(toBI(result.getEnergyUsed()));
       if (isPositive(refundEnergy)) {
         refundEnergy(refundEnergy.longValueExact(), "remaining energy from the internal call");
-        if (logger.isInfoEnabled()) {
-          logger.info("The remaining energy refunded, account: [{}], energy: [{}] ",
+        if (logger.isDebugEnabled()) {
+          logger.debug("The remaining energy refunded, account: [{}], energy: [{}] ",
               Hex.toHexString(senderAddress),
               refundEnergy.toString());
         }
@@ -750,10 +761,11 @@ public class Program {
     }
     long vmNowInUs = System.nanoTime() / 1000;
     if (vmNowInUs > getVmShouldEndInUs()) {
-      logger.error("minTimeRatio: {}", Args.getInstance().getMinTimeRatio());
-      logger.error("maxTimeRatio: {}", Args.getInstance().getMaxTimeRatio());
-      logger.error("vm should end time in us: {}", getVmShouldEndInUs());
-      logger.error("vm start time in us: {}", getVmStartInUs());
+      logger.info(
+          "minTimeRatio: {}, maxTimeRatio: {}, vm should end time in us: {}, " +
+              "vm now time in us: {}, vm start time in us: {}",
+          Args.getInstance().getMinTimeRatio(), Args.getInstance().getMaxTimeRatio(),
+          getVmShouldEndInUs(), vmNowInUs, getVmStartInUs());
       throw Exception.notEnoughTime(opName);
     }
 
@@ -764,12 +776,12 @@ public class Program {
   }
 
   public void refundEnergy(long energyValue, String cause) {
-    logger.info("[{}] Refund for cause: [{}], energy: [{}]", invoke.hashCode(), cause, energyValue);
+    logger.debug("[{}] Refund for cause: [{}], energy: [{}]", invoke.hashCode(), cause, energyValue);
     getResult().refundEnergy(energyValue);
   }
 
   public void futureRefundEnergy(long energyValue) {
-    logger.info("Future refund added: [{}]", energyValue);
+    logger.debug("Future refund added: [{}]", energyValue);
     getResult().addFutureRefund(energyValue);
   }
 
@@ -781,7 +793,7 @@ public class Program {
     DataWord keyWord = word1.clone();
     DataWord valWord = word2.clone();
     getContractState()
-        .putStorageValue(convertToTronAddress(getOwnerAddress().getLast20Bytes()), keyWord,
+        .putStorageValue(convertToTronAddress(getContractAddress().getLast20Bytes()), keyWord,
             valWord);
   }
 
@@ -794,8 +806,8 @@ public class Program {
     return nullToEmpty(code);
   }
 
-  public DataWord getOwnerAddress() {
-    return invoke.getOwnerAddress().clone();
+  public DataWord getContractAddress() {
+    return invoke.getContractAddress().clone();
   }
 
   public DataWord getBlockHash(int index) {
@@ -879,7 +891,7 @@ public class Program {
 
   public DataWord storageLoad(DataWord key) {
     DataWord ret = getContractState()
-        .getStorageValue(convertToTronAddress(getOwnerAddress().getLast20Bytes()), key.clone());
+        .getStorageValue(convertToTronAddress(getContractAddress().getLast20Bytes()), key.clone());
     return ret == null ? null : ret.clone();
   }
 
@@ -1242,7 +1254,7 @@ public class Program {
     // Repository track = getContractState().startTracking();
     Deposit deposit = getContractState().newDepositChild();
 
-    byte[] senderAddress = convertToTronAddress(this.getOwnerAddress().getLast20Bytes());
+    byte[] senderAddress = convertToTronAddress(this.getContractAddress().getLast20Bytes());
     byte[] codeAddress = convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
     byte[] contextAddress = msg.getType().callIsStateless() ? senderAddress : codeAddress;
 
@@ -1279,7 +1291,7 @@ public class Program {
     } else {
       // Delegate or not. if is delegated, we will use msg sender, otherwise use contract address
       contract.setCallerAddress(convertToTronAddress(msg.getType().callIsDelegate() ?
-          getCallerAddress().getLast20Bytes() : getOwnerAddress().getLast20Bytes()));
+          getCallerAddress().getLast20Bytes() : getContractAddress().getLast20Bytes()));
       // this is the depositImpl, not contractState as above
       contract.setDeposit(deposit);
       contract.setResult(this.result);

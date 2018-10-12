@@ -37,7 +37,7 @@ public class WalletTestAssetIssue015 {
 
 
   //testng001、testng002、testng003、testng004
-/*  private static final byte[] fromAddress = Base58
+  /*  private static final byte[] fromAddress = Base58
       .decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");
   private static final byte[] toAddress = Base58
       .decodeFromBase58Check("TV75jZpdmP2juMe1dRwGrwpV6AMU6mr1EU");*/
@@ -85,7 +85,7 @@ public class WalletTestAssetIssue015 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     logger.info(testKeyForAssetIssue015);
     logger.info(transferAssetCreateKey);
@@ -120,7 +120,7 @@ public class WalletTestAssetIssue015 {
     }
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void atestWhenCreatorHasNoEnoughBandwidthUseTransferNet() {
     //Transfer asset to an account.
     Assert.assertTrue(PublicMethed
@@ -155,7 +155,7 @@ public class WalletTestAssetIssue015 {
     Assert.assertTrue(transferAfterFreeNetUsed - transferBeforeFreeNetUsed > netCostMeasure);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void btestWhenTransferHasNoEnoughBandwidthUseBalance() {
     Boolean ret = true;
     while (ret) {
@@ -184,7 +184,7 @@ public class WalletTestAssetIssue015 {
     Assert.assertTrue(beforeBalance - afterBalance > 2000);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void ctestWhenFreezeBalanceUseNet() {
     Assert.assertTrue(PublicMethed.freezeBalance(transferAssetAddress,5000000,
         3,transferAssetCreateKey,blockingStubFull));
@@ -214,7 +214,7 @@ public class WalletTestAssetIssue015 {
   }
 
 
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

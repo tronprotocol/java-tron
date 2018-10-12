@@ -267,6 +267,9 @@ task stest(type: Test) {
 
     useTestNG {
         suites(file('src/test/resources/testng.xml'))
+        parallel 'tests'
+        threadCount 4
+
     }
 
     testLogging {
@@ -283,7 +286,7 @@ task stest(type: Test) {
 
 jacocoTestReport {
     reports {
-        xml.enabled false
+        xml.enabled true
         csv.enabled false
         html.destination file("${buildDir}/jacocoHtml")
     }

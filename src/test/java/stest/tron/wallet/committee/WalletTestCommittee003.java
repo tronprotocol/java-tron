@@ -25,32 +25,33 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class WalletTestCommittee003 {
-  //from account
-  private final String testKey003 =
-      "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
-  //Witness 47.93.9.236
-  private final String witnessKey001 =
-      "369F095838EB6EED45D4F6312AF962D5B9DE52927DA9F04174EE49F9AF54BC77";
-  //Witness 47.93.33.201
-  private final String witnessKey002 =
-      "9FD8E129DE181EA44C6129F727A6871440169568ADE002943EAD0E7A16D8EDAC";
-  //Witness 123.56.10.6
-  private final String witnessKey003 =
-      "291C233A5A7660FB148BAE07FCBCF885224F2DF453239BD983F859E8E5AA4602";
-  //Wtiness 39.107.80.135
-  private final String witnessKey004 =
-      "99676348CBF9501D07819BD4618ED885210CB5A03FEAF6BFF28F0AF8E1DE7DBE";
-  //Witness 47.93.184.2
-  private final String witnessKey005 =
-      "FA090CFB9F3A6B00BE95FE185E82BBCFC4DA959CA6A795D275635ECF5D58466D";
-
-
+  private final String testKey002 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key1");
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final String testKey003 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key2");
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
+  private final String witnessKey001 = Configuration.getByPath("testng.conf")
+      .getString("witness.key1");
+  //Witness 47.93.33.201
+  private final String witnessKey002 = Configuration.getByPath("testng.conf")
+      .getString("witness.key2");
+  //Witness 123.56.10.6
+  private final String witnessKey003 = Configuration.getByPath("testng.conf")
+      .getString("witness.key3");
+  //Wtiness 39.107.80.135
+  private final String witnessKey004 = Configuration.getByPath("testng.conf")
+      .getString("witness.key4");
+  //Witness 47.93.184.2
+  private final String witnessKey005 = Configuration.getByPath("testng.conf")
+      .getString("witness.key5");
+
+
   private final byte[] witness001Address = PublicMethed.getFinalAddress(witnessKey001);
   private final byte[] witness002Address = PublicMethed.getFinalAddress(witnessKey002);
-  private final byte[] witness003Address = PublicMethed.getFinalAddress(witnessKey003);
-  private final byte[] witness004Address = PublicMethed.getFinalAddress(witnessKey004);
-  private final byte[] witness005Address = PublicMethed.getFinalAddress(witnessKey005);
+  //private final byte[] witness003Address = PublicMethed.getFinalAddress(witnessKey003);
+  //private final byte[] witness004Address = PublicMethed.getFinalAddress(witnessKey004);
+  //private final byte[] witness005Address = PublicMethed.getFinalAddress(witnessKey005);
 
 
   private ManagedChannel channelFull = null;
@@ -82,14 +83,15 @@ public class WalletTestCommittee003 {
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
-    Assert.assertTrue(PublicMethed.sendcoin(witness001Address,1000000L,
-        toAddress,testKey003,blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(witness002Address,1000000L,
-        toAddress,testKey003,blockingStubFull));
   }
 
   @Test(enabled = true)
   public void testApproveProposal() {
+    Assert.assertTrue(PublicMethed.sendcoin(witness001Address,1000000L,
+        toAddress,testKey003,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(witness002Address,1000000L,
+        toAddress,testKey003,blockingStubFull));
+
     //Create a proposal
     try {
       Thread.sleep(2000);
@@ -113,7 +115,7 @@ public class WalletTestCommittee003 {
 
     Assert.assertTrue(PublicMethed.approveProposal(witness002Address,witnessKey002,proposalId,
         true,blockingStubFull));
-        try {
+    try {
       Thread.sleep(2000);
     } catch (InterruptedException e) {
       e.printStackTrace();
@@ -154,15 +156,15 @@ public class WalletTestCommittee003 {
         true,blockingStubFull));
     Assert.assertTrue(PublicMethed.approveProposal(witness002Address,witnessKey002,proposalId,
         true,blockingStubFull));
-    Assert.assertTrue(PublicMethed.approveProposal(witness003Address,witnessKey003,proposalId,
-        true,blockingStubFull));
-    Assert.assertTrue(PublicMethed.approveProposal(witness004Address,witnessKey004,proposalId,
-        true,blockingStubFull));
-    Assert.assertTrue(PublicMethed.approveProposal(witness005Address,witnessKey005,proposalId,
-        true,blockingStubFull));
+    //Assert.assertTrue(PublicMethed.approveProposal(witness003Address,witnessKey003,proposalId,
+    //    true,blockingStubFull));
+    //Assert.assertTrue(PublicMethed.approveProposal(witness004Address,witnessKey004,proposalId,
+    //    true,blockingStubFull));
+    //Assert.assertTrue(PublicMethed.approveProposal(witness005Address,witnessKey005,proposalId,
+    //    true,blockingStubFull));
     proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
     listProposals =  Optional.ofNullable(proposalList);
-    Assert.assertTrue(listProposals.get().getProposals(0).getApprovalsCount() == 5);
+    Assert.assertTrue(listProposals.get().getProposals(0).getApprovalsCount() == 2);
 
 
   }

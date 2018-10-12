@@ -20,6 +20,10 @@
     <img src="https://travis-ci.org/tronprotocol/java-tron.svg?branch=develop">
   </a>
   
+  <a href="https://codecov.io/gh/tronprotocol/java-tron">
+    <img src="https://codecov.io/gh/tronprotocol/java-tron/branch/develop/graph/badge.svg" />
+  </a>
+  
   <a href="https://github.com/tronprotocol/java-tron/issues">
     <img src="https://img.shields.io/github/issues/tronprotocol/java-tron.svg">
   </a>

@@ -159,11 +159,15 @@ public class ProgramResult {
   }
 
   public InternalTransaction addInternalTransaction(byte[] parentHash, int deep,
-      byte[] senderAddress, byte[] receiveAddress, long value, byte[] data, String note, long nonce) {
+      byte[] senderAddress, byte[] transferAddress, long value, byte[] data, String note, long nonce) {
     InternalTransaction transaction = new InternalTransaction(parentHash, deep,
-        size(internalTransactions), senderAddress, receiveAddress, value, data, note, nonce);
+        size(internalTransactions), senderAddress, transferAddress, value, data, note, nonce);
     getInternalTransactions().add(transaction);
     return transaction;
+  }
+
+  public void addInternalTransaction(InternalTransaction internalTransaction) {
+    getInternalTransactions().add(internalTransaction);
   }
 
   public void addInternalTransactions(List<InternalTransaction> internalTransactions) {

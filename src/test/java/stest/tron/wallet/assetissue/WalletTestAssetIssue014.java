@@ -35,7 +35,7 @@ public class WalletTestAssetIssue014 {
 
 
 
-/*  //testng001、testng002、testng003、testng004
+  /*  //testng001、testng002、testng003、testng004
   private static final byte[] fromAddress = Base58
       .decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");
   private static final byte[] toAddress = Base58
@@ -77,7 +77,7 @@ public class WalletTestAssetIssue014 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     logger.info(testKeyForAssetIssue014);
     logger.info(transferAssetCreateKey);
@@ -114,7 +114,7 @@ public class WalletTestAssetIssue014 {
     }
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testWhenNoEnoughPublicFreeAssetNetLimitUseTransferNet() {
     //Transfer asset to an account.
     Assert.assertTrue(PublicMethed
@@ -155,7 +155,7 @@ public class WalletTestAssetIssue014 {
   }
 
 
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

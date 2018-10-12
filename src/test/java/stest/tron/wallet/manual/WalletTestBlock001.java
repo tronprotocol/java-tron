@@ -1,19 +1,22 @@
-package stest.tron.wallet.account;
+package stest.tron.wallet.manual;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.math.BigInteger;
-import java.util.Comparator;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Test;
+import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
@@ -23,16 +26,16 @@ import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
 
 @Slf4j
-public class WalletTestAccount002 {
+public class WalletTestBlock001 {
 
   private ManagedChannel channelFull = null;
-  private ManagedChannel searchChannelFull = null;
+  private ManagedChannel channelSolidity = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-  private WalletGrpc.WalletBlockingStub searchBlockingStubFull = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
-  private String searchFullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(1);
+  private String soliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(0);
 
   @BeforeSuite
   public void beforeSuite() {
@@ -40,6 +43,7 @@ public class WalletTestAccount002 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  @Test(enabled = true)
   @BeforeClass
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -47,52 +51,60 @@ public class WalletTestAccount002 {
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
-    searchChannelFull = ManagedChannelBuilder.forTarget(searchFullnode)
+    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
         .usePlaintext(true)
         .build();
-    searchBlockingStubFull = WalletGrpc.newBlockingStub(searchChannelFull);
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  /*    @Test(enabled = true)
-    public void TestGetAllAccount(){
-        GrpcAPI.AccountList accountlist =
-        blockingStubFull.listAccounts(GrpcAPI.EmptyMessage.newBuilder().build());
-        Optional<GrpcAPI.AccountList> result = Optional.ofNullable(accountlist);
-        if (result.isPresent()) {
-            GrpcAPI.AccountList accountList = result.get();
-            List<Account> list = accountList.getAccountsList();
-            List<Account> newList = new ArrayList();
-            newList.addAll(list);
-            newList.sort(new AccountComparator());
-            GrpcAPI.AccountList.Builder builder = GrpcAPI.AccountList.newBuilder();
-            newList.forEach(account -> builder.addAccounts(account));
-            result = Optional.of(builder.build());
-        }
-        Assert.assertTrue(result.get().getAccountsCount() > 0);
-        logger.info(Integer.toString(result.get().getAccountsCount()));
-        for (int j = 0; j < result.get().getAccountsCount(); j++){
-            Assert.assertFalse(result.get().getAccounts(j).getAddress().isEmpty());
-        }
+  @Test(enabled = true)
+  public void testCurrentBlock() {
+    Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    Assert.assertTrue(currentBlock.hasBlockHeader());
+    Assert.assertFalse(currentBlock.getBlockHeader().getWitnessSignature().isEmpty());
+    Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getTimestamp() > 0);
+    Assert.assertFalse(currentBlock.getBlockHeader().getRawData().getWitnessAddress().isEmpty());
+    Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getNumber() > 0);
+    Assert.assertFalse(currentBlock.getBlockHeader().getRawData().getParentHash().isEmpty());
+    Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
+    logger.info("test getcurrentblock is " + Long.toString(currentBlock.getBlockHeader()
+        .getRawData().getNumber()));
 
+    //Improve coverage.
+    currentBlock.equals(currentBlock);
+    Block newBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    newBlock.equals(currentBlock);
+    newBlock.hashCode();
+    newBlock.getSerializedSize();
+    newBlock.getTransactionsCount();
+    newBlock.getTransactionsList();
+  }
 
-    }*/
+  @Test(enabled = true)
+  public void testCurrentBlockFromSolidity() {
+    Block currentBlock = blockingStubSolidity
+        .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    Assert.assertTrue(currentBlock.hasBlockHeader());
+    Assert.assertFalse(currentBlock.getBlockHeader().getWitnessSignature().isEmpty());
+    Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getTimestamp() > 0);
+    Assert.assertFalse(currentBlock.getBlockHeader().getRawData().getWitnessAddress().isEmpty());
+    Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getNumber() > 0);
+    Assert.assertFalse(currentBlock.getBlockHeader().getRawData().getParentHash().isEmpty());
+    Assert.assertTrue(currentBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
+    logger.info("test getcurrentblock in soliditynode is " + Long.toString(currentBlock
+        .getBlockHeader().getRawData().getNumber()));
+  }
 
   @AfterClass
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
-    if (searchChannelFull != null) {
-      searchChannelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    if (channelSolidity != null) {
+      channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
 
-  class AccountComparator implements Comparator {
-
-    public int compare(Object o1, Object o2) {
-      return Long.compare(((Account) o2).getBalance(), ((Account) o1).getBalance());
-    }
-  }
 
   public Account queryAccount(String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     byte[] address;
