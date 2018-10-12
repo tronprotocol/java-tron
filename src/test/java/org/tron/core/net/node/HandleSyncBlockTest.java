@@ -31,6 +31,9 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.db.Manager;
 import org.tron.core.net.message.BlockMessage;
+import org.tron.core.net.node.override.HandshakeHandlerTest;
+import org.tron.core.net.node.override.PeerClientTest;
+import org.tron.core.net.node.override.TronChannelInitializerTest;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
@@ -41,11 +44,13 @@ public class HandleSyncBlockTest {
 
   private static TronApplicationContext context;
   private static NodeImpl node;
-  RpcApiService rpcApiService;
-  private static PeerClient peerClient;
-  ChannelManager channelManager;
-  SyncPool pool;
+  private RpcApiService rpcApiService;
+  private static PeerClientTest peerClient;
+  private ChannelManager channelManager;
+  private SyncPool pool;
   private static Application appT;
+  private Node nodeEntity;
+  private static HandshakeHandlerTest handshakeHandlerTest;
   private static final String dbPath = "output-nodeImplTest-handleSyncBlock";
   private static final String dbDirectory = "db_HandleSyncBlock_test";
   private static final String indexDirectory = "index_HandleSyncBlock_test";
@@ -147,6 +152,9 @@ public class HandleSyncBlockTest {
 
   @Before
   public void init() {
+    nodeEntity = new Node(
+        "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:17893");
+
     new Thread(new Runnable() {
       @Override
       public void run() {
@@ -182,10 +190,12 @@ public class HandleSyncBlockTest {
 //        appT.startServices();
 //        appT.startup();
         node = context.getBean(NodeImpl.class);
-        peerClient = context.getBean(PeerClient.class);
+        peerClient = context.getBean(PeerClientTest.class);
         channelManager = context.getBean(ChannelManager.class);
         pool = context.getBean(SyncPool.class);
         Manager dbManager = context.getBean(Manager.class);
+        handshakeHandlerTest = context.getBean(HandshakeHandlerTest.class);
+        handshakeHandlerTest.setNode(nodeEntity);
         NodeDelegate nodeDelegate = new NodeDelegateImpl(dbManager);
         node.setNodeDelegate(nodeDelegate);
         pool.init(node);
@@ -213,15 +223,21 @@ public class HandleSyncBlockTest {
       ExecutorService advertiseLoopThread = ReflectUtils.getFieldValue(node, "broadPool");
       advertiseLoopThread.shutdownNow();
 
+      peerClient.prepare(nodeEntity.getHexId());
+
       ReflectUtils.setFieldValue(node, "isAdvertiseActive", false);
       ReflectUtils.setFieldValue(node, "isFetchActive", false);
 
-      Node node = new Node(
-          "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:17893");
+      TronChannelInitializerTest tronChannelInitializer = ReflectUtils
+          .getFieldValue(peerClient, "tronChannelInitializer");
+      tronChannelInitializer.prepare();
+      Channel channel = ReflectUtils.getFieldValue(tronChannelInitializer, "channel");
+      ReflectUtils.setFieldValue(channel, "handshakeHandler", handshakeHandlerTest);
+
       new Thread(new Runnable() {
         @Override
         public void run() {
-          peerClient.connect(node.getHost(), node.getPort(), node.getHexId());
+          peerClient.connect(nodeEntity.getHost(), nodeEntity.getPort(), nodeEntity.getHexId());
         }
       }).start();
       Thread.sleep(1000);
@@ -245,6 +261,7 @@ public class HandleSyncBlockTest {
       peer.close();
     }
     peerClient.close();
+    handshakeHandlerTest.close();
     context.destroy();
     appT.shutdownServices();
     appT.shutdown();
