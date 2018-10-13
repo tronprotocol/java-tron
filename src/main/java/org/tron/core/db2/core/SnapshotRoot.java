@@ -35,7 +35,8 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
     LevelDB levelDB = (LevelDB) db;
     SnapshotImpl snapshot = (SnapshotImpl) from;
     Map<WrappedByteArray, WrappedByteArray> batch = Streams.stream(snapshot.db)
-        .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey().getBytes()), WrappedByteArray.of(e.getValue().getBytes())))
+        .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey().getBytes()),
+            WrappedByteArray.of(e.getValue().getBytes())))
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     levelDB.flush(batch);
   }

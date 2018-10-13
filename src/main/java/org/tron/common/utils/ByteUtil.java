@@ -351,7 +351,7 @@ public class ByteUtil {
   }
 
   // lexicographical order
-  private static int compare(byte[] bytes1, byte[] bytes2) {
+  public static int compare(byte[] bytes1, byte[] bytes2) {
     Preconditions.checkNotNull(bytes1);
     Preconditions.checkNotNull(bytes2);
     Preconditions.checkArgument(bytes1.length == bytes2.length);

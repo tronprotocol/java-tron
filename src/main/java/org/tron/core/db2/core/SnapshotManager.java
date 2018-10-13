@@ -36,7 +36,6 @@ public class SnapshotManager implements RevokingDatabase {
   private boolean disabled = true;
   private int activeSession = 0;
   private boolean unChecked = true;
-  private WriteOptions writeOptions = new WriteOptions().sync(true);
 
   public ISession buildSession() {
     return buildSession(false);
@@ -132,7 +131,7 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   @Override
-  public void fastPop() throws RevokingStoreIllegalStateException {
+  public void fastPop() {
     pop();
   }
 
@@ -203,6 +202,10 @@ public class SnapshotManager implements RevokingDatabase {
     Map<WrappedByteArray, WrappedByteArray> batch = new HashMap<>();
     for (RevokingDBWithCachingNewValue db : dbs) {
       Snapshot head = db.getHead();
+      if (head.getPrevious() == null) {
+        continue;
+      }
+
       while (head.getPrevious().getPrevious() != null) {
         head = head.getPrevious();
       }
@@ -213,13 +216,14 @@ public class SnapshotManager implements RevokingDatabase {
       for (Map.Entry<Key, Value> e : keyValueDB) {
         Key k = e.getKey();
         Value v = e.getValue();
-        batch.put(WrappedByteArray.of(Bytes.concat(simpleEncode(dbName), k.getBytes())), WrappedByteArray.of(v.encode()));
+        batch.put(WrappedByteArray.of(Bytes.concat(simpleEncode(dbName), k.getBytes())),
+            WrappedByteArray.of(v.encode()));
       }
     }
 
     levelDbDataSource.updateByBatch(batch.entrySet().stream()
         .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
-        .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll), writeOptions);
+        .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll));
     levelDbDataSource.closeDB();
   }
 
