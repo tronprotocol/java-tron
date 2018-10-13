@@ -34,8 +34,7 @@ import org.tron.common.runtime.vm.VM;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.vm.program.Program;
-import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
-import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
+import org.tron.common.runtime.vm.program.Program.BytecodeExecutionException;
 import org.tron.common.runtime.vm.program.ProgramPrecompile;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
@@ -70,6 +69,7 @@ import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
 @Slf4j(topic = "Runtime")
 public class Runtime {
+
   private VMConfig config = VMConfig.getInstance();
 
   private Transaction trx;
@@ -131,8 +131,9 @@ public class Runtime {
    * For constant trx with latest blockCap.
    */
   private boolean isStaticCall = false;
+
   public Runtime(Transaction tx, BlockCapsule block, DepositImpl deposit,
-                 ProgramInvokeFactory programInvokeFactory, boolean isStaticCall) {
+      ProgramInvokeFactory programInvokeFactory, boolean isStaticCall) {
     this(tx, block, deposit, programInvokeFactory);
     this.isStaticCall = isStaticCall;
   }
@@ -362,7 +363,8 @@ public class Runtime {
           .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executorType, trx,
               blockCap.getInstance(), deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
       this.vm = new VM(config);
-      this.program = new Program(ops, programInvoke, rootInternalTransaction, config, this.blockCap);
+      this.program = new Program(ops, programInvoke, rootInternalTransaction, config,
+          this.blockCap);
       this.program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
       this.program.setRootCallConstant(isCallConstant());
     } catch (Exception e) {
@@ -403,7 +405,7 @@ public class Runtime {
       return;
     }
 
-    if(contract.getContractAddress() == null) {
+    if (contract.getContractAddress() == null) {
       throw new ContractValidateException("Cannot get contract address from TriggerContract");
     }
 
@@ -467,7 +469,7 @@ public class Runtime {
 
   }
 
-  public void go() {
+  public void go() throws VMIllegalException {
     try {
       if (vm != null) {
 
@@ -500,8 +502,8 @@ public class Runtime {
           if (afterSpend < 0) {
             if (null == result.getException()) {
               result.setException(Program.Exception
-                      .notEnoughSpendEnergy("save just created contract code",
-                          saveCodeEnergy, program.getEnergyLimitLeft().longValue()));
+                  .notEnoughSpendEnergy("save just created contract code",
+                      saveCodeEnergy, program.getEnergyLimitLeft().longValue()));
             }
           } else {
             result.spendEnergy(saveCodeEnergy);
@@ -521,40 +523,29 @@ public class Runtime {
             runtimeError = "REVERT opcode executed";
           }
         } else {
-          getResult().getInternalTransactions().add(0,rootInternalTransaction);
+          getResult().getInternalTransactions().add(0, rootInternalTransaction);
           deposit.commit();
         }
       } else {
         if (!trxType.equals(TRX_PRECOMPILED_TYPE)) {
-          getResult().getInternalTransactions().add(0,rootInternalTransaction);
+          getResult().getInternalTransactions().add(0, rootInternalTransaction);
         }
         deposit.commit();
       }
-    } catch (JVMStackOverFlowException e) {
+    } catch (BytecodeExecutionException e) {
       program.spendAllEnergy();
       result = program.getResult();
       result.setException(e);
       runtimeError = result.getException().getMessage();
-      logger.info("JVMStackOverFlowException: {}", result.getException().getMessage());
-    } catch (OutOfResourceException e) {
-      program.spendAllEnergy();
-      result = program.getResult();
-      result.setException(e);
-      runtimeError = result.getException().getMessage();
-      logger.info("timeout: {}", result.getException().getMessage());
+      logger.info("BytecodeExecutionException: {}", e.getMessage());
     } catch (ContractValidateException e) {
       logger.info("when check constant, {}", e.getMessage());
-    }catch (Throwable e) {
-      program.spendAllEnergy();
-      result = program.getResult();
-      if (Objects.isNull(result.getException())) {
-        logger.info(e.getMessage(), e);
-        result.setException(new RuntimeException("Unknown Throwable"));
-      }
-      if (StringUtils.isEmpty(runtimeError)) {
-        runtimeError = result.getException().getMessage();
-      }
-      logger.info("runtime error is :{}", result.getException().getMessage());
+    } catch (Exception e) {
+      logger.error("Unexpected exception: " + e.getMessage(), e);
+      throw new VMIllegalException("Unexpected exception: " + e.getMessage());
+    } catch (Throwable e) {
+      logger.error("Unable to catch throwable: " + e.getMessage(), e);
+      System.exit(-1);
     }
     trace.setBill(result.getEnergyUsed());
   }

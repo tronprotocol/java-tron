@@ -241,7 +241,8 @@ public class VM {
           energyCost = energyCosts.getLOG_ENERGY()
               + energyCosts.getLOG_TOPIC_ENERGY() * nTopics
               + energyCosts.getLOG_DATA_ENERGY() * stack.get(stack.size() - 2).longValue()
-              + calcMemEnergy(energyCosts, oldMemSize, memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0, op);
+              + calcMemEnergy(energyCosts, oldMemSize,
+              memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0, op);
 
           checkMemorySize(op, memNeeded(stack.peek(), stack.get(stack.size() - 2)));
           break;
@@ -1033,8 +1034,9 @@ public class VM {
           DataWord value = program.stackPop();
 
           if (logger.isDebugEnabled()) {
-            hint = "[" + program.getContractAddress().toPrefixString() + "] key: " + addr + " value: "
-                + value;
+            hint =
+                "[" + program.getContractAddress().toPrefixString() + "] key: " + addr + " value: "
+                    + value;
           }
 
           program.storageSave(addr, value);
@@ -1263,7 +1265,6 @@ public class VM {
         default:
           break;
       }
-
       program.setPreviouslyExecutedOp(op.val());
     } catch (RuntimeException e) {
       logger.info("VM halted: [{}]", e.getMessage());
