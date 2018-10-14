@@ -532,12 +532,12 @@ public class Runtime {
         }
         deposit.commit();
       }
-    } catch (BytecodeExecutionException e) {
+    } catch (BytecodeExecutionException | ArithmeticException | IndexOutOfBoundsException e) {
       program.spendAllEnergy();
       result = program.getResult();
       result.setException(e);
       runtimeError = result.getException().getMessage();
-      logger.info("BytecodeExecutionException: {}", e.getMessage());
+      logger.info("Expected exception: {}", e.getMessage());
     } catch (ContractValidateException e) {
       logger.info("when check constant, {}", e.getMessage());
     } catch (Exception e) {
