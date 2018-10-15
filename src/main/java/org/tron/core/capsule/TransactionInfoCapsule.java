@@ -9,16 +9,13 @@ import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.ProgramResult;
-import org.tron.common.utils.ByteArray;
+import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
 import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.InternalTransactionOrBuilder;
 import org.tron.protos.Protocol.TransactionInfo;
-import org.tron.protos.Protocol.TransactionInfo.Builder;
 import org.tron.protos.Protocol.TransactionInfo.Log;
 import org.tron.protos.Protocol.TransactionInfo.code;
 
@@ -148,19 +145,18 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
   }
 
   public static TransactionInfoCapsule buildInstance(TransactionCapsule trxCap, BlockCapsule block,
-      Runtime runtime, ReceiptCapsule traceReceipt) {
+      TransactionTrace trace) {
 
     TransactionInfo.Builder builder = TransactionInfo.newBuilder();
-
+    ReceiptCapsule traceReceipt = trace.getReceipt();
     builder.setResult(code.SUCESS);
-    if (StringUtils.isNoneEmpty(runtime.getRuntimeError()) || Objects
-        .nonNull(runtime.getResult().getException())) {
+    if (StringUtils.isNoneEmpty(trace.getRuntimeError()) || Objects
+        .nonNull(trace.getRuntimeResult().getException())) {
       builder.setResult(code.FAILED);
-      builder.setResMessage(ByteString.copyFromUtf8(runtime.getRuntimeError()));
+      builder.setResMessage(ByteString.copyFromUtf8(trace.getRuntimeError()));
     }
     builder.setId(ByteString.copyFrom(trxCap.getTransactionId().getBytes()));
-
-    ProgramResult programResult = runtime.getResult();
+    ProgramResult programResult = trace.getRuntimeResult();
     long fee =
         programResult.getRet().getFee() + traceReceipt.getEnergyFee() + traceReceipt.getNetFee();
     ByteString contractResult = ByteString.copyFrom(programResult.getHReturn());
@@ -187,8 +183,8 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
 
     builder.setReceipt(traceReceipt.getReceipt());
 
-    if (null != runtime.getResult().getInternalTransactions()) {
-      for (InternalTransaction internalTransaction : runtime.getResult()
+    if (null != programResult.getInternalTransactions()) {
+      for (InternalTransaction internalTransaction : programResult
           .getInternalTransactions()) {
         Protocol.InternalTransaction.Builder internalTrxBuilder = Protocol.InternalTransaction
             .newBuilder();
