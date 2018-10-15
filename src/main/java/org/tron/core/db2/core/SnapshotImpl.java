@@ -166,4 +166,14 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   public void reset() {
     getRoot().reset();
   }
+
+  @Override
+  public void resetSolidity() {
+    solidity.resetSolidity();
+  }
+
+  @Override
+  public void updateSolidity() {
+    solidity.updateSolidity();
+  }
 }

@@ -30,15 +30,4 @@ public abstract class AbstractSnapshot<K, V> implements Snapshot {
   public void setNext(Snapshot next) {
     this.next = new WeakReference<>(next);
   }
-
-  @Override
-  public void resetSolidity() {
-    solidity = solidity.getRoot();
-  }
-
-  @Override
-  public void updateSolidity() {
-    solidity = solidity.getNext();
-  }
-
 }
