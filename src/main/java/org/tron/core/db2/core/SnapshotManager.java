@@ -200,7 +200,7 @@ public class SnapshotManager implements RevokingDatabase {
 
       ((SnapshotRoot) solidity.getRoot()).merge(snapshots);
 
-      db.getHead().resetSolidity();
+      solidity.resetSolidity();
       if (db.getHead() == solidity) {
        db.setHead(solidity.getRoot());
       } else {
