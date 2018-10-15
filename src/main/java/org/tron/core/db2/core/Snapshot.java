@@ -40,7 +40,7 @@ public interface Snapshot extends Iterable<Map.Entry<byte[], byte[]>> {
 
   void reset();
 
-  void clearSolidity();
+  void resetSolidity();
 
   void updateSolidity();
 }

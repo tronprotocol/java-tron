@@ -32,7 +32,7 @@ public abstract class AbstractSnapshot<K, V> implements Snapshot {
   }
 
   @Override
-  public void clearSolidity() {
+  public void resetSolidity() {
     solidity = solidity.getRoot();
   }
 
