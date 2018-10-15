@@ -89,4 +89,8 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   public void updateSolidity() {
     solidity.updateSolidity();
   }
+
+  public Snapshot getSolidity() {
+    return solidity.getSolidity();
+  }
 }
