@@ -31,7 +31,6 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
     db.remove(key);
   }
 
-  // todo write batch into levelDB
   @Override
   public void merge(Snapshot from) {
     LevelDB levelDB = (LevelDB) db;
