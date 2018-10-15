@@ -13,8 +13,6 @@ public abstract class AbstractSnapshot<K, V> implements Snapshot {
   protected Snapshot previous;
 
   protected WeakReference<Snapshot> next;
-  @Getter
-  protected Snapshot solidity;
 
   @Override
   public Snapshot advance() {

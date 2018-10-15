@@ -7,14 +7,18 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import lombok.Getter;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.LevelDB;
 
 public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 
+  @Getter
+  private Snapshot solidity;
+
   public SnapshotRoot(String parentName, String name) {
     db = new LevelDB(parentName, name);
-    solidity = new SnapshotNode(this);
+    solidity = this;
   }
 
   @Override
@@ -82,15 +86,11 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 
   @Override
   public void resetSolidity() {
-    solidity.resetSolidity();
+    solidity = this;
   }
 
   @Override
   public void updateSolidity() {
-    solidity.updateSolidity();
-  }
-
-  public Snapshot getSolidity() {
-    return solidity.getSolidity();
+    solidity = solidity.getNext();
   }
 }
