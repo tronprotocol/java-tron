@@ -412,7 +412,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
       updateByBatchInner(rows, options);
     } catch (Exception e) {
       try {
-        updateByBatchInner(rows);
+        updateByBatchInner(rows, options);
       } catch (Exception e1) {
         throw new RuntimeException(e);
       }

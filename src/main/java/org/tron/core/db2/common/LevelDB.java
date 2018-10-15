@@ -30,6 +30,16 @@ public class LevelDB implements DB<byte[], byte[]> {
   }
 
   @Override
+  public long size() {
+    return db.getTotal();
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return size() == 0;
+  }
+
+  @Override
   public void remove(byte[] key) {
     db.deleteData(key);
   }
