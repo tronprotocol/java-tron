@@ -193,7 +193,7 @@ public class SnapshotManager implements RevokingDatabase {
 
   private void refresh() {
     dbs.forEach(db -> {
-      if (db.getHead().getPrevious() == null) {
+      if (Snapshot.isRoot(db.getHead())) {
         return;
       }
 
@@ -240,7 +240,7 @@ public class SnapshotManager implements RevokingDatabase {
     Map<WrappedByteArray, WrappedByteArray> batch = new HashMap<>();
     for (RevokingDBWithCachingNewValue db : dbs) {
       Snapshot head = db.getHead();
-      if (head.getPrevious() == null) {
+      if (Snapshot.isRoot(head)) {
         break;
       }
 
@@ -280,7 +280,7 @@ public class SnapshotManager implements RevokingDatabase {
   @Override
   public void check() {
     for (RevokingDBWithCachingNewValue db : dbs) {
-      if (db.getHead().getClass() != SnapshotRoot.class) {
+      if (!Snapshot.isRoot(db.getHead())) {
         throw new IllegalStateException("first check.");
       }
     }

@@ -35,7 +35,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   public byte[] get(byte[] key) {
     Snapshot snapshot = this;
     Value value;
-    while (snapshot.getClass() == SnapshotImpl.class) {
+    while (Snapshot.isRoot(snapshot)) {
       if ((value = ((SnapshotImpl) snapshot).db.get(Key.of(key))) != null) {
         return value.getBytes();
       }
@@ -132,7 +132,6 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     return previous;
   }
 
-  //TODO need to resolve levelDB'iterator close
   @Override
   public Iterator<Map.Entry<byte[],byte[]>> iterator() {
     Map<WrappedByteArray, WrappedByteArray> all = new HashMap<>();
