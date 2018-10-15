@@ -547,7 +547,9 @@ public class Runtime {
       logger.error("Unable to catch throwable: " + e.getMessage(), e);
       System.exit(-1);
     }
-    trace.setBill(result.getEnergyUsed());
+    if (null != trace) {
+      trace.setBill(result.getEnergyUsed());
+    }
   }
 
   private long getEnergyFee(long callerEnergyUsage, long callerEnergyFrozen,
