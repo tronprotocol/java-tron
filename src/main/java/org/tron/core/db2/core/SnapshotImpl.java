@@ -29,6 +29,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     previous = snapshot;
     snapshot.setNext(this);
     db = new HashDB();
+    solidity = snapshot.getSolidity();
   }
 
   @Override

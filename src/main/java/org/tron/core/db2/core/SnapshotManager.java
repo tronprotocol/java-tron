@@ -37,7 +37,6 @@ public class SnapshotManager implements RevokingDatabase {
   private int activeSession = 0;
   private boolean unChecked = true;
 
-  private Map<String, Snapshot> flushCursors = new HashMap<>();
   private int flushCount = 0;
 
   public ISession buildSession() {
@@ -177,13 +176,7 @@ public class SnapshotManager implements RevokingDatabase {
         break;
       }
 
-      String dbName = db.getDbName();
-      Snapshot snapshot = flushCursors.get(dbName);
-      if (snapshot == null) {
-        flushCursors.put(dbName, db.getHead().getRoot().getNext());
-      } else {
-        flushCursors.put(dbName, snapshot.getNext());
-      }
+      db.getHead().updateSolidity();
     }
   }
 
@@ -198,22 +191,21 @@ public class SnapshotManager implements RevokingDatabase {
       }
 
       List<Snapshot> snapshots = new ArrayList<>();
-      String dbName = db.getDbName();
-      Snapshot cursor = flushCursors.get(dbName);
-      Snapshot next = cursor.getRoot().getNext();
-      while (next != cursor.getNext()) {
+      Snapshot solidity = db.getHead().getSolidity();
+      Snapshot next = solidity.getRoot().getNext();
+      while (next != solidity.getNext()) {
         snapshots.add(next);
         next = next.getNext();
       }
 
-      ((SnapshotRoot) cursor.getRoot()).merge(snapshots);
+      ((SnapshotRoot) solidity.getRoot()).merge(snapshots);
 
-      flushCursors.put(dbName, cursor.getRoot());
-      if (db.getHead() == cursor) {
-       db.setHead(cursor.getRoot());
+      solidity.clearSolidity();
+      if (db.getHead() == solidity) {
+       db.setHead(solidity.getRoot());
       } else {
-        cursor.getNext().setPrevious(cursor.getRoot());
-        cursor.getRoot().setNext(cursor.getNext());
+        solidity.getNext().setPrevious(solidity.getRoot());
+        solidity.getRoot().setNext(solidity.getNext());
       }
     }
   }
@@ -245,9 +237,9 @@ public class SnapshotManager implements RevokingDatabase {
       }
 
       String dbName = db.getDbName();
-      Snapshot cursor = flushCursors.get(dbName);
-      Snapshot next = cursor.getRoot().getNext();
-      while (next != cursor.getNext()) {
+      Snapshot solidity = db.getHead().getSolidity();
+      Snapshot next = solidity.getRoot().getNext();
+      while (next != solidity.getNext()) {
         SnapshotImpl snapshot = (SnapshotImpl) next;
         DB<Key, Value> keyValueDB = snapshot.getDb();
         for (Map.Entry<Key, Value> e : keyValueDB) {

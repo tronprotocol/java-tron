@@ -14,6 +14,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 
   public SnapshotRoot(String parentName, String name) {
     db = new LevelDB(parentName, name);
+    solidity = this;
   }
 
   @Override

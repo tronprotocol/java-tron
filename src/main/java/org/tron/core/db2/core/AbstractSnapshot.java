@@ -13,6 +13,8 @@ public abstract class AbstractSnapshot<K, V> implements Snapshot {
   protected Snapshot previous;
 
   protected WeakReference<Snapshot> next;
+  @Getter
+  protected Snapshot solidity;
 
   @Override
   public Snapshot advance() {
@@ -27,6 +29,16 @@ public abstract class AbstractSnapshot<K, V> implements Snapshot {
   @Override
   public void setNext(Snapshot next) {
     this.next = new WeakReference<>(next);
+  }
+
+  @Override
+  public void clearSolidity() {
+    solidity = solidity.getRoot();
+  }
+
+  @Override
+  public void updateSolidity() {
+    solidity = solidity.getNext();
   }
 
 }
