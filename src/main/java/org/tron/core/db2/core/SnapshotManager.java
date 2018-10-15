@@ -192,7 +192,7 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   private void refresh() {
-    dbs.forEach(db -> {
+    for (RevokingDBWithCachingNewValue db : dbs) {
       if (Snapshot.isRoot(db.getHead())) {
         return;
       }
@@ -215,7 +215,7 @@ public class SnapshotManager implements RevokingDatabase {
         cursor.getNext().setPrevious(cursor.getRoot());
         cursor.getRoot().setNext(cursor.getNext());
       }
-    });
+    }
   }
 
   public void flush() {
@@ -241,7 +241,7 @@ public class SnapshotManager implements RevokingDatabase {
     for (RevokingDBWithCachingNewValue db : dbs) {
       Snapshot head = db.getHead();
       if (Snapshot.isRoot(head)) {
-        break;
+        return;
       }
 
       String dbName = db.getDbName();
