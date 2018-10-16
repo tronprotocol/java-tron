@@ -9,8 +9,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.core.config.args.Args;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.message.TransactionsMessage;
 import org.tron.core.net.peer.PeerConnection;
@@ -21,30 +21,35 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 @Component
 public class TrxHandler {
 
-  @Autowired
-  NodeImpl nodeImpl;
+  private NodeImpl nodeImpl;
 
   private static int MAX_TRX_SIZE = 10_000;
+
+  private static int TIME_OUT = 3600 * 1000;
 
   private BlockingQueue<TrxEvent> smartContractQueue = new LinkedBlockingQueue(MAX_TRX_SIZE);
 
   private BlockingQueue<Runnable> queue = new LinkedBlockingQueue();
 
-  private ExecutorService trxHandlePool = new ThreadPoolExecutor(6, 6,
+  private int threadNum = Args.getInstance().getValidateSignThreadNum();
+  private ExecutorService trxHandlePool = new ThreadPoolExecutor(threadNum, threadNum, 0L, TimeUnit.MILLISECONDS, queue);
 
+  private ScheduledExecutorService smartContractExecutor = Executors.newSingleThreadScheduledExecutor();
 
-      gs0L, TimeUnit.MILLISECONDS, queue);
-
-  private ScheduledExecutorService smartContractExecutor = Executors
-      .newSingleThreadScheduledExecutor();
+  public void init(NodeImpl nodeImpl) {
+    this.nodeImpl = nodeImpl;
+    handleSmartContract();
+  }
 
   private void handleSmartContract() {
     smartContractExecutor.scheduleWithFixedDelay(() -> {
       try {
-        while (queue.size() < 10 && smartContractQueue.size() > 0) {
+        while (queue.size() < 100 && smartContractQueue.size() > 0) {
           TrxEvent event = smartContractQueue.take();
-          if (System.currentTimeMillis() - event.getTime() > 3600){
-            logger.warn("Drop smart contract {} from peer {}");
+          logger.info("ppp Peer {}, pop msg:{}, smartContractQueue size {} queueSize {}",
+              event.getPeer().getInetAddress(), event.getMsg().getMessageId(), smartContractQueue.size(), queue.size());
+          if (System.currentTimeMillis() - event.getTime() > TIME_OUT){
+            logger.warn("ppp Drop smart contract {} from peer {}.");
             continue;
           }
           trxHandlePool.submit(() -> nodeImpl.onHandleTransactionMessage(event.getPeer(), event.getMsg()));
@@ -52,27 +57,23 @@ public class TrxHandler {
       } catch (Exception e) {
         logger.error("Handle smart contract exception", e);
       }
-    }, 1000, 30, TimeUnit.MILLISECONDS);
+    }, 1000, 20, TimeUnit.MILLISECONDS);
   }
 
   public void handleTransactionsMessage(PeerConnection peer, TransactionsMessage msg) {
-//    if (isBusy()){
-//      logger.warn("Drop trx from peer {}, trx size {} smart contract queue size {} queue size {}.",
-//          peer.getInetAddress(), msg.getTransactions().getTransactionsCount(), smartContractQueue.size(), queue.size());
-//      return;
-//    }
     for (Transaction trx : msg.getTransactions().getTransactionsList()) {
       int type = trx.getRawData().getContract(0).getType().getNumber();
       if (type == ContractType.TriggerSmartContract_VALUE || type == ContractType.CreateSmartContract_VALUE) {
         if (!smartContractQueue.offer(new TrxEvent(peer, new TransactionMessage(trx)))){
-          logger.warn("Add smart contract from peer {} failed, smartContractQueue size {} queueSize {}",
+          logger.warn("ppp Add smart contract from peer {} failed, smartContractQueue size {} queueSize {}",
               peer.getInetAddress(), smartContractQueue.size(), queue.size());
         }
       }else {
+        logger.info("ppp Peer {}, submit msg:{}, smartContractQueue size {} queueSize {}",
+            peer.getInetAddress(), new TransactionMessage(trx).getMessageId(), smartContractQueue.size(), queue.size());
         trxHandlePool.submit(() -> nodeImpl.onHandleTransactionMessage(peer, new TransactionMessage(trx)));
       }
     }
-
   }
 
   public boolean isBusy() {
