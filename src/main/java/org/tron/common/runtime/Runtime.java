@@ -84,6 +84,7 @@ public class Runtime {
 
   private VM vm = null;
   private Program program = null;
+  private InternalTransaction rootInternalTransaction;
 
   @Getter
   @Setter
@@ -355,13 +356,13 @@ public class Runtime {
 
       long energyLimit = getEnergyLimit(creator, feeLimit, callValue);
       byte[] ops = newSmartContract.getBytecode().toByteArray();
-      InternalTransaction internalTransaction = new InternalTransaction(trx);
+      rootInternalTransaction = new InternalTransaction(trx, trxType);
 
       ProgramInvoke programInvoke = programInvokeFactory
           .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executorType, trx,
               blockCap.getInstance(), deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
       this.vm = new VM(config);
-      this.program = new Program(ops, programInvoke, internalTransaction, config, this.blockCap);
+      this.program = new Program(ops, programInvoke, rootInternalTransaction, config, this.blockCap);
       this.program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
       this.program.setRootCallConstant(isCallConstant());
     } catch (Exception e) {
@@ -450,8 +451,8 @@ public class Runtime {
         programInvoke.setStaticCall();
       }
       this.vm = new VM(config);
-      InternalTransaction internalTransaction = new InternalTransaction(trx);
-      this.program = new Program(null, code, programInvoke, internalTransaction, config,
+      rootInternalTransaction = new InternalTransaction(trx, trxType);
+      this.program = new Program(null, code, programInvoke, rootInternalTransaction, config,
           this.blockCap);
       this.program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
       this.program.setRootCallConstant(isCallConstant());
@@ -520,9 +521,13 @@ public class Runtime {
             runtimeError = "REVERT opcode executed";
           }
         } else {
+          getResult().getInternalTransactions().add(0,rootInternalTransaction);
           deposit.commit();
         }
       } else {
+        if (!trxType.equals(TRX_PRECOMPILED_TYPE)) {
+          getResult().getInternalTransactions().add(0,rootInternalTransaction);
+        }
         deposit.commit();
       }
     } catch (JVMStackOverFlowException e) {
@@ -614,7 +619,7 @@ public class Runtime {
         traceContent = zipAndEncode(traceContent);
       }
 
-      String txHash = Hex.toHexString(new InternalTransaction(trx).getHash());
+      String txHash = Hex.toHexString(new InternalTransaction(trx, trxType).getHash());
       saveProgramTraceFile(config, txHash, traceContent);
     }
 

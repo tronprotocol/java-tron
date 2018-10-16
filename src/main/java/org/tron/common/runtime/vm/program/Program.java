@@ -34,13 +34,11 @@ import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.TreeSet;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
@@ -184,15 +182,26 @@ public class Program {
     return invoke.getCallDeep();
   }
 
+  /**
+   *
+   * @param energyLimit
+   * @param senderAddress
+   * @param transferAddress the address send trx to.
+   * @param value           the trx value transferred in the internaltransaction
+   * @param data
+   * @param note
+   * @param nonce
+   * @return
+   */
   private InternalTransaction addInternalTx(DataWord energyLimit, byte[] senderAddress,
-      byte[] receiveAddress,
+      byte[] transferAddress,
       long value, byte[] data, String note, long nonce) {
 
     // todo: now, internal transaction needn't energylimit
     InternalTransaction result = null;
     if (transaction != null) {
       result = getResult().addInternalTransaction(transaction.getHash(), getCallDeep(),
-          senderAddress, receiveAddress, value, data, note, nonce);
+          senderAddress, transferAddress, value, data, note, nonce);
     }
 
     return result;
@@ -393,7 +402,7 @@ public class Program {
 
   public void suicide(DataWord obtainerAddress) {
 
-    byte[] owner = convertToTronAddress(getOwnerAddress().getLast20Bytes());
+    byte[] owner = convertToTronAddress(getContractAddress().getLast20Bytes());
     byte[] obtainer = convertToTronAddress(obtainerAddress.getLast20Bytes());
     long balance = getContractState().getBalance(owner);
 
@@ -416,7 +425,7 @@ public class Program {
         throw new BytecodeExecutionException("transfer failure");
       }
     }
-    getResult().addDeleteAccount(this.getOwnerAddress());
+    getResult().addDeleteAccount(this.getContractAddress());
   }
 
   public Deposit getContractState() {
@@ -432,7 +441,7 @@ public class Program {
       return;
     }
 
-    byte[] senderAddress = convertToTronAddress(this.getOwnerAddress().getLast20Bytes());
+    byte[] senderAddress = convertToTronAddress(this.getContractAddress().getLast20Bytes());
 
     long endowment = value.value().longValueExact();
     if (getContractState().getBalance(senderAddress) < endowment) {
@@ -489,7 +498,7 @@ public class Program {
         programCode, "create", nonce);
     long vmStartInUs = System.nanoTime() / 1000;
     ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
-        this, new DataWord(newAddress), getOwnerAddress(), value,
+        this, new DataWord(newAddress), getContractAddress(), value,
         newBalance, null, deposit, false, byTestingSuite(), vmStartInUs,
         getVmShouldEndInUs(), energyLimit.longValueSafe());
 
@@ -566,7 +575,7 @@ public class Program {
       refundEnergy(refundEnergy, "remain energy from the internal call");
       if (logger.isDebugEnabled()) {
         logger.debug("The remaining energy is refunded, account: [{}], energy: [{}] ",
-            Hex.toHexString(convertToTronAddress(getOwnerAddress().getLast20Bytes())),
+            Hex.toHexString(convertToTronAddress(getContractAddress().getLast20Bytes())),
             refundEnergy);
       }
     }
@@ -593,7 +602,7 @@ public class Program {
 
     // FETCH THE SAVED STORAGE
     byte[] codeAddress = convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
-    byte[] senderAddress = convertToTronAddress(getOwnerAddress().getLast20Bytes());
+    byte[] senderAddress = convertToTronAddress(getContractAddress().getLast20Bytes());
     byte[] contextAddress = msg.getType().callIsStateless() ? senderAddress : codeAddress;
 
     if (logger.isDebugEnabled()) {
@@ -649,7 +658,7 @@ public class Program {
       long vmStartInUs = System.nanoTime() / 1000;
       ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
           this, new DataWord(contextAddress),
-          msg.getType().callIsDelegate() ? getCallerAddress() : getOwnerAddress(),
+          msg.getType().callIsDelegate() ? getCallerAddress() : getContractAddress(),
           msg.getType().callIsDelegate() ? getCallValue() : msg.getEndowment(),
           contextBalance, data, deposit, msg.getType().callIsStatic() || isStaticCall(),
           byTestingSuite(), vmStartInUs, getVmShouldEndInUs(), msg.getEnergy().longValueSafe());
@@ -784,7 +793,7 @@ public class Program {
     DataWord keyWord = word1.clone();
     DataWord valWord = word2.clone();
     getContractState()
-        .putStorageValue(convertToTronAddress(getOwnerAddress().getLast20Bytes()), keyWord,
+        .putStorageValue(convertToTronAddress(getContractAddress().getLast20Bytes()), keyWord,
             valWord);
   }
 
@@ -797,18 +806,17 @@ public class Program {
     return nullToEmpty(code);
   }
 
-  public DataWord getOwnerAddress() {
-    return invoke.getOwnerAddress().clone();
+  public DataWord getContractAddress() {
+    return invoke.getContractAddress().clone();
   }
 
   public DataWord getBlockHash(int index) {
     if (index < this.getNumber().longValue()
         && index >= Math.max(256, this.getNumber().longValue()) - 256) {
 
-      List<BlockCapsule> blocks = this.invoke.getBlockStore().getBlockByLatestNum(index);
+      BlockCapsule blockCapsule = this.invoke.getBlockByNum(index);
 
-      if (CollectionUtils.isNotEmpty(blocks)) {
-        BlockCapsule blockCapsule = blocks.get(0);
+      if (Objects.nonNull(blockCapsule)) {
         return new DataWord(blockCapsule.getBlockId().getBytes());
       } else {
         return DataWord.ZERO.clone();
@@ -883,7 +891,7 @@ public class Program {
 
   public DataWord storageLoad(DataWord key) {
     DataWord ret = getContractState()
-        .getStorageValue(convertToTronAddress(getOwnerAddress().getLast20Bytes()), key.clone());
+        .getStorageValue(convertToTronAddress(getContractAddress().getLast20Bytes()), key.clone());
     return ret == null ? null : ret.clone();
   }
 
@@ -1246,7 +1254,7 @@ public class Program {
     // Repository track = getContractState().startTracking();
     Deposit deposit = getContractState().newDepositChild();
 
-    byte[] senderAddress = convertToTronAddress(this.getOwnerAddress().getLast20Bytes());
+    byte[] senderAddress = convertToTronAddress(this.getContractAddress().getLast20Bytes());
     byte[] codeAddress = convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
     byte[] contextAddress = msg.getType().callIsStateless() ? senderAddress : codeAddress;
 
@@ -1283,7 +1291,7 @@ public class Program {
     } else {
       // Delegate or not. if is delegated, we will use msg sender, otherwise use contract address
       contract.setCallerAddress(convertToTronAddress(msg.getType().callIsDelegate() ?
-          getCallerAddress().getLast20Bytes() : getOwnerAddress().getLast20Bytes()));
+          getCallerAddress().getLast20Bytes() : getContractAddress().getLast20Bytes()));
       // this is the depositImpl, not contractState as above
       contract.setDeposit(deposit);
       contract.setResult(this.result);

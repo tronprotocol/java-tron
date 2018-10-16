@@ -1,8 +1,5 @@
 package org.tron.core.config.args;
 
-import static java.lang.Math.max;
-import static java.lang.Math.min;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.typesafe.config.Config;
@@ -82,7 +79,7 @@ public class Args {
   @Getter
   @Setter
   @Parameter(names = {"--min-time-ratio"})
-  private double minTimeRatio = 0.6;
+  private double minTimeRatio = 0.0;
 
   @Getter
   @Setter
@@ -391,7 +388,7 @@ public class Args {
     INSTANCE.isOpenFullTcpDisconnect = false;
     INSTANCE.supportConstant = false;
     INSTANCE.debug = false;
-    INSTANCE.minTimeRatio = 0.6;
+    INSTANCE.minTimeRatio = 0.0;
     INSTANCE.maxTimeRatio = 5.0;
     INSTANCE.longRunningTime = 10;
   }
@@ -542,7 +539,8 @@ public class Args {
         config.hasPath("node.maxActiveNodes") ? config.getInt("node.maxActiveNodes") : 30;
 
     INSTANCE.nodeMaxActiveNodesWithSameIp =
-        config.hasPath("node.maxActiveNodesWithSameIp") ? config.getInt("node.maxActiveNodesWithSameIp") : 2;
+        config.hasPath("node.maxActiveNodesWithSameIp") ? config
+            .getInt("node.maxActiveNodesWithSameIp") : 2;
 
     INSTANCE.minParticipationRate =
         config.hasPath("node.minParticipationRate") ? config.getInt("node.minParticipationRate")
@@ -649,7 +647,8 @@ public class Args {
         config.getLong("node.receiveTcpMinDataLength") : 2048;
     INSTANCE.isOpenFullTcpDisconnect = config.hasPath("node.isOpenFullTcpDisconnect") && config
         .getBoolean("node.isOpenFullTcpDisconnect");
-    INSTANCE.logLevel = config.hasPath("log.level.root") ? config.getString("log.level.root") : "INFO";
+    INSTANCE.logLevel =
+        config.hasPath("log.level.root") ? config.getString("log.level.root") : "INFO";
 
     initBackupProperty(config);
 
@@ -837,7 +836,8 @@ public class Args {
   }
 
   private static double calcMaxTimeRatio() {
-    return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
+    //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
+    return 5.0;
   }
 
   private static void initBackupProperty(Config config) {
@@ -849,7 +849,7 @@ public class Args {
         ? config.getStringList("node.backup.members") : new ArrayList<>();
   }
 
-  private static void logConfig(){
+  private static void logConfig() {
     Args args = getInstance();
     logger.info("\n");
     logger.info("************************ Net config ************************");
