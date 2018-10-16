@@ -124,9 +124,6 @@ dependencies {
 
     compile "org.apache.commons:commons-lang3:3.4"
 
-    compile group: 'org.springframework', name: 'spring-context', version: '4.2.0.RELEASE'
-    compile group: 'org.springframework', name: 'spring-tx', version: '4.2.0.RELEASE'
-
     compile group: 'com.beust', name: 'jcommander', version: '1.72'
 
     compile group: 'junit', name: 'junit', version: '4.12'
@@ -164,8 +161,18 @@ dependencies {
     // http
     compile 'org.eclipse.jetty:jetty-server:9.4.11.v20180605'
     compile 'org.eclipse.jetty:jetty-servlet:9.4.11.v20180605'
+    // https://mvnrepository.com/artifact/org.eclipse.jetty/jetty-servlets
+    compile group: 'org.eclipse.jetty', name: 'jetty-servlets', version: '9.4.12.RC2'
+
+
     compile 'com.alibaba:fastjson:1.2.47'
     // end http
+
+    compile 'org.springframework.amqp:spring-rabbit:2.0.5.RELEASE'
+
+    // Spring Data mongodb
+    compile "org.springframework.data:spring-data-mongodb:2.0.0.RELEASE"
+    compile "org.mongodb:mongo-java-driver:3.1.0"
 }
 
 check.dependsOn 'lint'
