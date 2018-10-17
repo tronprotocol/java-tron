@@ -13,7 +13,6 @@ import org.tron.common.entity.NodeInfo;
 import org.tron.common.entity.PeerInfo;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.server.SyncPool;
-import org.tron.common.utils.Time;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.net.peer.PeerConnection;
@@ -41,7 +40,7 @@ public class NodeInfoService {
 
   public NodeInfo getNodeInfo() {
     NodeInfo nodeInfo = new NodeInfo();
-    setConnectInfo(nodeInfo);
+//    setConnectInfo(nodeInfo);
     setMachineInfo(nodeInfo);
     setNodeInfo(nodeInfo);
     setBlockInfo(nodeInfo);
@@ -69,10 +68,11 @@ public class NodeInfoService {
     List<PeerInfo> peerInfoList = new ArrayList<>();
     for (PeerConnection peerConnection : syncPool.getActivePeers()) {
       PeerInfo peerInfo = new PeerInfo();
+      peerInfo.setHeadBlockWeBothHave(peerConnection.getHeadBlockWeBothHave().getString());
       peerInfo.setActive(peerConnection.isActive());
       peerInfo.setAvgLatency(peerConnection.getPeerStats().getAvgLatency());
       peerInfo.setBlockInPorcSize(peerConnection.getBlockInProc().size());
-      peerInfo.setConnectTime(Time.getTimeString(peerConnection.getStartTime()));
+      peerInfo.setConnectTime(peerConnection.getStartTime());
       peerInfo.setDisconnectTimes(peerConnection.getNodeStatistics().getDisconnectTimes());
       peerInfo.setHeadBlockTimeWeBothHave(peerConnection.getHeadBlockTimeWeBothHave());
       peerInfo.setHost(peerConnection.getNode().getHost());
@@ -121,11 +121,9 @@ public class NodeInfoService {
   }
 
   private void setBlockInfo(NodeInfo nodeInfo) {
-    nodeInfo.setBlockNum(dbManager.getHeadBlockNum());
-    nodeInfo.setSolidityNum(dbManager.getSolidBlockId().getNum());
     nodeInfo.setBeginSyncNum(dbManager.getSyncBeginNumber());
-    nodeInfo.setBlockHash(dbManager.getHeadBlockId().getString());
-    nodeInfo.setSolidityHash(dbManager.getSolidBlockId().getString());
+    nodeInfo.setBlock(dbManager.getHeadBlockId().getString());
+    nodeInfo.setSolidityBlock(dbManager.getSolidBlockId().getString());
   }
 
 }

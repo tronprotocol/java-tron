@@ -5,11 +5,9 @@ import java.util.List;
 public class NodeInfo {
 
   /*block information*/
-  private long blockNum;
-  private long solidityNum;
   private long beginSyncNum;
-  private String blockHash;
-  private String solidityHash;
+  private String block;
+  private String solidityBlock;
 
   /*node information*/
   private String codeVersion;
@@ -44,24 +42,6 @@ public class NodeInfo {
   private long jvmFreeMemory;
   private double processCpuRate;
 
-  public long getBlockNum() {
-    return blockNum;
-  }
-
-  public NodeInfo setBlockNum(long blockNum) {
-    this.blockNum = blockNum;
-    return this;
-  }
-
-  public long getSolidityNum() {
-    return solidityNum;
-  }
-
-  public NodeInfo setSolidityNum(long solidityNum) {
-    this.solidityNum = solidityNum;
-    return this;
-  }
-
   public long getBeginSyncNum() {
     return beginSyncNum;
   }
@@ -71,21 +51,21 @@ public class NodeInfo {
     return this;
   }
 
-  public String getSolidityHash() {
-    return solidityHash;
+  public String getBlock() {
+    return block;
   }
 
-  public NodeInfo setSolidityHash(String solidityHash) {
-    this.solidityHash = solidityHash;
+  public NodeInfo setBlock(String block) {
+    this.block = block;
     return this;
   }
 
-  public String getBlockHash() {
-    return blockHash;
+  public String getSolidityBlock() {
+    return solidityBlock;
   }
 
-  public NodeInfo setBlockHash(String blockHash) {
-    this.blockHash = blockHash;
+  public NodeInfo setSolidityBlock(String solidityBlock) {
+    this.solidityBlock = solidityBlock;
     return this;
   }
 

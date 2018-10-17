@@ -12,13 +12,14 @@ public class PeerInfo {
   private String host;
   private int port;
   private String nodeId;
-  private String connectTime;
+  private long connectTime;
   private double avgLatency;
   private int syncToFetchSize;
   private long syncToFetchSizePeekNum;
   private int syncBlockRequestedSize;
   private long unFetchSynNum;
   private int blockInPorcSize;
+  private String headBlockWeBothHave;
 
   private boolean isActive;
   private int score;
@@ -118,11 +119,11 @@ public class PeerInfo {
     return this;
   }
 
-  public String getConnectTime() {
+  public long getConnectTime() {
     return connectTime;
   }
 
-  public PeerInfo setConnectTime(String connectTime) {
+  public PeerInfo setConnectTime(long connectTime) {
     this.connectTime = connectTime;
     return this;
   }
@@ -178,6 +179,15 @@ public class PeerInfo {
 
   public PeerInfo setBlockInPorcSize(int blockInPorcSize) {
     this.blockInPorcSize = blockInPorcSize;
+    return this;
+  }
+
+  public String getHeadBlockWeBothHave() {
+    return headBlockWeBothHave;
+  }
+
+  public PeerInfo setHeadBlockWeBothHave(String headBlockWeBothHave) {
+    this.headBlockWeBothHave = headBlockWeBothHave;
     return this;
   }
 
