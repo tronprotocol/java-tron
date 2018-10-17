@@ -215,7 +215,7 @@ public class SolidityNode {
     while (true) {
       long blockNum = block.getBlockHeader().getRawData().getNumber();
       try {
-        dbManager.resource = "SolidityNode";
+        dbManager.triggerResource();
         dbManager.pushVerifiedBlock(new BlockCapsule(block));
         dbManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(blockNum);
         return;

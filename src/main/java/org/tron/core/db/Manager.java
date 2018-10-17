@@ -109,7 +109,9 @@ import org.tron.protos.Protocol.AccountType;
 @Component
 public class Manager {
 
-  public String resource = "FullNode";
+  enum Resource{
+    FullNode, SolidityNode;
+  }
 
   @Autowired
   private AmqpTemplate amqpTemplate;
@@ -198,6 +200,8 @@ public class Manager {
   private Thread repushThread;
 
   private boolean isRunRepushThread = true;
+
+  private Resource resource = Resource.FullNode;
 
   @Getter
   private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
@@ -313,6 +317,8 @@ public class Manager {
   public Set<Node> readNeighbours() {
     return this.peersStore.get("neighbours".getBytes());
   }
+
+  public void triggerResource() { this.resource = Resource.SolidityNode; }
 
   /**
    * Cycle thread to repush Transactions
@@ -1138,7 +1144,7 @@ public class Manager {
 
           EventLogEntity eventLogEntity = new EventLogEntity(blockNumber, blockTimestamp,
                   Wallet.encode58Check(contractAddress), entryName, resultJsonObject,rawJsonObject,
-                  Hex.toHexString(transactionInfoCapsule.getId()), resultParamType, this.resource, idx);
+                  Hex.toHexString(transactionInfoCapsule.getId()), resultParamType, this.resource.toString(), idx);
           // 事件日志写入MongoDB
           eventLogService.insertEventLog(eventLogEntity);
         });
