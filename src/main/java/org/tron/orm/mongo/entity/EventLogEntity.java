@@ -3,7 +3,8 @@ package org.tron.orm.mongo.entity;
 import com.alibaba.fastjson.JSONObject;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
-
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.repository.Query;
 import java.io.Serializable;
 
 /**
@@ -23,6 +24,9 @@ public class EventLogEntity implements Serializable {
     @Field(value = "contract_address")
     private String contractAddress;
 
+    @Field(value = "event_index")
+    private int eventIdx;
+
     @Field(value = "event_name")
     private String entryName;
 
@@ -35,7 +39,19 @@ public class EventLogEntity implements Serializable {
     @Field(value = "transaction_id")
     private String transactionId;
 
-    public EventLogEntity(long blockNumber, long blockTimestamp, String contractAddress, String entryName, JSONObject resultJsonObject, JSONObject rawJsonObject, String transactionId) {
+    @Field(value = "result_type")
+    private JSONObject resultType;
+
+    @Field(value = "resource_Node")
+    private String resourceNode;
+
+    @Id
+    private String id;
+
+
+    public EventLogEntity(long blockNumber, long blockTimestamp, String contractAddress, String entryName,
+                          JSONObject resultJsonObject, JSONObject rawJsonObject, String transactionId,
+                          JSONObject result_type, String resource, int eventindex) {
         this.blockNumber = blockNumber;
         this.blockTimestamp = blockTimestamp;
         this.contractAddress = contractAddress;
@@ -43,6 +59,10 @@ public class EventLogEntity implements Serializable {
         this.resultJsonObject = resultJsonObject;
         this.rawJsonObject = rawJsonObject;
         this.transactionId = transactionId;
+        this.resultType = result_type;
+        this.resourceNode = resource;
+        this.eventIdx = eventindex;
+        this.id = this.resourceNode + "-" + this.transactionId + "-" + Integer.toString(this.eventIdx);
     }
 
     public static long getSerialVersionUID() {
@@ -104,4 +124,16 @@ public class EventLogEntity implements Serializable {
     public void setTransactionId(String transactionId) {
         this.transactionId = transactionId;
     }
+
+    public void setResultType(JSONObject res){ this.resultType = res; }
+
+    public JSONObject getResultType(){ return  this.resultType; }
+
+    public void setResourceNode(String resource) { this.resourceNode = resource ;}
+
+    public String getResourceNode(){ return this.resourceNode; }
+
+    public void setEventIdx(int idx){this.eventIdx = idx;}
+
+    public int getEventIdx(){return this.eventIdx;}
 }

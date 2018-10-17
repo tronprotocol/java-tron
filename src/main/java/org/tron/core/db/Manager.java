@@ -33,6 +33,7 @@ import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import java.util.stream.IntStream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
@@ -107,6 +108,9 @@ import org.tron.protos.Protocol.AccountType;
 @Slf4j
 @Component
 public class Manager {
+
+  public String resource = "FullNode";
+
   @Autowired
   private AmqpTemplate amqpTemplate;
 
@@ -1050,7 +1054,9 @@ public class Manager {
         abiCache.put(contractAddress, abi);
       }
       Protocol.SmartContract.ABI finalAbi = abi;
-      logList.forEach(log -> {
+
+      IntStream.range(0,logList.size()).forEach(idx -> {
+        org.tron.protos.Protocol.TransactionInfo.Log log = logList.get(idx);
         finalAbi.getEntrysList().forEach(abiEntry -> {
           if (abiEntry.getType() != Protocol.SmartContract.ABI.Entry.EntryType.Event) {
             return;
@@ -1068,6 +1074,7 @@ public class Manager {
               logger.error("Unable parse abi entry. {}", e.getMessage());
             }
           });
+          JSONObject resultParamType = new JSONObject();
           JSONObject resultJsonObject = new JSONObject();
           JSONObject rawJsonObject = new JSONObject();
 
@@ -1079,8 +1086,10 @@ public class Manager {
           if (!StringUtils.equalsIgnoreCase(EventEncoder.encode(event), eventHexString)) {
             return;
           }
+
           String rawLogData = ByteArray.toHexString(log.getData().toByteArray());
           List<Type> nonIndexedValues = FunctionReturnDecoder.decode(rawLogData, event.getNonIndexedParameters());
+
           List<Type> indexedValues = new ArrayList<>();
 
           List<TypeReference<Type>> indexedParameters = event.getIndexedParameters();
@@ -1094,13 +1103,20 @@ public class Manager {
           int indexedCounter = 0;
           int nonIndexedCounter = 0;
           for (TypeReference<?> typeReference : typeList) {
+
             if(typeReference.isIndexed()) {
               resultJsonObject.put(nameList.get(counter),
                   (indexedValues.get(indexedCounter) instanceof BytesType)
                       ? Hex.toHexString((byte[]) indexedValues.get(indexedCounter).getValue())
                       : indexedValues.get(indexedCounter).getValue());
+              String [] abiTypearr = event.getIndexedParameters().get(indexedCounter).getType().toString().split("\\.");
+              resultParamType.put(nameList.get(counter), abiTypearr[abiTypearr.length-1].toLowerCase());
               indexedCounter++;
+
             } else {
+
+              String [] abiTypearr = event.getNonIndexedParameters().get(nonIndexedCounter).getType().toString().split("\\.");
+              resultParamType.put(nameList.get(counter), abiTypearr[abiTypearr.length-1].toLowerCase());
               resultJsonObject.put(nameList.get(counter), (nonIndexedValues.get(nonIndexedCounter) instanceof BytesType)
                   ? Hex.toHexString((byte[]) nonIndexedValues.get(nonIndexedCounter).getValue())
                   : nonIndexedValues.get(nonIndexedCounter).getValue());
@@ -1118,10 +1134,11 @@ public class Manager {
 //                  blockNumber, blockTimestamp,
 //                  Wallet.encode58Check(contractAddress), entryName, resultJsonObject, rawJsonObject,
 //                  Hex.toHexString(transactionInfoCapsule.getId()));
+//          logger.info("types: {}", resultParamType);
 
           EventLogEntity eventLogEntity = new EventLogEntity(blockNumber, blockTimestamp,
-                  Wallet.encode58Check(contractAddress), entryName, resultJsonObject, rawJsonObject,
-                  Hex.toHexString(transactionInfoCapsule.getId()));
+                  Wallet.encode58Check(contractAddress), entryName, resultJsonObject,rawJsonObject,
+                  Hex.toHexString(transactionInfoCapsule.getId()), resultParamType, this.resource, idx);
           // 事件日志写入MongoDB
           eventLogService.insertEventLog(eventLogEntity);
         });
