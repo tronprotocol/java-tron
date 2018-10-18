@@ -79,7 +79,12 @@ public class NodeInfoService {
         memoryDescInfo.setInitSize(pool.getUsage().getInit());
         memoryDescInfo.setUseSize(pool.getUsage().getUsed());
         memoryDescInfo.setMaxSize(pool.getUsage().getMax());
-        memoryDescInfo.setUseRate(pool.getUsage().getUsed() / pool.getUsage().getCommitted());
+        if (pool.getUsage().getMax() > 0) {
+          memoryDescInfo.setUseRate((double) pool.getUsage().getUsed() / pool.getUsage().getMax());
+        } else {
+          memoryDescInfo
+              .setUseRate((double) pool.getUsage().getUsed() / pool.getUsage().getCommitted());
+        }
         memoryDescInfoList.add(memoryDescInfo);
       }
     }
