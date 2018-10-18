@@ -1,5 +1,6 @@
 package org.tron.core.config;
 
+import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowire;
@@ -32,10 +33,11 @@ public class DefaultConfig {
 
   @Bean
   public IndexHelper indexHelper() {
-    if (!Args.getInstance().isSolidityNode()) {
-      return null;
+    if (Args.getInstance().isSolidityNode()
+        && BooleanUtils.toBoolean(Args.getInstance().getStorage().getIndexSwitch())) {
+      return new IndexHelper();
     }
-    return new IndexHelper();
+    return null;
   }
 
   @Bean

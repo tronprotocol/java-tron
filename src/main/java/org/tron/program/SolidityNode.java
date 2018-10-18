@@ -5,6 +5,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -163,6 +164,18 @@ public class SolidityNode {
     logger.info("Sync with trust node completed!!!");
   }
 
+  private void resolveCompatibilityIssueIfUsingFullNodeDatabase() {
+    long lastSolidityBlockNum = dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+    long headBlockNum = dbManager.getHeadBlockNum();
+    logger.info("headBlockNum:{}, solidityBlockNum:{}, diff:{}",
+        headBlockNum, lastSolidityBlockNum, headBlockNum - lastSolidityBlockNum);
+    if (lastSolidityBlockNum < headBlockNum) {
+      logger.info("use fullnode database, headBlockNum:{}, solidityBlockNum:{}, diff:{}",
+          headBlockNum, lastSolidityBlockNum, headBlockNum - lastSolidityBlockNum);
+      dbManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(headBlockNum);
+    }
+  }
+
   private void start(Args cfgArgs) {
     syncExecutor.scheduleWithFixedDelay(() -> {
       try {
@@ -184,6 +197,8 @@ public class SolidityNode {
     Args.setParam(args, Constant.TESTNET_CONF);
     Args cfgArgs = Args.getInstance();
 
+    logger.info("index switch is {}",
+        BooleanUtils.toStringOnOff(BooleanUtils.toBoolean(cfgArgs.getStorage().getIndexSwitch())));
     ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger)LoggerFactory
         .getLogger(Logger.ROOT_LOGGER_NAME);
     root.setLevel(Level.toLevel(cfgArgs.getLogLevel()));
@@ -224,6 +239,7 @@ public class SolidityNode {
 
     SolidityNode node = new SolidityNode();
     node.setDbManager(appT.getDbManager());
+    node.resolveCompatibilityIssueIfUsingFullNodeDatabase();
     node.start(cfgArgs);
 
     rpcApiService.blockUntilShutdown();
