@@ -3,7 +3,6 @@ package org.tron.common.runtime;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static org.apache.commons.lang3.ArrayUtils.getLength;
-import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.utils.MUtil.transfer;
@@ -31,7 +30,6 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.EnergyCost;
-import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.runtime.vm.VM;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType;
@@ -55,9 +53,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.EnergyProcessor;
-import org.tron.core.db.StorageMarket;
 import org.tron.core.db.TransactionTrace;
-import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.VMIllegalException;
@@ -310,7 +306,7 @@ public class Runtime {
     }
     SmartContract newSmartContract = contract.getNewContract();
     if (!contract.getOwnerAddress().equals(newSmartContract.getOriginAddress())) {
-      logger.error("OwnerAddress not equals OriginAddress");
+      logger.info("OwnerAddress not equals OriginAddress");
       throw new VMIllegalException("OwnerAddress is not equals OriginAddress");
     }
     byte[] code = newSmartContract.getBytecode().toByteArray();
@@ -352,7 +348,7 @@ public class Runtime {
 
       long feeLimit = trx.getRawData().getFeeLimit();
       if (feeLimit < 0 || feeLimit > VMConfig.MAX_FEE_LIMIT) {
-        logger.warn("invalid feeLimit {}", feeLimit);
+        logger.info("invalid feeLimit {}", feeLimit);
         throw new ContractValidateException(
             "feeLimit must be >= 0 and <= " + VMConfig.MAX_FEE_LIMIT);
       }
@@ -369,7 +365,7 @@ public class Runtime {
       this.program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
       this.program.setRootCallConstant(isCallConstant());
     } catch (Exception e) {
-      logger.error(e.getMessage());
+      logger.info(e.getMessage());
       throw new ContractValidateException(e.getMessage());
     }
 
@@ -397,7 +393,7 @@ public class Runtime {
       throws ContractValidateException {
 
     if (!deposit.getDbManager().getDynamicPropertiesStore().supportVM()) {
-      logger.error("vm work is off, need to be opened by the committee");
+      logger.info("vm work is off, need to be opened by the committee");
       throw new ContractValidateException("VM work is off, need to be opened by the committee");
     }
 
@@ -414,7 +410,7 @@ public class Runtime {
 
     ContractCapsule deployedContract = this.deposit.getContract(contractAddress);
     if (null == deployedContract) {
-      logger.error("No contract or not a smart contract");
+      logger.info("No contract or not a smart contract");
       throw new ContractValidateException("No contract or not a smart contract");
     }
     byte[] code = this.deposit.getCode(contractAddress);
@@ -435,7 +431,7 @@ public class Runtime {
 
       long feeLimit = trx.getRawData().getFeeLimit();
       if (feeLimit < 0 || feeLimit > VMConfig.MAX_FEE_LIMIT) {
-        logger.warn("invalid feeLimit {}", feeLimit);
+        logger.info("invalid feeLimit {}", feeLimit);
         throw new ContractValidateException(
             "feeLimit must be >= 0 and <= " + VMConfig.MAX_FEE_LIMIT);
       }
@@ -534,15 +530,15 @@ public class Runtime {
       result = program.getResult();
       result.setException(e);
       runtimeError = result.getException().getMessage();
-      logger.error("JVMStackOverFlowException: {}", result.getException().getMessage());
+      logger.info("JVMStackOverFlowException: {}", result.getException().getMessage());
     } catch (OutOfResourceException e) {
       program.spendAllEnergy();
       result = program.getResult();
       result.setException(e);
       runtimeError = result.getException().getMessage();
-      logger.error("timeout: {}", result.getException().getMessage());
+      logger.info("timeout: {}", result.getException().getMessage());
     } catch (ContractValidateException e) {
-      logger.error("when check constant, {}", e.getMessage());
+      logger.info("when check constant, {}", e.getMessage());
     }catch (Throwable e) {
       program.spendAllEnergy();
       result = program.getResult();
@@ -553,7 +549,7 @@ public class Runtime {
       if (StringUtils.isEmpty(runtimeError)) {
         runtimeError = result.getException().getMessage();
       }
-      logger.error("runtime error is :{}", result.getException().getMessage());
+      logger.info("runtime exception is :{}", result.getException().getMessage());
     }
     trace.setBill(result.getEnergyUsed());
   }
@@ -576,7 +572,7 @@ public class Runtime {
       ContractCapsule contract = deposit
           .getContract(triggerContractFromTransaction.getContractAddress().toByteArray());
       if (contract == null) {
-        logger.error("contract: {} is not in contract store", Wallet
+        logger.info("contract: {} is not in contract store", Wallet
             .encode58Check(triggerContractFromTransaction.getContractAddress().toByteArray()));
         throw new ContractValidateException("contract: " + Wallet
             .encode58Check(triggerContractFromTransaction.getContractAddress().toByteArray())
