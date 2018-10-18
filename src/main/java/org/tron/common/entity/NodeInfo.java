@@ -15,7 +15,7 @@ public class NodeInfo {
   private int activeConnectCount;
   private int passiveConnectCount;
   private long totalFlow;
-  private List<PeerInfo> peerList;
+  private List<PeerInfo> peerList = new ArrayList<>();
 
   /*node config information*/
   private ConfigNodeInfo configNodeInfo;
@@ -36,8 +36,8 @@ public class NodeInfo {
     private long jvmTotalMemoery;
     private long jvmFreeMemory;
     private double processCpuRate;
-    private List<MemoryDescInfo> memoryDescInfoList;
-    private List<DeadLockThreadInfo> deadLockThreadInfoList;
+    private List<MemoryDescInfo> memoryDescInfoList = new ArrayList<>();
+    private List<DeadLockThreadInfo> deadLockThreadInfoList = new ArrayList<>();
 
     public static class MemoryDescInfo {
 
