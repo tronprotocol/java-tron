@@ -25,14 +25,17 @@ public class TrxHandler {
 
   private static int MAX_TRX_SIZE = 10_000;
 
-  private static int TIME_OUT = 3600 * 1000;
+  private static int MAX_SMART_CONTRACT_SUBMIT_SIZE = 100;
+
+  private static int TIME_OUT = 10 * 60 * 1000;
 
   private BlockingQueue<TrxEvent> smartContractQueue = new LinkedBlockingQueue(MAX_TRX_SIZE);
 
   private BlockingQueue<Runnable> queue = new LinkedBlockingQueue();
 
   private int threadNum = Args.getInstance().getValidateSignThreadNum();
-  private ExecutorService trxHandlePool = new ThreadPoolExecutor(threadNum, threadNum, 0L, TimeUnit.MILLISECONDS, queue);
+  private ExecutorService trxHandlePool = new ThreadPoolExecutor(threadNum, threadNum, 0L,
+      TimeUnit.MILLISECONDS, queue);
 
   private ScheduledExecutorService smartContractExecutor = Executors.newSingleThreadScheduledExecutor();
 
@@ -44,12 +47,10 @@ public class TrxHandler {
   private void handleSmartContract() {
     smartContractExecutor.scheduleWithFixedDelay(() -> {
       try {
-        while (queue.size() < 100 && smartContractQueue.size() > 0) {
+        while (queue.size() < MAX_SMART_CONTRACT_SUBMIT_SIZE) {
           TrxEvent event = smartContractQueue.take();
-          logger.info("ppp Peer {}, pop msg:{}, smartContractQueue size {} queueSize {}",
-              event.getPeer().getInetAddress(), event.getMsg().getMessageId(), smartContractQueue.size(), queue.size());
-          if (System.currentTimeMillis() - event.getTime() > TIME_OUT){
-            logger.warn("ppp Drop smart contract {} from peer {}.");
+          if (System.currentTimeMillis() - event.getTime() > TIME_OUT) {
+            logger.warn("Drop smart contract {} from peer {}.");
             continue;
           }
           trxHandlePool.submit(() -> nodeImpl.onHandleTransactionMessage(event.getPeer(), event.getMsg()));
@@ -64,13 +65,11 @@ public class TrxHandler {
     for (Transaction trx : msg.getTransactions().getTransactionsList()) {
       int type = trx.getRawData().getContract(0).getType().getNumber();
       if (type == ContractType.TriggerSmartContract_VALUE || type == ContractType.CreateSmartContract_VALUE) {
-        if (!smartContractQueue.offer(new TrxEvent(peer, new TransactionMessage(trx)))){
-          logger.warn("ppp Add smart contract from peer {} failed, smartContractQueue size {} queueSize {}",
-              peer.getInetAddress(), smartContractQueue.size(), queue.size());
+        if (!smartContractQueue.offer(new TrxEvent(peer, new TransactionMessage(trx)))) {
+          logger.warn("Add smart contract failed, smartContractQueue size {} queueSize {}",
+              smartContractQueue.size(), queue.size());
         }
-      }else {
-        logger.info("ppp Peer {}, submit msg:{}, smartContractQueue size {} queueSize {}",
-            peer.getInetAddress(), new TransactionMessage(trx).getMessageId(), smartContractQueue.size(), queue.size());
+      } else {
         trxHandlePool.submit(() -> nodeImpl.onHandleTransactionMessage(peer, new TransactionMessage(trx)));
       }
     }
@@ -88,7 +87,7 @@ public class TrxHandler {
     @Getter
     private long time;
 
-    public TrxEvent (PeerConnection peer, TransactionMessage msg){
+    public TrxEvent(PeerConnection peer, TransactionMessage msg) {
       this.peer = peer;
       this.msg = msg;
       this.time = System.currentTimeMillis();
