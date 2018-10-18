@@ -146,9 +146,8 @@ public class NodeInfoService {
       peerInfo.setSyncBlockRequestedSize(peerConnection.getSyncBlockRequested().size());
       peerInfo.setSyncFlag(peerConnection.getSyncFlag());
       peerInfo.setSyncToFetchSize(peerConnection.getSyncBlockToFetch().size());
-      peerInfo.setSyncToFetchSizePeekNum(
-          peerConnection.getSyncBlockToFetch().size() > 0 ? peerConnection.getSyncBlockToFetch()
-              .peek().getNum() : -1);
+      peerInfo.setSyncToFetchSizePeekNum(peerConnection.getSyncBlockToFetch().size() > 0
+          ? peerConnection.getSyncBlockToFetch().peek().getNum() : -1);
       peerInfo.setUnFetchSynNum(peerConnection.getUnfetchSyncNum());
       totalFlow += peerConnection.getNodeStatistics().tcpFlow.getTotalCount();
       peerInfoList.add(peerInfo);
