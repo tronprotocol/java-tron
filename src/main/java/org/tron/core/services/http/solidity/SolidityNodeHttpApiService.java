@@ -11,6 +11,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.services.http.GetAccountServlet;
 import org.tron.core.services.http.GetAssetIssueListServlet;
 import org.tron.core.services.http.GetBlockByNumServlet;
+import org.tron.core.services.http.GetNodeInfoServlet;
 import org.tron.core.services.http.GetNowBlockServlet;
 import org.tron.core.services.http.GetPaginatedAssetIssueListServlet;
 import org.tron.core.services.http.ListWitnessesServlet;
@@ -47,6 +48,8 @@ public class SolidityNodeHttpApiService implements Service {
   @Autowired
   private GetBlockByNumServlet getBlockByNumServlet;
 
+  @Autowired
+  private GetNodeInfoServlet getNodeInfoServlet;
 
   @Override
   public void init() {
@@ -92,6 +95,8 @@ public class SolidityNodeHttpApiService implements Service {
             .addServlet(new ServletHolder(getTransactionsToThisServlet),
                 "/walletextension/gettransactionstothis");
       }
+
+      context.addServlet(new ServletHolder(getNodeInfoServlet), "/wallet/getnodeinfo");
 
       server.start();
     } catch (Exception e) {

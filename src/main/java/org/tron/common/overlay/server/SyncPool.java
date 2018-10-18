@@ -215,6 +215,14 @@ public class SyncPool {
     }
   }
 
+  public AtomicInteger getPassivePeersCount() {
+    return passivePeersCount;
+  }
+
+  public AtomicInteger getActivePeersCount() {
+    return activePeersCount;
+  }
+
   class NodeSelector implements Predicate<NodeHandler> {
 
     Set<String> nodesInUse;
