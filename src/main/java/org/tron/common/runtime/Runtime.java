@@ -543,13 +543,13 @@ public class Runtime {
       program.spendAllEnergy();
       result = program.getResult();
       if (Objects.isNull(result.getException())) {
-        logger.info(e.getMessage(), e);
+        logger.error(e.getMessage(), e);
         result.setException(new RuntimeException("Unknown Throwable"));
       }
       if (StringUtils.isEmpty(runtimeError)) {
         runtimeError = result.getException().getMessage();
       }
-      logger.info("runtime error is :{}", result.getException().getMessage());
+      logger.info("runtime exception is :{}", result.getException().getMessage());
     }
     trace.setBill(result.getEnergyUsed());
   }
