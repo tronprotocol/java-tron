@@ -3,13 +3,21 @@ package org.tron.core.services;
 import com.sun.management.OperatingSystemMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
+import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.RuntimeMXBean;
+import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.entity.NodeInfo;
+import org.tron.common.entity.NodeInfo.ConfigNodeInfo;
+import org.tron.common.entity.NodeInfo.MachineInfo;
+import org.tron.common.entity.NodeInfo.MachineInfo.DeadLockThreadInfo;
+import org.tron.common.entity.NodeInfo.MachineInfo.MemoryDescInfo;
 import org.tron.common.entity.PeerInfo;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.server.SyncPool;
@@ -40,7 +48,7 @@ public class NodeInfoService {
 
   public NodeInfo getNodeInfo() {
     NodeInfo nodeInfo = new NodeInfo();
-//    setConnectInfo(nodeInfo);
+    setConnectInfo(nodeInfo);
     setMachineInfo(nodeInfo);
     setNodeInfo(nodeInfo);
     setBlockInfo(nodeInfo);
@@ -48,16 +56,53 @@ public class NodeInfoService {
   }
 
   private void setMachineInfo(NodeInfo nodeInfo) {
-    nodeInfo.setThreadCount(threadMXBean.getThreadCount());
-    nodeInfo.setCpuCount(Runtime.getRuntime().availableProcessors());
-    nodeInfo.setTotalMemory(operatingSystemMXBean.getTotalPhysicalMemorySize());
-    nodeInfo.setFreeMemory(operatingSystemMXBean.getFreePhysicalMemorySize());
-    nodeInfo.setCpuRate(operatingSystemMXBean.getSystemCpuLoad());
-    nodeInfo.setJavaVersion(runtimeMXBean.getSystemProperties().get("java.version"));
-    nodeInfo.setOsName(operatingSystemMXBean.getName() + " " + operatingSystemMXBean.getVersion());
-    nodeInfo.setJvmTotalMemoery(operatingSystemMXBean.getTotalSwapSpaceSize());
-    nodeInfo.setJvmFreeMemory(operatingSystemMXBean.getFreeSwapSpaceSize());
-    nodeInfo.setProcessCpuRate(operatingSystemMXBean.getProcessCpuLoad());
+    MachineInfo machineInfo = new MachineInfo();
+    machineInfo.setThreadCount(threadMXBean.getThreadCount());
+    machineInfo.setCpuCount(Runtime.getRuntime().availableProcessors());
+    machineInfo.setTotalMemory(operatingSystemMXBean.getTotalPhysicalMemorySize());
+    machineInfo.setFreeMemory(operatingSystemMXBean.getFreePhysicalMemorySize());
+    machineInfo.setCpuRate(operatingSystemMXBean.getSystemCpuLoad());
+    machineInfo.setJavaVersion(runtimeMXBean.getSystemProperties().get("java.version"));
+    machineInfo
+        .setOsName(operatingSystemMXBean.getName() + " " + operatingSystemMXBean.getVersion());
+    machineInfo.setJvmTotalMemoery(memoryMXBean.getHeapMemoryUsage().getMax());
+    machineInfo.setJvmFreeMemory(
+        memoryMXBean.getHeapMemoryUsage().getMax() - memoryMXBean.getHeapMemoryUsage().getUsed());
+    machineInfo.setProcessCpuRate(operatingSystemMXBean.getProcessCpuLoad());
+    List<MemoryDescInfo> memoryDescInfoList = new ArrayList<>();
+    List<MemoryPoolMXBean> pools = ManagementFactory.getMemoryPoolMXBeans();
+    if (CollectionUtils.isNotEmpty(pools)) {
+      for (MemoryPoolMXBean pool : pools) {
+        MemoryDescInfo memoryDescInfo = new MemoryDescInfo();
+        memoryDescInfo.setName(pool.getName());
+        memoryDescInfo.setInitSize(pool.getUsage().getInit());
+        memoryDescInfo.setUseSize(pool.getUsage().getUsed());
+        memoryDescInfo.setMaxSize(pool.getUsage().getMax());
+        memoryDescInfo.setUseRate(pool.getUsage().getUsed() / pool.getUsage().getCommitted());
+        memoryDescInfoList.add(memoryDescInfo);
+      }
+    }
+    machineInfo.setMemoryDescInfoList(memoryDescInfoList);
+    //dead lock thread
+    long[] deadlockedIds = threadMXBean.findDeadlockedThreads();
+    if (ArrayUtils.isNotEmpty(deadlockedIds)) {
+      machineInfo.setDeadLockThreadCount(deadlockedIds.length);
+      ThreadInfo[] deadlockInfos = threadMXBean.getThreadInfo(deadlockedIds);
+      List<DeadLockThreadInfo> deadLockThreadInfoList = new ArrayList<>();
+      for (ThreadInfo deadlockInfo : deadlockInfos) {
+        DeadLockThreadInfo deadLockThreadInfo = new DeadLockThreadInfo();
+        deadLockThreadInfo.setName(deadlockInfo.getThreadName());
+        deadLockThreadInfo.setLockName(deadlockInfo.getLockName());
+        deadLockThreadInfo.setLockOwner(deadlockInfo.getLockOwnerName());
+        deadLockThreadInfo.setBlockTime(deadlockInfo.getBlockedTime());
+        deadLockThreadInfo.setWaitTime(deadlockInfo.getWaitedTime());
+        deadLockThreadInfo.setState(deadlockInfo.getThreadState().name());
+        deadLockThreadInfo.setStackTrace(deadlockInfo.getStackTrace().toString());
+        deadLockThreadInfoList.add(deadLockThreadInfo);
+      }
+      machineInfo.setDeadLockThreadInfoList(deadLockThreadInfoList);
+    }
+    nodeInfo.setMachineInfo(machineInfo);
   }
 
   private void setConnectInfo(NodeInfo nodeInfo) {
@@ -80,7 +125,8 @@ public class NodeInfoService {
       peerInfo.setLastBlockUpdateTime(peerConnection.getLastBlockUpdateTime());
       peerInfo.setLastSyncBlock(peerConnection.getLastSyncBlockId() == null ? ""
           : peerConnection.getLastSyncBlockId().getString());
-      ReasonCode reasonCode = peerConnection.getNodeStatistics().getTronLastLocalDisconnectReason();
+      ReasonCode reasonCode = peerConnection.getNodeStatistics()
+          .getTronLastLocalDisconnectReason();
       peerInfo.setLocalDisconnectReason(reasonCode == null ? "" : reasonCode.toString());
       reasonCode = peerConnection.getNodeStatistics().getTronLastRemoteDisconnectReason();
       peerInfo.setRemoteDisconnectReason(reasonCode == null ? "" : reasonCode.toString());
@@ -106,18 +152,20 @@ public class NodeInfoService {
   }
 
   private void setNodeInfo(NodeInfo nodeInfo) {
-    nodeInfo.setCodeVersion(Version.getVersion());
-    nodeInfo.setP2pVersion(String.valueOf(args.getNodeP2pVersion()));
-    nodeInfo.setListenPort(args.getNodeListenPort());
-    nodeInfo.setDiscoverEnable(args.isNodeDiscoveryEnable());
-    nodeInfo.setActiveNodeSize(args.getActiveNodes().size());
-    nodeInfo.setPassiveNodeSize(args.getPassiveNodes().size());
-    nodeInfo.setSendNodeSize(args.getSeedNodes().size());
-    nodeInfo.setMaxConnectCount(args.getNodeMaxActiveNodes());
-    nodeInfo.setSameIpMaxConnectCount(args.getNodeMaxActiveNodesWithSameIp());
-    nodeInfo.setBackupListenPort(args.getBackupPort());
-    nodeInfo.setBackupMemberSize(args.getBackupMembers().size());
-    nodeInfo.setBackupPriority(args.getBackupPriority());
+    ConfigNodeInfo configNodeInfo = new ConfigNodeInfo();
+    configNodeInfo.setCodeVersion(Version.getVersion());
+    configNodeInfo.setP2pVersion(String.valueOf(args.getNodeP2pVersion()));
+    configNodeInfo.setListenPort(args.getNodeListenPort());
+    configNodeInfo.setDiscoverEnable(args.isNodeDiscoveryEnable());
+    configNodeInfo.setActiveNodeSize(args.getActiveNodes().size());
+    configNodeInfo.setPassiveNodeSize(args.getPassiveNodes().size());
+    configNodeInfo.setSendNodeSize(args.getSeedNodes().size());
+    configNodeInfo.setMaxConnectCount(args.getNodeMaxActiveNodes());
+    configNodeInfo.setSameIpMaxConnectCount(args.getNodeMaxActiveNodesWithSameIp());
+    configNodeInfo.setBackupListenPort(args.getBackupPort());
+    configNodeInfo.setBackupMemberSize(args.getBackupMembers().size());
+    configNodeInfo.setBackupPriority(args.getBackupPriority());
+    nodeInfo.setConfigNodeInfo(configNodeInfo);
   }
 
   private void setBlockInfo(NodeInfo nodeInfo) {
