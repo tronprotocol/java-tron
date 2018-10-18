@@ -1,5 +1,6 @@
 package org.tron.common.entity;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class NodeInfo {
@@ -257,12 +258,12 @@ public class NodeInfo {
     }
 
     public List<MemoryDescInfo> getMemoryDescInfoList() {
-      return memoryDescInfoList;
+      return new ArrayList<>(memoryDescInfoList);
     }
 
     public MachineInfo setMemoryDescInfoList(
         List<MemoryDescInfo> memoryDescInfoList) {
-      this.memoryDescInfoList = memoryDescInfoList;
+      this.memoryDescInfoList = new ArrayList<>(memoryDescInfoList);
       return this;
     }
 
@@ -276,12 +277,11 @@ public class NodeInfo {
     }
 
     public List<DeadLockThreadInfo> getDeadLockThreadInfoList() {
-      return deadLockThreadInfoList;
+      return new ArrayList<>(deadLockThreadInfoList);
     }
 
-    public MachineInfo setDeadLockThreadInfoList(
-        List<DeadLockThreadInfo> deadLockThreadInfoList) {
-      this.deadLockThreadInfoList = deadLockThreadInfoList;
+    public MachineInfo setDeadLockThreadInfoList(List<DeadLockThreadInfo> deadLockThreadInfoList) {
+      this.deadLockThreadInfoList = new ArrayList<>(deadLockThreadInfoList);
       return this;
     }
   }
@@ -475,11 +475,11 @@ public class NodeInfo {
   }
 
   public List<PeerInfo> getPeerList() {
-    return peerList;
+    return new ArrayList<>(peerList);
   }
 
   public NodeInfo setPeerList(List<PeerInfo> peerList) {
-    this.peerList = peerList;
+    this.peerList = new ArrayList<>(peerList);
     return this;
   }
 
