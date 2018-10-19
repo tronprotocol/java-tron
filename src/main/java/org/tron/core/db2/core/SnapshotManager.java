@@ -347,7 +347,7 @@ public class SnapshotManager implements RevokingDatabase {
         }
 
         // debug begin
-        debugDumpDatas.add(db + ":" + ByteUtil.toHexString(realKey) + ":" + (value == null ? null : Sha256Hash.of(value)));
+        debugDumpDatas.add(db + ":" + ByteUtil.toHexString(realKey) + ":" + Sha256Hash.of(realValue));
         if ("block".equals(db)) {
           debugBlockHashs.add(Longs.fromByteArray(realKey) + ":" + ByteUtil.toHexString(realKey));
         }
