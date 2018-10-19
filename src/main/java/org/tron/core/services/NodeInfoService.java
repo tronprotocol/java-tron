@@ -51,7 +51,7 @@ public class NodeInfoService {
     NodeInfo nodeInfo = new NodeInfo();
     setConnectInfo(nodeInfo);
     setMachineInfo(nodeInfo);
-    setNodeInfo(nodeInfo);
+    setConfigNodeInfo(nodeInfo);
     setBlockInfo(nodeInfo);
     return nodeInfo;
   }
@@ -156,7 +156,7 @@ public class NodeInfoService {
     nodeInfo.setTotalFlow(totalFlow);
   }
 
-  private void setNodeInfo(NodeInfo nodeInfo) {
+  private void setConfigNodeInfo(NodeInfo nodeInfo) {
     ConfigNodeInfo configNodeInfo = new ConfigNodeInfo();
     configNodeInfo.setCodeVersion(Version.getVersion());
     configNodeInfo.setP2pVersion(String.valueOf(args.getNodeP2pVersion()));
@@ -170,6 +170,12 @@ public class NodeInfoService {
     configNodeInfo.setBackupListenPort(args.getBackupPort());
     configNodeInfo.setBackupMemberSize(args.getBackupMembers().size());
     configNodeInfo.setBackupPriority(args.getBackupPriority());
+    configNodeInfo.setDbVersion(args.getStorage().getDbVersion());
+    configNodeInfo.setMinParticipationRate(args.getMinParticipationRate());
+    configNodeInfo.setSupportConstant(args.isSupportConstant());
+    configNodeInfo.setMinTimeRatio(args.getMinTimeRatio());
+    configNodeInfo.setMaxTimeRatio(args.getMaxTimeRatio());
+    configNodeInfo.setAllowCreationOfContracts(args.getAllowCreationOfContracts());
     nodeInfo.setConfigNodeInfo(configNodeInfo);
   }
 
