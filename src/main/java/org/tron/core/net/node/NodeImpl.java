@@ -628,7 +628,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
 
   private void onHandleInventoryMessage(PeerConnection peer, InventoryMessage msg) {
-    if (trxHandler.isBusy()){
+    if (trxHandler.isBusy() && msg.getInventoryType().equals(InventoryType.TRX)){
       logger.warn("Too many trx msg to handle, drop inventory msg from peer {}, size {}",
           peer.getInetAddress(), msg.getHashList().size());
       return;
