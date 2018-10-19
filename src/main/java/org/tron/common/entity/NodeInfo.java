@@ -301,6 +301,12 @@ public class NodeInfo {
     private int backupListenPort;
     private int backupMemberSize;
     private int backupPriority;
+    private int dbVersion;
+    private int minParticipationRate;
+    private boolean supportConstant;
+    private double minTimeRatio;
+    private double maxTimeRatio;
+    private long allowCreationOfContracts;
 
     public String getCodeVersion() {
       return codeVersion;
@@ -407,6 +413,60 @@ public class NodeInfo {
 
     public ConfigNodeInfo setBackupPriority(int backupPriority) {
       this.backupPriority = backupPriority;
+      return this;
+    }
+
+    public int getDbVersion() {
+      return dbVersion;
+    }
+
+    public ConfigNodeInfo setDbVersion(int dbVersion) {
+      this.dbVersion = dbVersion;
+      return this;
+    }
+
+    public int getMinParticipationRate() {
+      return minParticipationRate;
+    }
+
+    public ConfigNodeInfo setMinParticipationRate(int minParticipationRate) {
+      this.minParticipationRate = minParticipationRate;
+      return this;
+    }
+
+    public boolean isSupportConstant() {
+      return supportConstant;
+    }
+
+    public ConfigNodeInfo setSupportConstant(boolean supportConstant) {
+      this.supportConstant = supportConstant;
+      return this;
+    }
+
+    public double getMinTimeRatio() {
+      return minTimeRatio;
+    }
+
+    public ConfigNodeInfo setMinTimeRatio(double minTimeRatio) {
+      this.minTimeRatio = minTimeRatio;
+      return this;
+    }
+
+    public double getMaxTimeRatio() {
+      return maxTimeRatio;
+    }
+
+    public ConfigNodeInfo setMaxTimeRatio(double maxTimeRatio) {
+      this.maxTimeRatio = maxTimeRatio;
+      return this;
+    }
+
+    public long getAllowCreationOfContracts() {
+      return allowCreationOfContracts;
+    }
+
+    public ConfigNodeInfo setAllowCreationOfContracts(long allowCreationOfContracts) {
+      this.allowCreationOfContracts = allowCreationOfContracts;
       return this;
     }
   }
