@@ -10,6 +10,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -195,7 +197,7 @@ public class SnapshotManager implements RevokingDatabase {
   private void refresh() {
     // debug begin
     List<String> debugBlockHashs = new ArrayList<>();
-    List<String> debugDumpDatas = new ArrayList<>();
+    Map<String, String> debugDumpDataMap = new HashMap<>();
     // debug end
 
     for (RevokingDBWithCachingNewValue db : dbs) {
@@ -214,7 +216,8 @@ public class SnapshotManager implements RevokingDatabase {
         for (Map.Entry<Key, Value> e : keyValueDB) {
           Key k = e.getKey();
           Value v = e.getValue();
-          debugDumpDatas.add(dbName + ":" + ByteUtil.toHexString(k.getBytes()) + ":"
+          debugDumpDataMap.put(dbName + ":" + ByteUtil.toHexString(k.getBytes()),
+              dbName + ":" + ByteUtil.toHexString(k.getBytes()) + ":"
               + (e.getValue().getBytes() == null ? null : Sha256Hash.of(v.getBytes())));
           if ("block".equals(dbName)) {
             debugBlockHashs.add(Longs.fromByteArray(k.getBytes()) + ":" + ByteUtil.toHexString(k.getBytes()));
@@ -236,6 +239,7 @@ public class SnapshotManager implements RevokingDatabase {
       }
     }
     // debug begin
+    List<String> debugDumpDatas = debugDumpDataMap.entrySet().stream().map(Entry::getValue).sorted(String::compareTo).collect(Collectors.toList());
     logger.info("***debug refresh:    blocks={}, datahash:{}", debugBlockHashs, Sha256Hash.of(debugDumpDatas.toString().getBytes()));
     // debug end
   }
@@ -262,7 +266,7 @@ public class SnapshotManager implements RevokingDatabase {
     Map<WrappedByteArray, WrappedByteArray> batch = new HashMap<>();
     // debug begin
     List<String> debugBlockHashs = new ArrayList<>();
-    List<String> debugDumpDatas = new ArrayList<>();
+    Map<String, String> debugDumpDataMap = new HashMap<>();
     // debug end
     for (RevokingDBWithCachingNewValue db : dbs) {
       Snapshot head = db.getHead();
@@ -282,7 +286,8 @@ public class SnapshotManager implements RevokingDatabase {
           batch.put(WrappedByteArray.of(Bytes.concat(simpleEncode(dbName), k.getBytes())),
               WrappedByteArray.of(v.encode()));
           // debug begin
-          debugDumpDatas.add(dbName + ":" + ByteUtil.toHexString(k.getBytes()) + ":" + (e.getValue().getBytes() == null ? null : Sha256Hash.of(v.getBytes())));
+          debugDumpDataMap.put(dbName + ":" + ByteUtil.toHexString(k.getBytes()),
+              dbName + ":" + ByteUtil.toHexString(k.getBytes()) + ":" + (v.getBytes() == null ? null : Sha256Hash.of(v.getBytes())));
           if ("block".equals(dbName)) {
             debugBlockHashs.add(Longs.fromByteArray(k.getBytes()) + ":" + ByteUtil.toHexString(k.getBytes()));
           }
@@ -293,6 +298,7 @@ public class SnapshotManager implements RevokingDatabase {
     }
 
     // debug begin
+    List<String> debugDumpDatas = debugDumpDataMap.entrySet().stream().map(Entry::getValue).sorted(String::compareTo).collect(Collectors.toList());
     logger.info("***debug checkpoint: blocks={}, datahash:{}", debugBlockHashs, Sha256Hash.of(debugDumpDatas.toString().getBytes()));
     // debug end
     LevelDbDataSourceImpl levelDbDataSource =
@@ -347,7 +353,7 @@ public class SnapshotManager implements RevokingDatabase {
         }
 
         // debug begin
-        debugDumpDatas.add(db + ":" + ByteUtil.toHexString(realKey) + ":" + Sha256Hash.of(realValue));
+        debugDumpDatas.add(db + ":" + ByteUtil.toHexString(realKey) + ":" + (realValue == null ? null : Sha256Hash.of(realValue)));
         if ("block".equals(db)) {
           debugBlockHashs.add(Longs.fromByteArray(realKey) + ":" + ByteUtil.toHexString(realKey));
         }
@@ -359,6 +365,7 @@ public class SnapshotManager implements RevokingDatabase {
     }
 
     // debug begin
+    debugDumpDatas.sort(String::compareTo);
     logger.info("***debug check:      blocks={}, datahash:{}", debugBlockHashs, Sha256Hash.of(debugDumpDatas.toString().getBytes()));
     // debug end
 
@@ -401,6 +408,7 @@ public class SnapshotManager implements RevokingDatabase {
         debugDumpDatas.add(dbName + ":" + ByteUtil.toHexString(e.getKey().getBytes()) + ":" + (e.getValue().getBytes() == null ? null : Sha256Hash.of(e.getValue().getBytes())));
       });
     }
+    debugDumpDatas.sort(String::compareTo);
     logger.info("***debug debug:      blocks={}, datahash:{}", debugBlockHashs, Sha256Hash.of(debugDumpDatas.toString().getBytes()));
     // debug end
 
