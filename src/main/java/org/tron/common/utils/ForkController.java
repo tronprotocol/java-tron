@@ -22,11 +22,11 @@ public class ForkController {
   @Getter
   private Manager manager;
   private volatile int[] slots = new int[0];
-  private boolean forked;
+  private boolean forked = true;
 
   public void init(Manager manager) {
     this.manager = manager;
-    forked = manager.getDynamicPropertiesStore().getForked();
+    forked = true;
   }
 
   public synchronized boolean shouldBeForked() {
