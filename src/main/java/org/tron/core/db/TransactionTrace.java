@@ -10,6 +10,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
 import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
@@ -100,7 +101,7 @@ public class TransactionTrace {
   public void init(BlockCapsule blockCap) throws VMIllegalException, ContractValidateException {
     txStartTimeInMs = System.currentTimeMillis();
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
-    runtime = new Runtime(this, blockCap, deposit, new ProgramInvokeFactoryImpl());
+    runtime = new RuntimeImpl(this, blockCap, deposit, new ProgramInvokeFactoryImpl());
     if (runtime.isCallConstant()) {
       throw new VMIllegalException("cannot call constant method ");
     }
