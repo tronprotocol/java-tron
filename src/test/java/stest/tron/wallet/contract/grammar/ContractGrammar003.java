@@ -51,8 +51,8 @@ public class ContractGrammar003 {
   byte[] contractAddress = null;
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] asset016Address = ecKey1.getAddress();
-  String testKeyForAssetIssue016 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  byte[] grammarAddress3 = ecKey1.getAddress();
+  String testKeyForGrammarAddress3 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
 
   @BeforeSuite
@@ -63,7 +63,7 @@ public class ContractGrammar003 {
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
-    PublicMethed.printAddress(testKeyForAssetIssue016);
+    PublicMethed.printAddress(testKeyForGrammarAddress3);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
@@ -82,7 +82,7 @@ public class ContractGrammar003 {
   @Test(enabled = true)
   public void testGrammar014() {
     PublicMethed
-        .sendcoin(asset016Address, 100000000000L, testNetAccountAddress, testNetAccountKey,
+        .sendcoin(grammarAddress3, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
     String contractName = "aContract";
     String code = "608060405234801561001057600080fd5b50610435806100206000396000f300608060405260043"
@@ -132,8 +132,8 @@ public class ContractGrammar003 {
         + "inputs\":[],\"name\":\"getnumberForB\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\""
         + "}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, testKeyForAssetIssue016,
-        asset016Address, blockingStubFull);
+        0L, 100, null, testKeyForGrammarAddress3,
+        grammarAddress3, blockingStubFull);
     String contractName1 = "bContract";
     String code1 = "608060405234801561001057600080fd5b5061055d806100206000396000f3006080604052600"
         + "4361061007f5763ffffffff60e060020a6000350416630eec1aba81146100845780631645c6c8146100b55"
@@ -191,14 +191,14 @@ public class ContractGrammar003 {
         + "stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
     byte[] contractAddress1 = PublicMethed
         .deployContract(contractName1, abi1, code1, "", maxFeeLimit,
-            0L, 100, null, testKeyForAssetIssue016,
-            asset016Address, blockingStubFull);
+            0L, 100, null, testKeyForGrammarAddress3,
+            grammarAddress3, blockingStubFull);
     String txid = PublicMethed.triggerContract(contractAddress,
         "getnumberForB()", "#", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     String txid1 = PublicMethed.triggerContract(contractAddress1,
         "getnumberForB()", "#", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Optional<TransactionInfo> infoById1 = null;
@@ -218,7 +218,7 @@ public class ContractGrammar003 {
     String initParmes = "\"" + Base58.encode58Check(contractAddress1) + "\",\"1\"";
     String txid4 = PublicMethed.triggerContract(contractAddress,
         "callTest(address,uint256)", initParmes, false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
 
     Optional<TransactionInfo> infoById4 = null;
     infoById4 = PublicMethed.getTransactionInfoById(txid4, blockingStubFull);
@@ -227,7 +227,7 @@ public class ContractGrammar003 {
 
     String txid5 = PublicMethed.triggerContract(contractAddress,
         "getnumberForB()", "#", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     Optional<TransactionInfo> infoById5 = null;
     infoById5 = PublicMethed.getTransactionInfoById(txid5, blockingStubFull);
     Long returnnumber5 = ByteArray.toLong(ByteArray
@@ -237,7 +237,7 @@ public class ContractGrammar003 {
 
     String txid6 = PublicMethed.triggerContract(contractAddress1,
         "getnumberForB()", "#", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     Optional<TransactionInfo> infoById6 = null;
     infoById6 = PublicMethed.getTransactionInfoById(txid6, blockingStubFull);
     Long returnnumber6 = ByteArray.toLong(ByteArray
@@ -247,7 +247,7 @@ public class ContractGrammar003 {
 
     String txid7 = PublicMethed.triggerContract(contractAddress,
         "callcodeTest(address,uint256)", initParmes, false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
 
     Optional<TransactionInfo> infoById7 = null;
     infoById7 = PublicMethed.getTransactionInfoById(txid7, blockingStubFull);
@@ -256,7 +256,7 @@ public class ContractGrammar003 {
 
     String txid8 = PublicMethed.triggerContract(contractAddress,
         "getnumberForB()", "#", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     Optional<TransactionInfo> infoById8 = null;
     infoById8 = PublicMethed.getTransactionInfoById(txid8, blockingStubFull);
     Long returnnumber8 = ByteArray.toLong(ByteArray
@@ -266,7 +266,7 @@ public class ContractGrammar003 {
 
     String txid9 = PublicMethed.triggerContract(contractAddress1,
         "getnumberForB()", "#", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     Optional<TransactionInfo> infoById9 = null;
     infoById9 = PublicMethed.getTransactionInfoById(txid6, blockingStubFull);
     Long returnnumber9 = ByteArray.toLong(ByteArray
@@ -276,7 +276,7 @@ public class ContractGrammar003 {
 
     String txid10 = PublicMethed.triggerContract(contractAddress,
         "delegatecallTest(address,uint256)", initParmes, false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     Optional<TransactionInfo> infoById10 = null;
     infoById10 = PublicMethed.getTransactionInfoById(txid10, blockingStubFull);
 
@@ -284,7 +284,7 @@ public class ContractGrammar003 {
 
     String txid11 = PublicMethed.triggerContract(contractAddress,
         "getnumberForB()", "#", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     Optional<TransactionInfo> infoById11 = null;
     infoById11 = PublicMethed.getTransactionInfoById(txid11, blockingStubFull);
     Long returnnumber11 = ByteArray.toLong(ByteArray
@@ -294,7 +294,7 @@ public class ContractGrammar003 {
 
     String txid12 = PublicMethed.triggerContract(contractAddress1,
         "getnumberForB()", "#", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     Optional<TransactionInfo> infoById12 = null;
     infoById12 = PublicMethed.getTransactionInfoById(txid12, blockingStubFull);
     Long returnnumber12 = ByteArray.toLong(ByteArray
@@ -305,7 +305,7 @@ public class ContractGrammar003 {
     String initParmes1 = "\"" + Base58.encode58Check(contractAddress1) + "\"";
     String txid13 = PublicMethed.triggerContract(contractAddress,
         "callAddTest(address)", initParmes1, false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     Optional<TransactionInfo> infoById13 = null;
     infoById13 = PublicMethed.getTransactionInfoById(txid13, blockingStubFull);
 
@@ -313,7 +313,7 @@ public class ContractGrammar003 {
 
     String txid14 = PublicMethed.triggerContract(contractAddress,
         "getnumberForB()", "#", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     Optional<TransactionInfo> infoById14 = null;
     infoById14 = PublicMethed.getTransactionInfoById(txid14, blockingStubFull);
     Long returnnumber14 = ByteArray.toLong(ByteArray
@@ -323,7 +323,7 @@ public class ContractGrammar003 {
 
     String txid15 = PublicMethed.triggerContract(contractAddress1,
         "getnumberForB()", "#", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     Optional<TransactionInfo> infoById15 = null;
     infoById15 = PublicMethed.getTransactionInfoById(txid15, blockingStubFull);
     Long returnnumber15 = ByteArray.toLong(ByteArray
@@ -374,12 +374,12 @@ public class ContractGrammar003 {
         + "\":false,\"name\":\"data\",\"type\":\"bytes\"},{\"indexed\":false,\"name\":\""
         + "para\",\"type\":\"uint256\"}],\"name\":\"ExistFuncCalled\",\"type\":\"event\"}]";
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, testKeyForAssetIssue016,
-        asset016Address, blockingStubFull);
+        0L, 100, null, testKeyForGrammarAddress3,
+        grammarAddress3, blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     String txid = PublicMethed.triggerContract(contractAddress,
         "callExistFunc()", "#", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     String i = ByteArray.toHexString(Hash.sha3("ExistFuncCalled(bytes,uint256)".getBytes()));
     String resultvalue = ByteArray
@@ -391,7 +391,7 @@ public class ContractGrammar003 {
     Optional<TransactionInfo> infoById1 = null;
     String txid1 = PublicMethed.triggerContract(contractAddress,
         "callNonExistFunc()", "#", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     infoById1 = PublicMethed.getTransactionInfoById(txid1, blockingStubFull);
     String value = ByteArray.toHexString(Hash.sha3("FallbackCalled(bytes)".getBytes()));
     String resultvalue1 = ByteArray
@@ -425,12 +425,12 @@ public class ContractGrammar003 {
     String abi = "[{\"constant\":false,\"inputs\":[],\"name\":\"readData\",\"outputs\":[],"
         + "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, testKeyForAssetIssue016,
-        asset016Address, blockingStubFull);
+        0L, 100, null, testKeyForGrammarAddress3,
+        grammarAddress3, blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     String txid = PublicMethed.triggerContract(contractAddress,
         "readData()", "#", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
 
     Assert.assertTrue(infoById.get().getResultValue() == 0);
@@ -459,12 +459,12 @@ public class ContractGrammar003 {
         + ":\"function\"}]";
     byte[] contractAddress1 = PublicMethed
         .deployContract(contractName1, abi1, code1, "", maxFeeLimit,
-            0L, 100, null, testKeyForAssetIssue016,
-            asset016Address, blockingStubFull);
+            0L, 100, null, testKeyForGrammarAddress3,
+            grammarAddress3, blockingStubFull);
     Optional<TransactionInfo> infoById1 = null;
     String txid1 = PublicMethed.triggerContract(contractAddress1,
         "g()", "#", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     infoById1 = PublicMethed.getTransactionInfoById(txid1, blockingStubFull);
 
     Assert.assertTrue(infoById1.get().getResultValue() == 0);
@@ -473,14 +473,14 @@ public class ContractGrammar003 {
     String num = "3";
     String txid2 = PublicMethed.triggerContract(contractAddress1,
         "setData(uint256)", num, false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     infoById2 = PublicMethed.getTransactionInfoById(txid2, blockingStubFull);
 
     Assert.assertTrue(infoById2.get().getResultValue() == 0);
 
     String txid3 = PublicMethed.triggerContract(contractAddress1,
         "getData()", "#", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     Optional<TransactionInfo> infoById3 = null;
     infoById3 = PublicMethed.getTransactionInfoById(txid3, blockingStubFull);
     Long returnnumber3 = ByteArray.toLong(ByteArray
@@ -524,14 +524,14 @@ public class ContractGrammar003 {
         + "[{\"name\":\"compaingnID\",\"type\":\"uint256\"}],\"payable\":false,\""
         + "stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
     byte[] contractAddress1 = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, testKeyForAssetIssue016,
-        asset016Address, blockingStubFull);
+        0L, 100, null, testKeyForGrammarAddress3,
+        grammarAddress3, blockingStubFull);
     Account info;
-    String initParmes = "\"" + Base58.encode58Check(asset016Address) + "\",\"1\"";
+    String initParmes = "\"" + Base58.encode58Check(grammarAddress3) + "\",\"1\"";
     Optional<TransactionInfo> infoById = null;
     String txid = PublicMethed.triggerContract(contractAddress1,
         "candidate(address,uint256)", initParmes, false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Long returnnumber1 = ByteArray.toLong(ByteArray
         .fromHexString(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray())));
@@ -539,7 +539,7 @@ public class ContractGrammar003 {
 
     String txid1 = PublicMethed.triggerContract(contractAddress1,
         "check(uint256)", "1", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     Optional<TransactionInfo> infoById1 = PublicMethed
         .getTransactionInfoById(txid1, blockingStubFull1);
     Long returnnumber2 = ByteArray.toLong(ByteArray
@@ -549,7 +549,7 @@ public class ContractGrammar003 {
 
     String txid2 = PublicMethed.triggerContract(contractAddress1,
         "vote(uint256)", "1", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     Optional<TransactionInfo> infoById2 = PublicMethed
         .getTransactionInfoById(txid2, blockingStubFull);
 
@@ -592,12 +592,12 @@ public class ContractGrammar003 {
         + "\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\""
         + "stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, testKeyForAssetIssue016,
-        asset016Address, blockingStubFull);
+        0L, 100, null, testKeyForGrammarAddress3,
+        grammarAddress3, blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     String txid = PublicMethed.triggerContract(contractAddress,
         "testAddmod()", "#", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Long returnnumber = ByteArray.toLong(ByteArray
         .fromHexString(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray())));
@@ -607,7 +607,7 @@ public class ContractGrammar003 {
 
     String txid1 = PublicMethed.triggerContract(contractAddress,
         "testMulmod()", "#", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     Optional<TransactionInfo> infoById1 = null;
     infoById1 = PublicMethed.getTransactionInfoById(txid1, blockingStubFull);
     Long returnnumber1 = ByteArray.toLong(ByteArray
@@ -618,7 +618,7 @@ public class ContractGrammar003 {
 
     String txid2 = PublicMethed.triggerContract(contractAddress,
         "testKeccak256()", "#", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     Optional<TransactionInfo> infoById2 = null;
     infoById2 = PublicMethed.getTransactionInfoById(txid2, blockingStubFull);
 
@@ -626,7 +626,7 @@ public class ContractGrammar003 {
 
     String txid3 = PublicMethed.triggerContract(contractAddress,
         "testSha256()", "#", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     Optional<TransactionInfo> infoById3 = null;
     infoById3 = PublicMethed.getTransactionInfoById(txid3, blockingStubFull);
 
@@ -634,7 +634,7 @@ public class ContractGrammar003 {
 
     String txid4 = PublicMethed.triggerContract(contractAddress,
         "testSha3()", "#", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     Optional<TransactionInfo> infoById4 = null;
     infoById4 = PublicMethed.getTransactionInfoById(txid4, blockingStubFull);
     Assert.assertTrue(infoById4.get().getResultValue() == 0);
@@ -650,11 +650,11 @@ public class ContractGrammar003 {
     String abi = "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\","
         + "\"type\":\"constructor\"}]";
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, testKeyForAssetIssue016,
-        asset016Address, blockingStubFull);
+        0L, 100, null, testKeyForGrammarAddress3,
+        grammarAddress3, blockingStubFull);
     String txid = PublicMethed.triggerContract(contractAddress,
         "timetest()", "#", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull1);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
@@ -674,11 +674,11 @@ public class ContractGrammar003 {
     String abi = "[{\"constant\":false,\"inputs\":[],\"name\":\"timetest\",\"outputs\":[],"
         + "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, testKeyForAssetIssue016,
-        asset016Address, blockingStubFull);
+        0L, 100, null, testKeyForGrammarAddress3,
+        grammarAddress3, blockingStubFull);
     String txid = PublicMethed.triggerContract(contractAddress,
         "timetest()", "#", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull1);
 
