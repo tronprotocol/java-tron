@@ -174,6 +174,13 @@ public class SnapshotManager implements RevokingDatabase {
   public void shutdown() {
     System.err.println("******** begin to pop revokingDb ********");
     System.err.println("******** before revokingDb size:" + size);
+    while (shouldBeRefreshed()) {
+      try {
+        TimeUnit.MILLISECONDS.sleep(10);
+      } catch (InterruptedException e) {
+        System.out.println(e.getMessage() + e);
+      }
+    }
     System.err.println("******** end to pop revokingDb ********");
   }
 
@@ -256,8 +263,8 @@ public class SnapshotManager implements RevokingDatabase {
 
       refresh();
 
-      flushCount = 0;
       deleteCheckPoint();
+      flushCount = 0;
     }
     --size;
   }
