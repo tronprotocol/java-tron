@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
@@ -313,7 +314,7 @@ public class SnapshotManager implements RevokingDatabase {
     levelDbDataSource.initDB();
     levelDbDataSource.updateByBatch(batch.entrySet().stream()
         .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
-        .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll));
+        .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll), new WriteOptions().sync(true));
     levelDbDataSource.closeDB();
   }
 
