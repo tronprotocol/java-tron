@@ -4,7 +4,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Optional;
@@ -43,8 +42,6 @@ import org.tron.protos.Protocol.Transaction.Result;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
-import stest.tron.wallet.common.client.utils.AbiUtil;
-
 
 
 public class PublicMethed {
@@ -1281,7 +1278,7 @@ public class PublicMethed {
 
   public static byte[] deployContract(String contractName, String abiString, String code,
       String data, Long feeLimit, long value,
-      long consumeUserResourcePercent, byte[] libraryAddress, String priKey, byte[] ownerAddress,
+      long consumeUserResourcePercent, String libraryAddress, String priKey, byte[] ownerAddress,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
@@ -1402,7 +1399,7 @@ public class PublicMethed {
 
   public static String deployContractAndGetTransactionInfoById(String contractName,
       String abiString, String code, String data, Long feeLimit, long value,
-      long consumeUserResourcePercent, byte[] libraryAddress, String priKey, byte[] ownerAddress,
+      long consumeUserResourcePercent, String libraryAddress, String priKey, byte[] ownerAddress,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
@@ -1473,7 +1470,6 @@ public class PublicMethed {
     texBuilder.setResult(transactionExtention.getResult());
     texBuilder.setTxid(transactionExtention.getTxid());
     transactionExtention = texBuilder.build();
-
 
     if (transactionExtention == null) {
       return null;
@@ -1681,16 +1677,36 @@ public class PublicMethed {
     return blockingStubFull.getContract(bytesMessage);
   }
 
-  private static byte[] replaceLibraryAddress(String code, byte[] libraryAddress) {
+  private static byte[] replaceLibraryAddress(String code, String libraryAddressPair) {
 
-    String libraryAddressHex;
-    try {
-      libraryAddressHex = (new String(Hex.encode(libraryAddress), "US-ASCII")).substring(2);
-    } catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);  // now ignore
+    String[] libraryAddressList = libraryAddressPair.split("[,]");
+
+    for (int i = 0; i < libraryAddressList.length; i++) {
+      String cur = libraryAddressList[i];
+
+      int lastPosition = cur.lastIndexOf(":");
+      if (-1 == lastPosition) {
+        throw new RuntimeException("libraryAddress delimit by ':'");
+      }
+      String libraryName = cur.substring(0, lastPosition);
+      String addr = cur.substring(lastPosition + 1);
+      String libraryAddressHex = ByteArray.toHexString(Wallet.decodeFromBase58Check(addr))
+          .substring(2);
+
+      String repeated = new String(new char[40 - libraryName.length() - 2]).replace("\0", "_");
+      String beReplaced = "__" + libraryName + repeated;
+      Matcher m = Pattern.compile(beReplaced).matcher(code);
+      code = m.replaceAll(libraryAddressHex);
     }
 
-    Matcher m = Pattern.compile("__.{36}__").matcher(code);
+    return Hex.decode(code);
+  }
+
+  private static byte[] replaceLibraryAddress_1(String code, byte[] libraryAddress) {
+
+    String libraryAddressHex = ByteArray.toHexString(libraryAddress).substring(2);
+
+    Matcher m = Pattern.compile("__.*__").matcher(code);
     code = m.replaceAll(libraryAddressHex);
     return Hex.decode(code);
   }
@@ -1888,7 +1904,7 @@ public class PublicMethed {
         .setFirstTokenBalance(firstTokenBalance)
         .setSecondTokenId(ByteString.copyFrom(secondTokenId))
         .setSecondTokenBalance(secondTokenBalance);
-    Contract.ExchangeCreateContract contract =  builder.build();
+    Contract.ExchangeCreateContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.exchangeCreate(contract);
     if (transactionExtention == null) {
       return false;
@@ -1906,7 +1922,7 @@ public class PublicMethed {
     }
     System.out.println(
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
-    transaction = signTransaction(ecKey,transaction);
+    transaction = signTransaction(ecKey, transaction);
     System.out.println(
         "txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray())));
 
@@ -1950,7 +1966,7 @@ public class PublicMethed {
         .setExchangeId(exchangeId)
         .setTokenId(ByteString.copyFrom(tokenId))
         .setQuant(quant);
-    Contract.ExchangeInjectContract contract =  builder.build();
+    Contract.ExchangeInjectContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.exchangeInject(contract);
     if (transactionExtention == null) {
       return false;
@@ -1968,7 +1984,7 @@ public class PublicMethed {
     }
     System.out.println(
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
-    transaction = signTransaction(ecKey,transaction);
+    transaction = signTransaction(ecKey, transaction);
     System.out.println(
         "txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray())));
     int i = 10;
@@ -1998,7 +2014,7 @@ public class PublicMethed {
 
   }
 
-  public static Optional<Exchange> getExchange(String id,WalletGrpc.WalletBlockingStub
+  public static Optional<Exchange> getExchange(String id, WalletGrpc.WalletBlockingStub
       blockingStubFull) {
     BytesMessage request = BytesMessage.newBuilder().setValue(ByteString.copyFrom(
         ByteArray.fromLong(Long.parseLong(id))))
@@ -2027,7 +2043,7 @@ public class PublicMethed {
         .setExchangeId(exchangeId)
         .setTokenId(ByteString.copyFrom(tokenId))
         .setQuant(quant);
-    Contract.ExchangeWithdrawContract contract =  builder.build();
+    Contract.ExchangeWithdrawContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.exchangeWithdraw(contract);
     if (transactionExtention == null) {
       return false;
@@ -2045,7 +2061,7 @@ public class PublicMethed {
     }
     System.out.println(
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
-    transaction = signTransaction(ecKey,transaction);
+    transaction = signTransaction(ecKey, transaction);
     System.out.println(
         "txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray())));
 
@@ -2092,7 +2108,7 @@ public class PublicMethed {
         .setTokenId(ByteString.copyFrom(tokenId))
         .setQuant(quant)
         .setExpected(expected);
-    Contract.ExchangeTransactionContract contract =  builder.build();
+    Contract.ExchangeTransactionContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.exchangeTransaction(contract);
     if (transactionExtention == null) {
       return false;
@@ -2110,7 +2126,7 @@ public class PublicMethed {
     }
     System.out.println(
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
-    transaction = signTransaction(ecKey,transaction);
+    transaction = signTransaction(ecKey, transaction);
     System.out.println(
         "txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray())));
 
@@ -2136,8 +2152,8 @@ public class PublicMethed {
 
 
   public static String deployContractWithConstantParame(String contractName, String abiString,
-      String code, String constructorStr, String argsStr,String data, Long feeLimit, long value,
-      long consumeUserResourcePercent, byte[] libraryAddress, String priKey, byte[] ownerAddress,
+      String code, String constructorStr, String argsStr, String data, Long feeLimit, long value,
+      long consumeUserResourcePercent, String libraryAddress, String priKey, byte[] ownerAddress,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
