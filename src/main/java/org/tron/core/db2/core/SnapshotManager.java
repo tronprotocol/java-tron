@@ -259,11 +259,11 @@ public class SnapshotManager implements RevokingDatabase {
     mark();
 
     if (shouldBeRefreshed()) {
+      deleteCheckPoint();
       createCheckPoint();
 
       refresh();
 
-      deleteCheckPoint();
       flushCount = 0;
     }
     --size;
@@ -377,7 +377,7 @@ public class SnapshotManager implements RevokingDatabase {
     // debug end
 
     levelDbDataSource.closeDB();
-    FileUtil.recursiveDelete(levelDbDataSource.getDbPath().toString());
+//    FileUtil.recursiveDelete(levelDbDataSource.getDbPath().toString());
     unChecked = false;
   }
 
