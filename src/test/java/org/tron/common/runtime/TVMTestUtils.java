@@ -94,15 +94,15 @@ public class TVMTestUtils {
       throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
     TransactionTrace trace = new TransactionTrace(trxCap, deposit.getDbManager());
-    Runtime runtime = new Runtime(trace, block, deposit,
+    Runtime runtime = new RuntimeImpl(trace, block, deposit,
         new ProgramInvokeFactoryImpl());
 
     // init
-    trace.init();
+    trace.init(block);
     //exec
-    trace.exec(runtime);
+    trace.exec();
 
-    trace.finalization(runtime);
+    trace.finalization();
 
     return runtime;
   }
@@ -139,15 +139,15 @@ public class TVMTestUtils {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
     TransactionTrace trace = new TransactionTrace(trxCap, dbManager);
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
-    Runtime runtime = new Runtime(trace, blockCap, deposit,
+    Runtime runtime = new RuntimeImpl(trace, blockCap, deposit,
         new ProgramInvokeFactoryImpl());
 
     // init
-    trace.init();
+    trace.init(blockCap);
     //exec
-    trace.exec(runtime);
+    trace.exec();
 
-    trace.finalization(runtime);
+    trace.finalization();
 
     return new TVMTestResult(runtime, trace.getReceipt(), null);
   }
