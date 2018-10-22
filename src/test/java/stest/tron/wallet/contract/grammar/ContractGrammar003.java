@@ -75,18 +75,15 @@ public class ContractGrammar003 {
 
     logger.info(Long.toString(PublicMethed.queryAccount(testNetAccountKey, blockingStubFull)
         .getBalance()));
-    PublicMethed
-        .sendcoin(asset016Address, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull);
 
   }
 
 
-
-
   @Test(enabled = true)
   public void testGrammar014() {
-
+    PublicMethed
+        .sendcoin(asset016Address, 100000000000L, testNetAccountAddress, testNetAccountKey,
+            blockingStubFull);
     String contractName = "aContract";
     String code = "608060405234801561001057600080fd5b50610435806100206000396000f300608060405260043"
         + "6106100745763ffffffff60e060020a6000350416633da5d187811461007957806343c3a43a1461009f5780"
