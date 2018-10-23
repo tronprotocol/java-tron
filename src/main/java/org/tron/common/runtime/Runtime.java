@@ -512,6 +512,7 @@ public class Runtime {
           result.getDeleteAccounts().clear();
           result.getLogInfoList().clear();
           result.resetFutureRefund();
+          result.rejectInternalTransactions();
 
           if (result.getException() != null) {
             program.spendAllEnergy();
@@ -521,13 +522,9 @@ public class Runtime {
             runtimeError = "REVERT opcode executed";
           }
         } else {
-          getResult().getInternalTransactions().add(0,rootInternalTransaction);
           deposit.commit();
         }
       } else {
-        if (!trxType.equals(TRX_PRECOMPILED_TYPE)) {
-          getResult().getInternalTransactions().add(0,rootInternalTransaction);
-        }
         deposit.commit();
       }
     } catch (JVMStackOverFlowException e) {

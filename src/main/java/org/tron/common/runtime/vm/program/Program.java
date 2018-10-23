@@ -494,7 +494,7 @@ public class Program {
 
     increaseNonce();
     // [5] COOK THE INVOKE AND EXECUTE
-    InternalTransaction internalTx = addInternalTx(null, senderAddress, null, endowment,
+    InternalTransaction internalTx = addInternalTx(null, senderAddress, newAddress, endowment,
         programCode, "create", nonce);
     long vmStartInUs = System.nanoTime() / 1000;
     ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
