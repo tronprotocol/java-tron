@@ -92,14 +92,22 @@ public class InternalTransaction {
       this.transferToAddress = Wallet.generateContractAddress(trx);
       this.note = "create";
       this.value = contract.getNewContract().getCallValue();
+      this.data = contract.getNewContract().getBytecode().toByteArray();
+      if(this.data.length == 0){
+        this.data = null;
+      }
     }
-    else if(trxType.equals(TrxType.TRX_CONTRACT_CALL_TYPE)){
+    else if(trxType.equals(TrxType.TRX_CONTRACT_CALL_TYPE)) {
       TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
       this.sendAddress = contract.getOwnerAddress().toByteArray();
       this.receiveAddress = contract.getContractAddress().toByteArray();
       this.transferToAddress = this.receiveAddress.clone();
       this.note = "call";
       this.value = contract.getCallValue();
+      this.data = contract.getData().toByteArray();
+      if (this.data.length == 0) {
+        this.data = null;
+      }
     }
     // TODO: Should consider unknown type?
     this.hash = trxCap.getTransactionId().getBytes();
