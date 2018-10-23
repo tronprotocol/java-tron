@@ -81,6 +81,7 @@ import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
@@ -153,6 +154,10 @@ public class Manager {
   @Getter
   @Setter
   private String netType;
+
+  @Getter
+  @Setter
+  private WitnessService witnessService;
 
   @Getter
   @Setter
@@ -1178,6 +1183,8 @@ public class Manager {
       DupTransactionException, TransactionExpirationException, ValidateScheduleException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
     // todo set revoking db max size.
+
+    witnessService.processBlock(block);
 
     // checkWitness
     if (!witnessController.validateWitnessSchedule(block)) {
