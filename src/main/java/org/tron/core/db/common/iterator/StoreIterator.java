@@ -19,7 +19,7 @@ public final class StoreIterator implements org.tron.core.db.common.iterator.DBI
   public StoreIterator(DBIterator dbIterator, Lock lock) {
     this.dbIterator = dbIterator;
     this.lock = lock;
-    this.lock.lock();
+//    this.lock.lock();
   }
 
   @Override
@@ -27,7 +27,7 @@ public final class StoreIterator implements org.tron.core.db.common.iterator.DBI
     try {
       dbIterator.close();
     } finally {
-      lock.unlock();
+//      lock.unlock();
     }
   }
 
@@ -45,7 +45,7 @@ public final class StoreIterator implements org.tron.core.db.common.iterator.DBI
         try {
           dbIterator.close();
         } finally {
-          lock.unlock();
+//          lock.unlock();
         }
       }
     } catch (Exception e) {
@@ -55,7 +55,7 @@ public final class StoreIterator implements org.tron.core.db.common.iterator.DBI
       } catch (IOException e1) {
         logger.debug(e1.getMessage(), e1);
       } finally {
-        lock.unlock();
+//        lock.unlock();
       }
     }
 
