@@ -1,5 +1,7 @@
 package org.tron.core.db.common.iterator;
 
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.DBIterator;
 
@@ -12,14 +14,21 @@ public final class StoreIterator implements org.tron.core.db.common.iterator.DBI
 
   private DBIterator dbIterator;
   private boolean first = true;
+  private Lock lock;
 
-  public StoreIterator(DBIterator dbIterator) {
+  public StoreIterator(DBIterator dbIterator, Lock lock) {
     this.dbIterator = dbIterator;
+    this.lock = lock;
+    this.lock.lock();
   }
 
   @Override
   public void close() throws IOException {
-    dbIterator.close();
+    try {
+      dbIterator.close();
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
@@ -33,7 +42,11 @@ public final class StoreIterator implements org.tron.core.db.common.iterator.DBI
       }
 
       if (!(hasNext = dbIterator.hasNext())) { // false is last item
-        dbIterator.close();
+        try {
+          dbIterator.close();
+        } finally {
+          lock.unlock();
+        }
       }
     } catch (Exception e) {
       logger.debug(e.getMessage(), e);
@@ -41,6 +54,8 @@ public final class StoreIterator implements org.tron.core.db.common.iterator.DBI
         dbIterator.close();
       } catch (IOException e1) {
         logger.debug(e1.getMessage(), e1);
+      } finally {
+        lock.unlock();
       }
     }
 

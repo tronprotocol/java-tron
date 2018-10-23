@@ -454,7 +454,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
 
   @Override
   public org.tron.core.db.common.iterator.DBIterator iterator() {
-    return new StoreIterator(database.iterator());
+    return new StoreIterator(database.iterator(), resetDbLock.readLock());
   }
 
   public Stream<Entry<byte[], byte[]>> stream() {
