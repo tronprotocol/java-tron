@@ -1406,7 +1406,7 @@ public class Manager {
     logger.info("******** end to close db ********");
   }
 
-  private void closeOneStore(ITronChainBase database) {
+  public void closeOneStore(ITronChainBase database) {
     logger.info("******** begin to close " + database.getName() + " ********");
     try {
       database.close();

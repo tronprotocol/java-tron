@@ -37,6 +37,7 @@ public class SnapshotManager implements RevokingDatabase {
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
   private static final int DEFAULT_FLUSH_COUNT = 5;
 
+  @Getter
   private List<RevokingDBWithCachingNewValue> dbs = new ArrayList<>();
   @Getter
   private int size = 0;
@@ -46,7 +47,7 @@ public class SnapshotManager implements RevokingDatabase {
   private int activeSession = 0;
   private boolean unChecked = true;
 
-  private int flushCount = 0;
+  private volatile int flushCount = 0;
 
   public ISession buildSession() {
     return buildSession(false);
