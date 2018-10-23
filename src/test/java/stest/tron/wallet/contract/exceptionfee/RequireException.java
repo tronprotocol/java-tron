@@ -25,10 +25,8 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class RequireException {
 
-  //testng001、testng002、testng003、testng004
-  private final String testNetAccountKey =
-      "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
-
+  private final String testNetAccountKey = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key1");
   private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
@@ -574,19 +572,7 @@ public class RequireException {
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
 
-    Account info;
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
-        blockingStubFull);
-    info = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
 
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     String txid = "";
     String contractName1 = "ContractGasNoenough";
     String code1 = "608060405234801561001057600080fd5b50610182806100206000396000f30060806040526004"
@@ -606,6 +592,19 @@ public class RequireException {
         .deployContract(contractName1, abi1, code1, "", maxFeeLimit,
             0L, 100, null,
             testKeyForAssetIssue016, asset016Address, blockingStubFull);
+    Account info;
+    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
+        blockingStubFull);
+    info = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull);
+    Long beforeBalance = info.getBalance();
+    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
+    Long beforeNetUsed = resourceInfo.getNetUsed();
+    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
+
+    logger.info("beforeBalance:" + beforeBalance);
+    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
+    logger.info("beforeNetUsed:" + beforeNetUsed);
+    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     txid = PublicMethed.triggerContract(contractAddress1,
         "newAccount()", "#", false,
         0, 5226000, asset016Address, testKeyForAssetIssue016, blockingStubFull);
@@ -655,19 +654,7 @@ public class RequireException {
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
 
-    Account info;
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
-        blockingStubFull);
-    info = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
 
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
     String saleContractString = "\"" + Base58.encode58Check(contractAddress) + "\"";
     String txid = "";
@@ -689,6 +676,19 @@ public class RequireException {
         .deployContract(contractName1, abi1, code1, "", maxFeeLimit,
             0L, 100, null,
             testKeyForAssetIssue016, asset016Address, blockingStubFull);
+    Account info;
+    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
+        blockingStubFull);
+    info = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull);
+    Long beforeBalance = info.getBalance();
+    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
+    Long beforeNetUsed = resourceInfo.getNetUsed();
+    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
+
+    logger.info("beforeBalance:" + beforeBalance);
+    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
+    logger.info("beforeNetUsed:" + beforeNetUsed);
+    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     txid = PublicMethed.triggerContract(contractAddress1,
         "messageUse(address)", saleContractString, false,
         0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
@@ -737,19 +737,7 @@ public class RequireException {
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
 
-    Account info;
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
-        blockingStubFull);
-    info = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
 
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     String txid = "";
     String saleContractString = "\"" + Base58.encode58Check(contractAddress) + "\"";
 
@@ -770,6 +758,19 @@ public class RequireException {
         .deployContract(contractName1, abi1, code1, "", maxFeeLimit, 0L,
             100, null, testKeyForAssetIssue016,
             asset016Address, blockingStubFull);
+    Account info;
+    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
+        blockingStubFull);
+    info = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull);
+    Long beforeBalance = info.getBalance();
+    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
+    Long beforeNetUsed = resourceInfo.getNetUsed();
+    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
+
+    logger.info("beforeBalance:" + beforeBalance);
+    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
+    logger.info("beforeNetUsed:" + beforeNetUsed);
+    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     txid = PublicMethed.triggerContract(contractAddress1,
         "messageUse(address)", saleContractString, false,
         0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
