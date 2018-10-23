@@ -1,6 +1,8 @@
 package org.tron.common.storage;
 
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.vm.cache.Key;
+import org.tron.common.runtime.vm.cache.Value;
 import org.tron.common.runtime.vm.program.Storage;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
