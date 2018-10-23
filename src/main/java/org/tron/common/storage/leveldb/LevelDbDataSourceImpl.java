@@ -140,6 +140,16 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     initDB();
   }
 
+  public void reOpen() {
+    resetDbLock.writeLock().lock();
+    try {
+      closeDB();
+      initDB();
+    } finally {
+      resetDbLock.writeLock().unlock();
+    }
+  }
+
   @Override
   public boolean isAlive() {
     return alive;

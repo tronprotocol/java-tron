@@ -54,8 +54,7 @@ public class LevelDB implements DB<byte[], byte[]> {
         .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
         .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll);
     db.updateByBatch(rows, writeOptions);
-    db.closeDB();
-    db.initDB();
+    db.reOpen();
   }
 
   public void close() {
