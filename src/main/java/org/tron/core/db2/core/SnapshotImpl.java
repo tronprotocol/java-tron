@@ -7,10 +7,12 @@ import com.google.common.collect.Streams;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.stream.Collectors;
@@ -98,6 +100,8 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
             db.put(k, v);
           } else if (value.getOperator() == Value.Operator.DELETE) {
             db.put(k, Value.copyOf(Value.Operator.MODIFY, v.getBytes()));
+          } else {
+            throw new IllegalStateException();
           }
         });
 
@@ -111,6 +115,8 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
             db.put(k, v);
           } else if (value.getOperator() == Value.Operator.CREATE) {
             db.put(k, Value.copyOf(Value.Operator.CREATE, v.getBytes()));
+          } else {
+            throw new IllegalStateException();
           }
         });
 
@@ -123,8 +129,10 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
             db.put(k, Value.of(Value.Operator.DELETE, null));
           } else if (value.getOperator() == Value.Operator.CREATE) {
             db.remove(k);
+          } else {
+            throw new IllegalStateException();
           }
-        });
+  });
   }
 
   @Override
@@ -136,11 +144,14 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   public Iterator<Map.Entry<byte[],byte[]>> iterator() {
     Map<WrappedByteArray, WrappedByteArray> all = new HashMap<>();
     collect(all);
+    Set<WrappedByteArray> keys = new HashSet<>(all.keySet());
+    all.entrySet()
+        .removeIf(entry -> entry.getValue() == null || entry.getValue().getBytes() == null);
     return Iterators.concat(
         Iterators.transform(all.entrySet().iterator(),
             e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes())),
         Iterators.filter(getRoot().iterator(),
-            e -> !all.containsKey(WrappedByteArray.of(e.getKey()))));
+            e -> !keys.contains(WrappedByteArray.of(e.getKey()))));
   }
 
   void collect(Map<WrappedByteArray, WrappedByteArray> all) {
@@ -151,9 +162,6 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
               WrappedByteArray.of(e.getValue().getBytes())));
       next = next.getNext();
     }
-
-    all.entrySet()
-        .removeIf(entry -> entry.getValue() == null || entry.getValue().getBytes() == null);
   }
 
   @Override

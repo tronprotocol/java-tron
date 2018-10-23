@@ -178,6 +178,7 @@ public class SnapshotManager implements RevokingDatabase {
     System.err.println("******** before revokingDb size:" + size);
     while (shouldBeRefreshed()) {
       try {
+        logger.info("waiting leveldb flush done");
         TimeUnit.MILLISECONDS.sleep(10);
       } catch (InterruptedException e) {
         System.out.println(e.getMessage() + e);
@@ -421,6 +422,16 @@ public class SnapshotManager implements RevokingDatabase {
     logger.info("***debug debug:      blocks={}, datahash:{}", debugBlockHashs, Sha256Hash.of(debugDumpDatas.toString().getBytes()));
     // debug end
 
+  }
+
+  private void printlog() {
+    Snapshot next = dbs.get(0).getHead().getRoot();
+    List<Snapshot> snapshots = new ArrayList<>();
+    while (next != null) {
+      snapshots.add(next);
+      next = next.getNext();
+    }
+    logger.info("******all snapshot:" + snapshots);
   }
 
   @Slf4j
