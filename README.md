@@ -345,6 +345,7 @@ Read the [Advanced Configurations](src/main/java/org/tron/core/config/README.md)
 # Developer Community
 
 * [Discord](https://discord.gg/GsRgsTD) Please join our Developer Discord
+* [Gitter](https://gitter.im/tronprotocol/allcoredev) the core dev gitter
 
 # Links
 
