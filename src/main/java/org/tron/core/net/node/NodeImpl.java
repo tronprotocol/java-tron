@@ -79,6 +79,9 @@ import org.tron.protos.Protocol.Transaction;
 public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Autowired
+  private TrxHandler trxHandler;
+
+  @Autowired
   private SyncPool pool;
 
   private MessageCount trxCount = new MessageCount();
@@ -285,7 +288,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         onHandleTransactionMessage(peer, (TransactionMessage) msg);
         break;
       case TRXS:
-        onHandleTransactionsMessage(peer, (TransactionsMessage) msg);
+        trxHandler.handleTransactionsMessage(peer, (TransactionsMessage) msg);
         break;
       case SYNC_BLOCK_CHAIN:
         onHandleSyncBlockChainMessage(peer, (SyncBlockChainMessage) msg);
@@ -341,6 +344,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   @Override
   public void listen() {
     pool.init(this);
+    trxHandler.init(this);
     isAdvertiseActive = true;
     isFetchActive = true;
     activeTronPump();
@@ -624,6 +628,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
 
   private void onHandleInventoryMessage(PeerConnection peer, InventoryMessage msg) {
+    if (trxHandler.isBusy() && msg.getInventoryType().equals(InventoryType.TRX)){
+      logger.warn("Too many trx msg to handle, drop inventory msg from peer {}, size {}",
+          peer.getInetAddress(), msg.getHashList().size());
+      return;
+    }
     for (Sha256Hash id : msg.getHashList()) {
       if (msg.getInventoryType().equals(InventoryType.TRX) && TrxCache.getIfPresent(id) != null) {
         logger.info("{} {} from peer {} Already exist.", msg.getInventoryType(), id,
@@ -824,7 +833,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     return false;
   }
 
-  private void onHandleTransactionMessage(PeerConnection peer, TransactionMessage trxMsg) {
+  public void onHandleTransactionMessage(PeerConnection peer, TransactionMessage trxMsg) {
     try {
       Item item = new Item(trxMsg.getMessageId(), InventoryType.TRX);
       if (!peer.getAdvObjWeRequested().containsKey(item)) {
@@ -842,17 +851,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         broadcast(trxMsg);
       }
     } catch (TraitorPeerException e) {
-      logger.error(e.getMessage());
+      logger.error("Trx {} from peer {} failed, error: {}", trxMsg.getMessageId(), peer.getInetAddress(), e.getMessage());
       banTraitorPeer(peer, ReasonCode.BAD_PROTOCOL);
     } catch (BadTransactionException e) {
+      logger.error("Bad Trx {} from peer {}, error: {}", trxMsg.getMessageId(), peer.getInetAddress(), e.getMessage());
       banTraitorPeer(peer, ReasonCode.BAD_TX);
-    }
-  }
-
-  private void onHandleTransactionsMessage(PeerConnection peer, TransactionsMessage msg) {
-    for (Transaction trans : msg.getTransactions().getTransactionsList()) {
-      trxsHandlePool
-          .submit(() -> onHandleTransactionMessage(peer, new TransactionMessage(trans)));
     }
   }
 

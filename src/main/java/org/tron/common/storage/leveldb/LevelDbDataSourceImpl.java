@@ -140,6 +140,16 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     initDB();
   }
 
+  public void reOpen() {
+    resetDbLock.writeLock().lock();
+    try {
+      closeDB();
+      initDB();
+    } finally {
+      resetDbLock.writeLock().unlock();
+    }
+  }
+
   @Override
   public boolean isAlive() {
     return alive;
@@ -412,7 +422,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
       updateByBatchInner(rows, options);
     } catch (Exception e) {
       try {
-        updateByBatchInner(rows);
+        updateByBatchInner(rows, options);
       } catch (Exception e1) {
         throw new RuntimeException(e);
       }
@@ -444,7 +454,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
 
   @Override
   public org.tron.core.db.common.iterator.DBIterator iterator() {
-    return new StoreIterator(database.iterator());
+    return new StoreIterator(database.iterator(), resetDbLock.readLock());
   }
 
   public Stream<Entry<byte[], byte[]>> stream() {

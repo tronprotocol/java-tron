@@ -4,29 +4,48 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Set;
+import java.util.Stack;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.stream.Collectors;
+import lombok.Getter;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.HashDB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
 
 public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
+  @Getter
+  protected Snapshot root;
 
   SnapshotImpl(Snapshot snapshot) {
+    root = snapshot.getRoot();
     previous = snapshot;
+    snapshot.setNext(this);
     db = new HashDB();
   }
 
   @Override
   public byte[] get(byte[] key) {
-    Value value = db.get(Key.of(key));
-    if (value != null) {
-      return value.getBytes();
-    } else {
-      return previous.get(key);
+    Snapshot snapshot = this;
+    Value value;
+    while (Snapshot.isImpl(snapshot)) {
+      if ((value = ((SnapshotImpl) snapshot).db.get(Key.of(key))) != null) {
+        return value.getBytes();
+      }
+
+      snapshot = snapshot.getPrevious();
     }
+
+    return snapshot.get(key);
   }
 
   @Override
@@ -41,7 +60,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
       operator = Value.Operator.MODIFY;
     }
 
-    db.put(Key.of(key), Value.of(operator, value));
+    db.put(Key.copyOf(key), Value.copyOf(operator, value));
   }
 
   @Override
@@ -80,7 +99,9 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
           if (value == null) {
             db.put(k, v);
           } else if (value.getOperator() == Value.Operator.DELETE) {
-            db.put(k, Value.of(Value.Operator.MODIFY, v.getBytes()));
+            db.put(k, Value.copyOf(Value.Operator.MODIFY, v.getBytes()));
+          } else {
+            throw new IllegalStateException();
           }
         });
 
@@ -93,7 +114,9 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
           if (value == null || value.getOperator() == Value.Operator.MODIFY) {
             db.put(k, v);
           } else if (value.getOperator() == Value.Operator.CREATE) {
-            db.put(k, Value.of(Value.Operator.CREATE, v.getBytes()));
+            db.put(k, Value.copyOf(Value.Operator.CREATE, v.getBytes()));
+          } else {
+            throw new IllegalStateException();
           }
         });
 
@@ -106,8 +129,10 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
             db.put(k, Value.of(Value.Operator.DELETE, null));
           } else if (value.getOperator() == Value.Operator.CREATE) {
             db.remove(k);
+          } else {
+            throw new IllegalStateException();
           }
-        });
+  });
   }
 
   @Override
@@ -116,35 +141,50 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   }
 
   @Override
-  public Snapshot getRoot() {
-    return previous.getRoot();
-  }
-
-  //todo need to resolve levelDB'iterator close
-  @Override
   public Iterator<Map.Entry<byte[],byte[]>> iterator() {
     Map<WrappedByteArray, WrappedByteArray> all = new HashMap<>();
     collect(all);
+    Set<WrappedByteArray> keys = new HashSet<>(all.keySet());
+    all.entrySet()
+        .removeIf(entry -> entry.getValue() == null || entry.getValue().getBytes() == null);
     return Iterators.concat(
-        Iterators.transform(all.entrySet().iterator(), e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes())),
-        Iterators.filter(getRoot().iterator(), e -> !all.containsKey(WrappedByteArray.of(e.getKey()))));
+        Iterators.transform(all.entrySet().iterator(),
+            e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes())),
+        Iterators.filter(getRoot().iterator(),
+            e -> !keys.contains(WrappedByteArray.of(e.getKey()))));
   }
 
   void collect(Map<WrappedByteArray, WrappedByteArray> all) {
-    if (previous.getClass() == SnapshotImpl.class) {
-      ((SnapshotImpl) previous).collect(all);
+    Snapshot next = getRoot().getNext();
+    while (next != null) {
+      Streams.stream(((SnapshotImpl) next).db)
+          .forEach(e -> all.put(WrappedByteArray.of(e.getKey().getBytes()),
+              WrappedByteArray.of(e.getValue().getBytes())));
+      next = next.getNext();
     }
-
-    Streams.stream(db).forEach(e -> all.put(WrappedByteArray.of(e.getKey().getBytes()), WrappedByteArray.of(e.getValue().getBytes())));
   }
 
   @Override
   public void close() {
-    previous.close();
+    getRoot().close();
   }
 
   @Override
   public void reset() {
-    previous.reset();
+    getRoot().reset();
+  }
+
+  @Override
+  public void resetSolidity() {
+    root.resetSolidity();
+  }
+
+  @Override
+  public void updateSolidity() {
+    root.updateSolidity();
+  }
+
+  public Snapshot getSolidity() {
+    return root.getSolidity();
   }
 }
