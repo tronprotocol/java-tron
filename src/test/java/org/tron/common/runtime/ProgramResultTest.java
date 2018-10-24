@@ -42,6 +42,7 @@ public class ProgramResultTest {
   private static DepositImpl deposit;
   private static final String dbPath = "output_InternalTransactionComplexTest";
   private static final String OWNER_ADDRESS;
+  private static final String TRANSFER_TO;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug", "--support-constant"},
@@ -49,6 +50,7 @@ public class ProgramResultTest {
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
+    TRANSFER_TO = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
   }
 
   /**
@@ -60,6 +62,8 @@ public class ProgramResultTest {
     deposit = DepositImpl.createRoot(dbManager);
     deposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
     deposit.addBalance(Hex.decode(OWNER_ADDRESS), 100000000);
+    deposit.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
+    deposit.addBalance(Hex.decode(TRANSFER_TO), 0);
   }
 
   /**
@@ -393,6 +397,55 @@ public class ProgramResultTest {
         + "7230582044968955c360128fedfc823b2c8ab2a92ab470f3085e67c816bc507926e626e90029";
 
     long value = 100000;
+    long feeLimit = 1000000000;
+    long consumeUserResourcePercent = 0;
+
+    return TVMTestUtils
+        .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
+            feeLimit, consumeUserResourcePercent, null,
+            deposit, null);
+  }
+
+
+  @Test
+  public void suicideResultTest()
+      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+    byte[] suicideContract = deploySuicide();
+    Assert.assertEquals(deposit.getAccount(suicideContract).getBalance(), 1000);
+    String params = Hex.toHexString(new DataWord(new DataWord(TRANSFER_TO).getLast20Bytes()).getData());
+
+
+    // ======================================= Test Suicide =======================================
+    byte[] triggerData1 = TVMTestUtils.parseABI("suicide(address)",
+        params);
+    runtime = TVMTestUtils
+        .triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
+            suicideContract, triggerData1,
+            0, 100000000, deposit, null);
+    List<InternalTransaction> internalTransactionsList = runtime.getResult().getInternalTransactions();
+    Assert.assertEquals(deposit.getAccount(Hex.decode(TRANSFER_TO)).getBalance(), 1000);
+    Assert.assertEquals(deposit.getAccount(suicideContract).getBalance(), 0);
+    Assert.assertEquals(internalTransactionsList.get(0).getValue(), 1000);
+    Assert.assertEquals(new DataWord(internalTransactionsList.get(0).getSender()).getLast20Bytes(), new DataWord(suicideContract).getLast20Bytes());
+    Assert.assertEquals(internalTransactionsList.get(0).getTransferToAddress() , Hex.decode(TRANSFER_TO));
+    Assert.assertEquals(internalTransactionsList.get(0).getNote(), "suicide");
+    Assert.assertEquals(internalTransactionsList.get(0).isRejected(), false);
+  }
+
+  private byte[] deploySuicide()
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
+    String contractName = "suicide";
+    byte[] address = Hex.decode(OWNER_ADDRESS);
+    String ABI =
+        "[{\"constant\":false,\"inputs\":[{\"name\":\"toAddress\",\"type\":\"address\"}],\"name\":\"suicide\","
+            + "\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs"
+            + "\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"constructor\"},{\"payable\":"
+            + "true,\"stateMutability\":\"payable\",\"type\":\"fallback\"}]";
+    String code = "6080604052608a8060116000396000f300608060405260043610603e5763ffffffff7c0100000000000000000"
+        + "000000000000000000000000000000000000000600035041663dbc1f22681146040575b005b603e60043573ffffffffff"
+        + "ffffffffffffffffffffffffffffff1680ff00a165627a7a72305820e382f1dabb1c53705abe0c3e99497025ffbf78b73"
+        + "c079471d8984a745b3218720029";
+    long value = 1000;
     long feeLimit = 1000000000;
     long consumeUserResourcePercent = 0;
 
