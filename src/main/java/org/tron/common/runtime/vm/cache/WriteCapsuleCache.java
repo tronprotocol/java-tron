@@ -36,13 +36,8 @@ public class WriteCapsuleCache<V extends ProtoCapsule> implements CachedSource<b
   @Override
   public void commit() {
     writeCache.forEach((key, value) -> {
-      logger.warn("write cache commit, key" + Hex.toHexString(key) + " value:" + value);
+      logger.debug("commit cache , key" + Hex.toHexString(key) + " value:" + value);
       this.backingSource.put(key, value);
-//      if (value == null) {
-//
-//      } else {
-//        this.backingSource.put(key, value);
-//      }
     });
   }
 }
