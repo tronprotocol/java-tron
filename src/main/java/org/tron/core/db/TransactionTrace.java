@@ -207,6 +207,7 @@ public class TransactionTrace {
       logger.info(
           "this tx resultCode in received block: {}\nthis tx resultCode in self: {}",
           trx.getContractRet(), receipt.getResult());
+
       throw new ReceiptCheckErrException("Different resultCode");
     }
   }

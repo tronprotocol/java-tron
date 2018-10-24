@@ -1,46 +1,39 @@
 package org.tron.common.runtime.vm.cache;
 
 
+import lombok.extern.slf4j.Slf4j;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.utils.ByteArrayMap;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 
+@Slf4j(topic = "cache")
 public class ReadWriteCapsuleCache<V extends ProtoCapsule> implements CachedSource<byte[], V> {
-  private ByteArrayMap<V>  writeCapsuleCache;
-  private ByteArrayMap<V> readCapsuleCache;
+  private ByteArrayMap<V> writeCache;
+  private ByteArrayMap<V> readCache;
   private TronStoreWithRevoking<V> store;
 
   public ReadWriteCapsuleCache(TronStoreWithRevoking<V> store) {
     this.store = store;
-    writeCapsuleCache = new ByteArrayMap<>();
-    readCapsuleCache = new ByteArrayMap<>();
-  }
-
-  @Override
-  public void delete(byte[] key) {
-    writeCapsuleCache.put(key, null);
+    writeCache = new ByteArrayMap<>();
+    readCache = new ByteArrayMap<>();
   }
 
   @Override
   public void put(byte[] key, V value) {
-    writeCapsuleCache.put(key, value);
-  }
-
-  @Override
-  public boolean containsKey(byte[] key) {
-    return writeCapsuleCache.containsKey(key) || readCapsuleCache.containsKey(key);
+    writeCache.put(key, value);
   }
 
   @Override
   public V get(byte[] key) {
-    if(writeCapsuleCache.containsKey(key)) {
-      return writeCapsuleCache.get(key);
+    if(writeCache.containsKey(key)) {
+      return writeCache.get(key);
     }
 
-    if (readCapsuleCache.containsKey(key)) {
-      return readCapsuleCache.get(key);
+    if (readCache.containsKey(key)) {
+      return readCache.get(key);
     } else {
       V value;
       try {
@@ -49,14 +42,15 @@ public class ReadWriteCapsuleCache<V extends ProtoCapsule> implements CachedSour
         value = null;
       }
       // Ensure each key should be visit once, though value is null
-      readCapsuleCache.put(key, value);
+      readCache.put(key, value);
     }
-    return readCapsuleCache.get(key);
+    return readCache.get(key);
   }
 
   @Override
   public void commit() {
-    writeCapsuleCache.forEach((key, value) -> {
+    writeCache.forEach((key, value) -> {
+      logger.warn("read cache commit, key" + Hex.toHexString(key) + " value:" + value);
       if (value == null) {
         this.store.delete(key);
       } else {

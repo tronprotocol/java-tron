@@ -34,14 +34,13 @@ public class CachedDepositImpl implements Deposit {
 //  private HashMap<ByteArrayWrapper, Storage> storageCache = new HashMap<>();
   private HashMap<Key, Storage> storageCache = new HashMap<>();
 
-
-
   public static Deposit createRoot(Manager manager) {
     return new CachedDepositImpl(manager);
   }
 
   // for deposit root
   private CachedDepositImpl(Manager manager) {
+    this.manager = manager;
     accountCache = new ReadWriteCapsuleCache<>(manager.getAccountStore());
     contractCache = new ReadWriteCapsuleCache<>(manager.getContractStore());
     transactionCache = new ReadWriteCapsuleCache<>(manager.getTransactionStore());
@@ -180,7 +179,8 @@ public class CachedDepositImpl implements Deposit {
 
   @Override
   public Storage getStorage(byte[] address) {
-    ByteArrayWrapper key = new ByteArrayWrapper(address);
+//    ByteArrayWrapper key = new ByteArrayWrapper(address);
+    Key key = Key.create(address);
     if (storageCache.containsKey(key)) {
       return storageCache.get(key);
     }
@@ -217,7 +217,7 @@ public class CachedDepositImpl implements Deposit {
 
   @Override
   public void setParent(Deposit deposit) {
-
+    this.parent = deposit;
   }
 
   @Override
