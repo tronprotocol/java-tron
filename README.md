@@ -12,12 +12,16 @@
 
 
 <p align="center">
-  <a href="https://tronfoundation.slack.com/">
-    <img src="https://img.shields.io/badge/chat-on%20slack-brightgreen.svg">
+  <a href="https://discord.gg/GsRgsTD">
+    <img src="https://img.shields.io/badge/chat-on%20discord-brightgreen.svg">
   </a>
     
   <a href="https://travis-ci.org/tronprotocol/java-tron">
     <img src="https://travis-ci.org/tronprotocol/java-tron.svg?branch=develop">
+  </a>
+  
+  <a href="https://codecov.io/gh/tronprotocol/java-tron">
+    <img src="https://codecov.io/gh/tronprotocol/java-tron/branch/develop/graph/badge.svg" />
   </a>
   
   <a href="https://github.com/tronprotocol/java-tron/issues">
@@ -41,7 +45,7 @@
   <a href="#how-to-build">How to Build</a> •
   <a href="#running">How to Run</a> •
   <a href="#links">Links</a> •
-  <a href="http://wiki.tron.network">Wiki</a> •
+  <a href="http://developers.tron.network">Documentation</a> •
   <a href="CONTRIBUTING.md">Contributing</a> •
   <a href="#community">Community</a>
 </p>
@@ -340,14 +344,14 @@ Read the [Advanced Configurations](src/main/java/org/tron/core/config/README.md)
 
 # Developer Community
 
-* [Slack](https://tronfoundation.slack.com/) Please email tian@tron.network for a developer invite
+* [Discord](https://discord.gg/GsRgsTD) Please join our Developer Discord
+* [Gitter](https://gitter.im/tronprotocol/allcoredev) the core dev gitter
 
 # Links
 
 * [Website](https://tron.network/)
-* [Documentation](https://github.com/tronprotocol/java-tron)
+* [Documentation](http://developers.tron.network)
 * [Blog](https://tronprotocol.github.io/tron-blog/)
-* [TRON Wiki](http://wiki.tron.network/en/latest/)
 
 # Projects
 

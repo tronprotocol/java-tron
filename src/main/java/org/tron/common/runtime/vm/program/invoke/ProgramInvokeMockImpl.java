@@ -21,9 +21,12 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.BlockStore;
+import org.tron.core.exception.StoreException;
 import org.tron.protos.Protocol;
 
 // import org.tron.core.db.BlockStoreDummy;
@@ -67,7 +70,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   }
 
   /*           ADDRESS op         */
-  public DataWord getOwnerAddress() {
+  public DataWord getContractAddress() {
     return new DataWord(ownerAddress);
   }
 
@@ -232,6 +235,15 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   @Override
   public void setStaticCall() {
 
+  }
+
+  @Override
+  public BlockCapsule getBlockByNum(int index) {
+    try {
+      return deposit.getDbManager().getBlockByNum(index);
+    } catch (StoreException e) {
+      throw new IllegalOperationException("cannot find block num");
+    }
   }
 
   @Override

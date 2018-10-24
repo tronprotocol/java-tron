@@ -327,6 +327,7 @@ message TransactionInfo {
 
   int64 withdraw_amount = 15;
   int64 unfreeze_amount = 16;
+  repeated InternalTransaction internal_transactions = 17;
 }
 
 message Transactions {
@@ -501,4 +502,21 @@ message SmartContract {
   int64 consume_user_resource_percent = 6;
   string name = 7;
 
+}
+
+message InternalTransaction {
+  // internalTransaction identity, the root InternalTransaction hash
+  // should equals to root transaction id.
+  bytes hash = 1;
+  // the one send trx (TBD: or token) via function
+  bytes caller_address = 2;
+  // the one recieve trx (TBD: or token) via function
+  bytes transferTo_address = 3;
+  message CallValueInfo{
+    // trx (TBD: or token) value
+    int64 callValue = 1;
+    // TBD: tokenName, trx should be empty
+    bytes tokenName = 2;
+  }
+  repeated CallValueInfo callValueInfo = 4;
 }

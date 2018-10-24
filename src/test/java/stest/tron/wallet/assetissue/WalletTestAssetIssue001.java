@@ -84,8 +84,8 @@ public class WalletTestAssetIssue001 {
     Optional<GrpcAPI.AssetIssueList> queryAssetByAccount = Optional.ofNullable(assetIssueList1);
     if (queryAssetByAccount.get().getAssetIssueCount() == 0) {
       Assert
-          .assertTrue(PublicMethed.sendcoin(noBandwitchAddress, 2048000000, fromAddress, testKey002
-              , blockingStubFull));
+          .assertTrue(PublicMethed.sendcoin(noBandwitchAddress, 2048000000, fromAddress,
+              testKey002, blockingStubFull));
       Long start = System.currentTimeMillis() + 2000;
       Long end = System.currentTimeMillis() + 1000000000;
 

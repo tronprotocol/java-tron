@@ -24,7 +24,11 @@ import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import com.google.common.primitives.Longs;
 import java.util.Arrays;
 import org.tron.common.crypto.Hash;
+import org.tron.core.Wallet;
+import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.protos.Contract.CreateSmartContract;
+import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Transaction;
 
 public class InternalTransaction {
@@ -35,7 +39,7 @@ public class InternalTransaction {
   /* the amount of trx to transfer (calculated as sun) */
   private long value;
 
-  /* the address of the destination account
+  /* the address of the destination account (for message)
    * In creation transaction the receive address is - 0 */
   private byte[] receiveAddress;
 
@@ -44,7 +48,9 @@ public class InternalTransaction {
    * Initialization code for a new contract */
   private byte[] data;
   private long nonce;
+  private byte[] transferToAddress;
 
+  /*  Message sender address */
   protected byte[] sendAddress;
   private int deep;
   private int index;
@@ -71,10 +77,32 @@ public class InternalTransaction {
   /**
    * Construct an un-encoded InternalTransaction
    */
-  public InternalTransaction(Transaction trx) {
+  public InternalTransaction(Transaction trx,  InternalTransaction.TrxType trxType) {
     this.transaction = trx;
-    this.protoEncoded = (new TransactionCapsule(trx)).getData();
+    TransactionCapsule trxCap = new TransactionCapsule(trx);
+    this.protoEncoded = trxCap.getData();
     this.nonce = 0;
+    // outside transaction should not have deep, so use -1 to mark it is root.
+    // It will not count in vm trace. But this deep will be shown in program result.
+    this.deep = -1;
+    if (trxType.equals(TrxType.TRX_CONTRACT_CREATION_TYPE)) {
+      CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
+      this.sendAddress = contract.getOwnerAddress().toByteArray();
+      this.receiveAddress = EMPTY_BYTE_ARRAY;
+      this.transferToAddress = Wallet.generateContractAddress(trx);
+      this.note = "create";
+      this.value = contract.getNewContract().getCallValue();
+    }
+    else if(trxType.equals(TrxType.TRX_CONTRACT_CALL_TYPE)){
+      TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
+      this.sendAddress = contract.getOwnerAddress().toByteArray();
+      this.receiveAddress = contract.getContractAddress().toByteArray();
+      this.transferToAddress = this.receiveAddress.clone();
+      this.note = "call";
+      this.value = contract.getCallValue();
+    }
+    // TODO: Should consider unknown type?
+    this.hash = trxCap.getTransactionId().getBytes();
   }
 
   /**
@@ -82,16 +110,23 @@ public class InternalTransaction {
    */
 
   public InternalTransaction(byte[] parentHash, int deep, int index,
-      byte[] sendAddress, byte[] receiveAddress, long value, byte[] data, String note, long nonce) {
+      byte[] sendAddress, byte[] transferToAddress,  long value, byte[] data, String note, long nonce) {
     this.parentHash = parentHash;
     this.deep = deep;
     this.index = index;
     this.note = note;
     this.sendAddress = nullToEmpty(sendAddress);
-    this.receiveAddress = nullToEmpty(receiveAddress);
+    this.transferToAddress = nullToEmpty(transferToAddress);
+    if(note.equalsIgnoreCase("create")){
+      this.receiveAddress = EMPTY_BYTE_ARRAY;
+    }
+    else {
+      this.receiveAddress = nullToEmpty(transferToAddress);
+    }
     this.value = value;
     this.data = nullToEmpty(data);
     this.nonce = nonce;
+    this.hash = getHash();
   }
 
   public Transaction getTransaction() {
@@ -100,6 +135,10 @@ public class InternalTransaction {
 
   public void setTransaction(Transaction transaction) {
     this.transaction = transaction;
+  }
+
+  public byte[] getTransferToAddress() {
+    return transferToAddress.clone();
   }
 
   public void reject() {
@@ -188,12 +227,17 @@ public class InternalTransaction {
     if (protoEncoded != null) {
       return protoEncoded.clone();
     }
+    byte[] parentHashArray = parentHash.clone();
 
+    if (parentHashArray == null){
+      parentHashArray = EMPTY_BYTE_ARRAY;
+    }
     byte[] valueByte = Longs.toByteArray(this.value);
-    byte[] raw = new byte[this.receiveAddress.length + this.data.length + valueByte.length];
-    System.arraycopy(this.receiveAddress, 0, raw, 0, this.receiveAddress.length);
-    System.arraycopy(this.data, 0, raw, this.receiveAddress.length, this.data.length);
-    System.arraycopy(valueByte, 0, raw, this.receiveAddress.length + this.data.length,
+    byte[] raw = new byte[parentHashArray.length + this.receiveAddress.length + this.data.length + valueByte.length];
+    System.arraycopy(parentHashArray, 0, raw, 0, parentHashArray.length);
+    System.arraycopy(this.receiveAddress, 0, raw, parentHashArray.length, this.receiveAddress.length);
+    System.arraycopy(this.data, 0, raw, parentHashArray.length + this.receiveAddress.length, this.data.length);
+    System.arraycopy(valueByte, 0, raw, parentHashArray.length + this.receiveAddress.length + this.data.length,
         valueByte.length);
     this.protoEncoded = raw;
     return protoEncoded.clone();

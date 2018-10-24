@@ -1,6 +1,5 @@
 buildscript {
     repositories {
-        maven { url 'http://mvnrepository.com' }
         mavenCentral()
         jcenter()
     }
@@ -46,7 +45,6 @@ task sourceJar(type: Jar, dependsOn: classes) {
 }
 
 repositories {
-    maven { url 'http://mvnrepository.com' }
     mavenLocal()
     mavenCentral()
     maven { url 'http://repo.spring.io/plugins-release' }
@@ -288,7 +286,7 @@ task stest(type: Test) {
 
 jacocoTestReport {
     reports {
-        xml.enabled false
+        xml.enabled true
         csv.enabled false
         html.destination file("${buildDir}/jacocoHtml")
     }

@@ -1,5 +1,7 @@
 package org.tron.core.capsule;
 
+import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
@@ -9,9 +11,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.LogInfo;
+import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.ProgramResult;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.exception.BadItemException;
+import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.InternalTransactionOrBuilder;
 import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.Protocol.TransactionInfo.Builder;
 import org.tron.protos.Protocol.TransactionInfo.Log;
 import org.tron.protos.Protocol.TransactionInfo.code;
 
@@ -179,6 +186,31 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
     }
 
     builder.setReceipt(traceReceipt.getReceipt());
+
+    if (null != runtime.getResult().getInternalTransactions()) {
+      for (InternalTransaction internalTransaction : runtime.getResult()
+          .getInternalTransactions()) {
+        Protocol.InternalTransaction.Builder internalTrxBuilder = Protocol.InternalTransaction
+            .newBuilder();
+        // set hash
+        internalTrxBuilder.setHash(ByteString.copyFrom(internalTransaction.getHash()));
+        // set caller
+        internalTrxBuilder.setCallerAddress(ByteString.copyFrom(internalTransaction.getSender()));
+        // set TransferTo
+        internalTrxBuilder
+            .setTransferToAddress(ByteString.copyFrom(internalTransaction.getTransferToAddress()));
+        //TODO: for loop below in future for Tokens if we design involve token in
+        Protocol.InternalTransaction.CallValueInfo.Builder callValueInfoBuilder =
+            Protocol.InternalTransaction.CallValueInfo.newBuilder();
+        callValueInfoBuilder.setCallValue(internalTransaction.getValue());
+        // trx will not be set token name
+        callValueInfoBuilder.setTokenName(ByteString.copyFrom(EMPTY_BYTE_ARRAY));
+        // Just one transferBuilder for now.
+        internalTrxBuilder.addCallValueInfo(callValueInfoBuilder);
+        // Token for loop end here
+        builder.addInternalTransactions(internalTrxBuilder);
+      }
+    }
 
     return new TransactionInfoCapsule(builder.build());
   }
