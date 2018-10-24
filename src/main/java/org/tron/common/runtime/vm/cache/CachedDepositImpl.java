@@ -23,13 +23,17 @@ public class CachedDepositImpl implements Deposit {
   @Getter
   private CachedSource<byte[], ContractCapsule> contractCache;
   @Getter
+  private CachedSource<byte[], BlockCapsule> blockCache;
+  @Getter
   private CachedSource<byte[], TransactionCapsule> transactionCache;
   @Getter
   private CachedSource<byte[], WitnessCapsule> witnessCache;
   @Getter
   private CachedSource<byte[], CodeCapsule> codeCache;
 
-  private HashMap<ByteArrayWrapper, Storage> storageCache = new HashMap<>();
+//  private HashMap<ByteArrayWrapper, Storage> storageCache = new HashMap<>();
+  private HashMap<Key, Storage> storageCache = new HashMap<>();
+
 
 
   public static Deposit createRoot(Manager manager) {
@@ -43,6 +47,7 @@ public class CachedDepositImpl implements Deposit {
     transactionCache = new ReadWriteCapsuleCache<>(manager.getTransactionStore());
     witnessCache = new ReadWriteCapsuleCache<>(manager.getWitnessStore());
     codeCache = new ReadWriteCapsuleCache<>(manager.getCodeStore());
+    blockCache = new ReadWriteCapsuleCache<>(manager.getBlockStore());
   }
 
   // for deposit child
@@ -55,6 +60,7 @@ public class CachedDepositImpl implements Deposit {
     transactionCache = new WriteCapsuleCache<>(parent.getTransactionCache());
     witnessCache = new WriteCapsuleCache<>(parent.getWitnessCache());
     codeCache = new WriteCapsuleCache<>(parent.getCodeCache());
+    blockCache = new WriteCapsuleCache<>(parent.getBlockCache());
   }
 
   @Override
@@ -141,7 +147,8 @@ public class CachedDepositImpl implements Deposit {
     if (getAccount(address) == null) {
       return;
     }
-    ByteArrayWrapper addressKey = new ByteArrayWrapper(address);
+//    ByteArrayWrapper addressKey = new ByteArrayWrapper(address);
+    Key addressKey = Key.create(address);
     Storage storage;
     if (storageCache.containsKey(addressKey)) {
       storage = storageCache.get(addressKey);
@@ -158,7 +165,9 @@ public class CachedDepositImpl implements Deposit {
     if (getAccount(address) == null) {
       return null;
     }
-    ByteArrayWrapper addressKey = new ByteArrayWrapper(address);
+    Key addressKey = Key.create(address);
+//    ByteArrayWrapper addressKey = new ByteArrayWrapper(address);
+
     Storage storage;
     if (storageCache.containsKey(addressKey)) {
       storage = storageCache.get(addressKey);
@@ -223,6 +232,8 @@ public class CachedDepositImpl implements Deposit {
     this.getCodeCache().commit();
     this.getContractCache().commit();
     this.getWitnessCache().commit();
+    this.getBlockCache().commit();
+    commitStorageCache(this.parent);
   }
 
   @Override
@@ -317,11 +328,24 @@ public class CachedDepositImpl implements Deposit {
 
   @Override
   public TransactionCapsule getTransaction(byte[] trxHash) {
-    return null;
+    return this.getTransactionCache().get(trxHash);
   }
 
   @Override
   public BlockCapsule getBlock(byte[] blockHash) {
-    return null;
+    return this.blockCache.get(blockHash);
+  }
+
+  private void commitStorageCache(Deposit deposit) {
+    storageCache.forEach((key, value) -> {
+      if (deposit != null) {
+        // write to parent cache
+        deposit.putStorage(key, value);
+      } else {
+        // persistence
+        value.commit();
+      }
+    });
+
   }
 }
