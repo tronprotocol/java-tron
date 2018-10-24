@@ -1184,7 +1184,9 @@ public class Manager {
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
     // todo set revoking db max size.
 
-    witnessService.processBlock(block);
+    if (witnessService != null){
+      witnessService.processBlock(block);
+    }
 
     // checkWitness
     if (!witnessController.validateWitnessSchedule(block)) {
