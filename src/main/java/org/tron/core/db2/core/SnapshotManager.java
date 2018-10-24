@@ -187,6 +187,7 @@ public class SnapshotManager implements RevokingDatabase {
         TimeUnit.MILLISECONDS.sleep(10);
       } catch (InterruptedException e) {
         System.out.println(e.getMessage() + e);
+        Thread.currentThread().interrupt();
       }
     }
     System.err.println("******** end to pop revokingDb ********");
