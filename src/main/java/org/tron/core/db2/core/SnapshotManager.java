@@ -402,7 +402,6 @@ public class SnapshotManager implements RevokingDatabase {
       retreat();
     }
 
-
     // debug begin
     debugDumpDatas.sort(String::compareTo);
     logger.info("***debug check:      blocks={}, datahash:{}, accounts:{}\n", debugBlockHashs, Sha256Hash.of(debugDumpDatas.toString().getBytes()), printAccount(null));
