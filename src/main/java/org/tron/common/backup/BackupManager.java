@@ -132,8 +132,6 @@ public class BackupManager implements EventHandler{
     int peerPriority = keepAliveMessage.getPriority();
     String peerIp = sender.getAddress().getHostAddress();
 
-    logger.info("aaa: peer priority {} ip {}", peerPriority, peerIp);
-
     if (status.equals(INIT) && (keepAliveMessage.getFlag() || peerPriority > priority)){
       setStatus(SLAVER);
       return;
