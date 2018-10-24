@@ -54,7 +54,7 @@ public class InternalTransaction {
   protected byte[] sendAddress;
   private int deep;
   private int index;
-  private boolean rejected = false;
+  private boolean rejected;
   private String note;
   private byte[] protoEncoded;
 
@@ -85,7 +85,7 @@ public class InternalTransaction {
     // outside transaction should not have deep, so use -1 to mark it is root.
     // It will not count in vm trace. But this deep will be shown in program result.
     this.deep = -1;
-    if (trxType.equals(TrxType.TRX_CONTRACT_CREATION_TYPE)) {
+    if (trxType == TrxType.TRX_CONTRACT_CREATION_TYPE) {
       CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
       this.sendAddress = contract.getOwnerAddress().toByteArray();
       this.receiveAddress = EMPTY_BYTE_ARRAY;
@@ -96,8 +96,7 @@ public class InternalTransaction {
       if(this.data.length == 0){
         this.data = null;
       }
-    }
-    else if(trxType.equals(TrxType.TRX_CONTRACT_CALL_TYPE)) {
+    } else if(trxType == TrxType.TRX_CONTRACT_CALL_TYPE) {
       TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
       this.sendAddress = contract.getOwnerAddress().toByteArray();
       this.receiveAddress = contract.getContractAddress().toByteArray();
@@ -108,8 +107,9 @@ public class InternalTransaction {
       if (this.data.length == 0) {
         this.data = null;
       }
+    } else {
+      // TODO: Should consider unknown type?
     }
-    // TODO: Should consider unknown type?
     this.hash = trxCap.getTransactionId().getBytes();
   }
 
@@ -119,16 +119,15 @@ public class InternalTransaction {
 
   public InternalTransaction(byte[] parentHash, int deep, int index,
       byte[] sendAddress, byte[] transferToAddress,  long value, byte[] data, String note, long nonce) {
-    this.parentHash = parentHash;
+    this.parentHash = parentHash.clone();
     this.deep = deep;
     this.index = index;
     this.note = note;
     this.sendAddress = nullToEmpty(sendAddress);
     this.transferToAddress = nullToEmpty(transferToAddress);
-    if(note.equalsIgnoreCase("create")){
+    if("create".equalsIgnoreCase(note)){
       this.receiveAddress = EMPTY_BYTE_ARRAY;
-    }
-    else {
+    } else {
       this.receiveAddress = nullToEmpty(transferToAddress);
     }
     this.value = value;
@@ -184,7 +183,7 @@ public class InternalTransaction {
     if (parentHash == null) {
       return EMPTY_BYTE_ARRAY;
     }
-    return parentHash;
+    return parentHash.clone();
   }
 
   public long getValue() {
@@ -212,7 +211,7 @@ public class InternalTransaction {
     return receiveAddress.clone();
   }
 
-  public byte[] getHash() {
+  public final byte[] getHash() {
     if (!isEmpty(hash)) {
       return Arrays.copyOf(hash, hash.length);
     }

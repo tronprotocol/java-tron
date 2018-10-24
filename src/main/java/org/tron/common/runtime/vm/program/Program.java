@@ -86,33 +86,9 @@ public class Program {
 
   private BlockCapsule blockCap;
 
-  public byte[] getRootTransactionId() {
-    return rootTransactionId.clone();
-  }
-
-  public void setRootTransactionId(byte[] rootTransactionId) {
-    this.rootTransactionId = rootTransactionId.clone();
-  }
-
-  public long getNonce() {
-    return nonce;
-  }
-
-  public void setNonce(long nonceValue) {
-    nonce = nonceValue;
-  }
-
-  public Boolean getRootCallConstant() {
-    return isRootCallConstant;
-  }
-
-  public void setRootCallConstant(Boolean rootCallConstant) {
-    isRootCallConstant = rootCallConstant;
-  }
-
-  private long nonce = 0;
-  private byte[] rootTransactionId = null;
-  private Boolean isRootCallConstant = null;
+  private long nonce;
+  private byte[] rootTransactionId;
+  private Boolean isRootCallConstant;
 
   private InternalTransaction transaction;
 
@@ -169,6 +145,30 @@ public class Program {
     this.contractState = setupProgramListener(new ContractState(programInvoke));
     this.trace = new ProgramTrace(config, programInvoke);
     this.nonce = transaction.getNonce();
+  }
+
+  public byte[] getRootTransactionId() {
+    return rootTransactionId.clone();
+  }
+
+  public void setRootTransactionId(byte[] rootTransactionId) {
+    this.rootTransactionId = rootTransactionId.clone();
+  }
+
+  public long getNonce() {
+    return nonce;
+  }
+
+  public void setNonce(long nonceValue) {
+    nonce = nonceValue;
+  }
+
+  public Boolean getRootCallConstant() {
+    return isRootCallConstant;
+  }
+
+  public void setRootCallConstant(Boolean rootCallConstant) {
+    isRootCallConstant = rootCallConstant;
   }
 
   public ProgramPrecompile getProgramPrecompile() {
@@ -798,7 +798,7 @@ public class Program {
   }
 
   public byte[] getCode() {
-    return ops;
+    return ops.clone();
   }
 
   public byte[] getCodeAt(DataWord address) {
@@ -1117,8 +1117,8 @@ public class Program {
 
   static class ByteCodeIterator {
 
-    byte[] code;
-    int pc;
+    public byte[] code;
+    public int pc;
 
     public ByteCodeIterator(byte[] code) {
       this.code = code;
@@ -1137,7 +1137,7 @@ public class Program {
     }
 
     public boolean isPush() {
-      return getCurOpcode() != null ? getCurOpcode().name().startsWith("PUSH") : false;
+      return getCurOpcode() != null && getCurOpcode().name().startsWith("PUSH");
     }
 
     public byte[] getCurOpcodeArg() {
@@ -1506,7 +1506,12 @@ public class Program {
   }
 
   public DataWord getCallEnergy(OpCode op, DataWord requestedEnergy, DataWord availableEnergy) {
-    return requestedEnergy.compareTo(availableEnergy) > 0 ? availableEnergy : requestedEnergy;
+    if (requestedEnergy.compareTo(availableEnergy) > 0) {
+      return availableEnergy;
+    }
+    else {
+      return requestedEnergy;
+    }
   }
 
   public DataWord getCreateEnergy(DataWord availableEnergy) {
