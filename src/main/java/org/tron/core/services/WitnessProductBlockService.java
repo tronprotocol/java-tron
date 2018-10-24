@@ -84,7 +84,8 @@ public class WitnessProductBlockService {
     try {
       BlockCapsule blockCapsule = historyBlockCapsuleCache.getIfPresent(block.getNum());
       if (blockCapsule != null && Arrays.equals(blockCapsule.getWitnessAddress().toByteArray(),
-          block.getWitnessAddress().toByteArray())) {
+          block.getWitnessAddress().toByteArray()) && !Arrays.equals(block.getBlockId().getBytes(),
+          blockCapsule.getBlockId().getBytes())) {
         String key = ByteArray.toHexString(block.getWitnessAddress().toByteArray());
         if (!cheatWitnessInfoMap.containsKey(key)) {
           CheatWitnessInfo cheatWitnessInfo = new CheatWitnessInfo();
