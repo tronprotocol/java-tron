@@ -307,7 +307,7 @@ public class BandwidthProcessor extends ResourceProcessor {
 
     long netUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
-    long netLimit = calculateGlobalNetLimit(accountCapsule.getFrozenBalance());
+    long netLimit = calculateGlobalNetLimit(accountCapsule.getAllFrozenBalanceForBandwidth());
 
     long newNetUsage = increase(netUsage, 0, latestConsumeTime, now);
 

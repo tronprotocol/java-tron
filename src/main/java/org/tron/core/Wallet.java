@@ -17,15 +17,15 @@
  */
 
 package org.tron.core;
- 
+
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 
+import com.google.common.base.CaseFormat;
 import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Range; 
-import com.google.common.base.CaseFormat; 
+import com.google.common.collect.Range;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
@@ -664,7 +664,7 @@ public class Wallet {
     long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
     long energyLimit = energyProcessor
-        .calculateGlobalEnergyLimit(accountCapsule.getEnergyFrozenBalance());
+        .calculateGlobalEnergyLimit(accountCapsule.getAllFrozenBalanceForEnergy());
     long totalEnergyLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyLimit();
     long totalEnergyWeight = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
 
