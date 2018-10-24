@@ -489,6 +489,7 @@ public class Runtime {
           long callValue = TransactionCapsule.getCallValue(trx.getRawData().getContract(0));
           if (callValue > 0) {
             runtimeError = "constant cannot set call value.";
+            result.rejectInternalTransactions();
           }
           return;
         }
@@ -531,12 +532,14 @@ public class Runtime {
       program.spendAllEnergy();
       result = program.getResult();
       result.setException(e);
+      result.rejectInternalTransactions();
       runtimeError = result.getException().getMessage();
       logger.info("JVMStackOverFlowException: {}", result.getException().getMessage());
     } catch (OutOfResourceException e) {
       program.spendAllEnergy();
       result = program.getResult();
       result.setException(e);
+      result.rejectInternalTransactions();
       runtimeError = result.getException().getMessage();
       logger.info("timeout: {}", result.getException().getMessage());
     } catch (ContractValidateException e) {
@@ -544,6 +547,7 @@ public class Runtime {
     }catch (Throwable e) {
       program.spendAllEnergy();
       result = program.getResult();
+      result.rejectInternalTransactions();
       if (Objects.isNull(result.getException())) {
         logger.info(e.getMessage(), e);
         result.setException(new RuntimeException("Unknown Throwable"));
