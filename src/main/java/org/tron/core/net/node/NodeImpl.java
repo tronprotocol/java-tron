@@ -761,9 +761,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
               block.getBlockId().getString(), peer.getNode().getHost(), e.getMessage());
           disconnectPeer(peer, ReasonCode.BAD_BLOCK);
         } catch (UnLinkedBlockException e) {
-          logger.error("We get a unlinked block {}, from {}, head is {}",
-              block.getBlockId().getString(), peer.getNode().getHost(),
-              del.getHeadBlockId().getString());
+          logger.error("We get a unlinked block {}, from {}, head is {}", block.getBlockId().
+              getString(), peer.getNode().getHost(), del.getHeadBlockId().getString());
           startSyncWithPeer(peer);
         } catch (NonCommonBlockException e) {
           logger.error(
