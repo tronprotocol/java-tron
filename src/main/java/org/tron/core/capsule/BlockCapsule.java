@@ -33,9 +33,12 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.utils.MerkleTree;
+import org.tron.core.capsule.utils.RLP;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.trie.Trie;
+import org.tron.core.trie.TrieImpl;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.Transaction;
@@ -224,7 +227,8 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public BlockId getBlockId() {
     if (blockId.equals(Sha256Hash.ZERO_HASH)) {
-      blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray()), getNum());
+      blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray()),
+          getNum());
     }
     return blockId;
   }
@@ -252,8 +256,48 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     this.block = this.block.toBuilder().setBlockHeader(
         this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
   }
+
+  public void setReceiptRoot() {
+    logger.info("calcReceiptRoot : {}", calcReceiptRoot());
+  }
+
+  public ByteString calcReceiptRoot() {
+    List<Transaction> transactionsList = this.block.getTransactionsList();
+
+    if (CollectionUtils.isEmpty(transactionsList)) {
+      return Sha256Hash.ZERO_HASH.getByteString();
+    }
+
+    Vector<Sha256Hash> ids = transactionsList.stream()
+        .map(TransactionCapsule::new)
+        .map(TransactionCapsule::getReceiptMPTHash)
+        .collect(Collectors.toCollection(Vector::new));
+
+    Trie receiptsTrie = new TrieImpl();
+
+    for (int i = 0; i < ids.size(); i++) {
+      receiptsTrie.put(RLP.encodeInt(i), ids.get(i).getBytes());
+    }
+    return ByteString.copyFrom(receiptsTrie.getRootHash());
+  }
+
+  public static ByteString calcReceiptsTrie(List<TransactionInfoCapsule> transactionInfoCapsules) {
+    Trie receiptsTrie = new TrieImpl();
+
+    if (CollectionUtils.isEmpty(transactionInfoCapsules)) {
+      return Sha256Hash.ZERO_HASH.getByteString();
+    }
+
+    for (int i = 0; i < transactionInfoCapsules.size(); i++) {
+      receiptsTrie.put(RLP.encodeInt(i), Sha256Hash.of(transactionInfoCapsules.get(i).getInstance().
+          getReceipt().toByteArray()).getBytes());
+    }
+    return ByteString.copyFrom(receiptsTrie.getRootHash());
+  }
+
+
   /* only for genisis */
-  public void  setWitness(String witness) {
+  public void setWitness(String witness) {
     BlockHeader.raw blockHeaderRaw =
         this.block.getBlockHeader().getRawData().toBuilder().setWitnessAddress(
             ByteString.copyFrom(witness.getBytes())).build();
