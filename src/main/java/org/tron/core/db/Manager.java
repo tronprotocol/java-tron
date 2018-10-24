@@ -37,7 +37,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.vm.cache.CachedDepositImpl;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
+import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
@@ -960,7 +962,7 @@ public class Manager {
 
     consumeBandwidth(trxCap, trace);
 
-    DepositImpl deposit = DepositImpl.createRoot(this);
+    Deposit deposit = CachedDepositImpl.createRoot(this);
     Runtime runtime = new Runtime(trace, blockCap, deposit, new ProgramInvokeFactoryImpl());
     if (runtime.isCallConstant()) {
       throw new VMIllegalException("cannot call constant method ");
@@ -974,7 +976,7 @@ public class Manager {
         if (trace.checkNeedRetry()) {
           String txId = Hex.toHexString(trxCap.getTransactionId().getBytes());
           logger.info("Retry for tx id: {}", txId);
-          deposit = DepositImpl.createRoot(this);
+          deposit = CachedDepositImpl.createRoot(this);
           runtime = new Runtime(trace, blockCap, deposit, new ProgramInvokeFactoryImpl());
           trace.init();
           trace.exec(runtime);
