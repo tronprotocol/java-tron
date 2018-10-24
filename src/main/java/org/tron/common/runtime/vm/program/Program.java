@@ -1117,8 +1117,8 @@ public class Program {
 
   static class ByteCodeIterator {
 
-    public byte[] code;
-    public int pc;
+    byte[] code;
+    int pc;
 
     public ByteCodeIterator(byte[] code) {
       this.code = code;
@@ -1506,12 +1506,7 @@ public class Program {
   }
 
   public DataWord getCallEnergy(OpCode op, DataWord requestedEnergy, DataWord availableEnergy) {
-    if (requestedEnergy.compareTo(availableEnergy) > 0) {
-      return availableEnergy;
-    }
-    else {
-      return requestedEnergy;
-    }
+    return requestedEnergy.compareTo(availableEnergy) > 0 ? availableEnergy : requestedEnergy;
   }
 
   public DataWord getCreateEnergy(DataWord availableEnergy) {
