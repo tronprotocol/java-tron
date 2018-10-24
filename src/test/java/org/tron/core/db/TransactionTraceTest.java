@@ -132,6 +132,8 @@ public class TransactionTraceTest {
     Runtime runtime = new RuntimeImpl(trace, null, deposit,
         new ProgramInvokeFactoryImpl());
     try {
+
+      trace.init(null);
       trace.exec();
       trace.pay();
       Assert.assertEquals(50000, trace.getReceipt().getEnergyUsage());
@@ -170,6 +172,7 @@ public class TransactionTraceTest {
     Runtime runtime = new RuntimeImpl(trace, null, deposit,
         new ProgramInvokeFactoryImpl());
     try {
+      trace.init(null);
       trace.exec();
       trace.pay();
       Assert.assertEquals(0, trace.getReceipt().getEnergyUsage());
@@ -207,6 +210,7 @@ public class TransactionTraceTest {
     Runtime runtime = new RuntimeImpl(trace, null, deposit,
         new ProgramInvokeFactoryImpl());
     try {
+      trace.init(null);
       trace.exec();
       trace.pay();
       Assert.assertEquals(5243, trace.getReceipt().getEnergyUsage());
@@ -246,6 +250,7 @@ public class TransactionTraceTest {
     Runtime runtime = new RuntimeImpl(trace, null, deposit,
         new ProgramInvokeFactoryImpl());
     try {
+      trace.init(null);
       trace.exec();
       trace.pay();
       Assert.assertEquals(0, trace.getReceipt().getEnergyUsage());

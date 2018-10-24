@@ -98,13 +98,11 @@ public class TransactionTrace {
   }
 
   //pre transaction check
-  public void init(BlockCapsule blockCap) throws VMIllegalException, ContractValidateException {
+  public void init(BlockCapsule blockCap) {
     txStartTimeInMs = System.currentTimeMillis();
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
     runtime = new RuntimeImpl(this, blockCap, deposit, new ProgramInvokeFactoryImpl());
-    if (runtime.isCallConstant()) {
-      throw new VMIllegalException("cannot call constant method ");
-    }
+
     // switch (trxType) {
     //   case TRX_PRECOMPILED_TYPE:
     //     break;
@@ -117,7 +115,11 @@ public class TransactionTrace {
     // }
 
   }
-
+public void checkIsConstant() throws ContractValidateException, VMIllegalException {
+  if (runtime.isCallConstant()) {
+    throw new VMIllegalException("cannot call constant method ");
+  }
+}
   //set bill
   public void setBill(long energyUsage) {
     if (energyUsage < 0) {
@@ -287,5 +289,9 @@ public class TransactionTrace {
 
   public ProgramResult getRuntimeResult() {
     return runtime.getResult();
+  }
+
+  public Runtime getRuntime() {
+    return runtime;
   }
 }
