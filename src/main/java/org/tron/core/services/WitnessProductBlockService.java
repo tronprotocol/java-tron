@@ -28,6 +28,11 @@ public class WitnessProductBlockService {
     private long latestBlockNum;
     private Set<BlockCapsule> blockCapsuleSet = new HashSet<>();
 
+    public CheatWitnessInfo increment() {
+      times.incrementAndGet();
+      return this;
+    }
+
     public AtomicInteger getTimes() {
       return times;
     }
@@ -47,12 +52,21 @@ public class WitnessProductBlockService {
     }
 
     public Set<BlockCapsule> getBlockCapsuleSet() {
-      return blockCapsuleSet;
+      return new HashSet<>(blockCapsuleSet);
     }
 
-    public CheatWitnessInfo setBlockCapsuleSet(
-        Set<BlockCapsule> blockCapsuleSet) {
-      this.blockCapsuleSet = blockCapsuleSet;
+    public CheatWitnessInfo clear() {
+      blockCapsuleSet.clear();
+      return this;
+    }
+
+    public CheatWitnessInfo add(BlockCapsule blockCapsule) {
+      blockCapsuleSet.add(blockCapsule);
+      return this;
+    }
+
+    public CheatWitnessInfo setBlockCapsuleSet(Set<BlockCapsule> blockCapsuleSet) {
+      this.blockCapsuleSet = new HashSet<>(blockCapsuleSet);
       return this;
     }
 
@@ -76,11 +90,8 @@ public class WitnessProductBlockService {
           CheatWitnessInfo cheatWitnessInfo = new CheatWitnessInfo();
           cheatWitnessInfoMap.put(key, cheatWitnessInfo);
         }
-        cheatWitnessInfoMap.get(key).getTimes().incrementAndGet();
-        cheatWitnessInfoMap.get(key).setLatestBlockNum(block.getNum());
-        cheatWitnessInfoMap.get(key).getBlockCapsuleSet().clear();
-        cheatWitnessInfoMap.get(key).getBlockCapsuleSet().add(block);
-        cheatWitnessInfoMap.get(key).getBlockCapsuleSet().add(blockCapsule);
+        cheatWitnessInfoMap.get(key).clear().setLatestBlockNum(block.getNum()).add(block)
+            .add(blockCapsule).increment();
       } else {
         historyBlockCapsuleCache.put(block.getNum(), block);
       }
