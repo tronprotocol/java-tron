@@ -450,8 +450,11 @@ public class SnapshotManager implements RevokingDatabase {
         }
       });
     }
-    debugDumpDatas.sort(String::compareTo);
-    logger.info("***debug debug:      blocks={}, datahash:{}, account:{}\n", debugBlockHashs, Sha256Hash.of(debugDumpDatas.toString().getBytes()), printAccount(values));
+    if (!debugBlockHashs.isEmpty()) {
+      debugDumpDatas.sort(String::compareTo);
+      logger.info("***debug debug:      blocks={}, datahash:{}, account:{}\n", debugBlockHashs,
+          Sha256Hash.of(debugDumpDatas.toString().getBytes()), printAccount(values));
+    }
     // debug end
 
   }
