@@ -76,6 +76,8 @@ public interface Deposit {
 
   void putContract(Key key, Value value);
 
+  void putStorage(byte[] key, Storage cache);
+
   void putStorage(Key key, Storage cache);
 
   void putVotes(Key key, Value value);

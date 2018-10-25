@@ -239,6 +239,11 @@ public class CachedDepositImpl implements Deposit {
   }
 
   @Override
+  public void putStorage(byte[] key, Storage cache) {
+    this.storageCache.put(key, cache);
+  }
+
+  @Override
   public void putStorage(Key key, Storage cache) {
 
   }

@@ -454,6 +454,11 @@ public class DepositImpl implements Deposit {
     contractCache.put(key, value);
   }
 
+  @Override
+  public void putStorage(byte[] key, Storage cache) {
+    throw new RuntimeException("unsupported method in depositImp");
+  }
+
 //  @Override
 //  public void putStorage(Key key, Value value) {
 //    storageCache.put(key, value);
