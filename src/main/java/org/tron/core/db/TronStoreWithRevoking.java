@@ -79,9 +79,6 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   @Override
   public T getUnchecked(byte[] key) {
     byte[] value = revokingDB.getUnchecked(key);
-    if (value == null) {
-      return null;
-    }
 
     try {
       return of(value);
@@ -96,9 +93,6 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
   public T getUncheckedOnSolidity(byte[] key) {
     byte[] value = revokingDB.getUncheckedOnSolidity(key);
-    if (value == null) {
-      return null;
-    }
 
     try {
       return of(value);
