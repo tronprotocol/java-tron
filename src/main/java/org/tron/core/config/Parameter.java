@@ -23,7 +23,7 @@ public interface Parameter {
     int BLOCK_FILLED_SLOTS_NUMBER = 128;
     int MAX_VOTE_NUMBER = 30;
     int MAX_FROZEN_NUMBER = 1;
-
+    int version = 3;
   }
 
   interface NodeConstant {
@@ -57,15 +57,22 @@ public interface Parameter {
   }
 
   enum ChainParameters {
-    MAINTENANCE_TIME_INTERVAL, //ms
-    ACCOUNT_UPGRADE_COST, //drop
-    CREATE_ACCOUNT_FEE, //drop
-    TRANSACTION_FEE, //drop
-    ASSET_ISSUE_FEE, //drop
-    WITNESS_PAY_PER_BLOCK, //drop
-    WITNESS_STANDBY_ALLOWANCE, //drop
-    CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT, //drop
-    CREATE_NEW_ACCOUNT_BANDWIDTH_RATE, // 1 ~
+    MAINTENANCE_TIME_INTERVAL, //ms  ,0
+    ACCOUNT_UPGRADE_COST, //drop ,1
+    CREATE_ACCOUNT_FEE, //drop ,2
+    TRANSACTION_FEE, //drop ,3
+    ASSET_ISSUE_FEE, //drop ,4
+    WITNESS_PAY_PER_BLOCK, //drop ,5
+    WITNESS_STANDBY_ALLOWANCE, //drop ,6
+    CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT, //drop ,7
+    CREATE_NEW_ACCOUNT_BANDWIDTH_RATE, // 1 ~ ,8
+    ALLOW_CREATION_OF_CONTRACTS, // 0 / >0 ,9
+    REMOVE_THE_POWER_OF_THE_GR,  // 1 ,10
+    ENERGY_FEE, // drop, 11
+    EXCHANGE_CREATE_FEE, // drop, 12
+    MAX_CPU_TIME_OF_ONE_TX, // ms, 13
+    ALLOW_UPDATE_ACCOUNT_NAME, // 1, 14
+    ALLOW_SAME_TOKEN_NAME, // 1, 15
 //    ONE_DAY_NET_LIMIT,
 //    MAX_FROZEN_TIME,
 //    MIN_FROZEN_TIME,
@@ -75,7 +82,9 @@ public interface Parameter {
 //    WITNESS_ALLOWANCE_FROZEN_TIME,
 //    PUBLIC_NET_LIMIT,
 //    FREE_NET_LIMIT,
-//    TOTAL_NET_LIMIT
+//    TOTAL_NET_LIMIT,
+//    EXCHANGE_BALANCE_LIMIT,
+//    TOTAL_ENERGY_LIMIT,
   }
 
 }

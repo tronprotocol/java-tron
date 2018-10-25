@@ -49,6 +49,7 @@ repositories {
     maven { url 'http://mvnrepository.com' }
     mavenLocal()
     mavenCentral()
+    maven { url 'http://repo.spring.io/plugins-release' }
 }
 def versions = [
         checkstyle: '8.7',
@@ -66,6 +67,24 @@ configurations {
 
 configurations.getByName('checkstyleConfig') {
     transitive = false
+}
+
+static def isWindows() {
+    return org.gradle.internal.os.OperatingSystem.current().isWindows()
+}
+
+if (isWindows()) {
+    ext {
+        leveldbGroup = "org.ethereum"
+        leveldbName = "leveldbjni-all"
+        leveldbVersion = "1.18.3"
+    }
+} else {
+    ext {
+        leveldbGroup = "org.fusesource.leveldbjni"
+        leveldbName = "leveldbjni-all"
+        leveldbVersion = "1.8"
+    }
 }
 
 dependencies {
@@ -95,8 +114,7 @@ dependencies {
 
     compile "org.iq80.leveldb:leveldb:0.7"
 
-    compile group: 'org.fusesource.leveldbjni', name: 'leveldbjni-all',
-            version: '1.8'
+    compile group: leveldbGroup, name: leveldbName, version: leveldbVersion
 
     compile "org.apache.commons:commons-collections4:4.0"
 
@@ -132,9 +150,9 @@ dependencies {
 
     checkstyleConfig "com.puppycrawl.tools:checkstyle:${versions.checkstyle}"
     // google grpc
-    compile group: 'io.grpc', name: 'grpc-netty', version: '1.9.0'
-    compile group: 'io.grpc', name: 'grpc-protobuf', version: '1.9.0'
-    compile group: 'io.grpc', name: 'grpc-stub', version: '1.9.0'
+    compile group: 'io.grpc', name: 'grpc-netty', version: '1.14.0'
+    compile group: 'io.grpc', name: 'grpc-protobuf', version: '1.14.0'
+    compile group: 'io.grpc', name: 'grpc-stub', version: '1.14.0'
     // end google grpc
 
     compile group: 'com.carrotsearch', name: 'java-sizeof', version: '0.0.5'
@@ -251,6 +269,9 @@ task stest(type: Test) {
 
     useTestNG {
         suites(file('src/test/resources/testng.xml'))
+        parallel 'tests'
+        threadCount 4
+
     }
 
     testLogging {

@@ -1,5 +1,8 @@
 package org.tron.core.db;
 
+import static org.tron.core.db2.core.SnapshotManager.simpleDecode;
+
+import com.google.common.collect.Maps;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
@@ -12,8 +15,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
-import com.google.common.collect.Maps;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -27,12 +28,8 @@ import org.tron.common.utils.Utils;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.core.ISession;
-import org.tron.core.db2.core.RevokingDBWithCachingNewValue;
 import org.tron.core.db2.core.RevokingDBWithCachingOldValue;
-import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
-
-import static org.tron.core.db2.core.SnapshotManager.simpleDecode;
 
 @Slf4j
 @Getter // only for unit test
@@ -247,6 +244,15 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
 
   @Override
   public synchronized void pop() {
+    prune(writeOptions);
+  }
+
+  @Override
+  public synchronized void fastPop() {
+    prune(new WriteOptions());
+  }
+
+  private synchronized void prune(WriteOptions options) {
     if (activeDialog != 0) {
       throw new RevokingStoreIllegalStateException("activeDialog has to be equal 0");
     }
@@ -259,9 +265,9 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
 
     try {
       RevokingState state = stack.peekLast();
-      state.oldValues.forEach((k, v) -> k.database.putData(k.key, v, writeOptions));
-      state.newIds.forEach(e -> e.database.deleteData(e.key, writeOptions));
-      state.removed.forEach((k, v) -> k.database.putData(k.key, v, writeOptions));
+      state.oldValues.forEach((k, v) -> k.database.putData(k.key, v, options));
+      state.newIds.forEach(e -> e.database.deleteData(e.key, options));
+      state.removed.forEach((k, v) -> k.database.putData(k.key, v, options));
       stack.pollLast();
     } finally {
       disabled = false;

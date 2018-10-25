@@ -1,5 +1,8 @@
 package org.tron.core.config.args;
 
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.typesafe.config.Config;
@@ -38,6 +41,7 @@ import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.ChainConstant;
+import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.db.AccountStore;
 import org.tron.keystore.CipherException;
 import org.tron.keystore.Credentials;
@@ -67,8 +71,28 @@ public class Args {
 
   @Getter
   @Setter
+  @Parameter(names = {"--support-constant"})
+  private boolean supportConstant = false;
+
+  @Getter
+  @Setter
   @Parameter(names = {"--debug"})
   private boolean debug = false;
+
+  @Getter
+  @Setter
+  @Parameter(names = {"--min-time-ratio"})
+  private double minTimeRatio = 0.6;
+
+  @Getter
+  @Setter
+  @Parameter(names = {"--max-time-ratio"})
+  private double maxTimeRatio = calcMaxTimeRatio();
+
+  @Getter
+  @Setter
+  @Parameter(names = {"--long-running-time"})
+  private int longRunningTime = 10;
 
   @Getter
   @Parameter(description = "--seed-nodes")
@@ -217,6 +241,14 @@ public class Args {
 
   @Getter
   @Setter
+  private int blockProducedTimeOut;
+
+  @Getter
+  @Setter
+  private long netMaxTrxPerSecond;
+
+  @Getter
+  @Setter
   private long maxConnectionAgeInMillis;
 
   @Getter
@@ -239,6 +271,10 @@ public class Args {
   @Getter
   @Setter
   private long proposalExpireTime; // (ms)
+
+  @Getter
+  @Setter
+  private long allowCreationOfContracts; //committee parameter
 
   @Getter
   @Setter
@@ -289,6 +325,14 @@ public class Args {
   @Setter
   private long receiveTcpMinDataLength;
 
+  @Getter
+  @Setter
+  private boolean isOpenFullTcpDisconnect;
+
+  @Getter
+  @Setter
+  private String logLevel;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -332,6 +376,7 @@ public class Args {
     INSTANCE.solidityHttpPort = 0;
     INSTANCE.maintenanceTimeInterval = 0;
     INSTANCE.proposalExpireTime = 0;
+    INSTANCE.allowCreationOfContracts = 0;
     INSTANCE.tcpNettyWorkThreadNum = 0;
     INSTANCE.udpNettyWorkThreadNum = 0;
     INSTANCE.p2pNodeId = "";
@@ -343,6 +388,12 @@ public class Args {
     INSTANCE.disconnectNumberFactor = 0.4;
     INSTANCE.maxConnectNumberFactor = 0.8;
     INSTANCE.receiveTcpMinDataLength = 2048;
+    INSTANCE.isOpenFullTcpDisconnect = false;
+    INSTANCE.supportConstant = false;
+    INSTANCE.debug = false;
+    INSTANCE.minTimeRatio = 0.6;
+    INSTANCE.maxTimeRatio = 5.0;
+    INSTANCE.longRunningTime = 10;
   }
 
   /**
@@ -402,6 +453,22 @@ public class Args {
 
     if (INSTANCE.isWitness() && CollectionUtils.isEmpty(INSTANCE.localWitnesses.getPrivateKeys())) {
       logger.warn("This is a witness node,but localWitnesses is null");
+    }
+
+    if (config.hasPath("vm.supportConstant")) {
+      INSTANCE.supportConstant = config.getBoolean("vm.supportConstant");
+    }
+
+    if (config.hasPath("vm.minTimeRatio")) {
+      INSTANCE.minTimeRatio = config.getDouble("vm.minTimeRatio");
+    }
+
+    if (config.hasPath("vm.maxTimeRatio")) {
+      INSTANCE.maxTimeRatio = config.getDouble("vm.maxTimeRatio");
+    }
+
+    if (config.hasPath("vm.longRunningTime")) {
+      INSTANCE.longRunningTime = config.getInt("vm.longRunningTime");
     }
 
     INSTANCE.storage = new Storage();
@@ -524,6 +591,12 @@ public class Args {
     INSTANCE.maxConnectionIdleInMillis = config.hasPath("node.rpc.maxConnectionIdleInMillis") ?
         config.getLong("node.rpc.maxConnectionIdleInMillis") : Long.MAX_VALUE;
 
+    INSTANCE.blockProducedTimeOut = config.hasPath("node.blockProducedTimeOut") ?
+        config.getInt("node.blockProducedTimeOut") : ChainConstant.BLOCK_PRODUCED_TIME_OUT;
+
+    INSTANCE.netMaxTrxPerSecond = config.hasPath("node.netMaxTrxPerSecond") ?
+        config.getInt("node.netMaxTrxPerSecond") : NetConstants.NET_MAX_TRX_PER_SECOND;
+
     INSTANCE.maxConnectionAgeInMillis = config.hasPath("node.rpc.maxConnectionAgeInMillis") ?
         config.getLong("node.rpc.maxConnectionAgeInMillis") : Long.MAX_VALUE;
 
@@ -540,6 +613,10 @@ public class Args {
     INSTANCE.proposalExpireTime =
         config.hasPath("block.proposalExpireTime") ? config
             .getInt("block.proposalExpireTime") : 259200000L;
+
+    INSTANCE.allowCreationOfContracts =
+        config.hasPath("committee.allowCreationOfContracts") ? config
+            .getInt("committee.allowCreationOfContracts") : 0;
 
     INSTANCE.tcpNettyWorkThreadNum = config.hasPath("node.tcpNettyWorkThreadNum") ? config
         .getInt("node.tcpNettyWorkThreadNum") : 0;
@@ -570,6 +647,9 @@ public class Args {
         config.getDouble("node.maxConnectNumberFactor") : 0.8;
     INSTANCE.receiveTcpMinDataLength = config.hasPath("node.receiveTcpMinDataLength") ?
         config.getLong("node.receiveTcpMinDataLength") : 2048;
+    INSTANCE.isOpenFullTcpDisconnect = config.hasPath("node.isOpenFullTcpDisconnect") && config
+        .getBoolean("node.isOpenFullTcpDisconnect");
+    INSTANCE.logLevel = config.hasPath("log.level.root") ? config.getString("log.level.root") : "INFO";
 
     initBackupProperty(config);
 
@@ -637,7 +717,7 @@ public class Args {
 
   private static List<Node> getNodes(final com.typesafe.config.Config config, String path) {
     if (!config.hasPath(path)) {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
     List<Node> ret = new ArrayList<>();
     List<String> list = config.getStringList(path);
@@ -754,6 +834,10 @@ public class Args {
     }
 
     return ECKey.fromPrivate(Hex.decode(INSTANCE.p2pNodeId));
+  }
+
+  private static double calcMaxTimeRatio() {
+    return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
   }
 
   private static void initBackupProperty(Config config) {

@@ -9,11 +9,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.junit.*;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.overlay.client.PeerClient;
@@ -45,14 +42,14 @@ import org.tron.protos.Protocol.Transaction;
 @Slf4j
 public class BroadTest {
 
-  private static AnnotationConfigApplicationContext context;
-  private NodeImpl node;
+  private static TronApplicationContext context;
+  private static NodeImpl node;
   RpcApiService rpcApiService;
-  PeerClient peerClient;
+  private static PeerClient peerClient;
   ChannelManager channelManager;
   SyncPool pool;
-  Application appT;
-  private static final String dbPath = "output-nodeImplTest/broad";
+  private static Application appT;
+  private static final String dbPath = "output-nodeImplTest-broad";
   private static final String dbDirectory = "db_Broad_test";
   private static final String indexDirectory = "index_Broad_test";
 
@@ -196,7 +193,7 @@ public class BroadTest {
         cfgArgs.setNeedSyncCheck(false);
         cfgArgs.setNodeExternalIp("127.0.0.1");
 
-        context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+        context = new TronApplicationContext(DefaultConfig.class);
 
         if (cfgArgs.isHelp()) {
           logger.info("Here is the help message.");
@@ -267,16 +264,18 @@ public class BroadTest {
     }
   }
 
-  @After
-  public void destroy() {
+  @AfterClass
+  public static void destroy() {
     Args.clearParam();
-    FileUtil.deleteDir(new File("output-nodeImplTest"));
     Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(node, "getActivePeer");
     for (PeerConnection peer : peerConnections) {
       peer.close();
     }
+    context.destroy();
     peerClient.close();
+    appT.shutdownServices();
     appT.shutdown();
+    FileUtil.deleteDir(new File(dbPath));
   }
-  
+
 }

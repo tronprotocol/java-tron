@@ -84,7 +84,7 @@ public class WalletTestAssetIssue008 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     logger.info(ByteArray.toHexString(ecKey.getPrivKeyBytes()));
     channelFull = ManagedChannelBuilder.forTarget(fullnode)

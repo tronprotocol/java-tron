@@ -25,7 +25,7 @@ public class ProposalStore extends TronStoreWithRevoking<ProposalCapsule> {
   }
 
   /**
-   * get all witnesses.
+   * get all proposals.
    */
   public List<ProposalCapsule> getAllProposals() {
     return Streams.stream(iterator())

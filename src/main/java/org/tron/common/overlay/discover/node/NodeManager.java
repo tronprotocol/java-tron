@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.common.overlay.discover.node;
 
 import com.google.common.cache.Cache;
@@ -47,6 +48,7 @@ import org.tron.common.net.udp.message.discover.NeighborsMessage;
 import org.tron.common.net.udp.message.discover.PingMessage;
 import org.tron.common.net.udp.message.discover.PongMessage;
 import org.tron.common.overlay.discover.DiscoverListener;
+import org.tron.common.overlay.discover.RefreshTask;
 import org.tron.common.overlay.discover.node.NodeHandler.State;
 import org.tron.common.overlay.discover.node.statistics.MessageStatistics;
 import org.tron.common.overlay.discover.node.statistics.NodeStatistics;
@@ -59,9 +61,6 @@ import org.tron.core.db.Manager;
 public class NodeManager implements EventHandler {
 
   private static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeManager");
-
-  private Cache<InetSocketAddress, NodeHandler> badNodes = CacheBuilder.newBuilder().maximumSize(10000)
-      .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
 
   private Args args = Args.getInstance();
 
@@ -96,8 +95,7 @@ public class NodeManager implements EventHandler {
     this.dbManager = dbManager;
     discoveryEnabled = args.isNodeDiscoveryEnable();
 
-    homeNode = new Node(Args.getInstance().getMyKey().getNodeId(), args.getNodeExternalIp(),
-        args.getNodeListenPort());
+    homeNode = new Node(RefreshTask.getNodeId(), args.getNodeExternalIp(), args.getNodeListenPort());
 
     for (String boot : args.getSeedNode().getIpList()) {
       bootNodes.add(Node.instanceOf(boot));
@@ -150,15 +148,15 @@ public class NodeManager implements EventHandler {
   }
 
   public boolean isNodeAlive(NodeHandler nodeHandler) {
-    return nodeHandler.getState().equals(State.Alive) ||
-        nodeHandler.getState().equals(State.Active) ||
-        nodeHandler.getState().equals(State.EvictCandidate);
+    return nodeHandler.getState().equals(State.Alive)
+        || nodeHandler.getState().equals(State.Active)
+        || nodeHandler.getState().equals(State.EvictCandidate);
   }
 
   private void dbRead() {
-    Set<Node> Nodes = this.dbManager.readNeighbours();
-    logger.info("Reading Node statistics from PeersStore: " + Nodes.size() + " nodes.");
-    Nodes.forEach(node -> getNodeHandler(node).getNodeStatistics()
+    Set<Node> nodes = this.dbManager.readNeighbours();
+    logger.info("Reading Node statistics from PeersStore: " + nodes.size() + " nodes.");
+    nodes.forEach(node -> getNodeHandler(node).getNodeStatistics()
         .setPersistedReputation(node.getReputation()));
   }
 
@@ -241,11 +239,6 @@ public class NodeManager implements EventHandler {
 
     NodeHandler nodeHandler = getNodeHandler(n);
     nodeHandler.getNodeStatistics().messageStatistics.addUdpInMessage(m.getType());
-    calculateMsgCount(nodeHandler);
-    if (badNodes.getIfPresent(nodeHandler.getInetSocketAddress()) != null){
-      logger.warn("Receive packet from bad node {}.", sender.getAddress());
-      return;
-    }
 
     switch (m.getType()) {
       case DISCOVER_PING:
@@ -259,6 +252,8 @@ public class NodeManager implements EventHandler {
         break;
       case DISCOVER_NEIGHBORS:
         nodeHandler.handleNeighbours((NeighborsMessage) m);
+        break;
+      default:
         break;
     }
   }
@@ -381,23 +376,6 @@ public class NodeManager implements EventHandler {
           discoveredNodes.remove(handler);
         }
       }
-    }
-  }
-
-  private void calculateMsgCount(NodeHandler nodeHandler){
-    int interval = 10;
-    int maxCount = 10;
-    MessageStatistics statistics = nodeHandler.getNodeStatistics().messageStatistics;
-    int pingCount = statistics.discoverInPing.getCount(interval);
-    int pongCount = statistics.discoverInPong.getCount(interval);
-    int findNodeCount = statistics.discoverInFindNode.getCount(interval);
-    int neighboursCount = statistics.discoverInNeighbours.getCount(interval);
-    int count = pingCount + pongCount + findNodeCount + neighboursCount;
-    if (count > maxCount){
-      logger.warn("UDP attack found: {} with total count({}), ping({}), pong({}), findNode({}), neighbours({})",
-          nodeHandler, count, pingCount, pongCount, findNodeCount, neighboursCount);
-      badNodes.put(nodeHandler.getInetSocketAddress(), nodeHandler);
-      table.dropNode(nodeHandler.getNode());
     }
   }
 

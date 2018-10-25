@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.VotesStore;
@@ -36,9 +38,7 @@ public class WitnessController {
   @Getter
   private Manager manager;
 
-  @Setter
-  @Getter
-  private boolean isGeneratingBlock;
+  private AtomicBoolean generatingBlock = new AtomicBoolean(false);
 
   public static WitnessController createInstance(Manager manager) {
     WitnessController instance = new WitnessController();
@@ -151,18 +151,32 @@ public class WitnessController {
   public boolean validateWitnessSchedule(BlockCapsule block) {
 
     ByteString witnessAddress = block.getInstance().getBlockHeader().getRawData()
-        .getWitnessAddress();
+            .getWitnessAddress();
+    long timeStamp = block.getTimeStamp();
+    return validateWitnessSchedule(witnessAddress,timeStamp);
+  }
+
+  public boolean validateWitnessSchedule(ByteString witnessAddress,long timeStamp) {
+
     //to deal with other condition later
     if (manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() == 0) {
       return true;
     }
-    long slot = getSlotAtTime(block.getTimeStamp());
+    long blockAbSlot = getAbSlotAtTime(timeStamp);
+    long headBlockAbSlot = getAbSlotAtTime(
+        manager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp());
+    if (blockAbSlot <= headBlockAbSlot) {
+      logger.warn("blockAbSlot is equals with headBlockAbSlot[" + blockAbSlot + "]");
+      return false;
+    }
+
+    long slot = getSlotAtTime(timeStamp);
     final ByteString scheduledWitness = getScheduledWitness(slot);
     if (!scheduledWitness.equals(witnessAddress)) {
       logger.warn(
           "Witness is out of order, scheduledWitness[{}],blockWitnessAddress[{}],blockTimeStamp[{}],slot[{}]",
           ByteArray.toHexString(scheduledWitness.toByteArray()),
-          ByteArray.toHexString(witnessAddress.toByteArray()), new DateTime(block.getTimeStamp()),
+          ByteArray.toHexString(witnessAddress.toByteArray()), new DateTime(timeStamp),
           slot);
       return false;
     }
@@ -297,6 +311,8 @@ public class WitnessController {
     VotesStore votesStore = manager.getVotesStore();
     AccountStore accountStore = manager.getAccountStore();
 
+    tryRemoveThePowerOfTheGr();
+
     Map<ByteString, Long> countWitness = countVote(votesStore);
 
     //Only possible during the initialization phase
@@ -366,6 +382,22 @@ public class WitnessController {
     }
   }
 
+  public void tryRemoveThePowerOfTheGr(){
+    if(manager.getDynamicPropertiesStore().getRemoveThePowerOfTheGr() == 1){
+
+      WitnessStore witnessStore = manager.getWitnessStore();
+
+      Args.getInstance().getGenesisBlock().getWitnesses().forEach(witnessInGenesisBlock -> {
+        WitnessCapsule witnessCapsule = witnessStore.get(witnessInGenesisBlock.getAddress());
+        witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() - witnessInGenesisBlock.getVoteCount());
+
+        witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
+      });
+
+      manager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(-1);
+    }
+  }
+
   private static boolean witnessSetChanged(List<ByteString> list1, List<ByteString> list2) {
     return !CollectionUtils.isEqualCollection(list1, list2);
   }
@@ -418,4 +450,11 @@ public class WitnessController {
 
   }
 
+  public boolean isGeneratingBlock() {
+    return generatingBlock.get();
+  }
+
+  public void setGeneratingBlock(boolean generatingBlock) {
+    this.generatingBlock.set(generatingBlock);
+  }
 }

@@ -122,7 +122,7 @@ message ParticipateAssetIssueContract {
 
 enum ResourceCode {
   BANDWIDTH = 0x00;
-  CPU = 0x01;
+  ENERGY = 0x01;
 }
 
 message FreezeBalanceContract {
@@ -132,6 +132,7 @@ message FreezeBalanceContract {
 
   ResourceCode resource = 10;
   bytes to_address = 11;
+  bytes receiver_address = 15;
 }
 
 message UnfreezeBalanceContract {
@@ -139,6 +140,7 @@ message UnfreezeBalanceContract {
 
   ResourceCode resource = 10;
   bytes to_address = 11;
+  bytes receiver_address = 13;
 }
 
 message UnfreezeAssetContract {
@@ -198,4 +200,34 @@ message BuyStorageBytesContract {
 message SellStorageContract {
   bytes owner_address = 1;
   int64 storage_bytes = 2;
+}
+
+message ExchangeCreateContract {
+  bytes owner_address = 1;
+  bytes first_token_id = 2;
+  int64 first_token_balance = 3;
+  bytes second_token_id = 4;
+  int64 second_token_balance = 5;
+}
+
+message ExchangeInjectContract {
+  bytes owner_address = 1;
+  int64 exchange_id = 2;
+  bytes token_id = 3;
+  int64 quant = 4;
+}
+
+message ExchangeWithdrawContract {
+  bytes owner_address = 1;
+  int64 exchange_id = 2;
+  bytes token_id = 3;
+  int64 quant = 4;
+}
+
+message ExchangeTransactionContract {
+  bytes owner_address = 1;
+  int64 exchange_id = 2;
+  bytes token_id = 3;
+  int64 quant = 4;
+  int64 expected = 5;
 }

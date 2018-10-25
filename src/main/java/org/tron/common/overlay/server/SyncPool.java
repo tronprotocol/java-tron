@@ -101,7 +101,7 @@ public class SyncPool {
       } catch (Throwable t) {
         logger.error("Exception in sync worker", t);
       }
-    }, 30, 3600, TimeUnit.MILLISECONDS);
+    }, 30000, 3600, TimeUnit.MILLISECONDS);
 
     logExecutor.scheduleWithFixedDelay(() -> {
       try {
@@ -235,7 +235,7 @@ public class SyncPool {
         return false;
       }
 
-      if (handler.getNodeStatistics().getReputation() >= NodeStatistics.REPUTATION_PREDEFINED){
+      if (handler.getNodeStatistics().getReputation() >= NodeStatistics.REPUTATION_PREDEFINED) {
         return true;
       }
 
@@ -246,7 +246,7 @@ public class SyncPool {
       if (channelManager.getBadPeers().getIfPresent(inetAddress) != null) {
         return false;
       }
-      if (channelManager.getConnectionNum(inetAddress) >= getMaxActivePeersWithSameIp){
+      if (channelManager.getConnectionNum(inetAddress) >= getMaxActivePeersWithSameIp) {
         return false;
       }
 

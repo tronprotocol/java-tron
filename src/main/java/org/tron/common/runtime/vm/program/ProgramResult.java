@@ -17,12 +17,8 @@ import org.tron.core.capsule.TransactionResultCapsule;
 
 public class ProgramResult {
 
-  private long ownerCpuUsed;
-  private long senderCpuUsed;
-  private long ownerStorageUsed;
-  private long senderStorageUsed;
-
-  private long dropUsed;
+  private long energyUsed = 0;
+  private long futureRefund = 0;
 
   private byte[] hReturn = EMPTY_BYTE_ARRAY;
   private byte[] contractAddress = EMPTY_BYTE_ARRAY;
@@ -33,10 +29,8 @@ public class ProgramResult {
   private ByteArraySet touchedAccounts = new ByteArraySet();
   private List<InternalTransaction> internalTransactions;
   private List<LogInfo> logInfoList;
-  private long futureRefund = 0;
 
   private TransactionResultCapsule ret = new TransactionResultCapsule();
-
 
   /*
    * for testing runs ,
@@ -45,8 +39,8 @@ public class ProgramResult {
    */
   private List<CallCreate> callCreateList;
 
-  public void spendDrop(long drops) {
-    dropUsed += drops;
+  public void spendEnergy(long energy) {
+    energyUsed += energy;
   }
 
   public void setRevert() {
@@ -57,8 +51,8 @@ public class ProgramResult {
     return revert;
   }
 
-  public void refundGas(long drops) {
-    dropUsed -= drops;
+  public void refundEnergy(long energy) {
+    energyUsed -= energy;
   }
 
   public void setContractAddress(byte[] contractAddress) {
@@ -82,12 +76,16 @@ public class ProgramResult {
     return ret;
   }
 
+  public void setRet(TransactionResultCapsule ret) {
+    this.ret = ret;
+  }
+
   public RuntimeException getException() {
     return exception;
   }
 
-  public long getDropUsed() {
-    return dropUsed;
+  public long getEnergyUsed() {
+    return energyUsed;
   }
 
   public void setException(RuntimeException exception) {
@@ -149,8 +147,8 @@ public class ProgramResult {
     return callCreateList;
   }
 
-  public void addCallCreate(byte[] data, byte[] destination, byte[] gasLimit, byte[] value) {
-    getCallCreateList().add(new CallCreate(data, destination, gasLimit, value));
+  public void addCallCreate(byte[] data, byte[] destination, byte[] energyLimit, byte[] value) {
+    getCallCreateList().add(new CallCreate(data, destination, energyLimit, value));
   }
 
   public List<InternalTransaction> getInternalTransactions() {
@@ -161,9 +159,9 @@ public class ProgramResult {
   }
 
   public InternalTransaction addInternalTransaction(byte[] parentHash, int deep,
-      byte[] senderAddress, byte[] receiveAddress, long value, byte[] data, String note) {
+      byte[] senderAddress, byte[] receiveAddress, long value, byte[] data, String note, long nonce) {
     InternalTransaction transaction = new InternalTransaction(parentHash, deep,
-        size(internalTransactions), senderAddress, receiveAddress, value, data, note);
+        size(internalTransactions), senderAddress, receiveAddress, value, data, note, nonce);
     getInternalTransactions().add(transaction);
     return transaction;
   }
@@ -178,8 +176,8 @@ public class ProgramResult {
     }
   }
 
-  public void addFutureRefund(long gasValue) {
-    futureRefund += gasValue;
+  public void addFutureRefund(long energyValue) {
+    futureRefund += energyValue;
   }
 
   public long getFutureRefund() {

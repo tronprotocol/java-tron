@@ -64,6 +64,5 @@ public class TransactionIndex extends AbstractIndex<TransactionCapsule, Transact
                 .collect(Collectors.toList()));
     TIMESTAMP =
         attribute("timestamp", bytes -> getObject(bytes).getRawData().getTimestamp());
-
   }
 }

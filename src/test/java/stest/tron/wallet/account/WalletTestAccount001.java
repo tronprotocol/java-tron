@@ -5,6 +5,7 @@ import com.googlecode.cqengine.query.simple.In;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.math.BigInteger;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -19,24 +20,22 @@ import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
-import stest.tron.wallet.common.client.WalletClient;
-import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
-import org.tron.core.Wallet;
+
 
 
 @Slf4j
 public class WalletTestAccount001 {
-  private final String testKey002 =
-      "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
+  private final String testKey002 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key1");
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final String invalidTestKey =
       "592BB6C9BB255409A6A45EFD18E9A74FECDDCCE93A40D96B70FBE334E6361E36";
-
-  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
@@ -108,6 +107,7 @@ public class WalletTestAccount001 {
     Account invalidQueryResult = solidityqueryAccount(invalidTestKey, blockingStubSolidity);
     Assert.assertTrue(invalidQueryResult.getAccountName().isEmpty());
     Assert.assertTrue(invalidQueryResult.getAddress().isEmpty());
+
 
   }
 

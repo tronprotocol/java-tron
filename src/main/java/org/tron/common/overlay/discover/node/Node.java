@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.common.overlay.discover.node;
 
 import static org.tron.common.crypto.Hash.sha3;
@@ -137,11 +138,8 @@ public class Node implements Serializable {
 
   @Override
   public String toString() {
-    return "Node{" +
-        " host='" + host + '\'' +
-        ", port=" + port +
-        ", id=" + ByteArray.toHexString(id) +
-        '}';
+    return "Node{" + " host='" + host + '\'' + ", port=" + port
+        + ", id=" + ByteArray.toHexString(id) + '}';
   }
 
   @Override

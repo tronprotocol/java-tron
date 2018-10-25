@@ -2,16 +2,14 @@ package org.tron.core.net.node;
 
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.junit.*;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.crypto.ECKey;
@@ -21,6 +19,7 @@ import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
@@ -40,37 +39,25 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 @Slf4j
 public class HandleBlockMessageTest {
 
-    private static AnnotationConfigApplicationContext context;
-    private NodeImpl node;
+    private static TronApplicationContext context;
+    private static NodeImpl node;
     RpcApiService rpcApiService;
-    PeerClient peerClient;
+    private static PeerClient peerClient;
     ChannelManager channelManager;
     SyncPool pool;
-    Application appT;
+    private static Application appT;
     Manager dbManager;
 
     private static final String dbPath = "output-HandleBlockMessageTest";
     private static final String dbDirectory = "db_HandleBlockMessage_test";
     private static final String indexDirectory = "index_HandleBlockMessage_test";
 
-    private static Boolean deleteFolder(File index) {
-        if (!index.isDirectory() || index.listFiles().length <= 0) {
-            return index.delete();
-        }
-        for (File file : index.listFiles()) {
-            if (null != file && !deleteFolder(file)) {
-                return false;
-            }
-        }
-        return index.delete();
-    }
-
     @Test
     public void testHandleBlockMessage() throws Exception {
         List<PeerConnection> activePeers = ReflectUtils.getFieldValue(pool, "activePeers");
         PeerConnection peer = activePeers.get(0);
 
-        //收到同步请求块
+        //receive a sync block
         BlockCapsule headBlockCapsule = dbManager.getHead();
         BlockCapsule syncblockCapsule = generateOneBlockCapsule(headBlockCapsule);
         BlockMessage blockMessage = new BlockMessage(syncblockCapsule);
@@ -78,14 +65,14 @@ public class HandleBlockMessageTest {
         node.onMessage(peer, blockMessage);
         Assert.assertEquals(peer.getSyncBlockRequested().isEmpty(), true);
 
-        //收到广播请求块
+        //receive a advertise block
         BlockCapsule advblockCapsule = generateOneBlockCapsule(headBlockCapsule);
         BlockMessage advblockMessage = new BlockMessage(advblockCapsule);
         peer.getAdvObjWeRequested().put(new Item(advblockMessage.getBlockId(), InventoryType.BLOCK), System.currentTimeMillis());
         node.onMessage(peer, advblockMessage);
         Assert.assertEquals(peer.getAdvObjWeRequested().size(), 0);
 
-        //收到非请求块
+        //receive a sync block but not requested
         BlockCapsule blockCapsule = generateOneBlockCapsule(headBlockCapsule);
         blockMessage = new BlockMessage(blockCapsule);
         BlockCapsule blockCapsuleOther = generateOneBlockCapsule(blockCapsule);
@@ -96,7 +83,7 @@ public class HandleBlockMessageTest {
         Assert.assertEquals(peer.getSyncBlockRequested().isEmpty(), false);
     }
 
-    //根据父块生成一个区块
+    // generate ong block by parent block
     private BlockCapsule generateOneBlockCapsule(BlockCapsule parentCapsule) {
         ByteString witnessAddress = ByteString.copyFrom(
                 ECKey.fromPrivate(
@@ -149,7 +136,7 @@ public class HandleBlockMessageTest {
                 cfgArgs.setNeedSyncCheck(false);
                 cfgArgs.setNodeExternalIp("127.0.0.1");
 
-                context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+                context = new TronApplicationContext(DefaultConfig.class);
 
                 if (cfgArgs.isHelp()) {
                     logger.info("Here is the help message.");
@@ -220,16 +207,17 @@ public class HandleBlockMessageTest {
         }
     }
 
-    @After
-    public void removeDb() {
+    @AfterClass
+    public static void destroy() {
         Args.clearParam();
-
-        File dbFolder = new File(dbPath);
-        if (deleteFolder(dbFolder)) {
-            logger.info("Release resources successful.");
-        } else {
-            logger.info("Release resources failure.");
+        Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(node, "getActivePeer");
+        for (PeerConnection peer : peerConnections) {
+            peer.close();
         }
+        peerClient.close();
+        appT.shutdownServices();
+        appT.shutdown();
         context.destroy();
+        FileUtil.deleteDir(new File(dbPath));
     }
 }

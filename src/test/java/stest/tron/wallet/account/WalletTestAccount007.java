@@ -28,10 +28,12 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class WalletTestAccount007 {
-  private final String testKey002 =
-      "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
-
+  private final String testKey002 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final String testKey003 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key2");
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
   private static final long now = System.currentTimeMillis();
   private static String name = "AssetIssue012_" + Long.toString(now);
@@ -72,13 +74,12 @@ public class WalletTestAccount007 {
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
-    Assert.assertTrue(PublicMethed.sendcoin(account007Address,10000000,
-        fromAddress,testKey002,blockingStubFull));
-
   }
 
   @Test(enabled = true)
   public void testCreateAccount() {
+    Assert.assertTrue(PublicMethed.sendcoin(account007Address,10000000,
+        fromAddress,testKey002,blockingStubFull));
     Account accountInfo = PublicMethed.queryAccount(account007Key,blockingStubFull);
     final Long beforeBalance = accountInfo.getBalance();
 

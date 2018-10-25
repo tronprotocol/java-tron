@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.common.overlay.discover.dht;
 
 import java.math.BigInteger;
@@ -49,10 +50,10 @@ public class Peer {
 
   public byte[] calcDistance(Peer toPeer) {
 
-    BigInteger aPeer = new BigInteger(getId());
-    BigInteger bPeer = new BigInteger(toPeer.getId());
+    BigInteger aaPeer = new BigInteger(getId());
+    BigInteger bbPeer = new BigInteger(toPeer.getId());
 
-    BigInteger distance = aPeer.xor(bPeer);
+    BigInteger distance = aaPeer.xor(bbPeer);
     return BigIntegers.asUnsignedByteArray(distance);
   }
 

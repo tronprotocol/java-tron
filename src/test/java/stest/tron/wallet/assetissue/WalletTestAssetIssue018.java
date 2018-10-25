@@ -102,17 +102,17 @@ public class WalletTestAssetIssue018 {
         testKey002,blockingStubFull));
 
     //Create 3 the same name token.
-    Long start = System.currentTimeMillis() + 3000;
+    Long start = System.currentTimeMillis() + 2000;
     Long end = System.currentTimeMillis() + 1000000000;
     Assert.assertTrue(PublicMethed.createAssetIssue(assetAccount1Address,
         name, totalSupply, 1, 1, start, end, 1, description, url,
         2000L,2000L, 1L,1L,assetAccount1Key,blockingStubFull));
-    start = System.currentTimeMillis() + 3000;
+    start = System.currentTimeMillis() + 2000;
     end = System.currentTimeMillis() + 1000000000;
     Assert.assertTrue(PublicMethed.createAssetIssue(assetAccount2Address,
         name, totalSupply + 1, 2, 2, start, end, 2, description, url,
         3000L,3000L, 2L,2L,assetAccount2Key,blockingStubFull));
-    start = System.currentTimeMillis() + 3000;
+    start = System.currentTimeMillis() + 2000;
     end = System.currentTimeMillis() + 1000000000;
     Assert.assertTrue(PublicMethed.createAssetIssue(assetAccount3Address,
         name, totalSupply + 2, 3, 3, start, end, 3, description, url,
@@ -149,7 +149,7 @@ public class WalletTestAssetIssue018 {
         asset3Name.getBytes(),3L,assetAccount3Address,assetAccount3Key,blockingStubFull));
 
     try {
-      Thread.sleep(10000);
+      Thread.sleep(5000);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }

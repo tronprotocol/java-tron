@@ -20,10 +20,10 @@
     <rollingPolicy
       class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
       <!-- rollover daily -->
-      <fileNamePattern>./logs/tron-%d{yyyy-MM-dd}.%i.log.tar.gz</fileNamePattern>
+      <fileNamePattern>./logs/tron-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
       <!-- each file should be at most 500MB, keep 30 days worth of history, but at most 50GB -->
       <maxFileSize>500MB</maxFileSize>
-      <maxHistory>720</maxHistory>
+      <maxHistory>30</maxHistory>
       <totalSizeCap>50GB</totalSizeCap>
     </rollingPolicy>
     <encoder>
@@ -88,6 +88,10 @@
   <logger name="AssetIssueCapsule" level="INFO"/>
   <logger name="Manager" level="INFO"/>
   <logger name="Net" level="INFO"/>
+  <logger name="Runtime" level="ERROR"/>
+  <logger name="VM" level="ERROR"/>
+  <logger name="Program" level="ERROR"/>
+  <logger name="ProgramPrecompile" level="ERROR"/>
 
 </configuration>
 

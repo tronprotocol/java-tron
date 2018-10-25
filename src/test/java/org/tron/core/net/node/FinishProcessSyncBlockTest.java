@@ -3,11 +3,8 @@ package org.tron.core.net.node;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.junit.*;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.crypto.ECKey;
@@ -17,6 +14,7 @@ import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
@@ -39,30 +37,18 @@ import java.util.concurrent.ExecutorService;
 @Slf4j
 public class FinishProcessSyncBlockTest {
 
-    private static AnnotationConfigApplicationContext context;
-    private NodeImpl node;
+    private static TronApplicationContext context;
+    private static NodeImpl node;
     RpcApiService rpcApiService;
-    PeerClient peerClient;
+    private static PeerClient peerClient;
     ChannelManager channelManager;
     SyncPool pool;
-    Application appT;
+    private static Application appT;
     Manager dbManager;
 
     private static final String dbPath = "output-FinishProcessSyncBlockTest";
     private static final String dbDirectory = "db_FinishProcessSyncBlock_test";
     private static final String indexDirectory = "index_FinishProcessSyncBlock_test";
-
-    private static Boolean deleteFolder(File index) {
-        if (!index.isDirectory() || index.listFiles().length <= 0) {
-            return index.delete();
-        }
-        for (File file : index.listFiles()) {
-            if (null != file && !deleteFolder(file)) {
-                return false;
-            }
-        }
-        return index.delete();
-    }
 
     @Test
     public void testFinishProcessSyncBlock() throws Exception {
@@ -77,8 +63,7 @@ public class FinishProcessSyncBlockTest {
         Assert.assertEquals(peer.getBlockInProc().isEmpty(), true);
     }
 
-
-    //根据父块生成一个区块
+    // generate ong block by parent block
     private BlockCapsule generateOneBlockCapsule(BlockCapsule parentCapsule) {
         ByteString witnessAddress = ByteString.copyFrom(
                 ECKey.fromPrivate(
@@ -131,7 +116,7 @@ public class FinishProcessSyncBlockTest {
                 cfgArgs.setNeedSyncCheck(false);
                 cfgArgs.setNodeExternalIp("127.0.0.1");
 
-                context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+                context = new TronApplicationContext(DefaultConfig.class);
 
                 if (cfgArgs.isHelp()) {
                     logger.info("Here is the help message.");
@@ -202,16 +187,9 @@ public class FinishProcessSyncBlockTest {
         }
     }
 
-    @After
-    public void removeDb() {
+    @AfterClass
+    public static void destroy() {
         Args.clearParam();
-
-        File dbFolder = new File(dbPath);
-        if (deleteFolder(dbFolder)) {
-            logger.info("Release resources successful.");
-        } else {
-            logger.info("Release resources failure.");
-        }
         Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(node, "getActivePeer");
         for (PeerConnection peer : peerConnections) {
             peer.close();
@@ -220,5 +198,6 @@ public class FinishProcessSyncBlockTest {
         appT.shutdownServices();
         appT.shutdown();
         context.destroy();
+        FileUtil.deleteDir(new File(dbPath));
     }
 }

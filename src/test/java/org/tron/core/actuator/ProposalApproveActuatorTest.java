@@ -12,7 +12,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
@@ -37,7 +37,7 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 
 public class ProposalApproveActuatorTest {
 
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
   private static Manager dbManager;
   private static final String dbPath = "output_ProposalApprove_test";
   private static final String ACCOUNT_NAME_FIRST = "ownerF";
@@ -50,7 +50,7 @@ public class ProposalApproveActuatorTest {
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new AnnotationConfigApplicationContext(DefaultConfig.class);
+    context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_SECOND =
@@ -73,12 +73,12 @@ public class ProposalApproveActuatorTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
+    context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {
       logger.info("Release resources failure.");
     }
-    context.destroy();
   }
 
   /**
@@ -290,7 +290,7 @@ public class ProposalApproveActuatorTest {
       fail("account[+OWNER_ADDRESS_NOACCOUNT+] not exists");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("account[" + OWNER_ADDRESS_NOACCOUNT + "] not exists",
+      Assert.assertEquals("Account[" + OWNER_ADDRESS_NOACCOUNT + "] not exists",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -385,7 +385,7 @@ public class ProposalApproveActuatorTest {
           + "] before");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("witness [" + readableOwnerAddress + "]has approved "
+      Assert.assertEquals("Witness[" + readableOwnerAddress + "]has approved "
               + "proposal[" + id + "] before",
           e.getMessage());
     } catch (ContractExeException e) {
@@ -483,7 +483,7 @@ public class ProposalApproveActuatorTest {
       fail("witness [" + readableOwnerAddress + "]has not approved proposal[" + id + "] before");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("witness [" + readableOwnerAddress + "]has not approved "
+      Assert.assertEquals("Witness[" + readableOwnerAddress + "]has not approved "
               + "proposal[" + id + "] before",
           e.getMessage());
     } catch (ContractExeException e) {

@@ -1,11 +1,11 @@
 package org.tron.core.capsule;
 
-import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.exception.BadItemException;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Result;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
 @Slf4j
 public class TransactionResultCapsule implements ProtoCapsule<Transaction.Result> {
@@ -31,6 +31,10 @@ public class TransactionResultCapsule implements ProtoCapsule<Transaction.Result
     this.transactionResult = Transaction.Result.newBuilder().build();
   }
 
+  public TransactionResultCapsule(contractResult code) {
+    this.transactionResult = Transaction.Result.newBuilder().setContractRet(code).build();
+  }
+
   public TransactionResultCapsule(Transaction.Result.code code, long fee) {
     this.transactionResult = Transaction.Result.newBuilder().setRet(code).setFee(fee).build();
   }
@@ -44,6 +48,22 @@ public class TransactionResultCapsule implements ProtoCapsule<Transaction.Result
 
   public long getFee() {
     return transactionResult.getFee();
+  }
+
+  public void setUnfreezeAmount(long amount) {
+    this.transactionResult = this.transactionResult.toBuilder().setUnfreezeAmount(amount).build();
+  }
+
+  public long getUnfreezeAmount() {
+    return transactionResult.getUnfreezeAmount();
+  }
+
+  public void setWithdrawAmount(long amount) {
+    this.transactionResult = this.transactionResult.toBuilder().setWithdrawAmount(amount).build();
+  }
+
+  public long getWithdrawAmount() {
+    return transactionResult.getWithdrawAmount();
   }
 
   public void setFee(long fee) {

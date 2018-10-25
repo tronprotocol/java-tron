@@ -3,7 +3,8 @@ language: java
 jdk: oraclejdk8
 addons:
   ssh_known_hosts:
-  - 47.93.9.236:22008
+  - 47.94.231.67:22008
+  - 47.94.10.122:22008
   sonarcloud:
     organization: tron-zhaohong
     token:
@@ -14,15 +15,11 @@ cache:
 script:
 - sh tron.sh
 - "./gradlew build"
+- bash deploy.sh
 
 skip_build:
 - README.md：
 - LICENSE
-deploy:
-  provider: script
-  script: bash deploy.sh
-  on:
-    branch: develop
 
 
 

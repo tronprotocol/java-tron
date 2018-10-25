@@ -8,9 +8,9 @@ import java.util.Map;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.backup.BackupManager;
 import org.tron.common.backup.BackupManager.BackupStatusEnum;
 import org.tron.common.backup.BackupServer;
@@ -24,8 +24,6 @@ import org.tron.core.config.args.Args;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.ReceiptException;
-import org.tron.core.exception.TransactionTraceException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateScheduleException;
@@ -45,13 +43,14 @@ public class WitnessService implements Service {
   protected Map<ByteString, WitnessCapsule> localWitnessStateMap = Maps
       .newHashMap(); //  <address,WitnessCapsule>
   private Thread generateThread;
+
   private volatile boolean isRunning = false;
   private Map<ByteString, byte[]> privateKeyMap = Maps.newHashMap();
   private volatile boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
 
   private WitnessController controller;
 
-  private AnnotationConfigApplicationContext context;
+  private TronApplicationContext context;
 
   private BackupManager backupManager;
 
@@ -60,7 +59,7 @@ public class WitnessService implements Service {
   /**
    * Construction method.
    */
-  public WitnessService(Application tronApp, AnnotationConfigApplicationContext context) {
+  public WitnessService(Application tronApp, TronApplicationContext context) {
     this.tronApp = tronApp;
     this.context = context;
     backupManager = context.getBean(BackupManager.class);
@@ -221,19 +220,30 @@ public class WitnessService implements Service {
     }
 
     try {
-      controller.setGeneratingBlock(true);
-      BlockCapsule block = generateBlock(scheduledTime, scheduledWitness);
 
-      if (block == null) {
-        logger.warn("exception when generate block");
-        return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
-      }
-      if (DateTime.now().getMillis() - now
-          > ChainConstant.BLOCK_PRODUCED_INTERVAL * ChainConstant.BLOCK_PRODUCED_TIME_OUT / 100) {
-        logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}",
-            ChainConstant.BLOCK_PRODUCED_INTERVAL * ChainConstant.BLOCK_PRODUCED_TIME_OUT / 100,
-            new DateTime(now), DateTime.now());
-        return BlockProductionCondition.TIME_OUT;
+      controller.getManager().lastHeadBlockIsMaintenance();
+
+      controller.setGeneratingBlock(true);
+      BlockCapsule block;
+      synchronized (tronApp.getDbManager()) {
+        block = generateBlock(scheduledTime, scheduledWitness,
+            controller.lastHeadBlockIsMaintenance());
+
+        if (block == null) {
+          logger.warn("exception when generate block");
+          return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
+        }
+
+        int blockProducedTimeOut = Args.getInstance().getBlockProducedTimeOut();
+
+        if (DateTime.now().getMillis() - now
+            > ChainConstant.BLOCK_PRODUCED_INTERVAL * blockProducedTimeOut / 100) {
+          logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}",
+              ChainConstant.BLOCK_PRODUCED_INTERVAL * blockProducedTimeOut / 100,
+              new DateTime(now), DateTime.now());
+          tronApp.getDbManager().eraseBlock();
+          return BlockProductionCondition.TIME_OUT;
+        }
       }
 
       logger.info(
@@ -241,7 +251,7 @@ public class WitnessService implements Service {
           block.getNum(), controller.getAbSlotAtTime(now), block.getBlockId(),
           block.getTransactions().size(),
           new DateTime(block.getTimeStamp()),
-          this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderHash());
+          block.getParentHash());
       broadcastBlock(block);
 
       return BlockProductionCondition.PRODUCED;
@@ -251,7 +261,6 @@ public class WitnessService implements Service {
     } finally {
       controller.setGeneratingBlock(false);
     }
-
   }
 
   private void broadcastBlock(BlockCapsule block) {
@@ -262,10 +271,12 @@ public class WitnessService implements Service {
     }
   }
 
-  private BlockCapsule generateBlock(long when, ByteString witnessAddress)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException, ReceiptException, TransactionTraceException {
+  private BlockCapsule generateBlock(long when, ByteString witnessAddress,
+      Boolean lastHeadBlockIsMaintenance)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException,
+      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException {
     return tronApp.getDbManager().generateBlock(this.localWitnessStateMap.get(witnessAddress), when,
-        this.privateKeyMap.get(witnessAddress));
+        this.privateKeyMap.get(witnessAddress), lastHeadBlockIsMaintenance);
   }
 
   /**
@@ -301,6 +312,7 @@ public class WitnessService implements Service {
   public void start() {
     isRunning = true;
     generateThread.start();
+
   }
 
   @Override
