@@ -69,11 +69,11 @@ public class WalletTestBlock002 {
     }
 
     //The number is large than the currently number, there is no exception when query this number.
-    /*    Long outOfCurrentBlockNum = currentBlockNum + 10000L;
+    Long outOfCurrentBlockNum = currentBlockNum + 10000L;
     NumberMessage.Builder builder1 = NumberMessage.newBuilder();
     builder1.setNum(outOfCurrentBlockNum);
     Block outOfCurrentBlock = blockingStubFull.getBlockByNum(builder1.build());
-    Assert.assertFalse(outOfCurrentBlock.hasBlockHeader());*/
+    Assert.assertFalse(outOfCurrentBlock.hasBlockHeader());
 
     //Query the first block.
     NumberMessage.Builder builder2 = NumberMessage.newBuilder();
@@ -113,11 +113,11 @@ public class WalletTestBlock002 {
     }
 
     //The number is large than the currently number, there is no exception when query this number.
-    /*    Long outOfCurrentBlockNum = currentBlockNum + 10000L;
+    Long outOfCurrentBlockNum = currentBlockNum + 10000L;
     NumberMessage.Builder builder1 = NumberMessage.newBuilder();
     builder1.setNum(outOfCurrentBlockNum);
     Block outOfCurrentBlock = blockingStubSolidity.getBlockByNum(builder1.build());
-    Assert.assertFalse(outOfCurrentBlock.hasBlockHeader());*/
+    Assert.assertFalse(outOfCurrentBlock.hasBlockHeader());
 
     //Query the first block.
     NumberMessage.Builder builder2 = NumberMessage.newBuilder();
@@ -146,6 +146,7 @@ public class WalletTestBlock002 {
     Assert.assertTrue(lastSecondBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
     logger.info("Last second test from solidity succesfully");
   }
+
   @Test(enabled = true)
   public void testGetBlockById() {
 

@@ -52,7 +52,7 @@ public class PrecompiledContractsTest {
   // common
   private static final DataWord voteContractAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010001");
-//  private static final DataWord freezeBalanceAddr = new DataWord(
+  //  private static final DataWord freezeBalanceAddr = new DataWord(
 //      "0000000000000000000000000000000000000000000000000000000000010002");
 //  private static final DataWord unFreezeBalanceAddr = new DataWord(
 //      "0000000000000000000000000000000000000000000000000000000000010003");
@@ -77,7 +77,7 @@ public class PrecompiledContractsTest {
   private static final String OWNER_ADDRESS;
   private static final String WITNESS_NAME = "witness";
   private static final String WITNESS_ADDRESS;
-  private static final String WITNESS_ADDRESS_BASE = "548794500882809695a8a687866e76d4271a1abc" ;
+  private static final String WITNESS_ADDRESS_BASE = "548794500882809695a8a687866e76d4271a1abc";
   private static final String URL = "https://tron.network";
 
   // withdraw
@@ -243,10 +243,12 @@ public class PrecompiledContractsTest {
       // 1000000 == 0xF4240
       DataWord value = new DataWord(
           "00000000000000000000000000000000000000000000000000000000000F4240");
-      byte[] data4Create =  new byte[64];
-      System.arraycopy(key.getData(),0,data4Create,0,key.getData().length);
-      System.arraycopy(value.getData(),0,data4Create,key.getData().length,value.getData().length);
-      PrecompiledContract createContract = createPrecompiledContract(proposalCreateAddr,WITNESS_ADDRESS);
+      byte[] data4Create = new byte[64];
+      System.arraycopy(key.getData(), 0, data4Create, 0, key.getData().length);
+      System
+          .arraycopy(value.getData(), 0, data4Create, key.getData().length, value.getData().length);
+      PrecompiledContract createContract = createPrecompiledContract(proposalCreateAddr,
+          WITNESS_ADDRESS);
 
       Assert.assertEquals(0, dbManager.getDynamicPropertiesStore().getLatestProposalNum());
       ProposalCapsule proposalCapsule;
@@ -261,7 +263,7 @@ public class PrecompiledContractsTest {
       Assert.assertEquals(0, proposalCapsule.getApprovals().size());
       Assert.assertEquals(1000000, proposalCapsule.getCreateTime());
       Assert.assertEquals(261200000, proposalCapsule.getExpirationTime()
-          ); // 2000000 + 3 * 4 * 21600000
+      ); // 2000000 + 3 * 4 * 21600000
 
 
 
@@ -270,23 +272,27 @@ public class PrecompiledContractsTest {
        */
 
       byte[] data4Approve = new byte[64];
-      DataWord isApprove = new DataWord("0000000000000000000000000000000000000000000000000000000000000001");
-      System.arraycopy(idBytes,0,data4Approve,0,idBytes.length);
-      System.arraycopy(isApprove.getData(),0,data4Approve,idBytes.length,isApprove.getData().length);
-      PrecompiledContract approveContract = createPrecompiledContract(proposalApproveAddr,WITNESS_ADDRESS);
+      DataWord isApprove = new DataWord(
+          "0000000000000000000000000000000000000000000000000000000000000001");
+      System.arraycopy(idBytes, 0, data4Approve, 0, idBytes.length);
+      System.arraycopy(isApprove.getData(), 0, data4Approve, idBytes.length,
+          isApprove.getData().length);
+      PrecompiledContract approveContract = createPrecompiledContract(proposalApproveAddr,
+          WITNESS_ADDRESS);
       Deposit deposit2 = DepositImpl.createRoot(dbManager);
       approveContract.setDeposit(deposit2);
       approveContract.execute(data4Approve);
       deposit2.commit();
       proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
-      Assert.assertEquals(1,proposalCapsule.getApprovals().size());
+      Assert.assertEquals(1, proposalCapsule.getApprovals().size());
       Assert.assertEquals(ByteString.copyFrom(ByteArray.fromHexString(WITNESS_ADDRESS)),
           proposalCapsule.getApprovals().get(0));
 
       /*
        *  delete proposal Test
        */
-      PrecompiledContract deleteContract = createPrecompiledContract(proposalDeleteAddr,WITNESS_ADDRESS);
+      PrecompiledContract deleteContract = createPrecompiledContract(proposalDeleteAddr,
+          WITNESS_ADDRESS);
       Deposit deposit3 = DepositImpl.createRoot(dbManager);
       deleteContract.setDeposit(deposit3);
       deleteContract.execute(idBytes);
@@ -310,16 +316,20 @@ public class PrecompiledContractsTest {
   //@Test
   public void convertFromTronBase58AddressNative() {
     // 27WnTihwXsqCqpiNedWvtKCZHsLjDt4Hfmf  TestNet address
-    DataWord word1 = new DataWord("3237576e54696877587371437170694e65645776744b435a48734c6a44743448");
-    DataWord word2 = new DataWord("666d660000000000000000000000000000000000000000000000000000000000");
+    DataWord word1 = new DataWord(
+        "3237576e54696877587371437170694e65645776744b435a48734c6a44743448");
+    DataWord word2 = new DataWord(
+        "666d660000000000000000000000000000000000000000000000000000000000");
 
     byte[] data = new byte[35];
-    System.arraycopy(word1.getData(),0,data,0, word1.getData().length);
-    System.arraycopy(Arrays.copyOfRange(word2.getData(), 0, 3),0,data,word1.getData().length,3);
-    PrecompiledContract contract = createPrecompiledContract(convertFromTronBase58AddressAddr, WITNESS_ADDRESS);
+    System.arraycopy(word1.getData(), 0, data, 0, word1.getData().length);
+    System.arraycopy(Arrays.copyOfRange(word2.getData(), 0, 3), 0, data, word1.getData().length, 3);
+    PrecompiledContract contract = createPrecompiledContract(convertFromTronBase58AddressAddr,
+        WITNESS_ADDRESS);
 
     byte[] solidityAddress = contract.execute(data).getRight();
-    Assert.assertArrayEquals(solidityAddress,new DataWord(Hex.decode(WITNESS_ADDRESS_BASE)).getData());
+    Assert.assertArrayEquals(solidityAddress,
+        new DataWord(Hex.decode(WITNESS_ADDRESS_BASE)).getData());
   }
 
   /**

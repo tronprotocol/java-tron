@@ -18,6 +18,14 @@
 
 package org.tron.core;
 
+import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
+import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
+
+import com.google.common.base.CaseFormat;
+import com.google.common.collect.ContiguousSet;
+import com.google.common.collect.DiscreteDomain;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Range;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
@@ -54,6 +62,7 @@ import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
@@ -539,88 +548,27 @@ public class Wallet {
 
   public Protocol.ChainParameters getChainParameters() {
     Protocol.ChainParameters.Builder builder = Protocol.ChainParameters.newBuilder();
-    DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
 
-    Protocol.ChainParameters.ChainParameter.Builder builder1
-        = Protocol.ChainParameters.ChainParameter.newBuilder();
+    Arrays.stream(ChainParameters.values()).forEach(parameters -> {
+      try {
+        String methodName = Wallet.makeUpperCamelMethod(parameters.name());
+        builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey(methodName)
+            .setValue((Long) DynamicPropertiesStore.class.getDeclaredMethod(methodName)
+                .invoke(dbManager.getDynamicPropertiesStore()))
+            .build());
+      } catch (Exception ex) {
+        logger.error("get chainParameter error,", ex);
+      }
 
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.MAINTENANCE_TIME_INTERVAL.name())
-        .setValue(
-            dynamicPropertiesStore.getMaintenanceTimeInterval())
-        .build());
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.ACCOUNT_UPGRADE_COST.name())
-        .setValue(
-            dynamicPropertiesStore.getAccountUpgradeCost())
-        .build());
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.CREATE_ACCOUNT_FEE.name())
-        .setValue(
-            dynamicPropertiesStore.getCreateAccountFee())
-        .build());
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.TRANSACTION_FEE.name())
-        .setValue(
-            dynamicPropertiesStore.getTransactionFee())
-        .build());
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.ASSET_ISSUE_FEE.name())
-        .setValue(
-            dynamicPropertiesStore.getAssetIssueFee())
-        .build());
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.WITNESS_PAY_PER_BLOCK.name())
-        .setValue(
-            dynamicPropertiesStore.getWitnessPayPerBlock())
-        .build());
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.WITNESS_STANDBY_ALLOWANCE.name())
-        .setValue(
-            dynamicPropertiesStore.getWitnessStandbyAllowance())
-        .build());
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT.name())
-        .setValue(
-            dynamicPropertiesStore.getCreateNewAccountFeeInSystemContract())
-        .build());
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.CREATE_NEW_ACCOUNT_BANDWIDTH_RATE.name())
-        .setValue(
-            dynamicPropertiesStore.getCreateNewAccountBandwidthRate())
-        .build());
-
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.ALLOW_CREATION_OF_CONTRACTS.name())
-        .setValue(
-            dynamicPropertiesStore.getAllowCreationOfContracts())
-        .build());
-
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.REMOVE_THE_POWER_OF_THE_GR.name())
-        .setValue(
-            dynamicPropertiesStore.getRemoveThePowerOfTheGr())
-        .build());
-
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.ENERGY_FEE.name())
-        .setValue(
-            dynamicPropertiesStore.getEnergyFee())
-        .build());
-
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.EXCHANGE_CREATE_FEE.name())
-        .setValue(
-            dynamicPropertiesStore.getExchangeCreateFee())
-        .build());
-
-    builder.addChainParameter(builder1
-        .setKey(ChainParameters.MAX_CPU_TIME_OF_ONE_TX.name())
-        .setValue(
-            dynamicPropertiesStore.getMaxCpuTimeOfOneTX())
-        .build());
+    });
 
     return builder.build();
+  }
+
+  public static String makeUpperCamelMethod(String originName) {
+    return "get" + CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, originName)
+        .replace("_", "");
   }
 
   public AssetIssueList getAssetIssueList() {
@@ -906,7 +854,7 @@ public class Wallet {
         headBlock = blockCapsuleList.get(0).getInstance();
       }
 
-      Runtime runtime = new Runtime(trxCap.getInstance(), new BlockCapsule(headBlock), deposit,
+      Runtime runtime = new RuntimeImpl(trxCap.getInstance(), new BlockCapsule(headBlock), deposit,
           new ProgramInvokeFactoryImpl(), true);
       runtime.execute();
       runtime.go();
@@ -999,5 +947,69 @@ public class Wallet {
 
     return false;
   }
+
+  /*
+  input
+  offset:100,limit:10
+  return
+  id: 101~110
+   */
+  public ProposalList getPaginatedProposalList(long offset, long limit) {
+
+    if (limit < 0 || offset < 0) {
+      return null;
+    }
+
+    long latestProposalNum = dbManager.getDynamicPropertiesStore().getLatestProposalNum();
+    if (latestProposalNum <= offset) {
+      return null;
+    }
+    limit = limit > PROPOSAL_COUNT_LIMIT_MAX ? PROPOSAL_COUNT_LIMIT_MAX : limit;
+    long end = offset + limit;
+    end = end > latestProposalNum ? latestProposalNum : end;
+    ProposalList.Builder builder = ProposalList.newBuilder();
+
+    ImmutableList<Long> rangeList = ContiguousSet
+        .create(Range.openClosed(offset, end), DiscreteDomain.longs()).asList();
+    rangeList.stream().map(ProposalCapsule::calculateDbKey).map(key -> {
+      try {
+        return dbManager.getProposalStore().get(key);
+      } catch (Exception ex) {
+        return null;
+      }
+    }).filter(Objects::nonNull)
+        .forEach(proposalCapsule -> builder.addProposals(proposalCapsule.getInstance()));
+    return builder.build();
+  }
+
+  public ExchangeList getPaginatedExchangeList(long offset, long limit) {
+
+    if (limit < 0 || offset < 0) {
+      return null;
+    }
+
+    long latestExchangeNum = dbManager.getDynamicPropertiesStore().getLatestExchangeNum();
+    if (latestExchangeNum <= offset) {
+      return null;
+    }
+    limit = limit > EXCHANGE_COUNT_LIMIT_MAX ? EXCHANGE_COUNT_LIMIT_MAX : limit;
+    long end = offset + limit;
+    end = end > latestExchangeNum ? latestExchangeNum : end;
+
+    ExchangeList.Builder builder = ExchangeList.newBuilder();
+    ImmutableList<Long> rangeList = ContiguousSet
+        .create(Range.openClosed(offset, end), DiscreteDomain.longs()).asList();
+    rangeList.stream().map(ExchangeCapsule::calculateDbKey).map(key -> {
+      try {
+        return dbManager.getExchangeStore().get(key);
+      } catch (Exception ex) {
+        return null;
+      }
+    }).filter(Objects::nonNull)
+        .forEach(exchangeCapsule -> builder.addExchanges(exchangeCapsule.getInstance()));
+    return builder.build();
+
+  }
+
 
 }

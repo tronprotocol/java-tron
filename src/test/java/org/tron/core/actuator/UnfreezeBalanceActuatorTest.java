@@ -135,12 +135,12 @@ public class UnfreezeBalanceActuatorTest {
             .build());
   }
 
-  private Any getContract(String ownerAddress, Contract.ResourceCode  resourceCode) {
+  private Any getContract(String ownerAddress, Contract.ResourceCode resourceCode) {
     return Any.pack(
-            Contract.UnfreezeBalanceContract.newBuilder()
-                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
-                    .setResource(resourceCode)
-                    .build());
+        Contract.UnfreezeBalanceContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
+            .setResource(resourceCode)
+            .build());
   }
 
 
@@ -482,7 +482,6 @@ public class UnfreezeBalanceActuatorTest {
     }
 
   }
-
 
 //  @Test
 //  public void InvalidTotalNetWeight(){
