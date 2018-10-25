@@ -469,7 +469,7 @@ public class SnapshotManager implements RevokingDatabase {
     .map(b -> Maps.immutableEntry(ByteUtil.toHexString(b), tronApplicationContext.getBean(
         AccountStore.class).get(b)))
         .map(e -> Maps.immutableEntry(e.getKey(), e.getValue()))
-        .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+        .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (k, v) -> k));
 //    return values.entrySet().stream()
 //        .map(e -> Maps.immutableEntry(e.getKey(), new AccountCapsule(e.getValue())))
 //        .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
