@@ -14,21 +14,14 @@ public final class StoreIterator implements org.tron.core.db.common.iterator.DBI
 
   private DBIterator dbIterator;
   private boolean first = true;
-  private Lock lock;
 
-  public StoreIterator(DBIterator dbIterator, Lock lock) {
+  public StoreIterator(DBIterator dbIterator) {
     this.dbIterator = dbIterator;
-    this.lock = lock;
-    this.lock.lock();
   }
 
   @Override
   public void close() throws IOException {
-    try {
-      dbIterator.close();
-    } finally {
-      lock.unlock();
-    }
+    dbIterator.close();
   }
 
   @Override
@@ -42,21 +35,10 @@ public final class StoreIterator implements org.tron.core.db.common.iterator.DBI
       }
 
       if (!(hasNext = dbIterator.hasNext())) { // false is last item
-        try {
-          dbIterator.close();
-        } finally {
-          lock.unlock();
-        }
+        dbIterator.close();
       }
     } catch (Exception e) {
       logger.debug(e.getMessage(), e);
-      try {
-        dbIterator.close();
-      } catch (IOException e1) {
-        logger.debug(e1.getMessage(), e1);
-      } finally {
-        lock.unlock();
-      }
     }
 
     return hasNext;

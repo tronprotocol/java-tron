@@ -3,11 +3,31 @@ package org.tron.core.db2.core;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 import com.google.common.collect.Streams;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import org.iq80.leveldb.WriteOptions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.tron.common.application.TronApplicationContext;
+import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.Sha256Hash;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.config.args.Args;
+import org.tron.core.db.AccountStore;
+import org.tron.core.db.Manager;
+import org.tron.core.db.RevokingDatabase;
+import org.tron.core.db.common.WrappedByteArray;
+import org.tron.core.db2.common.DB;
+import org.tron.core.db2.common.IRevokingDB;
+import org.tron.core.db2.common.Key;
+import org.tron.core.db2.common.Value;
+import org.tron.core.exception.RevokingStoreIllegalStateException;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -17,30 +37,14 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-import org.iq80.leveldb.WriteOptions;
-import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.FileUtil;
-import org.tron.common.utils.Sha256Hash;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.config.args.Account;
-import org.tron.core.config.args.Args;
-import org.tron.core.db.RevokingDatabase;
-import org.tron.core.db.common.WrappedByteArray;
-import org.tron.core.db2.common.DB;
-import org.tron.core.db2.common.HashDB;
-import org.tron.core.db2.common.IRevokingDB;
-import org.tron.core.db2.common.Key;
-import org.tron.core.db2.common.Value;
-import org.tron.core.exception.RevokingStoreIllegalStateException;
 
 @Slf4j
 public class SnapshotManager implements RevokingDatabase {
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
   private static final int DEFAULT_FLUSH_COUNT = 5;
+
+ @Autowired
+  private TronApplicationContext tronApplicationContext;
 
   @Getter
   private List<RevokingDBWithCachingNewValue> dbs = new ArrayList<>();
@@ -181,13 +185,14 @@ public class SnapshotManager implements RevokingDatabase {
   public void shutdown() {
     System.err.println("******** begin to pop revokingDb ********");
     System.err.println("******** before revokingDb size:" + size);
-    while (shouldBeRefreshed()) {
-      try {
+    try {
+      while (shouldBeRefreshed()) {
         logger.info("waiting leveldb flush done");
         TimeUnit.MILLISECONDS.sleep(10);
-      } catch (InterruptedException e) {
-        System.out.println(e.getMessage() + e);
       }
+    } catch (InterruptedException e) {
+        System.out.println(e.getMessage() + e);
+        Thread.currentThread().interrupt();
     }
     System.err.println("******** end to pop revokingDb ********");
   }
@@ -247,6 +252,12 @@ public class SnapshotManager implements RevokingDatabase {
         next = next.getNext();
       }
 
+      // debug begin
+        if ("block".equals(db.getDbName())) {
+            logger.info("**** debug previous:{}, next:{}, snapshots:{}",snapshots.get(0).getPrevious(), snapshots.get(snapshots.size() - 1).getNext(), snapshots);
+        }
+      // debug end
+
       ((SnapshotRoot) solidity.getRoot()).merge(snapshots);
 
       solidity.resetSolidity();
@@ -259,7 +270,7 @@ public class SnapshotManager implements RevokingDatabase {
     }
     // debug begin
     List<String> debugDumpDatas = debugDumpDataMap.entrySet().stream().map(Entry::getValue).sorted(String::compareTo).collect(Collectors.toList());
-    logger.info("***debug refresh:    blocks={}, datahash:{}, accounts:{}\n", debugBlockHashs, Sha256Hash.of(debugDumpDatas.toString().getBytes()), printAccounts(values));
+    logger.info("***debug refresh:    blocks={}, datahash:{}, accounts:{}\n", debugBlockHashs, Sha256Hash.of(debugDumpDatas.toString().getBytes()), printAccount(null));
     // debug end
   }
 
@@ -322,7 +333,7 @@ public class SnapshotManager implements RevokingDatabase {
 
     // debug begin
     List<String> debugDumpDatas = debugDumpDataMap.entrySet().stream().map(Entry::getValue).sorted(String::compareTo).collect(Collectors.toList());
-    logger.info("***debug checkpoint: blocks={}, datahash:{}, accounts:{}\n", debugBlockHashs, Sha256Hash.of(debugDumpDatas.toString().getBytes()), printAccounts(values));
+    logger.info("***debug checkpoint: blocks={}, datahash:{}, accounts:{}\n", debugBlockHashs, Sha256Hash.of(debugDumpDatas.toString().getBytes()), printAccount(null));
     // debug end
     LevelDbDataSourceImpl levelDbDataSource =
         new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
@@ -393,7 +404,7 @@ public class SnapshotManager implements RevokingDatabase {
 
     // debug begin
     debugDumpDatas.sort(String::compareTo);
-    logger.info("***debug check:      blocks={}, datahash:{}, accounts:{}\n", debugBlockHashs, Sha256Hash.of(debugDumpDatas.toString().getBytes()), printAccounts(values));
+    logger.info("***debug check:      blocks={}, datahash:{}, accounts:{}\n", debugBlockHashs, Sha256Hash.of(debugDumpDatas.toString().getBytes()), printAccount(null));
     // debug end
 
     levelDbDataSource.closeDB();
@@ -439,23 +450,29 @@ public class SnapshotManager implements RevokingDatabase {
         }
       });
     }
-    debugDumpDatas.sort(String::compareTo);
-    logger.info("***debug debug:      blocks={}, datahash:{}, account:{}\n", debugBlockHashs, Sha256Hash.of(debugDumpDatas.toString().getBytes()), printAccount(values));
+    if (!debugBlockHashs.isEmpty()) {
+      debugDumpDatas.sort(String::compareTo);
+      logger.info("***debug debug:      blocks={}, datahash:{}, account:{}\n", debugBlockHashs,
+          Sha256Hash.of(debugDumpDatas.toString().getBytes()), printAccount(values));
+    }
     // debug end
 
   }
 
   private Map<String, AccountCapsule> printAccount(Map<String, byte[]> values) {
-    return values.entrySet().stream()
-        .map(e -> Maps.immutableEntry(e.getKey(), new AccountCapsule(e.getValue())))
-        .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+    if (unChecked) {
+      return null;
+    }
+    return tronApplicationContext.getBean(Manager.class).getWitnessController().getActiveWitnesses().stream()
+    .map(b -> b.toByteArray())
+    .map(b -> Maps.immutableEntry(ByteUtil.toHexString(b), tronApplicationContext.getBean(
+        AccountStore.class).get(b)))
+        .map(e -> Maps.immutableEntry(e.getKey(), e.getValue()))
+        .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (k, v) -> k));
+//    return values.entrySet().stream()
+//        .map(e -> Maps.immutableEntry(e.getKey(), new AccountCapsule(e.getValue())))
+//        .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
-  }
-
-  private Map<String, List<AccountCapsule>> printAccounts(Multimap<String, byte[]> values) {
-    return values.asMap().entrySet().stream()
-        .map(e -> Maps.immutableEntry(e.getKey(), e.getValue().stream().map(AccountCapsule::new).collect(Collectors.toList())))
-        .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
   }
 
   @Slf4j
