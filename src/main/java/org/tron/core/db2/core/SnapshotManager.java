@@ -460,19 +460,16 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   private Map<String, AccountCapsule> printAccount(Map<String, byte[]> values) {
-    if (unChecked) {
-      return null;
-    }
-    return tronApplicationContext.getBean(Manager.class).getWitnessController().getActiveWitnesses().stream()
-    .map(b -> b.toByteArray())
-    .map(b -> Maps.immutableEntry(ByteUtil.toHexString(b), tronApplicationContext.getBean(
-        AccountStore.class).get(b)))
-        .map(e -> Maps.immutableEntry(e.getKey(), e.getValue()))
-        .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (k, v) -> k));
-//    return values.entrySet().stream()
-//        .map(e -> Maps.immutableEntry(e.getKey(), new AccountCapsule(e.getValue())))
-//        .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-
+    return null;
+//    if (unChecked) {
+//      return null;
+//    }
+//    return tronApplicationContext.getBean(Manager.class).getWitnessController().getActiveWitnesses().stream()
+//    .map(b -> b.toByteArray())
+//    .map(b -> Maps.immutableEntry(ByteUtil.toHexString(b), tronApplicationContext.getBean(
+//        AccountStore.class).get(b)))
+//        .map(e -> Maps.immutableEntry(e.getKey(), e.getValue()))
+//        .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (k, v) -> k));
   }
 
   @Slf4j
