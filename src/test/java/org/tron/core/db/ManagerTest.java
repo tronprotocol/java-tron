@@ -136,6 +136,7 @@ public class ManagerTest {
         ByteArray.toInt(trx.getInstance().getRawData().getRefBlockBytes().toByteArray()));
   }
 
+  @Ignore
   @Test
   public void pushBlock() {
     boolean isUnlinked = false;
