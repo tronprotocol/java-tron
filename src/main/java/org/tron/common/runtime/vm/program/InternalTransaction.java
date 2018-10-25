@@ -93,9 +93,6 @@ public class InternalTransaction {
       this.note = "create";
       this.value = contract.getNewContract().getCallValue();
       this.data = contract.getNewContract().getBytecode().toByteArray();
-      if(this.data.length == 0){
-        this.data = null;
-      }
     } else if(trxType == TrxType.TRX_CONTRACT_CALL_TYPE) {
       TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
       this.sendAddress = contract.getOwnerAddress().toByteArray();
@@ -104,9 +101,6 @@ public class InternalTransaction {
       this.note = "call";
       this.value = contract.getCallValue();
       this.data = contract.getData().toByteArray();
-      if (this.data.length == 0) {
-        this.data = null;
-      }
     } else {
       // TODO: Should consider unknown type?
     }
@@ -187,9 +181,6 @@ public class InternalTransaction {
   }
 
   public long getValue() {
-    if (data == null) {
-      return 0;
-    }
     return value;
   }
 
