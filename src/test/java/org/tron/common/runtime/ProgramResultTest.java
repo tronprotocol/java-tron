@@ -64,6 +64,7 @@ public class ProgramResultTest {
     deposit.addBalance(Hex.decode(OWNER_ADDRESS), 100000000);
     deposit.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
     deposit.addBalance(Hex.decode(TRANSFER_TO), 0);
+    deposit.commit();
   }
 
   /**
@@ -423,8 +424,8 @@ public class ProgramResultTest {
             suicideContract, triggerData1,
             0, 100000000, deposit, null);
     List<InternalTransaction> internalTransactionsList = runtime.getResult().getInternalTransactions();
-    Assert.assertEquals(deposit.getAccount(Hex.decode(TRANSFER_TO)).getBalance(), 1000);
-    Assert.assertEquals(deposit.getAccount(suicideContract).getBalance(), 0);
+    Assert.assertEquals(dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getBalance(), 1000);
+    Assert.assertEquals(dbManager.getAccountStore().get(suicideContract), null);
     Assert.assertEquals(internalTransactionsList.get(0).getValue(), 1000);
     Assert.assertEquals(new DataWord(internalTransactionsList.get(0).getSender()).getLast20Bytes(), new DataWord(suicideContract).getLast20Bytes());
     Assert.assertEquals(internalTransactionsList.get(0).getTransferToAddress() , Hex.decode(TRANSFER_TO));

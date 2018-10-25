@@ -26,6 +26,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TVMTestUtils;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
@@ -151,10 +152,11 @@ public class BandWidthRuntimeTest {
       dbManager.consumeBandwidth(trxCap, trace);
       BlockCapsule blockCapsule = null;
       DepositImpl deposit = DepositImpl.createRoot(dbManager);
-      Runtime runtime = new Runtime(trace, blockCapsule, deposit, new ProgramInvokeFactoryImpl());
-      trace.init();
-      trace.exec(runtime);
-      trace.finalization(runtime);
+      Runtime runtime = new RuntimeImpl(trace, blockCapsule, deposit,
+          new ProgramInvokeFactoryImpl());
+      trace.init(blockCapsule);
+      trace.exec();
+      trace.finalization();
 
       triggerOwner = dbManager.getAccountStore()
           .get(Wallet.decodeFromBase58Check(TriggerOwnerAddress));
@@ -184,10 +186,11 @@ public class BandWidthRuntimeTest {
       long bandWidth = trxCap.getSerializedSize() + Constant.MAX_RESULT_SIZE_IN_TX;
       BlockCapsule blockCapsule = null;
       DepositImpl deposit = DepositImpl.createRoot(dbManager);
-      Runtime runtime = new Runtime(trace, blockCapsule, deposit, new ProgramInvokeFactoryImpl());
-      trace.init();
-      trace.exec(runtime);
-      trace.finalization(runtime);
+      Runtime runtime = new RuntimeImpl(trace, blockCapsule, deposit,
+          new ProgramInvokeFactoryImpl());
+      trace.init(blockCapsule);
+      trace.exec();
+      trace.finalization();
 
       AccountCapsule triggerOwnerTwo = dbManager.getAccountStore()
           .get(Wallet.decodeFromBase58Check(TriggerOwnerTwoAddress));
@@ -225,10 +228,10 @@ public class BandWidthRuntimeTest {
     dbManager.consumeBandwidth(trxCap, trace);
     BlockCapsule blockCapsule = null;
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
-    Runtime runtime = new Runtime(trace, blockCapsule, deposit, new ProgramInvokeFactoryImpl());
-    trace.init();
-    trace.exec(runtime);
-    trace.finalization(runtime);
+    Runtime runtime = new RuntimeImpl(trace, blockCapsule, deposit, new ProgramInvokeFactoryImpl());
+    trace.init(blockCapsule);
+    trace.exec();
+    trace.finalization();
     owner = dbManager.getAccountStore()
         .get(Wallet.decodeFromBase58Check(OwnerAddress));
     energy = owner.getEnergyUsage() - energy;
