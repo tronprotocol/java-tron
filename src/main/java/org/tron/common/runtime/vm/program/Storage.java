@@ -22,32 +22,29 @@ public class Storage {
   }
 
   public DataWord getValue(DataWord key) {
-    if (rowCache.containsKey(key)) {
-      return rowCache.get(key).getValue();
-    } else {
-      StorageRowCapsule row = store.get(compose(key.getData(), addrHash));
-      if (row == null || row.getInstance() == null) {
-        return null;
-      }
-      rowCache.put(key, row);
-      return row.getValue();
+    StorageRowCapsule capsule = rowCache.get(key);
+    if (capsule == null && !rowCache.containsKey(key)){
+      capsule = store.get(compose(key));
+      rowCache.put(key, capsule);
     }
+    return (capsule == null) ? null : capsule.getValue();
   }
 
   public void put(DataWord key, DataWord value) {
-    if (rowCache.containsKey(key)) {
-      rowCache.get(key).setValue(value);
-    } else {
-      byte[] rowKey = compose(key.getData(), addrHash);
-      StorageRowCapsule row = new StorageRowCapsule(rowKey, value.getData());
-      rowCache.put(key, row);
+
+    StorageRowCapsule capsule = rowCache.get(key);
+    if (capsule == null){
+      rowCache.put(key, new StorageRowCapsule(compose(key), value.getData()));
+    }else {
+      capsule.setValue(value);
     }
   }
 
-  private static byte[] compose(byte[] key, byte[] addrHash) {
-    byte[] result = new byte[key.length];
+  private byte[] compose(DataWord key) {
+    byte[] realKey = key.getData();
+    byte[] result = new byte[realKey.length];
     arraycopy(addrHash, 0, result, 0, PREFIX_BYTES);
-    arraycopy(key, PREFIX_BYTES, result, PREFIX_BYTES, PREFIX_BYTES);
+    arraycopy(realKey, PREFIX_BYTES, result, PREFIX_BYTES, PREFIX_BYTES);
     return result;
   }
 
@@ -59,10 +56,11 @@ public class Storage {
   public void commit() {
     rowCache.forEach((key, value) -> {
       if (value.isDirty()) {
+        byte[] rowKey = value.getRowKey();
         if (value.getValue().isZero()) {
-          this.store.delete(value.getRowKey());
+          this.store.delete(rowKey);
         } else {
-          this.store.put(value.getRowKey(), value);
+          this.store.put(rowKey, value);
         }
       }
     });
