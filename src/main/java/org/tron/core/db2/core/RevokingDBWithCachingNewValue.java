@@ -24,8 +24,7 @@ import org.tron.core.db2.common.Value;
 import org.tron.core.exception.ItemNotFoundException;
 
 public class RevokingDBWithCachingNewValue implements IRevokingDB {
-  @Setter
-  @Getter
+
   private Snapshot head;
   @Getter
   private String dbName;
@@ -33,6 +32,14 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
   public RevokingDBWithCachingNewValue(String dbName) {
     this.dbName = dbName;
     head = new SnapshotRoot(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName);
+  }
+
+  public synchronized Snapshot getHead() {
+    return head;
+  }
+
+  public synchronized void setHead(Snapshot head) {
+    this.head = head;
   }
 
   /**
