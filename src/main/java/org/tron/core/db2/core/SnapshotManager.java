@@ -198,6 +198,7 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   private void mark() {
+    --size;
     ++flushCount;
     logger.info("*****flushCount:" + flushCount);
   }
@@ -293,7 +294,6 @@ public class SnapshotManager implements RevokingDatabase {
 
       flushCount = 0;
     }
-    --size;
   }
 
   private void createCheckPoint() {
