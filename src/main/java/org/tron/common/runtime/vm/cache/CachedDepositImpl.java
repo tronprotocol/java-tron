@@ -40,7 +40,13 @@ public class CachedDepositImpl implements Deposit {
 
   // for deposit root
   private CachedDepositImpl(Manager manager) {
-    this(manager, null);
+    this.manager = manager;
+    accountCache = new ReadWriteCapsuleCache<>(manager.getAccountStore());
+    contractCache = new ReadWriteCapsuleCache<>(manager.getContractStore());
+    transactionCache = new ReadWriteCapsuleCache<>(manager.getTransactionStore());
+    witnessCache = new ReadWriteCapsuleCache<>(manager.getWitnessStore());
+    codeCache = new ReadWriteCapsuleCache<>(manager.getCodeStore());
+    blockCache = new ReadWriteCapsuleCache<>(manager.getBlockStore());
   }
 
   // for deposit child
