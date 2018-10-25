@@ -10,6 +10,7 @@ import org.tron.common.runtime.vm.program.Storage;
 import org.tron.common.storage.Deposit;
 import org.tron.common.utils.ByteArrayMap;
 import org.tron.core.capsule.*;
+import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol;
 
@@ -32,7 +33,7 @@ public class CachedDepositImpl implements Deposit {
   private CachedSource<byte[], CodeCapsule> codeCache;
 
 //  private HashMap<ByteArrayWrapper, Storage> storageCache = new HashMap<>();
-  private HashMap<Key, Storage> storageCache = new HashMap<>();
+  private ByteArrayMap<Storage> storageCache = new ByteArrayMap<>();
 
   public static Deposit createRoot(Manager manager) {
     return new CachedDepositImpl(manager);
@@ -142,56 +143,26 @@ public class CachedDepositImpl implements Deposit {
 
   @Override
   public void putStorageValue(byte[] address, DataWord key, DataWord value) {
-    address = convertToTronAddress(address);
-    if (getAccount(address) == null) {
-      return;
-    }
-//    ByteArrayWrapper addressKey = new ByteArrayWrapper(address);
-    Key addressKey = Key.create(address);
-    Storage storage;
-    if (storageCache.containsKey(addressKey)) {
-      storage = storageCache.get(addressKey);
-    } else {
-      storage = getStorage(address);
-      storageCache.put(addressKey, storage);
-    }
-    storage.put(key, value);
+    getStorage(address).put(key, value);
   }
 
   @Override
   public DataWord getStorageValue(byte[] address, DataWord key) {
-    address = convertToTronAddress(address);
-    if (getAccount(address) == null) {
-      return null;
-    }
-    Key addressKey = Key.create(address);
-//    ByteArrayWrapper addressKey = new ByteArrayWrapper(address);
-
-    Storage storage;
-    if (storageCache.containsKey(addressKey)) {
-      storage = storageCache.get(addressKey);
-    } else {
-      storage = getStorage(address);
-      storageCache.put(addressKey, storage);
-    }
-    return storage.getValue(key);
+    return getStorage(address).getValue(key);
   }
 
   @Override
   public Storage getStorage(byte[] address) {
-//    ByteArrayWrapper key = new ByteArrayWrapper(address);
-    Key key = Key.create(address);
-    if (storageCache.containsKey(key)) {
-      return storageCache.get(key);
+    if (storageCache.containsKey(address)) {
+      return storageCache.get(address);
     }
-
     Storage storage;
     if (this.parent != null) {
       storage = parent.getStorage(address);
     } else {
       storage = new Storage(address, this.manager.getStorageRowStore());
     }
-    storageCache.put(key, storage);
+    storageCache.put(address, storage);
     return storage;
   }
 
