@@ -56,7 +56,6 @@ import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.ITronChainBase;
-import org.tron.core.db2.core.RevokingDBWithCachingNewValue;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
@@ -1247,8 +1246,7 @@ public class Manager {
     }
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
     try {
-      if (blockStore.getUncheckedOnSolidity(
-          getBlockIdByNum(latestSolidifiedBlockNum).getBytes()) == null) {
+      if (!blockStore.hasOnSolidity(getBlockIdByNum(latestSolidifiedBlockNum).getBytes())) {
         revokingStore.updateSolidity();
       }
     } catch (ItemNotFoundException e) {

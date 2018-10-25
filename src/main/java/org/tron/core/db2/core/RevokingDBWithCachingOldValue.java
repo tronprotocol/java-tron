@@ -54,6 +54,11 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
   }
 
   @Override
+  public boolean hasOnSolidity(byte[] key) {
+    return false;
+  }
+
+  @Override
   public boolean has(byte[] key) {
     return dbSource.getData(key) != null;
   }
