@@ -500,4 +500,6 @@ message InternalTransaction {
     bytes tokenName = 2;
   }
   repeated CallValueInfo callValueInfo = 4;
+  bytes note = 5;
+  bool rejected = 6;
 }

@@ -204,6 +204,8 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
         // Just one transferBuilder for now.
         internalTrxBuilder.addCallValueInfo(callValueInfoBuilder);
         // Token for loop end here
+        internalTrxBuilder.setNote(ByteString.copyFrom(internalTransaction.getNote().getBytes()));
+        internalTrxBuilder.setRejected(internalTransaction.isRejected());
         builder.addInternalTransactions(internalTrxBuilder);
       }
     }
