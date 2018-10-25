@@ -1,24 +1,12 @@
 package org.tron.core.db2.core;
 
-import com.alibaba.fastjson.JSON;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 import com.google.common.collect.Streams;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.WriteOptions;
@@ -29,20 +17,26 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.config.args.Account;
 import org.tron.core.config.args.Args;
-import org.tron.core.config.args.Witness;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.DB;
-import org.tron.core.db2.common.HashDB;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
-import org.tron.core.witness.WitnessController;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class SnapshotManager implements RevokingDatabase {
@@ -259,7 +253,9 @@ public class SnapshotManager implements RevokingDatabase {
       }
 
       // debug begin
-      logger.info("**** debug snapshots:{}", snapshots);
+        if ("block".equals(db.getDbName())) {
+            logger.info("**** debug previous:{}, next:{}, snapshots:{}",snapshots.get(0).getPrevious(), snapshots.get(snapshots.size() - 1).getNext(), snapshots);
+        }
       // debug end
 
       ((SnapshotRoot) solidity.getRoot()).merge(snapshots);
@@ -474,12 +470,6 @@ public class SnapshotManager implements RevokingDatabase {
 //        .map(e -> Maps.immutableEntry(e.getKey(), new AccountCapsule(e.getValue())))
 //        .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
-  }
-
-  private Map<String, List<AccountCapsule>> printAccounts(Multimap<String, byte[]> values) {
-    return values.asMap().entrySet().stream()
-        .map(e -> Maps.immutableEntry(e.getKey(), e.getValue().stream().map(AccountCapsule::new).collect(Collectors.toList())))
-        .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
   }
 
   @Slf4j
