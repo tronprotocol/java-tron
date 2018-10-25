@@ -1204,16 +1204,6 @@ public class Manager {
     this.updateTransHashCache(block);
     updateMaintenanceState(needMaint);
     updateRecentBlock(block);
-    try {
-      logger.info("check solidity head:{}, solidity:{}, getOnSolidity:{}, getOnSolidity hash:{}",
-          dynamicPropertiesStore.getLatestBlockHeaderNumber(),
-          dynamicPropertiesStore.getLatestSolidifiedBlockNum(),
-          ((RevokingDBWithCachingNewValue) blockStore.revokingDB).getHead().getSolidity(),
-          blockStore.getUncheckedOnSolidity(getBlockIdByNum(dynamicPropertiesStore.getLatestSolidifiedBlockNum()).getBytes()).getNum()
-      );
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
   }
 
   private void updateTransHashCache(BlockCapsule block) {
