@@ -15,6 +15,10 @@ public interface IRevokingDB extends Iterable<Map.Entry<byte[], byte[]>> {
 
   byte[] getUnchecked(byte[] key);
 
+  byte[] getOnSolidity(byte[] key) throws ItemNotFoundException;
+
+  byte[] getUncheckedOnSolidity(byte[] key);
+
   void close();
 
   void reset();

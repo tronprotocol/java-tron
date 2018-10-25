@@ -60,6 +60,7 @@ import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.ITronChainBase;
+import org.tron.core.db2.core.RevokingDBWithCachingNewValue;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
@@ -1205,7 +1206,16 @@ public class Manager {
     this.updateTransHashCache(block);
     updateMaintenanceState(needMaint);
     updateRecentBlock(block);
-
+    try {
+      logger.info("check solidity head:{}, solidity:{}, getOnSolidity:{}, getOnSolidity hash:{}",
+          dynamicPropertiesStore.getLatestBlockHeaderNumber(),
+          dynamicPropertiesStore.getLatestSolidifiedBlockNum(),
+          ((RevokingDBWithCachingNewValue) blockStore.revokingDB).getHead().getSolidity(),
+          blockStore.getUncheckedOnSolidity(getBlockIdByNum(dynamicPropertiesStore.getLatestSolidifiedBlockNum()).getBytes()).getNum()
+      );
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   private void updateTransHashCache(BlockCapsule block) {
@@ -1248,6 +1258,14 @@ public class Manager {
       return;
     }
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
+    try {
+      if (blockStore.getUncheckedOnSolidity(
+          getBlockIdByNum(latestSolidifiedBlockNum).getBytes()) == null) {
+        revokingStore.updateSolidity();
+      }
+    } catch (ItemNotFoundException e) {
+      throw new RuntimeException(e);
+    }
     logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
   }
 

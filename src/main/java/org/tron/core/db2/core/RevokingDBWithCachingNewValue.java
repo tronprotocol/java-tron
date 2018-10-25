@@ -86,6 +86,26 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
   }
 
   @Override
+  public byte[] getOnSolidity(byte[] key) throws ItemNotFoundException {
+    Snapshot solidity = head.getSolidity();
+    byte[] value = solidity.get(key);
+    if (ArrayUtils.isEmpty(value)) {
+      throw new ItemNotFoundException();
+    }
+    return value;
+
+  }
+
+  @Override
+  public byte[] getUncheckedOnSolidity(byte[] key) {
+    try {
+      return getOnSolidity(key);
+    } catch (ItemNotFoundException e) {
+      return null;
+    }
+  }
+
+  @Override
   public synchronized boolean has(byte[] key) {
     return head.get(key) != null;
   }

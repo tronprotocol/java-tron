@@ -79,6 +79,26 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   @Override
   public T getUnchecked(byte[] key) {
     byte[] value = revokingDB.getUnchecked(key);
+    if (value == null) {
+      return null;
+    }
+
+    try {
+      return of(value);
+    } catch (BadItemException e) {
+      return null;
+    }
+  }
+
+  public T getOnSolidity(byte[] key) throws ItemNotFoundException, BadItemException {
+    return of(revokingDB.getOnSolidity(key));
+  }
+
+  public T getUncheckedOnSolidity(byte[] key) {
+    byte[] value = revokingDB.getUncheckedOnSolidity(key);
+    if (value == null) {
+      return null;
+    }
 
     try {
       return of(value);
