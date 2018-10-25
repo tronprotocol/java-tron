@@ -35,11 +35,16 @@ public class ReadWriteCapsuleCache<V extends ProtoCapsule> implements CachedSour
     V value = readCache.get(key);
     if (value == null && !readCache.containsKey(key)){
       try {
-        readCache.put(key, this.store.get(key));
+        value = this.store.get(key);
+        /*if (!(value instanceof ProtoCapsule)){
+          value = null;
+        }*/
       } catch (ItemNotFoundException | BadItemException e) {
         logger.warn("read cache null, key" + Hex.toHexString(key));
-        readCache.put(key, null);
+        value = null;
       }
+      // write into cache even though value is null, to prevent searching DB next time.
+      readCache.put(key, value);
     }
     return value;
   }
@@ -47,7 +52,9 @@ public class ReadWriteCapsuleCache<V extends ProtoCapsule> implements CachedSour
   @Override
   public void commit() {
     writeCache.forEach((key, value) -> {
-      logger.debug("commit cache, key" + Hex.toHexString(key) + " value:" + value);
+
+      if (logger.isDebugEnabled()){ logger.debug("commit cache, key" + Hex.toHexString(key) + " value:" + value); }
+      
       if (value == null) {
         this.store.delete(key);
       } else {
