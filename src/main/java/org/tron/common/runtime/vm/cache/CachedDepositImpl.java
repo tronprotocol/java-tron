@@ -234,7 +234,7 @@ public class CachedDepositImpl implements Deposit {
     this.getContractCache().commit();
     this.getWitnessCache().commit();
     this.getBlockCache().commit();
-    commitStorageCache(this.parent);
+    commitStorageCache();
   }
 
   @Override
@@ -337,11 +337,11 @@ public class CachedDepositImpl implements Deposit {
     return this.blockCache.get(blockHash);
   }
 
-  private void commitStorageCache(Deposit deposit) {
+  private void commitStorageCache() {
     storageCache.forEach((key, value) -> {
-      if (deposit != null) {
+      if (this.parent != null) {
         // write to parent cache
-        deposit.putStorage(key, value);
+        this.parent.putStorage(key, value);
       } else {
         // persistence
         value.commit();
