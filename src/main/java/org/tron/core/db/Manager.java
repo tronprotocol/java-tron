@@ -1028,7 +1028,7 @@ public class Manager {
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
 
     if (Objects.nonNull(blockCap)) {
-      sendEventLog(runtime.getResult().getContractAddress(),
+      sendEventLog(trace.getRuntime().getResult().getContractAddress(),
           transactionInfo.getInstance().getLogList(), blockCap.getInstance(), transactionInfo);
     }
 
