@@ -112,7 +112,6 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     }
   }
 
-  @Override
   public boolean hasOnSolidity(byte[] key) {
     return revokingDB.hasOnSolidity(key);
   }

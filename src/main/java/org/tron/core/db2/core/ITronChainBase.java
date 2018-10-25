@@ -26,8 +26,6 @@ public interface ITronChainBase<T> extends Iterable<Entry<byte[], T>>, Quitable 
 
   T getUnchecked(byte[] key);
 
-  boolean hasOnSolidity(byte[] key);
-
   boolean has(byte[] key);
 
   String getName();
