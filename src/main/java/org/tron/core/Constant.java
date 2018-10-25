@@ -57,4 +57,8 @@ public class Constant {
   public static final long MIN_CONSUME_USER_RESOURCE_PERCENT = 0L;
   public static final long ACCORD_RANGE_PERCENT = 0L;
 
+  // Numbers
+  public static final int ONE_HUNDRED = 100;
+  public static final int ONE_THOUSAND = 1000;
+
 }

@@ -10,6 +10,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
 import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
@@ -20,8 +21,12 @@ import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
 import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
 import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
 import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
+import org.tron.common.runtime.vm.program.ProgramResult;
+import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
+import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -44,6 +49,8 @@ public class TransactionTrace {
   private ReceiptCapsule receipt;
 
   private Manager dbManager;
+
+  private Runtime runtime;
 
   private EnergyProcessor energyProcessor;
 
@@ -91,8 +98,11 @@ public class TransactionTrace {
   }
 
   //pre transaction check
-  public void init() {
+  public void init(BlockCapsule blockCap) {
     txStartTimeInMs = System.currentTimeMillis();
+    DepositImpl deposit = DepositImpl.createRoot(dbManager);
+    runtime = new RuntimeImpl(this, blockCap, deposit, new ProgramInvokeFactoryImpl());
+
     // switch (trxType) {
     //   case TRX_PRECOMPILED_TYPE:
     //     break;
@@ -105,7 +115,11 @@ public class TransactionTrace {
     // }
 
   }
-
+public void checkIsConstant() throws ContractValidateException, VMIllegalException {
+  if (runtime.isCallConstant()) {
+    throw new VMIllegalException("cannot call constant method ");
+  }
+}
   //set bill
   public void setBill(long energyUsage) {
     if (energyUsage < 0) {
@@ -120,7 +134,7 @@ public class TransactionTrace {
     receipt.setNetFee(netFee);
   }
 
-  public void exec(Runtime runtime)
+  public void exec()
       throws ContractExeException, ContractValidateException, VMIllegalException {
     /**  VM execute  **/
     runtime.execute();
@@ -137,7 +151,7 @@ public class TransactionTrace {
     }
   }
 
-  public void finalization(Runtime runtime) throws ContractExeException {
+  public void finalization() throws ContractExeException {
     try {
       pay();
     } catch (BalanceInsufficientException e) {
@@ -215,7 +229,7 @@ public class TransactionTrace {
     return receipt;
   }
 
-  public void setResult(Runtime runtime) {
+  public void setResult() {
     if (!needVM()) {
       return;
     }
@@ -267,5 +281,17 @@ public class TransactionTrace {
     }
     receipt.setResult(contractResult.UNKNOWN);
     return;
+  }
+
+  public String getRuntimeError() {
+    return runtime.getRuntimeError();
+  }
+
+  public ProgramResult getRuntimeResult() {
+    return runtime.getResult();
+  }
+
+  public Runtime getRuntime() {
+    return runtime;
   }
 }

@@ -12,5 +12,6 @@ public enum  BlockProductionCondition {
   CONSECUTIVE,
   TIME_OUT,
   BACKUP_STATUS_IS_NOT_MASTER,
+  DUP_WITNESS,
   EXCEPTION_PRODUCING_BLOCK
 }
