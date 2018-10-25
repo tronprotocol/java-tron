@@ -1,7 +1,9 @@
 package org.tron.common.entity;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class NodeInfo {
 
@@ -21,6 +23,8 @@ public class NodeInfo {
   private ConfigNodeInfo configNodeInfo;
   /*machine information*/
   private MachineInfo machineInfo;
+
+  private Map<String, String> cheatWitnessInfoMap = new HashMap<>();
 
   public static class MachineInfo {
 
@@ -558,6 +562,16 @@ public class NodeInfo {
 
   public NodeInfo setMachineInfo(MachineInfo machineInfo) {
     this.machineInfo = machineInfo;
+    return this;
+  }
+
+  public Map<String, String> getCheatWitnessInfoMap() {
+    return cheatWitnessInfoMap;
+  }
+
+  public NodeInfo setCheatWitnessInfoMap(
+      Map<String, String> cheatWitnessInfoMap) {
+    this.cheatWitnessInfoMap = cheatWitnessInfoMap;
     return this;
   }
 }

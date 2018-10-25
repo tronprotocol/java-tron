@@ -69,10 +69,10 @@ import org.tron.core.net.message.TransactionsMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
+import org.tron.core.services.WitnessProductBlockService;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
-import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
 @Component
@@ -83,6 +83,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Autowired
   private SyncPool pool;
+
+  @Autowired
+  private WitnessProductBlockService witnessProductBlockService;
 
   private MessageCount trxCount = new MessageCount();
 
@@ -470,7 +473,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     advObjToFetch.values().stream().sorted(PriorItem::compareTo).forEach(idToFetch -> {
       Sha256Hash hash = idToFetch.getHash();
       if (idToFetch.getTime() < now - MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL) {
-        logger.info("This obj is too late to fetch, type: {} hash: {}.", idToFetch.getType(), idToFetch.getHash());
+        logger.info("This obj is too late to fetch, type: {} hash: {}.", idToFetch.getType(),
+            idToFetch.getHash());
         advObjToFetch.remove(hash);
         return;
       }
@@ -605,7 +609,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     getActivePeer().forEach(peer -> {
       final boolean[] isDisconnected = {false};
 
-      if (peer.isNeedSyncFromPeer() && peer.getLastBlockUpdateTime() < System.currentTimeMillis() - blockUpdateTimeout){
+      if (peer.isNeedSyncFromPeer()
+          && peer.getLastBlockUpdateTime() < System.currentTimeMillis() - blockUpdateTimeout) {
         logger.warn("Peer {} not sync for a long time.", peer.getInetAddress());
         isDisconnected[0] = true;
       }
@@ -628,7 +633,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
 
   private void onHandleInventoryMessage(PeerConnection peer, InventoryMessage msg) {
-    if (trxHandler.isBusy() && msg.getInventoryType().equals(InventoryType.TRX)){
+    if (trxHandler.isBusy() && msg.getInventoryType().equals(InventoryType.TRX)) {
       logger.warn("Too many trx msg to handle, drop inventory msg from peer {}, size {}",
           peer.getInetAddress(), msg.getHashList().size());
       return;
@@ -738,6 +743,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     synchronized (freshBlockId) {
       if (!freshBlockId.contains(block.getBlockId())) {
         try {
+          witnessProductBlockService.validWitnessProductTwoBlock(block);
           LinkedList<Sha256Hash> trxIds = null;
           trxIds = del.handleBlock(block, false);
           freshBlockId.offer(block.getBlockId());
@@ -755,9 +761,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
               block.getBlockId().getString(), peer.getNode().getHost(), e.getMessage());
           disconnectPeer(peer, ReasonCode.BAD_BLOCK);
         } catch (UnLinkedBlockException e) {
-          logger.error("We get a unlinked block {}, from {}, head is {}",
-              block.getBlockId().getString(), peer.getNode().getHost(),
-              del.getHeadBlockId().getString());
+          logger.error("We get a unlinked block {}, from {}, head is {}", block.getBlockId().
+              getString(), peer.getNode().getHost(), del.getHeadBlockId().getString());
           startSyncWithPeer(peer);
         } catch (NonCommonBlockException e) {
           logger.error(
@@ -851,10 +856,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         broadcast(trxMsg);
       }
     } catch (TraitorPeerException e) {
-      logger.error("Trx {} from peer {} failed, error: {}", trxMsg.getMessageId(), peer.getInetAddress(), e.getMessage());
+      logger.error("Trx {} from peer {} failed, error: {}", trxMsg.getMessageId(),
+          peer.getInetAddress(), e.getMessage());
       banTraitorPeer(peer, ReasonCode.BAD_PROTOCOL);
     } catch (BadTransactionException e) {
-      logger.error("Bad Trx {} from peer {}, error: {}", trxMsg.getMessageId(), peer.getInetAddress(), e.getMessage());
+      logger
+          .error("Bad Trx {} from peer {}, error: {}", trxMsg.getMessageId(), peer.getInetAddress(),
+              e.getMessage());
       banTraitorPeer(peer, ReasonCode.BAD_TX);
     }
   }
@@ -1052,7 +1060,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     try {
       if (peer.getSyncChainRequested() != null) {
         Deque<BlockId> blockIdWeGet = new LinkedList<>(msg.getBlockIds());
-        if (blockIdWeGet.size() > 0){
+        if (blockIdWeGet.size() > 0) {
           peer.setNeedSyncFromPeer(true);
         }
 

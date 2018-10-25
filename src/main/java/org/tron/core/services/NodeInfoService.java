@@ -10,6 +10,7 @@ import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map.Entry;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,7 @@ import org.tron.common.overlay.server.SyncPool;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.core.services.WitnessProductBlockService.CheatWitnessInfo;
 import org.tron.program.Version;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -47,12 +49,16 @@ public class NodeInfoService {
   @Autowired
   private Manager dbManager;
 
+  @Autowired
+  private WitnessProductBlockService witnessProductBlockService;
+
   public NodeInfo getNodeInfo() {
     NodeInfo nodeInfo = new NodeInfo();
     setConnectInfo(nodeInfo);
     setMachineInfo(nodeInfo);
     setConfigNodeInfo(nodeInfo);
     setBlockInfo(nodeInfo);
+    setCheatWitnessInfo(nodeInfo);
     return nodeInfo;
   }
 
@@ -183,6 +189,13 @@ public class NodeInfoService {
     nodeInfo.setBeginSyncNum(dbManager.getSyncBeginNumber());
     nodeInfo.setBlock(dbManager.getHeadBlockId().getString());
     nodeInfo.setSolidityBlock(dbManager.getSolidBlockId().getString());
+  }
+
+  private void setCheatWitnessInfo(NodeInfo nodeInfo) {
+    for (Entry<String, CheatWitnessInfo> entry : witnessProductBlockService.queryCheatWitnessInfo()
+        .entrySet()) {
+      nodeInfo.getCheatWitnessInfoMap().put(entry.getKey(), entry.getValue().toString());
+    }
   }
 
 }
