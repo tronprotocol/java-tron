@@ -15,11 +15,6 @@ public class WriteCapsuleCache<V extends ProtoCapsule> implements CachedSource<b
     this.writeCache = new ByteArrayMap<>();
   }
 
-//  @Override
-//  public void delete(byte[] key) {
-//    writeCache.put(key, null);
-//  }
-
   @Override
   public void put(byte[] key, V value) {
     writeCache.put(key, value);
@@ -36,7 +31,6 @@ public class WriteCapsuleCache<V extends ProtoCapsule> implements CachedSource<b
   @Override
   public void commit() {
     writeCache.forEach((key, value) -> {
-      logger.debug("commit cache , key" + Hex.toHexString(key) + " value:" + value);
       this.backingSource.put(key, value);
     });
   }

@@ -3,11 +3,14 @@ package org.tron.common.runtime.vm.program;
 import static java.lang.System.arraycopy;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.StorageRowCapsule;
 import org.tron.core.db.StorageRowStore;
 
+@Slf4j(topic = "vm_storage")
 public class Storage {
 
   private byte[] addrHash;  // contract address

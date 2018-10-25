@@ -16,9 +16,8 @@
 package org.tron.core.capsule;
 
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.Sha256Hash;
+import org.spongycastle.util.encoders.Hex;
 
-import java.util.Arrays;
 
 @Slf4j
 public class CodeCapsule implements ProtoCapsule<byte[]> {
@@ -27,10 +26,6 @@ public class CodeCapsule implements ProtoCapsule<byte[]> {
 
   public CodeCapsule(byte[] code) {
     this.code = code;
-  }
-
-  public Sha256Hash getCodeHash() {
-    return Sha256Hash.of(this.code);
   }
 
   @Override
@@ -45,6 +40,6 @@ public class CodeCapsule implements ProtoCapsule<byte[]> {
 
   @Override
   public String toString() {
-    return Arrays.toString(this.code);
+    return Hex.toHexString(this.code);
   }
 }

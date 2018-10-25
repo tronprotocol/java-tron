@@ -8,8 +8,8 @@ import lombok.Getter;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.Storage;
 import org.tron.common.storage.Deposit;
+import org.tron.common.utils.ByteArrayMap;
 import org.tron.core.capsule.*;
-import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol;
 
@@ -185,6 +185,7 @@ public class CachedDepositImpl implements Deposit {
     } else {
       storage = new Storage(address, this.manager.getStorageRowStore());
     }
+    storageCache.put(key, storage);
     return storage;
   }
 
