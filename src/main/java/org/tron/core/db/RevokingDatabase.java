@@ -26,6 +26,8 @@ public interface RevokingDatabase {
 
   int size();
 
+  void updateSolidity();
+
   void check();
 
   void setMaxSize(int maxSize);

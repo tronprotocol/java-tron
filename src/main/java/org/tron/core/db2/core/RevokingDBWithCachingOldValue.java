@@ -77,6 +77,16 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
   }
 
   @Override
+  public byte[] getOnSolidity(byte[] key) throws ItemNotFoundException {
+    return null;
+  }
+
+  @Override
+  public byte[] getUncheckedOnSolidity(byte[] key) {
+    return null;
+  }
+
+  @Override
   public void close() {
     dbSource.closeDB();
   }

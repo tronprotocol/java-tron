@@ -200,6 +200,10 @@ public class SnapshotManager implements RevokingDatabase {
   private void mark() {
     ++flushCount;
     logger.info("*****flushCount:" + flushCount);
+  }
+
+  @Override
+  public void updateSolidity() {
     for (RevokingDBWithCachingNewValue db : dbs) {
       if (db.getHead().getRoot().getNext() == null) {
         --flushCount;
