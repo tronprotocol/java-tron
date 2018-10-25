@@ -1,4 +1,4 @@
-package org.tron.core.net.peer;
+package org.tron.core.net;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -7,6 +7,8 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.MessageQueue;
 import org.tron.core.net.message.TronMessage;
+import org.tron.core.net.peer.PeerConnection;
+import org.tron.core.net.peer.PeerConnectionDelegate;
 
 @Component
 @Scope("prototype")

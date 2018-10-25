@@ -41,7 +41,7 @@ import org.tron.common.overlay.message.StaticMessages;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.exception.P2pException;
 import org.tron.core.net.peer.PeerConnectionDelegate;
-import org.tron.core.net.peer.TronHandler;
+import org.tron.core.net.TronHandler;
 import org.tron.protos.Protocol.ReasonCode;
 
 @Component
