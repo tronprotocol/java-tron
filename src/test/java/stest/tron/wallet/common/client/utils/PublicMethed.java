@@ -615,6 +615,104 @@ public class PublicMethed {
     return ret;
   }
 
+  public static String sendcoinGetTransactionId(byte[] to, long amount, byte[] owner, String priKey,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    //String priKey = testKey002;
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+    //Protocol.Account search = queryAccount(priKey, blockingStubFull);
+
+    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+    ByteString bsTo = ByteString.copyFrom(to);
+    ByteString bsOwner = ByteString.copyFrom(owner);
+    builder.setToAddress(bsTo);
+    builder.setOwnerAddress(bsOwner);
+    builder.setAmount(amount);
+
+    Contract.TransferContract contract = builder.build();
+    Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      logger.info("transaction ==null");
+      return null;
+    }
+    //Test raw data
+    /*    Protocol.Transaction.raw.Builder builder1 = transaction.getRawData().toBuilder();
+    builder1.setData(ByteString.copyFromUtf8("12345678"));
+    Transaction.Builder builder2 = transaction.toBuilder();
+    builder2.setRawData(builder1);
+    transaction = builder2.build();*/
+
+    transaction = signTransaction(ecKey, transaction);
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      return null;
+    } else {
+      return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
+    }
+  }
+
+  public static Optional<Transaction> getTransactionById(String txID,
+      WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubFull) {
+    ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txID));
+    BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
+    Transaction transaction = blockingStubFull.getTransactionById(request);
+    return Optional.ofNullable(transaction);
+  }
+
+  public static Optional<Transaction> getTransactionById(String txID,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txID));
+    BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
+    Transaction transaction = blockingStubFull.getTransactionById(request);
+    return Optional.ofNullable(transaction);
+  }
+
+  public static Optional<Transaction> getTransactionByIdSolidity(String txID,
+      WalletGrpc.WalletBlockingStub blockingStubSolidity) {
+    ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txID));
+    BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
+    Transaction transaction = blockingStubSolidity.getTransactionById(request);
+    return Optional.ofNullable(transaction);
+  }
+
+  public static String printTransaction(Transaction transaction) {
+    String result = "";
+    result += "hash: ";
+    result += "\n";
+    result += ByteArray.toHexString(Sha256Hash.hash(transaction.toByteArray()));
+    result += "\n";
+    result += "txid: ";
+    result += "\n";
+    result += ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
+    result += "\n";
+
+    if (transaction.getRawData() != null) {
+      result += "raw_data: ";
+      result += "\n";
+      result += "{";
+      result += "\n";
+      result += printTransactionRow(transaction.getRawData());
+      result += "}";
+      result += "\n";
+    }
+
+    return result;
+  }
+
+  public static long printTransactionRow(Transaction.raw raw) {
+    long timestamp = raw.getTimestamp();
+
+    return timestamp;
+  }
+
   public static boolean updateAsset(byte[] address, byte[] description, byte[] url, long newLimit,
       long newPublicLimit, String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
