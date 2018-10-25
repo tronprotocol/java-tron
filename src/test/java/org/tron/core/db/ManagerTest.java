@@ -4,12 +4,14 @@ import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
@@ -55,10 +57,12 @@ public class ManagerTest {
   private static TronApplicationContext context;
   private static BlockCapsule blockCapsule2;
   private static String dbPath = "output_manager_test";
+  private static AtomicInteger port = new AtomicInteger(0);
 
   @Before
   public void init() {
     Args.setParam(new String[]{"-d", dbPath, "-w"}, Constant.TEST_CONF);
+    Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
     context = new TronApplicationContext(DefaultConfig.class);
 
     dbManager = context.getBean(Manager.class);
