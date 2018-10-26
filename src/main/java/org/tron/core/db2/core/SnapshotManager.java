@@ -206,11 +206,6 @@ public class SnapshotManager implements RevokingDatabase {
     long diff = newSolidifedBlockNum - oldSolidifiedBlockNum;
     for (int i = 0; i < diff; i++) {
       for (RevokingDBWithCachingNewValue db : dbs) {
-        if (db.getHead().getRoot().getNext() == null) {
-          --flushCount;
-          break;
-        }
-
         db.getHead().updateSolidity();
       }
     }
@@ -234,8 +229,12 @@ public class SnapshotManager implements RevokingDatabase {
 
       List<Snapshot> snapshots = new ArrayList<>();
       Snapshot solidity = db.getHead().getSolidity();
+      if (Snapshot.isRoot(solidity)) {
+        return;
+      }
+
       Snapshot next = solidity.getRoot().getNext();
-      while (next != solidity.getNext()) {
+      for (int i = 0; i < flushCount; i++, next = next.getNext()) {
         // debug begin
         String dbName = db.getDbName();
         SnapshotImpl snapshot = (SnapshotImpl) next;
@@ -255,7 +254,6 @@ public class SnapshotManager implements RevokingDatabase {
         }
         // debug end
         snapshots.add(next);
-        next = next.getNext();
       }
 
       // debug begin
@@ -312,8 +310,12 @@ public class SnapshotManager implements RevokingDatabase {
 
       String dbName = db.getDbName();
       Snapshot solidity = db.getHead().getSolidity();
+      if (Snapshot.isRoot(solidity)) {
+        return;
+      }
+
       Snapshot next = solidity.getRoot().getNext();
-      while (next != solidity.getNext()) {
+      for (int i = 0; i < flushCount; i++, next = next.getNext()) {
         SnapshotImpl snapshot = (SnapshotImpl) next;
         DB<Key, Value> keyValueDB = snapshot.getDb();
         for (Map.Entry<Key, Value> e : keyValueDB) {
@@ -332,7 +334,6 @@ public class SnapshotManager implements RevokingDatabase {
           }
           // debug end
         }
-        next = next.getNext();
       }
     }
 
