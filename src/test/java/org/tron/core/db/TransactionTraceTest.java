@@ -28,8 +28,9 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.RuntimeImpl;
+import org.tron.common.runtime.vm.Deposit;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
-import org.tron.common.storage.DepositImpl;
+import org.tron.common.runtime.vm.DepositImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Wallet;
@@ -128,7 +129,7 @@ public class TransactionTraceTest {
     Transaction transaction = Transaction.parseFrom(ByteArray.fromHexString(trxDeployByte));
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     TransactionTrace trace = new TransactionTrace(transactionCapsule, dbManager);
-    DepositImpl deposit = DepositImpl.createRoot(dbManager);
+    Deposit deposit = DepositImpl.createRoot(dbManager);
     Runtime runtime = new RuntimeImpl(trace, null, deposit,
         new ProgramInvokeFactoryImpl());
     try {
@@ -168,9 +169,6 @@ public class TransactionTraceTest {
     Transaction transaction = Transaction.parseFrom(ByteArray.fromHexString(trxTriggerByte));
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     TransactionTrace trace = new TransactionTrace(transactionCapsule, dbManager);
-    DepositImpl deposit = DepositImpl.createRoot(dbManager);
-    Runtime runtime = new RuntimeImpl(trace, null, deposit,
-        new ProgramInvokeFactoryImpl());
     try {
       trace.init(null);
       trace.exec();
@@ -206,9 +204,7 @@ public class TransactionTraceTest {
     Transaction transaction = Transaction.parseFrom(ByteArray.fromHexString(trxTriggerByte));
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     TransactionTrace trace = new TransactionTrace(transactionCapsule, dbManager);
-    DepositImpl deposit = DepositImpl.createRoot(dbManager);
-    Runtime runtime = new RuntimeImpl(trace, null, deposit,
-        new ProgramInvokeFactoryImpl());
+    Deposit deposit = DepositImpl.createRoot(dbManager);
     try {
       trace.init(null);
       trace.exec();
@@ -246,9 +242,6 @@ public class TransactionTraceTest {
     }
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     TransactionTrace trace = new TransactionTrace(transactionCapsule, dbManager);
-    DepositImpl deposit = DepositImpl.createRoot(dbManager);
-    Runtime runtime = new RuntimeImpl(trace, null, deposit,
-        new ProgramInvokeFactoryImpl());
     try {
       trace.init(null);
       trace.exec();

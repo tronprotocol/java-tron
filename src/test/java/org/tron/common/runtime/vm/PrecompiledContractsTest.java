@@ -22,8 +22,6 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.vm.PrecompiledContracts.PrecompiledContract;
 import org.tron.common.runtime.vm.program.ProgramResult;
-import org.tron.common.storage.Deposit;
-import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
@@ -162,7 +160,7 @@ public class PrecompiledContractsTest {
   public void voteWitnessNativeTest()
       throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException, ContractValidateException, ContractExeException {
     PrecompiledContract contract = createPrecompiledContract(voteContractAddr, OWNER_ADDRESS);
-    DepositImpl deposit = DepositImpl.createRoot(dbManager);
+    Deposit deposit = DepositImpl.createRoot(dbManager);
     byte[] witnessAddressBytes = new byte[32];
     byte[] witnessAddressBytes21 = Hex.decode(WITNESS_ADDRESS);
     System.arraycopy(witnessAddressBytes21, 0, witnessAddressBytes,

@@ -3,11 +3,13 @@ package org.tron.common.runtime.vm.program;
 import static java.lang.System.arraycopy;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.StorageRowCapsule;
 import org.tron.core.db.StorageRowStore;
 
+@Slf4j(topic = "vm_storage")
 public class Storage {
 
   private byte[] addrHash;  // contract address
@@ -22,16 +24,13 @@ public class Storage {
   }
 
   public DataWord getValue(DataWord key) {
-    if (rowCache.containsKey(key)) {
-      return rowCache.get(key).getValue();
-    } else {
-      StorageRowCapsule row = store.get(compose(key.getData(), addrHash));
-      if (row == null || row.getInstance() == null) {
-        return null;
-      }
+    StorageRowCapsule row = rowCache.get(key);
+    if (row == null) {
+      byte[] rowKey = compose(key.getData(), addrHash);
+      row = store.get(rowKey);
       rowCache.put(key, row);
-      return row.getValue();
     }
+    return row.getInstance() == null ? null : row.getValue();
   }
 
   public void put(DataWord key, DataWord value) {

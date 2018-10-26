@@ -12,7 +12,6 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TVMTestUtils;
-import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -30,7 +29,7 @@ public class EnergyWhenSendAndTransferTest {
 
   private Manager dbManager;
   private TronApplicationContext context;
-  private DepositImpl deposit;
+  private Deposit deposit;
   private String dbPath = "output_EnergyWhenSendAndTransferTest";
   private String OWNER_ADDRESS;
   private Application AppT;

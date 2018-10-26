@@ -21,7 +21,7 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.vm.program.Program;
-import org.tron.common.storage.Deposit;
+import org.tron.common.runtime.vm.Deposit;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
