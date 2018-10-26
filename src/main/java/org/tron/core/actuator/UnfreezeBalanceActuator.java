@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -50,7 +51,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     byte[] receiverAddress = unfreezeBalanceContract.getReceiverAddress().toByteArray();
     //If the receiver is not included in the contract, unfreeze frozen balance for this account.
     //otherwise,unfreeze delegated frozen balance provided this account.
-    if (receiverAddress.length == 0) {
+    if (ArrayUtils.isEmpty(receiverAddress)) {
 
       switch (unfreezeBalanceContract.getResource()) {
         case BANDWIDTH:
@@ -100,13 +101,13 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       switch (unfreezeBalanceContract.getResource()) {
         case BANDWIDTH:
           unfreezeBalance = delegatedResourceCapsule.getFrozenBalanceForBandwidth();
-          delegatedResourceCapsule.setFrozenBalanceForBandwidth(0);
+          delegatedResourceCapsule.setFrozenBalanceForBandwidth(0, 0);
           receiverCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(-unfreezeBalance);
           accountCapsule.addDelegatedFrozenBalanceForBandwidth(-unfreezeBalance);
           break;
         case ENERGY:
           unfreezeBalance = delegatedResourceCapsule.getFrozenBalanceForEnergy();
-          delegatedResourceCapsule.setFrozenBalanceForEnergy(0);
+          delegatedResourceCapsule.setFrozenBalanceForEnergy(0, 0);
           receiverCapsule.addAcquiredDelegatedFrozenBalanceForEnergy(-unfreezeBalance);
           accountCapsule.addDelegatedFrozenBalanceForEnergy(-unfreezeBalance);
           break;
@@ -195,7 +196,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     byte[] receiverAddress = unfreezeBalanceContract.getReceiverAddress().toByteArray();
     //If the receiver is not included in the contract, unfreeze frozen balance for this account.
     //otherwise,unfreeze delegated frozen balance provided this account.
-    if (receiverAddress.length == 0) {
+    if (ArrayUtils.isEmpty(receiverAddress)) {
 
       switch (unfreezeBalanceContract.getResource()) {
         case BANDWIDTH:
@@ -250,10 +251,6 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
             "delegated Resource not exists");
       }
 
-      if (delegatedResourceCapsule.getExpireTime() > now) {
-        throw new ContractValidateException("It's not time to unfreeze.");
-      }
-
       switch (unfreezeBalanceContract.getResource()) {
         case BANDWIDTH:
           if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() <= 0) {
@@ -267,6 +264,9 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
                     + delegatedResourceCapsule.getFrozenBalanceForBandwidth()
                     + "],this should never happen");
           }
+          if (delegatedResourceCapsule.getExpireTimeForBandwidth() > now) {
+            throw new ContractValidateException("It's not time to unfreeze.");
+          }
           break;
         case ENERGY:
           if (delegatedResourceCapsule.getFrozenBalanceForEnergy() <= 0) {
@@ -279,6 +279,9 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
                     .getAcquiredDelegatedFrozenBalanceForEnergy() + "] < delegatedEnergy["
                     + delegatedResourceCapsule.getFrozenBalanceForEnergy() +
                     "],this should never happen");
+          }
+          if (delegatedResourceCapsule.getExpireTimeForEnergy() > now) {
+            throw new ContractValidateException("It's not time to unfreeze.");
           }
           break;
         default:
