@@ -104,6 +104,22 @@ public class TVMTestUtils {
     return trace.getRuntime();
   }
 
+  public static TransactionTrace processTransactionAndReturnTrace(Transaction trx,
+      DepositImpl deposit, BlockCapsule block)
+      throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
+    TransactionCapsule trxCap = new TransactionCapsule(trx);
+    deposit.commit();
+    TransactionTrace trace = new TransactionTrace(trxCap, deposit.getDbManager());
+    // init
+    trace.init(block);
+    //exec
+    trace.exec();
+
+    trace.finalization();
+
+    return trace;
+  }
+
 
   public static TVMTestResult deployContractAndReturnTVMTestResult(String contractName,
       byte[] callerAddress,
