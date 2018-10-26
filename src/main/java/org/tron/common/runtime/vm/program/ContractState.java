@@ -196,6 +196,11 @@ public class ContractState implements Deposit, ProgramListenerAware {
   }
 
   @Override
+  public void putStorage(byte[] key, Storage cache) {
+    deposit.putStorage(key, cache);
+  }
+
+  @Override
   public void putStorage(Key key, Storage cache) {
     deposit.putStorage(key, cache);
   }
