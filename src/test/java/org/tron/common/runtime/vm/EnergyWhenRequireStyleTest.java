@@ -14,7 +14,6 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TVMTestUtils;
 import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
-import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -33,7 +32,7 @@ public class EnergyWhenRequireStyleTest {
 
   private Manager dbManager;
   private TronApplicationContext context;
-  private DepositImpl deposit;
+  private Deposit deposit;
   private String dbPath = "output_EnergyWhenRequireStyleTest";
   private String OWNER_ADDRESS;
   private Application AppT;

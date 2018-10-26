@@ -21,16 +21,11 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
 import org.tron.common.runtime.vm.program.listener.ProgramListener;
 import org.tron.common.runtime.vm.program.listener.ProgramListenerAware;
-import org.tron.common.storage.Deposit;
-import org.tron.common.runtime.vm.cache.Key;
-import org.tron.common.runtime.vm.cache.Value;
+import org.tron.common.runtime.vm.Deposit;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol;
@@ -76,21 +71,6 @@ public class ContractState implements Deposit, ProgramListenerAware {
   @Override
   public WitnessCapsule getWitness(byte[] address) {
     return deposit.getWitness(address);
-  }
-
-  @Override
-  public VotesCapsule getVotesCapsule(byte[] address) {
-    return deposit.getVotesCapsule(address);
-  }
-
-  @Override
-  public ProposalCapsule getProposalCapsule(byte[] id) {
-    return deposit.getProposalCapsule(id);
-  }
-
-  @Override
-  public BytesCapsule getDynamic(byte[] bytesKey) {
-    return deposit.getDynamic(bytesKey);
   }
 
   @Override
@@ -151,11 +131,6 @@ public class ContractState implements Deposit, ProgramListenerAware {
   }
 
   @Override
-  public void flush() {
-    deposit.flush();
-  }
-
-  @Override
   public void commit() {
     deposit.commit();
   }
@@ -166,108 +141,13 @@ public class ContractState implements Deposit, ProgramListenerAware {
   }
 
   @Override
-  public void putAccount(Key key, Value value) {
-    deposit.putAccount(key, value);
-  }
-
-  @Override
-  public void putTransaction(Key key, Value value) {
-    deposit.putTransaction(key, value);
-  }
-
-  @Override
-  public void putBlock(Key key, Value value) {
-    deposit.putBlock(key, value);
-  }
-
-  @Override
-  public void putWitness(Key key, Value value) {
-    deposit.putWitness(key, value);
-  }
-
-  @Override
-  public void putCode(Key key, Value value) {
-    deposit.putCode(key, value);
-  }
-
-  @Override
-  public void putContract(Key key, Value value) {
-    deposit.putContract(key, value);
-  }
-
-  @Override
   public void putStorage(byte[] key, Storage cache) {
     deposit.putStorage(key, cache);
   }
 
   @Override
-  public void putStorage(Key key, Storage cache) {
-    deposit.putStorage(key, cache);
-  }
-
-  @Override
-  public void putVotes(Key key, Value value) {
-    deposit.putVotes(key, value);
-  }
-
-  @Override
-  public void putProposal(Key key, Value value) {
-    deposit.putProposal(key, value);
-  }
-
-  @Override
-  public void putDynamicProperties(Key key, Value value) {
-    deposit.putDynamicProperties(key, value);
-  }
-
-  @Override
-  public void setParent(Deposit deposit) {
-    this.deposit.setParent(deposit);
-  }
-
-  @Override
   public TransactionCapsule getTransaction(byte[] trxHash) {
     return this.deposit.getTransaction(trxHash);
-  }
-
-  @Override
-  public void putAccountValue(byte[] address, AccountCapsule accountCapsule) {
-    this.deposit.putAccountValue(address,accountCapsule);
-  }
-
-  @Override
-  public void putVoteValue(byte[] address, VotesCapsule votesCapsule) {
-    this.deposit.putVoteValue(address,votesCapsule);
-  }
-
-  @Override
-  public void putProposalValue(byte[] address, ProposalCapsule proposalCapsule) {
-    deposit.putProposalValue(address, proposalCapsule);
-  }
-
-  @Override
-  public void putDynamicPropertiesWithLatestProposalNum(long num) {
-    deposit.putDynamicPropertiesWithLatestProposalNum(num);
-  }
-
-  @Override
-  public long getLatestProposalNum() {
-    return deposit.getLatestProposalNum();
-  }
-
-  @Override
-  public long getWitnessAllowanceFrozenTime() {
-    return  deposit.getWitnessAllowanceFrozenTime();
-  }
-
-  @Override
-  public long getMaintenanceTimeInterval() {
-    return deposit.getMaintenanceTimeInterval();
-  }
-
-  @Override
-  public long getNextMaintenanceTime() {
-    return deposit.getNextMaintenanceTime();
   }
 
   @Override

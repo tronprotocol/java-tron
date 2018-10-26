@@ -23,7 +23,7 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
-import org.tron.common.storage.Deposit;
+import org.tron.common.runtime.vm.Deposit;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.BlockStore;
 import org.tron.core.exception.StoreException;

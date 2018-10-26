@@ -28,7 +28,6 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TVMTestUtils;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
-import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -153,7 +152,7 @@ public class BandWidthRuntimeWithCheckTest {
       TransactionTrace trace = new TransactionTrace(trxCap, dbManager);
       dbManager.consumeBandwidth(trxCap, trace);
       BlockCapsule blockCapsule = null;
-      DepositImpl deposit = DepositImpl.createRoot(dbManager);
+      Deposit deposit = DepositImpl.createRoot(dbManager);
       Runtime runtime = new Runtime(trace, blockCapsule, deposit, new ProgramInvokeFactoryImpl());
       trace.init();
       trace.exec(runtime);
@@ -192,7 +191,7 @@ public class BandWidthRuntimeWithCheckTest {
       dbManager.consumeBandwidth(trxCap, trace);
       long bandWidth = trxCap.getSerializedSize() + Constant.MAX_RESULT_SIZE_IN_TX;
       BlockCapsule blockCapsule = null;
-      DepositImpl deposit = DepositImpl.createRoot(dbManager);
+      Deposit deposit = DepositImpl.createRoot(dbManager);
       Runtime runtime = new Runtime(trace, blockCapsule, deposit, new ProgramInvokeFactoryImpl());
       trace.init();
       trace.exec(runtime);
@@ -236,7 +235,7 @@ public class BandWidthRuntimeWithCheckTest {
     TransactionTrace trace = new TransactionTrace(trxCap, dbManager);
     dbManager.consumeBandwidth(trxCap, trace);
     BlockCapsule blockCapsule = null;
-    DepositImpl deposit = DepositImpl.createRoot(dbManager);
+    Deposit deposit = DepositImpl.createRoot(dbManager);
     Runtime runtime = new Runtime(trace, blockCapsule, deposit, new ProgramInvokeFactoryImpl());
     trace.init();
     trace.exec(runtime);

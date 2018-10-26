@@ -1,20 +1,17 @@
-package org.tron.common.runtime.vm.cache;
-
-import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
+package org.tron.common.runtime.vm;
 
 import com.google.protobuf.ByteString;
-import java.util.HashMap;
 import lombok.Getter;
-import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.vm.cache.CachedSource;
+import org.tron.common.runtime.vm.cache.ReadWriteCapsuleCache;
+import org.tron.common.runtime.vm.cache.WriteCapsuleCache;
 import org.tron.common.runtime.vm.program.Storage;
-import org.tron.common.storage.Deposit;
 import org.tron.common.utils.ByteArrayMap;
 import org.tron.core.capsule.*;
-import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol;
 
-public class CachedDepositImpl implements Deposit {
+public class DepositImpl implements Deposit {
 
   private Manager manager;
   private Deposit parent;
@@ -32,15 +29,14 @@ public class CachedDepositImpl implements Deposit {
   @Getter
   private CachedSource<byte[], CodeCapsule> codeCache;
 
-//  private HashMap<ByteArrayWrapper, Storage> storageCache = new HashMap<>();
-  private ByteArrayMap<Storage> storageCache = new ByteArrayMap<>();
+  private ByteArrayMap<Storage> storageMap = new ByteArrayMap<>();
 
   public static Deposit createRoot(Manager manager) {
-    return new CachedDepositImpl(manager);
+    return new DepositImpl(manager);
   }
 
   // for deposit root
-  private CachedDepositImpl(Manager manager) {
+  private DepositImpl(Manager manager) {
     this.manager = manager;
     accountCache = new ReadWriteCapsuleCache<>(manager.getAccountStore());
     contractCache = new ReadWriteCapsuleCache<>(manager.getContractStore());
@@ -51,7 +47,7 @@ public class CachedDepositImpl implements Deposit {
   }
 
   // for deposit child
-  private CachedDepositImpl(Manager manager, CachedDepositImpl parent) {
+  private DepositImpl(Manager manager, DepositImpl parent) {
     this.manager = manager;
     this.parent = parent;
 
@@ -65,7 +61,7 @@ public class CachedDepositImpl implements Deposit {
 
   @Override
   public Deposit newDepositChild() {
-    return new CachedDepositImpl(manager, this);
+    return new DepositImpl(manager, this);
   }
 
   @Override
@@ -97,21 +93,6 @@ public class CachedDepositImpl implements Deposit {
   @Override
   public WitnessCapsule getWitness(byte[] address) {
     return witnessCache.get(address);
-  }
-
-  @Override
-  public VotesCapsule getVotesCapsule(byte[] address) {
-    return null;
-  }
-
-  @Override
-  public ProposalCapsule getProposalCapsule(byte[] id) {
-    return null;
-  }
-
-  @Override
-  public BytesCapsule getDynamic(byte[] bytesKey) {
-    return null;
   }
 
   @Override
@@ -153,8 +134,8 @@ public class CachedDepositImpl implements Deposit {
 
   @Override
   public Storage getStorage(byte[] address) {
-    if (storageCache.containsKey(address)) {
-      return storageCache.get(address);
+    if (storageMap.containsKey(address)) {
+      return storageMap.get(address);
     }
     Storage storage;
     if (this.parent != null) {
@@ -162,7 +143,7 @@ public class CachedDepositImpl implements Deposit {
     } else {
       storage = new Storage(address, this.manager.getStorageRowStore());
     }
-    storageCache.put(address, storage);
+    storageMap.put(address, storage);
     return storage;
   }
 
@@ -186,17 +167,6 @@ public class CachedDepositImpl implements Deposit {
     return accountCapsule.getBalance();
   }
 
-
-  @Override
-  public void setParent(Deposit deposit) {
-    this.parent = deposit;
-  }
-
-  @Override
-  public void flush() {
-
-  }
-
   @Override
   public void commit() {
     this.getAccountCache().commit();
@@ -209,101 +179,6 @@ public class CachedDepositImpl implements Deposit {
   }
 
   @Override
-  public void putAccount(Key key, Value value) {
-
-  }
-
-  @Override
-  public void putTransaction(Key key, Value value) {
-
-  }
-
-  @Override
-  public void putBlock(Key key, Value value) {
-
-  }
-
-  @Override
-  public void putWitness(Key key, Value value) {
-
-  }
-
-  @Override
-  public void putCode(Key key, Value value) {
-
-  }
-
-  @Override
-  public void putContract(Key key, Value value) {
-
-  }
-
-  @Override
-  public void putStorage(byte[] key, Storage cache) {
-    this.storageCache.put(key, cache);
-  }
-
-  @Override
-  public void putStorage(Key key, Storage cache) {
-
-  }
-
-  @Override
-  public void putVotes(Key key, Value value) {
-
-  }
-
-  @Override
-  public void putProposal(Key key, Value value) {
-
-  }
-
-  @Override
-  public void putDynamicProperties(Key key, Value value) {
-
-  }
-
-  @Override
-  public void putAccountValue(byte[] address, AccountCapsule accountCapsule) {
-
-  }
-
-  @Override
-  public void putVoteValue(byte[] address, VotesCapsule votesCapsule) {
-
-  }
-
-  @Override
-  public void putProposalValue(byte[] address, ProposalCapsule proposalCapsule) {
-
-  }
-
-  @Override
-  public void putDynamicPropertiesWithLatestProposalNum(long num) {
-
-  }
-
-  @Override
-  public long getLatestProposalNum() {
-    return 0;
-  }
-
-  @Override
-  public long getWitnessAllowanceFrozenTime() {
-    return 0;
-  }
-
-  @Override
-  public long getMaintenanceTimeInterval() {
-    return 0;
-  }
-
-  @Override
-  public long getNextMaintenanceTime() {
-    return 0;
-  }
-
-  @Override
   public TransactionCapsule getTransaction(byte[] trxHash) {
     return this.getTransactionCache().get(trxHash);
   }
@@ -313,8 +188,13 @@ public class CachedDepositImpl implements Deposit {
     return this.blockCache.get(blockHash);
   }
 
+  @Override
+  public void putStorage(byte[] key, Storage storage) {
+    storageMap.put(key, storage);
+  }
+
   private void commitStorageCache() {
-    storageCache.forEach((key, value) -> {
+    storageMap.forEach((key, value) -> {
       if (this.parent != null) {
         // write to parent cache
         this.parent.putStorage(key, value);

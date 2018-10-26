@@ -22,8 +22,8 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
-import org.tron.common.storage.Deposit;
-import org.tron.common.storage.DepositImpl;
+import org.tron.common.runtime.vm.Deposit;
+import org.tron.common.runtime.vm.DepositImpl;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.BlockStore;
 import org.tron.core.exception.StoreException;
@@ -39,7 +39,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
 
   private byte[] msgData;
 
-  private DepositImpl deposit;
+  private Deposit deposit;
   private byte[] ownerAddress = Hex.decode("cd2a3d9f938e13cd947ec05abc7fe734df8dd826");
   private final byte[] contractAddress = Hex.decode("471fd3ad3e9eeadeec4608b92d16ce6b500704cc");
 

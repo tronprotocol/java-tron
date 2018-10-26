@@ -1,17 +1,11 @@
 package org.tron.core.actuator;
 
-import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
-import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
-import static org.tron.core.actuator.ActuatorConstant.WITNESS_EXCEPTION_STR;
-
 import com.google.common.math.LongMath;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Iterator;
-import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.storage.Deposit;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
@@ -32,7 +26,6 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j
 public class VoteWitnessActuator extends AbstractActuator {
 
-
   VoteWitnessActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
   }
@@ -42,7 +35,7 @@ public class VoteWitnessActuator extends AbstractActuator {
     long fee = calcFee();
     try {
       VoteWitnessContract voteContract = contract.unpack(VoteWitnessContract.class);
-      countVoteAccount(voteContract, getDeposit());
+      countVoteAccount(voteContract);
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
@@ -57,7 +50,7 @@ public class VoteWitnessActuator extends AbstractActuator {
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (dbManager == null && (getDeposit() == null || getDeposit().getDbManager() == null)) {
+    if (this.dbManager == null) {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(VoteWitnessContract.class)) {
@@ -104,33 +97,21 @@ public class VoteWitnessActuator extends AbstractActuator {
           throw new ContractValidateException("vote count must be greater than 0");
         }
         String readableWitnessAddress = StringUtil.createReadableString(vote.getVoteAddress());
-        if( !Objects.isNull(getDeposit())) {
-          if (Objects.isNull(getDeposit().getAccount(witnessCandidate))) {
-            throw new ContractValidateException(
-                ACCOUNT_EXCEPTION_STR + readableWitnessAddress + NOT_EXIST_STR);
-          }
-        }
-        else if (!accountStore.has(witnessCandidate)) {
+        if (!accountStore.has(witnessCandidate)) {
           throw new ContractValidateException(
-              ACCOUNT_EXCEPTION_STR + readableWitnessAddress + NOT_EXIST_STR);
+              "Account[" + readableWitnessAddress + "] not exists");
         }
-        if( !Objects.isNull(getDeposit())) {
-          if (Objects.isNull(getDeposit().getWitness(witnessCandidate))) {
-            throw new ContractValidateException(
-                WITNESS_EXCEPTION_STR + readableWitnessAddress + NOT_EXIST_STR);
-          }
-        }
-        else if (!witnessStore.has(witnessCandidate)) {
+        if (!witnessStore.has(witnessCandidate)) {
           throw new ContractValidateException(
-              WITNESS_EXCEPTION_STR + readableWitnessAddress + NOT_EXIST_STR);
+              "Witness[" + readableWitnessAddress + "] not exists");
         }
         sum = LongMath.checkedAdd(sum, vote.getVoteCount());
       }
 
-      AccountCapsule accountCapsule = (Objects.isNull(getDeposit())) ? accountStore.get(ownerAddress) : getDeposit().getAccount(ownerAddress);
+      AccountCapsule accountCapsule = accountStore.get(ownerAddress);
       if (accountCapsule == null) {
         throw new ContractValidateException(
-            ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
+            "Account[" + readableOwnerAddress + "] not exists");
       }
 
       long tronPower = accountCapsule.getTronPower();
@@ -149,25 +130,16 @@ public class VoteWitnessActuator extends AbstractActuator {
     return true;
   }
 
-  private void countVoteAccount(VoteWitnessContract voteContract, Deposit deposit) {
+  private void countVoteAccount(VoteWitnessContract voteContract) {
     byte[] ownerAddress = voteContract.getOwnerAddress().toByteArray();
 
     VotesCapsule votesCapsule;
     VotesStore votesStore = dbManager.getVotesStore();
     AccountStore accountStore = dbManager.getAccountStore();
 
-    AccountCapsule accountCapsule = (Objects.isNull(getDeposit())) ? accountStore.get(ownerAddress) : getDeposit().getAccount(ownerAddress);
+    AccountCapsule accountCapsule = accountStore.get(ownerAddress);
 
-    if (!Objects.isNull(getDeposit())){
-      VotesCapsule vCapsule = getDeposit().getVotesCapsule(ownerAddress);
-      if (Objects.isNull(vCapsule)) {
-        votesCapsule = new VotesCapsule(voteContract.getOwnerAddress(),
-            accountCapsule.getVotesList());
-      }
-      else
-        votesCapsule = vCapsule;
-    }
-    else if (!votesStore.has(ownerAddress)) {
+    if (!votesStore.has(ownerAddress)) {
       votesCapsule = new VotesCapsule(voteContract.getOwnerAddress(),
           accountCapsule.getVotesList());
     } else {
@@ -185,16 +157,8 @@ public class VoteWitnessActuator extends AbstractActuator {
       accountCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount());
     });
 
-    if (Objects.isNull(deposit)) {
-      accountStore.put(accountCapsule.createDbKey(), accountCapsule);
-      votesStore.put(ownerAddress, votesCapsule);
-    }
-    else{
-      // cache
-      deposit.putAccountValue(accountCapsule.createDbKey(),accountCapsule);
-      deposit.putVoteValue(ownerAddress,votesCapsule);
-    }
-
+    accountStore.put(accountCapsule.createDbKey(), accountCapsule);
+    votesStore.put(ownerAddress, votesCapsule);
   }
 
   @Override

@@ -3,7 +3,7 @@ package org.tron.common.runtime.utils;
 import java.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
-import org.tron.common.storage.Deposit;
+import org.tron.common.runtime.vm.Deposit;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.TransferActuator;
 import org.tron.core.exception.ContractValidateException;

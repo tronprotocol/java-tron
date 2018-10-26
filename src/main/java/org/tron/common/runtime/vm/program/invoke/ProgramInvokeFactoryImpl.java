@@ -27,7 +27,7 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.vm.program.Program;
-import org.tron.common.storage.Deposit;
+import org.tron.common.runtime.vm.Deposit;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.ContractCapsule;

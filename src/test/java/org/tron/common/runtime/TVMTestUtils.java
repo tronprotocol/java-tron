@@ -13,8 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
-import org.tron.common.storage.Deposit;
-import org.tron.common.storage.DepositImpl;
+import org.tron.common.runtime.vm.Deposit;
+import org.tron.common.runtime.vm.DepositImpl;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -139,7 +139,7 @@ public class TVMTestUtils {
       throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
     TransactionTrace trace = new TransactionTrace(trxCap, dbManager);
-    DepositImpl deposit = DepositImpl.createRoot(dbManager);
+    Deposit deposit = DepositImpl.createRoot(dbManager);
     Runtime runtime = new Runtime(trace, blockCap, deposit,
         new ProgramInvokeFactoryImpl());
 
