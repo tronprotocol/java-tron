@@ -18,8 +18,6 @@ import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.AccountStore;
-import org.tron.core.db.Manager;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.DB;
@@ -204,14 +202,17 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   @Override
-  public void updateSolidity() {
-    for (RevokingDBWithCachingNewValue db : dbs) {
-      if (db.getHead().getRoot().getNext() == null) {
-        --flushCount;
-        break;
-      }
+  public void updateSolidity(long oldSolidifiedBlockNum, long newSolidifedBlockNum) {
+    long diff = newSolidifedBlockNum - oldSolidifiedBlockNum;
+    for (int i = 0; i < diff; i++) {
+      for (RevokingDBWithCachingNewValue db : dbs) {
+        if (db.getHead().getRoot().getNext() == null) {
+          --flushCount;
+          break;
+        }
 
-      db.getHead().updateSolidity();
+        db.getHead().updateSolidity();
+      }
     }
   }
 

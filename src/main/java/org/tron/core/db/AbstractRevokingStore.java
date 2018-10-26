@@ -296,7 +296,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public void updateSolidity() {
+  public void updateSolidity(long oldSolidifiedBlockNum, long newSolidifedBlockNum) {
 
   }
 
