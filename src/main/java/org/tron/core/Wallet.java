@@ -62,9 +62,10 @@ import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.RuntimeImpl;
+import org.tron.common.runtime.vm.Deposit;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
-import org.tron.common.storage.DepositImpl;
+import org.tron.common.runtime.vm.DepositImpl;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -827,7 +828,7 @@ public class Wallet {
       if (!Args.getInstance().isSupportConstant()) {
         throw new ContractValidateException("this node don't support constant");
       }
-      DepositImpl deposit = DepositImpl.createRoot(dbManager);
+      Deposit deposit = DepositImpl.createRoot(dbManager);
 
       Block headBlock;
       List<BlockCapsule> blockCapsuleList = dbManager.getBlockStore().getBlockByLatestNum(1);

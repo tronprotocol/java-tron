@@ -11,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.RuntimeImpl;
+import org.tron.common.runtime.vm.Deposit;
+import org.tron.common.runtime.vm.DepositImpl;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
 import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
@@ -23,7 +25,6 @@ import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
 import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
-import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -100,7 +101,7 @@ public class TransactionTrace {
   //pre transaction check
   public void init(BlockCapsule blockCap) {
     txStartTimeInMs = System.currentTimeMillis();
-    DepositImpl deposit = DepositImpl.createRoot(dbManager);
+    Deposit deposit = DepositImpl.createRoot(dbManager);
     runtime = new RuntimeImpl(this, blockCap, deposit, new ProgramInvokeFactoryImpl());
 
     // switch (trxType) {
@@ -221,6 +222,7 @@ public void checkIsConstant() throws ContractValidateException, VMIllegalExcepti
       logger.info(
           "this tx resultCode in received block: {}\nthis tx resultCode in self: {}",
           trx.getContractRet(), receipt.getResult());
+
       throw new ReceiptCheckErrException("Different resultCode");
     }
   }

@@ -36,9 +36,8 @@ public class ProposalApproveActuator extends AbstractActuator {
     try {
       final ProposalApproveContract proposalApproveContract =
           this.contract.unpack(ProposalApproveContract.class);
-      ProposalCapsule proposalCapsule = (Objects.isNull(getDeposit()))? dbManager.getProposalStore().
-          get(ByteArray.fromLong(proposalApproveContract.getProposalId())) :
-          getDeposit().getProposalCapsule(ByteArray.fromLong(proposalApproveContract.getProposalId()));
+      ProposalCapsule proposalCapsule =  dbManager.getProposalStore().
+          get(ByteArray.fromLong(proposalApproveContract.getProposalId()));
 
       ByteString committeeAddress = proposalApproveContract.getOwnerAddress();
       if (proposalApproveContract.getIsAddApproval()) {
@@ -46,12 +45,7 @@ public class ProposalApproveActuator extends AbstractActuator {
       } else {
         proposalCapsule.removeApproval(committeeAddress);
       }
-      if (Objects.isNull(deposit)) {
-        dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
-      }
-      else {
-        deposit.putProposalValue(proposalCapsule.createDbKey(),proposalCapsule);
-      }
+      dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
       ret.setStatus(fee, code.SUCESS);
     } catch (ItemNotFoundException e) {
       logger.debug(e.getMessage(), e);
@@ -70,7 +64,7 @@ public class ProposalApproveActuator extends AbstractActuator {
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (dbManager == null && (getDeposit() == null || getDeposit().getDbManager() == null)) {
+    if (dbManager == null) {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(ProposalApproveContract.class)) {
@@ -92,26 +86,15 @@ public class ProposalApproveActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
 
-    if(!Objects.isNull(getDeposit())) {
-      if (Objects.isNull(getDeposit().getAccount(ownerAddress))) {
-        throw new ContractValidateException(
-            ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
-      }
-    } else if (!dbManager.getAccountStore().has(ownerAddress)) {
+    if (!dbManager.getAccountStore().has(ownerAddress)) {
       throw new ContractValidateException(ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
 
-    if( !Objects.isNull(getDeposit())) {
-      if (Objects.isNull(getDeposit().getWitness(ownerAddress))) {
-        throw new ContractValidateException(
-            WITNESS_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
-      }
-    }else if (!dbManager.getWitnessStore().has(ownerAddress)) {
+    if (!dbManager.getWitnessStore().has(ownerAddress)) {
       throw new ContractValidateException(WITNESS_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
 
-    long latestProposalNum = Objects.isNull(getDeposit()) ? dbManager.getDynamicPropertiesStore().getLatestProposalNum() :
-        getDeposit().getLatestProposalNum();
+    long latestProposalNum = dbManager.getDynamicPropertiesStore().getLatestProposalNum();
     if (contract.getProposalId() > latestProposalNum) {
       throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId() + NOT_EXIST_STR);
     }
@@ -119,9 +102,7 @@ public class ProposalApproveActuator extends AbstractActuator {
     long now = dbManager.getHeadBlockTimeStamp();
     ProposalCapsule proposalCapsule;
     try {
-      proposalCapsule = Objects.isNull(getDeposit()) ? dbManager.getProposalStore().
-          get(ByteArray.fromLong(contract.getProposalId())) :
-          getDeposit().getProposalCapsule(ByteArray.fromLong(contract.getProposalId()));
+      proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(contract.getProposalId()));
     } catch (ItemNotFoundException ex) {
       throw new ContractValidateException(PROPOSAL_EXCEPTION_STR+ contract.getProposalId() + NOT_EXIST_STR);
     }

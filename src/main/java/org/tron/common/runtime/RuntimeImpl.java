@@ -31,6 +31,7 @@ import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.vm.Deposit;
 import org.tron.common.runtime.vm.EnergyCost;
 import org.tron.common.runtime.vm.VM;
 import org.tron.common.runtime.vm.program.InternalTransaction;
@@ -42,8 +43,6 @@ import org.tron.common.runtime.vm.program.ProgramPrecompile;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactory;
-import org.tron.common.storage.Deposit;
-import org.tron.common.storage.DepositImpl;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
@@ -134,13 +133,13 @@ public class RuntimeImpl implements Runtime {
   /**
    * For constant trx with latest blockCap.
    */
-  public RuntimeImpl(Transaction tx, BlockCapsule block, DepositImpl deposit,
+  public RuntimeImpl(Transaction tx, BlockCapsule block, Deposit deposit,
       ProgramInvokeFactory programInvokeFactory, boolean isStaticCall) {
     this(tx, block, deposit, programInvokeFactory);
     this.isStaticCall = isStaticCall;
   }
 
-  public RuntimeImpl(Transaction tx, BlockCapsule block, DepositImpl deposit,
+  public RuntimeImpl(Transaction tx, BlockCapsule block, Deposit deposit,
       ProgramInvokeFactory programInvokeFactory) {
     this.trx = tx;
     this.deposit = deposit;

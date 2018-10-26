@@ -10,7 +10,8 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.testng.Assert;
-import org.tron.common.storage.DepositImpl;
+import org.tron.common.runtime.vm.Deposit;
+import org.tron.common.runtime.vm.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -29,7 +30,7 @@ public class InheritanceTest {
   private static Manager dbManager;
   private static TronApplicationContext context;
   private static Application appT;
-  private static DepositImpl deposit;
+  private static Deposit deposit;
   private static final String dbPath = "output_InheritanceTest";
   private static final String OWNER_ADDRESS;
 
