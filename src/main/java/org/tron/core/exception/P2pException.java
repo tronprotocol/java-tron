@@ -17,6 +17,8 @@ public class P2pException extends Exception {
         NO_SUCH_MESSAGE                         (1, "No such message"),
         PARSE_MESSAGE_FAILED                    (2, "Parse message failed"),
         MESSAGE_WITH_WRONG_LENGTH               (3, "Message with wrong length"),
+        BAD_MESSAGE                             (4, "Bad message"),
+        HARD_FORK                               (5, "Hard fork"),
         DEFAULT                                 (100, "default exception");
 
         private Integer value;
