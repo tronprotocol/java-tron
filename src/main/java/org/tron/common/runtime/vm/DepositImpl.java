@@ -3,6 +3,7 @@ package org.tron.common.runtime.vm;
 import com.google.protobuf.ByteString;
 import lombok.Getter;
 import org.tron.common.runtime.vm.cache.CachedSource;
+import org.tron.common.runtime.vm.cache.MemoryCache;
 import org.tron.common.runtime.vm.cache.ReadWriteCapsuleCache;
 import org.tron.common.runtime.vm.cache.WriteCapsuleCache;
 import org.tron.common.runtime.vm.program.Storage;
@@ -38,12 +39,22 @@ public class DepositImpl implements Deposit {
   // for deposit root
   private DepositImpl(Manager manager) {
     this.manager = manager;
-    accountCache = new ReadWriteCapsuleCache<>(manager.getAccountStore());
-    contractCache = new ReadWriteCapsuleCache<>(manager.getContractStore());
-    transactionCache = new ReadWriteCapsuleCache<>(manager.getTransactionStore());
-    witnessCache = new ReadWriteCapsuleCache<>(manager.getWitnessStore());
-    codeCache = new ReadWriteCapsuleCache<>(manager.getCodeStore());
-    blockCache = new ReadWriteCapsuleCache<>(manager.getBlockStore());
+    if (manager == null) {
+      // just for mock
+      accountCache = new MemoryCache<>();
+      contractCache = new MemoryCache<>();
+      transactionCache = new MemoryCache<>();
+      witnessCache = new MemoryCache<>();
+      codeCache = new MemoryCache<>();
+      blockCache = new MemoryCache<>();
+    } else {
+      accountCache = new ReadWriteCapsuleCache<>(manager.getAccountStore());
+      contractCache = new ReadWriteCapsuleCache<>(manager.getContractStore());
+      transactionCache = new ReadWriteCapsuleCache<>(manager.getTransactionStore());
+      witnessCache = new ReadWriteCapsuleCache<>(manager.getWitnessStore());
+      codeCache = new ReadWriteCapsuleCache<>(manager.getCodeStore());
+      blockCache = new ReadWriteCapsuleCache<>(manager.getBlockStore());
+    }
   }
 
   // for deposit child

@@ -76,7 +76,7 @@ public class ProposalDeleteActuator extends AbstractActuator {
     }
 
     if (!this.dbManager.getAccountStore().has(ownerAddress)) {
-      throw new ContractValidateException("account[" + readableOwnerAddress + "] not exists");
+      throw new ContractValidateException("Account[" + readableOwnerAddress + "] not exists");
     }
 
     if (contract.getProposalId() > dbManager.getDynamicPropertiesStore().getLatestProposalNum()) {
