@@ -150,7 +150,8 @@ message DelegatedResource {
   bytes to = 2;
   int64 frozen_balance_for_bandwidth = 3;
   int64 frozen_balance_for_energy = 4;
-  int64 expire_time = 5;
+  int64 expire_time_for_bandwidth = 5;
+  int64 expire_time_for_energy = 6;
 }
 
 message authority {
