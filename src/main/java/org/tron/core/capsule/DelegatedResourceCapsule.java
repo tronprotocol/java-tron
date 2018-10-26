@@ -22,14 +22,10 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
     }
   }
 
-  public DelegatedResourceCapsule(ByteString from, ByteString to, long energy, long bandwidth,
-      long expireTime) {
+  public DelegatedResourceCapsule(ByteString from, ByteString to) {
     this.delegatedResource = DelegatedResource.newBuilder()
         .setFrom(from)
         .setTo(to)
-        .setFrozenBalanceForEnergy(energy)
-        .setFrozenBalanceForBandwidth(bandwidth)
-        .setExpireTime(expireTime)
         .build();
   }
 
@@ -46,41 +42,57 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
     return this.delegatedResource.getFrozenBalanceForEnergy();
   }
 
-  public void setFrozenBalanceForEnergy(long energy) {
-    this.delegatedResource = this.delegatedResource.toBuilder().setFrozenBalanceForEnergy(energy).build();
+  public void setFrozenBalanceForEnergy(long energy, long expireTime) {
+    this.delegatedResource = this.delegatedResource.toBuilder()
+        .setFrozenBalanceForEnergy(energy)
+        .setExpireTimeForEnergy(expireTime)
+        .build();
   }
 
-  public void addFrozenBalanceForEnergy(long energy) {
+  public void addFrozenBalanceForEnergy(long energy, long expireTime) {
     this.delegatedResource = this.delegatedResource.toBuilder()
-        .setFrozenBalanceForEnergy(this.delegatedResource.getFrozenBalanceForEnergy() + energy).build();
+        .setFrozenBalanceForEnergy(this.delegatedResource.getFrozenBalanceForEnergy() + energy)
+        .setExpireTimeForEnergy(expireTime)
+        .build();
   }
 
   public long getFrozenBalanceForBandwidth() {
     return this.delegatedResource.getFrozenBalanceForBandwidth();
   }
 
-  public void setFrozenBalanceForBandwidth(long Bandwidth) {
-    this.delegatedResource = this.delegatedResource.toBuilder().setFrozenBalanceForBandwidth(Bandwidth).build();
-  }
-
-  public void addFrozenBalanceForBandwidth(long Bandwidth) {
+  public void setFrozenBalanceForBandwidth(long Bandwidth, long expireTime) {
     this.delegatedResource = this.delegatedResource.toBuilder()
-        .setFrozenBalanceForBandwidth(this.delegatedResource.getFrozenBalanceForBandwidth() + Bandwidth).build();
+        .setFrozenBalanceForBandwidth(Bandwidth)
+        .setExpireTimeForBandwidth(expireTime)
+        .build();
   }
 
-  public void addResource(long Bandwidth, long energy, long ExpireTime) {
+  public void addFrozenBalanceForBandwidth(long Bandwidth, long expireTime) {
     this.delegatedResource = this.delegatedResource.toBuilder()
-        .setFrozenBalanceForBandwidth(this.delegatedResource.getFrozenBalanceForBandwidth() + Bandwidth)
-        .setFrozenBalanceForEnergy(this.delegatedResource.getFrozenBalanceForEnergy() + energy)
-        .setExpireTime(ExpireTime).build();
+        .setFrozenBalanceForBandwidth(this.delegatedResource.getFrozenBalanceForBandwidth()
+            + Bandwidth)
+        .setExpireTimeForBandwidth(expireTime)
+        .build();
   }
 
-  public long getExpireTime() {
-    return this.delegatedResource.getExpireTime();
+  public long getExpireTimeForBandwidth() {
+    return this.delegatedResource.getExpireTimeForBandwidth();
   }
 
-  public void setExpireTime(long ExpireTime) {
-    this.delegatedResource = this.delegatedResource.toBuilder().setExpireTime(ExpireTime).build();
+  public long getExpireTimeForEnergy() {
+    return this.delegatedResource.getExpireTimeForBandwidth();
+  }
+
+  public void setExpireTimeForBandwidth(long ExpireTime) {
+    this.delegatedResource = this.delegatedResource.toBuilder()
+        .setExpireTimeForBandwidth(ExpireTime)
+        .build();
+  }
+
+  public void setExpireTimeForEnergy(long ExpireTime) {
+    this.delegatedResource = this.delegatedResource.toBuilder()
+        .setExpireTimeForEnergy(ExpireTime)
+        .build();
   }
 
   public byte[] createDbKey() {
