@@ -4,7 +4,6 @@ import static java.lang.System.arraycopy;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.StorageRowCapsule;
@@ -25,29 +24,29 @@ public class Storage {
   }
 
   public DataWord getValue(DataWord key) {
-    StorageRowCapsule capsule = rowCache.get(key);
-    if (capsule == null && !rowCache.containsKey(key)){
-      capsule = store.get(compose(key));
-      rowCache.put(key, capsule);
+    StorageRowCapsule row = rowCache.get(key);
+    if (row == null) {
+      byte[] rowKey = compose(key.getData(), addrHash);
+      row = store.get(rowKey);
+      rowCache.put(key, row);
     }
-    return (capsule == null) ? null : capsule.getValue();
+    return row.getInstance() == null ? null : row.getValue();
   }
 
   public void put(DataWord key, DataWord value) {
-
-    StorageRowCapsule capsule = rowCache.get(key);
-    if (capsule == null){
-      rowCache.put(key, new StorageRowCapsule(compose(key), value.getData()));
-    }else {
-      capsule.setValue(value);
+    if (rowCache.containsKey(key)) {
+      rowCache.get(key).setValue(value);
+    } else {
+      byte[] rowKey = compose(key.getData(), addrHash);
+      StorageRowCapsule row = new StorageRowCapsule(rowKey, value.getData());
+      rowCache.put(key, row);
     }
   }
 
-  private byte[] compose(DataWord key) {
-    byte[] realKey = key.getData();
-    byte[] result = new byte[realKey.length];
+  private static byte[] compose(byte[] key, byte[] addrHash) {
+    byte[] result = new byte[key.length];
     arraycopy(addrHash, 0, result, 0, PREFIX_BYTES);
-    arraycopy(realKey, PREFIX_BYTES, result, PREFIX_BYTES, PREFIX_BYTES);
+    arraycopy(key, PREFIX_BYTES, result, PREFIX_BYTES, PREFIX_BYTES);
     return result;
   }
 
@@ -59,11 +58,10 @@ public class Storage {
   public void commit() {
     rowCache.forEach((key, value) -> {
       if (value.isDirty()) {
-        byte[] rowKey = value.getRowKey();
         if (value.getValue().isZero()) {
-          this.store.delete(rowKey);
+          this.store.delete(value.getRowKey());
         } else {
-          this.store.put(rowKey, value);
+          this.store.put(value.getRowKey(), value);
         }
       }
     });
