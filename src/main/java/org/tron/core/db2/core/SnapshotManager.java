@@ -70,8 +70,9 @@ public class SnapshotManager implements RevokingDatabase {
       disabled = false;
     }
 
-    while (size > maxSize.get()) {
+    if (size > maxSize.get()) {
       logger.info("****size:" + size + ", maxsize:" + maxSize.get());
+      size = maxSize.get();
       flush();
     }
     // debug begin
@@ -195,16 +196,11 @@ public class SnapshotManager implements RevokingDatabase {
     System.err.println("******** end to pop revokingDb ********");
   }
 
-  private void mark() {
-    --size;
-    ++flushCount;
-    logger.info("*****flushCount:" + flushCount);
-  }
-
   @Override
   public void updateSolidity(long oldSolidifiedBlockNum, long newSolidifedBlockNum) {
     long diff = newSolidifedBlockNum - oldSolidifiedBlockNum;
     for (int i = 0; i < diff; i++) {
+      ++flushCount;
       for (RevokingDBWithCachingNewValue db : dbs) {
         db.getHead().updateSolidity();
       }
@@ -234,7 +230,7 @@ public class SnapshotManager implements RevokingDatabase {
       }
 
       Snapshot next = solidity.getRoot().getNext();
-      for (int i = 0; i < flushCount; i++, next = next.getNext()) {
+      while (next != solidity.getNext()) {
         // debug begin
         String dbName = db.getDbName();
         SnapshotImpl snapshot = (SnapshotImpl) next;
@@ -254,6 +250,7 @@ public class SnapshotManager implements RevokingDatabase {
         }
         // debug end
         snapshots.add(next);
+        next = next.getNext();
       }
 
       // debug begin
@@ -283,15 +280,11 @@ public class SnapshotManager implements RevokingDatabase {
       return;
     }
 
-    mark();
-
     if (shouldBeRefreshed()) {
+      flushCount = 0;
       deleteCheckPoint();
       createCheckPoint();
-
       refresh();
-
-      flushCount = 0;
     }
   }
 
@@ -315,7 +308,7 @@ public class SnapshotManager implements RevokingDatabase {
       }
 
       Snapshot next = solidity.getRoot().getNext();
-      for (int i = 0; i < flushCount; i++, next = next.getNext()) {
+      while (next != solidity.getNext()) {
         SnapshotImpl snapshot = (SnapshotImpl) next;
         DB<Key, Value> keyValueDB = snapshot.getDb();
         for (Map.Entry<Key, Value> e : keyValueDB) {
@@ -334,6 +327,7 @@ public class SnapshotManager implements RevokingDatabase {
           }
           // debug end
         }
+        next = next.getNext();
       }
     }
 
