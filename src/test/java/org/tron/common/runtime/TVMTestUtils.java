@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
+import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
@@ -45,7 +46,7 @@ public class TVMTestUtils {
   public static byte[] deployContractWholeProcessReturnContractAddress(String contractName,
       byte[] callerAddress,
       String ABI, String code, long value, long feeLimit, long consumeUserResourcePercent,
-      String libraryAddressPair, DepositImpl deposit, BlockCapsule block)
+      String libraryAddressPair, Deposit deposit, BlockCapsule block)
       throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     Transaction trx = generateDeploySmartContractAndGetTransaction(contractName, callerAddress, ABI,
         code, value, feeLimit, consumeUserResourcePercent, libraryAddressPair);
@@ -54,7 +55,7 @@ public class TVMTestUtils {
   }
 
   public static Runtime triggerContractWholeProcessReturnContractAddress(byte[] callerAddress,
-      byte[] contractAddress, byte[] data, long callValue, long feeLimit, DepositImpl deposit,
+      byte[] contractAddress, byte[] data, long callValue, long feeLimit, Deposit deposit,
       BlockCapsule block)
       throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     Transaction trx = generateTriggerSmartContractAndGetTransaction(callerAddress, contractAddress,
@@ -90,7 +91,7 @@ public class TVMTestUtils {
    */
 
   public static Runtime processTransactionAndReturnRuntime(Transaction trx,
-      DepositImpl deposit, BlockCapsule block)
+      Deposit deposit, BlockCapsule block)
       throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
     TransactionTrace trace = new TransactionTrace(trxCap, deposit.getDbManager());
