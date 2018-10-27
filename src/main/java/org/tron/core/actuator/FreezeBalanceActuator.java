@@ -63,7 +63,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
             .addTotalNetWeight(frozenBalance / 1000_000L);
         break;
       case ENERGY:
-        if (receiverAddress.length == 0) {
+        if (ArrayUtils.isEmpty(receiverAddress)) {
           long newFrozenBalanceForEnergy =
               frozenBalance + accountCapsule.getAccountResource()
                   .getFrozenBalanceForEnergy()
