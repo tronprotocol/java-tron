@@ -556,6 +556,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   public long getEnergyUsage() {
     return this.account.getAccountResource().getEnergyUsage();
   }
+
   public long getAllFrozenBalanceForEnergy() {
     return getEnergyFrozenBalance() + getAcquiredDelegatedFrozenBalanceForEnergy();
   }
