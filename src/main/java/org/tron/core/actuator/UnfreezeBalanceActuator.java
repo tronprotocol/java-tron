@@ -130,10 +130,12 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
     switch (unfreezeBalanceContract.getResource()) {
       case BANDWIDTH:
-        dbManager.getDynamicPropertiesStore().addTotalNetWeight(-unfreezeBalance / 1000_000L);
+        dbManager.getDynamicPropertiesStore()
+            .addTotalNetWeight(-unfreezeBalance / 1000_000L);
         break;
       case ENERGY:
-        dbManager.getDynamicPropertiesStore().addTotalEnergyWeight(-unfreezeBalance / 1000_000L);
+        dbManager.getDynamicPropertiesStore()
+            .addTotalEnergyWeight(-unfreezeBalance / 1000_000L);
         break;
         default:
         //this should never happen
@@ -211,7 +213,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           }
           break;
         case ENERGY:
-          Frozen frozenBalanceForEnergy = accountCapsule.getAccountResource().getFrozenBalanceForEnergy();
+          Frozen frozenBalanceForEnergy = accountCapsule.getAccountResource()
+              .getFrozenBalanceForEnergy();
           if (frozenBalanceForEnergy.getFrozenBalance() <= 0) {
             throw new ContractValidateException("no frozenBalance(Energy)");
           }
