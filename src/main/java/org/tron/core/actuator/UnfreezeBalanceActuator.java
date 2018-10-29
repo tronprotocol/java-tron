@@ -260,6 +260,11 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
               "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]");
       }
     } else {
+      if (!dbManager.getDynamicPropertiesStore().supportDR()) {
+        throw new ContractValidateException("Delegating resource is NOT ALLOWED,"
+            + " need to be opened by the committee");
+      }
+
       if (Arrays.equals(receiverAddress, ownerAddress)) {
         throw new ContractValidateException(
             "receiverAddress must not be the same as ownerAddress");
