@@ -131,7 +131,6 @@ message FreezeBalanceContract {
   int64 frozen_duration = 3;
 
   ResourceCode resource = 10;
-
   bytes receiver_address = 15;
 }
 
@@ -139,8 +138,7 @@ message UnfreezeBalanceContract {
   bytes owner_address = 1;
 
   ResourceCode resource = 10;
-
-  bytes receiver_address = 13;
+  bytes receiver_address = 15;
 }
 
 message UnfreezeAssetContract {

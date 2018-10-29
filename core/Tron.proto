@@ -72,6 +72,7 @@ message Account {
   message Frozen {
     int64 frozen_balance = 1; // the frozen trx balance
     int64 expire_time = 2; // the expire time
+    bytes to_address = 3; // resources are delegated to this address
   }
   // account nick name
   bytes account_name = 1;
@@ -144,12 +145,13 @@ message Account {
 }
 
 
-message  DelegatedResource{
+message DelegatedResource {
   bytes from = 1;
   bytes to = 2;
   int64 frozen_balance_for_bandwidth = 3;
   int64 frozen_balance_for_energy = 4;
-  int64 expire_time = 5;
+  int64 expire_time_for_bandwidth = 5;
+  int64 expire_time_for_energy = 6;
 }
 
 message authority {
