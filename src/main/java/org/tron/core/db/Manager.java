@@ -333,14 +333,14 @@ public class Manager {
       logger.error(
           "Please delete database directory({}) and restart",
           Args.getInstance().getOutputDirectory());
-      System.exit(1);
+      System.exit(0);
     } catch (BadItemException e) {
       e.printStackTrace();
       logger.error("DB data broken!");
       logger.error(
           "Please delete database directory({}) and restart",
           Args.getInstance().getOutputDirectory());
-      System.exit(1);
+      System.exit(0);
     }
     forkController.init(this);
     revokingStore.enable();
@@ -370,7 +370,7 @@ public class Manager {
         logger.error(
             "genesis block modify, please delete database directory({}) and restart",
             Args.getInstance().getOutputDirectory());
-        System.exit(1);
+        System.exit(0);
       } else {
         logger.info("create genesis block");
         Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
