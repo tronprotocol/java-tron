@@ -228,7 +228,7 @@ public class RuntimeImpl implements Runtime {
           feeLimit / sunPerEnergy;
     } else {
       long totalEnergyFromFreeze = energyProcessor
-          .calculateGlobalEnergyLimit(totalBalanceForEnergyFreeze);
+          .calculateGlobalEnergyLimit(account);
       long leftBalanceForEnergyFreeze = getEnergyFee(totalBalanceForEnergyFreeze,
           leftEnergyFromFreeze,
           totalEnergyFromFreeze);
