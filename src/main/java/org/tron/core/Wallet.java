@@ -76,6 +76,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.ProposalCapsule;
@@ -113,6 +114,7 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.SmartContract;
@@ -537,6 +539,10 @@ public class Wallet {
     return builder.build();
   }
 
+  public DelegatedResourceAccountIndex getDelegatedResourceAccountIndex(ByteString address) {
+    return dbManager.getDelegatedResourceAccountIndexStore()
+        .get(address.toByteArray()).getInstance();
+  }
 
   public ExchangeList getExchangeList() {
     ExchangeList.Builder builder = ExchangeList.newBuilder();

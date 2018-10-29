@@ -1,5 +1,7 @@
 package org.tron.core.services;
 
+import static io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall;
+
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Message;
@@ -1370,6 +1372,13 @@ public class RpcApiService implements Service {
         StreamObserver<DelegatedResourceList> responseObserver) {
       responseObserver
           .onNext(wallet.getDelegatedResource(request.getFromAddress(), request.getToAddress()));
+      responseObserver.onCompleted();
+    }
+
+    public void getDelegatedResourceAccountIndex(BytesMessage request,
+        StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
+      responseObserver
+          .onNext(wallet.getDelegatedResourceAccountIndex(request.getValue()));
       responseObserver.onCompleted();
     }
 
