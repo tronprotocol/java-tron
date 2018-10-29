@@ -241,11 +241,11 @@ public class UnfreezeBalanceActuatorTest {
 
     DelegatedResourceCapsule delegatedResourceCapsule = new DelegatedResourceCapsule(
         owner.getAddress(),
-        receiver.getAddress(),
-        0L,
-        frozenBalance,
-        now - 100L
+        receiver.getAddress()
     );
+    delegatedResourceCapsule.setFrozenBalanceForBandwidth(
+        frozenBalance,
+        now - 100L);
     dbManager.getDelegatedResourceStore().put(DelegatedResourceCapsule
         .createDbKey(ByteArray.fromHexString(OWNER_ADDRESS),
             ByteArray.fromHexString(RECEIVER_ADDRESS)), delegatedResourceCapsule);
@@ -296,11 +296,11 @@ public class UnfreezeBalanceActuatorTest {
 
     DelegatedResourceCapsule delegatedResourceCapsule = new DelegatedResourceCapsule(
         owner.getAddress(),
-        receiver.getAddress(),
-        frozenBalance,
-        0L,
-        now - 100L
+        receiver.getAddress()
     );
+    delegatedResourceCapsule.setFrozenBalanceForEnergy(
+        frozenBalance,
+        now - 100L);
     dbManager.getDelegatedResourceStore().put(DelegatedResourceCapsule
         .createDbKey(ByteArray.fromHexString(OWNER_ADDRESS),
             ByteArray.fromHexString(RECEIVER_ADDRESS)), delegatedResourceCapsule);

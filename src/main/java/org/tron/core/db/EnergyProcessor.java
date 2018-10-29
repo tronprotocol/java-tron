@@ -117,8 +117,7 @@ public class EnergyProcessor extends ResourceProcessor {
 
     long energyUsage = accountCapsule.getEnergyUsage();
     long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();
-    long energyLimit = calculateGlobalEnergyLimit(
-        accountCapsule.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance());
+    long energyLimit = calculateGlobalEnergyLimit(accountCapsule);
 
     long newEnergyUsage = increase(energyUsage, 0, latestConsumeTime, now);
 
@@ -138,7 +137,8 @@ public class EnergyProcessor extends ResourceProcessor {
   }
 
 
-  public long calculateGlobalEnergyLimit(long frozeBalance) {
+  public long calculateGlobalEnergyLimit(AccountCapsule accountCapsule) {
+    long frozeBalance = accountCapsule.getAllFrozenBalanceForEnergy();
     if (frozeBalance < 1000_000L) {
       return 0;
     }
@@ -155,8 +155,7 @@ public class EnergyProcessor extends ResourceProcessor {
 
     long energyUsage = accountCapsule.getEnergyUsage();
     long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();
-    long energyLimit = calculateGlobalEnergyLimit(
-        accountCapsule.getAllFrozenBalanceForEnergy());
+    long energyLimit = calculateGlobalEnergyLimit(accountCapsule);
 
     long newEnergyUsage = increase(energyUsage, 0, latestConsumeTime, now);
 
