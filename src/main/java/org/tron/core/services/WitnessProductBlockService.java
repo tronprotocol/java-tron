@@ -27,6 +27,7 @@ public class WitnessProductBlockService {
     private AtomicInteger times = new AtomicInteger(0);
     private long latestBlockNum;
     private Set<BlockCapsule> blockCapsuleSet = new HashSet<>();
+    private long time;
 
     public CheatWitnessInfo increment() {
       times.incrementAndGet();
@@ -70,10 +71,20 @@ public class WitnessProductBlockService {
       return this;
     }
 
+    public long getTime() {
+      return time;
+    }
+
+    public CheatWitnessInfo setTime(long time) {
+      this.time = time;
+      return this;
+    }
+
     @Override
     public String toString() {
-      return "CheatWitnessInfo{" +
+      return "{" +
           "times=" + times.get() +
+          ", time=" + time +
           ", latestBlockNum=" + latestBlockNum +
           ", blockCapsuleSet=" + blockCapsuleSet +
           '}';
@@ -91,8 +102,8 @@ public class WitnessProductBlockService {
           CheatWitnessInfo cheatWitnessInfo = new CheatWitnessInfo();
           cheatWitnessInfoMap.put(key, cheatWitnessInfo);
         }
-        cheatWitnessInfoMap.get(key).clear().setLatestBlockNum(block.getNum()).add(block)
-            .add(blockCapsule).increment();
+        cheatWitnessInfoMap.get(key).clear().setTime(System.currentTimeMillis())
+            .setLatestBlockNum(block.getNum()).add(block).add(blockCapsule).increment();
       } else {
         historyBlockCapsuleCache.put(block.getNum(), block);
       }
