@@ -65,22 +65,19 @@ public class SyncBlockChainMsgHadler implements TronMsgHandler {
       BlockId id = TronProxy.getBlockIdByNum(i);
       ids.add(id);
     }
-    return ids;
+    return ids;Integer.MAX_VALUE
   }
 
   private void checkSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage msg) throws Exception{
     List<BlockId> blockIds = msg.getBlockIds();
     if (CollectionUtils.isEmpty(blockIds)){
-      throw new P2pException(TypeEnum.BAD_MESSAGE, );
+      throw new P2pException(TypeEnum.BAD_MESSAGE, "SyncBlockChain blockIds is empty");
     }
     long lastBlockNum = blockIds.get(blockIds.size() - 1).getNum();
     BlockId lastSyncBlockId = peer.getLastSyncBlockId();
     if (lastSyncBlockId != null && lastBlockNum < lastSyncBlockId.getNum()) {
-      logger.warn("Peer {} receive bad SyncBlockChain message, firstNum {} lastSyncNum {}.",
-          peer.getInetAddress(), lastBlockNum, lastSyncBlockId.getNum());
-      throw new P2pException(TypeEnum.BAD_MESSAGE);
+      throw new P2pException(TypeEnum.BAD_MESSAGE, "SyncBlockChain firstNum:" + lastBlockNum + ", lastSyncNum:" + lastBlockNum);
     }
-    return true;
   }
 
   public boolean processMessage(PeerConnection peer, TronMessage msg){
