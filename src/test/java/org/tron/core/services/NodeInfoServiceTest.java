@@ -26,10 +26,6 @@ public class NodeInfoServiceTest extends BaseNetTest {
     super(dbPath, dbDirectory, indexDirectory, port);
   }
 
-  public void testValid() {
-
-  }
-
   @Test
   public void test() {
     nodeInfoService = context.getBean(NodeInfoService.class);
