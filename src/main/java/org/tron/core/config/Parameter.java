@@ -75,6 +75,7 @@ public interface Parameter {
     MAX_CPU_TIME_OF_ONE_TX, // ms, 13
     ALLOW_UPDATE_ACCOUNT_NAME, // 1, 14
     ALLOW_SAME_TOKEN_NAME, // 1, 15
+    ALLOW_DELEGATE_RESOURCE, // 0, 16
 //    ONE_DAY_NET_LIMIT,
 //    MAX_FROZEN_TIME,
 //    MIN_FROZEN_TIME,
