@@ -66,7 +66,7 @@ public class TrxHandler {
 
   public void handleTransactionsMessage(PeerConnection peer, TransactionsMessage msg) {
     for (Transaction trx : msg.getTransactions().getTransactionsList()) {
-      Item item = new Item(msg.getMessageId(), InventoryType.TRX);
+      Item item = new Item(new TransactionMessage(trx).getMessageId(), InventoryType.TRX);
       if (!peer.getAdvObjWeRequested().containsKey(item)) {
         logger.warn("Receive trx {} from peer {} without fetch request.",
             msg.getMessageId(), peer.getInetAddress());
