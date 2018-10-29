@@ -97,7 +97,7 @@ service Wallet {
   };
 
   //modify the energy_limit
-  rpc UpdateSettingForEnergyLimit (UpdateSettingContractForEnergyLimit) returns (TransactionExtention) {
+  rpc UpdateSettingForEnergyLimit (UpdateSettingForEnergyLimitContract) returns (TransactionExtention) {
   };
 
   //Use this function instead of VoteWitnessAccount.
