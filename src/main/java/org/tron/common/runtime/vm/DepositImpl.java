@@ -174,10 +174,10 @@ public class DepositImpl implements Deposit {
     if (value == 0) {
       return balance;
     }
-
-    accountCapsule.setBalance(Math.addExact(balance, value));
-    accountCache.put(address, accountCapsule);
-    return accountCapsule.getBalance();
+    AccountCapsule newAccountCapsule = new AccountCapsule(accountCapsule.getData());
+    newAccountCapsule.setBalance(Math.addExact(balance, value));
+    accountCache.put(address, newAccountCapsule);
+    return newAccountCapsule.getBalance();
   }
 
   @Override

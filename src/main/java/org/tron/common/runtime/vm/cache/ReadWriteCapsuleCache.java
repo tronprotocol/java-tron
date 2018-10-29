@@ -9,7 +9,7 @@ import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 
-@Slf4j(topic = "cache")
+@Slf4j(topic = "vm_read_write_cache")
 public class ReadWriteCapsuleCache<V extends ProtoCapsule> implements CachedSource<byte[], V> {
   private ByteArrayMap<V> writeCache;
   private ByteArrayMap<V> readCache;
@@ -41,7 +41,16 @@ public class ReadWriteCapsuleCache<V extends ProtoCapsule> implements CachedSour
         value = null;
       }
       // write into cache even though value is null, to prevent searching DB next time.
-      readCache.put(key, value);
+      // readCache just cached db data
+      if (value != null) {
+        V readValue;
+        try {
+          readValue = this.store.of(value.getData());
+        } catch (BadItemException e) {
+          readValue = null;
+        }
+        readCache.put(key, readValue);
+      }
     }
     return value;
   }
@@ -49,9 +58,7 @@ public class ReadWriteCapsuleCache<V extends ProtoCapsule> implements CachedSour
   @Override
   public void commit() {
     writeCache.forEach((key, value) -> {
-      logger.error("commit cache, key" + Hex.toHexString(key) + " value:" + value);
       if (logger.isDebugEnabled()){ logger.debug("commit cache, key" + Hex.toHexString(key) + " value:" + value); }
-
       if (value == null) {
         this.store.delete(key);
       } else {

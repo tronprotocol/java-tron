@@ -14,9 +14,9 @@ public class Storage {
   private static final int PREFIX_BYTES = 16;
   private byte[] addrHash;  // contract address
 
-  public Storage(byte[] addrHash,
+  public Storage(byte[] address,
       CachedSource<byte[], StorageRowCapsule> backingSource) {
-    this.addrHash = addrHash;
+    this.addrHash = addrHash(address);
     this.cachedSource = backingSource;
     keysToDelete = new ByteArraySet();
   }
@@ -37,20 +37,14 @@ public class Storage {
 
   public void put(DataWord key, DataWord value) {
     byte[] rowKey = compose(key.getData(), addrHash);
-    StorageRowCapsule row = cachedSource.get(rowKey);
-    if (row == null) {
-      row = new StorageRowCapsule(rowKey, value.getData());
-    } else {
-      row.setValue(value);
-    }
+    StorageRowCapsule row = new StorageRowCapsule(rowKey, value.getData());
+    cachedSource.put(rowKey, row);
 
     if (value.isZero()) {
       keysToDelete.add(rowKey);
     } else {
       keysToDelete.remove(rowKey);
     }
-    cachedSource.put(rowKey, row);
-
   }
 
   private static byte[] compose(byte[] key, byte[] addrHash) {

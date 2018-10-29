@@ -1,11 +1,10 @@
 package org.tron.common.runtime.vm.cache;
 
 import lombok.extern.slf4j.Slf4j;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.utils.ByteArrayMap;
 import org.tron.core.capsule.ProtoCapsule;
 
-@Slf4j(topic = "vm_cache")
+@Slf4j(topic = "vm_write_cache")
 public class WriteCapsuleCache<V extends ProtoCapsule> implements CachedSource<byte[], V> {
   private CachedSource<byte[], V> backingSource;
   private ByteArrayMap<V> writeCache;
