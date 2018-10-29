@@ -20,11 +20,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.tron.common.application.TronApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
@@ -40,8 +39,8 @@ import org.tron.core.services.WitnessService;
 @Slf4j
 public abstract class BaseNetTest {
 
-  protected static TronApplicationContext context;
-  protected static NodeImpl node;
+  protected TronApplicationContext context;
+  protected NodeImpl node;
   protected RpcApiService rpcApiService;
   protected PeerClient peerClient;
   protected ChannelManager channelManager;
@@ -49,13 +48,13 @@ public abstract class BaseNetTest {
   protected Manager manager;
   private Application appT;
 
-  private static String dbPath;
+  private String dbPath;
   private String dbDirectory;
   private String indexDirectory;
 
   private int port;
 
-  private static ExecutorService executorService = Executors.newFixedThreadPool(1);
+  private ExecutorService executorService = Executors.newFixedThreadPool(1);
 
   public BaseNetTest(String dbPath, String dbDirectory, String indexDirectory, int port) {
     this.dbPath = dbPath;
@@ -108,7 +107,7 @@ public abstract class BaseNetTest {
         NodeDelegate nodeDelegate = new NodeDelegateImpl(manager);
         node.setNodeDelegate(nodeDelegate);
         pool.init(node);
-        
+
         appT.startup();
         rpcApiService.blockUntilShutdown();
       }

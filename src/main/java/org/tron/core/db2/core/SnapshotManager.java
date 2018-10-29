@@ -70,8 +70,9 @@ public class SnapshotManager implements RevokingDatabase {
       disabled = false;
     }
 
-    while (size > maxSize.get()) {
+    if (size > maxSize.get()) {
       logger.info("****size:" + size + ", maxsize:" + maxSize.get());
+      size = maxSize.get();
       flush();
     }
     // debug begin
@@ -195,22 +196,12 @@ public class SnapshotManager implements RevokingDatabase {
     System.err.println("******** end to pop revokingDb ********");
   }
 
-  private void mark() {
-    --size;
-    ++flushCount;
-    logger.info("*****flushCount:" + flushCount);
-  }
-
   @Override
   public void updateSolidity(long oldSolidifiedBlockNum, long newSolidifedBlockNum) {
     long diff = newSolidifedBlockNum - oldSolidifiedBlockNum;
     for (int i = 0; i < diff; i++) {
+      ++flushCount;
       for (RevokingDBWithCachingNewValue db : dbs) {
-        if (db.getHead().getRoot().getNext() == null) {
-          --flushCount;
-          break;
-        }
-
         db.getHead().updateSolidity();
       }
     }
@@ -234,6 +225,10 @@ public class SnapshotManager implements RevokingDatabase {
 
       List<Snapshot> snapshots = new ArrayList<>();
       Snapshot solidity = db.getHead().getSolidity();
+      if (Snapshot.isRoot(solidity)) {
+        return;
+      }
+
       Snapshot next = solidity.getRoot().getNext();
       while (next != solidity.getNext()) {
         // debug begin
@@ -285,15 +280,11 @@ public class SnapshotManager implements RevokingDatabase {
       return;
     }
 
-    mark();
-
     if (shouldBeRefreshed()) {
+      flushCount = 0;
       deleteCheckPoint();
       createCheckPoint();
-
       refresh();
-
-      flushCount = 0;
     }
   }
 
@@ -312,6 +303,10 @@ public class SnapshotManager implements RevokingDatabase {
 
       String dbName = db.getDbName();
       Snapshot solidity = db.getHead().getSolidity();
+      if (Snapshot.isRoot(solidity)) {
+        return;
+      }
+
       Snapshot next = solidity.getRoot().getNext();
       while (next != solidity.getNext()) {
         SnapshotImpl snapshot = (SnapshotImpl) next;
