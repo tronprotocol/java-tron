@@ -523,3 +523,9 @@ message InternalTransaction {
   bytes note = 5;
   bool rejected = 6;
 }
+
+message DelegatedResourceAccountIndex {
+  bytes account = 1;
+  repeated bytes fromAccounts = 2;
+  repeated bytes toAccounts = 3;
+}

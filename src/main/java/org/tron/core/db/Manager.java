@@ -124,6 +124,8 @@ public class Manager {
   @Autowired
   private DelegatedResourceStore delegatedResourceStore;
   @Autowired
+  private DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore;
+  @Autowired
   @Getter
   private StorageRowStore storageRowStore;
 
@@ -197,6 +199,9 @@ public class Manager {
 
   public DelegatedResourceStore getDelegatedResourceStore() {
     return delegatedResourceStore;
+  }
+  public DelegatedResourceAccountIndexStore getDelegatedResourceAccountIndexStore() {
+    return delegatedResourceAccountIndexStore;
   }
 
   public CodeStore getCodeStore() {
