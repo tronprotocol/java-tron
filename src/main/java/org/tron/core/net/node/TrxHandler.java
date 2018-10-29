@@ -11,9 +11,12 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.TraitorPeerException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.message.TransactionsMessage;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.protos.Protocol.Inventory.InventoryType;
+import org.tron.protos.Protocol.ReasonCode;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
@@ -63,6 +66,15 @@ public class TrxHandler {
 
   public void handleTransactionsMessage(PeerConnection peer, TransactionsMessage msg) {
     for (Transaction trx : msg.getTransactions().getTransactionsList()) {
+      Item item = new Item(msg.getMessageId(), InventoryType.TRX);
+      if (!peer.getAdvObjWeRequested().containsKey(item)) {
+        logger.warn("Receive trx {} from peer {} without fetch request.",
+            msg.getMessageId(), peer.getInetAddress());
+        peer.setSyncFlag(false);
+        peer.disconnect(ReasonCode.BAD_PROTOCOL);
+        return;
+      }
+      peer.getAdvObjWeRequested().remove(item);
       int type = trx.getRawData().getContract(0).getType().getNumber();
       if (type == ContractType.TriggerSmartContract_VALUE || type == ContractType.CreateSmartContract_VALUE) {
         if (!smartContractQueue.offer(new TrxEvent(peer, new TransactionMessage(trx)))) {
