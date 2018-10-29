@@ -130,9 +130,11 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
               .getDelegatedResourceAccountIndexStore()
               .get(ownerAddress);
           if (delegatedResourceAccountIndexCapsule != null) {
-            List<ByteString> toAccountsList = delegatedResourceAccountIndexCapsule.getToAccountsList();
+            List<ByteString> toAccountsList = delegatedResourceAccountIndexCapsule
+                .getToAccountsList();
             toAccountsList.remove(ByteString.copyFrom(receiverAddress));
-            dbManager.getDelegatedResourceAccountIndexStore().put(ownerAddress, delegatedResourceAccountIndexCapsule);
+            dbManager.getDelegatedResourceAccountIndexStore()
+                .put(ownerAddress, delegatedResourceAccountIndexCapsule);
           }
         }
 
@@ -141,9 +143,11 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
               .getDelegatedResourceAccountIndexStore()
               .get(receiverAddress);
           if (delegatedResourceAccountIndexCapsule != null) {
-            List<ByteString> toAccountsList = delegatedResourceAccountIndexCapsule.getToAccountsList();
+            List<ByteString> toAccountsList = delegatedResourceAccountIndexCapsule
+                .getToAccountsList();
             toAccountsList.remove(ByteString.copyFrom(ownerAddress));
-            dbManager.getDelegatedResourceAccountIndexStore().put(receiverAddress, delegatedResourceAccountIndexCapsule);
+            dbManager.getDelegatedResourceAccountIndexStore()
+                .put(receiverAddress, delegatedResourceAccountIndexCapsule);
           }
         }
 

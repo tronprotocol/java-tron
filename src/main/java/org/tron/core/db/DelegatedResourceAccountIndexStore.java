@@ -11,7 +11,7 @@ public class DelegatedResourceAccountIndexStore extends
     TronStoreWithRevoking<DelegatedResourceAccountIndexCapsule> {
 
   @Autowired
-  public DelegatedResourceAccountIndexStore(@Value("DelegatedResource") String dbName) {
+  public DelegatedResourceAccountIndexStore(@Value("DelegatedResourceAccountIndex") String dbName) {
     super(dbName);
   }
 

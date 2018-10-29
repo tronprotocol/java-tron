@@ -418,6 +418,17 @@ service Wallet {
       };
     };
 
+  rpc GetDelegatedResourceAccountIndex (BytesMessage) returns (DelegatedResourceAccountIndex) {
+      option (google.api.http) = {
+        post: "/wallet/getdelegatedresourceaccountindex"
+        body: "*"
+        additional_bindings {
+          get: "/wallet/getdelegatedresourceaccountindex"
+        }
+      };
+    };
+
+
 
   rpc ListProposals (EmptyMessage) returns (ProposalList) {
     option (google.api.http) = {

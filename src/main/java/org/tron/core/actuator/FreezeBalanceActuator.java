@@ -237,9 +237,9 @@ public class FreezeBalanceActuator extends AbstractActuator {
       if (!toAccountsList.contains(ByteString.copyFrom(receiverAddress))) {
         toAccountsList.add(ByteString.copyFrom(receiverAddress));
       }
-      dbManager.getDelegatedResourceAccountIndexStore().put(ownerAddress, delegatedResourceAccountIndexCapsule);
+      dbManager.getDelegatedResourceAccountIndexStore()
+          .put(ownerAddress, delegatedResourceAccountIndexCapsule);
     }
-
 
     {
       DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule = dbManager
@@ -249,11 +249,13 @@ public class FreezeBalanceActuator extends AbstractActuator {
         delegatedResourceAccountIndexCapsule = new DelegatedResourceAccountIndexCapsule(
             ByteString.copyFrom(receiverAddress));
       }
-      List<ByteString> fromAccountsList = delegatedResourceAccountIndexCapsule.getFromAccountsList();
+      List<ByteString> fromAccountsList = delegatedResourceAccountIndexCapsule
+          .getFromAccountsList();
       if (!fromAccountsList.contains(ByteString.copyFrom(ownerAddress))) {
         fromAccountsList.add(ByteString.copyFrom(ownerAddress));
       }
-      dbManager.getDelegatedResourceAccountIndexStore().put(receiverAddress, delegatedResourceAccountIndexCapsule);
+      dbManager.getDelegatedResourceAccountIndexStore()
+          .put(receiverAddress, delegatedResourceAccountIndexCapsule);
     }
 
     //modify AccountStore
