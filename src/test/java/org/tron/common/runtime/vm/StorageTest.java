@@ -230,6 +230,9 @@ public class StorageTest {
     // check root cache
     Assert.assertEquals(rootDeposit.getStorageValue(address, storageKey1), storageVal1);
     Assert.assertEquals(rootDeposit.getStorageValue(address, nullKey), nullValue);
+
+//    Assert.assertEquals(rootDeposit.getStorageValue(address, nullKey), nullValue);
+
 //    Assert.assertEquals(chlidDeposit.getStorageValue(address, storageParentKey1), storageVal1);
 
 

@@ -49,7 +49,7 @@ public class ReadWriteCapsuleCache<V extends ProtoCapsule> implements CachedSour
   @Override
   public void commit() {
     writeCache.forEach((key, value) -> {
-
+      logger.error("commit cache, key" + Hex.toHexString(key) + " value:" + value);
       if (logger.isDebugEnabled()){ logger.debug("commit cache, key" + Hex.toHexString(key) + " value:" + value); }
 
       if (value == null) {

@@ -22,6 +22,7 @@ import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
 import org.tron.common.runtime.vm.program.listener.ProgramListener;
 import org.tron.common.runtime.vm.program.listener.ProgramListenerAware;
 import org.tron.common.runtime.vm.Deposit;
+import org.tron.common.utils.ByteArraySet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -143,6 +144,11 @@ public class ContractState implements Deposit, ProgramListenerAware {
   @Override
   public void putStorage(byte[] key, Storage cache) {
     deposit.putStorage(key, cache);
+  }
+
+  @Override
+  public ByteArraySet getStorageKeysToDelete() {
+    return deposit.getStorageKeysToDelete();
   }
 
   @Override

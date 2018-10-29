@@ -2,55 +2,32 @@ package org.tron.common.runtime.vm.program;
 
 import static java.lang.System.arraycopy;
 
-import lombok.Getter;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.cache.CachedSource;
-import org.tron.common.utils.ByteArraySet;
 import org.tron.core.capsule.StorageRowCapsule;
 
 
-public class Storage {
+public class CachedStorage {
   private static final int PREFIX_BYTES = 16;
   private byte[] addrHash;  // contract address
 
-  public Storage(byte[] addrHash,
+  public CachedStorage(byte[] addrHash,
       CachedSource<byte[], StorageRowCapsule> backingSource) {
     this.addrHash = addrHash;
     this.cachedSource = backingSource;
-    keysToDelete = new ByteArraySet();
   }
 
   private CachedSource<byte[], StorageRowCapsule> cachedSource;
-  @Getter
-  private ByteArraySet keysToDelete;
 
   public DataWord getValue(DataWord key) {
-    byte[] rowKey = compose(key.getData(), addrHash);
-    StorageRowCapsule row = cachedSource.get(rowKey);
-    if (row == null || row.getInstance() == null) {
-      return null;
-    } else {
-      return row.getValue();
-    }
+    StorageRowCapsule row = cachedSource.get(compose(key.getData(), addrHash));
+    return row.getInstance() == null ? null : row.getValue();
   }
 
   public void put(DataWord key, DataWord value) {
-    byte[] rowKey = compose(key.getData(), addrHash);
-    StorageRowCapsule row = cachedSource.get(rowKey);
-    if (row == null) {
-      row = new StorageRowCapsule(rowKey, value.getData());
-    } else {
-      row.setValue(value);
-    }
-
-    if (value.isZero()) {
-      keysToDelete.add(rowKey);
-    } else {
-      keysToDelete.remove(rowKey);
-    }
-    cachedSource.put(rowKey, row);
-
+    StorageRowCapsule row = cachedSource.get(compose(key.getData(), addrHash));
+    row.setValue(value);
   }
 
   private static byte[] compose(byte[] key, byte[] addrHash) {
@@ -66,8 +43,7 @@ public class Storage {
   }
 
   public void commit() {
-    keysToDelete.forEach(key -> {
-      this.cachedSource.put(key, null);
-    });
+    this.cachedSource.commit();
   }
+
 }

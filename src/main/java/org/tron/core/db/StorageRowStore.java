@@ -20,6 +20,7 @@ public class StorageRowStore extends TronStoreWithRevoking<StorageRowCapsule> {
   @Override
   public StorageRowCapsule get(byte[] key) {
     StorageRowCapsule row = getUnchecked(key);
+    if (row.getInstance() == null) return null;
     row.setRowKey(key);
     return row;
   }

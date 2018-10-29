@@ -1,6 +1,7 @@
 package org.tron.common.runtime.vm;
 
 import org.tron.common.runtime.vm.program.Storage;
+import org.tron.common.utils.ByteArraySet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -50,4 +51,6 @@ public interface Deposit {
   BlockCapsule getBlock(byte[] blockHash);
 
   void putStorage(byte[] key, Storage value);
+
+  ByteArraySet getStorageKeysToDelete();
 }

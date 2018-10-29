@@ -8,6 +8,7 @@ import org.tron.common.runtime.vm.cache.ReadWriteCapsuleCache;
 import org.tron.common.runtime.vm.cache.WriteCapsuleCache;
 import org.tron.common.runtime.vm.program.Storage;
 import org.tron.common.utils.ByteArrayMap;
+import org.tron.common.utils.ByteArraySet;
 import org.tron.core.capsule.*;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol;
@@ -30,7 +31,11 @@ public class DepositImpl implements Deposit {
   @Getter
   private CachedSource<byte[], CodeCapsule> codeCache;
 
+  @Getter
+  private CachedSource<byte[], StorageRowCapsule> storageRowCache;
   private ByteArrayMap<Storage> storageMap = new ByteArrayMap<>();
+  @Getter
+  private ByteArraySet storageKeysToDelete = new ByteArraySet();
 
   public static Deposit createRoot(Manager manager) {
     return new DepositImpl(manager);
@@ -54,6 +59,7 @@ public class DepositImpl implements Deposit {
       witnessCache = new ReadWriteCapsuleCache<>(manager.getWitnessStore());
       codeCache = new ReadWriteCapsuleCache<>(manager.getCodeStore());
       blockCache = new ReadWriteCapsuleCache<>(manager.getBlockStore());
+      storageRowCache = new ReadWriteCapsuleCache<>(manager.getStorageRowStore());
     }
   }
 
@@ -68,6 +74,7 @@ public class DepositImpl implements Deposit {
     witnessCache = new WriteCapsuleCache<>(parent.getWitnessCache());
     codeCache = new WriteCapsuleCache<>(parent.getCodeCache());
     blockCache = new WriteCapsuleCache<>(parent.getBlockCache());
+    storageRowCache = new WriteCapsuleCache<>(parent.getStorageRowCache());
   }
 
   @Override
@@ -135,26 +142,12 @@ public class DepositImpl implements Deposit {
 
   @Override
   public void putStorageValue(byte[] address, DataWord key, DataWord value) {
-    Storage storage;
-    if (storageMap.containsKey(address)) {
-      storage = this.storageMap.get(address);
-    } else {
-      storage = getStorage(address);
-      this.storageMap.put(address, storage);
-    }
-    storage.put(key, value);
+    getStorage(address).put(key, value);
   }
 
   @Override
   public DataWord getStorageValue(byte[] address, DataWord key) {
-    Storage storage;
-    if (storageMap.containsKey(address)) {
-      storage = this.storageMap.get(address);
-    } else {
-      storage = getStorage(address);
-      this.storageMap.put(address, storage);
-    }
-    return storage.getValue(key);
+    return getStorage(address).getValue(key);
   }
 
   @Override
@@ -162,12 +155,8 @@ public class DepositImpl implements Deposit {
     if (storageMap.containsKey(address)) {
       return storageMap.get(address);
     }
-    Storage storage;
-    if (this.parent != null) {
-      storage = parent.getStorage(address);
-    } else {
-      storage = new Storage(address, this.manager.getStorageRowStore());
-    }
+    Storage storage = new Storage(address, this.storageRowCache);
+    storageMap.put(address,storage);
     return storage;
   }
 
@@ -217,16 +206,25 @@ public class DepositImpl implements Deposit {
     storageMap.put(key, storage);
   }
 
-  private void commitStorageCache() {
-    storageMap.forEach((key, value) -> {
-      if (this.parent != null) {
-        // write to parent cache
-        this.parent.putStorage(key, value);
-      } else {
-        // persistence
-        value.commit();
-      }
-    });
+  @Override
+  public ByteArraySet getStorageKeysToDelete() {
+    return this.storageKeysToDelete;
+  }
 
+  private void commitStorageCache() {
+      storageMap.forEach((key, value) -> {
+        if (this.parent != null) {
+          this.parent.getStorageKeysToDelete().addAll(value.getKeysToDelete());
+        } else {
+          this.getStorageKeysToDelete().addAll(value.getKeysToDelete());
+        }
+      });
+
+    if (this.parent == null) {
+      storageKeysToDelete.forEach(key -> {
+        storageRowCache.put(key, null);
+      });
+    }
+    storageRowCache.commit();
   }
 }

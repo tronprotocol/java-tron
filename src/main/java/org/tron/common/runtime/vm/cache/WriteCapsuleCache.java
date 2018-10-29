@@ -5,7 +5,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.common.utils.ByteArrayMap;
 import org.tron.core.capsule.ProtoCapsule;
 
-@Slf4j(topic = "cache")
+@Slf4j(topic = "vm_cache")
 public class WriteCapsuleCache<V extends ProtoCapsule> implements CachedSource<byte[], V> {
   private CachedSource<byte[], V> backingSource;
   private ByteArrayMap<V> writeCache;
