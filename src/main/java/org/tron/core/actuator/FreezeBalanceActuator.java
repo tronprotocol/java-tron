@@ -4,11 +4,13 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
@@ -200,6 +202,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
   private void delegateResource(byte[] ownerAddress, byte[] receiverAddress, boolean isBandwidth,
       long balance, long expireTime) {
     byte[] key = DelegatedResourceCapsule.createDbKey(ownerAddress, receiverAddress);
+    //modify DelegatedResourceStore
     DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
         .get(key);
     if (delegatedResourceCapsule != null) {
@@ -217,9 +220,43 @@ public class FreezeBalanceActuator extends AbstractActuator {
       } else {
         delegatedResourceCapsule.setFrozenBalanceForEnergy(balance, expireTime);
       }
+
     }
     dbManager.getDelegatedResourceStore().put(key, delegatedResourceCapsule);
 
+    //modify DelegatedResourceAccountIndexStore
+    {
+      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule = dbManager
+          .getDelegatedResourceAccountIndexStore()
+          .get(ownerAddress);
+      if (delegatedResourceAccountIndexCapsule == null) {
+        delegatedResourceAccountIndexCapsule = new DelegatedResourceAccountIndexCapsule(
+            ByteString.copyFrom(ownerAddress));
+      }
+      List<ByteString> toAccountsList = delegatedResourceAccountIndexCapsule.getToAccountsList();
+      if (!toAccountsList.contains(ByteString.copyFrom(receiverAddress))) {
+        toAccountsList.add(ByteString.copyFrom(receiverAddress));
+      }
+      dbManager.getDelegatedResourceAccountIndexStore().put(ownerAddress, delegatedResourceAccountIndexCapsule);
+    }
+
+
+    {
+      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule = dbManager
+          .getDelegatedResourceAccountIndexStore()
+          .get(receiverAddress);
+      if (delegatedResourceAccountIndexCapsule == null) {
+        delegatedResourceAccountIndexCapsule = new DelegatedResourceAccountIndexCapsule(
+            ByteString.copyFrom(receiverAddress));
+      }
+      List<ByteString> fromAccountsList = delegatedResourceAccountIndexCapsule.getFromAccountsList();
+      if (!fromAccountsList.contains(ByteString.copyFrom(ownerAddress))) {
+        fromAccountsList.add(ByteString.copyFrom(ownerAddress));
+      }
+      dbManager.getDelegatedResourceAccountIndexStore().put(receiverAddress, delegatedResourceAccountIndexCapsule);
+    }
+
+    //modify AccountStore
     AccountCapsule receiverCapsule = dbManager.getAccountStore().get(receiverAddress);
     if (isBandwidth) {
       receiverCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(balance);

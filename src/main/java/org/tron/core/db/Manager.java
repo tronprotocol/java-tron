@@ -200,6 +200,7 @@ public class Manager {
   public DelegatedResourceStore getDelegatedResourceStore() {
     return delegatedResourceStore;
   }
+
   public DelegatedResourceAccountIndexStore getDelegatedResourceAccountIndexStore() {
     return delegatedResourceAccountIndexStore;
   }

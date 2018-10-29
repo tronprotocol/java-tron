@@ -12,6 +12,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
@@ -122,6 +123,30 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() == 0
           && delegatedResourceCapsule.getFrozenBalanceForEnergy() == 0) {
         dbManager.getDelegatedResourceStore().delete(key);
+
+        //modify DelegatedResourceAccountIndexStore
+        {
+          DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule = dbManager
+              .getDelegatedResourceAccountIndexStore()
+              .get(ownerAddress);
+          if (delegatedResourceAccountIndexCapsule != null) {
+            List<ByteString> toAccountsList = delegatedResourceAccountIndexCapsule.getToAccountsList();
+            toAccountsList.remove(ByteString.copyFrom(receiverAddress));
+            dbManager.getDelegatedResourceAccountIndexStore().put(ownerAddress, delegatedResourceAccountIndexCapsule);
+          }
+        }
+
+        {
+          DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule = dbManager
+              .getDelegatedResourceAccountIndexStore()
+              .get(receiverAddress);
+          if (delegatedResourceAccountIndexCapsule != null) {
+            List<ByteString> toAccountsList = delegatedResourceAccountIndexCapsule.getToAccountsList();
+            toAccountsList.remove(ByteString.copyFrom(ownerAddress));
+            dbManager.getDelegatedResourceAccountIndexStore().put(receiverAddress, delegatedResourceAccountIndexCapsule);
+          }
+        }
+
       } else {
         dbManager.getDelegatedResourceStore().put(key, delegatedResourceCapsule);
       }
