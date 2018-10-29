@@ -64,7 +64,7 @@ public class DelegatedResourceAccountIndexCapsule implements
 
   public void setAllToAccounts(List<ByteString> toAccounts) {
     this.delegatedResourceAccountIndex = this.delegatedResourceAccountIndex.toBuilder()
-        .clearFromAccounts()
+        .clearToAccounts()
         .addAllToAccounts(toAccounts)
         .build();
   }
@@ -74,6 +74,13 @@ public class DelegatedResourceAccountIndexCapsule implements
         .addToAccounts(toAccount)
         .build();
   }
+
+//  public void removeToAccount(ByteString toAccount) {
+//    this.delegatedResourceAccountIndex = this.delegatedResourceAccountIndex.toBuilder()
+//        . (toAccount)
+//        .build();
+//  }
+
 
   public byte[] createDbKey() {
     return getAccount().toByteArray();

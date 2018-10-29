@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -130,9 +131,10 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
               .getDelegatedResourceAccountIndexStore()
               .get(ownerAddress);
           if (delegatedResourceAccountIndexCapsule != null) {
-            List<ByteString> toAccountsList = delegatedResourceAccountIndexCapsule
-                .getToAccountsList();
+            List<ByteString> toAccountsList = new ArrayList<>(delegatedResourceAccountIndexCapsule
+                .getToAccountsList());
             toAccountsList.remove(ByteString.copyFrom(receiverAddress));
+            delegatedResourceAccountIndexCapsule.setAllToAccounts(toAccountsList);
             dbManager.getDelegatedResourceAccountIndexStore()
                 .put(ownerAddress, delegatedResourceAccountIndexCapsule);
           }
@@ -143,9 +145,10 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
               .getDelegatedResourceAccountIndexStore()
               .get(receiverAddress);
           if (delegatedResourceAccountIndexCapsule != null) {
-            List<ByteString> toAccountsList = delegatedResourceAccountIndexCapsule
-                .getToAccountsList();
-            toAccountsList.remove(ByteString.copyFrom(ownerAddress));
+            List<ByteString> fromAccountsList = new ArrayList<>(delegatedResourceAccountIndexCapsule
+                .getToAccountsList());
+            fromAccountsList.remove(ByteString.copyFrom(ownerAddress));
+            delegatedResourceAccountIndexCapsule.setAllFromAccounts(fromAccountsList);
             dbManager.getDelegatedResourceAccountIndexStore()
                 .put(receiverAddress, delegatedResourceAccountIndexCapsule);
           }
