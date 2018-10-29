@@ -24,8 +24,7 @@ import org.tron.core.db2.common.Value;
 import org.tron.core.exception.ItemNotFoundException;
 
 public class RevokingDBWithCachingNewValue implements IRevokingDB {
-  @Setter
-  @Getter
+
   private Snapshot head;
   @Getter
   private String dbName;
@@ -33,6 +32,14 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
   public RevokingDBWithCachingNewValue(String dbName) {
     this.dbName = dbName;
     head = new SnapshotRoot(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName);
+  }
+
+  public synchronized Snapshot getHead() {
+    return head;
+  }
+
+  public synchronized void setHead(Snapshot head) {
+    this.head = head;
   }
 
   /**
@@ -62,25 +69,43 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
 
   @Override
   public synchronized byte[] get(byte[] key) throws ItemNotFoundException {
-    byte[] value = head.get(key);
-    if (ArrayUtils.isEmpty(value)) {
+    byte[] value = getUnchecked(key);
+    if (value == null) {
       throw new ItemNotFoundException();
     }
+
     return value;
   }
 
   @Override
   public synchronized byte[] getUnchecked(byte[] key) {
-    try {
-      return get(key);
-    } catch (ItemNotFoundException e) {
-      return null;
+    return head.get(key);
+  }
+
+  @Override
+  public byte[] getOnSolidity(byte[] key) throws ItemNotFoundException {
+    byte[] value = getUncheckedOnSolidity(key);
+    if (value == null) {
+      throw new ItemNotFoundException();
     }
+
+    return value;
+  }
+
+  @Override
+  public byte[] getUncheckedOnSolidity(byte[] key) {
+    Snapshot solidity = head.getSolidity();
+    return solidity.get(key);
+  }
+
+  @Override
+  public synchronized boolean hasOnSolidity(byte[] key) {
+    return getUncheckedOnSolidity(key) != null;
   }
 
   @Override
   public synchronized boolean has(byte[] key) {
-    return head.get(key) != null;
+    return getUnchecked(key) != null;
   }
 
   @Override

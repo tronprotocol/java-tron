@@ -36,9 +36,6 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
-import org.tron.common.runtime.Runtime;
-import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
-import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.SessionOptional;
@@ -49,7 +46,6 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -769,9 +765,9 @@ public class Manager {
 
           logger.warn(
               "******** before switchFork ******* push block: "
-                  + block.getShortString()
+                  + block.toString()
                   + ", new block:"
-                  + newBlock.getShortString()
+                  + newBlock.toString()
                   + ", dynamic head num: "
                   + dynamicPropertiesStore.getLatestBlockHeaderNumber()
                   + ", dynamic head hash: "
@@ -790,9 +786,9 @@ public class Manager {
 
           logger.warn(
               "******** after switchFork ******* push block: "
-                  + block.getShortString()
+                  + block.toString()
                   + ", new block:"
-                  + newBlock.getShortString()
+                  + newBlock.toString()
                   + ", dynamic head num: "
                   + dynamicPropertiesStore.getLatestBlockHeaderNumber()
                   + ", dynamic head hash: "
@@ -965,25 +961,20 @@ public class Manager {
 
     consumeBandwidth(trxCap, trace);
 
-    DepositImpl deposit = DepositImpl.createRoot(this);
-    Runtime runtime = new Runtime(trace, blockCap, deposit, new ProgramInvokeFactoryImpl());
-    if (runtime.isCallConstant()) {
-      throw new VMIllegalException("cannot call constant method ");
-    }
-    trace.init();
-    trace.exec(runtime);
+    trace.init(blockCap);
+    trace.checkIsConstant();
+    trace.exec();
 
     if (Objects.nonNull(blockCap)) {
-      trace.setResult(runtime);
+      trace.setResult();
       if (!blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
         if (trace.checkNeedRetry()) {
           String txId = Hex.toHexString(trxCap.getTransactionId().getBytes());
           logger.info("Retry for tx id: {}", txId);
-          deposit = DepositImpl.createRoot(this);
-          runtime = new Runtime(trace, blockCap, deposit, new ProgramInvokeFactoryImpl());
-          trace.init();
-          trace.exec(runtime);
-          trace.setResult(runtime);
+          trace.init(blockCap);
+          trace.checkIsConstant();
+          trace.exec();
+          trace.setResult();
           logger.info("Retry result for tx id: {}, tx resultCode in receipt: {}",
               txId, trace.getReceipt().getResult());
         }
@@ -991,18 +982,16 @@ public class Manager {
       }
     }
 
-    trace.finalization(runtime);
+    trace.finalization();
     if (Objects.nonNull(blockCap)) {
       if (getDynamicPropertiesStore().supportVM()) {
-        trxCap.setResult(runtime);
+        trxCap.setResultCode(trace.getReceipt().getResult());
       }
     }
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
 
-    ReceiptCapsule traceReceipt = trace.getReceipt();
-
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
-        .buildInstance(trxCap, blockCap, runtime, traceReceipt);
+        .buildInstance(trxCap, blockCap, trace);
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
 
@@ -1031,17 +1020,17 @@ public class Manager {
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException {
 
     //check that the first block after the maintenance period has just been processed
-   // if (lastHeadBlockIsMaintenanceBefore != lastHeadBlockIsMaintenance()) {
-      if (!witnessController.validateWitnessSchedule(witnessCapsule.getAddress(), when)) {
-        logger.info("It's not my turn, "
-            + "and the first block after the maintenance period has just been processed");
-        
-        logger.info("when:{},lastHeadBlockIsMaintenanceBefore:{},lastHeadBlockIsMaintenanceAfter:{}",
-                when, lastHeadBlockIsMaintenanceBefore,lastHeadBlockIsMaintenance() );
-        
-        return null;
-      }
-   // }
+    // if (lastHeadBlockIsMaintenanceBefore != lastHeadBlockIsMaintenance()) {
+    if (!witnessController.validateWitnessSchedule(witnessCapsule.getAddress(), when)) {
+      logger.info("It's not my turn, "
+          + "and the first block after the maintenance period has just been processed");
+
+      logger.info("when:{},lastHeadBlockIsMaintenanceBefore:{},lastHeadBlockIsMaintenanceAfter:{}",
+          when, lastHeadBlockIsMaintenanceBefore, lastHeadBlockIsMaintenance());
+
+      return null;
+    }
+    // }
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
@@ -1214,7 +1203,6 @@ public class Manager {
     this.updateTransHashCache(block);
     updateMaintenanceState(needMaint);
     updateRecentBlock(block);
-
   }
 
   private void updateTransHashCache(BlockCapsule block) {
@@ -1255,6 +1243,13 @@ public class Manager {
     if (latestSolidifiedBlockNum < getDynamicPropertiesStore().getLatestSolidifiedBlockNum()) {
       logger.warn("latestSolidifiedBlockNum = 0,LatestBlockNum:{}", numbers);
       return;
+    }
+    try {
+      if (!blockStore.hasOnSolidity(getBlockIdByNum(latestSolidifiedBlockNum).getBytes())) {
+        revokingStore.updateSolidity(dynamicPropertiesStore.getLatestSolidifiedBlockNum(), latestSolidifiedBlockNum);
+      }
+    } catch (ItemNotFoundException e) {
+      throw new RuntimeException(e);
     }
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
     logger.info("update solid block, num = {}", latestSolidifiedBlockNum);

@@ -25,10 +25,8 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class AssertException {
 
-  //testng001、testng002、testng003、testng004
-  private final String testNetAccountKey =
-      "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
-
+  private final String testNetAccountKey = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key1");
   private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");

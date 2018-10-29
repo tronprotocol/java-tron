@@ -27,6 +27,7 @@ import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
@@ -128,10 +129,12 @@ public class TransactionTraceTest {
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     TransactionTrace trace = new TransactionTrace(transactionCapsule, dbManager);
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
-    Runtime runtime = new Runtime(trace, null, deposit,
+    Runtime runtime = new RuntimeImpl(trace, null, deposit,
         new ProgramInvokeFactoryImpl());
     try {
-      trace.exec(runtime);
+
+      trace.init(null);
+      trace.exec();
       trace.pay();
       Assert.assertEquals(50000, trace.getReceipt().getEnergyUsage());
       Assert.assertEquals(20110013100L, trace.getReceipt().getEnergyFee());
@@ -166,10 +169,11 @@ public class TransactionTraceTest {
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     TransactionTrace trace = new TransactionTrace(transactionCapsule, dbManager);
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
-    Runtime runtime = new Runtime(trace, null, deposit,
+    Runtime runtime = new RuntimeImpl(trace, null, deposit,
         new ProgramInvokeFactoryImpl());
     try {
-      trace.exec(runtime);
+      trace.init(null);
+      trace.exec();
       trace.pay();
       Assert.assertEquals(0, trace.getReceipt().getEnergyUsage());
       Assert.assertEquals(2024300, trace.getReceipt().getEnergyFee());
@@ -203,10 +207,11 @@ public class TransactionTraceTest {
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     TransactionTrace trace = new TransactionTrace(transactionCapsule, dbManager);
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
-    Runtime runtime = new Runtime(trace, null, deposit,
+    Runtime runtime = new RuntimeImpl(trace, null, deposit,
         new ProgramInvokeFactoryImpl());
     try {
-      trace.exec(runtime);
+      trace.init(null);
+      trace.exec();
       trace.pay();
       Assert.assertEquals(5243, trace.getReceipt().getEnergyUsage());
       Assert.assertEquals(0, trace.getReceipt().getEnergyFee());
@@ -242,10 +247,11 @@ public class TransactionTraceTest {
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     TransactionTrace trace = new TransactionTrace(transactionCapsule, dbManager);
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
-    Runtime runtime = new Runtime(trace, null, deposit,
+    Runtime runtime = new RuntimeImpl(trace, null, deposit,
         new ProgramInvokeFactoryImpl());
     try {
-      trace.exec(runtime);
+      trace.init(null);
+      trace.exec();
       trace.pay();
       Assert.assertEquals(0, trace.getReceipt().getEnergyUsage());
       Assert.assertEquals(20115013100L, trace.getReceipt().getEnergyFee());
