@@ -72,7 +72,6 @@ message Account {
   message Frozen {
     int64 frozen_balance = 1; // the frozen trx balance
     int64 expire_time = 2; // the expire time
-    bytes to_address = 3; // resources are delegated to this address
   }
   // account nick name
   bytes account_name = 1;
