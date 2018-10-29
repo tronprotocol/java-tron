@@ -227,6 +227,7 @@ message Transaction {
       ExchangeInjectContract = 42;
       ExchangeWithdrawContract = 43;
       ExchangeTransactionContract = 44;
+      ZksnarkV0TransferContract = 45;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
@@ -282,6 +283,8 @@ message Transaction {
   raw raw_data = 1;
   // only support size = 1,  repeated list here for muti-sig extension
   repeated bytes signature = 2;
+  repeated bytes signature_zk = 3;
+  repeated bytes proof = 4;
   repeated Result ret = 5;
 }
 
@@ -493,7 +496,7 @@ message InternalTransaction {
   bytes caller_address = 2;
   // the one recieve trx (TBD: or token) via function
   bytes transferTo_address = 3;
-  message CallValueInfo{
+  message CallValueInfo {
     // trx (TBD: or token) value
     int64 callValue = 1;
     // TBD: tokenName, trx should be empty
