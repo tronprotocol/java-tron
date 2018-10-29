@@ -195,6 +195,7 @@ public class FreezeBalanceActuatorTest {
 
   @Test
   public void testFreezeDelegatedBalanceForBandwidth() {
+    dbManager.getDynamicPropertiesStore().saveAllowDelegateResource(1);
     long frozenBalance = 1_000_000_000L;
     long duration = 3;
     FreezeBalanceActuator actuator = new FreezeBalanceActuator(
@@ -261,6 +262,7 @@ public class FreezeBalanceActuatorTest {
 
   @Test
   public void testFreezeDelegatedBalanceForCpu() {
+    dbManager.getDynamicPropertiesStore().saveAllowDelegateResource(1);
     long frozenBalance = 1_000_000_000L;
     long duration = 3;
     FreezeBalanceActuator actuator = new FreezeBalanceActuator(

@@ -224,6 +224,7 @@ public class UnfreezeBalanceActuatorTest {
 
   @Test
   public void testUnfreezeDelegatedBalanceForBandwidth() {
+    dbManager.getDynamicPropertiesStore().saveAllowDelegateResource(1);
     long now = System.currentTimeMillis();
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
 
@@ -315,6 +316,7 @@ public class UnfreezeBalanceActuatorTest {
 
   @Test
   public void testUnfreezeDelegatedBalanceForCpu() {
+    dbManager.getDynamicPropertiesStore().saveAllowDelegateResource(1);
     long now = System.currentTimeMillis();
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
 
