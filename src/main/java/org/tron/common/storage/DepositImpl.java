@@ -5,7 +5,6 @@ import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicLong;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.Storage;
 import org.tron.common.utils.ByteArray;
@@ -18,6 +17,7 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.AssetIssueStore;
 import org.tron.core.db.BlockStore;
@@ -302,7 +302,14 @@ public class DepositImpl implements Deposit {
 
     Storage storage;
     if (this.parent != null) {
-      storage = parent.getStorage(address);
+      Storage parentStorage = parent.getStorage(address);
+      if (Args.getInstance().getBlockVersion() == 3) {
+        // old logic
+        storage = parentStorage;
+      } else {
+        // new logic
+        storage = new Storage(parentStorage);
+      }
     } else {
       storage = new Storage(address, dbManager.getStorageRowStore());
     }
@@ -603,13 +610,13 @@ public class DepositImpl implements Deposit {
   }
 
   private void commitStorageCache(Deposit deposit) {
-    storageCache.forEach((key, value) -> {
+    storageCache.forEach((address, storage) -> {
       if (deposit != null) {
         // write to parent cache
-        deposit.putStorage(key, value);
+        deposit.putStorage(address, storage);
       } else {
         // persistence
-        value.commit();
+        storage.commit();
       }
     });
 
