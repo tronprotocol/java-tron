@@ -196,7 +196,7 @@ public class StorageTest {
     DataWord nullValue = new DataWord(0);
 
     DataWord storageParentKey1 = new DataWord("parent_key1".getBytes());
-    DataWord storageParentVal1 = new DataWord("parent_key1".getBytes());
+    DataWord storageParentVal1 = new DataWord("parent_val1".getBytes());
 
 
     Deposit chlidDeposit= rootDeposit.newDepositChild();
