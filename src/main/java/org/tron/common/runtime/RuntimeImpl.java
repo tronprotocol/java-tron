@@ -218,11 +218,10 @@ public class RuntimeImpl implements Runtime {
 
     long leftFrozenEnergy = energyProcessor.getAccountLeftEnergyFromFreeze(account);
     callValue = max(callValue, 0);
-    long energyFromBalance = Math.floorDiv(max(account.getBalance() - callValue, 0), sunPerEnergy);
+    long energyFromBalance = max(account.getBalance() - callValue, 0) / sunPerEnergy;
     long availableEnergy = Math.addExact(leftFrozenEnergy, energyFromBalance);
 
     long energyFromFeeLimit = feeLimit / sunPerEnergy;
-
     return min(availableEnergy, energyFromFeeLimit);
 
   }
@@ -276,11 +275,8 @@ public class RuntimeImpl implements Runtime {
     // creatorEnergyFromFreeze
     long creatorEnergyLimit = energyProcessor.getAccountLeftEnergyFromFreeze(creator);
 
-    SmartContract smartContract = this.deposit
-        .getContract(contract.getContractAddress().toByteArray()).getInstance();
-    long consumeUserResourcePercent = smartContract.getConsumeUserResourcePercent();
-
-    consumeUserResourcePercent = max(0, min(consumeUserResourcePercent, Constant.ONE_HUNDRED));
+    ContractCapsule contractCapsule = this.deposit.getContract(contract.getContractAddress().toByteArray());
+    long consumeUserResourcePercent = contractCapsule.getConsumeUserResourcePercent();
 
     if (creatorEnergyLimit * consumeUserResourcePercent
         > (Constant.ONE_HUNDRED - consumeUserResourcePercent) * callerEnergyLimit) {
@@ -295,35 +291,27 @@ public class RuntimeImpl implements Runtime {
 
     long callerEnergyLimit = getEnergyLimit2(caller, feeLimit, callValue);
     if (Arrays.equals(creator.getAddress().toByteArray(), caller.getAddress().toByteArray())) {
+      // FIXME: 这个地方会不会 导致 开发者调用自己的合约的时候, 由于feeLimit设置较小, 调用失败?
       return callerEnergyLimit;
     }
 
-    // creatorEnergyFromFreeze
-    long creatorEnergyLimit;
+    long creatorEnergyLimit = 0;
+    ContractCapsule contractCapsule = this.deposit.getContract(contract.getContractAddress().toByteArray());
+    long consumeUserResourcePercent = contractCapsule.getConsumeUserResourcePercent();
 
-    SmartContract smartContract = this.deposit
-        .getContract(contract.getContractAddress().toByteArray()).getInstance();
-    long consumeUserResourcePercent = smartContract.getConsumeUserResourcePercent();
-    consumeUserResourcePercent = max(0, min(consumeUserResourcePercent, Constant.ONE_HUNDRED));
+    long creatorMaxEnergy = contractCapsule.getEnergyLimit();
 
-    long creatorMaxEnergy = smartContract.getEnergyLimit();
-    if (creatorMaxEnergy == Constant.PB_DEFAULT_ENERGY_LIMIT) {
-      creatorMaxEnergy = Constant.CREATOR_DEFAULT_ENERGY_LIMIT;
-    }
-
-    if (consumeUserResourcePercent == 0) {
+    if (consumeUserResourcePercent <= 0) {
       creatorEnergyLimit = min(energyProcessor.getAccountLeftEnergyFromFreeze(creator),
           creatorMaxEnergy);
-    } else {
+    } else if (consumeUserResourcePercent < Constant.ONE_HUNDRED){
       creatorEnergyLimit = min(
           BigInteger.valueOf(callerEnergyLimit)
               .multiply(BigInteger.valueOf(Constant.ONE_HUNDRED - consumeUserResourcePercent))
               .divide(BigInteger.valueOf(consumeUserResourcePercent)).longValueExact(),
           min(energyProcessor.getAccountLeftEnergyFromFreeze(creator), creatorMaxEnergy));
     }
-
     return Math.addExact(callerEnergyLimit, creatorEnergyLimit);
-
   }
 
   private double getThisTxCPULimitInUsRatio() {

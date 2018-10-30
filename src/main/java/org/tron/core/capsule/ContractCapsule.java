@@ -19,10 +19,14 @@ import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.Constant;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
+
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 
 @Slf4j
 public class ContractCapsule implements ProtoCapsule<SmartContract> {
@@ -94,10 +98,15 @@ public class ContractCapsule implements ProtoCapsule<SmartContract> {
   }
 
   public long getConsumeUserResourcePercent() {
-    return this.smartContract.getConsumeUserResourcePercent();
+    long percent = this.smartContract.getConsumeUserResourcePercent();
+    return max(0, min(percent, Constant.ONE_HUNDRED));
   }
 
   public long getEnergyLimit() {
-    return this.smartContract.getEnergyLimit();
+    long energyLimit = this.smartContract.getEnergyLimit();
+    if (energyLimit == Constant.PB_DEFAULT_ENERGY_LIMIT) {
+      energyLimit = Constant.CREATOR_DEFAULT_ENERGY_LIMIT;
+    }
+    return energyLimit;
   }
 }

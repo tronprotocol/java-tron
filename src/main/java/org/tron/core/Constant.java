@@ -54,7 +54,7 @@ public class Constant {
   public static final long ENERGY_LIMIT_IN_CONSTANT_TX = 3000000; // ref: 1 us = 1 energy
   public static final long MAX_RESULT_SIZE_IN_TX = 64; // max 8 * 8 items in result
   public static final int PB_DEFAULT_ENERGY_LIMIT = 0;
-  public static final long CREATOR_DEFAULT_ENERGY_LIMIT = 10_000_000;
+  public static final long CREATOR_DEFAULT_ENERGY_LIMIT = 1000 * 10_000;
 
   public static final long MAX_CONSUME_USER_RESOURCE_PERCENT = 100L;
   public static final long MIN_CONSUME_USER_RESOURCE_PERCENT = 0L;
