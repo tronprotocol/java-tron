@@ -26,7 +26,7 @@ import org.tron.common.utils.Sha256Hash;
 
 @Slf4j
 public class StorageRowCapsule implements ProtoCapsule<byte[]> {
-
+  @Getter
   private byte[] rowValue;
   @Setter
   @Getter
@@ -46,6 +46,12 @@ public class StorageRowCapsule implements ProtoCapsule<byte[]> {
     this.rowKey = rowKey;
     this.rowValue = rowValue;
     markDirty();
+  }
+
+  public StorageRowCapsule(StorageRowCapsule rowCapsule) {
+    this.rowKey = rowCapsule.getRowKey().clone();
+    this.rowValue = rowCapsule.getRowValue().clone();
+    this.dirty = rowCapsule.isDirty();
   }
 
   public StorageRowCapsule(byte[] rowValue) {
