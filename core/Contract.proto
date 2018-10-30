@@ -81,7 +81,7 @@ message UpdateSettingContract {
 message UpdateSettingForEnergyLimitContract {
   bytes owner_address = 1;
   bytes contract_address = 2;
-  bytes energy_limit = 3;
+  int64 energy_limit = 3;
 }
 
 message WitnessCreateContract {
