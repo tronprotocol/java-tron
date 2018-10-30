@@ -31,6 +31,8 @@ import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.BlockListExtention;
 import org.tron.api.GrpcAPI.BlockReference;
 import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.DelegatedResourceList;
+import org.tron.api.GrpcAPI.DelegatedResourceMessage;
 import org.tron.api.GrpcAPI.EasyTransferByPrivateMessage;
 import org.tron.api.GrpcAPI.EasyTransferMessage;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
@@ -1367,6 +1369,22 @@ public class RpcApiService implements Service {
     public void listProposals(EmptyMessage request,
         StreamObserver<ProposalList> responseObserver) {
       responseObserver.onNext(wallet.getProposalList());
+      responseObserver.onCompleted();
+    }
+
+
+    @Override
+    public void getDelegatedResource(DelegatedResourceMessage request,
+        StreamObserver<DelegatedResourceList> responseObserver) {
+      responseObserver
+          .onNext(wallet.getDelegatedResource(request.getFromAddress(), request.getToAddress()));
+      responseObserver.onCompleted();
+    }
+
+    public void getDelegatedResourceAccountIndex(BytesMessage request,
+        StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
+      responseObserver
+          .onNext(wallet.getDelegatedResourceAccountIndex(request.getValue()));
       responseObserver.onCompleted();
     }
 
