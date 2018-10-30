@@ -96,4 +96,8 @@ public class ContractCapsule implements ProtoCapsule<SmartContract> {
   public long getConsumeUserResourcePercent() {
     return this.smartContract.getConsumeUserResourcePercent();
   }
+
+  public long getEnergyLimit() {
+    return this.smartContract.getEnergyLimit();
+  }
 }

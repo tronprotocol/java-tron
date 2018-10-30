@@ -78,6 +78,7 @@ import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.UpdateSettingContract;
+import org.tron.protos.Contract.UpdateSettingForEnergyLimitContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocol;
@@ -763,6 +764,13 @@ public class RpcApiService implements Service {
     public void updateSetting(UpdateSettingContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.UpdateSettingContract,
+          responseObserver);
+    }
+
+    @Override
+    public void updateSettingForEnergyLimit(UpdateSettingForEnergyLimitContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.UpdateSettingForEnergyLimitContract,
           responseObserver);
     }
 
