@@ -47,6 +47,30 @@ message TransferContract {
   int64 amount = 3;
 }
 
+
+message BN128G1{
+  bytes x = 1;
+  bytes y = 2;
+}
+
+message BN128G2{
+  bytes x1 = 1;
+  bytes x2 = 2;
+  bytes y1 = 3;
+  bytes y2 = 4;
+}
+
+message zkv0proof{
+  BN128G1 a = 1;
+  BN128G1 a_p = 2;
+  BN128G2 b = 3;
+  BN128G1 b_p = 4;
+  BN128G1 c = 5;
+  BN128G1 c_p = 6;
+  BN128G1 k = 7;
+  BN128G1 h = 8;
+}
+
 message ZksnarkV0TransferContract {
   bytes owner_address = 1;
   bytes to_address = 2;
@@ -62,6 +86,7 @@ message ZksnarkV0TransferContract {
   bytes h2 = 12;
   bytes C1 = 13;
   bytes C2 = 14;
+  zkv0proof proof = 15;
 }
 
 message TransferAssetContract {
