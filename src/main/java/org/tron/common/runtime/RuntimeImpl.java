@@ -209,7 +209,7 @@ public class RuntimeImpl implements Runtime {
     }
   }
 
-  private long getEnergyLimitTip001(AccountCapsule account, long feeLimit, long callValue) {
+  private long getEnergyLimit2(AccountCapsule account, long feeLimit, long callValue) {
 
     long sunPerEnergy = Constant.SUN_PER_ENERGY;
     if (deposit.getDbManager().getDynamicPropertiesStore().getEnergyFee() != 0) {
@@ -290,10 +290,10 @@ public class RuntimeImpl implements Runtime {
     }
   }
 
-  private long getEnergyLimitTip001(AccountCapsule creator, AccountCapsule caller,
+  private long getEnergyLimit2(AccountCapsule creator, AccountCapsule caller,
       TriggerSmartContract contract, long feeLimit, long callValue) {
 
-    long callerEnergyLimit = getEnergyLimitTip001(caller, feeLimit, callValue);
+    long callerEnergyLimit = getEnergyLimit2(caller, feeLimit, callValue);
     if (Arrays.equals(creator.getAddress().toByteArray(), caller.getAddress().toByteArray())) {
       return callerEnergyLimit;
     }
@@ -305,7 +305,11 @@ public class RuntimeImpl implements Runtime {
         .getContract(contract.getContractAddress().toByteArray()).getInstance();
     long consumeUserResourcePercent = smartContract.getConsumeUserResourcePercent();
     consumeUserResourcePercent = max(0, min(consumeUserResourcePercent, Constant.ONE_HUNDRED));
+
     long creatorMaxEnergy = smartContract.getEnergyLimit();
+    if (creatorMaxEnergy == Constant.PB_DEFAULT_ENERGY_LIMIT) {
+      creatorMaxEnergy = Constant.CREATOR_DEFAULT_ENERGY_LIMIT;
+    }
 
     if (consumeUserResourcePercent == 0) {
       creatorEnergyLimit = min(energyProcessor.getAccountLeftEnergyFromFreeze(creator),
@@ -400,8 +404,8 @@ public class RuntimeImpl implements Runtime {
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
 
       long energyLimit;
-      if (deposit.getDbManager().getDynamicPropertiesStore().getTip001() == 1L) {
-        energyLimit = getEnergyLimitTip001(creator, feeLimit, callValue);
+      if (false) {  // TODO according to version
+        energyLimit = getEnergyLimit2(creator, feeLimit, callValue);
       } else {
         energyLimit = getEnergyLimit(creator, feeLimit, callValue);
       }
@@ -485,14 +489,14 @@ public class RuntimeImpl implements Runtime {
       long energyLimit;
       if (isCallConstant(contractAddress)) {
         isStaticCall = true;
-        energyLimit = Constant.MAX_ENERGY_IN_TX;
+        energyLimit = Constant.ENERGY_LIMIT_IN_CONSTANT_TX;
       } else {
         AccountCapsule creator = this.deposit.getAccount(
             deployedContract.getInstance()
                 .getOriginAddress().toByteArray());
 
-        if (deposit.getDbManager().getDynamicPropertiesStore().getTip001() == 1L) {
-          energyLimit = getEnergyLimitTip001(creator, caller, contract, feeLimit, callValue);
+        if (false) { // TODO according to version
+          energyLimit = getEnergyLimit2(creator, caller, contract, feeLimit, callValue);
         } else {
           energyLimit = getEnergyLimit(creator, caller, contract, feeLimit, callValue);
         }

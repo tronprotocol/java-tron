@@ -132,13 +132,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_CREATION_OF_CONTRACTS = "ALLOW_CREATION_OF_CONTRACTS"
       .getBytes();
 
-  // TIP001:
-  // 1. feeLimit -> energyLimit: from floating ratio to fixed ratio
-  // 2. when the contract's executing times out, it will not cost all developer's energy,
-  // even when the ratio is 0. Add a developer's energyLimit.
-  private static final byte[] TIP001 = "TIP001".getBytes();
-
-
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -444,12 +437,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveNextMaintenanceTime(
           Long.parseLong(Args.getInstance().getGenesisBlock().getTimestamp()));
-    }
-
-    try {
-      this.getTip001();
-    } catch (IllegalArgumentException e) {
-      this.saveTip001(Args.getInstance().getTip001());
     }
 
   }
@@ -1021,19 +1008,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found ALLOW_CREATION_OF_CONTRACTS"));
-  }
-
-  public void saveTip001(long tip001) {
-    this.put(DynamicPropertiesStore.TIP001,
-        new BytesCapsule(ByteArray.fromLong(tip001)));
-  }
-
-  public long getTip001() {
-    return Optional.ofNullable(getUnchecked(TIP001))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException("not found TIP001"));
   }
 
   public boolean supportVM() {

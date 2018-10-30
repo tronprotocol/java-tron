@@ -311,7 +311,6 @@ public class NodeInfo {
     private double minTimeRatio;
     private double maxTimeRatio;
     private long allowCreationOfContracts;
-    private long tip001;
 
     public String getCodeVersion() {
       return codeVersion;
@@ -470,17 +469,8 @@ public class NodeInfo {
       return allowCreationOfContracts;
     }
 
-    public long getTip001() {
-      return tip001;
-    }
-
     public ConfigNodeInfo setAllowCreationOfContracts(long allowCreationOfContracts) {
       this.allowCreationOfContracts = allowCreationOfContracts;
-      return this;
-    }
-
-    public ConfigNodeInfo setTip001(long tip001) {
-      this.tip001 = tip001;
       return this;
     }
 
