@@ -3,6 +3,7 @@ package org.tron.common.runtime.vm.program;
 import static java.lang.System.arraycopy;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.Getter;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.StorageRowCapsule;
@@ -10,8 +11,11 @@ import org.tron.core.db.StorageRowStore;
 
 public class Storage {
 
+  @Getter
   private byte[] addrHash;  // contract address
+  @Getter
   private StorageRowStore store;
+  @Getter
   private final Map<DataWord, StorageRowCapsule> rowCache = new HashMap<>();
 
   private static final int PREFIX_BYTES = 16;
@@ -19,6 +23,15 @@ public class Storage {
   public Storage(byte[] address, StorageRowStore store) {
     addrHash = addrHash(address);
     this.store = store;
+  }
+
+  public Storage(Storage storage) {
+    this.addrHash = storage.addrHash.clone();
+    this.store = storage.store;
+    storage.getRowCache().forEach((rowKey, row) -> {
+      StorageRowCapsule newRow = new StorageRowCapsule(row);
+      this.rowCache.put(rowKey.clone(), newRow);
+    });
   }
 
   public DataWord getValue(DataWord key) {
