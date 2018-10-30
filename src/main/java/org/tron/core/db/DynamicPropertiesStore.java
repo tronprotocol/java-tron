@@ -129,6 +129,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_CREATION_OF_CONTRACTS = "ALLOW_CREATION_OF_CONTRACTS"
       .getBytes();
 
+  // TIP001:
+  // 1. feeLimit -> energyLimit: from floating ratio to fixed ratio
+  // 2. when the contract's executing times out, it will not cost all developer's energy,
+  // even when the ratio is 0. Add a developer's energyLimit.
+  private static final byte[] TIP001 = "TIP001".getBytes();
+
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -429,6 +435,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveNextMaintenanceTime(
           Long.parseLong(Args.getInstance().getGenesisBlock().getTimestamp()));
+    }
+
+    try {
+      this.getTip001();
+    } catch (IllegalArgumentException e) {
+      this.saveTip001(Args.getInstance().getTip001());
     }
 
   }
@@ -773,7 +785,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT"));
+            () -> new IllegalArgumentException(
+                "not found CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT"));
   }
 
   public void saveCreateNewAccountBandwidthRate(long rate) {
@@ -984,6 +997,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found ALLOW_CREATION_OF_CONTRACTS"));
   }
 
+  public void saveTip001(long tip001) {
+    this.put(DynamicPropertiesStore.TIP001,
+        new BytesCapsule(ByteArray.fromLong(tip001)));
+  }
+
+  public long getTip001() {
+    return Optional.ofNullable(getUnchecked(TIP001))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TIP001"));
+  }
+
   public boolean supportVM() {
     return getAllowCreationOfContracts() == 1L;
   }
@@ -1164,14 +1190,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void addTotalNetWeight(long amount) {
     long totalNetWeight = getTotalNetWeight();
     totalNetWeight += amount;
-    saveTotalNetWeight( totalNetWeight );
+    saveTotalNetWeight(totalNetWeight);
   }
 
   //The unit is trx
   public void addTotalEnergyWeight(long amount) {
     long totalEnergyWeight = getTotalEnergyWeight();
     totalEnergyWeight += amount;
-    saveTotalEnergyWeight( totalEnergyWeight );
+    saveTotalEnergyWeight(totalEnergyWeight);
   }
 
   public void addTotalCreateAccountCost(long fee) {

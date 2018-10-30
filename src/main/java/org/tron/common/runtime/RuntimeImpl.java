@@ -72,6 +72,7 @@ import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
 @Slf4j(topic = "Runtime")
 public class RuntimeImpl implements Runtime {
+
   private VMConfig config = VMConfig.getInstance();
 
   private Transaction trx;
@@ -178,7 +179,8 @@ public class RuntimeImpl implements Runtime {
     // insure blockCap is not null
     BigInteger curBlockHaveElapsedCPUInUs =
         BigInteger.valueOf(
-            Constant.ONE_THOUSAND * (DateTime.now().getMillis() - blockCap.getInstance().getBlockHeader()
+            Constant.ONE_THOUSAND * (DateTime.now().getMillis() - blockCap.getInstance()
+                .getBlockHeader()
                 .getRawData()
                 .getTimestamp())); // us
     BigInteger curBlockCPULimitInUs = BigInteger.valueOf((long)
@@ -207,10 +209,28 @@ public class RuntimeImpl implements Runtime {
     }
   }
 
+  private long getEnergyLimitTip001(AccountCapsule account, long feeLimit, long callValue) {
+
+    long sunPerEnergy = Constant.SUN_PER_ENERGY;
+    if (deposit.getDbManager().getDynamicPropertiesStore().getEnergyFee() != 0) {
+      sunPerEnergy = deposit.getDbManager().getDynamicPropertiesStore().getEnergyFee();
+    }
+
+    long leftFrozenEnergy = energyProcessor.getAccountLeftEnergyFromFreeze(account);
+    callValue = max(callValue, 0);
+    long energyFromBalance = Math.floorDiv(max(account.getBalance() - callValue, 0), sunPerEnergy);
+    long availableEnergy = Math.addExact(leftFrozenEnergy, energyFromBalance);
+
+    long energyFromFeeLimit = feeLimit / sunPerEnergy;
+
+    return min(availableEnergy, energyFromFeeLimit);
+
+  }
+
   private long getEnergyLimit(AccountCapsule account, long feeLimit, long callValue) {
 
     long sunPerEnergy = Constant.SUN_PER_ENERGY;
-    if (deposit.getDbManager().getDynamicPropertiesStore().getEnergyFee() != 0){
+    if (deposit.getDbManager().getDynamicPropertiesStore().getEnergyFee() != 0) {
       sunPerEnergy = deposit.getDbManager().getDynamicPropertiesStore().getEnergyFee();
     }
     // can change the calc way
@@ -271,6 +291,38 @@ public class RuntimeImpl implements Runtime {
     }
   }
 
+  private long getEnergyLimitTip001(AccountCapsule creator, AccountCapsule caller,
+      TriggerSmartContract contract, long feeLimit, long callValue) {
+
+    long callerEnergyLimit = getEnergyLimitTip001(caller, feeLimit, callValue);
+    if (Arrays.equals(creator.getAddress().toByteArray(), caller.getAddress().toByteArray())) {
+      return callerEnergyLimit;
+    }
+
+    // creatorEnergyFromFreeze
+    long creatorEnergyLimit;
+
+    SmartContract smartContract = this.deposit
+        .getContract(contract.getContractAddress().toByteArray()).getInstance();
+    long consumeUserResourcePercent = smartContract.getConsumeUserResourcePercent();
+    consumeUserResourcePercent = max(0, min(consumeUserResourcePercent, Constant.ONE_HUNDRED));
+    long creatorMaxEnergy = smartContract.getEnergyLimit();
+
+    if (consumeUserResourcePercent == 0) {
+      creatorEnergyLimit = min(energyProcessor.getAccountLeftEnergyFromFreeze(creator),
+          creatorMaxEnergy);
+    } else {
+      creatorEnergyLimit = min(
+          BigInteger.valueOf(callerEnergyLimit)
+              .multiply(BigInteger.valueOf(Constant.ONE_HUNDRED - consumeUserResourcePercent))
+              .divide(BigInteger.valueOf(consumeUserResourcePercent)).longValueExact(),
+          min(energyProcessor.getAccountLeftEnergyFromFreeze(creator), creatorMaxEnergy));
+    }
+
+    return Math.addExact(callerEnergyLimit, creatorEnergyLimit);
+
+  }
+
   private double getThisTxCPULimitInUsRatio() {
 
     double thisTxCPULimitInUsRatio;
@@ -281,7 +333,7 @@ public class RuntimeImpl implements Runtime {
           this.blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
         thisTxCPULimitInUsRatio = 1.0;
       } else {
-        // self witness 3, other witness 3, fullnode 2
+        // self witness 3, other witness 2, fullnode 2
         if (trx.getRet(0).getContractRet() == contractResult.OUT_OF_TIME) {
           thisTxCPULimitInUsRatio = Args.getInstance().getMinTimeRatio();
         } else {
@@ -347,7 +399,13 @@ public class RuntimeImpl implements Runtime {
 
       AccountCapsule creator = this.deposit
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
-      long energyLimit = getEnergyLimit(creator, feeLimit, callValue);
+
+      long energyLimit;
+      if (deposit.getDbManager().getDynamicPropertiesStore().getTip001() == 1L) {
+        energyLimit = getEnergyLimitTip001(creator, feeLimit, callValue);
+      } else {
+        energyLimit = getEnergyLimit(creator, feeLimit, callValue);
+      }
       byte[] ops = newSmartContract.getBytecode().toByteArray();
       rootInternalTransaction = new InternalTransaction(trx, trxType);
 
@@ -360,7 +418,8 @@ public class RuntimeImpl implements Runtime {
           .createProgramInvoke(TRX_CONTRACT_CREATION_TYPE, executorType, trx,
               blockCap.getInstance(), deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
       this.vm = new VM(config);
-      this.program = new Program(ops, programInvoke, rootInternalTransaction, config, this.blockCap);
+      this.program = new Program(ops, programInvoke, rootInternalTransaction, config,
+          this.blockCap);
       this.program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
       this.program.setRootCallConstant(isCallConstant());
     } catch (Exception e) {
@@ -402,7 +461,7 @@ public class RuntimeImpl implements Runtime {
       return;
     }
 
-    if(contract.getContractAddress() == null) {
+    if (contract.getContractAddress() == null) {
       throw new ContractValidateException("Cannot get contract address from TriggerContract");
     }
 
@@ -432,7 +491,12 @@ public class RuntimeImpl implements Runtime {
         AccountCapsule creator = this.deposit.getAccount(
             deployedContract.getInstance()
                 .getOriginAddress().toByteArray());
-        energyLimit = getEnergyLimit(creator, caller, contract, feeLimit, callValue);
+
+        if (deposit.getDbManager().getDynamicPropertiesStore().getTip001() == 1L) {
+          energyLimit = getEnergyLimitTip001(creator, caller, contract, feeLimit, callValue);
+        } else {
+          energyLimit = getEnergyLimit(creator, caller, contract, feeLimit, callValue);
+        }
       }
       long maxCpuTimeOfOneTx = deposit.getDbManager().getDynamicPropertiesStore()
           .getMaxCpuTimeOfOneTx() * Constant.ONE_THOUSAND;
@@ -597,6 +661,7 @@ public class RuntimeImpl implements Runtime {
     }
     return false;
   }
+
   public void finalization() {
     if (StringUtils.isEmpty(runtimeError)) {
       for (DataWord contract : result.getDeleteAccounts()) {

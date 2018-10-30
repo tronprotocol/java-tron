@@ -276,6 +276,10 @@ public class Args {
 
   @Getter
   @Setter
+  private long tip001;
+
+  @Getter
+  @Setter
   private int tcpNettyWorkThreadNum;
 
   @Getter
@@ -375,6 +379,7 @@ public class Args {
     INSTANCE.maintenanceTimeInterval = 0;
     INSTANCE.proposalExpireTime = 0;
     INSTANCE.allowCreationOfContracts = 0;
+    INSTANCE.tip001 = 0;
     INSTANCE.tcpNettyWorkThreadNum = 0;
     INSTANCE.udpNettyWorkThreadNum = 0;
     INSTANCE.p2pNodeId = "";
@@ -616,6 +621,10 @@ public class Args {
     INSTANCE.allowCreationOfContracts =
         config.hasPath("committee.allowCreationOfContracts") ? config
             .getInt("committee.allowCreationOfContracts") : 0;
+
+    INSTANCE.tip001 =
+        config.hasPath("vm.tip001") ? config
+            .getInt("vm.tip001") : 0;
 
     INSTANCE.tcpNettyWorkThreadNum = config.hasPath("node.tcpNettyWorkThreadNum") ? config
         .getInt("node.tcpNettyWorkThreadNum") : 0;
