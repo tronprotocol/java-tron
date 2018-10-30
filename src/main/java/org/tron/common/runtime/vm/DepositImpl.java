@@ -34,7 +34,6 @@ public class DepositImpl implements Deposit {
   @Getter
   private CachedSource<byte[], StorageRowCapsule> storageRowCache;
   private ByteArrayMap<Storage> storageMap = new ByteArrayMap<>();
-  @Getter
   private ByteArraySet storageKeysToDelete = new ByteArraySet();
 
   public static Deposit createRoot(Manager manager) {
@@ -221,9 +220,7 @@ public class DepositImpl implements Deposit {
       });
 
     if (this.parent == null) {
-      storageKeysToDelete.forEach(key -> {
-        storageRowCache.put(key, null);
-      });
+      storageKeysToDelete.forEach(key -> storageRowCache.put(key, null));
     }
     storageRowCache.commit();
   }

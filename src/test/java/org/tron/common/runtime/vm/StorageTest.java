@@ -248,7 +248,6 @@ public class StorageTest {
     Assert.assertNull(DepositImpl.createRoot(manager).getStorageValue(address, storageParentKey1));
     Assert.assertNull(DepositImpl.createRoot(manager).getStorageValue(address, storageParentZeroKey));
 
-
     rootDeposit.commit();
     Assert.assertEquals(DepositImpl.createRoot(manager).getStorageValue(address, storageKey1), storageVal1);
     Assert.assertNull(DepositImpl.createRoot(manager).getStorageValue(address, zeroKey));
