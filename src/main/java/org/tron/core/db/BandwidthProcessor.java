@@ -140,7 +140,7 @@ public class BandwidthProcessor extends ResourceProcessor {
 
     long netUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
-    long netLimit = calculateGlobalNetLimit(accountCapsule.getFrozenBalance());
+    long netLimit = calculateGlobalNetLimit(accountCapsule);
 
     long newNetUsage = increase(netUsage, 0, latestConsumeTime, now);
 
@@ -253,7 +253,7 @@ public class BandwidthProcessor extends ResourceProcessor {
 
     long issuerNetUsage = issuerAccountCapsule.getNetUsage();
     long latestConsumeTime = issuerAccountCapsule.getLatestConsumeTime();
-    long issuerNetLimit = calculateGlobalNetLimit(issuerAccountCapsule.getFrozenBalance());
+    long issuerNetLimit = calculateGlobalNetLimit(issuerAccountCapsule);
 
     long newIssuerNetUsage = increase(issuerNetUsage, 0, latestConsumeTime, now);
 
@@ -292,7 +292,8 @@ public class BandwidthProcessor extends ResourceProcessor {
 
   }
 
-  public long calculateGlobalNetLimit(long frozeBalance) {
+  public long calculateGlobalNetLimit(AccountCapsule accountCapsule) {
+    long frozeBalance = accountCapsule.getAllFrozenBalanceForBandwidth();
     if (frozeBalance < 1000_000L) {
       return 0;
     }
@@ -307,7 +308,7 @@ public class BandwidthProcessor extends ResourceProcessor {
 
     long netUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
-    long netLimit = calculateGlobalNetLimit(accountCapsule.getFrozenBalance());
+    long netLimit = calculateGlobalNetLimit(accountCapsule);
 
     long newNetUsage = increase(netUsage, 0, latestConsumeTime, now);
 

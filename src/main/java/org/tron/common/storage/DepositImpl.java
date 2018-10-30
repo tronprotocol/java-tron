@@ -23,6 +23,7 @@ import org.tron.core.db.AssetIssueStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.CodeStore;
 import org.tron.core.db.ContractStore;
+import org.tron.core.db.DelegatedResourceStore;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.ProposalStore;
@@ -113,6 +114,11 @@ public class DepositImpl implements Deposit {
   private StorageRowStore getStorageRowStore() {
     return dbManager.getStorageRowStore();
   }
+
+  private DelegatedResourceStore getDelegatedResourceStore() {
+    return dbManager.getDelegatedResourceStore();
+  }
+
 
   private AssetIssueStore getAssetIssueStore() {
     return dbManager.getAssetIssueStore();
