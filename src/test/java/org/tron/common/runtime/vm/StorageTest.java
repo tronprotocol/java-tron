@@ -210,7 +210,6 @@ public class StorageTest {
     rootDeposit.putStorageValue(address, storageParentKey1, storageParentVal1);
     rootDeposit.putStorageValue(address, storageParentZeroKey, zeroValue);
 
-
     // check child cache
     Assert.assertEquals(chlidDeposit.getStorageValue(address, storageKey1), storageVal1);
     Assert.assertEquals(chlidDeposit.getStorageValue(address, zeroKey), zeroValue);
