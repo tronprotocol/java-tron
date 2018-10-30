@@ -1244,12 +1244,15 @@ public class Manager {
       logger.warn("latestSolidifiedBlockNum = 0,LatestBlockNum:{}", numbers);
       return;
     }
+
+    BlockId blockId;
     try {
-      if (!blockStore.hasOnSolidity(getBlockIdByNum(latestSolidifiedBlockNum).getBytes())) {
-        revokingStore.updateSolidity(dynamicPropertiesStore.getLatestSolidifiedBlockNum(), latestSolidifiedBlockNum);
-      }
+      blockId = getBlockIdByNum(latestSolidifiedBlockNum);
     } catch (ItemNotFoundException e) {
-      throw new RuntimeException(e);
+      blockId = null;
+    }
+    if (blockId == null || !blockStore.hasOnSolidity(blockId.getBytes())) {
+      revokingStore.updateSolidity(dynamicPropertiesStore.getLatestSolidifiedBlockNum(), latestSolidifiedBlockNum);
     }
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
     logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
