@@ -576,6 +576,10 @@ service Wallet {
       }
     };
   }
+
+  rpc GetNodeInfo (EmptyMessage) returns (NodeInfo) {
+  };
+
 };
 
 
