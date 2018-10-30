@@ -82,11 +82,13 @@ message ZksnarkV0TransferContract {
   bytes cm1 = 8;
   bytes cm2 = 9;
   bytes pksig = 10;
-  bytes h1 = 11;
-  bytes h2 = 12;
-  bytes C1 = 13;
-  bytes C2 = 14;
-  zkv0proof proof = 15;
+  bytes randomSeed = 11;
+  bytes epk = 12;
+  bytes h1 = 20;
+  bytes h2 = 21;
+  bytes C1 = 22;
+  bytes C2 = 23;
+  zkv0proof proof = 30;
 }
 
 message TransferAssetContract {
