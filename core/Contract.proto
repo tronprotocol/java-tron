@@ -48,19 +48,19 @@ message TransferContract {
 }
 
 
-message BN128G1{
+message BN128G1 {
   bytes x = 1;
   bytes y = 2;
 }
 
-message BN128G2{
+message BN128G2 {
   bytes x1 = 1;
   bytes x2 = 2;
   bytes y1 = 3;
   bytes y2 = 4;
 }
 
-message zkv0proof{
+message zkv0proof {
   BN128G1 a = 1;
   BN128G1 a_p = 2;
   BN128G2 b = 3;
@@ -71,12 +71,17 @@ message zkv0proof{
   BN128G1 h = 8;
 }
 
+message MerkelRoot {
+  int64 blocknum = 1;
+  bytes rt = 2;
+}
+
 message ZksnarkV0TransferContract {
   bytes owner_address = 1;
   bytes to_address = 2;
   int64 v_from_pub = 3;
   int64 v_to_pub = 4;
-  bytes rt = 5;
+  MerkelRoot rt = 5;
   bytes nf1 = 6;
   bytes nf2 = 7;
   bytes cm1 = 8;

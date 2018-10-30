@@ -46,6 +46,9 @@ service Wallet {
   rpc CreateTransaction2 (TransferContract) returns (TransactionExtention) {
   };
 
+  rpc ZksnarkV0TransferTrx(ZksnarkV0TransferContract) returns(TransactionExtention) {
+  };
+
   rpc BroadcastTransaction (Transaction) returns (Return) {
     option (google.api.http) = {
       post: "/wallet/broadcasttransaction"
@@ -138,6 +141,8 @@ service Wallet {
   //Use this function instead of CreateAccount.
   rpc CreateAccount2 (AccountCreateContract) returns (TransactionExtention) {
   }
+
+  rpc
   //Please use CreateWitness2 instead of this function.
   rpc CreateWitness (WitnessCreateContract) returns (Transaction) {
     option (google.api.http) = {
