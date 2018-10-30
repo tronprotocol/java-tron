@@ -120,6 +120,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] REMOVE_THE_POWER_OF_THE_GR = "REMOVE_THE_POWER_OF_THE_GR".getBytes();
 
   //This value is only allowed to be 0, 1, -1
+  private static final byte[] ALLOW_DELEGATE_RESOURCE = "ALLOW_DELEGATE_RESOURCE".getBytes();
+
+  //This value is only allowed to be 0, 1, -1
   private static final byte[] ALLOW_UPDATE_ACCOUNT_NAME = "ALLOW_UPDATE_ACCOUNT_NAME".getBytes();
 
   //This value is only allowed to be 0, 1, -1
@@ -396,6 +399,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getRemoveThePowerOfTheGr();
     } catch (IllegalArgumentException e) {
       this.saveRemoveThePowerOfTheGr(0);
+    }
+
+    try {
+      this.getAllowDelegateResource();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowDelegateResource(0);
     }
 
     try {
@@ -943,6 +952,23 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found REMOVE_THE_POWER_OF_THE_GR"));
+  }
+
+  public void saveAllowDelegateResource(long value) {
+    this.put(ALLOW_DELEGATE_RESOURCE,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowDelegateResource() {
+    return Optional.ofNullable(getUnchecked(ALLOW_DELEGATE_RESOURCE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_DELEGATE_RESOURCE"));
+  }
+
+  public boolean supportDR() {
+    return getAllowDelegateResource() == 1L;
   }
 
   public void saveAllowUpdateAccountName(long rate) {
