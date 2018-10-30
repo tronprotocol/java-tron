@@ -33,24 +33,19 @@ public class ReadWriteCapsuleCache<V extends ProtoCapsule> implements CachedSour
     }
 
     V value = readCache.get(key);
+    V valueClone;
     if (value == null && !readCache.containsKey(key)){
       try {
         value = this.store.get(key);
+        valueClone = this.store.of(value.getData());
       } catch (ItemNotFoundException | BadItemException e) {
         logger.warn("read cache null, key" + Hex.toHexString(key));
         value = null;
+        valueClone = null;
       }
       // write into cache even though value is null, to prevent searching DB next time.
       // readCache just cached db data
-      if (value != null) {
-        V readValue;
-        try {
-          readValue = this.store.of(value.getData());
-        } catch (BadItemException e) {
-          readValue = null;
-        }
-        readCache.put(key, readValue);
-      }
+      readCache.put(key, valueClone);
     }
     return value;
   }
