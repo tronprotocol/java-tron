@@ -1,4 +1,4 @@
-package org.tron.core.net.node;
+package org.tron.core.net.messagehandler;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -14,6 +14,8 @@ import org.tron.core.config.args.Args;
 import org.tron.core.exception.TraitorPeerException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.message.TransactionsMessage;
+import org.tron.core.net.node.Item;
+import org.tron.core.net.node.NodeImpl;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
@@ -22,7 +24,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Slf4j
 @Component
-public class TrxHandler {
+public class TransactionsMsgHandler {
 
   private NodeImpl nodeImpl;
 

@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.statistics.MessageCount;
@@ -33,39 +34,26 @@ import org.tron.protos.Protocol.ReasonCode;
 public class SyncBlockChainMsgHadler implements TronMsgHandler {
 
   @Autowired
-  TronProxy TronProxy;
+  TronProxy tronProxy;
 
   private LinkedList<BlockId> getLostBlockIds(List<BlockId> blockIds) throws Exception{
 
-    if (TronProxy.getHeadBlockId().getNum() == 0) {
-      return new LinkedList<>();
-    }
-
-    BlockId unForkedBlockId;
-
-    if (blockIds.isEmpty() || (blockIds.size() == 1 && blockIds.get(0).equals(TronProxy.getGenesisBlockId()))) {
-      unForkedBlockId = TronProxy.getGenesisBlockId();
-    } else if (blockIds.size() == 1 && blockIds.get(0).getNum() == 0) {
-      return new LinkedList(Arrays.asList(TronProxy.getGenesisBlockId()));
-    } else {
-      Collections.reverse(blockIds);
-      unForkedBlockId = blockIds.stream()
-          .filter(blockId -> TronProxy.containBlockInMainChain(blockId))
-          .findFirst().orElse(null);
-      if (unForkedBlockId == null) {
-        return new LinkedList<>();
+    BlockId unForkId = null;
+    for (int i = blockIds.size() - 1; i >= 0; i--){
+      if (tronProxy.containBlockInMainChain(blockIds.get(i))){
+        unForkId = blockIds.get(i);
+        break;
       }
     }
 
-    long unForkedBlockIdNum = unForkedBlockId.getNum();
-    long len = Longs.min(TronProxy.getHeadBlockId().getNum(), unForkedBlockIdNum + NodeConstant.SYNC_FETCH_BATCH_NUM);
+    long len = Math.min(tronProxy.getHeadBlockId().getNum(), unForkId.getNum() + NodeConstant.SYNC_FETCH_BATCH_NUM);
 
     LinkedList<BlockId> ids = new LinkedList<>();
-    for (long i = unForkedBlockIdNum; i <= len; i++) {
-      BlockId id = TronProxy.getBlockIdByNum(i);
+    for (long i = unForkId.getNum(); i <= len; i++) {
+      BlockId id = tronProxy.getBlockIdByNum(i);
       ids.add(id);
     }
-    return ids;Integer.MAX_VALUE
+    return ids;
   }
 
   private void checkSyncBlockChainMessage(PeerConnection peer, SyncBlockChainMessage msg) throws Exception{
@@ -73,68 +61,51 @@ public class SyncBlockChainMsgHadler implements TronMsgHandler {
     if (CollectionUtils.isEmpty(blockIds)){
       throw new P2pException(TypeEnum.BAD_MESSAGE, "SyncBlockChain blockIds is empty");
     }
-    long lastBlockNum = blockIds.get(blockIds.size() - 1).getNum();
+
+    BlockId firstId = blockIds.get(0);
+    if (!tronProxy.containBlockInMainChain(firstId)){
+      throw new P2pException(TypeEnum.BAD_MESSAGE, "No first block:" + firstId.getString());
+    }
+
+    long headNum = tronProxy.getHeadBlockId().getNum();
+    if (firstId.getNum() > headNum){
+      throw new P2pException(TypeEnum.BAD_MESSAGE, "First blockNum:" + firstId.getNum() +" gt my head BlockNum:" + headNum);
+    }
+
     BlockId lastSyncBlockId = peer.getLastSyncBlockId();
-    if (lastSyncBlockId != null && lastBlockNum < lastSyncBlockId.getNum()) {
-      throw new P2pException(TypeEnum.BAD_MESSAGE, "SyncBlockChain firstNum:" + lastBlockNum + ", lastSyncNum:" + lastBlockNum);
+    long lastNum = blockIds.get(blockIds.size() - 1).getNum();
+    if (lastSyncBlockId != null && lastSyncBlockId.getNum() > lastNum) {
+      throw new P2pException(TypeEnum.BAD_MESSAGE, "lastSyncNum:" + lastSyncBlockId.getNum() + " gt lastNum:" + lastNum);
     }
   }
 
-  public boolean processMessage(PeerConnection peer, TronMessage msg){
+  public void processMessage(PeerConnection peer, TronMessage msg) throws Exception {
 
     SyncBlockChainMessage syncBlockChainMessage = (SyncBlockChainMessage) msg;
 
-    peer.setTronState(TronState.SYNCING);
-    BlockId headBlockId = TronProxy.getHeadBlockId();
-    long remainNum = 0;
-    LinkedList<BlockId> blockIds = new LinkedList<>();
-    List<BlockId> summaryChainIds = syncMsg.getBlockIds();
-    if (!checkSyncBlockChainMessage(peer, syncMsg)) {
-      disconnectPeer(peer, ReasonCode.BAD_PROTOCOL);
-      return;
-    }
-    try {
-      blockIds = del.getLostBlockIds(summaryChainIds);
-    } catch (StoreException e) {
-      logger.error(e.getMessage());
-    }
+    checkSyncBlockChainMessage(peer, syncBlockChainMessage);
 
-    if (blockIds.isEmpty()) {
-      if (CollectionUtils.isNotEmpty(summaryChainIds) && !del
-          .canChainRevoke(summaryChainIds.get(0).getNum())) {
-        logger.info("Node sync block fail, disconnect peer {}, no block {}", peer,
-            summaryChainIds.get(0).getString());
-        peer.disconnect(ReasonCode.SYNC_FAIL);
-        return;
-      } else {
-        peer.setNeedSyncFromUs(false);
-      }
-    } else if (blockIds.size() == 1
-        && !summaryChainIds.isEmpty()
-        && (summaryChainIds.contains(blockIds.peekFirst())
-        || blockIds.peek().getNum() == 0)) {
+    long remainNum = 0;
+
+    List<BlockId> summaryChainIds = syncBlockChainMessage.getBlockIds();
+
+    LinkedList<BlockId> blockIds = getLostBlockIds(summaryChainIds);
+
+    if (blockIds.size() == 1 && summaryChainIds.contains(blockIds.get(0))){
       peer.setNeedSyncFromUs(false);
-    } else {
+    }else {
       peer.setNeedSyncFromUs(true);
-      remainNum = del.getHeadBlockId().getNum() - blockIds.peekLast().getNum();
+      remainNum = tronProxy.getHeadBlockId().getNum() - blockIds.peekLast().getNum();
     }
 
     if (!peer.isNeedSyncFromPeer()
-        && CollectionUtils.isNotEmpty(summaryChainIds)
-        && !del.contain(Iterables.getLast(summaryChainIds), MessageTypes.BLOCK)
-        && del.canChainRevoke(summaryChainIds.get(0).getNum())) {
-      startSyncWithPeer(peer);
+        && !tronProxy.contain(Iterables.getLast(summaryChainIds), MessageTypes.BLOCK)
+        && tronProxy.canChainRevoke(summaryChainIds.get(0).getNum())) {
+      //startSyncWithPeer(peer);
     }
 
-    if (blockIds.peekLast() == null) {
-      peer.setLastSyncBlockId(headBlockId);
-    } else {
-      peer.setLastSyncBlockId(blockIds.peekLast());
-    }
+    peer.setLastSyncBlockId(blockIds.peekLast());
     peer.setRemainNum(remainNum);
     peer.sendMessage(new ChainInventoryMessage(blockIds, remainNum));
   }
-
-
-
 }

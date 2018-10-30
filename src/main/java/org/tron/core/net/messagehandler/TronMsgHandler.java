@@ -5,6 +5,6 @@ import org.tron.core.net.peer.PeerConnection;
 
 public interface TronMsgHandler {
 
-  boolean processMessage(PeerConnection peer, TronMessage msg);
+  void processMessage(PeerConnection peer, TronMessage msg) throws Exception;
 
 }

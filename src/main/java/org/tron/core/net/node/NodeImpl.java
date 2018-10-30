@@ -67,6 +67,7 @@ import org.tron.core.net.message.SyncBlockChainMessage;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.message.TransactionsMessage;
 import org.tron.core.net.message.TronMessage;
+import org.tron.core.net.messagehandler.TransactionsMsgHandler;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.core.services.WitnessProductBlockService;
@@ -79,7 +80,7 @@ import org.tron.protos.Protocol.ReasonCode;
 public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Autowired
-  private TrxHandler trxHandler;
+  private TransactionsMsgHandler transactionsMsgHandler;
 
   @Autowired
   private SyncPool pool;
@@ -288,7 +289,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         onHandleBlockMessage(peer, (BlockMessage) msg);
         break;
       case TRXS:
-        trxHandler.handleTransactionsMessage(peer, (TransactionsMessage) msg);
+        transactionsMsgHandler.handleTransactionsMessage(peer, (TransactionsMessage) msg);
         break;
       case SYNC_BLOCK_CHAIN:
         onHandleSyncBlockChainMessage(peer, (SyncBlockChainMessage) msg);
@@ -344,7 +345,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   @Override
   public void listen() {
     pool.init(this);
-    trxHandler.init(this);
+    transactionsMsgHandler.init(this);
     isAdvertiseActive = true;
     isFetchActive = true;
     activeTronPump();
@@ -630,7 +631,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
 
   private void onHandleInventoryMessage(PeerConnection peer, InventoryMessage msg) {
-    if (trxHandler.isBusy() && msg.getInventoryType().equals(InventoryType.TRX)) {
+    if (transactionsMsgHandler.isBusy() && msg.getInventoryType().equals(InventoryType.TRX)) {
       logger.warn("Too many trx msg to handle, drop inventory msg from peer {}, size {}",
           peer.getInetAddress(), msg.getHashList().size());
       return;

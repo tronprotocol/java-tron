@@ -39,7 +39,7 @@ public class TronProxy {
   }
 
   public void syncToCli(long unSyncNum) {
-    logger.info("There are " + unSyncNum + " blocks we need to sync.");
+    logger.info("There are {} blocks we need to sync.", unSyncNum);
     dbManager.setSyncMode(unSyncNum == 0);
   }
 
