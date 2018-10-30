@@ -287,9 +287,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       case BLOCK:
         onHandleBlockMessage(peer, (BlockMessage) msg);
         break;
-      case TRX:
-        onHandleTransactionMessage(peer, (TransactionMessage) msg);
-        break;
       case TRXS:
         trxHandler.handleTransactionsMessage(peer, (TransactionsMessage) msg);
         break;
@@ -660,11 +657,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           && !peer.isNeedSyncFromUs()) {
 
         //avoid TRX flood attack here.
-        if (msg.getInventoryType().equals(InventoryType.TRX)
-            && (peer.isAdvInvFull() || isFlooded())) {
-          logger.warn("A peer is flooding us, stop handle inv, the peer is: " + peer);
-          return;
-        }
+//        if (msg.getInventoryType().equals(InventoryType.TRX)
+//            && (peer.isAdvInvFull() || isFlooded())) {
+//          logger.warn("A peer is flooding us, stop handle inv, the peer is: " + peer);
+//          return;
+//        }
 
         peer.getAdvObjSpreadToUs().put(id, System.currentTimeMillis());
         if (!requested[0]) {
@@ -840,11 +837,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   public void onHandleTransactionMessage(PeerConnection peer, TransactionMessage trxMsg) {
     try {
-      Item item = new Item(trxMsg.getMessageId(), InventoryType.TRX);
-      if (!peer.getAdvObjWeRequested().containsKey(item)) {
-        throw new TraitorPeerException("We don't send fetch request to" + peer);
-      }
-      peer.getAdvObjWeRequested().remove(item);
       if (isTrxExist(trxMsg)) {
         logger.info("Trx {} from Peer {} already processed.", trxMsg.getMessageId(),
             peer.getNode().getHost());
@@ -855,15 +847,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       if (del.handleTransaction(transactionCapsule)) {
         broadcast(trxMsg);
       }
-    } catch (TraitorPeerException e) {
-      logger.error("Trx {} from peer {} failed, error: {}", trxMsg.getMessageId(),
-          peer.getInetAddress(), e.getMessage());
-      banTraitorPeer(peer, ReasonCode.BAD_PROTOCOL);
     } catch (BadTransactionException e) {
-      logger
-          .error("Bad Trx {} from peer {}, error: {}", trxMsg.getMessageId(), peer.getInetAddress(),
-              e.getMessage());
+      logger.error("Bad Trx {} from peer {}, error: {}",
+          trxMsg.getMessageId(), peer.getInetAddress(), e.getMessage());
       banTraitorPeer(peer, ReasonCode.BAD_TX);
+    } catch (Exception e){
+      logger.error("Process trx {} from peer {} failed",
+          trxMsg.getMessageId(), peer.getInetAddress(), e);
     }
   }
 

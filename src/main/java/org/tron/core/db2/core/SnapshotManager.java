@@ -18,8 +18,6 @@ import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.AccountStore;
-import org.tron.core.db.Manager;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.DB;
@@ -72,8 +70,9 @@ public class SnapshotManager implements RevokingDatabase {
       disabled = false;
     }
 
-    while (size > maxSize.get()) {
+    if (size > maxSize.get()) {
       logger.info("****size:" + size + ", maxsize:" + maxSize.get());
+      size = maxSize.get();
       flush();
     }
     // debug begin
@@ -197,16 +196,14 @@ public class SnapshotManager implements RevokingDatabase {
     System.err.println("******** end to pop revokingDb ********");
   }
 
-  private void mark() {
-    ++flushCount;
-    logger.info("*****flushCount:" + flushCount);
-    for (RevokingDBWithCachingNewValue db : dbs) {
-      if (db.getHead().getRoot().getNext() == null) {
-        --flushCount;
-        break;
+  @Override
+  public void updateSolidity(long oldSolidifiedBlockNum, long newSolidifedBlockNum) {
+    long diff = newSolidifedBlockNum - oldSolidifiedBlockNum;
+    for (int i = 0; i < diff; i++) {
+      ++flushCount;
+      for (RevokingDBWithCachingNewValue db : dbs) {
+        db.getHead().updateSolidity();
       }
-
-      db.getHead().updateSolidity();
     }
   }
 
@@ -228,6 +225,10 @@ public class SnapshotManager implements RevokingDatabase {
 
       List<Snapshot> snapshots = new ArrayList<>();
       Snapshot solidity = db.getHead().getSolidity();
+      if (Snapshot.isRoot(solidity)) {
+        return;
+      }
+
       Snapshot next = solidity.getRoot().getNext();
       while (next != solidity.getNext()) {
         // debug begin
@@ -279,17 +280,12 @@ public class SnapshotManager implements RevokingDatabase {
       return;
     }
 
-    mark();
-
     if (shouldBeRefreshed()) {
+      flushCount = 0;
       deleteCheckPoint();
       createCheckPoint();
-
       refresh();
-
-      flushCount = 0;
     }
-    --size;
   }
 
   private void createCheckPoint() {
@@ -307,6 +303,10 @@ public class SnapshotManager implements RevokingDatabase {
 
       String dbName = db.getDbName();
       Snapshot solidity = db.getHead().getSolidity();
+      if (Snapshot.isRoot(solidity)) {
+        return;
+      }
+
       Snapshot next = solidity.getRoot().getNext();
       while (next != solidity.getNext()) {
         SnapshotImpl snapshot = (SnapshotImpl) next;
@@ -460,19 +460,16 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   private Map<String, AccountCapsule> printAccount(Map<String, byte[]> values) {
-    if (unChecked) {
-      return null;
-    }
-    return tronApplicationContext.getBean(Manager.class).getWitnessController().getActiveWitnesses().stream()
-    .map(b -> b.toByteArray())
-    .map(b -> Maps.immutableEntry(ByteUtil.toHexString(b), tronApplicationContext.getBean(
-        AccountStore.class).get(b)))
-        .map(e -> Maps.immutableEntry(e.getKey(), e.getValue()))
-        .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (k, v) -> k));
-//    return values.entrySet().stream()
-//        .map(e -> Maps.immutableEntry(e.getKey(), new AccountCapsule(e.getValue())))
-//        .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-
+    return null;
+//    if (unChecked) {
+//      return null;
+//    }
+//    return tronApplicationContext.getBean(Manager.class).getWitnessController().getActiveWitnesses().stream()
+//    .map(b -> b.toByteArray())
+//    .map(b -> Maps.immutableEntry(ByteUtil.toHexString(b), tronApplicationContext.getBean(
+//        AccountStore.class).get(b)))
+//        .map(e -> Maps.immutableEntry(e.getKey(), e.getValue()))
+//        .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (k, v) -> k));
   }
 
   @Slf4j

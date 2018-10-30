@@ -204,6 +204,13 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         break;
       }
+      case (16): {
+        if (entry.getValue() != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_DELEGATE_RESOURCE] is only allowed to be 1");
+        }
+        break;
+      }
       default:
         break;
     }
