@@ -132,7 +132,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_CREATION_OF_CONTRACTS = "ALLOW_CREATION_OF_CONTRACTS"
       .getBytes();
 
-
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -782,7 +781,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT"));
+            () -> new IllegalArgumentException(
+                "not found CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT"));
   }
 
   public void saveCreateNewAccountBandwidthRate(long rate) {
@@ -1190,14 +1190,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void addTotalNetWeight(long amount) {
     long totalNetWeight = getTotalNetWeight();
     totalNetWeight += amount;
-    saveTotalNetWeight( totalNetWeight );
+    saveTotalNetWeight(totalNetWeight);
   }
 
   //The unit is trx
   public void addTotalEnergyWeight(long amount) {
     long totalEnergyWeight = getTotalEnergyWeight();
     totalEnergyWeight += amount;
-    saveTotalEnergyWeight( totalEnergyWeight );
+    saveTotalEnergyWeight(totalEnergyWeight);
   }
 
   public void addTotalCreateAccountCost(long fee) {
