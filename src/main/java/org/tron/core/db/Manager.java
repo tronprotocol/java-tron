@@ -123,6 +123,10 @@ public class Manager {
   @Autowired
   private ContractStore contractStore;
   @Autowired
+  private DelegatedResourceStore delegatedResourceStore;
+  @Autowired
+  private DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore;
+  @Autowired
   @Getter
   private StorageRowStore storageRowStore;
 
@@ -195,6 +199,15 @@ public class Manager {
 
   public void setWitnessScheduleStore(final WitnessScheduleStore witnessScheduleStore) {
     this.witnessScheduleStore = witnessScheduleStore;
+  }
+
+
+  public DelegatedResourceStore getDelegatedResourceStore() {
+    return delegatedResourceStore;
+  }
+
+  public DelegatedResourceAccountIndexStore getDelegatedResourceAccountIndexStore() {
+    return delegatedResourceAccountIndexStore;
   }
 
   public CodeStore getCodeStore() {
@@ -1244,12 +1257,15 @@ public class Manager {
       logger.warn("latestSolidifiedBlockNum = 0,LatestBlockNum:{}", numbers);
       return;
     }
+
+    BlockId blockId;
     try {
-      if (!blockStore.hasOnSolidity(getBlockIdByNum(latestSolidifiedBlockNum).getBytes())) {
-        revokingStore.updateSolidity(dynamicPropertiesStore.getLatestSolidifiedBlockNum(), latestSolidifiedBlockNum);
-      }
+      blockId = getBlockIdByNum(latestSolidifiedBlockNum);
     } catch (ItemNotFoundException e) {
-      throw new RuntimeException(e);
+      blockId = null;
+    }
+    if (blockId == null || !blockStore.hasOnSolidity(blockId.getBytes())) {
+      revokingStore.updateSolidity(dynamicPropertiesStore.getLatestSolidifiedBlockNum(), latestSolidifiedBlockNum);
     }
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
     logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
@@ -1407,6 +1423,7 @@ public class Manager {
     closeOneStore(recentBlockStore);
     closeOneStore(transactionHistoryStore);
     closeOneStore(votesStore);
+    closeOneStore(delegatedResourceStore);
     logger.info("******** end to close db ********");
   }
 
