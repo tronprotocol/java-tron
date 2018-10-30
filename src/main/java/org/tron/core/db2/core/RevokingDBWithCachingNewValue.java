@@ -2,11 +2,14 @@ package org.tron.core.db2.core;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
+import java.io.Serializable;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -21,8 +24,7 @@ import org.tron.core.db2.common.Value;
 import org.tron.core.exception.ItemNotFoundException;
 
 public class RevokingDBWithCachingNewValue implements IRevokingDB {
-  @Setter
-  @Getter
+
   private Snapshot head;
   @Getter
   private String dbName;
@@ -32,62 +34,88 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
     head = new SnapshotRoot(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName);
   }
 
+  public synchronized Snapshot getHead() {
+    return head;
+  }
+
+  public synchronized void setHead(Snapshot head) {
+    this.head = head;
+  }
+
   /**
    * close the database.
    */
   @Override
-  public void close() {
+  public synchronized void close() {
     head.close();
   }
 
   @Override
-  public void reset() {
+  public synchronized void reset() {
     head.reset();
     head.close();
     head = new SnapshotRoot(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName);
   }
 
   @Override
-  public void put(byte[] key, byte[] value) {
+  public synchronized void put(byte[] key, byte[] value) {
     head.put(key, value);
   }
 
   @Override
-  public void delete(byte[] key) {
+  public synchronized void delete(byte[] key) {
     head.remove(key);
   }
 
   @Override
-  public byte[] get(byte[] key) throws ItemNotFoundException {
-    byte[] value = head.get(key);
-    if (ArrayUtils.isEmpty(value)) {
+  public synchronized byte[] get(byte[] key) throws ItemNotFoundException {
+    byte[] value = getUnchecked(key);
+    if (value == null) {
       throw new ItemNotFoundException();
     }
+
     return value;
   }
 
   @Override
-  public byte[] getUnchecked(byte[] key) {
-    try {
-      return get(key);
-    } catch (ItemNotFoundException e) {
-      return null;
+  public synchronized byte[] getUnchecked(byte[] key) {
+    return head.get(key);
+  }
+
+  @Override
+  public byte[] getOnSolidity(byte[] key) throws ItemNotFoundException {
+    byte[] value = getUncheckedOnSolidity(key);
+    if (value == null) {
+      throw new ItemNotFoundException();
     }
+
+    return value;
   }
 
   @Override
-  public boolean has(byte[] key) {
-    return head.get(key) != null;
+  public byte[] getUncheckedOnSolidity(byte[] key) {
+    Snapshot solidity = head.getSolidity();
+    return solidity.get(key);
   }
 
   @Override
-  public Iterator<Map.Entry<byte[], byte[]>> iterator() {
+  public synchronized boolean hasOnSolidity(byte[] key) {
+    return getUncheckedOnSolidity(key) != null;
+  }
+
+  @Override
+  public synchronized boolean has(byte[] key) {
+    return getUnchecked(key) != null;
+  }
+
+  @Override
+  public synchronized Iterator<Map.Entry<byte[], byte[]>> iterator() {
     return head.iterator();
   }
 
   //for blockstore
   @Override
-  public Set<byte[]> getlatestValues(long limit) {
+  public synchronized Set<byte[]> getlatestValues(long limit) {
     if (limit <= 0) {
       return Collections.emptySet();
     }
@@ -95,11 +123,14 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
     Set<byte[]> result = new HashSet<>();
     Snapshot snapshot = head;
     long tmp = limit;
-    for (; tmp > 0 && snapshot.getPrevious() != null; --tmp, snapshot = snapshot.getPrevious()) {
-      Streams.stream(((SnapshotImpl) snapshot).db)
-          .map(Map.Entry::getValue)
-          .map(Value::getBytes)
-          .forEach(result::add);
+    for (; tmp > 0 && snapshot.getPrevious() != null; snapshot = snapshot.getPrevious()) {
+      if (!((SnapshotImpl) snapshot).db.isEmpty()) {
+        --tmp;
+        Streams.stream(((SnapshotImpl) snapshot).db)
+            .map(Map.Entry::getValue)
+            .map(Value::getBytes)
+            .forEach(result::add);
+      }
     }
 
     if (snapshot.getPrevious() == null && tmp != 0) {
@@ -111,7 +142,7 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
 
   //for blockstore
   @Override
-  public Set<byte[]> getValuesNext(byte[] key, long limit) {
+  public synchronized Set<byte[]> getValuesNext(byte[] key, long limit) {
     if (limit <= 0) {
       return Collections.emptySet();
     }
@@ -129,12 +160,11 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
     levelDBMap.putAll(collection);
 
     return levelDBMap.entrySet().stream()
-        .filter(e -> ByteUtil.greaterOrEquals(e.getKey().getBytes(), key))
+        .sorted((e1, e2) -> ByteUtil.compare(e1.getKey().getBytes(), e2.getKey().getBytes()))
         .limit(limit)
         .map(Map.Entry::getValue)
         .map(WrappedByteArray::getBytes)
         .collect(Collectors.toSet());
-
   }
 
 }

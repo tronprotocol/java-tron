@@ -296,6 +296,11 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
+  public void updateSolidity(long oldSolidifiedBlockNum, long newSolidifedBlockNum) {
+
+  }
+
+  @Override
   public void setMaxSize(int maxSize) {
     this.maxSize.set(maxSize);
   }

@@ -77,6 +77,7 @@ import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
@@ -149,6 +150,10 @@ public class Manager {
   @Getter
   @Setter
   private String netType;
+
+  @Getter
+  @Setter
+  private WitnessService witnessService;
 
   @Getter
   @Setter
@@ -760,9 +765,9 @@ public class Manager {
 
           logger.warn(
               "******** before switchFork ******* push block: "
-                  + block.getShortString()
+                  + block.toString()
                   + ", new block:"
-                  + newBlock.getShortString()
+                  + newBlock.toString()
                   + ", dynamic head num: "
                   + dynamicPropertiesStore.getLatestBlockHeaderNumber()
                   + ", dynamic head hash: "
@@ -781,9 +786,9 @@ public class Manager {
 
           logger.warn(
               "******** after switchFork ******* push block: "
-                  + block.getShortString()
+                  + block.toString()
                   + ", new block:"
-                  + newBlock.getShortString()
+                  + newBlock.toString()
                   + ", dynamic head num: "
                   + dynamicPropertiesStore.getLatestBlockHeaderNumber()
                   + ", dynamic head hash: "
@@ -1168,6 +1173,10 @@ public class Manager {
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
     // todo set revoking db max size.
 
+    if (witnessService != null){
+      witnessService.processBlock(block);
+    }
+
     // checkWitness
     if (!witnessController.validateWitnessSchedule(block)) {
       throw new ValidateScheduleException("validateWitnessSchedule error");
@@ -1194,7 +1203,6 @@ public class Manager {
     this.updateTransHashCache(block);
     updateMaintenanceState(needMaint);
     updateRecentBlock(block);
-
   }
 
   private void updateTransHashCache(BlockCapsule block) {
@@ -1235,6 +1243,13 @@ public class Manager {
     if (latestSolidifiedBlockNum < getDynamicPropertiesStore().getLatestSolidifiedBlockNum()) {
       logger.warn("latestSolidifiedBlockNum = 0,LatestBlockNum:{}", numbers);
       return;
+    }
+    try {
+      if (!blockStore.hasOnSolidity(getBlockIdByNum(latestSolidifiedBlockNum).getBytes())) {
+        revokingStore.updateSolidity(dynamicPropertiesStore.getLatestSolidifiedBlockNum(), latestSolidifiedBlockNum);
+      }
+    } catch (ItemNotFoundException e) {
+      throw new RuntimeException(e);
     }
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
     logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
@@ -1395,7 +1410,7 @@ public class Manager {
     logger.info("******** end to close db ********");
   }
 
-  private void closeOneStore(ITronChainBase database) {
+  public void closeOneStore(ITronChainBase database) {
     logger.info("******** begin to close " + database.getName() + " ********");
     try {
       database.close();
