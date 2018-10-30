@@ -51,6 +51,7 @@ public class DepositImpl implements Deposit {
       witnessCache = new MemoryCache<>();
       codeCache = new MemoryCache<>();
       blockCache = new MemoryCache<>();
+      storageRowCache = new MemoryCache<>();
     } else {
       accountCache = new ReadWriteCapsuleCache<>(manager.getAccountStore());
       contractCache = new ReadWriteCapsuleCache<>(manager.getContractStore());
