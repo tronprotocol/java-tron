@@ -26,7 +26,6 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.common.runtime.Runtime;
 
 @Slf4j
-
 public class StorageTest {
   private Manager manager;
   private TronApplicationContext context;
