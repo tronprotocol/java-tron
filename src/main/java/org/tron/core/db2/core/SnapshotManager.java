@@ -71,6 +71,7 @@ public class SnapshotManager implements RevokingDatabase {
       disabled = false;
     }
 
+    printDebug("before buildSession");
 //    if (size > maxSize.get()) {
 //      logger.info("****size:" + size + ", maxsize:" + maxSize.get());
 //      size = maxSize.get();
@@ -81,6 +82,7 @@ public class SnapshotManager implements RevokingDatabase {
     // debug end
     advance();
     ++activeSession;
+    printDebug("after buildSession");
     return new Session(this, disableOnExit);
   }
 
@@ -108,9 +110,31 @@ public class SnapshotManager implements RevokingDatabase {
       return;
     }
 
+    printDebug("before merge");
     dbs.forEach(db -> db.getHead().getPrevious().merge(db.getHead()));
     retreat();
     --activeSession;
+    printDebug("after merge");
+  }
+
+  private void printDebug(String tag) {
+    // debug begin
+    RevokingDBWithCachingNewValue debugDB = dbs.get(0);
+    Snapshot next = debugDB.getHead().getRoot();
+    List<Snapshot> snapshots = new ArrayList<>();
+    while (next != null) {
+      snapshots.add(next);
+      next = next.getNext();
+    }
+    logger.info("****debug snapshot {} db:{}, solid:{}, head:{}, next:{}, all snapshot:{}",
+        tag,
+        debugDB.getDbName(),
+        debugDB.getHead().getSolidity(),
+        debugDB.getHead(),
+        debugDB.getHead().getSolidity().getNext(),
+        snapshots
+    );
+    // debug end
   }
 
   public synchronized void revoke() {
@@ -201,25 +225,6 @@ public class SnapshotManager implements RevokingDatabase {
   public void updateSolidity(long oldSolidifiedBlockNum, long newSolidifedBlockNum) {
     long diff = newSolidifedBlockNum - oldSolidifiedBlockNum;
 
-    // debug begin
-    RevokingDBWithCachingNewValue debugDB = dbs.get(0);
-    Snapshot next = debugDB.getHead().getRoot();
-    List<Snapshot> snapshots = new ArrayList<>();
-    while (next != null) {
-      snapshots.add(next);
-      next = next.getNext();
-    }
-    logger.info("****updateSolidity newNum:{}, oldNum:{}, diff:{}, db:{}, solid:{}, head:{}, next:{}, all snapshot:{}",
-        newSolidifedBlockNum,
-        oldSolidifiedBlockNum,
-        diff,
-        debugDB.getDbName(),
-        debugDB.getHead().getSolidity(),
-        debugDB.getHead(),
-        debugDB.getHead().getSolidity().getNext(),
-        snapshots
-    );
-    // debug end
 
     for (int i = 0; i < diff; i++) {
       ++flushCount;
