@@ -209,7 +209,10 @@ public class SnapshotManager implements RevokingDatabase {
       snapshots.add(next);
       next = next.getNext();
     }
-    logger.info("****updateSolidity db:{}, solid:{}, head:{}, next:{}, all snapshot:{}",
+    logger.info("****updateSolidity newNum:{}, oldNum:{}, diff:{}, db:{}, solid:{}, head:{}, next:{}, all snapshot:{}",
+        newSolidifedBlockNum,
+        oldSolidifiedBlockNum,
+        diff,
         debugDB.getDbName(),
         debugDB.getHead().getSolidity(),
         debugDB.getHead(),
