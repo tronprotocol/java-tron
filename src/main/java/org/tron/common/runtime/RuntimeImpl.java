@@ -396,8 +396,8 @@ public class RuntimeImpl implements Runtime {
       long energyLimit;
       if (false) {  // TODO according to version
         long creatorEnergyLimit = newSmartContract.getEnergyLimit();
-        if (creatorEnergyLimit < 0) {
-          throw new ContractValidateException("The creator's energyLimit must be >= 0");
+        if (creatorEnergyLimit <= 0) {
+          throw new ContractValidateException("The creator's energyLimit must be > 0");
         }
         energyLimit = getEnergyLimit2(creator, feeLimit, callValue);
       } else {
