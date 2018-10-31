@@ -247,6 +247,7 @@ public class SnapshotManager implements RevokingDatabase {
 //    Multimap<String, byte[]> values = ArrayListMultimap.create();
     // debug end
 
+    int count = 0;
     for (RevokingDBWithCachingNewValue db : dbs) {
       if (Snapshot.isRoot(db.getHead())) {
         return;
@@ -280,7 +281,6 @@ public class SnapshotManager implements RevokingDatabase {
         // debug end
         snapshots.add(next);
         next = next.getNext();
-        --size;
       }
 
       // debug begin
@@ -289,6 +289,7 @@ public class SnapshotManager implements RevokingDatabase {
 //        }
       // debug end
 
+      count = snapshots.size();
       ((SnapshotRoot) solidity.getRoot()).merge(snapshots);
 
       solidity.resetSolidity();
@@ -299,6 +300,7 @@ public class SnapshotManager implements RevokingDatabase {
         solidity.getRoot().setNext(solidity.getNext());
       }
     }
+    size = size - count;
     // debug begin
 //    List<String> debugDumpDatas = debugDumpDataMap.entrySet().stream().map(Entry::getValue).sorted(String::compareTo).collect(Collectors.toList());
 //    logger.info("***debug refresh:    blocks={}, datahash:{}, accounts:{}\n", debugBlockHashs, Sha256Hash.of(debugDumpDatas.toString().getBytes()), printAccount(null));
