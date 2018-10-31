@@ -332,7 +332,7 @@ public class Args {
 
   @Getter
   @Setter
-  private int blockVersion;
+  private int blockVersion = 3;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
