@@ -87,6 +87,7 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
 import org.tron.protos.Protocol.Exchange;
+import org.tron.protos.Protocol.NodeInfo;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -108,6 +109,9 @@ public class RpcApiService implements Service {
   private WalletSolidity walletSolidity;
   @Autowired
   private Wallet wallet;
+
+  @Autowired
+  private NodeInfoService nodeInfoService;
 
   private static final long BLOCK_LIMIT_NUM = 100;
   private static final long TRANSACTION_LIMIT_NUM = 1000;
@@ -1437,6 +1441,16 @@ public class RpcApiService implements Service {
         responseObserver.onNext(reply);
       } else {
         responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getNodeInfo(EmptyMessage request, StreamObserver<NodeInfo> responseObserver) {
+      try {
+        responseObserver.onNext(nodeInfoService.getNodeInfo().transferToProtoEntity());
+      } catch (Exception e) {
+        responseObserver.onError(e);
       }
       responseObserver.onCompleted();
     }

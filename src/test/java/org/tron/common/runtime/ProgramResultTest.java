@@ -416,6 +416,17 @@ public class ProgramResultTest {
   }
 
 
+  /**
+   * pragma solidity ^0.4.24;
+   *
+   * contract A{
+   *     constructor () payable public{}
+   *     function suicide(address toAddress) public payable{
+   *         selfdestruct(toAddress);
+   *     }
+   *     function () payable public{}
+   * }s
+   */
   @Test
   public void suicideResultTest()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {

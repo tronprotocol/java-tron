@@ -26,7 +26,7 @@ public class TrxHandler {
 
   private NodeImpl nodeImpl;
 
-  private static int MAX_TRX_SIZE = 10_000;
+  private static int MAX_TRX_SIZE = 100_000;
 
   private static int MAX_SMART_CONTRACT_SUBMIT_SIZE = 100;
 
