@@ -80,6 +80,7 @@ import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
@@ -123,6 +124,7 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.Protocol.TransactionSign;
+import org.tron.protos.Protocol.TransactionInfo;
 
 @Slf4j
 @Component
@@ -762,6 +764,22 @@ public class Wallet {
     }
     if (transactionCapsule != null) {
       return transactionCapsule.getInstance();
+    }
+    return null;
+  }
+
+  public TransactionInfo getTransactionInfoById(ByteString transactionId) {
+    if (Objects.isNull(transactionId)) {
+      return null;
+    }
+    TransactionInfoCapsule transactionInfoCapsule = null;
+    try {
+      transactionInfoCapsule = dbManager.getTransactionHistoryStore()
+          .get(transactionId.toByteArray());
+    } catch (StoreException e) {
+    }
+    if (transactionInfoCapsule != null) {
+      return transactionInfoCapsule.getInstance();
     }
     return null;
   }

@@ -31,7 +31,7 @@ public class SolidityNodeHttpApiService implements Service {
   @Autowired
   private GetTransactionByIdSolidityServlet getTransactionByIdServlet;
   @Autowired
-  private GetTransactionInfoByIdServlet getTransactionInfoByIdServlet;
+  private GetTransactionInfoByIdSolidityServlet getTransactionInfoByIdServlet;
   @Autowired
   private GetTransactionsFromThisServlet getTransactionsFromThisServlet;
   @Autowired
