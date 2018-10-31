@@ -12,7 +12,8 @@ import org.tron.core.db.StorageRowStore;
 public class Storage {
 
   @Getter
-  private byte[] addrHash;  // contract address
+  private byte[] addrHash;
+
   @Getter
   private StorageRowStore store;
   @Getter
@@ -28,7 +29,7 @@ public class Storage {
   public Storage(Storage storage) {
     this.addrHash = storage.addrHash.clone();
     this.store = storage.store;
-    storage.getRowCache().forEach((rowKey, row) -> {
+    storage.getRowCache().forEach((DataWord rowKey,StorageRowCapsule row) -> {
       StorageRowCapsule newRow = new StorageRowCapsule(row);
       this.rowCache.put(rowKey.clone(), newRow);
     });
@@ -70,12 +71,12 @@ public class Storage {
   }
 
   public void commit() {
-    rowCache.forEach((key, value) -> {
-      if (value.isDirty()) {
-        if (value.getValue().isZero()) {
-          this.store.delete(value.getRowKey());
+    rowCache.forEach((DataWord rowKey,StorageRowCapsule row) -> {
+      if (row.isDirty()) {
+        if (row.getValue().isZero()) {
+          this.store.delete(row.getRowKey());
         } else {
-          this.store.put(value.getRowKey(), value);
+          this.store.put(row.getRowKey(), row);
         }
       }
     });

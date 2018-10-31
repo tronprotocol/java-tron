@@ -42,7 +42,7 @@ public class ContractState implements Deposit, ProgramListenerAware {
   private final DataWord address;  // contract address
   private ProgramListener programListener;
 
-  public ContractState(ProgramInvoke programInvoke) {
+  ContractState(ProgramInvoke programInvoke) {
     this.address = programInvoke.getContractAddress(); // contract address
     this.deposit = programInvoke.getDeposit();
   }
@@ -148,11 +148,6 @@ public class ContractState implements Deposit, ProgramListenerAware {
   @Override
   public Deposit newDepositChild() {
     return deposit.newDepositChild();
-  }
-
-  @Override
-  public void flush() {
-    deposit.flush();
   }
 
   @Override

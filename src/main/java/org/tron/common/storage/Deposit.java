@@ -58,8 +58,6 @@ public interface Deposit {
 
   void setParent(Deposit deposit);
 
-  void flush();
-
   void commit();
 
   void putAccount(Key key, Value value);

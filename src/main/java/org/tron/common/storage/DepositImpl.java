@@ -8,7 +8,6 @@ import java.util.HashMap;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.Storage;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BytesCapsule;
@@ -19,14 +18,12 @@ import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.AccountStore;
-import org.tron.core.db.AssetIssueStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.CodeStore;
 import org.tron.core.db.ContractStore;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.ProposalStore;
-import org.tron.core.db.StorageRowStore;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.db.VotesStore;
 import org.tron.core.db.WitnessStore;
@@ -50,14 +47,12 @@ public class DepositImpl implements Deposit {
   private HashMap<Key, Value> transactionCache = new HashMap<>();
   private HashMap<Key, Value> blockCache = new HashMap<>();
   private HashMap<Key, Value> witnessCache = new HashMap<>();
-  private HashMap<Key, Value> blockIndexCache = new HashMap<>();
   private HashMap<Key, Value> codeCache = new HashMap<>();
   private HashMap<Key, Value> contractCache = new HashMap<>();
 
   private HashMap<Key, Value> votesCache = new HashMap<>();
   private HashMap<Key, Value> proposalCache = new HashMap<>();
   private HashMap<Key, Value> dynamicPropertiesCache = new HashMap<>();
-  private HashMap<Key, Value> accountContractIndexCache = new HashMap<>();
   private HashMap<Key, Storage> storageCache = new HashMap<>();
 
   private DepositImpl(Manager dbManager, DepositImpl parent) {
@@ -108,14 +103,6 @@ public class DepositImpl implements Deposit {
 
   private CodeStore getCodeStore() {
     return dbManager.getCodeStore();
-  }
-
-  private StorageRowStore getStorageRowStore() {
-    return dbManager.getStorageRowStore();
-  }
-
-  private AssetIssueStore getAssetIssueStore() {
-    return dbManager.getAssetIssueStore();
   }
 
   @Override
@@ -368,16 +355,15 @@ public class DepositImpl implements Deposit {
       return balance;
     }
 
-    if (value < 0 && balance < -value) {
-      throw new RuntimeException(
-          StringUtil.createReadableString(accountCapsule.createDbKey())
-              + " insufficient balance");
-    }
+//    if (value < 0 && balance < -value) {
+//      throw new ContractExeException(Hex.toHexString(accountCapsule.createDbKey())
+//              + " insufficient balance");
+//    }
     accountCapsule.setBalance(Math.addExact(balance, value));
     Key key = Key.create(address);
-    Value V = Value.create(accountCapsule.getData(),
+    Value val = Value.create(accountCapsule.getData(),
         Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
-    accountCache.put(key, V);
+    accountCache.put(key, val);
     return accountCapsule.getBalance();
   }
 
@@ -458,11 +444,6 @@ public class DepositImpl implements Deposit {
   public void putContract(Key key, Value value) {
     contractCache.put(key, value);
   }
-
-//  @Override
-//  public void putStorage(Key key, Value value) {
-//    storageCache.put(key, value);
-//  }
 
   @Override
   public void putStorage(Key key, Storage cache) {
@@ -696,16 +677,10 @@ public class DepositImpl implements Deposit {
     commitWitnessCache(deposit);
     commitCodeCache(deposit);
     commitContractCache(deposit);
-    commitStorageCache(deposit);
     commitVoteCache(deposit);
     commitProposalCache(deposit);
     commitDynamicPropertiesCache(deposit);
-    // commitAccountContractIndex(deposit);
-  }
-
-  @Override
-  public void flush() {
-    throw new RuntimeException("Not supported");
+    commitStorageCache(deposit);
   }
 
   @Override
