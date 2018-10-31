@@ -119,8 +119,6 @@ public class DepositTest {
     byte[] aAddress = Wallet.generateContractAddress(aTrx);
     byte[] bAddress = Wallet.generateContractAddress(bTrx);
 
-    Thread.sleep(10000);
-
     // tigger contractA
     // callBcallA(address,uint256,uint256)
     // <bAddress>,1,2
