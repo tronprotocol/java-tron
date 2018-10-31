@@ -13,6 +13,7 @@ import org.tron.core.db2.common.LevelDB;
 
 public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 
+  @Getter
   private Snapshot solidity;
 
   public SnapshotRoot(String parentName, String name) {
@@ -84,17 +85,12 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   }
 
   @Override
-  public synchronized Snapshot getSolidity() {
-    return solidity;
-  }
-
-  @Override
-  public synchronized void resetSolidity() {
+  public void resetSolidity() {
     solidity = this;
   }
 
   @Override
-  public synchronized void updateSolidity() {
+  public void updateSolidity() {
     solidity = solidity.getNext();
   }
 }

@@ -70,11 +70,11 @@ public class SnapshotManager implements RevokingDatabase {
       disabled = false;
     }
 
-    if (size > maxSize.get()) {
-      logger.info("****size:" + size + ", maxsize:" + maxSize.get());
-      size = maxSize.get();
-      flush();
-    }
+//    if (size > maxSize.get()) {
+//      logger.info("****size:" + size + ", maxsize:" + maxSize.get());
+//      size = maxSize.get();
+//      flush();
+//    }
     // debug begin
 //    debug();
     // debug end
@@ -205,6 +205,7 @@ public class SnapshotManager implements RevokingDatabase {
         db.getHead().updateSolidity();
       }
     }
+    flush();
   }
 
   private boolean shouldBeRefreshed() {
@@ -251,6 +252,7 @@ public class SnapshotManager implements RevokingDatabase {
         // debug end
         snapshots.add(next);
         next = next.getNext();
+        --size;
       }
 
       // debug begin
