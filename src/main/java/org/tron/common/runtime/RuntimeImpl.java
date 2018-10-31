@@ -209,7 +209,7 @@ public class RuntimeImpl implements Runtime {
     }
   }
 
-  private long getEnergyLimit2(AccountCapsule account, long feeLimit, long callValue) {
+  public long getEnergyLimit2(AccountCapsule account, long feeLimit, long callValue) {
 
     long sunPerEnergy = Constant.SUN_PER_ENERGY;
     if (deposit.getDbManager().getDynamicPropertiesStore().getEnergyFee() != 0) {
@@ -286,7 +286,7 @@ public class RuntimeImpl implements Runtime {
     }
   }
 
-  private long getEnergyLimit2(AccountCapsule creator, AccountCapsule caller,
+  public long getEnergyLimit2(AccountCapsule creator, AccountCapsule caller,
       TriggerSmartContract contract, long feeLimit, long callValue) {
 
     long callerEnergyLimit = getEnergyLimit2(caller, feeLimit, callValue);
