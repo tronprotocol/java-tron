@@ -7,6 +7,7 @@ import com.google.common.collect.Streams;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
+import com.sun.org.apache.xpath.internal.WhitespaceStrippingElementMatcher;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.WriteOptions;
@@ -199,6 +200,24 @@ public class SnapshotManager implements RevokingDatabase {
   @Override
   public void updateSolidity(long oldSolidifiedBlockNum, long newSolidifedBlockNum) {
     long diff = newSolidifedBlockNum - oldSolidifiedBlockNum;
+
+    // debug begin
+    RevokingDBWithCachingNewValue debugDB = dbs.get(0);
+    Snapshot next = debugDB.getHead().getRoot();
+    List<Snapshot> snapshots = new ArrayList<>();
+    while (next != null) {
+      snapshots.add(next);
+      next = next.getNext();
+    }
+    logger.info("****updateSolidity db:{}, solid:{}, head:{}, next:{}, all snapshot:{}",
+        debugDB.getDbName(),
+        debugDB.getHead().getSolidity(),
+        debugDB.getHead(),
+        debugDB.getHead().getSolidity().getNext(),
+        snapshots
+    );
+    // debug end
+
     for (int i = 0; i < diff; i++) {
       ++flushCount;
       for (RevokingDBWithCachingNewValue db : dbs) {

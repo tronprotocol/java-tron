@@ -1258,6 +1258,9 @@ public class Manager {
       return;
     }
 
+    long oldSolidifiedBlockNum = dynamicPropertiesStore.getLatestSolidifiedBlockNum();
+    getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
+    logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
     BlockId blockId;
     try {
       blockId = getBlockIdByNum(latestSolidifiedBlockNum);
@@ -1265,10 +1268,8 @@ public class Manager {
       blockId = null;
     }
     if (blockId == null || !blockStore.hasOnSolidity(blockId.getBytes())) {
-      revokingStore.updateSolidity(dynamicPropertiesStore.getLatestSolidifiedBlockNum(), latestSolidifiedBlockNum);
+      revokingStore.updateSolidity(oldSolidifiedBlockNum, latestSolidifiedBlockNum);
     }
-    getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
-    logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
   }
 
   public void updateFork() {
