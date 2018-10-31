@@ -134,7 +134,7 @@ public class ReceiptCapsule {
       account.setBalance(balance - energyFee);
 
       manager.adjustBalance(manager.getAccountStore().getBlackhole().getAddress().toByteArray(),
-          energyFee);//send to blackhole
+          energyFee);//send to blackHole
     }
 
     manager.getAccountStore().put(account.getAddress().toByteArray(), account);
