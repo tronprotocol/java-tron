@@ -24,6 +24,8 @@ import static org.tron.protos.Contract.WitnessUpdateContract;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.security.InvalidKeyException;
+import java.security.PublicKey;
 import java.security.SignatureException;
 import java.util.Arrays;
 import java.util.List;
@@ -32,9 +34,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.util.StringUtils;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.crypto.eddsa.EdDSAEngine;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
 import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
@@ -47,6 +51,7 @@ import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
 import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.ZksnarkUtils;
 import org.tron.core.Wallet;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.TransactionTrace;
@@ -448,14 +453,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
 
-  /**
-   * validate signature
-   */
-  public boolean validateSignature() throws ValidateSignatureException {
-    if (isVerified == true) {
-      return true;
-    }
-
+  public void validatePubSignature() throws ValidateSignatureException {
     if (this.getInstance().getSignatureCount() !=
         this.getInstance().getRawData().getContractCount()) {
       throw new ValidateSignatureException("miss sig or contract");
@@ -476,6 +474,60 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         isVerified = false;
         throw new ValidateSignatureException(e.getMessage());
       }
+    }
+  }
+
+  public void validateZkSignature() throws ValidateSignatureException {
+    if (this.getInstance().getSignatureCount() !=
+        this.getInstance().getRawData().getContractCount()) {
+      throw new ValidateSignatureException("miss sig or contract");
+    }
+    for (int i = 0; i < this.transaction.getSignatureCount(); ++i) {
+      try {
+        Transaction.Contract contract = this.getInstance().getRawData().getContract(i);
+        Any contractParameter = contract.getParameter();
+        ZksnarkV0TransferContract zkContract = contractParameter
+            .unpack(ZksnarkV0TransferContract.class);
+        byte[] message = ZksnarkUtils.computeZkSignInput(zkContract);
+        byte[] pk = zkContract.getPksig().toByteArray();
+        PublicKey publicKey = ZksnarkUtils.byte2PublicKey(pk);
+        EdDSAEngine engine = new EdDSAEngine();
+        engine.initVerify(publicKey);
+        isVerified = engine
+            .verifyOneShot(message, this.getInstance().getSignatureZk(i).toByteArray());
+        if (!isVerified) {
+          throw new ValidateSignatureException("sig error");
+        }
+      } catch (InvalidProtocolBufferException e) {
+        isVerified = false;
+        throw new ValidateSignatureException(e.getMessage());
+      } catch (InvalidKeyException e) {
+        isVerified = false;
+        throw new ValidateSignatureException(e.getMessage());
+      } catch (SignatureException e) {
+        isVerified = false;
+        throw new ValidateSignatureException(e.getMessage());
+      }
+    }
+  }
+
+  /**
+   * validate signature
+   */
+  public boolean validateSignature() throws ValidateSignatureException {
+    if (isVerified == true) {
+      return true;
+    }
+    //Do not support multi contracts in one transaction
+    Transaction.Contract contract = this.getInstance().getRawData().getContract(0);
+    if (contract.getType() != ContractType.ZksnarkV0TransferContract) {
+      validatePubSignature();
+    } else {
+      byte[] owner = getOwner(contract);
+      if (!ArrayUtils.isEmpty(owner)) {
+        validatePubSignature();   //If no pub input , need not signature.
+      }
+      validateZkSignature();
     }
 
     isVerified = true;
