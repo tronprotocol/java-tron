@@ -275,7 +275,8 @@ public class RuntimeImpl implements Runtime {
     // creatorEnergyFromFreeze
     long creatorEnergyLimit = energyProcessor.getAccountLeftEnergyFromFreeze(creator);
 
-    ContractCapsule contractCapsule = this.deposit.getContract(contract.getContractAddress().toByteArray());
+    ContractCapsule contractCapsule = this.deposit
+        .getContract(contract.getContractAddress().toByteArray());
     long consumeUserResourcePercent = contractCapsule.getConsumeUserResourcePercent();
 
     if (creatorEnergyLimit * consumeUserResourcePercent
@@ -296,7 +297,8 @@ public class RuntimeImpl implements Runtime {
     }
 
     long creatorEnergyLimit = 0;
-    ContractCapsule contractCapsule = this.deposit.getContract(contract.getContractAddress().toByteArray());
+    ContractCapsule contractCapsule = this.deposit
+        .getContract(contract.getContractAddress().toByteArray());
     long consumeUserResourcePercent = contractCapsule.getConsumeUserResourcePercent();
 
     long creatorMaxEnergy = contractCapsule.getEnergyLimit();
@@ -304,7 +306,7 @@ public class RuntimeImpl implements Runtime {
     if (consumeUserResourcePercent <= 0) {
       creatorEnergyLimit = min(energyProcessor.getAccountLeftEnergyFromFreeze(creator),
           creatorMaxEnergy);
-    } else if (consumeUserResourcePercent < Constant.ONE_HUNDRED){
+    } else if (consumeUserResourcePercent < Constant.ONE_HUNDRED) {
       creatorEnergyLimit = min(
           BigInteger.valueOf(callerEnergyLimit)
               .multiply(BigInteger.valueOf(Constant.ONE_HUNDRED - consumeUserResourcePercent))
@@ -393,6 +395,10 @@ public class RuntimeImpl implements Runtime {
 
       long energyLimit;
       if (false) {  // TODO according to version
+        long creatorEnergyLimit = newSmartContract.getEnergyLimit();
+        if (creatorEnergyLimit < 0) {
+          throw new ContractValidateException("The creator's energyLimit must be >= 0");
+        }
         energyLimit = getEnergyLimit2(creator, feeLimit, callValue);
       } else {
         energyLimit = getEnergyLimit(creator, feeLimit, callValue);
