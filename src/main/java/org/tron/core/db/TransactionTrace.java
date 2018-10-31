@@ -93,7 +93,7 @@ public class TransactionTrace {
     this.energyProcessor = new EnergyProcessor(this.dbManager);
   }
 
-  public boolean needVM() {
+  private boolean needVM() {
     return this.trxType == TRX_CONTRACT_CALL_TYPE || this.trxType == TRX_CONTRACT_CREATION_TYPE;
   }
 
@@ -102,24 +102,14 @@ public class TransactionTrace {
     txStartTimeInMs = System.currentTimeMillis();
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
     runtime = new RuntimeImpl(this, blockCap, deposit, new ProgramInvokeFactoryImpl());
-
-    // switch (trxType) {
-    //   case TRX_PRECOMPILED_TYPE:
-    //     break;
-    //   case TRX_CONTRACT_CREATION_TYPE:
-    //   case TRX_CONTRACT_CALL_TYPE:
-    //     // checkForSmartContract();
-    //     break;
-    //   default:
-    //     break;
-    // }
-
   }
-public void checkIsConstant() throws ContractValidateException, VMIllegalException {
-  if (runtime.isCallConstant()) {
-    throw new VMIllegalException("cannot call constant method ");
+
+  public void checkIsConstant() throws ContractValidateException, VMIllegalException {
+    if (runtime.isCallConstant()) {
+      throw new VMIllegalException("cannot call constant method ");
+    }
   }
-}
+
   //set bill
   public void setBill(long energyUsage) {
     if (energyUsage < 0) {
@@ -136,7 +126,7 @@ public void checkIsConstant() throws ContractValidateException, VMIllegalExcepti
 
   public void exec()
       throws ContractExeException, ContractValidateException, VMIllegalException {
-    /**  VM execute  **/
+    /*  VM execute  */
     runtime.execute();
     runtime.go();
 
@@ -280,7 +270,6 @@ public void checkIsConstant() throws ContractValidateException, VMIllegalExcepti
       return;
     }
     receipt.setResult(contractResult.UNKNOWN);
-    return;
   }
 
   public String getRuntimeError() {

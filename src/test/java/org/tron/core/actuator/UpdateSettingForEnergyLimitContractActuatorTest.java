@@ -4,6 +4,7 @@ import static junit.framework.TestCase.fail;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
@@ -25,6 +26,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.TronException;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 
@@ -35,10 +37,13 @@ public class UpdateSettingForEnergyLimitContractActuatorTest {
   private static TronApplicationContext context;
   private static Manager dbManager;
   private static final String dbPath = "output_updatesettingforenergylimitcontract_test";
-  private static final String OWNER_ADDRESS;
+  private static final String OWNER_ADDRESS =
+      Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   private static final String OWNER_ADDRESS_ACCOUNT_NAME = "test_account";
-  private static final String SECOND_ACCOUNT_ADDRESS;
-  private static final String OWNER_ADDRESS_NOTEXIST;
+  private static final String SECOND_ACCOUNT_ADDRESS =
+      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d427122222";
+  private static final String OWNER_ADDRESS_NOTEXIST =
+      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
   private static final String SMART_CONTRACT_NAME = "smart_contarct";
   private static final String CONTRACT_ADDRESS = "111111";
@@ -50,11 +55,6 @@ public class UpdateSettingForEnergyLimitContractActuatorTest {
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
-    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
-    OWNER_ADDRESS_NOTEXIST =
-        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
-    SECOND_ACCOUNT_ADDRESS =
-        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d427122222";
   }
 
   /**
@@ -78,7 +78,7 @@ public class UpdateSettingForEnergyLimitContractActuatorTest {
             Protocol.AccountType.Normal);
     dbManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS), accountCapsule);
 
-    // smartContarct in contractStore
+    // smartContract in contractStore
     Protocol.SmartContract.Builder builder = Protocol.SmartContract.newBuilder();
     builder.setName(SMART_CONTRACT_NAME);
     builder.setOriginAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
@@ -123,7 +123,7 @@ public class UpdateSettingForEnergyLimitContractActuatorTest {
   }
 
   @Test
-  public void successUpdateSettingContract() {
+  public void successUpdateSettingForEnergyLimitContract() throws InvalidProtocolBufferException {
     UpdateSettingForEnergyLimitContractActuator actuator =
         new UpdateSettingForEnergyLimitContractActuator(
             getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, TARGET_ENERGY_LIMIT), dbManager);
@@ -134,15 +134,14 @@ public class UpdateSettingForEnergyLimitContractActuatorTest {
       actuator.execute(ret);
 
       // assert result state and energy_limit
+      Assert.assertEquals(OWNER_ADDRESS,
+          ByteArray.toHexString(actuator.getOwnerAddress().toByteArray()));
       Assert.assertEquals(ret.getInstance().getRet(), Protocol.Transaction.Result.code.SUCESS);
       Assert.assertEquals(
-          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS)).
-              getEnergyLimit(),
-          TARGET_ENERGY_LIMIT);
-    } catch (ContractValidateException e) {
-      Assert.assertFalse(e instanceof ContractValidateException);
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
+          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS))
+              .getEnergyLimit(), TARGET_ENERGY_LIMIT);
+    } catch (ContractValidateException | ContractExeException e) {
+      Assert.fail(e.getMessage());
     }
   }
 
@@ -158,11 +157,9 @@ public class UpdateSettingForEnergyLimitContractActuatorTest {
       actuator.execute(ret);
 
       fail("Invalid address");
-    } catch (ContractValidateException e) {
+    } catch (TronException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalid address", e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 
@@ -178,11 +175,9 @@ public class UpdateSettingForEnergyLimitContractActuatorTest {
       actuator.execute(ret);
 
       fail("Account[" + OWNER_ADDRESS_NOTEXIST + "] not exists");
-    } catch (ContractValidateException e) {
+    } catch (TronException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Account[" + OWNER_ADDRESS_NOTEXIST + "] not exists", e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 
@@ -198,11 +193,9 @@ public class UpdateSettingForEnergyLimitContractActuatorTest {
       actuator.execute(ret);
 
       fail("energy limit less than 0");
-    } catch (ContractValidateException e) {
+    } catch (TronException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("energy limit not less than 0", e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 
@@ -218,11 +211,9 @@ public class UpdateSettingForEnergyLimitContractActuatorTest {
       actuator.execute(ret);
 
       fail("Contract not exists");
-    } catch (ContractValidateException e) {
+    } catch (TronException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Contract not exists", e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 
@@ -238,18 +229,16 @@ public class UpdateSettingForEnergyLimitContractActuatorTest {
       actuator.execute(ret);
 
       fail("Account[" + SECOND_ACCOUNT_ADDRESS + "] is not the owner of the contract");
-    } catch (ContractValidateException e) {
+    } catch (TronException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(
           "Account[" + SECOND_ACCOUNT_ADDRESS + "] is not the owner of the contract",
           e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 
   @Test
-  public void twiceUpdateSettingContract() {
+  public void twiceUpdateSettingForEnergyLimitContract() throws InvalidProtocolBufferException {
     UpdateSettingForEnergyLimitContractActuator actuator =
         new UpdateSettingForEnergyLimitContractActuator(
             getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, TARGET_ENERGY_LIMIT), dbManager);
@@ -264,11 +253,12 @@ public class UpdateSettingForEnergyLimitContractActuatorTest {
       actuator.validate();
       actuator.execute(ret);
 
+      Assert.assertEquals(OWNER_ADDRESS,
+          ByteArray.toHexString(actuator.getOwnerAddress().toByteArray()));
       Assert.assertEquals(ret.getInstance().getRet(), Protocol.Transaction.Result.code.SUCESS);
       Assert.assertEquals(
-          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS)).
-              getEnergyLimit(),
-          TARGET_ENERGY_LIMIT);
+          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS))
+              .getEnergyLimit(), TARGET_ENERGY_LIMIT);
 
       // second
       secondActuator.validate();
@@ -276,14 +266,10 @@ public class UpdateSettingForEnergyLimitContractActuatorTest {
 
       Assert.assertEquals(ret.getInstance().getRet(), Protocol.Transaction.Result.code.SUCESS);
       Assert.assertEquals(
-          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS)).
-              getEnergyLimit(),
-          90L);
-
-    } catch (ContractValidateException e) {
-      Assert.assertFalse(e instanceof ContractValidateException);
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
+          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS))
+              .getEnergyLimit(), 90L);
+    } catch (ContractValidateException | ContractExeException e) {
+      Assert.fail(e.getMessage());
     }
   }
 

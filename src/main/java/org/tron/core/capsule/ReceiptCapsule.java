@@ -100,6 +100,7 @@ public class ReceiptCapsule {
       long originUsage = Math.multiplyExact(receipt.getEnergyUsageTotal(), percent) / 100;
       originUsage = Math
           .min(originUsage, energyProcessor.getAccountLeftEnergyFromFreeze(origin));
+
       long callerUsage = receipt.getEnergyUsageTotal() - originUsage;
       energyProcessor.useEnergy(origin, originUsage, now);
       this.setOriginEnergyUsage(originUsage);
@@ -134,7 +135,7 @@ public class ReceiptCapsule {
       account.setBalance(balance - energyFee);
 
       manager.adjustBalance(manager.getAccountStore().getBlackhole().getAddress().toByteArray(),
-          energyFee);//send to blackhole
+          energyFee);//send to blackHole
     }
 
     manager.getAccountStore().put(account.getAddress().toByteArray(), account);

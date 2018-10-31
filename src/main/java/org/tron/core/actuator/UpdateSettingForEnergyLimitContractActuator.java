@@ -14,7 +14,6 @@ import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.UpdateSettingForEnergyLimitContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -110,7 +109,7 @@ public class UpdateSettingForEnergyLimitContractActuator extends AbstractActuato
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(UpdateSettingContract.class).getOwnerAddress();
+    return contract.unpack(UpdateSettingForEnergyLimitContract.class).getOwnerAddress();
   }
 
   @Override

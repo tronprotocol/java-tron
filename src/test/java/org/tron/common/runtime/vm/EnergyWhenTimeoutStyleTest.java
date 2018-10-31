@@ -33,7 +33,7 @@ public class EnergyWhenTimeoutStyleTest {
   private Manager dbManager;
   private TronApplicationContext context;
   private DepositImpl deposit;
-  private String dbPath = "output_CPUTimeTest";
+  private String dbPath = "output_EnergyWhenTimeoutStyleTest";
   private String OWNER_ADDRESS;
   private Application AppT;
   private long totalBalance = 30_000_000_000_000L;
@@ -115,7 +115,8 @@ public class EnergyWhenTimeoutStyleTest {
     long expectEnergyUsageTotal2 = feeLimit / 100;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
     Exception exception = result.getRuntime().getResult().getException();
-    Assert.assertTrue((exception instanceof OutOfResourceException) || (exception instanceof OutOfEnergyException));
+    Assert.assertTrue((exception instanceof OutOfResourceException)
+        || (exception instanceof OutOfEnergyException));
     Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
         totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
   }
