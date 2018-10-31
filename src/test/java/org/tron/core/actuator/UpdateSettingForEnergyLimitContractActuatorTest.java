@@ -195,7 +195,7 @@ public class UpdateSettingForEnergyLimitContractActuatorTest {
       fail("energy limit less than 0");
     } catch (TronException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("energy limit not less than 0", e.getMessage());
+      Assert.assertEquals("energy limit must > 0", e.getMessage());
     }
   }
 

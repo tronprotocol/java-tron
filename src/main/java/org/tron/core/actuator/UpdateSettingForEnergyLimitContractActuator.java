@@ -49,6 +49,10 @@ public class UpdateSettingForEnergyLimitContractActuator extends AbstractActuato
 
   @Override
   public boolean validate() throws ContractValidateException {
+    if (!false) {
+      throw new ContractValidateException(
+          "contract type error,unexpected type [UpdateSettingForEnergyLimitContract]");
+    }
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
@@ -83,9 +87,9 @@ public class UpdateSettingForEnergyLimitContractActuator extends AbstractActuato
     }
 
     long newEnergyLimit = contract.getEnergyLimit();
-    if (newEnergyLimit < 0) {
+    if (newEnergyLimit <= 0) {
       throw new ContractValidateException(
-          "energy limit not less than 0");
+          "energy limit must > 0");
     }
 
     byte[] contractAddress = contract.getContractAddress().toByteArray();
