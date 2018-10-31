@@ -12,6 +12,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.MerkelRoot;
 import org.tron.protos.Contract.ZksnarkV0TransferContract;
+import org.tron.protos.Contract.zkv0proof;
 
 @Slf4j
 public class ZkV0TransferActuator extends AbstractActuator {
@@ -136,7 +137,7 @@ public class ZkV0TransferActuator extends AbstractActuator {
           "Needs both of cm2 and C2 are empty, or neither.");
     }
 
-    if (zkContract.getProof() == null) {
+    if (zkContract.getProof() == zkv0proof.getDefaultInstance()) {
       throw new ContractValidateException("Proof is null.");
     }
 
