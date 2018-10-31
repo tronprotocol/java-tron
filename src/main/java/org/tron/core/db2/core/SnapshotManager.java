@@ -225,7 +225,7 @@ public class SnapshotManager implements RevokingDatabase {
   public void updateSolidity(long oldSolidifiedBlockNum, long newSolidifedBlockNum) {
     long diff = newSolidifedBlockNum - oldSolidifiedBlockNum;
 
-
+    printDebug("before upadtesolidity");
     for (int i = 0; i < diff; i++) {
       ++flushCount;
       for (RevokingDBWithCachingNewValue db : dbs) {
@@ -233,6 +233,7 @@ public class SnapshotManager implements RevokingDatabase {
       }
     }
     flush();
+    printDebug("after upadtesolidity");
   }
 
   private boolean shouldBeRefreshed() {
