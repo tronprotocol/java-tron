@@ -89,7 +89,8 @@ public class ReceiptCapsule {
    * payEnergyBill pay receipt energy bill by energy processor.
    */
   public void payEnergyBill(Manager manager, AccountCapsule origin, AccountCapsule caller,
-      long percent, EnergyProcessor energyProcessor, long now) throws BalanceInsufficientException {
+      long percent, long energyLimit, EnergyProcessor energyProcessor, long now)
+      throws BalanceInsufficientException {
     if (receipt.getEnergyUsageTotal() <= 0) {
       return;
     }
@@ -98,8 +99,8 @@ public class ReceiptCapsule {
       payEnergyBill(manager, caller, receipt.getEnergyUsageTotal(), energyProcessor, now);
     } else {
       long originUsage = Math.multiplyExact(receipt.getEnergyUsageTotal(), percent) / 100;
-      originUsage = Math
-          .min(originUsage, energyProcessor.getAccountLeftEnergyFromFreeze(origin));
+      originUsage = Math.min(originUsage,
+          Math.min(energyProcessor.getAccountLeftEnergyFromFreeze(origin), energyLimit));
 
       long callerUsage = receipt.getEnergyUsageTotal() - originUsage;
       energyProcessor.useEnergy(origin, originUsage, now);

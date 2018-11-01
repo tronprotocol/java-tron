@@ -157,6 +157,7 @@ public class TransactionTrace {
     byte[] originAccount;
     byte[] callerAccount;
     long percent = 0;
+    long energyLimit = 0;
     switch (trxType) {
       case TRX_CONTRACT_CREATION_TYPE:
         callerAccount = TransactionCapsule.getOwner(trx.getInstance().getRawData().getContract(0));
@@ -165,13 +166,14 @@ public class TransactionTrace {
       case TRX_CONTRACT_CALL_TYPE:
         TriggerSmartContract callContract = ContractCapsule
             .getTriggerContractFromTransaction(trx.getInstance());
-        callerAccount = callContract.getOwnerAddress().toByteArray();
-
-        ContractCapsule contract =
+        ContractCapsule contractCapsule =
             dbManager.getContractStore().get(callContract.getContractAddress().toByteArray());
-        originAccount = contract.getInstance().getOriginAddress().toByteArray();
-        percent = Math.max(100 - contract.getConsumeUserResourcePercent(), 0);
+
+        callerAccount = callContract.getOwnerAddress().toByteArray();
+        originAccount = contractCapsule.getOriginAddress();
+        percent = Math.max(100 - contractCapsule.getConsumeUserResourcePercent(), 0);
         percent = Math.min(percent, 100);
+        energyLimit = contractCapsule.getEnergyLimit();
         break;
       default:
         return;
@@ -184,7 +186,7 @@ public class TransactionTrace {
         dbManager,
         origin,
         caller,
-        percent,
+        percent, energyLimit,
         energyProcessor,
         dbManager.getWitnessController().getHeadSlot());
   }
