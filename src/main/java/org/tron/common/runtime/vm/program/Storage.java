@@ -12,7 +12,7 @@ import org.tron.core.db.StorageRowStore;
 public class Storage {
 
   @Getter
-  private byte[] addrHash;  // contract address
+  private byte[] addrHash;
   @Getter
   private StorageRowStore store;
   @Getter
