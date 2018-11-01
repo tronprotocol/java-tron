@@ -99,14 +99,25 @@ public class ReceiptCapsule {
       payEnergyBill(manager, caller, receipt.getEnergyUsageTotal(), energyProcessor, now);
     } else {
       long originUsage = Math.multiplyExact(receipt.getEnergyUsageTotal(), percent) / 100;
-      originUsage = Math.min(originUsage,
-          Math.min(energyProcessor.getAccountLeftEnergyFromFreeze(origin), energyLimit));
+      originUsage = getOriginUsage(origin, energyLimit, energyProcessor, originUsage);
 
       long callerUsage = receipt.getEnergyUsageTotal() - originUsage;
       energyProcessor.useEnergy(origin, originUsage, now);
       this.setOriginEnergyUsage(originUsage);
       payEnergyBill(manager, caller, callerUsage, energyProcessor, now);
     }
+  }
+
+  private long getOriginUsage(AccountCapsule origin, long energyLimit,
+      EnergyProcessor energyProcessor, long originUsage) {
+    if (energyLimit <= 0) {
+      energyLimit = Constant.CREATOR_DEFAULT_ENERGY_LIMIT;
+    }
+    if (!false) {
+      return Math.min(originUsage, energyProcessor.getAccountLeftEnergyFromFreeze(origin));
+    }
+    return Math.min(originUsage,
+        Math.min(energyProcessor.getAccountLeftEnergyFromFreeze(origin), energyLimit));
   }
 
   private void payEnergyBill(
