@@ -2,6 +2,7 @@ package org.tron.core.db2.core;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
+import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -13,12 +14,12 @@ import org.tron.core.db2.common.LevelDB;
 
 public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 
-  @Getter
-  private Snapshot solidity;
+//  @Getter
+//  private Snapshot solidity;
 
   public SnapshotRoot(String parentName, String name) {
     db = new LevelDB(parentName, name);
-    solidity = this;
+    solidity = new WeakReference<>(this);
   }
 
   @Override
@@ -84,13 +85,13 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
     ((LevelDB) db).reset();
   }
 
-  @Override
-  public void resetSolidity() {
-    solidity = this;
-  }
-
-  @Override
-  public void updateSolidity() {
-    solidity = solidity.getNext();
-  }
+//  @Override
+//  public void resetSolidity() {
+//    solidity = this;
+//  }
+//
+//  @Override
+//  public void updateSolidity() {
+//    solidity = solidity.getNext();
+//  }
 }
