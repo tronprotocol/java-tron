@@ -263,7 +263,7 @@ public class SnapshotManager implements RevokingDatabase {
       List<Snapshot> snapshots = new ArrayList<>();
 
       SnapshotRoot root = (SnapshotRoot) db.getHead().getRoot();
-      Snapshot next = root.getNext();
+      Snapshot next = root;
       for (int i = 0; i < flushCount; ++i) {
         // debug begin
 //        String dbName = db.getDbName();
@@ -283,9 +283,9 @@ public class SnapshotManager implements RevokingDatabase {
 //          }
 //        }
         // debug end
+        next = next.getNext();
         snapshots.add(next);
         next.getCause().resetSolidity();
-        next = next.getNext();
       }
 
       // debug begin
@@ -336,9 +336,9 @@ public class SnapshotManager implements RevokingDatabase {
       }
 
       String dbName = db.getDbName();
-      Snapshot root = head.getRoot();
-      Snapshot next = root.getNext();
+      Snapshot next = head.getRoot();
       for (int i = 0; i < flushCount; ++i) {
+        next = next.getNext();
         SnapshotImpl snapshot = (SnapshotImpl) next;
         DB<Key, Value> keyValueDB = snapshot.getDb();
         for (Map.Entry<Key, Value> e : keyValueDB) {
@@ -357,7 +357,6 @@ public class SnapshotManager implements RevokingDatabase {
 //          }
           // debug end
         }
-        next = next.getNext();
       }
     }
 
