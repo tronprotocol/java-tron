@@ -6,6 +6,8 @@ import org.springframework.stereotype.Component;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
+import org.tron.core.db2.common.IRevokingDB;
+import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.net.node.Node;
 import org.tron.core.net.node.NodeDelegate;
 import org.tron.core.net.node.NodeDelegateImpl;
@@ -124,6 +126,11 @@ public class ApplicationImpl implements Application {
   }
 
   private void closeAllStore() {
+//    if (dbManager.getRevokingStore().getClass() == SnapshotManager.class) {
+//      ((SnapshotManager) dbManager.getRevokingStore()).getDbs().forEach(IRevokingDB::close);
+//    } else {
+//      dbManager.closeAllStore();
+//    }
     dbManager.closeAllStore();
   }
 

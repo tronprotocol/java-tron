@@ -30,6 +30,16 @@ public class LevelDB implements DB<byte[], byte[]> {
   }
 
   @Override
+  public long size() {
+    return db.getTotal();
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return size() == 0;
+  }
+
+  @Override
   public void remove(byte[] key) {
     db.deleteData(key);
   }
@@ -44,6 +54,7 @@ public class LevelDB implements DB<byte[], byte[]> {
         .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
         .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll);
     db.updateByBatch(rows, writeOptions);
+//    db.reOpen();
   }
 
   public void close() {

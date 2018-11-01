@@ -35,10 +35,7 @@ public class GetAccountServlet extends HttpServlet {
       JsonFormat.merge(jsonObject.toJSONString(), build);
       Account reply = wallet.getAccount(build.build());
       if (reply != null) {
-        AccountCapsule accountCapsule = new AccountCapsule(reply);
-        BandwidthProcessor processor = new BandwidthProcessor(dbManager);
-        processor.updateUsage(accountCapsule);
-        response.getWriter().println(JsonFormat.printToString(accountCapsule.getInstance()));
+        response.getWriter().println(JsonFormat.printToString(reply));
       } else {
         response.getWriter().println("{}");
       }
@@ -60,10 +57,7 @@ public class GetAccountServlet extends HttpServlet {
       JsonFormat.merge(account, build);
       Account reply = wallet.getAccount(build.build());
       if (reply != null) {
-        AccountCapsule accountCapsule = new AccountCapsule(reply);
-        BandwidthProcessor processor = new BandwidthProcessor(dbManager);
-        processor.updateUsage(accountCapsule);
-        response.getWriter().println(JsonFormat.printToString(accountCapsule.getInstance()));
+        response.getWriter().println(JsonFormat.printToString(reply));
       } else {
         response.getWriter().println("{}");
       }

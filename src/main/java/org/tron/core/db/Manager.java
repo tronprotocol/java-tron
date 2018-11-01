@@ -36,9 +36,6 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
-import org.tron.common.runtime.Runtime;
-import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
-import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.SessionOptional;
@@ -49,7 +46,6 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -81,6 +77,7 @@ import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
@@ -126,6 +123,10 @@ public class Manager {
   @Autowired
   private ContractStore contractStore;
   @Autowired
+  private DelegatedResourceStore delegatedResourceStore;
+  @Autowired
+  private DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore;
+  @Autowired
   @Getter
   private StorageRowStore storageRowStore;
 
@@ -153,6 +154,10 @@ public class Manager {
   @Getter
   @Setter
   private String netType;
+
+  @Getter
+  @Setter
+  private WitnessService witnessService;
 
   @Getter
   @Setter
@@ -194,6 +199,15 @@ public class Manager {
 
   public void setWitnessScheduleStore(final WitnessScheduleStore witnessScheduleStore) {
     this.witnessScheduleStore = witnessScheduleStore;
+  }
+
+
+  public DelegatedResourceStore getDelegatedResourceStore() {
+    return delegatedResourceStore;
+  }
+
+  public DelegatedResourceAccountIndexStore getDelegatedResourceAccountIndexStore() {
+    return delegatedResourceAccountIndexStore;
   }
 
   public CodeStore getCodeStore() {
@@ -764,9 +778,9 @@ public class Manager {
 
           logger.warn(
               "******** before switchFork ******* push block: "
-                  + block.getShortString()
+                  + block.toString()
                   + ", new block:"
-                  + newBlock.getShortString()
+                  + newBlock.toString()
                   + ", dynamic head num: "
                   + dynamicPropertiesStore.getLatestBlockHeaderNumber()
                   + ", dynamic head hash: "
@@ -785,9 +799,9 @@ public class Manager {
 
           logger.warn(
               "******** after switchFork ******* push block: "
-                  + block.getShortString()
+                  + block.toString()
                   + ", new block:"
-                  + newBlock.getShortString()
+                  + newBlock.toString()
                   + ", dynamic head num: "
                   + dynamicPropertiesStore.getLatestBlockHeaderNumber()
                   + ", dynamic head hash: "
@@ -960,25 +974,20 @@ public class Manager {
 
     consumeBandwidth(trxCap, trace);
 
-    DepositImpl deposit = DepositImpl.createRoot(this);
-    Runtime runtime = new Runtime(trace, blockCap, deposit, new ProgramInvokeFactoryImpl());
-    if (runtime.isCallConstant()) {
-      throw new VMIllegalException("cannot call constant method ");
-    }
-    trace.init();
-    trace.exec(runtime);
+    trace.init(blockCap);
+    trace.checkIsConstant();
+    trace.exec();
 
     if (Objects.nonNull(blockCap)) {
-      trace.setResult(runtime);
+      trace.setResult();
       if (!blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
         if (trace.checkNeedRetry()) {
           String txId = Hex.toHexString(trxCap.getTransactionId().getBytes());
           logger.info("Retry for tx id: {}", txId);
-          deposit = DepositImpl.createRoot(this);
-          runtime = new Runtime(trace, blockCap, deposit, new ProgramInvokeFactoryImpl());
-          trace.init();
-          trace.exec(runtime);
-          trace.setResult(runtime);
+          trace.init(blockCap);
+          trace.checkIsConstant();
+          trace.exec();
+          trace.setResult();
           logger.info("Retry result for tx id: {}, tx resultCode in receipt: {}",
               txId, trace.getReceipt().getResult());
         }
@@ -986,18 +995,16 @@ public class Manager {
       }
     }
 
-    trace.finalization(runtime);
+    trace.finalization();
     if (Objects.nonNull(blockCap)) {
       if (getDynamicPropertiesStore().supportVM()) {
-        trxCap.setResult(runtime);
+        trxCap.setResultCode(trace.getReceipt().getResult());
       }
     }
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
 
-    ReceiptCapsule traceReceipt = trace.getReceipt();
-
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
-        .buildInstance(trxCap, blockCap, runtime, traceReceipt);
+        .buildInstance(trxCap, blockCap, trace);
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
 
@@ -1026,17 +1033,17 @@ public class Manager {
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException {
 
     //check that the first block after the maintenance period has just been processed
-   // if (lastHeadBlockIsMaintenanceBefore != lastHeadBlockIsMaintenance()) {
-      if (!witnessController.validateWitnessSchedule(witnessCapsule.getAddress(), when)) {
-        logger.info("It's not my turn, "
-            + "and the first block after the maintenance period has just been processed");
-        
-        logger.info("when:{},lastHeadBlockIsMaintenanceBefore:{},lastHeadBlockIsMaintenanceAfter:{}",
-                when, lastHeadBlockIsMaintenanceBefore,lastHeadBlockIsMaintenance() );
-        
-        return null;
-      }
-   // }
+    // if (lastHeadBlockIsMaintenanceBefore != lastHeadBlockIsMaintenance()) {
+    if (!witnessController.validateWitnessSchedule(witnessCapsule.getAddress(), when)) {
+      logger.info("It's not my turn, "
+          + "and the first block after the maintenance period has just been processed");
+
+      logger.info("when:{},lastHeadBlockIsMaintenanceBefore:{},lastHeadBlockIsMaintenanceAfter:{}",
+          when, lastHeadBlockIsMaintenanceBefore, lastHeadBlockIsMaintenance());
+
+      return null;
+    }
+    // }
 
     final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
@@ -1180,6 +1187,10 @@ public class Manager {
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
     // todo set revoking db max size.
 
+    if (witnessService != null){
+      witnessService.processBlock(block);
+    }
+
     // checkWitness
     if (!witnessController.validateWitnessSchedule(block)) {
       throw new ValidateScheduleException("validateWitnessSchedule error");
@@ -1206,7 +1217,6 @@ public class Manager {
     this.updateTransHashCache(block);
     updateMaintenanceState(needMaint);
     updateRecentBlock(block);
-
   }
 
   private void updateTransHashCache(BlockCapsule block) {
@@ -1248,8 +1258,19 @@ public class Manager {
       logger.warn("latestSolidifiedBlockNum = 0,LatestBlockNum:{}", numbers);
       return;
     }
+
+    long oldSolidifiedBlockNum = dynamicPropertiesStore.getLatestSolidifiedBlockNum();
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
     logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
+    BlockId blockId;
+    try {
+      blockId = getBlockIdByNum(latestSolidifiedBlockNum);
+    } catch (ItemNotFoundException e) {
+      blockId = null;
+    }
+    if (blockId == null || !blockStore.hasOnSolidity(blockId.getBytes())) {
+      revokingStore.updateSolidity(oldSolidifiedBlockNum, latestSolidifiedBlockNum);
+    }
   }
 
   public void updateFork() {
@@ -1404,10 +1425,11 @@ public class Manager {
     closeOneStore(recentBlockStore);
     closeOneStore(transactionHistoryStore);
     closeOneStore(votesStore);
+    closeOneStore(delegatedResourceStore);
     logger.info("******** end to close db ********");
   }
 
-  private void closeOneStore(ITronChainBase database) {
+  public void closeOneStore(ITronChainBase database) {
     logger.info("******** begin to close " + database.getName() + " ********");
     try {
       database.close();
