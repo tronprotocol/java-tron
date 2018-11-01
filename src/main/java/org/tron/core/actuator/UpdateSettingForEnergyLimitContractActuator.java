@@ -49,7 +49,7 @@ public class UpdateSettingForEnergyLimitContractActuator extends AbstractActuato
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (!false) {
+    if (!true) {
       throw new ContractValidateException(
           "contract type error,unexpected type [UpdateSettingForEnergyLimitContract]");
     }

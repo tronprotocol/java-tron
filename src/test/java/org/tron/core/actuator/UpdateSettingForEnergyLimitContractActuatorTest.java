@@ -37,13 +37,10 @@ public class UpdateSettingForEnergyLimitContractActuatorTest {
   private static TronApplicationContext context;
   private static Manager dbManager;
   private static final String dbPath = "output_updatesettingforenergylimitcontract_test";
-  private static final String OWNER_ADDRESS =
-      Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
+  private static String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_ACCOUNT_NAME = "test_account";
-  private static final String SECOND_ACCOUNT_ADDRESS =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d427122222";
-  private static final String OWNER_ADDRESS_NOTEXIST =
-      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+  private static String SECOND_ACCOUNT_ADDRESS;
+  private static String OWNER_ADDRESS_NOTEXIST;
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
   private static final String SMART_CONTRACT_NAME = "smart_contarct";
   private static final String CONTRACT_ADDRESS = "111111";
@@ -63,6 +60,12 @@ public class UpdateSettingForEnergyLimitContractActuatorTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
+    OWNER_ADDRESS =
+        Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
+    SECOND_ACCOUNT_ADDRESS =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d427122222";
+    OWNER_ADDRESS_NOTEXIST =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
   }
 
   /**
