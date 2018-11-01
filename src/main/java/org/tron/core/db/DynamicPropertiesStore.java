@@ -115,6 +115,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] STORAGE_EXCHANGE_TAX_RATE = "STORAGE_EXCHANGE_TAX_RATE".getBytes();
 
   private static final byte[] FORK_CONTROLLER = "FORK_CONTROLLER".getBytes();
+  private static final String FORK_PREFIX = "FORK_VERSION_";
 
   //This value is only allowed to be 0, 1, -1
   private static final byte[] REMOVE_THE_POWER_OF_THE_GR = "REMOVE_THE_POWER_OF_THE_GR".getBytes();
@@ -1217,6 +1218,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void forked() {
     put(FORK_CONTROLLER, new BytesCapsule(Boolean.toString(true).getBytes()));
+  }
+
+  public void statsByVersion(int version, byte[] stats) {
+    String statsKey = FORK_PREFIX + version;
+    put(statsKey.getBytes(), new BytesCapsule(stats));
+  }
+
+  public byte[] statsByVersion(int version) {
+    String statsKey = FORK_PREFIX + version;
+    return revokingDB.getUnchecked(statsKey.getBytes());
   }
 
   public boolean getForked() {
