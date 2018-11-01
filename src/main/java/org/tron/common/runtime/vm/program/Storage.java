@@ -28,7 +28,7 @@ public class Storage {
   public Storage(Storage storage) {
     this.addrHash = storage.addrHash.clone();
     this.store = storage.store;
-    storage.getRowCache().forEach((rowKey, row) -> {
+    storage.getRowCache().forEach((DataWord rowKey, StorageRowCapsule row) -> {
       StorageRowCapsule newRow = new StorageRowCapsule(row);
       this.rowCache.put(rowKey.clone(), newRow);
     });

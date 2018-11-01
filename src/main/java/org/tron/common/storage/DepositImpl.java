@@ -39,7 +39,7 @@ import org.tron.protos.Protocol.AccountType;
 
 @Slf4j(topic = "deposit")
 public class DepositImpl implements Deposit {
-
+  private static final int OLD_BLOCK_VERSION = 3;
   private static final byte[] LATEST_PROPOSAL_NUM = "LATEST_PROPOSAL_NUM".getBytes();
   private static final byte[] WITNESS_ALLOWANCE_FROZEN_TIME = "WITNESS_ALLOWANCE_FROZEN_TIME"
       .getBytes();
@@ -291,7 +291,6 @@ public class DepositImpl implements Deposit {
     return code;
   }
 
-  private static final int OLD_BLOCK_VERSION = 3;
   @Override
   public synchronized Storage getStorage(byte[] address) {
     Key key = Key.create(address);
@@ -603,7 +602,7 @@ public class DepositImpl implements Deposit {
   }
 
   private void commitStorageCache(Deposit deposit) {
-    storageCache.forEach((address, storage) -> {
+    storageCache.forEach((Key address, Storage storage) -> {
       if (deposit != null) {
         // write to parent cache
         deposit.putStorage(address, storage);

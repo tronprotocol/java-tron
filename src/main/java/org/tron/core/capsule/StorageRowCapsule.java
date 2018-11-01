@@ -35,11 +35,10 @@ public class StorageRowCapsule implements ProtoCapsule<byte[]> {
   @Getter
   private boolean dirty = false;
 
-  private void markDirty() {
-    dirty = true;
-  }
-
-  private StorageRowCapsule() {
+  public StorageRowCapsule(StorageRowCapsule rowCapsule) {
+    this.rowKey = rowCapsule.getRowKey().clone();
+    this.rowValue = rowCapsule.getRowValue().clone();
+    this.dirty = rowCapsule.isDirty();
   }
 
   public StorageRowCapsule(byte[] rowKey, byte[] rowValue) {
@@ -48,21 +47,17 @@ public class StorageRowCapsule implements ProtoCapsule<byte[]> {
     markDirty();
   }
 
-  public StorageRowCapsule(StorageRowCapsule rowCapsule) {
-    this.rowKey = rowCapsule.getRowKey().clone();
-    this.rowValue = rowCapsule.getRowValue().clone();
-    this.dirty = rowCapsule.isDirty();
-  }
-
   public StorageRowCapsule(byte[] rowValue) {
     this.rowValue = rowValue;
   }
 
+  private void markDirty() {
+    dirty = true;
+  }
 
   public Sha256Hash getHash() {
     return Sha256Hash.of(this.rowValue);
   }
-
 
   public DataWord getValue() {
     return new DataWord(this.rowValue);
