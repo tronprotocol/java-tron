@@ -72,6 +72,10 @@ public class ForkController {
     }
 
     int version = blockCapsule.getInstance().getBlockHeader().getRawData().getVersion();
+    if (passSet.contains(version)) {
+      return;
+    }
+
     byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(version);
     if (check(stats)) {
       passSet.add(version);
