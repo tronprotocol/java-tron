@@ -69,9 +69,11 @@ public class SnapshotManager implements RevokingDatabase {
 
     printDebug("before buildSession");
 
-    flushCount = flushCount + (size - maxSize.get());
-    size = maxSize.get();
-    flush();
+    if (size > maxSize.get()) {
+      flushCount = flushCount + (size - maxSize.get());
+      size = maxSize.get();
+      flush();
+    }
 
     // debug begin
 //    debug();
