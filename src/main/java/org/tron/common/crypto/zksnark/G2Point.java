@@ -16,6 +16,15 @@ public class G2Point {
     y[1] = y2;
   }
 
+  public G2Point(byte[] x1, byte[] x2, byte[] y1, byte[] y2) {
+    x = new BigInteger[2];
+    y = new BigInteger[2];
+    x[0] = new BigInteger(x1);
+    x[1] = new BigInteger(x2);
+    y[0] = new BigInteger(y1);
+    y[1] = new BigInteger(y2);
+  }
+
   public BN128G2 toBN128G2() {
     return BN128G2
         .create(x[1].toByteArray(), x[0].toByteArray(), y[1].toByteArray(), y[0].toByteArray());

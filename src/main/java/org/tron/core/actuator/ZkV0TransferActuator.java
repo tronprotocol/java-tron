@@ -3,8 +3,14 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.math.BigInteger;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.crypto.zksnark.Proof;
+import org.tron.common.crypto.zksnark.VerifyingKey;
+import org.tron.common.crypto.zksnark.ZkVerify;
+import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.Manager;
@@ -54,6 +60,17 @@ public class ZkV0TransferActuator extends AbstractActuator {
       if (!Wallet.addressValid(ownerAddress.toByteArray())) {
         throw new ContractValidateException("Invalid ownerAddress");
       }
+      AccountCapsule ownerAccount = dbManager.getAccountStore().get(ownerAddress.toByteArray());
+      if (ownerAccount == null) {
+        throw new ContractValidateException(
+            "Validate ZkV0TransferActuator error, no OwnerAccount.");
+      }
+
+      long balance = ownerAccount.getBalance();
+      if (balance < vFromPub) {
+        throw new ContractValidateException(
+            "Validate ZkV0TransferActuator error, balance is not sufficient.");
+      }
     }
     if (vFromPub < 0) {
       throw new ContractValidateException("vFromPub can not less than 0.");
@@ -72,6 +89,16 @@ public class ZkV0TransferActuator extends AbstractActuator {
       if (toAddress.equals(ownerAddress)) {
         throw new ContractValidateException("Cannot transfer trx to yourself.");
       }
+      AccountCapsule toAccount = dbManager.getAccountStore().get(toAddress.toByteArray());
+      if (toAccount == null) {
+        throw new ContractValidateException(
+            "Validate ZkV0TransferActuator error, no toAccount.");
+      }
+      try {
+        Math.addExact(toAccount.getBalance(), vToPub);
+      } catch (ArithmeticException e) {
+        throw new ContractValidateException(e.getMessage());
+      }
     }
     if (vToPub < 0) {
       throw new ContractValidateException("vToPub can not less than 0.");
@@ -82,67 +109,88 @@ public class ZkV0TransferActuator extends AbstractActuator {
     }
 
     MerkelRoot rt = zkContract.getRt();
+    if (rt == MerkelRoot.getDefaultInstance() || rt.getRt().size() != 32) {
+      throw new ContractValidateException("Merkel root is invalid.");
+    }
+    //TODO: //check rt
     ByteString nf1 = zkContract.getNf1();
+    if (nf1.size() != 32) {
+      throw new ContractValidateException("Nf1 is invalid.");
+    }
+
     ByteString nf2 = zkContract.getNf2();
-    if (rt == MerkelRoot.getDefaultInstance()) {
-      if (nf1 != ByteString.EMPTY || nf2 != ByteString.EMPTY) {
-        throw new ContractValidateException("Merkel root is null, nf1 nf2 need empty.");
-      }
-    } else {
-      //check rt
-      if (nf1 == ByteString.EMPTY && nf2 == ByteString.EMPTY) {
-        throw new ContractValidateException("Merkel root is not null, both nf1 nf2 is empty.");
-      }
-      if (nf1.equals(nf2)) {
-        throw new ContractValidateException("Nf1 equals to nf2.");
-      }
-      //check nf1 nf2
+    if (nf2.size() != 32) {
+      throw new ContractValidateException("Nf2 is invalid.");
     }
-    if (ownerAddress.isEmpty() && nf1.isEmpty() && nf2.isEmpty()) {
-      throw new ContractValidateException("All from address is empty.");
+
+    if (nf1.equals(nf2)) {
+      throw new ContractValidateException("Nf1 equals to nf2.");
     }
+    //TODO: //check nf1 nf2
 
     ByteString cm1 = zkContract.getCm1();
+    if (cm1.size() != 32) {
+      throw new ContractValidateException("Cm1 is invalid.");
+    }
+
     ByteString cm2 = zkContract.getCm2();
-    if (toAddress.isEmpty() && cm1.isEmpty() && cm2.isEmpty()) {
-      throw new ContractValidateException("All to address is empty.");
+    if (cm2.size() != 32) {
+      throw new ContractValidateException("Cm2 is invalid.");
     }
 
-    if (nf1.isEmpty() && nf2.isEmpty() && cm1.isEmpty() && cm2.isEmpty()) {
-      throw new ContractValidateException("No shield from and to address.");
+    if (cm1.equals(cm2)) {
+      throw new ContractValidateException("Cm1 equals to Cm2.");
     }
 
-    if (!cm1.isEmpty() || !cm2.isEmpty()) {
-      if (zkContract.getRandomSeed().isEmpty()) {
-        throw new ContractValidateException("randomSeed is empty.");
-      }
-      if (zkContract.getEpk().isEmpty()) {
-        throw new ContractValidateException("Epk is empty.");
-      }
+    if (zkContract.getPksig().size() != 32) {
+      throw new ContractValidateException("Pksig is invalid.");
     }
-    if (nf1.isEmpty() ^ zkContract.getH1().isEmpty()) {
-      throw new ContractValidateException(
-          "Needs both of nf1 and h1 are empty, or neither.");
+
+    if (zkContract.getRandomSeed().size() != 32) {
+      throw new ContractValidateException("RandomSeed is invalid.");
     }
-    if (nf2.isEmpty() ^ zkContract.getH2().isEmpty()) {
-      throw new ContractValidateException(
-          "Needs both of nf2 and h2 are empty, or neither.");
+
+    if (zkContract.getEpk().size() != 32) {
+      throw new ContractValidateException("Epk is invalid.");
     }
-    if (cm1.isEmpty() ^ zkContract.getC1().isEmpty()) {
-      throw new ContractValidateException(
-          "Needs both of cm1 and C1 are empty, or neither.");
+
+    if (zkContract.getH1().size() != 32) {
+      throw new ContractValidateException("H1 is invalid.");
     }
-    if (cm2.isEmpty() ^ zkContract.getC2().isEmpty()) {
-      throw new ContractValidateException(
-          "Needs both of cm2 and C2 are empty, or neither.");
+
+    if (zkContract.getH2().size() != 32) {
+      throw new ContractValidateException("H2 is invalid.");
+    }
+
+    if (zkContract.getC1().isEmpty()) {
+      throw new ContractValidateException("C1 is empty.");
+    }
+
+    if (zkContract.getC2().isEmpty()) {
+      throw new ContractValidateException("C2 is empty.");
     }
 
     if (zkContract.getProof() == zkv0proof.getDefaultInstance()) {
       throw new ContractValidateException("Proof is null.");
     }
 
-    //computer witness
+    Proof proof = ZksnarkUtils.zkproof2Proof(zkContract.getProof());
+    if (proof == null) {
+      throw new ContractValidateException("Proof is invalid.");
+    }
+
+    //computer witness rt h_sig h1 h2 nf1 nf2 cm1 cm2 v_pub_old v_pub_new
+    byte[] hSig = ZksnarkUtils.computeHSig(zkContract);
+    long vPubNew = Math.addExact(vToPub, calcFee());
+    BigInteger[] witness = ZksnarkUtils
+        .witnessMap(rt.getRt().toByteArray(), hSig, zkContract.getH1().toByteArray(),
+            zkContract.getH2().toByteArray(), nf1.toByteArray(), nf2.toByteArray(),
+            cm1.toByteArray(), cm2.toByteArray(), vFromPub, vPubNew);
     //verify
+    int result = new ZkVerify().verify(VerifyingKey.getInstance(), witness, proof);
+    if (result != 0) {
+      throw new ContractValidateException("verify failed return " + result + " .");
+    }
     return true;
   }
 
