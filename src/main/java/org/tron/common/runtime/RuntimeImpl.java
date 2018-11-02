@@ -271,8 +271,9 @@ public class RuntimeImpl implements Runtime {
 
     long callerEnergyLimit = getEnergyLimitWithFixRatio(caller, feeLimit, callValue);
     if (Arrays.equals(creator.getAddress().toByteArray(), caller.getAddress().toByteArray())) {
-      // TODO: 写一下详细情况：这个地方会不会 导致 开发者调用自己的合约的时候, 由于feeLimit设置较小, 调用失败?
-      // when the creator calls his own contract, this logic
+      // when the creator calls his own contract, this logic will be used.
+      // so, the creator must use a BIG feeLimit to call his own contract,
+      // which will cost the feeLimit TRX when the creator's frozen energy is 0.
       return callerEnergyLimit;
     }
 
@@ -331,7 +332,7 @@ public class RuntimeImpl implements Runtime {
           this.blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
         thisTxCPULimitInUsRatio = 1.0;
       } else {
-        // self witness 3 or other witness or fullnode verifies block
+        // self witness or other witness or fullnode verifies block
         if (trx.getRet(0).getContractRet() == contractResult.OUT_OF_TIME) {
           thisTxCPULimitInUsRatio = Args.getInstance().getMinTimeRatio();
         } else {
@@ -339,7 +340,7 @@ public class RuntimeImpl implements Runtime {
         }
       }
     } else {
-      // self witness 1, other witness 1, fullnode 1
+      // self witness or other witness or fullnode receives tx
       thisTxCPULimitInUsRatio = 1.0;
     }
 
