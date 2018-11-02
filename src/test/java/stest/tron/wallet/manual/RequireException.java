@@ -1,4 +1,4 @@
-package stest.tron.wallet.contract.exceptionfee;
+package stest.tron.wallet.manual;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -572,7 +572,6 @@ public class RequireException {
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
 
-
     String txid = "";
     String contractName1 = "ContractGasNoenough";
     String code1 = "608060405234801561001057600080fd5b50610182806100206000396000f30060806040526004"
@@ -654,8 +653,6 @@ public class RequireException {
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
 
-
-
     String saleContractString = "\"" + Base58.encode58Check(contractAddress) + "\"";
     String txid = "";
     String contractName1 = "MessageUseContract";
@@ -736,7 +733,6 @@ public class RequireException {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
-
 
     String txid = "";
     String saleContractString = "\"" + Base58.encode58Check(contractAddress) + "\"";
