@@ -112,7 +112,7 @@ public class ReceiptCapsule {
   private long getOriginUsage(AccountCapsule origin, long originEnergyLimit,
       EnergyProcessor energyProcessor, long originUsage) {
 
-    if (RuntimeImpl.isNewVersion()) {
+    if (RuntimeImpl.IS_NEW_VERSION) {
       return Math.min(originUsage,
           Math.min(energyProcessor.getAccountLeftEnergyFromFreeze(origin), originEnergyLimit));
     }
@@ -145,8 +145,9 @@ public class ReceiptCapsule {
       }
       account.setBalance(balance - energyFee);
 
+      //send to blackHole
       manager.adjustBalance(manager.getAccountStore().getBlackhole().getAddress().toByteArray(),
-          energyFee);//send to blackHole
+          energyFee);
     }
 
     manager.getAccountStore().put(account.getAddress().toByteArray(), account);

@@ -96,6 +96,10 @@ public class RuntimeImpl implements Runtime {
   private TransactionTrace trace;
   private boolean isStaticCall;
 
+  // TODO according to version
+  public static final boolean IS_NEW_VERSION = false;
+
+
   /**
    * For blockCap's trx run
    */
@@ -287,24 +291,25 @@ public class RuntimeImpl implements Runtime {
     if (consumeUserResourcePercent <= 0) {
       creatorEnergyLimit = min(energyProcessor.getAccountLeftEnergyFromFreeze(creator),
           originEnergyLimit);
-    } else if (consumeUserResourcePercent < Constant.ONE_HUNDRED) {
-      // creatorEnergyLimit =
-      // min(callerEnergyLimit * (100 - percent) / percent, creatorLeftFrozenEnergy, originEnergyLimit)
-
-      creatorEnergyLimit = min(
-          BigInteger.valueOf(callerEnergyLimit)
-              .multiply(BigInteger.valueOf(Constant.ONE_HUNDRED - consumeUserResourcePercent))
-              .divide(BigInteger.valueOf(consumeUserResourcePercent)).longValueExact(),
-          min(energyProcessor.getAccountLeftEnergyFromFreeze(creator), originEnergyLimit)
-      );
     } else {
+      if (consumeUserResourcePercent < Constant.ONE_HUNDRED) {
+        // creatorEnergyLimit =
+        // min(callerEnergyLimit * (100 - percent) / percent, creatorLeftFrozenEnergy, originEnergyLimit)
+
+        creatorEnergyLimit = min(
+            BigInteger.valueOf(callerEnergyLimit)
+                .multiply(BigInteger.valueOf(Constant.ONE_HUNDRED - consumeUserResourcePercent))
+                .divide(BigInteger.valueOf(consumeUserResourcePercent)).longValueExact(),
+            min(energyProcessor.getAccountLeftEnergyFromFreeze(creator), originEnergyLimit)
+        );
+      }
     }
     return Math.addExact(callerEnergyLimit, creatorEnergyLimit);
   }
 
   public long getEnergyLimit(AccountCapsule creator, AccountCapsule caller,
       TriggerSmartContract contract, long feeLimit, long callValue) {
-    if (isNewVersion()) { // TODO according to version
+    if (IS_NEW_VERSION) { // TODO according to version
       return getEnergyLimitWithFixRatio(creator, caller, contract, feeLimit, callValue);
     } else {
       return getEnergyLimitWithFloatRatio(creator, caller, contract, feeLimit, callValue);
@@ -312,15 +317,11 @@ public class RuntimeImpl implements Runtime {
   }
 
   public long getEnergyLimit(AccountCapsule creator, long feeLimit, long callValue) {
-    if (isNewVersion()) {  // TODO according to version
+    if (IS_NEW_VERSION) {  // TODO according to version
       return getEnergyLimitWithFixRatio(creator, feeLimit, callValue);
     } else {
       return getEnergyLimitWithFloatRatio(creator, feeLimit, callValue);
     }
-  }
-
-  public static boolean isNewVersion() { // TODO according to version
-    return false;
   }
 
   private double getCpuLimitInUsRatio() {
@@ -389,7 +390,7 @@ public class RuntimeImpl implements Runtime {
         .setContractAddress(ByteString.copyFrom(contractAddress)).build();
     long callValue = newSmartContract.getCallValue();
 
-    if (isNewVersion() && callValue < 0) {
+    if (IS_NEW_VERSION && callValue < 0) {
       throw new ContractValidateException("callValue must >= 0");
     }
 
@@ -402,7 +403,7 @@ public class RuntimeImpl implements Runtime {
             "feeLimit must be >= 0 and <= " + VMConfig.MAX_FEE_LIMIT);
       }
 
-      if (RuntimeImpl.isNewVersion()) {  // TODO according to version
+      if (RuntimeImpl.IS_NEW_VERSION) {  // TODO according to version
         long originEnergyLimit = newSmartContract.getOriginEnergyLimit();
         if (originEnergyLimit <= 0) {
           throw new ContractValidateException("The originEnergyLimit must be > 0");
@@ -481,7 +482,7 @@ public class RuntimeImpl implements Runtime {
     }
 
     long callValue = contract.getCallValue();
-    if (isNewVersion() && callValue < 0) {
+    if (IS_NEW_VERSION && callValue < 0) {
       throw new ContractValidateException("callValue must >= 0");
     }
 
