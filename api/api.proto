@@ -576,6 +576,16 @@ service Wallet {
       }
     };
   }
+
+  rpc GetNullifier (BytesMessage) returns (BytesMessage) {
+    option (google.api.http) = {
+      post: "/wallet/getnullifier"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/getnullifier"
+      }
+    };
+  }
 };
 
 
