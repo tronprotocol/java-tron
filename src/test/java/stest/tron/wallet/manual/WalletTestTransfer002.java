@@ -1,4 +1,4 @@
-package stest.tron.wallet.transfer;
+package stest.tron.wallet.manual;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -27,12 +27,12 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
-import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 @Slf4j
 public class WalletTestTransfer002 {
+
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -70,14 +70,14 @@ public class WalletTestTransfer002 {
     blockingStubExtension = WalletExtensionGrpc.newBlockingStub(channelSolidity);
   }
 
-    @Test(enabled = true)
+  @Test(enabled = true)
   public void testGetTotalTransaction() {
     NumberMessage beforeGetTotalTransaction = blockingStubFull
         .totalTransaction(GrpcAPI.EmptyMessage.newBuilder().build());
     logger.info(Long.toString(beforeGetTotalTransaction.getNum()));
     Long beforeTotalTransaction = beforeGetTotalTransaction.getNum();
     Assert.assertTrue(PublicMethed.sendcoin(toAddress, 1000000, fromAddress,
-        testKey002,blockingStubFull));
+        testKey002, blockingStubFull));
     NumberMessage afterGetTotalTransaction = blockingStubFull
         .totalTransaction(GrpcAPI.EmptyMessage.newBuilder().build());
     logger.info(Long.toString(afterGetTotalTransaction.getNum()));

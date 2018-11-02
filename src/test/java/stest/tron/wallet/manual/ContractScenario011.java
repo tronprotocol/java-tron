@@ -1,4 +1,4 @@
-package stest.tron.wallet.contract.scenario;
+package stest.tron.wallet.manual;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -284,47 +284,85 @@ public class ContractScenario011 {
         "getKitty(uint256)", "1", false, 0, 10000000, triggerAddress,
         triggerKey, blockingStubFull);
     logger.info("getKitty " + txid);
-    infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
 
     String newCxoAddress = "\"" + Base58.encode58Check(triggerAddress)
         + "\"";
 
     txid = PublicMethed.triggerContract(kittyCoreContractAddress,
-        "setCOO(address)",newCxoAddress,false,0,10000000,deployAddress,
-        deployKey,blockingStubFull);
+        "setCOO(address)", newCxoAddress, false, 0, 10000000, deployAddress,
+        deployKey, blockingStubFull);
     logger.info("COO " + txid);
-    infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
 
     txid = PublicMethed.triggerContract(kittyCoreContractAddress,
-        "setCFO(address)",newCxoAddress,false,0,10000000,deployAddress,
-        deployKey,blockingStubFull);
+        "setCFO(address)", newCxoAddress, false, 0, 10000000, deployAddress,
+        deployKey, blockingStubFull);
     logger.info("CFO " + txid);
-    infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
 
     txid = PublicMethed.triggerContract(kittyCoreContractAddress,
-        "setCEO(address)",newCxoAddress,false,0,1000000,deployAddress,
-        deployKey,blockingStubFull);
+        "setCEO(address)", newCxoAddress, false, 0, 1000000, deployAddress,
+        deployKey, blockingStubFull);
     logger.info("CEO " + txid);
-    infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
   }
 
   @Test(enabled = true)
   public void triggerUseTriggerEnergyUsage() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
-    Long beforeBalance = PublicMethed.queryAccount(triggerKey, blockingStubFull).getBalance();
+    ECKey ecKey3 = new ECKey(Utils.getRandom());
+    byte[] triggerUseTriggerEnergyUsageAddress = ecKey3.getAddress();
+    String triggerUseTriggerEnergyUsageKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
+    Assert.assertTrue(
+        PublicMethed.sendcoin(triggerUseTriggerEnergyUsageAddress, 100000000000L,
+            fromAddress, testKey002, blockingStubFull));
+    String newCxoAddress = "\"" + Base58.encode58Check(triggerUseTriggerEnergyUsageAddress)
+        + "\"";
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    String txid1;
+    String txid2;
+    String txid3;
+    txid1 = PublicMethed.triggerContract(kittyCoreContractAddress,
+        "setCOO(address)", newCxoAddress, false, 0, maxFeeLimit, triggerAddress,
+        triggerKey, blockingStubFull);
+    logger.info("COO " + txid);
+
+    txid2 = PublicMethed.triggerContract(kittyCoreContractAddress,
+        "setCFO(address)", newCxoAddress, false, 0, maxFeeLimit, triggerAddress,
+        triggerKey, blockingStubFull);
+    logger.info("CFO " + txid);
+
+    txid3 = PublicMethed.triggerContract(kittyCoreContractAddress,
+        "setCEO(address)", newCxoAddress, false, 0, maxFeeLimit, triggerAddress,
+        triggerKey, blockingStubFull);
+    logger.info("CEO " + txid);
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    infoById = PublicMethed.getTransactionInfoById(txid1, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+    infoById = PublicMethed.getTransactionInfoById(txid2, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+    infoById = PublicMethed.getTransactionInfoById(txid3, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Long beforeBalance = PublicMethed
+        .queryAccount(triggerUseTriggerEnergyUsageKey, blockingStubFull).getBalance();
     logger.info("before balance is " + Long.toString(beforeBalance));
     txid = PublicMethed.triggerContract(kittyCoreContractAddress,
         "createGen0Auction(uint256)", "0", false,
-        0, 100000000L, triggerAddress, triggerKey, blockingStubFull);
+        0, 100000000L, triggerUseTriggerEnergyUsageAddress, triggerUseTriggerEnergyUsageKey,
+        blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull1);
-    logger.info("after originEnergyUsage is " + Long
-        .toString(infoById.get().getReceipt().getOriginEnergyUsage()));
+    logger.info("Q " + Long
+        .toString(infoById.get().getReceipt().getEnergyFee()));
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsage() == 0);
     Assert.assertTrue(infoById.get().getReceipt().getEnergyFee() > 10000);
     Assert.assertTrue(infoById.get().getReceipt().getOriginEnergyUsage() > 10000);
@@ -333,12 +371,11 @@ public class ContractScenario011 {
         .getOriginEnergyUsage());
 
     Long fee = infoById.get().getFee();
-    Long afterBalance = PublicMethed.queryAccount(triggerKey, blockingStubFull1).getBalance();
+    Long afterBalance = PublicMethed
+        .queryAccount(triggerUseTriggerEnergyUsageKey, blockingStubFull1).getBalance();
     logger.info("after balance is " + Long.toString(afterBalance));
     logger.info("fee is " + Long.toString(fee));
     Assert.assertTrue(beforeBalance == afterBalance + fee);
-
-
 
     logger.info("before EnergyUsage is " + infoById.get().getReceipt().getEnergyUsage());
     logger.info("before EnergyFee is " + infoById.get().getReceipt().getEnergyFee());
@@ -346,19 +383,22 @@ public class ContractScenario011 {
         .getOriginEnergyUsage());
     logger.info("before EnergyTotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
 
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(triggerAddress,100000000L,
-        3,1,triggerKey,blockingStubFull));
-    beforeBalance = PublicMethed.queryAccount(triggerKey, blockingStubFull).getBalance();
+    Assert.assertTrue(
+        PublicMethed.freezeBalanceGetEnergy(triggerUseTriggerEnergyUsageAddress, 100000000L,
+            3, 1, triggerUseTriggerEnergyUsageKey, blockingStubFull));
+    beforeBalance = PublicMethed.queryAccount(triggerUseTriggerEnergyUsageKey, blockingStubFull)
+        .getBalance();
     logger.info("before balance is " + Long.toString(beforeBalance));
 
     AccountResourceMessage accountResource = PublicMethed
-        .getAccountResource(triggerAddress, blockingStubFull);
+        .getAccountResource(triggerUseTriggerEnergyUsageAddress, blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
     logger.info("before EnergyLimit is " + Long.toString(energyLimit));
 
     txid = PublicMethed.triggerContract(kittyCoreContractAddress,
         "createGen0Auction(uint256)", "0", false,
-        0, 100000000L, triggerAddress, triggerKey, blockingStubFull);
+        0, 100000000L, triggerUseTriggerEnergyUsageAddress, triggerUseTriggerEnergyUsageKey,
+        blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull1);
@@ -367,11 +407,13 @@ public class ContractScenario011 {
     logger.info("after OriginEnergyUsage is " + infoById.get().getReceipt().getOriginEnergyUsage());
     logger.info("after EnergyTotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
     fee = infoById.get().getFee();
-    afterBalance = PublicMethed.queryAccount(triggerKey, blockingStubFull1).getBalance();
+    afterBalance = PublicMethed.queryAccount(triggerUseTriggerEnergyUsageKey, blockingStubFull1)
+        .getBalance();
     logger.info("after balance is " + Long.toString(afterBalance));
     logger.info("fee is " + Long.toString(fee));
 
-    accountResource = PublicMethed.getAccountResource(triggerAddress, blockingStubFull1);
+    accountResource = PublicMethed
+        .getAccountResource(triggerUseTriggerEnergyUsageAddress, blockingStubFull1);
     energyLimit = accountResource.getEnergyLimit();
 
     logger.info("after EnergyLimit is " + Long.toString(energyLimit));
@@ -386,9 +428,6 @@ public class ContractScenario011 {
 
     Assert.assertTrue(beforeBalance == afterBalance + fee);
   }
-
-
-
 
 
   @AfterClass
