@@ -235,7 +235,6 @@ public class SnapshotManager implements RevokingDatabase {
     System.err.println("******** end to pop revokingDb ********");
   }
 
-  @Override
   public void updateSolidity(int hops) {
     for (int i = 0; i < hops; i++) {
       for (RevokingDBWithCachingNewValue db : dbs) {
