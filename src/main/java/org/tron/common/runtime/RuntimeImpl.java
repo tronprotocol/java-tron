@@ -7,7 +7,6 @@ import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.utils.MUtil.transfer;
 import static org.tron.common.runtime.vm.VMConstant.CONTRACT_NAME_LENGTH;
-import static org.tron.common.runtime.vm.VMConstant.REASON_ALREADY_TIME_OUT;
 import static org.tron.common.runtime.vm.VMUtils.saveProgramTraceFile;
 import static org.tron.common.runtime.vm.VMUtils.zipAndEncode;
 import static org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType.ET_NORMAL_TYPE;
@@ -34,7 +33,7 @@ import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
-import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
+import org.tron.common.runtime.vm.program.Program.OutOfTimeException;
 import org.tron.common.runtime.vm.program.ProgramPrecompile;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
@@ -81,7 +80,6 @@ public class RuntimeImpl implements Runtime {
 
   private EnergyProcessor energyProcessor;
   private ProgramResult result = new ProgramResult();
-
 
   private VM vm;
   private Program program;
@@ -161,7 +159,7 @@ public class RuntimeImpl implements Runtime {
   }
 
 
-  public void precompiled() throws ContractValidateException, ContractExeException {
+  private void precompiled() throws ContractValidateException, ContractExeException {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
     final List<Actuator> actuatorList = ActuatorFactory
         .createActuator(trxCap, deposit.getDbManager());
@@ -531,15 +529,16 @@ public class RuntimeImpl implements Runtime {
   public void go() {
     try {
       if (vm != null) {
-
         TransactionCapsule trxCap = new TransactionCapsule(trx);
         if (null != blockCap && blockCap.generatedByMyself && null != trxCap.getContractRet()
             && contractResult.OUT_OF_TIME == trxCap.getContractRet()) {
           result = program.getResult();
           program.spendAllEnergy();
-          runtimeError = REASON_ALREADY_TIME_OUT;
-          result.setException(Program.Exception.notEnoughTime(REASON_ALREADY_TIME_OUT));
-          throw Program.Exception.notEnoughTime(REASON_ALREADY_TIME_OUT);
+
+          OutOfTimeException e = Program.Exception.alreadyTimeOut();
+          runtimeError = e.getMessage();
+          result.setException(e);
+          throw e;
         }
 
         vm.play(program);
@@ -595,7 +594,7 @@ public class RuntimeImpl implements Runtime {
       result.rejectInternalTransactions();
       runtimeError = result.getException().getMessage();
       logger.info("JVMStackOverFlowException: {}", result.getException().getMessage());
-    } catch (OutOfResourceException e) {
+    } catch (OutOfTimeException e) {
       program.spendAllEnergy();
       result = program.getResult();
       result.setException(e);

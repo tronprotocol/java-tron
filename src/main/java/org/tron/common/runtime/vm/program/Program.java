@@ -1348,9 +1348,9 @@ public class Program {
   }
 
   @SuppressWarnings("serial")
-  public static class OutOfResourceException extends BytecodeExecutionException {
+  public static class OutOfTimeException extends BytecodeExecutionException {
 
-    public OutOfResourceException(String message, Object... args) {
+    public OutOfTimeException(String message, Object... args) {
       super(format(message, args));
     }
   }
@@ -1454,9 +1454,13 @@ public class Program {
     }
 
 
-    public static OutOfResourceException notEnoughTime(String op) {
-      return new OutOfResourceException(
+    public static OutOfTimeException notEnoughTime(String op) {
+      return new OutOfTimeException(
           "CPU timeout for '%s' operation executing", op);
+    }
+
+    public static OutOfTimeException alreadyTimeOut() {
+      return new OutOfTimeException("Already Time Out");
     }
 
 
