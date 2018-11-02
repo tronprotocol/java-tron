@@ -43,6 +43,7 @@ import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
+import org.tron.common.utils.ForkController;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
@@ -51,6 +52,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.TransactionTrace;
@@ -95,9 +97,6 @@ public class RuntimeImpl implements Runtime {
   //tx trace
   private TransactionTrace trace;
   private boolean isStaticCall;
-
-  //  according to version
-  public static final boolean IS_NEW_VERSION = false;
 
 
   /**
@@ -312,7 +311,7 @@ public class RuntimeImpl implements Runtime {
   public long getTotalEnergyLimit(AccountCapsule creator, AccountCapsule caller,
       TriggerSmartContract contract, long feeLimit, long callValue) {
     //  according to version
-    if (IS_NEW_VERSION) {
+    if (deposit.getDbManager().passVersion(ForkBlockVersionConsts.ENERGY_LIMIT)) {
       return getTotalEnergyLimitWithFixRatio(creator, caller, contract, feeLimit, callValue);
     } else {
       return getTotalEnergyLimitWithFloatRatio(creator, caller, contract, feeLimit, callValue);
@@ -397,7 +396,8 @@ public class RuntimeImpl implements Runtime {
 
       long energyLimit;
       // according to version
-      if (IS_NEW_VERSION) {
+
+      if (deposit.getDbManager().passVersion(ForkBlockVersionConsts.ENERGY_LIMIT)) {
         if (callValue < 0) {
           throw new ContractValidateException("callValue must >= 0");
         }
@@ -477,7 +477,7 @@ public class RuntimeImpl implements Runtime {
     }
 
     long callValue = contract.getCallValue();
-    if (IS_NEW_VERSION && callValue < 0) {
+    if (deposit.getDbManager().passVersion(ForkBlockVersionConsts.ENERGY_LIMIT) && callValue < 0) {
       throw new ContractValidateException("callValue must >= 0");
     }
 

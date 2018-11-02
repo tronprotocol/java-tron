@@ -51,6 +51,7 @@ import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.Parameter.ChainConstant;
+import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
@@ -1521,5 +1522,9 @@ public class Manager {
     } catch (TooBigTransactionResultException e) {
       logger.debug("too big transaction result");
     }
+  }
+
+  public boolean passVersion(int version) {
+    return forkController.pass(ForkBlockVersionConsts.ENERGY_LIMIT);
   }
 }

@@ -4,6 +4,7 @@ import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
+import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -100,7 +101,7 @@ public class ReceiptCapsule {
       payEnergyBill(manager, caller, receipt.getEnergyUsageTotal(), energyProcessor, now);
     } else {
       long originUsage = Math.multiplyExact(receipt.getEnergyUsageTotal(), percent) / 100;
-      originUsage = getOriginUsage(origin, originEnergyLimit, energyProcessor, originUsage);
+      originUsage = getOriginUsage(manager, origin, originEnergyLimit, energyProcessor, originUsage);
 
       long callerUsage = receipt.getEnergyUsageTotal() - originUsage;
       energyProcessor.useEnergy(origin, originUsage, now);
@@ -109,10 +110,11 @@ public class ReceiptCapsule {
     }
   }
 
-  private long getOriginUsage(AccountCapsule origin, long originEnergyLimit,
+  private long getOriginUsage(Manager manager, AccountCapsule origin,
+      long originEnergyLimit,
       EnergyProcessor energyProcessor, long originUsage) {
 
-    if (RuntimeImpl.IS_NEW_VERSION) {
+    if (manager.passVersion(ForkBlockVersionConsts.ENERGY_LIMIT)) {
       return Math.min(originUsage,
           Math.min(energyProcessor.getAccountLeftEnergyFromFreeze(origin), originEnergyLimit));
     }
