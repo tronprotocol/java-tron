@@ -1,5 +1,6 @@
 package org.tron.core.capsule;
 
+import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
@@ -111,11 +112,11 @@ public class ReceiptCapsule {
   private long getOriginUsage(AccountCapsule origin, long originEnergyLimit,
       EnergyProcessor energyProcessor, long originUsage) {
 
-    if (!false) {
-      return Math.min(originUsage, energyProcessor.getAccountLeftEnergyFromFreeze(origin));
+    if (RuntimeImpl.isNewVersion()) {
+      return Math.min(originUsage,
+          Math.min(energyProcessor.getAccountLeftEnergyFromFreeze(origin), originEnergyLimit));
     }
-    return Math.min(originUsage,
-        Math.min(energyProcessor.getAccountLeftEnergyFromFreeze(origin), originEnergyLimit));
+    return Math.min(originUsage, energyProcessor.getAccountLeftEnergyFromFreeze(origin));
   }
 
   private void payEnergyBill(

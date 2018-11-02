@@ -318,7 +318,7 @@ public class RuntimeImpl implements Runtime {
     }
   }
 
-  private boolean isNewVersion() { // TODO according to version
+  public static boolean isNewVersion() { // TODO according to version
     return false;
   }
 
@@ -404,7 +404,7 @@ public class RuntimeImpl implements Runtime {
       AccountCapsule creator = this.deposit
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
 
-      if (isNewVersion()) {  // TODO according to version
+      if (RuntimeImpl.isNewVersion()) {  // TODO according to version
         long originEnergyLimit = newSmartContract.getOriginEnergyLimit();
         if (originEnergyLimit <= 0) {
           throw new ContractValidateException("The originEnergyLimit must be > 0");
