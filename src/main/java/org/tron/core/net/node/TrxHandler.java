@@ -88,7 +88,7 @@ public class TrxHandler {
   }
 
   public boolean isBusy() {
-    return queue.size() > MAX_TRX_SIZE;
+    return queue.size() + smartContractQueue.size() > MAX_TRX_SIZE;
   }
 
   class TrxEvent {

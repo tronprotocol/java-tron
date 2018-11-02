@@ -630,6 +630,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
 
   private void onHandleInventoryMessage(PeerConnection peer, InventoryMessage msg) {
+    int count = peer.getNodeStatistics().messageStatistics.tronInTrxInventoryElement.getCount(10);
+    if (count > 10_000){
+      logger.warn("Inventory count {} from Peer {} is overload.", count, peer.getInetAddress());
+      return;
+    }
     if (trxHandler.isBusy() && msg.getInventoryType().equals(InventoryType.TRX)) {
       logger.warn("Too many trx msg to handle, drop inventory msg from peer {}, size {}",
           peer.getInetAddress(), msg.getHashList().size());
@@ -1092,7 +1097,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           }
         }
 
-        peer.setSyncChainRequested(null);
         if (msg.getRemainNum() == 0
             && (blockIdWeGet.isEmpty() || (blockIdWeGet.size() == 1 && del
             .containBlock(blockIdWeGet.peek())))
@@ -1103,6 +1107,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           if (unSyncNum == 0) {
             del.syncToCli(0);
           }
+          peer.setSyncChainRequested(null);
           return;
         }
 
@@ -1163,6 +1168,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           unSyncNum = newUnSyncNum;
           del.syncToCli(unSyncNum);
         }
+
+        peer.setSyncChainRequested(null);
 
         if (msg.getRemainNum() == 0) {
           if (!peer.getSyncBlockToFetch().isEmpty()) {
@@ -1280,21 +1287,27 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void syncNextBatchChainIds(PeerConnection peer) {
-    if (peer.getSyncChainRequested() != null) {
-      logger.info("Peer {} is in sync.", peer.getNode().getHost());
-      return;
-    }
-    try {
-      Deque<BlockId> chainSummary =
-          del.getBlockChainSummary(peer.getHeadBlockWeBothHave(),
-              peer.getSyncBlockToFetch());
-      peer.setSyncChainRequested(
-          new Pair<>(chainSummary, System.currentTimeMillis()));
-      peer.sendMessage(new SyncBlockChainMessage((LinkedList<BlockId>) chainSummary));
-    } catch (TronException e) {
-      logger.error("Peer {} sync next batch chainIds failed, error: {}.", peer.getNode().getHost(),
-          e.getMessage());
-      disconnectPeer(peer, ReasonCode.FORKED);
+    synchronized (peer){
+      if (peer.isDisconnect()) {
+        logger.warn("Peer {} is disconnect", peer.getInetAddress());
+        return;
+      }
+      if (peer.getSyncChainRequested() != null) {
+        logger.info("Peer {} is in sync.", peer.getInetAddress());
+        return;
+      }
+      try {
+        Deque<BlockId> chainSummary =
+            del.getBlockChainSummary(peer.getHeadBlockWeBothHave(),
+                peer.getSyncBlockToFetch());
+        peer.setSyncChainRequested(
+            new Pair<>(chainSummary, System.currentTimeMillis()));
+        peer.sendMessage(new SyncBlockChainMessage((LinkedList<BlockId>) chainSummary));
+      } catch (TronException e) {
+        logger.error("Peer {} sync next batch chainIds failed, error: {}.", peer.getNode().getHost(),
+            e.getMessage());
+        disconnectPeer(peer, ReasonCode.FORKED);
+      }
     }
   }
 
