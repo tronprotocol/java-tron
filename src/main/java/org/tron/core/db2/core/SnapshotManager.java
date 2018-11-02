@@ -71,8 +71,8 @@ public class SnapshotManager implements RevokingDatabase {
 
     if (size > maxSize.get()) {
       flushCount = flushCount + (size - maxSize.get());
-      size = maxSize.get();
       updateSolidity(size - maxSize.get());
+      size = maxSize.get();
       flush();
     }
 
