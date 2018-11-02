@@ -96,7 +96,7 @@ public class RuntimeImpl implements Runtime {
   private TransactionTrace trace;
   private boolean isStaticCall;
 
-  // TODO according to version
+  // according to version
   public static final boolean IS_NEW_VERSION = false;
 
 
@@ -309,7 +309,8 @@ public class RuntimeImpl implements Runtime {
 
   public long getEnergyLimit(AccountCapsule creator, AccountCapsule caller,
       TriggerSmartContract contract, long feeLimit, long callValue) {
-    if (IS_NEW_VERSION) { // TODO according to version
+    // TODO according to version
+    if (IS_NEW_VERSION) {
       return getEnergyLimitWithFixRatio(creator, caller, contract, feeLimit, callValue);
     } else {
       return getEnergyLimitWithFloatRatio(creator, caller, contract, feeLimit, callValue);
@@ -317,7 +318,8 @@ public class RuntimeImpl implements Runtime {
   }
 
   public long getEnergyLimit(AccountCapsule creator, long feeLimit, long callValue) {
-    if (IS_NEW_VERSION) {  // TODO according to version
+    // TODO according to version
+    if (IS_NEW_VERSION) {
       return getEnergyLimitWithFixRatio(creator, feeLimit, callValue);
     } else {
       return getEnergyLimitWithFloatRatio(creator, feeLimit, callValue);
@@ -402,8 +404,8 @@ public class RuntimeImpl implements Runtime {
         throw new ContractValidateException(
             "feeLimit must be >= 0 and <= " + VMConfig.MAX_FEE_LIMIT);
       }
-
-      if (RuntimeImpl.IS_NEW_VERSION) {  // TODO according to version
+      // TODO according to version
+      if (RuntimeImpl.IS_NEW_VERSION) {
         long originEnergyLimit = newSmartContract.getOriginEnergyLimit();
         if (originEnergyLimit <= 0) {
           throw new ContractValidateException("The originEnergyLimit must be > 0");

@@ -25,6 +25,7 @@ import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -171,8 +172,9 @@ public class TransactionTrace {
 
         callerAccount = callContract.getOwnerAddress().toByteArray();
         originAccount = contractCapsule.getOriginAddress();
-        percent = Math.max(100 - contractCapsule.getConsumeUserResourcePercent(), 0);
-        percent = Math.min(percent, 100);
+        percent = Math
+            .max(Constant.ONE_HUNDRED - contractCapsule.getConsumeUserResourcePercent(), 0);
+        percent = Math.min(percent, Constant.ONE_HUNDRED);
         originEnergyLimit = contractCapsule.getOriginEnergyLimit();
         break;
       default:
