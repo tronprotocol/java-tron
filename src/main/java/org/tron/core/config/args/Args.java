@@ -331,10 +331,6 @@ public class Args {
   @Setter
   private String logLevel;
 
-  @Getter
-  @Setter
-  private int blockVersion;
-
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;

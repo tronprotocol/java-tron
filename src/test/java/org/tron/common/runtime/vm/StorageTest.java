@@ -1,6 +1,7 @@
 package org.tron.common.runtime.vm;
 
 import java.io.File;
+import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -17,6 +18,7 @@ import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.DefaultConfig;
+import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
@@ -190,7 +192,10 @@ public class StorageTest {
 
   @Test
   public void testParentChild() {
-    Args.getInstance().setBlockVersion(4);
+    byte[] stats = new byte[27];
+    Arrays.fill(stats, (byte) 1);
+    this.manager.getDynamicPropertiesStore().statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
+
     byte[] address = Hex.decode(OWNER_ADDRESS);
     DataWord storageKey1 = new DataWord("key1".getBytes());
     DataWord storageVal1 = new DataWord("val1".getBytes());
@@ -259,7 +264,9 @@ public class StorageTest {
 
   @Test
   public void testParentChildOldVersion() {
-    Args.getInstance().setBlockVersion(3);
+    byte[] stats = new byte[27];
+    Arrays.fill(stats, (byte) 0);
+    this.manager.getDynamicPropertiesStore().statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
     byte[] address = Hex.decode(OWNER_ADDRESS);
     DataWord storageKey1 = new DataWord("key1".getBytes());
     DataWord storageVal1 = new DataWord("val1".getBytes());

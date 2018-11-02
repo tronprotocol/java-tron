@@ -11,6 +11,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
@@ -50,7 +51,7 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (RuntimeImpl.IS_NEW_VERSION) {
+    if (!dbManager.passVersion(ForkBlockVersionConsts.ENERGY_LIMIT)) {
       throw new ContractValidateException(
           "contract type error,unexpected type [UpdateEnergyLimitContract]");
     }
