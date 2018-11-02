@@ -82,7 +82,7 @@ public class Program {
 
   private static final int MAX_DEPTH = 64;
   //Max size for stack checks
-  private static final int MAX_STACKSIZE = 1024;
+  private static final int MAX_STACK_SIZE = 1024;
 
   private BlockCapsule blockCap;
 
@@ -90,7 +90,7 @@ public class Program {
   private byte[] rootTransactionId;
   private Boolean isRootCallConstant;
 
-  private InternalTransaction transaction;
+  private InternalTransaction internalTransaction;
 
   private ProgramInvoke invoke;
   private ProgramInvokeFactory programInvokeFactory = new ProgramInvokeFactoryImpl();
@@ -122,20 +122,20 @@ public class Program {
     this(ops, programInvoke, null);
   }
 
-  public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction transaction) {
-    this(ops, programInvoke, transaction, VMConfig.getInstance(), null);
+  public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction internalTransaction) {
+    this(ops, programInvoke, internalTransaction, VMConfig.getInstance(), null);
   }
 
-  public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction transaction,
+  public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction internalTransaction,
       VMConfig config, BlockCapsule blockCap) {
-    this(null, ops, programInvoke, transaction, config, blockCap);
+    this(null, ops, programInvoke, internalTransaction, config, blockCap);
   }
 
   public Program(byte[] codeHash, byte[] ops, ProgramInvoke programInvoke,
-      InternalTransaction transaction, VMConfig config, BlockCapsule blockCap) {
+      InternalTransaction internalTransaction, VMConfig config, BlockCapsule blockCap) {
     this.config = config;
     this.invoke = programInvoke;
-    this.transaction = transaction;
+    this.internalTransaction = internalTransaction;
     this.blockCap = blockCap;
     this.ops = nullToEmpty(ops);
 
@@ -144,7 +144,7 @@ public class Program {
     this.stack = setupProgramListener(new Stack());
     this.contractState = setupProgramListener(new ContractState(programInvoke));
     this.trace = new ProgramTrace(config, programInvoke);
-    this.nonce = transaction.getNonce();
+    this.nonce = internalTransaction.getNonce();
   }
 
   public byte[] getRootTransactionId() {
@@ -197,14 +197,14 @@ public class Program {
       byte[] transferAddress,
       long value, byte[] data, String note, long nonce) {
 
-    // todo: now, internal transaction needn't energylimit
-    InternalTransaction result = null;
-    if (transaction != null) {
-      result = getResult().addInternalTransaction(transaction.getHash(), getCallDeep(),
+    // todo: now, internal internalTransaction needn't energylimit
+    InternalTransaction addedInternalTx = null;
+    if (internalTransaction != null) {
+      addedInternalTx = getResult().addInternalTransaction(internalTransaction.getHash(), getCallDeep(),
           senderAddress, transferAddress, value, data, note, nonce);
     }
 
-    return result;
+    return addedInternalTx;
   }
 
   private <T extends ProgramListenerAware> T setupProgramListener(T programListenerAware) {
@@ -337,9 +337,9 @@ public class Program {
   }
 
   public void verifyStackOverflow(int argsReqs, int returnReqs) {
-    if ((stack.size() - argsReqs + returnReqs) > MAX_STACKSIZE) {
+    if ((stack.size() - argsReqs + returnReqs) > MAX_STACK_SIZE) {
       throw new StackTooLargeException(
-          "Expected: overflow " + MAX_STACKSIZE + " elements stack limit");
+          "Expected: overflow " + MAX_STACK_SIZE + " elements stack limit");
     }
   }
 
