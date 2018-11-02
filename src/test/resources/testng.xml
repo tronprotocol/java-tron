@@ -25,6 +25,8 @@
       </package>
       <package name="stest.tron.wallet.committee">
       </package>
+      <package name="stest.tron.wallet.contract.internalTransaction">
+      </package>
     </packages>
   </test>
   <test name="Stest block,node,witness">
