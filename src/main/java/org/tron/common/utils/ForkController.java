@@ -13,9 +13,12 @@ import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.config.Parameter;
+import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.Manager;
 
 @Slf4j
@@ -73,7 +76,7 @@ public class ForkController {
     }
 
     int version = blockCapsule.getInstance().getBlockHeader().getRawData().getVersion();
-    if (passSet.contains(version)) {
+    if (version < ForkBlockVersionConsts.ENERGY_LIMIT || passSet.contains(version)) {
       return;
     }
 
@@ -87,16 +90,17 @@ public class ForkController {
       stats = new byte[witnesses.size()];
     }
 
-    stats[slot] = (byte) (version > 0 ? 1 : 0);
+    stats[slot] = (byte) 1;
     manager.getDynamicPropertiesStore().statsByVersion(version, stats);
     logger.info(
         "*******update hard fork:{}, witness size:{}, solt:{}, witness:{}, version:{}",
         Streams.zip(witnesses.stream(), Stream.of(ArrayUtils.toObject(stats)), Maps::immutableEntry)
             .map(e -> Maps.immutableEntry(Wallet.encode58Check(e.getKey().toByteArray()), e.getValue()))
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)),
+            .map(e -> Maps.immutableEntry(StringUtils.substring(e.getKey(), e.getKey().length() - 4), e.getValue()))
+            .collect(Collectors.toList()),
         witnesses.size(),
         slot,
-        ByteUtil.toHexString(witness.toByteArray()),
+        Wallet.encode58Check(witness.toByteArray()),
         version);
   }
 
