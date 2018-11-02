@@ -78,6 +78,12 @@ message UpdateSettingContract {
   int64 consume_user_resource_percent = 3;
 }
 
+message UpdateSettingForEnergyLimitContract {
+  bytes owner_address = 1;
+  bytes contract_address = 2;
+  int64 energy_limit = 3;
+}
+
 message WitnessCreateContract {
   bytes owner_address = 1;
   bytes url = 2;

@@ -247,6 +247,7 @@ message Transaction {
       ExchangeInjectContract = 42;
       ExchangeWithdrawContract = 43;
       ExchangeTransactionContract = 44;
+      UpdateSettingForEnergyLimitContract = 45;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
@@ -502,6 +503,7 @@ message SmartContract {
   int64 call_value = 5;
   int64 consume_user_resource_percent = 6;
   string name = 7;
+  int64 energy_limit = 8;
 
 }
 
@@ -513,7 +515,7 @@ message InternalTransaction {
   bytes caller_address = 2;
   // the one recieve trx (TBD: or token) via function
   bytes transferTo_address = 3;
-  message CallValueInfo{
+  message CallValueInfo {
     // trx (TBD: or token) value
     int64 callValue = 1;
     // TBD: tokenName, trx should be empty
