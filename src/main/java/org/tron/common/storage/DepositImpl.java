@@ -20,7 +20,7 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.args.Args;
+import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.CodeStore;
@@ -301,12 +301,10 @@ public class DepositImpl implements Deposit {
     Storage storage;
     if (this.parent != null) {
       Storage parentStorage = parent.getStorage(address);
-      if (Args.getInstance().getBlockVersion() == OLD_BLOCK_VERSION) {
-        // old logic
-        storage = parentStorage;
-      } else {
-        // new logic
+      if (this.dbManager.passVersion(ForkBlockVersionConsts.ENERGY_LIMIT)) {
         storage = new Storage(parentStorage);
+      } else {
+        storage = parentStorage;
       }
     } else {
       storage = new Storage(address, dbManager.getStorageRowStore());

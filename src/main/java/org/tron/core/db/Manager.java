@@ -1525,6 +1525,6 @@ public class Manager {
   }
 
   public boolean passVersion(int version) {
-    return forkController.pass(ForkBlockVersionConsts.ENERGY_LIMIT);
+    return forkController.pass(version);
   }
 }

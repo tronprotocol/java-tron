@@ -1,6 +1,7 @@
 package org.tron.common.runtime.vm;
 
 import java.io.File;
+import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -18,6 +19,7 @@ import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.DefaultConfig;
+import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
@@ -91,7 +93,11 @@ public class DepositTest {
 
   @Test
   public void loopCallTest()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException, InterruptedException {
+      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+    byte[] stats = new byte[27];
+    Arrays.fill(stats, (byte) 1);
+    this.manager.getDynamicPropertiesStore().statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
+
     String contractA = "A";
     String contractB = "B";
     byte[] address = Hex.decode(OWNER_ADDRESS);
@@ -105,14 +111,15 @@ public class DepositTest {
     long value = 0;
     long fee = 100000000;
     long consumeUserResourcePercent = 0;
+    long engeryLiimt = 100000000;
 
     Transaction aTrx = TVMTestUtils.generateDeploySmartContractAndGetTransaction(
-        contractA, address, aABI, aCode, value, fee, consumeUserResourcePercent, null);
+        contractA, address, aABI, aCode, value, fee, consumeUserResourcePercent, null, engeryLiimt);
     Runtime runtime = TVMTestUtils.processTransactionAndReturnRuntime(aTrx, DepositImpl.createRoot(manager), null);
     Assert.assertNull(runtime.getRuntimeError());
 
     Transaction bTrx = TVMTestUtils.generateDeploySmartContractAndGetTransaction(
-        contractB, address, bABI, bCode, value, fee, consumeUserResourcePercent, null);
+        contractB, address, bABI, bCode, value, fee, consumeUserResourcePercent, null, engeryLiimt);
     runtime = TVMTestUtils.processTransactionAndReturnRuntime(bTrx, DepositImpl.createRoot(manager), null);
     Assert.assertNull(runtime.getRuntimeError());
 
@@ -173,8 +180,11 @@ public class DepositTest {
 
   @Test
   public void loopCallTestOldVersion()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException, InterruptedException {
-    Args.getInstance().setBlockVersion(3);
+      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+    byte[] stats = new byte[27];
+    Arrays.fill(stats, (byte) 0);
+    this.manager.getDynamicPropertiesStore().statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
+
     String contractA = "A";
     String contractB = "B";
     byte[] address = Hex.decode(OWNER_ADDRESS);

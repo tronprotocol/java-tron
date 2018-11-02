@@ -70,12 +70,25 @@ public class TVMTestUtils {
       byte[] callerAddress,
       String ABI, String code, long value, long feeLimit, long consumeUserResourcePercent,
       String libraryAddressPair) {
+    return generateDeploySmartContractAndGetTransaction(contractName, callerAddress,ABI,  code, value,  feeLimit,  consumeUserResourcePercent,
+    libraryAddressPair, 0);
+  }
+
+  /**
+   * return generated smart contract Transaction, just before we use it to broadcast and push
+   * transaction
+   */
+  public static Transaction generateDeploySmartContractAndGetTransaction(String contractName,
+      byte[] callerAddress,
+      String ABI, String code, long value, long feeLimit, long consumeUserResourcePercent,
+      String libraryAddressPair, long orginEngeryLimit) {
 
     CreateSmartContract contract = buildCreateSmartContract(contractName, callerAddress, ABI, code,
-        value, consumeUserResourcePercent, libraryAddressPair);
+        value, consumeUserResourcePercent, libraryAddressPair, orginEngeryLimit);
     TransactionCapsule trxCapWithoutFeeLimit = new TransactionCapsule(contract,
         ContractType.CreateSmartContract);
     Transaction.Builder transactionBuilder = trxCapWithoutFeeLimit.getInstance().toBuilder();
+
     Transaction.raw.Builder rawBuilder = trxCapWithoutFeeLimit.getInstance().getRawData()
         .toBuilder();
     rawBuilder.setFeeLimit(feeLimit);
@@ -195,14 +208,10 @@ public class TVMTestUtils {
     return new TVMTestResult(trace.getRuntime(), trace.getReceipt(), null);
   }
 
-
-  /**
-   * create the Contract Instance for smart contract.
-   */
   public static CreateSmartContract buildCreateSmartContract(String contractName,
       byte[] address,
       String ABI, String code, long value, long consumeUserResourcePercent,
-      String libraryAddressPair) {
+      String libraryAddressPair, long engeryLimit) {
     SmartContract.ABI abi = jsonStr2ABI(ABI);
     if (abi == null) {
       logger.error("abi is null");
@@ -214,6 +223,7 @@ public class TVMTestUtils {
     builder.setOriginAddress(ByteString.copyFrom(address));
     builder.setAbi(abi);
     builder.setConsumeUserResourcePercent(consumeUserResourcePercent);
+    builder.setOriginEnergyLimit(engeryLimit);
 
     if (value != 0) {
       builder.setCallValue(value);
@@ -228,6 +238,19 @@ public class TVMTestUtils {
     builder.setBytecode(ByteString.copyFrom(byteCode));
     return CreateSmartContract.newBuilder().setOwnerAddress(ByteString.copyFrom(address)).
         setNewContract(builder.build()).build();
+  }
+
+  /**
+   * create the Contract Instance for smart contract.
+   */
+  public static CreateSmartContract buildCreateSmartContract(String contractName,
+      byte[] address,
+      String ABI, String code, long value, long consumeUserResourcePercent,
+      String libraryAddressPair) {
+    return buildCreateSmartContract(contractName,
+    address,
+    ABI, code, value, consumeUserResourcePercent,
+    libraryAddressPair, 0);
   }
 
   public static CreateSmartContract buildCreateSmartContractWithCreatorEnergyLimit(String contractName,
