@@ -117,12 +117,12 @@ public class UpdateEnergyLimitContractActuatorTest {
     }
   }
 
-  private Any getContract(String accountAddress, String contractAddress, long energyLimit) {
+  private Any getContract(String accountAddress, String contractAddress, long originEnergyLimit) {
     return Any.pack(
         Contract.UpdateEnergyLimitContract.newBuilder()
             .setOwnerAddress(StringUtil.hexString2ByteString(accountAddress))
             .setContractAddress(StringUtil.hexString2ByteString(contractAddress))
-            .setEnergyLimit(energyLimit).build());
+            .setOriginEnergyLimit(originEnergyLimit).build());
   }
 
   @Test
@@ -195,10 +195,10 @@ public class UpdateEnergyLimitContractActuatorTest {
       actuator.validate();
       actuator.execute(ret);
 
-      fail("energy limit less than 0");
+      fail("origin energy limit less than 0");
     } catch (TronException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("energy limit must > 0", e.getMessage());
+      Assert.assertEquals("origin energy limit must > 0", e.getMessage());
     }
   }
 

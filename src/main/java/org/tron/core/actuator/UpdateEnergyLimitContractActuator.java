@@ -31,12 +31,12 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
     try {
       UpdateEnergyLimitContract usContract = contract
           .unpack(UpdateEnergyLimitContract.class);
-      long newEnergyLimit = usContract.getEnergyLimit();
+      long newOriginEnergyLimit = usContract.getOriginEnergyLimit();
       byte[] contractAddress = usContract.getContractAddress().toByteArray();
       ContractCapsule deployedContract = dbManager.getContractStore().get(contractAddress);
 
       dbManager.getContractStore().put(contractAddress, new ContractCapsule(
-          deployedContract.getInstance().toBuilder().setOriginEnergyLimit(newEnergyLimit)
+          deployedContract.getInstance().toBuilder().setOriginEnergyLimit(newOriginEnergyLimit)
               .build()));
 
       ret.setStatus(fee, code.SUCESS);
@@ -87,10 +87,10 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
           "Account[" + readableOwnerAddress + "] not exists");
     }
 
-    long newEnergyLimit = contract.getEnergyLimit();
-    if (newEnergyLimit <= 0) {
+    long newOriginEnergyLimit = contract.getOriginEnergyLimit();
+    if (newOriginEnergyLimit <= 0) {
       throw new ContractValidateException(
-          "energy limit must > 0");
+          "origin energy limit must > 0");
     }
 
     byte[] contractAddress = contract.getContractAddress().toByteArray();
