@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
+import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
@@ -89,7 +90,7 @@ public class TVMTestUtils {
    */
 
   public static Runtime processTransactionAndReturnRuntime(Transaction trx,
-      DepositImpl deposit, BlockCapsule block)
+      Deposit deposit, BlockCapsule block)
       throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
     deposit.commit();
