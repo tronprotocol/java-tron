@@ -106,6 +106,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private long blockUpdateTimeout = 20_000;
 
+  private Object syncBlock = new Object();
+
   @Getter
   class PriorItem implements java.lang.Comparable<PriorItem> {
 
@@ -1286,26 +1288,28 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     syncNextBatchChainIds(peer);
   }
 
-  synchronized private void syncNextBatchChainIds(PeerConnection peer) {
-    if (peer.isDisconnect()) {
-      logger.warn("Peer {} is disconnect", peer.getInetAddress());
-      return;
-    }
-    if (peer.getSyncChainRequested() != null) {
-      logger.info("Peer {} is in sync.", peer.getInetAddress());
-      return;
-    }
-    try {
-      Deque<BlockId> chainSummary =
-          del.getBlockChainSummary(peer.getHeadBlockWeBothHave(),
-              peer.getSyncBlockToFetch());
-      peer.setSyncChainRequested(
-          new Pair<>(chainSummary, System.currentTimeMillis()));
-      peer.sendMessage(new SyncBlockChainMessage((LinkedList<BlockId>) chainSummary));
-    } catch (TronException e) {
-      logger.error("Peer {} sync next batch chainIds failed, error: {}.", peer.getNode().getHost(),
-          e.getMessage());
-      disconnectPeer(peer, ReasonCode.FORKED);
+  private void syncNextBatchChainIds(PeerConnection peer) {
+    synchronized (syncBlock){
+      if (peer.isDisconnect()) {
+        logger.warn("Peer {} is disconnect", peer.getInetAddress());
+        return;
+      }
+      if (peer.getSyncChainRequested() != null) {
+        logger.info("Peer {} is in sync.", peer.getInetAddress());
+        return;
+      }
+      try {
+        Deque<BlockId> chainSummary =
+            del.getBlockChainSummary(peer.getHeadBlockWeBothHave(),
+                peer.getSyncBlockToFetch());
+        peer.setSyncChainRequested(
+            new Pair<>(chainSummary, System.currentTimeMillis()));
+        peer.sendMessage(new SyncBlockChainMessage((LinkedList<BlockId>) chainSummary));
+      } catch (TronException e) {
+        logger.error("Peer {} sync next batch chainIds failed, error: {}.", peer.getNode().getHost(),
+            e.getMessage());
+        disconnectPeer(peer, ReasonCode.FORKED);
+      }
     }
   }
 
