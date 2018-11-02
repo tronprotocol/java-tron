@@ -297,6 +297,7 @@ public class RuntimeImpl implements Runtime {
               .divide(BigInteger.valueOf(consumeUserResourcePercent)).longValueExact(),
           min(energyProcessor.getAccountLeftEnergyFromFreeze(creator), originEnergyLimit)
       );
+    } else {
     }
     return Math.addExact(callerEnergyLimit, creatorEnergyLimit);
   }
@@ -401,15 +402,15 @@ public class RuntimeImpl implements Runtime {
             "feeLimit must be >= 0 and <= " + VMConfig.MAX_FEE_LIMIT);
       }
 
-      AccountCapsule creator = this.deposit
-          .getAccount(newSmartContract.getOriginAddress().toByteArray());
-
       if (RuntimeImpl.isNewVersion()) {  // TODO according to version
         long originEnergyLimit = newSmartContract.getOriginEnergyLimit();
         if (originEnergyLimit <= 0) {
           throw new ContractValidateException("The originEnergyLimit must be > 0");
         }
       }
+
+      AccountCapsule creator = this.deposit
+          .getAccount(newSmartContract.getOriginAddress().toByteArray());
       long energyLimit = getEnergyLimit(creator, feeLimit, callValue);
 
       byte[] ops = newSmartContract.getBytecode().toByteArray();
@@ -478,13 +479,13 @@ public class RuntimeImpl implements Runtime {
       logger.info("No contract or not a smart contract");
       throw new ContractValidateException("No contract or not a smart contract");
     }
-    byte[] code = this.deposit.getCode(contractAddress);
-    long callValue = contract.getCallValue();
 
+    long callValue = contract.getCallValue();
     if (isNewVersion() && callValue < 0) {
       throw new ContractValidateException("callValue must >= 0");
     }
 
+    byte[] code = this.deposit.getCode(contractAddress);
     if (isNotEmpty(code)) {
 
       long feeLimit = trx.getRawData().getFeeLimit();
