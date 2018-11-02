@@ -78,7 +78,7 @@ message UpdateSettingContract {
   int64 consume_user_resource_percent = 3;
 }
 
-message UpdateSettingForEnergyLimitContract {
+message UpdateEnergyLimitContract {
   bytes owner_address = 1;
   bytes contract_address = 2;
   int64 energy_limit = 3;
