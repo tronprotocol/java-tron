@@ -50,7 +50,7 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (!RuntimeImpl.isNewVersion()) {
+    if (RuntimeImpl.isNewVersion()) {
       throw new ContractValidateException(
           "contract type error,unexpected type [UpdateEnergyLimitContract]");
     }
