@@ -20,6 +20,8 @@ public class P2pException extends Exception {
         BAD_MESSAGE                             (4, "Bad message"),
         DIFF_GENESIS_BLOCK                      (5, "Different genesis block"),
         HARD_FORKED                             (6, "Hard forked"),
+        SYNC_FAILED                             (7, "Sync failed"),
+        CHECK_FAILED                            (8, "Check failed"),
         DEFAULT                                 (100, "default exception");
 
         private Integer value;

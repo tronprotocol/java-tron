@@ -2,8 +2,6 @@ package org.tron.core.net.peer;
 
 import static org.tron.core.config.Parameter.NetConstants.MAX_INVENTORY_SIZE_IN_MINUTES;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -18,6 +16,7 @@ import javafx.util.Pair;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.HelloMessage;
@@ -26,17 +25,15 @@ import org.tron.common.overlay.server.Channel;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.config.Parameter.NodeConstant;
-import org.tron.core.config.args.Args;
-import org.tron.core.net.node.Item;
+import org.tron.core.net.TronProxy;
 
 @Slf4j
 @Component
 @Scope("prototype")
 public class PeerConnection extends Channel {
 
-  private Cache<Sha256Hash, Integer> syncBlockIdCache = CacheBuilder.newBuilder()
-      .maximumSize(2 * NodeConstant.SYNC_FETCH_BATCH_NUM).build();
+  @Autowired
+  private TronProxy tronProxy;
 
   @Setter
   @Getter
@@ -50,210 +47,86 @@ public class PeerConnection extends Channel {
   @Getter
   private long lastBlockUpdateTime = System.currentTimeMillis();
 
-  private volatile boolean syncFlag = true;
-
+  @Setter
   private HelloMessage helloMessage;
 
-  //broadcast
+  @Setter
+  @Getter
   private Queue<Sha256Hash> invToUs = new LinkedBlockingQueue<>();
 
+  @Setter
+  @Getter
   private Queue<Sha256Hash> invWeAdv = new LinkedBlockingQueue<>();
 
+  @Setter
+  @Getter
   private Map<Sha256Hash, Long> advObjSpreadToUs = new ConcurrentHashMap<>();
 
+  @Setter
+  @Getter
   private Map<Sha256Hash, Long> advObjWeSpread = new ConcurrentHashMap<>();
 
+  @Setter
+  @Getter
   private Map<Item, Long> advObjWeRequested = new ConcurrentHashMap<>();
 
-  private boolean advInhibit = false;
-
-  public Map<Sha256Hash, Long> getAdvObjSpreadToUs() {
-    return advObjSpreadToUs;
-  }
-
-  public Map<Sha256Hash, Long> getAdvObjWeSpread() {
-    return advObjWeSpread;
-  }
-
-  public boolean isAdvInhibit() {
-    return advInhibit;
-  }
-
-  public void setAdvInhibit(boolean advInhibit) {
-    this.advInhibit = advInhibit;
-  }
-
-  //sync chain
+  @Setter
+  @Getter
   private BlockId headBlockWeBothHave = new BlockId();
 
-  private long headBlockTimeWeBothHave;
-
+  @Setter
+  @Getter
   private Deque<BlockId> syncBlockToFetch = new ConcurrentLinkedDeque<>();
 
+  @Setter
+  @Getter
   private Map<BlockId, Long> syncBlockRequested = new ConcurrentHashMap<>();
 
+  @Setter
+  @Getter
   private Pair<Deque<BlockId>, Long> syncChainRequested = null;
 
-  public Pair<Deque<BlockId>, Long> getSyncChainRequested() {
-    return syncChainRequested;
-  }
-
-  public Cache<Sha256Hash, Integer> getSyncBlockIdCache() {
-    return syncBlockIdCache;
-  }
-
-  public void setSyncChainRequested(
-      Pair<Deque<BlockId>, Long> syncChainRequested) {
-    this.syncChainRequested = syncChainRequested;
-  }
-
-  public Map<BlockId, Long> getSyncBlockRequested() {
-    return syncBlockRequested;
-  }
-
-  public void setSyncBlockRequested(ConcurrentHashMap<BlockId, Long> syncBlockRequested) {
-    this.syncBlockRequested = syncBlockRequested;
-  }
-
-  public long getUnfetchSyncNum() {
-    return unfetchSyncNum;
-  }
-
-  public void setUnfetchSyncNum(long unfetchSyncNum) {
-    this.unfetchSyncNum = unfetchSyncNum;
-  }
-
+  @Setter
+  @Getter
   private long unfetchSyncNum = 0L;
 
+  @Setter
+  @Getter
   private boolean needSyncFromPeer;
 
+  @Setter
+  @Getter
   private boolean needSyncFromUs;
 
-  public Set<BlockId> getBlockInProc() {
-    return blockInProc;
-  }
-
-  public void setBlockInProc(Set<BlockId> blockInProc) {
-    this.blockInProc = blockInProc;
-  }
-
-  private boolean banned;
-
+  @Setter
+  @Getter
   private Set<BlockId> blockInProc = new HashSet<>();
 
-  public Map<Item, Long> getAdvObjWeRequested() {
-    return advObjWeRequested;
-  }
-
-  public void setAdvObjWeRequested(ConcurrentHashMap<Item, Long> advObjWeRequested) {
-    this.advObjWeRequested = advObjWeRequested;
-  }
-
-  public void setHelloMessage(HelloMessage helloMessage) {
-    this.helloMessage = helloMessage;
-  }
-
-  public HelloMessage getHelloMessage() {
-    return this.helloMessage;
-  }
-
   public void cleanInvGarbage() {
-    long oldestTimestamp =
-        Time.getCurrentMillis() - MAX_INVENTORY_SIZE_IN_MINUTES * 60 * 1000;
+
+    long time = Time.getCurrentMillis() - MAX_INVENTORY_SIZE_IN_MINUTES * 60 * 1000;
 
     Iterator<Entry<Sha256Hash, Long>> iterator = this.advObjSpreadToUs.entrySet().iterator();
 
-    removeIterator(iterator, oldestTimestamp);
+    removeIterator(iterator, time);
 
     iterator = this.advObjWeSpread.entrySet().iterator();
 
-    removeIterator(iterator, oldestTimestamp);
+    removeIterator(iterator, time);
   }
 
   private void removeIterator(Iterator<Entry<Sha256Hash, Long>> iterator, long oldestTimestamp) {
     while (iterator.hasNext()) {
       Map.Entry entry = iterator.next();
       Long ts = (Long) entry.getValue();
-
       if (ts < oldestTimestamp) {
         iterator.remove();
       }
     }
   }
 
-  public boolean isAdvInvFull() {
-    return advObjSpreadToUs.size() > MAX_INVENTORY_SIZE_IN_MINUTES
-        * 60
-        * Args.getInstance().getNetMaxTrxPerSecond();
-  }
 
-  public boolean isBanned() {
-    return banned;
-  }
 
-  public void setBanned(boolean banned) {
-    this.banned = banned;
-  }
-
-  public BlockId getHeadBlockWeBothHave() {
-    return headBlockWeBothHave;
-  }
-
-  public void setHeadBlockWeBothHave(BlockId headBlockWeBothHave) {
-    this.headBlockWeBothHave = headBlockWeBothHave;
-  }
-
-  public long getHeadBlockTimeWeBothHave() {
-    return headBlockTimeWeBothHave;
-  }
-
-  public void setHeadBlockTimeWeBothHave(long headBlockTimeWeBothHave) {
-    this.headBlockTimeWeBothHave = headBlockTimeWeBothHave;
-  }
-
-  public Deque<BlockId> getSyncBlockToFetch() {
-    return syncBlockToFetch;
-  }
-
-  public boolean isNeedSyncFromPeer() {
-    return needSyncFromPeer;
-  }
-
-  public void setNeedSyncFromPeer(boolean needSyncFromPeer) {
-    this.needSyncFromPeer = needSyncFromPeer;
-  }
-
-  public boolean isNeedSyncFromUs() {
-    return needSyncFromUs;
-  }
-
-  public void setNeedSyncFromUs(boolean needSyncFromUs) {
-    this.needSyncFromUs = needSyncFromUs;
-  }
-
-  public Queue<Sha256Hash> getInvToUs() {
-    return invToUs;
-  }
-
-  public void setInvToUs(Queue<Sha256Hash> invToUs) {
-    this.invToUs = invToUs;
-  }
-
-  public Queue<Sha256Hash> getInvWeAdv() {
-    return invWeAdv;
-  }
-
-  public void setInvWeAdv(Queue<Sha256Hash> invWeAdv) {
-    this.invWeAdv = invWeAdv;
-  }
-
-  public boolean getSyncFlag() {
-    return syncFlag;
-  }
-
-  public void setSyncFlag(boolean syncFlag) {
-    this.syncFlag = syncFlag;
-  }
 
   public String logSyncStats() {
     return String.format(

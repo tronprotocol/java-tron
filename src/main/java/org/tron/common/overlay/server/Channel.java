@@ -40,7 +40,7 @@ import org.tron.common.overlay.message.MessageCodec;
 import org.tron.common.overlay.message.StaticMessages;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.exception.P2pException;
-import org.tron.core.net.peer.PeerConnectionDelegate;
+import org.tron.core.net.node.PeerConnectionDelegate;
 import org.tron.core.net.TronHandler;
 import org.tron.protos.Protocol.ReasonCode;
 

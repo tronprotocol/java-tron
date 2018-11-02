@@ -8,7 +8,7 @@ import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.MessageQueue;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.PeerConnection;
-import org.tron.core.net.peer.PeerConnectionDelegate;
+import org.tron.core.net.node.PeerConnectionDelegate;
 
 @Component
 @Scope("prototype")
@@ -26,6 +26,10 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
 
   @Override
   public void channelRead0(final ChannelHandlerContext ctx, TronMessage msg) {
+    if (!peer.isDisconnect()) {
+      logger.warn("Received a block {} from disconnect peer {}", blockId.getNum(), peer.getNode().getHost());
+      return;
+    }
     msgQueue.receivedMessage(msg);
     peerDel.onMessage(peer, msg);
   }

@@ -23,6 +23,7 @@ import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.net.message.BlockMessage;
+import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;

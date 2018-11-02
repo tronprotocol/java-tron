@@ -68,8 +68,8 @@ import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.message.TransactionsMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.messagehandler.TransactionsMsgHandler;
+import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
-import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.core.services.WitnessProductBlockService;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory.InventoryType;
@@ -289,7 +289,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         onHandleBlockMessage(peer, (BlockMessage) msg);
         break;
       case TRXS:
-        transactionsMsgHandler.handleTransactionsMessage(peer, (TransactionsMessage) msg);
+        transactionsMsgHandler.processMessage(peer, msg);
         break;
       case SYNC_BLOCK_CHAIN:
         onHandleSyncBlockChainMessage(peer, (SyncBlockChainMessage) msg);
@@ -1252,7 +1252,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     logger.info("update peer {} block both we have {}", peer.getNode().getHost(),
         block.getBlockId().getString());
     peer.setHeadBlockWeBothHave(block.getBlockId());
-    peer.setHeadBlockTimeWeBothHave(block.getTimeStamp());
     peer.setLastBlockUpdateTime(System.currentTimeMillis());
   }
 
@@ -1263,7 +1262,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     peer.setHeadBlockWeBothHave(blockId);
     long time = ((BlockMessage) del.getData(blockId, MessageTypes.BLOCK)).getBlockCapsule()
         .getTimeStamp();
-    peer.setHeadBlockTimeWeBothHave(time);
     peer.setLastBlockUpdateTime(System.currentTimeMillis());
   }
 
@@ -1346,7 +1344,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void disconnectPeer(PeerConnection peer, ReasonCode reason) {
-    peer.setSyncFlag(false);
     peer.disconnect(reason);
   }
 

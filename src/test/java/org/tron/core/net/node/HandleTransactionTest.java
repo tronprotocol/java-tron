@@ -32,6 +32,7 @@ import org.tron.core.net.message.TransactionsMessage;
 import org.tron.core.net.node.override.HandshakeHandlerTest;
 import org.tron.core.net.node.override.PeerClientTest;
 import org.tron.core.net.node.override.TronChannelInitializerTest;
+import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;

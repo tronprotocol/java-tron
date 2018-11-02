@@ -1,5 +1,6 @@
 package org.tron.core.net;
 
+import java.util.LinkedList;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -23,24 +24,8 @@ public class TronProxy {
   @Autowired
   private Manager dbManager;
 
-  public Message getData(Sha256Hash hash, MessageTypes type) throws StoreException {
-    switch (type) {
-      case BLOCK:
-        return new BlockMessage(dbManager.getBlockById(hash));
-      case TRX:
-        TransactionCapsule tx = dbManager.getTransactionStore().get(hash.getBytes());
-        if (tx != null) {
-          return new TransactionMessage(tx.getData());
-        }
-        throw new ItemNotFoundException("transaction is not found");
-      default:
-        throw new BadItemException("message type not block or trx.");
-    }
-  }
-
-  public void syncToCli(long unSyncNum) {
-    logger.info("There are {} blocks we need to sync.", unSyncNum);
-    dbManager.setSyncMode(unSyncNum == 0);
+  public long getSyncBeginNumber() {
+    return dbManager.getSyncBeginNumber();
   }
 
   public long getBlockTime(BlockId id) {
@@ -67,8 +52,9 @@ public class TronProxy {
 
   public BlockId getBlockIdByNum(long num) throws Exception {return dbManager.getBlockIdByNum(num);}
 
-
-
+  public BlockCapsule getGenesisBlock() {
+    return dbManager.getGenesisBlock();
+  }
   public long getHeadBlockTimeStamp() {
     return dbManager.getHeadBlockTimeStamp();
   }
@@ -81,6 +67,14 @@ public class TronProxy {
     return dbManager.containBlockInMainChain(id);
   }
 
+  public LinkedList<BlockId> getBlockChainHashesOnFork(BlockId forkBlockHash) throws Exception {
+    return dbManager.getBlockChainHashesOnFork(forkBlockHash);
+  }
+
+  public boolean canChainRevoke(long num) {
+    return num >= dbManager.getSyncBeginNumber();
+  }
+
   public boolean contain(Sha256Hash hash, MessageTypes type) {
     if (type.equals(MessageTypes.BLOCK)) {
       return dbManager.containBlock(hash);
@@ -90,12 +84,19 @@ public class TronProxy {
     return false;
   }
 
-  public BlockCapsule getGenesisBlock() {
-    return dbManager.getGenesisBlock();
-  }
-
-  public boolean canChainRevoke(long num) {
-    return num >= dbManager.getSyncBeginNumber();
+  public Message getData(Sha256Hash hash, MessageTypes type) throws StoreException {
+    switch (type) {
+      case BLOCK:
+        return new BlockMessage(dbManager.getBlockById(hash));
+      case TRX:
+        TransactionCapsule tx = dbManager.getTransactionStore().get(hash.getBytes());
+        if (tx != null) {
+          return new TransactionMessage(tx.getData());
+        }
+        throw new ItemNotFoundException("transaction is not found");
+      default:
+        throw new BadItemException("message type not block or trx.");
+    }
   }
 
 }
