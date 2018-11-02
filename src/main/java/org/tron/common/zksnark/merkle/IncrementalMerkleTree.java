@@ -16,10 +16,15 @@ public class IncrementalMerkleTree {
   //need persist
   public static HashMap<String, IncrementalMerkleTree> treeMap = new HashMap();
   public static Integer DEPTH = 29;
+  public static IncrementalMerkleTree lastTree;
 
   private Optional<SHA256Compress> left = Optional.empty();
   private Optional<SHA256Compress> right = Optional.empty();
   private List<Optional<SHA256Compress>> parents = new ArrayList<>();
+
+  public static IncrementalMerkleTree getBestMerkleRoot(){
+    return lastTree;
+  }
 
   public int DynamicMemoryUsage() {
     return 32 + 32 + parents.size() * 32;
