@@ -25,6 +25,7 @@ import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -157,7 +158,7 @@ public class TransactionTrace {
     byte[] originAccount;
     byte[] callerAccount;
     long percent = 0;
-    long energyLimit = 0;
+    long originEnergyLimit = 0;
     switch (trxType) {
       case TRX_CONTRACT_CREATION_TYPE:
         callerAccount = TransactionCapsule.getOwner(trx.getInstance().getRawData().getContract(0));
@@ -171,9 +172,10 @@ public class TransactionTrace {
 
         callerAccount = callContract.getOwnerAddress().toByteArray();
         originAccount = contractCapsule.getOriginAddress();
-        percent = Math.max(100 - contractCapsule.getConsumeUserResourcePercent(), 0);
-        percent = Math.min(percent, 100);
-        energyLimit = contractCapsule.getEnergyLimit();
+        percent = Math
+            .max(Constant.ONE_HUNDRED - contractCapsule.getConsumeUserResourcePercent(), 0);
+        percent = Math.min(percent, Constant.ONE_HUNDRED);
+        originEnergyLimit = contractCapsule.getOriginEnergyLimit();
         break;
       default:
         return;
@@ -186,7 +188,7 @@ public class TransactionTrace {
         dbManager,
         origin,
         caller,
-        percent, energyLimit,
+        percent, originEnergyLimit,
         energyProcessor,
         dbManager.getWitnessController().getHeadSlot());
   }

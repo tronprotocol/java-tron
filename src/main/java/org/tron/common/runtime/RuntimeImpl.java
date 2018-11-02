@@ -27,7 +27,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.DataWord;
@@ -52,7 +51,6 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.TransactionTrace;
@@ -97,6 +95,10 @@ public class RuntimeImpl implements Runtime {
   //tx trace
   private TransactionTrace trace;
   private boolean isStaticCall;
+
+  //  according to version
+  public static final boolean IS_NEW_VERSION = false;
+
 
   /**
    * For blockCap's trx run
@@ -173,25 +175,6 @@ public class RuntimeImpl implements Runtime {
     }
   }
 
-
-  public BigInteger getBlockCPULeftInUs() {
-
-    // insure blockCap is not null
-    BigInteger curBlockHaveElapsedCPUInUs =
-        BigInteger.valueOf(
-            Constant.ONE_THOUSAND * (DateTime.now().getMillis() - blockCap.getInstance()
-                .getBlockHeader()
-                .getRawData()
-                .getTimestamp())); // us
-    BigInteger curBlockCPULimitInUs = BigInteger.valueOf((long)
-        (Constant.ONE_THOUSAND * ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5
-            * Args.getInstance().getBlockProducedTimeOut()
-            / Constant.ONE_HUNDRED)); // us
-
-    return curBlockCPULimitInUs.subtract(curBlockHaveElapsedCPUInUs);
-
-  }
-
   public void execute()
       throws ContractValidateException, ContractExeException, VMIllegalException {
     switch (trxType) {
@@ -209,15 +192,16 @@ public class RuntimeImpl implements Runtime {
     }
   }
 
-  public long getEnergyLimit2(AccountCapsule account, long feeLimit, long callValue) {
+  public long getAccountEnergyLimitWithFixRatio(AccountCapsule account, long feeLimit,
+      long callValue) {
 
     long sunPerEnergy = Constant.SUN_PER_ENERGY;
-    if (deposit.getDbManager().getDynamicPropertiesStore().getEnergyFee() != 0) {
+    if (deposit.getDbManager().getDynamicPropertiesStore().getEnergyFee() > 0) {
       sunPerEnergy = deposit.getDbManager().getDynamicPropertiesStore().getEnergyFee();
     }
 
     long leftFrozenEnergy = energyProcessor.getAccountLeftEnergyFromFreeze(account);
-    callValue = max(callValue, 0);
+
     long energyFromBalance = max(account.getBalance() - callValue, 0) / sunPerEnergy;
     long availableEnergy = Math.addExact(leftFrozenEnergy, energyFromBalance);
 
@@ -226,10 +210,11 @@ public class RuntimeImpl implements Runtime {
 
   }
 
-  private long getEnergyLimit(AccountCapsule account, long feeLimit, long callValue) {
+  private long getAccountEnergyLimitWithFloatRatio(AccountCapsule account, long feeLimit,
+      long callValue) {
 
     long sunPerEnergy = Constant.SUN_PER_ENERGY;
-    if (deposit.getDbManager().getDynamicPropertiesStore().getEnergyFee() != 0) {
+    if (deposit.getDbManager().getDynamicPropertiesStore().getEnergyFee() > 0) {
       sunPerEnergy = deposit.getDbManager().getDynamicPropertiesStore().getEnergyFee();
     }
     // can change the calc way
@@ -264,10 +249,10 @@ public class RuntimeImpl implements Runtime {
     return min(Math.addExact(leftEnergyFromFreeze, energyFromBalance), energyFromFeeLimit);
   }
 
-  private long getEnergyLimit(AccountCapsule creator, AccountCapsule caller,
+  private long getTotalEnergyLimitWithFloatRatio(AccountCapsule creator, AccountCapsule caller,
       TriggerSmartContract contract, long feeLimit, long callValue) {
 
-    long callerEnergyLimit = getEnergyLimit(caller, feeLimit, callValue);
+    long callerEnergyLimit = getAccountEnergyLimitWithFloatRatio(caller, feeLimit, callValue);
     if (Arrays.equals(creator.getAddress().toByteArray(), caller.getAddress().toByteArray())) {
       return callerEnergyLimit;
     }
@@ -287,12 +272,14 @@ public class RuntimeImpl implements Runtime {
     }
   }
 
-  public long getEnergyLimit2(AccountCapsule creator, AccountCapsule caller,
+  public long getTotalEnergyLimitWithFixRatio(AccountCapsule creator, AccountCapsule caller,
       TriggerSmartContract contract, long feeLimit, long callValue) {
 
-    long callerEnergyLimit = getEnergyLimit2(caller, feeLimit, callValue);
+    long callerEnergyLimit = getAccountEnergyLimitWithFixRatio(caller, feeLimit, callValue);
     if (Arrays.equals(creator.getAddress().toByteArray(), caller.getAddress().toByteArray())) {
-      // FIXME: 这个地方会不会 导致 开发者调用自己的合约的时候, 由于feeLimit设置较小, 调用失败?
+      // when the creator calls his own contract, this logic will be used.
+      // so, the creator must use a BIG feeLimit to call his own contract,
+      // which will cost the feeLimit TRX when the creator's frozen energy is 0.
       return callerEnergyLimit;
     }
 
@@ -301,44 +288,60 @@ public class RuntimeImpl implements Runtime {
         .getContract(contract.getContractAddress().toByteArray());
     long consumeUserResourcePercent = contractCapsule.getConsumeUserResourcePercent();
 
-    long creatorMaxEnergy = contractCapsule.getEnergyLimit();
+    long originEnergyLimit = contractCapsule.getOriginEnergyLimit();
 
     if (consumeUserResourcePercent <= 0) {
       creatorEnergyLimit = min(energyProcessor.getAccountLeftEnergyFromFreeze(creator),
-          creatorMaxEnergy);
-    } else if (consumeUserResourcePercent < Constant.ONE_HUNDRED) {
-      creatorEnergyLimit = min(
-          BigInteger.valueOf(callerEnergyLimit)
-              .multiply(BigInteger.valueOf(Constant.ONE_HUNDRED - consumeUserResourcePercent))
-              .divide(BigInteger.valueOf(consumeUserResourcePercent)).longValueExact(),
-          min(energyProcessor.getAccountLeftEnergyFromFreeze(creator), creatorMaxEnergy));
+          originEnergyLimit);
+    } else {
+      if (consumeUserResourcePercent < Constant.ONE_HUNDRED) {
+        // creatorEnergyLimit =
+        // min(callerEnergyLimit * (100 - percent) / percent, creatorLeftFrozenEnergy, originEnergyLimit)
+
+        creatorEnergyLimit = min(
+            BigInteger.valueOf(callerEnergyLimit)
+                .multiply(BigInteger.valueOf(Constant.ONE_HUNDRED - consumeUserResourcePercent))
+                .divide(BigInteger.valueOf(consumeUserResourcePercent)).longValueExact(),
+            min(energyProcessor.getAccountLeftEnergyFromFreeze(creator), originEnergyLimit)
+        );
+      }
     }
     return Math.addExact(callerEnergyLimit, creatorEnergyLimit);
   }
 
-  private double getThisTxCPULimitInUsRatio() {
+  public long getTotalEnergyLimit(AccountCapsule creator, AccountCapsule caller,
+      TriggerSmartContract contract, long feeLimit, long callValue) {
+    //  according to version
+    if (IS_NEW_VERSION) {
+      return getTotalEnergyLimitWithFixRatio(creator, caller, contract, feeLimit, callValue);
+    } else {
+      return getTotalEnergyLimitWithFloatRatio(creator, caller, contract, feeLimit, callValue);
+    }
+  }
 
-    double thisTxCPULimitInUsRatio;
+  private double getCpuLimitInUsRatio() {
+
+    double cpuLimitRatio;
 
     if (ET_NORMAL_TYPE == executorType) {
-      // self witness 2
+      // self witness generates block
       if (this.blockCap != null && blockCap.generatedByMyself &&
           this.blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
-        thisTxCPULimitInUsRatio = 1.0;
+        cpuLimitRatio = 1.0;
       } else {
-        // self witness 3, other witness 2, fullnode 2
+        // self witness or other witness or fullnode verifies block
         if (trx.getRet(0).getContractRet() == contractResult.OUT_OF_TIME) {
-          thisTxCPULimitInUsRatio = Args.getInstance().getMinTimeRatio();
+          cpuLimitRatio = Args.getInstance().getMinTimeRatio();
         } else {
-          thisTxCPULimitInUsRatio = Args.getInstance().getMaxTimeRatio();
+          cpuLimitRatio = Args.getInstance().getMaxTimeRatio();
         }
       }
     } else {
-      // self witness 1, other witness 1, fullnode 1
-      thisTxCPULimitInUsRatio = 1.0;
+      // self witness or other witness or fullnode receives tx
+      cpuLimitRatio = 1.0;
     }
 
-    return thisTxCPULimitInUsRatio;
+    return cpuLimitRatio;
   }
 
   /*
@@ -389,26 +392,29 @@ public class RuntimeImpl implements Runtime {
         throw new ContractValidateException(
             "feeLimit must be >= 0 and <= " + VMConfig.MAX_FEE_LIMIT);
       }
-
       AccountCapsule creator = this.deposit
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
 
       long energyLimit;
-      if (false) {  // TODO according to version
-        long creatorEnergyLimit = newSmartContract.getEnergyLimit();
-        if (creatorEnergyLimit <= 0) {
-          throw new ContractValidateException("The creator's energyLimit must be > 0");
+      // according to version
+      if (IS_NEW_VERSION) {
+        if (callValue < 0) {
+          throw new ContractValidateException("callValue must >= 0");
         }
-        energyLimit = getEnergyLimit2(creator, feeLimit, callValue);
+        if (newSmartContract.getOriginEnergyLimit() <= 0) {
+          throw new ContractValidateException("The originEnergyLimit must be > 0");
+        }
+        energyLimit = getAccountEnergyLimitWithFixRatio(creator, feeLimit, callValue);
       } else {
-        energyLimit = getEnergyLimit(creator, feeLimit, callValue);
+        energyLimit = getAccountEnergyLimitWithFloatRatio(creator, feeLimit, callValue);
       }
+
       byte[] ops = newSmartContract.getBytecode().toByteArray();
       rootInternalTransaction = new InternalTransaction(trx, trxType);
 
       long maxCpuTimeOfOneTx = deposit.getDbManager().getDynamicPropertiesStore()
           .getMaxCpuTimeOfOneTx() * Constant.ONE_THOUSAND;
-      long thisTxCPULimitInUs = (long) (maxCpuTimeOfOneTx * getThisTxCPULimitInUsRatio());
+      long thisTxCPULimitInUs = (long) (maxCpuTimeOfOneTx * getCpuLimitInUsRatio());
       long vmStartInUs = System.nanoTime() / Constant.ONE_THOUSAND;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
       ProgramInvoke programInvoke = programInvokeFactory
@@ -469,8 +475,13 @@ public class RuntimeImpl implements Runtime {
       logger.info("No contract or not a smart contract");
       throw new ContractValidateException("No contract or not a smart contract");
     }
-    byte[] code = this.deposit.getCode(contractAddress);
+
     long callValue = contract.getCallValue();
+    if (IS_NEW_VERSION && callValue < 0) {
+      throw new ContractValidateException("callValue must >= 0");
+    }
+
+    byte[] code = this.deposit.getCode(contractAddress);
     if (isNotEmpty(code)) {
 
       long feeLimit = trx.getRawData().getFeeLimit();
@@ -488,17 +499,12 @@ public class RuntimeImpl implements Runtime {
         AccountCapsule creator = this.deposit.getAccount(
             deployedContract.getInstance()
                 .getOriginAddress().toByteArray());
-
-        if (false) { // TODO according to version
-          energyLimit = getEnergyLimit2(creator, caller, contract, feeLimit, callValue);
-        } else {
-          energyLimit = getEnergyLimit(creator, caller, contract, feeLimit, callValue);
-        }
+        energyLimit = getTotalEnergyLimit(creator, caller, contract, feeLimit, callValue);
       }
       long maxCpuTimeOfOneTx = deposit.getDbManager().getDynamicPropertiesStore()
           .getMaxCpuTimeOfOneTx() * Constant.ONE_THOUSAND;
       long thisTxCPULimitInUs =
-          (long) (maxCpuTimeOfOneTx * getThisTxCPULimitInUsRatio());
+          (long) (maxCpuTimeOfOneTx * getCpuLimitInUsRatio());
       long vmStartInUs = System.nanoTime() / Constant.ONE_THOUSAND;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
       ProgramInvoke programInvoke = programInvokeFactory

@@ -245,7 +245,7 @@ public class TVMTestUtils {
     builder.setOriginAddress(ByteString.copyFrom(address));
     builder.setAbi(abi);
     builder.setConsumeUserResourcePercent(consumeUserResourcePercent);
-    builder.setEnergyLimit(creatorEnergyLimit);
+    builder.setOriginEnergyLimit(creatorEnergyLimit);
 
     if (value != 0) {
       builder.setCallValue(value);
