@@ -689,6 +689,12 @@ service WalletSolidity {
       }
     };
   }
+
+  rpc GetMerkleRoot (BytesMessage) returns (MerkelRoot) {
+  }
+
+  rpc GetMerklePath (BytesMessage) returns (MerklePath) {
+    }
 };
 
 service WalletExtension {

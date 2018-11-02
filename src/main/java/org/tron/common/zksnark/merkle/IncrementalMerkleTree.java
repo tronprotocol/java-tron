@@ -19,6 +19,7 @@ public class IncrementalMerkleTree {
 
   private Optional<SHA256Compress> left = Optional.empty();
   private Optional<SHA256Compress> right = Optional.empty();
+  private List<Optional<SHA256Compress>> parents = new ArrayList<>();
 
   public int DynamicMemoryUsage() {
     return 32 + 32 + parents.size() * 32;
@@ -103,7 +104,6 @@ public class IncrementalMerkleTree {
     return EmptyMerkleRoots.emptyMerkleRootsInstance.emptyRoot(DEPTH);
   }
 
-  private List<Optional<SHA256Compress>> parents = new ArrayList<>();
 
   private MerklePath path() {
     Deque<SHA256Compress> filler_hashes = new ArrayDeque<SHA256Compress>();
