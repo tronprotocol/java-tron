@@ -1258,18 +1258,8 @@ public class Manager {
       return;
     }
 
-    long oldSolidifiedBlockNum = dynamicPropertiesStore.getLatestSolidifiedBlockNum();
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
     logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
-    BlockId blockId;
-    try {
-      blockId = getBlockIdByNum(latestSolidifiedBlockNum);
-    } catch (ItemNotFoundException e) {
-      blockId = null;
-    }
-    if (blockId == null || !blockStore.hasOnSolidity(blockId.getBytes())) {
-      revokingStore.updateSolidity(oldSolidifiedBlockNum, latestSolidifiedBlockNum);
-    }
   }
 
   public void updateFork() {

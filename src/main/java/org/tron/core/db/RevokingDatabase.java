@@ -26,7 +26,7 @@ public interface RevokingDatabase {
 
   int size();
 
-  void updateSolidity(long oldSolidifiedBlockNum, long newSolidifedBlockNum);
+  void updateSolidity(int hops);
 
   void check();
 

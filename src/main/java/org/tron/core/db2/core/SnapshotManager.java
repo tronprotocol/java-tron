@@ -72,6 +72,7 @@ public class SnapshotManager implements RevokingDatabase {
     if (size > maxSize.get()) {
       flushCount = flushCount + (size - maxSize.get());
       size = maxSize.get();
+      updateSolidity(size - maxSize.get());
       flush();
     }
 
@@ -235,11 +236,10 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   @Override
-  public void updateSolidity(long oldSolidifiedBlockNum, long newSolidifedBlockNum) {
-    long diff = newSolidifedBlockNum - oldSolidifiedBlockNum;
-    for (int i = 0; i < diff; i++) {
+  public void updateSolidity(int hops) {
+    for (int i = 0; i < hops; i++) {
       for (RevokingDBWithCachingNewValue db : dbs) {
-        db.getHead().updateSolidity(db.getHead());
+        db.getHead().updateSolidity();
       }
     }
   }
@@ -285,7 +285,6 @@ public class SnapshotManager implements RevokingDatabase {
         // debug end
         next = next.getNext();
         snapshots.add(next);
-        next.getCause().resetSolidity();
       }
 
       // debug begin
@@ -296,6 +295,7 @@ public class SnapshotManager implements RevokingDatabase {
 
       root.merge(snapshots);
 
+      root.resetSolidity();
       if (db.getHead() == next) {
        db.setHead(root);
       } else {
