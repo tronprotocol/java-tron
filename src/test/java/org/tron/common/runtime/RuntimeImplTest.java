@@ -115,18 +115,18 @@ public class RuntimeImplTest {
     AccountCapsule creatorAccount = deposit.getAccount(creatorAddress);
 
     long expectEnergyLimit1 = 10_000_000L;
-    Assert.assertEquals(runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
+    Assert.assertEquals(runtimeImpl.getAccountEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
         expectEnergyLimit1);
 
     value = 2_500_000_000L;
     long expectEnergyLimit2 = 5_000_000L;
-    Assert.assertEquals(runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
+    Assert.assertEquals(runtimeImpl.getAccountEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
         expectEnergyLimit2);
 
     value = 10L;
     feeLimit = 1_000_000L;
     long expectEnergyLimit3 = 10_000L;
-    Assert.assertEquals(runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
+    Assert.assertEquals(runtimeImpl.getAccountEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
         expectEnergyLimit3);
 
     long frozenBalance = 1_000_000_000L;
@@ -138,19 +138,19 @@ public class RuntimeImplTest {
 
     feeLimit = 1_000_000_000L;
     long expectEnergyLimit4 = 10_000_000L;
-    Assert.assertEquals(runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
+    Assert.assertEquals(runtimeImpl.getAccountEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
         expectEnergyLimit4);
 
     feeLimit = 3_000_000_000L;
     value = 10L;
     long expectEnergyLimit5 = 20_009_999L;
-    Assert.assertEquals(runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
+    Assert.assertEquals(runtimeImpl.getAccountEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
         expectEnergyLimit5);
 
     feeLimit = 3_000L;
     value = 10L;
     long expectEnergyLimit6 = 30L;
-    Assert.assertEquals(runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
+    Assert.assertEquals(runtimeImpl.getAccountEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
         expectEnergyLimit6);
 
   }
@@ -190,7 +190,7 @@ public class RuntimeImplTest {
     value = 0L;
     long expectEnergyLimit1 = 10_000_000L;
     Assert.assertEquals(
-        runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
+        runtimeImpl.getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
         expectEnergyLimit1);
 
     long creatorFrozenBalance = 1_000_000_000L;
@@ -204,20 +204,20 @@ public class RuntimeImplTest {
     value = 0L;
     long expectEnergyLimit2 = 10_005_000L;
     Assert.assertEquals(
-        runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
+        runtimeImpl.getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
         expectEnergyLimit2);
 
     value = 3_500_000_000L;
     long expectEnergyLimit3 = 5_005_000L;
     Assert.assertEquals(
-        runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
+        runtimeImpl.getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
         expectEnergyLimit3);
 
     value = 10L;
     feeLimit = 5_000_000_000L;
     long expectEnergyLimit4 = 40_004_999L;
     Assert.assertEquals(
-        runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
+        runtimeImpl.getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
         expectEnergyLimit4);
 
     long callerFrozenBalance = 1_000_000_000L;
@@ -230,7 +230,7 @@ public class RuntimeImplTest {
     feeLimit = 5_000_000_000L;
     long expectEnergyLimit5 = 30_014_999L;
     Assert.assertEquals(
-        runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
+        runtimeImpl.getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
         expectEnergyLimit5);
 
   }
@@ -270,7 +270,7 @@ public class RuntimeImplTest {
     value = 0L;
     long expectEnergyLimit1 = 10_000_000L;
     Assert.assertEquals(
-        runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
+        runtimeImpl.getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
         expectEnergyLimit1);
 
     long creatorFrozenBalance = 1_000_000_000L;
@@ -284,13 +284,13 @@ public class RuntimeImplTest {
     value = 0L;
     long expectEnergyLimit2 = 10_005_000L;
     Assert.assertEquals(
-        runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
+        runtimeImpl.getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
         expectEnergyLimit2);
 
     value = 3_999_950_000L;
     long expectEnergyLimit3 = 1_250L;
     Assert.assertEquals(
-        runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
+        runtimeImpl.getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
         expectEnergyLimit3);
 
   }
@@ -330,7 +330,7 @@ public class RuntimeImplTest {
     value = 0L;
     long expectEnergyLimit1 = 10_000_000L;
     Assert.assertEquals(
-        runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
+        runtimeImpl.getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
         expectEnergyLimit1);
 
     long creatorFrozenBalance = 1_000_000_000L;
@@ -344,13 +344,13 @@ public class RuntimeImplTest {
     value = 0L;
     long expectEnergyLimit2 = 10_000_000L;
     Assert.assertEquals(
-        runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
+        runtimeImpl.getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
         expectEnergyLimit2);
 
     value = 3_999_950_000L;
     long expectEnergyLimit3 = 500L;
     Assert.assertEquals(
-        runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
+        runtimeImpl.getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
         expectEnergyLimit3);
 
   }
