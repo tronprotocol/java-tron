@@ -382,7 +382,6 @@ public class RuntimeImpl implements Runtime {
     newSmartContract = newSmartContract.toBuilder()
         .setContractAddress(ByteString.copyFrom(contractAddress)).build();
     long callValue = newSmartContract.getCallValue();
-
     // create vm to constructor smart contract
     try {
       long feeLimit = trx.getRawData().getFeeLimit();
