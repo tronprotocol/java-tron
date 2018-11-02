@@ -245,6 +245,7 @@ public class RpcApiService implements Service {
       responseObserver.onNext(dynamicProperties);
       responseObserver.onCompleted();
     }
+
   }
 
   /**
@@ -1417,6 +1418,19 @@ public class RpcApiService implements Service {
         TransactionInfo reply = walletSolidity.getTransactionInfoById(id);
 
         responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getNullifier(BytesMessage request, StreamObserver<BytesMessage> responseObserver) {
+      ByteString id = request.getValue();
+      if (null != id) {
+        BytesMessage trxId = wallet.getNullifier(id);
+
+        responseObserver.onNext(trxId);
       } else {
         responseObserver.onNext(null);
       }

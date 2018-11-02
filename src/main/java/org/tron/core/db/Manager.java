@@ -124,6 +124,8 @@ public class Manager {
   @Autowired
   @Getter
   private StorageRowStore storageRowStore;
+  @Autowired
+  private NullifierStore nullifierStore;
 
   // for network
   @Autowired
@@ -386,8 +388,11 @@ public class Manager {
         this.witnessController.initWits();
         this.khaosDb.start(genesisBlock);
         this.updateRecentBlock(genesisBlock);
+
       }
     }
+
+    // just for test
   }
 
   /**
@@ -1371,6 +1376,14 @@ public class Manager {
     this.accountIndexStore = indexStore;
   }
 
+  public NullifierStore getNullfierStore() {
+    return this.nullifierStore;
+  }
+
+  public void setNullifierStore(NullifierStore nullifierStore) {
+    this.nullifierStore = nullifierStore;
+  }
+
   public void closeAllStore() {
     logger.info("******** begin to close db ********");
     closeOneStore(accountStore);
@@ -1392,6 +1405,7 @@ public class Manager {
     closeOneStore(recentBlockStore);
     closeOneStore(transactionHistoryStore);
     closeOneStore(votesStore);
+    closeOneStore(nullifierStore);
     logger.info("******** end to close db ********");
   }
 

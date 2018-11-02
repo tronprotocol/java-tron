@@ -1875,6 +1875,15 @@ public class PublicMethed {
     return Optional.ofNullable(transactionInfo);
   }
 
+  public static Optional<BytesMessage> getNullifier(String hash, WalletGrpc
+      .WalletBlockingStub blockingStubFull) {
+    ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(hash));
+    BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
+    BytesMessage trxId;
+    trxId = blockingStubFull.getNullifier(request);
+    return Optional.ofNullable(trxId);
+  }
+
   public static String triggerContract(byte[] contractAddress, String method, String argsStr,
       Boolean isHex, long callValue, long feeLimit, byte[] ownerAddress,
       String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {

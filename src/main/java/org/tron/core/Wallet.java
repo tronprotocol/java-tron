@@ -46,6 +46,7 @@ import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
+import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
@@ -74,6 +75,7 @@ import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.ProposalCapsule;
@@ -776,6 +778,19 @@ public class Wallet {
     return null;
   }
 
+  public BytesMessage getNullifier(ByteString id) {
+
+    if (Objects.isNull(id)) {
+      return null;
+    }
+    BytesCapsule trxId = null;
+    trxId = dbManager.getNullfierStore().get(id.toByteArray());
+
+    if (trxId != null) {
+      return BytesMessage.newBuilder().setValue(ByteString.copyFrom(trxId.getData())).build();
+    }
+    return null;
+  }
 
   public NodeList listNodes() {
     List<NodeHandler> handlerList = nodeManager.dumpActiveNodes();
