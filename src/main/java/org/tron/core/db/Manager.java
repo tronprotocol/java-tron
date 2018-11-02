@@ -961,7 +961,6 @@ public class Manager {
       throw new ContractSizeNotEqualToOneException(
           "act size should be exactly 1, this is extend feature");
     }
-    forkController.hardFork(trxCap);
 
     validateDup(trxCap);
 
@@ -1263,10 +1262,6 @@ public class Manager {
   }
 
   public void updateFork() {
-    if (forkController.shouldBeForked()) {
-      return;
-    }
-
     try {
       long latestSolidifiedBlockNum = dynamicPropertiesStore.getLatestSolidifiedBlockNum();
       BlockCapsule solidifiedBlock = getBlockByNum(latestSolidifiedBlockNum);
@@ -1308,7 +1303,7 @@ public class Manager {
     proposalController.processProposals();
     witnessController.updateWitness();
     this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
-    forkController.reset();
+    forkController.reset(block);
   }
 
   /**

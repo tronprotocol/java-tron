@@ -23,7 +23,7 @@ public interface Parameter {
     int BLOCK_FILLED_SLOTS_NUMBER = 128;
     int MAX_VOTE_NUMBER = 30;
     int MAX_FROZEN_NUMBER = 1;
-    int version = 3;
+    int BLOCK_VERSION = 5;
   }
 
   interface NodeConstant {
@@ -88,6 +88,11 @@ public interface Parameter {
 //    TOTAL_NET_LIMIT,
 //    EXCHANGE_BALANCE_LIMIT,
 //    TOTAL_ENERGY_LIMIT,
+  }
+
+  interface ForkBlockVersionConsts {
+    int START_NEW_TRANSACTION = 4;
+    int ENERGY_LIMIT = 5;
   }
 
 }

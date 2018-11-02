@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -129,7 +128,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
         .setNumber(number)
         .setParentHash(hash.getByteString())
         .setTimestamp(when)
-        .setVersion(ChainConstant.version)
+        .setVersion(ChainConstant.BLOCK_VERSION)
         .setWitnessAddress(witnessAddress)
         .build();
 

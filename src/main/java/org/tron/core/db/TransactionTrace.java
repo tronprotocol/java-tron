@@ -93,7 +93,7 @@ public class TransactionTrace {
     this.energyProcessor = new EnergyProcessor(this.dbManager);
   }
 
-  public boolean needVM() {
+  private boolean needVM() {
     return this.trxType == TRX_CONTRACT_CALL_TYPE || this.trxType == TRX_CONTRACT_CREATION_TYPE;
   }
 
@@ -102,24 +102,14 @@ public class TransactionTrace {
     txStartTimeInMs = System.currentTimeMillis();
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
     runtime = new RuntimeImpl(this, blockCap, deposit, new ProgramInvokeFactoryImpl());
-
-    // switch (trxType) {
-    //   case TRX_PRECOMPILED_TYPE:
-    //     break;
-    //   case TRX_CONTRACT_CREATION_TYPE:
-    //   case TRX_CONTRACT_CALL_TYPE:
-    //     // checkForSmartContract();
-    //     break;
-    //   default:
-    //     break;
-    // }
-
   }
-public void checkIsConstant() throws ContractValidateException, VMIllegalException {
-  if (runtime.isCallConstant()) {
-    throw new VMIllegalException("cannot call constant method ");
+
+  public void checkIsConstant() throws ContractValidateException, VMIllegalException {
+    if (runtime.isCallConstant()) {
+      throw new VMIllegalException("cannot call constant method ");
+    }
   }
-}
+
   //set bill
   public void setBill(long energyUsage) {
     if (energyUsage < 0) {
@@ -136,7 +126,7 @@ public void checkIsConstant() throws ContractValidateException, VMIllegalExcepti
 
   public void exec()
       throws ContractExeException, ContractValidateException, VMIllegalException {
-    /**  VM execute  **/
+    /*  VM execute  */
     runtime.execute();
     runtime.go();
 
@@ -167,6 +157,7 @@ public void checkIsConstant() throws ContractValidateException, VMIllegalExcepti
     byte[] originAccount;
     byte[] callerAccount;
     long percent = 0;
+    long energyLimit = 0;
     switch (trxType) {
       case TRX_CONTRACT_CREATION_TYPE:
         callerAccount = TransactionCapsule.getOwner(trx.getInstance().getRawData().getContract(0));
@@ -175,13 +166,14 @@ public void checkIsConstant() throws ContractValidateException, VMIllegalExcepti
       case TRX_CONTRACT_CALL_TYPE:
         TriggerSmartContract callContract = ContractCapsule
             .getTriggerContractFromTransaction(trx.getInstance());
-        callerAccount = callContract.getOwnerAddress().toByteArray();
-
-        ContractCapsule contract =
+        ContractCapsule contractCapsule =
             dbManager.getContractStore().get(callContract.getContractAddress().toByteArray());
-        originAccount = contract.getInstance().getOriginAddress().toByteArray();
-        percent = Math.max(100 - contract.getConsumeUserResourcePercent(), 0);
+
+        callerAccount = callContract.getOwnerAddress().toByteArray();
+        originAccount = contractCapsule.getOriginAddress();
+        percent = Math.max(100 - contractCapsule.getConsumeUserResourcePercent(), 0);
         percent = Math.min(percent, 100);
+        energyLimit = contractCapsule.getEnergyLimit();
         break;
       default:
         return;
@@ -194,7 +186,7 @@ public void checkIsConstant() throws ContractValidateException, VMIllegalExcepti
         dbManager,
         origin,
         caller,
-        percent,
+        percent, energyLimit,
         energyProcessor,
         dbManager.getWitnessController().getHeadSlot());
   }
@@ -280,7 +272,6 @@ public void checkIsConstant() throws ContractValidateException, VMIllegalExcepti
       return;
     }
     receipt.setResult(contractResult.UNKNOWN);
-    return;
   }
 
   public String getRuntimeError() {

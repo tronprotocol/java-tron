@@ -476,6 +476,7 @@ public class NodeInfo {
       this.allowCreationOfContracts = allowCreationOfContracts;
       return this;
     }
+
   }
 
   public long getBeginSyncNum() {
