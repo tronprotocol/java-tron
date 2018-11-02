@@ -14,13 +14,13 @@ import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract.UpdateSettingForEnergyLimitContract;
+import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
-public class UpdateSettingForEnergyLimitContractActuator extends AbstractActuator {
+public class UpdateEnergyLimitContractActuator extends AbstractActuator {
 
-  UpdateSettingForEnergyLimitContractActuator(Any contract, Manager dbManager) {
+  UpdateEnergyLimitContractActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
   }
 
@@ -28,14 +28,14 @@ public class UpdateSettingForEnergyLimitContractActuator extends AbstractActuato
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
     try {
-      UpdateSettingForEnergyLimitContract usContract = contract
-          .unpack(UpdateSettingForEnergyLimitContract.class);
+      UpdateEnergyLimitContract usContract = contract
+          .unpack(UpdateEnergyLimitContract.class);
       long newEnergyLimit = usContract.getEnergyLimit();
       byte[] contractAddress = usContract.getContractAddress().toByteArray();
       ContractCapsule deployedContract = dbManager.getContractStore().get(contractAddress);
 
       dbManager.getContractStore().put(contractAddress, new ContractCapsule(
-          deployedContract.getInstance().toBuilder().setEnergyLimit(newEnergyLimit)
+          deployedContract.getInstance().toBuilder().setOriginEnergyLimit(newEnergyLimit)
               .build()));
 
       ret.setStatus(fee, code.SUCESS);
@@ -51,7 +51,7 @@ public class UpdateSettingForEnergyLimitContractActuator extends AbstractActuato
   public boolean validate() throws ContractValidateException {
     if (!true) {
       throw new ContractValidateException(
-          "contract type error,unexpected type [UpdateSettingForEnergyLimitContract]");
+          "contract type error,unexpected type [UpdateEnergyLimitContract]");
     }
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
@@ -59,15 +59,15 @@ public class UpdateSettingForEnergyLimitContractActuator extends AbstractActuato
     if (this.dbManager == null) {
       throw new ContractValidateException("No dbManager!");
     }
-    if (!this.contract.is(UpdateSettingForEnergyLimitContract.class)) {
+    if (!this.contract.is(UpdateEnergyLimitContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [UpdateSettingForEnergyLimitContract],real type["
+          "contract type error,expected type [UpdateEnergyLimitContract],real type["
               + contract
               .getClass() + "]");
     }
-    final UpdateSettingForEnergyLimitContract contract;
+    final UpdateEnergyLimitContract contract;
     try {
-      contract = this.contract.unpack(UpdateSettingForEnergyLimitContract.class);
+      contract = this.contract.unpack(UpdateEnergyLimitContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -113,7 +113,7 @@ public class UpdateSettingForEnergyLimitContractActuator extends AbstractActuato
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(UpdateSettingForEnergyLimitContract.class).getOwnerAddress();
+    return contract.unpack(UpdateEnergyLimitContract.class).getOwnerAddress();
   }
 
   @Override

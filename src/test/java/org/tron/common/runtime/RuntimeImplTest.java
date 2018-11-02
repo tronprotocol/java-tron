@@ -7,35 +7,27 @@ import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
-import org.tron.common.runtime.vm.program.Program.OutOfMemoryException;
-import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Contract;
-import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 
@@ -123,18 +115,18 @@ public class RuntimeImplTest {
     AccountCapsule creatorAccount = deposit.getAccount(creatorAddress);
 
     long expectEnergyLimit1 = 10_000_000L;
-    Assert.assertEquals(runtimeImpl.getEnergyLimit2(creatorAccount, feeLimit, value),
+    Assert.assertEquals(runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
         expectEnergyLimit1);
 
     value = 2_500_000_000L;
     long expectEnergyLimit2 = 5_000_000L;
-    Assert.assertEquals(runtimeImpl.getEnergyLimit2(creatorAccount, feeLimit, value),
+    Assert.assertEquals(runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
         expectEnergyLimit2);
 
     value = 10L;
     feeLimit = 1_000_000L;
     long expectEnergyLimit3 = 10_000L;
-    Assert.assertEquals(runtimeImpl.getEnergyLimit2(creatorAccount, feeLimit, value),
+    Assert.assertEquals(runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
         expectEnergyLimit3);
 
     long frozenBalance = 1_000_000_000L;
@@ -146,19 +138,19 @@ public class RuntimeImplTest {
 
     feeLimit = 1_000_000_000L;
     long expectEnergyLimit4 = 10_000_000L;
-    Assert.assertEquals(runtimeImpl.getEnergyLimit2(creatorAccount, feeLimit, value),
+    Assert.assertEquals(runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
         expectEnergyLimit4);
 
     feeLimit = 3_000_000_000L;
     value = 10L;
     long expectEnergyLimit5 = 20_009_999L;
-    Assert.assertEquals(runtimeImpl.getEnergyLimit2(creatorAccount, feeLimit, value),
+    Assert.assertEquals(runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
         expectEnergyLimit5);
 
     feeLimit = 3_000L;
     value = 10L;
     long expectEnergyLimit6 = 30L;
-    Assert.assertEquals(runtimeImpl.getEnergyLimit2(creatorAccount, feeLimit, value),
+    Assert.assertEquals(runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
         expectEnergyLimit6);
 
   }
@@ -198,7 +190,7 @@ public class RuntimeImplTest {
     value = 0L;
     long expectEnergyLimit1 = 10_000_000L;
     Assert.assertEquals(
-        runtimeImpl.getEnergyLimit2(creatorAccount, callerAccount, contract, feeLimit, value),
+        runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
         expectEnergyLimit1);
 
     long creatorFrozenBalance = 1_000_000_000L;
@@ -212,20 +204,20 @@ public class RuntimeImplTest {
     value = 0L;
     long expectEnergyLimit2 = 10_005_000L;
     Assert.assertEquals(
-        runtimeImpl.getEnergyLimit2(creatorAccount, callerAccount, contract, feeLimit, value),
+        runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
         expectEnergyLimit2);
 
     value = 3_500_000_000L;
     long expectEnergyLimit3 = 5_005_000L;
     Assert.assertEquals(
-        runtimeImpl.getEnergyLimit2(creatorAccount, callerAccount, contract, feeLimit, value),
+        runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
         expectEnergyLimit3);
 
     value = 10L;
     feeLimit = 5_000_000_000L;
     long expectEnergyLimit4 = 40_004_999L;
     Assert.assertEquals(
-        runtimeImpl.getEnergyLimit2(creatorAccount, callerAccount, contract, feeLimit, value),
+        runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
         expectEnergyLimit4);
 
     long callerFrozenBalance = 1_000_000_000L;
@@ -238,7 +230,7 @@ public class RuntimeImplTest {
     feeLimit = 5_000_000_000L;
     long expectEnergyLimit5 = 30_014_999L;
     Assert.assertEquals(
-        runtimeImpl.getEnergyLimit2(creatorAccount, callerAccount, contract, feeLimit, value),
+        runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
         expectEnergyLimit5);
 
   }
@@ -278,7 +270,7 @@ public class RuntimeImplTest {
     value = 0L;
     long expectEnergyLimit1 = 10_000_000L;
     Assert.assertEquals(
-        runtimeImpl.getEnergyLimit2(creatorAccount, callerAccount, contract, feeLimit, value),
+        runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
         expectEnergyLimit1);
 
     long creatorFrozenBalance = 1_000_000_000L;
@@ -292,13 +284,13 @@ public class RuntimeImplTest {
     value = 0L;
     long expectEnergyLimit2 = 10_005_000L;
     Assert.assertEquals(
-        runtimeImpl.getEnergyLimit2(creatorAccount, callerAccount, contract, feeLimit, value),
+        runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
         expectEnergyLimit2);
 
     value = 3_999_950_000L;
     long expectEnergyLimit3 = 1_250L;
     Assert.assertEquals(
-        runtimeImpl.getEnergyLimit2(creatorAccount, callerAccount, contract, feeLimit, value),
+        runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
         expectEnergyLimit3);
 
   }
@@ -338,7 +330,7 @@ public class RuntimeImplTest {
     value = 0L;
     long expectEnergyLimit1 = 10_000_000L;
     Assert.assertEquals(
-        runtimeImpl.getEnergyLimit2(creatorAccount, callerAccount, contract, feeLimit, value),
+        runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
         expectEnergyLimit1);
 
     long creatorFrozenBalance = 1_000_000_000L;
@@ -352,13 +344,13 @@ public class RuntimeImplTest {
     value = 0L;
     long expectEnergyLimit2 = 10_000_000L;
     Assert.assertEquals(
-        runtimeImpl.getEnergyLimit2(creatorAccount, callerAccount, contract, feeLimit, value),
+        runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
         expectEnergyLimit2);
 
     value = 3_999_950_000L;
     long expectEnergyLimit3 = 500L;
     Assert.assertEquals(
-        runtimeImpl.getEnergyLimit2(creatorAccount, callerAccount, contract, feeLimit, value),
+        runtimeImpl.getEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
         expectEnergyLimit3);
 
   }

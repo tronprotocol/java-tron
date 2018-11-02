@@ -89,7 +89,7 @@ public class ReceiptCapsule {
    * payEnergyBill pay receipt energy bill by energy processor.
    */
   public void payEnergyBill(Manager manager, AccountCapsule origin, AccountCapsule caller,
-      long percent, long energyLimit, EnergyProcessor energyProcessor, long now)
+      long percent, long originEnergyLimit, EnergyProcessor energyProcessor, long now)
       throws BalanceInsufficientException {
     if (receipt.getEnergyUsageTotal() <= 0) {
       return;
@@ -99,7 +99,7 @@ public class ReceiptCapsule {
       payEnergyBill(manager, caller, receipt.getEnergyUsageTotal(), energyProcessor, now);
     } else {
       long originUsage = Math.multiplyExact(receipt.getEnergyUsageTotal(), percent) / 100;
-      originUsage = getOriginUsage(origin, energyLimit, energyProcessor, originUsage);
+      originUsage = getOriginUsage(origin, originEnergyLimit, energyProcessor, originUsage);
 
       long callerUsage = receipt.getEnergyUsageTotal() - originUsage;
       energyProcessor.useEnergy(origin, originUsage, now);
@@ -108,16 +108,14 @@ public class ReceiptCapsule {
     }
   }
 
-  private long getOriginUsage(AccountCapsule origin, long energyLimit,
+  private long getOriginUsage(AccountCapsule origin, long originEnergyLimit,
       EnergyProcessor energyProcessor, long originUsage) {
-    if (energyLimit <= 0) {
-      energyLimit = Constant.CREATOR_DEFAULT_ENERGY_LIMIT;
-    }
+
     if (!false) {
       return Math.min(originUsage, energyProcessor.getAccountLeftEnergyFromFreeze(origin));
     }
     return Math.min(originUsage,
-        Math.min(energyProcessor.getAccountLeftEnergyFromFreeze(origin), energyLimit));
+        Math.min(energyProcessor.getAccountLeftEnergyFromFreeze(origin), originEnergyLimit));
   }
 
   private void payEnergyBill(
