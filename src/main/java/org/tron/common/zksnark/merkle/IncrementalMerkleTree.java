@@ -22,7 +22,7 @@ public class IncrementalMerkleTree {
   private Optional<SHA256Compress> right = Optional.empty();
   private List<Optional<SHA256Compress>> parents = new ArrayList<>();
 
-  public static IncrementalMerkleTree getBestMerkleRoot(){
+  public static IncrementalMerkleTree getBestMerkleRoot() {
     return lastTree;
   }
 
@@ -110,7 +110,7 @@ public class IncrementalMerkleTree {
   }
 
 
-  private MerklePath path() {
+  public MerklePath path() {
     Deque<SHA256Compress> filler_hashes = new ArrayDeque<SHA256Compress>();
     return path(filler_hashes);
   }
@@ -279,18 +279,21 @@ public class IncrementalMerkleTree {
 
   public static void main(String[] args) {
 
-
-
     //add
     IncrementalMerkleTree tree = new IncrementalMerkleTree();
     String s1 = "2ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab91";
     SHA256Compress a = new SHA256Compress(ByteArray.fromHexString(s1));
     String s2 = "9b3eba79a06c4f37edce2f0e7957c22c0f712d9c071ac87f253ae6ddefb24bb1";
     SHA256Compress b = new SHA256Compress(ByteArray.fromHexString(s2));
+    String s3 = "2ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab91";
+    SHA256Compress c = new SHA256Compress(ByteArray.fromHexString(s3));
     tree.append(a);
     tree.append(b);
+    tree.append(c);
     IncrementalMerkleTree.treeMap.put(tree.getRootKey(), tree);
     //get
-    IncrementalMerkleTree.treeMap.get(tree.getRootKey());
+    IncrementalMerkleTree tree1 = IncrementalMerkleTree.treeMap.get(tree.getRootKey());
+    MerklePath path = tree1.path();
+
   }
 }
