@@ -292,8 +292,21 @@ public class IncrementalMerkleTree {
     tree.append(c);
     IncrementalMerkleTree.treeMap.put(tree.getRootKey(), tree);
     //get
-    IncrementalMerkleTree tree1 = IncrementalMerkleTree.treeMap.get(tree.getRootKey());
-    MerklePath path = tree1.path();
+    tree = IncrementalMerkleTree.treeMap.get(tree.getRootKey());
+    //other
+    tree.last();
+    tree.isComplete();
+    tree.next_depth(0);
+    tree.DynamicMemoryUsage();
+    tree.size();
+    tree.wfcheck();
 
+    MerklePath path = tree.path();
+    IncrementalWitness witness = tree.witness();
+    //witness
+    witness.append(a);
+    witness.root();
+    witness.element();
+    witness.path();
   }
 }
