@@ -5,7 +5,6 @@ import com.google.common.collect.Lists;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import org.tron.common.utils.ByteArray;
@@ -13,18 +12,12 @@ import org.tron.common.zksnark.SHA256Compress;
 
 public class IncrementalMerkleTree {
 
-  //need persist
-  public static HashMap<String, IncrementalMerkleTree> treeMap = new HashMap();
   public static Integer DEPTH = 29;
-  public static IncrementalMerkleTree lastTree;
 
   private Optional<SHA256Compress> left = Optional.empty();
   private Optional<SHA256Compress> right = Optional.empty();
   private List<Optional<SHA256Compress>> parents = new ArrayList<>();
 
-  public static IncrementalMerkleTree getBestMerkleRoot() {
-    return lastTree;
-  }
 
   public int DynamicMemoryUsage() {
     return 32 + 32 + parents.size() * 32;
@@ -200,7 +193,7 @@ public class IncrementalMerkleTree {
   }
 
 
-  private boolean isComplete() {
+  public boolean isComplete() {
     return isComplete(DEPTH);
   }
 
@@ -257,7 +250,7 @@ public class IncrementalMerkleTree {
     return d + skip;
   }
 
-  private void wfcheck() {
+  public void wfcheck() {
     if (parents.size() >= DEPTH) {
       throw new RuntimeException("tree has too many parents");
     }
@@ -277,50 +270,5 @@ public class IncrementalMerkleTree {
   }
 
 
-  public static boolean rootIsExist(String rt) {
-    return treeMap.containsKey(rt);
-  }
 
-  public static void saveCm(String rt, byte[] cm1, byte[] cm2) {
-    IncrementalMerkleTree tree = treeMap.get(rt);
-    tree.append(new SHA256Compress(cm1));
-    tree.append(new SHA256Compress(cm2));
-    treeMap.put(tree.getRootKey(), tree);
-  }
-
-
-  public static void main(String[] args) {
-
-    //add
-    IncrementalMerkleTree tree = new IncrementalMerkleTree();
-    String s1 = "2ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab91";
-    SHA256Compress a = new SHA256Compress(ByteArray.fromHexString(s1));
-    String s2 = "9b3eba79a06c4f37edce2f0e7957c22c0f712d9c071ac87f253ae6ddefb24bb1";
-    SHA256Compress b = new SHA256Compress(ByteArray.fromHexString(s2));
-    String s3 = "2ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab91";
-    SHA256Compress c = new SHA256Compress(ByteArray.fromHexString(s3));
-    tree.append(a);
-    tree.append(b);
-    tree.append(c);
-    IncrementalMerkleTree.treeMap.put(tree.getRootKey(), tree);
-    //get
-    tree = IncrementalMerkleTree.treeMap.get(tree.getRootKey());
-    //other
-    tree.last();
-    tree.isComplete();
-    tree.next_depth(0);
-    tree.DynamicMemoryUsage();
-    tree.size();
-    tree.wfcheck();
-
-    MerklePath path = tree.path();
-    IncrementalWitness witness = tree.witness();
-    //witness
-    witness.append(a);
-    witness.root();
-    witness.element();
-    witness.path();
-
-//    mgadget1.generate_r1cs_witness(wit1.path());
-  }
 }

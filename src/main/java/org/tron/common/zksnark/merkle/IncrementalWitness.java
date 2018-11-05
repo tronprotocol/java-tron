@@ -1,6 +1,7 @@
 package org.tron.common.zksnark.merkle;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
@@ -11,8 +12,8 @@ public class IncrementalWitness {
   public static Integer DEPTH = IncrementalMerkleTree.DEPTH;
 
   private IncrementalMerkleTree tree;
-  private List<SHA256Compress> filled;
-  private Optional<IncrementalMerkleTree> cursor;
+  private List<SHA256Compress> filled = new ArrayList<>();
+  private Optional<IncrementalMerkleTree> cursor = Optional.empty();
   private int cursor_depth = 0;
 
   private Deque<SHA256Compress> partial_path() {
