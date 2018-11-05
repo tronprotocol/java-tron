@@ -20,8 +20,7 @@ package org.tron.common.runtime.vm.program.invoke;
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.InternalTransaction;
@@ -42,9 +41,8 @@ import org.tron.protos.Protocol.Transaction;
  * @since 08.06.2014
  */
 @Component("ProgramInvokeFactory")
+@Slf4j(topic = "vm")
 public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
-
-  private static final Logger logger = LoggerFactory.getLogger("VM");
 
   // Invocation by the wire tx
   @Override
@@ -91,34 +89,27 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
           .getTriggerContractFromTransaction(tx);
       /***         ADDRESS op       ***/
       // YP: Get address of currently executing account.
-      // byte[] address = tx.isContractCreation() ? tx.getContractAddress() : tx.getReceiveAddress();
       byte[] address = contract.getContractAddress().toByteArray();
 
       /***         ORIGIN op       ***/
       // YP: This is the sender of original transaction; it is never a contract.
-      // byte[] origin = tx.getSender();
       byte[] origin = contract.getOwnerAddress().toByteArray();
 
       /***         CALLER op       ***/
       // YP: This is the address of the account that is directly responsible for this execution.
-      //byte[] caller = tx.getSender();
       byte[] caller = contract.getOwnerAddress().toByteArray();
 
       /***         BALANCE op       ***/
-      // byte[] balance = repository.getBalance(address).toByteArray();
       balance = deposit.getBalance(caller);
 
       /***        CALLVALUE op      ***/
-      // byte[] callValue = nullToEmpty(tx.getValue());
       long callValue = contract.getCallValue();
 
       /***     CALLDATALOAD  op   ***/
       /***     CALLDATACOPY  op   ***/
       /***     CALLDATASIZE  op   ***/
-      // byte[] data = tx.isContractCreation() ? ByteUtil.EMPTY_BYTE_ARRAY : nullToEmpty(tx.getData());
       data = contract.getData().toByteArray();
 
-      // dropLimit = contract.getTrxEnergyLimitInUs().toByteArray();
       switch (executorType) {
         case ET_CONSTANT_TYPE:
           break;

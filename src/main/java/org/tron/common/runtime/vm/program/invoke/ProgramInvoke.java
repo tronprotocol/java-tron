@@ -54,8 +54,6 @@ public interface ProgramInvoke {
 
   DataWord getDifficulty();
 
-  boolean byTransaction();
-
   boolean byTestingSuite();
 
   int getCallDeep();
