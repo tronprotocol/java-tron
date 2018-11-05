@@ -1,6 +1,8 @@
 package org.tron.core.db2.core;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Streams;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;
@@ -258,7 +260,8 @@ public class SnapshotManager implements RevokingDatabase {
   private void refresh() {
     // debug begin
 //    Map<String, String> debugDumpDataMap = new HashMap<>();
-//    Multimap<String, byte[]> values = ArrayListMultimap.create();
+    List<List<byte[]>> accounts = new ArrayList<>();
+    List<String> debugBlockHashs = new ArrayList<>();
     // debug end
 
     for (RevokingDBWithCachingNewValue db : dbs) {
@@ -271,9 +274,10 @@ public class SnapshotManager implements RevokingDatabase {
       SnapshotRoot root = (SnapshotRoot) db.getHead().getRoot();
       Snapshot next = root;
       for (int i = 0; i < flushCount; ++i) {
+        next = next.getNext();
+        snapshots.add(next);
         // debug begin
         List<byte[]> debugDumpDatas = new ArrayList<>();
-        List<String> debugBlockHashs = new ArrayList<>();
         String dbName = db.getDbName();
         SnapshotImpl snapshot = (SnapshotImpl) next;
         DB<Key, Value> keyValueDB = snapshot.getDb();
@@ -290,10 +294,12 @@ public class SnapshotManager implements RevokingDatabase {
             debugDumpDatas.add(v.getBytes());
           }
         }
-        DBChecker.check(debugBlockHashs.get(0), debugDumpDatas);
+
+        if ("account".equals(dbName)) {
+          accounts.add(debugDumpDatas);
+        }
+
         // debug end
-        next = next.getNext();
-        snapshots.add(next);
       }
 
       // debug begin
@@ -313,6 +319,9 @@ public class SnapshotManager implements RevokingDatabase {
       }
     }
     // debug begin
+    for (int i = 0; i < debugBlockHashs.size(); ++i) {
+      DBChecker.check(debugBlockHashs.get(i), accounts.get(i));
+    }
 //    List<String> debugDumpDatas = debugDumpDataMap.entrySet().stream().map(Entry::getValue).sorted(String::compareTo).collect(Collectors.toList());
 //    logger.info("***debug refresh:    blocks={}, datahash:{}, accounts:{}\n", debugBlockHashs, Sha256Hash.of(debugDumpDatas.toString().getBytes()), printAccount(null));
     // debug end
