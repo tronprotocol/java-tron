@@ -71,6 +71,26 @@ message zkv0proof {
   BN128G1 h = 8;
 }
 
+message AuthenticationPath{
+  repeated bool  value = 1;
+}
+
+message MerklePath {
+  repeated AuthenticationPath  authentication_paths= 1;
+  repeated bool index = 2;
+  bytes rt = 3;
+}
+
+message SHA256Compress{
+  bytes value = 1;
+}
+
+message MerkleTree {
+  bytes left = 1;
+  bytes right = 2;
+  repeated bytes parents = 3;
+}
+
 message ZksnarkV0TransferContract {
   bytes owner_address = 1;
   bytes to_address = 2;
