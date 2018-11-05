@@ -54,6 +54,7 @@ public class InternalTransaction {
 
   /*  Message sender address */
   private byte[] sendAddress;
+  @Getter
   private int deep;
   @Getter
   private int index;
@@ -78,7 +79,7 @@ public class InternalTransaction {
 
 
   /**
-   * Construct an un-encoded InternalTransaction
+   * Construct a root InternalTransaction
    */
   public InternalTransaction(Transaction trx,  InternalTransaction.TrxType trxType)
       throws ContractValidateException {
@@ -100,7 +101,7 @@ public class InternalTransaction {
       this.note = "create";
       this.value = contract.getNewContract().getCallValue();
       this.data = contract.getNewContract().getBytecode().toByteArray();
-    } else if(trxType == TrxType.TRX_CONTRACT_CALL_TYPE) {
+    } else if (trxType == TrxType.TRX_CONTRACT_CALL_TYPE) {
       TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
       if (contract == null) {
         throw new ContractValidateException("Invalid TriggerSmartContract Protocol");
@@ -112,13 +113,13 @@ public class InternalTransaction {
       this.value = contract.getCallValue();
       this.data = contract.getData().toByteArray();
     } else {
-      throw new ContractValidateException("Unknown contract type");
+      // do nothing, just for running byte code
     }
     this.hash = trxCap.getTransactionId().getBytes();
   }
 
   /**
-   * Construct an encoded InternalTransaction
+   * Construct a child InternalTransaction
    */
 
   public InternalTransaction(byte[] parentHash, int deep, int index,
