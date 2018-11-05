@@ -277,7 +277,6 @@ public class IncrementalMerkleTree {
   }
 
 
-
   public static boolean rootIsExist(String rt) {
     return treeMap.containsKey(rt);
   }
