@@ -3,6 +3,8 @@ package org.tron.core.db;
 import static org.tron.core.db2.core.SnapshotManager.simpleDecode;
 
 import com.google.common.collect.Maps;
+import com.google.common.collect.Streams;
+import com.google.common.primitives.Longs;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
@@ -11,9 +13,11 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -23,9 +27,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.SourceInter;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Utils;
 import org.tron.core.config.args.Args;
+import org.tron.core.db2.common.DBChecker;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.RevokingDBWithCachingOldValue;
@@ -67,6 +73,24 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
     stack.add(new RevokingState());
     ++activeDialog;
     return new Dialog(this, disableOnExit);
+  }
+
+  @Override
+  public void checkDB() {
+    RevokingState state = stack.peekLast();
+    List<byte[]> debugDumpDatas = new ArrayList<>();
+    List<String> debugBlockHashs = new ArrayList<>();
+    Streams.concat(state.oldValues.entrySet().stream().map(Entry::getKey),
+        state.newIds.stream()).forEach(tuple -> {
+          if ("block".equals(((LevelDbDataSourceImpl) tuple.getDatabase()).getDBName())) {
+            debugBlockHashs.add(Longs.fromByteArray(tuple.getKey()) + ":" + ByteUtil.toHexString(tuple.getKey()));
+          }
+          if ("account".equals(((LevelDbDataSourceImpl) tuple.getDatabase()).getDBName())) {
+            byte[] v = tuple.getDatabase().getData(tuple.getKey());
+            debugDumpDatas.add(v);
+          }
+    });
+    DBChecker.check(debugBlockHashs.get(0), debugDumpDatas);
   }
 
   @Override
@@ -425,7 +449,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
 
   @ToString
   @Getter // only for unit test
-  static class RevokingState {
+  public static class RevokingState {
 
     Map<RevokingTuple, byte[]> oldValues = new HashMap<>();
     Set<RevokingTuple> newIds = new HashSet<>();

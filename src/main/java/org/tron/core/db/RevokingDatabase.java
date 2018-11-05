@@ -1,5 +1,6 @@
 package org.tron.core.db;
 
+import org.tron.core.db.AbstractRevokingStore.RevokingState;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
@@ -25,6 +26,8 @@ public interface RevokingDatabase {
   void enable();
 
   int size();
+
+  void checkDB();
 
   void check();
 

@@ -7,6 +7,7 @@ import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.aspectj.weaver.Checker;
 import org.iq80.leveldb.WriteOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.TronApplicationContext;
@@ -16,9 +17,11 @@ import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.AbstractRevokingStore.RevokingState;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.DB;
+import org.tron.core.db2.common.DBChecker;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
@@ -207,6 +210,11 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   @Override
+  public void checkDB() {
+
+  }
+
+  @Override
   public void setMaxSize(int maxSize) {
     this.maxSize.set(maxSize);
   }
@@ -249,7 +257,6 @@ public class SnapshotManager implements RevokingDatabase {
 
   private void refresh() {
     // debug begin
-//    List<String> debugBlockHashs = new ArrayList<>();
 //    Map<String, String> debugDumpDataMap = new HashMap<>();
 //    Multimap<String, byte[]> values = ArrayListMultimap.create();
     // debug end
@@ -265,22 +272,25 @@ public class SnapshotManager implements RevokingDatabase {
       Snapshot next = root;
       for (int i = 0; i < flushCount; ++i) {
         // debug begin
-//        String dbName = db.getDbName();
-//        SnapshotImpl snapshot = (SnapshotImpl) next;
-//        DB<Key, Value> keyValueDB = snapshot.getDb();
-//        for (Map.Entry<Key, Value> e : keyValueDB) {
-//          Key k = e.getKey();
-//          Value v = e.getValue();
+        List<byte[]> debugDumpDatas = new ArrayList<>();
+        List<String> debugBlockHashs = new ArrayList<>();
+        String dbName = db.getDbName();
+        SnapshotImpl snapshot = (SnapshotImpl) next;
+        DB<Key, Value> keyValueDB = snapshot.getDb();
+        for (Map.Entry<Key, Value> e : keyValueDB) {
+          Key k = e.getKey();
+          Value v = e.getValue();
 //          debugDumpDataMap.put(dbName + ":" + ByteUtil.toHexString(k.getBytes()),
 //              dbName + ":" + ByteUtil.toHexString(k.getBytes()) + ":"
 //              + (e.getValue().getBytes() == null ? null : Sha256Hash.of(v.getBytes())));
-//          if ("block".equals(dbName)) {
-//            debugBlockHashs.add(Longs.fromByteArray(k.getBytes()) + ":" + ByteUtil.toHexString(k.getBytes()));
-//          }
-//          if ("account".equals(dbName) && v.getBytes() != null) {
-//            values.put(ByteUtil.toHexString(k.getBytes()), v.getBytes());
-//          }
-//        }
+          if ("block".equals(dbName)) {
+            debugBlockHashs.add(Longs.fromByteArray(k.getBytes()) + ":" + ByteUtil.toHexString(k.getBytes()));
+          }
+          if ("account".equals(dbName) && v.getBytes() != null) {
+            debugDumpDatas.add(v.getBytes());
+          }
+        }
+        DBChecker.check(debugBlockHashs.get(0), debugDumpDatas);
         // debug end
         next = next.getNext();
         snapshots.add(next);
