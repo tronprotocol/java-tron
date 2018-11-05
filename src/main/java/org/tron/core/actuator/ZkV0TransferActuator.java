@@ -9,8 +9,11 @@ import org.tron.common.crypto.zksnark.Proof;
 import org.tron.common.crypto.zksnark.VerifyingKey;
 import org.tron.common.crypto.zksnark.ZkVerify;
 import org.tron.common.crypto.zksnark.ZksnarkUtils;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.zksnark.merkle.IncrementalMerkleTree;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.Manager;
@@ -51,9 +54,14 @@ public class ZkV0TransferActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractExeException(e.getMessage());
     }
-    //TODO:
-    //save nf1 nf2
-    //save cm1 cm2
+
+    byte[] nf1 = zkContract.getNf1().toByteArray();
+    byte[] nf2 = zkContract.getNf2().toByteArray();
+    dbManager.getNullfierStore().put(nf1, new BytesCapsule(nf1));
+    dbManager.getNullfierStore().put(nf2, new BytesCapsule(nf2));
+
+    IncrementalMerkleTree.saveCm(ByteArray.toHexString(zkContract.getRt().getRt().toByteArray()),
+        zkContract.getCm1().toByteArray(), zkContract.getCm2().toByteArray());
     return true;
   }
 
@@ -137,7 +145,11 @@ public class ZkV0TransferActuator extends AbstractActuator {
     if (rt == MerkelRoot.getDefaultInstance() || rt.getRt().size() != 32) {
       throw new ContractValidateException("Merkel root is invalid.");
     }
-    //TODO: //check rt
+
+    if (!IncrementalMerkleTree.rootIsExist(ByteArray.toHexString(rt.getRt().toByteArray()))) {
+      throw new ContractValidateException("Rt is invalid.");
+    }
+
     ByteString nf1 = zkContract.getNf1();
     if (nf1.size() != 32) {
       throw new ContractValidateException("Nf1 is invalid.");
@@ -151,7 +163,14 @@ public class ZkV0TransferActuator extends AbstractActuator {
     if (nf1.equals(nf2)) {
       throw new ContractValidateException("Nf1 equals to nf2.");
     }
-    //TODO: //check nf1 nf2
+
+    if (dbManager.getNullfierStore().has(nf1.toByteArray())) {
+      throw new ContractValidateException("Nf1 is exist.");
+    }
+
+    if (dbManager.getNullfierStore().has(nf2.toByteArray())) {
+      throw new ContractValidateException("Nf2 is exist.");
+    }
 
     ByteString cm1 = zkContract.getCm1();
     if (cm1.size() != 32) {
