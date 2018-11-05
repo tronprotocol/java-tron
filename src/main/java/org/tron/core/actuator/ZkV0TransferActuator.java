@@ -20,7 +20,6 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract.MerkelRoot;
 import org.tron.protos.Contract.ZksnarkV0TransferContract;
 import org.tron.protos.Contract.zkv0proof;
 
@@ -60,7 +59,7 @@ public class ZkV0TransferActuator extends AbstractActuator {
     dbManager.getNullfierStore().put(nf1, new BytesCapsule(nf1));
     dbManager.getNullfierStore().put(nf2, new BytesCapsule(nf2));
 
-    IncrementalMerkleTree.saveCm(ByteArray.toHexString(zkContract.getRt().getRt().toByteArray()),
+    IncrementalMerkleTree.saveCm(ByteArray.toHexString(zkContract.getRt().toByteArray()),
         zkContract.getCm1().toByteArray(), zkContract.getCm2().toByteArray());
     return true;
   }
@@ -141,12 +140,12 @@ public class ZkV0TransferActuator extends AbstractActuator {
           "ToAddress needs to be empty and the vToPub is zero, or neither.");
     }
 
-    MerkelRoot rt = zkContract.getRt();
-    if (rt == MerkelRoot.getDefaultInstance() || rt.getRt().size() != 32) {
+    ByteString rt = zkContract.getRt();
+    if (rt.isEmpty() || rt.size() != 32) {
       throw new ContractValidateException("Merkel root is invalid.");
     }
 
-    if (!IncrementalMerkleTree.rootIsExist(ByteArray.toHexString(rt.getRt().toByteArray()))) {
+    if (!IncrementalMerkleTree.rootIsExist(ByteArray.toHexString(rt.toByteArray()))) {
       throw new ContractValidateException("Rt is invalid.");
     }
 
@@ -227,7 +226,7 @@ public class ZkV0TransferActuator extends AbstractActuator {
     byte[] hSig = ZksnarkUtils.computeHSig(zkContract);
     long vPubNew = Math.addExact(vToPub, calcFee());
     BigInteger[] witness = ZksnarkUtils
-        .witnessMap(rt.getRt().toByteArray(), hSig, zkContract.getH1().toByteArray(),
+        .witnessMap(rt.toByteArray(), hSig, zkContract.getH1().toByteArray(),
             zkContract.getH2().toByteArray(), nf1.toByteArray(), nf2.toByteArray(),
             cm1.toByteArray(), cm2.toByteArray(), vFromPub, vPubNew);
     //verify
