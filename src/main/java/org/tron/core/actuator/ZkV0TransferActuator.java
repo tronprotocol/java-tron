@@ -14,6 +14,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.MerkelRoot;
@@ -29,6 +30,30 @@ public class ZkV0TransferActuator extends AbstractActuator {
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
+    ZksnarkV0TransferContract zkContract;
+    try {
+      zkContract = contract.unpack(ZksnarkV0TransferContract.class);
+      ByteString ownerAddress = zkContract.getOwnerAddress();
+      if (!ownerAddress.isEmpty()) {
+        long vFromPub = zkContract.getVFromPub();
+        dbManager.adjustBalance(ownerAddress.toByteArray(), -vFromPub);
+      }
+      ByteString toAddress = zkContract.getToAddress();
+      if (!toAddress.isEmpty()) {
+        long vToPub = zkContract.getVToPub();
+        dbManager.adjustBalance(toAddress.toByteArray(), vToPub);
+      }
+      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), calcFee());
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+      throw new ContractExeException(e.getMessage());
+    } catch (BalanceInsufficientException e) {
+      logger.debug(e.getMessage(), e);
+      throw new ContractExeException(e.getMessage());
+    }
+    //TODO:
+    //save nf1 nf2
+    //save cm1 cm2
     return true;
   }
 
