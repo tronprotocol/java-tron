@@ -80,6 +80,7 @@ import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
+import org.tron.protos.Contract.ZksnarkV0TransferContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -548,6 +549,12 @@ public class RpcApiService implements Service {
     public void createTransaction2(TransferContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.TransferContract, responseObserver);
+    }
+
+    @Override
+    public void zksnarkV0TransferTrx(ZksnarkV0TransferContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.ZksnarkV0TransferContract, responseObserver);
     }
 
     private void createTransactionExtention(Message request, ContractType contractType,
@@ -1363,23 +1370,23 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
-    @Override
-    public void getPaginatedProposalList(PaginatedMessage request,
-        StreamObserver<ProposalList> responseObserver) {
-      responseObserver
-          .onNext(wallet.getPaginatedProposalList(request.getOffset(), request.getLimit()));
-      responseObserver.onCompleted();
-
-    }
-
-    @Override
-    public void getPaginatedExchangeList(PaginatedMessage request,
-        StreamObserver<ExchangeList> responseObserver) {
-      responseObserver
-          .onNext(wallet.getPaginatedExchangeList(request.getOffset(), request.getLimit()));
-      responseObserver.onCompleted();
-
-    }
+//    @Override
+//    public void getPaginatedProposalList(PaginatedMessage request,
+//        StreamObserver<ProposalList> responseObserver) {
+//      responseObserver
+//          .onNext(wallet.getPaginatedProposalList(request.getOffset(), request.getLimit()));
+//      responseObserver.onCompleted();
+//
+//    }
+//
+//    @Override
+//    public void getPaginatedExchangeList(PaginatedMessage request,
+//        StreamObserver<ExchangeList> responseObserver) {
+//      responseObserver
+//          .onNext(wallet.getPaginatedExchangeList(request.getOffset(), request.getLimit()));
+//      responseObserver.onCompleted();
+//
+//    }
 
     @Override
     public void listExchanges(EmptyMessage request,
