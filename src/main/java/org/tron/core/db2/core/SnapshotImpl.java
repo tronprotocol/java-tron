@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
+import java.lang.ref.WeakReference;
 import lombok.Getter;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.HashDB;
@@ -142,6 +143,11 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   }
 
   @Override
+  public Snapshot getSolidity() {
+    return root.getSolidity();
+  }
+
+  @Override
   public Iterator<Map.Entry<byte[],byte[]>> iterator() {
     Map<WrappedByteArray, WrappedByteArray> all = new HashMap<>();
     collect(all);
@@ -183,9 +189,5 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   @Override
   public void updateSolidity() {
     root.updateSolidity();
-  }
-
-  public Snapshot getSolidity() {
-    return root.getSolidity();
   }
 }

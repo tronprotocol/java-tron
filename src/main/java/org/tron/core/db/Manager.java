@@ -51,6 +51,7 @@ import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.Parameter.ChainConstant;
+import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
@@ -961,7 +962,6 @@ public class Manager {
       throw new ContractSizeNotEqualToOneException(
           "act size should be exactly 1, this is extend feature");
     }
-    forkController.hardFork(trxCap);
 
     validateDup(trxCap);
 
@@ -1258,25 +1258,11 @@ public class Manager {
       return;
     }
 
-    long oldSolidifiedBlockNum = dynamicPropertiesStore.getLatestSolidifiedBlockNum();
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
     logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
-    BlockId blockId;
-    try {
-      blockId = getBlockIdByNum(latestSolidifiedBlockNum);
-    } catch (ItemNotFoundException e) {
-      blockId = null;
-    }
-    if (blockId == null || !blockStore.hasOnSolidity(blockId.getBytes())) {
-      revokingStore.updateSolidity(oldSolidifiedBlockNum, latestSolidifiedBlockNum);
-    }
   }
 
   public void updateFork() {
-    if (forkController.shouldBeForked()) {
-      return;
-    }
-
     try {
       long latestSolidifiedBlockNum = dynamicPropertiesStore.getLatestSolidifiedBlockNum();
       BlockCapsule solidifiedBlock = getBlockByNum(latestSolidifiedBlockNum);
@@ -1318,7 +1304,7 @@ public class Manager {
     proposalController.processProposals();
     witnessController.updateWitness();
     this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
-    forkController.reset();
+    forkController.reset(block);
   }
 
   /**
@@ -1536,5 +1522,9 @@ public class Manager {
     } catch (TooBigTransactionResultException e) {
       logger.debug("too big transaction result");
     }
+  }
+
+  public boolean passVersion(int version) {
+    return forkController.pass(version);
   }
 }

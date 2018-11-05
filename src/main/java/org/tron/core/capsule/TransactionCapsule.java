@@ -73,6 +73,7 @@ import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.UpdateAssetContract;
 import org.tron.protos.Contract.UpdateSettingContract;
+import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -358,6 +359,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 //          break;
         case UpdateSettingContract:
           owner = contractParameter.unpack(UpdateSettingContract.class)
+              .getOwnerAddress();
+          break;
+        case UpdateEnergyLimitContract:
+          owner = contractParameter.unpack(UpdateEnergyLimitContract.class)
               .getOwnerAddress();
           break;
         case ExchangeCreateContract:

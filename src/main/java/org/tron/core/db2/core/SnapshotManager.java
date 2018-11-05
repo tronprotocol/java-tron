@@ -1,13 +1,10 @@
 package org.tron.core.db2.core;
 
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
 import com.google.common.collect.Streams;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
-import com.sun.org.apache.xpath.internal.WhitespaceStrippingElementMatcher;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.WriteOptions;
@@ -32,7 +29,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -71,16 +67,21 @@ public class SnapshotManager implements RevokingDatabase {
       disabled = false;
     }
 
-//    if (size > maxSize.get()) {
-//      logger.info("****size:" + size + ", maxsize:" + maxSize.get());
-//      size = maxSize.get();
-//      flush();
-//    }
+    printDebug("before buildSession");
+
+    if (size > maxSize.get()) {
+      flushCount = flushCount + (size - maxSize.get());
+      updateSolidity(size - maxSize.get());
+      size = maxSize.get();
+      flush();
+    }
+
     // debug begin
 //    debug();
     // debug end
     advance();
     ++activeSession;
+    printDebug("after buildSession");
     return new Session(this, disableOnExit);
   }
 
@@ -113,6 +114,35 @@ public class SnapshotManager implements RevokingDatabase {
     --activeSession;
   }
 
+  private void printDebug(String tag) {
+    // debug begin
+    RevokingDBWithCachingNewValue debugDB = dbs.get(0);
+    Snapshot next = debugDB.getHead().getRoot();
+    List<Snapshot> snapshots = new ArrayList<>();
+    while (next != null) {
+      snapshots.add(next);
+      next = next.getNext();
+    }
+    logger.info("****debug snapshot {} db:{}, size:{}, maxSize:{}, diff:{}, flush count:{}, session:{}, solid:{}, head:{}, next:{}, all snapshot:{}",
+        tag,
+        debugDB.getDbName(),
+        size,
+        maxSize.get(),
+        size - maxSize.get(),
+        flushCount,
+        activeSession,
+        toClassString(debugDB.getHead().getSolidity()),
+        toClassString(debugDB.getHead()),
+        toClassString(debugDB.getHead().getSolidity().getNext()),
+        snapshots.stream().map(this::toClassString).collect(Collectors.toList())
+    );
+    // debug end
+  }
+
+  private String toClassString(Object o) {
+    return o == null ? null : o.getClass().getSimpleName() + "@" + o.hashCode();
+  }
+
   public synchronized void revoke() {
     if (disabled) {
       return;
@@ -120,6 +150,10 @@ public class SnapshotManager implements RevokingDatabase {
 
     if (activeSession <= 0) {
       throw new RevokingStoreIllegalStateException("activeSession has to be greater than 0");
+    }
+
+    if (size <= 0) {
+      return;
     }
 
     disabled = true;
@@ -143,6 +177,10 @@ public class SnapshotManager implements RevokingDatabase {
   public synchronized void pop() {
     if (activeSession != 0) {
       throw new RevokingStoreIllegalStateException("activeSession has to be equal 0");
+    }
+
+    if (size <= 0) {
+      throw new RevokingStoreIllegalStateException("there is not snapshot to be popped");
     }
 
     disabled = true;
@@ -197,37 +235,12 @@ public class SnapshotManager implements RevokingDatabase {
     System.err.println("******** end to pop revokingDb ********");
   }
 
-  @Override
-  public void updateSolidity(long oldSolidifiedBlockNum, long newSolidifedBlockNum) {
-    long diff = newSolidifedBlockNum - oldSolidifiedBlockNum;
-
-    // debug begin
-    RevokingDBWithCachingNewValue debugDB = dbs.get(0);
-    Snapshot next = debugDB.getHead().getRoot();
-    List<Snapshot> snapshots = new ArrayList<>();
-    while (next != null) {
-      snapshots.add(next);
-      next = next.getNext();
-    }
-    logger.info("****updateSolidity newNum:{}, oldNum:{}, diff:{}, db:{}, solid:{}, head:{}, next:{}, all snapshot:{}",
-        newSolidifedBlockNum,
-        oldSolidifiedBlockNum,
-        diff,
-        debugDB.getDbName(),
-        debugDB.getHead().getSolidity(),
-        debugDB.getHead(),
-        debugDB.getHead().getSolidity().getNext(),
-        snapshots
-    );
-    // debug end
-
-    for (int i = 0; i < diff; i++) {
-      ++flushCount;
+  public void updateSolidity(int hops) {
+    for (int i = 0; i < hops; i++) {
       for (RevokingDBWithCachingNewValue db : dbs) {
         db.getHead().updateSolidity();
       }
     }
-    flush();
   }
 
   private boolean shouldBeRefreshed() {
@@ -247,13 +260,10 @@ public class SnapshotManager implements RevokingDatabase {
       }
 
       List<Snapshot> snapshots = new ArrayList<>();
-      Snapshot solidity = db.getHead().getSolidity();
-      if (Snapshot.isRoot(solidity)) {
-        return;
-      }
 
-      Snapshot next = solidity.getRoot().getNext();
-      while (next != solidity.getNext()) {
+      SnapshotRoot root = (SnapshotRoot) db.getHead().getRoot();
+      Snapshot next = root;
+      for (int i = 0; i < flushCount; ++i) {
         // debug begin
 //        String dbName = db.getDbName();
 //        SnapshotImpl snapshot = (SnapshotImpl) next;
@@ -272,9 +282,8 @@ public class SnapshotManager implements RevokingDatabase {
 //          }
 //        }
         // debug end
-        snapshots.add(next);
         next = next.getNext();
-        --size;
+        snapshots.add(next);
       }
 
       // debug begin
@@ -283,14 +292,14 @@ public class SnapshotManager implements RevokingDatabase {
 //        }
       // debug end
 
-      ((SnapshotRoot) solidity.getRoot()).merge(snapshots);
+      root.merge(snapshots);
 
-      solidity.resetSolidity();
-      if (db.getHead() == solidity) {
-       db.setHead(solidity.getRoot());
+      root.resetSolidity();
+      if (db.getHead() == next) {
+       db.setHead(root);
       } else {
-        solidity.getNext().setPrevious(solidity.getRoot());
-        solidity.getRoot().setNext(solidity.getNext());
+        next.getNext().setPrevious(root);
+        root.setNext(next.getNext());
       }
     }
     // debug begin
@@ -305,10 +314,10 @@ public class SnapshotManager implements RevokingDatabase {
     }
 
     if (shouldBeRefreshed()) {
-      flushCount = 0;
       deleteCheckPoint();
       createCheckPoint();
       refresh();
+      flushCount = 0;
     }
   }
 
@@ -326,13 +335,9 @@ public class SnapshotManager implements RevokingDatabase {
       }
 
       String dbName = db.getDbName();
-      Snapshot solidity = db.getHead().getSolidity();
-      if (Snapshot.isRoot(solidity)) {
-        return;
-      }
-
-      Snapshot next = solidity.getRoot().getNext();
-      while (next != solidity.getNext()) {
+      Snapshot next = head.getRoot();
+      for (int i = 0; i < flushCount; ++i) {
+        next = next.getNext();
         SnapshotImpl snapshot = (SnapshotImpl) next;
         DB<Key, Value> keyValueDB = snapshot.getDb();
         for (Map.Entry<Key, Value> e : keyValueDB) {
@@ -351,7 +356,6 @@ public class SnapshotManager implements RevokingDatabase {
 //          }
           // debug end
         }
-        next = next.getNext();
       }
     }
 
