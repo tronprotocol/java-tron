@@ -11,7 +11,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.config.VMConfig;
@@ -25,7 +24,7 @@ import org.tron.common.runtime.vm.program.Stack;
 public class VM {
 
   private static final BigInteger _32_ = BigInteger.valueOf(32);
-  private static final String logString = "{}    Op: [{}]  Energy: [{}] Deep: [{}]  Hint: [{}]";
+  private static final String ENERGY_LOG_FORMATE = "{}    Op: [{}]  Energy: [{}] Deep: [{}]  Hint: [{}]";
 
   // 3MB
   private static final BigInteger MEM_LIMIT = BigInteger.valueOf(3L * 1024 * 1024);
@@ -251,7 +250,7 @@ public class VM {
           DataWord exp = stack.get(stack.size() - 2);
           int bytesOccupied = exp.bytesOccupied();
           energyCost =
-              energyCosts.getEXP_ENERGY() + energyCosts.getEXP_BYTE_ENERGY() * bytesOccupied;
+              (long)energyCosts.getEXP_ENERGY() + energyCosts.getEXP_BYTE_ENERGY() * bytesOccupied;
           break;
         default:
           break;
@@ -411,7 +410,7 @@ public class VM {
             hint = word1.value() + " < " + word2.value();
           }
 
-          if (word1.value().compareTo(word2.value()) == -1) {
+          if (word1.value().compareTo(word2.value()) < 0) {
             word1.and(DataWord.ZERO);
             word1.getData()[31] = 1;
           } else {
@@ -430,7 +429,7 @@ public class VM {
             hint = word1.sValue() + " < " + word2.sValue();
           }
 
-          if (word1.sValue().compareTo(word2.sValue()) == -1) {
+          if (word1.sValue().compareTo(word2.sValue()) < 0) {
             word1.and(DataWord.ZERO);
             word1.getData()[31] = 1;
           } else {
@@ -449,7 +448,7 @@ public class VM {
             hint = word1.sValue() + " > " + word2.sValue();
           }
 
-          if (word1.sValue().compareTo(word2.sValue()) == 1) {
+          if (word1.sValue().compareTo(word2.sValue()) > 0) {
             word1.and(DataWord.ZERO);
             word1.getData()[31] = 1;
           } else {
@@ -468,7 +467,7 @@ public class VM {
             hint = word1.value() + " > " + word2.value();
           }
 
-          if (word1.value().compareTo(word2.value()) == 1) {
+          if (word1.value().compareTo(word2.value()) > 0) {
             word1.and(DataWord.ZERO);
             word1.getData()[31] = 1;
           } else {
@@ -559,7 +558,7 @@ public class VM {
           DataWord word1 = program.stackPop();
           DataWord word2 = program.stackPop();
           final DataWord result;
-          if (word1.value().compareTo(_32_) == -1) {
+          if (word1.value().compareTo(_32_) < 0) {
             byte tmp = word2.getData()[word1.intValue()];
             word2.and(DataWord.ZERO);
             word2.getData()[31] = tmp;
@@ -1195,7 +1194,7 @@ public class VM {
                 + " energy: " + adjustedCallEnergy.shortHex()
                 + " inOff: " + inDataOffs.shortHex()
                 + " inSize: " + inDataSize.shortHex();
-            logger.debug(logString, String.format("%5s", "[" + program.getPC() + "]"),
+            logger.debug(ENERGY_LOG_FORMATE, String.format("%5s", "[" + program.getPC() + "]"),
                 String.format("%-12s", op.name()),
                 program.getEnergyLimitLeft().value(),
                 program.getCallDeep(), hint);
