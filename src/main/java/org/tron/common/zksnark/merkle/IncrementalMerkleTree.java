@@ -281,9 +281,10 @@ public class IncrementalMerkleTree {
     return treeMap.containsKey(rt);
   }
 
-  public static void saveCm(String rt, byte[] cm) {
+  public static void saveCm(String rt, byte[] cm1, byte[] cm2) {
     IncrementalMerkleTree tree = treeMap.get(rt);
-    tree.append(new SHA256Compress(cm));
+    tree.append(new SHA256Compress(cm1));
+    tree.append(new SHA256Compress(cm2));
     treeMap.put(tree.getRootKey(), tree);
   }
 

@@ -8,6 +8,9 @@ public class Record {
   //IncrementNoteWitnesses
 
   //asyncrpcoperation_sendmany
+
   //z_sendmany
 
+  //接口
+  //find_unspent_notes
 }
