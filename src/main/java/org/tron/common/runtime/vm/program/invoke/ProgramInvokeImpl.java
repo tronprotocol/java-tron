@@ -22,8 +22,11 @@ import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
 import org.tron.common.storage.Deposit;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.BlockStore;
+import org.tron.core.exception.StoreException;
 
 @Slf4j
 public class ProgramInvokeImpl implements ProgramInvoke {
@@ -117,7 +120,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   }
 
   /*           ADDRESS op         */
-  public DataWord getOwnerAddress() {
+  public DataWord getContractAddress() {
     return address;
   }
 
@@ -372,6 +375,15 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   @Override
   public void setStaticCall() {
     isStaticCall = true;
+  }
+
+  @Override
+  public BlockCapsule getBlockByNum(int index) {
+    try {
+      return deposit.getDbManager().getBlockByNum(index);
+    } catch (StoreException e) {
+      throw new IllegalOperationException("cannot find block num");
+    }
   }
 
 }
