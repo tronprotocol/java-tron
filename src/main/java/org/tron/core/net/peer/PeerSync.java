@@ -27,7 +27,7 @@ public class PeerSync {
   @Autowired
   private TronManager tronManager;
 
-  public void startSync(PeerConnection peer) throws Exception {
+  public void startSync(PeerConnection peer) {
     peer.setTronState(TronState.SYNCING);
     peer.setNeedSyncFromPeer(true);
     peer.getSyncBlockToFetch().clear();
@@ -36,7 +36,7 @@ public class PeerSync {
     syncNext(peer);
   }
 
-  public void syncNext(PeerConnection peer) throws Exception {
+  public void syncNext(PeerConnection peer) {
     if (peer.getSyncChainRequested() != null) {
       logger.warn("Peer {} is in sync.", peer.getNode().getHost());
       return;

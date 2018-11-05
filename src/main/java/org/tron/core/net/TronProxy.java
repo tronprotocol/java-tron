@@ -1,10 +1,12 @@
 package org.tron.core.net;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -16,13 +18,21 @@ import org.tron.core.exception.StoreException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
+import org.tron.core.net.peer.PeerConnection;
 
 @Slf4j
 @Component
 public class TronProxy {
 
   @Autowired
+  private SyncPool syncPool;
+
+  @Autowired
   private Manager dbManager;
+
+  public Collection<PeerConnection> getActivePeer() {
+    return syncPool.getActivePeers();
+  }
 
   public long getSyncBeginNumber() {
     return dbManager.getSyncBeginNumber();
@@ -36,6 +46,14 @@ public class TronProxy {
     } catch (ItemNotFoundException e) {
       return dbManager.getGenesisBlock().getTimeStamp();
     }
+  }
+
+  public void preValidateTransactionSign (BlockCapsule block) throws Exception {
+    dbManager.preValidateTransactionSign(block);
+  }
+
+  public void pushBlock (BlockCapsule block) throws Exception {
+    dbManager.pushBlock(block);
   }
 
   public BlockId getHeadBlockId() {
@@ -55,6 +73,7 @@ public class TronProxy {
   public BlockCapsule getGenesisBlock() {
     return dbManager.getGenesisBlock();
   }
+
   public long getHeadBlockTimeStamp() {
     return dbManager.getHeadBlockTimeStamp();
   }
