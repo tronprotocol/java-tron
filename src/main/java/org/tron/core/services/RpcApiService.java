@@ -81,6 +81,7 @@ import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Contract.ZksnarkV0TransferContract;
+import org.tron.protos.Contract.MerklePath;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -1438,6 +1439,19 @@ public class RpcApiService implements Service {
         BytesMessage trxId = wallet.getNullifier(id);
 
         responseObserver.onNext(trxId);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getMerklePath(BytesMessage request, StreamObserver<MerklePath> responseObserver) {
+      ByteString rt = request.getValue();
+      if (null != rt) {
+        MerklePath merklePath = wallet.getMerklePath(rt);
+
+        responseObserver.onNext(merklePath);
       } else {
         responseObserver.onNext(null);
       }

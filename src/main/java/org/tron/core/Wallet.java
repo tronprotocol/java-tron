@@ -70,6 +70,7 @@ import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
+import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
@@ -110,6 +111,8 @@ import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.TriggerSmartContract;
+import org.tron.protos.Contract.MerklePath;
+import org.tron.protos.Contract.AuthenticationPath;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -788,6 +791,39 @@ public class Wallet {
 
     if (trxId != null) {
       return BytesMessage.newBuilder().setValue(ByteString.copyFrom(trxId.getData())).build();
+    }
+    return null;
+  }
+
+  public MerklePath getMerklePath(ByteString rt) {
+
+    if (Objects.isNull(rt)) {
+      return null;
+    }
+
+    if (!IncrementalMerkleTreeContainer.rootIsExist(ByteArray.toHexString(rt.toByteArray()))) {
+      return null;
+    }
+
+    org.tron.common.zksnark.merkle.MerklePath merklePath = null;
+    try {
+      merklePath = IncrementalMerkleTreeContainer.path(rt.toString());
+    } catch (Exception ex) {
+      logger.error("get merkle path error, ", ex);
+      return null;
+    }
+
+    if (merklePath != null) {
+      MerklePath.Builder builder = MerklePath.newBuilder();
+      List<List<Boolean>> authenticationPath = merklePath.getAuthenticationPath();
+      List<Boolean> index = merklePath.getIndex();
+      builder.setRt(rt);
+      builder.addAllIndex(index);
+      authenticationPath.forEach(
+          path ->
+              builder.addAuthenticationPaths(
+                  AuthenticationPath.newBuilder().addAllValue(path).build()));
+      return builder.build();
     }
     return null;
   }

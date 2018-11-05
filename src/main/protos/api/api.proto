@@ -585,11 +585,27 @@ service Wallet {
   //  }
   // input rt[]
   rpc GetMerklePath (BytesMessage) returns (MerklePath) {
+    option (google.api.http) = {
+      post: "/wallet/getmerklepath"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/getmerklepath"
+      }
+    };
   }
+
   // get last merkle
   rpc GetBestMerkleRoot (EmptyMessage) returns (MerklePath) {
   }
+
   rpc GetNullifier (BytesMessage) returns (BytesMessage) {
+    option (google.api.http) = {
+      post: "/wallet/getnullifier"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/getnullifier"
+      }
+    };
   }
 };
 

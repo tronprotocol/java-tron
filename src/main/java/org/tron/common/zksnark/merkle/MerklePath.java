@@ -13,4 +13,11 @@ public class MerklePath {
     this.index = index;
   }
 
+  public List<List<Boolean>> getAuthenticationPath() {
+    return this.authentication_path;
+  }
+
+  public List<Boolean> getIndex() {
+    return this.index;
+  }
 }
