@@ -589,6 +589,8 @@ service Wallet {
   // get last merkle
   rpc GetBestMerkleRoot (EmptyMessage) returns (MerklePath) {
   }
+  rpc GetNullifier (BytesMessage) returns (BytesMessage) {
+  }
 };
 
 
