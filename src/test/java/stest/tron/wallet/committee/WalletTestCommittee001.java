@@ -18,6 +18,7 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
@@ -117,6 +118,14 @@ public class WalletTestCommittee001 {
     logger.info(Long.toString(now));
     //Assert.assertTrue(listProposals.get().getProposals(0).getCreateTime() >= now);
     Assert.assertTrue(listProposals.get().getProposals(0).getParametersMap().equals(proposalMap));
+
+    //getProposalListPaginated
+    PaginatedMessage.Builder pageMessageBuilder = PaginatedMessage.newBuilder();
+    pageMessageBuilder.setOffset(0);
+    pageMessageBuilder.setLimit(1);
+    ProposalList paginatedProposalList = blockingStubFull
+        .getPaginatedProposalList(pageMessageBuilder.build());
+    Assert.assertTrue(paginatedProposalList.getProposalsCount() >= 1);
   }
 
   @AfterClass

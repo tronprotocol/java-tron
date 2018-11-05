@@ -24,13 +24,17 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 public class ContractScenario001 {
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key1");
+      .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
   private ManagedChannel channelFull = null;
+  private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
+  private String fullnode1 = Configuration.getByPath("testng.conf")
+      .getStringList("fullnode.ip.list").get(1);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
 
@@ -51,23 +55,31 @@ public class ContractScenario001 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(contract001Address,20000000L,fromAddress,
-        testKey002,blockingStubFull));
-    logger.info(Long.toString(PublicMethed.queryAccount(contract001Key,blockingStubFull)
+    Assert.assertTrue(PublicMethed.sendcoin(contract001Address, 20000000L, fromAddress,
+        testKey002, blockingStubFull));
+    channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
+        .usePlaintext(true)
+        .build();
+    blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
+    logger.info(Long.toString(PublicMethed.queryAccount(contract001Key, blockingStubFull)
         .getBalance()));
   }
 
   @Test(enabled = true)
   public void deployAddressDemo() {
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract001Address, 1000000L,
-        3,1,contract001Key,blockingStubFull));
+        3, 1, contract001Key, blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract001Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
     Long energyUsage = accountResource.getEnergyUsed();
+    Long balanceBefore = PublicMethed.queryAccount(contract001Key, blockingStubFull).getBalance();
 
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
+    logger.info("before balance is " + Long.toString(balanceBefore));
+
     String contractName = "addressDemo";
     String code = "608060405234801561001057600080fd5b5060bf8061001f6000396000f3006080604052600436"
         + "1060485763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041"
@@ -80,18 +92,24 @@ public class ContractScenario001 {
         + "se,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inpu"
         + "ts\":[],\"name\":\"nowInSeconds\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\""
         + "payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
-    byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
-        0L, 100,null,contract001Key,contract001Address,blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
+    byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
+        0L, 100, null, contract001Key, contract001Address, blockingStubFull);
+    SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertTrue(smartContract.getAbi() != null);
-    accountResource = PublicMethed.getAccountResource(contract001Address,blockingStubFull);
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    accountResource = PublicMethed.getAccountResource(contract001Address, blockingStubFull1);
     energyLimit = accountResource.getEnergyLimit();
     energyUsage = accountResource.getEnergyUsed();
-    Assert.assertTrue(energyLimit > 0);
-    Assert.assertTrue(energyUsage > 0);
+    Long balanceAfter = PublicMethed.queryAccount(contract001Key, blockingStubFull1).getBalance();
 
     logger.info("after energy limit is " + Long.toString(energyLimit));
     logger.info("after energy usage is " + Long.toString(energyUsage));
+    logger.info("after balance is " + Long.toString(balanceAfter));
+
+    Assert.assertTrue(energyLimit > 0);
+    Assert.assertTrue(energyUsage > 0);
+    Assert.assertEquals(balanceBefore, balanceAfter);
   }
 
   @AfterClass
