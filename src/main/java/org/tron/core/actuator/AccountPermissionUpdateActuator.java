@@ -85,7 +85,10 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
     boolean containOwner = false;
     boolean containActive = false;
     for (Permission permission : accountPermissionUpdateContract.getPermissionsList()) {
-      //TODO : need assert max keysCount.
+      if (permission.getKeysCount() >= dbManager.getDynamicPropertiesStore().getTotalSignNum()) {
+        throw new ContractValidateException("number of keys in permission should not be greater "
+            + "than " + dbManager.getDynamicPropertiesStore().getTotalSignNum());
+      }
       if (permission.getKeysCount() == 0) {
         throw new ContractValidateException("key's count should be greater than 0");
       }
