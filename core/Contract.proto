@@ -71,17 +71,12 @@ message zkv0proof {
   BN128G1 h = 8;
 }
 
-message MerkelRoot {
-  int64 blocknum = 1;
-  bytes rt = 2;
-}
-
 message ZksnarkV0TransferContract {
   bytes owner_address = 1;
   bytes to_address = 2;
   int64 v_from_pub = 3;
   int64 v_to_pub = 4;
-  MerkelRoot rt = 5;
+  bytes rt = 5;
   bytes nf1 = 6;
   bytes nf2 = 7;
   bytes cm1 = 8;
