@@ -694,7 +694,10 @@ service WalletSolidity {
   }
 
   rpc GetMerklePath (BytesMessage) returns (MerklePath) {
-    }
+  }
+
+  rpc GetBestMerkleRoot (EmptyMessage) returns (MerklePath) {
+  }
 };
 
 service WalletExtension {
