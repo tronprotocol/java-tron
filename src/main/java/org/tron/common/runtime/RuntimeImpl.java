@@ -511,7 +511,7 @@ public class RuntimeImpl implements Runtime {
       }
       this.vm = new VM(config);
       rootInternalTransaction = new InternalTransaction(trx, trxType);
-      this.program = new Program(null, code, programInvoke, rootInternalTransaction, config,
+      this.program = new Program(code, programInvoke, rootInternalTransaction, config,
           this.blockCap);
       this.program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
       this.program.setRootCallConstant(isCallConstant());

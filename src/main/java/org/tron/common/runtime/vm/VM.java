@@ -11,6 +11,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.config.VMConfig;
@@ -736,7 +737,7 @@ public class VM {
 
           byte[] msgData = program.getReturnDataBufferData(dataOffsetData, lengthData);
 
-          if (msgData == null) {
+          if (ArrayUtils.isEmpty(msgData)) {
             throw new Program.ReturnDataCopyIllegalBoundsException(dataOffsetData, lengthData,
                 program.getReturnDataBufferSize().longValueSafe());
           }
