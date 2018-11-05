@@ -60,8 +60,6 @@ public interface ProgramInvoke {
 
   Deposit getDeposit();
 
-  BlockStore getBlockStore();
-
   boolean isStaticCall();
 
   long getVmShouldEndInUs();

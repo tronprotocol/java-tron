@@ -243,11 +243,6 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   }
 
   @Override
-  public BlockStore getBlockStore() {
-    return deposit.getDbManager().getBlockStore();
-  }
-
-  @Override
   public boolean isStaticCall() {
     return isStaticCall;
   }
