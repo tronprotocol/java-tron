@@ -46,7 +46,7 @@ service Wallet {
   rpc CreateTransaction2 (TransferContract) returns (TransactionExtention) {
   };
 
-  rpc ZksnarkV0TransferTrx(ZksnarkV0TransferContract) returns(TransactionExtention) {
+  rpc ZksnarkV0TransferTrx (ZksnarkV0TransferContract) returns (TransactionExtention) {
   };
 
   rpc BroadcastTransaction (Transaction) returns (Return) {
@@ -419,15 +419,15 @@ service Wallet {
       }
     };
   };
- rpc GetPaginatedProposalList (PaginatedMessage) returns (ProposalList) {
-      option (google.api.http) = {
+  rpc GetPaginatedProposalList (PaginatedMessage) returns (ProposalList) {
+    option (google.api.http) = {
           post: "/wallet/getpaginatedproposallist"
           body: "*"
           additional_bindings {
             get: "/wallet/getpaginatedproposallist"
           }
         };
-    }
+  }
   rpc GetProposalById (BytesMessage) returns (Proposal) {
     option (google.api.http) = {
         post: "/wallet/getproposalbyid"
@@ -448,14 +448,14 @@ service Wallet {
     };
   };
   rpc GetPaginatedExchangeList (PaginatedMessage) returns (ExchangeList) {
-      option (google.api.http) = {
+    option (google.api.http) = {
           post: "/wallet/getpaginatedexchangelist"
           body: "*"
           additional_bindings {
             get: "/wallet/getpaginatedexchangelist"
           }
         };
-    }
+  }
   rpc GetExchangeById (BytesMessage) returns (Exchange) {
     option (google.api.http) = {
         post: "/wallet/getexchangebyid"
@@ -581,14 +581,15 @@ service Wallet {
     };
   }
 
+  //  rpc GetMerkleRoot (BytesMessage) returns (BytesMessage) {
+  //  }
+  // input rt[]
+  rpc GetMerklePath (BytesMessage) returns (MerklePath) {
+  }
+  // get last merkle
+  rpc GetBestMerkleRoot (EmptyMessage) returns (MerklePath) {
+  }
   rpc GetNullifier (BytesMessage) returns (BytesMessage) {
-    option (google.api.http) = {
-      post: "/wallet/getnullifier"
-      body: "*"
-      additional_bindings {
-        get: "/wallet/getnullifier"
-      }
-    };
   }
 };
 
@@ -700,7 +701,7 @@ service WalletSolidity {
     };
   }
 
-  rpc GetMerkleRoot (BytesMessage) returns (MerkelRoot) {
+  rpc GetMerkleRoot (BytesMessage) returns (BytesMessage) {
   }
 
   rpc GetMerklePath (BytesMessage) returns (MerklePath) {
@@ -901,7 +902,7 @@ message EasyTransferByPrivateMessage {
 message EasyTransferResponse {
   Transaction transaction = 1;
   Return result = 2;
-  bytes txid = 3;   //transaction id =  sha256(transaction.rowdata)
+  bytes txid = 3; //transaction id =  sha256(transaction.rowdata)
 }
 
 message AddressPrKeyPairMessage {
@@ -911,7 +912,7 @@ message AddressPrKeyPairMessage {
 
 message TransactionExtention {
   Transaction transaction = 1;
-  bytes txid = 2;   //transaction id =  sha256(transaction.rowdata)
+  bytes txid = 2; //transaction id =  sha256(transaction.rowdata)
   repeated bytes constant_result = 3;
   Return result = 4;
 }
