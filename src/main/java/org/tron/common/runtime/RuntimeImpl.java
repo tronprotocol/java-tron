@@ -555,7 +555,7 @@ public class RuntimeImpl implements Runtime {
 
         if (TRX_CONTRACT_CREATION_TYPE == trxType && !result.isRevert()) {
           byte[] code = program.getResult().getHReturn();
-          long saveCodeEnergy = (long) getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
+          long saveCodeEnergy = getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
           long afterSpend = program.getEnergyLimitLeft().longValue() - saveCodeEnergy;
           if (afterSpend < 0) {
             if (null == result.getException()) {

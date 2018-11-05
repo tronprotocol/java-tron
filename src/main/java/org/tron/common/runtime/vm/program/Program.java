@@ -519,7 +519,7 @@ public class Program {
     // 4. CREATE THE CONTRACT OUT OF RETURN
     byte[] code = createResult.getHReturn();
 
-    long saveCodeEnergy = (long) getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
+    long saveCodeEnergy = getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
 
     long afterSpend = programInvoke.getEnergyLimit() - createResult.getEnergyUsed() - saveCodeEnergy;
     if (!createResult.isRevert()) {
