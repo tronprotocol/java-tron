@@ -78,6 +78,7 @@ message AuthenticationPath{
 message MerklePath {
   repeated AuthenticationPath  authentication_paths= 1;
   repeated bool index = 2;
+  bytes rt = 3;
 }
 
 message SHA256Compress{
