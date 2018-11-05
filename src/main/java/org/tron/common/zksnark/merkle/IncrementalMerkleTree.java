@@ -277,6 +277,18 @@ public class IncrementalMerkleTree {
   }
 
 
+
+  public static boolean rootIsExist(String rt) {
+    return treeMap.containsKey(rt);
+  }
+
+  public static void saveCm(String rt, byte[] cm) {
+    IncrementalMerkleTree tree = treeMap.get(rt);
+    tree.append(new SHA256Compress(cm));
+    treeMap.put(tree.getRootKey(), tree);
+  }
+
+
   public static void main(String[] args) {
 
     //add
@@ -308,5 +320,7 @@ public class IncrementalMerkleTree {
     witness.root();
     witness.element();
     witness.path();
+
+//    mgadget1.generate_r1cs_witness(wit1.path());
   }
 }
