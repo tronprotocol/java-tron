@@ -8,6 +8,7 @@ public class IncrementalMerkleTreeContainer {
 
   //need persist
   public static HashMap<String, IncrementalMerkleTree> treeMap = new HashMap();
+  public static HashMap<String, IncrementalWitness> treeWitnessMap = new HashMap();
 
   public static IncrementalMerkleTree lastTree;
 
@@ -33,6 +34,18 @@ public class IncrementalMerkleTreeContainer {
     return tree.path();
   }
 
+  private static String createWitnessKey(String txHash, int index) {
+    return txHash + index;
+  }
+
+  private static IncrementalWitness getWitness(String txHash, int index) {
+    return treeWitnessMap.get(createWitnessKey(txHash, index));
+  }
+
+  public static void saveWitness(String txHash, int index,
+      IncrementalWitness witness) {
+    treeWitnessMap.put(createWitnessKey(txHash, index), witness);
+  }
 
   public static void main(String[] args) {
 

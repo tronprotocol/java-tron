@@ -13,4 +13,6 @@ public class Record {
 
   //接口
   //find_unspent_notes
+
+  //jsopWitnessAnchorMap
 }
