@@ -872,7 +872,7 @@ public class Program {
 
   public byte[] getReturnDataBufferData(DataWord off, DataWord size) {
     if ((long) off.intValueSafe() + size.intValueSafe() > getReturnDataBufferSizeI()) {
-      return ByteArray.EMPTY_BYTE_ARRAY;
+      return null;
     }
     return returnDataBuffer == null ? new byte[0] :
         Arrays.copyOfRange(returnDataBuffer, off.intValueSafe(),

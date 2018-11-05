@@ -737,7 +737,7 @@ public class VM {
 
           byte[] msgData = program.getReturnDataBufferData(dataOffsetData, lengthData);
 
-          if (ArrayUtils.isEmpty(msgData)) {
+          if (msgData == null) {
             throw new Program.ReturnDataCopyIllegalBoundsException(dataOffsetData, lengthData,
                 program.getReturnDataBufferSize().longValueSafe());
           }
