@@ -17,15 +17,15 @@
  */
 
 package org.tron.core;
- 
+
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 
+import com.google.common.base.CaseFormat;
 import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Range; 
-import com.google.common.base.CaseFormat; 
+import com.google.common.collect.Range;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
@@ -46,6 +46,7 @@ import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
+import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
@@ -61,6 +62,7 @@ import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
@@ -73,6 +75,7 @@ import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.ProposalCapsule;
@@ -775,6 +778,19 @@ public class Wallet {
     return null;
   }
 
+  public BytesMessage getNullifier(ByteString id) {
+
+    if (Objects.isNull(id)) {
+      return null;
+    }
+    BytesCapsule trxId = null;
+    trxId = dbManager.getNullfierStore().get(id.toByteArray());
+
+    if (trxId != null) {
+      return BytesMessage.newBuilder().setValue(ByteString.copyFrom(trxId.getData())).build();
+    }
+    return null;
+  }
 
   public NodeList listNodes() {
     List<NodeHandler> handlerList = nodeManager.dumpActiveNodes();
@@ -836,7 +852,7 @@ public class Wallet {
         headBlock = blockCapsuleList.get(0).getInstance();
       }
 
-      Runtime runtime = new Runtime(trxCap.getInstance(), new BlockCapsule(headBlock), deposit,
+      Runtime runtime = new RuntimeImpl(trxCap.getInstance(), new BlockCapsule(headBlock), deposit,
           new ProgramInvokeFactoryImpl(), true);
       runtime.execute();
       runtime.go();

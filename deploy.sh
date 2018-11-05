@@ -29,7 +29,7 @@ fi
 
 echo "$TRAVIS_BRANCH"
 
-if [[ "$TRAVIS_BRANCH" = "develop" || "$TRAVIS_BRANCH" = "master" ]];then
+if [[ "$TRAVIS_BRANCH" = "develop" || "$TRAVIS_BRANCH" = "master" || "$TRAVIS_BRANCH" = "Odyssey_v3.2" ]];then
   echo "init env"
   ssh java-tron@$stest_server -p 22008 sh /data/workspace/docker_workspace/stest.sh >$stestlogname 2>&1
   if [[ `find $stestlogname -type f | xargs grep "Connection refused"` =~ "Connection refused" || `find $stestlogname -type f | xargs grep "stest FAILED"` =~ "stest FAILED" ]];
