@@ -420,6 +420,7 @@ public class ContractScenario011 {
 
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsage() > 10000);
     Assert.assertTrue(infoById.get().getReceipt().getEnergyFee() == 0);
+
     //Assert.assertTrue(infoById.get().getReceipt().getOriginEnergyUsage() > 10000);
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() == infoById.get()
         .getReceipt().getEnergyUsage() + infoById.get().getReceipt().getOriginEnergyUsage());
