@@ -81,8 +81,6 @@ message MerklePath {
   bytes rt = 3;
 }
 
-
-
 message OutputPoint{
   bytes txHash = 1;
   bytes index = 2;

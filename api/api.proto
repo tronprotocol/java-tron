@@ -588,10 +588,17 @@ service Wallet {
   }
 
   // get last merkle
-  rpc GetBestMerkleRoot (EmptyMessage) returns (MerklePath) {
+  rpc GetBestMerkleRoot (EmptyMessage) returns (BytesMessage) {
   }
 
   rpc GetNullifier (BytesMessage) returns (BytesMessage) {
+  }
+
+
+  rpc GetMerkleRoot (BytesMessage) returns (BytesMessage) {
+  }
+
+  rpc GetMerkleTreeWitness (OutputPoint) returns (IncrementalMerkleWitness) {
   }
 };
 
@@ -701,18 +708,6 @@ service WalletSolidity {
         get: "/walletsolidity/generateaddress"
       }
     };
-  }
-
-  rpc GetMerkleRoot (BytesMessage) returns (BytesMessage) {
-  }
-
-  rpc GetMerklePath (BytesMessage) returns (MerklePath) {
-  }
-
-  rpc GetMerkleTreeWitness (OutputPoint) returns (IncrementalMerkleWitness) {
-  }
-
-  rpc GetBestMerkleRoot (EmptyMessage) returns (MerklePath) {
   }
 };
 
