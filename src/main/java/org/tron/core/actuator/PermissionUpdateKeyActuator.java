@@ -51,6 +51,10 @@ public class PermissionUpdateKeyActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+    if (this.dbManager.getDynamicPropertiesStore().getAllowMultiSign() != 1) {
+      throw new ContractValidateException("multi sign is not allowed, "
+          + "need to be opened by the committee");
+    }
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
