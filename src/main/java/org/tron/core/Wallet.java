@@ -70,6 +70,8 @@ import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
+import org.tron.common.zksnark.merkle.IncrementalMerkleTree;
+import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
@@ -110,6 +112,8 @@ import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.TriggerSmartContract;
+import org.tron.protos.Contract.MerklePath;
+import org.tron.protos.Contract.AuthenticationPath;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -779,7 +783,6 @@ public class Wallet {
   }
 
   public BytesMessage getNullifier(ByteString id) {
-
     if (Objects.isNull(id)) {
       return null;
     }
@@ -789,6 +792,61 @@ public class Wallet {
     if (trxId != null) {
       return BytesMessage.newBuilder().setValue(ByteString.copyFrom(trxId.getData())).build();
     }
+    return null;
+  }
+
+  public MerklePath getMerklePath(ByteString rt) {
+    if (Objects.isNull(rt)) {
+      return null;
+    }
+
+    String rtString = ByteArray.toHexString(rt.toByteArray());
+    if (!IncrementalMerkleTreeContainer.rootIsExist(rtString)) {
+      return null;
+    }
+
+    org.tron.common.zksnark.merkle.MerklePath merklePath = null;
+    try {
+      merklePath = IncrementalMerkleTreeContainer.path(rtString);
+    } catch (Exception ex) {
+      logger.error("get merkle path error, ", ex);
+    }
+
+    if (merklePath != null) {
+      MerklePath.Builder builder = MerklePath.newBuilder();
+      List<List<Boolean>> authenticationPath = merklePath.getAuthenticationPath();
+      List<Boolean> index = merklePath.getIndex();
+      builder.setRt(ByteString.copyFrom(ByteArray.fromString(rtString)));
+      builder.addAllIndex(index);
+      authenticationPath.forEach(
+          path ->
+              builder.addAuthenticationPaths(
+                  AuthenticationPath.newBuilder().addAllValue(path).build()));
+      return builder.build();
+    }
+    return null;
+  }
+
+  public MerklePath getBestMerkleRoot() {
+    IncrementalMerkleTree lastTree = IncrementalMerkleTreeContainer.getBestMerkleRoot();
+    if (lastTree != null) {
+      org.tron.common.zksnark.merkle.MerklePath merklePath = lastTree.path();
+      if (merklePath != null) {
+        MerklePath.Builder builder = MerklePath.newBuilder();
+        List<List<Boolean>> authenticationPath = merklePath.getAuthenticationPath();
+        List<Boolean> index = merklePath.getIndex();
+        String root_key = lastTree.getRootKey();
+        builder.setRt(ByteString.copyFrom(ByteArray.fromString(root_key)));
+        builder.addAllIndex(index);
+        authenticationPath.forEach(
+            path ->
+                builder.addAuthenticationPaths(
+                    AuthenticationPath.newBuilder().addAllValue(path).build()));
+        return builder.build();
+      }
+      return null;
+    }
+
     return null;
   }
 

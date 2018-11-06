@@ -31,6 +31,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.CreateSmartContract;
+import org.tron.protos.Contract.MerklePath;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
@@ -1882,6 +1883,15 @@ public class PublicMethed {
     BytesMessage trxId;
     trxId = blockingStubFull.getNullifier(request);
     return Optional.ofNullable(trxId);
+  }
+
+  public static Optional<MerklePath> getMerklePath(String rt, WalletGrpc
+      .WalletBlockingStub blockingStubFull) {
+    ByteString bsRt = ByteString.copyFrom(ByteArray.fromHexString(rt));
+    BytesMessage request = BytesMessage.newBuilder().setValue(bsRt).build();
+    MerklePath merklePath;
+    merklePath = blockingStubFull.getMerklePath(request);
+    return Optional.ofNullable(merklePath);
   }
 
   public static String triggerContract(byte[] contractAddress, String method, String argsStr,
