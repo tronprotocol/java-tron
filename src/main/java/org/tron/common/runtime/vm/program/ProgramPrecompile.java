@@ -34,10 +34,12 @@ public class ProgramPrecompile {
 
   public static ProgramPrecompile compile(byte[] ops) {
     ProgramPrecompile ret = new ProgramPrecompile();
+//    for (int i = 0; i < ops.length; ++i) {
     int i = 0;
-    while (i < ops.length) {
+    while(i < ops.length) {
       OpCode op = OpCode.code(ops[i]);
       if (op == null) {
+        i++;
         continue;
       }
 
@@ -50,6 +52,7 @@ public class ProgramPrecompile {
         i += op.asInt() - OpCode.PUSH1.asInt() + 1;
       }
       i++;
+      System.err.println(i);
     }
     return ret;
   }
@@ -59,6 +62,7 @@ public class ProgramPrecompile {
     while (i < ops.length) {
       OpCode op = OpCode.code(ops[i]);
       if (op == null) {
+        i++;
         continue;
       }
 
