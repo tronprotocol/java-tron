@@ -157,7 +157,7 @@ public class BlockMsgHandler implements TronMsgHandler {
       if (freshBlockId.contains(blockId)) {
         return;
       }
-      if (!tronProxy.containBlock(block.getBlockId())) {
+      if (!tronProxy.containBlock(block.getParentBlockId())) {
         logger.warn("Get unlink block {} from {}, head is {}.", blockId.getString(),
             peer.getInetAddress(), tronProxy.getHeadBlockId().getString());
         peerSync.startSync(peer);
