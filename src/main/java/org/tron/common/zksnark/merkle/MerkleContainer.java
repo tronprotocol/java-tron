@@ -22,11 +22,13 @@ public class MerkleContainer {
   }
 
   public static byte[] lastTreeKey = "LAST_TREE".getBytes();
-  public static IncrementalMerkleTreeContainer lastTree;
-
 
   public IncrementalMerkleTreeContainer getBestMerkleRoot() {
-    return manager.getMerkleTreeStore().get(lastTreeKey).toMerkleTreeContainer();
+    IncrementalMerkleTreeCapsule capsule = manager.getMerkleTreeStore().get(lastTreeKey);
+    if (capsule == null) {
+      capsule = new IncrementalMerkleTreeCapsule();
+    }
+    return capsule.toMerkleTreeContainer();
   }
 
 

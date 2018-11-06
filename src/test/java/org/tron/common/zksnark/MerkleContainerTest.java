@@ -92,7 +92,8 @@ public class MerkleContainerTest {
 
     //saveCmIntoMerkle
     IncrementalMerkleTreeContainer newTree = merkleContainer
-        .saveCmIntoMerkle(tree.getRootKey(), ByteArray.fromHexString(s1), ByteArray.fromHexString(s2));
+        .saveCmIntoMerkle(tree.getRootKey(), ByteArray.fromHexString(s1),
+            ByteArray.fromHexString(s2));
     //todo : need check
     Assert.assertEquals("18a4aa922c9f3f8aecb5cd469bc92da72297cda82c55c3a50c36e7b2956c8b80",
         ByteArray.toHexString(newTree.getRootKey()));
@@ -114,11 +115,14 @@ public class MerkleContainerTest {
     witness.append(a);
     Assert.assertEquals(true, path.getIndex().get(1));
 
-    Assert.assertEquals("835ea79627cfa5b773439220b4a8fba947be8b3faab18ffe12dd2343cd669d15",
+    Assert.assertEquals("eb9baf23d8d83a2f873a5fedb9f47b1d09b045f638fa1e3144aa16da57d02507",
         ByteArray.toHexString(witness.getRootKey()));
 
     witness.element();
     witness.path();
+
+    IncrementalMerkleTreeContainer bestMerkleRoot = merkleContainer.getBestMerkleRoot();
+    Assert.assertEquals(0, bestMerkleRoot.size());
 
   }
 
