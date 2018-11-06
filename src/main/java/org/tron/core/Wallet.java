@@ -825,23 +825,10 @@ public class Wallet {
     return null;
   }
 
-  public MerklePath getBestMerkleRoot() {
+  public byte[] getBestMerkleRoot() {
     IncrementalMerkleTreeContainer lastTree = dbManager.getMerkleContainer().getBestMerkleRoot();
     if (lastTree != null) {
-      org.tron.common.zksnark.merkle.MerklePath merklePath = lastTree.path();
-      if (merklePath != null) {
-        MerklePath.Builder builder = MerklePath.newBuilder();
-        List<List<Boolean>> authenticationPath = merklePath.getAuthenticationPath();
-        List<Boolean> index = merklePath.getIndex();
-        builder.setRt(ByteString.copyFrom(lastTree.getRootKey()));
-        builder.addAllIndex(index);
-        authenticationPath.forEach(
-            path ->
-                builder.addAuthenticationPaths(
-                    AuthenticationPath.newBuilder().addAllValue(path).build()));
-        return builder.build();
-      }
-      return null;
+      return lastTree.getRootKey();
     }
 
     return null;

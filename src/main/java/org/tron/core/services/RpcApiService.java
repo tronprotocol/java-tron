@@ -73,6 +73,7 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.MerklePath;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
@@ -81,7 +82,6 @@ import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Contract.ZksnarkV0TransferContract;
-import org.tron.protos.Contract.MerklePath;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -1459,8 +1459,15 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getBestMerkleRoot(EmptyMessage request, StreamObserver<MerklePath> responseObserver) {
-      responseObserver.onNext(wallet.getBestMerkleRoot());
+    public void getBestMerkleRoot(EmptyMessage request,
+        StreamObserver<BytesMessage> responseObserver) {
+      byte[] rt = wallet.getBestMerkleRoot();
+      if (rt == null) {
+        responseObserver.onNext(null);
+      } else {
+        responseObserver
+            .onNext(BytesMessage.newBuilder().setValue(ByteString.copyFrom(rt)).build());
+      }
       responseObserver.onCompleted();
     }
   }
