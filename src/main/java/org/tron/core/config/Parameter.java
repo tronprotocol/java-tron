@@ -58,6 +58,16 @@ public interface Parameter {
     int EXCHANGE_COUNT_LIMIT_MAX = 1000;
   }
 
+  interface AdaptiveResourceLimitConstants {
+
+    int CONTRACT_RATE_NUMERATOR = 99;
+    int CONTRACT_RATE_DENOMINATOR = 100;
+    int EXPAND_RATE_NUMERATOR = 1000;
+    int EXPAND_RATE_DENOMINATOR = 999;
+    int PERIODS_MS = 60_000;
+    int LIMIT_MULTIPLIER = 1000; //s
+  }
+
   enum ChainParameters {
     MAINTENANCE_TIME_INTERVAL, //ms  ,0
     ACCOUNT_UPGRADE_COST, //drop ,1
