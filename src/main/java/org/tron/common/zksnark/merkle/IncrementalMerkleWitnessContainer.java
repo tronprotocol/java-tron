@@ -79,6 +79,11 @@ public class IncrementalMerkleWitnessContainer {
   }
 
 
+  public byte[] getRootKey() {
+    return root().getContent().toByteArray();
+  }
+
+
   private boolean cursorIsExist() {
     return !witnessCapsule.getCursor().isEmptyTree();
   }

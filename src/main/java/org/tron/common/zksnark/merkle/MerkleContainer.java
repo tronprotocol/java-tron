@@ -21,19 +21,21 @@ public class MerkleContainer {
     return instance;
   }
 
-  //need persist
-//  public static HashMap<String, IncrementalMerkleTreeContainer> this.manager.getMerkleTreeStore() = new HashMap();
-//  public static HashMap<String, IncrementalMerkleWitnessContainer> this.manager.getMerkleWitnessStore() = new HashMap();
-
+  public static byte[] lastTreeKey = "LAST_TREE".getBytes();
   public static IncrementalMerkleTreeContainer lastTree;
 
 
-  public static IncrementalMerkleTreeContainer getBestMerkleRoot() {
-    return lastTree;
+  public IncrementalMerkleTreeContainer getBestMerkleRoot() {
+    return manager.getMerkleTreeStore().get(lastTreeKey).toMerkleTreeContainer();
   }
 
 
-  public boolean rootIsExist(byte[] rt) {
+  public void setBestMerkleRoot(IncrementalMerkleTreeContainer lastTree) {
+    manager.getMerkleTreeStore().put(lastTreeKey, lastTree.getTreeCapsule());
+  }
+
+
+  public boolean merkleRootIsExist(byte[] rt) {
     return this.manager.getMerkleTreeStore().contain(rt);
   }
 
@@ -42,7 +44,7 @@ public class MerkleContainer {
     return this.manager.getMerkleTreeStore().get(rt);
   }
 
-  public IncrementalMerkleTreeContainer saveCm(byte[] rt, byte[] cm1, byte[] cm2) {
+  public IncrementalMerkleTreeContainer saveCmIntoMerkle(byte[] rt, byte[] cm1, byte[] cm2) {
     IncrementalMerkleTreeContainer tree = this.manager.getMerkleTreeStore().get(rt)
         .toMerkleTreeContainer();
 
@@ -67,7 +69,7 @@ public class MerkleContainer {
     this.manager.getMerkleWitnessStore().put(key, capsule);
   }
 
-  public MerklePath path(byte[] rt) {
+  public MerklePath merklePath(byte[] rt) {
     IncrementalMerkleTreeContainer tree = this.manager.getMerkleTreeStore().get(rt)
         .toMerkleTreeContainer();
     return tree.path();

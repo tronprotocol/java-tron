@@ -226,7 +226,7 @@ public class IncrementalMerkleTreeContainer {
 
 
   public MerklePath path() {
-    Deque<SHA256Compress> filler_hashes = new ArrayDeque<SHA256Compress>();
+    Deque<SHA256Compress> filler_hashes = new ArrayDeque<>();
     return path(filler_hashes);
   }
 
@@ -296,7 +296,7 @@ public class IncrementalMerkleTreeContainer {
     return EmptyMerkleRoots.emptyMerkleRootsInstance.emptyRoot(DEPTH);
   }
 
-  
+
   private boolean leftIsExist() {
     return !treeCapsule.getLeft().getContent().isEmpty();
   }

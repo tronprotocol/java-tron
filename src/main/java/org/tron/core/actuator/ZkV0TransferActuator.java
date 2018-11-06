@@ -57,7 +57,7 @@ public class ZkV0TransferActuator extends AbstractActuator {
     dbManager.getNullfierStore().put(nf1, new BytesCapsule(nf1));
     dbManager.getNullfierStore().put(nf2, new BytesCapsule(nf2));
 
-    dbManager.getMerkleContainer().saveCm(zkContract.getRt().toByteArray(),
+    dbManager.getMerkleContainer().saveCmIntoMerkle(zkContract.getRt().toByteArray(),
         zkContract.getCm1().toByteArray(), zkContract.getCm2().toByteArray());
     return true;
   }
@@ -143,7 +143,7 @@ public class ZkV0TransferActuator extends AbstractActuator {
       throw new ContractValidateException("Merkel root is invalid.");
     }
 
-    if (!dbManager.getMerkleContainer().rootIsExist(rt.toByteArray())) {
+    if (!dbManager.getMerkleContainer().merkleRootIsExist(rt.toByteArray())) {
       throw new ContractValidateException("Rt is invalid.");
     }
 

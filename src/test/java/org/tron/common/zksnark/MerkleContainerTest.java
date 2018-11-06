@@ -70,20 +70,29 @@ public class MerkleContainerTest {
     tree.append(b);
     tree.append(c);
 
+    //root
     //todo : need check
     Assert.assertEquals("835ea79627cfa5b773439220b4a8fba947be8b3faab18ffe12dd2343cd669d15",
         ByteArray.toHexString(tree.getRootKey()));
 
+    //save
     merkleContainer.putMerkleTree(tree.getRootKey(), tree.getTreeCapsule());
+
     //get
-    Assert.assertEquals(true, merkleContainer.rootIsExist(tree.getRootKey()));
+    Assert.assertEquals(true, merkleContainer.merkleRootIsExist(tree.getRootKey()));
 
     tree = merkleContainer.getMerkleTree(tree.getRootKey()).toMerkleTreeContainer();
     Assert.assertEquals(3, tree.size());
 
-    //add
+    //other
+    Assert.assertEquals(false, tree.isComplete());
+    Assert.assertEquals(0, tree.next_depth(0));
+    Assert.assertEquals(96, tree.DynamicMemoryUsage());
+    tree.wfcheck();
+
+    //saveCmIntoMerkle
     IncrementalMerkleTreeContainer newTree = merkleContainer
-        .saveCm(tree.getRootKey(), ByteArray.fromHexString(s1), ByteArray.fromHexString(s2));
+        .saveCmIntoMerkle(tree.getRootKey(), ByteArray.fromHexString(s1), ByteArray.fromHexString(s2));
     //todo : need check
     Assert.assertEquals("18a4aa922c9f3f8aecb5cd469bc92da72297cda82c55c3a50c36e7b2956c8b80",
         ByteArray.toHexString(newTree.getRootKey()));
@@ -92,26 +101,22 @@ public class MerkleContainerTest {
     Assert.assertEquals(5, newTree.size());
     Assert.assertEquals(s2, ByteArray.toHexString(newTree.last().getContent().toByteArray()));
 
-    Assert.assertEquals(false, tree.isComplete());
-    Assert.assertEquals(0, tree.next_depth(0));
-    Assert.assertEquals(96, tree.DynamicMemoryUsage());
-    tree.wfcheck();
-
+    //path
     MerklePath path = tree.path();
     //todo:need to check path
     Assert.assertEquals(false, path.getIndex().get(0));
     Assert.assertEquals(true, path.getIndex().get(1));
 
-
-
-    //todo:need to check path
+    //todo:need to check witness
     //witness test
     IncrementalMerkleWitnessContainer witness = tree.witness();
     //witness
     witness.append(a);
     Assert.assertEquals(true, path.getIndex().get(1));
 
-    witness.root();
+    Assert.assertEquals("835ea79627cfa5b773439220b4a8fba947be8b3faab18ffe12dd2343cd669d15",
+        ByteArray.toHexString(witness.getRootKey()));
+
     witness.element();
     witness.path();
 
