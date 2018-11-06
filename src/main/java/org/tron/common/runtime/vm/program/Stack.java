@@ -63,6 +63,9 @@ public class Stack extends java.util.Stack<DataWord> implements ProgramListenerA
 
   @Override
   public boolean equals(Object o) {
+    if (o == null) {
+      return false;
+    }
     if (this == o) {
       return true;
     }
