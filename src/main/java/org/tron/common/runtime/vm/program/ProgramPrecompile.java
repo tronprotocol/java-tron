@@ -34,8 +34,8 @@ public class ProgramPrecompile {
 
   public static ProgramPrecompile compile(byte[] ops) {
     ProgramPrecompile ret = new ProgramPrecompile();
-    for (int i = 0; i < ops.length; ++i) {
-
+    int i = 0;
+    while (i < ops.length) {
       OpCode op = OpCode.code(ops[i]);
       if (op == null) {
         continue;
@@ -49,13 +49,14 @@ public class ProgramPrecompile {
       if (op.asInt() >= OpCode.PUSH1.asInt() && op.asInt() <= OpCode.PUSH32.asInt()) {
         i += op.asInt() - OpCode.PUSH1.asInt() + 1;
       }
+      i++;
     }
     return ret;
   }
 
   public static byte[] getCode(byte[] ops) {
-    for (int i = 0; i < ops.length; ++i) {
-
+    int i = 0;
+    while (i < ops.length) {
       OpCode op = OpCode.code(ops[i]);
       if (op == null) {
         continue;
@@ -78,6 +79,7 @@ public class ProgramPrecompile {
       if (op.asInt() >= OpCode.PUSH1.asInt() && op.asInt() <= OpCode.PUSH32.asInt()) {
         i += op.asInt() - OpCode.PUSH1.asInt() + 1;
       }
+      i++;
     }
     return new DataWord(0).getData();
   }

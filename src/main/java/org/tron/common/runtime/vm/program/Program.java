@@ -58,7 +58,6 @@ import org.tron.common.runtime.vm.program.listener.ProgramStorageChangeListener;
 import org.tron.common.runtime.vm.trace.ProgramTrace;
 import org.tron.common.runtime.vm.trace.ProgramTraceListener;
 import org.tron.common.storage.Deposit;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.utils.Utils;
@@ -519,7 +518,7 @@ public class Program {
     // 4. CREATE THE CONTRACT OUT OF RETURN
     byte[] code = createResult.getHReturn();
 
-    long saveCodeEnergy = getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
+    long saveCodeEnergy = (long)getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
 
     long afterSpend = programInvoke.getEnergyLimit() - createResult.getEnergyUsed() - saveCodeEnergy;
     if (!createResult.isRevert()) {
