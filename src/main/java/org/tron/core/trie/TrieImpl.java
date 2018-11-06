@@ -759,6 +759,39 @@ public class TrieImpl implements Trie<byte[]> {
     }
   }
 
+  public Node find(Node node, TrieKey key) {
+    if (node == null) {
+      return null;
+    }
+    if (node.getType() == NodeType.BranchNode) {
+      for (int i = 0; i < 16; i++) {
+        findNode(node.branchNodeGetChild(i), key);
+      }
+    } else if (node.getType() == NodeType.KVNodeNode) {
+      findNode(node.kvNodeGetChildNode(), key);
+    } else {
+
+    }
+    node.kvNodeGetKey();
+  }
+
+  public Node findNode(Node node, TrieKey key) {
+    if (node == null) {
+      return null;
+    }
+    TrieKey currentNodeKey = node.kvNodeGetKey();
+    TrieKey commonPrefix = key.getCommonPrefix(currentNodeKey);
+    if (commonPrefix.isEmpty()) {
+      return null;
+    } else if (commonPrefix.equals(key)) {
+      return node;
+    } else if (commonPrefix.equals(currentNodeKey)) {
+      return findNode(node.kvNodeGetChildNode(), key.shift(commonPrefix.getLength()));
+    } else {
+      return null;
+    }
+  }
+
 
   private static String hash2str(byte[] hash, boolean shortHash) {
     String ret = Hex.toHexString(hash);

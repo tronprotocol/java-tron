@@ -21,6 +21,16 @@ public class ConcurrentHashDB implements DB<byte[], byte[]> {
   }
 
   @Override
+  public long size() {
+    return db.size();
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return db.isEmpty();
+  }
+
+  @Override
   public void remove(byte[] bytes) {
     db.remove(bytes);
   }

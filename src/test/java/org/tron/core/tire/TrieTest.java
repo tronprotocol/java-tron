@@ -21,6 +21,8 @@ import static org.tron.common.crypto.Hash.EMPTY_TRIE_HASH;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -29,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.capsule.utils.ByteArrayWrapper;
 import org.tron.core.capsule.utils.RLP;
 import org.tron.core.db2.common.ConcurrentHashDB;
 import org.tron.core.db2.common.DB;
@@ -70,12 +73,15 @@ public class TrieTest {
   @Test
   public void test() throws UnsupportedEncodingException {
     TrieImpl trie = new TrieImpl();
-    trie.put(RLP.encodeInt(1), c.getBytes());
+    trie.put(new byte[]{1}, c.getBytes());
     Assert.assertTrue(Arrays.areEqual(trie.get(RLP.encodeInt(1)), c.getBytes()));
-    trie.put(RLP.encodeInt(2), ca.getBytes());
-    trie.put(RLP.encodeInt(3), cat.getBytes());
-    trie.put(RLP.encodeInt(4), dog.getBytes());
+    trie.put(new byte[]{1,0}, ca.getBytes());
+    trie.put(new byte[]{1,1}, cat.getBytes());
+    trie.put(new byte[]{1,2}, dog.getBytes());
     trie.put(RLP.encodeInt(5), doge.getBytes());
+    trie.put(RLP.encodeInt(6), doge.getBytes());
+    trie.put(RLP.encodeInt(7), doge.getBytes());
+    trie.put(RLP.encodeInt(11), doge.getBytes());
     System.out.println(Sha256Hash.of(trie.getRootHash()).toString());
     trie.put(RLP.encodeInt(5), dude.getBytes());
     System.out.println(trie.dumpTrie());
@@ -83,6 +89,26 @@ public class TrieTest {
     trie.delete(RLP.encodeInt(3));
     System.out.println(trie.dumpTrie());
     System.out.println(Sha256Hash.of(trie.getRootHash()).toString());
+    getReferencedTrieNodes(trie, RLP.encodeInt(1));
+  }
+
+  public Set<ByteArrayWrapper> getReferencedTrieNodes(TrieImpl trie, byte[] keyV) {
+    final Set<ByteArrayWrapper> ret = new HashSet<>();
+    trie.scanTree(new TrieImpl.ScanAction() {
+      @Override
+      public void doOnNode(byte[] hash, TrieImpl.Node node) {
+        ret.add(new ByteArrayWrapper(hash));
+      }
+
+      @Override
+      public void doOnValue(byte[] nodeHash, TrieImpl.Node node, byte[] key, byte[] value) {
+//        if (Arrays.areEqual(key, keyV)) {
+//          ret.add(new ByteArrayWrapper( node.encode()));
+//        }
+      }
+    });
+    System.out.println("getReferencedTrieNodes: " + ret);
+    return ret;
   }
 
 }
