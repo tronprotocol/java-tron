@@ -172,7 +172,7 @@ public class InternalTransaction {
     if (sendAddress == null) {
       return EMPTY_BYTE_ARRAY;
     }
-    return sendAddress;
+    return sendAddress.clone();
   }
 
   public byte[] getParentHash() {

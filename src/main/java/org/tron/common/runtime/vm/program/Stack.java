@@ -66,7 +66,7 @@ public class Stack extends java.util.Stack<DataWord> implements ProgramListenerA
     if (this == o) {
       return true;
     }
-    if (!(o instanceof Stack)) {
+    if (o.getClass() != this.getClass()) {
       return false;
     }
     if (!super.equals(o)) {
