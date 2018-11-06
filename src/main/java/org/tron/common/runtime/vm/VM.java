@@ -2,9 +2,7 @@ package org.tron.common.runtime.vm;
 
 import static org.tron.common.crypto.Hash.sha3;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
-import static org.tron.common.runtime.vm.OpCode.CALL;
-import static org.tron.common.runtime.vm.OpCode.PUSH1;
-import static org.tron.common.runtime.vm.OpCode.REVERT;
+import static org.tron.common.runtime.vm.OpCode.*;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 
 import java.math.BigInteger;
@@ -1173,7 +1171,12 @@ public class VM {
           program.stackPop(); // use adjustedCallEnergy instead of requested
           DataWord codeAddress = program.stackPop();
 
-          DataWord value = op.callHasValue() ? program.stackPop() : DataWord.ZERO;
+          DataWord value;
+          if (op.callHasValue()) {
+            value = program.stackPop();
+          } else {
+            value = DataWord.ZERO;
+          }
 
           if (program.isStaticCall() && op == CALL && !value.isZero()) {
             throw new Program.StaticCallModificationException();
@@ -1223,7 +1226,7 @@ public class VM {
         }
         break;
         case RETURN:
-        case REVERT: {
+        case REVERT:
           DataWord offset = program.stackPop();
           DataWord size = program.stackPop();
 
@@ -1242,8 +1245,7 @@ public class VM {
           if (op == REVERT) {
             program.getResult().setRevert();
           }
-        }
-        break;
+          break;
         case SUICIDE: {
           if (program.isStaticCall()) {
             throw new Program.StaticCallModificationException();
