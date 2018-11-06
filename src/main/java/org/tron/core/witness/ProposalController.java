@@ -167,7 +167,9 @@ public class ProposalController {
           break;
         }
         case (16): {
-          manager.getDynamicPropertiesStore().saveAllowMultiSign(entry.getValue());
+          if (manager.getDynamicPropertiesStore().getAllowMultiSign() == 0) {
+            manager.getDynamicPropertiesStore().saveAllowMultiSign(entry.getValue());
+          }
           break;
         }
         default:
