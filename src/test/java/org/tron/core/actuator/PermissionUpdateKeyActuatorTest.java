@@ -6,8 +6,8 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -30,9 +30,8 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
-import org.tron.protos.Contract.PermissionUpdateKeyContract;
-import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -59,7 +58,7 @@ public class PermissionUpdateKeyActuatorTest {
   private static final String KEY_ADDRESS_INVALID = "bbbb";
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     AppT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -81,15 +80,20 @@ public class PermissionUpdateKeyActuatorTest {
             .setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS)))
             .setWeight(UPDATE_WEIGHT)
             .build();
+    dbManager.getDynamicPropertiesStore().saveAllowMultiSign(1);
   }
 
-  /** Init data. */
+  /**
+   * Init data.
+   */
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
   }
 
-  /** Release resources. */
+  /**
+   * Release resources.
+   */
   @AfterClass
   public static void destroy() {
     Args.clearParam();
@@ -104,7 +108,9 @@ public class PermissionUpdateKeyActuatorTest {
     }
   }
 
-  /** create temp Capsule test need. */
+  /**
+   * create temp Capsule test need.
+   */
   @Before
   public void createCapsule() {
     AccountCapsule ownerCapsule =
@@ -138,7 +144,9 @@ public class PermissionUpdateKeyActuatorTest {
             .build());
   }
 
-  /** return a PermissionAddKeyContract as an invalid contract */
+  /**
+   * return a PermissionAddKeyContract as an invalid contract
+   */
   private Any getInvalidContract() {
     return Any.pack(
         Contract.PermissionAddKeyContract.newBuilder()
