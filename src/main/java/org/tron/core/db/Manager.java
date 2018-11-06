@@ -41,6 +41,9 @@ import org.tron.common.utils.ForkController;
 import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
+import org.tron.common.zksnark.merkle.IncrementalMerkleTreeStore;
+import org.tron.common.zksnark.merkle.IncrementalMerkleWitnessStore;
+import org.tron.common.zksnark.merkle.MerkleContainer;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -126,6 +129,12 @@ public class Manager {
   private StorageRowStore storageRowStore;
   @Autowired
   private NullifierStore nullifierStore;
+  @Autowired
+  @Getter
+  private IncrementalMerkleTreeStore merkleTreeStore;
+  @Autowired
+  @Getter
+  private IncrementalMerkleWitnessStore merkleWitnessStore;
 
   // for network
   @Autowired
@@ -159,6 +168,10 @@ public class Manager {
   @Getter
   @Setter
   private ProposalController proposalController;
+
+  @Getter
+  @Setter
+  private MerkleContainer merkleContainer;
 
   private ExecutorService validateSignService;
 
@@ -317,6 +330,7 @@ public class Manager {
     revokingStore.check();
     this.setWitnessController(WitnessController.createInstance(this));
     this.setProposalController(ProposalController.createInstance(this));
+    this.setMerkleContainer(merkleContainer.createInstance(this));
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
     this.repushTransactions = new LinkedBlockingQueue<>();
 
@@ -1406,6 +1420,8 @@ public class Manager {
     closeOneStore(transactionHistoryStore);
     closeOneStore(votesStore);
     closeOneStore(nullifierStore);
+    closeOneStore(merkleTreeStore);
+    closeOneStore(merkleWitnessStore);
     logger.info("******** end to close db ********");
   }
 

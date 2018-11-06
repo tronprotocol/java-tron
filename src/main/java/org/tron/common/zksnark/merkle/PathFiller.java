@@ -1,7 +1,7 @@
 package org.tron.common.zksnark.merkle;
 
 import java.util.Deque;
-import org.tron.common.zksnark.SHA256Compress;
+import org.tron.protos.Contract.SHA256Compress;
 
 public class PathFiller {
 

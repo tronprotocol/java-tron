@@ -9,8 +9,6 @@ import org.tron.common.crypto.zksnark.Proof;
 import org.tron.common.crypto.zksnark.VerifyingKey;
 import org.tron.common.crypto.zksnark.ZkVerify;
 import org.tron.common.crypto.zksnark.ZksnarkUtils;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
@@ -59,7 +57,7 @@ public class ZkV0TransferActuator extends AbstractActuator {
     dbManager.getNullfierStore().put(nf1, new BytesCapsule(nf1));
     dbManager.getNullfierStore().put(nf2, new BytesCapsule(nf2));
 
-    IncrementalMerkleTreeContainer.saveCm(ByteArray.toHexString(zkContract.getRt().toByteArray()),
+    dbManager.getMerkleContainer().saveCm(zkContract.getRt().toByteArray(),
         zkContract.getCm1().toByteArray(), zkContract.getCm2().toByteArray());
     return true;
   }
@@ -145,7 +143,7 @@ public class ZkV0TransferActuator extends AbstractActuator {
       throw new ContractValidateException("Merkel root is invalid.");
     }
 
-    if (!IncrementalMerkleTreeContainer.rootIsExist(ByteArray.toHexString(rt.toByteArray()))) {
+    if (!dbManager.getMerkleContainer().rootIsExist(rt.toByteArray())) {
       throw new ContractValidateException("Rt is invalid.");
     }
 
