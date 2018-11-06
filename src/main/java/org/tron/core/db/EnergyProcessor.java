@@ -34,7 +34,7 @@ public class EnergyProcessor extends ResourceProcessor {
 
     accountCapsule.setEnergyUsage(increase(oldEnergyUsage, 0, latestConsumeTime, now));
 
-    updateAdaptiveTotalEnergyLimit(now, false);
+    updateAdaptiveTotalEnergyLimit(now);
 
   }
 
@@ -49,8 +49,8 @@ public class EnergyProcessor extends ResourceProcessor {
     dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageTime(now);
   }
 
-  public void updateAdaptiveTotalEnergyLimit(long now, boolean usingAdaptiveLimit) {
-    if (!usingAdaptiveLimit) {
+  public void updateAdaptiveTotalEnergyLimit(long now) {
+    if (dbManager.getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 0) {
       return;
     }
 
