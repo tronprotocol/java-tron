@@ -131,6 +131,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] TOTAL_SIGN_NUM = "TOTAL_SIGN_NUM".getBytes();
 
+  private static final byte[] ALLOW_MULTI_SIGN = "ALLOW_MULTI_SIGN".getBytes();
+
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -140,6 +142,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getTotalSignNum();
     } catch (IllegalArgumentException e) {
       this.saveTotalSignNum(5);
+    }
+
+    try {
+      this.getAllowMultiSign();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowMultiSign(0);
     }
 
     try {
@@ -996,6 +1004,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toInt)
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_SIGN_NUM"));
+  }
+
+  public void saveAllowMultiSign(long allowMultiSing) {
+    this.put(ALLOW_MULTI_SIGN,
+        new BytesCapsule(ByteArray.fromLong(allowMultiSing)));
+  }
+
+  public long getAllowMultiSign() {
+    return Optional.ofNullable(getUnchecked(ALLOW_MULTI_SIGN))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_MULTI_SIGN"));
   }
 
   public long getAllowCreationOfContracts() {
