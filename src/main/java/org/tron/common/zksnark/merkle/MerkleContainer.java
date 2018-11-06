@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.SHA256CompressCapsule;
 import org.tron.core.db.Manager;
+import org.tron.protos.Contract.SHA256Compress;
 
 @Slf4j
 public class MerkleContainer {
@@ -26,7 +27,19 @@ public class MerkleContainer {
   public IncrementalMerkleTreeContainer getBestMerkleRoot() {
     IncrementalMerkleTreeCapsule capsule = manager.getMerkleTreeStore().get(lastTreeKey);
     if (capsule == null) {
-      capsule = new IncrementalMerkleTreeCapsule();
+      IncrementalMerkleTreeContainer container = (new IncrementalMerkleTreeCapsule())
+          .toMerkleTreeContainer();
+
+      //tmp
+      String s1 = "2ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab91";
+      SHA256CompressCapsule compressCapsule1 = new SHA256CompressCapsule();
+      compressCapsule1.setContent(ByteString.copyFrom(ByteArray.fromHexString(s1)));
+      SHA256Compress a = compressCapsule1.getInstance();
+
+      container.append(a);
+
+      this.manager.getMerkleTreeStore().put(container.getRootKey(), container.getTreeCapsule());
+      return container;
     }
     return capsule.toMerkleTreeContainer();
   }
