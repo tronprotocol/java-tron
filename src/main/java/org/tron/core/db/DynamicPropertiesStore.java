@@ -125,6 +125,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_DELEGATE_RESOURCE = "ALLOW_DELEGATE_RESOURCE".getBytes();
 
   //This value is only allowed to be 0, 1, -1
+  private static final byte[] ALLOW_ADAPTIVE_ENERGY = "ALLOW_ADAPTIVE_ENERGY".getBytes();
+
+  //This value is only allowed to be 0, 1, -1
   private static final byte[] ALLOW_UPDATE_ACCOUNT_NAME = "ALLOW_UPDATE_ACCOUNT_NAME".getBytes();
 
   //This value is only allowed to be 0, 1, -1
@@ -406,6 +409,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getAllowDelegateResource();
     } catch (IllegalArgumentException e) {
       this.saveAllowDelegateResource(0);
+    }
+
+    try {
+      this.getAllowAdaptiveEnergy();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowAdaptiveEnergy(0);
     }
 
     try {
@@ -1042,6 +1051,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found ALLOW_DELEGATE_RESOURCE"));
+  }
+
+  public void saveAllowAdaptiveEnergy(long value) {
+    this.put(ALLOW_ADAPTIVE_ENERGY,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowAdaptiveEnergy() {
+    return Optional.ofNullable(getUnchecked(ALLOW_ADAPTIVE_ENERGY))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_ADAPTIVE_ENERGY"));
   }
 
   public boolean supportDR() {
