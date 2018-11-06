@@ -707,7 +707,7 @@ service WalletSolidity {
   rpc GetMerklePath (BytesMessage) returns (MerklePath) {
   }
 
-  rpc GetMerkleTreeWitness (OutputPoint) returns (MerkleWitness) {
+  rpc GetMerkleTreeWitness (OutputPoint) returns (IncrementalMerkleWitness) {
   }
 
   rpc GetBestMerkleRoot (EmptyMessage) returns (MerklePath) {
