@@ -1457,6 +1457,12 @@ public class RpcApiService implements Service {
       }
       responseObserver.onCompleted();
     }
+
+    @Override
+    public void getBestMerkleRoot(EmptyMessage request, StreamObserver<MerklePath> responseObserver) {
+      responseObserver.onNext(wallet.getBestMerkleRoot());
+      responseObserver.onCompleted();
+    }
   }
 
 
