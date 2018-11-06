@@ -659,25 +659,25 @@ public class PublicMethed {
     }
   }
 
-  public static Optional<Transaction> getTransactionById(String txID,
+  public static Optional<Transaction> getTransactionById(String txId,
       WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubFull) {
-    ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txID));
+    ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
     BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
     Transaction transaction = blockingStubFull.getTransactionById(request);
     return Optional.ofNullable(transaction);
   }
 
-  public static Optional<Transaction> getTransactionById(String txID,
+  public static Optional<Transaction> getTransactionById(String txId,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
-    ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txID));
+    ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
     BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
     Transaction transaction = blockingStubFull.getTransactionById(request);
     return Optional.ofNullable(transaction);
   }
 
-  public static Optional<Transaction> getTransactionByIdSolidity(String txID,
+  public static Optional<Transaction> getTransactionByIdSolidity(String txId,
       WalletGrpc.WalletBlockingStub blockingStubSolidity) {
-    ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txID));
+    ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
     BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
     Transaction transaction = blockingStubSolidity.getTransactionById(request);
     return Optional.ofNullable(transaction);
@@ -1400,6 +1400,7 @@ public class PublicMethed {
     builder.setOriginAddress(ByteString.copyFrom(owner));
     builder.setAbi(abi);
     builder.setConsumeUserResourcePercent(consumeUserResourcePercent);
+    builder.setOriginEnergyLimit(1);
 
     if (value != 0) {
 
@@ -1521,6 +1522,7 @@ public class PublicMethed {
     builder.setOriginAddress(ByteString.copyFrom(owner));
     builder.setAbi(abi);
     builder.setConsumeUserResourcePercent(consumeUserResourcePercent);
+    builder.setOriginEnergyLimit(1);
 
     if (value != 0) {
 
