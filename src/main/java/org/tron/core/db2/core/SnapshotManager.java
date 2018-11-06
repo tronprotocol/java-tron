@@ -72,7 +72,7 @@ public class SnapshotManager implements RevokingDatabase {
       disabled = false;
     }
 
-    printDebug("before buildSession");
+//    printDebug("before buildSession");
 
     if (size > maxSize.get()) {
       flushCount = flushCount + (size - maxSize.get());
@@ -86,7 +86,7 @@ public class SnapshotManager implements RevokingDatabase {
     // debug end
     advance();
     ++activeSession;
-    printDebug("after buildSession");
+//    printDebug("after buildSession");
     return new Session(this, disableOnExit);
   }
 

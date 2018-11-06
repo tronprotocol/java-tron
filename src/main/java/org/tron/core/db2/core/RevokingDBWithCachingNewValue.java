@@ -161,6 +161,7 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
 
     return levelDBMap.entrySet().stream()
         .sorted((e1, e2) -> ByteUtil.compare(e1.getKey().getBytes(), e2.getKey().getBytes()))
+        .filter(e -> ByteUtil.greaterOrEquals(e.getKey().getBytes(), key))
         .limit(limit)
         .map(Map.Entry::getValue)
         .map(WrappedByteArray::getBytes)

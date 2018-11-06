@@ -46,7 +46,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     } else {
       operator = Value.Operator.MODIFY;
     }
-    if (!Arrays.equals(value, v)) {
+    if (true || !Arrays.equals(value, v)) {
       db.put(Key.copyOf(key), Value.copyOf(operator, value));
     }
   }
