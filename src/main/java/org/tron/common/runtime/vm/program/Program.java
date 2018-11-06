@@ -63,6 +63,7 @@ import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.TransferActuator;
+import org.tron.core.actuator.TransferAssetActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -617,12 +618,25 @@ public class Program {
 
     // 2.1 PERFORM THE VALUE (endowment) PART
     long endowment = msg.getEndowment().value().longValueExact();
-    long senderBalance = deposit.getBalance(senderAddress);
-    if (senderBalance < endowment) {
-      stackPushZero();
-      refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
-      return;
+    // transfer trx validation
+    if (msg.getTokenId() == null) {
+      long senderBalance = deposit.getBalance(senderAddress);
+      if (senderBalance < endowment) {
+        stackPushZero();
+        refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+        return;
+      }
     }
+    // transfer trc10 token validation
+    else {
+      long senderBalance = deposit.getTokenBalance(senderAddress, msg.getTokenId().getData());
+      if (senderBalance < endowment) {
+        stackPushZero();
+        refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+        return;
+      }
+    }
+
 
     // FETCH THE CODE
     AccountCapsule accountCapsule = getContractState().getAccount(codeAddress);
@@ -630,6 +644,7 @@ public class Program {
     byte[] programCode =
         accountCapsule != null ? getContractState().getCode(codeAddress) : EMPTY_BYTE_ARRAY;
 
+    // only for trx, not for token
     long contextBalance = 0L;
     if (byTestingSuite()) {
       // This keeps track of the calls created for a test
@@ -638,14 +653,25 @@ public class Program {
           msg.getEndowment().getNoLeadZeroesData());
     } else if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
         && senderAddress != contextAddress && endowment > 0) {
-      try {
-        TransferActuator
-            .validateForSmartContract(deposit, senderAddress, contextAddress, endowment);
-      } catch (ContractValidateException e) {
-        throw new BytecodeExecutionException("validateForSmartContract failure");
+      if (msg.getTokenId() == null) {
+        try {
+          TransferActuator
+              .validateForSmartContract(deposit, senderAddress, contextAddress, endowment);
+        } catch (ContractValidateException e) {
+          throw new BytecodeExecutionException("validateForSmartContract failure");
+        }
+        deposit.addBalance(senderAddress, -endowment);
+        contextBalance = deposit.addBalance(contextAddress, endowment);
       }
-      deposit.addBalance(senderAddress, -endowment);
-      contextBalance = deposit.addBalance(contextAddress, endowment);
+      else {
+        try {
+          TransferAssetActuator.validateForSmartContract(deposit,senderAddress,contextAddress, msg.getTokenId().getData(), endowment);
+        } catch (ContractValidateException e) {
+          throw new BytecodeExecutionException("validateForSmartContract failure");
+        }
+        deposit.addTokenBalance(senderAddress,msg.getTokenId().getData(),-endowment);
+        deposit.addTokenBalance(contextAddress, msg.getTokenId().getData(), endowment);
+      }
     }
 
     // CREATE CALL INTERNAL TRANSACTION

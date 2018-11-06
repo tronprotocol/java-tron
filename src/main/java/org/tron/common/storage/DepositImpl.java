@@ -6,11 +6,13 @@ import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.Storage;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -33,6 +35,7 @@ import org.tron.core.db.VotesStore;
 import org.tron.core.db.WitnessStore;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 
@@ -60,6 +63,7 @@ public class DepositImpl implements Deposit {
   private HashMap<Key, Value> dynamicPropertiesCache = new HashMap<>();
   private HashMap<Key, Value> accountContractIndexCache = new HashMap<>();
   private HashMap<Key, Storage> storageCache = new HashMap<>();
+  private HashMap<Key, Value> assetIssueCache = new HashMap<>();
 
   private DepositImpl(Manager dbManager, DepositImpl parent) {
     init(dbManager, parent);
@@ -316,6 +320,26 @@ public class DepositImpl implements Deposit {
   }
 
   @Override
+  public synchronized AssetIssueCapsule getAssetIssue(byte[] tokenId) {
+    byte[] tokenIdWithoutLeadingZero =MUtil.removeZeroes(tokenId);
+    Key key = Key.create(tokenIdWithoutLeadingZero);
+    if (assetIssueCache.containsKey(key)) {
+      return assetIssueCache.get(key).getAssetIssue();
+    }
+
+    AssetIssueCapsule assetIssueCapsule;
+    if (this.parent != null) {
+      assetIssueCapsule = parent.getAssetIssue(tokenIdWithoutLeadingZero);
+    } else {
+      assetIssueCapsule = this.dbManager.getAssetIssueStore().get(tokenIdWithoutLeadingZero);
+    }
+    if (assetIssueCapsule != null) {
+      assetIssueCache.put(key, Value.create(assetIssueCapsule.getData()));
+    }
+    return assetIssueCapsule;
+  }
+
+  @Override
   public synchronized void putStorageValue(byte[] address, DataWord key, DataWord value) {
     address = convertToTronAddress(address);
     if (getAccount(address) == null) {
@@ -356,6 +380,33 @@ public class DepositImpl implements Deposit {
   }
 
   @Override
+  public synchronized long addTokenBalance(byte[] address, byte[] tokenId, long value) {
+    byte[] tokenIdWithoutLeadingZero = MUtil.removeZeroes(tokenId);
+    AccountCapsule accountCapsule = getAccount(address);
+    if (accountCapsule == null) {
+      accountCapsule = createAccount(address, AccountType.Normal);
+    }
+    long balance = accountCapsule.getAssetMap().getOrDefault(new String(tokenIdWithoutLeadingZero),new Long(0));
+    if (value == 0) {
+      return balance;
+    }
+
+    if (value < 0 && balance < -value) {
+      throw new RuntimeException(
+          StringUtil.createReadableString(accountCapsule.createDbKey())
+              + " insufficient balance");
+    }
+    accountCapsule.addAssetAmount(tokenIdWithoutLeadingZero, value);
+//    accountCapsule.getAssetMap().put(new String(tokenIdWithoutLeadingZero), Math.addExact(balance, value));
+    Key key = Key.create(address);
+    Value V = Value.create(accountCapsule.getData(),
+        Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
+    accountCache.put(key, V);
+//    accountCapsule.addAssetAmount(tokenIdWithoutLeadingZero, value);
+    return accountCapsule.getAssetMap().get(new String(tokenIdWithoutLeadingZero));
+  }
+
+  @Override
   public synchronized long addBalance(byte[] address, long value) {
     AccountCapsule accountCapsule = getAccount(address);
     if (accountCapsule == null) {
@@ -378,6 +429,12 @@ public class DepositImpl implements Deposit {
         Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
     accountCache.put(key, V);
     return accountCapsule.getBalance();
+  }
+
+  @Override
+  public synchronized long getTokenBalance(byte[] address, byte[] tokenId){
+    AccountCapsule accountCapsule = getAccount(address);
+    return accountCapsule.getAssetMap().getOrDefault(new String(MUtil.removeZeroes(tokenId)), new Long(0));
   }
 
   @Override

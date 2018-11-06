@@ -63,4 +63,14 @@ public class MUtil {
     }
     return result;
   }
+
+  public static byte[] removeZeroes(byte[] data) {
+    int i;
+    for(i = 0; i < data.length; i++) {
+      if(data[i] != '\0') {
+        break;
+      }
+    }
+    return Arrays.copyOfRange(data, i, data.length);
+  }
 }
