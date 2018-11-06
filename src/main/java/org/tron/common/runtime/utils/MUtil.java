@@ -3,9 +3,11 @@ package org.tron.common.runtime.utils;
 import java.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.storage.Deposit;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.TransferActuator;
+import org.tron.core.actuator.TransferAssetActuator;
 import org.tron.core.exception.ContractValidateException;
 
 public class MUtil {
@@ -25,6 +27,16 @@ public class MUtil {
     }
     deposit.addBalance(toAddress, amount);
     deposit.addBalance(fromAddress, -amount);
+  }
+
+  public static void transferToken(Deposit deposit, byte[] fromAddress, byte[] toAddress, String tokenId, long amount)
+      throws ContractValidateException {
+    if (0 == amount) {
+      return;
+    }
+    TransferAssetActuator.validateForSmartContract(deposit, fromAddress, toAddress, tokenId.getBytes(), amount);
+    deposit.addTokenBalance(toAddress, tokenId.getBytes(), amount);
+    deposit.addTokenBalance(fromAddress, tokenId.getBytes(), -amount);
   }
 
 

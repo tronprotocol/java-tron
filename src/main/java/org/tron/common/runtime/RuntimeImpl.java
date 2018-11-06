@@ -6,6 +6,7 @@ import static org.apache.commons.lang3.ArrayUtils.getLength;
 import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.utils.MUtil.transfer;
+import static org.tron.common.runtime.utils.MUtil.transferToken;
 import static org.tron.common.runtime.vm.VMConstant.CONTRACT_NAME_LENGTH;
 import static org.tron.common.runtime.vm.VMConstant.REASON_ALREADY_TIME_OUT;
 import static org.tron.common.runtime.vm.VMUtils.saveProgramTraceFile;
@@ -44,6 +45,7 @@ import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
@@ -381,6 +383,11 @@ public class RuntimeImpl implements Runtime {
     if (callValue > 0) {
       transfer(this.deposit, callerAddress, contractAddress, callValue);
     }
+    long callTokenValue = contract.getCallTokenValue();
+    String tokenId = contract.getTokenId();
+    if (callTokenValue > 0 && !StringUtils.isEmpty(tokenId)) {
+      transferToken(this.deposit,callerAddress,contractAddress, tokenId, callTokenValue);
+    }
 
   }
 
@@ -458,6 +465,11 @@ public class RuntimeImpl implements Runtime {
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
     if (callValue > 0) {
       transfer(this.deposit, callerAddress, contractAddress, callValue);
+    }
+    long callTokenValue = contract.getCallTokenValue();
+    String tokenId = contract.getTokenId();
+    if (callTokenValue > 0 && !StringUtils.isEmpty(tokenId)) {
+      transferToken(this.deposit,callerAddress,contractAddress, tokenId, callTokenValue);
     }
 
   }
