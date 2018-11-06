@@ -232,7 +232,7 @@ public class IncrementalMerkleTreeContainer {
 
   public MerklePath path(Deque<SHA256Compress> filler_hashes) {
 
-    if (treeCapsule.getLeft().getContent().isEmpty()) {
+    if (!leftIsExist()) {
       throw new RuntimeException(
           "can't create an authentication path for the beginning of the tree");
     }

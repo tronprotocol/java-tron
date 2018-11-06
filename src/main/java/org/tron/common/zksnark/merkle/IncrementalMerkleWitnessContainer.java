@@ -24,7 +24,7 @@ public class IncrementalMerkleWitnessContainer {
     Deque<SHA256Compress> uncles = new ArrayDeque<>(witnessCapsule.getFilled());
 
     if (cursorIsExist()) {
-      uncles.add(new IncrementalMerkleTreeContainer(witnessCapsule.getCursor())
+      uncles.add(witnessCapsule.getCursor().toMerkleTreeContainer()
           .root(witnessCapsule.getCursorDepth()));
     }
 

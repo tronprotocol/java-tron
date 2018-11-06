@@ -121,6 +121,9 @@ public class MerkleContainerTest {
     witness.element();
     witness.path();
 
+    //save
+    merkleContainer.putMerkleWitness(witness.getRootKey(), witness.getWitnessCapsule());
+
     IncrementalMerkleTreeContainer bestMerkleRoot = merkleContainer.getBestMerkleRoot();
     Assert.assertEquals(0, bestMerkleRoot.size());
 
