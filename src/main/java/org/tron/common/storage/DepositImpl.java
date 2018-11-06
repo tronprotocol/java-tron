@@ -5,7 +5,9 @@ import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicLong;
+import lombok.extern.slf4j.Slf4j;
+import org.spongycastle.util.Strings;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.Storage;
 import org.tron.common.utils.ByteArray;
@@ -18,15 +20,15 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.AccountStore;
-import org.tron.core.db.AssetIssueStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.CodeStore;
 import org.tron.core.db.ContractStore;
+import org.tron.core.db.DelegatedResourceStore;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.ProposalStore;
-import org.tron.core.db.StorageRowStore;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.db.VotesStore;
 import org.tron.core.db.WitnessStore;
@@ -35,8 +37,9 @@ import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 
+@Slf4j(topic = "deposit")
 public class DepositImpl implements Deposit {
-
+  private static final int OLD_BLOCK_VERSION = 3;
   private static final byte[] LATEST_PROPOSAL_NUM = "LATEST_PROPOSAL_NUM".getBytes();
   private static final byte[] WITNESS_ALLOWANCE_FROZEN_TIME = "WITNESS_ALLOWANCE_FROZEN_TIME"
       .getBytes();
@@ -50,14 +53,12 @@ public class DepositImpl implements Deposit {
   private HashMap<Key, Value> transactionCache = new HashMap<>();
   private HashMap<Key, Value> blockCache = new HashMap<>();
   private HashMap<Key, Value> witnessCache = new HashMap<>();
-  private HashMap<Key, Value> blockIndexCache = new HashMap<>();
   private HashMap<Key, Value> codeCache = new HashMap<>();
   private HashMap<Key, Value> contractCache = new HashMap<>();
 
   private HashMap<Key, Value> votesCache = new HashMap<>();
   private HashMap<Key, Value> proposalCache = new HashMap<>();
   private HashMap<Key, Value> dynamicPropertiesCache = new HashMap<>();
-  private HashMap<Key, Value> accountContractIndexCache = new HashMap<>();
   private HashMap<Key, Storage> storageCache = new HashMap<>();
 
   private DepositImpl(Manager dbManager, DepositImpl parent) {
@@ -110,12 +111,8 @@ public class DepositImpl implements Deposit {
     return dbManager.getCodeStore();
   }
 
-  private StorageRowStore getStorageRowStore() {
-    return dbManager.getStorageRowStore();
-  }
-
-  private AssetIssueStore getAssetIssueStore() {
-    return dbManager.getAssetIssueStore();
+  private DelegatedResourceStore getDelegatedResourceStore() {
+    return dbManager.getDelegatedResourceStore();
   }
 
   @Override
@@ -218,6 +215,7 @@ public class DepositImpl implements Deposit {
       try {
         proposalCapsule = getProposalStore().get(id);
       } catch (ItemNotFoundException e) {
+        logger.warn("Not found proposal, id:" + Hex.toHexString(id));
         proposalCapsule = null;
       }
     }
@@ -302,7 +300,12 @@ public class DepositImpl implements Deposit {
 
     Storage storage;
     if (this.parent != null) {
-      storage = parent.getStorage(address);
+      Storage parentStorage = parent.getStorage(address);
+      if (this.dbManager.passVersion(ForkBlockVersionConsts.ENERGY_LIMIT)) {
+        storage = new Storage(parentStorage);
+      } else {
+        storage = parentStorage;
+      }
     } else {
       storage = new Storage(address, dbManager.getStorageRowStore());
     }
@@ -368,9 +371,9 @@ public class DepositImpl implements Deposit {
     }
     accountCapsule.setBalance(Math.addExact(balance, value));
     Key key = Key.create(address);
-    Value V = Value.create(accountCapsule.getData(),
+    Value val = Value.create(accountCapsule.getData(),
         Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
-    accountCache.put(key, V);
+    accountCache.put(key, val);
     return accountCapsule.getBalance();
   }
 
@@ -452,11 +455,6 @@ public class DepositImpl implements Deposit {
     contractCache.put(key, value);
   }
 
-//  @Override
-//  public void putStorage(Key key, Value value) {
-//    storageCache.put(key, value);
-//  }
-
   @Override
   public void putStorage(Key key, Storage cache) {
     storageCache.put(key, cache);
@@ -517,9 +515,8 @@ public class DepositImpl implements Deposit {
     } else {
       try {
         bytesCapsule = getDynamicPropertiesStore().get(word);
-      } catch (BadItemException e) {
-        bytesCapsule = null;
-      } catch (ItemNotFoundException e) {
+      } catch (BadItemException | ItemNotFoundException e) {
+        logger.warn("Not found dynamic property:" + Strings.fromUTF8ByteArray(word));
         bytesCapsule = null;
       }
     }
@@ -603,13 +600,13 @@ public class DepositImpl implements Deposit {
   }
 
   private void commitStorageCache(Deposit deposit) {
-    storageCache.forEach((key, value) -> {
+    storageCache.forEach((Key address, Storage storage) -> {
       if (deposit != null) {
         // write to parent cache
-        deposit.putStorage(key, value);
+        deposit.putStorage(address, storage);
       } else {
         // persistence
-        value.commit();
+        storage.commit();
       }
     });
 
@@ -693,13 +690,8 @@ public class DepositImpl implements Deposit {
     commitVoteCache(deposit);
     commitProposalCache(deposit);
     commitDynamicPropertiesCache(deposit);
-    // commitAccountContractIndex(deposit);
   }
 
-  @Override
-  public void flush() {
-    throw new RuntimeException("Not supported");
-  }
 
   @Override
   public void setParent(Deposit deposit) {

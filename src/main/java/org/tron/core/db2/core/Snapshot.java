@@ -4,6 +4,14 @@ import java.util.Map;
 
 public interface Snapshot extends Iterable<Map.Entry<byte[], byte[]>> {
 
+  static boolean isRoot(Snapshot snapshot) {
+    return snapshot != null && snapshot.getClass() == SnapshotRoot.class;
+  }
+
+  static boolean isImpl(Snapshot snapshot) {
+    return snapshot != null && snapshot.getClass() == SnapshotImpl.class;
+  }
+
   byte[] get(byte[] key);
 
   void put(byte[] key, byte[] value);
@@ -18,11 +26,21 @@ public interface Snapshot extends Iterable<Map.Entry<byte[], byte[]>> {
 
   Snapshot getPrevious();
 
+  void setPrevious(Snapshot previous);
+
   Snapshot getRoot();
 
-  void setPrevious(Snapshot previous);
+  Snapshot getNext();
+
+  void setNext(Snapshot next);
+
+  Snapshot getSolidity();
 
   void close();
 
   void reset();
+
+  void resetSolidity();
+
+  void updateSolidity();
 }

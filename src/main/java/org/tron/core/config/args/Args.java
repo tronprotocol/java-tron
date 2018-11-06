@@ -43,6 +43,7 @@ import org.tron.core.db.AccountStore;
 import org.tron.keystore.CipherException;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
+import org.tron.program.Version;
 
 @Slf4j
 @NoArgsConstructor
@@ -867,6 +868,9 @@ public class Args {
     logger.info("Backup listen port: {}", args.getBackupPort());
     logger.info("Backup member size: {}", args.getBackupMembers().size());
     logger.info("Backup priority: {}", args.getBackupPriority());
+    logger.info("************************ Code version *************************");
+    logger.info("Code version : {}", Version.getVersion());
+    logger.info("***************************************************************");
     logger.info("\n");
   }
 }

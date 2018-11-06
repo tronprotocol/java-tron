@@ -115,9 +115,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] STORAGE_EXCHANGE_TAX_RATE = "STORAGE_EXCHANGE_TAX_RATE".getBytes();
 
   private static final byte[] FORK_CONTROLLER = "FORK_CONTROLLER".getBytes();
+  private static final String FORK_PREFIX = "FORK_VERSION_";
 
   //This value is only allowed to be 0, 1, -1
   private static final byte[] REMOVE_THE_POWER_OF_THE_GR = "REMOVE_THE_POWER_OF_THE_GR".getBytes();
+
+  //This value is only allowed to be 0, 1, -1
+  private static final byte[] ALLOW_DELEGATE_RESOURCE = "ALLOW_DELEGATE_RESOURCE".getBytes();
 
   //This value is only allowed to be 0, 1, -1
   private static final byte[] ALLOW_UPDATE_ACCOUNT_NAME = "ALLOW_UPDATE_ACCOUNT_NAME".getBytes();
@@ -128,7 +132,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   //If the parameter is larger than 0, the contract is allowed to be created.
   private static final byte[] ALLOW_CREATION_OF_CONTRACTS = "ALLOW_CREATION_OF_CONTRACTS"
       .getBytes();
-
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -396,6 +399,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getRemoveThePowerOfTheGr();
     } catch (IllegalArgumentException e) {
       this.saveRemoveThePowerOfTheGr(0);
+    }
+
+    try {
+      this.getAllowDelegateResource();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowDelegateResource(0);
     }
 
     try {
@@ -773,7 +782,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT"));
+            () -> new IllegalArgumentException(
+                "not found CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT"));
   }
 
   public void saveCreateNewAccountBandwidthRate(long rate) {
@@ -943,6 +953,23 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found REMOVE_THE_POWER_OF_THE_GR"));
+  }
+
+  public void saveAllowDelegateResource(long value) {
+    this.put(ALLOW_DELEGATE_RESOURCE,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowDelegateResource() {
+    return Optional.ofNullable(getUnchecked(ALLOW_DELEGATE_RESOURCE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_DELEGATE_RESOURCE"));
+  }
+
+  public boolean supportDR() {
+    return getAllowDelegateResource() == 1L;
   }
 
   public void saveAllowUpdateAccountName(long rate) {
@@ -1164,14 +1191,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void addTotalNetWeight(long amount) {
     long totalNetWeight = getTotalNetWeight();
     totalNetWeight += amount;
-    saveTotalNetWeight( totalNetWeight );
+    saveTotalNetWeight(totalNetWeight);
   }
 
   //The unit is trx
   public void addTotalEnergyWeight(long amount) {
     long totalEnergyWeight = getTotalEnergyWeight();
     totalEnergyWeight += amount;
-    saveTotalEnergyWeight( totalEnergyWeight );
+    saveTotalEnergyWeight(totalEnergyWeight);
   }
 
   public void addTotalCreateAccountCost(long fee) {
@@ -1191,6 +1218,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void forked() {
     put(FORK_CONTROLLER, new BytesCapsule(Boolean.toString(true).getBytes()));
+  }
+
+  public void statsByVersion(int version, byte[] stats) {
+    String statsKey = FORK_PREFIX + version;
+    put(statsKey.getBytes(), new BytesCapsule(stats));
+  }
+
+  public byte[] statsByVersion(int version) {
+    String statsKey = FORK_PREFIX + version;
+    return revokingDB.getUnchecked(statsKey.getBytes());
   }
 
   public boolean getForked() {

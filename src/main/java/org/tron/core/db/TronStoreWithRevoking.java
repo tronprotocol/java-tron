@@ -87,6 +87,20 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     }
   }
 
+  public T getOnSolidity(byte[] key) throws ItemNotFoundException, BadItemException {
+    return of(revokingDB.getOnSolidity(key));
+  }
+
+  public T getUncheckedOnSolidity(byte[] key) {
+    byte[] value = revokingDB.getUncheckedOnSolidity(key);
+
+    try {
+      return of(value);
+    } catch (BadItemException e) {
+      return null;
+    }
+  }
+
   public T of(byte[] value) throws BadItemException {
     try {
       Constructor constructor = token.getRawType().getConstructor(byte[].class);
@@ -96,6 +110,10 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
       throw new BadItemException(e.getMessage());
     }
+  }
+
+  public boolean hasOnSolidity(byte[] key) {
+    return revokingDB.hasOnSolidity(key);
   }
 
   @Override

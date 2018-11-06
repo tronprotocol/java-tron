@@ -72,6 +72,8 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetTransactionByIdServlet getTransactionByIdServlet;
   @Autowired
+  private GetTransactionInfoByIdServlet getTransactionInfoByIdServlet;
+  @Autowired
   private ListWitnessesServlet listWitnessesServlet;
   @Autowired
   private GetAssetIssueListServlet getAssetIssueListServlet;
@@ -127,6 +129,8 @@ public class FullNodeHttpApiService implements Service {
   private GetChainParametersServlet getChainParametersServlet;
   @Autowired
   private GetAccountResourceServlet getAccountResourceServlet;
+  @Autowired
+  private GetNodeInfoServlet getNodeInfoServlet;
 
   @Override
   public void init() {
@@ -173,6 +177,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getBlockByLimitNextServlet), "/getblockbylimitnext");
       context.addServlet(new ServletHolder(getBlockByLatestNumServlet), "/getblockbylatestnum");
       context.addServlet(new ServletHolder(getTransactionByIdServlet), "/gettransactionbyid");
+      context.addServlet(new ServletHolder(getTransactionInfoByIdServlet), "/gettransactioninfobyid");
       context.addServlet(new ServletHolder(listWitnessesServlet), "/listwitnesses");
       context.addServlet(new ServletHolder(getAssetIssueListServlet), "/getassetissuelist");
       context.addServlet(new ServletHolder(getPaginatedAssetIssueListServlet),
@@ -205,6 +210,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(listExchangesServlet), "/listexchanges");
       context.addServlet(new ServletHolder(getChainParametersServlet), "/getchainparameters");
       context.addServlet(new ServletHolder(getAccountResourceServlet), "/getaccountresource");
+      context.addServlet(new ServletHolder(getNodeInfoServlet), "/getnodeinfo");
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());
