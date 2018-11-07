@@ -91,9 +91,10 @@ public class MerkleContainerTest {
     tree.wfcheck();
 
     //saveCmIntoMerkleTree
+    byte[] hash = {0x01};
     IncrementalMerkleTreeContainer newTree = merkleContainer
         .saveCmIntoMerkleTree(tree.getMerkleTreeKey(), ByteArray.fromHexString(s1),
-            ByteArray.fromHexString(s2));
+            ByteArray.fromHexString(s2), hash);
     //todo : need check
     Assert.assertEquals("18a4aa922c9f3f8aecb5cd469bc92da72297cda82c55c3a50c36e7b2956c8b80",
         ByteArray.toHexString(newTree.getMerkleTreeKey()));
@@ -101,6 +102,13 @@ public class MerkleContainerTest {
     Assert.assertEquals(3, tree.size());
     Assert.assertEquals(5, newTree.size());
     Assert.assertEquals(s2, ByteArray.toHexString(newTree.last().getContent().toByteArray()));
+
+    Assert.assertEquals("0100000000",
+        ByteArray.toHexString(
+            merkleContainer.getWitness(hash, 0).toMerkleWitnessContainer().getMerkleWitnessKey()));
+    Assert.assertEquals("0100000001",
+        ByteArray.toHexString(
+            merkleContainer.getWitness(hash, 1).toMerkleWitnessContainer().getMerkleWitnessKey()));
 
     //path
     MerklePath path = tree.path();
@@ -120,6 +128,8 @@ public class MerkleContainerTest {
 
     witness.element();
     witness.path();
+
+    witness.getWitnessCapsule().setOutputPoint(ByteString.copyFrom(hash), 1);
 
     //save
     merkleContainer

@@ -83,7 +83,7 @@ message MerklePath {
 
 message OutputPoint{
   bytes txHash = 1;
-  bytes index = 2;
+  int32 index = 2;
 }
 
 message SHA256Compress{
@@ -101,6 +101,7 @@ message IncrementalMerkleWitness{
   repeated SHA256Compress filled = 2;
   IncrementalMerkleTree cursor = 3;
   int64 cursor_depth = 4;
+  OutputPoint output_point = 10;
 }
 
 message ZksnarkV0TransferContract {
