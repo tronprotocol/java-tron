@@ -375,17 +375,4 @@ public class RpcApiServiceOnSolidity implements Service {
       apiServer.shutdown();
     }
   }
-
-  /**
-   * ...
-   */
-  public void blockUntilShutdown() {
-    if (apiServer != null) {
-      try {
-        apiServer.awaitTermination();
-      } catch (InterruptedException e) {
-        logger.debug(e.getMessage(), e);
-      }
-    }
-  }
 }
