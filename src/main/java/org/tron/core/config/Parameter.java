@@ -86,7 +86,8 @@ public interface Parameter {
     ALLOW_UPDATE_ACCOUNT_NAME, // 1, 14
     ALLOW_SAME_TOKEN_NAME, // 1, 15
     ALLOW_DELEGATE_RESOURCE, // 0, 16
-    ALLOW_ADAPTIVE_ENERGY,
+    ALLOW_ADAPTIVE_ENERGY, // 0, 17
+    TOTAL_ENERGY_LIMIT, // 50,000,000,000, 18
 //    ONE_DAY_NET_LIMIT,
 //    MAX_FROZEN_TIME,
 //    MIN_FROZEN_TIME,
@@ -98,7 +99,6 @@ public interface Parameter {
 //    FREE_NET_LIMIT,
 //    TOTAL_NET_LIMIT,
 //    EXCHANGE_BALANCE_LIMIT,
-//    TOTAL_ENERGY_LIMIT,
   }
 
   interface ForkBlockVersionConsts {
