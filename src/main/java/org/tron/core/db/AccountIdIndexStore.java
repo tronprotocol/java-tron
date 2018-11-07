@@ -52,7 +52,7 @@ public class AccountIdIndexStore extends TronStoreWithRevoking<BytesCapsule> {
   @Override
   public BytesCapsule getOnSolidity(byte[] key) {
     byte[] lowerCaseKey = getLowerCaseAccountId(key);
-    byte[] value = revokingDB.getUnchecked(lowerCaseKey);
+    byte[] value = revokingDB.getUncheckedOnSolidity(lowerCaseKey);
     if (ArrayUtils.isEmpty(value)) {
       return null;
     }
