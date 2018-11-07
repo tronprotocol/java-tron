@@ -147,6 +147,17 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     });
   }
 
+  public Iterator<Map.Entry<byte[], T>> iteratorOnSolidity() {
+    return Iterators.transform(((RevokingDBWithCachingNewValue) revokingDB).iteratorOnSolidity(), e ->
+    {
+      try {
+        return Maps.immutableEntry(e.getKey(), of(e.getValue()));
+      } catch (BadItemException e1) {
+        throw new RuntimeException(e1);
+      }
+    });
+  }
+
   public long size() {
     return Streams.stream(revokingDB.iterator()).count();
   }

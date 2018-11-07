@@ -30,6 +30,12 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
         .collect(Collectors.toList());
   }
 
+  public List<WitnessCapsule> getAllWitnessesOnSolidity() {
+    return Streams.stream(iteratorOnSolidity())
+        .map(Entry::getValue)
+        .collect(Collectors.toList());
+  }
+
   @Override
   public WitnessCapsule get(byte[] key) {
     byte[] value = revokingDB.getUnchecked(key);
