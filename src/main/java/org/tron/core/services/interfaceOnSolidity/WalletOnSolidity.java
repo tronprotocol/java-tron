@@ -52,7 +52,7 @@ public class WalletOnSolidity {
 
   public Account getAccount(Account account) {
     AccountStore accountStore = dbManager.getAccountStore();
-    AccountCapsule accountCapsule = accountStore.get(account.getAddress().toByteArray());
+    AccountCapsule accountCapsule = accountStore.getOnSolidity(account.getAddress().toByteArray());
     if (accountCapsule == null) {
       return null;
     }
