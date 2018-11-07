@@ -110,7 +110,7 @@ public class MerkleContainerTest {
 
     //todo:need to check witness
     //witness test
-    IncrementalMerkleWitnessContainer witness = tree.witness();
+    IncrementalMerkleWitnessContainer witness = tree.toWitness();
     //witness
     witness.append(a);
     Assert.assertEquals(true, path.getIndex().get(1));
