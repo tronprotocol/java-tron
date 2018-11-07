@@ -73,15 +73,15 @@ public class MerkleContainerTest {
     //root
     //todo : need check
     Assert.assertEquals("835ea79627cfa5b773439220b4a8fba947be8b3faab18ffe12dd2343cd669d15",
-        ByteArray.toHexString(tree.getRootArray()));
+        ByteArray.toHexString(tree.getMerkleTreeKey()));
 
     //save
-    merkleContainer.putMerkleTreeIntoStore(tree.getRootArray(), tree.getTreeCapsule());
+    merkleContainer.putMerkleTreeIntoStore(tree.getMerkleTreeKey(), tree.getTreeCapsule());
 
     //get
-    Assert.assertEquals(true, merkleContainer.merkleRootIsExist(tree.getRootArray()));
+    Assert.assertEquals(true, merkleContainer.merkleRootIsExist(tree.getMerkleTreeKey()));
 
-    tree = merkleContainer.getMerkleTree(tree.getRootArray()).toMerkleTreeContainer();
+    tree = merkleContainer.getMerkleTree(tree.getMerkleTreeKey()).toMerkleTreeContainer();
     Assert.assertEquals(3, tree.size());
 
     //other
@@ -90,13 +90,13 @@ public class MerkleContainerTest {
     Assert.assertEquals(96, tree.DynamicMemoryUsage());
     tree.wfcheck();
 
-    //saveCmIntoMerkleAndStore
+    //saveCmIntoMerkleTree
     IncrementalMerkleTreeContainer newTree = merkleContainer
-        .saveCmIntoMerkleAndStore(tree.getRootArray(), ByteArray.fromHexString(s1),
+        .saveCmIntoMerkleTree(tree.getMerkleTreeKey(), ByteArray.fromHexString(s1),
             ByteArray.fromHexString(s2));
     //todo : need check
     Assert.assertEquals("18a4aa922c9f3f8aecb5cd469bc92da72297cda82c55c3a50c36e7b2956c8b80",
-        ByteArray.toHexString(newTree.getRootArray()));
+        ByteArray.toHexString(newTree.getMerkleTreeKey()));
 
     Assert.assertEquals(3, tree.size());
     Assert.assertEquals(5, newTree.size());
@@ -122,7 +122,8 @@ public class MerkleContainerTest {
     witness.path();
 
     //save
-    merkleContainer.putMerkleWitnessIntoStore(witness.getRootArray(), witness.getWitnessCapsule());
+    merkleContainer
+        .putMerkleWitnessIntoStore(witness.getMerkleWitnessKey(), witness.getWitnessCapsule());
 
     IncrementalMerkleTreeContainer bestMerkleRoot = merkleContainer.getBestMerkleRoot();
     Assert.assertEquals(1, bestMerkleRoot.size());

@@ -78,6 +78,10 @@ public class IncrementalMerkleWitnessContainer {
     return witnessCapsule.getTree().toMerkleTreeContainer().root(DEPTH, partial_path());
   }
 
+  public byte[] getMerkleWitnessKey() {
+    return root().getContent().toByteArray();
+  }
+
 
   public byte[] getRootArray() {
     return root().getContent().toByteArray();

@@ -283,10 +283,13 @@ public class IncrementalMerkleTreeContainer {
   }
 
 
+  public byte[] getMerkleTreeKey() {
+    return getRootArray();
+  }
+
   public byte[] getRootArray() {
     return root().getContent().toByteArray();
   }
-
 
   public IncrementalMerkleWitnessContainer toWitness() {
     return new IncrementalMerkleWitnessContainer(this);
