@@ -43,7 +43,6 @@ import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
-import org.tron.common.utils.ForkController;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
@@ -617,7 +616,7 @@ public class RuntimeImpl implements Runtime {
       if (StringUtils.isEmpty(runtimeError)) {
         runtimeError = result.getException().getMessage();
       }
-      logger.info("runtime error is :{}", result.getException().getMessage());
+      logger.info("runtime result is :{}", result.getException().getMessage());
     }
     trace.setBill(result.getEnergyUsed());
   }

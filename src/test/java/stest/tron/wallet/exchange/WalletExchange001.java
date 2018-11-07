@@ -12,6 +12,7 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
+import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
@@ -291,6 +292,16 @@ public class WalletExchange001 {
         == beforeToken1Balance - afterToken1Balance);
     Assert.assertTrue(afterExchangeToken2Balance - beforeExchangeToken2Balance
         == beforeToken2Balance - afterToken2Balance);
+  }
+
+  @Test(enabled = true)
+  public void test7GetExchangeListPaginated() {
+    PaginatedMessage.Builder pageMessageBuilder = PaginatedMessage.newBuilder();
+    pageMessageBuilder.setOffset(0);
+    pageMessageBuilder.setLimit(100);
+    ExchangeList exchangeList = blockingStubFull
+        .getPaginatedExchangeList(pageMessageBuilder.build());
+    Assert.assertTrue(exchangeList.getExchangesCount() >= 1);
   }
 
   @AfterClass
