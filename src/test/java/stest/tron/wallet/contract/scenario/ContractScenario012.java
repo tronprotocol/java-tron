@@ -63,12 +63,12 @@ public class ContractScenario012 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(contract012Address,2000000000L,fromAddress,
-        testKey002,blockingStubFull));
   }
 
   @Test(enabled = true)
   public void deployTransactionCoin() {
+    Assert.assertTrue(PublicMethed.sendcoin(contract012Address,2000000000L,fromAddress,
+        testKey002,blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract012Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
