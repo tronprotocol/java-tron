@@ -82,6 +82,8 @@ import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Contract.ZksnarkV0TransferContract;
+import org.tron.protos.Contract.OutputPoint;
+import org.tron.protos.Contract.IncrementalMerkleWitness;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -1467,6 +1469,22 @@ public class RpcApiService implements Service {
       } else {
         responseObserver
             .onNext(BytesMessage.newBuilder().setValue(ByteString.copyFrom(rt)).build());
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getMerkleTreeWitness(OutputPoint request,
+        StreamObserver<IncrementalMerkleWitness> responseObserver) {
+
+      ByteString txHash = request.getTxHash();
+      int index = request.getIndex();
+
+      if (null != txHash && index >= 0) {
+        IncrementalMerkleWitness witness = wallet.getMerkleTreeWitness(txHash.toByteArray(), index);
+        responseObserver.onNext(witness);
+      } else {
+        responseObserver.onNext(null);
       }
       responseObserver.onCompleted();
     }
