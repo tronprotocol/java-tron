@@ -26,7 +26,7 @@ public class TrxHandler {
 
   private NodeImpl nodeImpl;
 
-  private static int MAX_TRX_SIZE = 10_000;
+  private static int MAX_TRX_SIZE = 50_000;
 
   private static int MAX_SMART_CONTRACT_SUBMIT_SIZE = 100;
 
@@ -88,7 +88,7 @@ public class TrxHandler {
   }
 
   public boolean isBusy() {
-    return queue.size() > MAX_TRX_SIZE;
+    return queue.size() + smartContractQueue.size() > MAX_TRX_SIZE;
   }
 
   class TrxEvent {

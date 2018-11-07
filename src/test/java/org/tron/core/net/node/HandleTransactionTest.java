@@ -72,7 +72,7 @@ public class HandleTransactionTest {
     }
 
     @Test
-    public void testHandleTransactionMessage() {
+    public void testHandleTransactionMessage() throws Exception{
 
         TransferContract tc =
             TransferContract.newBuilder()

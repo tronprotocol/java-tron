@@ -961,7 +961,6 @@ public class Manager {
       throw new ContractSizeNotEqualToOneException(
           "act size should be exactly 1, this is extend feature");
     }
-    forkController.hardFork(trxCap);
 
     validateDup(trxCap);
 
@@ -998,7 +997,7 @@ public class Manager {
     trace.finalization();
     if (Objects.nonNull(blockCap)) {
       if (getDynamicPropertiesStore().supportVM()) {
-        trxCap.setResultCode(trace.getReceipt().getResult());
+        trxCap.setResult(trace.getRuntime());
       }
     }
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
@@ -1186,7 +1185,7 @@ public class Manager {
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
     // todo set revoking db max size.
 
-    if (witnessService != null){
+    if (witnessService != null) {
       witnessService.processBlock(block);
     }
 
@@ -1258,24 +1257,11 @@ public class Manager {
       return;
     }
 
-    BlockId blockId;
-    try {
-      blockId = getBlockIdByNum(latestSolidifiedBlockNum);
-    } catch (ItemNotFoundException e) {
-      blockId = null;
-    }
-    if (blockId == null || !blockStore.hasOnSolidity(blockId.getBytes())) {
-      revokingStore.updateSolidity(dynamicPropertiesStore.getLatestSolidifiedBlockNum(), latestSolidifiedBlockNum);
-    }
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
     logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
   }
 
   public void updateFork() {
-    if (forkController.shouldBeForked()) {
-      return;
-    }
-
     try {
       long latestSolidifiedBlockNum = dynamicPropertiesStore.getLatestSolidifiedBlockNum();
       BlockCapsule solidifiedBlock = getBlockByNum(latestSolidifiedBlockNum);
@@ -1317,7 +1303,7 @@ public class Manager {
     proposalController.processProposals();
     witnessController.updateWitness();
     this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
-    forkController.reset();
+    forkController.reset(block);
   }
 
   /**
@@ -1535,5 +1521,9 @@ public class Manager {
     } catch (TooBigTransactionResultException e) {
       logger.debug("too big transaction result");
     }
+  }
+
+  public boolean passVersion(int version) {
+    return forkController.pass(version);
   }
 }

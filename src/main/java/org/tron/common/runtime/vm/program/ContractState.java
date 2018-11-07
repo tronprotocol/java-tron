@@ -40,11 +40,12 @@ import org.tron.protos.Protocol.AccountType;
 public class ContractState implements Deposit, ProgramListenerAware {
 
   private Deposit deposit;
-  private final DataWord address;  // contract address
+  // contract address
+  private final DataWord address;
   private ProgramListener programListener;
 
-  public ContractState(ProgramInvoke programInvoke) {
-    this.address = programInvoke.getContractAddress(); // contract address
+  ContractState(ProgramInvoke programInvoke) {
+    this.address = programInvoke.getContractAddress();
     this.deposit = programInvoke.getDeposit();
   }
 
@@ -149,11 +150,6 @@ public class ContractState implements Deposit, ProgramListenerAware {
   @Override
   public Deposit newDepositChild() {
     return deposit.newDepositChild();
-  }
-
-  @Override
-  public void flush() {
-    deposit.flush();
   }
 
   @Override

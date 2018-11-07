@@ -18,7 +18,7 @@ import org.tron.protos.Protocol.TransactionInfo;
 
 @Component
 @Slf4j
-public class GetTransactionInfoByIdServlet extends HttpServlet {
+public class GetTransactionInfoByIdSolidityServlet extends HttpServlet {
 
   @Autowired
   private WalletSolidity walletSolidity;

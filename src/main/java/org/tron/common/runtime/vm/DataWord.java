@@ -363,6 +363,8 @@ public class DataWord implements Comparable<DataWord> {
         return new DataWord(Arrays.clone(data));
     }
 
+
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

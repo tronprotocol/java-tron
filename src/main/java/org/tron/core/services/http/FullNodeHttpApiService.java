@@ -72,6 +72,8 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetTransactionByIdServlet getTransactionByIdServlet;
   @Autowired
+  private GetTransactionInfoByIdServlet getTransactionInfoByIdServlet;
+  @Autowired
   private ListWitnessesServlet listWitnessesServlet;
   @Autowired
   private GetAssetIssueListServlet getAssetIssueListServlet;
@@ -175,6 +177,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getBlockByLimitNextServlet), "/getblockbylimitnext");
       context.addServlet(new ServletHolder(getBlockByLatestNumServlet), "/getblockbylatestnum");
       context.addServlet(new ServletHolder(getTransactionByIdServlet), "/gettransactionbyid");
+      context.addServlet(new ServletHolder(getTransactionInfoByIdServlet), "/gettransactioninfobyid");
       context.addServlet(new ServletHolder(listWitnessesServlet), "/listwitnesses");
       context.addServlet(new ServletHolder(getAssetIssueListServlet), "/getassetissuelist");
       context.addServlet(new ServletHolder(getPaginatedAssetIssueListServlet),

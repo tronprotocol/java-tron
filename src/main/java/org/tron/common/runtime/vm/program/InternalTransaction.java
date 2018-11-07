@@ -18,15 +18,18 @@
 package org.tron.common.runtime.vm.program;
 
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
-import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 
 import com.google.common.primitives.Longs;
 import java.util.Arrays;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.crypto.Hash;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Transaction;
@@ -53,8 +56,10 @@ public class InternalTransaction {
   private byte[] transferToAddress;
 
   /*  Message sender address */
-  protected byte[] sendAddress;
+  private byte[] sendAddress;
+  @Getter
   private int deep;
+  @Getter
   private int index;
   private boolean rejected;
   private String note;
@@ -77,9 +82,10 @@ public class InternalTransaction {
 
 
   /**
-   * Construct an un-encoded InternalTransaction
+   * Construct a root InternalTransaction
    */
-  public InternalTransaction(Transaction trx,  InternalTransaction.TrxType trxType) {
+  public InternalTransaction(Transaction trx,  InternalTransaction.TrxType trxType)
+      throws ContractValidateException {
     this.transaction = trx;
     TransactionCapsule trxCap = new TransactionCapsule(trx);
     this.protoEncoded = trxCap.getData();
@@ -89,6 +95,9 @@ public class InternalTransaction {
     this.deep = -1;
     if (trxType == TrxType.TRX_CONTRACT_CREATION_TYPE) {
       CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
+      if (contract == null) {
+        throw new ContractValidateException("Invalid CreateSmartContract Protocol");
+      }
       this.sendAddress = contract.getOwnerAddress().toByteArray();
       this.receiveAddress = EMPTY_BYTE_ARRAY;
       this.transferToAddress = Wallet.generateContractAddress(trx);
@@ -97,8 +106,11 @@ public class InternalTransaction {
       this.data = contract.getNewContract().getBytecode().toByteArray();
       this.tokenValue = contract.getCallTokenValue();
       this.tokenId = contract.getTokenId();
-    } else if(trxType == TrxType.TRX_CONTRACT_CALL_TYPE) {
+    } else if (trxType == TrxType.TRX_CONTRACT_CALL_TYPE) {
       TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
+      if (contract == null) {
+        throw new ContractValidateException("Invalid TriggerSmartContract Protocol");
+      }
       this.sendAddress = contract.getOwnerAddress().toByteArray();
       this.receiveAddress = contract.getContractAddress().toByteArray();
       this.transferToAddress = this.receiveAddress.clone();
@@ -108,31 +120,31 @@ public class InternalTransaction {
       this.tokenValue = contract.getCallTokenValue();
       this.tokenId  = contract.getTokenId();
     } else {
-      // TODO: Should consider unknown type?
+      // do nothing, just for running byte code
     }
     this.hash = trxCap.getTransactionId().getBytes();
   }
 
   /**
-   * Construct an encoded InternalTransaction
+   * Construct a child InternalTransaction
    */
 
   public InternalTransaction(byte[] parentHash, int deep, int index,
-      byte[] sendAddress, byte[] transferToAddress, long value, byte[] data, String note, long nonce, String tokenId) {
+      byte[] sendAddress, byte[] transferToAddress,  long value, byte[] data, String note, long nonce, String tokenId) {
     this.parentHash = parentHash.clone();
     this.deep = deep;
     this.index = index;
     this.note = note;
-    this.sendAddress = nullToEmpty(sendAddress);
-    this.transferToAddress = nullToEmpty(transferToAddress);
+    this.sendAddress = ArrayUtils.nullToEmpty(sendAddress);
+    this.transferToAddress = ArrayUtils.nullToEmpty(transferToAddress);
     if("create".equalsIgnoreCase(note)){
       this.receiveAddress = EMPTY_BYTE_ARRAY;
     } else {
-      this.receiveAddress = nullToEmpty(transferToAddress);
+      this.receiveAddress = ArrayUtils.nullToEmpty(transferToAddress);
     }
     // in this case, value also can represent a tokenValue when tokenId is not null, otherwise it is a trx callvalue.
     this.value = value;
-    this.data = nullToEmpty(data);
+    this.data = ArrayUtils.nullToEmpty(data);
     this.nonce = nonce;
     this.hash = getHash();
     // in a contract call contract case, only one value should be used. trx or a token. can't be both. We should avoid using
@@ -157,15 +169,6 @@ public class InternalTransaction {
     this.rejected = true;
   }
 
-
-  public int getDeep() {
-    return deep;
-  }
-
-  public int getIndex() {
-    return index;
-  }
-
   public boolean isRejected() {
     return rejected;
   }
@@ -188,7 +191,7 @@ public class InternalTransaction {
     if (sendAddress == null) {
       return EMPTY_BYTE_ARRAY;
     }
-    return sendAddress;
+    return sendAddress.clone();
   }
 
   public byte[] getParentHash() {
@@ -209,16 +212,6 @@ public class InternalTransaction {
     return data.clone();
   }
 
-  protected void setValue(long value) {
-    this.value = value;
-  }
-
-  public byte[] getReceiveAddress() {
-    if (receiveAddress == null) {
-      return EMPTY_BYTE_ARRAY;
-    }
-    return receiveAddress.clone();
-  }
 
   public final byte[] getHash() {
     if (!isEmpty(hash)) {
@@ -245,7 +238,7 @@ public class InternalTransaction {
     }
     byte[] parentHashArray = parentHash.clone();
 
-    if (parentHashArray == null){
+    if (parentHashArray == null) {
       parentHashArray = EMPTY_BYTE_ARRAY;
     }
     byte[] valueByte = Longs.toByteArray(this.value);

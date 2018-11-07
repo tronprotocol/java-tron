@@ -87,6 +87,8 @@ public class ActuatorFactory {
 //        return new SellStorageActuator(contract.getParameter(), manager);
       case UpdateSettingContract:
         return new UpdateSettingContractActuator(contract.getParameter(), manager);
+      case UpdateEnergyLimitContract:
+        return new UpdateEnergyLimitContractActuator(contract.getParameter(), manager);
       case ExchangeCreateContract:
         return new ExchangeCreateActuator(contract.getParameter(), manager);
       case ExchangeInjectContract:

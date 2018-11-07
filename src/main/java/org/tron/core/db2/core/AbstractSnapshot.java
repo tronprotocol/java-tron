@@ -1,5 +1,6 @@
 package org.tron.core.db2.core;
 
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import lombok.Getter;
 import lombok.Setter;

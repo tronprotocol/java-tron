@@ -2,10 +2,7 @@ package org.tron.common.runtime.vm;
 
 import static org.tron.common.crypto.Hash.sha3;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
-import static org.tron.common.runtime.vm.OpCode.CALL;
-import static org.tron.common.runtime.vm.OpCode.CALLTOKEN;
-import static org.tron.common.runtime.vm.OpCode.PUSH1;
-import static org.tron.common.runtime.vm.OpCode.REVERT;
+import static org.tron.common.runtime.vm.OpCode.*;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 
 import java.math.BigInteger;
@@ -18,14 +15,14 @@ import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
 import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
-import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
+import org.tron.common.runtime.vm.program.Program.OutOfTimeException;
 import org.tron.common.runtime.vm.program.Stack;
 
 @Slf4j(topic = "VM")
 public class VM {
 
   private static final BigInteger _32_ = BigInteger.valueOf(32);
-  private static final String logString = "{}    Op: [{}]  Energy: [{}] Deep: [{}]  Hint: [{}]";
+  private static final String ENERGY_LOG_FORMATE = "{}    Op: [{}]  Energy: [{}] Deep: [{}]  Hint: [{}]";
 
   // 3MB
   private static final BigInteger MEM_LIMIT = BigInteger.valueOf(3L * 1024 * 1024);
@@ -262,7 +259,7 @@ public class VM {
           DataWord exp = stack.get(stack.size() - 2);
           int bytesOccupied = exp.bytesOccupied();
           energyCost =
-              energyCosts.getEXP_ENERGY() + energyCosts.getEXP_BYTE_ENERGY() * bytesOccupied;
+              (long)energyCosts.getEXP_ENERGY() + energyCosts.getEXP_BYTE_ENERGY() * bytesOccupied;
           break;
         default:
           break;
@@ -422,7 +419,7 @@ public class VM {
             hint = word1.value() + " < " + word2.value();
           }
 
-          if (word1.value().compareTo(word2.value()) == -1) {
+          if (word1.value().compareTo(word2.value()) < 0) {
             word1.and(DataWord.ZERO);
             word1.getData()[31] = 1;
           } else {
@@ -441,7 +438,7 @@ public class VM {
             hint = word1.sValue() + " < " + word2.sValue();
           }
 
-          if (word1.sValue().compareTo(word2.sValue()) == -1) {
+          if (word1.sValue().compareTo(word2.sValue()) < 0) {
             word1.and(DataWord.ZERO);
             word1.getData()[31] = 1;
           } else {
@@ -460,7 +457,7 @@ public class VM {
             hint = word1.sValue() + " > " + word2.sValue();
           }
 
-          if (word1.sValue().compareTo(word2.sValue()) == 1) {
+          if (word1.sValue().compareTo(word2.sValue()) > 0) {
             word1.and(DataWord.ZERO);
             word1.getData()[31] = 1;
           } else {
@@ -479,7 +476,7 @@ public class VM {
             hint = word1.value() + " > " + word2.value();
           }
 
-          if (word1.value().compareTo(word2.value()) == 1) {
+          if (word1.value().compareTo(word2.value()) > 0) {
             word1.and(DataWord.ZERO);
             word1.getData()[31] = 1;
           } else {
@@ -570,7 +567,7 @@ public class VM {
           DataWord word1 = program.stackPop();
           DataWord word2 = program.stackPop();
           final DataWord result;
-          if (word1.value().compareTo(_32_) == -1) {
+          if (word1.value().compareTo(_32_) < 0) {
             byte tmp = word2.getData()[word1.intValue()];
             word2.and(DataWord.ZERO);
             word2.getData()[31] = tmp;
@@ -1186,7 +1183,12 @@ public class VM {
           program.stackPop(); // use adjustedCallEnergy instead of requested
           DataWord codeAddress = program.stackPop();
 
-          DataWord value = op.callHasValue() ? program.stackPop() : DataWord.ZERO;
+          DataWord value;
+          if (op.callHasValue()) {
+            value = program.stackPop();
+          } else {
+            value = DataWord.ZERO;
+          }
 
           if (program.isStaticCall() && op == CALL && !value.isZero()) {
             throw new Program.StaticCallModificationException();
@@ -1212,7 +1214,7 @@ public class VM {
                 + " energy: " + adjustedCallEnergy.shortHex()
                 + " inOff: " + inDataOffs.shortHex()
                 + " inSize: " + inDataSize.shortHex();
-            logger.debug(logString, String.format("%5s", "[" + program.getPC() + "]"),
+            logger.debug(ENERGY_LOG_FORMATE, String.format("%5s", "[" + program.getPC() + "]"),
                 String.format("%-12s", op.name()),
                 program.getEnergyLimitLeft().value(),
                 program.getCallDeep(), hint);
@@ -1304,7 +1306,7 @@ public class VM {
         this.step(program);
       }
 
-    } catch (JVMStackOverFlowException | OutOfResourceException e) {
+    } catch (JVMStackOverFlowException | OutOfTimeException e) {
       throw e;
     } catch (RuntimeException e) {
       if (StringUtils.isEmpty(e.getMessage())) {
