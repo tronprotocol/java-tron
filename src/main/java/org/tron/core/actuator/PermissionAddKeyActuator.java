@@ -47,15 +47,15 @@ public class PermissionAddKeyActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (this.dbManager.getDynamicPropertiesStore().getAllowMultiSign() != 1) {
-      throw new ContractValidateException("multi sign is not allowed, "
-          + "need to be opened by the committee");
-    }
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
     if (this.dbManager == null) {
       throw new ContractValidateException("No dbManager!");
+    }
+    if (this.dbManager.getDynamicPropertiesStore().getAllowMultiSign() != 1) {
+      throw new ContractValidateException("multi sign is not allowed, "
+          + "need to be opened by the committee");
     }
     if (!this.contract.is(PermissionAddKeyContract.class)) {
       throw new ContractValidateException(
@@ -89,10 +89,6 @@ public class PermissionAddKeyActuator extends AbstractActuator {
       throw new ContractValidateException("address in key is invalidate");
     }
     Permission permission = account.getPermissionByName(name);
-    if (permission.getKeysCount() >= dbManager.getDynamicPropertiesStore().getTotalSignNum()) {
-      throw new ContractValidateException("number of keys in permission should not be greater than "
-          + dbManager.getDynamicPropertiesStore().getTotalSignNum());
-    }
     if (permission != null) {
       for (Key key : permission.getKeysList()) {
         String address = Wallet.encode58Check(keyAddress.toByteArray());
@@ -100,6 +96,11 @@ public class PermissionAddKeyActuator extends AbstractActuator {
           throw new ContractValidateException("address " + address + " is already in permission "
               + name);
         }
+      }
+      if (permission.getKeysCount() >= dbManager.getDynamicPropertiesStore().getTotalSignNum()) {
+        throw new ContractValidateException(
+            "number of keys in permission should not be greater than "
+                + dbManager.getDynamicPropertiesStore().getTotalSignNum());
       }
     }
 

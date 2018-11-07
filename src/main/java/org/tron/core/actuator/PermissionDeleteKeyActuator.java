@@ -51,15 +51,15 @@ public class PermissionDeleteKeyActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (this.dbManager.getDynamicPropertiesStore().getAllowMultiSign() != 1) {
-      throw new ContractValidateException("multi sign is not allowed, "
-          + "need to be opened by the committee");
-    }
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
     if (this.dbManager == null) {
       throw new ContractValidateException("No dbManager!");
+    }
+    if (this.dbManager.getDynamicPropertiesStore().getAllowMultiSign() != 1) {
+      throw new ContractValidateException("multi sign is not allowed, "
+          + "need to be opened by the committee");
     }
     if (!this.contract.is(PermissionDeleteKeyContract.class)) {
       throw new ContractValidateException(
