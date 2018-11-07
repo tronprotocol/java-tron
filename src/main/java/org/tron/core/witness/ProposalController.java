@@ -173,6 +173,10 @@ public class ProposalController {
           manager.getDynamicPropertiesStore().saveAllowAdaptiveEnergy(entry.getValue());
           break;
         }
+        case (18): {
+          manager.getDynamicPropertiesStore().saveTotalEnergyLimit(entry.getValue());
+          break;
+        }
         default:
           break;
       }
