@@ -18,10 +18,9 @@ if [ $docker_num_in_67 -le $docker_num_in_122 ];
     stest_server=47.94.10.122
 fi
 
-if [[ ${docker_num} -le 3 ]];
+if [[ ${docker_num} -le 4 ]];
 then
 echo $stest_server
-break
 else
     stest_server=""
   fi
