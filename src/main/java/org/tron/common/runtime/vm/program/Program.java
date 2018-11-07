@@ -68,7 +68,9 @@ import org.tron.core.actuator.TransferAssetActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
 import org.tron.protos.Protocol;
@@ -1545,4 +1547,8 @@ public class Program {
     return this.invoke.getVmStartInUs();
   }
 
+  public boolean isHardFork(){
+    Manager manager = contractState.getDbManager();
+    return manager.passVersion(ForkBlockVersionConsts.ENERGY_LIMIT);
+  }
 }

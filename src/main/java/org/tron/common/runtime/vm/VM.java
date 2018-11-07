@@ -79,7 +79,7 @@ public class VM {
       }
 
       // hard fork for 3.2
-      if (false) {
+      if (!program.isHardFork()) {
         if (op == CALLTOKEN) {
           throw Program.Exception.invalidOpCode(program.getCurrentOp());
         }
