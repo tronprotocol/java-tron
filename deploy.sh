@@ -1,29 +1,37 @@
 #!/bin/bash
 stestlogname="`date +%Y%m%d%H%M%S`_stest.log"
-testnet=(
-47.94.231.67
-47.94.10.122
-)
+#testnet=(
+#47.94.231.67
+#47.94.10.122
+#)
 stest_server=""
-for i in ${testnet[@]}; do
-  docker_num=`ssh -p 22008 -t java-tron@$i 'docker ps -a | wc -l'`
-  echo $docker_num
-  docker_num=`echo $docker_num | tr -d "\r"`
-  echo $docker_num
-  if [[ ${docker_num} -le 4 ]];
+docker_num_in_67=`ssh -p 22008 -t java-tron@47.94.231.67 'docker ps -a | wc -l'`
+docker_num_in_67=`echo $docker_num_in_67 | tr -d "\r"`
+docker_num_in_122=`ssh -p 22008 -t java-tron@47.94.10.122 'docker ps -a | wc -l'`
+docker_num_in_122=`echo $docker_num_in_122 | tr -d "\r"`
+if [ $docker_num_in_67 -le $docker_num_in_122 ];
   then
-  stest_server=$i
-  echo $stest_server
-  break
+  docker_num=$docker_num_in_67
+  stest_server=47.94.231.67
   else
-    continue
+    docker_num=$docker_num_in_122
+    stest_server=47.94.10.122
+fi
+
+if [[ ${docker_num} -le 3 ]];
+then
+echo $stest_server
+break
+else
+    stest_server=""
   fi
-done
+
 if [ "$stest_server" = "" ]
 then
 echo "All docker server is busy, stest FAILED"
 exit 1
 fi
+
 change_branch_CMD="sed -i '1c branch_name_in_CI=$TRAVIS_BRANCH' /data/workspace/docker_workspace/do_stest.sh"
 
 echo "$TRAVIS_BRANCH"
@@ -58,8 +66,8 @@ if [[ "$TRAVIS_BRANCH" = "develop" || "$TRAVIS_BRANCH" = "master" || "$TRAVIS_BR
     rm -f $stestlogname
     exit 1
   fi
-
 fi
 echo "bye bye"
+echo $stest_server
 rm -f $stestlogname
 exit 0
