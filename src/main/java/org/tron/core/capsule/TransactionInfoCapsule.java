@@ -200,7 +200,7 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
             Protocol.InternalTransaction.CallValueInfo.newBuilder();
         callValueInfoBuilder.setCallValue(internalTransaction.getValue());
         // trx will not be set token name
-        callValueInfoBuilder.setTokenName(ByteString.copyFrom(internalTransaction.getTokenId().getBytes()));
+        callValueInfoBuilder.setTokenId(internalTransaction.getTokenId());
         // Just one transferBuilder for now.
         internalTrxBuilder.addCallValueInfo(callValueInfoBuilder);
         // Token for loop end here
