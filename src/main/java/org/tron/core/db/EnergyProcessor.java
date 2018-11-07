@@ -52,16 +52,18 @@ public class EnergyProcessor extends ResourceProcessor {
 
     updateTotalEnergyAverageUsage(now);
 
-    long totalNetAverageUsage = dbManager.getDynamicPropertiesStore().getTotalEnergyAverageUsage();
-    long targetTotalNetLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyTargetLimit();
-    long totalNetCurrentLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
+    long totalEnergyAverageUsage = dbManager.getDynamicPropertiesStore()
+        .getTotalEnergyAverageUsage();
+    long targetTotalEnergyLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyTargetLimit();
+    long totalEnergyCurrentLimit = dbManager.getDynamicPropertiesStore()
+        .getTotalEnergyCurrentLimit();
 
     long result;
-    if (totalNetAverageUsage > targetTotalNetLimit) {
-      result = totalNetCurrentLimit * AdaptiveResourceLimitConstants.CONTRACT_RATE_NUMERATOR
+    if (totalEnergyAverageUsage > targetTotalEnergyLimit) {
+      result = totalEnergyCurrentLimit * AdaptiveResourceLimitConstants.CONTRACT_RATE_NUMERATOR
           / AdaptiveResourceLimitConstants.CONTRACT_RATE_DENOMINATOR;
     } else {
-      result = totalNetCurrentLimit * AdaptiveResourceLimitConstants.EXPAND_RATE_NUMERATOR
+      result = totalEnergyCurrentLimit * AdaptiveResourceLimitConstants.EXPAND_RATE_NUMERATOR
           / AdaptiveResourceLimitConstants.EXPAND_RATE_DENOMINATOR;
     }
 
@@ -72,7 +74,8 @@ public class EnergyProcessor extends ResourceProcessor {
 
     dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(result);
     logger.info(
-        "adjust totalNetCurrentLimit, old[" + totalNetCurrentLimit + "], new[" + result + "]");
+        "adjust totalEnergyCurrentLimit, old[" + totalEnergyCurrentLimit + "], new[" + result
+            + "]");
   }
 
 
