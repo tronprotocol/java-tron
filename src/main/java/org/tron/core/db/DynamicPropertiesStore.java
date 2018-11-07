@@ -754,6 +754,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void saveTotalEnergyLimit(long totalEnergyLimit) {
     this.put(DynamicResourceProperties.TOTAL_ENERGY_LIMIT,
         new BytesCapsule(ByteArray.fromLong(totalEnergyLimit)));
+
+    saveTotalEnergyTargetLimit(totalEnergyLimit / 14400);
+
   }
 
   public long getTotalEnergyLimit() {
