@@ -43,6 +43,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.config.VMConfig;
+import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.EnergyCost;
 import org.tron.common.runtime.vm.MessageCall;
@@ -196,13 +197,13 @@ public class Program {
    */
   private InternalTransaction addInternalTx(DataWord energyLimit, byte[] senderAddress,
       byte[] transferAddress,
-      long value, byte[] data, String note, long nonce) {
+      long value, byte[] data, String note, long nonce, String tokenId) {
 
     // todo: now, internal transaction needn't energylimit
     InternalTransaction result = null;
     if (transaction != null) {
       result = getResult().addInternalTransaction(transaction.getHash(), getCallDeep(),
-          senderAddress, transferAddress, value, data, note, nonce);
+          senderAddress, transferAddress, value, data, note, nonce, tokenId);
     }
 
     return result;
@@ -414,7 +415,7 @@ public class Program {
     }
 
     increaseNonce();
-    addInternalTx(null, owner, obtainer, balance, null, "suicide", nonce);
+    addInternalTx(null, owner, obtainer, balance, null, "suicide", nonce,  null);
 
     if (FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0) {
       // if owner == obtainer just zeroing account according to Yellow Paper
@@ -496,7 +497,7 @@ public class Program {
     increaseNonce();
     // [5] COOK THE INVOKE AND EXECUTE
     InternalTransaction internalTx = addInternalTx(null, senderAddress, newAddress, endowment,
-        programCode, "create", nonce);
+        programCode, "create", nonce, null);
     long vmStartInUs = System.nanoTime() / 1000;
     ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
         this, new DataWord(newAddress), getContractAddress(), value,
@@ -677,7 +678,7 @@ public class Program {
     // CREATE CALL INTERNAL TRANSACTION
     increaseNonce();
     InternalTransaction internalTx = addInternalTx(null, senderAddress, contextAddress,
-        endowment, data, "call", nonce);
+        endowment, data, "call", nonce , msg.getTokenId() == null ? null: new String(MUtil.removeZeroes(msg.getTokenId().getData())));
 
     ProgramResult result = null;
     if (isNotEmpty(programCode)) {

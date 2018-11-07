@@ -38,6 +38,8 @@ public class InternalTransaction {
   private byte[] parentHash;
   /* the amount of trx to transfer (calculated as sun) */
   private long value;
+  private long tokenValue;
+  private String tokenId;
 
   /* the address of the destination account (for message)
    * In creation transaction the receive address is - 0 */
@@ -93,6 +95,8 @@ public class InternalTransaction {
       this.note = "create";
       this.value = contract.getNewContract().getCallValue();
       this.data = contract.getNewContract().getBytecode().toByteArray();
+      this.tokenValue = contract.getCallTokenValue();
+      this.tokenId = contract.getTokenId();
     } else if(trxType == TrxType.TRX_CONTRACT_CALL_TYPE) {
       TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
       this.sendAddress = contract.getOwnerAddress().toByteArray();
@@ -101,6 +105,8 @@ public class InternalTransaction {
       this.note = "call";
       this.value = contract.getCallValue();
       this.data = contract.getData().toByteArray();
+      this.tokenValue = contract.getCallTokenValue();
+      this.tokenId  = contract.getTokenId();
     } else {
       // TODO: Should consider unknown type?
     }
@@ -112,7 +118,7 @@ public class InternalTransaction {
    */
 
   public InternalTransaction(byte[] parentHash, int deep, int index,
-      byte[] sendAddress, byte[] transferToAddress,  long value, byte[] data, String note, long nonce) {
+      byte[] sendAddress, byte[] transferToAddress, long value, byte[] data, String note, long nonce, String tokenId) {
     this.parentHash = parentHash.clone();
     this.deep = deep;
     this.index = index;
@@ -124,10 +130,15 @@ public class InternalTransaction {
     } else {
       this.receiveAddress = nullToEmpty(transferToAddress);
     }
+    // in this case, value also can represent a tokenValue when tokenId is not null, otherwise it is a trx callvalue.
     this.value = value;
     this.data = nullToEmpty(data);
     this.nonce = nonce;
     this.hash = getHash();
+    // in a contract call contract case, only one value should be used. trx or a token. can't be both. We should avoid using
+    // tokenValue in this case.
+    this.tokenValue = this.value;
+    this.tokenId  = tokenId;
   }
 
   public Transaction getTransaction() {
@@ -164,6 +175,13 @@ public class InternalTransaction {
       return "";
     }
     return note;
+  }
+
+  public String getTokenId() {
+    if (tokenId == null) {
+      return "";
+    }
+    return tokenId;
   }
 
   public byte[] getSender() {
