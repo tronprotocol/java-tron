@@ -57,7 +57,7 @@ public class ZkV0TransferActuator extends AbstractActuator {
     dbManager.getNullfierStore().put(nf1, new BytesCapsule(nf1));
     dbManager.getNullfierStore().put(nf2, new BytesCapsule(nf2));
 
-    dbManager.getMerkleContainer().saveCmIntoMerkle(zkContract.getRt().toByteArray(),
+    dbManager.getMerkleContainer().saveCmIntoMerkleAndStore(zkContract.getRt().toByteArray(),
         zkContract.getCm1().toByteArray(), zkContract.getCm2().toByteArray());
     return true;
   }

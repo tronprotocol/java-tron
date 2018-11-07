@@ -79,7 +79,7 @@ public class IncrementalMerkleWitnessContainer {
   }
 
 
-  public byte[] getRootKey() {
+  public byte[] getRootArray() {
     return root().getContent().toByteArray();
   }
 

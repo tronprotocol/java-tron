@@ -38,7 +38,7 @@ public class MerkleContainer {
 
       container.append(a);
 
-      this.manager.getMerkleTreeStore().put(container.getRootKey(), container.getTreeCapsule());
+      this.manager.getMerkleTreeStore().put(container.getRootArray(), container.getTreeCapsule());
       return container;
     }
     return capsule.toMerkleTreeContainer();
@@ -59,28 +59,59 @@ public class MerkleContainer {
     return this.manager.getMerkleTreeStore().get(rt);
   }
 
-  public IncrementalMerkleTreeContainer saveCmIntoMerkle(byte[] rt, byte[] cm1, byte[] cm2) {
+
+  public IncrementalMerkleTreeContainer saveCmIntoMerkleAndStore(byte[] rt, byte[] cm) {
     IncrementalMerkleTreeContainer tree = this.manager.getMerkleTreeStore().get(rt)
         .toMerkleTreeContainer();
 
     SHA256CompressCapsule sha256CompressCapsule1 = new SHA256CompressCapsule();
-    sha256CompressCapsule1.setContent(ByteString.copyFrom(cm1));
+    sha256CompressCapsule1.setContent(ByteString.copyFrom(cm));
     tree.append(sha256CompressCapsule1.getInstance());
 
-    SHA256CompressCapsule sha256CompressCapsule2 = new SHA256CompressCapsule();
-    sha256CompressCapsule2.setContent(ByteString.copyFrom(cm2));
-    tree.append(sha256CompressCapsule2.getInstance());
-
-    this.manager.getMerkleTreeStore().put(tree.getRootKey(), tree.getTreeCapsule());
+    putMerkleTreeIntoStore(tree.getRootArray(), tree.getTreeCapsule());
     return tree;
   }
 
-  public void putMerkleTree(byte[] key, IncrementalMerkleTreeCapsule capsule) {
+
+  public IncrementalMerkleTreeContainer saveCmIntoMerkleAndStore(byte[] rt, byte[] cm1,
+      byte[] cm2) {
+
+    IncrementalMerkleTreeContainer container1 = saveCmIntoMerkleAndStore(rt,
+        cm1);
+
+    IncrementalMerkleWitnessContainer witnessContainer1 = container1.toWitness();
+
+    putMerkleWitnessIntoStore(witnessContainer1.getRootArray(),
+        witnessContainer1.getWitnessCapsule());
+
+    IncrementalMerkleTreeContainer container2 = saveCmIntoMerkleAndStore(container1.getRootArray(),
+        cm2);
+
+    IncrementalMerkleWitnessContainer witnessContainer2 = saveCmIntoMerkleWitnessAndStore(
+        witnessContainer1.getRootArray(), cm2);
+
+    return container2;
+
+  }
+
+  public IncrementalMerkleWitnessContainer saveCmIntoMerkleWitnessAndStore(byte[] rt, byte[] cm) {
+    IncrementalMerkleWitnessContainer tree = this.manager.getMerkleWitnessStore().get(rt)
+        .toMerkleWitnessContainer();
+
+    SHA256CompressCapsule sha256CompressCapsule1 = new SHA256CompressCapsule();
+    sha256CompressCapsule1.setContent(ByteString.copyFrom(cm));
+    tree.append(sha256CompressCapsule1.getInstance());
+
+    putMerkleWitnessIntoStore(tree.getRootArray(), tree.getWitnessCapsule());
+    return tree;
+  }
+
+  public void putMerkleTreeIntoStore(byte[] key, IncrementalMerkleTreeCapsule capsule) {
     this.manager.getMerkleTreeStore().put(key, capsule);
   }
 
 
-  public void putMerkleWitness(byte[] key, IncrementalMerkleWitnessCapsule capsule) {
+  public void putMerkleWitnessIntoStore(byte[] key, IncrementalMerkleWitnessCapsule capsule) {
     this.manager.getMerkleWitnessStore().put(key, capsule);
   }
 
@@ -94,7 +125,7 @@ public class MerkleContainer {
     return ByteArray.fromString(txHash + index);
   }
 
-  private IncrementalMerkleWitnessContainer getWitness(String txHash, int index) {
+  public IncrementalMerkleWitnessContainer getWitness(String txHash, int index) {
     return this.manager.getMerkleWitnessStore().get(createWitnessKey(txHash, index))
         .toMerkleWitnessContainer();
   }
