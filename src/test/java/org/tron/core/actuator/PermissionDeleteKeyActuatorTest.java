@@ -71,7 +71,6 @@ public class PermissionDeleteKeyActuatorTest {
             .setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS)))
             .setWeight(KEY_WEIGHT)
             .build();
-    dbManager.getDynamicPropertiesStore().saveAllowMultiSign(1);
   }
 
   /**
@@ -80,6 +79,8 @@ public class PermissionDeleteKeyActuatorTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
+    dbManager.getDynamicPropertiesStore().saveAllowMultiSign(1);
+    dbManager.getDynamicPropertiesStore().saveTotalSignNum(5);
   }
 
   /**

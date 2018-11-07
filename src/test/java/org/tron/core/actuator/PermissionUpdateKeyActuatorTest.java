@@ -80,7 +80,6 @@ public class PermissionUpdateKeyActuatorTest {
             .setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS)))
             .setWeight(UPDATE_WEIGHT)
             .build();
-    dbManager.getDynamicPropertiesStore().saveAllowMultiSign(1);
   }
 
   /**
@@ -89,6 +88,8 @@ public class PermissionUpdateKeyActuatorTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
+    dbManager.getDynamicPropertiesStore().saveAllowMultiSign(1);
+    dbManager.getDynamicPropertiesStore().saveTotalSignNum(5);
   }
 
   /**

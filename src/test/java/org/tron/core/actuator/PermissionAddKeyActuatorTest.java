@@ -71,7 +71,6 @@ public class PermissionAddKeyActuatorTest {
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";
     OWNER_ADDRESS_NOACCOUNT =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1aed";
-    dbManager.getDynamicPropertiesStore().saveAllowMultiSign(1);
   }
 
   /**
@@ -80,6 +79,8 @@ public class PermissionAddKeyActuatorTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
+    dbManager.getDynamicPropertiesStore().saveAllowMultiSign(1);
+    dbManager.getDynamicPropertiesStore().saveTotalSignNum(5);
   }
 
   /**
