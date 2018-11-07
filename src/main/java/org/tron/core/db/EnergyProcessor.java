@@ -1,6 +1,5 @@
 package org.tron.core.db;
 
-
 import static java.lang.Long.max;
 
 import java.util.List;
@@ -33,9 +32,6 @@ public class EnergyProcessor extends ResourceProcessor {
     long latestConsumeTime = accountResource.getLatestConsumeTimeForEnergy();
 
     accountCapsule.setEnergyUsage(increase(oldEnergyUsage, 0, latestConsumeTime, now));
-
-    updateAdaptiveTotalEnergyLimit(now);
-
   }
 
   public void updateTotalEnergyAverageUsage(long now) {
@@ -178,6 +174,9 @@ public class EnergyProcessor extends ResourceProcessor {
     accountCapsule.setLatestConsumeTimeForEnergy(latestConsumeTime);
 
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+
+    updateAdaptiveTotalEnergyLimit(now);
+
     return true;
   }
 
