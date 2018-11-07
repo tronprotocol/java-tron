@@ -101,6 +101,7 @@ public class Manager {
   @Autowired
   private DynamicPropertiesStore dynamicPropertiesStore;
   @Autowired
+  @Getter
   private BlockIndexStore blockIndexStore;
   @Autowired
   private AccountIdIndexStore accountIdIndexStore;
