@@ -129,18 +129,30 @@ message Account {
     int64 latest_exchange_storage_time = 8;
   }
   AccountResource account_resource = 26;
-
   bytes codeHash = 30;
+  repeated Permission permissions = 31;
+}
+
+message Key {
+  bytes address = 1;
+  int64 weight = 2;
+}
+
+message Permission {
+  string name = 1;
+  int64 threshold = 2;
+  string parent = 3;
+  repeated Key keys = 4;
 }
 
 message authority {
   AccountId account = 1;
   bytes permission_name = 2;
 }
-
-message permission {
-  AccountId account = 1;
-}
+//
+//message permission {
+//  AccountId account = 1;
+//}
 
 // Witness
 message Witness {
@@ -227,6 +239,10 @@ message Transaction {
       ExchangeInjectContract = 42;
       ExchangeWithdrawContract = 43;
       ExchangeTransactionContract = 44;
+      AccountPermissionUpdateContract = 45;
+      PermissionAddKeyContract = 46;
+      PermissionUpdateKeyContract = 47;
+      PermissionDeleteKeyContract = 48;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;

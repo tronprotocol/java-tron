@@ -10,6 +10,7 @@ import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionList;
+import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -40,6 +41,10 @@ import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Contract.WitnessUpdateContract;
+import org.tron.protos.Contract.AccountPermissionUpdateContract;
+import org.tron.protos.Contract.PermissionAddKeyContract;
+import org.tron.protos.Contract.PermissionUpdateKeyContract;
+import org.tron.protos.Contract.PermissionDeleteKeyContract;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
@@ -117,6 +122,16 @@ public class Util {
     if (transactionExtention.getResult().getResult()) {
       jsonObject.put("transaction", printTransactionToJSON(transactionExtention.getTransaction()));
     }
+    return jsonObject.toJSONString();
+  }
+
+  public static String printTransactionSignWeight(TransactionSignWeight transactionSignWeight) {
+    String string = JsonFormat.printToString(transactionSignWeight);
+    JSONObject jsonObject = JSONObject.parseObject(string);
+    JSONObject jsonObjectExt = jsonObject.getJSONObject("transaction");
+    jsonObjectExt
+        .put("transaction", printTransactionToJSON(transactionSignWeight.getTransaction().getTransaction()));
+    jsonObject.put("transaction",jsonObjectExt);
     return jsonObject.toJSONString();
   }
 
@@ -266,6 +281,30 @@ public class Util {
                 .unpack(ExchangeTransactionContract.class);
             contractJson = JSONObject
                 .parseObject(JsonFormat.printToString(exchangeTransactionContract));
+            break;
+          case AccountPermissionUpdateContract:
+            AccountPermissionUpdateContract accountPermissionUpdateContract = contractParameter
+                    .unpack(AccountPermissionUpdateContract.class);
+            contractJson = JSONObject
+                    .parseObject(JsonFormat.printToString(accountPermissionUpdateContract));
+            break;
+          case PermissionAddKeyContract:
+            PermissionAddKeyContract permissionAddKeyContract = contractParameter
+                    .unpack(PermissionAddKeyContract.class);
+            contractJson = JSONObject
+                    .parseObject(JsonFormat.printToString(permissionAddKeyContract));
+            break;
+          case PermissionUpdateKeyContract:
+            PermissionUpdateKeyContract permissionUpdateKeyContract = contractParameter
+                    .unpack(PermissionUpdateKeyContract.class);
+            contractJson = JSONObject
+                    .parseObject(JsonFormat.printToString(permissionUpdateKeyContract));
+            break;
+          case PermissionDeleteKeyContract:
+            PermissionDeleteKeyContract permissionDeleteKeyContract = contractParameter
+                    .unpack(PermissionDeleteKeyContract.class);
+            contractJson = JSONObject
+                    .parseObject(JsonFormat.printToString(permissionDeleteKeyContract));
             break;
           // todo add other contract
           default:
@@ -482,6 +521,38 @@ public class Util {
                 .merge(parameter.getJSONObject("value").toJSONString(),
                     ProposalDeleteContractBuilder);
             any = Any.pack(ProposalDeleteContractBuilder.build());
+            break;
+          case "AccountPermissionUpdateContract":
+            AccountPermissionUpdateContract.Builder AccountPermissionUpdateContractBuilder =
+                    AccountPermissionUpdateContract.newBuilder();
+            JsonFormat
+                    .merge(parameter.getJSONObject("value").toJSONString(),
+                            AccountPermissionUpdateContractBuilder);
+            any = Any.pack(AccountPermissionUpdateContractBuilder.build());
+            break;
+          case "PermissionAddKeyContract":
+            PermissionAddKeyContract.Builder PermissionAddKeyContractBuilder = PermissionAddKeyContract
+                    .newBuilder();
+            JsonFormat
+                    .merge(parameter.getJSONObject("value").toJSONString(),
+                            PermissionAddKeyContractBuilder);
+            any = Any.pack(PermissionAddKeyContractBuilder.build());
+            break;
+          case "PermissionUpdateKeyContract":
+            PermissionUpdateKeyContract.Builder PermissionUpdateKeyContractBuilder = PermissionUpdateKeyContract
+                    .newBuilder();
+            JsonFormat
+                    .merge(parameter.getJSONObject("value").toJSONString(),
+                            PermissionUpdateKeyContractBuilder);
+            any = Any.pack(PermissionUpdateKeyContractBuilder.build());
+            break;
+          case "PermissionDeleteKeyContract":
+            PermissionDeleteKeyContract.Builder PermissionDeleteKeyContractBuilder = PermissionDeleteKeyContract
+                    .newBuilder();
+            JsonFormat
+                    .merge(parameter.getJSONObject("value").toJSONString(),
+                            PermissionDeleteKeyContractBuilder);
+            any = Any.pack(PermissionDeleteKeyContractBuilder.build());
             break;
           // todo add other contract
           default:

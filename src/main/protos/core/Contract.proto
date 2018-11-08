@@ -227,3 +227,26 @@ message ExchangeTransactionContract {
   int64 quant = 4;
   int64 expected = 5;
 }
+
+message AccountPermissionUpdateContract {
+  bytes owner_address = 1;
+  repeated Permission permissions = 2;
+}
+
+message PermissionAddKeyContract {
+  bytes owner_address = 1;
+  Key key = 2;
+  string permission_name = 3;
+}
+
+message PermissionUpdateKeyContract {
+  bytes owner_address = 1;
+  Key key = 2;
+  string permission_name = 3;
+}
+
+message PermissionDeleteKeyContract {
+  bytes owner_address = 1;
+  bytes key_address = 2;
+  string permission_name = 3;
+}
