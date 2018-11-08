@@ -15,9 +15,6 @@ public class DBChecker {
         .sorted(String::compareTo)
         .collect(Collectors.toList());
     String sha256Hash = Sha256Hash.of(hashs.toString().getBytes()).toString();
-    logger.info("check account hash, block:{}, size:{}, account hash:{}", blockId, capsules.size(), sha256Hash);
-    if (blockId.contains(":4954:")) {
-      logger.info("check account content:{}", capsules.stream().map(AccountCapsule::new).collect(Collectors.toList()));
-    }
+    logger.info("check account hash, block:{}, account hash:{}", blockId, sha256Hash);
   }
 }
