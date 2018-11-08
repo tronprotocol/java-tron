@@ -1,6 +1,7 @@
 package org.tron.core.capsule;
 
 import org.tron.common.runtime.RuntimeImpl;
+import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
@@ -114,7 +115,7 @@ public class ReceiptCapsule {
       long originEnergyLimit,
       EnergyProcessor energyProcessor, long originUsage) {
 
-    if (manager.passVersion(ForkBlockVersionConsts.ENERGY_LIMIT)) {
+    if (VMConfig.getEnergyLimitHardFork()) {
       return Math.min(originUsage,
           Math.min(energyProcessor.getAccountLeftEnergyFromFreeze(origin), originEnergyLimit));
     }

@@ -1525,7 +1525,4 @@ public class Manager {
     }
   }
 
-  public boolean passVersion(int version) {
-    return forkController.pass(version);
-  }
 }

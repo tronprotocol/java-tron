@@ -13,6 +13,7 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TVMTestUtils;
+import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
@@ -97,7 +98,7 @@ public class DepositTest {
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
     this.manager.getDynamicPropertiesStore().statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
-
+    VMConfig.initVmHardFork();
     String contractA = "A";
     String contractB = "B";
     byte[] address = Hex.decode(OWNER_ADDRESS);
@@ -176,6 +177,7 @@ public class DepositTest {
     System.out.println(Hex.toHexString(checkN2.getRuntime().getResult().getHReturn()));
     Assert.assertEquals(checkN1.getRuntime().getResult().getHReturn(), new DataWord(100).getData());
     Assert.assertEquals(checkN2.getRuntime().getResult().getHReturn(), new DataWord(1000).getData());
+    VMConfig.setENERGY_LIMIT_HARD_FORK(false);
   }
 
   @Test
@@ -264,6 +266,7 @@ public class DepositTest {
     System.out.println(Hex.toHexString(checkN2.getRuntime().getResult().getHReturn()));
     Assert.assertEquals(checkN1.getRuntime().getResult().getHReturn(), new DataWord(100).getData());
     Assert.assertEquals(checkN2.getRuntime().getResult().getHReturn(), new DataWord(1000).getData());
+    VMConfig.setENERGY_LIMIT_HARD_FORK(false);
   }
 
 

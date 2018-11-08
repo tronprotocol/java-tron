@@ -12,6 +12,7 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TVMTestUtils;
+import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
@@ -195,7 +196,7 @@ public class StorageTest {
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
     this.manager.getDynamicPropertiesStore().statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
-
+    VMConfig.initVmHardFork();
     byte[] address = Hex.decode(OWNER_ADDRESS);
     DataWord storageKey1 = new DataWord("key1".getBytes());
     DataWord storageVal1 = new DataWord("val1".getBytes());
@@ -260,6 +261,7 @@ public class StorageTest {
     Assert.assertNull(DepositImpl.createRoot(manager).getStorageValue(address, zeroKey));
     Assert.assertEquals(DepositImpl.createRoot(manager).getStorageValue(address, storageParentKey1), parentChangedVal);
     Assert.assertNull(DepositImpl.createRoot(manager).getStorageValue(address, storageParentZeroKey));
+    VMConfig.setENERGY_LIMIT_HARD_FORK(false);
   }
 
   @Test
@@ -340,5 +342,6 @@ public class StorageTest {
     Assert.assertNull(DepositImpl.createRoot(manager).getStorageValue(address, zeroKey));
     Assert.assertEquals(DepositImpl.createRoot(manager).getStorageValue(address, storageParentKey1), parentChangedVal);
     Assert.assertNull(DepositImpl.createRoot(manager).getStorageValue(address, storageParentZeroKey));
+    VMConfig.setENERGY_LIMIT_HARD_FORK(false);
   }
 }

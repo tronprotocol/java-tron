@@ -299,7 +299,7 @@ public class RuntimeImpl implements Runtime {
   public long getTotalEnergyLimit(AccountCapsule creator, AccountCapsule caller,
       TriggerSmartContract contract, long feeLimit, long callValue) {
     //  according to version
-    if (deposit.getDbManager().passVersion(ForkBlockVersionConsts.ENERGY_LIMIT)) {
+    if (VMConfig.getEnergyLimitHardFork()) {
       return getTotalEnergyLimitWithFixRatio(creator, caller, contract, feeLimit, callValue);
     } else {
       return getTotalEnergyLimitWithFloatRatio(creator, caller, contract, feeLimit, callValue);
@@ -385,7 +385,7 @@ public class RuntimeImpl implements Runtime {
       long energyLimit;
       // according to version
 
-      if (deposit.getDbManager().passVersion(ForkBlockVersionConsts.ENERGY_LIMIT)) {
+      if (VMConfig.getEnergyLimitHardFork()) {
         if (callValue < 0) {
           throw new ContractValidateException("callValue must >= 0");
         }
@@ -470,7 +470,7 @@ public class RuntimeImpl implements Runtime {
     }
 
     long callValue = contract.getCallValue();
-    if (deposit.getDbManager().passVersion(ForkBlockVersionConsts.ENERGY_LIMIT) && callValue < 0) {
+    if (VMConfig.getEnergyLimitHardFork() && callValue < 0) {
       throw new ContractValidateException("callValue must >= 0");
     }
 
