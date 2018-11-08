@@ -37,6 +37,7 @@ public class ForkController {
 
   public void init(Manager manager) {
     this.manager = manager;
+    passSet.clear();
   }
 
   public synchronized boolean pass(int version) {
