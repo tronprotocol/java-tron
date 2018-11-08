@@ -57,7 +57,7 @@ public class ForkController {
       return false;
     }
 
-    for (int i=0; i<stats.length; i++) {
+    for (int i = 0; i < stats.length; i++) {
       if (check[i] != stats[i]) {
         return false;
       }
@@ -105,7 +105,7 @@ public class ForkController {
 
   public synchronized void reset(BlockCapsule blockCapsule) {
     int version = blockCapsule.getInstance().getBlockHeader().getRawData().getVersion();
-    if (passSet.contains(version)) {
+    if (version < ForkBlockVersionConsts.ENERGY_LIMIT || passSet.contains(version)) {
       return;
     }
 
