@@ -1,6 +1,9 @@
 package org.tron.core.db2.core;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Streams;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;
 import java.util.ArrayList;
@@ -13,13 +16,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.aspectj.weaver.Checker;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.AbstractRevokingStore.RevokingState;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.DB;
+import org.tron.core.db2.common.DBChecker;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
@@ -161,6 +167,11 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   @Override
+  public void checkDB() {
+
+  }
+
+  @Override
   public void setMaxSize(int maxSize) {
     this.maxSize.set(maxSize);
   }
@@ -202,6 +213,12 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   private void refresh() {
+    // debug begin
+//    Map<String, String> debugDumpDataMap = new HashMap<>();
+    List<List<byte[]>> accounts = new ArrayList<>();
+    List<String> debugBlockHashs = new ArrayList<>();
+    // debug end
+
     for (RevokingDBWithCachingNewValue db : dbs) {
       if (Snapshot.isRoot(db.getHead())) {
         return;
@@ -214,6 +231,30 @@ public class SnapshotManager implements RevokingDatabase {
       for (int i = 0; i < flushCount; ++i) {
         next = next.getNext();
         snapshots.add(next);
+        // debug begin
+        List<byte[]> debugDumpDatas = new ArrayList<>();
+        String dbName = db.getDbName();
+        SnapshotImpl snapshot = (SnapshotImpl) next;
+        DB<Key, Value> keyValueDB = snapshot.getDb();
+        for (Map.Entry<Key, Value> e : keyValueDB) {
+          Key k = e.getKey();
+          Value v = e.getValue();
+//          debugDumpDataMap.put(dbName + ":" + ByteUtil.toHexString(k.getBytes()),
+//              dbName + ":" + ByteUtil.toHexString(k.getBytes()) + ":"
+//              + (e.getValue().getBytes() == null ? null : Sha256Hash.of(v.getBytes())));
+          if ("block".equals(dbName)) {
+            debugBlockHashs.add(Longs.fromByteArray(k.getBytes()) + ":" + ByteUtil.toHexString(k.getBytes()));
+          }
+          if ("account".equals(dbName) && v.getBytes() != null) {
+            debugDumpDatas.add(v.getBytes());
+          }
+        }
+
+        if ("account".equals(dbName)) {
+          accounts.add(debugDumpDatas);
+        }
+
+        // debug end
       }
 
       root.merge(snapshots);
@@ -226,6 +267,13 @@ public class SnapshotManager implements RevokingDatabase {
         root.setNext(next.getNext());
       }
     }
+    // debug begin
+    for (int i = 0; i < debugBlockHashs.size(); ++i) {
+      DBChecker.check(debugBlockHashs.get(i), accounts.get(i));
+    }
+//    List<String> debugDumpDatas = debugDumpDataMap.entrySet().stream().map(Entry::getValue).sorted(String::compareTo).collect(Collectors.toList());
+//    logger.info("***debug refresh:    blocks={}, datahash:{}, accounts:{}\n", debugBlockHashs, Sha256Hash.of(debugDumpDatas.toString().getBytes()), printAccount(null));
+    // debug end
   }
 
   public void flush() {

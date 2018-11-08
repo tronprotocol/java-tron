@@ -639,6 +639,7 @@ public class Manager {
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
     updateFork();
+    revokingStore.checkDB();
   }
 
   private void switchFork(BlockCapsule newHead)
