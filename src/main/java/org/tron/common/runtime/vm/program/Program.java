@@ -34,13 +34,11 @@ import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.TreeSet;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
@@ -180,15 +178,8 @@ public class Program {
   }
 
   /**
-   *
-   * @param energyLimit
-   * @param senderAddress
    * @param transferAddress the address send trx to.
-   * @param value           the trx value transferred in the internaltransaction
-   * @param data
-   * @param note
-   * @param nonce
-   * @return
+   * @param value the trx value transferred in the internaltransaction
    */
   private InternalTransaction addInternalTx(DataWord energyLimit, byte[] senderAddress,
       byte[] transferAddress,
@@ -196,8 +187,9 @@ public class Program {
 
     InternalTransaction addedInternalTx = null;
     if (internalTransaction != null) {
-      addedInternalTx = getResult().addInternalTransaction(internalTransaction.getHash(), getCallDeep(),
-          senderAddress, transferAddress, value, data, note, nonce);
+      addedInternalTx = getResult()
+          .addInternalTransaction(internalTransaction.getHash(), getCallDeep(),
+              senderAddress, transferAddress, value, data, note, nonce);
     }
 
     return addedInternalTx;
@@ -520,9 +512,10 @@ public class Program {
     // 4. CREATE THE CONTRACT OUT OF RETURN
     byte[] code = createResult.getHReturn();
 
-    long saveCodeEnergy = (long)getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
+    long saveCodeEnergy = (long) getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
 
-    long afterSpend = programInvoke.getEnergyLimit() - createResult.getEnergyUsed() - saveCodeEnergy;
+    long afterSpend =
+        programInvoke.getEnergyLimit() - createResult.getEnergyUsed() - saveCodeEnergy;
     if (!createResult.isRevert()) {
       if (afterSpend < 0) {
         createResult.setException(
@@ -767,7 +760,8 @@ public class Program {
   }
 
   public void refundEnergy(long energyValue, String cause) {
-    logger.debug("[{}] Refund for cause: [{}], energy: [{}]", invoke.hashCode(), cause, energyValue);
+    logger
+        .debug("[{}] Refund for cause: [{}], energy: [{}]", invoke.hashCode(), cause, energyValue);
     getResult().refundEnergy(energyValue);
   }
 
@@ -1417,7 +1411,9 @@ public class Program {
   }
 
   public static class Exception {
-    private Exception() {}
+
+    private Exception() {
+    }
 
     public static OutOfEnergyException notEnoughOpEnergy(OpCode op, long opEnergy,
         long programEnergy) {
