@@ -6,7 +6,6 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.Parameter.AdaptiveResourceLimitConstants;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.Account.AccountResource;
@@ -45,40 +44,34 @@ public class EnergyProcessor extends ResourceProcessor {
     dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageTime(now);
   }
 
-  public void updateAdaptiveTotalEnergyLimit(long now, long energy) {
-    if (dbManager.getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 0) {
-      return;
-    }
-
-    updateTotalEnergyAverageUsage(now, energy);
-
-    long totalEnergyAverageUsage = dbManager.getDynamicPropertiesStore()
-        .getTotalEnergyAverageUsage();
-    long targetTotalEnergyLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyTargetLimit();
-    long totalEnergyCurrentLimit = dbManager.getDynamicPropertiesStore()
-        .getTotalEnergyCurrentLimit();
-
-    long result;
-    if (totalEnergyAverageUsage > targetTotalEnergyLimit) {
-      result = totalEnergyCurrentLimit * AdaptiveResourceLimitConstants.CONTRACT_RATE_NUMERATOR
-          / AdaptiveResourceLimitConstants.CONTRACT_RATE_DENOMINATOR;
-      // logger.info(totalEnergyAverageUsage + ">" + targetTotalEnergyLimit + "\n" + result);
-    } else {
-      result = totalEnergyCurrentLimit * AdaptiveResourceLimitConstants.EXPAND_RATE_NUMERATOR
-          / AdaptiveResourceLimitConstants.EXPAND_RATE_DENOMINATOR;
-      // logger.info(totalEnergyAverageUsage + "<" + targetTotalEnergyLimit + "\n" + result);
-    }
-
-    result = Math.min(
-        Math.max(result, dbManager.getDynamicPropertiesStore().getTotalEnergyLimit()),
-        dbManager.getDynamicPropertiesStore().getTotalEnergyLimit()
-            * AdaptiveResourceLimitConstants.LIMIT_MULTIPLIER);
-
-    dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(result);
-    logger.debug(
-        "adjust totalEnergyCurrentLimit, old[" + totalEnergyCurrentLimit + "], new[" + result
-            + "]");
-  }
+//  public void updateAdaptiveTotalEnergyLimit() {
+//    long totalEnergyAverageUsage = dbManager.getDynamicPropertiesStore()
+//        .getTotalEnergyAverageUsage();
+//    long targetTotalEnergyLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyTargetLimit();
+//    long totalEnergyCurrentLimit = dbManager.getDynamicPropertiesStore()
+//        .getTotalEnergyCurrentLimit();
+//
+//    long result;
+//    if (totalEnergyAverageUsage > targetTotalEnergyLimit) {
+//      result = totalEnergyCurrentLimit * AdaptiveResourceLimitConstants.CONTRACT_RATE_NUMERATOR
+//          / AdaptiveResourceLimitConstants.CONTRACT_RATE_DENOMINATOR;
+//      // logger.info(totalEnergyAverageUsage + ">" + targetTotalEnergyLimit + "\n" + result);
+//    } else {
+//      result = totalEnergyCurrentLimit * AdaptiveResourceLimitConstants.EXPAND_RATE_NUMERATOR
+//          / AdaptiveResourceLimitConstants.EXPAND_RATE_DENOMINATOR;
+//      // logger.info(totalEnergyAverageUsage + "<" + targetTotalEnergyLimit + "\n" + result);
+//    }
+//
+//    result = Math.min(
+//        Math.max(result, dbManager.getDynamicPropertiesStore().getTotalEnergyLimit()),
+//        dbManager.getDynamicPropertiesStore().getTotalEnergyLimit()
+//            * AdaptiveResourceLimitConstants.LIMIT_MULTIPLIER);
+//
+//    dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(result);
+//    logger.debug(
+//        "adjust totalEnergyCurrentLimit, old[" + totalEnergyCurrentLimit + "], new[" + result
+//            + "]");
+//  }
 
 
   @Override
@@ -180,7 +173,9 @@ public class EnergyProcessor extends ResourceProcessor {
 
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    updateAdaptiveTotalEnergyLimit(now, energy);
+    if (dbManager.getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 1) {
+      updateTotalEnergyAverageUsage(now, energy);
+    }
 
     return true;
   }
