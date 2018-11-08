@@ -36,6 +36,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.SessionOptional;
@@ -973,6 +974,7 @@ public class Manager {
 
     consumeBandwidth(trxCap, trace);
 
+    VMConfig.initVmHardFork(this);
     trace.init(blockCap);
     trace.checkIsConstant();
     trace.exec();

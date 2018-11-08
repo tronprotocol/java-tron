@@ -1547,11 +1547,4 @@ public class Program {
     return this.invoke.getVmStartInUs();
   }
 
-  public boolean isHardFork(){
-    if(byTestingSuite()){
-      return true;
-    }
-    Manager manager = contractState.getDbManager();
-    return manager.passVersion(ForkBlockVersionConsts.ENERGY_LIMIT);
-  }
 }

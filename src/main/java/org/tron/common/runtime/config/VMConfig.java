@@ -17,6 +17,9 @@
  */
 package org.tron.common.runtime.config;
 
+import org.tron.core.config.Parameter.ForkBlockVersionConsts;
+import org.tron.core.db.Manager;
+
 /**
  * For developer only
  */
@@ -29,6 +32,8 @@ public class VMConfig {
   private boolean vmTraceCompressed = false;
   private boolean vmTrace = false;
 
+  //Odyssey3.2 hard fork -- ForkBlockVersionConsts.ENERGY_LIMIT
+  public static boolean ENERGY_LIMIT_HARD_FORK = false;
 
   private VMConfig() {
   }
@@ -48,6 +53,10 @@ public class VMConfig {
 
   public boolean vmTraceCompressed() {
     return vmTraceCompressed;
+  }
+
+  public static void initVmHardFork(Manager dbManager){
+    ENERGY_LIMIT_HARD_FORK = dbManager.passVersion(ForkBlockVersionConsts.ENERGY_LIMIT);
   }
 
 

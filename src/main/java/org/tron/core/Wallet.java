@@ -63,6 +63,7 @@ import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.RuntimeImpl;
+import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
@@ -879,6 +880,7 @@ public class Wallet {
 
       Runtime runtime = new RuntimeImpl(trxCap.getInstance(), new BlockCapsule(headBlock), deposit,
           new ProgramInvokeFactoryImpl(), true);
+      VMConfig.initVmHardFork(dbManager);
       runtime.execute();
       runtime.go();
       runtime.finalization();
