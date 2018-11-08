@@ -974,7 +974,7 @@ public class Manager {
 
     consumeBandwidth(trxCap, trace);
 
-    VMConfig.initVmHardFork(this);
+    VMConfig.initVmHardFork();
     trace.init(blockCap);
     trace.checkIsConstant();
     trace.exec();

@@ -9,6 +9,7 @@ import java.util.HashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.Strings;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.Storage;
@@ -305,7 +306,7 @@ public class DepositImpl implements Deposit {
     Storage storage;
     if (this.parent != null) {
       Storage parentStorage = parent.getStorage(address);
-      if (this.dbManager.passVersion(ForkBlockVersionConsts.ENERGY_LIMIT)) {
+      if (VMConfig.getEnergyLimitHardFork()) {
         storage = new Storage(parentStorage);
       } else {
         storage = parentStorage;
