@@ -79,7 +79,7 @@ public class VM {
       }
 
       // hard fork for 3.2
-      if (!VMConfig.ENERGY_LIMIT_HARD_FORK) {
+      if (!VMConfig.getEnergyLimitHardFork()) {
         if (op == CALLTOKEN) {
           throw Program.Exception.invalidOpCode(program.getCurrentOp());
         }

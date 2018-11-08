@@ -33,7 +33,7 @@ public class VMConfig {
   private boolean vmTrace = false;
 
   //Odyssey3.2 hard fork -- ForkBlockVersionConsts.ENERGY_LIMIT
-  public static boolean ENERGY_LIMIT_HARD_FORK = false;
+  private static boolean ENERGY_LIMIT_HARD_FORK = false;
 
   private VMConfig() {
   }
@@ -57,6 +57,10 @@ public class VMConfig {
 
   public static void initVmHardFork(Manager dbManager){
     ENERGY_LIMIT_HARD_FORK = dbManager.passVersion(ForkBlockVersionConsts.ENERGY_LIMIT);
+  }
+
+  public static boolean getEnergyLimitHardFork(){
+    return ENERGY_LIMIT_HARD_FORK;
   }
 
 
