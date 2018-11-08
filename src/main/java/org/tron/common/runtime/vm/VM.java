@@ -131,6 +131,7 @@ public class VM {
         case SLOAD:
           energyCost = energyCosts.getSLOAD();
           break;
+        case TOKENBALANCE:
         case BALANCE:
           energyCost = energyCosts.getBALANCE();
           break;
@@ -1171,6 +1172,15 @@ public class VM {
           DataWord inOffset = program.stackPop();
           DataWord inSize = program.stackPop();
           program.createContract(value, inOffset, inSize);
+
+          program.step();
+        }
+        break;
+        case TOKENBALANCE: {
+          DataWord tokenId = program.stackPop();
+          DataWord address = program.stackPop();
+          DataWord tokenBalance = program.getTokenBalance(address, tokenId);
+          program.stackPush(tokenBalance);
 
           program.step();
         }
