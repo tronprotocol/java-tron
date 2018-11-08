@@ -5,7 +5,6 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.capsule.AccountCapsule;
 
 @Slf4j
 public class DBChecker {
