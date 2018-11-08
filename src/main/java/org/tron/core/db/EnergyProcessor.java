@@ -34,23 +34,23 @@ public class EnergyProcessor extends ResourceProcessor {
     accountCapsule.setEnergyUsage(increase(oldEnergyUsage, 0, latestConsumeTime, now));
   }
 
-  public void updateTotalEnergyAverageUsage(long now) {
+  public void updateTotalEnergyAverageUsage(long now, long energy) {
     long totalNetAverageUsage = dbManager.getDynamicPropertiesStore().getTotalEnergyAverageUsage();
     long totalNetAverageTime = dbManager.getDynamicPropertiesStore().getTotalEnergyAverageTime();
 
-    long newPublicNetAverageUsage = increase(totalNetAverageUsage, 0, totalNetAverageTime,
+    long newPublicNetAverageUsage = increase(totalNetAverageUsage, energy, totalNetAverageTime,
         now, averageWindowSize);
 
     dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageUsage(newPublicNetAverageUsage);
     dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageTime(now);
   }
 
-  public void updateAdaptiveTotalEnergyLimit(long now) {
+  public void updateAdaptiveTotalEnergyLimit(long now, long energy) {
     if (dbManager.getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 0) {
       return;
     }
 
-    updateTotalEnergyAverageUsage(now);
+    updateTotalEnergyAverageUsage(now, energy);
 
     long totalEnergyAverageUsage = dbManager.getDynamicPropertiesStore()
         .getTotalEnergyAverageUsage();
@@ -180,7 +180,7 @@ public class EnergyProcessor extends ResourceProcessor {
 
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    updateAdaptiveTotalEnergyLimit(now);
+    updateAdaptiveTotalEnergyLimit(now, energy);
 
     return true;
   }
