@@ -1,8 +1,11 @@
 package org.tron.common.runtime;
 
-import static java.lang.Math.*;
-import static org.apache.commons.lang3.ArrayUtils.*;
-import static org.tron.common.runtime.utils.MUtil.*;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+import static org.apache.commons.lang3.ArrayUtils.getLength;
+import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
+import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
+import static org.tron.common.runtime.utils.MUtil.transfer;
 
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
@@ -599,7 +602,7 @@ public class RuntimeImpl implements Runtime {
       result = program.getResult();
       result.rejectInternalTransactions();
       if (Objects.isNull(result.getException())) {
-        logger.info(e.getMessage(), e);
+        logger.error(e.getMessage(), e);
         result.setException(new RuntimeException("Unknown Throwable"));
       }
       if (StringUtils.isEmpty(runtimeError)) {
