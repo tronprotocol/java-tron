@@ -2,7 +2,9 @@ package org.tron.common.runtime.vm;
 
 import static org.tron.common.crypto.Hash.sha3;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
-import static org.tron.common.runtime.vm.OpCode.*;
+import static org.tron.common.runtime.vm.OpCode.CALL;
+import static org.tron.common.runtime.vm.OpCode.PUSH1;
+import static org.tron.common.runtime.vm.OpCode.REVERT;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 
 import java.math.BigInteger;
@@ -239,7 +241,8 @@ public class VM {
           energyCost = energyCosts.getLOG_ENERGY()
               + energyCosts.getLOG_TOPIC_ENERGY() * nTopics
               + energyCosts.getLOG_DATA_ENERGY() * stack.get(stack.size() - 2).longValue()
-              + calcMemEnergy(energyCosts, oldMemSize, memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0, op);
+              + calcMemEnergy(energyCosts, oldMemSize,
+              memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0, op);
 
           checkMemorySize(op, memNeeded(stack.peek(), stack.get(stack.size() - 2)));
           break;
@@ -248,7 +251,7 @@ public class VM {
           DataWord exp = stack.get(stack.size() - 2);
           int bytesOccupied = exp.bytesOccupied();
           energyCost =
-              (long)energyCosts.getEXP_ENERGY() + energyCosts.getEXP_BYTE_ENERGY() * bytesOccupied;
+              (long) energyCosts.getEXP_ENERGY() + energyCosts.getEXP_BYTE_ENERGY() * bytesOccupied;
           break;
         default:
           break;
@@ -1031,8 +1034,9 @@ public class VM {
           DataWord value = program.stackPop();
 
           if (logger.isDebugEnabled()) {
-            hint = "[" + program.getContractAddress().toPrefixString() + "] key: " + addr + " value: "
-                + value;
+            hint =
+                "[" + program.getContractAddress().toPrefixString() + "] key: " + addr + " value: "
+                    + value;
           }
 
           program.storageSave(addr, value);
