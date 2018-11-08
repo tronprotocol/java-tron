@@ -621,7 +621,13 @@ public class Manager {
       VMIllegalException, TooBigTransactionResultException, UnLinkedBlockException,
       NonCommonBlockException, BadNumberBlockException, BadBlockException {
     block.generatedByMyself = true;
+    long start = System.currentTimeMillis();
     pushBlock(block);
+    logger.info("push block cost:{}ms, blockNum:{}, blockHash:{}, trx count:{}",
+        System.currentTimeMillis() - start,
+        block.getNum(),
+        block.getBlockId(),
+        block.getTransactions().size());
   }
 
   private void applyBlock(BlockCapsule block) throws ContractValidateException,
