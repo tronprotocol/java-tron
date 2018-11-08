@@ -211,6 +211,20 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         break;
       }
+      case (17): {
+        if (entry.getValue() != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_ADAPTIVE_RESOURCE] is only allowed to be 1");
+        }
+        break;
+      }
+      case (18): {
+        if (entry.getValue() < 0 || entry.getValue() > 100_000_000_000_000_000L) {
+          throw new ContractValidateException(
+              "Bad chain parameter value,valid range is [0,100_000_000_000_000_000L]");
+        }
+        break;
+      }
       default:
         break;
     }

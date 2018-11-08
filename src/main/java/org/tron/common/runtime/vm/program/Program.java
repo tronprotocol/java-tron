@@ -82,7 +82,7 @@ public class Program {
 
   private static final int MAX_DEPTH = 64;
   //Max size for stack checks
-  private static final int MAX_STACKSIZE = 1024;
+  private static final int MAX_STACK_SIZE = 1024;
 
   private BlockCapsule blockCap;
 
@@ -90,7 +90,7 @@ public class Program {
   private byte[] rootTransactionId;
   private Boolean isRootCallConstant;
 
-  private InternalTransaction transaction;
+  private InternalTransaction internalTransaction;
 
   private ProgramInvoke invoke;
   private ProgramInvokeFactory programInvokeFactory = new ProgramInvokeFactoryImpl();
@@ -122,20 +122,15 @@ public class Program {
     this(ops, programInvoke, null);
   }
 
-  public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction transaction) {
-    this(ops, programInvoke, transaction, VMConfig.getInstance(), null);
+  public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction internalTransaction) {
+    this(ops, programInvoke, internalTransaction, VMConfig.getInstance(), null);
   }
 
-  public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction transaction,
+  public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction internalTransaction,
       VMConfig config, BlockCapsule blockCap) {
-    this(null, ops, programInvoke, transaction, config, blockCap);
-  }
-
-  public Program(byte[] codeHash, byte[] ops, ProgramInvoke programInvoke,
-      InternalTransaction transaction, VMConfig config, BlockCapsule blockCap) {
     this.config = config;
     this.invoke = programInvoke;
-    this.transaction = transaction;
+    this.internalTransaction = internalTransaction;
     this.blockCap = blockCap;
     this.ops = nullToEmpty(ops);
 
@@ -144,7 +139,7 @@ public class Program {
     this.stack = setupProgramListener(new Stack());
     this.contractState = setupProgramListener(new ContractState(programInvoke));
     this.trace = new ProgramTrace(config, programInvoke);
-    this.nonce = transaction.getNonce();
+    this.nonce = internalTransaction.getNonce();
   }
 
   public byte[] getRootTransactionId() {
@@ -197,14 +192,13 @@ public class Program {
       byte[] transferAddress,
       long value, byte[] data, String note, long nonce) {
 
-    // todo: now, internal transaction needn't energylimit
-    InternalTransaction result = null;
-    if (transaction != null) {
-      result = getResult().addInternalTransaction(transaction.getHash(), getCallDeep(),
+    InternalTransaction addedInternalTx = null;
+    if (internalTransaction != null) {
+      addedInternalTx = getResult().addInternalTransaction(internalTransaction.getHash(), getCallDeep(),
           senderAddress, transferAddress, value, data, note, nonce);
     }
 
-    return result;
+    return addedInternalTx;
   }
 
   private <T extends ProgramListenerAware> T setupProgramListener(T programListenerAware) {
@@ -337,9 +331,9 @@ public class Program {
   }
 
   public void verifyStackOverflow(int argsReqs, int returnReqs) {
-    if ((stack.size() - argsReqs + returnReqs) > MAX_STACKSIZE) {
+    if ((stack.size() - argsReqs + returnReqs) > MAX_STACK_SIZE) {
       throw new StackTooLargeException(
-          "Expected: overflow " + MAX_STACKSIZE + " elements stack limit");
+          "Expected: overflow " + MAX_STACK_SIZE + " elements stack limit");
     }
   }
 
@@ -502,10 +496,10 @@ public class Program {
         newBalance, null, deposit, false, byTestingSuite(), vmStartInUs,
         getVmShouldEndInUs(), energyLimit.longValueSafe());
 
-    ProgramResult result = ProgramResult.createEmpty();
+    ProgramResult createResult = ProgramResult.createEmpty();
 
     if (contractAlreadyExists) {
-      result.setException(new BytecodeExecutionException(
+      createResult.setException(new BytecodeExecutionException(
           "Trying to create a contract with existing contract address: 0x" + Hex
               .toHexString(newAddress)));
     } else if (isNotEmpty(programCode)) {
@@ -514,7 +508,7 @@ public class Program {
       program.setRootTransactionId(this.rootTransactionId);
       program.setRootCallConstant(this.isRootCallConstant);
       vm.play(program);
-      result = program.getResult();
+      createResult = program.getResult();
       getTrace().merge(program.getTrace());
       // always commit nonce
       this.nonce = program.nonce;
@@ -522,38 +516,38 @@ public class Program {
     }
 
     // 4. CREATE THE CONTRACT OUT OF RETURN
-    byte[] code = result.getHReturn();
+    byte[] code = createResult.getHReturn();
 
-    long saveCodeEnergy = getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
+    long saveCodeEnergy = (long)getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
 
-    long afterSpend = programInvoke.getEnergyLimit() - result.getEnergyUsed() - saveCodeEnergy;
-    if (!result.isRevert()) {
+    long afterSpend = programInvoke.getEnergyLimit() - createResult.getEnergyUsed() - saveCodeEnergy;
+    if (!createResult.isRevert()) {
       if (afterSpend < 0) {
-        result.setException(
+        createResult.setException(
             Program.Exception.notEnoughSpendEnergy("No energy to save just created contract code",
-                saveCodeEnergy, programInvoke.getEnergyLimit() - result.getEnergyUsed()));
+                saveCodeEnergy, programInvoke.getEnergyLimit() - createResult.getEnergyUsed()));
       } else {
-        result.spendEnergy(saveCodeEnergy);
+        createResult.spendEnergy(saveCodeEnergy);
         deposit.saveCode(newAddress, code);
       }
     }
 
-    getResult().merge(result);
+    getResult().merge(createResult);
 
-    if (result.getException() != null || result.isRevert()) {
+    if (createResult.getException() != null || createResult.isRevert()) {
       logger.debug("contract run halted by Exception: contract: [{}], exception: [{}]",
           Hex.toHexString(newAddress),
-          result.getException());
+          createResult.getException());
 
       internalTx.reject();
-      result.rejectInternalTransactions();
+      createResult.rejectInternalTransactions();
 
       stackPushZero();
 
-      if (result.getException() != null) {
+      if (createResult.getException() != null) {
         return;
       } else {
-        returnDataBuffer = result.getHReturn();
+        returnDataBuffer = createResult.getHReturn();
       }
     } else {
       if (!byTestingSuite()) {
@@ -565,7 +559,7 @@ public class Program {
     }
 
     // 5. REFUND THE REMAIN Energy
-    refundEnergyAfterVM(energyLimit, result);
+    refundEnergyAfterVM(energyLimit, createResult);
   }
 
   public void refundEnergyAfterVM(DataWord energyLimit, ProgramResult result) {
@@ -612,7 +606,6 @@ public class Program {
           msg.getOutDataSize().longValue());
     }
 
-    //Repository track = getContractState().startTracking();
     Deposit deposit = getContractState().newDepositChild();
 
     // 2.1 PERFORM THE VALUE (endowment) PART
@@ -653,7 +646,7 @@ public class Program {
     InternalTransaction internalTx = addInternalTx(null, senderAddress, contextAddress,
         endowment, data, "call", nonce);
 
-    ProgramResult result = null;
+    ProgramResult callResult = null;
     if (isNotEmpty(programCode)) {
       long vmStartInUs = System.nanoTime() / 1000;
       ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
@@ -663,30 +656,29 @@ public class Program {
           contextBalance, data, deposit, msg.getType().callIsStatic() || isStaticCall(),
           byTestingSuite(), vmStartInUs, getVmShouldEndInUs(), msg.getEnergy().longValueSafe());
       VM vm = new VM(config);
-      Program program = new Program(null, programCode, programInvoke, internalTx, config,
+      Program program = new Program(programCode, programInvoke, internalTx, config,
           this.blockCap);
       program.setRootTransactionId(this.rootTransactionId);
       program.setRootCallConstant(this.isRootCallConstant);
       vm.play(program);
-      result = program.getResult();
+      callResult = program.getResult();
 
       getTrace().merge(program.getTrace());
-      getResult().merge(result);
+      getResult().merge(callResult);
       // always commit nonce
       this.nonce = program.nonce;
 
-      if (result.getException() != null || result.isRevert()) {
+      if (callResult.getException() != null || callResult.isRevert()) {
         logger.debug("contract run halted by Exception: contract: [{}], exception: [{}]",
             Hex.toHexString(contextAddress),
-            result.getException());
+            callResult.getException());
 
         internalTx.reject();
-        result.rejectInternalTransactions();
+        callResult.rejectInternalTransactions();
 
-        // deposit.rollback();
         stackPushZero();
 
-        if (result.getException() != null) {
+        if (callResult.getException() != null) {
           return;
         }
       } else {
@@ -698,9 +690,6 @@ public class Program {
       if (byTestingSuite()) {
         logger.debug("Testing run, skipping storage diff listener");
       }
-      // else if (Arrays.equals(transaction.getReceiveAddress(), internalTx.getReceiveAddress())) {
-      //   storageDiffListener.merge(program.getStorageDiff());
-      // }
     } else {
       // 4. THE FLAG OF SUCCESS IS ONE PUSHED INTO THE STACK
       deposit.commit();
@@ -708,8 +697,8 @@ public class Program {
     }
 
     // 3. APPLY RESULTS: result.getHReturn() into out_memory allocated
-    if (result != null) {
-      byte[] buffer = result.getHReturn();
+    if (callResult != null) {
+      byte[] buffer = callResult.getHReturn();
       int offset = msg.getOutDataOffs().intValue();
       int size = msg.getOutDataSize().intValue();
 
@@ -719,8 +708,8 @@ public class Program {
     }
 
     // 5. REFUND THE REMAIN ENERGY
-    if (result != null) {
-      BigInteger refundEnergy = msg.getEnergy().value().subtract(toBI(result.getEnergyUsed()));
+    if (callResult != null) {
+      BigInteger refundEnergy = msg.getEnergy().value().subtract(toBI(callResult.getEnergyUsed()));
       if (isPositive(refundEnergy)) {
         refundEnergy(refundEnergy.longValueExact(), "remaining energy from the internal call");
         if (logger.isDebugEnabled()) {
@@ -1195,8 +1184,6 @@ public class Program {
   public static String stringify(byte[] code) {
     int index = 0;
     StringBuilder sb = new StringBuilder();
-    BitSet mask = buildReachableBytecodesMask(code);
-    String binData = "";
 
     while (index < code.length) {
       final byte opCode = code[index];
@@ -1251,14 +1238,12 @@ public class Program {
       return;
     }
 
-    // Repository track = getContractState().startTracking();
     Deposit deposit = getContractState().newDepositChild();
 
     byte[] senderAddress = convertToTronAddress(this.getContractAddress().getLast20Bytes());
     byte[] codeAddress = convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
     byte[] contextAddress = msg.getType().callIsStateless() ? senderAddress : codeAddress;
 
-    // todo: need check endowment > 0 and not exceed?? because of "senderBalance < endowment"
     long endowment = msg.getEndowment().value().longValueExact();
     long senderBalance = deposit.getBalance(senderAddress);
     if (senderBalance < endowment) {
@@ -1283,11 +1268,10 @@ public class Program {
 
     long requiredEnergy = contract.getEnergyForData(data);
     if (requiredEnergy > msg.getEnergy().longValue()) {
-      // todo: new throw?? because it has done nothing, but outside don't know this
+      // Not need to throw an exception, method caller needn't know that
       // regard as consumed the energy
       this.refundEnergy(0, "call pre-compiled"); //matches cpp logic
       this.stackPushZero();
-      // deposit.rollback();
     } else {
       // Delegate or not. if is delegated, we will use msg sender, otherwise use contract address
       contract.setCallerAddress(convertToTronAddress(msg.getType().callIsDelegate() ?
@@ -1310,7 +1294,6 @@ public class Program {
         if (Objects.nonNull(this.result.getException())) {
           throw result.getException();
         }
-        // deposit.rollback();
       }
 
       this.memorySave(msg.getOutDataOffs().intValue(), out.getRight());
@@ -1348,9 +1331,9 @@ public class Program {
   }
 
   @SuppressWarnings("serial")
-  public static class OutOfResourceException extends BytecodeExecutionException {
+  public static class OutOfTimeException extends BytecodeExecutionException {
 
-    public OutOfResourceException(String message, Object... args) {
+    public OutOfTimeException(String message, Object... args) {
       super(format(message, args));
     }
   }
@@ -1432,6 +1415,7 @@ public class Program {
   }
 
   public static class Exception {
+    private Exception() {}
 
     public static OutOfEnergyException notEnoughOpEnergy(OpCode op, long opEnergy,
         long programEnergy) {
@@ -1454,9 +1438,13 @@ public class Program {
     }
 
 
-    public static OutOfResourceException notEnoughTime(String op) {
-      return new OutOfResourceException(
+    public static OutOfTimeException notEnoughTime(String op) {
+      return new OutOfTimeException(
           "CPU timeout for '%s' operation executing", op);
+    }
+
+    public static OutOfTimeException alreadyTimeOut() {
+      return new OutOfTimeException("Already Time Out");
     }
 
 

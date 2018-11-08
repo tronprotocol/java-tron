@@ -31,10 +31,13 @@ import org.tron.core.exception.StoreException;
 @Slf4j
 public class ProgramInvokeImpl implements ProgramInvoke {
 
-  // private BlockStore blockStore;
   /* TRANSACTION  env*/
   private final DataWord address;
-  private final DataWord origin, caller, balance, callValue;
+  private final DataWord origin;
+  private final DataWord caller;
+  private final DataWord balance;
+  private final DataWord callValue;
+
   private byte[] msgData;
 
   private long vmStartInUs;
@@ -42,9 +45,12 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   private long energyLimit;
 
   /* BLOCK  env **/
-  private final DataWord prevHash, coinbase, timestamp, number;
+  private final DataWord prevHash;
+  private final DataWord coinbase;
+  private final DataWord timestamp;
+  private final DataWord number;
 
-  private Deposit deposit = null;
+  private Deposit deposit;
   private boolean byTransaction = true;
   private boolean byTestingSuite = false;
   private int callDeep = 0;
@@ -114,9 +120,6 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     this.vmStartInUs = vmStartInUs;
     this.vmShouldEndInUs = vmShouldEndInUs;
     this.energyLimit = energyLimit;
-    // logger.info("vmStartInUs: {}", vmStartInUs);
-    // logger.info("vmShouldEndInUs: {}", vmShouldEndInUs);
-
   }
 
   /*           ADDRESS op         */
@@ -150,7 +153,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   /* NOTE: In the protocol there is no restriction on the maximum message data,
    * However msgData here is a byte[] and this can't hold more than 2^32-1
    */
-  private static BigInteger MAX_MSG_DATA = BigInteger.valueOf(Integer.MAX_VALUE);
+  private static final BigInteger MAX_MSG_DATA = BigInteger.valueOf(Integer.MAX_VALUE);
 
   /*     CALLDATALOAD  op   */
   public DataWord getDataValue(DataWord indexData) {
@@ -228,7 +231,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
 
   /*     DIFFICULTY op    */
   public DataWord getDifficulty() {
-    return new DataWord(0); //difficulty;
+    return new DataWord(0);
   }
 
   public long getVmShouldEndInUs() {
@@ -237,16 +240,6 @@ public class ProgramInvokeImpl implements ProgramInvoke {
 
   public Deposit getDeposit() {
     return deposit;
-  }
-
-  @Override
-  public BlockStore getBlockStore() {
-    return deposit.getDbManager().getBlockStore();
-  }
-
-  @Override
-  public boolean byTransaction() {
-    return byTransaction;
   }
 
   @Override
@@ -302,12 +295,6 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     if (coinbase != null ? !coinbase.equals(that.coinbase) : that.coinbase != null) {
       return false;
     }
-    //if (difficulty != null ? !difficulty.equals(that.difficulty) : that.difficulty != null) return false;
-    //if (energy != null ? !energy.equals(that.energy) : that.energy != null) return false;
-    //if (energyPrice != null ? !energyPrice.equals(that.energyPrice) : that.energyPrice != null) return false;
-    //if (dropLimit != null ? !dropLimit.equals(that.dropLimit) : that.dropLimit != null) {
-    //    return false;
-    // }
     if (!Arrays.equals(msgData, that.msgData)) {
       return false;
     }
@@ -323,18 +310,13 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     if (deposit != null ? !deposit.equals(that.deposit) : that.deposit != null) {
       return false;
     }
-    //if (storage != null ? !storage.equals(that.storage) : that.storage != null) return false;
-    if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) {
-      return false;
-    }
-
-    return true;
+    return timestamp != null ? timestamp.equals(that.timestamp) : that.timestamp == null;
   }
 
   @Override
   public int hashCode() {
-    return new Integer(new Boolean(byTestingSuite).hashCode()
-        + new Boolean(byTransaction).hashCode()
+    return new Integer(Boolean.valueOf(byTestingSuite).hashCode()
+        + Boolean.valueOf(byTransaction).hashCode()
         + address.hashCode()
         + balance.hashCode()
         + callValue.hashCode()

@@ -1,5 +1,6 @@
 package stest.tron.wallet.manual;
 
+import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.Random;
@@ -13,6 +14,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.AccountNetMessage;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
@@ -36,12 +38,14 @@ public class WalletTestAccount008 {
   private static final long sendAmount = 10000000000L;
 
   private ManagedChannel channelFull = null;
+  private ManagedChannel channelSolidity = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
+
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
-
-  private static final long FREENETLIMIT = 5000L;
-  private static final long BASELINE = 4800L;
+  private String soliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(0);
 
   @BeforeSuite
   public void beforeSuite() {
@@ -56,6 +60,11 @@ public class WalletTestAccount008 {
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
+    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
+        .usePlaintext(true)
+        .build();
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+
   }
 
   @Test(enabled = true)
@@ -65,12 +74,12 @@ public class WalletTestAccount008 {
     String account008Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
     ECKey ecKey2 = new ECKey(Utils.getRandom());
-    byte[] account008SecondAddress = ecKey2.getAddress();
+    final byte[] account008SecondAddress = ecKey2.getAddress();
     String account008SecondKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
     ECKey ecKey3 = new ECKey(Utils.getRandom());
-    byte[] account008InvalidAddress = ecKey3.getAddress();
-    String account008InvalidKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
+    final byte[] account008InvalidAddress = ecKey3.getAddress();
+    final String account008InvalidKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
 
     PublicMethed.printAddress(account008Key);
     PublicMethed.printAddress(account008SecondKey);
@@ -107,6 +116,22 @@ public class WalletTestAccount008 {
     Assert.assertTrue(PublicMethed.setAccountId(longAccountId.getBytes(),account008SecondAddress,
         account008SecondKey,blockingStubFull));
 
+
+    //GetAccountById
+    Account account008SecondAccount = PublicMethed.queryAccount(account008SecondKey,
+        blockingStubFull);
+    Long account008SecondAccountBalance = account008SecondAccount.getBalance();
+    ByteString bsAccountId = ByteString.copyFromUtf8(longAccountId);
+    Account request = Account.newBuilder().setAccountId(bsAccountId).build();
+    logger.info(Long.toString(blockingStubFull.getAccountById(request).getBalance()));
+    logger.info(Long.toString(account008SecondAccountBalance));
+    Assert.assertTrue(blockingStubFull.getAccountById(request).getBalance()
+        == account008SecondAccountBalance);
+
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    Assert.assertTrue(blockingStubSolidity.getAccountById(request).getBalance()
+        == account008SecondAccountBalance);
+
     Account account008Info = PublicMethed.queryAccount(account008Key,blockingStubFull);
     Assert.assertTrue(ByteArray.toStr(account008Info.getAccountId().toByteArray()).length() == 8);
     Account account008SecondInfo = PublicMethed.queryAccount(account008SecondKey,blockingStubFull);
@@ -126,6 +151,9 @@ public class WalletTestAccount008 {
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelSolidity != null) {
+      channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
 

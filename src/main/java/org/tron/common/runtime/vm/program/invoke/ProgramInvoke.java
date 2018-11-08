@@ -20,7 +20,6 @@ package org.tron.common.runtime.vm.program.invoke;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.storage.Deposit;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.db.BlockStore;
 
 /**
  * @author Roman Mandeleil
@@ -54,15 +53,11 @@ public interface ProgramInvoke {
 
   DataWord getDifficulty();
 
-  boolean byTransaction();
-
   boolean byTestingSuite();
 
   int getCallDeep();
 
   Deposit getDeposit();
-
-  BlockStore getBlockStore();
 
   boolean isStaticCall();
 

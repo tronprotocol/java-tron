@@ -70,12 +70,12 @@ public class Storage {
   }
 
   public void commit() {
-    rowCache.forEach((key, value) -> {
-      if (value.isDirty()) {
-        if (value.getValue().isZero()) {
-          this.store.delete(value.getRowKey());
+    rowCache.forEach((DataWord rowKey, StorageRowCapsule row) -> {
+      if (row.isDirty()) {
+        if (row.getValue().isZero()) {
+          this.store.delete(row.getRowKey());
         } else {
-          this.store.put(value.getRowKey(), value);
+          this.store.put(row.getRowKey(), row);
         }
       }
     });

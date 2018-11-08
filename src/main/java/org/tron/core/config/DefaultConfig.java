@@ -13,6 +13,8 @@ import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.RevokingStore;
 import org.tron.core.db.api.IndexHelper;
 import org.tron.core.db2.core.SnapshotManager;
+import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
+import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
 
 @Configuration
 @Import(CommonConfig.class)
@@ -48,6 +50,28 @@ public class DefaultConfig {
     } else {
       throw new RuntimeException("db version is error.");
     }
+  }
+
+  @Bean
+  public RpcApiServiceOnSolidity getRpcApiServiceOnSolidity() {
+    boolean isSolidityNode = Args.getInstance().isSolidityNode();
+    int dbVersion = Args.getInstance().getStorage().getDbVersion();
+    if (!isSolidityNode && dbVersion == 2) {
+      return new RpcApiServiceOnSolidity();
+    }
+
+    return null;
+  }
+
+  @Bean
+  public HttpApiOnSolidityService getHttpApiOnSolidityService() {
+    boolean isSolidityNode = Args.getInstance().isSolidityNode();
+    int dbVersion = Args.getInstance().getStorage().getDbVersion();
+    if (!isSolidityNode && dbVersion == 2) {
+      return new HttpApiOnSolidityService();
+    }
+
+    return null;
   }
 
 }

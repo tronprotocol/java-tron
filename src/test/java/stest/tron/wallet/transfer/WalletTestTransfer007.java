@@ -1,5 +1,6 @@
 package stest.tron.wallet.transfer;
 
+import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.Optional;
@@ -9,12 +10,14 @@ import org.junit.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
@@ -89,6 +92,24 @@ public class WalletTestTransfer007 {
     Long timestampBlockOne = PublicMethed.getBlock(1, blockingStubFull).getBlockHeader()
         .getRawData().getTimestamp();
     Assert.assertTrue(timestamptis >= timestampBlockOne);
+
+    infoById = PublicMethed.getTransactionById(transactionId, blockingStubFull);
+    timestamptis = PublicMethed.printTransactionRow(infoById.get().getRawData());
+    timestampBlockOne = PublicMethed.getBlock(1, blockingStubFull).getBlockHeader()
+        .getRawData().getTimestamp();
+    Assert.assertTrue(timestamptis >= timestampBlockOne);
+
+    ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(transactionId));
+    BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
+    TransactionInfo transactionInfo;
+
+    transactionInfo = blockingStubSolidity.getTransactionInfoById(request);
+    Assert.assertTrue(transactionInfo.getBlockTimeStamp() >= timestampBlockOne);
+
+    transactionInfo = blockingStubFull.getTransactionInfoById(request);
+
+    Assert.assertTrue(transactionInfo.getBlockTimeStamp() >= timestampBlockOne);
+
 
   }
 

@@ -51,7 +51,6 @@ import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.Parameter.ChainConstant;
-import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
@@ -102,6 +101,7 @@ public class Manager {
   @Autowired
   private DynamicPropertiesStore dynamicPropertiesStore;
   @Autowired
+  @Getter
   private BlockIndexStore blockIndexStore;
   @Autowired
   private AccountIdIndexStore accountIdIndexStore;
@@ -179,8 +179,7 @@ public class Manager {
       .newBuilder().maximumSize(100_000).recordStats().build();
 
   @Getter
-  @Autowired
-  private ForkController forkController;
+  private ForkController forkController = ForkController.instance();
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -999,7 +998,7 @@ public class Manager {
     trace.finalization();
     if (Objects.nonNull(blockCap)) {
       if (getDynamicPropertiesStore().supportVM()) {
-        trxCap.setResultCode(trace.getReceipt().getResult());
+        trxCap.setResult(trace.getRuntime());
       }
     }
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
@@ -1187,7 +1186,7 @@ public class Manager {
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
     // todo set revoking db max size.
 
-    if (witnessService != null){
+    if (witnessService != null) {
       witnessService.processBlock(block);
     }
 
