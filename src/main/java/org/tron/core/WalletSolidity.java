@@ -13,6 +13,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.db.api.StoreAPI;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.NonUniqueObjectException;
+import org.tron.core.exception.StoreException;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
 
@@ -27,10 +28,11 @@ public class WalletSolidity {
 
   public Transaction getTransactionById(ByteString id) {
     try {
-      Transaction transactionById = storeAPI
-          .getTransactionById(ByteArray.toHexString(id.toByteArray()));
+      Transaction transactionById = dbManager.getTransactionStore()
+          .get(id.toByteArray())
+          .getInstance();
       return transactionById;
-    } catch (NonUniqueObjectException e) {
+    } catch (StoreException e) {
       e.printStackTrace();
     }
     return null;
