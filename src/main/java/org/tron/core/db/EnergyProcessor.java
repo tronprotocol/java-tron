@@ -44,35 +44,6 @@ public class EnergyProcessor extends ResourceProcessor {
     dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageTime(now);
   }
 
-//  public void updateAdaptiveTotalEnergyLimit() {
-//    long totalEnergyAverageUsage = dbManager.getDynamicPropertiesStore()
-//        .getTotalEnergyAverageUsage();
-//    long targetTotalEnergyLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyTargetLimit();
-//    long totalEnergyCurrentLimit = dbManager.getDynamicPropertiesStore()
-//        .getTotalEnergyCurrentLimit();
-//
-//    long result;
-//    if (totalEnergyAverageUsage > targetTotalEnergyLimit) {
-//      result = totalEnergyCurrentLimit * AdaptiveResourceLimitConstants.CONTRACT_RATE_NUMERATOR
-//          / AdaptiveResourceLimitConstants.CONTRACT_RATE_DENOMINATOR;
-//      // logger.info(totalEnergyAverageUsage + ">" + targetTotalEnergyLimit + "\n" + result);
-//    } else {
-//      result = totalEnergyCurrentLimit * AdaptiveResourceLimitConstants.EXPAND_RATE_NUMERATOR
-//          / AdaptiveResourceLimitConstants.EXPAND_RATE_DENOMINATOR;
-//      // logger.info(totalEnergyAverageUsage + "<" + targetTotalEnergyLimit + "\n" + result);
-//    }
-//
-//    result = Math.min(
-//        Math.max(result, dbManager.getDynamicPropertiesStore().getTotalEnergyLimit()),
-//        dbManager.getDynamicPropertiesStore().getTotalEnergyLimit()
-//            * AdaptiveResourceLimitConstants.LIMIT_MULTIPLIER);
-//
-//    dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(result);
-//    logger.debug(
-//        "adjust totalEnergyCurrentLimit, old[" + totalEnergyCurrentLimit + "], new[" + result
-//            + "]");
-//  }
-
 
   @Override
   public void consume(TransactionCapsule trx,
