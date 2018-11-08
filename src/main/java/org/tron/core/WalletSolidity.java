@@ -23,36 +23,6 @@ public class WalletSolidity {
 
   @Autowired
   private StoreAPI storeAPI;
-  @Autowired
-  private Manager dbManager;
-
-  public Transaction getTransactionById(ByteString id) {
-    try {
-      Transaction transactionById = dbManager.getTransactionStore()
-          .get(id.toByteArray())
-          .getInstance();
-      return transactionById;
-    } catch (StoreException e) {
-      e.printStackTrace();
-    }
-    return null;
-  }
-
-  public TransactionInfo getTransactionInfoById(ByteString id) {
-    if (Objects.isNull(id)) {
-      return null;
-    }
-    TransactionInfoCapsule transactionInfoCapsule = null;
-    try {
-      transactionInfoCapsule = dbManager.getTransactionHistoryStore()
-          .get(id.toByteArray());
-    } catch (BadItemException e) {
-    }
-    if (transactionInfoCapsule != null) {
-      return transactionInfoCapsule.getInstance();
-    }
-    return null;
-  }
 
   public TransactionList getTransactionsFromThis(ByteString thisAddress, long offset, long limit) {
     List<Transaction> transactionsFromThis = storeAPI
