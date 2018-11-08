@@ -6,6 +6,7 @@ import static org.apache.commons.lang3.ArrayUtils.getLength;
 import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.utils.MUtil.transfer;
+import static org.tron.common.runtime.utils.MUtil.transferToken;
 
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
@@ -35,6 +36,7 @@ import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
@@ -262,7 +264,8 @@ public class RuntimeImpl implements Runtime {
   }
 
   public long getTotalEnergyLimitWithFixRatio(AccountCapsule creator, AccountCapsule caller,
-      TriggerSmartContract contract, long feeLimit, long callValue) {
+      TriggerSmartContract contract, long feeLimit, long callValue)
+      throws ContractValidateException {
 
     long callerEnergyLimit = getAccountEnergyLimitWithFixRatio(caller, feeLimit, callValue);
     if (Arrays.equals(creator.getAddress().toByteArray(), caller.getAddress().toByteArray())) {
@@ -278,6 +281,9 @@ public class RuntimeImpl implements Runtime {
     long consumeUserResourcePercent = contractCapsule.getConsumeUserResourcePercent();
 
     long originEnergyLimit = contractCapsule.getOriginEnergyLimit();
+    if (originEnergyLimit < 0) {
+      throw new ContractValidateException("originEnergyLimit can't be < 0");
+    }
 
     if (consumeUserResourcePercent <= 0) {
       creatorEnergyLimit = min(energyProcessor.getAccountLeftEnergyFromFreeze(creator),
@@ -299,9 +305,10 @@ public class RuntimeImpl implements Runtime {
   }
 
   public long getTotalEnergyLimit(AccountCapsule creator, AccountCapsule caller,
-      TriggerSmartContract contract, long feeLimit, long callValue) {
+      TriggerSmartContract contract, long feeLimit, long callValue)
+      throws ContractValidateException {
     //  according to version
-    if (deposit.getDbManager().passVersion(ForkBlockVersionConsts.ENERGY_LIMIT)) {
+    if (VMConfig.getEnergyLimitHardFork()) {
       return getTotalEnergyLimitWithFixRatio(creator, caller, contract, feeLimit, callValue);
     } else {
       return getTotalEnergyLimitWithFloatRatio(creator, caller, contract, feeLimit, callValue);
@@ -387,7 +394,7 @@ public class RuntimeImpl implements Runtime {
       long energyLimit;
       // according to version
 
-      if (deposit.getDbManager().passVersion(ForkBlockVersionConsts.ENERGY_LIMIT)) {
+      if (VMConfig.getEnergyLimitHardFork()) {
         if (callValue < 0) {
           throw new ContractValidateException("callValue must >= 0");
         }
@@ -434,6 +441,13 @@ public class RuntimeImpl implements Runtime {
     if (callValue > 0) {
       transfer(this.deposit, callerAddress, contractAddress, callValue);
     }
+    if (VMConfig.getEnergyLimitHardFork()) {
+      long callTokenValue = contract.getCallTokenValue();
+      String tokenId = contract.getTokenId();
+      if (callTokenValue > 0 && !StringUtils.isEmpty(tokenId)) {
+        transferToken(this.deposit, callerAddress, contractAddress, tokenId, callTokenValue);
+      }
+    }
 
   }
 
@@ -467,7 +481,7 @@ public class RuntimeImpl implements Runtime {
     }
 
     long callValue = contract.getCallValue();
-    if (deposit.getDbManager().passVersion(ForkBlockVersionConsts.ENERGY_LIMIT) && callValue < 0) {
+    if (VMConfig.getEnergyLimitHardFork() && callValue < 0) {
       throw new ContractValidateException("callValue must >= 0");
     }
 
@@ -516,6 +530,13 @@ public class RuntimeImpl implements Runtime {
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
     if (callValue > 0) {
       transfer(this.deposit, callerAddress, contractAddress, callValue);
+    }
+    if (VMConfig.getEnergyLimitHardFork()) {
+      long callTokenValue = contract.getCallTokenValue();
+      String tokenId = contract.getTokenId();
+      if (callTokenValue > 0 && !StringUtils.isEmpty(tokenId)) {
+        transferToken(this.deposit, callerAddress, contractAddress, tokenId, callTokenValue);
+      }
     }
 
   }

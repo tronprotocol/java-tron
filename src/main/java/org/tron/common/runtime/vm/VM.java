@@ -3,8 +3,10 @@ package org.tron.common.runtime.vm;
 import static org.tron.common.crypto.Hash.sha3;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.vm.OpCode.CALL;
+import static org.tron.common.runtime.vm.OpCode.CALLTOKEN;
 import static org.tron.common.runtime.vm.OpCode.PUSH1;
 import static org.tron.common.runtime.vm.OpCode.REVERT;
+import static org.tron.common.runtime.vm.OpCode.TOKENBALANCE;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 
 import java.math.BigInteger;
@@ -80,6 +82,13 @@ public class VM {
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
 
+      // hard fork for 3.2
+      if (!VMConfig.getEnergyLimitHardFork()) {
+        if (op == CALLTOKEN || op == TOKENBALANCE) {
+          throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        }
+      }
+
       program.setLastOp(op.val());
       program.verifyStackSize(op.require());
       program.verifyStackOverflow(op.require(), op.ret()); //Check not exceeding stack limits
@@ -126,6 +135,7 @@ public class VM {
         case SLOAD:
           energyCost = energyCosts.getSLOAD();
           break;
+        case TOKENBALANCE:
         case BALANCE:
           energyCost = energyCosts.getBALANCE();
           break;
@@ -181,6 +191,7 @@ public class VM {
         case CALLCODE:
         case DELEGATECALL:
         case STATICCALL:
+        case CALLTOKEN:
           // here, contract call an other contract, or a library, and so on
           energyCost = energyCosts.getCALL();
           DataWord callEnergyWord = stack.get(stack.size() - 1);
@@ -188,7 +199,7 @@ public class VM {
           DataWord value = op.callHasValue() ? stack.get(stack.size() - 3) : DataWord.ZERO;
 
           //check to see if account does not exist and is not a precompiled contract
-          if (op == CALL) {
+          if (op == CALL || op == CALLTOKEN) {
             if (isDeadAccount(program, callAddressWord) && !value.isZero()) {
               energyCost += energyCosts.getNEW_ACCT_CALL();
             }
@@ -200,6 +211,9 @@ public class VM {
           }
 
           int opOff = op.callHasValue() ? 4 : 3;
+          if (op == CALLTOKEN) {
+            opOff ++;
+          }
           BigInteger in = memNeeded(stack.get(stack.size() - opOff),
               stack.get(stack.size() - opOff - 1)); // in offset+size
           BigInteger out = memNeeded(stack.get(stack.size() - opOff - 2),
@@ -1168,8 +1182,18 @@ public class VM {
           program.step();
         }
         break;
+        case TOKENBALANCE: {
+          DataWord tokenId = program.stackPop();
+          DataWord address = program.stackPop();
+          DataWord tokenBalance = program.getTokenBalance(address, tokenId);
+          program.stackPush(tokenBalance);
+
+          program.step();
+        }
+        break;
         case CALL:
         case CALLCODE:
+        case CALLTOKEN:
         case DELEGATECALL:
         case STATICCALL: {
           program.stackPop(); // use adjustedCallEnergy instead of requested
@@ -1188,6 +1212,11 @@ public class VM {
 
           if (!value.isZero()) {
             adjustedCallEnergy.add(new DataWord(energyCosts.getSTIPEND_CALL()));
+          }
+
+          DataWord tokenId = null;
+          if (op == CALLTOKEN) {
+            tokenId = program.stackPop();
           }
 
           DataWord inDataOffs = program.stackPop();
@@ -1211,7 +1240,7 @@ public class VM {
 
           MessageCall msg = new MessageCall(
               op, adjustedCallEnergy, codeAddress, value, inDataOffs, inDataSize,
-              outDataOffs, outDataSize);
+              outDataOffs, outDataSize, tokenId);
 
           PrecompiledContracts.PrecompiledContract contract =
               PrecompiledContracts.getContractForAddress(codeAddress);
@@ -1230,7 +1259,7 @@ public class VM {
         }
         break;
         case RETURN:
-        case REVERT:
+        case REVERT: {
           DataWord offset = program.stackPop();
           DataWord size = program.stackPop();
 
@@ -1249,7 +1278,8 @@ public class VM {
           if (op == REVERT) {
             program.getResult().setRevert();
           }
-          break;
+        }
+        break;
         case SUICIDE: {
           if (program.isStaticCall()) {
             throw new Program.StaticCallModificationException();

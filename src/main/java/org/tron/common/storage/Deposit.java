@@ -3,6 +3,7 @@ package org.tron.common.storage;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.Storage;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -92,6 +93,12 @@ public interface Deposit {
   long getMaintenanceTimeInterval();
 
   long getNextMaintenanceTime();
+
+  long addTokenBalance(byte[] address, byte[] tokenId, long value);
+
+  long getTokenBalance(byte[] address, byte[] tokenId);
+
+  AssetIssueCapsule getAssetIssue(byte[] tokenId);
 
   TransactionCapsule getTransaction(byte[] trxHash);
 
