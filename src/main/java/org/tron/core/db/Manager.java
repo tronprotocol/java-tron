@@ -179,8 +179,7 @@ public class Manager {
       .newBuilder().maximumSize(100_000).recordStats().build();
 
   @Getter
-  @Autowired
-  private ForkController forkController;
+  private ForkController forkController = ForkController.instance();
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
