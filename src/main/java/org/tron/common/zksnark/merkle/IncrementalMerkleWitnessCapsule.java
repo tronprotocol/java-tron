@@ -1,10 +1,12 @@
 package org.tron.common.zksnark.merkle;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.protos.Contract.IncrementalMerkleWitness;
+import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.SHA256Compress;
 
 @Slf4j
@@ -64,6 +66,15 @@ public class IncrementalMerkleWitnessCapsule implements ProtoCapsule<Incremental
 
   public void setCursorDepth(long cursorDepth) {
     this.witness = this.witness.toBuilder().setCursorDepth(cursorDepth).build();
+  }
+
+  public OutputPoint getOutputPoint() {
+    return this.witness.getOutputPoint();
+  }
+
+  public void setOutputPoint(ByteString hash, int index) {
+    this.witness = this.witness.toBuilder()
+        .setOutputPoint(OutputPoint.newBuilder().setTxHash(hash).setIndex(index).build()).build();
   }
 
   @Override

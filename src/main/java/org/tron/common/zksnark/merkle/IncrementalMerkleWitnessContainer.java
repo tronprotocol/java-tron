@@ -2,6 +2,8 @@ package org.tron.common.zksnark.merkle;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import org.tron.common.utils.ByteArray;
+import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.SHA256Compress;
 
 public class IncrementalMerkleWitnessContainer {
@@ -79,7 +81,12 @@ public class IncrementalMerkleWitnessContainer {
   }
 
   public byte[] getMerkleWitnessKey() {
-    return root().getContent().toByteArray();
+    OutputPoint outputPoint = witnessCapsule.getOutputPoint();
+
+    if (outputPoint.getTxHash().isEmpty()) {
+      throw new RuntimeException("outputPoint is not initialized");
+    }
+    return OutputPointUtil.outputPointToKey(outputPoint);
   }
 
 
@@ -90,6 +97,21 @@ public class IncrementalMerkleWitnessContainer {
 
   private boolean cursorIsExist() {
     return !witnessCapsule.getCursor().isEmptyTree();
+  }
+
+  public static class OutputPointUtil {
+
+    public static byte[] outputPointToKey(OutputPoint outputPoint) {
+      return outputPointToKey(outputPoint.getTxHash().toByteArray(), outputPoint.getIndex());
+    }
+
+    public static byte[] outputPointToKey(byte[] txBytes, int index) {
+      byte[] indexBytes = ByteArray.fromInt(index);
+      byte[] rs = new byte[txBytes.length + indexBytes.length];
+      System.arraycopy(txBytes, 0, rs, 0, txBytes.length);
+      System.arraycopy(indexBytes, 0, rs, txBytes.length, indexBytes.length);
+      return rs;
+    }
   }
 
 

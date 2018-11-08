@@ -71,6 +71,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
+import org.tron.common.zksnark.merkle.IncrementalMerkleWitnessCapsule;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
@@ -113,6 +114,7 @@ import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.MerklePath;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.TriggerSmartContract;
+import org.tron.protos.Contract.IncrementalMerkleWitness;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -829,6 +831,20 @@ public class Wallet {
     IncrementalMerkleTreeContainer lastTree = dbManager.getMerkleContainer().getBestMerkleRoot();
     if (lastTree != null) {
       return lastTree.getRootArray();
+    }
+
+    return null;
+  }
+
+  public IncrementalMerkleWitness getMerkleTreeWitness(byte[] txHash, int index) {
+    if (Objects.isNull(txHash) || index < 0) {
+      return null;
+    }
+
+    IncrementalMerkleWitnessCapsule merkleWitnessCapsule =
+        dbManager.getMerkleContainer().getWitness(txHash, index);
+    if (merkleWitnessCapsule != null) {
+      return merkleWitnessCapsule.getInstance();
     }
 
     return null;

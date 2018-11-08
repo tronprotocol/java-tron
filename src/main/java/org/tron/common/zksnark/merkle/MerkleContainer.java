@@ -6,6 +6,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.SHA256CompressCapsule;
+import org.tron.common.zksnark.merkle.IncrementalMerkleWitnessContainer.OutputPointUtil;
 import org.tron.core.db.Manager;
 import org.tron.protos.Contract.SHA256Compress;
 
@@ -73,7 +74,7 @@ public class MerkleContainer {
 
 
   public IncrementalMerkleTreeContainer saveCmIntoMerkleTree(byte[] rt, byte[] cm1,
-      byte[] cm2) {
+      byte[] cm2, byte[] hash) {
 
     IncrementalMerkleTreeContainer tree = this.manager.getMerkleTreeStore().get(rt)
         .toMerkleTreeContainer();
@@ -81,6 +82,7 @@ public class MerkleContainer {
     tree = saveCmIntoMerkleTree(tree, cm1);
 
     IncrementalMerkleWitnessContainer witnessContainer1 = tree.toWitness();
+    witnessContainer1.getWitnessCapsule().setOutputPoint(ByteString.copyFrom(hash), 0);
     putMerkleWitnessIntoStore(witnessContainer1.getMerkleWitnessKey(),
         witnessContainer1.getWitnessCapsule());
 
@@ -88,6 +90,7 @@ public class MerkleContainer {
 
     IncrementalMerkleWitnessContainer witnessContainer2 = saveCmIntoMerkleWitness(
         witnessContainer1, cm2);
+    witnessContainer2.getWitnessCapsule().setOutputPoint(ByteString.copyFrom(hash), 1);
     putMerkleWitnessIntoStore(witnessContainer2.getMerkleWitnessKey(),
         witnessContainer2.getWitnessCapsule());
 
@@ -120,19 +123,10 @@ public class MerkleContainer {
     return tree.path();
   }
 
-  private byte[] createWitnessKey(String txHash, int index) {
-    return ByteArray.fromString(txHash + index);
-  }
 
-  public IncrementalMerkleWitnessContainer getWitness(String txHash, int index) {
-    return this.manager.getMerkleWitnessStore().get(createWitnessKey(txHash, index))
-        .toMerkleWitnessContainer();
-  }
-
-  public void saveWitness(String txHash, int index,
-      IncrementalMerkleWitnessContainer witness) {
-    this.manager.getMerkleWitnessStore()
-        .put(createWitnessKey(txHash, index), witness.getWitnessCapsule());
+  public IncrementalMerkleWitnessCapsule getWitness(byte[] txHash, int index) {
+    return this.manager.getMerkleWitnessStore()
+        .get(OutputPointUtil.outputPointToKey(txHash, index));
   }
 
 
