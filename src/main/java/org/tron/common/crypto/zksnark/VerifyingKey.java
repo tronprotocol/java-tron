@@ -1,5 +1,12 @@
 package org.tron.common.crypto.zksnark;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.Arrays;
+import org.tron.common.utils.ByteArray;
+
 public class VerifyingKey {
 
   private G2Point A;
@@ -89,5 +96,211 @@ public class VerifyingKey {
           "0x111e2e2a5f8828f80ddad08f9f74db56dac1cc16c1cb278036f79a84cf7a116f, 0x1d7d62e192b219b9808faa906c5ced871788f6339e8d91b83ac1343e20a16b30");
     }
     return vk;
+  }
+
+  public static void assertAequalsB(byte a, byte b) throws IOException {
+    if (a != b) {
+      byte[] A = {a};
+      byte[] B = {b};
+      throw new IOException(
+          "Need " + ByteArray.toHexString(A) + " but found " + ByteArray.toHexString(B));
+    }
+  }
+
+  public static VerifyingKey loadVk() {
+    if (vk == null) {
+      File file = new File("sprout-verifying.key");
+      Long filelength = file.length();
+      byte[] filecontent = new byte[filelength.intValue()];
+      try {
+        FileInputStream in = new FileInputStream(file);
+        in.read(filecontent);
+        in.close();
+        vk = new VerifyingKey();
+        int offset = 0;
+        assertAequalsB((byte) (0x30), filecontent[offset++]);
+        vk.A = Pairing.G2Point(Arrays.copyOfRange(filecontent, offset, offset + 128));
+        offset += 128;
+        assertAequalsB((byte) (0x30), filecontent[offset++]);
+        vk.B = Pairing.G1Point(Arrays.copyOfRange(filecontent, offset, offset + 64));
+        offset += 64;
+        assertAequalsB((byte) (0x30), filecontent[offset++]);
+        vk.C = Pairing.G2Point(Arrays.copyOfRange(filecontent, offset, offset + 128));
+        offset += 128;
+        assertAequalsB((byte) (0x30), filecontent[offset++]);
+        vk.gamma = Pairing.G2Point(Arrays.copyOfRange(filecontent, offset, offset + 128));
+        offset += 128;
+        assertAequalsB((byte) (0x30), filecontent[offset++]);
+        vk.gammaBeta1 = Pairing.G1Point(Arrays.copyOfRange(filecontent, offset, offset + 64));
+        offset += 64;
+        assertAequalsB((byte) (0x30), filecontent[offset++]);
+        vk.gammaBeta2 = Pairing.G2Point(Arrays.copyOfRange(filecontent, offset, offset + 128));
+        offset += 128;
+        assertAequalsB((byte) (0x30), filecontent[offset++]);
+        vk.Z = Pairing.G2Point(Arrays.copyOfRange(filecontent, offset, offset + 128));
+        offset += 128;
+        vk.IC = new G1Point[10];
+        assertAequalsB((byte) (0x30), filecontent[offset++]);
+        vk.IC[0] = Pairing.G1Point(Arrays.copyOfRange(filecontent, offset, offset + 64));
+        offset += 88;
+        for (int i = 1; i < 10; i++) {
+          assertAequalsB((byte) (0x30), filecontent[offset++]);
+          vk.IC[i] = Pairing.G1Point(Arrays.copyOfRange(filecontent, offset, offset + 64));
+          offset += 64;
+        }
+      } catch (FileNotFoundException e) {
+        e.printStackTrace();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+    return vk;
+  }
+
+  public static VerifyingKey initVk() {
+    if (vk == null) {
+      vk = new VerifyingKey();
+      vk.A = new G2Point(
+          "14752851163271972921165116810778899752274893127848647655434033030151679466487",
+          "2146841959437886920191033516947821737903543682424168472444605468016078231160",
+          "19774899457345372253936887903062884289284519982717033379297427576421785416781",
+          "8159591693044959083845993640644415462154314071906244874217244895511876957520");
+      vk.B = new G1Point(
+          "21163380042281667028194921861846440787793088615342153907557220755287297358850",
+          "1730005633951488561162401768080055521907218407650744548610087024095695199108");
+      vk.C = new G2Point(
+          "21049232722760520884910305096518213957309396732908002623546433288382066807275",
+          "752476689148090443252690606274719847522796924289184281944322016120845872819",
+          "9346016947773545029940290874113526292203330783138316933543286726319309993747",
+          "10657101118636466197534311304303971390099046792106599174009327086566056805776");
+      vk.Z = new G2Point(
+          "15147055940817099984713168864119185960995485721468434382981947300642935581737",
+          "4631727067030503710010688256995134761045201948838871620017875546783390086460",
+          "17623047202600292659611642134440671974256480551657416500487803939184025704533",
+          "21638878652776235365545898652250152098523031965244840843903617079107891864279");
+      vk.gamma = new G2Point(
+          "17174171333098854828033634539500164902488935492941049779522958919502622588081",
+          "15684072703239714088748884492940919778409948011906556607893998678768263898205",
+          "2875949754418862832249955782188169764124161746616276218844232725526931423080",
+          "3086697999584045732786424745914779370086036468911841736272013630524944011227");
+      vk.gammaBeta1 = new G1Point(
+          "9712873799510369170966410452086991795283841876597505062330138725142728449825",
+          "9433999572643313025031367487888933220352848413609488855427374525420646960237");
+      vk.gammaBeta2 = new G2Point(
+          "14123988352319117906018970862315159679452117471849989000282265698764599106398",
+          "18203970449465878141055527247672796515569702004956673464850250575302350363961",
+          "9070274571799942693810232181825350369966811716654884009331987967306715939422",
+          "3344169380239392314048474373026629561296701202792428464496597755254021991380");
+      vk.IC = new G1Point[10];
+      vk.IC[0] = new G1Point(
+          "4944125736493822447335225095051526251764804673819722614680138374080051759962",
+          "1935192491180648890600311215252271941452272522684171010354270378941282184111");
+      vk.IC[1] = new G1Point(
+          "13671710343712145123751755431743289257188978742535474396465034058168696864220",
+          "20826522333544227498944395534998927652160019773231902383997070883222962120651");
+      vk.IC[2] = new G1Point(
+          "12761764339888541584683044940570653033593327533706847447891003583652324561983",
+          "1890169332711480046756085850376547686758361763522376714890812739379155117275");
+      vk.IC[3] = new G1Point(
+          "10780973691118990463572234139590032304523642666772690042271497225434343505093",
+          "1225111119988715799286416715484295049110336342693607646598445309214414972833");
+      vk.IC[4] = new G1Point(
+          "6813397648435401772315777392068447297731770034820995962730599333379629935197",
+          "5543296837108785826068557070639753614637117027747616223928176042346981863803");
+      vk.IC[5] = new G1Point(
+          "15888176973130579702136584647732320447911977285971866534948545524629530339320",
+          "19353498956202835216323577418447420319043865439124272799134659660891866791335");
+      vk.IC[6] = new G1Point(
+          "4391160655333174988591015543994926300076235924540378279303074871686753798142",
+          "11171604800461778651579303937810014677300582907756707298692424617842305602740");
+      vk.IC[7] = new G1Point(
+          "5577412546328490241391307238739013120425748898832356403880504969857771119690",
+          "11257371099238762117045275690719175766562617360639429481885451902339768879934");
+      vk.IC[8] = new G1Point(
+          "4717266903818752750408066803467256739157750721583295354208673132324161744458",
+          "2253904876039028511475843193830314875944384935466740271927641917713621346414");
+      vk.IC[9] = new G1Point(
+          "7742642460569273216539674856471756904887522145302233146876244281004809392495",
+          "13338610944590869762446817049541912676528855874207736821753831893421715974960");
+    }
+
+    return vk;
+  }
+
+
+  public static boolean checkG1Poin(G1Point g1) {
+    BN128G1 g11 = g1.toBN128G1();
+    if (g11 == null) {
+      return false;
+    }
+    return true;
+  }
+
+  public static boolean checkG2Poin(G2Point g2) {
+    BN128G2 g21 = g2.toBN128G2();
+    if (g21 == null) {
+      return false;
+    }
+    return true;
+  }
+
+
+  public static void sort(byte[] bytes) {
+    int len = bytes.length / 2;
+    for (int i = 0; i < len; i++) {
+      byte b = bytes[i];
+      bytes[i] = bytes[bytes.length - i - 1];
+      bytes[bytes.length - i - 1] = b;
+    }
+  }
+
+  public static G1Point G1Point(byte[] x, byte[] y) {
+//   sort(x);
+//    sort(y);
+    return new G1Point(x, y);
+  }
+
+  public static void test() {
+    byte[] x = ByteArray
+        .fromHexString("2eca0c7238bf16e83e7a1e6c5d49540685ff51380f309842a98561558019fc02");
+    byte[] y = ByteArray
+        .fromHexString("03d3260361bb8451de5ff5ecd17f010ff22f5c31cdf184e9020b06fa5997db84");
+    G1Point p = G1Point(x, y);
+    if (checkG1Poin(p)) {
+      System.out.println("1");
+    } else {
+      System.out.println("2");
+    }
+
+  }
+
+  public static void main(String[] args) throws Exception {
+    initVk();
+    if (!checkG2Poin(vk.A)) {
+      throw new Exception("Check false!");
+    }
+    if (!checkG1Poin(vk.B)) {
+      throw new Exception("Check false!");
+    }
+    if (!checkG2Poin(vk.C)) {
+      throw new Exception("Check false!");
+    }
+    if (!checkG2Poin(vk.gamma)) {
+      throw new Exception("Check false!");
+    }
+    if (!checkG1Poin(vk.gammaBeta1)) {
+      throw new Exception("Check false!");
+    }
+    if (!checkG2Poin(vk.gammaBeta2)) {
+      throw new Exception("Check false!");
+    }
+    if (!checkG2Poin(vk.Z)) {
+      throw new Exception("Check false!");
+    }
+    for (int i = 0; i < 10; i++) {
+      if (!checkG1Poin(vk.IC[i])) {
+        throw new Exception("Check false!");
+      }
+    }
   }
 }

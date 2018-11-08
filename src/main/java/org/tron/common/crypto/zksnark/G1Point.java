@@ -18,6 +18,11 @@ public class G1Point {
     this.y = y;
   }
 
+  public G1Point(String x, String y) {
+    this.x = new BigInteger(x, 10);
+    this.y = new BigInteger(y, 10);
+  }
+
   public G1Point(byte[] x, byte[] y) {
     this.x = new BigInteger(x);
     this.y = new BigInteger(y);
