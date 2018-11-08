@@ -169,6 +169,14 @@ public class ProposalController {
           manager.getDynamicPropertiesStore().saveAllowDelegateResource(entry.getValue());
           break;
         }
+        case (17): {
+          manager.getDynamicPropertiesStore().saveAllowAdaptiveEnergy(entry.getValue());
+          break;
+        }
+        case (18): {
+          manager.getDynamicPropertiesStore().saveTotalEnergyLimit(entry.getValue());
+          break;
+        }
         default:
           break;
       }
