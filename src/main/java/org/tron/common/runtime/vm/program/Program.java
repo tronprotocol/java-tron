@@ -198,8 +198,9 @@ public class Program {
 
     InternalTransaction addedInternalTx = null;
     if (internalTransaction != null) {
-      addedInternalTx = getResult().addInternalTransaction(internalTransaction.getHash(), getCallDeep(),
-          senderAddress, transferAddress, value, data, note, nonce, tokenId);
+      addedInternalTx = getResult()
+          .addInternalTransaction(internalTransaction.getHash(), getCallDeep(),
+              senderAddress, transferAddress, value, data, note, nonce, tokenId);
     }
 
     return addedInternalTx;

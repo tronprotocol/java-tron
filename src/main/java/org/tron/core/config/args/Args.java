@@ -111,6 +111,9 @@ public class Args {
   @Parameter(names = {"--storage-index-directory"}, description = "Storage index directory")
   private String storageIndexDirectory = "";
 
+  @Parameter(names = {"--storage-index-switch"}, description = "Storage index switch.(on or off)")
+  private String storageIndexSwitch = "";
+
   @Getter
   private Storage storage;
 
@@ -343,6 +346,7 @@ public class Args {
     INSTANCE.privateKey = "";
     INSTANCE.storageDbDirectory = "";
     INSTANCE.storageIndexDirectory = "";
+    INSTANCE.storageIndexSwitch = "";
 
     // FIXME: INSTANCE.storage maybe null ?
     if (INSTANCE.storage != null) {
@@ -487,6 +491,10 @@ public class Args {
     INSTANCE.storage.setIndexDirectory(Optional.ofNullable(INSTANCE.storageIndexDirectory)
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getIndexDirectoryFromConfig(config)));
+
+    INSTANCE.storage.setIndexSwitch(Optional.ofNullable(INSTANCE.storageIndexSwitch)
+        .filter(StringUtils::isNotEmpty)
+        .orElse(Storage.getIndexSwitchFromConfig(config)));
 
     INSTANCE.storage.setPropertyMapFromConfig(config);
 

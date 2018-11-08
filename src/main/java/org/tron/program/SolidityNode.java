@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -211,6 +212,18 @@ public class SolidityNode {
     }
   }
 
+  private void resolveCompatibilityIssueIfUsingFullNodeDatabase() {
+    long lastSolidityBlockNum = dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+    long headBlockNum = dbManager.getHeadBlockNum();
+    logger.info("headBlockNum:{}, solidityBlockNum:{}, diff:{}",
+        headBlockNum, lastSolidityBlockNum, headBlockNum - lastSolidityBlockNum);
+    if (lastSolidityBlockNum < headBlockNum) {
+      logger.info("use fullnode database, headBlockNum:{}, solidityBlockNum:{}, diff:{}",
+          headBlockNum, lastSolidityBlockNum, headBlockNum - lastSolidityBlockNum);
+      dbManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(headBlockNum);
+    }
+  }
+
   private void loopProcessBlock(Block block) {
     while (true) {
       long blockNum = block.getBlockHeader().getRawData().getNumber();
@@ -269,7 +282,9 @@ public class SolidityNode {
     Args.setParam(args, Constant.TESTNET_CONF);
     Args cfgArgs = Args.getInstance();
 
-    ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory
+    logger.info("index switch is {}",
+        BooleanUtils.toStringOnOff(BooleanUtils.toBoolean(cfgArgs.getStorage().getIndexSwitch())));
+    ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger)LoggerFactory
         .getLogger(Logger.ROOT_LOGGER_NAME);
     root.setLevel(Level.toLevel(cfgArgs.getLogLevel()));
 
@@ -308,6 +323,7 @@ public class SolidityNode {
     nodeManager.close();
 
     SolidityNode node = new SolidityNode(appT.getDbManager(), cfgArgs);
+    node.resolveCompatibilityIssueIfUsingFullNodeDatabase();
     node.start();
 
     rpcApiService.blockUntilShutdown();

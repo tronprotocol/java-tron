@@ -1,8 +1,12 @@
 package org.tron.common.runtime;
 
-import static java.lang.Math.*;
-import static org.apache.commons.lang3.ArrayUtils.*;
-import static org.tron.common.runtime.utils.MUtil.*;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+import static org.apache.commons.lang3.ArrayUtils.getLength;
+import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
+import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
+import static org.tron.common.runtime.utils.MUtil.transfer;
+import static org.tron.common.runtime.utils.MUtil.transferToken;
 
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
@@ -260,7 +264,8 @@ public class RuntimeImpl implements Runtime {
   }
 
   public long getTotalEnergyLimitWithFixRatio(AccountCapsule creator, AccountCapsule caller,
-      TriggerSmartContract contract, long feeLimit, long callValue) {
+      TriggerSmartContract contract, long feeLimit, long callValue)
+      throws ContractValidateException {
 
     long callerEnergyLimit = getAccountEnergyLimitWithFixRatio(caller, feeLimit, callValue);
     if (Arrays.equals(creator.getAddress().toByteArray(), caller.getAddress().toByteArray())) {
@@ -276,6 +281,9 @@ public class RuntimeImpl implements Runtime {
     long consumeUserResourcePercent = contractCapsule.getConsumeUserResourcePercent();
 
     long originEnergyLimit = contractCapsule.getOriginEnergyLimit();
+    if (originEnergyLimit < 0) {
+      throw new ContractValidateException("originEnergyLimit can't be < 0");
+    }
 
     if (consumeUserResourcePercent <= 0) {
       creatorEnergyLimit = min(energyProcessor.getAccountLeftEnergyFromFreeze(creator),
@@ -297,7 +305,8 @@ public class RuntimeImpl implements Runtime {
   }
 
   public long getTotalEnergyLimit(AccountCapsule creator, AccountCapsule caller,
-      TriggerSmartContract contract, long feeLimit, long callValue) {
+      TriggerSmartContract contract, long feeLimit, long callValue)
+      throws ContractValidateException {
     //  according to version
     if (VMConfig.getEnergyLimitHardFork()) {
       return getTotalEnergyLimitWithFixRatio(creator, caller, contract, feeLimit, callValue);
@@ -432,10 +441,12 @@ public class RuntimeImpl implements Runtime {
     if (callValue > 0) {
       transfer(this.deposit, callerAddress, contractAddress, callValue);
     }
-    long callTokenValue = contract.getCallTokenValue();
-    String tokenId = contract.getTokenId();
-    if (callTokenValue > 0 && !StringUtils.isEmpty(tokenId)) {
-      transferToken(this.deposit,callerAddress,contractAddress, tokenId, callTokenValue);
+    if (VMConfig.getEnergyLimitHardFork()) {
+      long callTokenValue = contract.getCallTokenValue();
+      String tokenId = contract.getTokenId();
+      if (callTokenValue > 0 && !StringUtils.isEmpty(tokenId)) {
+        transferToken(this.deposit, callerAddress, contractAddress, tokenId, callTokenValue);
+      }
     }
 
   }
@@ -520,10 +531,12 @@ public class RuntimeImpl implements Runtime {
     if (callValue > 0) {
       transfer(this.deposit, callerAddress, contractAddress, callValue);
     }
-    long callTokenValue = contract.getCallTokenValue();
-    String tokenId = contract.getTokenId();
-    if (callTokenValue > 0 && !StringUtils.isEmpty(tokenId)) {
-      transferToken(this.deposit,callerAddress,contractAddress, tokenId, callTokenValue);
+    if (VMConfig.getEnergyLimitHardFork()) {
+      long callTokenValue = contract.getCallTokenValue();
+      String tokenId = contract.getTokenId();
+      if (callTokenValue > 0 && !StringUtils.isEmpty(tokenId)) {
+        transferToken(this.deposit, callerAddress, contractAddress, tokenId, callTokenValue);
+      }
     }
 
   }
@@ -610,7 +623,7 @@ public class RuntimeImpl implements Runtime {
       result = program.getResult();
       result.rejectInternalTransactions();
       if (Objects.isNull(result.getException())) {
-        logger.info(e.getMessage(), e);
+        logger.error(e.getMessage(), e);
         result.setException(new RuntimeException("Unknown Throwable"));
       }
       if (StringUtils.isEmpty(runtimeError)) {
