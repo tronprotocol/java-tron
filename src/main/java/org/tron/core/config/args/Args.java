@@ -214,6 +214,10 @@ public class Args {
 
   @Getter
   @Setter
+  private int rpcOnSolidityPort;
+
+  @Getter
+  @Setter
   private int fullNodeHttpPort;
 
   @Getter
@@ -370,6 +374,7 @@ public class Args {
     //INSTANCE.syncNodeCount = 0;
     INSTANCE.nodeP2pVersion = 0;
     INSTANCE.rpcPort = 0;
+    INSTANCE.rpcOnSolidityPort = 0;
     INSTANCE.fullNodeHttpPort = 0;
     INSTANCE.solidityHttpPort = 0;
     INSTANCE.maintenanceTimeInterval = 0;
@@ -568,6 +573,9 @@ public class Args {
 
     INSTANCE.rpcPort =
         config.hasPath("node.rpc.port") ? config.getInt("node.rpc.port") : 50051;
+
+    INSTANCE.rpcOnSolidityPort =
+        config.hasPath("node.rpc.solidityPort") ? config.getInt("node.rpc.solidityPort") : 50061;
 
     INSTANCE.fullNodeHttpPort =
         config.hasPath("node.http.fullNodePort") ? config.getInt("node.http.fullNodePort") : 8090;

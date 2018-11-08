@@ -1,4 +1,4 @@
-package org.tron.core.services.http.solidity;
+package org.tron.core.services.interfaceOnSolidity.http.solidity;
 
 import com.google.protobuf.ByteString;
 import java.io.IOException;
@@ -11,24 +11,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Wallet;
-import org.tron.core.WalletSolidity;
 import org.tron.core.services.http.JsonFormat;
+import org.tron.core.services.interfaceOnSolidity.WalletOnSolidity;
 import org.tron.protos.Protocol.TransactionInfo;
 
 
 @Component
 @Slf4j
-public class GetTransactionInfoByIdSolidityServlet extends HttpServlet {
+public class GetTransactionInfoByIdOnSolidityServlet extends HttpServlet {
 
   @Autowired
-  private Wallet wallet;
+  private WalletOnSolidity walletOnSolidity;
 
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       String input = request.getParameter("value");
-      TransactionInfo transInfo = wallet.getTransactionInfoById(ByteString.copyFrom(
+      TransactionInfo transInfo = walletOnSolidity.getTransactionInfoById(ByteString.copyFrom(
           ByteArray.fromHexString(input)));
       if (transInfo == null) {
         response.getWriter().println("{}");
@@ -52,7 +51,7 @@ public class GetTransactionInfoByIdSolidityServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build);
-      TransactionInfo transInfo = wallet.getTransactionInfoById(build.build().getValue());
+      TransactionInfo transInfo = walletOnSolidity.getTransactionInfoById(build.build().getValue());
       if (transInfo == null) {
         response.getWriter().println("{}");
       } else {

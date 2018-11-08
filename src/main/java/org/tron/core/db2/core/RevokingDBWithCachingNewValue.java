@@ -108,9 +108,23 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
     return head.iterator();
   }
 
+  public synchronized Iterator<Map.Entry<byte[], byte[]>> iteratorOnSolidity() {
+    return head.getSolidity().iterator();
+  }
+
   //for blockstore
   @Override
-  public synchronized Set<byte[]> getlatestValues(long limit) {
+  public Set<byte[]> getlatestValues(long limit) {
+    return getlatestValues(head, limit);
+  }
+
+  //for blockstore
+  public Set<byte[]> getlatestValuesOnSolidity(long limit) {
+    return getlatestValues(head.getSolidity(), limit);
+  }
+
+  //for blockstore
+  private synchronized Set<byte[]> getlatestValues(Snapshot head, long limit) {
     if (limit <= 0) {
       return Collections.emptySet();
     }
@@ -136,8 +150,7 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
   }
 
   //for blockstore
-  @Override
-  public synchronized Set<byte[]> getValuesNext(byte[] key, long limit) {
+  private Set<byte[]> getValuesNext(Snapshot head, byte[] key, long limit) {
     if (limit <= 0) {
       return Collections.emptySet();
     }
@@ -161,6 +174,15 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
         .map(Map.Entry::getValue)
         .map(WrappedByteArray::getBytes)
         .collect(Collectors.toSet());
+  }
+
+  @Override
+  public Set<byte[]> getValuesNext(byte[] key, long limit) {
+    return getValuesNext(head, key, limit);
+  }
+
+  public synchronized Set<byte[]> getValuesNextOnSolidity(byte[] key, long limit) {
+    return getValuesNext(head.getSolidity(), key, limit);
   }
 
 }

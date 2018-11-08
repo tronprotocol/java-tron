@@ -123,6 +123,7 @@ public class AssetIssueActuator extends AbstractActuator {
           "contract type error,expected type [AssetIssueContract],real type[" + contract
               .getClass() + "]");
     }
+
     final AssetIssueContract assetIssueContract;
     try {
       assetIssueContract = this.contract.unpack(AssetIssueContract.class);
@@ -130,20 +131,25 @@ public class AssetIssueActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
+
     byte[] ownerAddress = assetIssueContract.getOwnerAddress().toByteArray();
     if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
+
     if (!TransactionUtil.validAssetName(assetIssueContract.getName().toByteArray())) {
       throw new ContractValidateException("Invalid assetName");
     }
+
     if ((!assetIssueContract.getAbbr().isEmpty()) && !TransactionUtil
         .validAssetName(assetIssueContract.getAbbr().toByteArray())) {
       throw new ContractValidateException("Invalid abbreviation for token");
     }
+
     if (!TransactionUtil.validUrl(assetIssueContract.getUrl().toByteArray())) {
       throw new ContractValidateException("Invalid url");
     }
+
     if (!TransactionUtil
         .validAssetDescription(assetIssueContract.getDescription().toByteArray())) {
       throw new ContractValidateException("Invalid description");
@@ -235,6 +241,23 @@ public class AssetIssueActuator extends AbstractActuator {
     if (accountCapsule.getBalance() < calcFee()) {
       throw new ContractValidateException("No enough balance for fee!");
     }
+
+    AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
+    String name = new String(assetIssueCapsule.getName().toByteArray(),
+        Charset.forName("UTF-8")); // getName().toStringUtf8()
+    long order = 0;
+    byte[] key = name.getBytes();
+    while (this.dbManager.getAssetIssueStore().get(key) != null) {
+      order++;
+      String nameKey = AssetIssueCapsule.createDbKeyString(name, order);
+      key = nameKey.getBytes();
+    }
+    assetIssueCapsule.setOrder(order);
+
+    if (!TransactionUtil.validAssetName(assetIssueCapsule.createDbKey())) {
+      throw new ContractValidateException("Invalid assetID");
+    }
+
     return true;
   }
 

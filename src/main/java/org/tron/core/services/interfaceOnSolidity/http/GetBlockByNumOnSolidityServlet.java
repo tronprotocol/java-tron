@@ -1,6 +1,5 @@
-package org.tron.core.services.http.solidity;
+package org.tron.core.services.interfaceOnSolidity.http;
 
-import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
@@ -9,59 +8,54 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.api.GrpcAPI.BytesMessage;
-import org.tron.common.utils.ByteArray;
-import org.tron.core.Wallet;
-import org.tron.core.WalletSolidity;
+import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.core.services.http.JsonFormat;
-import org.tron.protos.Protocol.TransactionInfo;
-
+import org.tron.core.services.http.Util;
+import org.tron.core.services.interfaceOnSolidity.WalletOnSolidity;
+import org.tron.protos.Protocol.Block;
 
 @Component
 @Slf4j
-public class GetTransactionInfoByIdSolidityServlet extends HttpServlet {
+public class GetBlockByNumOnSolidityServlet extends HttpServlet {
 
   @Autowired
-  private Wallet wallet;
+  private WalletOnSolidity walletOnSolidity;
 
-  @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getParameter("value");
-      TransactionInfo transInfo = wallet.getTransactionInfoById(ByteString.copyFrom(
-          ByteArray.fromHexString(input)));
-      if (transInfo == null) {
-        response.getWriter().println("{}");
+      long num = Long.parseLong(request.getParameter("num"));
+      Block reply = walletOnSolidity.getBlockByNum(num);
+      if (reply != null) {
+        response.getWriter().println(Util.printBlock(reply));
       } else {
-        response.getWriter().println(JsonFormat.printToString(transInfo));
+        response.getWriter().println("{}");
       }
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {
-        response.getWriter().println(e.getMessage());
+        response.getWriter().println(Util.printErrorMsg(e));
       } catch (IOException ioe) {
         logger.debug("IOException: {}", ioe.getMessage());
       }
     }
   }
 
-  @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
-      BytesMessage.Builder build = BytesMessage.newBuilder();
+      NumberMessage.Builder build = NumberMessage.newBuilder();
       JsonFormat.merge(input, build);
-      TransactionInfo transInfo = wallet.getTransactionInfoById(build.build().getValue());
-      if (transInfo == null) {
-        response.getWriter().println("{}");
+      Block reply = walletOnSolidity.getBlockByNum(build.getNum());
+      if (reply != null) {
+        response.getWriter().println(Util.printBlock(reply));
       } else {
-        response.getWriter().println(JsonFormat.printToString(transInfo));
+        response.getWriter().println("{}");
       }
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {
-        response.getWriter().println(e.getMessage());
+        response.getWriter().println(Util.printErrorMsg(e));
       } catch (IOException ioe) {
         logger.debug("IOException: {}", ioe.getMessage());
       }
