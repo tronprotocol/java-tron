@@ -182,6 +182,8 @@ message ProposalDeleteContract {
 message CreateSmartContract {
   bytes owner_address = 1;
   SmartContract new_contract = 2;
+  int64 call_token_value = 3;
+  string token_id = 4;
 }
 
 message TriggerSmartContract {
@@ -189,6 +191,8 @@ message TriggerSmartContract {
   bytes contract_address = 2;
   int64 call_value = 3;
   bytes data = 4;
+  int64 call_token_value = 5;
+  string token_id = 6;
 }
 
 message BuyStorageContract {

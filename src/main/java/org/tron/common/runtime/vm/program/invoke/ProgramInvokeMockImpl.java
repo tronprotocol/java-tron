@@ -241,7 +241,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
 
   @Override
   public boolean byTestingSuite() {
-    return false;
+    return true;
   }
 
   @Override

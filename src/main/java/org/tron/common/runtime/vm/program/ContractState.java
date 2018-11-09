@@ -25,6 +25,7 @@ import org.tron.common.storage.Deposit;
 import org.tron.common.storage.Key;
 import org.tron.common.storage.Value;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -259,6 +260,21 @@ public class ContractState implements Deposit, ProgramListenerAware {
   @Override
   public long getNextMaintenanceTime() {
     return deposit.getNextMaintenanceTime();
+  }
+
+  @Override
+  public long addTokenBalance(byte[] address, byte[] tokenId, long value) {
+    return  deposit.addTokenBalance(address,tokenId,value);
+  }
+
+  @Override
+  public long getTokenBalance(byte[] address, byte[] tokenId) {
+    return deposit.getTokenBalance(address,tokenId);
+  }
+
+  @Override
+  public AssetIssueCapsule getAssetIssue(byte[] tokenId) {
+    return deposit.getAssetIssue(tokenId);
   }
 
   @Override

@@ -43,6 +43,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.config.VMConfig;
+import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.EnergyCost;
 import org.tron.common.runtime.vm.MessageCall;
@@ -63,10 +64,13 @@ import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.TransferActuator;
+import org.tron.core.actuator.TransferAssetActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
 import org.tron.protos.Protocol;
@@ -190,12 +194,13 @@ public class Program {
    */
   private InternalTransaction addInternalTx(DataWord energyLimit, byte[] senderAddress,
       byte[] transferAddress,
-      long value, byte[] data, String note, long nonce) {
+      long value, byte[] data, String note, long nonce, String tokenId) {
 
     InternalTransaction addedInternalTx = null;
     if (internalTransaction != null) {
-      addedInternalTx = getResult().addInternalTransaction(internalTransaction.getHash(), getCallDeep(),
-          senderAddress, transferAddress, value, data, note, nonce);
+      addedInternalTx = getResult()
+          .addInternalTransaction(internalTransaction.getHash(), getCallDeep(),
+              senderAddress, transferAddress, value, data, note, nonce, tokenId);
     }
 
     return addedInternalTx;
@@ -407,7 +412,7 @@ public class Program {
     }
 
     increaseNonce();
-    addInternalTx(null, owner, obtainer, balance, null, "suicide", nonce);
+    addInternalTx(null, owner, obtainer, balance, null, "suicide", nonce,  null);
 
     if (FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0) {
       // if owner == obtainer just zeroing account according to Yellow Paper
@@ -489,7 +494,7 @@ public class Program {
     increaseNonce();
     // [5] COOK THE INVOKE AND EXECUTE
     InternalTransaction internalTx = addInternalTx(null, senderAddress, newAddress, endowment,
-        programCode, "create", nonce);
+        programCode, "create", nonce, null);
     long vmStartInUs = System.nanoTime() / 1000;
     ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
         this, new DataWord(newAddress), getContractAddress(), value,
@@ -610,11 +615,23 @@ public class Program {
 
     // 2.1 PERFORM THE VALUE (endowment) PART
     long endowment = msg.getEndowment().value().longValueExact();
-    long senderBalance = deposit.getBalance(senderAddress);
-    if (senderBalance < endowment) {
-      stackPushZero();
-      refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
-      return;
+    // transfer trx validation
+    if (msg.getTokenId() == null) {
+      long senderBalance = deposit.getBalance(senderAddress);
+      if (senderBalance < endowment) {
+        stackPushZero();
+        refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+        return;
+      }
+    }
+    // transfer trc10 token validation
+    else {
+      long senderBalance = deposit.getTokenBalance(senderAddress, msg.getTokenId().getData());
+      if (senderBalance < endowment) {
+        stackPushZero();
+        refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+        return;
+      }
     }
 
     // FETCH THE CODE
@@ -623,6 +640,7 @@ public class Program {
     byte[] programCode =
         accountCapsule != null ? getContractState().getCode(codeAddress) : EMPTY_BYTE_ARRAY;
 
+    // only for trx, not for token
     long contextBalance = 0L;
     if (byTestingSuite()) {
       // This keeps track of the calls created for a test
@@ -631,20 +649,31 @@ public class Program {
           msg.getEndowment().getNoLeadZeroesData());
     } else if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
         && senderAddress != contextAddress && endowment > 0) {
-      try {
-        TransferActuator
-            .validateForSmartContract(deposit, senderAddress, contextAddress, endowment);
-      } catch (ContractValidateException e) {
-        throw new BytecodeExecutionException("validateForSmartContract failure");
+      if (msg.getTokenId() == null) {
+        try {
+          TransferActuator
+              .validateForSmartContract(deposit, senderAddress, contextAddress, endowment);
+        } catch (ContractValidateException e) {
+          throw new BytecodeExecutionException("validateForSmartContract failure");
+        }
+        deposit.addBalance(senderAddress, -endowment);
+        contextBalance = deposit.addBalance(contextAddress, endowment);
       }
-      deposit.addBalance(senderAddress, -endowment);
-      contextBalance = deposit.addBalance(contextAddress, endowment);
+      else {
+        try {
+          TransferAssetActuator.validateForSmartContract(deposit,senderAddress,contextAddress, msg.getTokenId().getData(), endowment);
+        } catch (ContractValidateException e) {
+          throw new BytecodeExecutionException("validateForSmartContract failure");
+        }
+        deposit.addTokenBalance(senderAddress,msg.getTokenId().getData(),-endowment);
+        deposit.addTokenBalance(contextAddress, msg.getTokenId().getData(), endowment);
+      }
     }
 
     // CREATE CALL INTERNAL TRANSACTION
     increaseNonce();
     InternalTransaction internalTx = addInternalTx(null, senderAddress, contextAddress,
-        endowment, data, "call", nonce);
+        endowment, data, "call", nonce , msg.getTokenId() == null ? null: new String(MUtil.removeZeroes(msg.getTokenId().getData())));
 
     ProgramResult callResult = null;
     if (isNotEmpty(programCode)) {
@@ -882,6 +911,11 @@ public class Program {
     DataWord ret = getContractState()
         .getStorageValue(convertToTronAddress(getContractAddress().getLast20Bytes()), key.clone());
     return ret == null ? null : ret.clone();
+  }
+
+  public DataWord getTokenBalance(DataWord address, DataWord tokenId) {
+    long ret = getContractState().getTokenBalance(address.getLast20Bytes(), tokenId.getData());
+    return ret == 0 ? new DataWord(0) : new DataWord(ret);
   }
 
   public DataWord getPrevHash() {

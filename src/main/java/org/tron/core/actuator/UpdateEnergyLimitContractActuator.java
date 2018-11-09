@@ -6,6 +6,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.RuntimeImpl;
+import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -51,7 +52,7 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (!dbManager.passVersion(ForkBlockVersionConsts.ENERGY_LIMIT)) {
+    if (!VMConfig.getEnergyLimitHardFork()) {
       throw new ContractValidateException(
           "contract type error,unexpected type [UpdateEnergyLimitContract]");
     }
