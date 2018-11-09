@@ -4,11 +4,19 @@ import com.google.common.collect.Maps;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -44,6 +52,7 @@ public class SnapshotManager implements RevokingDatabase {
   private boolean unChecked = true;
 
   private volatile int flushCount = 0;
+  private Map<String, ListeningExecutorService> flushServices = new HashMap<>();
 
   public ISession buildSession() {
     return buildSession(false);
@@ -78,7 +87,12 @@ public class SnapshotManager implements RevokingDatabase {
 
   @Override
   public void add(IRevokingDB db) {
-    dbs.add((RevokingDBWithCachingNewValue) db);
+    RevokingDBWithCachingNewValue revokingDB = (RevokingDBWithCachingNewValue) db;
+    dbs.add(revokingDB);
+    flushServices.put(revokingDB.getDbName(), MoreExecutors.listeningDecorator(
+        Executors.newSingleThreadExecutor(
+            new ThreadFactoryBuilder().setNameFormat(revokingDB.getDbName()).build()
+        )));
   }
 
   private void advance() {
@@ -220,53 +234,64 @@ public class SnapshotManager implements RevokingDatabase {
     List<List<byte[]>> accounts = new ArrayList<>();
     List<String> debugBlockHashs = new ArrayList<>();
     // debug end
+    List<ListenableFuture<?>> futures = new ArrayList<>(dbs.size());
     for (RevokingDBWithCachingNewValue db : dbs) {
-      if (Snapshot.isRoot(db.getHead())) {
-        return;
-      }
+      futures.add(flushServices.get(db.getDbName()).submit(() -> {
+        if (Snapshot.isRoot(db.getHead())) {
+          return;
+        }
 
-      List<Snapshot> snapshots = new ArrayList<>();
+        List<Snapshot> snapshots = new ArrayList<>();
 
-      SnapshotRoot root = (SnapshotRoot) db.getHead().getRoot();
-      Snapshot next = root;
-      for (int i = 0; i < flushCount; ++i) {
-        next = next.getNext();
-        snapshots.add(next);
-        // debug begin
-        List<byte[]> debugDumpDatas = new ArrayList<>();
-        String dbName = db.getDbName();
-        SnapshotImpl snapshot = (SnapshotImpl) next;
-        DB<Key, Value> keyValueDB = snapshot.getDb();
-        for (Map.Entry<Key, Value> e : keyValueDB) {
-          Key k = e.getKey();
-          Value v = e.getValue();
+        SnapshotRoot root = (SnapshotRoot) db.getHead().getRoot();
+        Snapshot next = root;
+        for (int i = 0; i < flushCount; ++i) {
+          next = next.getNext();
+          snapshots.add(next);
+          // debug begin
+          List<byte[]> debugDumpDatas = new ArrayList<>();
+          String dbName = db.getDbName();
+          SnapshotImpl snapshot = (SnapshotImpl) next;
+          DB<Key, Value> keyValueDB = snapshot.getDb();
+          for (Map.Entry<Key, Value> e : keyValueDB) {
+            Key k = e.getKey();
+            Value v = e.getValue();
 //          debugDumpDataMap.put(dbName + ":" + ByteUtil.toHexString(k.getBytes()),
 //              dbName + ":" + ByteUtil.toHexString(k.getBytes()) + ":"
 //              + (e.getValue().getBytes() == null ? null : Sha256Hash.of(v.getBytes())));
-          if ("block".equals(dbName)) {
-            debugBlockHashs.add(Longs.fromByteArray(k.getBytes()) + ":" + ByteUtil.toHexString(k.getBytes()));
+            if ("block".equals(dbName)) {
+              debugBlockHashs.add(
+                  Longs.fromByteArray(k.getBytes()) + ":" + ByteUtil.toHexString(k.getBytes()));
+            }
+            if ("account".equals(dbName) && v.getBytes() != null) {
+              debugDumpDatas.add(v.getBytes());
+            }
           }
-          if ("account".equals(dbName) && v.getBytes() != null) {
-            debugDumpDatas.add(v.getBytes());
+
+          if ("account".equals(dbName)) {
+            accounts.add(debugDumpDatas);
           }
+
+          // debug end
         }
 
-        if ("account".equals(dbName)) {
-          accounts.add(debugDumpDatas);
+        root.merge(snapshots);
+
+        root.resetSolidity();
+        if (db.getHead() == next) {
+          db.setHead(root);
+        } else {
+          next.getNext().setPrevious(root);
+          root.setNext(next.getNext());
         }
+      }));
+    }
 
-        // debug end
-      }
-
-      root.merge(snapshots);
-
-      root.resetSolidity();
-      if (db.getHead() == next) {
-       db.setHead(root);
-      } else {
-        next.getNext().setPrevious(root);
-        root.setNext(next.getNext());
-      }
+    Future<?> future = Futures.allAsList(futures);
+    try {
+      future.get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
     }
 
     // debug begin
