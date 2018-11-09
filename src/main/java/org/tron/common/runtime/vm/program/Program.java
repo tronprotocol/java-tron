@@ -929,6 +929,11 @@ public class Program {
     return ret == null ? null : ret.clone();
   }
 
+  public DataWord getTokenBalance(DataWord address, DataWord tokenId) {
+    long ret = getContractState().getTokenBalance(address.getLast20Bytes(), tokenId.getData());
+    return ret == 0 ? new DataWord(0) : new DataWord(ret);
+  }
+
   public DataWord getPrevHash() {
     return invoke.getPrevHash().clone();
   }

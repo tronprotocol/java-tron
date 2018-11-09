@@ -593,6 +593,7 @@ message NodeInfo {
     double minTimeRatio = 16;
     double maxTimeRatio = 17;
     int64 allowCreationOfContracts = 18;
+    int64 allowAdaptiveEnergy = 19;
   }
 
   message MachineInfo {

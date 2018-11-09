@@ -570,6 +570,7 @@ public enum OpCode {
      */
     CALLTOKEN(0xd0, 8, 1, OpCode.Tier.SpecialTier, CallFlags.Call, CallFlags.HasValue),
 
+    TOKENBALANCE(0xd1, 2, 1, OpCode.Tier.ExtTier),
     /**
      * (0xf0) Create a new account with associated code
      */

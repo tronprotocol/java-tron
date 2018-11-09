@@ -375,7 +375,7 @@ public class RpcApiService implements Service {
         StreamObserver<Transaction> responseObserver) {
       ByteString id = request.getValue();
       if (null != id) {
-        Transaction reply = walletSolidity.getTransactionById(id);
+        Transaction reply = wallet.getTransactionById(id);
 
         responseObserver.onNext(reply);
       } else {
@@ -389,7 +389,7 @@ public class RpcApiService implements Service {
         StreamObserver<TransactionInfo> responseObserver) {
       ByteString id = request.getValue();
       if (null != id) {
-        TransactionInfo reply = walletSolidity.getTransactionInfoById(id);
+        TransactionInfo reply = wallet.getTransactionInfoById(id);
 
         responseObserver.onNext(reply);
       } else {
@@ -1444,7 +1444,7 @@ public class RpcApiService implements Service {
         StreamObserver<TransactionInfo> responseObserver) {
       ByteString id = request.getValue();
       if (null != id) {
-        TransactionInfo reply = walletSolidity.getTransactionInfoById(id);
+        TransactionInfo reply = wallet.getTransactionInfoById(id);
 
         responseObserver.onNext(reply);
       } else {

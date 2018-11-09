@@ -33,6 +33,12 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
   }
 
+  @Override
+  public AccountCapsule getOnSolidity(byte[] key) {
+    byte[] value = revokingDB.getUncheckedOnSolidity(key);
+    return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
+  }
+
   /**
    * Max TRX account.
    */

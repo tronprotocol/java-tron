@@ -17,6 +17,8 @@
  */
 package org.tron.common.runtime.config;
 
+import lombok.Setter;
+import org.tron.common.utils.ForkController;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.Manager;
 
@@ -33,6 +35,7 @@ public class VMConfig {
   private boolean vmTrace = false;
 
   //Odyssey3.2 hard fork -- ForkBlockVersionConsts.ENERGY_LIMIT
+  @Setter
   private static boolean ENERGY_LIMIT_HARD_FORK = false;
 
   private VMConfig() {
@@ -55,8 +58,8 @@ public class VMConfig {
     return vmTraceCompressed;
   }
 
-  public static void initVmHardFork(Manager dbManager){
-    ENERGY_LIMIT_HARD_FORK = dbManager.passVersion(ForkBlockVersionConsts.ENERGY_LIMIT);
+  public static void initVmHardFork(){
+    ENERGY_LIMIT_HARD_FORK = ForkController.instance().pass(ForkBlockVersionConsts.ENERGY_LIMIT);
   }
 
   public static boolean getEnergyLimitHardFork(){

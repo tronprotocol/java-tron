@@ -2,7 +2,11 @@ package org.tron.common.runtime.vm;
 
 import static org.tron.common.crypto.Hash.sha3;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
-import static org.tron.common.runtime.vm.OpCode.*;
+import static org.tron.common.runtime.vm.OpCode.CALL;
+import static org.tron.common.runtime.vm.OpCode.CALLTOKEN;
+import static org.tron.common.runtime.vm.OpCode.PUSH1;
+import static org.tron.common.runtime.vm.OpCode.REVERT;
+import static org.tron.common.runtime.vm.OpCode.TOKENBALANCE;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 
 import java.math.BigInteger;
@@ -80,7 +84,7 @@ public class VM {
 
       // hard fork for 3.2
       if (!VMConfig.getEnergyLimitHardFork()) {
-        if (op == CALLTOKEN) {
+        if (op == CALLTOKEN || op == TOKENBALANCE) {
           throw Program.Exception.invalidOpCode(program.getCurrentOp());
         }
       }
@@ -131,6 +135,7 @@ public class VM {
         case SLOAD:
           energyCost = energyCosts.getSLOAD();
           break;
+        case TOKENBALANCE:
         case BALANCE:
           energyCost = energyCosts.getBALANCE();
           break;
@@ -250,7 +255,8 @@ public class VM {
           energyCost = energyCosts.getLOG_ENERGY()
               + energyCosts.getLOG_TOPIC_ENERGY() * nTopics
               + energyCosts.getLOG_DATA_ENERGY() * stack.get(stack.size() - 2).longValue()
-              + calcMemEnergy(energyCosts, oldMemSize, memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0, op);
+              + calcMemEnergy(energyCosts, oldMemSize,
+              memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0, op);
 
           checkMemorySize(op, memNeeded(stack.peek(), stack.get(stack.size() - 2)));
           break;
@@ -259,7 +265,7 @@ public class VM {
           DataWord exp = stack.get(stack.size() - 2);
           int bytesOccupied = exp.bytesOccupied();
           energyCost =
-              (long)energyCosts.getEXP_ENERGY() + energyCosts.getEXP_BYTE_ENERGY() * bytesOccupied;
+              (long) energyCosts.getEXP_ENERGY() + energyCosts.getEXP_BYTE_ENERGY() * bytesOccupied;
           break;
         default:
           break;
@@ -1042,8 +1048,9 @@ public class VM {
           DataWord value = program.stackPop();
 
           if (logger.isDebugEnabled()) {
-            hint = "[" + program.getContractAddress().toPrefixString() + "] key: " + addr + " value: "
-                + value;
+            hint =
+                "[" + program.getContractAddress().toPrefixString() + "] key: " + addr + " value: "
+                    + value;
           }
 
           program.storageSave(addr, value);
@@ -1171,6 +1178,15 @@ public class VM {
           DataWord inOffset = program.stackPop();
           DataWord inSize = program.stackPop();
           program.createContract(value, inOffset, inSize);
+
+          program.step();
+        }
+        break;
+        case TOKENBALANCE: {
+          DataWord tokenId = program.stackPop();
+          DataWord address = program.stackPop();
+          DataWord tokenBalance = program.getTokenBalance(address, tokenId);
+          program.stackPush(tokenBalance);
 
           program.step();
         }
