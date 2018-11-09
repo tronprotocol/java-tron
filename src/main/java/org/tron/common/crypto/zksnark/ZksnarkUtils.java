@@ -35,7 +35,10 @@ public class ZksnarkUtils {
     byte[] message = ByteUtil
         .merge(zkContract.getRandomSeed().toByteArray(), zkContract.getNf1().toByteArray(),
             zkContract.getNf2().toByteArray(), zkContract.getPksig().toByteArray());
-    return Blake2b.hash(message);
+    byte[] personal = {'Z', 'c', 'a', 's', 'h', 'C', 'o', 'm', 'p', 'u', 't', 'e', 'h', 'S', 'i',
+        'g'};
+    System.out.println(ByteArray.toHexString(message));
+    return Blake2b.blake2b_personal(message, personal);
   }
 
   public static byte[] computeZkSignInput(
@@ -101,6 +104,7 @@ public class ZksnarkUtils {
       long vpub_new
   ) {
     System.out.println(ByteArray.toHexString(h_sig));
+    System.out.println(ByteArray.toHexString(rt));
     System.out.println(ByteArray.toHexString(h1));
     System.out.println(ByteArray.toHexString(h2));
     System.out.println(ByteArray.toHexString(nf1));
@@ -111,20 +115,20 @@ public class ZksnarkUtils {
     sort(vnew);
     byte[] temp = new byte[21];
 
-    byte[] witness = ByteUtil.merge(rt, h_sig, h1, h2, nf1, nf2, cm1, cm2, vold, vnew);
+    byte[] witness = ByteUtil.merge(rt, h_sig, nf1, h1, nf2, h2, cm1, cm2, vold, vnew);
 
     int offset = 0;
     to253Bits(witness, rt, offset);
     offset += 253;
     to253Bits(witness, h_sig, offset);
     offset += 253;
-    to253Bits(witness, h1, offset);
-    offset += 253;
-    to253Bits(witness, h2, offset);
-    offset += 253;
     to253Bits(witness, nf1, offset);
     offset += 253;
+    to253Bits(witness, h1, offset);
+    offset += 253;
     to253Bits(witness, nf2, offset);
+    offset += 253;
+    to253Bits(witness, h2, offset);
     offset += 253;
     to253Bits(witness, cm1, offset);
     offset += 253;

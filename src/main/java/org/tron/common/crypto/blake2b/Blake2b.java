@@ -31,6 +31,9 @@ import static org.tron.common.crypto.blake2b.ArrayUtils.fillByteArray;
 import static org.tron.common.crypto.blake2b.Const.BLAKE2B_IV;
 
 import org.tron.common.crypto.blake2b.security.Blake2b256Digest;
+import org.tron.common.crypto.zksnark.ZksnarkUtils;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 
 /**
  * Blake2b offers a built-in keying mechanism to be used directly for authentication ("Prefix-MAC")
@@ -500,5 +503,41 @@ public class Blake2b {
     Blake2b256Digest digest = new Blake2b256Digest();
     digest.update(msg);
     return digest.digest();
+  }
+
+  public static byte[] blake2b_personal(byte[] msg, byte[] personal) {
+    Blake2b digest = new Blake2b(null, 32, null, personal);
+    digest.update(msg, 0, msg.length);
+
+    byte[] out = new byte[32];
+    digest.digest(out, 0);
+    return out;
+  }
+
+  public static void main(String[] args) {
+    byte[] personal = {'Z', 'c', 'a', 's', 'h', 'C', 'o', 'm', 'p', 'u', 't', 'e', 'h', 'S', 'i',
+        'g'};
+
+    byte[] rondom = ByteArray
+        .fromHexString("c81ce6d22473de2f1e0b0d6f3bf5200217d26aa6b8f792337a7b811acd053e60");
+    ZksnarkUtils.sort(rondom);
+    byte[] nf1 = ByteArray
+        .fromHexString("4f8977bb059974a459373b45b3773a59ac2e23624d96fb3d0b1f57542f52c8a7");
+    ZksnarkUtils.sort(nf1);
+    byte[] nf2 = ByteArray
+        .fromHexString("c4cb993606305688d0145eb7942cc4646bea402269076f31d797822f232609de");
+    ZksnarkUtils.sort(nf2);
+    byte[] pk = ByteArray
+        .fromHexString("ad8a021f3438f0fe251fce2607a03526bd38d5e48a8a6347018ac5e0e6eccfed");
+    ZksnarkUtils.sort(pk);
+    byte[] msg = ByteUtil.merge(rondom, nf1, nf2, pk);
+    byte[] hash = blake2b_personal(msg, personal);
+    System.out.println(ByteArray.toHexString(hash));
+
+
+    byte[] msg1 = ByteArray.fromHexString("603e05cd1a817b7a3392f7b8a66ad2170220f53b6f0d0b1e2fde7324d2e61cc8a7c8522f54571f0b3dfb964d62232eac593a77b3453b3759a4749905bb77894fde0926232f8297d7316f07692240ea6b64c42c94b75e14d0885630063699cbc4edcfece6e0c58a0147638a8ae4d538bd2635a00726ce1f25fef038341f028aad");
+    byte[] hash1 = blake2b_personal(msg1, personal);
+    System.out.println(ByteArray.toHexString(hash1));
+
   }
 }
