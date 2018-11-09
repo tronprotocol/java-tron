@@ -12,6 +12,7 @@ import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.Storage;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -161,6 +162,13 @@ public class DepositImpl implements Deposit {
       accountCache.put(key, Value.create(accountCapsule.getData()));
     }
     return accountCapsule;
+  }
+
+  @Override
+  public byte[] getBlackHoleAddress() {
+    // using dbManager directly, black hole address should not be changed
+    // when executing smart contract.
+    return getAccountStore().getBlackhole().getAddress().toByteArray();
   }
 
   @Override
@@ -318,7 +326,7 @@ public class DepositImpl implements Deposit {
 
   @Override
   public synchronized AssetIssueCapsule getAssetIssue(byte[] tokenId) {
-    byte[] tokenIdWithoutLeadingZero =MUtil.removeZeroes(tokenId);
+    byte[] tokenIdWithoutLeadingZero =ByteUtil.stripLeadingZeroes(tokenId);
     Key key = Key.create(tokenIdWithoutLeadingZero);
     if (assetIssueCache.containsKey(key)) {
       return assetIssueCache.get(key).getAssetIssue();
@@ -378,7 +386,7 @@ public class DepositImpl implements Deposit {
 
   @Override
   public synchronized long addTokenBalance(byte[] address, byte[] tokenId, long value) {
-    byte[] tokenIdWithoutLeadingZero = MUtil.removeZeroes(tokenId);
+    byte[] tokenIdWithoutLeadingZero = ByteUtil.stripLeadingZeroes(tokenId);
     AccountCapsule accountCapsule = getAccount(address);
     if (accountCapsule == null) {
       accountCapsule = createAccount(address, AccountType.Normal);
@@ -431,7 +439,7 @@ public class DepositImpl implements Deposit {
   @Override
   public synchronized long getTokenBalance(byte[] address, byte[] tokenId){
     AccountCapsule accountCapsule = getAccount(address);
-    return accountCapsule.getAssetMap().getOrDefault(new String(MUtil.removeZeroes(tokenId)), new Long(0));
+    return accountCapsule.getAssetMap().getOrDefault(new String(ByteUtil.stripLeadingZeroes(tokenId)), new Long(0));
   }
 
   @Override

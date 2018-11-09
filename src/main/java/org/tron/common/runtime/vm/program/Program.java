@@ -26,14 +26,17 @@ import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.utils.MUtil.transfer;
+import static org.tron.common.runtime.utils.MUtil.transferAllToken;
 import static org.tron.common.utils.BIUtil.isPositive;
 import static org.tron.common.utils.BIUtil.toBI;
+import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 
 import com.google.protobuf.ByteString;
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Objects;
@@ -194,12 +197,12 @@ public class Program {
    */
   private InternalTransaction addInternalTx(DataWord energyLimit, byte[] senderAddress,
       byte[] transferAddress,
-      long value, byte[] data, String note, long nonce, String tokenId) {
+      long value, byte[] data, String note, long nonce, Map<String, Long> tokenInfo) {
 
     InternalTransaction addedInternalTx = null;
     if (internalTransaction != null) {
       addedInternalTx = getResult().addInternalTransaction(internalTransaction.getHash(), getCallDeep(),
-          senderAddress, transferAddress, value, data, note, nonce, tokenId);
+          senderAddress, transferAddress, value, data, note, nonce, tokenInfo);
     }
 
     return addedInternalTx;
@@ -411,14 +414,24 @@ public class Program {
     }
 
     increaseNonce();
-    addInternalTx(null, owner, obtainer, balance, null, "suicide", nonce,  null);
+
+    addInternalTx(null, owner, obtainer, balance, null, "suicide", nonce,
+        getContractState().getAccount(owner).getAssetMap());
 
     if (FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0) {
       // if owner == obtainer just zeroing account according to Yellow Paper
       getContractState().addBalance(owner, -balance);
+      byte[] blackHoleAddress = getContractState().getBlackHoleAddress();
+      if (VMConfig.getEnergyLimitHardFork()) {
+        getContractState().addBalance(blackHoleAddress, balance);
+        transferAllToken(getContractState(),owner,blackHoleAddress);
+      }
     } else {
       try {
         transfer(getContractState(), owner, obtainer, balance);
+        if (VMConfig.getEnergyLimitHardFork()) {
+          transferAllToken(getContractState(), owner, obtainer);
+        }
       } catch (ContractValidateException e) {
         throw new BytecodeExecutionException("transfer failure");
       }
@@ -671,9 +684,13 @@ public class Program {
 
     // CREATE CALL INTERNAL TRANSACTION
     increaseNonce();
+    HashMap<String,Long> tokenInfo = new HashMap<>();
+    if (msg.getTokenId()!= null) {
+      tokenInfo.put(new String(stripLeadingZeroes(msg.getTokenId().getData())),endowment);
+    }
     InternalTransaction internalTx = addInternalTx(null, senderAddress, contextAddress,
-        endowment, data, "call", nonce , msg.getTokenId() == null ? null: new String(MUtil.removeZeroes(msg.getTokenId().getData())));
-
+        endowment, data, "call", nonce ,
+        msg.getTokenId() == null ? null: tokenInfo);
     ProgramResult callResult = null;
     if (isNotEmpty(programCode)) {
       long vmStartInUs = System.nanoTime() / 1000;

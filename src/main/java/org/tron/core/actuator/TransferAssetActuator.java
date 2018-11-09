@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.storage.Deposit;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -186,7 +187,7 @@ public class TransferAssetActuator extends AbstractActuator {
     }
 
     long fee = 0;
-    byte[] tokenIdWithoutLeadingZero = MUtil.removeZeroes(tokenId);
+    byte[] tokenIdWithoutLeadingZero = ByteUtil.stripLeadingZeroes(tokenId);
 
     if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
