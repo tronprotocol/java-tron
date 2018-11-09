@@ -231,7 +231,7 @@ public class ZkV0TransferActuator extends AbstractActuator {
             zkContract.getH2().toByteArray(), nf1.toByteArray(), nf2.toByteArray(),
             cm1.toByteArray(), cm2.toByteArray(), vFromPub, vPubNew);
     //verify
-    int result = new ZkVerify().verify(VerifyingKey.getInstance(), witness, proof);
+    int result = new ZkVerify().verify(VerifyingKey.initVk(), witness, proof);
     if (result != 0) {
       throw new ContractValidateException("verify failed return " + result + " .");
     }

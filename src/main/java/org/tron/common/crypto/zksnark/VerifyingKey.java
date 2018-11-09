@@ -244,27 +244,17 @@ public class VerifyingKey {
     return true;
   }
 
-
-  public static void sort(byte[] bytes) {
-    int len = bytes.length / 2;
-    for (int i = 0; i < len; i++) {
-      byte b = bytes[i];
-      bytes[i] = bytes[bytes.length - i - 1];
-      bytes[bytes.length - i - 1] = b;
-    }
-  }
-
   public static G1Point G1Point(byte[] x, byte[] y) {
-//   sort(x);
-//    sort(y);
+    ZksnarkUtils.sort(x);
+    ZksnarkUtils.sort(y);
     return new G1Point(x, y);
   }
 
   public static void test() {
     byte[] x = ByteArray
-        .fromHexString("2eca0c7238bf16e83e7a1e6c5d49540685ff51380f309842a98561558019fc02");
+        .fromHexString("e16358efd807dd3a3f0c68618cc81605dcdbf35a6354b5fa81b2390eae345927");
     byte[] y = ByteArray
-        .fromHexString("03d3260361bb8451de5ff5ecd17f010ff22f5c31cdf184e9020b06fa5997db84");
+        .fromHexString("6ec608532907e9fd152e785eb80ae8a2b7a06cc40ebaaad6f3a3d2dd479b5625");
     G1Point p = G1Point(x, y);
     if (checkG1Poin(p)) {
       System.out.println("1");
@@ -272,35 +262,49 @@ public class VerifyingKey {
       System.out.println("2");
     }
 
+    byte[] x1 = ByteArray.fromHexString("3af932f1b5784e512b18a3bef26485958789f56bb75de275952391f8c90b0c2a");
+    byte[] x2 = ByteArray.fromHexString("1cb607c805373d08f94567b71e8f3736464af688d722cd2b560c4630cf701c26");
+    byte[] y1 = ByteArray.fromHexString("00f66b4bc25f8adf9b841161e7d25b7c4a76661f0fdf09fb86510585a562ca12");
+    byte[] y2 = ByteArray.fromHexString("9c5b1866b8bb84981970d3273fea70f6643a1faa8e73fe376a8e818bc287431e");
+    ZksnarkUtils.sort(x1);
+    ZksnarkUtils.sort(x2);
+    ZksnarkUtils.sort(y1);
+    ZksnarkUtils.sort(y2);
+    G2Point g2 = new G2Point(x2, x1, y2, y1);
+    if (checkG2Poin(g2)) {
+      System.out.println("1");
+    } else {
+      System.out.println("2");
+    }
   }
 
   public static void main(String[] args) throws Exception {
-    initVk();
-    if (!checkG2Poin(vk.A)) {
-      throw new Exception("Check false!");
-    }
-    if (!checkG1Poin(vk.B)) {
-      throw new Exception("Check false!");
-    }
-    if (!checkG2Poin(vk.C)) {
-      throw new Exception("Check false!");
-    }
-    if (!checkG2Poin(vk.gamma)) {
-      throw new Exception("Check false!");
-    }
-    if (!checkG1Poin(vk.gammaBeta1)) {
-      throw new Exception("Check false!");
-    }
-    if (!checkG2Poin(vk.gammaBeta2)) {
-      throw new Exception("Check false!");
-    }
-    if (!checkG2Poin(vk.Z)) {
-      throw new Exception("Check false!");
-    }
-    for (int i = 0; i < 10; i++) {
-      if (!checkG1Poin(vk.IC[i])) {
-        throw new Exception("Check false!");
-      }
-    }
+    test();
+//    if (!checkG2Poin(vk.A)) {
+//      throw new Exception("Check false!");
+//    }
+//    if (!checkG1Poin(vk.B)) {
+//      throw new Exception("Check false!");
+//    }
+//    if (!checkG2Poin(vk.C)) {
+//      throw new Exception("Check false!");
+//    }
+//    if (!checkG2Poin(vk.gamma)) {
+//      throw new Exception("Check false!");
+//    }
+//    if (!checkG1Poin(vk.gammaBeta1)) {
+//      throw new Exception("Check false!");
+//    }
+//    if (!checkG2Poin(vk.gammaBeta2)) {
+//      throw new Exception("Check false!");
+//    }
+//    if (!checkG2Poin(vk.Z)) {
+//      throw new Exception("Check false!");
+//    }
+//    for (int i = 0; i < 10; i++) {
+//      if (!checkG1Poin(vk.IC[i])) {
+//        throw new Exception("Check false!");
+//      }
+//    }
   }
 }
