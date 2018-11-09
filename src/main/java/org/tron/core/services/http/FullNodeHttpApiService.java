@@ -131,6 +131,10 @@ public class FullNodeHttpApiService implements Service {
   private GetAccountResourceServlet getAccountResourceServlet;
   @Autowired
   private GetNodeInfoServlet getNodeInfoServlet;
+  @Autowired
+  private UpdateSettingServlet updateSettingServlet;
+  @Autowired
+  private UpdateEnergyLimitServlet updateEnergyLimitServlet;
 
   @Override
   public void init() {
@@ -211,6 +215,8 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getChainParametersServlet), "/getchainparameters");
       context.addServlet(new ServletHolder(getAccountResourceServlet), "/getaccountresource");
       context.addServlet(new ServletHolder(getNodeInfoServlet), "/getnodeinfo");
+      context.addServlet(new ServletHolder(updateSettingServlet), "/updatesetting");
+      context.addServlet(new ServletHolder(updateEnergyLimitServlet), "/updateenergylimit");
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());

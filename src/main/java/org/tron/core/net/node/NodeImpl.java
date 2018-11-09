@@ -53,6 +53,8 @@ import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.NonCommonBlockException;
+import org.tron.core.exception.P2pException;
+import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TraitorPeerException;
 import org.tron.core.exception.TronException;
@@ -284,7 +286,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private volatile boolean isFetchSyncActive = false;
 
   @Override
-  public void onMessage(PeerConnection peer, TronMessage msg) {
+  public void onMessage(PeerConnection peer, TronMessage msg) throws Exception{
     switch (msg.getType()) {
       case BLOCK:
         onHandleBlockMessage(peer, (BlockMessage) msg);
@@ -305,7 +307,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         onHandleInventoryMessage(peer, (InventoryMessage) msg);
         break;
       default:
-        throw new IllegalArgumentException("No such message");
+        throw new P2pException(TypeEnum.NO_SUCH_MESSAGE, "msg type: " + msg.getType());
     }
   }
 

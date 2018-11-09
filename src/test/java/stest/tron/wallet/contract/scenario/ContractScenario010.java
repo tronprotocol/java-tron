@@ -51,14 +51,12 @@ public class ContractScenario010 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(contract009Address,600000000L,fromAddress,
-        testKey002,blockingStubFull));
-    logger.info(Long.toString(PublicMethed.queryAccount(contract009Key,blockingStubFull)
-        .getBalance()));
   }
 
   @Test(enabled = true)
   public void deployContainLibraryContract() {
+    Assert.assertTrue(PublicMethed.sendcoin(contract009Address,600000000L,fromAddress,
+        testKey002,blockingStubFull));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract009Address, 10000000L,
         3,1,contract009Key,blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract009Address,

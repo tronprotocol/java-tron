@@ -36,6 +36,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.SessionOptional;
@@ -50,8 +51,8 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
+import org.tron.core.config.Parameter.AdaptiveResourceLimitConstants;
 import org.tron.core.config.Parameter.ChainConstant;
-import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
@@ -102,6 +103,7 @@ public class Manager {
   @Autowired
   private DynamicPropertiesStore dynamicPropertiesStore;
   @Autowired
+  @Getter
   private BlockIndexStore blockIndexStore;
   @Autowired
   private AccountIdIndexStore accountIdIndexStore;
@@ -179,8 +181,7 @@ public class Manager {
       .newBuilder().maximumSize(100_000).recordStats().build();
 
   @Getter
-  @Autowired
-  private ForkController forkController;
+  private ForkController forkController = ForkController.instance();
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -621,7 +622,13 @@ public class Manager {
       VMIllegalException, TooBigTransactionResultException, UnLinkedBlockException,
       NonCommonBlockException, BadNumberBlockException, BadBlockException {
     block.generatedByMyself = true;
+    long start = System.currentTimeMillis();
     pushBlock(block);
+    logger.info("push block cost:{}ms, blockNum:{}, blockHash:{}, trx count:{}",
+        System.currentTimeMillis() - start,
+        block.getNum(),
+        block.getBlockId(),
+        block.getTransactions().size());
   }
 
   private void applyBlock(BlockCapsule block) throws ContractValidateException,
@@ -975,6 +982,7 @@ public class Manager {
 
     consumeBandwidth(trxCap, trace);
 
+    VMConfig.initVmHardFork();
     trace.init(blockCap);
     trace.checkIsConstant();
     trace.exec();
@@ -999,7 +1007,7 @@ public class Manager {
     trace.finalization();
     if (Objects.nonNull(blockCap)) {
       if (getDynamicPropertiesStore().supportVM()) {
-        trxCap.setResultCode(trace.getReceipt().getResult());
+        trxCap.setResult(trace.getRuntime());
       }
     }
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
@@ -1187,7 +1195,7 @@ public class Manager {
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
     // todo set revoking db max size.
 
-    if (witnessService != null){
+    if (witnessService != null) {
       witnessService.processBlock(block);
     }
 
@@ -1211,12 +1219,44 @@ public class Manager {
         this.processMaintenance(block);
       }
     }
+    if (getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 1) {
+      updateAdaptiveTotalEnergyLimit();
+    }
     this.updateDynamicProperties(block);
     this.updateSignedWitness(block);
     this.updateLatestSolidifiedBlock();
     this.updateTransHashCache(block);
     updateMaintenanceState(needMaint);
     updateRecentBlock(block);
+  }
+
+  public void updateAdaptiveTotalEnergyLimit() {
+    long totalEnergyAverageUsage = getDynamicPropertiesStore()
+        .getTotalEnergyAverageUsage();
+    long targetTotalEnergyLimit = getDynamicPropertiesStore().getTotalEnergyTargetLimit();
+    long totalEnergyCurrentLimit = getDynamicPropertiesStore()
+        .getTotalEnergyCurrentLimit();
+
+    long result;
+    if (totalEnergyAverageUsage > targetTotalEnergyLimit) {
+      result = totalEnergyCurrentLimit * AdaptiveResourceLimitConstants.CONTRACT_RATE_NUMERATOR
+          / AdaptiveResourceLimitConstants.CONTRACT_RATE_DENOMINATOR;
+      // logger.info(totalEnergyAverageUsage + ">" + targetTotalEnergyLimit + "\n" + result);
+    } else {
+      result = totalEnergyCurrentLimit * AdaptiveResourceLimitConstants.EXPAND_RATE_NUMERATOR
+          / AdaptiveResourceLimitConstants.EXPAND_RATE_DENOMINATOR;
+      // logger.info(totalEnergyAverageUsage + "<" + targetTotalEnergyLimit + "\n" + result);
+    }
+
+    result = Math.min(
+        Math.max(result, getDynamicPropertiesStore().getTotalEnergyLimit()),
+        getDynamicPropertiesStore().getTotalEnergyLimit()
+            * AdaptiveResourceLimitConstants.LIMIT_MULTIPLIER);
+
+    getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(result);
+    logger.debug(
+        "adjust totalEnergyCurrentLimit, old[" + totalEnergyCurrentLimit + "], new[" + result
+            + "]");
   }
 
   private void updateTransHashCache(BlockCapsule block) {
@@ -1525,7 +1565,4 @@ public class Manager {
     }
   }
 
-  public boolean passVersion(int version) {
-    return forkController.pass(version);
-  }
 }

@@ -93,12 +93,15 @@ public class ProposalDeleteActuator extends AbstractActuator {
             ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
       }
     } else if (!dbManager.getAccountStore().has(ownerAddress)) {
-      throw new ContractValidateException(ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
+      throw new ContractValidateException(ACCOUNT_EXCEPTION_STR + readableOwnerAddress
+          + NOT_EXIST_STR);
     }
 
-    long latestProposalNum = Objects.isNull(deposit) ? dbManager.getDynamicPropertiesStore().getLatestProposalNum() : deposit.getLatestProposalNum();
+    long latestProposalNum = Objects.isNull(deposit) ? dbManager.getDynamicPropertiesStore()
+        .getLatestProposalNum() : deposit.getLatestProposalNum();
     if (contract.getProposalId() > latestProposalNum) {
-      throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId() + NOT_EXIST_STR);
+      throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId()
+          + NOT_EXIST_STR);
     }
 
     ProposalCapsule proposalCapsule;
@@ -107,7 +110,8 @@ public class ProposalDeleteActuator extends AbstractActuator {
           get(ByteArray.fromLong(contract.getProposalId())) :
           deposit.getProposalCapsule(ByteArray.fromLong(contract.getProposalId()));
     } catch (ItemNotFoundException ex) {
-      throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId() + NOT_EXIST_STR);
+      throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId()
+          + NOT_EXIST_STR);
     }
 
     long now = dbManager.getHeadBlockTimeStamp();
@@ -116,10 +120,12 @@ public class ProposalDeleteActuator extends AbstractActuator {
           + "is not proposed by " + readableOwnerAddress);
     }
     if (now >= proposalCapsule.getExpirationTime()) {
-      throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId() + "] expired");
+      throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId()
+          + "] expired");
     }
     if (proposalCapsule.getState() == State.CANCELED) {
-      throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId() + "] canceled");
+      throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId()
+          + "] canceled");
     }
 
     return true;

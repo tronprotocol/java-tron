@@ -6,23 +6,22 @@ import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.Manager;
 
 @Slf4j
-@Component
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ForkController {
 
   private static final byte[] check;
@@ -38,6 +37,7 @@ public class ForkController {
 
   public void init(Manager manager) {
     this.manager = manager;
+    passSet.clear();
   }
 
   public synchronized boolean pass(int version) {
@@ -58,7 +58,7 @@ public class ForkController {
       return false;
     }
 
-    for (int i=0; i<stats.length; i++) {
+    for (int i = 0; i < stats.length; i++) {
       if (check[i] != stats[i]) {
         return false;
       }
@@ -106,7 +106,7 @@ public class ForkController {
 
   public synchronized void reset(BlockCapsule blockCapsule) {
     int version = blockCapsule.getInstance().getBlockHeader().getRawData().getVersion();
-    if (passSet.contains(version)) {
+    if (version < ForkBlockVersionConsts.ENERGY_LIMIT || passSet.contains(version)) {
       return;
     }
 
@@ -119,6 +119,24 @@ public class ForkController {
     if (stats != null) {
       Arrays.fill(stats, (byte) 0);
       manager.getDynamicPropertiesStore().statsByVersion(version, stats);
+    }
+  }
+
+  public static ForkController instance() {
+    return ForkControllerEnum.INSTANCE.getInstance();
+  }
+
+  private enum ForkControllerEnum {
+    INSTANCE;
+
+    private ForkController instance;
+
+    ForkControllerEnum() {
+      instance = new ForkController();
+    }
+
+    private ForkController getInstance() {
+      return instance;
     }
   }
 }

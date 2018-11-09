@@ -519,7 +519,7 @@ message InternalTransaction {
     // trx (TBD: or token) value
     int64 callValue = 1;
     // TBD: tokenName, trx should be empty
-    bytes tokenName = 2;
+    string tokenId = 2;
   }
   repeated CallValueInfo callValueInfo = 4;
   bytes note = 5;

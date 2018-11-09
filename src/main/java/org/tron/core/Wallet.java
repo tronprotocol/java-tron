@@ -63,6 +63,7 @@ import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.RuntimeImpl;
+import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
@@ -123,8 +124,8 @@ import org.tron.protos.Protocol.SmartContract.ABI.Entry.StateMutabilityType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
-import org.tron.protos.Protocol.TransactionSign;
 import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.Protocol.TransactionSign;
 
 @Slf4j
 @Component
@@ -673,7 +674,7 @@ public class Wallet {
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
     long energyLimit = energyProcessor
         .calculateGlobalEnergyLimit(accountCapsule);
-    long totalEnergyLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyLimit();
+    long totalEnergyLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
     long totalEnergyWeight = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
 
     long storageLimit = accountCapsule.getAccountResource().getStorageLimit();
@@ -879,6 +880,7 @@ public class Wallet {
 
       Runtime runtime = new RuntimeImpl(trxCap.getInstance(), new BlockCapsule(headBlock), deposit,
           new ProgramInvokeFactoryImpl(), true);
+      VMConfig.initVmHardFork();
       runtime.execute();
       runtime.go();
       runtime.finalization();

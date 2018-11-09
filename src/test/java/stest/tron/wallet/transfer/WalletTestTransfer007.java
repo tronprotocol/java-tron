@@ -1,5 +1,6 @@
 package stest.tron.wallet.transfer;
 
+import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.Optional;
@@ -9,12 +10,14 @@ import org.junit.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
@@ -31,8 +34,10 @@ public class WalletTestTransfer007 {
 
   private ManagedChannel channelFull = null;
   private ManagedChannel searchChannelFull = null;
+
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidityInFullnode = null;
 
   private WalletGrpc.WalletBlockingStub searchBlockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
@@ -43,8 +48,12 @@ public class WalletTestTransfer007 {
   byte[] sendAccountAddress = ecKey1.getAddress();
   String sendAccountKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private ManagedChannel channelSolidity = null;
+  private ManagedChannel channelSolidityInFullnode = null;
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
+  private String solidityInFullnode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(1);
+
 
 
   @BeforeClass
@@ -58,10 +67,16 @@ public class WalletTestTransfer007 {
         .usePlaintext(true)
         .build();
     searchBlockingStubFull = WalletGrpc.newBlockingStub(searchChannelFull);
+
     channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+
+    channelSolidityInFullnode = ManagedChannelBuilder.forTarget(solidityInFullnode)
+        .usePlaintext(true)
+        .build();
+    blockingStubSolidityInFullnode = WalletSolidityGrpc.newBlockingStub(channelSolidityInFullnode);
   }
 
 
@@ -82,6 +97,7 @@ public class WalletTestTransfer007 {
     String transactionId = PublicMethed.sendcoinGetTransactionId(sendAccountAddress, 90000000000L,
         fromAddress, testKey002, blockingStubFull);
     PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSolidity);
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSolidityInFullnode);
 
     Optional<Transaction> infoById = PublicMethed
         .getTransactionById(transactionId, blockingStubSolidity);
@@ -89,6 +105,27 @@ public class WalletTestTransfer007 {
     Long timestampBlockOne = PublicMethed.getBlock(1, blockingStubFull).getBlockHeader()
         .getRawData().getTimestamp();
     Assert.assertTrue(timestamptis >= timestampBlockOne);
+
+    infoById = PublicMethed.getTransactionById(transactionId, blockingStubFull);
+    timestamptis = PublicMethed.printTransactionRow(infoById.get().getRawData());
+    timestampBlockOne = PublicMethed.getBlock(1, blockingStubFull).getBlockHeader()
+        .getRawData().getTimestamp();
+    Assert.assertTrue(timestamptis >= timestampBlockOne);
+
+    ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(transactionId));
+    BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
+    TransactionInfo transactionInfo;
+
+    transactionInfo = blockingStubSolidity.getTransactionInfoById(request);
+    Assert.assertTrue(transactionInfo.getBlockTimeStamp() >= timestampBlockOne);
+
+    transactionInfo = blockingStubFull.getTransactionInfoById(request);
+    Assert.assertTrue(transactionInfo.getBlockTimeStamp() >= timestampBlockOne);
+
+
+    transactionInfo = blockingStubSolidityInFullnode.getTransactionInfoById(request);
+    Assert.assertTrue(transactionInfo.getBlockTimeStamp() >= timestampBlockOne);
+
 
   }
 

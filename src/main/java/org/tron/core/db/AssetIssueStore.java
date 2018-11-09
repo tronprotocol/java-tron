@@ -29,6 +29,11 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
     return super.getUnchecked(key);
   }
 
+  @Override
+  public AssetIssueCapsule getOnSolidity(byte[] key) {
+    return super.getUncheckedOnSolidity(key);
+  }
+
   /**
    * get all asset issues.
    */
@@ -38,7 +43,14 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
         .collect(Collectors.toList());
   }
 
-  public List<AssetIssueCapsule> getAssetIssuesPaginated(long offset, long limit) {
+  public List<AssetIssueCapsule> getAllAssetIssuesOnSolidity() {
+    return Streams.stream(iteratorOnSolidity())
+        .map(Entry::getValue)
+        .collect(Collectors.toList());
+  }
+
+  private List<AssetIssueCapsule> getAssetIssuesPaginated(List<AssetIssueCapsule> assetIssueList,
+      long offset, long limit) {
     if (limit < 0 || offset < 0) {
       return null;
     }
@@ -50,7 +62,6 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
 //        .limit(Math.min(limit, ASSET_ISSUE_COUNT_LIMIT_MAX))
 //        .collect(Collectors.toList());
 
-    List<AssetIssueCapsule> assetIssueList = getAllAssetIssues();
     if (assetIssueList.size() <= offset) {
       return null;
     }
@@ -64,6 +75,14 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
     long end = offset + limit;
     end = end > assetIssueList.size() ? assetIssueList.size() : end ;
     return assetIssueList.subList((int)offset,(int)end);
+  }
+
+  public List<AssetIssueCapsule> getAssetIssuesPaginated(long offset, long limit) {
+    return getAssetIssuesPaginated(getAllAssetIssues(), offset, limit);
+  }
+
+  public List<AssetIssueCapsule> getAssetIssuesPaginatedOnSolidity(long offset, long limit) {
+    return getAssetIssuesPaginated(getAllAssetIssuesOnSolidity(), offset, limit);
   }
 
 }

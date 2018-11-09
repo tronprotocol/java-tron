@@ -51,9 +51,11 @@ public class DeployContractServlet extends HttpServlet {
       long feeLimit = jsonObject.getLongValue("fee_limit");
 
       SmartContract.Builder smartBuilder = SmartContract.newBuilder();
-      smartBuilder.setAbi(abiBuilder)
+      smartBuilder
+          .setAbi(abiBuilder)
           .setCallValue(jsonObject.getLongValue("call_value"))
-          .setConsumeUserResourcePercent(jsonObject.getLongValue("consume_user_resource_percent"));
+          .setConsumeUserResourcePercent(jsonObject.getLongValue("consume_user_resource_percent"))
+          .setOriginEnergyLimit(jsonObject.getLongValue("origin_energy_limit"));
       if (!ArrayUtils.isEmpty(ownerAddress)) {
         smartBuilder.setOriginAddress(ByteString.copyFrom(ownerAddress));
       }
