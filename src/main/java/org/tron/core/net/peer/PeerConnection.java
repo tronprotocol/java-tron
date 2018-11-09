@@ -2,16 +2,16 @@ package org.tron.core.net.peer;
 
 import static org.tron.core.config.Parameter.NetConstants.MAX_INVENTORY_SIZE_IN_MINUTES;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.LinkedBlockingQueue;
 import javafx.util.Pair;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,6 +25,7 @@ import org.tron.common.overlay.server.Channel;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.net.TronProxy;
 
 @Slf4j
@@ -35,6 +36,39 @@ public class PeerConnection extends Channel {
   @Autowired
   private TronProxy tronProxy;
 
+  @Autowired
+  private PeerSync peerSync;
+
+  @Autowired
+  private PeerAdv peerAdv;
+
+  @Setter
+  @Getter
+  private HelloMessage helloMessage;
+
+  @Setter
+  @Getter
+  private Map<Item, Long> advInvReceive = new ConcurrentHashMap<>();
+
+  @Setter
+  @Getter
+  private Map<Item, Long> advInvSpread = new ConcurrentHashMap<>();
+
+  @Setter
+  @Getter
+  private Map<Item, Long> advInvRequest = new ConcurrentHashMap<>();
+
+  @Setter
+  @Getter
+  private BlockId blockBothHave = tronProxy.getGenesisBlockId();
+  public void setBlockBothHave (BlockId blockId) {
+    this.blockBothHave = blockId;
+    this.blockBothHaveUpdateTime = System.currentTimeMillis();
+  }
+
+  @Getter
+  private long blockBothHaveUpdateTime = System.currentTimeMillis();
+
   @Setter
   @Getter
   private BlockId lastSyncBlockId;
@@ -43,36 +77,9 @@ public class PeerConnection extends Channel {
   @Getter
   private long remainNum;
 
-  @Setter
   @Getter
-  private long lastBlockUpdateTime = System.currentTimeMillis();
-
-  @Setter
-  private HelloMessage helloMessage;
-
-  @Setter
-  @Getter
-  private Queue<Sha256Hash> invToUs = new LinkedBlockingQueue<>();
-
-  @Setter
-  @Getter
-  private Queue<Sha256Hash> invWeAdv = new LinkedBlockingQueue<>();
-
-  @Setter
-  @Getter
-  private Map<Sha256Hash, Long> advObjSpreadToUs = new ConcurrentHashMap<>();
-
-  @Setter
-  @Getter
-  private Map<Sha256Hash, Long> advObjWeSpread = new ConcurrentHashMap<>();
-
-  @Setter
-  @Getter
-  private Map<Item, Long> advObjWeRequested = new ConcurrentHashMap<>();
-
-  @Setter
-  @Getter
-  private BlockId headBlockWeBothHave = new BlockId();
+  private Cache<Sha256Hash, Long> syncBlockIdCache = CacheBuilder.newBuilder()
+      .maximumSize(2 * NodeConstant.SYNC_FETCH_BATCH_NUM).recordStats().build();
 
   @Setter
   @Getter
@@ -88,7 +95,7 @@ public class PeerConnection extends Channel {
 
   @Setter
   @Getter
-  private long unfetchSyncNum = 0L;
+  private Set<BlockId> syncBlockInProcess = new HashSet<>();
 
   @Setter
   @Getter
@@ -98,24 +105,20 @@ public class PeerConnection extends Channel {
   @Getter
   private boolean needSyncFromUs;
 
-  @Setter
-  @Getter
-  private Set<BlockId> blockInProc = new HashSet<>();
-
   public void cleanInvGarbage() {
 
     long time = Time.getCurrentMillis() - MAX_INVENTORY_SIZE_IN_MINUTES * 60 * 1000;
 
-    Iterator<Entry<Sha256Hash, Long>> iterator = this.advObjSpreadToUs.entrySet().iterator();
+    Iterator<Entry<Item, Long>> iterator = this.advInvReceive.entrySet().iterator();
 
     removeIterator(iterator, time);
 
-    iterator = this.advObjWeSpread.entrySet().iterator();
+    iterator = this.advInvSpread.entrySet().iterator();
 
     removeIterator(iterator, time);
   }
 
-  private void removeIterator(Iterator<Entry<Sha256Hash, Long>> iterator, long oldestTimestamp) {
+  private void removeIterator(Iterator<Entry<Item, Long>> iterator, long oldestTimestamp) {
     while (iterator.hasNext()) {
       Map.Entry entry = iterator.next();
       Long ts = (Long) entry.getValue();
@@ -125,8 +128,27 @@ public class PeerConnection extends Channel {
     }
   }
 
+  public boolean isIdle() {
+    return advInvRequest.isEmpty() && syncBlockRequested.isEmpty() && syncChainRequested == null;
+  }
 
+  public void sendMessage(Message message) {
+    msgQueue.sendMessage(message);
+  }
 
+  public void onConnectPeer() {
+    if (getHelloMessage().getHeadBlockId().getNum() > tronProxy.getHeadBlockId().getNum()) {
+      setTronState(TronState.SYNCING);
+      peerSync.startSync(this);
+    } else {
+      setTronState(TronState.SYNC_COMPLETED);
+    }
+  }
+
+  public void onDisconnectPeer() {
+    peerSync.onDisconnect(this);
+    peerAdv.onDisconnect(this);
+  }
 
   public String logSyncStats() {
     return String.format(
@@ -138,36 +160,23 @@ public class PeerConnection extends Channel {
             + "syncToFetchSize:%d\n"
             + "syncToFetchSizePeekNum:%d\n"
             + "syncBlockRequestedSize:%d\n"
-            + "unFetchSynNum:%d\n"
+            + "remainNum:%d\n"
             + "syncChainRequested:%s\n"
-            + "blockInPorc:%d\n",
+            + "blockInProcess:%d\n",
         this.getNode().getHost() + ":" + this.getNode().getPort(),
         this.getNode().getHexIdShort(),
         (int) this.getPeerStats().getAvgLatency(),
         Time.getTimeString(super.getStartTime()),
-        headBlockWeBothHave.getNum(),
+        blockBothHave.getNum(),
         isNeedSyncFromPeer(),
         isNeedSyncFromUs(),
         syncBlockToFetch.size(),
         syncBlockToFetch.size() > 0 ? syncBlockToFetch.peek().getNum() : -1,
         syncBlockRequested.size(),
-        unfetchSyncNum,
+        remainNum,
         syncChainRequested == null ? "NULL" : Time.getTimeString(syncChainRequested.getValue()),
-        blockInProc.size())
+        syncBlockInProcess.size())
         + nodeStatistics.toString() + "\n";
   }
 
-  public boolean isBusy() {
-    return !idle();
-  }
-
-  public boolean idle() {
-    return advObjWeRequested.isEmpty()
-        && syncBlockRequested.isEmpty()
-        && syncChainRequested == null;
-  }
-
-  public void sendMessage(Message message) {
-    msgQueue.sendMessage(message);
-  }
 }

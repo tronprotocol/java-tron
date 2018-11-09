@@ -70,8 +70,6 @@ public class SyncPool {
 
   private ChannelManager channelManager;
 
-  private PeerConnectionDelegate peerDel;
-
   private Args args = Args.getInstance();
 
   private int maxActiveNodes = args.getNodeMaxActiveNodes();
@@ -84,8 +82,7 @@ public class SyncPool {
 
   private PeerClient peerClient;
 
-  public void init(PeerConnectionDelegate peerDel) {
-    this.peerDel = peerDel;
+  public void init() {
 
     channelManager = ctx.getBean(ChannelManager.class);
 
@@ -175,27 +172,29 @@ public class SyncPool {
   }
 
   public synchronized void onConnect(Channel peer) {
-    if (!activePeers.contains(peer)) {
-      if (!peer.isActive()) {
+    PeerConnection peerConnection = (PeerConnection) peer;
+    if (!activePeers.contains(peerConnection)) {
+      if (!peerConnection.isActive()) {
         passivePeersCount.incrementAndGet();
       } else {
         activePeersCount.incrementAndGet();
       }
-      activePeers.add((PeerConnection) peer);
+      activePeers.add(peerConnection);
       activePeers.sort(Comparator.comparingDouble(c -> c.getPeerStats().getAvgLatency()));
-      peerDel.onConnectPeer((PeerConnection) peer);
+      peerConnection.onConnectPeer();
     }
   }
 
   public synchronized void onDisconnect(Channel peer) {
-    if (activePeers.contains(peer)) {
-      if (!peer.isActive()) {
+    PeerConnection peerConnection = (PeerConnection) peer;
+    if (activePeers.contains(peerConnection)) {
+      if (!peerConnection.isActive()) {
         passivePeersCount.decrementAndGet();
       } else {
         activePeersCount.decrementAndGet();
       }
-      activePeers.remove(peer);
-      peerDel.onDisconnectPeer((PeerConnection) peer);
+      activePeers.remove(peerConnection);
+      peerConnection.onDisconnectPeer();
     }
   }
 

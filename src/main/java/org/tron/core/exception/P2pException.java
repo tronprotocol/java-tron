@@ -9,6 +9,11 @@ public class P2pException extends Exception {
         this.type = type;
     }
 
+    public P2pException(TypeEnum type, Throwable throwable){
+        super(throwable);
+        this.type = type;
+    }
+
     public P2pException(TypeEnum type, String errMsg, Throwable throwable){
         super(errMsg, throwable);
         this.type = type;
@@ -27,8 +32,10 @@ public class P2pException extends Exception {
         HARD_FORKED                             (6, "hard forked"),
         SYNC_FAILED                             (7, "sync failed"),
         CHECK_FAILED                            (8, "check failed"),
-        BAD_BLOCK                               (9, "bad block"),
-        UNLINK_BLOCK                            (10, "unlink block"),
+        UNLINK_BLOCK                            (9, "unlink block"),
+        BAD_BLOCK                               (10, "bad block"),
+        BAD_TRX                                 (11, "bad trx"),
+        TRX_EXE_FAILED                          (12, "trx exe failed"),
         DEFAULT                                 (100, "default exception");
 
         private Integer value;

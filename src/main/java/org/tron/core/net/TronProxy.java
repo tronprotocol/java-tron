@@ -2,6 +2,9 @@ package org.tron.core.net;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -12,13 +15,33 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.AccountResourceInsufficientException;
+import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.BadNumberBlockException;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractSizeNotEqualToOneException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.exception.NonCommonBlockException;
+import org.tron.core.exception.P2pException;
+import org.tron.core.exception.P2pException.TypeEnum;
+import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.StoreException;
+import org.tron.core.exception.TaposException;
+import org.tron.core.exception.TooBigTransactionException;
+import org.tron.core.exception.TooBigTransactionResultException;
+import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.VMIllegalException;
+import org.tron.core.exception.ValidateScheduleException;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.protos.Protocol.Inventory.InventoryType;
 
 @Slf4j
 @Component
@@ -29,6 +52,19 @@ public class TronProxy {
 
   @Autowired
   private Manager dbManager;
+
+  @Getter
+  private Object blockLock;
+
+  private Queue<BlockId> freshBlockId = new ConcurrentLinkedQueue<BlockId>() {
+    @Override
+    public boolean offer(BlockId blockId) {
+      if (size() > 200) {
+        super.poll();
+      }
+      return super.offer(blockId);
+    }
+  };
 
   public Collection<PeerConnection> getActivePeer() {
     return syncPool.getActivePeers();
@@ -46,14 +82,6 @@ public class TronProxy {
     } catch (ItemNotFoundException e) {
       return dbManager.getGenesisBlock().getTimeStamp();
     }
-  }
-
-  public void preValidateTransactionSign (BlockCapsule block) throws Exception {
-    dbManager.preValidateTransactionSign(block);
-  }
-
-  public void pushBlock (BlockCapsule block) throws Exception {
-    dbManager.pushBlock(block);
   }
 
   public BlockId getHeadBlockId() {
@@ -103,7 +131,7 @@ public class TronProxy {
     return false;
   }
 
-  public Message getData(Sha256Hash hash, MessageTypes type) throws StoreException {
+  public Message getData(Sha256Hash hash, InventoryType type) throws StoreException {
     switch (type) {
       case BLOCK:
         return new BlockMessage(dbManager.getBlockById(hash));
@@ -118,4 +146,53 @@ public class TronProxy {
     }
   }
 
+  public void processBlock(BlockCapsule block) throws Exception {
+    synchronized (blockLock) {
+      try {
+        if (freshBlockId.contains(block.getBlockId())) {
+          dbManager.preValidateTransactionSign(block);
+          dbManager.pushBlock(block);
+          freshBlockId.add(block.getBlockId());
+          logger.info("Success process block {}.", block.getBlockId().getString());
+        }
+      } catch (ValidateSignatureException
+          | ContractValidateException
+          | ContractExeException
+          | UnLinkedBlockException
+          | ValidateScheduleException
+          | AccountResourceInsufficientException
+          | TaposException
+          | TooBigTransactionException
+          | TooBigTransactionResultException
+          | DupTransactionException
+          | TransactionExpirationException
+          | BadNumberBlockException
+          | BadBlockException
+          | NonCommonBlockException
+          | ReceiptCheckErrException
+          | VMIllegalException e) {
+        throw new P2pException(TypeEnum.BAD_BLOCK, e);
+      }
+    }
+  }
+
+  public void pushTransaction (TransactionCapsule trx) throws Exception {
+    try {
+      dbManager.pushTransaction(trx);
+    } catch (ContractSizeNotEqualToOneException
+        | ValidateSignatureException
+        | VMIllegalException e) {
+      throw new P2pException(TypeEnum.BAD_TRX, e);
+    } catch (ContractValidateException
+        | ContractExeException
+        | DupTransactionException
+        | TaposException
+        | TooBigTransactionException
+        | TransactionExpirationException
+        | ReceiptCheckErrException
+        | TooBigTransactionResultException
+        | AccountResourceInsufficientException e) {
+      throw new P2pException(TypeEnum.TRX_EXE_FAILED, e);
+    }
+  }
 }

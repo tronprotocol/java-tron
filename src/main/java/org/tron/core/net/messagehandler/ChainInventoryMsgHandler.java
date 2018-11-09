@@ -15,7 +15,7 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
-import org.tron.core.net.TronManager;
+import org.tron.core.net.TronNetClient;
 import org.tron.core.net.TronProxy;
 import org.tron.core.net.message.ChainInventoryMessage;
 import org.tron.core.net.message.TronMessage;
@@ -33,7 +33,7 @@ public class ChainInventoryMsgHandler implements TronMsgHandler  {
   private PeerSync peerSync;
 
   @Setter
-  private TronManager tronManager;
+  private TronNetClient tronManager;
 
   @Override
   public void processMessage (PeerConnection peer, TronMessage msg) throws Exception {
@@ -50,10 +50,6 @@ public class ChainInventoryMsgHandler implements TronMsgHandler  {
 
     if (blockIdWeGet.size() == 1 && tronProxy.containBlock(blockIdWeGet.peek())) {
       peer.setNeedSyncFromPeer(false);
-//      unSyncNum = getUnSyncNum();
-//      if (unSyncNum == 0) {
-//        del.syncToCli(0);
-//      }
       return;
     }
 
@@ -66,10 +62,10 @@ public class ChainInventoryMsgHandler implements TronMsgHandler  {
 
     blockIdWeGet.poll();
 
-    peer.setUnfetchSyncNum(chainInventoryMessage.getRemainNum());
+    peer.setRemainNum(chainInventoryMessage.getRemainNum());
     peer.getSyncBlockToFetch().addAll(blockIdWeGet);
 
-    synchronized (tronManager.getBlockLock()) {
+    synchronized (tronProxy.getBlockLock()) {
       while (!peer.getSyncBlockToFetch().isEmpty() && tronProxy.containBlock(peer.getSyncBlockToFetch().peek())) {
         BlockId blockId = peer.getSyncBlockToFetch().pop();
         logger.info("Block {} from {} is processed", blockId.getString(), peer.getNode().getHost());
@@ -80,15 +76,9 @@ public class ChainInventoryMsgHandler implements TronMsgHandler  {
       peer.setNeedSyncFromPeer(false);
     }
 
-//    long newUnSyncNum = getUnSyncNum();
-//    if (unSyncNum != newUnSyncNum) {
-//      unSyncNum = newUnSyncNum;
-//      del.syncToCli(unSyncNum);
-//    }
-
     if ((chainInventoryMessage.getRemainNum() == 0 && !peer.getSyncBlockToFetch().isEmpty()) ||
         (chainInventoryMessage.getRemainNum() != 0 && peer.getSyncBlockToFetch().size() > NodeConstant.SYNC_FETCH_BATCH_NUM)) {
-      tronManager.setSyncBlockFetchFlag(true);
+      peerSync.setFetchFlag(true);
     }else {
       peerSync.syncNext(peer);
     }

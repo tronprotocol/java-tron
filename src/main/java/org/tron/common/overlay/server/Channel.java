@@ -248,6 +248,7 @@ public class Channel {
 
   public void setTronState(TronState tronState) {
     this.tronState = tronState;
+    logger.info("Peer {} status change to {}.", inetSocketAddress, tronState);
   }
 
   public TronState getTronState() {

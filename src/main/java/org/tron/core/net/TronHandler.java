@@ -2,6 +2,8 @@ package org.tron.core.net;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.server.Channel;
@@ -16,22 +18,19 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
 
   protected PeerConnection peer;
 
-  private MessageQueue msgQueue = null;
+  private MessageQueue msgQueue;
 
-  public PeerConnectionDelegate peerDel;
+  private TronNetService tronNetService;
 
-  public void setPeerDel(PeerConnectionDelegate peerDel) {
-    this.peerDel = peerDel;
+  @Autowired
+  private TronHandler (final ApplicationContext ctx){
+    tronNetService = ctx.getBean(TronNetService.class);
   }
 
   @Override
   public void channelRead0(final ChannelHandlerContext ctx, TronMessage msg) {
-    if (!peer.isDisconnect()) {
-      logger.warn("Received a block {} from disconnect peer {}", blockId.getNum(), peer.getNode().getHost());
-      return;
-    }
     msgQueue.receivedMessage(msg);
-    peerDel.onMessage(peer, msg);
+    tronNetService.onMessage(peer, msg);
   }
 
   @Override

@@ -68,6 +68,8 @@ public class ChannelManager {
       trustPeers.put(new InetSocketAddress(node.getHost(), node.getPort()).getAddress(), node);
     }
     logger.info("Trust peer size {}", trustPeers.size());
+
+    syncPool.init();
   }
 
   public void processDisconnect(Channel channel, ReasonCode reason) {

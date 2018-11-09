@@ -1330,6 +1330,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
   }
 
+
   public void shutDown() {
     logExecutor.shutdown();
     trxsHandlePool.shutdown();
