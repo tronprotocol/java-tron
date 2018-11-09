@@ -746,6 +746,7 @@ public class Manager {
       TaposException, TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException {
+    long start = System.currentTimeMillis();
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
@@ -769,10 +770,14 @@ public class Manager {
       // DB don't need lower block
       if (getDynamicPropertiesStore().getLatestBlockHeaderHash() == null) {
         if (newBlock.getNum() != 0) {
+          logger.info("pushBlock cost:{}/{}(txs)", System.currentTimeMillis() - start,
+              block.getTransactions().size());
           return;
         }
       } else {
         if (newBlock.getNum() <= getDynamicPropertiesStore().getLatestBlockHeaderNumber()) {
+          logger.info("pushBlock cost:{}/{}(txs)", System.currentTimeMillis() - start,
+              block.getTransactions().size());
           return;
         }
 
@@ -824,6 +829,8 @@ public class Manager {
                   + ", khaosDb unlinkMiniStore size: "
                   + khaosDb.getMiniUnlinkedStore().size());
 
+          logger.info("pushBlock cost:{}/{}(txs)", System.currentTimeMillis() - start,
+              block.getTransactions().size());
           return;
         }
         try (ISession tmpSession = revokingStore.buildSession()) {
@@ -836,6 +843,8 @@ public class Manager {
         }
       }
       logger.info("save block: " + newBlock);
+      logger.info("pushBlock cost:{}/{}(txs)", System.currentTimeMillis() - start,
+          block.getTransactions().size());
     }
   }
 
