@@ -22,6 +22,8 @@ import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 
 import com.google.common.primitives.Longs;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -42,7 +44,7 @@ public class InternalTransaction {
   /* the amount of trx to transfer (calculated as sun) */
   private long value;
   private long tokenValue;
-  private String tokenId;
+  private Map<String, Long> tokenInfo =new HashMap<>();
 
   /* the address of the destination account (for message)
    * In creation transaction the receive address is - 0 */
@@ -104,8 +106,7 @@ public class InternalTransaction {
       this.note = "create";
       this.value = contract.getNewContract().getCallValue();
       this.data = contract.getNewContract().getBytecode().toByteArray();
-      this.tokenValue = contract.getCallTokenValue();
-      this.tokenId = contract.getTokenId();
+      this.tokenInfo.put(contract.getTokenId(), contract.getCallTokenValue());
     } else if (trxType == TrxType.TRX_CONTRACT_CALL_TYPE) {
       TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
       if (contract == null) {
@@ -117,8 +118,7 @@ public class InternalTransaction {
       this.note = "call";
       this.value = contract.getCallValue();
       this.data = contract.getData().toByteArray();
-      this.tokenValue = contract.getCallTokenValue();
-      this.tokenId  = contract.getTokenId();
+      this.tokenInfo.put(contract.getTokenId(), contract.getCallTokenValue());
     } else {
       // do nothing, just for running byte code
     }
@@ -130,7 +130,7 @@ public class InternalTransaction {
    */
 
   public InternalTransaction(byte[] parentHash, int deep, int index,
-      byte[] sendAddress, byte[] transferToAddress,  long value, byte[] data, String note, long nonce, String tokenId) {
+      byte[] sendAddress, byte[] transferToAddress,  long value, byte[] data, String note, long nonce, Map<String, Long> tokenInfo) {
     this.parentHash = parentHash.clone();
     this.deep = deep;
     this.index = index;
@@ -149,8 +149,9 @@ public class InternalTransaction {
     this.hash = getHash();
     // in a contract call contract case, only one value should be used. trx or a token. can't be both. We should avoid using
     // tokenValue in this case.
-    this.tokenValue = this.value;
-    this.tokenId  = tokenId;
+    if (tokenInfo != null) {
+      this.tokenInfo.putAll(tokenInfo);
+    }
   }
 
   public Transaction getTransaction() {
@@ -180,11 +181,8 @@ public class InternalTransaction {
     return note;
   }
 
-  public String getTokenId() {
-    if (tokenId == null) {
-      return "";
-    }
-    return tokenId;
+  public Map<String, Long> getTokenInfo() {
+    return tokenInfo;
   }
 
   public byte[] getSender() {

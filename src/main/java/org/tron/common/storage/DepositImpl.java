@@ -165,6 +165,13 @@ public class DepositImpl implements Deposit {
   }
 
   @Override
+  public byte[] getBlackHoleAddress() {
+    // using dbManager directly, black hole address should not be changed
+    // when executing smart contract.
+    return getAccountStore().getBlackhole().getAddress().toByteArray();
+  }
+
+  @Override
   public WitnessCapsule getWitness(byte[] address) {
     Key key = new Key(address);
     if (witnessCache.containsKey(key)) {
@@ -319,7 +326,7 @@ public class DepositImpl implements Deposit {
 
   @Override
   public synchronized AssetIssueCapsule getAssetIssue(byte[] tokenId) {
-    byte[] tokenIdWithoutLeadingZero =MUtil.removeZeroes(tokenId);
+    byte[] tokenIdWithoutLeadingZero =ByteUtil.stripLeadingZeroes(tokenId);
     Key key = Key.create(tokenIdWithoutLeadingZero);
     if (assetIssueCache.containsKey(key)) {
       return assetIssueCache.get(key).getAssetIssue();
@@ -379,7 +386,7 @@ public class DepositImpl implements Deposit {
 
   @Override
   public synchronized long addTokenBalance(byte[] address, byte[] tokenId, long value) {
-    byte[] tokenIdWithoutLeadingZero = MUtil.removeZeroes(tokenId);
+    byte[] tokenIdWithoutLeadingZero = ByteUtil.stripLeadingZeroes(tokenId);
     AccountCapsule accountCapsule = getAccount(address);
     if (accountCapsule == null) {
       accountCapsule = createAccount(address, AccountType.Normal);
