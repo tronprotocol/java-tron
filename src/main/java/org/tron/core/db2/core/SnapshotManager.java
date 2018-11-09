@@ -1,9 +1,6 @@
 package org.tron.core.db2.core;
 
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Streams;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
@@ -17,13 +14,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.aspectj.weaver.Checker;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.AbstractRevokingStore.RevokingState;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.DB;
@@ -66,7 +61,6 @@ public class SnapshotManager implements RevokingDatabase {
 
 //    printDebug("before buildSession");
 
-
     if (size > maxSize.get()) {
       flushCount = flushCount + (size - maxSize.get());
       updateSolidity(size - maxSize.get());
@@ -76,7 +70,9 @@ public class SnapshotManager implements RevokingDatabase {
 
     advance();
     ++activeSession;
+
 //    printDebug("after buildSession");
+
     return new Session(this, disableOnExit);
   }
 
@@ -224,8 +220,6 @@ public class SnapshotManager implements RevokingDatabase {
     List<List<byte[]>> accounts = new ArrayList<>();
     List<String> debugBlockHashs = new ArrayList<>();
     // debug end
-
-
     for (RevokingDBWithCachingNewValue db : dbs) {
       if (Snapshot.isRoot(db.getHead())) {
         return;
