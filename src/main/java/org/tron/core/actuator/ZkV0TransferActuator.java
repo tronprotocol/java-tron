@@ -147,7 +147,7 @@ public class ZkV0TransferActuator extends AbstractActuator {
     }
 
     if (!dbManager.getMerkleContainer().merkleRootIsExist(rt.toByteArray())) {
-     // throw new ContractValidateException("Rt is invalid.");
+      throw new ContractValidateException("Rt is invalid.");
     }
 
     ByteString nf1 = zkContract.getNf1();
