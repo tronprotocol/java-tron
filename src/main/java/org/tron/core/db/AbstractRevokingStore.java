@@ -304,6 +304,10 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
     return maxSize.get();
   }
 
+  @Override
+  public void setMaxFlushCount(int maxFlushCount) {
+  }
+
   public synchronized void shutdown() {
     System.err.println("******** begin to pop revokingDb ********");
     System.err.println("******** before revokingDb size:" + size());
