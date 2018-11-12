@@ -72,8 +72,8 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.UpdateAssetContract;
-import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.UpdateEnergyLimitContract;
+import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -428,6 +428,27 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case CreateSmartContract:
           return contractParameter.unpack(CreateSmartContract.class).getNewContract()
               .getCallValue();
+        default:
+          return 0L;
+      }
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
+      return 0L;
+    }
+  }
+
+  // todo mv this static function to capsule util
+  public static long getCallTokenValue(Transaction.Contract contract) {
+    int energyForTrx;
+    try {
+      Any contractParameter = contract.getParameter();
+      long callValue;
+      switch (contract.getType()) {
+        case TriggerSmartContract:
+          return contractParameter.unpack(TriggerSmartContract.class).getCallTokenValue();
+
+        case CreateSmartContract:
+          return contractParameter.unpack(CreateSmartContract.class).getCallTokenValue();
         default:
           return 0L;
       }
