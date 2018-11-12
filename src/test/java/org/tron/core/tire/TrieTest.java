@@ -21,7 +21,11 @@ import static org.tron.common.crypto.Hash.EMPTY_TRIE_HASH;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.junit.After;
 import org.junit.Assert;
@@ -36,6 +40,7 @@ import org.tron.core.capsule.utils.RLP;
 import org.tron.core.db2.common.ConcurrentHashDB;
 import org.tron.core.db2.common.DB;
 import org.tron.core.trie.TrieImpl;
+import org.tron.core.trie.TrieImpl.Node;
 
 public class TrieTest {
 
@@ -75,20 +80,43 @@ public class TrieTest {
     TrieImpl trie = new TrieImpl();
     trie.put(new byte[]{1}, c.getBytes());
     Assert.assertTrue(Arrays.areEqual(trie.get(RLP.encodeInt(1)), c.getBytes()));
-    trie.put(new byte[]{1,0}, ca.getBytes());
-    trie.put(new byte[]{1,1}, cat.getBytes());
-    trie.put(new byte[]{1,2}, dog.getBytes());
-    trie.put(RLP.encodeInt(5), doge.getBytes());
+    trie.put(new byte[]{1, 0}, ca.getBytes());
+    trie.put(new byte[]{1, 1}, cat.getBytes());
+    trie.put(new byte[]{1, 2}, dog.getBytes());
+    trie.put(RLP.encodeInt(5), test.getBytes());
     trie.put(RLP.encodeInt(6), doge.getBytes());
-    trie.put(RLP.encodeInt(7), doge.getBytes());
-    trie.put(RLP.encodeInt(11), doge.getBytes());
+    trie.put(RLP.encodeInt(7), "cdfs".getBytes());
+    trie.put(RLP.encodeInt(11), "sgd".getBytes());
+//    trie.delete(RLP.encodeInt(5));
     System.out.println(Sha256Hash.of(trie.getRootHash()).toString());
-    trie.put(RLP.encodeInt(5), dude.getBytes());
+    trie.put(RLP.encodeInt(5), doge.getBytes());
+//    trie.put(RLP.encodeInt(5), test.getBytes());
     System.out.println(trie.dumpTrie());
     System.out.println(Sha256Hash.of(trie.getRootHash()).toString());
     trie.delete(RLP.encodeInt(3));
     System.out.println(trie.dumpTrie());
     System.out.println(Sha256Hash.of(trie.getRootHash()).toString());
+    List<Node> nodeList = new ArrayList<>();
+//    trie.find(trie.getRoot(), TrieKey.fromNormal(RLP.encodeInt(5)), nodeList);
+    System.out.println(nodeList);
+    byte[] rootHash = trie.getRootHash();
+    TrieImpl trieCopy = new TrieImpl(trie.getCache(), rootHash);
+    Map<byte[], Node> map = trieCopy.prove(new byte[]{1, 1});
+    System.out.println("map: " + map);
+    boolean result = trie
+        .verifyProof(trieCopy.getRootHash(), new byte[]{1, 1}, (LinkedHashMap<byte[], Node>) map);
+    Assert.assertTrue(result);
+    System.out.println(trieCopy.prove(RLP.encodeInt(5)));
+    System.out.println(trieCopy.prove(RLP.encodeInt(6)));
+    Assert.assertTrue(trieCopy.verifyProof(trieCopy.getRootHash(), RLP.encodeInt(5),
+        trieCopy.prove(RLP.encodeInt(5))));
+    Assert.assertFalse(trieCopy.verifyProof(trieCopy.getRootHash(), RLP.encodeInt(6),
+        trieCopy.prove(RLP.encodeInt(5))));
+    Assert.assertTrue(trieCopy.verifyProof(trieCopy.getRootHash(), RLP.encodeInt(6),
+        trieCopy.prove(RLP.encodeInt(6))));
+    Assert.assertFalse(trieCopy.verifyProof(trieCopy.getRootHash(), RLP.encodeInt(5),
+        trieCopy.prove(RLP.encodeInt(6))));
+//    Assert.assertTrue(trie.verifyProof(trie.getRootHash(),RLP.encodeInt(5),trie.prove(trie.getRoot(),RLP.encodeInt(11))));
     getReferencedTrieNodes(trie, RLP.encodeInt(1));
   }
 

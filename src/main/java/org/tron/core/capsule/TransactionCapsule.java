@@ -240,11 +240,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return Sha256Hash.of(transBytes);
   }
 
-  public Sha256Hash getReceiptMPTHash() {
-    byte[] transReceiptBytes = this.trxTrace.getReceipt().getReceipt().toByteArray();
-    return Sha256Hash.of(transReceiptBytes);
-  }
-
   private Sha256Hash getRawHash() {
     return Sha256Hash.of(this.transaction.getRawData().toByteArray());
   }

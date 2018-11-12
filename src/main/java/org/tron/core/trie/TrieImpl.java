@@ -10,7 +10,10 @@ import static org.tron.core.capsule.utils.RLP.encodeList;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -52,10 +55,11 @@ public class TrieImpl implements Trie<byte[]> {
 
   public final class Node {
 
-    private byte[] hash = null;
+    byte[] hash = null;
     private byte[] rlp = null;
     private RLP.LList parsedRlp = null;
     private boolean dirty = false;
+    private NodeType nodeType;
 
     private Object[] children = null;
 
@@ -87,6 +91,10 @@ public class TrieImpl implements Trie<byte[]> {
 
     private Node(Object[] children) {
       this.children = children;
+    }
+
+    public Node(int length) {
+      this.children = new Object[length];
     }
 
     public boolean resolveCheck() {
@@ -421,6 +429,15 @@ public class TrieImpl implements Trie<byte[]> {
         ret = "[<" + kvNodeGetKey() + ">, " + val2str(kvNodeGetValue(), compact) + "]";
       }
       return ret;
+    }
+
+    public NodeType getNodeType() {
+      return nodeType;
+    }
+
+    public Node setNodeType(NodeType nodeType) {
+      this.nodeType = nodeType;
+      return this;
     }
 
     @Override
@@ -759,39 +776,187 @@ public class TrieImpl implements Trie<byte[]> {
     }
   }
 
-  public Node find(Node node, TrieKey key) {
+  public LinkedHashMap<byte[], Node> prove(byte[] key) {
+    Node node = root;
+    List<Node> nodeList = new ArrayList<>();
     if (node == null) {
       return null;
     }
-    if (node.getType() == NodeType.BranchNode) {
-      for (int i = 0; i < 16; i++) {
-        findNode(node.branchNodeGetChild(i), key);
+    TrieKey trieKey = TrieKey.fromNormal(key);
+    while (node != null) {
+      Node n = node;
+      if (n.getType() == NodeType.BranchNode) {
+        if (trieKey.isEmpty()) {
+          nodeList.add(n);
+          break;
+        }
+        node = (Node) n.branchNodeGetChild(trieKey.getHex(0));
+        if (node == null) {
+          return null;
+        }
+        trieKey = trieKey.shift(1);
+        nodeList.add(n);
+      } else if (n.getType() == NodeType.KVNodeNode) {
+        TrieKey currentNodeKey = n.kvNodeGetKey();
+        TrieKey commonPrefix = trieKey.getCommonPrefix(currentNodeKey);
+        if (commonPrefix.getLength() != currentNodeKey.getLength()) {
+          return null;
+        }
+        node = n.kvNodeGetChildNode();
+        if (node == null) {
+          return null;
+        }
+        trieKey = trieKey.shift(commonPrefix.getLength());
+        nodeList.add(n);
+      } else {
+        if (!n.kvNodeGetKey().equals(trieKey)) {
+          return null;
+        }
+        nodeList.add(n);
+        break;
       }
-    } else if (node.getType() == NodeType.KVNodeNode) {
-      findNode(node.kvNodeGetChildNode(), key);
-    } else {
-
     }
-    node.kvNodeGetKey();
+    LinkedHashMap<byte[], Node> nodeMap = new LinkedHashMap<>();
+    int i = 0;
+    for (Node n : nodeList) {
+      List<Node> cpList = new ArrayList<>();
+      nodeMap.put(childrenHash(n, cpList, 0, i == 0 ? true : false), cpList.get(0));
+      ++i;
+    }
+    return nodeMap;
   }
 
-  public Node findNode(Node node, TrieKey key) {
-    if (node == null) {
-      return null;
+  private byte[] childrenHash(Node n, List<Node> cpList, int level, boolean forceHash) {
+
+    if (n.children == null) {
+      System.out.println("childrenHash n children: " + n.children + ", n : " + n);
     }
-    TrieKey currentNodeKey = node.kvNodeGetKey();
-    TrieKey commonPrefix = key.getCommonPrefix(currentNodeKey);
-    if (commonPrefix.isEmpty()) {
-      return null;
-    } else if (commonPrefix.equals(key)) {
-      return node;
-    } else if (commonPrefix.equals(currentNodeKey)) {
-      return findNode(node.kvNodeGetChildNode(), key.shift(commonPrefix.getLength()));
+    Node cp = new Node(n.children.length);
+    if (level == 0) {
+      cpList.add(cp);
+    }
+    Object[] hashArray = new Object[n.children.length];
+    if (n.getType() == NodeType.BranchNode) {
+      cp.setNodeType(NodeType.BranchNode);
+      for (int i = 0; i < 16; i++) {
+        Node cNode = n.branchNodeGetChild(i);
+        if (cNode != null) {
+          if (cNode.hash == null) {
+            byte[] childrenHash = childrenHash(cNode, cpList, level + 1, false);
+            cp.children[i] =
+                childrenHash.length < 32 && !forceHash ? childrenHash : encodeElement(childrenHash);
+          } else {
+            cp.children[i] = encodeElement(cNode.hash);
+          }
+        } else {//todo
+          cp.children[i] = EMPTY_ELEMENT_RLP;
+        }
+      }
+      byte[] value = n.branchNodeGetValue();
+      cp.children[16] = value == null ? EMPTY_ELEMENT_RLP : encodeElement(value);
+      hashArray = cp.children.clone();
+    } else if (n.getType() == NodeType.KVNodeNode) {
+      cp.setNodeType(NodeType.KVNodeNode);
+      TrieKey trieKey = n.kvNodeGetKey();
+      Node cNode = n.kvNodeGetChildNode();
+      cp.children[0] = encodeElement(trieKey.toPacked());
+      if (cNode.hash == null) {
+        byte[] childrenHash = childrenHash(cNode, cpList, level + 1, false);
+        cp.children[1] =
+            childrenHash.length < 32 && !forceHash ? childrenHash : encodeElement(childrenHash);
+      } else {
+        cp.children[1] = encodeElement(cNode.hash);
+      }
+      hashArray = cp.children.clone();
+      cp.children[0] = trieKey;
     } else {
-      return null;
+      cp.setNodeType(NodeType.KVNodeValue);
+      byte[] value = n.kvNodeGetValue();
+      TrieKey trieKey = n.kvNodeGetKey();
+      cp.children[0] = encodeElement(trieKey.toPacked());
+      cp.children[1] = encodeElement(value == null ? EMPTY_BYTE_ARRAY : value);
+      hashArray = cp.children.clone();
+      cp.children[0] = trieKey;
+    }
+    byte[] ret = RLP.encodeList(hashArray);
+    if (ret.length < 32 && !forceHash) {
+      return ret;
+    } else {
+      return Hash.sha3(ret);
     }
   }
 
+  public boolean verifyProof(byte[] rootHash, byte[] key, LinkedHashMap<byte[], Node> nodeMap) {
+    if (nodeMap == null || rootHash == null || rootHash.length <= 0 || key == null
+        || key.length <= 0) {
+      return false;
+    }
+    int i = 0;
+    TrieKey trieKey = TrieKey.fromNormal(key);
+    byte[] beforeNode = null;
+    for (Entry<byte[], Node> entry : nodeMap.entrySet()) {
+      if (i > 0) {
+        byte[] hash = (beforeNode.length < 32) ? entry.getKey() : encodeElement(entry.getKey());
+        if (!Arrays.equals(beforeNode, hash)) {
+          return false;
+        }
+      }
+      //
+      switch (entry.getValue().getNodeType()) {
+        case BranchNode: {
+          if (trieKey.isEmpty()) {
+            break;
+          }
+          beforeNode = (byte[]) entry.getValue().children[trieKey.getHex(0)];
+          trieKey = trieKey.shift(1);
+        }
+        break;
+        case KVNodeNode: {
+          TrieKey currentNodeKey = (TrieKey) entry.getValue().children[0];
+          entry.getValue().children[0] = encodeElement(currentNodeKey.toPacked());
+          TrieKey commonPrefix = trieKey.getCommonPrefix(currentNodeKey);
+          if (commonPrefix.getLength() != currentNodeKey.getLength()) {
+            return false;
+          }
+          beforeNode = (byte[]) entry.getValue().children[1];
+          trieKey = trieKey.shift(commonPrefix.getLength());
+        }
+        break;
+        case KVNodeValue: {
+          TrieKey currentNodeKey = (TrieKey) entry.getValue().children[0];
+          entry.getValue().children[0] = encodeElement(currentNodeKey.toPacked());
+          if (!currentNodeKey.equals(trieKey)) {
+            return false;
+          }
+          trieKey = trieKey.shift(trieKey.getLength());
+        }
+        break;
+        default:
+          return false;
+      }
+
+      if (i == 0 && !Arrays.equals(rootHash, entry.getKey())) {
+        return false;
+      }
+      byte[] hash = Hash.sha3(RLP.encodeList(entry.getValue().children));
+      if (i > 0) {
+        byte[] encode = RLP.encodeList(entry.getValue().children);
+        hash = (encode.length < 32) ? encode : Hash.sha3(encode);
+      }
+      if (!Arrays.equals(hash, entry.getKey())) {
+        return false;
+      }
+      ++i;
+    }
+    if (trieKey.getLength() != 0) {
+      return false;
+    }
+    return true;
+  }
+
+  public Node getRoot() {
+    return root;
+  }
 
   private static String hash2str(byte[] hash, boolean shortHash) {
     String ret = Hex.toHexString(hash);

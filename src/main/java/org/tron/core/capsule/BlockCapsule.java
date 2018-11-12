@@ -21,9 +21,11 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -124,6 +126,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   private Block block;
   public boolean generatedByMyself = false;
   private List<TransactionCapsule> transactions = new ArrayList<>();
+  private Map<Sha256Hash, TransactionInfoCapsule> transactionInfoCapsuleMap = new LinkedHashMap<>();
 
   public BlockCapsule(long number, Sha256Hash hash, long when, ByteString witnessAddress) {
     // blockheader raw
@@ -262,15 +265,15 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   }
 
   public ByteString calcReceiptRoot() {
-    List<Transaction> transactionsList = this.block.getTransactionsList();
+    Collection<TransactionInfoCapsule> transactionInfoCapsules = this.transactionInfoCapsuleMap
+        .values();
 
-    if (CollectionUtils.isEmpty(transactionsList)) {
+    if (CollectionUtils.isEmpty(transactionInfoCapsules)) {
       return Sha256Hash.ZERO_HASH.getByteString();
     }
 
-    Vector<Sha256Hash> ids = transactionsList.stream()
-        .map(TransactionCapsule::new)
-        .map(TransactionCapsule::getReceiptMPTHash)
+    Vector<Sha256Hash> ids = transactionInfoCapsules.stream()
+        .map(TransactionInfoCapsule::getReceiptMPTHash)
         .collect(Collectors.toCollection(Vector::new));
 
     Trie receiptsTrie = new TrieImpl();
@@ -289,8 +292,8 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     }
 
     for (int i = 0; i < transactionInfoCapsules.size(); i++) {
-      receiptsTrie.put(RLP.encodeInt(i), Sha256Hash.of(transactionInfoCapsules.get(i).getInstance().
-          getReceipt().toByteArray()).getBytes());
+      receiptsTrie.put(RLP.encodeInt(i),
+          Sha256Hash.of(transactionInfoCapsules.get(i).getInstance().toByteArray()).getBytes());
     }
     return ByteString.copyFrom(receiptsTrie.getRootHash());
   }
@@ -342,6 +345,12 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public long getTimeStamp() {
     return this.block.getBlockHeader().getRawData().getTimestamp();
+  }
+
+  public BlockCapsule putTransactionInfo(Sha256Hash transactionId,
+      TransactionInfoCapsule transactionInfoCapsule) {
+    transactionInfoCapsuleMap.put(transactionId, transactionInfoCapsule);
+    return this;
   }
 
   private StringBuffer toStringBuff = new StringBuffer();
