@@ -102,8 +102,8 @@ import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.net.TronNetClient;
 import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.net.node.NodeImpl;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TransferContract;
@@ -128,7 +128,7 @@ public class Wallet {
   @Getter
   private final ECKey ecKey;
   @Autowired
-  private NodeImpl p2pNode;
+  private TronNetClient tronNetClient;
   @Autowired
   private Manager dbManager;
   @Autowired
@@ -421,7 +421,7 @@ public class Wallet {
         trx.resetResult();
       }
       dbManager.pushTransaction(trx);
-      p2pNode.broadcast(message);
+      tronNetClient.broadcast(message);
 
       return builder.setResult(true).setCode(response_code.SUCCESS).build();
     } catch (ValidateSignatureException e) {

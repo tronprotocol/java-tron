@@ -18,7 +18,6 @@ package org.tron.common.application;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
-import org.tron.core.net.node.Node;
 
 public interface Application {
 
@@ -35,8 +34,6 @@ public interface Application {
   void startServices();
 
   void shutdownServices();
-
-  Node getP2pNode();
 
   BlockStore getBlockStoreS();
 

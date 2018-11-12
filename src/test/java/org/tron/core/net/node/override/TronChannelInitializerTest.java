@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.ChannelManager;
-import org.tron.core.net.node.NodeImpl;
 import org.tron.core.net.peer.PeerConnection;
 
 @Component

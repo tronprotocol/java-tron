@@ -40,7 +40,6 @@ import org.tron.common.overlay.message.MessageCodec;
 import org.tron.common.overlay.message.StaticMessages;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.exception.P2pException;
-import org.tron.core.net.node.PeerConnectionDelegate;
 import org.tron.core.net.TronHandler;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -84,8 +83,6 @@ public class Channel {
 
   private long startTime;
 
-  private PeerConnectionDelegate peerDel;
-
   private TronState tronState = TronState.INIT;
 
   protected NodeStatistics nodeStatistics;
@@ -101,7 +98,7 @@ public class Channel {
   private boolean isTrustPeer;
 
   public void init(ChannelPipeline pipeline, String remoteId, boolean discoveryMode,
-      ChannelManager channelManager, PeerConnectionDelegate peerDel) {
+      ChannelManager channelManager) {
 
     this.channelManager = channelManager;
 
@@ -120,8 +117,6 @@ public class Channel {
     //handshake first
     pipeline.addLast("handshakeHandler", handshakeHandler);
 
-    this.peerDel = peerDel;
-
     messageCodec.setChannel(this);
     msgQueue.setChannel(this);
     handshakeHandler.setChannel(this, remoteId);
@@ -130,8 +125,6 @@ public class Channel {
 
     p2pHandler.setMsgQueue(msgQueue);
     tronHandler.setMsgQueue(msgQueue);
-    tronHandler.setPeerDel(peerDel);
-
   }
 
   public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage msg) {

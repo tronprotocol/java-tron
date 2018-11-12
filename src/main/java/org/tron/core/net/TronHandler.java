@@ -10,7 +10,6 @@ import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.MessageQueue;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.PeerConnection;
-import org.tron.core.net.node.PeerConnectionDelegate;
 
 @Component
 @Scope("prototype")

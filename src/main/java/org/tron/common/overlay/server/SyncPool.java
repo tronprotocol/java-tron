@@ -44,7 +44,6 @@ import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.discover.node.statistics.NodeStatistics;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.peer.PeerConnection;
-import org.tron.core.net.node.PeerConnectionDelegate;
 
 @Component
 public class SyncPool {

@@ -14,13 +14,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.server.TronChannelInitializer;
 import org.tron.core.config.args.Args;
-import org.tron.core.net.node.NodeImpl;
 import org.tron.protos.Protocol.ReasonCode;
 
 @Component
@@ -30,10 +28,6 @@ public class PeerClient {
 
   @Autowired
   private ApplicationContext ctx;
-
-  @Autowired
-  @Lazy
-  private NodeImpl node;
 
   private EventLoopGroup workerGroup;
 
@@ -79,7 +73,6 @@ public class PeerClient {
     TronChannelInitializer tronChannelInitializer = ctx
         .getBean(TronChannelInitializer.class, remoteId);
     tronChannelInitializer.setPeerDiscoveryMode(discoveryMode);
-    tronChannelInitializer.setNodeImpl(node);
 
     Bootstrap b = new Bootstrap();
     b.group(workerGroup);
