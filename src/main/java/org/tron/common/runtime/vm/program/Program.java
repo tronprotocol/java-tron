@@ -689,7 +689,7 @@ public class Program {
       tokenInfo.put(new String(stripLeadingZeroes(msg.getTokenId().getData())),endowment);
     }
     InternalTransaction internalTx = addInternalTx(null, senderAddress, contextAddress,
-        endowment, data, "call", nonce ,
+        msg.getTokenId() == null ? endowment: 0, data, "call", nonce ,
         msg.getTokenId() == null ? null: tokenInfo);
     ProgramResult callResult = null;
     if (isNotEmpty(programCode)) {
