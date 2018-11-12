@@ -128,7 +128,8 @@ public class ProposalController {
           break;
         }
         case (7): {
-          manager.getDynamicPropertiesStore().saveCreateNewAccountFeeInSystemContract(entry.getValue());
+          manager.getDynamicPropertiesStore()
+              .saveCreateNewAccountFeeInSystemContract(entry.getValue());
           break;
         }
         case (8): {
@@ -163,6 +164,12 @@ public class ProposalController {
         }
         case (15): {
           manager.getDynamicPropertiesStore().saveAllowSameTokenName(entry.getValue());
+          break;
+        }
+        case (16): {
+          if (manager.getDynamicPropertiesStore().getAllowMultiSign() == 0) {
+            manager.getDynamicPropertiesStore().saveAllowMultiSign(entry.getValue());
+          }
           break;
         }
         default:

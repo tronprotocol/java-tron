@@ -129,10 +129,26 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_CREATION_OF_CONTRACTS = "ALLOW_CREATION_OF_CONTRACTS"
       .getBytes();
 
+  private static final byte[] TOTAL_SIGN_NUM = "TOTAL_SIGN_NUM".getBytes();
+
+  private static final byte[] ALLOW_MULTI_SIGN = "ALLOW_MULTI_SIGN".getBytes();
+
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
+
+    try {
+      this.getTotalSignNum();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalSignNum(5);
+    }
+
+    try {
+      this.getAllowMultiSign();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowMultiSign(0);
+    }
 
     try {
       this.getLatestBlockHeaderTimestamp();
@@ -773,7 +789,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT"));
+            () -> new IllegalArgumentException(
+                "not found CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT"));
   }
 
   public void saveCreateNewAccountBandwidthRate(long rate) {
@@ -972,8 +989,34 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void saveAllowCreationOfContracts(long allowCreationOfContracts) {
-    this.put(DynamicPropertiesStore.ALLOW_CREATION_OF_CONTRACTS,
+    this.put(ALLOW_CREATION_OF_CONTRACTS,
         new BytesCapsule(ByteArray.fromLong(allowCreationOfContracts)));
+  }
+
+  public void saveTotalSignNum(int num) {
+    this.put(DynamicPropertiesStore.TOTAL_SIGN_NUM,
+        new BytesCapsule(ByteArray.fromInt(num)));
+  }
+
+  public int getTotalSignNum() {
+    return Optional.ofNullable(getUnchecked(TOTAL_SIGN_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toInt)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_SIGN_NUM"));
+  }
+
+  public void saveAllowMultiSign(long allowMultiSing) {
+    this.put(ALLOW_MULTI_SIGN,
+        new BytesCapsule(ByteArray.fromLong(allowMultiSing)));
+  }
+
+  public long getAllowMultiSign() {
+    return Optional.ofNullable(getUnchecked(ALLOW_MULTI_SIGN))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_MULTI_SIGN"));
   }
 
   public long getAllowCreationOfContracts() {
@@ -1164,14 +1207,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void addTotalNetWeight(long amount) {
     long totalNetWeight = getTotalNetWeight();
     totalNetWeight += amount;
-    saveTotalNetWeight( totalNetWeight );
+    saveTotalNetWeight(totalNetWeight);
   }
 
   //The unit is trx
   public void addTotalEnergyWeight(long amount) {
     long totalEnergyWeight = getTotalEnergyWeight();
     totalEnergyWeight += amount;
-    saveTotalEnergyWeight( totalEnergyWeight );
+    saveTotalEnergyWeight(totalEnergyWeight);
   }
 
   public void addTotalCreateAccountCost(long fee) {

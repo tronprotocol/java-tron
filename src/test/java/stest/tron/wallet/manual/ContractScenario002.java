@@ -1,4 +1,4 @@
-package stest.tron.wallet.contract.scenario;
+package stest.tron.wallet.manual;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -58,7 +58,7 @@ public class ContractScenario002 {
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     Assert.assertTrue(PublicMethed.sendcoin(contract002Address, 50000000L, fromAddress,
-        testKey002,blockingStubFull));
+        testKey002, blockingStubFull));
     channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
         .usePlaintext(true)
         .build();
@@ -182,7 +182,7 @@ public class ContractScenario002 {
   @Test(enabled = true)
   public void getContractWithInvaildAddress() {
     byte[] contractAddress = contract002Address;
-    SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
+    SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     logger.info(smartContract.getAbi().toString());
     Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
   }
