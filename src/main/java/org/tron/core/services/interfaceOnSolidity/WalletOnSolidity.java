@@ -26,10 +26,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.tron.api.GrpcAPI.AssetIssueList;
+import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
+import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -40,6 +43,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.StoreException;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
 
@@ -168,6 +172,37 @@ public class WalletOnSolidity {
       return transactionInfoCapsule.getInstance();
     }
     return null;
+  }
+
+  public DelegatedResourceList getDelegatedResource(ByteString fromAddress, ByteString toAddress) {
+    DelegatedResourceList.Builder builder = DelegatedResourceList.newBuilder();
+    byte[] dbKey = DelegatedResourceCapsule
+        .createDbKey(fromAddress.toByteArray(), toAddress.toByteArray());
+    DelegatedResourceCapsule delegatedResourceCapsule = null;
+    try {
+      delegatedResourceCapsule =
+          dbManager.getDelegatedResourceStore().getOnSolidity(dbKey);
+    } catch (StoreException e) {
+    }
+    if (delegatedResourceCapsule != null) {
+      builder.addDelegatedResource(delegatedResourceCapsule.getInstance());
+    }
+    return builder.build();
+  }
+
+  public DelegatedResourceAccountIndex getDelegatedResourceAccountIndex(ByteString address) {
+    DelegatedResourceAccountIndexCapsule accountIndexCapsule = null;
+    try {
+      accountIndexCapsule =
+          dbManager.getDelegatedResourceAccountIndexStore().getOnSolidity(address.toByteArray());
+    } catch (StoreException e) {
+
+    }
+    if (accountIndexCapsule != null) {
+      return accountIndexCapsule.getInstance();
+    } else {
+      return null;
+    }
   }
 
 }
