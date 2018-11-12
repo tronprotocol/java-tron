@@ -17,37 +17,16 @@
  */
 package org.tron.core.tire;
 
-import static org.tron.common.crypto.Hash.EMPTY_TRIE_HASH;
-
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.spongycastle.util.Arrays;
-import org.spongycastle.util.encoders.Hex;
-import org.tron.common.utils.Sha256Hash;
-import org.tron.core.capsule.utils.ByteArrayWrapper;
 import org.tron.core.capsule.utils.RLP;
-import org.tron.core.db2.common.ConcurrentHashDB;
-import org.tron.core.db2.common.DB;
 import org.tron.core.trie.TrieImpl;
 import org.tron.core.trie.TrieImpl.Node;
 
 public class TrieTest {
-
-  private static final Logger logger = LoggerFactory.getLogger("test");
-
-  private static String LONG_STRING = "1234567890abcdefghijklmnopqrstuvwxxzABCEFGHIJKLMNOPQRSTUVWXYZ";
-  private static String ROOT_HASH_EMPTY = Hex.toHexString(EMPTY_TRIE_HASH);
 
   private static String c = "c";
   private static String ca = "ca";
@@ -57,86 +36,76 @@ public class TrieTest {
   private static String test = "test";
   private static String dude = "dude";
 
-
-  //    public TrieCache mockDb = new TrieCache();
-//    public TrieCache mockDb_2 = new TrieCache();
-  public DB mockDb = new ConcurrentHashDB();
-
-//      ROOT: [ '\x16', A ]
-//      A: [ '', '', '', '', B, '', '', '', C, '', '', '', '', '', '', '', '' ]
-//      B: [ '\x00\x6f', D ]
-//      D: [ '', '', '', '', '', '', E, '', '', '', '', '', '', '', '', '', 'verb' ]
-//      E: [ '\x17', F ]
-//      F: [ '', '', '', '', '', '', G, '', '', '', '', '', '', '', '', '', 'puppy' ]
-//      G: [ '\x35', 'coin' ]
-//      C: [ '\x20\x6f\x72\x73\x65', 'stallion' ]
-
-  @After
-  public void closeMockDb() throws IOException {
-  }
-
   @Test
-  public void test() throws UnsupportedEncodingException {
+  public void test() {
     TrieImpl trie = new TrieImpl();
     trie.put(new byte[]{1}, c.getBytes());
     Assert.assertTrue(Arrays.areEqual(trie.get(RLP.encodeInt(1)), c.getBytes()));
     trie.put(new byte[]{1, 0}, ca.getBytes());
     trie.put(new byte[]{1, 1}, cat.getBytes());
     trie.put(new byte[]{1, 2}, dog.getBytes());
-    trie.put(RLP.encodeInt(5), test.getBytes());
-    trie.put(RLP.encodeInt(6), doge.getBytes());
-    trie.put(RLP.encodeInt(7), "cdfs".getBytes());
-    trie.put(RLP.encodeInt(11), "sgd".getBytes());
-//    trie.delete(RLP.encodeInt(5));
-    System.out.println(Sha256Hash.of(trie.getRootHash()).toString());
     trie.put(RLP.encodeInt(5), doge.getBytes());
-//    trie.put(RLP.encodeInt(5), test.getBytes());
-    System.out.println(trie.dumpTrie());
-    System.out.println(Sha256Hash.of(trie.getRootHash()).toString());
+    trie.put(RLP.encodeInt(6), doge.getBytes());
+    trie.put(RLP.encodeInt(7), doge.getBytes());
+    trie.put(RLP.encodeInt(11), doge.getBytes());
+    trie.put(RLP.encodeInt(12), dude.getBytes());
+    trie.put(RLP.encodeInt(13), test.getBytes());
     trie.delete(RLP.encodeInt(3));
-    System.out.println(trie.dumpTrie());
-    System.out.println(Sha256Hash.of(trie.getRootHash()).toString());
-    List<Node> nodeList = new ArrayList<>();
-//    trie.find(trie.getRoot(), TrieKey.fromNormal(RLP.encodeInt(5)), nodeList);
-    System.out.println(nodeList);
     byte[] rootHash = trie.getRootHash();
     TrieImpl trieCopy = new TrieImpl(trie.getCache(), rootHash);
     Map<byte[], Node> map = trieCopy.prove(new byte[]{1, 1});
-    System.out.println("map: " + map);
     boolean result = trie
         .verifyProof(trieCopy.getRootHash(), new byte[]{1, 1}, (LinkedHashMap<byte[], Node>) map);
     Assert.assertTrue(result);
     System.out.println(trieCopy.prove(RLP.encodeInt(5)));
     System.out.println(trieCopy.prove(RLP.encodeInt(6)));
-    Assert.assertTrue(trieCopy.verifyProof(trieCopy.getRootHash(), RLP.encodeInt(5),
-        trieCopy.prove(RLP.encodeInt(5))));
-    Assert.assertFalse(trieCopy.verifyProof(trieCopy.getRootHash(), RLP.encodeInt(6),
-        trieCopy.prove(RLP.encodeInt(5))));
-    Assert.assertTrue(trieCopy.verifyProof(trieCopy.getRootHash(), RLP.encodeInt(6),
-        trieCopy.prove(RLP.encodeInt(6))));
-    Assert.assertFalse(trieCopy.verifyProof(trieCopy.getRootHash(), RLP.encodeInt(5),
-        trieCopy.prove(RLP.encodeInt(6))));
-//    Assert.assertTrue(trie.verifyProof(trie.getRootHash(),RLP.encodeInt(5),trie.prove(trie.getRoot(),RLP.encodeInt(11))));
-    getReferencedTrieNodes(trie, RLP.encodeInt(1));
+    assertTrue(RLP.encodeInt(5), trieCopy);
+    assertTrue(RLP.encodeInt(5), RLP.encodeInt(6), trieCopy);
+    assertTrue(RLP.encodeInt(6), trieCopy);
+    assertTrue(RLP.encodeInt(6), RLP.encodeInt(5), trieCopy);
+    //
+    trie.put(RLP.encodeInt(5), doge.getBytes());
+    byte[] rootHash2 = trie.getRootHash();
+    Assert.assertFalse(Arrays.areEqual(rootHash, rootHash2));
+    trieCopy = new TrieImpl(trie.getCache(), rootHash2);
+    //
+    assertTrue(RLP.encodeInt(5), trieCopy);
+    assertFalse(RLP.encodeInt(5), RLP.encodeInt(6), trieCopy);
+    assertTrue(RLP.encodeInt(6), trieCopy);
+    assertFalse(RLP.encodeInt(6), RLP.encodeInt(5), trieCopy);
   }
 
-  public Set<ByteArrayWrapper> getReferencedTrieNodes(TrieImpl trie, byte[] keyV) {
-    final Set<ByteArrayWrapper> ret = new HashSet<>();
-    trie.scanTree(new TrieImpl.ScanAction() {
-      @Override
-      public void doOnNode(byte[] hash, TrieImpl.Node node) {
-        ret.add(new ByteArrayWrapper(hash));
+  @Test
+  public void test2() {
+    TrieImpl trie = new TrieImpl();
+    int n = 100;
+    for (int i = 1; i < n; i++) {
+      trie.put(RLP.encodeInt(i), String.valueOf(i).getBytes());
+    }
+    byte[] rootHash = trie.getRootHash();
+    TrieImpl trieCopy = new TrieImpl(trie.getCache(), rootHash);
+    for (int i = 1; i < n; i++) {
+      assertTrue(RLP.encodeInt(i), trieCopy);
+    }
+    for (int i = 1; i < n; i++) {
+      for (int j = 1; j < n; j++) {
+        if (i != j) {
+          assertFalse(RLP.encodeInt(i), RLP.encodeInt(j), trieCopy);
+        }
       }
+    }
+  }
 
-      @Override
-      public void doOnValue(byte[] nodeHash, TrieImpl.Node node, byte[] key, byte[] value) {
-//        if (Arrays.areEqual(key, keyV)) {
-//          ret.add(new ByteArrayWrapper( node.encode()));
-//        }
-      }
-    });
-    System.out.println("getReferencedTrieNodes: " + ret);
-    return ret;
+  private void assertTrue(byte[] key, TrieImpl trieCopy) {
+    Assert.assertTrue(trieCopy.verifyProof(trieCopy.getRootHash(), key, trieCopy.prove(key)));
+  }
+
+  private void assertTrue(byte[] key1, byte[] key2, TrieImpl trieCopy) {
+    Assert.assertTrue(trieCopy.verifyProof(trieCopy.getRootHash(), key2, trieCopy.prove(key1)));
+  }
+
+  private void assertFalse(byte[] key1, byte[] key2, TrieImpl trieCopy) {
+    Assert.assertFalse(trieCopy.verifyProof(trieCopy.getRootHash(), key2, trieCopy.prove(key1)));
   }
 
 }
