@@ -198,11 +198,17 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
         //TODO: "for loop" below in future for multiple token case, we only have one for now.
         Protocol.InternalTransaction.CallValueInfo.Builder callValueInfoBuilder =
             Protocol.InternalTransaction.CallValueInfo.newBuilder();
-        callValueInfoBuilder.setCallValue(internalTransaction.getValue());
         // trx will not be set token name
-        callValueInfoBuilder.setTokenId(internalTransaction.getTokenId());
+        callValueInfoBuilder.setCallValue(internalTransaction.getValue());
         // Just one transferBuilder for now.
         internalTrxBuilder.addCallValueInfo(callValueInfoBuilder);
+        internalTransaction.getTokenInfo().forEach((tokenId, amount) -> {
+          Protocol.InternalTransaction.CallValueInfo.Builder tokenInfoBuilder =
+              Protocol.InternalTransaction.CallValueInfo.newBuilder();
+          tokenInfoBuilder.setTokenId(tokenId);
+          tokenInfoBuilder.setCallValue(amount);
+          internalTrxBuilder.addCallValueInfo(tokenInfoBuilder);
+        });
         // Token for loop end here
         internalTrxBuilder.setNote(ByteString.copyFrom(internalTransaction.getNote().getBytes()));
         internalTrxBuilder.setRejected(internalTransaction.isRejected());

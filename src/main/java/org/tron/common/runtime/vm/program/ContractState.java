@@ -282,4 +282,9 @@ public class ContractState implements Deposit, ProgramListenerAware {
     return this.deposit.getBlock(blockHash);
   }
 
+  @Override
+  public byte[] getBlackHoleAddress() {
+    return deposit.getBlackHoleAddress();
+  }
+
 }

@@ -104,4 +104,6 @@ public interface Deposit {
 
   BlockCapsule getBlock(byte[] blockHash);
 
+  byte[] getBlackHoleAddress();
+
 }
