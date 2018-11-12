@@ -439,7 +439,7 @@ public class DepositImpl implements Deposit {
   @Override
   public synchronized long getTokenBalance(byte[] address, byte[] tokenId){
     AccountCapsule accountCapsule = getAccount(address);
-    String tokenStr = Arrays.toString(ByteUtil.stripLeadingZeroes(tokenId));
+    String tokenStr = new String(ByteUtil.stripLeadingZeroes(tokenId));
     return accountCapsule.getAssetMap().getOrDefault(tokenStr, 0L);
   }
 
