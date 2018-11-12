@@ -82,7 +82,6 @@ public class BlockMsgHandler implements TronMsgHandler {
     }
     tronProxy.processBlock(block);
     witnessProductBlockService.validWitnessProductTwoBlock(block);
-    //trxIds.forEach(trxId -> advObjToFetch.remove(trxId));
     tronProxy.getActivePeer().forEach(p -> {
       if (p.getAdvInvReceive().containsKey(blockId)) {
         p.setBlockBothHave(blockId);

@@ -21,10 +21,10 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
 
   private TronNetService tronNetService;
 
-  @Autowired
-  private TronHandler (final ApplicationContext ctx){
-    tronNetService = ctx.getBean(TronNetService.class);
-  }
+//  @Autowired
+//  private TronHandler (final ApplicationContext ctx){
+//    tronNetService = ctx.getBean(TronNetService.class);
+//  }
 
   @Override
   public void channelRead0(final ChannelHandlerContext ctx, TronMessage msg) {

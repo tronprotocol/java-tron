@@ -58,7 +58,6 @@ public class PeerConnection extends Channel {
   @Getter
   private Map<Item, Long> advInvRequest = new ConcurrentHashMap<>();
 
-  @Setter
   @Getter
   private BlockId blockBothHave = tronProxy.getGenesisBlockId();
   public void setBlockBothHave (BlockId blockId) {
