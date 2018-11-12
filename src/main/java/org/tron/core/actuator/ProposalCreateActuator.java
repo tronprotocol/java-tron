@@ -204,7 +204,7 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         break;
       }
-      case (16): {
+      case (19): {
         if (entry.getValue() != 1) {
           throw new ContractValidateException(
               "This value[ALLOW_MULTI_SIGN] is only allowed to be 1");

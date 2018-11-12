@@ -166,7 +166,7 @@ public class ProposalController {
           manager.getDynamicPropertiesStore().saveAllowSameTokenName(entry.getValue());
           break;
         }
-        case (16): {
+        case (19): {
           if (manager.getDynamicPropertiesStore().getAllowMultiSign() == 0) {
             manager.getDynamicPropertiesStore().saveAllowMultiSign(entry.getValue());
           }
