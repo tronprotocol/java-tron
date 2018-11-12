@@ -37,7 +37,7 @@ import org.tron.core.exception.RevokingStoreIllegalStateException;
 @Slf4j
 public class SnapshotManager implements RevokingDatabase {
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
-  public static final int DEFAULT_MAX_FLUSH_COUNT = 1000;
+  public static final int DEFAULT_MAX_FLUSH_COUNT = 500;
   public static final int DEFAULT_MIN_FLUSH_COUNT = 1;
 
   @Getter
@@ -279,7 +279,7 @@ public class SnapshotManager implements RevokingDatabase {
     try {
       future.get();
     } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
+      Thread.currentThread().interrupt();
     }
 
     // debug begin
