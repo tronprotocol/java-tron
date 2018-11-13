@@ -61,10 +61,14 @@ public class SHA256CompressCapsule implements ProtoCapsule<SHA256Compress> {
 
     System.arraycopy(a.getContent().toByteArray(), 0, blob, 0, 32);
     System.arraycopy(b.getContent().toByteArray(), 0, blob, 32, 32);
-    res = Sha256Hash.hash(blob);
+    res = Sha256Hash.Sha256OneBlock(blob);
     SHA256CompressCapsule sha256CompressCapsule = new SHA256CompressCapsule();
     sha256CompressCapsule.setContent(ByteString.copyFrom(res));
-
+    System.out.print(ByteArray.toHexString(a.getContent().toByteArray()));
+    System.out.print(" : ");
+    System.out.print(ByteArray.toHexString(b.getContent().toByteArray()));
+    System.out.print(" : ");
+    System.out.println(ByteArray.toHexString(res));
     return sha256CompressCapsule;
   }
 
@@ -80,4 +84,14 @@ public class SHA256CompressCapsule implements ProtoCapsule<SHA256Compress> {
     return !sha256Compress.getContent().isEmpty();
   }
 
+  public static void main(String[] args){
+    byte[] a = ByteArray.fromHexString("0000000000000000000000000000000000000000000000000000000000000000");
+   // ZksnarkUtils.sort(a);
+    byte[] b = ByteArray.fromHexString("0000000000000000000000000000000000000000000000000000000000000000");
+ //   ZksnarkUtils.sort(b);
+    SHA256Compress sa = SHA256Compress.newBuilder().setContent(ByteString.copyFrom(a)).build();
+    SHA256Compress sb = SHA256Compress.newBuilder().setContent(ByteString.copyFrom(b)).build();
+    combine(sa, sb, 0);
+
+  }
 }
