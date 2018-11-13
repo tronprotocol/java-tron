@@ -36,7 +36,6 @@ import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
-import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
@@ -45,7 +44,6 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.TransactionTrace;
@@ -561,8 +559,10 @@ public class RuntimeImpl implements Runtime {
 
         if (isCallConstant()) {
           long callValue = TransactionCapsule.getCallValue(trx.getRawData().getContract(0));
-          if (callValue > 0) {
-            runtimeError = "constant cannot set call value.";
+          long callTokenValue = TransactionCapsule
+              .getCallTokenValue(trx.getRawData().getContract(0));
+          if (callValue > 0 || callTokenValue > 0) {
+            runtimeError = "constant cannot set call value or call token value.";
             result.rejectInternalTransactions();
           }
           return;
