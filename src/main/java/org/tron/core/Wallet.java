@@ -111,10 +111,10 @@ import org.tron.core.net.node.NodeImpl;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.AuthenticationPath;
 import org.tron.protos.Contract.CreateSmartContract;
+import org.tron.protos.Contract.IncrementalMerkleWitness;
 import org.tron.protos.Contract.MerklePath;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.TriggerSmartContract;
-import org.tron.protos.Contract.IncrementalMerkleWitness;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -836,14 +836,16 @@ public class Wallet {
     return null;
   }
 
-  public IncrementalMerkleWitness getMerkleTreeWitness(byte[] txHash, int index) {
-    if (Objects.isNull(txHash) || index < 0) {
+  public IncrementalMerkleWitness getMerkleTreeWitness(byte[] hash, int index) {
+    if (Objects.isNull(hash) || index < 0) {
       return null;
     }
 
     IncrementalMerkleWitnessCapsule merkleWitnessCapsule =
-        dbManager.getMerkleContainer().getWitness(txHash, index);
+        dbManager.getMerkleContainer().getWitness(hash, index);
+
     if (merkleWitnessCapsule != null) {
+      merkleWitnessCapsule.resetRt();
       return merkleWitnessCapsule.getInstance();
     }
 

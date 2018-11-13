@@ -124,9 +124,9 @@ public class MerkleContainer {
   }
 
 
-  public IncrementalMerkleWitnessCapsule getWitness(byte[] txHash, int index) {
+  public IncrementalMerkleWitnessCapsule getWitness(byte[] hash, int index) {
     return this.manager.getMerkleWitnessStore()
-        .get(OutputPointUtil.outputPointToKey(txHash, index));
+        .get(OutputPointUtil.outputPointToKey(hash, index));
   }
 
 

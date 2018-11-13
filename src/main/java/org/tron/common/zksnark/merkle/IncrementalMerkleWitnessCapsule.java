@@ -68,6 +68,11 @@ public class IncrementalMerkleWitnessCapsule implements ProtoCapsule<Incremental
     this.witness = this.witness.toBuilder().setCursorDepth(cursorDepth).build();
   }
 
+  public void resetRt() {
+    this.witness = this.witness.toBuilder().setRt(toMerkleWitnessContainer().root().getContent())
+        .build();
+  }
+
   public OutputPoint getOutputPoint() {
     return this.witness.getOutputPoint();
   }

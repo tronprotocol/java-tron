@@ -105,11 +105,11 @@ public class IncrementalMerkleWitnessContainer {
       return outputPointToKey(outputPoint.getHash().toByteArray(), outputPoint.getIndex());
     }
 
-    public static byte[] outputPointToKey(byte[] txBytes, int index) {
+    public static byte[] outputPointToKey(byte[] hashBytes, int index) {
       byte[] indexBytes = ByteArray.fromInt(index);
-      byte[] rs = new byte[txBytes.length + indexBytes.length];
-      System.arraycopy(txBytes, 0, rs, 0, txBytes.length);
-      System.arraycopy(indexBytes, 0, rs, txBytes.length, indexBytes.length);
+      byte[] rs = new byte[hashBytes.length + indexBytes.length];
+      System.arraycopy(hashBytes, 0, rs, 0, hashBytes.length);
+      System.arraycopy(indexBytes, 0, rs, hashBytes.length, indexBytes.length);
       return rs;
     }
   }
