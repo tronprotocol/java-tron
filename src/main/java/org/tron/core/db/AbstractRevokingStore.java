@@ -313,12 +313,14 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
     System.err.println("******** before revokingDb size:" + size());
     try {
       disable();
-      boolean exit = false;
-      while (!exit) {
+      while (true) {
         try {
           commit();
         } catch (RevokingStoreIllegalStateException e) {
-          exit = true;
+          break;
+        }
+        if (activeDialog <= 0) {
+          break;
         }
       }
 
@@ -326,6 +328,12 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
         try {
           pop();
         } catch (RevokingStoreIllegalStateException e) {
+          break;
+        }
+        if (activeDialog != 0) {
+          break;
+        }
+        if (stack.isEmpty()) {
           break;
         }
       }
