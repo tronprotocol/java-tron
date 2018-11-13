@@ -1082,8 +1082,15 @@ public class Manager {
     session.setValue(revokingStore.buildSession());
 
     Iterator iterator = pendingTransactions.iterator();
-    while (iterator.hasNext()) {
-      TransactionCapsule trx = (TransactionCapsule) iterator.next();
+    while (iterator.hasNext() || repushTransactions.size() > 0) {
+
+      TransactionCapsule trx;
+      if (iterator.hasNext()) {
+        trx = (TransactionCapsule) iterator.next();
+      } else {
+        trx = repushTransactions.poll();
+      }
+
       if (DateTime.now().getMillis() - when
           > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5
           * Args.getInstance().getBlockProducedTimeOut()
