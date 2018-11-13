@@ -9,6 +9,7 @@ import org.tron.common.crypto.zksnark.Proof;
 import org.tron.common.crypto.zksnark.VerifyingKey;
 import org.tron.common.crypto.zksnark.ZkVerify;
 import org.tron.common.crypto.zksnark.ZksnarkUtils;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
@@ -57,12 +58,15 @@ public class ZkV0TransferActuator extends AbstractActuator {
     dbManager.getNullfierStore().put(nf1, new BytesCapsule(nf1));
     dbManager.getNullfierStore().put(nf2, new BytesCapsule(nf2));
 
-    //todo get tx_hash
-    byte[] hash = {0x01};
+    byte[] hash = getContractId(zkContract);
 
     dbManager.getMerkleContainer().saveCmIntoMerkleTree(zkContract.getRt().toByteArray(),
         zkContract.getCm1().toByteArray(), zkContract.getCm2().toByteArray(), hash);
     return true;
+  }
+
+  private byte[] getContractId(ZksnarkV0TransferContract contract) {
+    return Sha256Hash.of(contract.toByteArray()).getBytes();
   }
 
   @Override

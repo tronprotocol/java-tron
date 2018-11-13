@@ -74,7 +74,8 @@ public class IncrementalMerkleWitnessCapsule implements ProtoCapsule<Incremental
 
   public void setOutputPoint(ByteString hash, int index) {
     this.witness = this.witness.toBuilder()
-        .setOutputPoint(OutputPoint.newBuilder().setTxHash(hash).setIndex(index).build()).build();
+        .setOutputPoint(OutputPoint.newBuilder().setHash(hash).setIndex(index).build())
+        .build();
   }
 
   @Override

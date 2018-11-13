@@ -83,7 +83,7 @@ public class IncrementalMerkleWitnessContainer {
   public byte[] getMerkleWitnessKey() {
     OutputPoint outputPoint = witnessCapsule.getOutputPoint();
 
-    if (outputPoint.getTxHash().isEmpty()) {
+    if (outputPoint.getHash().isEmpty()) {
       throw new RuntimeException("outputPoint is not initialized");
     }
     return OutputPointUtil.outputPointToKey(outputPoint);
@@ -102,7 +102,7 @@ public class IncrementalMerkleWitnessContainer {
   public static class OutputPointUtil {
 
     public static byte[] outputPointToKey(OutputPoint outputPoint) {
-      return outputPointToKey(outputPoint.getTxHash().toByteArray(), outputPoint.getIndex());
+      return outputPointToKey(outputPoint.getHash().toByteArray(), outputPoint.getIndex());
     }
 
     public static byte[] outputPointToKey(byte[] txBytes, int index) {

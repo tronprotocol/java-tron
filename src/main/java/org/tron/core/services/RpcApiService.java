@@ -73,7 +73,9 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.IncrementalMerkleWitness;
 import org.tron.protos.Contract.MerklePath;
+import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
@@ -82,8 +84,6 @@ import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Contract.ZksnarkV0TransferContract;
-import org.tron.protos.Contract.OutputPoint;
-import org.tron.protos.Contract.IncrementalMerkleWitness;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -1477,11 +1477,11 @@ public class RpcApiService implements Service {
     public void getMerkleTreeWitness(OutputPoint request,
         StreamObserver<IncrementalMerkleWitness> responseObserver) {
 
-      ByteString txHash = request.getTxHash();
+      ByteString hash = request.getHash();
       int index = request.getIndex();
 
-      if (null != txHash && index >= 0) {
-        IncrementalMerkleWitness witness = wallet.getMerkleTreeWitness(txHash.toByteArray(), index);
+      if (null != hash && index >= 0) {
+        IncrementalMerkleWitness witness = wallet.getMerkleTreeWitness(hash.toByteArray(), index);
         responseObserver.onNext(witness);
       } else {
         responseObserver.onNext(null);
