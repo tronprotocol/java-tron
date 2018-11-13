@@ -82,7 +82,7 @@ message MerklePath {
 }
 
 message OutputPoint{
-  bytes txHash = 1;
+  bytes hash = 1;
   int32 index = 2;
 }
 
