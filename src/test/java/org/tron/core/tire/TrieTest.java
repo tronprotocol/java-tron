@@ -76,6 +76,23 @@ public class TrieTest {
   }
 
   @Test
+  public void test1() {
+    TrieImpl trie = new TrieImpl();
+    int n = 100;
+    for (int i = 1; i < n; i++) {
+      trie.put(RLP.encodeInt(i), String.valueOf(i).getBytes());
+    }
+    byte[] rootHash1 = trie.getRootHash();
+
+    TrieImpl trie2 = new TrieImpl();
+    for (int i = 1; i < n; i++) {
+      trie2.put(RLP.encodeInt(i), String.valueOf(i).getBytes());
+    }
+    byte[] rootHash2 = trie2.getRootHash();
+    Assert.assertTrue(Arrays.areEqual(rootHash1, rootHash2));
+  }
+
+  @Test
   public void test2() {
     TrieImpl trie = new TrieImpl();
     int n = 100;
