@@ -345,6 +345,19 @@ public class StoreAPITest {
   }
 
   @Test
+  public void UpdateAssetV2() {
+    long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
+
+    for (AssetIssueCapsule assetIssueCapsule : dbManager.getAssetIssueStore().getAllAssetIssues()) {
+      dbManager.getAssetIssueV2Store().put(ByteArray.fromLong(tokenIdNum), assetIssueCapsule);
+      assetIssueCapsule.setId(tokenIdNum);
+      tokenIdNum++;
+    }
+    Assert.assertEquals(2, dbManager.getAssetIssueV2Store().getAllAssetIssues().size());
+
+  }
+
+  @Test
   public void getTransactionsFromThis() {
     List<Transaction> transactionList = storeAPI
         .getTransactionsFromThis(ACCOUNT_ADDRESS_ONE, 0, 1000);

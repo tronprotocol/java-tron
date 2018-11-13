@@ -87,7 +87,7 @@ message Account {
   map<string, int64> asset = 6;
 
   // the other asset owned by this account，key is assetId
-  map<string, int64> assetV2 = 36;
+  map<string, int64> assetV2 = 56;
 
   // the frozen balance for bandwidth
   repeated Frozen frozen = 7;

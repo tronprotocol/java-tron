@@ -192,6 +192,10 @@ public class Manager {
     return this.witnessStore;
   }
 
+  public boolean needToUpdateAsset() {
+    return getDynamicPropertiesStore().getTokenUpdateDone() == 0L;
+  }
+
   public DynamicPropertiesStore getDynamicPropertiesStore() {
     return this.dynamicPropertiesStore;
   }

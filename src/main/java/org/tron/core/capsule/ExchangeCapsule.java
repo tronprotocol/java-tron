@@ -80,6 +80,12 @@ public class ExchangeCapsule implements ProtoCapsule<Exchange> {
     return this.exchange.getSecondTokenId().toByteArray();
   }
 
+  public void setSecondTokenId(byte[] id) {
+    this.exchange = this.exchange.toBuilder()
+        .setSecondTokenId(ByteString.copyFrom(id))
+        .build();
+  }
+
   public long getFirstTokenBalance() {
     return this.exchange.getFirstTokenBalance();
   }

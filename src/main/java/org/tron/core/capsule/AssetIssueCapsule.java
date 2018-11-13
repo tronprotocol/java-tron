@@ -20,6 +20,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.nio.charset.Charset;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.ByteArray;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.AssetIssueContract.FrozenSupply;
 
@@ -61,6 +62,16 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
     return this.assetIssueContract.getName();
   }
 
+  public void setId(long id) {
+    this.assetIssueContract = this.assetIssueContract.toBuilder()
+        .setId(String.valueOf(id))
+        .build();
+  }
+
+  public long getId() {
+    return Long.parseLong(this.assetIssueContract.getId());
+  }
+
   public void setOrder(long order) {
     this.assetIssueContract = this.assetIssueContract.toBuilder()
         .setOrder(order)
@@ -71,6 +82,9 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
     return this.assetIssueContract.getOrder();
   }
 
+  public byte[] createDbV2Key() {
+    return ByteArray.fromLong(getId());
+  }
   public byte[] createDbKey() {
     long order = getOrder();
     if (order == 0) {

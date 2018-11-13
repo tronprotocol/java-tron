@@ -393,8 +393,26 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   /**
    * add asset.
    */
+  public boolean addAssetV2Map(Map<String, Long> assetMap) {
+    this.account = this.account.toBuilder().putAllAssetV2(assetMap).build();
+    return true;
+  }
+
+
+  /**
+   * add asset.
+   */
   public Map<String, Long> getAssetMap() {
     Map<String, Long> assetMap = this.account.getAssetMap();
+    if (assetMap.isEmpty()) {
+      assetMap = Maps.newHashMap();
+    }
+
+    return assetMap;
+  }
+
+  public Map<String, Long> getAssetV2Map() {
+    Map<String, Long> assetMap = this.account.getAssetV2Map();
     if (assetMap.isEmpty()) {
       assetMap = Maps.newHashMap();
     }
