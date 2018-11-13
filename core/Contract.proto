@@ -101,6 +101,7 @@ message IncrementalMerkleWitness{
   repeated SHA256Compress filled = 2;
   IncrementalMerkleTree cursor = 3;
   int64 cursor_depth = 4;
+  bytes rt = 5;
   OutputPoint output_point = 10;
 }
 
