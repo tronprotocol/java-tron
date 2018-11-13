@@ -9,11 +9,11 @@ import org.tron.stresstest.dispatch.strategy.Level2Strategy;
 
 @Getter
 public abstract class AbstractTransactionCreator extends Level2Strategy {
-  protected String privateKey = "cbe57d98134c118ed0d219c0c8bc4154372c02c1e13b5cce30dd22ecd7bed19e";
-  protected String witnessPrivateKey = "369F095838EB6EED45D4F6312AF962D5B9DE52927DA9F04174EE49F9AF54BC77";
-  protected ByteString ownerAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("27meR2d4HodFPYX2V8YRDrLuFpYdbLvBEWi"));
-  protected ByteString witnessAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("27QAUYjg5FXfxcvyHcWF3Aokd5eu9iYgs1c"));
-  protected ByteString toAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("27ZESitosJfKouTBrGg6Nk5yEjnJHXMbkZp"));
+  protected String privateKey = "22a6aca17f8ec257cc57e190902767d7fedf908bba920b4fbeaab8f158e0da17";
+  protected String witnessPrivateKey = "22a6aca17f8ec257cc57e190902767d7fedf908bba920b4fbeaab8f158e0da17";
+  protected ByteString ownerAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("TRx2rc1v91HjUFdeBBgNSiqirctq94sAfA"));
+  protected ByteString witnessAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("TRx2rc1v91HjUFdeBBgNSiqirctq94sAfA"));
+  protected ByteString toAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("TRxgBU7HFTQvU6zPheLHphqpwhDKNxB6Rk"));
   protected Long amount = 1L;
   protected Long amountOneTrx = 1000_000L;
   protected ByteString assetName = ByteString.copyFrom("pressure1", Charsets.UTF_8);
