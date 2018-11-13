@@ -4,6 +4,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicLong;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
@@ -32,6 +33,8 @@ public class NiceTransferTransactionCreator extends AbstractTransferTransactionC
     return transaction;
   }
 
+  long time = System.currentTimeMillis();
+  AtomicLong count = new AtomicLong();
   public Transaction createTransaction(com.google.protobuf.Message message,
       ContractType contractType) {
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(
@@ -41,13 +44,12 @@ public class NiceTransferTransactionCreator extends AbstractTransferTransactionC
     Transaction transaction = Transaction.newBuilder().setRawData(transactionBuilder.build())
         .build();
 
-    Random rand = new Random();
-    long time = rand.nextLong();
-    String ref = "" + (rand.nextLong() + time);
+    long gTime = count.incrementAndGet() + time;
+    String ref = "" + gTime;
 
-    transaction = setReference(transaction, time, ByteArray.fromString(ref));
+    transaction = setReference(transaction, gTime, ByteArray.fromString(ref));
 
-    transaction = setExpiration(transaction, time);
+    transaction = setExpiration(transaction, gTime);
 
     return transaction;
   }
