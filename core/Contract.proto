@@ -95,6 +95,8 @@ message WitnessUpdateContract {
 }
 
 message AssetIssueContract {
+  string id = 41;
+
   message FrozenSupply {
     int64 frozen_amount = 1;
     int64 frozen_days = 2;
