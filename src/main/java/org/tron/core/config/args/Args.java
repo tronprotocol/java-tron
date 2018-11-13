@@ -79,6 +79,11 @@ public class Args {
 
   @Getter
   @Setter
+  @Parameter(names = {"--generate"})
+  private boolean generate = false;
+
+  @Getter
+  @Setter
   @Parameter(names = {"--min-time-ratio"})
   private double minTimeRatio = 0.0;
 
