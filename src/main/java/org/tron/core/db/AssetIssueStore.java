@@ -2,16 +2,14 @@ package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.DatabaseConstants.ASSET_ISSUE_COUNT_LIMIT_MAX;
 
+import com.google.common.collect.Streams;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-
-import com.google.common.collect.Streams;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 
 @Slf4j
@@ -19,7 +17,7 @@ import org.tron.core.capsule.AssetIssueCapsule;
 public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
 
   @Autowired
-  private AssetIssueStore(@Value("asset-issue") String dbName) {
+  protected AssetIssueStore(@Value("asset-issue") String dbName) {
     super(dbName);
   }
 

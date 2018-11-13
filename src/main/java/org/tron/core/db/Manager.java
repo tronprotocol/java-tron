@@ -102,6 +102,8 @@ public class Manager {
   @Autowired
   private AssetIssueStore assetIssueStore;
   @Autowired
+  private AssetIssueV2Store assetIssueV2Store;
+  @Autowired
   private DynamicPropertiesStore dynamicPropertiesStore;
   @Autowired
   @Getter
@@ -120,6 +122,8 @@ public class Manager {
   private ProposalStore proposalStore;
   @Autowired
   private ExchangeStore exchangeStore;
+  @Autowired
+  private ExchangeV2Store exchangeV2Store;
   @Autowired
   private TransactionHistoryStore transactionHistoryStore;
   @Autowired
@@ -231,6 +235,10 @@ public class Manager {
 
   public ExchangeStore getExchangeStore() {
     return this.exchangeStore;
+  }
+
+  public ExchangeV2Store getExchangeV2Store() {
+    return this.exchangeV2Store;
   }
 
   public List<TransactionCapsule> getPendingTransactions() {
@@ -1414,6 +1422,10 @@ public class Manager {
 
   public AssetIssueStore getAssetIssueStore() {
     return assetIssueStore;
+  }
+
+  public AssetIssueV2Store getAssetIssueV2Store() {
+    return assetIssueV2Store;
   }
 
   public void setAssetIssueStore(AssetIssueStore assetIssueStore) {
