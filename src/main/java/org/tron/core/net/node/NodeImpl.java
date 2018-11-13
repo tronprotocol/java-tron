@@ -94,8 +94,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private MessageCount trxCount = new MessageCount();
 
+  private long TPS = 2000;
+
   private Cache<Sha256Hash, TransactionMessage> TrxCache = CacheBuilder.newBuilder()
-      .maximumSize(500_000).expireAfterWrite(1, TimeUnit.HOURS).initialCapacity(50_000)
+      .maximumSize(100_000_000).expireAfterWrite(1, TimeUnit.HOURS).initialCapacity(100_000_000)
       .recordStats().build();
 
   private Cache<Sha256Hash, BlockMessage> BlockCache = CacheBuilder.newBuilder()
@@ -353,7 +355,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
       long cost = (System.currentTimeMillis() - time) / 1000;
       if (count.incrementAndGet() % 1000 == 0 && cost > 0) {
-        logger.info("SPREAD count: {}, cost: {}s, Tps: {}", count.get(), cost, count.get() / cost);
+        logger.info("SPREAD count: {}, cost: {}s, Tps: {}, advObjToSpreadSize: {}",
+            count.get(), cost, count.get() / cost, advObjToSpread.size());
       }
     } else {
       return;
@@ -519,16 +522,14 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     logger.info("SPREAD advObjToSpread :{} , peer size: {}", advObjToSpread.size(), getActivePeer().size());
     ConcurrentHashMap<Sha256Hash, InventoryType> spread = new ConcurrentHashMap<>();
     AtomicInteger invCount = new AtomicInteger(0);
-    int maxCount = 2000;
     synchronized (advObjToSpread) {
-      advObjToSpread.entrySet().forEach(entry -> {
-        if (invCount.getAndIncrement() >= maxCount){
-          logger.info("SPREAD invCount.getAndIncrement() >= maxCount: {}", invCount.getAndIncrement());
-          return;
+      for (Entry<Sha256Hash, InventoryType> entry: advObjToSpread.entrySet()) {
+        if (invCount.getAndIncrement() >= TPS){
+          break;
         }
         spread.put(entry.getKey(), entry.getValue());
         advObjToSpread.remove(entry.getKey());
-      });
+      }
     }
     int n = 0;
     while (spread.size() > 0 && getActivePeer().size() > 0) {

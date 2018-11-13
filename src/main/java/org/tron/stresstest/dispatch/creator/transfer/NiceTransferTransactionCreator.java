@@ -3,6 +3,7 @@ package org.tron.stresstest.dispatch.creator.transfer;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.util.List;
+import java.util.Random;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
@@ -37,8 +38,34 @@ public class NiceTransferTransactionCreator extends AbstractTransferTransactionC
         Transaction.Contract.newBuilder().setType(contractType).setParameter(
             Any.pack(message)).build());
 
-    return Transaction.newBuilder().setRawData(transactionBuilder.build())
+    Transaction transaction = Transaction.newBuilder().setRawData(transactionBuilder.build())
         .build();
+
+    Random rand = new Random();
+    long time = rand.nextLong();
+    String ref = "" + (rand.nextLong() + time);
+
+    transaction = setReference(transaction, time, ByteArray.fromString(ref));
+
+    transaction = setExpiration(transaction, time);
+
+    return transaction;
+  }
+
+  private Transaction setReference(Transaction transaction, long blockNum,
+      byte[] blockHash) {
+    byte[] refBlockNum = ByteArray.fromLong(blockNum);
+    Transaction.raw rawData = transaction.getRawData().toBuilder()
+        .setRefBlockHash(ByteString.copyFrom(blockHash))
+        .setRefBlockBytes(ByteString.copyFrom(refBlockNum))
+        .build();
+    return transaction.toBuilder().setRawData(rawData).build();
+  }
+
+  public Transaction setExpiration(Transaction transaction, long expiration) {
+    Transaction.raw rawData = transaction.getRawData().toBuilder().setExpiration(expiration)
+        .build();
+    return transaction.toBuilder().setRawData(rawData).build();
   }
 
   public static Transaction sign(Transaction transaction, ECKey myKey) {

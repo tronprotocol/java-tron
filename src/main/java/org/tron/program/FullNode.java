@@ -62,7 +62,7 @@ public class FullNode {
     context.refresh();
 
     if (cfgArgs.isGenerate()) {
-      new TransactionGenerator(context, 2000000).start();
+      new TransactionGenerator(context, 100000).start();
     }
 
     Application appT = ApplicationFactory.create(context);
@@ -92,65 +92,25 @@ public class FullNode {
     appT.startup();
 
     Thread.sleep(10000);
-
+    NodeImpl nodeImpl = context.getBean(NodeImpl.class);
     File f = new File("transaction.csv");
     FileInputStream fis = null;
-    ConcurrentLinkedQueue<Transaction> transactions = new ConcurrentLinkedQueue<>();
+    long startTime = System.currentTimeMillis();
+    long trxCount = 0;
     try {
       fis = new FileInputStream(f);
-
       Transaction transaction;
-      long trxCount = 0;
-      System.out.println();
-      System.out.println();
       while ((transaction = Transaction.parseDelimitedFrom(fis)) != null) {
-        transactions.add(transaction);
         trxCount++;
-        System.out.print("\r");
-        System.out.print("Read Transaction: " + trxCount);
+        Message message = new TransactionMessage(transaction);
+        nodeImpl.broadcast(message);
       }
-
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
-    } catch (IOException e) {
+    } catch (Exception e) {
       e.printStackTrace();
     }
-
-    System.out.println();
-    System.out.println();
-
-    long time = System.currentTimeMillis();
-    int trxSize = transactions.size();
-    CountDownLatch latch = new CountDownLatch(trxSize);
-
-    NodeImpl nodeImpl = context.getBean(NodeImpl.class);
-    for (int i = 0; i < 50; i++) {
-      new Thread(() -> {
-        try {
-          Transaction trx = transactions.poll();
-          while (trx != null) {
-            latch.countDown();
-            Message message = new TransactionMessage(trx);
-            nodeImpl.broadcast(message);
-
-            Thread.sleep(1);
-            trx = transactions.poll();
-          }
-        } catch (Exception e) {
-          logger.error(e.getMessage());
-        }
-      }).start();
-    }
-    try {
-      latch.await();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-    long cost = System.currentTimeMillis() - time;
+    long cost = System.currentTimeMillis() - startTime;
     logger.info("Trx size: {}, cost: {}, tps: {}",
-        trxSize, cost, 1.0 * trxSize / cost * 1000);
-
-    rpcApiService.blockUntilShutdown();
+        trxCount, cost, 1.0 * trxCount / cost * 1000);
   }
 
   public static void shutdown(final Application app) {
