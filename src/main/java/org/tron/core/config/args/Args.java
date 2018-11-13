@@ -342,6 +342,10 @@ public class Args {
   @Setter
   private String logLevel;
 
+  @Getter
+  @Setter
+  private boolean needToUpdateAsset;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -675,6 +679,10 @@ public class Args {
         .getBoolean("node.isOpenFullTcpDisconnect");
     INSTANCE.logLevel =
         config.hasPath("log.level.root") ? config.getString("log.level.root") : "INFO";
+    INSTANCE.needToUpdateAsset =
+        config.hasPath("storage.needToUpdateAsset") ? config
+            .getBoolean("storage.needToUpdateAsset")
+            : false;
 
     initBackupProperty(config);
 

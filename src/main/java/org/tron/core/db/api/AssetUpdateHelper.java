@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
@@ -22,11 +21,16 @@ public class AssetUpdateHelper {
   }
 
   public void doWork() {
-
+    init();
     updateAsset();
     updateExchange();
     updateAccount();
     finish();
+  }
+
+  public void init() {
+    dbManager.getAssetIssueV2Store().reset();
+    dbManager.getExchangeV2Store().reset();
   }
 
   public void updateAsset() {

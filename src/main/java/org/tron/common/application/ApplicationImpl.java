@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
-import org.tron.core.db.api.AssetUpdateHelper;
 import org.tron.core.net.node.Node;
 import org.tron.core.net.node.NodeDelegate;
 import org.tron.core.net.node.NodeDelegateImpl;
@@ -25,10 +24,10 @@ public class ApplicationImpl implements Application {
 
   @Autowired
   private Manager dbManager;
-  
+
   private boolean isProducer;
 
- 
+
   private void resetP2PNode() {
     p2pNode.listen();
     p2pNode.syncFrom(null);
@@ -45,9 +44,6 @@ public class ApplicationImpl implements Application {
     blockStoreDb = dbManager.getBlockStore();
     services = new ServiceContainer();
     nodeDelegate = new NodeDelegateImpl(dbManager);
-    if (dbManager.needToUpdateAsset()) {
-      new AssetUpdateHelper(dbManager).doWork();
-    }
   }
 
   @Override
