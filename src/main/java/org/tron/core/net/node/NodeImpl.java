@@ -286,7 +286,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private volatile boolean isFetchSyncActive = false;
 
   @Override
-  public void onMessage(PeerConnection peer, TronMessage msg) throws Exception{
+  public void onMessage(PeerConnection peer, TronMessage msg) throws Exception {
     switch (msg.getType()) {
       case BLOCK:
         onHandleBlockMessage(peer, (BlockMessage) msg);
@@ -635,7 +635,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleInventoryMessage(PeerConnection peer, InventoryMessage msg) {
     int count = peer.getNodeStatistics().messageStatistics.tronInTrxInventoryElement.getCount(10);
-    if (count > 10_000){
+    if (count > 10_000) {
       logger.warn("Inventory count {} from Peer {} is overload.", count, peer.getInetAddress());
       return;
     }
@@ -860,7 +860,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       logger.error("Bad Trx {} from peer {}, error: {}",
           trxMsg.getMessageId(), peer.getInetAddress(), e.getMessage());
       banTraitorPeer(peer, ReasonCode.BAD_TX);
-    } catch (Exception e){
+    } catch (Exception e) {
       logger.error("Process trx {} from peer {} failed",
           trxMsg.getMessageId(), peer.getInetAddress(), e);
     }
@@ -1120,9 +1120,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
           for (PeerConnection peerToCheck :
               getActivePeer()) {
-            if (!peerToCheck.equals(peer)
-                && !peerToCheck.getSyncBlockToFetch().isEmpty()
-                && peerToCheck.getSyncBlockToFetch().peekFirst()
+            BlockId blockId = peerToCheck.getSyncBlockToFetch().peekFirst();
+            if (!peerToCheck.equals(peer) && blockId != null && blockId
                 .equals(blockIdWeGet.peekFirst())) {
               isFound = true;
               break;
@@ -1291,7 +1290,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void syncNextBatchChainIds(PeerConnection peer) {
-    synchronized (syncBlock){
+    synchronized (syncBlock) {
       if (peer.isDisconnect()) {
         logger.warn("Peer {} is disconnect", peer.getInetAddress());
         return;
@@ -1308,8 +1307,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             new Pair<>(chainSummary, System.currentTimeMillis()));
         peer.sendMessage(new SyncBlockChainMessage((LinkedList<BlockId>) chainSummary));
       } catch (TronException e) {
-        logger.error("Peer {} sync next batch chainIds failed, error: {}.", peer.getNode().getHost(),
-            e.getMessage());
+        logger.error("Peer {} sync next batch chainIds failed, error: {}.",
+            peer.getNode().getHost(), e.getMessage());
         disconnectPeer(peer, ReasonCode.FORKED);
       }
     }
