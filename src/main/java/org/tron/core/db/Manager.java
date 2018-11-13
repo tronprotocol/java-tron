@@ -1083,9 +1083,10 @@ public class Manager {
 
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext() || repushTransactions.size() > 0) {
-
+      boolean fromPending = false;
       TransactionCapsule trx;
       if (iterator.hasNext()) {
+        fromPending = true;
         trx = (TransactionCapsule) iterator.next();
       } else {
         trx = repushTransactions.poll();
@@ -1110,7 +1111,9 @@ public class Manager {
         tmpSeesion.merge();
         // push into block
         blockCapsule.addTransaction(trx);
-        iterator.remove();
+        if (fromPending){
+          iterator.remove();
+        }
       } catch (ContractExeException e) {
         logger.info("contract not processed during execute");
         logger.debug(e.getMessage(), e);
