@@ -15,6 +15,8 @@ public class AssetUpdateHelper {
 
   private Manager dbManager;
 
+  private HashMap<byte[], byte[]> assetNameToIdMap = new HashMap<>();
+
   public AssetUpdateHelper(Manager dbManager) {
     this.dbManager = dbManager;
   }
@@ -35,6 +37,9 @@ public class AssetUpdateHelper {
       assetIssueCapsule.setId(tokenIdNum);
       dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
       dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+
+      assetNameToIdMap.put(assetIssueCapsule.createDbKey(), assetIssueCapsule.createDbV2Key());
+
       tokenIdNum++;
     }
 
@@ -44,13 +49,8 @@ public class AssetUpdateHelper {
 
     for (ExchangeCapsule exchangeCapsule : dbManager.getExchangeStore().getAllExchanges()) {
 
-      AssetIssueCapsule firstAssetIssueCapsule = dbManager.getAssetIssueStore()
-          .get(exchangeCapsule.getFirstTokenId());
-      exchangeCapsule.setSecondTokenId(ByteArray.fromLong(firstAssetIssueCapsule.getId()));
-
-      AssetIssueCapsule secondAssetIssueCapsule = dbManager.getAssetIssueStore()
-          .get(exchangeCapsule.getSecondTokenId());
-      exchangeCapsule.setSecondTokenId(ByteArray.fromLong(secondAssetIssueCapsule.getId()));
+      exchangeCapsule.setSecondTokenId(assetNameToIdMap.get(exchangeCapsule.getFirstTokenId()));
+      exchangeCapsule.setSecondTokenId(assetNameToIdMap.get(exchangeCapsule.getSecondTokenId()));
 
       dbManager.getExchangeV2Store().put(exchangeCapsule.createDbKey(), exchangeCapsule);
     }
@@ -64,9 +64,7 @@ public class AssetUpdateHelper {
       AccountCapsule accountCapsule = iterator.next().getValue();
       HashMap<String, Long> assetV2Map = new HashMap<>();
       for (Map.Entry<String, Long> entry : accountCapsule.getAssetMap().entrySet()) {
-        AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
-            .get(ByteArray.fromString(entry.getKey()));
-        assetV2Map.put(ByteArray.toStr(assetIssueCapsule.createDbV2Key()), entry.getValue());
+        assetV2Map.put(new String(assetNameToIdMap.get(entry.getKey())), entry.getValue());
       }
 
       accountCapsule.addAssetV2Map(assetV2Map);
