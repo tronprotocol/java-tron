@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
@@ -79,9 +80,9 @@ public class AssetUpdateHelper {
       AccountCapsule accountCapsule = iterator.next().getValue();
       HashMap<String, Long> assetV2Map = new HashMap<>();
       for (Map.Entry<String, Long> entry : accountCapsule.getAssetMap().entrySet()) {
-        assetV2Map.put(new String(assetNameToIdMap.get(entry.getKey())), entry.getValue());
+        assetV2Map.put(new String(assetNameToIdMap.get(ByteArray.fromString(entry.getKey()))), entry.getValue());
       }
-
+      accountCapsule.setAssetIssuedID(assetNameToIdMap.get(accountCapsule.getAssetIssuedName().toByteArray()));
       accountCapsule.clearAssetV2();
       accountCapsule.addAssetV2Map(assetV2Map);
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
