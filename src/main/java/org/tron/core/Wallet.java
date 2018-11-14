@@ -554,7 +554,14 @@ public class Wallet {
 
   public ExchangeList getExchangeList() {
     ExchangeList.Builder builder = ExchangeList.newBuilder();
-    List<ExchangeCapsule> exchangeCapsuleList = dbManager.getExchangeStore().getAllExchanges();
+    List<ExchangeCapsule> exchangeCapsuleList;
+
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 1) {
+      exchangeCapsuleList = dbManager.getExchangeV2Store().getAllExchanges();
+    } else {
+      exchangeCapsuleList = dbManager.getExchangeStore().getAllExchanges();
+    }
+
     exchangeCapsuleList
         .forEach(exchangeCapsule -> builder.addExchanges(exchangeCapsule.getInstance()));
     return builder.build();
@@ -813,8 +820,11 @@ public class Wallet {
     }
     ExchangeCapsule exchangeCapsule = null;
     try {
-      exchangeCapsule = dbManager.getExchangeStore()
-          .get(exchangeId.toByteArray());
+      if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 1) {
+        exchangeCapsule = dbManager.getExchangeV2Store().get(exchangeId.toByteArray());
+      } else {
+        exchangeCapsule = dbManager.getExchangeStore().get(exchangeId.toByteArray());
+      }
     } catch (StoreException e) {
     }
     if (exchangeCapsule != null) {
@@ -1032,7 +1042,11 @@ public class Wallet {
         .create(Range.openClosed(offset, end), DiscreteDomain.longs()).asList();
     rangeList.stream().map(ExchangeCapsule::calculateDbKey).map(key -> {
       try {
-        return dbManager.getExchangeStore().get(key);
+        if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 1) {
+          return dbManager.getExchangeV2Store().get(key);
+        } else {
+          return dbManager.getExchangeStore().get(key);
+        }
       } catch (Exception ex) {
         return null;
       }
