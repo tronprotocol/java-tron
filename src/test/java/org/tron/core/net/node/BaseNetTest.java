@@ -106,7 +106,6 @@ public abstract class BaseNetTest {
         manager = context.getBean(Manager.class);
         NodeDelegate nodeDelegate = new NodeDelegateImpl(manager);
         node.setNodeDelegate(nodeDelegate);
-        pool.init(node);
 
         appT.startup();
         rpcApiService.blockUntilShutdown();
