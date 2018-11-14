@@ -137,6 +137,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_CREATION_OF_CONTRACTS = "ALLOW_CREATION_OF_CONTRACTS"
       .getBytes();
 
+  //This value is only allowed to be 0, 1, -1
+  private static final byte[] ALLOW_TVM_TRANSFER_TRC10 = "ALLOW_TVM_TRANSFER_TRC10".getBytes();
+
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -415,6 +419,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getAllowAdaptiveEnergy();
     } catch (IllegalArgumentException e) {
       this.saveAllowAdaptiveEnergy(Args.getInstance().getAllowAdaptiveEnergy());
+    }
+    try {
+      this.getAllowTvmTransferTrc10();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTvmTransferTrc10(Args.getInstance().getAllowTvmTransferTrc10());
     }
 
     try {
@@ -1069,6 +1078,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found ALLOW_ADAPTIVE_ENERGY"));
   }
 
+  public void saveAllowTvmTransferTrc10(long value) {
+    this.put(ALLOW_TVM_TRANSFER_TRC10,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowTvmTransferTrc10() {
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_TRANSFER_TRC10))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_TVM_TRANSFER_TRC10"));
+  }
+
   public boolean supportDR() {
     return getAllowDelegateResource() == 1L;
   }
@@ -1237,7 +1259,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
    */
 
   public Sha256Hash getLatestBlockHeaderHashOnSolidity() {
-    byte[] blockHash = Optional.ofNullable(revokingDB.getUncheckedOnSolidity(LATEST_BLOCK_HEADER_HASH))
+    byte[] blockHash = Optional
+        .ofNullable(revokingDB.getUncheckedOnSolidity(LATEST_BLOCK_HEADER_HASH))
         .orElseThrow(() -> new IllegalArgumentException("not found block hash"));
     return Sha256Hash.wrap(blockHash);
   }

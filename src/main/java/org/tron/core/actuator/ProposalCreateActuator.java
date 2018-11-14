@@ -225,6 +225,13 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         break;
       }
+      case (20): {
+        if (entry.getValue() != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_TVM_TRANSFER_TRC10] is only allowed to be 1");
+        }
+        break;
+      }
       default:
         break;
     }
