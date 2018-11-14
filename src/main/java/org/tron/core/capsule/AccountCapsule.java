@@ -373,6 +373,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     if (manager.getDynamicPropertiesStore().getAllowSameTokenName() == 1) {
       byte[] tokenID = key;
       Map<String, Long> assetMapV2 = this.account.getAssetV2Map();
+      // TODO: maybe better method
       Long currentAmount = assetMapV2.get(ByteArray.toLong(tokenID) + "");
       if (amount > 0 && null != currentAmount && amount <= currentAmount) {
         this.account = this.account.toBuilder()
