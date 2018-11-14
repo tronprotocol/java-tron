@@ -10,6 +10,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -127,6 +128,16 @@ public class ExchangeCreateActuator extends AbstractActuator {
     byte[] secondTokenID = contract.getSecondTokenId().toByteArray();
     long firstTokenBalance = contract.getFirstTokenBalance();
     long secondTokenBalance = contract.getSecondTokenBalance();
+
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 1) {
+      if (!Arrays.equals(firstTokenID, "_".getBytes()) && !TransactionUtil.isNumber(firstTokenID)) {
+        throw new ContractValidateException("first token id is not a valid number");
+      }
+      if (!Arrays.equals(secondTokenID, "_".getBytes()) && !TransactionUtil
+          .isNumber(secondTokenID)) {
+        throw new ContractValidateException("second token id is not a valid number");
+      }
+    }
 
     if (Arrays.equals(firstTokenID, secondTokenID)) {
       throw new ContractValidateException("cannot exchange same tokens");
