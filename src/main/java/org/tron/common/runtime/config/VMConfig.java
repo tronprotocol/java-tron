@@ -65,7 +65,7 @@ public class VMConfig {
   }
 
   public static void initAllowTVMTransferTrc10(long allow) {
-    ENERGY_LIMIT_HARD_FORK = allow == 1;
+    ALLOW_TVM_TRANSFER_TRC10 = allow == 1;
   }
 
   public static boolean getEnergyLimitHardFork() {
