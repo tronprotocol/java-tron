@@ -39,6 +39,9 @@ public class VMConfig {
   @Setter
   private static boolean ENERGY_LIMIT_HARD_FORK = false;
 
+  @Setter
+  private static boolean ALLOW_TVM_TRANSFER_TRC10 = false;
+
   private VMConfig() {
   }
 
@@ -59,13 +62,19 @@ public class VMConfig {
     return vmTraceCompressed;
   }
 
-  public static void initVmHardFork(){
+  public static void initVmHardFork() {
     ENERGY_LIMIT_HARD_FORK = ForkController.instance().pass(ForkBlockVersionConsts.ENERGY_LIMIT);
   }
 
-  public static boolean getEnergyLimitHardFork(){
+  public static void initAllowTvmTransferTrc10(long allow) {    ALLOW_TVM_TRANSFER_TRC10 = allow == 1;
+  }
+
+  public static boolean getEnergyLimitHardFork() {
     return ENERGY_LIMIT_HARD_FORK;
   }
 
+  public static boolean allowTvmTransferTrc10() {
+    return ALLOW_TVM_TRANSFER_TRC10;
+  }
 
 }
