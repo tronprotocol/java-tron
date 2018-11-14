@@ -334,6 +334,23 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return amount > 0 && null != currentAmount && amount <= currentAmount;
   }
 
+  public boolean assetBalanceEnoughV2(byte[] key, long amount, Manager manager) {
+    Map<String, Long> assetMap;
+    String nameKey;
+    Long currentAmount;
+    if (manager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      assetMap = this.account.getAssetMap();
+      nameKey = ByteArray.toStr(key);
+      currentAmount = assetMap.get(nameKey);
+    } else {
+      String tokenID = ByteArray.toLong(key) + "";
+      assetMap = this.account.getAssetV2Map();
+      currentAmount = assetMap.get(tokenID);
+    }
+
+    return amount > 0 && null != currentAmount && amount <= currentAmount;
+  }
+
 
   /**
    * reduce asset amount.
