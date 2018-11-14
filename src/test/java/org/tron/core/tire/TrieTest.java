@@ -53,6 +53,7 @@ public class TrieTest {
     trie.delete(RLP.encodeInt(3));
     byte[] rootHash = trie.getRootHash();
     TrieImpl trieCopy = new TrieImpl(trie.getCache(), rootHash);
+    Assert.assertNull(trie.prove(RLP.encodeInt(111)));
     Map<byte[], Node> map = trieCopy.prove(new byte[]{1, 1});
     boolean result = trie
         .verifyProof(trieCopy.getRootHash(), new byte[]{1, 1}, (LinkedHashMap<byte[], Node>) map);
