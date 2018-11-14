@@ -53,7 +53,7 @@ public class AssetUpdateHelper {
 
     for (ExchangeCapsule exchangeCapsule : dbManager.getExchangeStore().getAllExchanges()) {
 
-      exchangeCapsule.setSecondTokenId(assetNameToIdMap.get(exchangeCapsule.getFirstTokenId()));
+      exchangeCapsule.setFirstTokenId(assetNameToIdMap.get(exchangeCapsule.getFirstTokenId()));
       exchangeCapsule.setSecondTokenId(assetNameToIdMap.get(exchangeCapsule.getSecondTokenId()));
 
       dbManager.getExchangeV2Store().put(exchangeCapsule.createDbKey(), exchangeCapsule);
