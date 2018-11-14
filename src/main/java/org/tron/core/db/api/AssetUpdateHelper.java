@@ -34,7 +34,7 @@ public class AssetUpdateHelper {
   public void init() {
     dbManager.getAssetIssueV2Store().reset();
     dbManager.getExchangeV2Store().reset();
-    dbManager.getDynamicPropertiesStore().saveTokenIdNum(1000001L);
+    dbManager.getDynamicPropertiesStore().saveTokenIdNum(1000000L);
   }
 
   public void updateAsset() {
@@ -42,13 +42,13 @@ public class AssetUpdateHelper {
     long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
 
     for (AssetIssueCapsule assetIssueCapsule : dbManager.getAssetIssueStore().getAllAssetIssues()) {
+      tokenIdNum++;
+
       assetIssueCapsule.setId(tokenIdNum);
       dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
       dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
 
       assetNameToIdMap.put(assetIssueCapsule.createDbKey(), assetIssueCapsule.createDbV2Key());
-
-      tokenIdNum++;
     }
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenIdNum);
 
