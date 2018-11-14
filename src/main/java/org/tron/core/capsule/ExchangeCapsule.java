@@ -2,9 +2,11 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.utils.ExchangeProcessor;
+import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.Exchange;
 
 @Slf4j
@@ -136,6 +138,28 @@ public class ExchangeCapsule implements ProtoCapsule<Exchange> {
     }
 
     return buyTokenQuant;
+  }
+
+  //be carefully, this function should be used only before AllowSameTokenName proposal is not active
+  public void resetTokenWithID(Manager manager) {
+    if (manager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      byte[] firstTokenName = this.exchange.getFirstTokenId().toByteArray();
+      byte[] secondTokenName = this.exchange.getSecondTokenId().toByteArray();
+      byte[] firstTokenID = firstTokenName;
+      byte[] secondTokenID = secondTokenName;
+      if (!Arrays.equals(firstTokenName, "_".getBytes())) {
+        firstTokenID = Long.toString(
+            manager.getAssetIssueStore().get(firstTokenName).getId()).getBytes();
+      }
+      if (!Arrays.equals(secondTokenName, "_".getBytes())) {
+        secondTokenID = Long.toString(
+            manager.getAssetIssueStore().get(secondTokenName).getId()).getBytes();
+      }
+      this.exchange = this.exchange.toBuilder()
+          .setFirstTokenId(ByteString.copyFrom(firstTokenID))
+          .setSecondTokenId(ByteString.copyFrom(secondTokenID))
+          .build();
+    }
   }
 
   @Override

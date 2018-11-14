@@ -343,7 +343,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       nameKey = ByteArray.toStr(key);
       currentAmount = assetMap.get(nameKey);
     } else {
-      String tokenID = ByteArray.toLong(key) + "";
+      String tokenID = ByteArray.toStr(key);
       assetMap = this.account.getAssetV2Map();
       currentAmount = assetMap.get(tokenID);
     }

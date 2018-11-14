@@ -12,6 +12,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -35,8 +36,14 @@ public class ExchangeInjectActuator extends AbstractActuator {
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(exchangeInjectContract.getOwnerAddress().toByteArray());
 
-      ExchangeCapsule exchangeCapsule = dbManager.getExchangeStore().
-          get(ByteArray.fromLong(exchangeInjectContract.getExchangeId()));
+      ExchangeCapsule exchangeCapsule;
+      if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+        exchangeCapsule = dbManager.getExchangeStore().
+            get(ByteArray.fromLong(exchangeInjectContract.getExchangeId()));
+      } else {
+        exchangeCapsule = dbManager.getExchangeV2Store().
+            get(ByteArray.fromLong(exchangeInjectContract.getExchangeId()));
+      }
 
       byte[] firstTokenID = exchangeCapsule.getFirstTokenId();
       byte[] secondTokenID = exchangeCapsule.getSecondTokenId();
@@ -69,17 +76,24 @@ public class ExchangeInjectActuator extends AbstractActuator {
       if (Arrays.equals(tokenID, "_".getBytes())) {
         accountCapsule.setBalance(newBalance - tokenQuant);
       } else {
-        accountCapsule.reduceAssetAmount(tokenID, tokenQuant);
+        accountCapsule.reduceAssetAmountV2(tokenID, tokenQuant, dbManager);
       }
 
       if (Arrays.equals(anotherTokenID, "_".getBytes())) {
         accountCapsule.setBalance(newBalance - anotherTokenQuant);
       } else {
-        accountCapsule.reduceAssetAmount(anotherTokenID, anotherTokenQuant);
+        accountCapsule.reduceAssetAmountV2(anotherTokenID, anotherTokenQuant, dbManager);
       }
-
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-      dbManager.getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
+
+      if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+        dbManager.getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
+        ExchangeCapsule exchangeCapsuleV2 = new ExchangeCapsule(exchangeCapsule.getData());
+        exchangeCapsuleV2.resetTokenWithID(dbManager);
+        dbManager.getExchangeV2Store().put(exchangeCapsuleV2.createDbKey(), exchangeCapsuleV2);
+      } else {
+        dbManager.getExchangeV2Store().put(exchangeCapsule.createDbKey(), exchangeCapsule);
+      }
 
       ret.setStatus(fee, code.SUCESS);
     } catch (ItemNotFoundException e) {
@@ -93,7 +107,6 @@ public class ExchangeInjectActuator extends AbstractActuator {
     }
     return true;
   }
-
 
   @Override
   public boolean validate() throws ContractValidateException {
@@ -134,8 +147,13 @@ public class ExchangeInjectActuator extends AbstractActuator {
 
     ExchangeCapsule exchangeCapsule;
     try {
-      exchangeCapsule = dbManager.getExchangeStore().
-          get(ByteArray.fromLong(contract.getExchangeId()));
+      if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+        exchangeCapsule = dbManager.getExchangeStore().
+            get(ByteArray.fromLong(contract.getExchangeId()));
+      } else {
+        exchangeCapsule = dbManager.getExchangeV2Store().
+            get(ByteArray.fromLong(contract.getExchangeId()));
+      }
     } catch (ItemNotFoundException ex) {
       throw new ContractValidateException("Exchange[" + contract.getExchangeId() + "] not exists");
     }
@@ -155,8 +173,14 @@ public class ExchangeInjectActuator extends AbstractActuator {
     byte[] anotherTokenID;
     long anotherTokenQuant;
 
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 1) {
+      if (!Arrays.equals(tokenID, "_".getBytes()) && !TransactionUtil.isNumber(tokenID)) {
+        throw new ContractValidateException("token id is not a valid number");
+      }
+    }
+
     if (!Arrays.equals(tokenID, firstTokenID) && !Arrays.equals(tokenID, secondTokenID)) {
-      throw new ContractValidateException("token is not in exchange");
+      throw new ContractValidateException("token id is not in exchange");
     }
 
     if (firstTokenBalance == 0 || secondTokenBalance == 0) {
@@ -204,7 +228,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
         throw new ContractValidateException("balance is not enough");
       }
     } else {
-      if (!accountCapsule.assetBalanceEnough(tokenID, tokenQuant)) {
+      if (!accountCapsule.assetBalanceEnoughV2(tokenID, tokenQuant, dbManager)) {
         throw new ContractValidateException("token balance is not enough");
       }
     }
@@ -214,7 +238,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
         throw new ContractValidateException("balance is not enough");
       }
     } else {
-      if (!accountCapsule.assetBalanceEnough(anotherTokenID, anotherTokenQuant)) {
+      if (!accountCapsule.assetBalanceEnoughV2(anotherTokenID, anotherTokenQuant, dbManager)) {
         throw new ContractValidateException("another token balance is not enough");
       }
     }

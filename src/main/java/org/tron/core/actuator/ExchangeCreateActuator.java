@@ -191,7 +191,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
         throw new ContractValidateException("balance is not enough");
       }
     } else {
-      if (!accountCapsule.assetBalanceEnough(firstTokenID, firstTokenBalance)) {
+      if (!accountCapsule.assetBalanceEnoughV2(firstTokenID, firstTokenBalance, dbManager)) {
         throw new ContractValidateException("first token balance is not enough");
       }
     }
@@ -201,7 +201,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
         throw new ContractValidateException("balance is not enough");
       }
     } else {
-      if (!accountCapsule.assetBalanceEnough(secondTokenID, secondTokenBalance)) {
+      if (!accountCapsule.assetBalanceEnoughV2(secondTokenID, secondTokenBalance, dbManager)) {
         throw new ContractValidateException("second token balance is not enough");
       }
     }
