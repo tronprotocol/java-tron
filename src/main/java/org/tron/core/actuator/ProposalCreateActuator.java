@@ -21,6 +21,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 
 @Slf4j
 public class ProposalCreateActuator extends AbstractActuator {
@@ -205,6 +206,9 @@ public class ProposalCreateActuator extends AbstractActuator {
         break;
       }
       case (16): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
+          throw new ContractValidateException("Bad chain parameter id");
+        }
         if (entry.getValue() != 1) {
           throw new ContractValidateException(
               "This value[ALLOW_DELEGATE_RESOURCE] is only allowed to be 1");
@@ -212,6 +216,9 @@ public class ProposalCreateActuator extends AbstractActuator {
         break;
       }
       case (17): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
+          throw new ContractValidateException("Bad chain parameter id");
+        }
         if (entry.getValue() != 1) {
           throw new ContractValidateException(
               "This value[ALLOW_ADAPTIVE_RESOURCE] is only allowed to be 1");
@@ -219,6 +226,9 @@ public class ProposalCreateActuator extends AbstractActuator {
         break;
       }
       case (18): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
+          throw new ContractValidateException("Bad chain parameter id");
+        }
         if (entry.getValue() < 0 || entry.getValue() > 100_000_000_000_000_000L) {
           throw new ContractValidateException(
               "Bad chain parameter value,valid range is [0,100_000_000_000_000_000L]");
@@ -226,6 +236,9 @@ public class ProposalCreateActuator extends AbstractActuator {
         break;
       }
       case (19): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
+          throw new ContractValidateException("Bad chain parameter id");
+        }
         if (entry.getValue() != 1) {
           throw new ContractValidateException(
               "This value[ALLOW_TVM_TRANSFER_TRC10] is only allowed to be 1");
