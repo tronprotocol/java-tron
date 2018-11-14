@@ -285,6 +285,12 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
+  public void clearAssetV2() {
+    this.account = this.account.toBuilder()
+        .clearAssetV2()
+        .build();
+  }
+
   public void clearVotes() {
     this.account = this.account.toBuilder()
         .clearVotes()
