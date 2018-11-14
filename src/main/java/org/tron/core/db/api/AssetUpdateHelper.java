@@ -34,6 +34,7 @@ public class AssetUpdateHelper {
   public void init() {
     dbManager.getAssetIssueV2Store().reset();
     dbManager.getExchangeV2Store().reset();
+    dbManager.getDynamicPropertiesStore().saveTokenIdNum(1000001);
   }
 
   public void updateAsset() {
@@ -49,6 +50,7 @@ public class AssetUpdateHelper {
 
       tokenIdNum++;
     }
+    dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenIdNum);
 
     logger.info("Complete the asset store update");
 
