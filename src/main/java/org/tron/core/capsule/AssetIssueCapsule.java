@@ -17,7 +17,6 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.nio.charset.Charset;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
@@ -86,13 +85,14 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
     return ByteArray.fromLong(getId());
   }
   public byte[] createDbKey() {
-    long order = getOrder();
-    if (order == 0) {
-      return getName().toByteArray();
-    }
-    String name = new String(getName().toByteArray(), Charset.forName("UTF-8"));
-    String nameKey = createDbKeyString(name, order);
-    return nameKey.getBytes();
+//    long order = getOrder();
+//    if (order == 0) {
+//      return getName().toByteArray();
+//    }
+//    String name = new String(getName().toByteArray(), Charset.forName("UTF-8"));
+//    String nameKey = createDbKeyString(name, order);
+//    return nameKey.getBytes();
+    return getName().toByteArray();
   }
 
   public static String createDbKeyString(String name, long order) {

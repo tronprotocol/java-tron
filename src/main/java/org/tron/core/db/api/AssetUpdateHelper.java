@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
@@ -32,41 +33,50 @@ public class AssetUpdateHelper {
   }
 
   public void init() {
+    if (dbManager.getAssetIssueV2Store().iterator().hasNext()) {
+      logger.warn("AssetIssueV2Store is not empty");
+    }
     dbManager.getAssetIssueV2Store().reset();
+    if (dbManager.getExchangeV2Store().iterator().hasNext()) {
+      logger.warn("ExchangeV2Store is not empty");
+    }
     dbManager.getExchangeV2Store().reset();
-    dbManager.getDynamicPropertiesStore().saveTokenIdNum(1000001);
+    dbManager.getDynamicPropertiesStore().saveTokenIdNum(1000000L);
   }
 
   public void updateAsset() {
 
     long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
+    long count = 0;
 
     for (AssetIssueCapsule assetIssueCapsule : dbManager.getAssetIssueStore().getAllAssetIssues()) {
+      tokenIdNum++;
+      count++;
+
       assetIssueCapsule.setId(tokenIdNum);
       dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
       dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
 
       assetNameToIdMap.put(assetIssueCapsule.createDbKey(), assetIssueCapsule.createDbV2Key());
-
-      tokenIdNum++;
     }
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenIdNum);
 
-    logger.info("Complete the asset store update");
+    logger.info("Complete the asset store update,Total assets：{}", count);
 
   }
 
   public void updateExchange() {
+    long count = 0;
 
     for (ExchangeCapsule exchangeCapsule : dbManager.getExchangeStore().getAllExchanges()) {
-
+      count++;
       exchangeCapsule.setFirstTokenId(assetNameToIdMap.get(exchangeCapsule.getFirstTokenId()));
       exchangeCapsule.setSecondTokenId(assetNameToIdMap.get(exchangeCapsule.getSecondTokenId()));
 
       dbManager.getExchangeV2Store().put(exchangeCapsule.createDbKey(), exchangeCapsule);
     }
 
-    logger.info("Complete the exchange store update");
+    logger.info("Complete the exchange store update,Total exchanges：{}", count);
 
   }
 
@@ -77,13 +87,23 @@ public class AssetUpdateHelper {
     Iterator<Entry<byte[], AccountCapsule>> iterator = dbManager.getAccountStore().iterator();
     while (iterator.hasNext()) {
       AccountCapsule accountCapsule = iterator.next().getValue();
-      HashMap<String, Long> assetV2Map = new HashMap<>();
-      for (Map.Entry<String, Long> entry : accountCapsule.getAssetMap().entrySet()) {
-        assetV2Map.put(new String(assetNameToIdMap.get(entry.getKey())), entry.getValue());
-      }
 
       accountCapsule.clearAssetV2();
-      accountCapsule.addAssetV2Map(assetV2Map);
+      if(accountCapsule.getAssetMap().size()!=0){
+        HashMap<String, Long> assetV2Map = new HashMap<>();
+        for (Map.Entry<String, Long> entry : accountCapsule.getAssetMap().entrySet()) {
+          assetV2Map.put(new String(assetNameToIdMap.get(ByteArray.fromString(entry.getKey()))),
+              entry.getValue());
+        }
+
+        accountCapsule.addAssetV2Map(assetV2Map);
+      }
+
+      if(!accountCapsule.getAssetIssuedName().isEmpty()){
+        accountCapsule.setAssetIssuedID(
+            assetNameToIdMap.get(accountCapsule.getAssetIssuedName().toByteArray()));
+      }
+
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
       if (count % 50000 == 0) {
@@ -92,7 +112,7 @@ public class AssetUpdateHelper {
       count++;
     }
 
-    logger.info("Complete the account store update");
+    logger.info("Complete the account store update,Total assets：{}", count);
 
   }
 
