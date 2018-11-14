@@ -115,9 +115,10 @@ message Account {
   // asset_issued_name
   bytes asset_issued_name = 17;
   map<string, int64> latest_asset_operation_time = 18;
-
+  map<string, int64> latest_asset_operation_timeV2 = 57;
   int64 free_net_usage = 19;
   map<string, int64> free_asset_net_usage = 20;
+  map<string, int64> free_asset_net_usageV2 = 58;
   int64 latest_consume_time = 21;
   int64 latest_consume_free_time = 22;
 
