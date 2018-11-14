@@ -71,6 +71,7 @@ public class AssetUpdateHelper {
         assetV2Map.put(new String(assetNameToIdMap.get(entry.getKey())), entry.getValue());
       }
 
+      accountCapsule.clearAssetV2();
       accountCapsule.addAssetV2Map(assetV2Map);
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
@@ -80,6 +81,7 @@ public class AssetUpdateHelper {
 
   public void finish() {
     dbManager.getDynamicPropertiesStore().saveTokenUpdateDone(1);
+    assetNameToIdMap.clear();
   }
 
 
