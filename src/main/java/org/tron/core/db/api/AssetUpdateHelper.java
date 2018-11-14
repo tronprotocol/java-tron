@@ -1,5 +1,6 @@
 package org.tron.core.db.api;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -73,10 +74,16 @@ public class AssetUpdateHelper {
 
     for (ExchangeCapsule exchangeCapsule : dbManager.getExchangeStore().getAllExchanges()) {
       count++;
-      exchangeCapsule.setFirstTokenId(
-          assetNameToIdMap.get(ByteArray.toStr(exchangeCapsule.getFirstTokenId())));
-      exchangeCapsule.setSecondTokenId(
-          assetNameToIdMap.get(ByteArray.toStr(exchangeCapsule.getSecondTokenId())));
+      if (!Arrays.equals(exchangeCapsule.getFirstTokenId(), "_".getBytes())) {
+        exchangeCapsule.setFirstTokenId(
+            assetNameToIdMap.get(ByteArray.toStr(exchangeCapsule.getFirstTokenId())));
+      }
+
+      if (!Arrays.equals(exchangeCapsule.getSecondTokenId(), "_".getBytes())) {
+        exchangeCapsule.setSecondTokenId(
+            assetNameToIdMap.get(ByteArray.toStr(exchangeCapsule.getSecondTokenId())));
+      }
+
 
       dbManager.getExchangeV2Store().put(exchangeCapsule.createDbKey(), exchangeCapsule);
     }
