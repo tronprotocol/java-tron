@@ -15,13 +15,13 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.Parameter.ChainParameters;
+import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
-import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 
 @Slf4j
 public class ProposalCreateActuator extends AbstractActuator {
