@@ -55,20 +55,25 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       long balance = Math.subtractExact(ownerAccount.getBalance(), cost);
       balance = Math.subtractExact(balance, fee);
       ownerAccount.setBalance(balance);
+      byte[] key = participateAssetIssueContract.getAssetName().toByteArray();
 
       //calculate the exchange amount
-      AssetIssueCapsule assetIssueCapsule =
-          this.dbManager.getAssetIssueStore()
-              .get(participateAssetIssueContract.getAssetName().toByteArray());
+      AssetIssueCapsule assetIssueCapsule;
+      if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+        assetIssueCapsule = this.dbManager.getAssetIssueStore().get(key);
+      } else {
+        assetIssueCapsule = this.dbManager.getAssetIssueV2Store().get(key);
+      }
+
       long exchangeAmount = Math.multiplyExact(cost, assetIssueCapsule.getNum());
       exchangeAmount = Math.floorDiv(exchangeAmount, assetIssueCapsule.getTrxNum());
-      ownerAccount.addAssetAmount(assetIssueCapsule.createDbKey(), exchangeAmount);
+      ownerAccount.addAssetAmountV2(key, exchangeAmount, dbManager);
 
       //add to to_address
       byte[] toAddress = participateAssetIssueContract.getToAddress().toByteArray();
       AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddress);
       toAccount.setBalance(Math.addExact(toAccount.getBalance(), cost));
-      if (!toAccount.reduceAssetAmount(assetIssueCapsule.createDbKey(), exchangeAmount)) {
+      if (!toAccount.reduceAssetAmountV2(key, exchangeAmount, dbManager)) {
         throw new ContractExeException("reduceAssetAmount failed !");
       }
 
@@ -147,7 +152,12 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       }
 
       //Whether have the mapping
-      AssetIssueCapsule assetIssueCapsule = this.dbManager.getAssetIssueStore().get(assetName);
+      AssetIssueCapsule assetIssueCapsule;
+      if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+        assetIssueCapsule = this.dbManager.getAssetIssueStore().get(assetName);
+      } else {
+        assetIssueCapsule = this.dbManager.getAssetIssueV2Store().get(assetName);
+      }
       if (assetIssueCapsule == null) {
         throw new ContractValidateException("No asset named " + ByteArray.toStr(assetName));
       }
