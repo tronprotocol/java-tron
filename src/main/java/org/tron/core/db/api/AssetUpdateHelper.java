@@ -24,7 +24,7 @@ public class AssetUpdateHelper {
 
   public void doWork() {
     long start = System.currentTimeMillis();
-    logger.info("Start to update the asset");
+    logger.info("Start updating the asset");
     init();
     updateAsset();
     updateExchange();
