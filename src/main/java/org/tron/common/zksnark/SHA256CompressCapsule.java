@@ -3,6 +3,7 @@ package org.tron.common.zksnark;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.ProtoCapsule;
@@ -85,10 +86,10 @@ public class SHA256CompressCapsule implements ProtoCapsule<SHA256Compress> {
   }
 
   public static void main(String[] args){
-    byte[] a = ByteArray.fromHexString("0000000000000000000000000000000000000000000000000000000000000000");
-   // ZksnarkUtils.sort(a);
-    byte[] b = ByteArray.fromHexString("0000000000000000000000000000000000000000000000000000000000000000");
- //   ZksnarkUtils.sort(b);
+    byte[] a = ByteArray.fromHexString("7303efd3b694316ac87f0850f0ce5ac8f8112fbfd2d24e27150c26c2c29f16d8");
+    ZksnarkUtils.sort(a);
+    byte[] b = ByteArray.fromHexString("d8a93718eaf9feba4362d2c091d4e58ccabe9f779957336269b4b917be9856da");
+    ZksnarkUtils.sort(b);
     SHA256Compress sa = SHA256Compress.newBuilder().setContent(ByteString.copyFrom(a)).build();
     SHA256Compress sb = SHA256Compress.newBuilder().setContent(ByteString.copyFrom(b)).build();
     combine(sa, sb, 0);

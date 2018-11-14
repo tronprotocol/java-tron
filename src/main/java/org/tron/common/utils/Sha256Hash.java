@@ -311,11 +311,11 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
   }
 
   private static int sig0(int x) {
-    return S(x, 7) ^ S(x, 18) ^ S(x, 3);
+    return S(x, 7) ^ S(x, 18) ^ R(x, 3);
   }
 
   private static int sig1(int x) {
-    return S(x, 17) ^ S(x, 19) ^ S(x, 10);
+    return S(x, 17) ^ S(x, 19) ^ R(x, 10);
   }
 
   private static int CH(int x, int y, int z) {
@@ -332,6 +332,15 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
     b += ((int) (a[offset++]) << 16)&0x00FF0000;
     b += ((int) (a[offset++]) << 8)&0x0000FF00;
     b += ((int) (a[offset++]))&0x000000FF;
+    return b;
+  }
+
+  private static int byte2Int_(byte[] a, int offset) {
+    int b = 0;
+    b += ((int) (a[offset++]))&0x000000FF;
+    b += ((int) (a[offset++]) << 8)&0x0000FF00;
+    b += ((int) (a[offset++]) << 16)&0x00FF0000;
+    b += ((int) (a[offset++]) << 24)&0xFF000000;
     return b;
   }
 
@@ -445,8 +454,8 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
   }
 
   public static void main(String[] args){
-    ROTR32(0xEAEAEAEA, 24);
-    ROTR32(0xEAEAEAEA, 16);
-    ROTR32(0xEAEAEAEA, 8);
+    byte[] msg = ByteArray.fromHexString("6D38B7C9D29C104292D92219BDB70139AA86585B70B728FBADB2F5DE9CB4C14DFC338BAEDE9DA5B2D2EE9DA485F3151A57A935A1EDA8239A4EF020DE8518BC5E");
+    byte[] hash = Sha256OneBlock(msg);
+    System.out.println(ByteArray.toHexString(hash));
   }
 }
