@@ -46,30 +46,64 @@ public class ExchangeCreateActuator extends AbstractActuator {
       if (Arrays.equals(firstTokenID, "_".getBytes())) {
         accountCapsule.setBalance(newBalance - firstTokenBalance);
       } else {
-        accountCapsule.reduceAssetAmount(firstTokenID, firstTokenBalance);
+        accountCapsule.reduceAssetAmountV2(firstTokenID, firstTokenBalance, dbManager);
       }
 
       if (Arrays.equals(secondTokenID, "_".getBytes())) {
         accountCapsule.setBalance(newBalance - secondTokenBalance);
       } else {
-        accountCapsule.reduceAssetAmount(secondTokenID, secondTokenBalance);
+        accountCapsule.reduceAssetAmountV2(secondTokenID, secondTokenBalance, dbManager);
       }
 
       long id = dbManager.getDynamicPropertiesStore().getLatestExchangeNum() + 1;
       long now = dbManager.getHeadBlockTimeStamp();
-      ExchangeCapsule exchangeCapsule =
-          new ExchangeCapsule(
-              exchangeCreateContract.getOwnerAddress(),
-              id,
-              now,
-              firstTokenID,
-              secondTokenID
-          );
+      if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+        //save to old asset store
+        ExchangeCapsule exchangeCapsule =
+            new ExchangeCapsule(
+                exchangeCreateContract.getOwnerAddress(),
+                id,
+                now,
+                firstTokenID,
+                secondTokenID
+            );
+        exchangeCapsule.setBalance(firstTokenBalance, secondTokenBalance);
+        dbManager.getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
 
-      exchangeCapsule.setBalance(firstTokenBalance, secondTokenBalance);
-
+        //save to new asset store
+        if (!Arrays.equals(firstTokenID, "_".getBytes())) {
+          long firstTokenRealID = dbManager.getAssetIssueStore().get(firstTokenID).getId();
+          firstTokenID = Long.toString(firstTokenRealID).getBytes();
+        }
+        if (!Arrays.equals(secondTokenID, "_".getBytes())) {
+          long secondTokenRealID = dbManager.getAssetIssueStore().get(secondTokenID).getId();
+          secondTokenID = Long.toString(secondTokenRealID).getBytes();
+        }
+        ExchangeCapsule exchangeCapsuleV2 =
+            new ExchangeCapsule(
+                exchangeCreateContract.getOwnerAddress(),
+                id,
+                now,
+                firstTokenID,
+                secondTokenID
+            );
+        exchangeCapsuleV2.setBalance(firstTokenBalance, secondTokenBalance);
+        dbManager.getExchangeV2Store().put(exchangeCapsuleV2.createDbKey(), exchangeCapsuleV2);
+      }
+      if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 1) {
+        // only save to new asset store
+        ExchangeCapsule exchangeCapsuleV2 =
+            new ExchangeCapsule(
+                exchangeCreateContract.getOwnerAddress(),
+                id,
+                now,
+                firstTokenID,
+                secondTokenID
+            );
+        exchangeCapsuleV2.setBalance(firstTokenBalance, secondTokenBalance);
+        dbManager.getExchangeV2Store().put(exchangeCapsuleV2.createDbKey(), exchangeCapsuleV2);
+      }
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-      dbManager.getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
       dbManager.getDynamicPropertiesStore().saveLatestExchangeNum(id);
 
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
