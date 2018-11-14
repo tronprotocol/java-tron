@@ -413,14 +413,14 @@ public class Program {
       // if owner == obtainer just zeroing account according to Yellow Paper
       getContractState().addBalance(owner, -balance);
       byte[] blackHoleAddress = getContractState().getBlackHoleAddress();
-      if (VMConfig.allowTVMTransferTrc10()) {
+      if (VMConfig.allowTvmTransferTrc10()) {
         getContractState().addBalance(blackHoleAddress, balance);
         transferAllToken(getContractState(), owner, blackHoleAddress);
       }
     } else {
       try {
         transfer(getContractState(), owner, obtainer, balance);
-        if (VMConfig.allowTVMTransferTrc10()) {
+        if (VMConfig.allowTvmTransferTrc10()) {
           transferAllToken(getContractState(), owner, obtainer);
         }
       } catch (ContractValidateException e) {

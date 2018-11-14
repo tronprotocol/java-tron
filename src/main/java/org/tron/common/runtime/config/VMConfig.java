@@ -64,7 +64,7 @@ public class VMConfig {
     ENERGY_LIMIT_HARD_FORK = ForkController.instance().pass(ForkBlockVersionConsts.ENERGY_LIMIT);
   }
 
-  public static void initAllowTVMTransferTrc10(long allow) {
+  public static void initAllowTvmTransferTrc10(long allow) {
     ALLOW_TVM_TRANSFER_TRC10 = allow == 1;
   }
 
@@ -72,7 +72,7 @@ public class VMConfig {
     return ENERGY_LIMIT_HARD_FORK;
   }
 
-  public static boolean allowTVMTransferTrc10() {
+  public static boolean allowTvmTransferTrc10() {
     return ALLOW_TVM_TRANSFER_TRC10;
   }
 

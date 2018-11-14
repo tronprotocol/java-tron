@@ -439,7 +439,7 @@ public class RuntimeImpl implements Runtime {
     if (callValue > 0) {
       transfer(this.deposit, callerAddress, contractAddress, callValue);
     }
-    if (VMConfig.allowTVMTransferTrc10()) {
+    if (VMConfig.allowTvmTransferTrc10()) {
       long callTokenValue = contract.getCallTokenValue();
       String tokenId = contract.getTokenId();
       if (callTokenValue > 0 && !StringUtils.isEmpty(tokenId)) {
@@ -529,7 +529,7 @@ public class RuntimeImpl implements Runtime {
     if (callValue > 0) {
       transfer(this.deposit, callerAddress, contractAddress, callValue);
     }
-    if (VMConfig.allowTVMTransferTrc10()) {
+    if (VMConfig.allowTvmTransferTrc10()) {
       long callTokenValue = contract.getCallTokenValue();
       String tokenId = contract.getTokenId();
       if (callTokenValue > 0 && !StringUtils.isEmpty(tokenId)) {

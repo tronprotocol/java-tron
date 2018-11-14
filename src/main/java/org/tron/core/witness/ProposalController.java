@@ -179,7 +179,7 @@ public class ProposalController {
           break;
         }
         case (19): {
-          manager.getDynamicPropertiesStore().saveAllowTVMTransferTrc10(entry.getValue());
+          manager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(entry.getValue());
           break;
         }
         default:
