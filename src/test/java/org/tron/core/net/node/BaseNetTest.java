@@ -87,7 +87,7 @@ public abstract class BaseNetTest {
         context = new TronApplicationContext(DefaultConfig.class);
 
         if (cfgArgs.isHelp()) {
-          logger.info("Here is the help message.");
+          logger.info("Here is the help message");
           return;
         }
         appT = ApplicationFactory.create(context);
