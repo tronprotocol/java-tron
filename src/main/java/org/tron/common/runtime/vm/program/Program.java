@@ -46,7 +46,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.config.VMConfig;
-import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.EnergyCost;
 import org.tron.common.runtime.vm.MessageCall;
@@ -71,9 +70,7 @@ import org.tron.core.actuator.TransferAssetActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
 import org.tron.protos.Protocol;
@@ -185,15 +182,8 @@ public class Program {
   }
 
   /**
-   *
-   * @param energyLimit
-   * @param senderAddress
    * @param transferAddress the address send trx to.
-   * @param value           the trx value transferred in the internaltransaction
-   * @param data
-   * @param note
-   * @param nonce
-   * @return
+   * @param value the trx value transferred in the internaltransaction
    */
   private InternalTransaction addInternalTx(DataWord energyLimit, byte[] senderAddress,
       byte[] transferAddress,
@@ -201,8 +191,9 @@ public class Program {
 
     InternalTransaction addedInternalTx = null;
     if (internalTransaction != null) {
-      addedInternalTx = getResult().addInternalTransaction(internalTransaction.getHash(), getCallDeep(),
-          senderAddress, transferAddress, value, data, note, nonce, tokenInfo);
+      addedInternalTx = getResult()
+          .addInternalTransaction(internalTransaction.getHash(), getCallDeep(),
+              senderAddress, transferAddress, value, data, note, nonce, tokenInfo);
     }
 
     return addedInternalTx;
@@ -422,14 +413,14 @@ public class Program {
       // if owner == obtainer just zeroing account according to Yellow Paper
       getContractState().addBalance(owner, -balance);
       byte[] blackHoleAddress = getContractState().getBlackHoleAddress();
-      if (VMConfig.getEnergyLimitHardFork()) {
+      if (VMConfig.allowTVMTransferTrc10()) {
         getContractState().addBalance(blackHoleAddress, balance);
-        transferAllToken(getContractState(),owner,blackHoleAddress);
+        transferAllToken(getContractState(), owner, blackHoleAddress);
       }
     } else {
       try {
         transfer(getContractState(), owner, obtainer, balance);
-        if (VMConfig.getEnergyLimitHardFork()) {
+        if (VMConfig.allowTVMTransferTrc10()) {
           transferAllToken(getContractState(), owner, obtainer);
         }
       } catch (ContractValidateException e) {
@@ -535,9 +526,10 @@ public class Program {
     // 4. CREATE THE CONTRACT OUT OF RETURN
     byte[] code = createResult.getHReturn();
 
-    long saveCodeEnergy = (long)getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
+    long saveCodeEnergy = (long) getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
 
-    long afterSpend = programInvoke.getEnergyLimit() - createResult.getEnergyUsed() - saveCodeEnergy;
+    long afterSpend =
+        programInvoke.getEnergyLimit() - createResult.getEnergyUsed() - saveCodeEnergy;
     if (!createResult.isRevert()) {
       if (afterSpend < 0) {
         createResult.setException(
@@ -670,27 +662,27 @@ public class Program {
         }
         deposit.addBalance(senderAddress, -endowment);
         contextBalance = deposit.addBalance(contextAddress, endowment);
-      }
-      else {
+      } else {
         try {
-          TransferAssetActuator.validateForSmartContract(deposit,senderAddress,contextAddress, msg.getTokenId().getData(), endowment);
+          TransferAssetActuator.validateForSmartContract(deposit, senderAddress, contextAddress,
+              msg.getTokenId().getData(), endowment);
         } catch (ContractValidateException e) {
           throw new BytecodeExecutionException("validateForSmartContract failure");
         }
-        deposit.addTokenBalance(senderAddress,msg.getTokenId().getData(),-endowment);
+        deposit.addTokenBalance(senderAddress, msg.getTokenId().getData(), -endowment);
         deposit.addTokenBalance(contextAddress, msg.getTokenId().getData(), endowment);
       }
     }
 
     // CREATE CALL INTERNAL TRANSACTION
     increaseNonce();
-    HashMap<String,Long> tokenInfo = new HashMap<>();
-    if (msg.getTokenId()!= null) {
-      tokenInfo.put(new String(stripLeadingZeroes(msg.getTokenId().getData())),endowment);
+    HashMap<String, Long> tokenInfo = new HashMap<>();
+    if (msg.getTokenId() != null) {
+      tokenInfo.put(new String(stripLeadingZeroes(msg.getTokenId().getData())), endowment);
     }
     InternalTransaction internalTx = addInternalTx(null, senderAddress, contextAddress,
-        msg.getTokenId() == null ? endowment: 0, data, "call", nonce ,
-        msg.getTokenId() == null ? null: tokenInfo);
+        msg.getTokenId() == null ? endowment : 0, data, "call", nonce,
+        msg.getTokenId() == null ? null : tokenInfo);
     ProgramResult callResult = null;
     if (isNotEmpty(programCode)) {
       long vmStartInUs = System.nanoTime() / 1000;
@@ -810,7 +802,8 @@ public class Program {
   }
 
   public void refundEnergy(long energyValue, String cause) {
-    logger.debug("[{}] Refund for cause: [{}], energy: [{}]", invoke.hashCode(), cause, energyValue);
+    logger
+        .debug("[{}] Refund for cause: [{}], energy: [{}]", invoke.hashCode(), cause, energyValue);
     getResult().refundEnergy(energyValue);
   }
 
@@ -1465,7 +1458,9 @@ public class Program {
   }
 
   public static class Exception {
-    private Exception() {}
+
+    private Exception() {
+    }
 
     public static OutOfEnergyException notEnoughOpEnergy(OpCode op, long opEnergy,
         long programEnergy) {
