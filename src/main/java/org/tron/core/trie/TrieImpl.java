@@ -827,10 +827,7 @@ public class TrieImpl implements Trie<byte[]> {
   }
 
   private byte[] childrenHash(Node n, List<Node> cpList, int level, boolean forceHash) {
-
-    if (n.children == null) {
-      logger.debug("childrenHash n children: " + n.children + ", n : " + n);
-    }
+    n.toString();//init children
     Node cp = new Node(n.children.length);
     if (level == 0) {
       cpList.add(cp);
