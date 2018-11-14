@@ -104,7 +104,7 @@ public class AssetUpdateHelper {
       if (accountCapsule.getAssetMap().size() != 0) {
         HashMap<String, Long> assetV2Map = new HashMap<>();
         for (Map.Entry<String, Long> entry : accountCapsule.getAssetMap().entrySet()) {
-          assetV2Map.put(new String(assetNameToIdMap.get(entry.getKey())),
+          assetV2Map.put(String.valueOf(ByteArray.toLong(assetNameToIdMap.get(entry.getKey()))),
               entry.getValue());
         }
 
