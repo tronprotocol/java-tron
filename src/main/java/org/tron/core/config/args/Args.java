@@ -682,7 +682,7 @@ public class Args {
     INSTANCE.needToUpdateAsset =
         config.hasPath("storage.needToUpdateAsset") ? config
             .getBoolean("storage.needToUpdateAsset")
-            : false;
+            : true;
 
     initBackupProperty(config);
 
