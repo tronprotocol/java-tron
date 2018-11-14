@@ -1295,24 +1295,42 @@ public class Program {
     byte[] contextAddress = msg.getType().callIsStateless() ? senderAddress : codeAddress;
 
     long endowment = msg.getEndowment().value().longValueExact();
-    long senderBalance = deposit.getBalance(senderAddress);
+    long senderBalance = 0;
+    // transfer trx validation
+    if (msg.getTokenId() == null) {
+      senderBalance = deposit.getBalance(senderAddress);
+    }
+    // transfer trc10 token validation
+    else {
+      senderBalance = deposit.getTokenBalance(senderAddress, msg.getTokenId().getData());
+    }
     if (senderBalance < endowment) {
       stackPushZero();
-      this.refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+      refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
       return;
     }
-
     byte[] data = this.memoryChunk(msg.getInDataOffs().intValue(),
         msg.getInDataSize().intValue());
 
     // Charge for endowment - is not reversible by rollback
     if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
         && senderAddress != contextAddress && msg.getEndowment().value().longValueExact() > 0) {
-      try {
-        transfer(deposit, senderAddress, contextAddress,
-            msg.getEndowment().value().longValueExact());
-      } catch (ContractValidateException e) {
-        throw new BytecodeExecutionException("transfer failure");
+      if (msg.getTokenId() == null) {
+        try {
+          transfer(deposit, senderAddress, contextAddress,
+              msg.getEndowment().value().longValueExact());
+        } catch (ContractValidateException e) {
+          throw new BytecodeExecutionException("transfer failure");
+        }
+      }
+      else {
+        try {
+          TransferAssetActuator.validateForSmartContract(deposit,senderAddress,contextAddress, msg.getTokenId().getData(), endowment);
+        } catch (ContractValidateException e) {
+          throw new BytecodeExecutionException("validateForSmartContract failure");
+        }
+        deposit.addTokenBalance(senderAddress,msg.getTokenId().getData(),-endowment);
+        deposit.addTokenBalance(contextAddress, msg.getTokenId().getData(), endowment);
       }
     }
 
