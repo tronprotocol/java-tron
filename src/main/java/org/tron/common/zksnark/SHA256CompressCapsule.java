@@ -5,7 +5,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Update;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.protos.Contract.SHA256Compress;
 
@@ -62,13 +62,19 @@ public class SHA256CompressCapsule implements ProtoCapsule<SHA256Compress> {
 
     System.arraycopy(a.getContent().toByteArray(), 0, blob, 0, 32);
     System.arraycopy(b.getContent().toByteArray(), 0, blob, 32, 32);
-    res = Sha256Hash.Sha256OneBlock(blob);
+    res = Sha256Update.Sha256OneBlock(blob);
     SHA256CompressCapsule sha256CompressCapsule = new SHA256CompressCapsule();
     sha256CompressCapsule.setContent(ByteString.copyFrom(res));
-    System.out.print(ByteArray.toHexString(a.getContent().toByteArray()));
+
+    byte[] temp = a.getContent().toByteArray();
+    ZksnarkUtils.sort(temp);
+    System.out.print(ByteArray.toHexString(temp));
     System.out.print(" : ");
-    System.out.print(ByteArray.toHexString(b.getContent().toByteArray()));
+    temp = b.getContent().toByteArray();
+    ZksnarkUtils.sort(temp);
+    System.out.print(ByteArray.toHexString(temp));
     System.out.print(" : ");
+    ZksnarkUtils.sort(res);
     System.out.println(ByteArray.toHexString(res));
     return sha256CompressCapsule;
   }
@@ -86,7 +92,7 @@ public class SHA256CompressCapsule implements ProtoCapsule<SHA256Compress> {
   }
 
   public static void main(String[] args){
-    byte[] a = ByteArray.fromHexString("7303efd3b694316ac87f0850f0ce5ac8f8112fbfd2d24e27150c26c2c29f16d8");
+    byte[] a = ByteArray.fromHexString("c9b350fc5221e4b4db929307a628ec6ca751f309d0653608d90e41ad5a2dc1d4");
     ZksnarkUtils.sort(a);
     byte[] b = ByteArray.fromHexString("d8a93718eaf9feba4362d2c091d4e58ccabe9f779957336269b4b917be9856da");
     ZksnarkUtils.sort(b);
