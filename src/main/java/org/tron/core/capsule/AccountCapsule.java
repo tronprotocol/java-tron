@@ -365,7 +365,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       if (amount > 0 && null != currentAmount && amount <= currentAmount) {
         this.account = this.account.toBuilder()
             .putAsset(nameKey, Math.subtractExact(currentAmount, amount))
-            .putAssetV2(tokenID + "", Math.subtractExact(currentAmount, amount))
+            .putAssetV2(Long.toString(tokenID), Math.subtractExact(currentAmount, amount))
             .build();
         return true;
       }
@@ -373,10 +373,10 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     if (manager.getDynamicPropertiesStore().getAllowSameTokenName() == 1) {
       byte[] tokenID = key;
       Map<String, Long> assetMapV2 = this.account.getAssetV2Map();
-      Long currentAmount = assetMapV2.get(ByteArray.toLong(tokenID) + "");
+      Long currentAmount = assetMapV2.get(ByteArray.toStr(tokenID));
       if (amount > 0 && null != currentAmount && amount <= currentAmount) {
         this.account = this.account.toBuilder()
-            .putAssetV2(tokenID + "", Math.subtractExact(currentAmount, amount))
+            .putAssetV2(ByteArray.toStr(tokenID), Math.subtractExact(currentAmount, amount))
             .build();
         return true;
       }
@@ -416,18 +416,19 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       }
       this.account = this.account.toBuilder()
           .putAsset(nameKey, Math.addExact(currentAmount, amount))
-          .putAssetV2(tokenID + "", Math.addExact(currentAmount, amount))
+          .putAssetV2(Long.toString(tokenID), Math.addExact(currentAmount, amount))
           .build();
     }
     if (manager.getDynamicPropertiesStore().getAllowSameTokenName() == 1) {
       byte[] tokenID = key;
+      String tokenIDStr = ByteArray.toStr(tokenID);
       Map<String, Long> assetMapV2 = this.account.getAssetV2Map();
-      Long currentAmount = assetMapV2.get(ByteArray.toLong(tokenID) + "");
+      Long currentAmount = assetMapV2.get(tokenIDStr);
       if (currentAmount == null) {
         currentAmount = 0L;
       }
       this.account = this.account.toBuilder()
-          .putAssetV2(ByteArray.toLong(tokenID) + "", Math.addExact(currentAmount, amount))
+          .putAssetV2(tokenIDStr, Math.addExact(currentAmount, amount))
           .build();
     }
     return true;
