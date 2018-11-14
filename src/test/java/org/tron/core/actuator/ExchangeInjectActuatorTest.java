@@ -431,7 +431,7 @@ public class ExchangeInjectActuatorTest {
       fail();
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("token is not in exchange",
+      Assert.assertEquals("token id is not in exchange",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);

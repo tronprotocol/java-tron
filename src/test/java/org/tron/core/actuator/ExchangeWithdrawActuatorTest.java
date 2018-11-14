@@ -19,6 +19,7 @@ import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -28,6 +29,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Contract;
+import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -123,6 +125,23 @@ public class ExchangeWithdrawActuatorTest {
             "abc".getBytes(),
             "def".getBytes());
     exchangeCapsule3.setBalance(903L, 737L);
+
+    AssetIssueCapsule assetIssueCapsule1 =
+        new AssetIssueCapsule(
+            AssetIssueContract.newBuilder()
+                .setName(ByteString.copyFrom("abc".getBytes()))
+                .build());
+    assetIssueCapsule1.setId(1);
+    dbManager.getAssetIssueStore()
+        .put(assetIssueCapsule1.getName().toByteArray(), assetIssueCapsule1);
+    AssetIssueCapsule assetIssueCapsule2 =
+        new AssetIssueCapsule(
+            AssetIssueContract.newBuilder()
+                .setName(ByteString.copyFrom("def".getBytes()))
+                .build());
+    assetIssueCapsule2.setId(2);
+    dbManager.getAssetIssueStore()
+        .put(assetIssueCapsule2.getName().toByteArray(), assetIssueCapsule2);
 
     dbManager.getAccountStore()
         .put(ownerAccountFirstCapsule.getAddress().toByteArray(), ownerAccountFirstCapsule);
