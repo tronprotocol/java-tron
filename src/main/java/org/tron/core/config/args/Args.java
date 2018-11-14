@@ -342,6 +342,10 @@ public class Args {
   @Setter
   private String logLevel;
 
+  @Getter
+  @Setter
+  private boolean vmTrace;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -676,6 +680,9 @@ public class Args {
     INSTANCE.logLevel =
         config.hasPath("log.level.root") ? config.getString("log.level.root") : "INFO";
 
+    INSTANCE.vmTrace =
+        config.hasPath("vm.vmTrace") ? config
+            .getBoolean("vm.vmTrace") : false;
     initBackupProperty(config);
 
     logConfig();

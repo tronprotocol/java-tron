@@ -20,6 +20,7 @@ package org.tron.common.runtime.config;
 import lombok.Setter;
 import org.tron.common.utils.ForkController;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 
 /**
@@ -32,7 +33,7 @@ public class VMConfig {
   public static final int MAX_FEE_LIMIT = 1_000_000_000; //1000 trx
 
   private boolean vmTraceCompressed = false;
-  private boolean vmTrace = false;
+  private boolean vmTrace = Args.getInstance().isVmTrace();
 
   //Odyssey3.2 hard fork -- ForkBlockVersionConsts.ENERGY_LIMIT
   @Setter
