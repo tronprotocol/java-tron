@@ -334,6 +334,23 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return amount > 0 && null != currentAmount && amount <= currentAmount;
   }
 
+  public boolean assetBalanceEnoughV2(byte[] key, long amount, Manager manager) {
+    Map<String, Long> assetMap;
+    String nameKey;
+    Long currentAmount;
+    if (manager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      assetMap = this.account.getAssetMap();
+      nameKey = ByteArray.toStr(key);
+      currentAmount = assetMap.get(nameKey);
+    } else {
+      String tokenID = ByteArray.toLong(key) + "";
+      assetMap = this.account.getAssetV2Map();
+      currentAmount = assetMap.get(tokenID);
+    }
+
+    return amount > 0 && null != currentAmount && amount <= currentAmount;
+  }
+
 
   /**
    * reduce asset amount.
@@ -541,10 +558,17 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account.getLatestAssetOperationTimeOrDefault(assetName, 0);
   }
 
+  public long getLatestAssetOperationTimeV2(String assetName) {
+    return this.account.getLatestAssetOperationTimeV2OrDefault(assetName, 0);
+  }
+
   public void putLatestAssetOperationTimeMap(String key, Long value) {
     this.account = this.account.toBuilder().putLatestAssetOperationTime(key, value).build();
   }
 
+  public void putLatestAssetOperationTimeV2Map(String key, Long value) {
+    this.account = this.account.toBuilder().putLatestAssetOperationTimeV2(key, value).build();
+  }
 
   public int getFrozenCount() {
     return getInstance().getFrozenCount();
@@ -732,13 +756,26 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account.getFreeAssetNetUsageOrDefault(assetName, 0);
   }
 
+  public long getFreeAssetNetUsageV2(String assetName) {
+    return this.account.getFreeAssetNetUsageV2OrDefault(assetName, 0);
+  }
+
   public Map<String, Long> getAllFreeAssetNetUsage() {
     return this.account.getFreeAssetNetUsageMap();
+  }
+
+  public Map<String, Long> getAllFreeAssetNetUsageV2() {
+    return this.account.getFreeAssetNetUsageV2Map();
   }
 
   public void putFreeAssetNetUsage(String s, long freeAssetNetUsage) {
     this.account = this.account.toBuilder()
         .putFreeAssetNetUsage(s, freeAssetNetUsage).build();
+  }
+
+  public void putFreeAssetNetUsageV2(String s, long freeAssetNetUsage) {
+    this.account = this.account.toBuilder()
+        .putFreeAssetNetUsageV2(s, freeAssetNetUsage).build();
   }
 
   public long getStorageLimit() {

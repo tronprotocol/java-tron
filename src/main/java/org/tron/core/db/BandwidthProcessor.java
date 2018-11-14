@@ -210,8 +210,13 @@ public class BandwidthProcessor extends ResourceProcessor {
       throw new RuntimeException(ex.getMessage());
     }
     String assetNameString = ByteArray.toStr(assetName.toByteArray());
-    AssetIssueCapsule assetIssueCapsule
-        = dbManager.getAssetIssueStore().get(assetName.toByteArray());
+    String tokenID = ByteArray.toLong(assetName.toByteArray()) + "";
+    AssetIssueCapsule assetIssueCapsule;
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      assetIssueCapsule = dbManager.getAssetIssueStore().get(assetName.toByteArray());
+    } else {
+      assetIssueCapsule = dbManager.getAssetIssueV2Store().get(assetName.toByteArray());
+    }
     if (assetIssueCapsule == null) {
       throw new ContractValidateException("asset not exists");
     }
@@ -234,10 +239,16 @@ public class BandwidthProcessor extends ResourceProcessor {
 
     long freeAssetNetLimit = assetIssueCapsule.getFreeAssetNetLimit();
 
-    long freeAssetNetUsage = accountCapsule
-        .getFreeAssetNetUsage(assetNameString);
-    long latestAssetOperationTime = accountCapsule
-        .getLatestAssetOperationTime(assetNameString);
+    long freeAssetNetUsage, latestAssetOperationTime;
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      freeAssetNetUsage = accountCapsule
+          .getFreeAssetNetUsage(assetNameString);
+      latestAssetOperationTime = accountCapsule
+          .getLatestAssetOperationTime(assetNameString);
+    } else {
+      freeAssetNetUsage = accountCapsule.getFreeAssetNetUsageV2(tokenID);
+      latestAssetOperationTime = accountCapsule.getLatestAssetOperationTimeV2(tokenID);
+    }
 
     long newFreeAssetNetUsage = increase(freeAssetNetUsage, 0,
         latestAssetOperationTime, now);
@@ -275,9 +286,15 @@ public class BandwidthProcessor extends ResourceProcessor {
     issuerAccountCapsule.setLatestConsumeTime(latestConsumeTime);
 
     accountCapsule.setLatestOperationTime(latestOperationTime);
-    accountCapsule.putLatestAssetOperationTimeMap(assetNameString,
-        latestAssetOperationTime);
-    accountCapsule.putFreeAssetNetUsage(assetNameString, newFreeAssetNetUsage);
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      accountCapsule.putLatestAssetOperationTimeMap(assetNameString,
+          latestAssetOperationTime);
+      accountCapsule.putFreeAssetNetUsage(assetNameString, newFreeAssetNetUsage);
+    } else {
+      accountCapsule.putLatestAssetOperationTimeV2Map(tokenID,
+          latestAssetOperationTime);
+      accountCapsule.putFreeAssetNetUsageV2(tokenID, newFreeAssetNetUsage);
+    }
 
     assetIssueCapsule.setPublicFreeAssetNetUsage(newPublicFreeAssetNetUsage);
     assetIssueCapsule.setPublicLatestFreeNetTime(publicLatestFreeNetTime);
