@@ -198,7 +198,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getTokenIdNum();
     } catch (IllegalArgumentException e) {
-      this.saveTokenIdNum(1000001L);
+      this.saveTokenIdNum(1000000L);
     }
 
     try {
