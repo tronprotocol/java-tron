@@ -19,6 +19,7 @@ import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -28,6 +29,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Contract;
+import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -134,6 +136,25 @@ public class ExchangeCreateActuatorTest {
     String secondTokenId = "def";
     long secondTokenBalance = 100000000L;
 
+    AssetIssueCapsule assetIssueCapsule1 =
+        new AssetIssueCapsule(
+            AssetIssueContract.newBuilder()
+                .setName(ByteString.copyFrom(firstTokenId.getBytes()))
+                .build());
+    assetIssueCapsule1.setId(1);
+
+    AssetIssueCapsule assetIssueCapsule2 =
+        new AssetIssueCapsule(
+            AssetIssueContract.newBuilder()
+                .setName(ByteString.copyFrom(secondTokenId.getBytes()))
+                .build());
+    assetIssueCapsule2.setId(2);
+
+    dbManager.getAssetIssueStore()
+        .put(assetIssueCapsule1.getName().toByteArray(), assetIssueCapsule1);
+    dbManager.getAssetIssueStore()
+        .put(assetIssueCapsule2.getName().toByteArray(), assetIssueCapsule2);
+
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
     accountCapsule.addAssetAmount(firstTokenId.getBytes(), firstTokenBalance);
@@ -189,6 +210,15 @@ public class ExchangeCreateActuatorTest {
     long firstTokenBalance = 100_000_000_000000L;
     String secondTokenId = "abc";
     long secondTokenBalance = 100_000_000L;
+
+    AssetIssueCapsule assetIssueCapsule =
+        new AssetIssueCapsule(
+            AssetIssueContract.newBuilder()
+                .setName(ByteString.copyFrom(secondTokenId.getBytes()))
+                .build());
+    assetIssueCapsule.setId(1);
+    dbManager.getAssetIssueStore()
+        .put(assetIssueCapsule.getName().toByteArray(), assetIssueCapsule);
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
