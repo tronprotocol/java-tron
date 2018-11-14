@@ -420,11 +420,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveAllowAdaptiveEnergy(Args.getInstance().getAllowAdaptiveEnergy());
     }
-    
+
     try {
-      this.getAllowTVMTransferTrc10();
+      this.getAllowTvmTransferTrc10();
     } catch (IllegalArgumentException e) {
-      this.saveAllowTVMTransferTrc10(Args.getInstance().getAllowTVMTransferTrc10());
+      this.saveAllowTVMTransferTrc10(Args.getInstance().getAllowTvmTransferTrc10());
     }
 
     try {
@@ -1084,7 +1084,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         new BytesCapsule(ByteArray.fromLong(value)));
   }
 
-  public long getAllowTVMTransferTrc10() {
+  public long getAllowTvmTransferTrc10() {
     return Optional.ofNullable(getUnchecked(ALLOW_TVM_TRANSFER_TRC10))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)

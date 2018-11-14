@@ -993,7 +993,7 @@ public class Manager {
     consumeBandwidth(trxCap, trace);
 
     VMConfig.initVmHardFork();
-    VMConfig.initAllowTVMTransferTrc10(dynamicPropertiesStore.getAllowTVMTransferTrc10());
+    VMConfig.initAllowTVMTransferTrc10(dynamicPropertiesStore.getAllowTvmTransferTrc10());
     trace.init(blockCap);
     trace.checkIsConstant();
     trace.exec();

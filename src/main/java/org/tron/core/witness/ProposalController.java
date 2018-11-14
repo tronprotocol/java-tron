@@ -178,7 +178,7 @@ public class ProposalController {
           manager.getDynamicPropertiesStore().saveTotalEnergyLimit(entry.getValue());
           break;
         }
-        case (20): {
+        case (19): {
           manager.getDynamicPropertiesStore().saveAllowTVMTransferTrc10(entry.getValue());
           break;
         }

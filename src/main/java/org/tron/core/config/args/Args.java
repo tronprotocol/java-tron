@@ -287,7 +287,7 @@ public class Args {
 
   @Getter
   @Setter
-  private long allowTVMTransferTrc10; //committee parameter
+  private long allowTvmTransferTrc10; //committee parameter
 
   @Getter
   @Setter
@@ -393,7 +393,7 @@ public class Args {
     INSTANCE.proposalExpireTime = 0;
     INSTANCE.allowCreationOfContracts = 0;
     INSTANCE.allowAdaptiveEnergy = 0;
-    INSTANCE.allowTVMTransferTrc10 = 0;
+    INSTANCE.allowTvmTransferTrc10 = 0;
     INSTANCE.tcpNettyWorkThreadNum = 0;
     INSTANCE.udpNettyWorkThreadNum = 0;
     INSTANCE.p2pNodeId = "";
@@ -647,7 +647,7 @@ public class Args {
         config.hasPath("committee.allowAdaptiveEnergy") ? config
             .getInt("committee.allowAdaptiveEnergy") : 0;
 
-    INSTANCE.allowTVMTransferTrc10 =
+    INSTANCE.allowTvmTransferTrc10 =
         config.hasPath("committee.allowTvmTransferTrc10") ? config
             .getInt("committee.allowTvmTransferTrc10") : 0;
 

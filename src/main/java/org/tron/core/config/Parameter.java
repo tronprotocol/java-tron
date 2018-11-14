@@ -89,8 +89,7 @@ public interface Parameter {
     ALLOW_DELEGATE_RESOURCE, // 0, 16
     ALLOW_ADAPTIVE_ENERGY, // 0, 17
     TOTAL_ENERGY_LIMIT, // 50,000,000,000, 18
-    A_,//19 skip to trc10 name id
-    ALLOW_TVM_TRANSFER_TRC10, // 1, 20
+    ALLOW_TVM_TRANSFER_TRC10, // 1, 19
 //    ONE_DAY_NET_LIMIT,
 //    MAX_FROZEN_TIME,
 //    MIN_FROZEN_TIME,
