@@ -145,6 +145,15 @@ public class TransactionUtil {
     // other rules.
     return true;
   }
+
+  public static boolean isNumber(byte[] id) {
+    for (byte b : id) {
+      if (b < '0' || b > '9') {
+        return false;
+      }
+    }
+    return true;
+  }
   /**
    * Get sender.
    */

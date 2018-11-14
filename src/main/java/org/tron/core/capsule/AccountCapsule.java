@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.db.Manager;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Protocol.Account;
@@ -351,6 +352,40 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   /**
+   * reduce asset amount.
+   */
+  public boolean reduceAssetAmountV2(byte[] key, long amount, Manager manager) {
+    if (manager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      byte[] tokenName = key;
+      Map<String, Long> assetMap = this.account.getAssetMap();
+      AssetIssueCapsule assetIssueCapsule = manager.getAssetIssueStore().get(tokenName);
+      long tokenID = assetIssueCapsule.getId();
+      String nameKey = ByteArray.toStr(tokenName);
+      Long currentAmount = assetMap.get(nameKey);
+      if (amount > 0 && null != currentAmount && amount <= currentAmount) {
+        this.account = this.account.toBuilder()
+            .putAsset(nameKey, Math.subtractExact(currentAmount, amount))
+            .putAssetV2(tokenID + "", Math.subtractExact(currentAmount, amount))
+            .build();
+        return true;
+      }
+    }
+    if (manager.getDynamicPropertiesStore().getAllowSameTokenName() == 1) {
+      byte[] tokenID = key;
+      Map<String, Long> assetMapV2 = this.account.getAssetV2Map();
+      Long currentAmount = assetMapV2.get(ByteArray.toLong(tokenID) + "");
+      if (amount > 0 && null != currentAmount && amount <= currentAmount) {
+        this.account = this.account.toBuilder()
+            .putAssetV2(tokenID + "", Math.subtractExact(currentAmount, amount))
+            .build();
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
    * add asset amount.
    */
   public boolean addAssetAmount(byte[] key, long amount) {
@@ -362,6 +397,39 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     }
     this.account = this.account.toBuilder().putAsset(nameKey, Math.addExact(currentAmount, amount))
         .build();
+    return true;
+  }
+
+  /**
+   * add asset amount.
+   */
+  public boolean addAssetAmountV2(byte[] key, long amount, Manager manager) {
+    if (manager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      byte[] tokenName = key;
+      Map<String, Long> assetMap = this.account.getAssetMap();
+      AssetIssueCapsule assetIssueCapsule = manager.getAssetIssueStore().get(tokenName);
+      long tokenID = assetIssueCapsule.getId();
+      String nameKey = ByteArray.toStr(tokenName);
+      Long currentAmount = assetMap.get(nameKey);
+      if (currentAmount == null) {
+        currentAmount = 0L;
+      }
+      this.account = this.account.toBuilder()
+          .putAsset(nameKey, Math.addExact(currentAmount, amount))
+          .putAssetV2(tokenID + "", Math.addExact(currentAmount, amount))
+          .build();
+    }
+    if (manager.getDynamicPropertiesStore().getAllowSameTokenName() == 1) {
+      byte[] tokenID = key;
+      Map<String, Long> assetMapV2 = this.account.getAssetV2Map();
+      Long currentAmount = assetMapV2.get(ByteArray.toLong(tokenID) + "");
+      if (currentAmount == null) {
+        currentAmount = 0L;
+      }
+      this.account = this.account.toBuilder()
+          .putAssetV2(ByteArray.toLong(tokenID) + "", Math.addExact(currentAmount, amount))
+          .build();
+    }
     return true;
   }
 
