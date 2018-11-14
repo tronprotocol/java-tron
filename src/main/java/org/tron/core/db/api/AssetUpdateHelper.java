@@ -23,13 +23,15 @@ public class AssetUpdateHelper {
   }
 
   public void doWork() {
+    long start = System.currentTimeMillis();
     logger.info("Start to update the asset");
     init();
     updateAsset();
     updateExchange();
     updateAccount();
     finish();
-    logger.info("Complete the asset update");
+    logger.info("Complete the asset update,Total time：{} milliseconds",
+        System.currentTimeMillis() - start);
   }
 
   public void init() {
