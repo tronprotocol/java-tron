@@ -26,13 +26,12 @@ public class IncrementalMerkleWitnessContainer {
     Deque<SHA256Compress> uncles = new ArrayDeque<>(witnessCapsule.getFilled());
 
     if (cursorIsExist()) {
-      uncles.add(witnessCapsule.getCursor().toMerkleTreeContainer()
-          .root(witnessCapsule.getCursorDepth()));
+      uncles.add(
+          witnessCapsule.getCursor().toMerkleTreeContainer().root(witnessCapsule.getCursorDepth()));
     }
 
     return uncles;
   }
-
 
   public void append(SHA256Compress obj) {
 
@@ -42,13 +41,16 @@ public class IncrementalMerkleWitnessContainer {
       long cursor_depth = witnessCapsule.getCursorDepth();
 
       if (witnessCapsule.getCursor().toMerkleTreeContainer().isComplete()) {
-        witnessCapsule
-            .addFilled(witnessCapsule.getCursor().toMerkleTreeContainer().root(cursor_depth));
+        witnessCapsule.addFilled(
+            witnessCapsule.getCursor().toMerkleTreeContainer().root(cursor_depth));
         witnessCapsule.clearCursor();
       }
     } else {
-      long cursor_depth = witnessCapsule.getTree().toMerkleTreeContainer()
-          .next_depth(witnessCapsule.getFilled().size());
+      long cursor_depth =
+          witnessCapsule
+              .getTree()
+              .toMerkleTreeContainer()
+              .next_depth(witnessCapsule.getFilled().size());
 
       witnessCapsule.setCursorDepth(cursor_depth);
 
@@ -59,7 +61,9 @@ public class IncrementalMerkleWitnessContainer {
       if (cursor_depth == 0) {
         witnessCapsule.addFilled(obj);
       } else {
-        witnessCapsule.getCursor().toMerkleTreeContainer().append(obj);
+        IncrementalMerkleTreeCapsule cursor = new IncrementalMerkleTreeCapsule();
+        cursor.toMerkleTreeContainer().append(obj);
+        witnessCapsule.setCursor(cursor);
       }
     }
   }
@@ -89,11 +93,9 @@ public class IncrementalMerkleWitnessContainer {
     return OutputPointUtil.outputPointToKey(outputPoint);
   }
 
-
   public byte[] getRootArray() {
     return root().getContent().toByteArray();
   }
-
 
   private boolean cursorIsExist() {
     return !witnessCapsule.getCursor().isEmptyTree();
@@ -113,6 +115,4 @@ public class IncrementalMerkleWitnessContainer {
       return rs;
     }
   }
-
-
 }
