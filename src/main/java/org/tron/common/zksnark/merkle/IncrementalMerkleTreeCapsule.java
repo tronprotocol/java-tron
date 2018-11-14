@@ -1,6 +1,7 @@
 package org.tron.common.zksnark.merkle;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.ProtoCapsule;
@@ -107,6 +108,11 @@ public class IncrementalMerkleTreeCapsule implements ProtoCapsule<IncrementalMer
 
   public IncrementalMerkleTreeContainer toMerkleTreeContainer() {
     return new IncrementalMerkleTreeContainer(this);
+  }
+
+  public IncrementalMerkleTreeCapsule deepCopy() {
+    byte[] data = Arrays.copyOf(this.getData(), this.getData().length);
+    return new IncrementalMerkleTreeCapsule(data);
   }
 
 }
