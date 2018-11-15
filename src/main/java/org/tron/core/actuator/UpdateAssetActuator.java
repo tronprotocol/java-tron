@@ -46,7 +46,8 @@ public class UpdateAssetActuator extends AbstractActuator {
       assetIssueCapsule.setPublicFreeAssetNetLimit(newPublicLimit);
       assetIssueCapsule.setUrl(newUrl);
       assetIssueCapsule.setDescription(newDescription);
-      assetIssueStore.put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+
+      dbManager.putAssetIssue(assetIssueCapsule);
 
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {

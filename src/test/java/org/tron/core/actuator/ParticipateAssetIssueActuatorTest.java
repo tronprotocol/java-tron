@@ -64,6 +64,7 @@ public class ParticipateAssetIssueActuatorTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
+    dbManager.getDynamicPropertiesStore().saveTokenIdNum(1000000);
   }
 
   /**
@@ -152,10 +153,13 @@ public class ParticipateAssetIssueActuatorTest {
   }
 
   private void initAssetIssue(long startTimestmp, long endTimestmp) {
+    long id = dbManager.getDynamicPropertiesStore().getTokenIdNum() + 1;
+    dbManager.getDynamicPropertiesStore().saveTokenIdNum(id);
     AssetIssueContract assetIssueContract =
         AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
             .setName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
+            .setId(Long.toString(id))
             .setTotalSupply(TOTAL_SUPPLY)
             .setTrxNum(TRX_NUM)
             .setNum(NUM)
@@ -175,10 +179,13 @@ public class ParticipateAssetIssueActuatorTest {
   }
 
   private void initAssetIssue(long startTimestmp, long endTimestmp, String assetName) {
+    long id = dbManager.getDynamicPropertiesStore().getTokenIdNum() + 1;
+    dbManager.getDynamicPropertiesStore().saveTokenIdNum(id);
     AssetIssueContract assetIssueContract =
         AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
             .setName(ByteString.copyFrom(ByteArray.fromString(assetName)))
+            .setId(Long.toString(id))
             .setTotalSupply(TOTAL_SUPPLY)
             .setTrxNum(TRX_NUM)
             .setNum(NUM)
