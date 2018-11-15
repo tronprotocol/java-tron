@@ -82,7 +82,7 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
   }
 
   public byte[] createDbV2Key() {
-    return ByteArray.fromLong(getId());
+    return ByteArray.fromString(this.assetIssueContract.getId());
   }
   public byte[] createDbKey() {
 //    long order = getOrder();

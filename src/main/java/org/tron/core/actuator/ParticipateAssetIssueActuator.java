@@ -59,11 +59,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
 
       //calculate the exchange amount
       AssetIssueCapsule assetIssueCapsule;
-      if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-        assetIssueCapsule = this.dbManager.getAssetIssueStore().get(key);
-      } else {
-        assetIssueCapsule = this.dbManager.getAssetIssueV2Store().get(key);
-      }
+      assetIssueCapsule = this.dbManager.getAssetIssueStoreFinal().get(key);
 
       long exchangeAmount = Math.multiplyExact(cost, assetIssueCapsule.getNum());
       exchangeAmount = Math.floorDiv(exchangeAmount, assetIssueCapsule.getTrxNum());
@@ -153,11 +149,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
 
       //Whether have the mapping
       AssetIssueCapsule assetIssueCapsule;
-      if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-        assetIssueCapsule = this.dbManager.getAssetIssueStore().get(assetName);
-      } else {
-        assetIssueCapsule = this.dbManager.getAssetIssueV2Store().get(assetName);
-      }
+      assetIssueCapsule = this.dbManager.getAssetIssueStoreFinal().get(assetName);
       if (assetIssueCapsule == null) {
         throw new ContractValidateException("No asset named " + ByteArray.toStr(assetName));
       }
@@ -186,7 +178,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
         throw new ContractValidateException("To account does not exist!");
       }
 
-      if (!toAccount.assetBalanceEnoughV2(assetIssueCapsule.createDbKey(), exchangeAmount,
+      if (!toAccount.assetBalanceEnoughV2(assetName, exchangeAmount,
           dbManager)) {
         throw new ContractValidateException("Asset balance is not enough !");
       }

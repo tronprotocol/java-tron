@@ -554,13 +554,7 @@ public class Wallet {
 
   public ExchangeList getExchangeList() {
     ExchangeList.Builder builder = ExchangeList.newBuilder();
-    List<ExchangeCapsule> exchangeCapsuleList;
-
-    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      exchangeCapsuleList = dbManager.getExchangeStore().getAllExchanges();
-    } else {
-      exchangeCapsuleList = dbManager.getExchangeV2Store().getAllExchanges();
-    }
+    List<ExchangeCapsule> exchangeCapsuleList = dbManager.getExchangeStoreFinal().getAllExchanges();
 
     exchangeCapsuleList
         .forEach(exchangeCapsule -> builder.addExchanges(exchangeCapsule.getInstance()));
@@ -673,7 +667,8 @@ public class Wallet {
     Map<String, Long> assetNetLimitMap = new HashMap<>();
     accountCapsule.getAllFreeAssetNetUsage().keySet().forEach(asset -> {
       byte[] key = ByteArray.fromString(asset);
-      assetNetLimitMap.put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
+      assetNetLimitMap
+          .put(asset, dbManager.getAssetIssueStoreFinal().get(key).getFreeAssetNetLimit());
     });
 
     builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
@@ -719,7 +714,8 @@ public class Wallet {
     Map<String, Long> assetNetLimitMap = new HashMap<>();
     accountCapsule.getAllFreeAssetNetUsage().keySet().forEach(asset -> {
       byte[] key = ByteArray.fromString(asset);
-      assetNetLimitMap.put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
+      assetNetLimitMap
+          .put(asset, dbManager.getAssetIssueStoreFinal().get(key).getFreeAssetNetLimit());
     });
 
     builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
@@ -763,7 +759,7 @@ public class Wallet {
     if (assetId == null) {
       return null;
     }
-    AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueV2Store()
+    AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStoreFinal()
         .get(ByteArray.fromLong(assetId));
     return assetIssueCapsule != null ? assetIssueCapsule.getInstance() : null;
   }
@@ -863,11 +859,7 @@ public class Wallet {
     }
     ExchangeCapsule exchangeCapsule = null;
     try {
-      if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-        exchangeCapsule = dbManager.getExchangeStore().get(exchangeId.toByteArray());
-      } else {
-        exchangeCapsule = dbManager.getExchangeV2Store().get(exchangeId.toByteArray());
-      }
+      exchangeCapsule = dbManager.getExchangeStoreFinal().get(exchangeId.toByteArray());
     } catch (StoreException e) {
     }
     if (exchangeCapsule != null) {
@@ -1085,11 +1077,7 @@ public class Wallet {
         .create(Range.openClosed(offset, end), DiscreteDomain.longs()).asList();
     rangeList.stream().map(ExchangeCapsule::calculateDbKey).map(key -> {
       try {
-        if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-          return dbManager.getExchangeStore().get(key);
-        } else {
-          return dbManager.getExchangeV2Store().get(key);
-        }
+        return dbManager.getExchangeStoreFinal().get(key);
       } catch (Exception ex) {
         return null;
       }

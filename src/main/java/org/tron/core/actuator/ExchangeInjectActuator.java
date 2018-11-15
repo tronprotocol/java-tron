@@ -37,13 +37,8 @@ public class ExchangeInjectActuator extends AbstractActuator {
           .get(exchangeInjectContract.getOwnerAddress().toByteArray());
 
       ExchangeCapsule exchangeCapsule;
-      if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-        exchangeCapsule = dbManager.getExchangeStore().
-            get(ByteArray.fromLong(exchangeInjectContract.getExchangeId()));
-      } else {
-        exchangeCapsule = dbManager.getExchangeV2Store().
-            get(ByteArray.fromLong(exchangeInjectContract.getExchangeId()));
-      }
+      exchangeCapsule = dbManager.getExchangeStoreFinal().
+          get(ByteArray.fromLong(exchangeInjectContract.getExchangeId()));
 
       byte[] firstTokenID = exchangeCapsule.getFirstTokenId();
       byte[] secondTokenID = exchangeCapsule.getSecondTokenId();
@@ -86,14 +81,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
       }
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-      if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-        dbManager.getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
-        ExchangeCapsule exchangeCapsuleV2 = new ExchangeCapsule(exchangeCapsule.getData());
-        exchangeCapsuleV2.resetTokenWithID(dbManager);
-        dbManager.getExchangeV2Store().put(exchangeCapsuleV2.createDbKey(), exchangeCapsuleV2);
-      } else {
-        dbManager.getExchangeV2Store().put(exchangeCapsule.createDbKey(), exchangeCapsule);
-      }
+      dbManager.putExchangeCapsule(exchangeCapsule);
 
       ret.setStatus(fee, code.SUCESS);
     } catch (ItemNotFoundException e) {
@@ -147,13 +135,9 @@ public class ExchangeInjectActuator extends AbstractActuator {
 
     ExchangeCapsule exchangeCapsule;
     try {
-      if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-        exchangeCapsule = dbManager.getExchangeStore().
+      exchangeCapsule = dbManager.getExchangeStoreFinal().
             get(ByteArray.fromLong(contract.getExchangeId()));
-      } else {
-        exchangeCapsule = dbManager.getExchangeV2Store().
-            get(ByteArray.fromLong(contract.getExchangeId()));
-      }
+
     } catch (ItemNotFoundException ex) {
       throw new ContractValidateException("Exchange[" + contract.getExchangeId() + "] not exists");
     }

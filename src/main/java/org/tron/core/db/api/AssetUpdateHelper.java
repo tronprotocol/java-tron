@@ -48,7 +48,6 @@ public class AssetUpdateHelper {
   }
 
   public void updateAsset() {
-
     long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
     long count = 0;
 
@@ -66,7 +65,6 @@ public class AssetUpdateHelper {
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenIdNum);
 
     logger.info("Complete the asset store update,Total assets：{}", count);
-
   }
 
   public void updateExchange() {
@@ -84,16 +82,13 @@ public class AssetUpdateHelper {
             assetNameToIdMap.get(ByteArray.toStr(exchangeCapsule.getSecondTokenId())));
       }
 
-
       dbManager.getExchangeV2Store().put(exchangeCapsule.createDbKey(), exchangeCapsule);
     }
 
     logger.info("Complete the exchange store update,Total exchanges：{}", count);
-
   }
 
   public void updateAccount() {
-
     long count = 0;
 
     Iterator<Entry<byte[], AccountCapsule>> iterator = dbManager.getAccountStore().iterator();
@@ -104,7 +99,7 @@ public class AssetUpdateHelper {
       if (accountCapsule.getAssetMap().size() != 0) {
         HashMap<String, Long> assetV2Map = new HashMap<>();
         for (Map.Entry<String, Long> entry : accountCapsule.getAssetMap().entrySet()) {
-          assetV2Map.put(String.valueOf(ByteArray.toLong(assetNameToIdMap.get(entry.getKey()))),
+          assetV2Map.put(ByteArray.toStr(assetNameToIdMap.get(entry.getKey())),
               entry.getValue());
         }
 
@@ -133,6 +128,4 @@ public class AssetUpdateHelper {
     dbManager.getDynamicPropertiesStore().saveTokenUpdateDone(1);
     assetNameToIdMap.clear();
   }
-
-
 }
