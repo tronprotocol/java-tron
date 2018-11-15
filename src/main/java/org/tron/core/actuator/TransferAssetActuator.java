@@ -141,8 +141,8 @@ public class TransferAssetActuator extends AbstractActuator {
     }
 
     if (!this.dbManager.getAssetIssueStoreFinal().has(assetName)) {
-        throw new ContractValidateException("No asset !");
-      }
+      throw new ContractValidateException("No asset !");
+    }
 
     Map<String, Long> asset;
     if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
@@ -189,7 +189,7 @@ public class TransferAssetActuator extends AbstractActuator {
   }
 
   public static boolean validateForSmartContract(Deposit deposit, byte[] ownerAddress,
-      byte[] toAddress, byte[] tokenId, long amount) throws ContractValidateException{
+      byte[] toAddress, byte[] tokenId, long amount) throws ContractValidateException {
     if (deposit == null) {
       throw new ContractValidateException("No deposit!");
     }
@@ -219,12 +219,12 @@ public class TransferAssetActuator extends AbstractActuator {
       throw new ContractValidateException("No owner account!");
     }
 
-    if (deposit.getAssetIssue(tokenIdWithoutLeadingZero)== null) {
+    if (deposit.getAssetIssue(tokenIdWithoutLeadingZero) == null) {
       throw new ContractValidateException("No asset !");
     }
     if (!deposit.getDbManager().getAssetIssueStoreFinal().has(tokenIdWithoutLeadingZero)) {
-        throw new ContractValidateException("No asset !");
-      }
+      throw new ContractValidateException("No asset !");
+    }
 
     Map<String, Long> asset;
     if (deposit.getDbManager().getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
