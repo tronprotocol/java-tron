@@ -119,7 +119,7 @@ public class WalletOnSolidity {
 
   public AssetIssueList getAssetIssueList() {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
-    dbManager.getAssetIssueStore().getAllAssetIssuesOnSolidity()
+    dbManager.getAssetIssueStoreFinal().getAllAssetIssuesOnSolidity()
         .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
     return builder.build();
   }
@@ -127,7 +127,7 @@ public class WalletOnSolidity {
 
   public AssetIssueList getAssetIssueList(long offset, long limit) {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
-    List<AssetIssueCapsule> assetIssueList = dbManager.getAssetIssueStore()
+    List<AssetIssueCapsule> assetIssueList = dbManager.getAssetIssueStoreFinal()
         .getAssetIssuesPaginatedOnSolidity(offset, limit);
 
     if (CollectionUtils.isEmpty(assetIssueList)) {

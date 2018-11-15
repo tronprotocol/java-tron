@@ -37,7 +37,7 @@ public class UpdateAssetActuator extends AbstractActuator {
       ByteString newUrl = updateAssetContract.getUrl();
       ByteString newDescription = updateAssetContract.getDescription();
 
-      AssetIssueStore assetIssueStore = dbManager.getAssetIssueStore();
+      AssetIssueStore assetIssueStore = dbManager.getAssetIssueStoreFinal();
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
       AssetIssueCapsule assetIssueCapsule =
           assetIssueStore.get(accountCapsule.getAssetIssuedName().toByteArray());
@@ -99,7 +99,8 @@ public class UpdateAssetActuator extends AbstractActuator {
       throw new ContractValidateException("Account has not issue any asset");
     }
 
-    assert (dbManager.getAssetIssueStore().get(account.getAssetIssuedName().toByteArray()) != null);
+    assert (dbManager.getAssetIssueStoreFinal().get(account.getAssetIssuedName().toByteArray())
+        != null);
 
     if (!TransactionUtil.validUrl(newUrl.toByteArray())) {
       throw new ContractValidateException("Invalid url");

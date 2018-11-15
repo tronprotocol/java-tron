@@ -140,15 +140,9 @@ public class TransferAssetActuator extends AbstractActuator {
       throw new ContractValidateException("No owner account!");
     }
 
-    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      if (!this.dbManager.getAssetIssueStore().has(assetName)) {
+    if (!this.dbManager.getAssetIssueStoreFinal().has(assetName)) {
         throw new ContractValidateException("No asset !");
       }
-    } else {
-      if (!this.dbManager.getAssetIssueV2Store().has(assetName)) {
-        throw new ContractValidateException("No asset !");
-      }
-    }
 
     Map<String, Long> asset;
     if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
@@ -228,15 +222,9 @@ public class TransferAssetActuator extends AbstractActuator {
     if (deposit.getAssetIssue(tokenIdWithoutLeadingZero)== null) {
       throw new ContractValidateException("No asset !");
     }
-    if (deposit.getDbManager().getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      if (!deposit.getDbManager().getAssetIssueStore().has(tokenIdWithoutLeadingZero)) {
+    if (!deposit.getDbManager().getAssetIssueStoreFinal().has(tokenIdWithoutLeadingZero)) {
         throw new ContractValidateException("No asset !");
       }
-    } else {
-      if (!deposit.getDbManager().getAssetIssueV2Store().has(tokenIdWithoutLeadingZero)) {
-        throw new ContractValidateException("No asset !");
-      }
-    }
 
     Map<String, Long> asset;
     if (deposit.getDbManager().getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
