@@ -20,6 +20,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.db.Manager;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.AssetIssueContract.FrozenSupply;
 
@@ -93,6 +94,14 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
 //    String nameKey = createDbKeyString(name, order);
 //    return nameKey.getBytes();
     return getName().toByteArray();
+  }
+
+  public byte[] createDbKeyFinal(Manager manager) {
+    if (manager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      return createDbKey();
+    } else {
+      return createDbV2Key();
+    }
   }
 
   public static String createDbKeyString(String name, long order) {
