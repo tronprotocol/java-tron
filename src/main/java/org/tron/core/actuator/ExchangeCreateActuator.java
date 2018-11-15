@@ -70,17 +70,15 @@ public class ExchangeCreateActuator extends AbstractActuator {
         exchangeCapsule.setBalance(firstTokenBalance, secondTokenBalance);
         dbManager.getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
 
-
-      }
-
-      //save to new asset store
-      if (!Arrays.equals(firstTokenID, "_".getBytes())) {
-        long firstTokenRealID = dbManager.getAssetIssueStore().get(firstTokenID).getId();
-        firstTokenID = Long.toString(firstTokenRealID).getBytes();
-      }
-      if (!Arrays.equals(secondTokenID, "_".getBytes())) {
-        long secondTokenRealID = dbManager.getAssetIssueStore().get(secondTokenID).getId();
-        secondTokenID = Long.toString(secondTokenRealID).getBytes();
+        //save to new asset store
+        if (!Arrays.equals(firstTokenID, "_".getBytes())) {
+          long firstTokenRealID = dbManager.getAssetIssueStore().get(firstTokenID).getId();
+          firstTokenID = Long.toString(firstTokenRealID).getBytes();
+        }
+        if (!Arrays.equals(secondTokenID, "_".getBytes())) {
+          long secondTokenRealID = dbManager.getAssetIssueStore().get(secondTokenID).getId();
+          secondTokenID = Long.toString(secondTokenRealID).getBytes();
+        }
       }
 
       // only save to new asset store

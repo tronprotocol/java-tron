@@ -109,6 +109,7 @@ public class TransferAssetActuatorTest {
         AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
+            .setId(1000001 + "")
             .setTotalSupply(TOTAL_SUPPLY)
             .setTrxNum(TRX_NUM)
             .setNum(NUM)
@@ -129,11 +130,14 @@ public class TransferAssetActuatorTest {
     AccountCapsule ownerCapsule = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
     ownerCapsule.addAsset(assetName.getBytes(), OWNER_ASSET_BALANCE);
+    long id = dbManager.getDynamicPropertiesStore().getTokenIdNum() + 1;
+    dbManager.getDynamicPropertiesStore().saveTokenIdNum(id);
 
     AssetIssueContract assetIssueContract =
         AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFrom(ByteArray.fromString(assetName)))
+            .setId(Long.toString(id))
             .setTotalSupply(TOTAL_SUPPLY)
             .setTrxNum(TRX_NUM)
             .setNum(NUM)
