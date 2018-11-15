@@ -279,6 +279,10 @@ public class Args {
 
   @Getter
   @Setter
+  private int defaultFrozenTime; // day,for test only
+
+  @Getter
+  @Setter
   private long allowCreationOfContracts; //committee parameter
 
   @Getter
@@ -633,6 +637,10 @@ public class Args {
     INSTANCE.proposalExpireTime =
         config.hasPath("block.proposalExpireTime") ? config
             .getInt("block.proposalExpireTime") : 259200000L;
+
+    INSTANCE.defaultFrozenTime =
+        config.hasPath("block.defaultFrozenTime") ? config
+            .getInt("block.defaultFrozenTime") : 3;
 
     INSTANCE.allowCreationOfContracts =
         config.hasPath("committee.allowCreationOfContracts") ? config
