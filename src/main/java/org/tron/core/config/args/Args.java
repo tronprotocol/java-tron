@@ -279,11 +279,19 @@ public class Args {
 
   @Getter
   @Setter
+  private int checkFrozenTime; // for test only
+
+  @Getter
+  @Setter
   private long allowCreationOfContracts; //committee parameter
 
   @Getter
   @Setter
   private long allowAdaptiveEnergy; //committee parameter
+
+  @Getter
+  @Setter
+  private long allowDelegateResource; //committee parameter
 
   @Getter
   @Setter
@@ -395,9 +403,11 @@ public class Args {
     INSTANCE.solidityHttpPort = 0;
     INSTANCE.maintenanceTimeInterval = 0;
     INSTANCE.proposalExpireTime = 0;
+    INSTANCE.checkFrozenTime = 1;
     INSTANCE.allowCreationOfContracts = 0;
     INSTANCE.allowAdaptiveEnergy = 0;
     INSTANCE.allowTvmTransferTrc10 = 0;
+    INSTANCE.allowDelegateResource = 0;
     INSTANCE.tcpNettyWorkThreadNum = 0;
     INSTANCE.udpNettyWorkThreadNum = 0;
     INSTANCE.p2pNodeId = "";
@@ -643,6 +653,10 @@ public class Args {
         config.hasPath("block.proposalExpireTime") ? config
             .getInt("block.proposalExpireTime") : 259200000L;
 
+    INSTANCE.checkFrozenTime =
+        config.hasPath("block.checkFrozenTime") ? config
+            .getInt("block.checkFrozenTime") : 1;
+
     INSTANCE.allowCreationOfContracts =
         config.hasPath("committee.allowCreationOfContracts") ? config
             .getInt("committee.allowCreationOfContracts") : 0;
@@ -650,6 +664,10 @@ public class Args {
     INSTANCE.allowAdaptiveEnergy =
         config.hasPath("committee.allowAdaptiveEnergy") ? config
             .getInt("committee.allowAdaptiveEnergy") : 0;
+
+    INSTANCE.allowDelegateResource =
+        config.hasPath("committee.allowDelegateResource") ? config
+            .getInt("committee.allowDelegateResource") : 0;
 
     INSTANCE.allowTvmTransferTrc10 =
         config.hasPath("committee.allowTvmTransferTrc10") ? config

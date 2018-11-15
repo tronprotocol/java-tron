@@ -414,7 +414,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowDelegateResource();
     } catch (IllegalArgumentException e) {
-      this.saveAllowDelegateResource(0);
+      this.saveAllowDelegateResource(Args.getInstance().getAllowDelegateResource());
     }
 
     try {
