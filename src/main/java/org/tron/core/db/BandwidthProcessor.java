@@ -212,11 +212,7 @@ public class BandwidthProcessor extends ResourceProcessor {
     String assetNameString = ByteArray.toStr(assetName.toByteArray());
     String tokenID = ByteArray.toLong(assetName.toByteArray()) + "";
     AssetIssueCapsule assetIssueCapsule;
-    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      assetIssueCapsule = dbManager.getAssetIssueStore().get(assetName.toByteArray());
-    } else {
-      assetIssueCapsule = dbManager.getAssetIssueV2Store().get(assetName.toByteArray());
-    }
+    assetIssueCapsule = dbManager.getAssetIssueStoreFinal().get(assetName.toByteArray());
     if (assetIssueCapsule == null) {
       throw new ContractValidateException("asset not exists");
     }

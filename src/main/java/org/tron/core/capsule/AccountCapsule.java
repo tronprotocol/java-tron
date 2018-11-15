@@ -482,6 +482,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return true;
   }
 
+
   public boolean addAssetV2(byte[] key, long value, Manager manager) {
     if (manager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       byte[] tokenName = key;
