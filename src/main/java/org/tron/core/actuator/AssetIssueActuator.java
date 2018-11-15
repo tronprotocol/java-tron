@@ -98,7 +98,6 @@ public class AssetIssueActuator extends AbstractActuator {
         accountCapsule.setAssetIssuedName(assetIssueCapsule.createDbKey());
       }
       accountCapsule.setAssetIssuedID(assetIssueCapsule.createDbV2Key());
-      accountCapsule.addAsset(assetIssueCapsule.createDbKey(), remainSupply);
       accountCapsule.addAssetV2(assetIssueCapsule.createDbKey(), remainSupply, dbManager);
       accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
           .addAllFrozenSupply(frozenList).build());
