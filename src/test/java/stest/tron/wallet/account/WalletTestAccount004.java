@@ -18,6 +18,8 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
@@ -53,6 +55,13 @@ public class WalletTestAccount004 {
       .get(0);
   private String searchFullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
+
+  //Wait to be create account
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] account004Address = ecKey1.getAddress();
+  String account004Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
+  Long freezeAmount = 2000000L;
 
   @BeforeSuite
   public void beforeSuite() {
@@ -95,21 +104,17 @@ public class WalletTestAccount004 {
     //Freeze failed when freeze duration is 0.
     Assert.assertFalse(freezeBalance(fromAddress, 1000000L, 0L, testKey002));
 
-    try {
-      Thread.sleep(16000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-    //Freeze balance success.
-    Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 1000000L,
-        3L, testKey002,blockingStubFull));
   }
 
   @Test(enabled = true)
   public void testUnFreezeBalance() {
     //Unfreeze failed when there is no freeze balance.
-    unFreezeBalance(noFrozenAddress, noFrozenBalanceTestKey);
+
+    Assert.assertFalse(PublicMethed.unFreezeBalance(noFrozenAddress, noFrozenBalanceTestKey,1,blockingStubFull));
     logger.info("Test unfreezebalance");
+
+    //Assert.assertTrue(PublicMethed.sendcoin(account004Address,freezeAmount,fromAddress,testKey002,blockingStubFull));
+    //Assert.assertTrue(PublicMethed.freezeBalance(account004Address,freezeAmount,0,));
 
   }
 
