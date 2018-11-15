@@ -186,7 +186,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
         throw new ContractValidateException("To account does not exist!");
       }
 
-      if (!toAccount.assetBalanceEnoughV2(assetIssueCapsule.createDbKey(), exchangeAmount,
+      if (!toAccount.assetBalanceEnoughV2(assetName, exchangeAmount,
           dbManager)) {
         throw new ContractValidateException("Asset balance is not enough !");
       }
