@@ -551,6 +551,51 @@ public class PublicMethed {
     }
   }
 
+  public static Boolean sendcoin(byte[] to, long amount, byte[] owner, String priKey,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    //String priKey = testKey002;
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+    //Protocol.Account search = queryAccount(priKey, blockingStubFull);
+
+    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+    ByteString bsTo = ByteString.copyFrom(to);
+    ByteString bsOwner = ByteString.copyFrom(owner);
+    builder.setToAddress(bsTo);
+    builder.setOwnerAddress(bsOwner);
+    builder.setAmount(amount);
+
+    Contract.TransferContract contract = builder.build();
+    Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      logger.info("transaction ==null");
+      return false;
+    }
+    //Test raw data
+    /*    Protocol.Transaction.raw.Builder builder1 = transaction.getRawData().toBuilder();
+    builder1.setData(ByteString.copyFromUtf8("12345678"));
+    Transaction.Builder builder2 = transaction.toBuilder();
+    builder2.setRawData(builder1);
+    transaction = builder2.build();*/
+
+    transaction = signTransaction(ecKey, transaction);
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+
   public static Return sendcoin2(byte[] to, long amount, byte[] owner, String priKey,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
