@@ -6,7 +6,6 @@ import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,6 +33,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.CreateSmartContract;
+import org.tron.protos.Contract.CreateSmartContract.Builder;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
@@ -1412,6 +1412,16 @@ public class PublicMethed {
       String data, Long feeLimit, long value,
       long consumeUserResourcePercent, String libraryAddress, String priKey, byte[] ownerAddress,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
+    return deployContract(contractName, abiString, code, data, feeLimit, value,
+        consumeUserResourcePercent, 1000L, "#", 0L, libraryAddress,
+        priKey, ownerAddress, blockingStubFull);
+  }
+
+  public static byte[] deployContract(String contractName, String abiString, String code,
+      String data, Long feeLimit, long value,
+      long consumeUserResourcePercent, long originEnergyLimit, String tokenId, long tokenValue,
+      String libraryAddress, String priKey, byte[] ownerAddress,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -1434,7 +1444,7 @@ public class PublicMethed {
     builder.setOriginAddress(ByteString.copyFrom(owner));
     builder.setAbi(abi);
     builder.setConsumeUserResourcePercent(consumeUserResourcePercent);
-    builder.setOriginEnergyLimit(1);
+    builder.setOriginEnergyLimit(originEnergyLimit);
 
     if (value != 0) {
 
@@ -1449,8 +1459,12 @@ public class PublicMethed {
     }
     builder.setBytecode(ByteString.copyFrom(byteCode));
 
-    CreateSmartContract contractDeployContract = CreateSmartContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(owner)).setNewContract(builder.build()).build();
+    Builder contractBuilder = CreateSmartContract.newBuilder();
+    contractBuilder.setOwnerAddress(ByteString.copyFrom(owner));
+    contractBuilder.setCallTokenValue(tokenValue);
+    contractBuilder.setTokenId(tokenId);
+    CreateSmartContract contractDeployContract = contractBuilder
+        .setNewContract(builder.build()).build();
 
     TransactionExtention transactionExtention = blockingStubFull
         .deployContract(contractDeployContract);
@@ -1534,6 +1548,16 @@ public class PublicMethed {
       String abiString, String code, String data, Long feeLimit, long value,
       long consumeUserResourcePercent, String libraryAddress, String priKey, byte[] ownerAddress,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
+    return deployContractAndGetTransactionInfoById(contractName, abiString, code, data, feeLimit,
+        value, consumeUserResourcePercent, 1000L, "#", 0L, libraryAddress,
+        priKey, ownerAddress, blockingStubFull);
+  }
+
+  public static String deployContractAndGetTransactionInfoById(String contractName,
+      String abiString, String code, String data, Long feeLimit, long value,
+      long consumeUserResourcePercent, long originEnergyLimit, String tokenId, long tokenValue,
+      String libraryAddress, String priKey, byte[] ownerAddress,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -1556,7 +1580,7 @@ public class PublicMethed {
     builder.setOriginAddress(ByteString.copyFrom(owner));
     builder.setAbi(abi);
     builder.setConsumeUserResourcePercent(consumeUserResourcePercent);
-    builder.setOriginEnergyLimit(1);
+    builder.setOriginEnergyLimit(originEnergyLimit);
 
     if (value != 0) {
 
@@ -1571,8 +1595,12 @@ public class PublicMethed {
     }
     builder.setBytecode(ByteString.copyFrom(byteCode));
 
-    CreateSmartContract contractDeployContract = CreateSmartContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(owner)).setNewContract(builder.build()).build();
+    Builder contractBuilder = CreateSmartContract.newBuilder();
+    contractBuilder.setOwnerAddress(ByteString.copyFrom(owner));
+    contractBuilder.setCallTokenValue(tokenValue);
+    contractBuilder.setTokenId(tokenId);
+    CreateSmartContract contractDeployContract = contractBuilder
+        .setNewContract(builder.build()).build();
 
     TransactionExtention transactionExtention = blockingStubFull
         .deployContract(contractDeployContract);
@@ -1914,6 +1942,14 @@ public class PublicMethed {
   public static String triggerContract(byte[] contractAddress, String method, String argsStr,
       Boolean isHex, long callValue, long feeLimit, byte[] ownerAddress,
       String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
+    return triggerContract(contractAddress, method, argsStr, isHex, callValue, feeLimit,
+        "#", 0, ownerAddress, priKey, blockingStubFull);
+  }
+
+  public static String triggerContract(byte[] contractAddress, String method, String argsStr,
+      Boolean isHex, long callValue, long feeLimit, String tokenId, long tokenValue,
+      byte[] ownerAddress,
+      String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -1936,7 +1972,10 @@ public class PublicMethed {
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
     builder.setData(ByteString.copyFrom(input));
     builder.setCallValue(callValue);
+    builder.setTokenId(tokenId);
+    builder.setCallTokenValue(tokenValue);
     Contract.TriggerSmartContract triggerContract = builder.build();
+
     TransactionExtention transactionExtention = blockingStubFull.triggerContract(triggerContract);
     if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
       System.out.println("RPC create call trx failed!");
@@ -2289,6 +2328,16 @@ public class PublicMethed {
       String code, String constructorStr, String argsStr, String data, Long feeLimit, long value,
       long consumeUserResourcePercent, String libraryAddress, String priKey, byte[] ownerAddress,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
+    return deployContractWithConstantParame(contractName, abiString, code, constructorStr, argsStr,
+        data, feeLimit, value, consumeUserResourcePercent, 1000L, "#", 0L,
+        libraryAddress, priKey, ownerAddress, blockingStubFull);
+  }
+
+  public static String deployContractWithConstantParame(String contractName, String abiString,
+      String code, String constructorStr, String argsStr, String data, Long feeLimit, long value,
+      long consumeUserResourcePercent, long originEnergyLimit, String tokenId, long tokenValue,
+      String libraryAddress, String priKey, byte[] ownerAddress,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -2312,7 +2361,7 @@ public class PublicMethed {
     builder.setOriginAddress(ByteString.copyFrom(owner));
     builder.setAbi(abi);
     builder.setConsumeUserResourcePercent(consumeUserResourcePercent);
-    builder.setOriginEnergyLimit(1);
+    builder.setOriginEnergyLimit(originEnergyLimit);
 
     if (value != 0) {
 
@@ -2327,8 +2376,12 @@ public class PublicMethed {
     }
     builder.setBytecode(ByteString.copyFrom(byteCode));
 
-    CreateSmartContract contractDeployContract = CreateSmartContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(owner)).setNewContract(builder.build()).build();
+    Builder contractBuilder = CreateSmartContract.newBuilder();
+    contractBuilder.setOwnerAddress(ByteString.copyFrom(owner));
+    contractBuilder.setCallTokenValue(tokenValue);
+    contractBuilder.setTokenId(tokenId);
+    CreateSmartContract contractDeployContract = contractBuilder.setNewContract(builder.build())
+        .build();
 
     TransactionExtention transactionExtention = blockingStubFull
         .deployContract(contractDeployContract);
