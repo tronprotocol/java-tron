@@ -336,7 +336,7 @@ public class DepositImpl implements Deposit {
     if (this.parent != null) {
       assetIssueCapsule = parent.getAssetIssue(tokenIdWithoutLeadingZero);
     } else {
-      assetIssueCapsule = this.dbManager.getAssetIssueStore().get(tokenIdWithoutLeadingZero);
+      assetIssueCapsule = this.dbManager.getAssetIssueV2Store().get(tokenIdWithoutLeadingZero);
     }
     if (assetIssueCapsule != null) {
       assetIssueCache.put(key, Value.create(assetIssueCapsule.getData()));
@@ -391,7 +391,7 @@ public class DepositImpl implements Deposit {
     if (accountCapsule == null) {
       accountCapsule = createAccount(address, AccountType.Normal);
     }
-    long balance = accountCapsule.getAssetMap().getOrDefault(new String(tokenIdWithoutLeadingZero),new Long(0));
+    long balance = accountCapsule.getAssetV2Map().getOrDefault(new String(tokenIdWithoutLeadingZero),new Long(0));
     if (value == 0) {
       return balance;
     }
@@ -401,14 +401,14 @@ public class DepositImpl implements Deposit {
           StringUtil.createReadableString(accountCapsule.createDbKey())
               + " insufficient balance");
     }
-    accountCapsule.addAssetAmount(tokenIdWithoutLeadingZero, value);
+    accountCapsule.addAssetAmountV2(tokenIdWithoutLeadingZero, value, this.dbManager);
 //    accountCapsule.getAssetMap().put(new String(tokenIdWithoutLeadingZero), Math.addExact(balance, value));
     Key key = Key.create(address);
     Value V = Value.create(accountCapsule.getData(),
         Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
     accountCache.put(key, V);
 //    accountCapsule.addAssetAmount(tokenIdWithoutLeadingZero, value);
-    return accountCapsule.getAssetMap().get(new String(tokenIdWithoutLeadingZero));
+    return accountCapsule.getAssetV2Map().get(new String(tokenIdWithoutLeadingZero));
   }
 
   @Override
@@ -443,7 +443,7 @@ public class DepositImpl implements Deposit {
       return 0;
     }
     String tokenStr = new String(ByteUtil.stripLeadingZeroes(tokenId));
-    return accountCapsule.getAssetMap().getOrDefault(tokenStr, 0L);
+    return accountCapsule.getAssetV2Map().getOrDefault(tokenStr, 0L);
   }
 
   @Override
