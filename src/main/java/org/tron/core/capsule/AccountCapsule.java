@@ -482,44 +482,18 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return true;
   }
 
-  public boolean addAssetV2(byte[] key, long value, Manager manager) {
-    if (manager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      byte[] tokenName = key;
-      String nameKey = ByteArray.toStr(tokenName);
-      Map<String, Long> assetMap = this.account.getAssetMap();
-      if (!assetMap.isEmpty()) {
-        if (assetMap.containsKey(nameKey)) {
-          return false;
-        }
+  public boolean addAssetV2(byte[] key, long value) {
+    String tokenID = ByteArray.toStr(key);
+    Map<String, Long> assetV2Map = this.account.getAssetV2Map();
+    if (!assetV2Map.isEmpty()) {
+      if (assetV2Map.containsKey(tokenID)) {
+        return false;
       }
-
-      AssetIssueCapsule assetIssueCapsule = manager.getAssetIssueStore().get(tokenName);
-      String tokenID = assetIssueCapsule.getId() + "";
-      Map<String, Long> assetV2Map = this.account.getAssetV2Map();
-      if (!assetV2Map.isEmpty()) {
-        if (assetV2Map.containsKey(tokenID)) {
-          return false;
-        }
-      }
-
-      this.account = this.account.toBuilder()
-          .putAsset(nameKey, value)
-          .putAssetV2(tokenID, value)
-          .build();
     }
-    if (manager.getDynamicPropertiesStore().getAllowSameTokenName() == 1) {
-      String tokenID = ByteArray.toStr(key);
-      Map<String, Long> assetV2Map = this.account.getAssetV2Map();
-      if (!assetV2Map.isEmpty()) {
-        if (assetV2Map.containsKey(tokenID)) {
-          return false;
-        }
-      }
 
-      this.account = this.account.toBuilder()
-          .putAssetV2(tokenID, value)
-          .build();
-    }
+    this.account = this.account.toBuilder()
+        .putAssetV2(tokenID, value)
+        .build();
     return true;
   }
 
