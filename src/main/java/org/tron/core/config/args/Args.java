@@ -291,6 +291,10 @@ public class Args {
 
   @Getter
   @Setter
+  private long allowTvmTransferTrc10; //committee parameter
+
+  @Getter
+  @Setter
   private int tcpNettyWorkThreadNum;
 
   @Getter
@@ -346,6 +350,10 @@ public class Args {
   @Setter
   private String logLevel;
 
+  @Getter
+  @Setter
+  private boolean vmTrace;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -393,6 +401,7 @@ public class Args {
     INSTANCE.proposalExpireTime = 0;
     INSTANCE.allowCreationOfContracts = 0;
     INSTANCE.allowAdaptiveEnergy = 0;
+    INSTANCE.allowTvmTransferTrc10 = 0;
     INSTANCE.tcpNettyWorkThreadNum = 0;
     INSTANCE.udpNettyWorkThreadNum = 0;
     INSTANCE.p2pNodeId = "";
@@ -650,6 +659,10 @@ public class Args {
         config.hasPath("committee.allowAdaptiveEnergy") ? config
             .getInt("committee.allowAdaptiveEnergy") : 0;
 
+    INSTANCE.allowTvmTransferTrc10 =
+        config.hasPath("committee.allowTvmTransferTrc10") ? config
+            .getInt("committee.allowTvmTransferTrc10") : 0;
+
     INSTANCE.tcpNettyWorkThreadNum = config.hasPath("node.tcpNettyWorkThreadNum") ? config
         .getInt("node.tcpNettyWorkThreadNum") : 0;
 
@@ -684,6 +697,9 @@ public class Args {
     INSTANCE.logLevel =
         config.hasPath("log.level.root") ? config.getString("log.level.root") : "INFO";
 
+    INSTANCE.vmTrace =
+        config.hasPath("vm.vmTrace") ? config
+            .getBoolean("vm.vmTrace") : false;
     initBackupProperty(config);
 
     logConfig();

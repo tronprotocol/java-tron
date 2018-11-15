@@ -83,7 +83,7 @@ public class VM {
       }
 
       // hard fork for 3.2
-      if (!VMConfig.getEnergyLimitHardFork()) {
+      if (!VMConfig.allowTvmTransferTrc10()) {
         if (op == CALLTOKEN || op == TOKENBALANCE) {
           throw Program.Exception.invalidOpCode(program.getCurrentOp());
         }
@@ -212,7 +212,7 @@ public class VM {
 
           int opOff = op.callHasValue() ? 4 : 3;
           if (op == CALLTOKEN) {
-            opOff ++;
+            opOff++;
           }
           BigInteger in = memNeeded(stack.get(stack.size() - opOff),
               stack.get(stack.size() - opOff - 1)); // in offset+size
@@ -1206,7 +1206,7 @@ public class VM {
             value = DataWord.ZERO;
           }
 
-          if (program.isStaticCall() && op == CALL && !value.isZero()) {
+          if (program.isStaticCall() && (op == CALL || op == CALLTOKEN) && !value.isZero()) {
             throw new Program.StaticCallModificationException();
           }
 
