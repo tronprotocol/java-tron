@@ -56,14 +56,7 @@ public class WalletTestAccount004 {
   private String searchFullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
 
-  //Wait to be create account
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] account004Address = ecKey1.getAddress();
-  String account004Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] account004AddressForFreeze = ecKey2.getAddress();
-  String account004KeyForFreeze = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
   Long freezeAmount = 2000000L;
 
@@ -91,6 +84,12 @@ public class WalletTestAccount004 {
 
   @Test(enabled = true)
   public void testFreezeBalance() {
+
+    ECKey ecKey2 = new ECKey(Utils.getRandom());
+    byte[] account004AddressForFreeze = ecKey2.getAddress();
+    String account004KeyForFreeze = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+
+
     Assert.assertTrue(PublicMethed.sendcoin(account004AddressForFreeze,10000000,
         fromAddress,testKey002,blockingStubFull));
     //Freeze failed when freeze amount is large than currently balance.
@@ -120,6 +119,10 @@ public class WalletTestAccount004 {
   @Test(enabled = true)
   public void testUnFreezeBalance() {
     //Unfreeze failed when there is no freeze balance.
+    //Wait to be create account
+    ECKey ecKey1 = new ECKey(Utils.getRandom());
+    byte[] account004Address = ecKey1.getAddress();
+    String account004Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
 
     Assert.assertFalse(PublicMethed.unFreezeBalance(noFrozenAddress, noFrozenBalanceTestKey,1,
