@@ -96,7 +96,6 @@ public class AssetIssueActuator extends AbstractActuator {
 
       if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
         accountCapsule.setAssetIssuedName(assetIssueCapsule.createDbKey());
-        accountCapsule.addAsset(assetIssueCapsule.createDbKey(), remainSupply);
       }
       accountCapsule.setAssetIssuedID(assetIssueCapsule.createDbV2Key());
       accountCapsule.addAssetV2(assetIssueCapsule.createDbKey(), remainSupply, dbManager);
