@@ -159,17 +159,17 @@ public class WalletTestAssetIssue018 {
     final String asset3Name = name + "_2";
     ByteString assetNameBs = ByteString.copyFrom(asset1Name.getBytes());
     GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
-    Contract.AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request);
+    Contract.AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request).getAssetIssue(0);
     Assert.assertTrue(assetIssueByName.getVoteScore() == 1);
 
     assetNameBs = ByteString.copyFrom(asset2Name.getBytes());
     request = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
-    assetIssueByName = blockingStubFull.getAssetIssueByName(request);
+    assetIssueByName = blockingStubFull.getAssetIssueByName(request).getAssetIssue(0);
     Assert.assertTrue(assetIssueByName.getVoteScore() == 2);
 
     assetNameBs = ByteString.copyFrom(asset3Name.getBytes());
     request = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
-    assetIssueByName = blockingStubFull.getAssetIssueByName(request);
+    assetIssueByName = blockingStubFull.getAssetIssueByName(request).getAssetIssue(0);
     Assert.assertTrue(assetIssueByName.getVoteScore() == 3);
 
     //Transfer asset issue.

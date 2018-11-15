@@ -594,16 +594,30 @@ public class Wallet {
 
   public AssetIssueList getAssetIssueList() {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
-    dbManager.getAssetIssueStore().getAllAssetIssues()
-        .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
+
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      dbManager.getAssetIssueStore().getAllAssetIssues()
+          .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
+    } else {
+      dbManager.getAssetIssueV2Store().getAllAssetIssues()
+          .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
+    }
+
     return builder.build();
   }
 
 
   public AssetIssueList getAssetIssueList(long offset, long limit) {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
-    List<AssetIssueCapsule> assetIssueList = dbManager.getAssetIssueStore()
-        .getAssetIssuesPaginated(offset, limit);
+
+    List<AssetIssueCapsule> assetIssueList;
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      assetIssueList = dbManager.getAssetIssueStore()
+          .getAssetIssuesPaginated(offset, limit);
+    } else {
+      assetIssueList = dbManager.getAssetIssueStore()
+          .getAssetIssuesPaginated(offset, limit);
+    }
 
     if (CollectionUtils.isEmpty(assetIssueList)) {
       return null;
@@ -617,14 +631,23 @@ public class Wallet {
     if (accountAddress == null || accountAddress.isEmpty()) {
       return null;
     }
-    List<AssetIssueCapsule> assetIssueCapsuleList = dbManager.getAssetIssueStore()
-        .getAllAssetIssues();
+
+    List<AssetIssueCapsule> assetIssueCapsuleList;
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      assetIssueCapsuleList = dbManager.getAssetIssueStore()
+          .getAllAssetIssues();
+    } else {
+      assetIssueCapsuleList = dbManager.getAssetIssueV2Store()
+          .getAllAssetIssues();
+    }
+
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     assetIssueCapsuleList.stream()
         .filter(assetIssueCapsule -> assetIssueCapsule.getOwnerAddress().equals(accountAddress))
         .forEach(issueCapsule -> {
           builder.addAssetIssue(issueCapsule.getInstance());
         });
+
     return builder.build();
   }
 
@@ -716,12 +739,32 @@ public class Wallet {
     return builder.build();
   }
 
-  public AssetIssueContract getAssetIssueByName(ByteString assetName) {
-    if (assetName == null || assetName.isEmpty()) {
+  public AssetIssueList getAssetIssueByName(ByteString assetName) {
+    List<AssetIssueCapsule> assetIssueCapsuleList;
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      assetIssueCapsuleList = dbManager.getAssetIssueStore()
+          .getAllAssetIssues();
+    } else {
+      assetIssueCapsuleList = dbManager.getAssetIssueV2Store()
+          .getAllAssetIssues();
+    }
+
+    AssetIssueList.Builder builder = AssetIssueList.newBuilder();
+    assetIssueCapsuleList.stream()
+        .filter(assetIssueCapsule -> assetIssueCapsule.getName().equals(assetName))
+        .forEach(issueCapsule -> {
+          builder.addAssetIssue(issueCapsule.getInstance());
+        });
+
+    return builder.build();
+  }
+
+  public AssetIssueContract getAssetIssueById(Long assetId) {
+    if (assetId == null) {
       return null;
     }
-    AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
-        .get(assetName.toByteArray());
+    AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueV2Store()
+        .get(ByteArray.fromLong(assetId));
     return assetIssueCapsule != null ? assetIssueCapsule.getInstance() : null;
   }
 
