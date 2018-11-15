@@ -198,13 +198,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getMaxFrozenTime();
     } catch (IllegalArgumentException e) {
-      this.saveMaxFrozenTime(Args.getInstance().getDefaultFrozenTime());
+      this.saveMaxFrozenTime(3);
     }
 
     try {
       this.getMinFrozenTime();
     } catch (IllegalArgumentException e) {
-      this.saveMinFrozenTime(Args.getInstance().getDefaultFrozenTime());
+      this.saveMinFrozenTime(3);
     }
 
     try {

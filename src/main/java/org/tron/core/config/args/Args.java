@@ -279,7 +279,7 @@ public class Args {
 
   @Getter
   @Setter
-  private int defaultFrozenTime; // day,for test only
+  private int checkFrozenTime; // for test only
 
   @Getter
   @Setter
@@ -403,7 +403,7 @@ public class Args {
     INSTANCE.solidityHttpPort = 0;
     INSTANCE.maintenanceTimeInterval = 0;
     INSTANCE.proposalExpireTime = 0;
-    INSTANCE.defaultFrozenTime = 3;
+    INSTANCE.checkFrozenTime = 1;
     INSTANCE.allowCreationOfContracts = 0;
     INSTANCE.allowAdaptiveEnergy = 0;
     INSTANCE.allowTvmTransferTrc10 = 0;
@@ -653,9 +653,9 @@ public class Args {
         config.hasPath("block.proposalExpireTime") ? config
             .getInt("block.proposalExpireTime") : 259200000L;
 
-    INSTANCE.defaultFrozenTime =
-        config.hasPath("block.defaultFrozenTime") ? config
-            .getInt("block.defaultFrozenTime") : 3;
+    INSTANCE.checkFrozenTime =
+        config.hasPath("block.checkFrozenTime") ? config
+            .getInt("block.checkFrozenTime") : 1;
 
     INSTANCE.allowCreationOfContracts =
         config.hasPath("committee.allowCreationOfContracts") ? config
