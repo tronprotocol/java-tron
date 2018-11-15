@@ -508,7 +508,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
           .build();
     }
     if (manager.getDynamicPropertiesStore().getAllowSameTokenName() == 1) {
-      String tokenID = ByteArray.toLong(key) + "";
+      String tokenID = ByteArray.toStr(key);
       Map<String, Long> assetV2Map = this.account.getAssetV2Map();
       if (!assetV2Map.isEmpty()) {
         if (assetV2Map.containsKey(tokenID)) {
