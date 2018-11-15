@@ -140,14 +140,8 @@ public class TransferAssetActuator extends AbstractActuator {
       throw new ContractValidateException("No owner account!");
     }
 
-    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      if (!this.dbManager.getAssetIssueStore().has(assetName)) {
-        throw new ContractValidateException("No asset !");
-      }
-    } else {
-      if (!this.dbManager.getAssetIssueV2Store().has(assetName)) {
-        throw new ContractValidateException("No asset !");
-      }
+    if (!this.dbManager.getAssetIssueStoreFinal().has(assetName)) {
+      throw new ContractValidateException("No asset !");
     }
 
     Map<String, Long> asset;
@@ -195,7 +189,7 @@ public class TransferAssetActuator extends AbstractActuator {
   }
 
   public static boolean validateForSmartContract(Deposit deposit, byte[] ownerAddress,
-      byte[] toAddress, byte[] tokenId, long amount) throws ContractValidateException{
+      byte[] toAddress, byte[] tokenId, long amount) throws ContractValidateException {
     if (deposit == null) {
       throw new ContractValidateException("No deposit!");
     }
@@ -225,17 +219,11 @@ public class TransferAssetActuator extends AbstractActuator {
       throw new ContractValidateException("No owner account!");
     }
 
-    if (deposit.getAssetIssue(tokenIdWithoutLeadingZero)== null) {
+    if (deposit.getAssetIssue(tokenIdWithoutLeadingZero) == null) {
       throw new ContractValidateException("No asset !");
     }
-    if (deposit.getDbManager().getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      if (!deposit.getDbManager().getAssetIssueStore().has(tokenIdWithoutLeadingZero)) {
-        throw new ContractValidateException("No asset !");
-      }
-    } else {
-      if (!deposit.getDbManager().getAssetIssueV2Store().has(tokenIdWithoutLeadingZero)) {
-        throw new ContractValidateException("No asset !");
-      }
+    if (!deposit.getDbManager().getAssetIssueStoreFinal().has(tokenIdWithoutLeadingZero)) {
+      throw new ContractValidateException("No asset !");
     }
 
     Map<String, Long> asset;

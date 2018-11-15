@@ -79,6 +79,9 @@ public class ExchangeCreateActuator extends AbstractActuator {
           long secondTokenRealID = dbManager.getAssetIssueStore().get(secondTokenID).getId();
           secondTokenID = Long.toString(secondTokenRealID).getBytes();
         }
+      }
+
+      // only save to new asset store
         ExchangeCapsule exchangeCapsuleV2 =
             new ExchangeCapsule(
                 exchangeCreateContract.getOwnerAddress(),
@@ -89,20 +92,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
             );
         exchangeCapsuleV2.setBalance(firstTokenBalance, secondTokenBalance);
         dbManager.getExchangeV2Store().put(exchangeCapsuleV2.createDbKey(), exchangeCapsuleV2);
-      }
-      if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 1) {
-        // only save to new asset store
-        ExchangeCapsule exchangeCapsuleV2 =
-            new ExchangeCapsule(
-                exchangeCreateContract.getOwnerAddress(),
-                id,
-                now,
-                firstTokenID,
-                secondTokenID
-            );
-        exchangeCapsuleV2.setBalance(firstTokenBalance, secondTokenBalance);
-        dbManager.getExchangeV2Store().put(exchangeCapsuleV2.createDbKey(), exchangeCapsuleV2);
-      }
+
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
       dbManager.getDynamicPropertiesStore().saveLatestExchangeNum(id);
 
