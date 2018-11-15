@@ -149,6 +149,13 @@ public class AssetIssueActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid assetName");
     }
 
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() != 0) {
+      String name = assetIssueContract.getName().toStringUtf8().toLowerCase();
+      if (name.equals("trx")) {
+        throw new ContractValidateException("assetName can't be trx");
+      }
+    }
+
     if ((!assetIssueContract.getAbbr().isEmpty()) && !TransactionUtil
         .validAssetName(assetIssueContract.getAbbr().toByteArray())) {
       throw new ContractValidateException("Invalid abbreviation for token");
