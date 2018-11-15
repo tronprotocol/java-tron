@@ -72,10 +72,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
     //ONE_DAY_NET_LIMIT - PUBLIC_NET_LIMIT，current TOTAL_NET_LIMIT
     private static final byte[] TOTAL_NET_LIMIT = "TOTAL_NET_LIMIT".getBytes();
-    private static final byte[] TOTAL_ENERGY_TARGET_LIMIT = "TOTAL_NET_TARGET_LIMIT".getBytes();
-    private static final byte[] TOTAL_ENERGY_CURRENT_LIMIT = "TOTAL_NET_CURRENT_LIMIT".getBytes();
-    private static final byte[] TOTAL_ENERGY_AVERAGE_USAGE = "TOTAL_NET_AVERAGE_USAGE".getBytes();
-    private static final byte[] TOTAL_ENERGY_AVERAGE_TIME = "TOTAL_NET_AVERAGE_TIME".getBytes();
+    private static final byte[] TOTAL_ENERGY_TARGET_LIMIT = "TOTAL_ENERGY_TARGET_LIMIT".getBytes();
+    private static final byte[] TOTAL_ENERGY_CURRENT_LIMIT = "TOTAL_ENERGY_CURRENT_LIMIT"
+        .getBytes();
+    private static final byte[] TOTAL_ENERGY_AVERAGE_USAGE = "TOTAL_ENERGY_AVERAGE_USAGE"
+        .getBytes();
+    private static final byte[] TOTAL_ENERGY_AVERAGE_TIME = "TOTAL_ENERGY_AVERAGE_TIME".getBytes();
     private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
     private static final byte[] TOTAL_ENERGY_LIMIT = "TOTAL_ENERGY_LIMIT".getBytes();
   }
@@ -142,6 +144,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   //Used only for token updates, once，value is {0,1}
   private static final byte[] TOKEN_UPDATE_DONE = "TOKEN_UPDATE_DONE".getBytes();
+
+  //This value is only allowed to be 0, 1, -1
+  private static final byte[] ALLOW_TVM_TRANSFER_TRC10 = "ALLOW_TVM_TRANSFER_TRC10".getBytes();
+
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -426,13 +432,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowDelegateResource();
     } catch (IllegalArgumentException e) {
-      this.saveAllowDelegateResource(0);
+      this.saveAllowDelegateResource(Args.getInstance().getAllowDelegateResource());
     }
 
     try {
       this.getAllowAdaptiveEnergy();
     } catch (IllegalArgumentException e) {
       this.saveAllowAdaptiveEnergy(Args.getInstance().getAllowAdaptiveEnergy());
+    }
+
+    try {
+      this.getAllowTvmTransferTrc10();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTvmTransferTrc10(Args.getInstance().getAllowTvmTransferTrc10());
     }
 
     try {
@@ -1113,6 +1125,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found ALLOW_ADAPTIVE_ENERGY"));
+  }
+
+  public void saveAllowTvmTransferTrc10(long value) {
+    this.put(ALLOW_TVM_TRANSFER_TRC10,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowTvmTransferTrc10() {
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_TRANSFER_TRC10))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_TVM_TRANSFER_TRC10"));
   }
 
   public boolean supportDR() {
