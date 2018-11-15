@@ -94,6 +94,9 @@ public class ContractLinkage004 {
 
   @Test(enabled = true)
   public void getTransactionInfoById() {
+    ecKey1 = new ECKey(Utils.getRandom());
+    linkage004Address = ecKey1.getAddress();
+    linkage004Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
     Assert.assertTrue(PublicMethed.sendcoin(linkage004Address, 2000000000000L, fromAddress,
         testKey003, blockingStubFull));
