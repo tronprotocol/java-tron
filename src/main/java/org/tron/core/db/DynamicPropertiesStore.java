@@ -141,7 +141,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] TOKEN_ID_NUM = "TOKEN_ID_NUM".getBytes();
 
   //Used only for token updates, once，value is {0,1}
-  private static final byte[] TOKEN_UPDATE_DONE = "TOPEN_UPDATE_DONE".getBytes();
+  private static final byte[] TOKEN_UPDATE_DONE = "TOKEN_UPDATE_DONE".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -206,9 +206,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveTokenUpdateDone(0);
     }
-
-
-
 
     try {
       this.getMaxFrozenTime();
@@ -1286,7 +1283,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
    */
 
   public Sha256Hash getLatestBlockHeaderHashOnSolidity() {
-    byte[] blockHash = Optional.ofNullable(revokingDB.getUncheckedOnSolidity(LATEST_BLOCK_HEADER_HASH))
+    byte[] blockHash = Optional
+        .ofNullable(revokingDB.getUncheckedOnSolidity(LATEST_BLOCK_HEADER_HASH))
         .orElseThrow(() -> new IllegalArgumentException("not found block hash"));
     return Sha256Hash.wrap(blockHash);
   }
