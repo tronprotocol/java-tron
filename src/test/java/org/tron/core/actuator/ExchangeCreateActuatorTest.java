@@ -127,10 +127,11 @@ public class ExchangeCreateActuatorTest {
   }
 
   /**
-   * first createExchange,result is success.
+   * SameTokenName close,first createExchange,result is success.
    */
   @Test
-  public void successExchangeCreate() {
+  public void sameTokenNameCloseSuccessExchangeCreate() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
     String firstTokenId = "abc";
     long firstTokenBalance = 100000000L;
     String secondTokenId = "def";
@@ -172,15 +173,14 @@ public class ExchangeCreateActuatorTest {
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
       long id = 1;
+      Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestExchangeNum(), id);
+      // check old(V1) version
       ExchangeCapsule exchangeCapsule = dbManager.getExchangeStore().get(ByteArray.fromLong(id));
       Assert.assertNotNull(exchangeCapsule);
-      Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestExchangeNum(), id);
-
       Assert.assertEquals(ByteString.copyFrom(ownerAddress), exchangeCapsule.getCreatorAddress());
       Assert.assertEquals(id, exchangeCapsule.getID());
       Assert.assertEquals(1000000, exchangeCapsule.getCreateTime());
       Assert.assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsule.getFirstTokenId()));
-//      Assert.assertEquals(firstTokenId.getBytes(), exchangeCapsule.getFirstTokenId());
       Assert.assertEquals(firstTokenId, ByteArray.toStr(exchangeCapsule.getFirstTokenId()));
       Assert.assertEquals(firstTokenBalance, exchangeCapsule.getFirstTokenBalance());
       Assert.assertEquals(secondTokenId, ByteArray.toStr(exchangeCapsule.getSecondTokenId()));
@@ -192,6 +192,29 @@ public class ExchangeCreateActuatorTest {
       Assert.assertEquals(0L, assetMap.get(firstTokenId).longValue());
       Assert.assertEquals(0L, assetMap.get(secondTokenId).longValue());
 
+      // check V2 version
+      ExchangeCapsule exchangeCapsuleV2 = dbManager.getExchangeV2Store().get(ByteArray.fromLong(id));
+      Assert.assertNotNull(exchangeCapsuleV2);
+      Assert.assertEquals(ByteString.copyFrom(ownerAddress), exchangeCapsuleV2.getCreatorAddress());
+      Assert.assertEquals(id, exchangeCapsuleV2.getID());
+      Assert.assertEquals(1000000, exchangeCapsuleV2.getCreateTime());
+      // convert
+      long firstTokenRealID = dbManager.getAssetIssueStore().get(firstTokenId.getBytes()).getId();
+      firstTokenId = Long.toString(firstTokenRealID);
+      long secondTokenRealID = dbManager.getAssetIssueStore().get(secondTokenId.getBytes()).getId();
+      secondTokenId = Long.toString(secondTokenRealID);
+      Assert.assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsuleV2.getFirstTokenId()));
+      Assert.assertEquals(firstTokenId, ByteArray.toStr(exchangeCapsuleV2.getFirstTokenId()));
+      Assert.assertEquals(firstTokenBalance, exchangeCapsuleV2.getFirstTokenBalance());
+      Assert.assertEquals(secondTokenId, ByteArray.toStr(exchangeCapsuleV2.getSecondTokenId()));
+      Assert.assertEquals(secondTokenBalance, exchangeCapsuleV2.getSecondTokenBalance());
+
+      accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+      Map<String, Long> getAssetV2Map = accountCapsule.getAssetV2Map();
+      Assert.assertEquals(10000_000000L - 1024_000000L, accountCapsule.getBalance());
+      Assert.assertEquals(0L, getAssetV2Map.get(firstTokenId).longValue());
+      Assert.assertEquals(0L, getAssetV2Map.get(secondTokenId).longValue());
+
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -202,10 +225,11 @@ public class ExchangeCreateActuatorTest {
   }
 
   /**
-   * second create Exchange, result is success.
+   * SameTokenName close,second create Exchange, result is success.
    */
   @Test
-  public void successExchangeCreate2() {
+  public void sameTokenNameCloseSuccessExchangeCreate2() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
     String firstTokenId = "_";
     long firstTokenBalance = 100_000_000_000000L;
     String secondTokenId = "abc";
@@ -236,15 +260,14 @@ public class ExchangeCreateActuatorTest {
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
       long id = 1;
+      Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestExchangeNum(), id);
+      // check old version
       ExchangeCapsule exchangeCapsule = dbManager.getExchangeStore().get(ByteArray.fromLong(id));
       Assert.assertNotNull(exchangeCapsule);
-      Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestExchangeNum(), id);
-
       Assert.assertEquals(ByteString.copyFrom(ownerAddress), exchangeCapsule.getCreatorAddress());
       Assert.assertEquals(id, exchangeCapsule.getID());
       Assert.assertEquals(1000000, exchangeCapsule.getCreateTime());
       Assert.assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsule.getFirstTokenId()));
-//      Assert.assertEquals(firstTokenId.getBytes(), exchangeCapsule.getFirstTokenId());
       Assert.assertEquals(firstTokenId, ByteArray.toStr(exchangeCapsule.getFirstTokenId()));
       Assert.assertEquals(firstTokenBalance, exchangeCapsule.getFirstTokenBalance());
       Assert.assertEquals(secondTokenId, ByteArray.toStr(exchangeCapsule.getSecondTokenId()));
@@ -256,6 +279,26 @@ public class ExchangeCreateActuatorTest {
           accountCapsule.getBalance());
       Assert.assertEquals(100_000_000L, assetMap.get(secondTokenId).longValue());
 
+      // check V2 version
+      ExchangeCapsule exchangeCapsuleV2 = dbManager.getExchangeV2Store().get(ByteArray.fromLong(id));
+      Assert.assertNotNull(exchangeCapsuleV2);
+      Assert.assertEquals(ByteString.copyFrom(ownerAddress), exchangeCapsuleV2.getCreatorAddress());
+      Assert.assertEquals(id, exchangeCapsuleV2.getID());
+      Assert.assertEquals(1000000, exchangeCapsuleV2.getCreateTime());
+      long secondTokenRealID = dbManager.getAssetIssueStore().get(secondTokenId.getBytes()).getId();
+      secondTokenId = Long.toString(secondTokenRealID);
+      Assert.assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsuleV2.getFirstTokenId()));
+      Assert.assertEquals(firstTokenId, ByteArray.toStr(exchangeCapsuleV2.getFirstTokenId()));
+      Assert.assertEquals(firstTokenBalance, exchangeCapsuleV2.getFirstTokenBalance());
+      Assert.assertEquals(secondTokenId, ByteArray.toStr(exchangeCapsuleV2.getSecondTokenId()));
+      Assert.assertEquals(secondTokenBalance, exchangeCapsuleV2.getSecondTokenBalance());
+
+      accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+      Map<String, Long> getAssetV2Map = accountCapsule.getAssetV2Map();
+      Assert.assertEquals(200_000_000_000000L - 1024_000000L - firstTokenBalance,
+              accountCapsule.getBalance());
+      Assert.assertEquals(100_000_000L, getAssetV2Map.get(secondTokenId).longValue());
+
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -266,10 +309,220 @@ public class ExchangeCreateActuatorTest {
   }
 
   /**
-   * use Invalid Address, result is failed, exception is "Invalid address".
+   * SameTokenName open,first createExchange,result is success.
    */
   @Test
-  public void invalidAddress() {
+  public void sameTokenNameOpenSuccessExchangeCreate() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    String firstTokenId = "123";
+    long firstTokenBalance = 100000000L;
+    String secondTokenId = "456";
+    long secondTokenBalance = 100000000L;
+
+    AssetIssueCapsule assetIssueCapsule1 =
+            new AssetIssueCapsule(
+                    AssetIssueContract.newBuilder()
+                            .setName(ByteString.copyFrom(firstTokenId.getBytes()))
+                            .build());
+    assetIssueCapsule1.setId(1);
+
+    AssetIssueCapsule assetIssueCapsule2 =
+            new AssetIssueCapsule(
+                    AssetIssueContract.newBuilder()
+                            .setName(ByteString.copyFrom(secondTokenId.getBytes()))
+                            .build());
+    assetIssueCapsule2.setId(2);
+
+    dbManager.getAssetIssueStore()
+            .put(assetIssueCapsule1.getName().toByteArray(), assetIssueCapsule1);
+    dbManager.getAssetIssueStore()
+            .put(assetIssueCapsule2.getName().toByteArray(), assetIssueCapsule2);
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.addAssetAmountV2(firstTokenId.getBytes(), firstTokenBalance, dbManager);
+    accountCapsule.addAssetAmountV2(secondTokenId.getBytes(), secondTokenBalance, dbManager);
+    accountCapsule.setBalance(10000_000000L);
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+
+    ExchangeCreateActuator actuator = new ExchangeCreateActuator(getContract(
+            OWNER_ADDRESS_FIRST, firstTokenId, firstTokenBalance, secondTokenId, secondTokenBalance),
+            dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestExchangeNum(), 0);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      long id = 1;
+      Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestExchangeNum(), id);
+
+      // check V2 version
+      ExchangeCapsule exchangeCapsuleV2 = dbManager.getExchangeV2Store().get(ByteArray.fromLong(id));
+      Assert.assertNotNull(exchangeCapsuleV2);
+      Assert.assertEquals(ByteString.copyFrom(ownerAddress), exchangeCapsuleV2.getCreatorAddress());
+      Assert.assertEquals(id, exchangeCapsuleV2.getID());
+      Assert.assertEquals(1000000, exchangeCapsuleV2.getCreateTime());
+
+      Assert.assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsuleV2.getFirstTokenId()));
+      Assert.assertEquals(firstTokenId, ByteArray.toStr(exchangeCapsuleV2.getFirstTokenId()));
+      Assert.assertEquals(firstTokenBalance, exchangeCapsuleV2.getFirstTokenBalance());
+      Assert.assertEquals(secondTokenId, ByteArray.toStr(exchangeCapsuleV2.getSecondTokenId()));
+      Assert.assertEquals(secondTokenBalance, exchangeCapsuleV2.getSecondTokenBalance());
+
+      accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+      Map<String, Long> getAssetV2Map = accountCapsule.getAssetV2Map();
+      Assert.assertEquals(10000_000000L - 1024_000000L, accountCapsule.getBalance());
+      Assert.assertEquals(0L, getAssetV2Map.get(firstTokenId).longValue());
+      Assert.assertEquals(0L, getAssetV2Map.get(secondTokenId).longValue());
+
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } catch (ItemNotFoundException e) {
+      Assert.assertFalse(e instanceof ItemNotFoundException);
+    }
+  }
+
+  /**
+   * SameTokenName close,second create Exchange, result is success.
+   */
+  @Test
+  public void sameTokenNameOpenSuccessExchangeCreate2() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    String firstTokenId = "_";
+    long firstTokenBalance = 100_000_000_000000L;
+    String secondTokenId = "123";
+    long secondTokenBalance = 100_000_000L;
+
+    AssetIssueCapsule assetIssueCapsule =
+            new AssetIssueCapsule(
+                    AssetIssueContract.newBuilder()
+                            .setName(ByteString.copyFrom(secondTokenId.getBytes()))
+                            .build());
+    assetIssueCapsule.setId(1);
+    dbManager.getAssetIssueStore()
+            .put(assetIssueCapsule.getName().toByteArray(), assetIssueCapsule);
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.setBalance(200_000_000_000000L);
+    accountCapsule.addAssetAmountV2(secondTokenId.getBytes(), 200_000_000L, dbManager );
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+
+    ExchangeCreateActuator actuator = new ExchangeCreateActuator(getContract(
+            OWNER_ADDRESS_FIRST, firstTokenId, firstTokenBalance, secondTokenId, secondTokenBalance),
+            dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestExchangeNum(), 0);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      long id = 1;
+      Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestExchangeNum(), id);
+      // check V2 version
+      ExchangeCapsule exchangeCapsuleV2 = dbManager.getExchangeV2Store().get(ByteArray.fromLong(id));
+      Assert.assertNotNull(exchangeCapsuleV2);
+      Assert.assertEquals(ByteString.copyFrom(ownerAddress), exchangeCapsuleV2.getCreatorAddress());
+      Assert.assertEquals(id, exchangeCapsuleV2.getID());
+      Assert.assertEquals(1000000, exchangeCapsuleV2.getCreateTime());
+      Assert.assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsuleV2.getFirstTokenId()));
+      Assert.assertEquals(firstTokenId, ByteArray.toStr(exchangeCapsuleV2.getFirstTokenId()));
+      Assert.assertEquals(firstTokenBalance, exchangeCapsuleV2.getFirstTokenBalance());
+      Assert.assertEquals(secondTokenId, ByteArray.toStr(exchangeCapsuleV2.getSecondTokenId()));
+      Assert.assertEquals(secondTokenBalance, exchangeCapsuleV2.getSecondTokenBalance());
+
+      accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+      Map<String, Long> getAssetV2Map = accountCapsule.getAssetV2Map();
+      Assert.assertEquals(200_000_000_000000L - 1024_000000L - firstTokenBalance,
+              accountCapsule.getBalance());
+      Assert.assertEquals(100_000_000L, getAssetV2Map.get(secondTokenId).longValue());
+
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } catch (ItemNotFoundException e) {
+      Assert.assertFalse(e instanceof ItemNotFoundException);
+    }
+  }
+
+
+  /**
+   * SameTokenName open,first createExchange,result is failure.
+   */
+  @Test
+  public void sameTokenNameOpenExchangeCreateFailure() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    String firstTokenId = "abc";
+    long firstTokenBalance = 100000000L;
+    String secondTokenId = "def";
+    long secondTokenBalance = 100000000L;
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.setBalance(10000_000000L);
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+
+    ExchangeCreateActuator actuator = new ExchangeCreateActuator(getContract(
+            OWNER_ADDRESS_FIRST, firstTokenId, firstTokenBalance, secondTokenId, secondTokenBalance),
+            dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestExchangeNum(), 0);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail();
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("first token id is not a valid number", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  /**
+   * SameTokenName open,second create Exchange, result is failure.
+   */
+  @Test
+  public void sameTokenNameOpenExchangeCreateFailure2() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    String firstTokenId = "_";
+    long firstTokenBalance = 100_000_000_000000L;
+    String secondTokenId = "abc";
+    long secondTokenBalance = 100_000_000L;
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.setBalance(200_000_000_000000L);
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+
+    ExchangeCreateActuator actuator = new ExchangeCreateActuator(getContract(
+            OWNER_ADDRESS_FIRST, firstTokenId, firstTokenBalance, secondTokenId, secondTokenBalance),
+            dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestExchangeNum(), 0);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail();
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("second token id is not a valid number", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+
+  /**
+   * SameTokenName close, use Invalid Address, result is failed, exception is "Invalid address".
+   */
+  @Test
+  public void sameTokenNameCloseInvalidAddress() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
     String firstTokenId = "_";
     long firstTokenBalance = 100_000_000_000000L;
     String secondTokenId = "abc";
@@ -293,11 +546,43 @@ public class ExchangeCreateActuatorTest {
     }
   }
 
+
   /**
-   * use AccountStore not exists, result is failed, exception is "account not exists".
+   * SameTokenName open, use Invalid Address, result is failed, exception is "Invalid address".
    */
   @Test
-  public void noAccount() {
+  public void sameTokenNameOpenInvalidAddress() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    String firstTokenId = "_";
+    long firstTokenBalance = 100_000_000_000000L;
+    String secondTokenId = "123";
+    long secondTokenBalance = 100_000_000L;
+
+    ExchangeCreateActuator actuator = new ExchangeCreateActuator(getContract(
+            OWNER_ADDRESS_INVALID, firstTokenId, firstTokenBalance, secondTokenId, secondTokenBalance),
+            dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestExchangeNum(), 0);
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail("Invalid address");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Invalid address", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  /**
+   * SameTokenName close, use AccountStore not exists, result is failed, exception is "account not
+   * exists".
+   */
+  @Test
+  public void sameTokenNameCloseNoAccount() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
     String firstTokenId = "_";
     long firstTokenBalance = 100_000_000_000000L;
     String secondTokenId = "abc";
@@ -324,10 +609,43 @@ public class ExchangeCreateActuatorTest {
   }
 
   /**
-   * No enough balance
+   * SameTokenName open, use AccountStore not exists, result is failed, exception is "account not
+   * exists".
    */
   @Test
-  public void noEnoughBalance() {
+  public void sameTokenNameOpenNoAccount() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    String firstTokenId = "_";
+    long firstTokenBalance = 100_000_000_000000L;
+    String secondTokenId = "123";
+    long secondTokenBalance = 100_000_000L;
+
+    ExchangeCreateActuator actuator = new ExchangeCreateActuator(getContract(
+            OWNER_ADDRESS_NOACCOUNT, firstTokenId, firstTokenBalance, secondTokenId,
+            secondTokenBalance),
+            dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestExchangeNum(), 0);
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail("account[+OWNER_ADDRESS_NOACCOUNT+] not exists");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("account[" + OWNER_ADDRESS_NOACCOUNT + "] not exists",
+              e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  /**
+   * SameTokenName close,No enough balance
+   */
+  @Test
+  public void sameTokenNameCloseNoEnoughBalance() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
     String firstTokenId = "abc";
     long firstTokenBalance = 100000000L;
     String secondTokenId = "def";
@@ -358,11 +676,49 @@ public class ExchangeCreateActuatorTest {
     }
   }
 
+
   /**
-   * exchange same tokens
+   * SameTokenName open,No enough balance
    */
   @Test
-  public void sameTokens() {
+  public void sameTokenNameOpenNoEnoughBalance() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    String firstTokenId = "123";
+    long firstTokenBalance = 100000000L;
+    String secondTokenId = "345";
+    long secondTokenBalance = 100000000L;
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.addAssetAmount(firstTokenId.getBytes(), firstTokenBalance);
+    accountCapsule.addAssetAmount(secondTokenId.getBytes(), secondTokenBalance);
+    accountCapsule.setBalance(1000_000000L);
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+
+    ExchangeCreateActuator actuator = new ExchangeCreateActuator(getContract(
+            OWNER_ADDRESS_FIRST, firstTokenId, firstTokenBalance, secondTokenId, secondTokenBalance),
+            dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestExchangeNum(), 0);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail();
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("No enough balance for exchange create fee!",
+              e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  /**
+   * SameTokenName close,exchange same tokens
+   */
+  @Test
+  public void sameTokenNameCloseSameTokens() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
     String firstTokenId = "abc";
     long firstTokenBalance = 100000000L;
     String secondTokenId = "abc";
@@ -394,10 +750,47 @@ public class ExchangeCreateActuatorTest {
   }
 
   /**
-   * token balance less than zero
+   * SameTokenName open,exchange same tokens
    */
   @Test
-  public void lessToken() {
+  public void sameTokenNameOpenSameTokens() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    String firstTokenId = "123";
+    long firstTokenBalance = 100000000L;
+    String secondTokenId = "456";
+    long secondTokenBalance = 100000000L;
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.addAssetAmount(firstTokenId.getBytes(), firstTokenBalance);
+    accountCapsule.addAssetAmount(secondTokenId.getBytes(), secondTokenBalance);
+    accountCapsule.setBalance(10000_000000L);
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+
+    ExchangeCreateActuator actuator = new ExchangeCreateActuator(getContract(
+            OWNER_ADDRESS_FIRST, firstTokenId, firstTokenBalance, secondTokenId, secondTokenBalance),
+            dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestExchangeNum(), 0);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail();
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("first token balance is not enough",
+              e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  /**
+   * SameTokenName close,token balance less than zero
+   */
+  @Test
+  public void sameTokenNameCloseLessToken() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
     String firstTokenId = "abc";
     long firstTokenBalance = 0L;
     String secondTokenId = "def";
@@ -428,11 +821,49 @@ public class ExchangeCreateActuatorTest {
     }
   }
 
+
   /**
-   * token balance must less than balanceLimit
+   * SameTokenName open,token balance less than zero
    */
   @Test
-  public void moreThanBalanceLimit() {
+  public void sameTokenNameOpenLessToken() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    String firstTokenId = "123";
+    long firstTokenBalance = 0L;
+    String secondTokenId = "456";
+    long secondTokenBalance = 0L;
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.addAssetAmount(firstTokenId.getBytes(), 1000);
+    accountCapsule.addAssetAmount(secondTokenId.getBytes(), 1000);
+    accountCapsule.setBalance(10000_000000L);
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+
+    ExchangeCreateActuator actuator = new ExchangeCreateActuator(getContract(
+            OWNER_ADDRESS_FIRST, firstTokenId, firstTokenBalance, secondTokenId, secondTokenBalance),
+            dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestExchangeNum(), 0);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail();
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("token balance must greater than zero",
+              e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  /**
+   * SameTokenName close,token balance must less than balanceLimit
+   */
+  @Test
+  public void sameTokenNameCloseMoreThanBalanceLimit() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
     String firstTokenId = "abc";
     long firstTokenBalance = 1_000_000_000_000_001L;
     String secondTokenId = "def";
@@ -463,11 +894,49 @@ public class ExchangeCreateActuatorTest {
     }
   }
 
+
   /**
-   * balance is not enough
+   * SameTokenName open,token balance must less than balanceLimit
    */
   @Test
-  public void balanceNotEnough() {
+  public void sameTokenNameOpenMoreThanBalanceLimit() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    String firstTokenId = "123";
+    long firstTokenBalance = 1_000_000_000_000_001L;
+    String secondTokenId = "456";
+    long secondTokenBalance = 100000000L;
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.addAssetAmount(firstTokenId.getBytes(), firstTokenBalance);
+    accountCapsule.addAssetAmount(secondTokenId.getBytes(), secondTokenBalance);
+    accountCapsule.setBalance(10000_000000L);
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+
+    ExchangeCreateActuator actuator = new ExchangeCreateActuator(getContract(
+            OWNER_ADDRESS_FIRST, firstTokenId, firstTokenBalance, secondTokenId, secondTokenBalance),
+            dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestExchangeNum(), 0);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail();
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("token balance must less than 1000000000000000",
+              e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  /**
+   * SameTokenName close,balance is not enough
+   */
+  @Test
+  public void sameTokenNameCloseBalanceNotEnough() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
     String firstTokenId = "_";
     long firstTokenBalance = 100_000_000_000000L;
     String secondTokenId = "abc";
@@ -497,11 +966,48 @@ public class ExchangeCreateActuatorTest {
     }
   }
 
+
   /**
-   * first token balance is not enough
+   * SameTokenName open,balance is not enough
    */
   @Test
-  public void firstTokenBalanceNotEnough() {
+  public void sameTokenNameOpenBalanceNotEnough() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    String firstTokenId = "_";
+    long firstTokenBalance = 100_000_000_000000L;
+    String secondTokenId = "123";
+    long secondTokenBalance = 100_000_000L;
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.setBalance(firstTokenBalance + 1000L);
+    accountCapsule.addAssetAmount(secondTokenId.getBytes(), 200_000_000L);
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+
+    ExchangeCreateActuator actuator = new ExchangeCreateActuator(getContract(
+            OWNER_ADDRESS_FIRST, firstTokenId, firstTokenBalance, secondTokenId, secondTokenBalance),
+            dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestExchangeNum(), 0);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail();
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("balance is not enough",
+              e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  /**
+   * SameTokenName close,first token balance is not enough
+   */
+  @Test
+  public void sameTokenNameCloseFirstTokenBalanceNotEnough() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
     String firstTokenId = "abc";
     long firstTokenBalance = 100_000_000_000000L;
     String secondTokenId = "def";
@@ -532,11 +1038,49 @@ public class ExchangeCreateActuatorTest {
     }
   }
 
+
   /**
-   * balance is not enough
+   * SameTokenName open,first token balance is not enough
    */
   @Test
-  public void balanceNotEnough2() {
+  public void sameTokenNameOpenFirstTokenBalanceNotEnough() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    String firstTokenId = "123";
+    long firstTokenBalance = 100_000_000_000000L;
+    String secondTokenId = "456";
+    long secondTokenBalance = 100_000_000L;
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.addAssetAmount(firstTokenId.getBytes(), firstTokenBalance - 1000L);
+    accountCapsule.addAssetAmount(secondTokenId.getBytes(), 200_000_000L);
+    accountCapsule.setBalance(10000_000000L);
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+
+    ExchangeCreateActuator actuator = new ExchangeCreateActuator(getContract(
+            OWNER_ADDRESS_FIRST, firstTokenId, firstTokenBalance, secondTokenId, secondTokenBalance),
+            dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestExchangeNum(), 0);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail();
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("first token balance is not enough",
+              e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  /**
+   * SameTokenName close,balance is not enough
+   */
+  @Test
+  public void sameTokenNameCloseBalanceNotEnough2() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
     String firstTokenId = "abc";
     long firstTokenBalance = 100_000_000L;
     String secondTokenId = "_";
@@ -566,11 +1110,48 @@ public class ExchangeCreateActuatorTest {
     }
   }
 
+
   /**
-   * first token balance is not enough
+   * SameTokenName open,balance is not enough
    */
   @Test
-  public void secondTokenBalanceNotEnough() {
+  public void sameTokenNameOpenBalanceNotEnough2() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    String firstTokenId = "123";
+    long firstTokenBalance = 100_000_000L;
+    String secondTokenId = "_";
+    long secondTokenBalance = 100_000_000_000000L;
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.setBalance(secondTokenBalance + 1000L);
+    accountCapsule.addAssetAmount(firstTokenId.getBytes(), 200_000_000L);
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+
+    ExchangeCreateActuator actuator = new ExchangeCreateActuator(getContract(
+            OWNER_ADDRESS_FIRST, firstTokenId, firstTokenBalance, secondTokenId, secondTokenBalance),
+            dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestExchangeNum(), 0);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail();
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("first token balance is not enough",
+              e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  /**
+   * SameTokenName close,first token balance is not enough
+   */
+  @Test
+  public void sameTokenNameCloseSecondTokenBalanceNotEnough() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
     String firstTokenId = "abc";
     long firstTokenBalance = 100_000_000_000000L;
     String secondTokenId = "def";
@@ -601,11 +1182,49 @@ public class ExchangeCreateActuatorTest {
     }
   }
 
-  /*
-   * not trx,ont token is ok, but the second one is not exist.
+
+  /**
+   * SameTokenName open,first token balance is not enough
    */
   @Test
-  public void secondTokenNotExist() {
+  public void sameTokenNameOpenSecondTokenBalanceNotEnough() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    String firstTokenId = "123";
+    long firstTokenBalance = 100_000_000_000000L;
+    String secondTokenId = "456";
+    long secondTokenBalance = 100_000_000L;
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.addAssetAmount(firstTokenId.getBytes(), firstTokenBalance);
+    accountCapsule.addAssetAmount(secondTokenId.getBytes(), 90_000_000L);
+    accountCapsule.setBalance(10000_000000L);
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+
+    ExchangeCreateActuator actuator = new ExchangeCreateActuator(getContract(
+            OWNER_ADDRESS_FIRST, firstTokenId, firstTokenBalance, secondTokenId, secondTokenBalance),
+            dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestExchangeNum(), 0);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail();
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("first token balance is not enough",
+              e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  /**
+   * SameTokenName close,not trx,ont token is ok, but the second one is not exist.
+   */
+  @Test
+  public void sameTokenNameCloseSecondTokenNotExist() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
     String firstTokenId = "abc";
     long firstTokenBalance = 100_000_000_000000L;
     String secondTokenId = "def";
@@ -630,6 +1249,42 @@ public class ExchangeCreateActuatorTest {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("second token balance is not enough",
           e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+
+  /**
+   * SameTokenName open,not trx,ont token is ok, but the second one is not exist.
+   */
+  @Test
+  public void sameTokenNameOpenSecondTokenNotExist() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    String firstTokenId = "123";
+    long firstTokenBalance = 100_000_000_000000L;
+    String secondTokenId = "456";
+    long secondTokenBalance = 100_000_000L;
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.addAssetAmount(firstTokenId.getBytes(), firstTokenBalance);
+    accountCapsule.setBalance(10000_000000L);
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+
+    ExchangeCreateActuator actuator = new ExchangeCreateActuator(getContract(
+            OWNER_ADDRESS_FIRST, firstTokenId, firstTokenBalance, secondTokenId, secondTokenBalance),
+            dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestExchangeNum(), 0);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail();
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("first token balance is not enough",
+              e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
