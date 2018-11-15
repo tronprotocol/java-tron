@@ -128,6 +128,4 @@ public class AssetUpdateHelper {
     dbManager.getDynamicPropertiesStore().saveTokenUpdateDone(1);
     assetNameToIdMap.clear();
   }
-
-
 }
