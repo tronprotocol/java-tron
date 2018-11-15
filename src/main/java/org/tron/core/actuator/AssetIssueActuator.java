@@ -65,12 +65,8 @@ public class AssetIssueActuator extends AbstractActuator {
       assetIssueCapsule.setId(tokenIdNum);
       dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenIdNum);
 
-      if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-        dbManager.getAssetIssueStore()
-            .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
-      }
-      dbManager.getAssetIssueV2Store()
-          .put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
+      dbManager.putAssetIssue(assetIssueCapsule);
+
 
       dbManager.adjustBalance(ownerAddress, -fee);
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().getAddress().toByteArray(),
