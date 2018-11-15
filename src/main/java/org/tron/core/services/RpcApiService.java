@@ -355,6 +355,23 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
+
+    @Override
+    public void getDelegatedResource(DelegatedResourceMessage request,
+        StreamObserver<DelegatedResourceList> responseObserver) {
+      responseObserver
+          .onNext(wallet.getDelegatedResource(request.getFromAddress(), request.getToAddress()));
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getDelegatedResourceAccountIndex(BytesMessage request,
+        StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
+      responseObserver
+          .onNext(wallet.getDelegatedResourceAccountIndex(request.getValue()));
+      responseObserver.onCompleted();
+    }
+
     @Override
     public void getTransactionCountByBlockNum(NumberMessage request,
         StreamObserver<NumberMessage> responseObserver) {
