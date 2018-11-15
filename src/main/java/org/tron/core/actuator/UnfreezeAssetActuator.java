@@ -47,8 +47,16 @@ public class UnfreezeAssetActuator extends AbstractActuator {
         }
       }
 
-      accountCapsule
-          .addAssetAmountV2(accountCapsule.getAssetIssuedName().toByteArray(), unfreezeAsset, dbManager);
+      if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+        accountCapsule
+            .addAssetAmountV2(accountCapsule.getAssetIssuedName().toByteArray(), unfreezeAsset,
+                dbManager);
+      } else {
+        accountCapsule
+            .addAssetAmountV2(accountCapsule.getAssetIssuedID().toByteArray(), unfreezeAsset,
+                dbManager);
+      }
+
       accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
           .clearFrozenSupply().addAllFrozenSupply(frozenList).build());
 
