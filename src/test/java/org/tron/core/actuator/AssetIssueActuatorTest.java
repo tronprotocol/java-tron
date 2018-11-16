@@ -194,7 +194,7 @@ public class AssetIssueActuatorTest {
       Assert.assertEquals(ownerSecond.getBalance(), 0);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(ownerSecond.getAssetV2Map().get(idKey).longValue(), TOTAL_SUPPLY);
+      Assert.assertEquals(ownerSecond.getAssetMapV2().get(idKey).longValue(), TOTAL_SUPPLY);
     } catch (ContractValidateException e) {
       logger.info(e.getMessage());
       Assert.assertFalse(e instanceof ContractValidateException);
