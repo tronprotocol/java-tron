@@ -25,7 +25,7 @@ public class AssetUpdateHelperTest {
 
   private static Manager dbManager;
   private static TronApplicationContext context;
-  private static String dbPath = "output_IndexHelper_test";
+  private static String dbPath = "output_AssetUpdateHelperTest_test";
   private static Application AppT;
 
   private static ByteString assetName = ByteString.copyFrom("assetIssueName".getBytes());
@@ -44,21 +44,25 @@ public class AssetUpdateHelperTest {
 
     AssetIssueCapsule assetIssueCapsule =
         new AssetIssueCapsule(
-            AssetIssueContract.newBuilder()
-                .setName(assetName)
-                .setNum(12581)
-                .build());
+            AssetIssueContract.newBuilder().setName(assetName).setNum(12581).build());
     dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
 
-    ExchangeCapsule exchangeCapsule = new ExchangeCapsule(
-        Exchange.newBuilder().setExchangeId(1L)
-            .setFirstTokenId(assetName)
-            .setSecondTokenId(ByteString.copyFrom("_".getBytes())).build());
+    ExchangeCapsule exchangeCapsule =
+        new ExchangeCapsule(
+            Exchange.newBuilder()
+                .setExchangeId(1L)
+                .setFirstTokenId(assetName)
+                .setSecondTokenId(ByteString.copyFrom("_".getBytes()))
+                .build());
     dbManager.getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
 
     AccountCapsule accountCapsule =
         new AccountCapsule(
-            Account.newBuilder().setAssetIssuedName(assetName).putAsset("assetIssueName", 100)
+            Account.newBuilder()
+                .setAssetIssuedName(assetName)
+                .putAsset("assetIssueName", 100)
+                .putFreeAssetNetUsage("assetIssueName", 20000)
+                .putLatestAssetOperationTime("assetIssueName", 30000000)
                 .setAddress(ByteString.copyFrom(ByteArray.fromHexString("121212abc")))
                 .build());
     dbManager.getAccountStore().put(ByteArray.fromHexString("121212abc"), accountCapsule);
@@ -73,55 +77,67 @@ public class AssetUpdateHelperTest {
     FileUtil.deleteDir(new File(dbPath));
   }
 
-
   @Test
-  public void testUpdateAsset() {
+  public void test() {
 
-    new AssetUpdateHelper(dbManager).updateAsset();
+    if (dbManager == null) {
+      init();
+    }
+    AssetUpdateHelper assetUpdateHelper = new AssetUpdateHelper(dbManager);
+    assetUpdateHelper.init();
+    {
+      assetUpdateHelper.updateAsset();
 
-    long idNum = 1000000L;
+      long idNum = 1000001L;
 
-    AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
-        .get(assetName.toByteArray());
-    Assert.assertEquals(idNum, assetIssueCapsule.getId());
+      AssetIssueCapsule assetIssueCapsule =
+          dbManager.getAssetIssueStore().get(assetName.toByteArray());
+      Assert.assertEquals(idNum, assetIssueCapsule.getId());
 
-    AssetIssueCapsule assetIssueCapsule2 = dbManager.getAssetIssueV2Store()
-        .get(ByteArray.fromString(String.valueOf(idNum)));
+      AssetIssueCapsule assetIssueCapsule2 =
+          dbManager.getAssetIssueV2Store().get(ByteArray.fromString(String.valueOf(idNum)));
 
-    Assert.assertEquals(idNum, assetIssueCapsule2.getId());
-    Assert.assertEquals(assetName, assetIssueCapsule2.getName());
-
-  }
-
-  @Test
-  public void testUpdateExchange() {
-
-    new AssetUpdateHelper(dbManager).updateExchange();
-
-    try {
-      ExchangeCapsule exchangeCapsule = dbManager.getExchangeV2Store().get(ByteArray.fromLong(1L));
-      Assert.assertEquals("1000000", ByteArray.toStr(exchangeCapsule.getFirstTokenId()));
-      Assert.assertEquals("_", ByteArray.toStr(exchangeCapsule.getSecondTokenId()));
-    } catch (Exception ex) {
-      throw new RuntimeException("testUpdateExchange error");
+      Assert.assertEquals(idNum, assetIssueCapsule2.getId());
+      Assert.assertEquals(assetName, assetIssueCapsule2.getName());
     }
 
-  }
+    {
+      assetUpdateHelper.updateExchange();
 
-  @Test
-  public void testUpdateAccount() {
+      try {
+        ExchangeCapsule exchangeCapsule =
+            dbManager.getExchangeV2Store().get(ByteArray.fromLong(1L));
+        Assert.assertEquals("1000001", ByteArray.toStr(exchangeCapsule.getFirstTokenId()));
+        Assert.assertEquals("_", ByteArray.toStr(exchangeCapsule.getSecondTokenId()));
+      } catch (Exception ex) {
+        throw new RuntimeException("testUpdateExchange error");
+      }
+    }
 
-    new AssetUpdateHelper(dbManager).updateAccount();
-    AccountCapsule accountCapsule = dbManager.getAccountStore()
-        .get(ByteArray.fromHexString("121212abc"));
+    {
+      assetUpdateHelper.updateAccount();
 
-    Assert.assertEquals(
-        ByteString.copyFrom(ByteArray.fromString("1000000")), accountCapsule.getAssetIssuedID());
+      AccountCapsule accountCapsule =
+          dbManager.getAccountStore().get(ByteArray.fromHexString("121212abc"));
 
-    Assert.assertEquals(1, accountCapsule.getAssetMapV2().size());
+      Assert.assertEquals(
+          ByteString.copyFrom(ByteArray.fromString("1000001")), accountCapsule.getAssetIssuedID());
 
-    Assert.assertEquals(100L, accountCapsule.getAssetMapV2().get("1000000").longValue());
+      Assert.assertEquals(1, accountCapsule.getAssetMapV2().size());
 
+      Assert.assertEquals(100L, accountCapsule.getAssetMapV2().get("1000001").longValue());
 
+      Assert.assertEquals(1, accountCapsule.getAllFreeAssetNetUsageV2().size());
+
+      Assert.assertEquals(20000L,
+          accountCapsule.getAllFreeAssetNetUsageV2().get("1000001").longValue());
+
+      Assert.assertEquals(1, accountCapsule.getLatestAssetOperationTimeMapV2().size());
+
+      Assert.assertEquals(30000000L,
+          accountCapsule.getLatestAssetOperationTimeMapV2().get("1000001").longValue());
+    }
+
+    removeDb();
   }
 }
