@@ -61,6 +61,8 @@ public class AssetUpdateHelperTest {
             Account.newBuilder()
                 .setAssetIssuedName(assetName)
                 .putAsset("assetIssueName", 100)
+                .putFreeAssetNetUsage("assetIssueName", 20000)
+                .putLatestAssetOperationTime("assetIssueName", 30000000)
                 .setAddress(ByteString.copyFrom(ByteArray.fromHexString("121212abc")))
                 .build());
     dbManager.getAccountStore().put(ByteArray.fromHexString("121212abc"), accountCapsule);
@@ -124,6 +126,16 @@ public class AssetUpdateHelperTest {
       Assert.assertEquals(1, accountCapsule.getAssetV2Map().size());
 
       Assert.assertEquals(100L, accountCapsule.getAssetV2Map().get("1000001").longValue());
+
+      Assert.assertEquals(1, accountCapsule.getFreeAssetNetUsageV2Map().size());
+
+      Assert.assertEquals(20000L,
+          accountCapsule.getFreeAssetNetUsageV2Map().get("1000001").longValue());
+
+      Assert.assertEquals(1, accountCapsule.getLatestAssetOperationTimeV2Map().size());
+
+      Assert.assertEquals(30000000L,
+          accountCapsule.getLatestAssetOperationTimeV2Map().get("1000001").longValue());
     }
 
     removeDb();
