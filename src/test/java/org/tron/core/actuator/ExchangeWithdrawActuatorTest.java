@@ -253,15 +253,17 @@ public class ExchangeWithdrawActuatorTest {
                             .build());
     assetIssueCapsule1.setId(1);
     dbManager.getAssetIssueV2Store()
-            .put(assetIssueCapsule1.getName().toByteArray(), assetIssueCapsule1);
+            .put(assetIssueCapsule1.createDbV2Key(), assetIssueCapsule1);
+
     AssetIssueCapsule assetIssueCapsule2 =
             new AssetIssueCapsule(
                     AssetIssueContract.newBuilder()
                             .setName(ByteString.copyFrom("456".getBytes()))
                             .build());
     assetIssueCapsule2.setId(2);
+
     dbManager.getAssetIssueV2Store()
-            .put(assetIssueCapsule2.getName().toByteArray(), assetIssueCapsule2);
+            .put(assetIssueCapsule2.createDbV2Key(), assetIssueCapsule2);
 
     dbManager.getExchangeV2Store()
             .put(exchangeCapsule.createDbKey(), exchangeCapsule);

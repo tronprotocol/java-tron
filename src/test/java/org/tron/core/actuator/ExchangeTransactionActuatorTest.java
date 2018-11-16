@@ -182,7 +182,6 @@ public class ExchangeTransactionActuatorTest {
                     "456".getBytes());
     exchangeCapsule2.setBalance(100000000L, 200000000L);
 
-
     AssetIssueCapsule assetIssueCapsule1 =
             new AssetIssueCapsule(
                     AssetIssueContract.newBuilder()
@@ -200,9 +199,9 @@ public class ExchangeTransactionActuatorTest {
     dbManager.getExchangeV2Store().put(exchangeCapsule.createDbKey(), exchangeCapsule);
     dbManager.getExchangeV2Store().put(exchangeCapsule2.createDbKey(), exchangeCapsule2);
 
-    dbManager.getAssetIssueV2Store().put(assetIssueCapsule1.getName().toByteArray(),
+    dbManager.getAssetIssueV2Store().put(assetIssueCapsule1.createDbV2Key(),
             assetIssueCapsule1);
-    dbManager.getAssetIssueV2Store().put(assetIssueCapsule2.getName().toByteArray(),
+    dbManager.getAssetIssueV2Store().put(assetIssueCapsule2.createDbV2Key(),
             assetIssueCapsule2);
   }
 
