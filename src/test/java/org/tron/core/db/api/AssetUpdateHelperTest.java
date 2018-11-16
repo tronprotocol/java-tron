@@ -123,19 +123,19 @@ public class AssetUpdateHelperTest {
       Assert.assertEquals(
           ByteString.copyFrom(ByteArray.fromString("1000001")), accountCapsule.getAssetIssuedID());
 
-      Assert.assertEquals(1, accountCapsule.getAssetV2Map().size());
+      Assert.assertEquals(1, accountCapsule.getAssetMapV2().size());
 
-      Assert.assertEquals(100L, accountCapsule.getAssetV2Map().get("1000001").longValue());
+      Assert.assertEquals(100L, accountCapsule.getAssetMapV2().get("1000001").longValue());
 
-      Assert.assertEquals(1, accountCapsule.getFreeAssetNetUsageV2Map().size());
+      Assert.assertEquals(1, accountCapsule.getAllFreeAssetNetUsageV2().size());
 
       Assert.assertEquals(20000L,
-          accountCapsule.getFreeAssetNetUsageV2Map().get("1000001").longValue());
+          accountCapsule.getAllFreeAssetNetUsageV2().get("1000001").longValue());
 
-      Assert.assertEquals(1, accountCapsule.getLatestAssetOperationTimeV2Map().size());
+      Assert.assertEquals(1, accountCapsule.getLatestAssetOperationTimeMapV2().size());
 
       Assert.assertEquals(30000000L,
-          accountCapsule.getLatestAssetOperationTimeV2Map().get("1000001").longValue());
+          accountCapsule.getLatestAssetOperationTimeMapV2().get("1000001").longValue());
     }
 
     removeDb();

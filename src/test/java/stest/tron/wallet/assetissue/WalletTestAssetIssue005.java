@@ -102,7 +102,7 @@ public class WalletTestAssetIssue005 {
     ByteString assetNameBs = ByteString.copyFrom(name.getBytes());
     GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
     Contract.AssetIssueContract assetIssueByName =
-        blockingStubFull.getAssetIssueByName(request).getAssetIssue(0);
+        blockingStubFull.getAssetIssueByName(request);
 
     Assert.assertFalse(assetIssueByName.getUrl().isEmpty());
     Assert.assertFalse(assetIssueByName.getDescription().isEmpty());
@@ -113,7 +113,7 @@ public class WalletTestAssetIssue005 {
     String wrongName = name + "_wrong";
     assetNameBs = ByteString.copyFrom(wrongName.getBytes());
     request = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
-    assetIssueByName = blockingStubFull.getAssetIssueByName(request).getAssetIssue(0);
+    assetIssueByName = blockingStubFull.getAssetIssueByName(request);
 
     Assert.assertFalse(assetIssueByName.getTotalSupply() > 0);
     Assert.assertFalse(assetIssueByName.getTrxNum() > 0);
@@ -124,7 +124,7 @@ public class WalletTestAssetIssue005 {
     wrongName = "";
     assetNameBs = ByteString.copyFrom(wrongName.getBytes());
     request = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
-    assetIssueByName = blockingStubFull.getAssetIssueByName(request).getAssetIssue(0);
+    assetIssueByName = blockingStubFull.getAssetIssueByName(request);
 
     Assert.assertFalse(assetIssueByName.getTotalSupply() > 0);
     Assert.assertFalse(assetIssueByName.getTrxNum() > 0);

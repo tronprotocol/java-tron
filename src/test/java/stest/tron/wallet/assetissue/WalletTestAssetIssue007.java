@@ -128,7 +128,7 @@ public class WalletTestAssetIssue007 {
     //Participate an assetIssue, then query the net information.
     ByteString assetNameBs = ByteString.copyFrom(name.getBytes());
     GrpcAPI.BytesMessage request1 = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
-    Contract.AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request1).getAssetIssue(0);
+    Contract.AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request1);
     logger.info(Long.toString(assetIssueByName.getStartTime()));
     logger.info(Long.toString(System.currentTimeMillis()));
     
