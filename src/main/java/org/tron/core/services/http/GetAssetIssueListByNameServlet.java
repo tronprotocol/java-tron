@@ -1,6 +1,6 @@
 package org.tron.core.services.http;
 
-import com.alibaba.fastjson.JSONObject;
+import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
@@ -9,37 +9,24 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.api.GrpcAPI.AssetIssueList;
+import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.protos.Contract.AssetIssueContract;
 
 @Component
 @Slf4j
-public class GetAssetIssueByNameServlet extends HttpServlet {
+public class GetAssetIssueListByNameServlet extends HttpServlet {
 
   @Autowired
   private Wallet wallet;
 
-  protected boolean inputValid(String input) {
-    byte[] tokenID = input.getBytes();
-    if (!TransactionUtil.isNumber(tokenID)) {
-      return false;
-    } else {
-      return true;
-    }
-  }
-
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       String input = request.getParameter("value");
-      if (!inputValid(input)) {
-        response.getWriter().println("{}");
-        return;
-      }
-
-      AssetIssueContract reply = wallet
-          .getAssetIssueByName(Long.parseLong(input));
-
+      AssetIssueList reply = wallet
+          .getAssetIssueListByName(ByteString.copyFrom(ByteArray.fromHexString(input)));
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply));
       } else {
@@ -59,15 +46,9 @@ public class GetAssetIssueByNameServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
-      JSONObject jsonObject = JSONObject.parseObject(input);
-      String id = jsonObject.getString("value");
-      if (!inputValid(id)) {
-        response.getWriter().println("{}");
-        return;
-      }
-
-      AssetIssueContract reply =
-          wallet.getAssetIssueByName(Long.parseLong(id));
+      BytesMessage.Builder build = BytesMessage.newBuilder();
+      JsonFormat.merge(input, build);
+      AssetIssueList reply = wallet.getAssetIssueListByName(build.getValue());
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply));
       } else {

@@ -60,6 +60,8 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetAssetIssueByNameServlet getAssetIssueByNameServlet;
   @Autowired
+  private GetAssetIssueListByNameServlet getAssetIssueListByNameServlet;
+  @Autowired
   private GetAssetIssueByIdServlet getAssetIssueByIdServlet;
   @Autowired
   private GetNowBlockServlet getNowBlockServlet;
@@ -179,6 +181,7 @@ public class FullNodeHttpApiService implements Service {
           new ServletHolder(getAssetIssueByAccountServlet), "/getassetissuebyaccount");
       context.addServlet(new ServletHolder(getAccountNetServlet), "/getaccountnet");
       context.addServlet(new ServletHolder(getAssetIssueByNameServlet), "/getassetissuebyname");
+      context.addServlet(new ServletHolder(getAssetIssueListByNameServlet), "/getassetissuelistbyname");
       context.addServlet(new ServletHolder(getAssetIssueByIdServlet), "/getassetissuebyid");
       context.addServlet(new ServletHolder(getNowBlockServlet), "/getnowblock");
       context.addServlet(new ServletHolder(getBlockByNumServlet), "/getblockbynum");
