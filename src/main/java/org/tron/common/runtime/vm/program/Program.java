@@ -500,7 +500,7 @@ public class Program {
         programCode, "create", nonce, null);
     long vmStartInUs = System.nanoTime() / 1000;
     ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
-        this, new DataWord(newAddress), getContractAddress(), value,
+        this, new DataWord(newAddress), getContractAddress(), value, new DataWord(0), null,
         newBalance, null, deposit, false, byTestingSuite(), vmStartInUs,
         getVmShouldEndInUs(), energyLimit.longValueSafe());
 
@@ -631,7 +631,7 @@ public class Program {
     }
     // transfer trc10 token validation
     else {
-      tokenId = new DataWord(msg.getTokenId().getData()).shortHexWithoutZeroX().getBytes();
+      tokenId = String.valueOf(msg.getTokenId().longValue()).getBytes();
       long senderBalance = deposit.getTokenBalance(senderAddress, tokenId);
       if (senderBalance < endowment) {
         stackPushZero();
@@ -688,10 +688,13 @@ public class Program {
     ProgramResult callResult = null;
     if (isNotEmpty(programCode)) {
       long vmStartInUs = System.nanoTime() / 1000;
+      DataWord callValue = msg.getType().callIsDelegate() ? getCallValue() : msg.getEndowment();
       ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
           this, new DataWord(contextAddress),
           msg.getType().callIsDelegate() ? getCallerAddress() : getContractAddress(),
-          msg.getType().callIsDelegate() ? getCallValue() : msg.getEndowment(),
+          msg.getTokenId() == null ? callValue : new DataWord(0),
+          msg.getTokenId() == null ? new DataWord(0) : callValue,
+          msg.getTokenId() == null ? null : msg.getTokenId(),
           contextBalance, data, deposit, msg.getType().callIsStatic() || isStaticCall(),
           byTestingSuite(), vmStartInUs, getVmShouldEndInUs(), msg.getEnergy().longValueSafe());
       VM vm = new VM(config);
@@ -925,9 +928,13 @@ public class Program {
   }
 
   public DataWord getTokenBalance(DataWord address, DataWord tokenId) {
-    long ret = getContractState().getTokenBalance(convertToTronAddress(address.getLast20Bytes()), tokenId.shortHexWithoutZeroX().getBytes());
+    long ret = getContractState().getTokenBalance(convertToTronAddress(address.getLast20Bytes()), String.valueOf(tokenId.longValue()).getBytes());
     return ret == 0 ? new DataWord(0) : new DataWord(ret);
   }
+
+  public DataWord getTokenValue() { return invoke.getTokenValue().clone(); }
+
+  public DataWord getTokenId() { return invoke.getTokenId().clone(); }
 
   public DataWord getPrevHash() {
     return invoke.getPrevHash().clone();
@@ -1298,7 +1305,7 @@ public class Program {
     }
     // transfer trc10 token validation
     else {
-      tokenId = new DataWord(msg.getTokenId().getData()).shortHexWithoutZeroX().getBytes();
+      tokenId = String.valueOf(msg.getTokenId().longValue()).getBytes();
       senderBalance = deposit.getTokenBalance(senderAddress, tokenId);
     }
     if (senderBalance < endowment) {

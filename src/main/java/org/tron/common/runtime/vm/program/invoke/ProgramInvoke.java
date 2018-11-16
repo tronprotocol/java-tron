@@ -37,6 +37,10 @@ public interface ProgramInvoke {
 
   DataWord getCallValue();
 
+  DataWord getTokenValue();
+
+  DataWord getTokenId();
+
   DataWord getDataSize();
 
   DataWord getDataValue(DataWord indexData);

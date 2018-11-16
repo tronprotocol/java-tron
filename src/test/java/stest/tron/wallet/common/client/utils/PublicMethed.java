@@ -1462,7 +1462,7 @@ public class PublicMethed {
     Builder contractBuilder = CreateSmartContract.newBuilder();
     contractBuilder.setOwnerAddress(ByteString.copyFrom(owner));
     contractBuilder.setCallTokenValue(tokenValue);
-    contractBuilder.setTokenId(tokenId);
+    contractBuilder.setTokenId(Long.parseLong(tokenId));
     CreateSmartContract contractDeployContract = contractBuilder
         .setNewContract(builder.build()).build();
 
@@ -1598,7 +1598,7 @@ public class PublicMethed {
     Builder contractBuilder = CreateSmartContract.newBuilder();
     contractBuilder.setOwnerAddress(ByteString.copyFrom(owner));
     contractBuilder.setCallTokenValue(tokenValue);
-    contractBuilder.setTokenId(tokenId);
+    contractBuilder.setTokenId(Long.parseLong(tokenId));
     CreateSmartContract contractDeployContract = contractBuilder
         .setNewContract(builder.build()).build();
 
@@ -1972,7 +1972,7 @@ public class PublicMethed {
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
     builder.setData(ByteString.copyFrom(input));
     builder.setCallValue(callValue);
-    builder.setTokenId(tokenId);
+    builder.setTokenId(Long.parseLong(tokenId));
     builder.setCallTokenValue(tokenValue);
     Contract.TriggerSmartContract triggerContract = builder.build();
 
@@ -2379,7 +2379,7 @@ public class PublicMethed {
     Builder contractBuilder = CreateSmartContract.newBuilder();
     contractBuilder.setOwnerAddress(ByteString.copyFrom(owner));
     contractBuilder.setCallTokenValue(tokenValue);
-    contractBuilder.setTokenId(tokenId);
+    contractBuilder.setTokenId(Long.parseLong(tokenId));
     CreateSmartContract contractDeployContract = contractBuilder.setNewContract(builder.build())
         .build();
 

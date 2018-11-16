@@ -21,6 +21,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
 import org.tron.common.storage.Deposit;
@@ -37,6 +38,8 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   private final DataWord caller;
   private final DataWord balance;
   private final DataWord callValue;
+  private final DataWord tokenValue;
+  private final DataWord tokenId;
 
   private byte[] msgData;
 
@@ -57,7 +60,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   private boolean isStaticCall = false;
 
   public ProgramInvokeImpl(DataWord address, DataWord origin, DataWord caller, DataWord balance,
-      DataWord callValue, byte[] msgData,
+      DataWord callValue, DataWord tokenValue, DataWord tokenId, byte[] msgData,
       DataWord lastHash, DataWord coinbase, DataWord timestamp, DataWord number,
       DataWord difficulty,
       Deposit deposit, int callDeep, boolean isStaticCall, boolean byTestingSuite,
@@ -67,6 +70,8 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     this.caller = caller;
     this.balance = balance;
     this.callValue = callValue;
+    this.tokenValue = tokenValue;
+    this.tokenId = tokenId;
     if (Objects.nonNull(msgData)) {
       this.msgData = Arrays.copyOf(msgData, msgData.length);
     }
@@ -89,16 +94,16 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   }
 
   public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
-      long callValue, byte[] msgData,
+      long callValue, long tokenValue, long tokenId, byte[] msgData,
       byte[] lastHash, byte[] coinbase, long timestamp, long number, Deposit deposit,
       long vmStartInUs, long vmShouldEndInUs, boolean byTestingSuite, long energyLimit) {
-    this(address, origin, caller, balance, callValue, msgData, lastHash, coinbase,
+    this(address, origin, caller, balance, callValue, tokenValue, tokenId, msgData, lastHash, coinbase,
         timestamp, number, deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
     this.byTestingSuite = byTestingSuite;
   }
 
   public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
-      long callValue, byte[] msgData, byte[] lastHash, byte[] coinbase, long timestamp,
+      long callValue, long tokenValue, long tokenId, byte[] msgData, byte[] lastHash, byte[] coinbase, long timestamp,
       long number, Deposit deposit, long vmStartInUs, long vmShouldEndInUs, long energyLimit) {
 
     // Transaction env
@@ -107,6 +112,8 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     this.caller = new DataWord(caller);
     this.balance = new DataWord(balance);
     this.callValue = new DataWord(callValue);
+    this.tokenValue = new DataWord(tokenValue);
+    this.tokenId = new DataWord(tokenId);
     this.msgData = Arrays.copyOf(msgData, msgData.length);
 
     // last Block env
@@ -146,6 +153,12 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   public DataWord getCallValue() {
     return callValue;
   }
+
+  /*          TOKENVALUE op     */
+  public DataWord getTokenValue() { return tokenValue; }
+
+  /*          TOKENID op     */
+  public DataWord getTokenId() { return tokenId; }
 
   /*****************/
   /***  msg data ***/
