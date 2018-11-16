@@ -90,6 +90,7 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
 
       dbManager.putExchangeCapsule(exchangeCapsule);
 
+      ret.setExchangeWithdrawAnotherAmount(anotherTokenQuant);
       ret.setStatus(fee, code.SUCESS);
     } catch (ItemNotFoundException e) {
       logger.debug(e.getMessage(), e);

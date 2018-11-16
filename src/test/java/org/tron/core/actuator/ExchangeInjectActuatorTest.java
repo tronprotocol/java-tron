@@ -231,11 +231,14 @@ public class ExchangeInjectActuatorTest {
       Assert.assertEquals(secondTokenId, ByteArray.toStr(exchangeCapsule.getSecondTokenId()));
       Assert.assertEquals(600000000L, exchangeCapsule.getSecondTokenBalance());
 
+      Assert.assertEquals(secondTokenQuant, ret.getExchangeInjectAnotherAmount());
+
       accountCapsule = dbManager.getAccountStore().get(ownerAddress);
       Map<String, Long> assetMap = accountCapsule.getAssetMap();
       Assert.assertEquals(10000_000000L, accountCapsule.getBalance());
       Assert.assertEquals(0L, assetMap.get(firstTokenId).longValue());
       Assert.assertEquals(0L, assetMap.get(secondTokenId).longValue());
+
 
     } catch (ContractValidateException e) {
       logger.info(e.getMessage());

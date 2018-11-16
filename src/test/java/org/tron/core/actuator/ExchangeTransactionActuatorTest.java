@@ -323,6 +323,8 @@ public class ExchangeTransactionActuatorTest {
       Assert.assertEquals(20000_000000L - quant, accountCapsule.getBalance());
       Assert.assertEquals(999L, assetV2Map.get("123").longValue());
 
+      Assert.assertEquals(999L, ret.getExchangeReceivedAmount());
+
     } catch (ContractValidateException e) {
       logger.info(e.getMessage());
       Assert.assertFalse(e instanceof ContractValidateException);
