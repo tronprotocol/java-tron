@@ -417,26 +417,10 @@ service Wallet {
 
 
   rpc GetDelegatedResource (DelegatedResourceMessage) returns (DelegatedResourceList) {
-      option (google.api.http) = {
-        post: "/wallet/getdelegatedresource"
-        body: "*"
-        additional_bindings {
-          get: "/wallet/getdelegatedresource"
-        }
-      };
-    };
+  };
 
   rpc GetDelegatedResourceAccountIndex (BytesMessage) returns (DelegatedResourceAccountIndex) {
-      option (google.api.http) = {
-        post: "/wallet/getdelegatedresourceaccountindex"
-        body: "*"
-        additional_bindings {
-          get: "/wallet/getdelegatedresourceaccountindex"
-        }
-      };
-    };
-
-
+  };
 
   rpc ListProposals (EmptyMessage) returns (ProposalList) {
     option (google.api.http) = {
@@ -692,6 +676,12 @@ service WalletSolidity {
 
   rpc GetTransactionCountByBlockNum (NumberMessage) returns (NumberMessage) {
   }
+
+  rpc GetDelegatedResource (DelegatedResourceMessage) returns (DelegatedResourceList) {
+  };
+
+  rpc GetDelegatedResourceAccountIndex (BytesMessage) returns (DelegatedResourceAccountIndex) {
+  };
 
   rpc GetTransactionById (BytesMessage) returns (Transaction) {
     option (google.api.http) = {
