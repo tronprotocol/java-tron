@@ -407,7 +407,7 @@ public class Program {
     increaseNonce();
 
     addInternalTx(null, owner, obtainer, balance, null, "suicide", nonce,
-        getContractState().getAccount(owner).getAssetV2Map());
+        getContractState().getAccount(owner).getAssetMapV2());
 
     if (FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0) {
       // if owner == obtainer just zeroing account according to Yellow Paper

@@ -391,7 +391,7 @@ public class DepositImpl implements Deposit {
     if (accountCapsule == null) {
       accountCapsule = createAccount(address, AccountType.Normal);
     }
-    long balance = accountCapsule.getAssetV2Map().getOrDefault(new String(tokenIdWithoutLeadingZero),new Long(0));
+    long balance = accountCapsule.getAssetMapV2().getOrDefault(new String(tokenIdWithoutLeadingZero),new Long(0));
     if (value == 0) {
       return balance;
     }
@@ -413,7 +413,7 @@ public class DepositImpl implements Deposit {
         Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
     accountCache.put(key, V);
 //    accountCapsule.addAssetAmount(tokenIdWithoutLeadingZero, value);
-    return accountCapsule.getAssetV2Map().get(new String(tokenIdWithoutLeadingZero));
+    return accountCapsule.getAssetMapV2().get(new String(tokenIdWithoutLeadingZero));
   }
 
   @Override
@@ -457,7 +457,7 @@ public class DepositImpl implements Deposit {
       return 0;
     }
     String tokenStr = new String(ByteUtil.stripLeadingZeroes(tokenId));
-    return accountCapsule.getAssetV2Map().getOrDefault(tokenStr, 0L);
+    return accountCapsule.getAssetMapV2().getOrDefault(tokenStr, 0L);
   }
 
   @Override
