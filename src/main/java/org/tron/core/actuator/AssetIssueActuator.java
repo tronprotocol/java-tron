@@ -27,6 +27,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.utils.TransactionUtil;
+import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -63,6 +64,7 @@ public class AssetIssueActuator extends AbstractActuator {
       long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
       tokenIdNum++;
       assetIssueCapsule.setId(tokenIdNum);
+      assetIssueCapsule.setPrecision(assetIssueContract.getPrecision());
       dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenIdNum);
 
       dbManager.putAssetIssue(assetIssueCapsule);
@@ -154,6 +156,17 @@ public class AssetIssueActuator extends AbstractActuator {
       if (name.equals("trx")) {
         throw new ContractValidateException("assetName can't be trx");
       }
+    }
+
+    int precision = assetIssueContract.getPrecision();
+    if (!dbManager.getForkController().pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
+      if (precision != 0) {
+        throw new ContractValidateException("Setting accuracy is not allowed");
+      }
+    }
+
+    if (precision < 0 || precision > 6) {
+      throw new ContractValidateException("precision cannot exceed 6");
     }
 
     if ((!assetIssueContract.getAbbr().isEmpty()) && !TransactionUtil
