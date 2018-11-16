@@ -128,7 +128,8 @@ public class ProposalController {
           break;
         }
         case (7): {
-          manager.getDynamicPropertiesStore().saveCreateNewAccountFeeInSystemContract(entry.getValue());
+          manager.getDynamicPropertiesStore()
+              .saveCreateNewAccountFeeInSystemContract(entry.getValue());
           break;
         }
         case (8): {
@@ -175,6 +176,10 @@ public class ProposalController {
         }
         case (18): {
           manager.getDynamicPropertiesStore().saveTotalEnergyLimit(entry.getValue());
+          break;
+        }
+        case (19): {
+          manager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(entry.getValue());
           break;
         }
         default:

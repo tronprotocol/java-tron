@@ -37,10 +37,17 @@ public class UpdateAssetActuator extends AbstractActuator {
       ByteString newUrl = updateAssetContract.getUrl();
       ByteString newDescription = updateAssetContract.getDescription();
 
-      AssetIssueStore assetIssueStore = dbManager.getAssetIssueStoreFinal();
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-      AssetIssueCapsule assetIssueCapsule =
-          assetIssueStore.get(accountCapsule.getAssetIssuedName().toByteArray());
+
+      AssetIssueCapsule assetIssueCapsule;
+
+      if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+        AssetIssueStore assetIssueStore = dbManager.getAssetIssueStore();
+        assetIssueCapsule = assetIssueStore.get(accountCapsule.getAssetIssuedName().toByteArray());
+      } else {
+        AssetIssueStore assetIssueStore = dbManager.getAssetIssueV2Store();
+        assetIssueCapsule = assetIssueStore.get(accountCapsule.getAssetIssuedID().toByteArray());
+      }
 
       assetIssueCapsule.setFreeAssetNetLimit(newLimit);
       assetIssueCapsule.setPublicFreeAssetNetLimit(newPublicLimit);
@@ -96,12 +103,25 @@ public class UpdateAssetActuator extends AbstractActuator {
       throw new ContractValidateException("Account has not existed");
     }
 
-    if (account.getAssetIssuedName().isEmpty()) {
-      throw new ContractValidateException("Account has not issue any asset");
-    }
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      if (account.getAssetIssuedName().isEmpty()) {
+        throw new ContractValidateException("Account has not issue any asset");
+      }
 
-    assert (dbManager.getAssetIssueStoreFinal().get(account.getAssetIssuedName().toByteArray())
-        != null);
+      if (dbManager.getAssetIssueStore().get(account.getAssetIssuedName().toByteArray())
+          == null) {
+        throw new ContractValidateException("Asset not exists in AssetIssueStore");
+      }
+    } else {
+      if (account.getAssetIssuedID().isEmpty()) {
+        throw new ContractValidateException("Account has not issue any asset");
+      }
+
+      if (dbManager.getAssetIssueV2Store().get(account.getAssetIssuedID().toByteArray())
+          == null) {
+        throw new ContractValidateException("Asset not exists  in AssetIssueV2Store");
+      }
+    }
 
     if (!TransactionUtil.validUrl(newUrl.toByteArray())) {
       throw new ContractValidateException("Invalid url");

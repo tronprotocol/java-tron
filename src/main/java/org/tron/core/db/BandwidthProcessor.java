@@ -312,7 +312,9 @@ public class BandwidthProcessor extends ResourceProcessor {
     long netWeight = frozeBalance / 1000_000L;
     long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
-    assert totalNetWeight > 0;
+    if(totalNetWeight == 0){
+      return 0;
+    }
     return (long) (netWeight * ((double) totalNetLimit / totalNetWeight));
   }
 

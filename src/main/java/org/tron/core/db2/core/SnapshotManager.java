@@ -47,6 +47,8 @@ public class SnapshotManager implements RevokingDatabase {
   private AtomicInteger maxSize = new AtomicInteger(DEFAULT_STACK_MAX_SIZE);
 
   private boolean disabled = true;
+  // for test
+  @Getter
   private int activeSession = 0;
   private boolean unChecked = true;
 

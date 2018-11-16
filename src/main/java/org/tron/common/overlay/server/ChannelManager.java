@@ -58,7 +58,9 @@ public class ChannelManager {
   private ChannelManager(final PeerServer peerServer, final PeerClient peerClient) {
     this.peerServer = peerServer;
     this.peerClient = peerClient;
+  }
 
+  public void init() {
     if (this.args.getNodeListenPort() > 0) {
       new Thread(() -> peerServer.start(Args.getInstance().getNodeListenPort()),
           "PeerServerThread").start();
