@@ -925,7 +925,7 @@ public class Program {
   }
 
   public DataWord getTokenBalance(DataWord address, DataWord tokenId) {
-    long ret = getContractState().getTokenBalance(convertToTronAddress(address.getLast20Bytes()), tokenId.getData());
+    long ret = getContractState().getTokenBalance(convertToTronAddress(address.getLast20Bytes()), tokenId.shortHexWithoutZeroX().getBytes());
     return ret == 0 ? new DataWord(0) : new DataWord(ret);
   }
 

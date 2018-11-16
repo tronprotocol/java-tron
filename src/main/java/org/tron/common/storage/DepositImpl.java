@@ -436,6 +436,15 @@ public class DepositImpl implements Deposit {
     return accountCapsule.getBalance();
   }
 
+  /**
+   *
+   * @param address address
+   * @param tokenId
+   *
+   * tokenIdstr in assetV2map is a string like "1000001". So before using this function, we need to do some conversion.
+   * usually we will use a DataWord as input. so the byte tokenId should be like DataWord.shortHexWithoutZeroX().getbytes().
+   * @return
+   */
   @Override
   public synchronized long getTokenBalance(byte[] address, byte[] tokenId){
     AccountCapsule accountCapsule = getAccount(address);
