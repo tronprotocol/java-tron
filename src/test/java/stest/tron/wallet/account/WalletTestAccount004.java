@@ -102,7 +102,7 @@ public class WalletTestAccount004 {
     //Assert.assertFalse(freezeBalance(fromAddress, 1000000L, 2L, testKey002));
     //Unfreeze balance failed when 3 days hasn't come.
     Assert.assertFalse(PublicMethed.unFreezeBalance(account004AddressForFreeze,
-        account004KeyForFreeze,0,blockingStubFull));
+        account004KeyForFreeze,0,null,blockingStubFull));
     //Freeze failed when freeze amount is 0.
     Assert.assertFalse(freezeBalance(account004AddressForFreeze, 0L, 3L,
         account004KeyForFreeze));
@@ -126,7 +126,7 @@ public class WalletTestAccount004 {
 
 
     Assert.assertFalse(PublicMethed.unFreezeBalance(noFrozenAddress, noFrozenBalanceTestKey,1,
-        blockingStubFull));
+        null, blockingStubFull));
     logger.info("Test unfreezebalance");
 
 
@@ -139,7 +139,7 @@ public class WalletTestAccount004 {
     account004 = PublicMethed.queryAccount(account004Address, blockingStubFull);
     Assert.assertTrue(account004.getBalance() == 0);
     Assert.assertTrue(PublicMethed.unFreezeBalance(account004Address,account004Key,0,
-        blockingStubFull));
+        null,blockingStubFull));
     account004 = PublicMethed.queryAccount(account004Address, blockingStubFull);
     Assert.assertTrue(account004.getBalance() == freezeAmount);
 
@@ -149,9 +149,9 @@ public class WalletTestAccount004 {
     Assert.assertTrue(account004.getBalance() == 0);
 
     Assert.assertFalse(PublicMethed.unFreezeBalance(account004Address,account004Key,0,
-        blockingStubFull));
+        null,blockingStubFull));
     Assert.assertTrue(PublicMethed.unFreezeBalance(account004Address,account004Key,1,
-        blockingStubFull));
+        null,blockingStubFull));
     account004 = PublicMethed.queryAccount(account004Address, blockingStubFull);
     Assert.assertTrue(account004.getBalance() == freezeAmount);
 

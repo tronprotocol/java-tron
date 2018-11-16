@@ -718,7 +718,11 @@ public class Wallet {
     return builder.build();
   }
 
-  public AssetIssueList getAssetIssueByName(ByteString assetName) {
+  public AssetIssueContract getAssetIssueByName(String assetName) {
+    return getAssetIssueById(assetName);
+  }
+
+  public AssetIssueList getAssetIssueListByName(ByteString assetName) {
     List<AssetIssueCapsule> assetIssueCapsuleList =
         dbManager.getAssetIssueStoreFinal().getAllAssetIssues();
 
@@ -732,12 +736,12 @@ public class Wallet {
     return builder.build();
   }
 
-  public AssetIssueContract getAssetIssueById(Long assetId) {
+  public AssetIssueContract getAssetIssueById(String assetId) {
     if (assetId == null) {
       return null;
     }
     AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStoreFinal()
-        .get(ByteArray.fromLong(assetId));
+        .get(ByteArray.fromString(assetId));
     return assetIssueCapsule != null ? assetIssueCapsule.getInstance() : null;
   }
 

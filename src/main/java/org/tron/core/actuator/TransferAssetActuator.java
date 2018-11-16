@@ -148,7 +148,7 @@ public class TransferAssetActuator extends AbstractActuator {
     if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       asset = ownerAccount.getAssetMap();
     } else {
-      asset = ownerAccount.getAssetV2Map();
+      asset = ownerAccount.getAssetMapV2();
     }
     if (asset.isEmpty()) {
       throw new ContractValidateException("Owner no asset!");
@@ -167,7 +167,7 @@ public class TransferAssetActuator extends AbstractActuator {
       if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
         assetBalance = toAccount.getAssetMap().get(ByteArray.toStr(assetName));
       } else {
-        assetBalance = toAccount.getAssetV2Map().get(ByteArray.toStr(assetName));
+        assetBalance = toAccount.getAssetMapV2().get(ByteArray.toStr(assetName));
       }
       if (assetBalance != null) {
         try {
@@ -230,7 +230,7 @@ public class TransferAssetActuator extends AbstractActuator {
     if (deposit.getDbManager().getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       asset = ownerAccount.getAssetMap();
     } else {
-      asset = ownerAccount.getAssetV2Map();
+      asset = ownerAccount.getAssetMapV2();
     }
     if (asset.isEmpty()) {
       throw new ContractValidateException("Owner no asset!");
@@ -249,7 +249,7 @@ public class TransferAssetActuator extends AbstractActuator {
       if (deposit.getDbManager().getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
         assetBalance = toAccount.getAssetMap().get(ByteArray.toStr(tokenIdWithoutLeadingZero));
       } else {
-        assetBalance = toAccount.getAssetV2Map().get(ByteArray.toStr(tokenIdWithoutLeadingZero));
+        assetBalance = toAccount.getAssetMapV2().get(ByteArray.toStr(tokenIdWithoutLeadingZero));
       }
       if (assetBalance != null) {
         try {

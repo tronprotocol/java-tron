@@ -27,6 +27,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.utils.TransactionUtil;
+import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -63,14 +64,11 @@ public class AssetIssueActuator extends AbstractActuator {
       long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
       tokenIdNum++;
       assetIssueCapsule.setId(tokenIdNum);
+      assetIssueCapsule.setPrecision(assetIssueContract.getPrecision());
       dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenIdNum);
 
-      if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-        dbManager.getAssetIssueStore()
-            .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
-      }
-      dbManager.getAssetIssueV2Store()
-          .put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
+      dbManager.putAssetIssue(assetIssueCapsule);
+
 
       dbManager.adjustBalance(ownerAddress, -fee);
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().getAddress().toByteArray(),
@@ -95,9 +93,9 @@ public class AssetIssueActuator extends AbstractActuator {
       }
 
       if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-        accountCapsule.setAssetIssuedName(assetIssueCapsule.createDbKey());
         accountCapsule.addAsset(assetIssueCapsule.createDbKey(), remainSupply);
       }
+      accountCapsule.setAssetIssuedName(assetIssueCapsule.createDbKey());
       accountCapsule.setAssetIssuedID(assetIssueCapsule.createDbV2Key());
       accountCapsule.addAssetV2(assetIssueCapsule.createDbV2Key(), remainSupply);
       accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
@@ -151,6 +149,24 @@ public class AssetIssueActuator extends AbstractActuator {
 
     if (!TransactionUtil.validAssetName(assetIssueContract.getName().toByteArray())) {
       throw new ContractValidateException("Invalid assetName");
+    }
+
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() != 0) {
+      String name = assetIssueContract.getName().toStringUtf8().toLowerCase();
+      if (name.equals("trx")) {
+        throw new ContractValidateException("assetName can't be trx");
+      }
+    }
+
+    int precision = assetIssueContract.getPrecision();
+    if (!dbManager.getForkController().pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
+      if (precision != 0) {
+        throw new ContractValidateException("Setting accuracy is not allowed");
+      }
+    }
+
+    if (precision < 0 || precision > 6) {
+      throw new ContractValidateException("precision cannot exceed 6");
     }
 
     if ((!assetIssueContract.getAbbr().isEmpty()) && !TransactionUtil

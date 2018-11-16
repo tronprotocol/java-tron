@@ -292,6 +292,18 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
+  public void clearLatestAssetOperationTimeV2() {
+    this.account = this.account.toBuilder()
+        .clearLatestAssetOperationTimeV2()
+        .build();
+  }
+
+  public void clearFreeAssetNetUsageV2() {
+    this.account = this.account.toBuilder()
+        .clearFreeAssetNetUsageV2()
+        .build();
+  }
+
   public void clearVotes() {
     this.account = this.account.toBuilder()
         .clearVotes()
@@ -500,15 +512,12 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   /**
    * add asset.
    */
-  public boolean addAssetV2Map(Map<String, Long> assetMap) {
+  public boolean addAssetMapV2(Map<String, Long> assetMap) {
     this.account = this.account.toBuilder().putAllAssetV2(assetMap).build();
     return true;
   }
 
 
-  /**
-   * add asset.
-   */
   public Map<String, Long> getAssetMap() {
     Map<String, Long> assetMap = this.account.getAssetMap();
     if (assetMap.isEmpty()) {
@@ -518,7 +527,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return assetMap;
   }
 
-  public Map<String, Long> getAssetV2Map() {
+  public Map<String, Long> getAssetMapV2() {
     Map<String, Long> assetMap = this.account.getAssetV2Map();
     if (assetMap.isEmpty()) {
       assetMap = Maps.newHashMap();
@@ -527,6 +536,18 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return assetMap;
   }
 
+  public boolean addAllLatestAssetOperationTimeV2(Map<String, Long> map) {
+    this.account = this.account.toBuilder().putAllLatestAssetOperationTimeV2(map).build();
+    return true;
+  }
+
+  public Map<String, Long> getLatestAssetOperationTimeMap() {
+    return this.account.getLatestAssetOperationTimeMap();
+  }
+
+  public Map<String, Long> getLatestAssetOperationTimeMapV2() {
+    return this.account.getLatestAssetOperationTimeV2Map();
+  }
 
   public long getLatestAssetOperationTime(String assetName) {
     return this.account.getLatestAssetOperationTimeOrDefault(assetName, 0);
@@ -540,7 +561,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = this.account.toBuilder().putLatestAssetOperationTime(key, value).build();
   }
 
-  public void putLatestAssetOperationTimeV2Map(String key, Long value) {
+  public void putLatestAssetOperationTimeMapV2(String key, Long value) {
     this.account = this.account.toBuilder().putLatestAssetOperationTimeV2(key, value).build();
   }
 
@@ -728,6 +749,12 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   public void setFreeNetUsage(long freeNetUsage) {
     this.account = this.account.toBuilder()
         .setFreeNetUsage(freeNetUsage).build();
+  }
+
+
+  public boolean addAllFreeAssetNetUsageV2(Map<String, Long> map) {
+    this.account = this.account.toBuilder().putAllFreeAssetNetUsageV2(map).build();
+    return true;
   }
 
   public long getFreeAssetNetUsage(String assetName) {

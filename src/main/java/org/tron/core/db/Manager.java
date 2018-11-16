@@ -44,6 +44,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
@@ -1475,7 +1476,15 @@ public class Manager {
     } else {
       return getAssetIssueV2Store();
     }
+  }
 
+  public void putAssetIssue(AssetIssueCapsule assetIssueCapsule) {
+    if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      getAssetIssueStore()
+          .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+    }
+    getAssetIssueV2Store()
+        .put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
   }
 
 

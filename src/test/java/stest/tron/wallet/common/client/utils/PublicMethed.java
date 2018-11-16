@@ -6,6 +6,7 @@ import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -524,7 +525,7 @@ public class PublicMethed {
 
 
   public static Boolean unFreezeBalance(byte[] address, String priKey, int resourceCode,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
+      byte[] receiverAddress, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -538,6 +539,10 @@ public class PublicMethed {
         .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
     builder.setOwnerAddress(byteAddreess).setResourceValue(resourceCode);
+    if (receiverAddress != null) {
+      ByteString receiverAddressBytes = ByteString.copyFrom(receiverAddress);
+      builder.setReceiverAddress(receiverAddressBytes);
+    }
 
     Contract.UnfreezeBalanceContract contract = builder.build();
     Transaction transaction =  blockingStubFull.unfreezeBalance(contract);

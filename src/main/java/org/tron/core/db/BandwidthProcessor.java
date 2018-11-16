@@ -287,7 +287,7 @@ public class BandwidthProcessor extends ResourceProcessor {
           latestAssetOperationTime);
       accountCapsule.putFreeAssetNetUsage(assetNameString, newFreeAssetNetUsage);
     } else {
-      accountCapsule.putLatestAssetOperationTimeV2Map(tokenID,
+      accountCapsule.putLatestAssetOperationTimeMapV2(tokenID,
           latestAssetOperationTime);
       accountCapsule.putFreeAssetNetUsageV2(tokenID, newFreeAssetNetUsage);
     }

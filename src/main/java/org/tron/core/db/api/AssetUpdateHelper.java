@@ -31,8 +31,8 @@ public class AssetUpdateHelper {
     updateExchange();
     updateAccount();
     finish();
-    logger.info("Complete the asset update,Total time：{} milliseconds",
-        System.currentTimeMillis() - start);
+    logger.info(
+        "Complete the asset update,Total time：{} milliseconds", System.currentTimeMillis() - start);
   }
 
   public void init() {
@@ -59,8 +59,8 @@ public class AssetUpdateHelper {
       dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
       dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
 
-      assetNameToIdMap
-          .put(ByteArray.toStr(assetIssueCapsule.createDbKey()), assetIssueCapsule.createDbV2Key());
+      assetNameToIdMap.put(
+          ByteArray.toStr(assetIssueCapsule.createDbKey()), assetIssueCapsule.createDbV2Key());
     }
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenIdNum);
 
@@ -97,19 +97,38 @@ public class AssetUpdateHelper {
 
       accountCapsule.clearAssetV2();
       if (accountCapsule.getAssetMap().size() != 0) {
-        HashMap<String, Long> assetV2Map = new HashMap<>();
+        HashMap<String, Long> map = new HashMap<>();
         for (Map.Entry<String, Long> entry : accountCapsule.getAssetMap().entrySet()) {
-          assetV2Map.put(ByteArray.toStr(assetNameToIdMap.get(entry.getKey())),
-              entry.getValue());
+          map.put(ByteArray.toStr(assetNameToIdMap.get(entry.getKey())), entry.getValue());
         }
 
-        accountCapsule.addAssetV2Map(assetV2Map);
+        accountCapsule.addAssetMapV2(map);
+      }
+
+      accountCapsule.clearFreeAssetNetUsageV2();
+      if (accountCapsule.getAllFreeAssetNetUsage().size() != 0) {
+        HashMap<String, Long> map = new HashMap<>();
+        for (Map.Entry<String, Long> entry :
+            accountCapsule.getAllFreeAssetNetUsage().entrySet()) {
+          map.put(ByteArray.toStr(assetNameToIdMap.get(entry.getKey())), entry.getValue());
+        }
+        accountCapsule.addAllFreeAssetNetUsageV2(map);
+      }
+
+      accountCapsule.clearLatestAssetOperationTimeV2();
+      if (accountCapsule.getLatestAssetOperationTimeMap().size() != 0) {
+        HashMap<String, Long> map = new HashMap<>();
+        for (Map.Entry<String, Long> entry :
+            accountCapsule.getLatestAssetOperationTimeMap().entrySet()) {
+          map.put(ByteArray.toStr(assetNameToIdMap.get(entry.getKey())), entry.getValue());
+        }
+        accountCapsule.addAllLatestAssetOperationTimeV2(map);
       }
 
       if (!accountCapsule.getAssetIssuedName().isEmpty()) {
         accountCapsule.setAssetIssuedID(
-            assetNameToIdMap
-                .get(ByteArray.toStr(accountCapsule.getAssetIssuedName().toByteArray())));
+            assetNameToIdMap.get(
+                ByteArray.toStr(accountCapsule.getAssetIssuedName().toByteArray())));
       }
 
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -121,7 +140,6 @@ public class AssetUpdateHelper {
     }
 
     logger.info("Complete the account store update,Total assets：{}", count);
-
   }
 
   public void finish() {
