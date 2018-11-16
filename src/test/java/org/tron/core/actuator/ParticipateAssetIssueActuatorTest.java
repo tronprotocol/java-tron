@@ -1600,4 +1600,65 @@ public class ParticipateAssetIssueActuatorTest {
   }
 
 
+  /**
+   * SameTokenName close, invalid oweraddress
+   */
+  @Test
+  public void sameTokenNameCloseInvalidOwerAddressTest() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    Any any = Any.pack(
+            Contract.ParticipateAssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString("12131312")))
+                    .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
+                    .setAssetName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
+                    .setAmount(1000)
+                    .build());
+
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(any, dbManager);
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      System.out.println("e:"+e.getMessage());
+      Assert.assertTrue(("Invalid ownerAddress").equals(e.getMessage()));
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  /**
+   * SameTokenName close, invalid Invalid toAddress
+   */
+  @Test
+  public void sameTokenNameCloseInvalidToAddressTest() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    Any any = Any.pack(
+            Contract.ParticipateAssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+                    .setToAddress(ByteString.copyFrom(ByteArray.fromHexString("12313123")))
+                    .setAssetName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
+                    .setAmount(1000)
+                    .build());
+
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(any, dbManager);
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      System.out.println("e:"+e.getMessage());
+      Assert.assertTrue(("Invalid toAddress").equals(e.getMessage()));
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+
 }
