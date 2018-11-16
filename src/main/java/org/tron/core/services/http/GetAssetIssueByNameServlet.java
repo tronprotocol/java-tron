@@ -20,7 +20,7 @@ public class GetAssetIssueByNameServlet extends HttpServlet {
   @Autowired
   private Wallet wallet;
 
-  protected boolean inputValid(String input) {
+  protected boolean tokenValid(String input) {
     byte[] tokenID = input.getBytes();
     if (!TransactionUtil.isNumber(tokenID)) {
       return false;
@@ -32,13 +32,12 @@ public class GetAssetIssueByNameServlet extends HttpServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       String input = request.getParameter("value");
-      if (!inputValid(input)) {
+      if (!tokenValid(input)) {
         response.getWriter().println("{}");
         return;
       }
 
-      AssetIssueContract reply = wallet
-          .getAssetIssueByName(Long.parseLong(input));
+      AssetIssueContract reply = wallet.getAssetIssueByName(input);
 
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply));
@@ -61,13 +60,12 @@ public class GetAssetIssueByNameServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       JSONObject jsonObject = JSONObject.parseObject(input);
       String id = jsonObject.getString("value");
-      if (!inputValid(id)) {
+      if (!tokenValid(id)) {
         response.getWriter().println("{}");
         return;
       }
 
-      AssetIssueContract reply =
-          wallet.getAssetIssueByName(Long.parseLong(id));
+      AssetIssueContract reply = wallet.getAssetIssueByName(id);
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply));
       } else {

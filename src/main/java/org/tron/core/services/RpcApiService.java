@@ -1212,7 +1212,7 @@ public class RpcApiService implements Service {
       ByteString assetId = request.getValue();
 
       if (assetId != null) {
-        responseObserver.onNext(wallet.getAssetIssueById(Long.parseLong(assetId.toStringUtf8())));
+        responseObserver.onNext(wallet.getAssetIssueById(assetId.toStringUtf8()));
       } else {
         responseObserver.onNext(null);
       }
