@@ -72,6 +72,16 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
     return Long.parseLong(this.assetIssueContract.getId());
   }
 
+  public void setPrecision(int precision) {
+    this.assetIssueContract = this.assetIssueContract.toBuilder()
+        .setPrecision(precision)
+        .build();
+  }
+
+  public int getPrecision() {
+    return this.assetIssueContract.getPrecision();
+  }
+
   public void setOrder(long order) {
     this.assetIssueContract = this.assetIssueContract.toBuilder()
         .setOrder(order)
