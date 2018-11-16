@@ -107,10 +107,11 @@ message AssetIssueContract {
   int64 total_supply = 4;
   repeated FrozenSupply frozen_supply = 5;
   int32 trx_num = 6;
+  int32 precision = 7;
   int32 num = 8;
   int64 start_time = 9;
   int64 end_time = 10;
-  int64 order = 11; // usless
+  int64 order = 11; // useless
   int32 vote_score = 16;
   bytes description = 20;
   bytes url = 21;
