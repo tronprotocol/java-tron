@@ -102,14 +102,14 @@ public class AssetUpdateHelper {
           map.put(ByteArray.toStr(assetNameToIdMap.get(entry.getKey())), entry.getValue());
         }
 
-        accountCapsule.addAssetV2Map(map);
+        accountCapsule.addAssetMapV2(map);
       }
 
       accountCapsule.clearFreeAssetNetUsageV2();
-      if (accountCapsule.getFreeAssetNetUsageMap().size() != 0) {
+      if (accountCapsule.getAllFreeAssetNetUsage().size() != 0) {
         HashMap<String, Long> map = new HashMap<>();
         for (Map.Entry<String, Long> entry :
-            accountCapsule.getFreeAssetNetUsageMap().entrySet()) {
+            accountCapsule.getAllFreeAssetNetUsage().entrySet()) {
           map.put(ByteArray.toStr(assetNameToIdMap.get(entry.getKey())), entry.getValue());
         }
         accountCapsule.addAllFreeAssetNetUsageV2(map);

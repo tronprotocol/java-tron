@@ -308,7 +308,7 @@ public class ExchangeInjectActuatorTest {
       Assert.assertEquals(600000000L, exchangeCapsuleV2.getSecondTokenBalance());
 
       accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-      Map<String, Long> assetV2Map = accountCapsule.getAssetV2Map();
+      Map<String, Long> assetV2Map = accountCapsule.getAssetMapV2();
       Assert.assertEquals(10000_000000L, accountCapsule.getBalance());
       Assert.assertEquals(0L, assetV2Map.get(firstTokenId).longValue());
       Assert.assertEquals(0L, assetV2Map.get(secondTokenId).longValue());
@@ -437,7 +437,7 @@ public class ExchangeInjectActuatorTest {
       Assert.assertEquals(11_000_000L, exchangeV2Capsule.getSecondTokenBalance());
 
       accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-      Map<String, Long> assetV2Map = accountCapsule.getAssetV2Map();
+      Map<String, Long> assetV2Map = accountCapsule.getAssetMapV2();
       Assert.assertEquals(0L, accountCapsule.getBalance());
       Assert.assertEquals(3_000_000L, assetV2Map.get(secondTokenId).longValue());
 
