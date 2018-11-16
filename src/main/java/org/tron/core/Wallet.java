@@ -648,11 +648,23 @@ public class Wallet {
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
-    accountCapsule.getAllFreeAssetNetUsage().keySet().forEach(asset -> {
-      byte[] key = ByteArray.fromString(asset);
-      assetNetLimitMap
-          .put(asset, dbManager.getAssetIssueStoreFinal().get(key).getFreeAssetNetLimit());
-    });
+    Map<String, Long> allFreeAssetNetUsage;
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsage();
+      allFreeAssetNetUsage.keySet().forEach(asset -> {
+        byte[] key = ByteArray.fromString(asset);
+        assetNetLimitMap
+            .put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
+      });
+    } else {
+      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsageV2();
+      allFreeAssetNetUsage.keySet().forEach(asset -> {
+        byte[] key = ByteArray.fromString(asset);
+        assetNetLimitMap
+            .put(asset, dbManager.getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
+      });
+    }
+
 
     builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
         .setFreeNetLimit(freeNetLimit)
@@ -660,7 +672,7 @@ public class Wallet {
         .setNetLimit(netLimit)
         .setTotalNetLimit(totalNetLimit)
         .setTotalNetWeight(totalNetWeight)
-        .putAllAssetNetUsed(accountCapsule.getAllFreeAssetNetUsage())
+        .putAllAssetNetUsed(allFreeAssetNetUsage)
         .putAllAssetNetLimit(assetNetLimitMap);
     return builder.build();
   }
@@ -695,11 +707,23 @@ public class Wallet {
     long storageUsage = accountCapsule.getAccountResource().getStorageUsage();
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
-    accountCapsule.getAllFreeAssetNetUsage().keySet().forEach(asset -> {
-      byte[] key = ByteArray.fromString(asset);
-      assetNetLimitMap
-          .put(asset, dbManager.getAssetIssueStoreFinal().get(key).getFreeAssetNetLimit());
-    });
+    Map<String, Long> allFreeAssetNetUsage;
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsage();
+      allFreeAssetNetUsage.keySet().forEach(asset -> {
+        byte[] key = ByteArray.fromString(asset);
+        assetNetLimitMap
+            .put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
+      });
+    } else {
+      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsageV2();
+      allFreeAssetNetUsage.keySet().forEach(asset -> {
+        byte[] key = ByteArray.fromString(asset);
+        assetNetLimitMap
+            .put(asset, dbManager.getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
+      });
+    }
+
 
     builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
         .setFreeNetLimit(freeNetLimit)
@@ -713,7 +737,7 @@ public class Wallet {
         .setTotalEnergyWeight(totalEnergyWeight)
         .setStorageLimit(storageLimit)
         .setStorageUsed(storageUsage)
-        .putAllAssetNetUsed(accountCapsule.getAllFreeAssetNetUsage())
+        .putAllAssetNetUsed(allFreeAssetNetUsage)
         .putAllAssetNetLimit(assetNetLimitMap);
     return builder.build();
   }
@@ -740,7 +764,7 @@ public class Wallet {
     if (assetId == null) {
       return null;
     }
-    AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStoreFinal()
+    AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueV2Store()
         .get(ByteArray.fromString(assetId));
     return assetIssueCapsule != null ? assetIssueCapsule.getInstance() : null;
   }
