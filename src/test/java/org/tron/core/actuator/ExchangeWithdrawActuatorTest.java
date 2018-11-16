@@ -319,6 +319,8 @@ public class ExchangeWithdrawActuatorTest {
       Assert.assertEquals(firstTokenQuant, assetMap.get(firstTokenId).longValue());
       Assert.assertEquals(secondTokenQuant, assetMap.get(secondTokenId).longValue());
 
+      Assert.assertEquals(secondTokenQuant, ret.getExchangeWithdrawAnotherAmount());
+
     } catch (ContractValidateException e) {
       logger.info(e.getMessage());
       Assert.assertFalse(e instanceof ContractValidateException);
