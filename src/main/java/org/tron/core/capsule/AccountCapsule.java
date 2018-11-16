@@ -324,7 +324,6 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   //tp:Tron_Power
   public long getTronPower() {
     long tp = 0;
-    //long now = Time.getCurrentMillis();
     for (int i = 0; i < account.getFrozenCount(); ++i) {
       tp += account.getFrozen(i).getFrozenBalance();
     }
@@ -483,10 +482,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   public boolean addAsset(byte[] key, long value) {
     Map<String, Long> assetMap = this.account.getAssetMap();
     String nameKey = ByteArray.toStr(key);
-    if (!assetMap.isEmpty()) {
-      if (assetMap.containsKey(nameKey)) {
-        return false;
-      }
+    if (!assetMap.isEmpty() && assetMap.containsKey(nameKey)) {
+      return false;
     }
 
     this.account = this.account.toBuilder().putAsset(nameKey, value).build();
@@ -497,10 +494,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   public boolean addAssetV2(byte[] key, long value) {
     String tokenID = ByteArray.toStr(key);
     Map<String, Long> assetV2Map = this.account.getAssetV2Map();
-    if (!assetV2Map.isEmpty()) {
-      if (assetV2Map.containsKey(tokenID)) {
+    if (!assetV2Map.isEmpty() && assetV2Map.containsKey(tokenID)) {
         return false;
-      }
     }
 
     this.account = this.account.toBuilder()
