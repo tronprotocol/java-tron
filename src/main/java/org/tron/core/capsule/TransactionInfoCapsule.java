@@ -1,7 +1,5 @@
 package org.tron.core.capsule;
 
-import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
-
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
@@ -167,6 +165,7 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
     builder.setContractAddress(ContractAddress);
     builder.setUnfreezeAmount(programResult.getRet().getUnfreezeAmount());
     builder.setWithdrawAmount(programResult.getRet().getWithdrawAmount());
+    builder.setExchangeReceivedAmount(programResult.getRet().getExchangeReceivedAmount());
 
     List<Log> logList = new ArrayList<>();
     programResult.getLogInfoList().forEach(
