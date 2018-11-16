@@ -18,6 +18,8 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
@@ -54,6 +56,10 @@ public class WalletTestAccount004 {
   private String searchFullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
 
+
+
+  Long freezeAmount = 2000000L;
+
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
@@ -78,38 +84,76 @@ public class WalletTestAccount004 {
 
   @Test(enabled = true)
   public void testFreezeBalance() {
-    //Freeze failed when freeze amount is large than currently balance.
-    Assert.assertFalse(freezeBalance(fromAddress, 9000000000000000000L, 3L, testKey002));
-    //Freeze failed when freeze amount less than 1Trx
-    Assert.assertFalse(freezeBalance(fromAddress, 999999L, 3L, testKey002));
-    //Freeze failed when freeze duration isn't 3 days.
-    Assert.assertFalse(freezeBalance(fromAddress, 1000000L, 2L, testKey002));
-    //Unfreeze balance failed when 3 days hasn't come.
-    Assert.assertFalse(unFreezeBalance(fromAddress, testKey002));
-    //Freeze failed when freeze amount is 0.
-    Assert.assertFalse(freezeBalance(fromAddress, 0L, 3L, testKey002));
-    //Freeze failed when freeze amount is -1.
-    Assert.assertFalse(freezeBalance(fromAddress, -1L, 3L, testKey002));
-    //Freeze failed when freeze duration is -1.
-    Assert.assertFalse(freezeBalance(fromAddress, 1000000L, -1L, testKey002));
-    //Freeze failed when freeze duration is 0.
-    Assert.assertFalse(freezeBalance(fromAddress, 1000000L, 0L, testKey002));
 
-    try {
-      Thread.sleep(16000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-    //Freeze balance success.
-    Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 1000000L,
-        3L, testKey002,blockingStubFull));
+    ECKey ecKey2 = new ECKey(Utils.getRandom());
+    byte[] account004AddressForFreeze = ecKey2.getAddress();
+    String account004KeyForFreeze = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+
+
+    Assert.assertTrue(PublicMethed.sendcoin(account004AddressForFreeze,10000000,
+        fromAddress,testKey002,blockingStubFull));
+    //Freeze failed when freeze amount is large than currently balance.
+    Assert.assertFalse(freezeBalance(account004AddressForFreeze, 9000000000000000000L,
+        3L, account004KeyForFreeze));
+    //Freeze failed when freeze amount less than 1Trx
+    Assert.assertFalse(freezeBalance(account004AddressForFreeze, 999999L, 3L,
+        account004KeyForFreeze));
+    //Freeze failed when freeze duration isn't 3 days.
+    //Assert.assertFalse(freezeBalance(fromAddress, 1000000L, 2L, testKey002));
+    //Unfreeze balance failed when 3 days hasn't come.
+    Assert.assertFalse(PublicMethed.unFreezeBalance(account004AddressForFreeze,
+        account004KeyForFreeze,0,null,blockingStubFull));
+    //Freeze failed when freeze amount is 0.
+    Assert.assertFalse(freezeBalance(account004AddressForFreeze, 0L, 3L,
+        account004KeyForFreeze));
+    //Freeze failed when freeze amount is -1.
+    Assert.assertFalse(freezeBalance(account004AddressForFreeze, -1L, 3L,
+        account004KeyForFreeze));
+    //Freeze failed when freeze duration is -1.
+    //Assert.assertFalse(freezeBalance(fromAddress, 1000000L, -1L, testKey002));
+    //Freeze failed when freeze duration is 0.
+    //Assert.assertFalse(freezeBalance(fromAddress, 1000000L, 0L, testKey002));
+
   }
 
   @Test(enabled = true)
   public void testUnFreezeBalance() {
     //Unfreeze failed when there is no freeze balance.
-    unFreezeBalance(noFrozenAddress, noFrozenBalanceTestKey);
+    //Wait to be create account
+    ECKey ecKey1 = new ECKey(Utils.getRandom());
+    byte[] account004Address = ecKey1.getAddress();
+    String account004Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
+
+    Assert.assertFalse(PublicMethed.unFreezeBalance(noFrozenAddress, noFrozenBalanceTestKey,1,
+        null, blockingStubFull));
     logger.info("Test unfreezebalance");
+
+
+    Account account004;
+
+    Assert.assertTrue(PublicMethed.sendcoin(account004Address,freezeAmount,fromAddress,testKey002,
+        blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalance(account004Address,freezeAmount,0,
+        account004Key,blockingStubFull));
+    account004 = PublicMethed.queryAccount(account004Address, blockingStubFull);
+    Assert.assertTrue(account004.getBalance() == 0);
+    Assert.assertTrue(PublicMethed.unFreezeBalance(account004Address,account004Key,0,
+        null,blockingStubFull));
+    account004 = PublicMethed.queryAccount(account004Address, blockingStubFull);
+    Assert.assertTrue(account004.getBalance() == freezeAmount);
+
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(account004Address,freezeAmount,0,
+        1,account004Key,blockingStubFull));
+    account004 = PublicMethed.queryAccount(account004Address, blockingStubFull);
+    Assert.assertTrue(account004.getBalance() == 0);
+
+    Assert.assertFalse(PublicMethed.unFreezeBalance(account004Address,account004Key,0,
+        null,blockingStubFull));
+    Assert.assertTrue(PublicMethed.unFreezeBalance(account004Address,account004Key,1,
+        null,blockingStubFull));
+    account004 = PublicMethed.queryAccount(account004Address, blockingStubFull);
+    Assert.assertTrue(account004.getBalance() == freezeAmount);
 
   }
 

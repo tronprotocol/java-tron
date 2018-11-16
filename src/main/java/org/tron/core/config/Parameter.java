@@ -52,6 +52,7 @@ public interface Parameter {
   }
 
   interface DatabaseConstants {
+
     int TRANSACTIONS_COUNT_LIMIT_MAX = 1000;
     int ASSET_ISSUE_COUNT_LIMIT_MAX = 1000;
     int PROPOSAL_COUNT_LIMIT_MAX = 1000;
@@ -86,8 +87,9 @@ public interface Parameter {
     ALLOW_UPDATE_ACCOUNT_NAME, // 1, 14
     ALLOW_SAME_TOKEN_NAME, // 1, 15
     ALLOW_DELEGATE_RESOURCE, // 0, 16
-    ALLOW_ADAPTIVE_ENERGY, // 0, 17
-    TOTAL_ENERGY_LIMIT, // 50,000,000,000, 18
+    TOTAL_ENERGY_LIMIT, // 50,000,000,000, 17
+    ALLOW_TVM_TRANSFER_TRC10, // 1, 18
+//    ALLOW_ADAPTIVE_ENERGY,
 //    ONE_DAY_NET_LIMIT,
 //    MAX_FROZEN_TIME,
 //    MIN_FROZEN_TIME,
@@ -102,6 +104,7 @@ public interface Parameter {
   }
 
   interface ForkBlockVersionConsts {
+
     int START_NEW_TRANSACTION = 4;
     int ENERGY_LIMIT = 5;
   }

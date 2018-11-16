@@ -91,9 +91,9 @@ public class AssetIssueActuator extends AbstractActuator {
       }
 
       if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-        accountCapsule.setAssetIssuedName(assetIssueCapsule.createDbKey());
         accountCapsule.addAsset(assetIssueCapsule.createDbKey(), remainSupply);
       }
+      accountCapsule.setAssetIssuedName(assetIssueCapsule.createDbKey());
       accountCapsule.setAssetIssuedID(assetIssueCapsule.createDbV2Key());
       accountCapsule.addAssetV2(assetIssueCapsule.createDbV2Key(), remainSupply);
       accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
@@ -147,6 +147,13 @@ public class AssetIssueActuator extends AbstractActuator {
 
     if (!TransactionUtil.validAssetName(assetIssueContract.getName().toByteArray())) {
       throw new ContractValidateException("Invalid assetName");
+    }
+
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() != 0) {
+      String name = assetIssueContract.getName().toStringUtf8().toLowerCase();
+      if (name.equals("trx")) {
+        throw new ContractValidateException("assetName can't be trx");
+      }
     }
 
     if ((!assetIssueContract.getAbbr().isEmpty()) && !TransactionUtil

@@ -292,6 +292,18 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
+  public void clearLatestAssetOperationTimeV2() {
+    this.account = this.account.toBuilder()
+        .clearLatestAssetOperationTimeV2()
+        .build();
+  }
+
+  public void clearFreeAssetNetUsageV2() {
+    this.account = this.account.toBuilder()
+        .clearFreeAssetNetUsageV2()
+        .build();
+  }
+
   public void clearVotes() {
     this.account = this.account.toBuilder()
         .clearVotes()
@@ -506,9 +518,6 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
 
-  /**
-   * add asset.
-   */
   public Map<String, Long> getAssetMap() {
     Map<String, Long> assetMap = this.account.getAssetMap();
     if (assetMap.isEmpty()) {
@@ -527,6 +536,28 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return assetMap;
   }
 
+  public boolean addAllLatestAssetOperationTimeV2(Map<String, Long> map) {
+    this.account = this.account.toBuilder().putAllLatestAssetOperationTimeV2(map).build();
+    return true;
+  }
+
+  public Map<String, Long> getLatestAssetOperationTimeMap() {
+    Map<String, Long> map = this.account.getLatestAssetOperationTimeMap();
+    if (map.isEmpty()) {
+      map = Maps.newHashMap();
+    }
+
+    return map;
+  }
+
+  public Map<String, Long> getLatestAssetOperationTimeV2Map() {
+    Map<String, Long> map = this.account.getLatestAssetOperationTimeV2Map();
+    if (map.isEmpty()) {
+      map = Maps.newHashMap();
+    }
+
+    return map;
+  }
 
   public long getLatestAssetOperationTime(String assetName) {
     return this.account.getLatestAssetOperationTimeOrDefault(assetName, 0);
@@ -732,6 +763,30 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   public long getFreeAssetNetUsage(String assetName) {
     return this.account.getFreeAssetNetUsageOrDefault(assetName, 0);
+  }
+
+
+  public boolean addAllFreeAssetNetUsageV2(Map<String, Long> map) {
+    this.account = this.account.toBuilder().putAllFreeAssetNetUsageV2(map).build();
+    return true;
+  }
+
+  public Map<String, Long> getFreeAssetNetUsageMap() {
+    Map<String, Long> map = this.account.getFreeAssetNetUsageMap();
+    if (map.isEmpty()) {
+      map = Maps.newHashMap();
+    }
+
+    return map;
+  }
+
+  public Map<String, Long> getFreeAssetNetUsageV2Map() {
+    Map<String, Long> map = this.account.getFreeAssetNetUsageV2Map();
+    if (map.isEmpty()) {
+      map = Maps.newHashMap();
+    }
+
+    return map;
   }
 
   public long getFreeAssetNetUsageV2(String assetName) {

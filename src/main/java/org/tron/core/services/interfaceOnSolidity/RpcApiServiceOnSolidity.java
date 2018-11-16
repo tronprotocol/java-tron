@@ -20,6 +20,8 @@ import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockExtention;
 import org.tron.api.GrpcAPI.BlockReference;
 import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.DelegatedResourceList;
+import org.tron.api.GrpcAPI.DelegatedResourceMessage;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.PaginatedMessage;
@@ -306,6 +308,22 @@ public class RpcApiServiceOnSolidity implements Service {
       } else {
         responseObserver.onNext(null);
       }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getDelegatedResource(DelegatedResourceMessage request,
+        StreamObserver<DelegatedResourceList> responseObserver) {
+      responseObserver
+          .onNext(walletOnSolidity.getDelegatedResource(request.getFromAddress(), request.getToAddress()));
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getDelegatedResourceAccountIndex(BytesMessage request,
+        StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
+      responseObserver
+          .onNext(walletOnSolidity.getDelegatedResourceAccountIndex(request.getValue()));
       responseObserver.onCompleted();
     }
 

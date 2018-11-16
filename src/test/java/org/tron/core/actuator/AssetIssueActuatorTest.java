@@ -1635,6 +1635,36 @@ public class AssetIssueActuatorTest {
   }
 
   @Test
+  public void assetIssueTRXNameTest() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    Any contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+        .setName(ByteString.copyFromUtf8("TRX"))
+        .setTotalSupply(TOTAL_SUPPLY)
+        .setTrxNum(TRX_NUM).setNum(NUM)
+        .setStartTime(startTime)
+        .setEndTime(endTime)
+        .setDescription(ByteString.copyFromUtf8("description"))
+        .setUrl(ByteString.copyFromUtf8(URL))
+        .build());
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("assetName can't be trx", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(ASSET_NAME_SECOND));
+    }
+  }
+
+  @Test
   public void frozenListSizeTest() {
     this.dbManager.getDynamicPropertiesStore().saveMaxFrozenSupplyNumber(3);
     List<FrozenSupply> frozenList = new ArrayList();
