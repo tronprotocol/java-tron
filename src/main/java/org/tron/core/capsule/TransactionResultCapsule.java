@@ -66,6 +66,15 @@ public class TransactionResultCapsule implements ProtoCapsule<Transaction.Result
     return transactionResult.getWithdrawAmount();
   }
 
+  public void setExchangeReceivedAmount(long amount) {
+    this.transactionResult = this.transactionResult.toBuilder().setExchangeReceivedAmount(amount)
+        .build();
+  }
+
+  public long getExchangeReceivedAmount() {
+    return transactionResult.getExchangeReceivedAmount();
+  }
+
   public void setFee(long fee) {
     this.transactionResult = this.transactionResult.toBuilder().setFee(fee).build();
   }
