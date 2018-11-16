@@ -126,7 +126,7 @@ public class WalletTestAssetIssue010 {
     //Query the description and url,freeAssetNetLimit and publicFreeAssetNetLimit
     ByteString assetNameBs = ByteString.copyFrom(name.getBytes());
     GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
-    Contract.AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request).getAssetIssue(0);
+    Contract.AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request);
 
     Assert.assertTrue(
         ByteArray.toStr(assetIssueByName.getDescription().toByteArray()).equals(description));
@@ -144,7 +144,7 @@ public class WalletTestAssetIssue010 {
     // freeAssetNetLimit and publicFreeAssetNetLimit
     assetNameBs = ByteString.copyFrom(name.getBytes());
     request = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
-    assetIssueByName = blockingStubFull.getAssetIssueByName(request).getAssetIssue(0);
+    assetIssueByName = blockingStubFull.getAssetIssueByName(request);
 
     Assert.assertTrue(
         ByteArray.toStr(assetIssueByName.getDescription().toByteArray()).equals(updateDescription));

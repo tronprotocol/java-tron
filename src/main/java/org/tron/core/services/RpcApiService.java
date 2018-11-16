@@ -1172,11 +1172,17 @@ public class RpcApiService implements Service {
 
     @Override
     public void getAssetIssueByName(BytesMessage request,
+        StreamObserver<AssetIssueContract> responseObserver) {
+      getAssetIssueById(request, responseObserver);
+    }
+
+    @Override
+    public void getAssetIssueListByName(BytesMessage request,
         StreamObserver<AssetIssueList> responseObserver) {
       ByteString assetName = request.getValue();
 
       if (assetName != null) {
-        responseObserver.onNext(wallet.getAssetIssueByName(assetName));
+        responseObserver.onNext(wallet.getAssetIssueListByName(assetName));
       } else {
         responseObserver.onNext(null);
       }

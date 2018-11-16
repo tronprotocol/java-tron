@@ -718,7 +718,11 @@ public class Wallet {
     return builder.build();
   }
 
-  public AssetIssueList getAssetIssueByName(ByteString assetName) {
+  public AssetIssueContract getAssetIssueByName(Long assetName) {
+    return getAssetIssueById(assetName);
+  }
+
+  public AssetIssueList getAssetIssueListByName(ByteString assetName) {
     List<AssetIssueCapsule> assetIssueCapsuleList =
         dbManager.getAssetIssueStoreFinal().getAllAssetIssues();
 
