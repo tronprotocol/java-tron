@@ -295,6 +295,10 @@ public class Args {
 
   @Getter
   @Setter
+  private long allowSameTokenName; //committee parameter
+
+  @Getter
+  @Setter
   private long allowTvmTransferTrc10; //committee parameter
 
   @Getter
@@ -412,6 +416,7 @@ public class Args {
     INSTANCE.allowAdaptiveEnergy = 0;
     INSTANCE.allowTvmTransferTrc10 = 0;
     INSTANCE.allowDelegateResource = 0;
+    INSTANCE.allowSameTokenName = 0;
     INSTANCE.tcpNettyWorkThreadNum = 0;
     INSTANCE.udpNettyWorkThreadNum = 0;
     INSTANCE.p2pNodeId = "";
@@ -672,6 +677,10 @@ public class Args {
     INSTANCE.allowDelegateResource =
         config.hasPath("committee.allowDelegateResource") ? config
             .getInt("committee.allowDelegateResource") : 0;
+
+    INSTANCE.allowSameTokenName =
+        config.hasPath("committee.allowSameTokenName") ? config
+            .getInt("committee.allowSameTokenName") : 0;
 
     INSTANCE.allowTvmTransferTrc10 =
         config.hasPath("committee.allowTvmTransferTrc10") ? config
