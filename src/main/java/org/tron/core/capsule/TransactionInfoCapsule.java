@@ -166,6 +166,9 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
     builder.setUnfreezeAmount(programResult.getRet().getUnfreezeAmount());
     builder.setWithdrawAmount(programResult.getRet().getWithdrawAmount());
     builder.setExchangeReceivedAmount(programResult.getRet().getExchangeReceivedAmount());
+    builder.setExchangeInjectAnotherAmount(programResult.getRet().getExchangeInjectAnotherAmount());
+    builder.setExchangeWithdrawAnotherAmount(
+        programResult.getRet().getExchangeWithdrawAnotherAmount());
 
     List<Log> logList = new ArrayList<>();
     programResult.getLogInfoList().forEach(
