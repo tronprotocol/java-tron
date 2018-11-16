@@ -450,7 +450,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowSameTokenName();
     } catch (IllegalArgumentException e) {
-      this.saveAllowSameTokenName(0);
+      this.saveAllowSameTokenName(Args.getInstance().getAllowSameTokenName());
     }
 
     try {
