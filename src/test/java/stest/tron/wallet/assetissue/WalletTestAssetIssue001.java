@@ -56,6 +56,10 @@ public class WalletTestAssetIssue001 {
 
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
+  ECKey ecKey = new ECKey(Utils.getRandom());
+  byte[] noBandwitchAddress = ecKey.getAddress();
+  String noBandwitch = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+
 
 
   @BeforeSuite
@@ -66,22 +70,18 @@ public class WalletTestAssetIssue001 {
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
-
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-
-
-
   }
 
   @Test(enabled = true)
   public void testTransferAssetBandwitchDecreaseWithin10Second() {
     //get account
-    ECKey ecKey = new ECKey(Utils.getRandom());
-    byte[] noBandwitchAddress = ecKey.getAddress();
-    String noBandwitch = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+    ecKey = new ECKey(Utils.getRandom());
+    noBandwitchAddress = ecKey.getAddress();
+    noBandwitch = ByteArray.toHexString(ecKey.getPrivKeyBytes());
 
     PublicMethed.printAddress(noBandwitch);
 

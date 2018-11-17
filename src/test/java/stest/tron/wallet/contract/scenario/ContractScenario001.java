@@ -50,7 +50,6 @@ public class ContractScenario001 {
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
-    PublicMethed.printAddress(contract001Key);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
@@ -63,6 +62,11 @@ public class ContractScenario001 {
 
   @Test(enabled = true)
   public void deployAddressDemo() {
+    ecKey1 = new ECKey(Utils.getRandom());
+    contract001Address = ecKey1.getAddress();
+    contract001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    PublicMethed.printAddress(contract001Key);
+
     Assert.assertTrue(PublicMethed.sendcoin(contract001Address, 20000000L, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
