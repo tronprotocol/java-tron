@@ -21,7 +21,7 @@
        </package>
        <package name="stest.tron.wallet.block">
        </package>
-       <package name="stest.tron.wallet.exchangeAndToken">
+       <package name="stest.tron.wallet.exchangeandtoken">
        </package>
        <package name="stest.tron.wallet.committee">
        </package>
@@ -41,13 +41,12 @@
        </package>
        <package name="stest.tron.wallet.contract.scenario">
        </package>
-
      </packages>
 <!--      <classes>
-            <class name="stest.tron.wallet.exchange.WalletExchange001"/>
+            <class name="stest.tron.wallet.exchangeandtoken.WalletTestAssetIssue017"/>
           </classes>-->
 <!--               <packages>
-            <package name="stest.tron.wallet.account">
+            <package name="stest.tron.wallet.exchangeandtoken.WalletTestAssetIssue019">
             </package>
           </packages>-->
   </test>
