@@ -1104,6 +1104,51 @@ public class TransferAssetActuatorTest {
     }
   }
 
+  /**
+   * SameTokenName close, No owner account!
+   */
+  @Test
+  public void sameTokenNameCloseNoOwnerAccount() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    long id = dbManager.getDynamicPropertiesStore().getTokenIdNum() + 1;
+    dbManager.getDynamicPropertiesStore().saveTokenIdNum(id);
+    AssetIssueContract assetIssueContract =
+            AssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+                    .setName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
+                    .setId(Long.toString(id))
+                    .setTotalSupply(TOTAL_SUPPLY)
+                    .setTrxNum(TRX_NUM)
+                    .setNum(NUM)
+                    .setStartTime(START_TIME)
+                    .setEndTime(END_TIME)
+                    .setVoteScore(VOTE_SCORE)
+                    .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
+                    .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
+                    .build();
+    AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
+    dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+
+    dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS));
+
+    TransferAssetActuator actuator = new TransferAssetActuator(getContract(100L), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue("No owner account!".equals(e.getMessage()));
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+
+
+
+
   @Test
   /**
    * SameTokenName close,Asset name length must between 1 to 32 and can not contain space and other unreadable character, and can not contain chinese characters.
