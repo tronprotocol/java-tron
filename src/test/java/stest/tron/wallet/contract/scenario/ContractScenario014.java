@@ -60,8 +60,6 @@ public class ContractScenario014 {
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
-    PublicMethed.printAddress(contract014Key);
-    PublicMethed.printAddress(receiverKey);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
@@ -70,6 +68,17 @@ public class ContractScenario014 {
 
   @Test(enabled = true)
   public void testTripleTrigger() {
+    ecKey1 = new ECKey(Utils.getRandom());
+    contract014Address = ecKey1.getAddress();
+    contract014Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
+    ecKey2 = new ECKey(Utils.getRandom());
+    receiverAddress = ecKey2.getAddress();
+    receiverKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+    PublicMethed.printAddress(contract014Key);
+    PublicMethed.printAddress(receiverKey);
+
+
     Assert.assertTrue(PublicMethed.sendcoin(contract014Address,5000000000L,fromAddress,
         testKey002,blockingStubFull));
     //Deploy contract1, contract1 has a function to transaction 5 sun to target account

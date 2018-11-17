@@ -88,7 +88,7 @@ public class WalletTestAccount012 {
     beforeTime = System.currentTimeMillis();
   }
 
-  @Test(enabled = true,threadPoolSize = 20, invocationCount = 20)
+  @Test(enabled = false,threadPoolSize = 20, invocationCount = 20)
   public void storageAndCpu() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     byte[] asset011Address = ecKey1.getAddress();
