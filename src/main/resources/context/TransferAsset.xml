@@ -14,27 +14,26 @@
   <bean id="dispatcher" class="org.tron.stresstest.dispatch.strategy.Dispatcher">
     <property name="source">
       <list>
-        <ref bean="contract"/>
+        <ref bean="assetIssue"/>
       </list>
     </property>
   </bean>
 
   <bean id="level1Strategy" class="org.tron.stresstest.dispatch.strategy.Level1Strategy"/>
 
-  <bean id="contract" parent="level1Strategy">
-    <property name="name" value="contract"/>
+  <bean id="assetIssue" parent="level1Strategy">
+    <property name="name" value="assetIssue"/>
     <property name="begin" value="0"/>
     <property name="end" value="99"/>
     <property name="source">
       <list>
-        <ref bean="triggerFibonacciContractCreator"/>
-        <ref bean="niceTransferTransaction"/>
+        <ref bean="niceTransferAssetTransactionCreator"/>
       </list>
     </property>
   </bean>
 
-  <bean id="triggerFibonacciContractCreator" class="org.tron.stresstest.dispatch.creator.contract.TriggerFibonacciCreator">
-    <property name="name" value="triggerFibonacciContractCreator"/>
+  <bean id="niceTransferAssetTransactionCreator" class="org.tron.stresstest.dispatch.creator.asset.NiceTransferAssetTransactionCreator">
+    <property name="name" value="niceTransferAssetTransactionCreator"/>
     <property name="begin" value="0"/>
     <property name="end" value="99"/>
   </bean>

@@ -1,12 +1,19 @@
 package org.tron.program;
 
+import static org.tron.stresstest.dispatch.AbstractTransactionCreator.getID;
+
 import ch.qos.logback.classic.Level;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +22,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -30,16 +38,26 @@ import org.tron.stresstest.generator.TransactionGenerator;
 
 @Slf4j
 public class FullNode {
+  private static ExecutorService saveTransactionIDPool = Executors.newFixedThreadPool(1, new ThreadFactory() {
+    @Override
+    public Thread newThread(Runnable r) {
+      return new Thread(r, "save-transaction-id");
+    }
+  });
+
+  private static ConcurrentLinkedQueue<Transaction> transactionIDs = new ConcurrentLinkedQueue<>();
+  private static volatile boolean isFinishSend = false;
 
   /**
    * Start the FullNode.
    */
-  public static void main(String[] args) throws InterruptedException {
+  public static void main(String[] args) throws InterruptedException, FileNotFoundException {
     logger.info("Full node running.");
     Args.setParam(args, Constant.TESTNET_CONF);
     Args cfgArgs = Args.getInstance();
 
-    ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+    ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory
+        .getLogger(Logger.ROOT_LOGGER_NAME);
     root.setLevel(Level.toLevel(cfgArgs.getLogLevel()));
 
     if (cfgArgs.isHelp()) {
@@ -61,10 +79,6 @@ public class FullNode {
 
     context.refresh();
 
-    if (cfgArgs.isGenerate()) {
-      new TransactionGenerator(context, 100000).start();
-    }
-
     Application appT = ApplicationFactory.create(context);
     shutdown(appT);
 
@@ -81,9 +95,11 @@ public class FullNode {
 
     // fullnode and soliditynode fuse together, provide solidity rpc and http server on the fullnode.
     if (Args.getInstance().getStorage().getDbVersion() == 2) {
-      RpcApiServiceOnSolidity rpcApiServiceOnSolidity = context.getBean(RpcApiServiceOnSolidity.class);
+      RpcApiServiceOnSolidity rpcApiServiceOnSolidity = context
+          .getBean(RpcApiServiceOnSolidity.class);
       appT.addService(rpcApiServiceOnSolidity);
-      HttpApiOnSolidityService httpApiOnSolidityService = context.getBean(HttpApiOnSolidityService.class);
+      HttpApiOnSolidityService httpApiOnSolidityService = context
+          .getBean(HttpApiOnSolidityService.class);
       appT.addService(httpApiOnSolidityService);
     }
 
@@ -91,26 +107,109 @@ public class FullNode {
     appT.startServices();
     appT.startup();
 
-    Thread.sleep(10000);
     NodeImpl nodeImpl = context.getBean(NodeImpl.class);
+
+    if (cfgArgs.isGenerate()) {
+      new TransactionGenerator(context, 10000).start();
+    }
+
     File f = new File("transaction.csv");
     FileInputStream fis = null;
     long startTime = System.currentTimeMillis();
     long trxCount = 0;
+
+    saveTransactionIDPool.submit(() -> {
+      BufferedWriter bufferedWriter = null;
+      int count = 0;
+      try {
+        bufferedWriter = new BufferedWriter(
+            new FileWriter("transactionsID.csv"));
+
+        while (!isFinishSend) {
+          count++;
+
+          if (transactionIDs.isEmpty()) {
+            try {
+              Thread.sleep(100);
+              continue;
+            } catch (InterruptedException e) {
+              System.out.println(e);
+            }
+          }
+
+          Transaction transaction = transactionIDs.peek();
+
+          try {
+
+            Sha256Hash id = getID(transaction);
+            System.out.println("adew " + id.toString());
+            bufferedWriter.write(id.toString());
+            bufferedWriter.newLine();
+            if (count % 1000 == 0) {
+              bufferedWriter.flush();
+              System.out.println("transaction id size: " + transactionIDs.size());
+            }
+            transactionIDs.poll();
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+        }
+      } catch (IOException e) {
+        e.printStackTrace();
+      } finally {
+        if (bufferedWriter != null) {
+          try {
+            bufferedWriter.flush();
+            bufferedWriter.close();
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+        }
+      }
+    });
+
     try {
       fis = new FileInputStream(f);
       Transaction transaction;
       while ((transaction = Transaction.parseDelimitedFrom(fis)) != null) {
         trxCount++;
         Message message = new TransactionMessage(transaction);
+
+        // 单线程广播交易
         nodeImpl.broadcast(message);
+        transactionIDs.add(transaction);
       }
+
+      int emptyCount = 0;
+      while (true) {
+        if (transactionIDs.isEmpty()) {
+          if (emptyCount == 7) {
+            Thread.sleep(500);
+            isFinishSend = true;
+            break;
+          } else {
+            emptyCount++;
+          }
+        } else {
+          emptyCount = 0;
+        }
+        Thread.sleep(200);
+      }
+
     } catch (Exception e) {
       e.printStackTrace();
+    } finally {
+      try {
+        fis.close();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
     }
     long cost = System.currentTimeMillis() - startTime;
-    logger.info("Trx size: {}, cost: {}, tps: {}",
-        trxCount, cost, 1.0 * trxCount / cost * 1000);
+    logger.info("Trx size: {}, cost: {}, tps: {}, txid: {}",
+        trxCount, cost, 1.0 * trxCount / cost * 1000, transactionIDs.size());
+
+    System.exit(0);
   }
 
   public static void shutdown(final Application app) {

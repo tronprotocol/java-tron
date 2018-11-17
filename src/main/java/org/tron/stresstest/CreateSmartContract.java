@@ -200,15 +200,4 @@ public class CreateSmartContract {
         return SmartContract.ABI.Entry.StateMutabilityType.UNRECOGNIZED;
     }
   }
-
-  public static Contract.TriggerSmartContract triggerCallContract(byte[] address,
-      byte[] contractAddress,
-      long callValue, byte[] data) {
-    Contract.TriggerSmartContract.Builder builder = Contract.TriggerSmartContract.newBuilder();
-    builder.setOwnerAddress(ByteString.copyFrom(address));
-    builder.setContractAddress(ByteString.copyFrom(contractAddress));
-    builder.setData(ByteString.copyFrom(data));
-    builder.setCallValue(callValue);
-    return builder.build();
-  }
 }

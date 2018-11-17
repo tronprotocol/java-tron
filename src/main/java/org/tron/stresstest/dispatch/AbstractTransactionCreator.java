@@ -1,19 +1,30 @@
 package org.tron.stresstest.dispatch;
 
 import com.google.common.base.Charsets;
+import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.stresstest.dispatch.strategy.Level2Strategy;
 
 @Getter
 public abstract class AbstractTransactionCreator extends Level2Strategy {
-  protected String privateKey = "22a6aca17f8ec257cc57e190902767d7fedf908bba920b4fbeaab8f158e0da17";
-  protected String witnessPrivateKey = "22a6aca17f8ec257cc57e190902767d7fedf908bba920b4fbeaab8f158e0da17";
-  protected ByteString ownerAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("TRx2rc1v91HjUFdeBBgNSiqirctq94sAfA"));
-  protected ByteString witnessAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("TRx2rc1v91HjUFdeBBgNSiqirctq94sAfA"));
-  protected ByteString toAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("TRxgBU7HFTQvU6zPheLHphqpwhDKNxB6Rk"));
+  protected String privateKey = "cbe57d98134c118ed0d219c0c8bc4154372c02c1e13b5cce30dd22ecd7bed19e";
+  protected String witnessPrivateKey = "369F095838EB6EED45D4F6312AF962D5B9DE52927DA9F04174EE49F9AF54BC77";
+  protected ByteString ownerAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("27meR2d4HodFPYX2V8YRDrLuFpYdbLvBEWi"));
+  protected byte[] ownerAddressBytes = Wallet.decodeFromBase58Check("27meR2d4HodFPYX2V8YRDrLuFpYdbLvBEWi");
+  protected ByteString witnessAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("27QAUYjg5FXfxcvyHcWF3Aokd5eu9iYgs1c"));
+  protected ByteString toAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("27ZESitosJfKouTBrGg6Nk5yEjnJHXMbkZp"));
   protected Long amount = 1L;
   protected Long amountOneTrx = 1000_000L;
   protected ByteString assetName = ByteString.copyFrom("pressure1", Charsets.UTF_8);
@@ -39,4 +50,80 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
       put("27jvZ4iJ7LQ8UP3VKPGQLp3oj7c7jFf6Q32", "1");
     }
   };
+
+  // exchange
+  protected long exchangeId = 1;
+  protected byte[] firstTokeID = "_".getBytes();
+  protected byte[] secondTokeID = "xxd".getBytes();
+  protected long quant = 10;
+  protected long expected = 1;
+
+  long time = System.currentTimeMillis();
+  AtomicLong count = new AtomicLong();
+  public Transaction createTransaction(com.google.protobuf.Message message,
+      ContractType contractType) {
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(
+        Transaction.Contract.newBuilder().setType(contractType).setParameter(
+            Any.pack(message)).build());
+
+    Transaction transaction = Transaction.newBuilder().setRawData(transactionBuilder.build())
+        .build();
+
+    long gTime = count.incrementAndGet() + time;
+    String ref = "" + gTime;
+
+    transaction = setReference(transaction, gTime, ByteArray.fromString(ref));
+
+    transaction = setExpiration(transaction, gTime);
+
+    return transaction;
+  }
+
+  private Transaction setReference(Transaction transaction, long blockNum,
+      byte[] blockHash) {
+    byte[] refBlockNum = ByteArray.fromLong(blockNum);
+    Transaction.raw rawData = transaction.getRawData().toBuilder()
+        .setRefBlockHash(ByteString.copyFrom(blockHash))
+        .setRefBlockBytes(ByteString.copyFrom(refBlockNum))
+        .build();
+    return transaction.toBuilder().setRawData(rawData).build();
+  }
+
+  public Transaction setExpiration(Transaction transaction, long expiration) {
+    Transaction.raw rawData = transaction.getRawData().toBuilder().setExpiration(expiration)
+        .build();
+    return transaction.toBuilder().setRawData(rawData).build();
+  }
+
+  public static Transaction sign(Transaction transaction, ECKey myKey) {
+    Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
+    byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
+    List<Contract> listContract = transaction.getRawData().getContractList();
+    for (int i = 0; i < listContract.size(); i++) {
+      ECDSASignature signature = myKey.sign(hash);
+      ByteString bsSign = ByteString.copyFrom(signature.toByteArray());
+      transactionBuilderSigned.addSignature(
+          bsSign);//Each contract may be signed with a different private key in the future.
+    }
+
+    transaction = transactionBuilderSigned.build();
+    return transaction;
+  }
+
+  public static org.tron.protos.Contract.ExchangeTransactionContract createExchangeTransactionContract(byte[] owner,
+      long exchangeId, byte[] tokenId, long quant, long expected) {
+    org.tron.protos.Contract.ExchangeTransactionContract.Builder builder = org.tron.protos.Contract.ExchangeTransactionContract
+        .newBuilder();
+    builder
+        .setOwnerAddress(ByteString.copyFrom(owner))
+        .setExchangeId(exchangeId)
+        .setTokenId(ByteString.copyFrom(tokenId))
+        .setQuant(quant)
+        .setExpected(expected);
+    return builder.build();
+  }
+
+  public static Sha256Hash getID(Transaction transaction) {
+    return Sha256Hash.of(transaction.getRawData().toByteArray());
+  }
 }

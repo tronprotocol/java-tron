@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.stream.LongStream;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.protos.Protocol.Transaction;
@@ -20,6 +21,24 @@ public class TransactionGenerator {
   private int count;
   private String outputFile;
 
+  private volatile boolean isGenerate = true;
+  private ConcurrentLinkedQueue<Transaction> transactions = new ConcurrentLinkedQueue<>();
+  FileOutputStream fos = null;
+  CountDownLatch countDownLatch = null;
+  private ExecutorService savePool = Executors.newFixedThreadPool(1, new ThreadFactory() {
+    @Override
+    public Thread newThread(Runnable r) {
+      return new Thread(r, "save-transaction");
+    }
+  });
+
+  private ExecutorService generatePool = Executors.newFixedThreadPool(2, new ThreadFactory() {
+    @Override
+    public Thread newThread(Runnable r) {
+      return new Thread(r, "generate-transaction");
+    }
+  });
+
   public TransactionGenerator(TronApplicationContext context, String outputFile, int count) {
     this.context = context;
     this.outputFile = outputFile;
@@ -30,54 +49,79 @@ public class TransactionGenerator {
     this(context, "transaction.csv", count);
   }
 
-  public void start() {
-    ConcurrentLinkedQueue<Transaction> transactions = new ConcurrentLinkedQueue<>();
-    ExecutorService service = Executors.newFixedThreadPool(32);
-    FileOutputStream fos = null;
+  private void consumerGenerateTransaction() throws IOException {
+    if (transactions.isEmpty()) {
+      try {
+        Thread.sleep(100);
+        return;
+      } catch (InterruptedException e) {
+        System.out.println(e);
+      }
+    }
+
+    Transaction transaction = transactions.poll();
+    transaction.writeDelimitedTo(fos);
+
+    long count = countDownLatch.getCount();
+    if (count % 10000 == 0) {
+      fos.flush();
+      System.out.println("Generate transaction success ------- ------- ------- ------- ------- Remain: " + countDownLatch.getCount() + ", Pending size: " + transactions.size());
+    }
+
+    countDownLatch.countDown();
+  }
+
+  public void start() throws FileNotFoundException {
+
+    savePool.submit(() -> {
+      while (isGenerate) {
+        try {
+          consumerGenerateTransaction();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+    });
+
     try {
       fos = new FileOutputStream(new File(this.outputFile));
       TransactionFactory.init(context);
 
-      CountDownLatch countDownLatch = new CountDownLatch(this.count);
+      countDownLatch = new CountDownLatch(this.count);
 
-      long t1 = System.currentTimeMillis();
       LongStream.range(0L, this.count).forEach(l -> {
-        service.execute(() -> {
+        generatePool.execute(() -> {
           Optional.ofNullable(TransactionFactory.newTransaction()).ifPresent(transactions::add);
-          countDownLatch.countDown();
-          System.out.print("\r");
-          System.out.print("Remain generate transaction: " + countDownLatch.getCount());
         });
       });
 
       countDownLatch.await();
-      System.out.println();
-      System.out.println();
-      System.out.println("Time consuming: " + (System.currentTimeMillis() - t1) + " ms");
-      System.out.println();
-      System.out.println();
-      int size = 1;
-      t1 = System.currentTimeMillis();
-      for (Transaction transaction : transactions) {
-        transaction.writeDelimitedTo(fos);
-        System.out.print("\r");
-        System.out.printf("Write transaction count %d", size++);
-      }
+
+      isGenerate = false;
 
       fos.flush();
       fos.close();
-      System.out.println();
-      System.out.println();
-      System.out.println("Time consuming: " + (System.currentTimeMillis() - t1) + "ms");
-      System.out.println();
-      System.out.println();
     } catch (InterruptedException | IOException e) {
       e.printStackTrace();
     } finally {
-      service.shutdown();
+      generatePool.shutdown();
 
       while (true) {
-        if (service.isTerminated()) {
+        if (generatePool.isTerminated()) {
+          break;
+        }
+
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+      }
+
+      savePool.shutdown();
+
+      while (true) {
+        if (savePool.isTerminated()) {
           break;
         }
 
