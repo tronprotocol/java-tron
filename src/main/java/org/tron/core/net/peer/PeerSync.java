@@ -53,9 +53,9 @@ public class PeerSync {
       .expireAfterWrite(1, TimeUnit.HOURS).initialCapacity(10000)
       .recordStats().build();
 
-  private ScheduledExecutorService fetchSyncBlocksExecutor = Executors.newSingleThreadScheduledExecutor();
-
-  private ScheduledExecutorService syncHandleExecutor = Executors.newSingleThreadScheduledExecutor();
+  private ScheduledExecutorService fetchExecutor = Executors.newSingleThreadScheduledExecutor();
+  
+  private ScheduledExecutorService blockHandleExecutor = Executors.newSingleThreadScheduledExecutor();
 
   private boolean syncHandleFlag = false;
 
@@ -63,7 +63,7 @@ public class PeerSync {
   private boolean fetchFlag = false;
 
   public void init () {
-    fetchSyncBlocksExecutor.scheduleWithFixedDelay(() -> {
+    fetchExecutor.scheduleWithFixedDelay(() -> {
       try {
         if (fetchFlag) {
           startFetchSyncBlock();
@@ -74,7 +74,7 @@ public class PeerSync {
       }
     }, 10, 1, TimeUnit.SECONDS);
 
-    syncHandleExecutor.scheduleWithFixedDelay(() -> {
+    blockHandleExecutor.scheduleWithFixedDelay(() -> {
       try {
         if (syncHandleFlag) {
           syncHandleFlag = false;
@@ -84,6 +84,12 @@ public class PeerSync {
         logger.error("Unhandled exception", t);
       }
     }, 10, 1, TimeUnit.SECONDS);
+  }
+
+  public void close () {
+    fetchExecutor.shutdown();
+    blockHandleExecutor.shutdown();
+    logger.info("PeerSync closed.");
   }
 
   public void startSync(PeerConnection peer) {

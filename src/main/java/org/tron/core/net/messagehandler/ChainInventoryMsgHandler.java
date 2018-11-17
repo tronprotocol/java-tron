@@ -44,7 +44,7 @@ public class ChainInventoryMsgHandler implements TronMsgHandler  {
 
     peer.setNeedSyncFromPeer(true);
 
-    peer.setSyncChainRequested(null);
+    peer.setSyncChainRequested(null); //todo thread sec
 
     Deque<BlockId> blockIdWeGet = new LinkedList<>(chainInventoryMessage.getBlockIds());
 
@@ -71,10 +71,10 @@ public class ChainInventoryMsgHandler implements TronMsgHandler  {
         logger.info("Block {} from {} is processed", blockId.getString(), peer.getNode().getHost());
       }
     }
-
-    if (chainInventoryMessage.getRemainNum() == 0 && peer.getSyncBlockToFetch().isEmpty()) {
-      peer.setNeedSyncFromPeer(false);
-    }
+//
+//    if (chainInventoryMessage.getRemainNum() == 0 && peer.getSyncBlockToFetch().isEmpty()) {
+//      peer.setNeedSyncFromPeer(false);
+//    }
 
     if ((chainInventoryMessage.getRemainNum() == 0 && !peer.getSyncBlockToFetch().isEmpty()) ||
         (chainInventoryMessage.getRemainNum() != 0 && peer.getSyncBlockToFetch().size() > NodeConstant.SYNC_FETCH_BATCH_NUM)) {
@@ -94,9 +94,12 @@ public class ChainInventoryMsgHandler implements TronMsgHandler  {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "blockIds is empty");
     }
 
+    if (blockIds.size() > NodeConstant.SYNC_FETCH_BATCH_NUM + 1) {
+      throw new P2pException(TypeEnum.BAD_MESSAGE, "big blockIds size: " + blockIds.size());
+    }
+
     if (msg.getRemainNum() == 0 && blockIds.size() < NodeConstant.SYNC_FETCH_BATCH_NUM) {
-      throw new P2pException(TypeEnum.BAD_MESSAGE,
-          "remain blockNum: 0, blockIds size: " + blockIds.size());
+      throw new P2pException(TypeEnum.BAD_MESSAGE, "remain blockNum: 0, blockIds size: " + blockIds.size());
     }
 
     long num = blockIds.get(0).getNum();

@@ -79,6 +79,12 @@ public class PeerAdv {
     }, 100, 30, TimeUnit.MILLISECONDS);
   }
 
+  public void close () {
+    spreadExecutor.shutdown();
+    fetchExecutor.shutdown();
+    logger.info("PeerAdv closed.");
+  }
+
   synchronized public boolean addInv (Item item) {
     InventoryType type = item.getType();
     Sha256Hash hash = item.getHash();

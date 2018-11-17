@@ -66,7 +66,7 @@ public class PeerClient {
         });
   }
 
-  public ChannelFuture connectAsync(String host, int port, String remoteId, boolean discoveryMode) {
+  private ChannelFuture connectAsync(String host, int port, String remoteId, boolean discoveryMode) {
 
     logger.info("connect peer {} {} {}", host, port, remoteId);
 

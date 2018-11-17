@@ -4,6 +4,7 @@ import io.netty.channel.ChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.server.ChannelManager;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.message.TronMessage;
@@ -20,6 +21,9 @@ import org.tron.protos.Protocol.ReasonCode;
 @Slf4j
 @Component
 public class TronNetService {
+
+  @Autowired
+  private ChannelManager channelManager;
 
   @Autowired
   private PeerAdv peerAdv;
@@ -49,6 +53,16 @@ public class TronNetService {
     peerAdv.init();
     peerSync.init();
     transactionsMsgHandler.init();
+  }
+
+  public void close () {
+    try {
+      peerAdv.close();
+      peerSync.close();
+      transactionsMsgHandler.close();
+    }catch (Exception e) {
+      logger.error("TronNetService closed failed.",e );
+    }
   }
 
   public void onMessage(PeerConnection peer, TronMessage msg) {

@@ -49,18 +49,18 @@ public class SyncBlockChainMsgHadler implements TronMsgHandler {
 
     LinkedList<BlockId> blockIds = getLostBlockIds(summaryChainIds);
 
-    if (blockIds.size() == 1 && summaryChainIds.contains(blockIds.get(0))){
+    if (blockIds.size() == 1){
       peer.setNeedSyncFromUs(false);
     }else {
       peer.setNeedSyncFromUs(true);
       remainNum = tronProxy.getHeadBlockId().getNum() - blockIds.peekLast().getNum();
     }
-
-    if (!peer.isNeedSyncFromPeer()
-        && !tronProxy.contain(Iterables.getLast(summaryChainIds), MessageTypes.BLOCK)
-        && tronProxy.canChainRevoke(summaryChainIds.get(0).getNum())) {
-      //startSyncWithPeer(peer);
-    }
+//
+//    if (!peer.isNeedSyncFromPeer()
+//        && !tronProxy.contain(Iterables.getLast(summaryChainIds), MessageTypes.BLOCK)
+//        && tronProxy.canChainRevoke(summaryChainIds.get(0).getNum())) {
+//      //startSyncWithPeer(peer);
+//    }
 
     peer.setLastSyncBlockId(blockIds.peekLast());
     peer.setRemainNum(remainNum);

@@ -167,5 +167,6 @@ public class ChannelManager {
   public void close() {
     peerServer.close();
     peerClient.close();
+    syncPool.close();
   }
 }
