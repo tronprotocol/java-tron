@@ -47,7 +47,6 @@ public class ContractScenario008 {
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
-    PublicMethed.printAddress(contract008Key);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
@@ -56,6 +55,10 @@ public class ContractScenario008 {
 
   @Test(enabled = true)
   public void deployErc721CryptoKitties() {
+    ecKey1 = new ECKey(Utils.getRandom());
+    contract008Address = ecKey1.getAddress();
+    contract008Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    PublicMethed.printAddress(contract008Key);
     Assert.assertTrue(PublicMethed.sendcoin(contract008Address,5000000000L,fromAddress,
         testKey002,blockingStubFull));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract008Address, 1000000L,
