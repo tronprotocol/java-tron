@@ -81,7 +81,8 @@ public class ExchangeCreateActuator extends AbstractActuator {
         }
       }
 
-      // only save to new asset store
+      {
+        // only save to new asset store
         ExchangeCapsule exchangeCapsuleV2 =
             new ExchangeCapsule(
                 exchangeCreateContract.getOwnerAddress(),
@@ -92,6 +93,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
             );
         exchangeCapsuleV2.setBalance(firstTokenBalance, secondTokenBalance);
         dbManager.getExchangeV2Store().put(exchangeCapsuleV2.createDbKey(), exchangeCapsuleV2);
+      }
 
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
       dbManager.getDynamicPropertiesStore().saveLatestExchangeNum(id);
