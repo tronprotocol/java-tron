@@ -48,7 +48,7 @@ public class AccountCapsuleTest {
     context = new TronApplicationContext(DefaultConfig.class);
     dbManager = context.getBean(Manager.class);
 
-    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "a06a17a49648a8ad32055c06f60fa14ae46df94cc1";
+    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "a06a17a49648a8ad32055c06f60fa14ae46df91234";
   }
 
 
@@ -66,6 +66,7 @@ public class AccountCapsuleTest {
   @AfterClass
   public static void removeDb() {
     Args.clearParam();
+    context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }
 
