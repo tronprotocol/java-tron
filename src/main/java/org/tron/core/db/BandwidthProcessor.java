@@ -38,11 +38,21 @@ public class BandwidthProcessor extends ResourceProcessor {
     long oldFreeNetUsage = accountCapsule.getFreeNetUsage();
     long latestConsumeFreeTime = accountCapsule.getLatestConsumeFreeTime();
     accountCapsule.setFreeNetUsage(increase(oldFreeNetUsage, 0, latestConsumeFreeTime, now));
-    Map<String, Long> assetMap = accountCapsule.getAssetMap();
-    assetMap.forEach((assetName, balance) -> {
-      long oldFreeAssetNetUsage = accountCapsule.getFreeAssetNetUsage(assetName);
-      long latestAssetOperationTime = accountCapsule.getLatestAssetOperationTime(assetName);
-      accountCapsule.putFreeAssetNetUsage(assetName,
+
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      Map<String, Long> assetMap = accountCapsule.getAssetMap();
+      assetMap.forEach((assetName, balance) -> {
+        long oldFreeAssetNetUsage = accountCapsule.getFreeAssetNetUsage(assetName);
+        long latestAssetOperationTime = accountCapsule.getLatestAssetOperationTime(assetName);
+        accountCapsule.putFreeAssetNetUsage(assetName,
+            increase(oldFreeAssetNetUsage, 0, latestAssetOperationTime, now));
+      });
+    }
+    Map<String, Long> assetMapV2 = accountCapsule.getAssetMapV2();
+    assetMapV2.forEach((assetName, balance) -> {
+      long oldFreeAssetNetUsage = accountCapsule.getFreeAssetNetUsageV2(assetName);
+      long latestAssetOperationTime = accountCapsule.getLatestAssetOperationTimeV2(assetName);
+      accountCapsule.putFreeAssetNetUsageV2(assetName,
           increase(oldFreeAssetNetUsage, 0, latestAssetOperationTime, now));
     });
   }
@@ -281,24 +291,28 @@ public class BandwidthProcessor extends ResourceProcessor {
     issuerAccountCapsule.setNetUsage(newIssuerNetUsage);
     issuerAccountCapsule.setLatestConsumeTime(latestConsumeTime);
 
+    assetIssueCapsule.setPublicFreeAssetNetUsage(newPublicFreeAssetNetUsage);
+    assetIssueCapsule.setPublicLatestFreeNetTime(publicLatestFreeNetTime);
+
     accountCapsule.setLatestOperationTime(latestOperationTime);
     if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       accountCapsule.putLatestAssetOperationTimeMap(assetNameString,
           latestAssetOperationTime);
       accountCapsule.putFreeAssetNetUsage(assetNameString, newFreeAssetNetUsage);
-    } else {
+      dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+    }
+
+    {
       accountCapsule.putLatestAssetOperationTimeMapV2(tokenID,
           latestAssetOperationTime);
       accountCapsule.putFreeAssetNetUsageV2(tokenID, newFreeAssetNetUsage);
+      dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
     }
-
-    assetIssueCapsule.setPublicFreeAssetNetUsage(newPublicFreeAssetNetUsage);
-    assetIssueCapsule.setPublicLatestFreeNetTime(publicLatestFreeNetTime);
 
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     dbManager.getAccountStore().put(issuerAccountCapsule.createDbKey(),
         issuerAccountCapsule);
-    dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+
 
     return true;
 
