@@ -219,8 +219,7 @@ public class BandwidthProcessor extends ResourceProcessor {
     } catch (Exception ex) {
       throw new RuntimeException(ex.getMessage());
     }
-    String assetNameString = ByteArray.toStr(assetName.toByteArray());
-    String tokenID = ByteArray.toLong(assetName.toByteArray()) + "";
+    String tokenID = ByteArray.toStr(assetName.toByteArray());
     AssetIssueCapsule assetIssueCapsule;
     assetIssueCapsule = dbManager.getAssetIssueStoreFinal().get(assetName.toByteArray());
     if (assetIssueCapsule == null) {
@@ -239,7 +238,7 @@ public class BandwidthProcessor extends ResourceProcessor {
         publicLatestFreeNetTime, now);
 
     if (bytes > (publicFreeAssetNetLimit - newPublicFreeAssetNetUsage)) {
-      logger.debug("The " + assetNameString + " public free bandwidth is not enough");
+      logger.debug("The " + tokenID + " public free bandwidth is not enough");
       return false;
     }
 
@@ -248,9 +247,9 @@ public class BandwidthProcessor extends ResourceProcessor {
     long freeAssetNetUsage, latestAssetOperationTime;
     if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       freeAssetNetUsage = accountCapsule
-          .getFreeAssetNetUsage(assetNameString);
+          .getFreeAssetNetUsage(tokenID);
       latestAssetOperationTime = accountCapsule
-          .getLatestAssetOperationTime(assetNameString);
+          .getLatestAssetOperationTime(tokenID);
     } else {
       freeAssetNetUsage = accountCapsule.getFreeAssetNetUsageV2(tokenID);
       latestAssetOperationTime = accountCapsule.getLatestAssetOperationTimeV2(tokenID);
@@ -260,7 +259,7 @@ public class BandwidthProcessor extends ResourceProcessor {
         latestAssetOperationTime, now);
 
     if (bytes > (freeAssetNetLimit - newFreeAssetNetUsage)) {
-      logger.debug("The " + assetNameString + " free bandwidth is not enough");
+      logger.debug("The " + tokenID + " free bandwidth is not enough");
       return false;
     }
 
@@ -274,7 +273,7 @@ public class BandwidthProcessor extends ResourceProcessor {
     long newIssuerNetUsage = increase(issuerNetUsage, 0, latestConsumeTime, now);
 
     if (bytes > (issuerNetLimit - newIssuerNetUsage)) {
-      logger.debug("The " + assetNameString + " issuer'bandwidth is not enough");
+      logger.debug("The " + tokenID + " issuer'bandwidth is not enough");
       return false;
     }
 
@@ -282,6 +281,7 @@ public class BandwidthProcessor extends ResourceProcessor {
     latestAssetOperationTime = now;
     publicLatestFreeNetTime = now;
     long latestOperationTime = dbManager.getHeadBlockTimeStamp();
+
     newIssuerNetUsage = increase(newIssuerNetUsage, bytes, latestConsumeTime, now);
     newFreeAssetNetUsage = increase(newFreeAssetNetUsage,
         bytes, latestAssetOperationTime, now);
@@ -296,9 +296,9 @@ public class BandwidthProcessor extends ResourceProcessor {
 
     accountCapsule.setLatestOperationTime(latestOperationTime);
     if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      accountCapsule.putLatestAssetOperationTimeMap(assetNameString,
+      accountCapsule.putLatestAssetOperationTimeMap(tokenID,
           latestAssetOperationTime);
-      accountCapsule.putFreeAssetNetUsage(assetNameString, newFreeAssetNetUsage);
+      accountCapsule.putFreeAssetNetUsage(tokenID, newFreeAssetNetUsage);
       dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
     }
 
