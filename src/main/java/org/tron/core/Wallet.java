@@ -665,7 +665,6 @@ public class Wallet {
       });
     }
 
-
     builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
         .setFreeNetLimit(freeNetLimit)
         .setNetUsed(accountCapsule.getNetUsage())
@@ -724,7 +723,6 @@ public class Wallet {
       });
     }
 
-
     builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
         .setFreeNetLimit(freeNetLimit)
         .setNetUsed(accountCapsule.getNetUsage())
@@ -761,7 +759,7 @@ public class Wallet {
   }
 
   public AssetIssueContract getAssetIssueById(String assetId) {
-    if (assetId == null) {
+    if (assetId == null || assetId.isEmpty()) {
       return null;
     }
     AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueV2Store()

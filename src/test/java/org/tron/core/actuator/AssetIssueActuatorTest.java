@@ -4,6 +4,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -22,8 +23,10 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
+import org.tron.core.config.Parameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
@@ -1735,4 +1738,422 @@ public class AssetIssueActuatorTest {
       dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
     }
   }
+
+  /**
+   * SameTokenName close, Invalid ownerAddress
+   */
+  @Test
+  public void SameTokenNameCloseInvalidOwnerAddress() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    long nowTime = new Date().getTime();
+    Any any = Any.pack(
+            Contract.AssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString("12312315345345")))
+                    .setName(ByteString.copyFromUtf8(NAME))
+                    .setTotalSupply(TOTAL_SUPPLY)
+                    .setTrxNum(TRX_NUM)
+                    .setNum(NUM)
+                    .setStartTime(nowTime)
+                    .setEndTime(nowTime + 24 * 3600 * 1000)
+                    .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+                    .setUrl(ByteString.copyFromUtf8(URL))
+                    .build());
+
+    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Invalid ownerAddress", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+  }
+
+  /**
+   * SameTokenName close, precision, Setting accuracy is not allowed
+   */
+  @Test
+  public void SameTokenNameCloseAccuracyNotAllow() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    long nowTime = new Date().getTime();
+    Any any = Any.pack(
+            Contract.AssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+                    .setName(ByteString.copyFromUtf8(NAME))
+                    .setTotalSupply(TOTAL_SUPPLY)
+                    .setTrxNum(TRX_NUM)
+                    .setNum(NUM)
+                    .setStartTime(nowTime)
+                    .setEndTime(nowTime + 24 * 3600 * 1000)
+                    .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+                    .setUrl(ByteString.copyFromUtf8(URL))
+                    .setPrecision(3)
+                    .build());
+
+    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Setting accuracy is not allowed", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+  }
+
+  /**
+   * SameTokenName close, check invalid precision
+   */
+  @Test
+  public void SameTokenNameCloseInvalidPrecision() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    long nowTime = new Date().getTime();
+    Any any = Any.pack(
+            Contract.AssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+                    .setName(ByteString.copyFromUtf8(NAME))
+                    .setTotalSupply(TOTAL_SUPPLY)
+                    .setTrxNum(TRX_NUM)
+                    .setNum(NUM)
+                    .setStartTime(nowTime)
+                    .setEndTime(nowTime + 24 * 3600 * 1000)
+                    .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+                    .setUrl(ByteString.copyFromUtf8(URL))
+                    .setPrecision(7)
+                    .build());
+
+    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    byte[] stats = new byte[27];
+    Arrays.fill(stats, (byte) 1);
+    dbManager.getDynamicPropertiesStore().statsByVersion(Parameter.ForkBlockVersionConsts.ENERGY_LIMIT, stats);
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("precision cannot exceed 6", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+  }
+
+  /**
+   * SameTokenName close, Invalid abbreviation for token
+   */
+  @Test
+  public void SameTokenNameCloseInvalidAddr() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    long nowTime = new Date().getTime();
+    Any any = Any.pack(
+            Contract.AssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+                    .setName(ByteString.copyFromUtf8(NAME))
+                    .setTotalSupply(TOTAL_SUPPLY)
+                    .setTrxNum(TRX_NUM)
+                    .setNum(NUM)
+                    .setStartTime(nowTime)
+                    .setEndTime(nowTime + 24 * 3600 * 1000)
+                    .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+                    .setUrl(ByteString.copyFromUtf8(URL))
+                    .setAbbr(ByteString.copyFrom(ByteArray.fromHexString(
+                            "a0299f3db80a24123b20a254b89ce639d59132f157f13")))
+                    .setPrecision(4)
+                    .build());
+
+    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    byte[] stats = new byte[27];
+    Arrays.fill(stats, (byte) 1);
+    dbManager.getDynamicPropertiesStore().statsByVersion(Parameter.ForkBlockVersionConsts.ENERGY_LIMIT, stats);
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Invalid abbreviation for token", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+  }
+
+  /**
+   * repeat issue assert name,
+   */
+  @Test
+  public void IssueSameTokenNameAssert() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    String ownerAddress = "a08beaa1a8e2d45367af7bae7c49009876a4fa4301";
+
+    long id = dbManager.getDynamicPropertiesStore().getTokenIdNum() + 1;
+    dbManager.getDynamicPropertiesStore().saveTokenIdNum(id);
+    Contract.AssetIssueContract assetIssueContract =
+            Contract.AssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
+                    .setName(ByteString.copyFrom(ByteArray.fromString(NAME)))
+                    .setId(Long.toString(id))
+                    .setTotalSupply(TOTAL_SUPPLY)
+                    .setTrxNum(TRX_NUM)
+                    .setNum(NUM)
+                    .setStartTime(1)
+                    .setEndTime(100)
+                    .setVoteScore(2)
+                    .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
+                    .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
+                    .build();
+    AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
+    dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+
+    AccountCapsule ownerCapsule =
+            new AccountCapsule(
+                    ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)),
+                    ByteString.copyFromUtf8("owner11"),
+                    AccountType.AssetIssue);
+    ownerCapsule.addAsset(NAME.getBytes(), 1000L);
+    dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+
+    AssetIssueActuator actuator = new AssetIssueActuator(getContract(), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    Long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
+    // SameTokenName not active, same assert name, should failure
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Token exists", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+
+    // SameTokenName active, same assert name,should success
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      AccountCapsule owner =
+              dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
+      AssetIssueCapsule assetIssueCapsuleV2 =
+              dbManager.getAssetIssueV2Store().get(ByteArray.fromString(String.valueOf(tokenIdNum)));
+      Assert.assertNotNull(assetIssueCapsuleV2);
+
+      Assert.assertEquals(owner.getBalance(), 0L);
+      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
+              blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
+      Assert.assertEquals(owner.getAssetMapV2().get(String.valueOf(tokenIdNum)).longValue(), TOTAL_SUPPLY);
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+  }
+
+  /**
+   * SameTokenName close, check invalid param
+   * "PublicFreeAssetNetUsage must be 0!"
+   * "Invalid FreeAssetNetLimit"
+   * "Invalid PublicFreeAssetNetLimit"
+   * "Account not exists"
+   * "No enough balance for fee!"
+   */
+  @Test
+  public void SameTokenNameCloseInvalidparam() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    long nowTime = new Date().getTime();
+    byte[] stats = new byte[27];
+    Arrays.fill(stats, (byte) 1);
+    dbManager.getDynamicPropertiesStore().statsByVersion(Parameter.ForkBlockVersionConsts.ENERGY_LIMIT, stats);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    // PublicFreeAssetNetUsage must be 0!
+    Any any = Any.pack(
+            Contract.AssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+                    .setName(ByteString.copyFromUtf8(NAME))
+                    .setTotalSupply(TOTAL_SUPPLY)
+                    .setTrxNum(TRX_NUM)
+                    .setNum(NUM)
+                    .setStartTime(nowTime)
+                    .setEndTime(nowTime + 24 * 3600 * 1000)
+                    .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+                    .setUrl(ByteString.copyFromUtf8(URL))
+                    .setPrecision(3)
+                    .setPublicFreeAssetNetUsage(100)
+                    .build());
+    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("PublicFreeAssetNetUsage must be 0!", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+
+    //Invalid FreeAssetNetLimit
+    any = Any.pack(
+            Contract.AssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+                    .setName(ByteString.copyFromUtf8(NAME))
+                    .setTotalSupply(TOTAL_SUPPLY)
+                    .setTrxNum(TRX_NUM)
+                    .setNum(NUM)
+                    .setStartTime(nowTime)
+                    .setEndTime(nowTime + 24 * 3600 * 1000)
+                    .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+                    .setUrl(ByteString.copyFromUtf8(URL))
+                    .setPrecision(3)
+                    .setFreeAssetNetLimit(-10)
+                    .build());
+    actuator = new AssetIssueActuator(any, dbManager);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Invalid FreeAssetNetLimit", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+
+    //Invalid PublicFreeAssetNetLimit
+    any = Any.pack(
+            Contract.AssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+                    .setName(ByteString.copyFromUtf8(NAME))
+                    .setTotalSupply(TOTAL_SUPPLY)
+                    .setTrxNum(TRX_NUM)
+                    .setNum(NUM)
+                    .setStartTime(nowTime)
+                    .setEndTime(nowTime + 24 * 3600 * 1000)
+                    .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+                    .setUrl(ByteString.copyFromUtf8(URL))
+                    .setPrecision(3)
+                    .setPublicFreeAssetNetLimit(-10)
+                    .build());
+    actuator = new AssetIssueActuator(any, dbManager);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Invalid PublicFreeAssetNetLimit", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+  }
+
+
+  /**
+   * SameTokenName close, account not good
+   * "Account not exists"
+   * "No enough balance for fee!"
+   */
+  @Test
+  public void SameTokenNameCloseInvalidAccount() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    long nowTime = new Date().getTime();
+    byte[] stats = new byte[27];
+    Arrays.fill(stats, (byte) 1);
+    dbManager.getDynamicPropertiesStore().statsByVersion(Parameter.ForkBlockVersionConsts.ENERGY_LIMIT, stats);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    // No enough balance for fee!
+    Any any = Any.pack(
+            Contract.AssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+                    .setName(ByteString.copyFromUtf8(NAME))
+                    .setTotalSupply(TOTAL_SUPPLY)
+                    .setTrxNum(TRX_NUM)
+                    .setNum(NUM)
+                    .setStartTime(nowTime)
+                    .setEndTime(nowTime + 24 * 3600 * 1000)
+                    .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+                    .setUrl(ByteString.copyFromUtf8(URL))
+                    .setPrecision(3)
+                    .build());
+    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager);
+    AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    owner.setBalance(1000);
+    dbManager.getAccountStore().put(owner.createDbKey(), owner);
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("No enough balance for fee!", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+
+    //Account not exists
+    dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS));
+    any = Any.pack(
+            Contract.AssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+                    .setName(ByteString.copyFromUtf8(NAME))
+                    .setTotalSupply(TOTAL_SUPPLY)
+                    .setTrxNum(TRX_NUM)
+                    .setNum(NUM)
+                    .setStartTime(nowTime)
+                    .setEndTime(nowTime + 24 * 3600 * 1000)
+                    .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+                    .setUrl(ByteString.copyFromUtf8(URL))
+                    .setPrecision(3)
+                    .build());
+    actuator = new AssetIssueActuator(any, dbManager);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Account not exists", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+
+  }
+
 }
