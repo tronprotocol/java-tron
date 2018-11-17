@@ -388,7 +388,7 @@ public class DepositImpl implements Deposit {
     if (accountCapsule == null) {
       accountCapsule = createAccount(address, AccountType.Normal);
     }
-    long balance = accountCapsule.getAssetMap().getOrDefault(new String(tokenIdWithoutLeadingZero),new Long(0));
+    long balance = accountCapsule.getAssetMapV2().getOrDefault(new String(tokenIdWithoutLeadingZero),new Long(0));
     if (value == 0) {
       return balance;
     }
@@ -398,14 +398,19 @@ public class DepositImpl implements Deposit {
           StringUtil.createReadableString(accountCapsule.createDbKey())
               + " insufficient balance");
     }
-    accountCapsule.addAssetAmount(tokenIdWithoutLeadingZero, value);
+    if (value >= 0) {
+      accountCapsule.addAssetAmountV2(tokenIdWithoutLeadingZero, value, this.dbManager);
+    }
+    else {
+      accountCapsule.reduceAssetAmountV2(tokenIdWithoutLeadingZero, -value, this.dbManager);
+    }
 //    accountCapsule.getAssetMap().put(new String(tokenIdWithoutLeadingZero), Math.addExact(balance, value));
     Key key = Key.create(address);
     Value V = Value.create(accountCapsule.getData(),
         Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
     accountCache.put(key, V);
 //    accountCapsule.addAssetAmount(tokenIdWithoutLeadingZero, value);
-    return accountCapsule.getAssetMap().get(new String(tokenIdWithoutLeadingZero));
+    return accountCapsule.getAssetMapV2().get(new String(tokenIdWithoutLeadingZero));
   }
 
   @Override
@@ -433,6 +438,15 @@ public class DepositImpl implements Deposit {
     return accountCapsule.getBalance();
   }
 
+  /**
+   *
+   * @param address address
+   * @param tokenId
+   *
+   * tokenIdstr in assetV2map is a string like "1000001". So before using this function, we need to do some conversion.
+   * usually we will use a DataWord as input. so the byte tokenId should be like DataWord.shortHexWithoutZeroX().getbytes().
+   * @return
+   */
   @Override
   public synchronized long getTokenBalance(byte[] address, byte[] tokenId){
     AccountCapsule accountCapsule = getAccount(address);
@@ -440,7 +454,7 @@ public class DepositImpl implements Deposit {
       return 0;
     }
     String tokenStr = new String(ByteUtil.stripLeadingZeroes(tokenId));
-    return accountCapsule.getAssetMap().getOrDefault(tokenStr, 0L);
+    return accountCapsule.getAssetMapV2().getOrDefault(tokenStr, 0L);
   }
 
   @Override

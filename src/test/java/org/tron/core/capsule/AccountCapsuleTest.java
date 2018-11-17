@@ -8,6 +8,7 @@ import java.util.Random;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
@@ -21,6 +22,7 @@ import org.tron.protos.Contract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Vote;
 
+@Ignore
 public class AccountCapsuleTest {
 
   private static final String dbPath = "output_accountCapsule_test";

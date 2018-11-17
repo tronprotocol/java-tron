@@ -106,7 +106,7 @@ public class InternalTransaction {
       this.note = "create";
       this.value = contract.getNewContract().getCallValue();
       this.data = contract.getNewContract().getBytecode().toByteArray();
-      this.tokenInfo.put(contract.getTokenId(), contract.getCallTokenValue());
+      this.tokenInfo.put(String.valueOf(contract.getTokenId()), contract.getCallTokenValue());
     } else if (trxType == TrxType.TRX_CONTRACT_CALL_TYPE) {
       TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
       if (contract == null) {
@@ -118,7 +118,7 @@ public class InternalTransaction {
       this.note = "call";
       this.value = contract.getCallValue();
       this.data = contract.getData().toByteArray();
-      this.tokenInfo.put(contract.getTokenId(), contract.getCallTokenValue());
+      this.tokenInfo.put(String.valueOf(contract.getTokenId()), contract.getCallTokenValue());
     } else {
       // do nothing, just for running byte code
     }
