@@ -101,6 +101,8 @@ public class AssetIssueActuator extends AbstractActuator {
           .addAllFrozenSupply(frozenList).build());
 
       dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+
+      ret.setAssetIssueID(Long.toString(tokenIdNum));
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
