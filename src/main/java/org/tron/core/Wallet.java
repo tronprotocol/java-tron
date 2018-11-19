@@ -101,6 +101,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
+import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
@@ -740,11 +741,60 @@ public class Wallet {
     return builder.build();
   }
 
-  public AssetIssueContract getAssetIssueByName(String assetName) {
-    return getAssetIssueById(assetName);
+  public AssetIssueContract getAssetIssueByName(ByteString assetName)
+      throws NonUniqueObjectException {
+    if (assetName == null || assetName.isEmpty()) {
+      return null;
+    }
+
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      // fetch from old DB, same as old logic ops
+      AssetIssueCapsule assetIssueCapsule =
+          dbManager.getAssetIssueStore().get(assetName.toByteArray());
+      return assetIssueCapsule != null ? assetIssueCapsule.getInstance() : null;
+    } else {
+      // get asset issue by name from new DB
+      List<AssetIssueCapsule> assetIssueCapsuleList =
+          dbManager.getAssetIssueV2Store().getAllAssetIssues();
+      AssetIssueList.Builder builder = AssetIssueList.newBuilder();
+      assetIssueCapsuleList
+          .stream()
+          .filter(assetIssueCapsule -> assetIssueCapsule.getName().equals(assetName))
+          .forEach(
+              issueCapsule -> {
+                builder.addAssetIssue(issueCapsule.getInstance());
+              });
+
+      // check count
+      if (builder.getAssetIssueCount() > 1) {
+        throw new NonUniqueObjectException("get more than one asset, please use getassetissuebyid");
+      } else {
+        // fetch from DB by assetName as id
+        AssetIssueCapsule assetIssueCapsule =
+            dbManager.getAssetIssueV2Store().get(assetName.toByteArray());
+        if (assetIssueCapsule != null) {
+          builder.addAssetIssue(assetIssueCapsule.getInstance());
+          // check count
+          if (builder.getAssetIssueCount() > 1) {
+            throw new NonUniqueObjectException(
+                "get more than one asset, please use getassetissuebyid");
+          }
+        }
+      }
+
+      if (builder.getAssetIssueCount() > 0) {
+        return builder.getAssetIssue(0);
+      } else {
+        return null;
+      }
+    }
   }
 
   public AssetIssueList getAssetIssueListByName(ByteString assetName) {
+    if (assetName == null || assetName.isEmpty()) {
+      return null;
+    }
+
     List<AssetIssueCapsule> assetIssueCapsuleList =
         dbManager.getAssetIssueStoreFinal().getAllAssetIssues();
 
