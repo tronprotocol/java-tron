@@ -772,7 +772,14 @@ public class Wallet {
         // fetch from DB by assetName as id
         AssetIssueCapsule assetIssueCapsule =
             dbManager.getAssetIssueV2Store().get(assetName.toByteArray());
+
         if (assetIssueCapsule != null) {
+          // check already fetch
+          if (builder.getAssetIssueCount() > 0
+              && builder.getAssetIssue(0).getId().equals(assetIssueCapsule.getInstance().getId())) {
+            return assetIssueCapsule.getInstance();
+          }
+
           builder.addAssetIssue(assetIssueCapsule.getInstance());
           // check count
           if (builder.getAssetIssueCount() > 1) {
