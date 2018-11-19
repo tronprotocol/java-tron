@@ -883,7 +883,7 @@ public class Manager {
       logger.info("save block: " + newBlock);
     }
     logger.info("pushBlock block number:{}, cost/txs:{}/{}",
-        block.getBlockId(),
+        block.getNum(),
         System.currentTimeMillis() - start,
         block.getTransactions().size());
   }
