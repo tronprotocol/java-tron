@@ -50,6 +50,9 @@ public class SnapshotManager implements RevokingDatabase {
   // for test
   @Getter
   private int activeSession = 0;
+
+  // for test
+  @Setter
   private boolean unChecked = true;
 
   private volatile int flushCount = 0;
