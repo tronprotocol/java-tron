@@ -383,6 +383,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * reduce asset amount.
    */
   public boolean reduceAssetAmountV2(byte[] key, long amount, Manager manager) {
+    //key is token name
     if (manager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       Map<String, Long> assetMap = this.account.getAssetMap();
       AssetIssueCapsule assetIssueCapsule = manager.getAssetIssueStore().get(key);
@@ -397,6 +398,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         return true;
       }
     }
+    //key is token id
     if (manager.getDynamicPropertiesStore().getAllowSameTokenName() == 1) {
       String tokenID = ByteArray.toStr(key);
       Map<String, Long> assetMapV2 = this.account.getAssetV2Map();
@@ -431,6 +433,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * add asset amount.
    */
   public boolean addAssetAmountV2(byte[] key, long amount, Manager manager) {
+    //key is token name
     if (manager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       Map<String, Long> assetMap = this.account.getAssetMap();
       AssetIssueCapsule assetIssueCapsule = manager.getAssetIssueStore().get(key);
@@ -445,6 +448,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
           .putAssetV2(Long.toString(tokenID), Math.addExact(currentAmount, amount))
           .build();
     }
+    //key is token name
     if (manager.getDynamicPropertiesStore().getAllowSameTokenName() == 1) {
       String tokenIDStr = ByteArray.toStr(key);
       Map<String, Long> assetMapV2 = this.account.getAssetV2Map();
