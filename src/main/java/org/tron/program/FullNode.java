@@ -142,7 +142,6 @@ public class FullNode {
           try {
 
             Sha256Hash id = getID(transaction);
-            System.out.println("adew " + id.toString());
             bufferedWriter.write(id.toString());
             bufferedWriter.newLine();
             if (count % 1000 == 0) {
@@ -209,6 +208,7 @@ public class FullNode {
     logger.info("Trx size: {}, cost: {}, tps: {}, txid: {}",
         trxCount, cost, 1.0 * trxCount / cost * 1000, transactionIDs.size());
 
+    Thread.sleep(5000);
     System.exit(0);
   }
 
