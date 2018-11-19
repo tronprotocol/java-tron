@@ -4,11 +4,14 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
+import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -21,17 +24,23 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
+import org.tron.core.exception.AccountResourceInsufficientException;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 
+import javax.lang.model.element.NestingKind;
+
 @Slf4j
 public class BandwidthProcessorTest {
 
   private static Manager dbManager;
-  private static final String dbPath = "bandwidth_test";
+  private static final String dbPath = "output_bandwidth_test";
   private static TronApplicationContext context;
   private static final String ASSET_NAME;
   private static final String ASSET_NAME_V2;
@@ -39,6 +48,15 @@ public class BandwidthProcessorTest {
   private static final String ASSET_ADDRESS;
   private static final String ASSET_ADDRESS_V2;
   private static final String TO_ADDRESS;
+  private static final long TOTAL_SUPPLY = 10000000000000L;
+  private static final int TRX_NUM = 2;
+  private static final int NUM = 2147483647;
+  private static final int VOTE_SCORE = 2;
+  private static final String DESCRIPTION = "TRX";
+  private static final String URL = "https://tron.network";
+  private static long START_TIME;
+  private static long END_TIME;
+
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -49,6 +67,8 @@ public class BandwidthProcessorTest {
     TO_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     ASSET_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";
     ASSET_ADDRESS_V2 = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a7890";
+    START_TIME = DateTime.now().minusDays(1).getMillis();
+    END_TIME = DateTime.now().getMillis();
   }
 
   /**
@@ -173,6 +193,40 @@ public class BandwidthProcessorTest {
         .setPublicFreeAssetNetLimit(1000L)
         .build();
   }
+
+  private void initAssetIssue(long startTimestmp, long endTimestmp, String assetName) {
+    long id = dbManager.getDynamicPropertiesStore().getTokenIdNum() + 1;
+    dbManager.getDynamicPropertiesStore().saveTokenIdNum(id);
+    AssetIssueContract assetIssueContract =
+            AssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
+                    .setName(ByteString.copyFrom(ByteArray.fromString(assetName)))
+                    .setId(Long.toString(id))
+                    .setTotalSupply(TOTAL_SUPPLY)
+                    .setTrxNum(TRX_NUM)
+                    .setNum(NUM)
+                    .setStartTime(startTimestmp)
+                    .setEndTime(endTimestmp)
+                    .setVoteScore(VOTE_SCORE)
+                    .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
+                    .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
+                    .build();
+    AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
+    AccountCapsule toAccountCapsule = dbManager.getAccountStore()
+            .get(ByteArray.fromHexString(TO_ADDRESS));
+    if(dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 1 ) {
+      dbManager.getAssetIssueV2Store()
+              .put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
+      toAccountCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), TOTAL_SUPPLY);
+    } else {
+      dbManager.getAssetIssueStore()
+              .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+      toAccountCapsule.addAsset(assetName.getBytes(), TOTAL_SUPPLY);
+    }
+    dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
+  }
+
+
 
 
   //@Test
@@ -489,5 +543,287 @@ public class BandwidthProcessorTest {
 //    Assert.assertEquals(101220L, ret.getFee());
   }
 
+  /**
+   * sameTokenName close, consume success
+   * assetIssueCapsule.getOwnerAddress() != fromAccount.getAddress())
+   * contract.getType() = TransferAssetContract
+   */
+  @Test
+  public void sameTokenNameCloseConsumeSuccess() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    dbManager.getDynamicPropertiesStore().saveTotalNetWeight(10_000_000L);
 
+    long id = dbManager.getDynamicPropertiesStore().getTokenIdNum() + 1;
+    dbManager.getDynamicPropertiesStore().saveTokenIdNum(id);
+    AssetIssueContract assetIssueContract =
+            AssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
+                    .setName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
+                    .setId(Long.toString(id))
+                    .setTotalSupply(TOTAL_SUPPLY)
+                    .setTrxNum(TRX_NUM)
+                    .setNum(NUM)
+                    .setStartTime(START_TIME)
+                    .setEndTime(END_TIME)
+                    .setVoteScore(VOTE_SCORE)
+                    .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
+                    .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
+                    .setPublicFreeAssetNetLimit(2000)
+                    .setFreeAssetNetLimit(2000)
+                    .build();
+    AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
+    // V1
+    dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+    // V2
+    dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
+
+    AccountCapsule ownerCapsule =
+            new AccountCapsule(
+                    ByteString.copyFromUtf8("owner"),
+                    ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+                    AccountType.Normal,
+                    dbManager.getDynamicPropertiesStore().getAssetIssueFee());
+    ownerCapsule.setBalance(10_000_000L);
+    long expireTime = DateTime.now().getMillis() + 6 * 86_400_000;
+    ownerCapsule.setFrozenForBandwidth(2_000_000L, expireTime);
+    dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+
+    AccountCapsule toAddressCapsule =
+            new AccountCapsule(
+                    ByteString.copyFromUtf8("owner"),
+                    ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
+                    AccountType.Normal,
+                    dbManager.getDynamicPropertiesStore().getAssetIssueFee());
+    toAddressCapsule.setBalance(10_000_000L);
+    long expireTime2 = DateTime.now().getMillis() + 6 * 86_400_000;
+    toAddressCapsule.setFrozenForBandwidth(2_000_000L, expireTime2);
+    dbManager.getAccountStore().put(toAddressCapsule.getAddress().toByteArray(), toAddressCapsule);
+
+    TransferAssetContract contract = Contract.TransferAssetContract.newBuilder()
+            .setAssetName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
+            .setAmount(100L)
+            .build();
+
+    TransactionCapsule trx = new TransactionCapsule(contract);
+    TransactionTrace trace = new TransactionTrace(trx, dbManager);
+
+    long byteSize = trx.getInstance().toBuilder().clearRet().build().getSerializedSize() +
+            Constant.MAX_RESULT_SIZE_IN_TX;
+
+    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+
+    try {
+      processor.consume(trx, trace);
+      Assert.assertEquals(trace.getReceipt().getNetFee(), 0);
+      Assert.assertEquals(trace.getReceipt().getNetUsage(), byteSize);
+      //V1
+      AssetIssueCapsule assetIssueCapsuleV1 =
+              dbManager.getAssetIssueStore().get(assetIssueCapsule.createDbKey());
+      Assert.assertNotNull(assetIssueCapsuleV1);
+      Assert.assertEquals(assetIssueCapsuleV1.getPublicFreeAssetNetUsage(), byteSize);
+
+      AccountCapsule fromAccount =
+              dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      Assert.assertNotNull(fromAccount);
+      Assert.assertEquals(fromAccount.getFreeAssetNetUsage(ASSET_NAME), byteSize);
+      Assert.assertEquals(fromAccount.getFreeAssetNetUsageV2(String.valueOf(id)), byteSize);
+
+      AccountCapsule ownerAccount =
+              dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+      Assert.assertNotNull(ownerAccount);
+      Assert.assertEquals(ownerAccount.getNetUsage(), byteSize);
+
+      //V2
+      AssetIssueCapsule assetIssueCapsuleV2 =
+              dbManager.getAssetIssueV2Store().get(assetIssueCapsule.createDbV2Key());
+      Assert.assertNotNull(assetIssueCapsuleV2);
+      Assert.assertEquals(assetIssueCapsuleV2.getPublicFreeAssetNetUsage(), byteSize);
+      Assert.assertEquals(fromAccount.getFreeAssetNetUsage(ASSET_NAME), byteSize);
+      Assert.assertEquals(fromAccount.getFreeAssetNetUsageV2(String.valueOf(id)), byteSize);
+    } catch ( ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (TooBigTransactionResultException e ) {
+      Assert.assertFalse(e instanceof TooBigTransactionResultException);
+    } catch (AccountResourceInsufficientException e ) {
+      Assert.assertFalse(e instanceof AccountResourceInsufficientException);
+    } finally {
+      dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS));
+      dbManager.getAccountStore().delete(ByteArray.fromHexString(TO_ADDRESS));
+      dbManager.getAssetIssueStore().delete(assetIssueCapsule.createDbKey());
+      dbManager.getAssetIssueV2Store().delete(assetIssueCapsule.createDbV2Key());
+    }
+  }
+
+  /**
+   * sameTokenName open, consume success
+   * assetIssueCapsule.getOwnerAddress() != fromAccount.getAddress())
+   * contract.getType() = TransferAssetContract
+   */
+  @Test
+  public void sameTokenNameOpenConsumeSuccess() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    dbManager.getDynamicPropertiesStore().saveTotalNetWeight(10_000_000L);
+
+    long id = dbManager.getDynamicPropertiesStore().getTokenIdNum() + 1;
+    dbManager.getDynamicPropertiesStore().saveTokenIdNum(id);
+    AssetIssueContract assetIssueContract =
+            AssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
+                    .setName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
+                    .setId(Long.toString(id))
+                    .setTotalSupply(TOTAL_SUPPLY)
+                    .setTrxNum(TRX_NUM)
+                    .setNum(NUM)
+                    .setStartTime(START_TIME)
+                    .setEndTime(END_TIME)
+                    .setVoteScore(VOTE_SCORE)
+                    .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
+                    .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
+                    .setPublicFreeAssetNetLimit(2000)
+                    .setFreeAssetNetLimit(2000)
+                    .build();
+    AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
+    // V2
+    dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
+
+    AccountCapsule ownerCapsule =
+            new AccountCapsule(
+                    ByteString.copyFromUtf8("owner"),
+                    ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+                    AccountType.Normal,
+                    dbManager.getDynamicPropertiesStore().getAssetIssueFee());
+    ownerCapsule.setBalance(10_000_000L);
+    long expireTime = DateTime.now().getMillis() + 6 * 86_400_000;
+    ownerCapsule.setFrozenForBandwidth(2_000_000L, expireTime);
+    dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+
+    AccountCapsule toAddressCapsule =
+            new AccountCapsule(
+                    ByteString.copyFromUtf8("owner"),
+                    ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
+                    AccountType.Normal,
+                    dbManager.getDynamicPropertiesStore().getAssetIssueFee());
+    toAddressCapsule.setBalance(10_000_000L);
+    long expireTime2 = DateTime.now().getMillis() + 6 * 86_400_000;
+    toAddressCapsule.setFrozenForBandwidth(2_000_000L, expireTime2);
+    dbManager.getAccountStore().put(toAddressCapsule.getAddress().toByteArray(), toAddressCapsule);
+
+    TransferAssetContract contract = Contract.TransferAssetContract.newBuilder()
+            .setAssetName(ByteString.copyFrom(ByteArray.fromString(String.valueOf(id))))
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
+            .setAmount(100L)
+            .build();
+
+    TransactionCapsule trx = new TransactionCapsule(contract);
+    TransactionTrace trace = new TransactionTrace(trx, dbManager);
+
+    long byteSize = trx.getInstance().toBuilder().clearRet().build().getSerializedSize() +
+            Constant.MAX_RESULT_SIZE_IN_TX;
+
+    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+
+    try {
+      processor.consume(trx, trace);
+      Assert.assertEquals(trace.getReceipt().getNetFee(), 0);
+      Assert.assertEquals(trace.getReceipt().getNetUsage(), byteSize);
+      AccountCapsule ownerAccount =
+              dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+      Assert.assertNotNull(ownerAccount);
+      Assert.assertEquals(ownerAccount.getNetUsage(), byteSize);
+
+      //V2
+      AssetIssueCapsule assetIssueCapsuleV2 =
+              dbManager.getAssetIssueV2Store().get(assetIssueCapsule.createDbV2Key());
+      Assert.assertNotNull(assetIssueCapsuleV2);
+      Assert.assertEquals(assetIssueCapsuleV2.getPublicFreeAssetNetUsage(), byteSize);
+
+      AccountCapsule fromAccount =
+              dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      Assert.assertNotNull(fromAccount);
+      Assert.assertEquals(fromAccount.getFreeAssetNetUsageV2(String.valueOf(id)), byteSize);
+      Assert.assertEquals(fromAccount.getFreeAssetNetUsageV2(String.valueOf(id)), byteSize);
+
+    } catch ( ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (TooBigTransactionResultException e ) {
+      Assert.assertFalse(e instanceof TooBigTransactionResultException);
+    } catch (AccountResourceInsufficientException e ) {
+      Assert.assertFalse(e instanceof AccountResourceInsufficientException);
+    } finally {
+      dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS));
+      dbManager.getAccountStore().delete(ByteArray.fromHexString(TO_ADDRESS));
+      dbManager.getAssetIssueStore().delete(assetIssueCapsule.createDbKey());
+      dbManager.getAssetIssueV2Store().delete(assetIssueCapsule.createDbV2Key());
+    }
+  }
+
+  /**
+   * sameTokenName close, consume success
+   * contract.getType() = TransferContract
+   * toAddressAccount isn't exist.
+   */
+  @Test
+  public void sameTokenNameCloseTransferToAccountNotExist() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    dbManager.getDynamicPropertiesStore().saveTotalNetWeight(10_000_000L);
+
+    AccountCapsule ownerCapsule =
+            new AccountCapsule(
+                    ByteString.copyFromUtf8("owner"),
+                    ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+                    AccountType.Normal,
+                    dbManager.getDynamicPropertiesStore().getAssetIssueFee());
+    ownerCapsule.setBalance(10_000_000L);
+    long expireTime = DateTime.now().getMillis() + 6 * 86_400_000;
+    ownerCapsule.setFrozenForBandwidth(2_000_000L, expireTime);
+    dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+
+    AccountCapsule toAddressCapsule =
+            new AccountCapsule(
+                    ByteString.copyFromUtf8("owner"),
+                    ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
+                    AccountType.Normal,
+                    dbManager.getDynamicPropertiesStore().getAssetIssueFee());
+    toAddressCapsule.setBalance(10_000_000L);
+    long expireTime2 = DateTime.now().getMillis() + 6 * 86_400_000;
+    toAddressCapsule.setFrozenForBandwidth(2_000_000L, expireTime2);
+    dbManager.getAccountStore().delete(toAddressCapsule.getAddress().toByteArray());
+
+    Contract.TransferContract contract = Contract.TransferContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
+            .setAmount(100L)
+            .build();
+
+    TransactionCapsule trx = new TransactionCapsule(contract, dbManager.getAccountStore());
+    TransactionTrace trace = new TransactionTrace(trx, dbManager);
+
+    long byteSize = trx.getInstance().toBuilder().clearRet().build().getSerializedSize() +
+            Constant.MAX_RESULT_SIZE_IN_TX;
+
+    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+
+    try {
+      processor.consume(trx, trace);
+
+      Assert.assertEquals(trace.getReceipt().getNetFee(), 0);
+      Assert.assertEquals(trace.getReceipt().getNetUsage(), byteSize);
+      AccountCapsule fromAccount =
+              dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      Assert.assertNotNull(fromAccount);
+      Assert.assertEquals(fromAccount.getNetUsage(), byteSize);
+    } catch ( ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (TooBigTransactionResultException e ) {
+      Assert.assertFalse(e instanceof TooBigTransactionResultException);
+    } catch (AccountResourceInsufficientException e ) {
+      Assert.assertFalse(e instanceof AccountResourceInsufficientException);
+    } finally {
+      dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS));
+      dbManager.getAccountStore().delete(ByteArray.fromHexString(TO_ADDRESS));
+    }
+  }
 }
