@@ -1467,4 +1467,32 @@ public class ExchangeWithdrawActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
+
+  /**
+   * SameTokenName open, Invalid param
+   * "token id is not a valid number"
+   */
+  @Test
+  public void SameTokenNameOpenInvalidParam() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    InitExchangeSameTokenNameActive();
+    long exchangeId = 1;
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    //token id is not a valid number
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
+            OWNER_ADDRESS_FIRST, exchangeId, "abc", 1000),
+            dbManager);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail();
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("token id is not a valid number",
+              e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
 }
