@@ -65,11 +65,11 @@ public class SnapshotRootTest {
     revokingDatabase.add(tronDatabase.getRevokingDB());
 
     SessionOptional dialog = SessionOptional.instance().setValue(revokingDatabase.buildSession());
-    ProtoCapsuleTest testProtoCapsule = new ProtoCapsuleTest("test".getBytes());
-    tronDatabase.put("merge".getBytes(), testProtoCapsule);
+    ProtoCapsuleTest testProtoCapsule = new ProtoCapsuleTest("merge".getBytes());
+    tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
     revokingDatabase.getDbs().forEach(db -> db.getHead().getRoot().merge(db.getHead()));
     dialog.reset();
-    Assert.assertEquals(tronDatabase.get("merge".getBytes()), testProtoCapsule);
+    Assert.assertEquals(tronDatabase.get(testProtoCapsule.getData()), testProtoCapsule);
 
     tronDatabase.close();
   }
