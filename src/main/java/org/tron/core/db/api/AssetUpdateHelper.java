@@ -16,6 +16,7 @@ import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Slf4j
 public class AssetUpdateHelper {
@@ -67,7 +68,7 @@ public class AssetUpdateHelper {
         BlockCapsule block = dbManager.getBlockByNum(blockNum);
         for (TransactionCapsule transaction : block.getTransactions()) {
           if (transaction.getInstance().getRawData().getContract(0).getType()
-              == org.tron.protos.Protocol.Transaction.Contract.ContractType.AssetIssueContract) {
+              == ContractType.AssetIssueContract) {
             AssetIssueContract obj =
                 transaction
                     .getInstance()

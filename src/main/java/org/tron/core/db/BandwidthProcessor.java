@@ -222,13 +222,12 @@ public class BandwidthProcessor extends ResourceProcessor {
 
     AssetIssueCapsule assetIssueCapsule;
     assetIssueCapsule = dbManager.getAssetIssueStoreFinal().get(assetName.toByteArray());
-    String tokenName = ByteArray.toStr(assetName.toByteArray());
-    String tokenID = assetIssueCapsule.getId();
-
     if (assetIssueCapsule == null) {
       throw new ContractValidateException("asset not exists");
     }
 
+    String tokenName = ByteArray.toStr(assetName.toByteArray());
+    String tokenID = assetIssueCapsule.getId();
     if (assetIssueCapsule.getOwnerAddress() == accountCapsule.getAddress()) {
       return useAccountNet(accountCapsule, bytes, now);
     }
