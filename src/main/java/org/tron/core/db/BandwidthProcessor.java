@@ -223,7 +223,7 @@ public class BandwidthProcessor extends ResourceProcessor {
     AssetIssueCapsule assetIssueCapsule;
     assetIssueCapsule = dbManager.getAssetIssueStoreFinal().get(assetName.toByteArray());
     String tokenName = ByteArray.toStr(assetName.toByteArray());
-    String tokenID = Long.toString(assetIssueCapsule.getId());
+    String tokenID = assetIssueCapsule.getId();
 
     if (assetIssueCapsule == null) {
       throw new ContractValidateException("asset not exists");
@@ -250,9 +250,9 @@ public class BandwidthProcessor extends ResourceProcessor {
     long freeAssetNetUsage, latestAssetOperationTime;
     if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       freeAssetNetUsage = accountCapsule
-          .getFreeAssetNetUsage(tokenID);
+          .getFreeAssetNetUsage(tokenName);
       latestAssetOperationTime = accountCapsule
-          .getLatestAssetOperationTime(tokenID);
+          .getLatestAssetOperationTime(tokenName);
     } else {
       freeAssetNetUsage = accountCapsule.getFreeAssetNetUsageV2(tokenID);
       latestAssetOperationTime = accountCapsule.getLatestAssetOperationTimeV2(tokenID);
@@ -299,9 +299,9 @@ public class BandwidthProcessor extends ResourceProcessor {
 
     accountCapsule.setLatestOperationTime(latestOperationTime);
     if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      accountCapsule.putLatestAssetOperationTimeMap(tokenID,
+      accountCapsule.putLatestAssetOperationTimeMap(tokenName,
           latestAssetOperationTime);
-      accountCapsule.putFreeAssetNetUsage(tokenID, newFreeAssetNetUsage);
+      accountCapsule.putFreeAssetNetUsage(tokenName, newFreeAssetNetUsage);
       dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
     }
 
