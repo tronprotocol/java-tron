@@ -63,7 +63,7 @@ public class AssetIssueActuator extends AbstractActuator {
 //      assetIssueCapsule.setOrder(order);
       long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
       tokenIdNum++;
-      assetIssueCapsule.setId(tokenIdNum);
+      assetIssueCapsule.setId(Long.toString(tokenIdNum));
       assetIssueCapsule.setPrecision(assetIssueContract.getPrecision());
       dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenIdNum);
 

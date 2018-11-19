@@ -387,13 +387,13 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     if (manager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       Map<String, Long> assetMap = this.account.getAssetMap();
       AssetIssueCapsule assetIssueCapsule = manager.getAssetIssueStore().get(key);
-      long tokenID = assetIssueCapsule.getId();
+      String tokenID = assetIssueCapsule.getId();
       String nameKey = ByteArray.toStr(key);
       Long currentAmount = assetMap.get(nameKey);
       if (amount > 0 && null != currentAmount && amount <= currentAmount) {
         this.account = this.account.toBuilder()
             .putAsset(nameKey, Math.subtractExact(currentAmount, amount))
-            .putAssetV2(Long.toString(tokenID), Math.subtractExact(currentAmount, amount))
+            .putAssetV2(tokenID, Math.subtractExact(currentAmount, amount))
             .build();
         return true;
       }
@@ -437,7 +437,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     if (manager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       Map<String, Long> assetMap = this.account.getAssetMap();
       AssetIssueCapsule assetIssueCapsule = manager.getAssetIssueStore().get(key);
-      long tokenID = assetIssueCapsule.getId();
+      String tokenID = assetIssueCapsule.getId();
       String nameKey = ByteArray.toStr(key);
       Long currentAmount = assetMap.get(nameKey);
       if (currentAmount == null) {
@@ -445,7 +445,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       }
       this.account = this.account.toBuilder()
           .putAsset(nameKey, Math.addExact(currentAmount, amount))
-          .putAssetV2(Long.toString(tokenID), Math.addExact(currentAmount, amount))
+          .putAssetV2(tokenID, Math.addExact(currentAmount, amount))
           .build();
     }
     //key is token name
@@ -496,7 +496,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     String tokenID = ByteArray.toStr(key);
     Map<String, Long> assetV2Map = this.account.getAssetV2Map();
     if (!assetV2Map.isEmpty() && assetV2Map.containsKey(tokenID)) {
-        return false;
+      return false;
     }
 
     this.account = this.account.toBuilder()
