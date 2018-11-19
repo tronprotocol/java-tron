@@ -28,15 +28,10 @@ public class WalletTestAssetIssue019 {
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
   private static final long now = System.currentTimeMillis();
-  //private static final String name = "Asset019_" + Long.toString(now);
-  private static final String char32Name = "To_long_asset_name_" + Long.toString(now);
-  private static final String char33Name = "To_long_asset_name_a" + Long.toString(now);
   private static final long totalSupply = now;
   String description = "just-test";
   String url = "https://github.com/tronprotocol/wallet-cli/";
-
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
@@ -46,8 +41,6 @@ public class WalletTestAssetIssue019 {
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] asset019Address = ecKey1.getAddress();
   String asset019Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] asset019SecondAddress = ecKey2.getAddress();
   String asset019SecondKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
@@ -130,8 +123,12 @@ public class WalletTestAssetIssue019 {
         2000L,2000L, 1L,1L,asset019SecondKey,blockingStubFull));
   }
 
-  @Test(enabled = false)
-  public void testLastOperationTimeAndAssetIssueFreeNetUsed() {
+  @Test(enabled = true)
+  public void testGetAssetLastOperationTimeAndAssetIssueFreeNetUsed() {
+    Assert.assertTrue(PublicMethed.freezeBalance(asset019Address,100000000L,3,
+        asset019Key,blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalance(asset019SecondAddress,100000000L,3,
+        asset019SecondKey,blockingStubFull));
     Account getAssetIdFromThisAccount;
     getAssetIdFromThisAccount = PublicMethed.queryAccount(asset019Address,blockingStubFull);
     ByteString asset019AccountId = getAssetIdFromThisAccount.getAssetIssuedID();
@@ -150,30 +147,19 @@ public class WalletTestAssetIssue019 {
     PublicMethed.transferAsset(asset019SecondAddress,asset019SecondAccountId.toByteArray(),
         10L,asset019Address,asset019Key,blockingStubFull);
 
-
-
     getAssetIdFromThisAccount = PublicMethed.queryAccount(asset019Address,blockingStubFull);
-    for (String id : getAssetIdFromThisAccount.getAssetV2Map().keySet()) {
+    for (String id : getAssetIdFromThisAccount.getFreeAssetNetUsageV2Map().keySet()) {
       if (asset019SecondAccountId.toStringUtf8().equalsIgnoreCase(id)) {
-        logger.info("asset019Address.getLatestAssetOperationTimeV2Map().get(id)"
-            + getAssetIdFromThisAccount.getLatestAssetOperationTimeV2Map().get(id));
-        Assert.assertTrue(getAssetIdFromThisAccount.getLatestAssetOperationTimeV2Map().get(id) > 0);
-        Assert.assertTrue(getAssetIdFromThisAccount.getFreeAssetNetUsageMap().get(id) > 0);
+        Assert.assertTrue(getAssetIdFromThisAccount.getFreeAssetNetUsageV2Map().get(id) > 0);
       }
     }
 
     getAssetIdFromThisAccount = PublicMethed.queryAccount(asset019SecondAddress,blockingStubFull);
-    for (String id : getAssetIdFromThisAccount.getAssetV2Map().keySet()) {
+    for (String id : getAssetIdFromThisAccount.getLatestAssetOperationTimeV2Map().keySet()) {
       if (asset019AccountId.toStringUtf8().equalsIgnoreCase(id)) {
-        logger.info("asset019SecondAddress.getLatestAssetOperationTimeV2Map().get(id)"
-            + getAssetIdFromThisAccount.getLatestAssetOperationTimeV2Map().get(id));
         Assert.assertTrue(getAssetIdFromThisAccount.getLatestAssetOperationTimeV2Map().get(id) > 0);
-        Assert.assertTrue(getAssetIdFromThisAccount.getFreeAssetNetUsageMap().get(id) > 0);
       }
     }
-
-
-
   }
 
   @AfterClass(enabled = true)
