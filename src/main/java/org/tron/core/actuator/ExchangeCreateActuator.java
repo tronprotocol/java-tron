@@ -100,6 +100,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
 
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
 
+      ret.setExchangeId(id);
       ret.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);

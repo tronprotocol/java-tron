@@ -101,6 +101,16 @@ public class TransactionResultCapsule implements ProtoCapsule<Transaction.Result
         .build();
   }
 
+  public long getExchangeId() {
+    return transactionResult.getExchangeId();
+  }
+
+  public void setExchangeId(long id) {
+    this.transactionResult = this.transactionResult.toBuilder()
+        .setExchangeId(id)
+        .build();
+  }
+
   public long getExchangeInjectAnotherAmount() {
     return transactionResult.getExchangeInjectAnotherAmount();
   }
