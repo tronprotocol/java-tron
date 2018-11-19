@@ -407,7 +407,7 @@ public class Program {
     increaseNonce();
 
     addInternalTx(null, owner, obtainer, balance, null, "suicide", nonce,
-        getContractState().getAccount(owner).getAssetMap());
+        getContractState().getAccount(owner).getAssetMapV2());
 
     if (FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0) {
       // if owner == obtainer just zeroing account according to Yellow Paper
@@ -500,7 +500,7 @@ public class Program {
         programCode, "create", nonce, null);
     long vmStartInUs = System.nanoTime() / 1000;
     ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
-        this, new DataWord(newAddress), getContractAddress(), value,
+        this, new DataWord(newAddress), getContractAddress(), value, new DataWord(0), null,
         newBalance, null, deposit, false, byTestingSuite(), vmStartInUs,
         getVmShouldEndInUs(), energyLimit.longValueSafe());
 
@@ -620,6 +620,7 @@ public class Program {
     // 2.1 PERFORM THE VALUE (endowment) PART
     long endowment = msg.getEndowment().value().longValueExact();
     // transfer trx validation
+    byte[] tokenId = null;
     if (msg.getTokenId() == null) {
       long senderBalance = deposit.getBalance(senderAddress);
       if (senderBalance < endowment) {
@@ -630,7 +631,8 @@ public class Program {
     }
     // transfer trc10 token validation
     else {
-      long senderBalance = deposit.getTokenBalance(senderAddress, msg.getTokenId().getData());
+      tokenId = String.valueOf(msg.getTokenId().longValue()).getBytes();
+      long senderBalance = deposit.getTokenBalance(senderAddress, tokenId);
       if (senderBalance < endowment) {
         stackPushZero();
         refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
@@ -665,12 +667,12 @@ public class Program {
       } else {
         try {
           TransferAssetActuator.validateForSmartContract(deposit, senderAddress, contextAddress,
-              msg.getTokenId().getData(), endowment);
+              tokenId, endowment);
         } catch (ContractValidateException e) {
           throw new BytecodeExecutionException("validateForSmartContract failure");
         }
-        deposit.addTokenBalance(senderAddress, msg.getTokenId().getData(), -endowment);
-        deposit.addTokenBalance(contextAddress, msg.getTokenId().getData(), endowment);
+        deposit.addTokenBalance(senderAddress, tokenId, -endowment);
+        deposit.addTokenBalance(contextAddress, tokenId, endowment);
       }
     }
 
@@ -678,7 +680,7 @@ public class Program {
     increaseNonce();
     HashMap<String, Long> tokenInfo = new HashMap<>();
     if (msg.getTokenId() != null) {
-      tokenInfo.put(new String(stripLeadingZeroes(msg.getTokenId().getData())), endowment);
+      tokenInfo.put(new String(stripLeadingZeroes(tokenId)), endowment);
     }
     InternalTransaction internalTx = addInternalTx(null, senderAddress, contextAddress,
         msg.getTokenId() == null ? endowment : 0, data, "call", nonce,
@@ -686,10 +688,13 @@ public class Program {
     ProgramResult callResult = null;
     if (isNotEmpty(programCode)) {
       long vmStartInUs = System.nanoTime() / 1000;
+      DataWord callValue = msg.getType().callIsDelegate() ? getCallValue() : msg.getEndowment();
       ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
           this, new DataWord(contextAddress),
           msg.getType().callIsDelegate() ? getCallerAddress() : getContractAddress(),
-          msg.getType().callIsDelegate() ? getCallValue() : msg.getEndowment(),
+          msg.getTokenId() == null ? callValue : new DataWord(0),
+          msg.getTokenId() == null ? new DataWord(0) : callValue,
+          msg.getTokenId() == null ? null : msg.getTokenId(),
           contextBalance, data, deposit, msg.getType().callIsStatic() || isStaticCall(),
           byTestingSuite(), vmStartInUs, getVmShouldEndInUs(), msg.getEnergy().longValueSafe());
       VM vm = new VM(config);
@@ -923,9 +928,13 @@ public class Program {
   }
 
   public DataWord getTokenBalance(DataWord address, DataWord tokenId) {
-    long ret = getContractState().getTokenBalance(convertToTronAddress(address.getLast20Bytes()), tokenId.getData());
+    long ret = getContractState().getTokenBalance(convertToTronAddress(address.getLast20Bytes()), String.valueOf(tokenId.longValue()).getBytes());
     return ret == 0 ? new DataWord(0) : new DataWord(ret);
   }
+
+  public DataWord getTokenValue() { return invoke.getTokenValue().clone(); }
+
+  public DataWord getTokenId() { return invoke.getTokenId().clone(); }
 
   public DataWord getPrevHash() {
     return invoke.getPrevHash().clone();
@@ -1289,13 +1298,15 @@ public class Program {
 
     long endowment = msg.getEndowment().value().longValueExact();
     long senderBalance = 0;
+    byte[] tokenId = null;
     // transfer trx validation
     if (msg.getTokenId() == null) {
       senderBalance = deposit.getBalance(senderAddress);
     }
     // transfer trc10 token validation
     else {
-      senderBalance = deposit.getTokenBalance(senderAddress, msg.getTokenId().getData());
+      tokenId = String.valueOf(msg.getTokenId().longValue()).getBytes();
+      senderBalance = deposit.getTokenBalance(senderAddress, tokenId);
     }
     if (senderBalance < endowment) {
       stackPushZero();
@@ -1318,12 +1329,12 @@ public class Program {
       }
       else {
         try {
-          TransferAssetActuator.validateForSmartContract(deposit,senderAddress,contextAddress, msg.getTokenId().getData(), endowment);
+          TransferAssetActuator.validateForSmartContract(deposit,senderAddress,contextAddress, tokenId, endowment);
         } catch (ContractValidateException e) {
           throw new BytecodeExecutionException("validateForSmartContract failure");
         }
-        deposit.addTokenBalance(senderAddress,msg.getTokenId().getData(),-endowment);
-        deposit.addTokenBalance(contextAddress, msg.getTokenId().getData(), endowment);
+        deposit.addTokenBalance(senderAddress,tokenId,-endowment);
+        deposit.addTokenBalance(contextAddress, tokenId, endowment);
       }
     }
 

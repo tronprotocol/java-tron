@@ -231,11 +231,14 @@ public class ExchangeInjectActuatorTest {
       Assert.assertEquals(secondTokenId, ByteArray.toStr(exchangeCapsule.getSecondTokenId()));
       Assert.assertEquals(600000000L, exchangeCapsule.getSecondTokenBalance());
 
+      Assert.assertEquals(secondTokenQuant, ret.getExchangeInjectAnotherAmount());
+
       accountCapsule = dbManager.getAccountStore().get(ownerAddress);
       Map<String, Long> assetMap = accountCapsule.getAssetMap();
       Assert.assertEquals(10000_000000L, accountCapsule.getBalance());
       Assert.assertEquals(0L, assetMap.get(firstTokenId).longValue());
       Assert.assertEquals(0L, assetMap.get(secondTokenId).longValue());
+
 
     } catch (ContractValidateException e) {
       logger.info(e.getMessage());
@@ -1399,6 +1402,32 @@ public class ExchangeInjectActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("another token balance is not enough",
+              e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  /**
+   * SameTokenName open, invalid param
+   * "token id is not a valid number"
+   */
+  @Test
+  public void SameTokenNameOpenInvalidParam() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    InitExchangeSameTokenNameActive();
+    long exchangeId = 1;
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
+            OWNER_ADDRESS_FIRST, exchangeId, "abc", 1000),
+            dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail();
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("token id is not a valid number",
               e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);

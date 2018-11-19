@@ -109,6 +109,16 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
     return new DataWord(balance);
   }
 
+  @Override
+  public DataWord getTokenValue() {
+    return null;
+  }
+
+  @Override
+  public DataWord getTokenId() {
+    return null;
+  }
+
   /*****************/
   /***  msg data ***/
   /**

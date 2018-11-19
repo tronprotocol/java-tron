@@ -63,7 +63,7 @@ public class AssetIssueActuator extends AbstractActuator {
 //      assetIssueCapsule.setOrder(order);
       long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
       tokenIdNum++;
-      assetIssueCapsule.setId(tokenIdNum);
+      assetIssueCapsule.setId(Long.toString(tokenIdNum));
       assetIssueCapsule.setPrecision(assetIssueContract.getPrecision());
       dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenIdNum);
 
@@ -196,8 +196,9 @@ public class AssetIssueActuator extends AbstractActuator {
       throw new ContractValidateException("Start time should be greater than HeadBlockTime");
     }
 
-    if (this.dbManager.getAssetIssueStore().get(assetIssueContract.getName().toByteArray())
-        != null && this.dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+    if (this.dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0
+        && this.dbManager.getAssetIssueStore().get(assetIssueContract.getName().toByteArray())
+            != null) {
       throw new ContractValidateException("Token exists");
     }
 

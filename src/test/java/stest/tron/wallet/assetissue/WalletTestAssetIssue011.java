@@ -75,44 +75,45 @@ public class WalletTestAssetIssue011 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-
-    //Sendcoin to this account
-    ByteString addressBS1 = ByteString.copyFrom(asset011Address);
-    Account request1 = Account.newBuilder().setAddress(addressBS1).build();
-    GrpcAPI.AssetIssueList assetIssueList1 = blockingStubFull
-        .getAssetIssueByAccount(request1);
-    Optional<GrpcAPI.AssetIssueList> queryAssetByAccount = Optional.ofNullable(assetIssueList1);
-    if (queryAssetByAccount.get().getAssetIssueCount() == 0) {
-      //Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 10000000, 3, testKey002,
-      //    blockingStubFull));
-      Assert.assertTrue(PublicMethed
-          .sendcoin(asset011Address, sendAmount, fromAddress, testKey002, blockingStubFull));
-      Assert.assertTrue(PublicMethed
-          .freezeBalance(asset011Address, 100000000L, 3, testKeyForAssetIssue011,
-              blockingStubFull));
-      Long start = System.currentTimeMillis() + 2000;
-      Long end = System.currentTimeMillis() + 1000000000;
-      Assert.assertTrue(PublicMethed
-          .createAssetIssue(asset011Address, name, totalSupply, 1, 1, start, end, 1, description,
-              url, freeAssetNetLimit, publicFreeAssetNetLimit, 1L, 1L, testKeyForAssetIssue011,
-              blockingStubFull));
-    } else {
-      logger.info("This account already create an assetisue");
-      Optional<GrpcAPI.AssetIssueList> queryAssetByAccount1 = Optional.ofNullable(assetIssueList1);
-      name = ByteArray.toStr(queryAssetByAccount1.get().getAssetIssue(0).getName().toByteArray());
-    }
   }
 
   @Test(enabled = true)
   public void testTransferAssetCreateAccount() {
+    //get account
+    ecKey1 = new ECKey(Utils.getRandom());
+    asset011Address = ecKey1.getAddress();
+    testKeyForAssetIssue011 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
+
+    ecKey2 = new ECKey(Utils.getRandom());
+    transferAssetCreateAddress = ecKey2.getAddress();
+    transferAssetCreateKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+
+    Assert.assertTrue(PublicMethed
+        .sendcoin(asset011Address, sendAmount, fromAddress, testKey002, blockingStubFull));
+    Assert.assertTrue(PublicMethed
+        .freezeBalance(asset011Address, 100000000L, 3, testKeyForAssetIssue011,
+            blockingStubFull));
+    Long start = System.currentTimeMillis() + 2000;
+    Long end = System.currentTimeMillis() + 1000000000;
+    Assert.assertTrue(PublicMethed
+        .createAssetIssue(asset011Address, name, totalSupply, 1, 1, start, end, 1, description,
+            url, freeAssetNetLimit, publicFreeAssetNetLimit, 1L, 1L, testKeyForAssetIssue011,
+            blockingStubFull));
+
+    Account getAssetIdFromThisAccount;
+    getAssetIdFromThisAccount = PublicMethed.queryAccount(asset011Address,blockingStubFull);
+    ByteString assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
+
+
     //Transfer asset to create an account.
     Assert.assertTrue(PublicMethed
-        .transferAsset(transferAssetCreateAddress, name.getBytes(), 1L, asset011Address,
-            testKeyForAssetIssue011, blockingStubFull));
+        .transferAsset(transferAssetCreateAddress, assetAccountId.toByteArray(), 1L,
+            asset011Address, testKeyForAssetIssue011, blockingStubFull));
 
     Account queryTransferAssetAccount = PublicMethed
         .queryAccount(transferAssetCreateKey, blockingStubFull);
-    Assert.assertTrue(queryTransferAssetAccount.getAssetCount() == 1);
+    Assert.assertTrue(queryTransferAssetAccount.getAssetV2Count() == 1);
     Assert.assertTrue(PublicMethed.updateAccount(asset011Address, Long.toString(now)
         .getBytes(), testKeyForAssetIssue011, blockingStubFull));
     Assert.assertTrue(PublicMethed.updateAccount(transferAssetCreateAddress, updateMostLongName

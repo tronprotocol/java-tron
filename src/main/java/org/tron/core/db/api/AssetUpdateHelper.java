@@ -55,7 +55,7 @@ public class AssetUpdateHelper {
       tokenIdNum++;
       count++;
 
-      assetIssueCapsule.setId(tokenIdNum);
+      assetIssueCapsule.setId(Long.toString(tokenIdNum));
       dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
       dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
 

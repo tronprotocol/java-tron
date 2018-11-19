@@ -288,6 +288,9 @@ message Transaction {
 
     int64 withdraw_amount = 15;
     int64 unfreeze_amount = 16;
+    int64 exchange_received_amount = 18;
+    int64 exchange_inject_another_amount = 19;
+    int64 exchange_withdraw_another_amount = 20;
   }
 
   message raw {
@@ -336,6 +339,9 @@ message TransactionInfo {
   int64 withdraw_amount = 15;
   int64 unfreeze_amount = 16;
   repeated InternalTransaction internal_transactions = 17;
+  int64 exchange_received_amount = 18;
+  int64 exchange_inject_another_amount = 19;
+  int64 exchange_withdraw_another_amount = 20;
 }
 
 message Transactions {

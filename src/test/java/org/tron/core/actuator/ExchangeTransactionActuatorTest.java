@@ -323,6 +323,8 @@ public class ExchangeTransactionActuatorTest {
       Assert.assertEquals(20000_000000L - quant, accountCapsule.getBalance());
       Assert.assertEquals(999L, assetV2Map.get("123").longValue());
 
+      Assert.assertEquals(999L, ret.getExchangeReceivedAmount());
+
     } catch (ContractValidateException e) {
       logger.info(e.getMessage());
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -1253,6 +1255,52 @@ public class ExchangeTransactionActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("token required must greater than expected",
+              e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  /**
+   * SameTokenName open,invalid param
+   * "token id is not a valid number"
+   * "token expected must greater than zero"
+   */
+  @Test
+  public void SameTokenNameOpenInvalidParam() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    InitExchangeSameTokenNameActive();
+    long exchangeId = 1;
+    long quant = 100_000_000L; // use 100 TRX to buy abc
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    //token id is not a valid number
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
+            OWNER_ADDRESS_SECOND, exchangeId, "abc", quant, 1),
+            dbManager);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail("should not run here");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("token id is not a valid number",
+              e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+
+    //token expected must greater than zero
+    actuator = new ExchangeTransactionActuator(getContract(
+            OWNER_ADDRESS_SECOND, exchangeId, "_", quant, 0),
+            dbManager);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail("should not run here");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("token expected must greater than zero",
               e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);

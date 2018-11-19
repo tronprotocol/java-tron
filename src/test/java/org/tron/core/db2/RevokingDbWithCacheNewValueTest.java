@@ -1,6 +1,8 @@
 package org.tron.core.db2;
 
 import java.io.File;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.junit.After;
@@ -79,7 +81,7 @@ public class RevokingDbWithCacheNewValueTest {
   }
 
   @Test
-  public synchronized void testMerge() throws BadItemException, ItemNotFoundException {
+  public synchronized void testMerge() {
     revokingDatabase = new TestSnapshotManager();
     revokingDatabase.enable();
     tronDatabase = new TestRevokingTronStore("testRevokingDBWithCacheNewValue-testMerge");
@@ -93,25 +95,25 @@ public class RevokingDbWithCacheNewValueTest {
     ProtoCapsuleTest testProtoCapsule = new ProtoCapsuleTest("merge".getBytes());
     ProtoCapsuleTest testProtoCapsule2 = new ProtoCapsuleTest("merge2".getBytes());
 
-    tronDatabase.put("merge".getBytes(), testProtoCapsule);
+    tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
 
     try (ISession tmpSession = revokingDatabase.buildSession()) {
       tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule2);
       tmpSession.merge();
     }
-    Assert.assertEquals(testProtoCapsule2, tronDatabase.get("merge".getBytes()));
+    Assert.assertEquals(testProtoCapsule2, tronDatabase.get(testProtoCapsule.getData()));
 
     try (ISession tmpSession = revokingDatabase.buildSession()) {
-      tronDatabase.delete("merge".getBytes());
+      tronDatabase.delete(testProtoCapsule.getData());
       tmpSession.merge();
     }
-    Assert.assertEquals(null, tronDatabase.get("merge".getBytes()));
+    Assert.assertEquals(null, tronDatabase.get(testProtoCapsule.getData()));
     dialog.reset();
   }
 
 
   @Test
-  public synchronized void testRevoke() throws BadItemException, ItemNotFoundException {
+  public synchronized void testRevoke() {
     revokingDatabase = new TestSnapshotManager();
     revokingDatabase.enable();
     tronDatabase = new TestRevokingTronStore("testRevokingDBWithCacheNewValue-testRevoke");
@@ -168,6 +170,64 @@ public class RevokingDbWithCacheNewValueTest {
         .valueOf(tronDatabase.getUnchecked(testProtoCapsule.getData())));
     Assert.assertEquals(testProtoCapsule, tronDatabase.get(testProtoCapsule.getData()));
   }
+
+  @Test
+  public synchronized void testGetlatestValues() {
+    revokingDatabase = new TestSnapshotManager();
+    revokingDatabase.enable();
+    tronDatabase = new TestRevokingTronStore("testSnapshotManager-testGetlatestValues");
+    revokingDatabase.add(tronDatabase.getRevokingDB());
+    while (revokingDatabase.size() != 0) {
+      revokingDatabase.pop();
+    }
+
+    for (int i = 1; i < 10; i++) {
+      ProtoCapsuleTest testProtoCapsule = new ProtoCapsuleTest(("getLastestValues" + i).getBytes());
+      try (ISession tmpSession = revokingDatabase.buildSession()) {
+        tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
+        tmpSession.commit();
+      }
+    }
+
+    Set<ProtoCapsuleTest> result = tronDatabase.getRevokingDB().getlatestValues(5).stream()
+        .map(ProtoCapsuleTest::new)
+        .collect(Collectors.toSet());
+
+    for (int i = 9; i >= 5; i--) {
+      Assert.assertEquals(true,
+          result.contains(new ProtoCapsuleTest(("getLastestValues" + i).getBytes())));
+    }
+  }
+
+  @Test
+  public synchronized void testGetValuesNext() {
+    revokingDatabase = new TestSnapshotManager();
+    revokingDatabase.enable();
+    tronDatabase = new TestRevokingTronStore("testSnapshotManager-testGetValuesNext");
+    revokingDatabase.add(tronDatabase.getRevokingDB());
+    while (revokingDatabase.size() != 0) {
+      revokingDatabase.pop();
+    }
+
+    for (int i = 1; i < 10; i++) {
+      ProtoCapsuleTest testProtoCapsule = new ProtoCapsuleTest(("getValuesNext" + i).getBytes());
+      try (ISession tmpSession = revokingDatabase.buildSession()) {
+        tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
+        tmpSession.commit();
+      }
+    }
+
+    Set<ProtoCapsuleTest> result =
+        tronDatabase.getRevokingDB().getValuesNext(
+          new ProtoCapsuleTest("getValuesNext2".getBytes()).getData(), 3
+        ).stream().map(ProtoCapsuleTest::new).collect(Collectors.toSet());
+
+    for (int i = 2; i < 5; i++) {
+      Assert.assertEquals(true,
+          result.contains(new ProtoCapsuleTest(("getValuesNext" + i).getBytes())));
+    }
+  }
+
 
   public static class TestRevokingTronStore extends TronStoreWithRevoking<ProtoCapsuleTest> {
 

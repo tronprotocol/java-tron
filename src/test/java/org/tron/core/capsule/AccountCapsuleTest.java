@@ -8,6 +8,7 @@ import java.util.Random;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
@@ -21,6 +22,7 @@ import org.tron.protos.Contract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Vote;
 
+@Ignore
 public class AccountCapsuleTest {
 
   private static final String dbPath = "output_accountCapsule_test";
@@ -46,7 +48,7 @@ public class AccountCapsuleTest {
     context = new TronApplicationContext(DefaultConfig.class);
     dbManager = context.getBean(Manager.class);
 
-    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "a06a17a49648a8ad32055c06f60fa14ae46df94cc1";
+    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "a06a17a49648a8ad32055c06f60fa14ae46df91234";
   }
 
 
@@ -64,6 +66,7 @@ public class AccountCapsuleTest {
   @AfterClass
   public static void removeDb() {
     Args.clearParam();
+    context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }
 

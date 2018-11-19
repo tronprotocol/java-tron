@@ -62,14 +62,14 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
     return this.assetIssueContract.getName();
   }
 
-  public void setId(long id) {
+  public void setId(String id) {
     this.assetIssueContract = this.assetIssueContract.toBuilder()
-        .setId(String.valueOf(id))
+        .setId(id)
         .build();
   }
 
-  public long getId() {
-    return Long.parseLong(this.assetIssueContract.getId());
+  public String getId() {
+    return this.assetIssueContract.getId();
   }
 
   public void setPrecision(int precision) {

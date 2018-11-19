@@ -148,12 +148,10 @@ public class ExchangeCapsule implements ProtoCapsule<Exchange> {
       byte[] firstTokenID = firstTokenName;
       byte[] secondTokenID = secondTokenName;
       if (!Arrays.equals(firstTokenName, "_".getBytes())) {
-        firstTokenID = Long.toString(
-            manager.getAssetIssueStore().get(firstTokenName).getId()).getBytes();
+        firstTokenID = manager.getAssetIssueStore().get(firstTokenName).getId().getBytes();
       }
       if (!Arrays.equals(secondTokenName, "_".getBytes())) {
-        secondTokenID = Long.toString(
-            manager.getAssetIssueStore().get(secondTokenName).getId()).getBytes();
+        secondTokenID = manager.getAssetIssueStore().get(secondTokenName).getId().getBytes();
       }
       this.exchange = this.exchange.toBuilder()
           .setFirstTokenId(ByteString.copyFrom(firstTokenID))

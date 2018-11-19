@@ -88,10 +88,10 @@ public class TestApproveProposal {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testApproveProposal() {
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
-    proposalMap.put(18L, 100000000000000000L);
+    proposalMap.put(15L, 1L);
     Assert.assertTrue(PublicMethed.createProposal(witness001Address,witnessKey001,
         proposalMap,blockingStubFull));
     try {
@@ -157,12 +157,13 @@ public class TestApproveProposal {
   @Test(enabled = true)
   public void testGetAllNodeBlockNum() throws InterruptedException {
     String[] nodeIp = {
-        //"47.93.14.253:50051",
+        "47.93.14.253:50051",
+        "39.105.28.73:50051",
         "101.200.51.70:50051",
-        //"47.94.209.241:50051",
-        //"47.94.148.150:50051",
-        //"47.94.9.222:50051",
-        //"39.107.87.203:50051"
+      "47.94.209.241:50051",
+        "47.94.148.150:50051",
+        "47.94.9.222:50051",
+        "39.107.87.203:50051"
     };
 
     for (String ip: nodeIp) {
@@ -178,7 +179,7 @@ public class TestApproveProposal {
 
 
       Integer times = 0;
-      while (times++ <= 100) {
+      while (times++ <= -100) {
         currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
         Transaction.Contract contract;
         TransferContract transferContract;
@@ -214,7 +215,7 @@ public class TestApproveProposal {
 
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testGetChainParameters() {
     //Set the default map
     HashMap<String, Long> defaultCommitteeMap = new HashMap<String, Long>();
