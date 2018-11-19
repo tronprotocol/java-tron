@@ -373,6 +373,26 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getExchangeById(BytesMessage request,
+        StreamObserver<Exchange> responseObserver) {
+      ByteString exchangeId = request.getValue();
+
+      if (Objects.nonNull(exchangeId)) {
+        responseObserver.onNext(wallet.getExchangeById(exchangeId));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void listExchanges(EmptyMessage request,
+        StreamObserver<ExchangeList> responseObserver) {
+      responseObserver.onNext(wallet.getExchangeList());
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getTransactionCountByBlockNum(NumberMessage request,
         StreamObserver<NumberMessage> responseObserver) {
       NumberMessage.Builder builder = NumberMessage.newBuilder();

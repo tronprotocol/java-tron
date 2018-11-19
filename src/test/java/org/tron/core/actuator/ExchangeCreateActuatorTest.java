@@ -142,14 +142,14 @@ public class ExchangeCreateActuatorTest {
             AssetIssueContract.newBuilder()
                 .setName(ByteString.copyFrom(firstTokenId.getBytes()))
                 .build());
-    assetIssueCapsule1.setId(1);
+    assetIssueCapsule1.setId(String.valueOf(1L));
 
     AssetIssueCapsule assetIssueCapsule2 =
         new AssetIssueCapsule(
             AssetIssueContract.newBuilder()
                 .setName(ByteString.copyFrom(secondTokenId.getBytes()))
                 .build());
-    assetIssueCapsule2.setId(2);
+    assetIssueCapsule2.setId(String.valueOf(2L));
 
     dbManager.getAssetIssueStore()
         .put(assetIssueCapsule1.getName().toByteArray(), assetIssueCapsule1);
@@ -199,10 +199,8 @@ public class ExchangeCreateActuatorTest {
       Assert.assertEquals(id, exchangeCapsuleV2.getID());
       Assert.assertEquals(1000000, exchangeCapsuleV2.getCreateTime());
       // convert
-      long firstTokenRealID = dbManager.getAssetIssueStore().get(firstTokenId.getBytes()).getId();
-      firstTokenId = Long.toString(firstTokenRealID);
-      long secondTokenRealID = dbManager.getAssetIssueStore().get(secondTokenId.getBytes()).getId();
-      secondTokenId = Long.toString(secondTokenRealID);
+      firstTokenId = dbManager.getAssetIssueStore().get(firstTokenId.getBytes()).getId();
+      secondTokenId = dbManager.getAssetIssueStore().get(secondTokenId.getBytes()).getId();
       Assert.assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsuleV2.getFirstTokenId()));
       Assert.assertEquals(firstTokenId, ByteArray.toStr(exchangeCapsuleV2.getFirstTokenId()));
       Assert.assertEquals(firstTokenBalance, exchangeCapsuleV2.getFirstTokenBalance());
@@ -240,7 +238,7 @@ public class ExchangeCreateActuatorTest {
             AssetIssueContract.newBuilder()
                 .setName(ByteString.copyFrom(secondTokenId.getBytes()))
                 .build());
-    assetIssueCapsule.setId(1);
+    assetIssueCapsule.setId(String.valueOf(1L));
     dbManager.getAssetIssueStore()
         .put(assetIssueCapsule.getName().toByteArray(), assetIssueCapsule);
 
@@ -285,8 +283,7 @@ public class ExchangeCreateActuatorTest {
       Assert.assertEquals(ByteString.copyFrom(ownerAddress), exchangeCapsuleV2.getCreatorAddress());
       Assert.assertEquals(id, exchangeCapsuleV2.getID());
       Assert.assertEquals(1000000, exchangeCapsuleV2.getCreateTime());
-      long secondTokenRealID = dbManager.getAssetIssueStore().get(secondTokenId.getBytes()).getId();
-      secondTokenId = Long.toString(secondTokenRealID);
+      secondTokenId = dbManager.getAssetIssueStore().get(secondTokenId.getBytes()).getId();
       Assert.assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsuleV2.getFirstTokenId()));
       Assert.assertEquals(firstTokenId, ByteArray.toStr(exchangeCapsuleV2.getFirstTokenId()));
       Assert.assertEquals(firstTokenBalance, exchangeCapsuleV2.getFirstTokenBalance());
@@ -324,14 +321,14 @@ public class ExchangeCreateActuatorTest {
                     AssetIssueContract.newBuilder()
                             .setName(ByteString.copyFrom(firstTokenId.getBytes()))
                             .build());
-    assetIssueCapsule1.setId(1);
+    assetIssueCapsule1.setId(String.valueOf(1L));
 
     AssetIssueCapsule assetIssueCapsule2 =
             new AssetIssueCapsule(
                     AssetIssueContract.newBuilder()
                             .setName(ByteString.copyFrom(secondTokenId.getBytes()))
                             .build());
-    assetIssueCapsule2.setId(2);
+    assetIssueCapsule2.setId(String.valueOf(2L));
 
     dbManager.getAssetIssueStore()
             .put(assetIssueCapsule1.getName().toByteArray(), assetIssueCapsule1);
@@ -401,7 +398,7 @@ public class ExchangeCreateActuatorTest {
                     AssetIssueContract.newBuilder()
                             .setName(ByteString.copyFrom(secondTokenId.getBytes()))
                             .build());
-    assetIssueCapsule.setId(1);
+    assetIssueCapsule.setId(String.valueOf(1L));
     dbManager.getAssetIssueStore()
             .put(assetIssueCapsule.getName().toByteArray(), assetIssueCapsule);
 

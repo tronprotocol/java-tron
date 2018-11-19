@@ -350,7 +350,7 @@ public class StoreAPITest {
 
     for (AssetIssueCapsule assetIssueCapsule : dbManager.getAssetIssueStore().getAllAssetIssues()) {
       dbManager.getAssetIssueV2Store().put(ByteArray.fromLong(tokenIdNum), assetIssueCapsule);
-      assetIssueCapsule.setId(tokenIdNum);
+      assetIssueCapsule.setId(String.valueOf(tokenIdNum));
       tokenIdNum++;
     }
     Assert.assertEquals(2, dbManager.getAssetIssueV2Store().getAllAssetIssues().size());

@@ -148,14 +148,14 @@ public class ExchangeTransactionActuatorTest {
                     AssetIssueContract.newBuilder()
                             .setName(ByteString.copyFrom("abc".getBytes()))
                             .build());
-    assetIssueCapsule1.setId(1);
+    assetIssueCapsule1.setId(String.valueOf(1L));
 
     AssetIssueCapsule assetIssueCapsule2 =
             new AssetIssueCapsule(
                     AssetIssueContract.newBuilder()
                             .setName(ByteString.copyFrom("def".getBytes()))
                             .build());
-    assetIssueCapsule2.setId(2);
+    assetIssueCapsule2.setId(String.valueOf(2L));
 
     dbManager.getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
     dbManager.getExchangeStore().put(exchangeCapsule2.createDbKey(), exchangeCapsule2);
@@ -187,14 +187,14 @@ public class ExchangeTransactionActuatorTest {
                     AssetIssueContract.newBuilder()
                             .setName(ByteString.copyFrom("123".getBytes()))
                             .build());
-    assetIssueCapsule1.setId(1);
+    assetIssueCapsule1.setId(String.valueOf(1L));
 
     AssetIssueCapsule assetIssueCapsule2 =
             new AssetIssueCapsule(
                     AssetIssueContract.newBuilder()
                             .setName(ByteString.copyFrom("456".getBytes()))
                             .build());
-    assetIssueCapsule2.setId(2);
+    assetIssueCapsule2.setId(String.valueOf(2));
 
     dbManager.getExchangeV2Store().put(exchangeCapsule.createDbKey(), exchangeCapsule);
     dbManager.getExchangeV2Store().put(exchangeCapsule2.createDbKey(), exchangeCapsule2);
