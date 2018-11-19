@@ -26,7 +26,7 @@ public class TriggerFibonacciCreator extends AbstractTransferTransactionCreator 
     TriggerSmartContract contract = null;
     try {
       contract = triggerCallContract(ownerAddress.toByteArray(), Wallet
-          .decodeFromBase58Check("27fLGKVpXaoggZZFzT2FwHxK9DT6UaNuEQi"), 0L, Hex
+          .decodeFromBase58Check("27gBVvpYxUFYVr22ZgbeRamuD5ztQw6qF4r"), 0L, Hex
           .decode(AbiUtil.parseMethod("add2(uint256)", param, false)));
     } catch (EncodingException e) {
       e.printStackTrace();

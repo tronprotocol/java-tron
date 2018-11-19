@@ -54,7 +54,7 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
   // exchange
   protected long exchangeId = 1;
   protected byte[] firstTokeID = "_".getBytes();
-  protected byte[] secondTokeID = "xxd".getBytes();
+  protected byte[] secondTokeID = "1000001".getBytes();
   protected long quant = 10;
   protected long expected = 1;
 

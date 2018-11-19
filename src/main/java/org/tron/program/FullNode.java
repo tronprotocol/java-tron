@@ -110,7 +110,7 @@ public class FullNode {
     NodeImpl nodeImpl = context.getBean(NodeImpl.class);
 
     if (cfgArgs.isGenerate()) {
-      new TransactionGenerator(context, 10000).start();
+      new TransactionGenerator(context, 20000).start();
     }
 
     File f = new File("transaction.csv");
@@ -207,9 +207,6 @@ public class FullNode {
     long cost = System.currentTimeMillis() - startTime;
     logger.info("Trx size: {}, cost: {}, tps: {}, txid: {}",
         trxCount, cost, 1.0 * trxCount / cost * 1000, transactionIDs.size());
-
-    Thread.sleep(5000);
-    System.exit(0);
   }
 
   public static void shutdown(final Application app) {
