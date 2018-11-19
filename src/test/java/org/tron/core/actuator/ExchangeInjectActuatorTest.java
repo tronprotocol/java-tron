@@ -190,7 +190,7 @@ public class ExchangeInjectActuatorTest {
             AssetIssueContract.newBuilder()
                 .setName(ByteString.copyFrom(firstTokenId.getBytes()))
                 .build());
-    assetIssueCapsule1.setId(1);
+    assetIssueCapsule1.setId(String.valueOf(1L));
     dbManager.getAssetIssueStore()
         .put(assetIssueCapsule1.getName().toByteArray(), assetIssueCapsule1);
     AssetIssueCapsule assetIssueCapsule2 =
@@ -198,7 +198,7 @@ public class ExchangeInjectActuatorTest {
             AssetIssueContract.newBuilder()
                 .setName(ByteString.copyFrom(secondTokenId.getBytes()))
                 .build());
-    assetIssueCapsule2.setId(2);
+    assetIssueCapsule2.setId(String.valueOf(2L));
     dbManager.getAssetIssueStore()
         .put(assetIssueCapsule2.getName().toByteArray(), assetIssueCapsule2);
 
@@ -268,7 +268,7 @@ public class ExchangeInjectActuatorTest {
                     AssetIssueContract.newBuilder()
                             .setName(ByteString.copyFrom(firstTokenId.getBytes()))
                             .build());
-    assetIssueCapsule1.setId(1);
+    assetIssueCapsule1.setId(String.valueOf(1L));
     dbManager.getAssetIssueStore()
             .put(assetIssueCapsule1.getName().toByteArray(), assetIssueCapsule1);
     AssetIssueCapsule assetIssueCapsule2 =
@@ -276,7 +276,7 @@ public class ExchangeInjectActuatorTest {
                     AssetIssueContract.newBuilder()
                             .setName(ByteString.copyFrom(secondTokenId.getBytes()))
                             .build());
-    assetIssueCapsule2.setId(2);
+    assetIssueCapsule2.setId(String.valueOf(2L));
     dbManager.getAssetIssueStore()
             .put(assetIssueCapsule2.getName().toByteArray(), assetIssueCapsule2);
 
@@ -343,7 +343,7 @@ public class ExchangeInjectActuatorTest {
             AssetIssueContract.newBuilder()
                 .setName(ByteString.copyFrom(secondTokenId.getBytes()))
                 .build());
-    assetIssueCapsule.setId(2);
+    assetIssueCapsule.setId(String.valueOf(2L));
     dbManager.getAssetIssueStore()
         .put(assetIssueCapsule.getName().toByteArray(), assetIssueCapsule);
 
@@ -407,7 +407,7 @@ public class ExchangeInjectActuatorTest {
                     AssetIssueContract.newBuilder()
                             .setName(ByteString.copyFrom(secondTokenId.getBytes()))
                             .build());
-    assetIssueCapsule.setId(2);
+    assetIssueCapsule.setId(String.valueOf(2L));
     dbManager.getAssetIssueV2Store()
             .put(assetIssueCapsule.getName().toByteArray(), assetIssueCapsule);
 
