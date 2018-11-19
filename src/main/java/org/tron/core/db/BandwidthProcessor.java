@@ -219,9 +219,12 @@ public class BandwidthProcessor extends ResourceProcessor {
     } catch (Exception ex) {
       throw new RuntimeException(ex.getMessage());
     }
-    String tokenID = ByteArray.toStr(assetName.toByteArray());
+
     AssetIssueCapsule assetIssueCapsule;
     assetIssueCapsule = dbManager.getAssetIssueStoreFinal().get(assetName.toByteArray());
+    String tokenName = ByteArray.toStr(assetName.toByteArray());
+    String tokenID = Long.toString(assetIssueCapsule.getId());
+
     if (assetIssueCapsule == null) {
       throw new ContractValidateException("asset not exists");
     }
