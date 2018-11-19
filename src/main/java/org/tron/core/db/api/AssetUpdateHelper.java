@@ -1,16 +1,22 @@
 package org.tron.core.db.api;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
+import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Slf4j
 public class AssetUpdateHelper {
@@ -47,11 +53,57 @@ public class AssetUpdateHelper {
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(1000000L);
   }
 
+  public List<AssetIssueCapsule> getAllAssetIssues() {
+
+    List<AssetIssueCapsule> result = new ArrayList<>();
+
+    long latestBlockHeaderNumber =
+        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    long blockNum = 1;
+    while (blockNum <= latestBlockHeaderNumber) {
+      if (blockNum % 100000 == 0) {
+        logger.info("The number of block that have processed：{}", blockNum);
+      }
+      try {
+        BlockCapsule block = dbManager.getBlockByNum(blockNum);
+        for (TransactionCapsule transaction : block.getTransactions()) {
+          if (transaction.getInstance().getRawData().getContract(0).getType()
+              == ContractType.AssetIssueContract) {
+            AssetIssueContract obj =
+                transaction
+                    .getInstance()
+                    .getRawData()
+                    .getContract(0)
+                    .getParameter()
+                    .unpack(AssetIssueContract.class);
+
+            AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(obj);
+
+            result.add(dbManager.getAssetIssueStore().get(assetIssueCapsule.createDbKey()));
+          }
+        }
+
+      } catch (Exception e) {
+        throw new RuntimeException("Block not exists,num:" + blockNum);
+      }
+
+      blockNum++;
+    }
+    logger.info("Total block：{}", blockNum);
+
+    if (dbManager.getAssetIssueStore().getAllAssetIssues().size() != result.size()) {
+      throw new RuntimeException("Asset num is wrong!");
+    }
+
+    return result;
+  }
+
   public void updateAsset() {
     long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
     long count = 0;
 
-    for (AssetIssueCapsule assetIssueCapsule : dbManager.getAssetIssueStore().getAllAssetIssues()) {
+    List<AssetIssueCapsule> assetIssueCapsuleList = getAllAssetIssues();
+    for (AssetIssueCapsule assetIssueCapsule : assetIssueCapsuleList) {
       tokenIdNum++;
       count++;
 
@@ -108,8 +160,7 @@ public class AssetUpdateHelper {
       accountCapsule.clearFreeAssetNetUsageV2();
       if (accountCapsule.getAllFreeAssetNetUsage().size() != 0) {
         HashMap<String, Long> map = new HashMap<>();
-        for (Map.Entry<String, Long> entry :
-            accountCapsule.getAllFreeAssetNetUsage().entrySet()) {
+        for (Map.Entry<String, Long> entry : accountCapsule.getAllFreeAssetNetUsage().entrySet()) {
           map.put(ByteArray.toStr(assetNameToIdMap.get(entry.getKey())), entry.getValue());
         }
         accountCapsule.addAllFreeAssetNetUsageV2(map);
