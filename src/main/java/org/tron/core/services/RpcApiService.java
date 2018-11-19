@@ -70,6 +70,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Contract;
@@ -1210,7 +1211,18 @@ public class RpcApiService implements Service {
     @Override
     public void getAssetIssueByName(BytesMessage request,
         StreamObserver<AssetIssueContract> responseObserver) {
-      getAssetIssueById(request, responseObserver);
+      ByteString assetName = request.getValue();
+      if (assetName != null) {
+        try {
+          responseObserver.onNext(wallet.getAssetIssueByName(assetName));
+        } catch (NonUniqueObjectException e) {
+          responseObserver.onNext(null);
+          logger.debug("NonUniqueObjectException: {}", e.getMessage());
+        }
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
     }
 
     @Override
