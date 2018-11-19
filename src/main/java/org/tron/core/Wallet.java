@@ -776,7 +776,7 @@ public class Wallet {
         if (assetIssueCapsule != null) {
           // check already fetch
           if (builder.getAssetIssueCount() > 0
-              && builder.getAssetIssue(0).equals(assetIssueCapsule.getInstance())) {
+              && builder.getAssetIssue(0).getId().equals(assetIssueCapsule.getInstance().getId())) {
             return assetIssueCapsule.getInstance();
           }
 
