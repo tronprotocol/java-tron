@@ -292,6 +292,7 @@ message Transaction {
     int64 exchange_received_amount = 18;
     int64 exchange_inject_another_amount = 19;
     int64 exchange_withdraw_another_amount = 20;
+    int64 exchange_id = 21;
   }
 
   message raw {
@@ -344,6 +345,7 @@ message TransactionInfo {
   int64 exchange_received_amount = 18;
   int64 exchange_inject_another_amount = 19;
   int64 exchange_withdraw_another_amount = 20;
+  int64 exchange_id = 21;
 }
 
 message Transactions {
