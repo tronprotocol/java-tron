@@ -171,6 +171,8 @@ public class ExchangeCreateActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
+
+      Assert.assertEquals(ret.getInstance().getExchangeId(), 1L);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
       long id = 1;
       Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestExchangeNum(), id);
@@ -212,6 +214,7 @@ public class ExchangeCreateActuatorTest {
       Assert.assertEquals(10000_000000L - 1024_000000L, accountCapsule.getBalance());
       Assert.assertEquals(0L, getAssetV2Map.get(firstTokenId).longValue());
       Assert.assertEquals(0L, getAssetV2Map.get(secondTokenId).longValue());
+
 
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
