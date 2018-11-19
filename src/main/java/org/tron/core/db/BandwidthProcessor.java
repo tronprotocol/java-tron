@@ -219,13 +219,15 @@ public class BandwidthProcessor extends ResourceProcessor {
     } catch (Exception ex) {
       throw new RuntimeException(ex.getMessage());
     }
-    String tokenID = ByteArray.toStr(assetName.toByteArray());
+
     AssetIssueCapsule assetIssueCapsule;
     assetIssueCapsule = dbManager.getAssetIssueStoreFinal().get(assetName.toByteArray());
     if (assetIssueCapsule == null) {
       throw new ContractValidateException("asset not exists");
     }
 
+    String tokenName = ByteArray.toStr(assetName.toByteArray());
+    String tokenID = assetIssueCapsule.getId();
     if (assetIssueCapsule.getOwnerAddress() == accountCapsule.getAddress()) {
       return useAccountNet(accountCapsule, bytes, now);
     }
@@ -247,9 +249,9 @@ public class BandwidthProcessor extends ResourceProcessor {
     long freeAssetNetUsage, latestAssetOperationTime;
     if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       freeAssetNetUsage = accountCapsule
-          .getFreeAssetNetUsage(tokenID);
+          .getFreeAssetNetUsage(tokenName);
       latestAssetOperationTime = accountCapsule
-          .getLatestAssetOperationTime(tokenID);
+          .getLatestAssetOperationTime(tokenName);
     } else {
       freeAssetNetUsage = accountCapsule.getFreeAssetNetUsageV2(tokenID);
       latestAssetOperationTime = accountCapsule.getLatestAssetOperationTimeV2(tokenID);
@@ -296,9 +298,9 @@ public class BandwidthProcessor extends ResourceProcessor {
 
     accountCapsule.setLatestOperationTime(latestOperationTime);
     if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      accountCapsule.putLatestAssetOperationTimeMap(tokenID,
+      accountCapsule.putLatestAssetOperationTimeMap(tokenName,
           latestAssetOperationTime);
-      accountCapsule.putFreeAssetNetUsage(tokenID, newFreeAssetNetUsage);
+      accountCapsule.putFreeAssetNetUsage(tokenName, newFreeAssetNetUsage);
       dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
     }
 
@@ -313,7 +315,6 @@ public class BandwidthProcessor extends ResourceProcessor {
     dbManager.getAccountStore().put(issuerAccountCapsule.createDbKey(),
         issuerAccountCapsule);
 
-
     return true;
 
   }
@@ -326,7 +327,7 @@ public class BandwidthProcessor extends ResourceProcessor {
     long netWeight = frozeBalance / 1000_000L;
     long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
-    if(totalNetWeight == 0){
+    if (totalNetWeight == 0) {
       return 0;
     }
     return (long) (netWeight * ((double) totalNetLimit / totalNetWeight));

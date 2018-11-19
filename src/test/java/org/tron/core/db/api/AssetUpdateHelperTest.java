@@ -11,15 +11,19 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Exchange;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 public class AssetUpdateHelperTest {
 
@@ -42,10 +46,21 @@ public class AssetUpdateHelperTest {
 
     dbManager = context.getBean(Manager.class);
 
-    AssetIssueCapsule assetIssueCapsule =
-        new AssetIssueCapsule(
-            AssetIssueContract.newBuilder().setName(assetName).setNum(12581).build());
+    AssetIssueContract contract =
+        AssetIssueContract.newBuilder().setName(assetName).setNum(12581).build();
+    AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(contract);
     dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+
+    BlockCapsule blockCapsule = new BlockCapsule(1,
+        Sha256Hash.wrap(ByteString.copyFrom(
+            ByteArray.fromHexString(
+                "0000000000000002498b464ac0292229938a342238077182498b464ac0292222"))),
+        1234, ByteString.copyFrom("1234567".getBytes()));
+
+    blockCapsule.addTransaction(new TransactionCapsule(contract, ContractType.AssetIssueContract));
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(1L);
+    dbManager.getBlockIndexStore().put(blockCapsule.getBlockId());
+    dbManager.getBlockStore().put(blockCapsule.getBlockId().getBytes(), blockCapsule);
 
     ExchangeCapsule exchangeCapsule =
         new ExchangeCapsule(
@@ -88,7 +103,7 @@ public class AssetUpdateHelperTest {
     {
       assetUpdateHelper.updateAsset();
 
-      long idNum = 1000001L;
+      String idNum = "1000001";
 
       AssetIssueCapsule assetIssueCapsule =
           dbManager.getAssetIssueStore().get(assetName.toByteArray());
@@ -129,13 +144,13 @@ public class AssetUpdateHelperTest {
 
       Assert.assertEquals(1, accountCapsule.getAllFreeAssetNetUsageV2().size());
 
-      Assert.assertEquals(20000L,
-          accountCapsule.getAllFreeAssetNetUsageV2().get("1000001").longValue());
+      Assert.assertEquals(
+          20000L, accountCapsule.getAllFreeAssetNetUsageV2().get("1000001").longValue());
 
       Assert.assertEquals(1, accountCapsule.getLatestAssetOperationTimeMapV2().size());
 
-      Assert.assertEquals(30000000L,
-          accountCapsule.getLatestAssetOperationTimeMapV2().get("1000001").longValue());
+      Assert.assertEquals(
+          30000000L, accountCapsule.getLatestAssetOperationTimeMapV2().get("1000001").longValue());
     }
 
     removeDb();
