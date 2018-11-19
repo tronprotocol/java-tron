@@ -69,7 +69,6 @@ public class AssetIssueActuator extends AbstractActuator {
 
       dbManager.putAssetIssue(assetIssueCapsule);
 
-
       dbManager.adjustBalance(ownerAddress, -fee);
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().getAddress().toByteArray(),
           fee);//send to blackhole
@@ -198,7 +197,7 @@ public class AssetIssueActuator extends AbstractActuator {
 
     if (this.dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0
         && this.dbManager.getAssetIssueStore().get(assetIssueContract.getName().toByteArray())
-            != null) {
+        != null) {
       throw new ContractValidateException("Token exists");
     }
 

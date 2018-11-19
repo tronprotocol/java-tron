@@ -131,7 +131,7 @@ public class ExchangeWithdrawActuatorTest {
             AssetIssueContract.newBuilder()
                 .setName(ByteString.copyFrom("abc".getBytes()))
                 .build());
-    assetIssueCapsule1.setId(1);
+    assetIssueCapsule1.setId(String.valueOf(1L));
     dbManager.getAssetIssueStore()
         .put(assetIssueCapsule1.getName().toByteArray(), assetIssueCapsule1);
     AssetIssueCapsule assetIssueCapsule2 =
@@ -139,7 +139,7 @@ public class ExchangeWithdrawActuatorTest {
             AssetIssueContract.newBuilder()
                 .setName(ByteString.copyFrom("def".getBytes()))
                 .build());
-    assetIssueCapsule2.setId(2);
+    assetIssueCapsule2.setId(String.valueOf(2L));
     dbManager.getAssetIssueStore()
         .put(assetIssueCapsule2.getName().toByteArray(), assetIssueCapsule2);
 
@@ -200,7 +200,7 @@ public class ExchangeWithdrawActuatorTest {
                     AssetIssueContract.newBuilder()
                             .setName(ByteString.copyFrom("abc".getBytes()))
                             .build());
-    assetIssueCapsule1.setId(1);
+    assetIssueCapsule1.setId(String.valueOf(1L));
     dbManager.getAssetIssueStore()
             .put(assetIssueCapsule1.getName().toByteArray(), assetIssueCapsule1);
     AssetIssueCapsule assetIssueCapsule2 =
@@ -208,7 +208,7 @@ public class ExchangeWithdrawActuatorTest {
                     AssetIssueContract.newBuilder()
                             .setName(ByteString.copyFrom("def".getBytes()))
                             .build());
-    assetIssueCapsule2.setId(2);
+    assetIssueCapsule2.setId(String.valueOf(2L));
     dbManager.getAssetIssueStore()
             .put(assetIssueCapsule2.getName().toByteArray(), assetIssueCapsule2);
 
@@ -251,7 +251,7 @@ public class ExchangeWithdrawActuatorTest {
                     AssetIssueContract.newBuilder()
                             .setName(ByteString.copyFrom("123".getBytes()))
                             .build());
-    assetIssueCapsule1.setId(1);
+    assetIssueCapsule1.setId(String.valueOf(1L));
     dbManager.getAssetIssueV2Store()
             .put(assetIssueCapsule1.createDbV2Key(), assetIssueCapsule1);
 
@@ -260,7 +260,7 @@ public class ExchangeWithdrawActuatorTest {
                     AssetIssueContract.newBuilder()
                             .setName(ByteString.copyFrom("456".getBytes()))
                             .build());
-    assetIssueCapsule2.setId(2);
+    assetIssueCapsule2.setId(String.valueOf(2L));
 
     dbManager.getAssetIssueV2Store()
             .put(assetIssueCapsule2.createDbV2Key(), assetIssueCapsule2);
