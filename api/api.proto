@@ -683,6 +683,13 @@ service WalletSolidity {
   rpc GetDelegatedResourceAccountIndex (BytesMessage) returns (DelegatedResourceAccountIndex) {
   };
 
+  rpc GetExchangeById (BytesMessage) returns (Exchange) {
+  };
+
+  rpc ListExchanges (EmptyMessage) returns (ExchangeList) {
+  };
+
+
   rpc GetTransactionById (BytesMessage) returns (Transaction) {
     option (google.api.http) = {
       post: "/walletsolidity/gettransactionbyid"
