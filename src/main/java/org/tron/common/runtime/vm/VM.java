@@ -1236,7 +1236,7 @@ public class VM {
             adjustedCallEnergy.add(new DataWord(energyCosts.getSTIPEND_CALL()));
           }
 
-          DataWord tokenId = null;
+          DataWord tokenId = new DataWord(0);
           if (op == CALLTOKEN) {
             tokenId = program.stackPop();
           }
