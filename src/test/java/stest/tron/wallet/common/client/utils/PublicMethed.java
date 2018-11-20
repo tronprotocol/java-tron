@@ -18,6 +18,7 @@ import org.testng.Assert;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountNetMessage;
 import org.tron.api.GrpcAPI.AccountResourceMessage;
+import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.DelegatedResourceMessage;
@@ -72,7 +73,6 @@ public class PublicMethed {
       ex.printStackTrace();
     }
     ECKey ecKey = temKey;
-    //Protocol.Account search = queryAccount(ecKey, blockingStubFull);
     try {
       Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(address));
@@ -87,8 +87,6 @@ public class PublicMethed {
       builder.setUrl(ByteString.copyFrom(url.getBytes()));
       builder.setFreeAssetNetLimit(freeAssetNetLimit);
       builder.setPublicFreeAssetNetLimit(publicFreeAssetNetLimit);
-      //builder.setPublicFreeAssetNetUsage();
-      //builder.setPublicLatestFreeNetTime();
       Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder =
           Contract.AssetIssueContract.FrozenSupply.newBuilder();
       frozenBuilder.setFrozenAmount(fronzenAmount);
@@ -119,6 +117,67 @@ public class PublicMethed {
       return false;
     }
   }
+
+  public static Boolean createAssetIssue(byte[] address, String name, Long totalSupply,
+      Integer trxNum, Integer icoNum, int precision,Long startTime, Long endTime, Integer voteScore,
+      String description, String url, Long freeAssetNetLimit, Long publicFreeAssetNetLimit,
+      Long fronzenAmount, Long frozenDay, String priKey,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    ECKey ecKey = temKey;
+    try {
+      Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
+      builder.setOwnerAddress(ByteString.copyFrom(address));
+      builder.setName(ByteString.copyFrom(name.getBytes()));
+      builder.setTotalSupply(totalSupply);
+      builder.setTrxNum(trxNum);
+      builder.setNum(icoNum);
+      builder.setStartTime(startTime);
+      builder.setEndTime(endTime);
+      builder.setVoteScore(voteScore);
+      builder.setPrecision(precision);
+      builder.setDescription(ByteString.copyFrom(description.getBytes()));
+      builder.setUrl(ByteString.copyFrom(url.getBytes()));
+      builder.setFreeAssetNetLimit(freeAssetNetLimit);
+      builder.setPublicFreeAssetNetLimit(publicFreeAssetNetLimit);
+      Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder =
+          Contract.AssetIssueContract.FrozenSupply.newBuilder();
+      frozenBuilder.setFrozenAmount(fronzenAmount);
+      frozenBuilder.setFrozenDays(frozenDay);
+      builder.addFrozenSupply(0, frozenBuilder);
+
+      Protocol.Transaction transaction = blockingStubFull.createAssetIssue(builder.build());
+      if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+        logger.info("transaction == null");
+        return false;
+      }
+      transaction = signTransaction(ecKey, transaction);
+
+      GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+      if (response.getResult() == false) {
+        logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+        return false;
+      } else {
+        try {
+          Thread.sleep(3000);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+        return true;
+      }
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      return false;
+    }
+  }
+
 
   public static Return createAssetIssue2(byte[] address, String name, Long totalSupply,
       Integer trxNum, Integer icoNum, Long startTime, Long endTime, Integer voteScore,
@@ -2546,6 +2605,33 @@ public class PublicMethed {
         .getDelegatedResourceAccountIndex(bytesMessage);
     return Optional.ofNullable(accountIndex);
   }
+
+  public static Contract.AssetIssueContract getAssetIssueByName(String assetName,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ByteString assetNameBs = ByteString.copyFrom(assetName.getBytes());
+    BytesMessage request = BytesMessage.newBuilder().setValue(assetNameBs).build();
+    return blockingStubFull.getAssetIssueByName(request);
+  }
+
+  public static Optional<AssetIssueList> getAssetIssueListByName(String assetName,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ByteString assetNameBs = ByteString.copyFrom(assetName.getBytes());
+    BytesMessage request = BytesMessage.newBuilder().setValue(assetNameBs).build();
+    AssetIssueList assetIssueList = blockingStubFull.getAssetIssueListByName(request);
+    return Optional.ofNullable(assetIssueList);
+  }
+
+  public static Contract.AssetIssueContract getAssetIssueById(String assetId,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ByteString assetIdBs = ByteString.copyFrom(assetId.getBytes());
+    BytesMessage request = BytesMessage.newBuilder().setValue(assetIdBs).build();
+    return blockingStubFull.getAssetIssueById(request);
+  }
+
+
 
 
 
