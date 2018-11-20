@@ -1163,12 +1163,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getAllowSameTokenName() {
-    return 1L;
-//    return Optional.ofNullable(getUnchecked(ALLOW_SAME_TOKEN_NAME))
-//        .map(BytesCapsule::getData)
-//        .map(ByteArray::toLong)
-//        .orElseThrow(
-//            () -> new IllegalArgumentException("not found ALLOW_SAME_TOKEN_NAME"));
+    return Optional.ofNullable(getUnchecked(ALLOW_SAME_TOKEN_NAME))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_SAME_TOKEN_NAME"));
   }
 
   public void saveAllowCreationOfContracts(long allowCreationOfContracts) {
