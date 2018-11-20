@@ -146,7 +146,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
               .get(receiverAddress);
           if (delegatedResourceAccountIndexCapsule != null) {
             List<ByteString> fromAccountsList = new ArrayList<>(delegatedResourceAccountIndexCapsule
-                .getToAccountsList());
+                .getFromAccountsList());
             fromAccountsList.remove(ByteString.copyFrom(ownerAddress));
             delegatedResourceAccountIndexCapsule.setAllFromAccounts(fromAccountsList);
             dbManager.getDelegatedResourceAccountIndexStore()
