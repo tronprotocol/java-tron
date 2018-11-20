@@ -4,6 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.config.Parameter.NetConstants;
+import org.tron.core.exception.P2pException;
+import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.TronProxy;
 import org.tron.core.net.message.InventoryMessage;
 import org.tron.core.net.message.TronMessage;
@@ -29,43 +32,46 @@ public class InventoryMsgHandler implements TronMsgHandler{
 
   @Override
   public void processMessage (PeerConnection peer, TronMessage msg) throws Exception {
-
     InventoryMessage inventoryMessage = (InventoryMessage) msg;
     InventoryType type = inventoryMessage.getInventoryType();
 
-    if (transactionsMsgHandler.isBusy() && type.equals(InventoryType.TRX)) {
-      logger.warn("Too many trx msg to handle, drop inventory msg from peer {}, size {}",
-          peer.getInetAddress(), inventoryMessage.getHashList().size());
-      return;
-    }
-
-    int count = peer.getNodeStatistics().messageStatistics.tronInTrxInventoryElement.getCount(10);
-    if (count > maxCountIn10s) {
-      logger.warn("Inv is overload from peer {}, size {}", peer.getInetAddress(), count);
+    if (!check(peer, inventoryMessage)) {
       return;
     }
 
     for (Sha256Hash id : inventoryMessage.getHashList()) {
       Item item = new Item(id, type);
-      boolean spreadFlag = false;
-      boolean requestFlag = false;
-      for (PeerConnection p: tronProxy.getActivePeer()) {
-        if (p.getAdvInvSpread().containsKey(item)) {
-          spreadFlag = true;
-        }
-        if (p.getAdvInvRequest().containsKey(item)) {
-          requestFlag = true;
-        }
-      }
-      if (!spreadFlag && !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs()) {
-        peer.getAdvInvReceive().put(item, System.currentTimeMillis());
-        if (!requestFlag) {
-          if (!peerAdv.addInv(item)) {
-            logger.info("This item {} from peer {} Already exist.", item, peer.getInetAddress());
-            continue;
-          }
-        }
+      peer.getAdvInvReceive().put(item, System.currentTimeMillis());
+      if (!peerAdv.addInv(item)) {
+        logger.info("This item {} from peer {} Already exist.", item, peer.getInetAddress());
       }
     }
+  }
+
+  private boolean check (PeerConnection peer, InventoryMessage inventoryMessage) throws Exception {
+    InventoryType type = inventoryMessage.getInventoryType();
+    int size = inventoryMessage.getHashList().size();
+
+    if (size > NetConstants.MAX_INV_FETCH_PER_PEER) {
+      throw new P2pException(TypeEnum.BAD_MESSAGE, "size: " + size);
+    }
+
+    if (peer.isNeedSyncFromPeer() || peer.isNeedSyncFromUs()) {
+      logger.warn("Drop inv: {} size: {} from Peer {}, syncFromUs: {}, syncFromPeer: {}.",
+          type, size, peer.getInetAddress(), peer.isNeedSyncFromUs(), peer.isNeedSyncFromPeer());
+      return false;
+    }
+    if (transactionsMsgHandler.isBusy() && type.equals(InventoryType.TRX)) {
+      logger.warn("Drop inv: {} size: {} from Peer {}, transactionsMsgHandler is busy.",
+          type, size, peer.getInetAddress());
+      return false;
+    }
+    int count = peer.getNodeStatistics().messageStatistics.tronInTrxInventoryElement.getCount(10);
+    if (count > maxCountIn10s) {
+      logger.warn("Drop inv: {} size: {} from Peer {}, Inv count: {} is overload.",
+          type, size, peer.getInetAddress(), count);
+      return false;
+    }
+    return true;
   }
 }

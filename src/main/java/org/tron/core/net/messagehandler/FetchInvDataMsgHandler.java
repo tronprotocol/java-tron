@@ -51,7 +51,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
 
     FetchInvDataMessage fetchInvDataMsg = (FetchInvDataMessage) msg;
 
-    checkFetchInvDataMsg(peer, fetchInvDataMsg);
+    check(peer, fetchInvDataMsg);
 
     InventoryType type = fetchInvDataMsg.getInventoryType();
     List<Transaction> transactions = Lists.newArrayList();
@@ -92,7 +92,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
     }
   }
 
-  private void checkFetchInvDataMsg(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) throws Exception{
+  private void check(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) throws Exception{
     MessageTypes type = fetchInvDataMsg.getInvMessageType();
 
     //todo check inv size not gt MAX_INV_FETCH_PER_PEER

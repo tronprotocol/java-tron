@@ -19,6 +19,7 @@ import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.message.TransactionsMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.Item;
+import org.tron.core.net.peer.PeerAdv;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
@@ -32,11 +33,14 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   @Autowired
   private TronProxy tronProxy;
 
-  private static int MAX_TRX_SIZE = 10_000;
+  @Autowired
+  private PeerAdv peerAdv;
+
+  private static int MAX_TRX_SIZE = 50_000;
 
   private static int MAX_SMART_CONTRACT_SUBMIT_SIZE = 100;
 
-  private static int TIME_OUT = 10 * 60 * 1000;
+//  private static int TIME_OUT = 10 * 60 * 1000;
 
   private BlockingQueue<TrxEvent> smartContractQueue = new LinkedBlockingQueue(MAX_TRX_SIZE);
 
@@ -73,7 +77,7 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   }
 
   public boolean isBusy() {
-    return queue.size() > MAX_TRX_SIZE;
+    return queue.size() + smartContractQueue.size() > MAX_TRX_SIZE;
   }
 
   @Override
@@ -107,10 +111,10 @@ public class TransactionsMsgHandler implements TronMsgHandler {
       try {
         while (queue.size() < MAX_SMART_CONTRACT_SUBMIT_SIZE) {
           TrxEvent event = smartContractQueue.take();
-          if (System.currentTimeMillis() - event.getTime() > TIME_OUT) {
-            logger.warn("Drop smart contract {} from peer {}.");
-            continue;
-          }
+//          if (System.currentTimeMillis() - event.getTime() > TIME_OUT) {
+//            logger.warn("Drop smart contract {} from peer {}.");
+//            continue;
+//          }
           trxHandlePool.submit(() -> handleTransaction(event.getPeer(), event.getMsg()));
         }
       } catch (Exception e) {
@@ -119,22 +123,22 @@ public class TransactionsMsgHandler implements TronMsgHandler {
     }, 1000, 20, TimeUnit.MILLISECONDS);
   }
 
-  private boolean handleTransaction (PeerConnection peer, TransactionMessage trx) {
+  private void handleTransaction (PeerConnection peer, TransactionMessage trx) {
     if (peer.isDisconnect()) {
       logger.warn("Peer {} is disconnect, drop trx {}", peer.getInetAddress(), trx.getMessageId());
-      return false;
+      return;
     }
     try {
       tronProxy.pushTransaction(trx.getTransactionCapsule());
-      return true;
+      peerAdv.broadcast(trx);
     }catch (P2pException e) {
-      logger.warn("Trx {} from peer {} process failed. type: {}", trx.getMessageId(), peer.getInetAddress(), e.getType(), e);
+      logger.warn("Trx {} from peer {} process failed. type: {}, reason: {}",
+          trx.getMessageId(), peer.getInetAddress(), e.getType(), e.getMessage());
       if (e.getType().equals(TypeEnum.BAD_TRX)) {
         peer.disconnect(ReasonCode.BAD_TX);
       }
     }catch (Exception e) {
       logger.warn("Trx {} from peer {} process failed.", trx.getMessageId(), peer.getInetAddress(), e);
     }
-    return false;
   }
 }

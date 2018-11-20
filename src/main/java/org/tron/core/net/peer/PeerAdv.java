@@ -39,9 +39,12 @@ public class PeerAdv {
   @Autowired
   private TronProxy tronProxy;
 
-  private ConcurrentHashMap<Item, Long> advObjToFetch = new ConcurrentHashMap<>();
+  private ConcurrentHashMap<Item, Long> invToFetch = new ConcurrentHashMap<>();
 
-  private ConcurrentHashMap<Item, Long> advObjToSpread = new ConcurrentHashMap<>();
+  private ConcurrentHashMap<Item, Long> invToSpread = new ConcurrentHashMap<>();
+  
+  private Cache<Item, Long> invToFetchCache = CacheBuilder.newBuilder()
+      .maximumSize(500_000).expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
 
   private Cache<Item, Message> messageCache = CacheBuilder.newBuilder()
       .maximumSize(100_000).expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
@@ -86,31 +89,18 @@ public class PeerAdv {
   }
 
   synchronized public boolean addInv (Item item) {
-    InventoryType type = item.getType();
-    Sha256Hash hash = item.getHash();
+    if (invToFetchCache.getIfPresent(item) != null) {
+      return false;
+    }
     if (messageCache.getIfPresent(item) != null) {
       return false;
     }
-//    if (type.equals(InventoryType.TRX) && trxCache.getIfPresent(hash) != null) {
-//      return false;
-//    }
-//    if (type.equals(InventoryType.BLOCK) && blockCache.getIfPresent(hash) != null) {
-//      return false;
-//    }
-    if (advObjToFetch.get(item) != null) {
-      return false;
-    }
-    advObjToFetch.put(item, System.currentTimeMillis());
+    invToFetchCache.put(item, System.currentTimeMillis());
+    invToFetch.put(item, System.currentTimeMillis());
     return true;
   }
 
   public Message getMessage (Item item) {
-//    if (item.getType().equals(InventoryType.TRX)) {
-//      return trxCache.getIfPresent(item.getHash());
-//    }
-//    if (item.getType().equals(InventoryType.BLOCK)) {
-//      return blockCache.getIfPresent(item.getHash());
-//    }
     return messageCache.getIfPresent(item);
   }
 
@@ -122,7 +112,7 @@ public class PeerAdv {
       messageCache.put(new Item(blockMsg.getMessageId(), InventoryType.BLOCK), blockMsg);
       type = InventoryType.BLOCK;
       blockMsg.getBlockCapsule().getTransactions().forEach(transactionCapsule -> {
-        advObjToSpread.remove(transactionCapsule.getTransactionId());
+        invToSpread.remove(transactionCapsule.getTransactionId());
       });
     } else if (msg instanceof TransactionMessage) {
       TransactionMessage trxMsg = (TransactionMessage) msg;
@@ -133,8 +123,8 @@ public class PeerAdv {
       logger.error("Adv item is neither block nor trx.");
       return;
     }
-    synchronized (advObjToSpread) {
-      advObjToSpread.put(new Item(msg.getMessageId(), type), System.currentTimeMillis());
+    synchronized (invToSpread) {
+      invToSpread.put(new Item(msg.getMessageId(), type), System.currentTimeMillis());
     }
   }
 
@@ -146,7 +136,7 @@ public class PeerAdv {
             .filter(peerConnection -> peerConnection.getAdvInvReceive().containsKey(item))
             .findFirst()
             .isPresent()) {
-          advObjToFetch.put(item, System.currentTimeMillis());
+          invToFetch.put(item, System.currentTimeMillis());
         }
       });
     }
@@ -157,17 +147,17 @@ public class PeerAdv {
         .filter(peer -> peer.isIdle())
         .collect(Collectors.toList());
 
-    if (advObjToFetch.isEmpty() || peers.isEmpty()) {
+    if (invToFetch.isEmpty() || peers.isEmpty()) {
       return;
     }
 
     InvSender invSender = new InvSender();
     long now = Time.getCurrentMillis();
-    advObjToFetch.forEach((item, time) -> {
+    invToFetch.forEach((item, time) -> {
       Sha256Hash hash = item.getHash();
       if (time < now - MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL) {
         logger.info("This obj is too late to fetch, type: {} hash: {}.", item.getType(), item.getHash());
-        advObjToFetch.remove(item);
+        invToFetch.remove(item);
         return;
       }
       peers.stream()
@@ -176,7 +166,7 @@ public class PeerAdv {
           .findFirst().ifPresent(peer -> {
         invSender.add(item, peer);
         peer.getAdvInvRequest().put(item, now);
-        advObjToFetch.remove(item);
+        invToFetch.remove(item);
       });
     });
 
@@ -184,15 +174,15 @@ public class PeerAdv {
   }
 
   private void consumerAdvObjToSpread() {
-    if (advObjToSpread.isEmpty()) {
+    if (invToSpread.isEmpty()) {
       return;
     }
 
     InvSender invSender = new InvSender();
     HashMap<Item, Long> spread = new HashMap<>();
-    synchronized (advObjToSpread) {
-      spread.putAll(advObjToSpread);
-      advObjToSpread.clear();
+    synchronized (invToSpread) {
+      spread.putAll(invToSpread);
+      invToSpread.clear();
     }
 
     tronProxy.getActivePeer().stream()
