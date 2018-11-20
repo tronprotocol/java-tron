@@ -53,14 +53,12 @@ public class AssetUpdateHelper {
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(1000000L);
   }
 
-  public List<AssetIssueCapsule> getAllAssetIssues() {
+  public List<AssetIssueCapsule> getAssetIssues(long start, long end) {
 
     List<AssetIssueCapsule> result = new ArrayList<>();
 
-    long latestBlockHeaderNumber =
-        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
-    long blockNum = 1;
-    while (blockNum <= latestBlockHeaderNumber) {
+    long blockNum = start;
+    while (blockNum <= end) {
       if (blockNum % 100000 == 0) {
         logger.info("The number of block that have processed：{}", blockNum);
       }
@@ -90,6 +88,23 @@ public class AssetUpdateHelper {
       blockNum++;
     }
     logger.info("Total block：{}", blockNum);
+
+    if (dbManager.getAssetIssueStore().getAllAssetIssues().size() != result.size()) {
+      throw new RuntimeException("Asset num is wrong!");
+    }
+
+    return result;
+  }
+
+  public List<AssetIssueCapsule> getAllAssetIssues() {
+
+    List<AssetIssueCapsule> result = new ArrayList<>();
+
+    long latestBlockHeaderNumber =
+        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    result = getAssetIssues(1L, latestBlockHeaderNumber);
+
+    logger.info("Total block：{}", latestBlockHeaderNumber);
 
     if (dbManager.getAssetIssueStore().getAllAssetIssues().size() != result.size()) {
       throw new RuntimeException("Asset num is wrong!");
