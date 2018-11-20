@@ -500,7 +500,7 @@ public class Program {
         programCode, "create", nonce, null);
     long vmStartInUs = System.nanoTime() / 1000;
     ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
-        this, new DataWord(newAddress), getContractAddress(), value, new DataWord(0), null,
+        this, new DataWord(newAddress), getContractAddress(), value, new DataWord(0), new DataWord(0),
         newBalance, null, deposit, false, byTestingSuite(), vmStartInUs,
         getVmShouldEndInUs(), energyLimit.longValueSafe());
 
