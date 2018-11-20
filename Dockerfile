@@ -1,11 +1,35 @@
-FROM tronprotocol/tron-gradle
+FROM frolvlad/alpine-oraclejdk8:full
 
-RUN set -o errexit -o nounset \
-    && echo "git clone" \
-    && git clone https://github.com/tronprotocol/java-tron.git \
-    && cd java-tron \
-    && gradle build
+# keeping everything updated
+RUN apk -U upgrade && \
+    apk add --no-cache --update bash curl wget \
+        tar tzdata iputils unzip findutils git gettext gdb lsof patch \
+        libcurl libxml2 libxslt openssl-dev zlib-dev \
+        make automake gcc g++ binutils-gold linux-headers paxctl libgcc libstdc++ \
+        python gnupg ncurses-libs ca-certificates && \
+    update-ca-certificates --fresh && \
+    rm -rf /var/cache/apk/*
 
-WORKDIR /java-tron
+# home folder
+ENV HOME=/opt/java-tron
+RUN	mkdir -p ${HOME} && \
+    adduser -s /bin/sh -u 1001 -G root -h ${HOME} -S -D default && \
+    chown -R 1001:0 ${HOME}
 
+COPY build/libs/FullNode.jar ${HOME}/FullNode.jar
+COPY docker/main_net_config.conf ${HOME}/main_net_config.conf
+
+COPY docker/start.sh ${HOME}/start.sh
+RUN	chmod +x ${HOME}/start.sh
+
+
+WORKDIR ${HOME}
+USER 1001
+
+EXPOSE 8090
+EXPOSE 50051
 EXPOSE 18888
+EXPOSE 10001/udp
+EXPOSE 18888/udp
+
+CMD ${HOME}/start.sh
