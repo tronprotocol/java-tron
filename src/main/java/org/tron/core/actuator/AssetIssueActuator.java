@@ -63,12 +63,11 @@ public class AssetIssueActuator extends AbstractActuator {
 //      assetIssueCapsule.setOrder(order);
       long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
       tokenIdNum++;
-      assetIssueCapsule.setId(tokenIdNum);
+      assetIssueCapsule.setId(Long.toString(tokenIdNum));
       assetIssueCapsule.setPrecision(assetIssueContract.getPrecision());
       dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenIdNum);
 
       dbManager.putAssetIssue(assetIssueCapsule);
-
 
       dbManager.adjustBalance(ownerAddress, -fee);
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().getAddress().toByteArray(),
@@ -102,6 +101,8 @@ public class AssetIssueActuator extends AbstractActuator {
           .addAllFrozenSupply(frozenList).build());
 
       dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+
+      ret.setAssetIssueID(Long.toString(tokenIdNum));
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
@@ -198,7 +199,7 @@ public class AssetIssueActuator extends AbstractActuator {
 
     if (this.dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0
         && this.dbManager.getAssetIssueStore().get(assetIssueContract.getName().toByteArray())
-            != null) {
+        != null) {
       throw new ContractValidateException("Token exists");
     }
 

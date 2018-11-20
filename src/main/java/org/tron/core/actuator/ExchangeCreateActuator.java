@@ -72,12 +72,12 @@ public class ExchangeCreateActuator extends AbstractActuator {
 
         //save to new asset store
         if (!Arrays.equals(firstTokenID, "_".getBytes())) {
-          long firstTokenRealID = dbManager.getAssetIssueStore().get(firstTokenID).getId();
-          firstTokenID = Long.toString(firstTokenRealID).getBytes();
+          String firstTokenRealID = dbManager.getAssetIssueStore().get(firstTokenID).getId();
+          firstTokenID = firstTokenRealID.getBytes();
         }
         if (!Arrays.equals(secondTokenID, "_".getBytes())) {
-          long secondTokenRealID = dbManager.getAssetIssueStore().get(secondTokenID).getId();
-          secondTokenID = Long.toString(secondTokenRealID).getBytes();
+          String secondTokenRealID = dbManager.getAssetIssueStore().get(secondTokenID).getId();
+          secondTokenID = secondTokenRealID.getBytes();
         }
       }
 
@@ -100,6 +100,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
 
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
 
+      ret.setExchangeId(id);
       ret.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);

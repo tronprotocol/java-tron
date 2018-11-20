@@ -50,7 +50,6 @@ public class SnapshotManager implements RevokingDatabase {
   // for test
   @Getter
   private int activeSession = 0;
-
   // for test
   @Setter
   private boolean unChecked = true;
@@ -271,10 +270,17 @@ public class SnapshotManager implements RevokingDatabase {
     }
 
     if (shouldBeRefreshed()) {
+      long start = System.currentTimeMillis();
       deleteCheckPoint();
       createCheckPoint();
+      long checkPointEnd = System.currentTimeMillis();
       refresh();
       flushCount = 0;
+      logger.info("flush cost:{}, create checkpoint cost:{}, refresh cost:{}",
+          System.currentTimeMillis() - start,
+          checkPointEnd - start,
+          System.currentTimeMillis() - checkPointEnd
+      );
     }
   }
 

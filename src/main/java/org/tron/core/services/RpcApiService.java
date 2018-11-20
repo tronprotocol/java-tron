@@ -70,6 +70,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Contract;
@@ -369,6 +370,26 @@ public class RpcApiService implements Service {
         StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
       responseObserver
           .onNext(wallet.getDelegatedResourceAccountIndex(request.getValue()));
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getExchangeById(BytesMessage request,
+        StreamObserver<Exchange> responseObserver) {
+      ByteString exchangeId = request.getValue();
+
+      if (Objects.nonNull(exchangeId)) {
+        responseObserver.onNext(wallet.getExchangeById(exchangeId));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void listExchanges(EmptyMessage request,
+        StreamObserver<ExchangeList> responseObserver) {
+      responseObserver.onNext(wallet.getExchangeList());
       responseObserver.onCompleted();
     }
 
@@ -1190,7 +1211,18 @@ public class RpcApiService implements Service {
     @Override
     public void getAssetIssueByName(BytesMessage request,
         StreamObserver<AssetIssueContract> responseObserver) {
-      getAssetIssueById(request, responseObserver);
+      ByteString assetName = request.getValue();
+      if (assetName != null) {
+        try {
+          responseObserver.onNext(wallet.getAssetIssueByName(assetName));
+        } catch (NonUniqueObjectException e) {
+          responseObserver.onNext(null);
+          logger.debug("NonUniqueObjectException: {}", e.getMessage());
+        }
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
     }
 
     @Override

@@ -58,6 +58,14 @@ public class TransactionResultCapsule implements ProtoCapsule<Transaction.Result
     return transactionResult.getUnfreezeAmount();
   }
 
+  public void setAssetIssueID(String id) {
+    this.transactionResult = this.transactionResult.toBuilder().setAssetIssueID(id).build();
+  }
+
+  public String getAssetIssueID() {
+    return transactionResult.getAssetIssueID();
+  }
+
   public void setWithdrawAmount(long amount) {
     this.transactionResult = this.transactionResult.toBuilder().setWithdrawAmount(amount).build();
   }
@@ -90,6 +98,16 @@ public class TransactionResultCapsule implements ProtoCapsule<Transaction.Result
   public void setExchangeInjectAnotherAmount(long amount) {
     this.transactionResult = this.transactionResult.toBuilder()
         .setExchangeInjectAnotherAmount(amount)
+        .build();
+  }
+
+  public long getExchangeId() {
+    return transactionResult.getExchangeId();
+  }
+
+  public void setExchangeId(long id) {
+    this.transactionResult = this.transactionResult.toBuilder()
+        .setExchangeId(id)
         .build();
   }
 
