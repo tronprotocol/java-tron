@@ -2189,7 +2189,24 @@ public class PublicMethed {
       blockingStubFull) {
     ExchangeList exchangeList = blockingStubFull.listExchanges(EmptyMessage.newBuilder().build());
     return Optional.ofNullable(exchangeList);
+  }
 
+  public static Optional<ExchangeList> getExchangeList(WalletSolidityGrpc
+      .WalletSolidityBlockingStub blockingStubSolidity) {
+    ExchangeList exchangeList = blockingStubSolidity.listExchanges(EmptyMessage.newBuilder()
+        .build());
+    return Optional.ofNullable(exchangeList);
+  }
+
+
+
+  public static Optional<Exchange> getExchange(String id, WalletSolidityGrpc
+      .WalletSolidityBlockingStub blockingStubSolidity) {
+    BytesMessage request = BytesMessage.newBuilder().setValue(ByteString.copyFrom(
+        ByteArray.fromLong(Long.parseLong(id))))
+        .build();
+    Exchange exchange = blockingStubSolidity.getExchangeById(request);
+    return Optional.ofNullable(exchange);
   }
 
   public static Optional<Exchange> getExchange(String id, WalletGrpc.WalletBlockingStub
@@ -2200,6 +2217,7 @@ public class PublicMethed {
     Exchange exchange = blockingStubFull.getExchangeById(request);
     return Optional.ofNullable(exchange);
   }
+
 
   public static boolean exchangeWithdraw(long exchangeId, byte[] tokenId, long quant,
       byte[] ownerAddress, String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
