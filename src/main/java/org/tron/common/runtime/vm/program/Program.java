@@ -621,7 +621,7 @@ public class Program {
     long endowment = msg.getEndowment().value().longValueExact();
     // transfer trx validation
     byte[] tokenId = null;
-    if (msg.getTokenId() == null) {
+    if (msg.getTokenId().longValue() == 0) {
       long senderBalance = deposit.getBalance(senderAddress);
       if (senderBalance < endowment) {
         stackPushZero();
@@ -655,7 +655,7 @@ public class Program {
           msg.getEndowment().getNoLeadZeroesData());
     } else if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
         && senderAddress != contextAddress && endowment > 0) {
-      if (msg.getTokenId() == null) {
+      if (msg.getTokenId().longValue() == 0) {
         try {
           TransferActuator
               .validateForSmartContract(deposit, senderAddress, contextAddress, endowment);
@@ -679,12 +679,12 @@ public class Program {
     // CREATE CALL INTERNAL TRANSACTION
     increaseNonce();
     HashMap<String, Long> tokenInfo = new HashMap<>();
-    if (msg.getTokenId() != null) {
+    if (msg.getTokenId().longValue() != 0) {
       tokenInfo.put(new String(stripLeadingZeroes(tokenId)), endowment);
     }
     InternalTransaction internalTx = addInternalTx(null, senderAddress, contextAddress,
-        msg.getTokenId() == null ? endowment : 0, data, "call", nonce,
-        msg.getTokenId() == null ? null : tokenInfo);
+        msg.getTokenId().longValue() == 0 ? endowment : 0, data, "call", nonce,
+        msg.getTokenId().longValue() == 0 ? null : tokenInfo);
     ProgramResult callResult = null;
     if (isNotEmpty(programCode)) {
       long vmStartInUs = System.nanoTime() / 1000;
@@ -692,9 +692,9 @@ public class Program {
       ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
           this, new DataWord(contextAddress),
           msg.getType().callIsDelegate() ? getCallerAddress() : getContractAddress(),
-          msg.getTokenId() == null ? callValue : new DataWord(0),
-          msg.getTokenId() == null ? new DataWord(0) : callValue,
-          msg.getTokenId() == null ? null : msg.getTokenId(),
+          msg.getTokenId().longValue() == 0 ? callValue : new DataWord(0),
+          msg.getTokenId().longValue() == 0 ? new DataWord(0) : callValue,
+          msg.getTokenId().longValue() == 0 ? new DataWord(0) : msg.getTokenId(),
           contextBalance, data, deposit, msg.getType().callIsStatic() || isStaticCall(),
           byTestingSuite(), vmStartInUs, getVmShouldEndInUs(), msg.getEnergy().longValueSafe());
       VM vm = new VM(config);
@@ -783,7 +783,6 @@ public class Program {
   }
 
   public void checkCPUTimeLimit(String opName) {
-
     if (Args.getInstance().isDebug()) {
       return;
     }
@@ -1300,7 +1299,7 @@ public class Program {
     long senderBalance = 0;
     byte[] tokenId = null;
     // transfer trx validation
-    if (msg.getTokenId() == null) {
+    if (msg.getTokenId().longValue() == 0) {
       senderBalance = deposit.getBalance(senderAddress);
     }
     // transfer trc10 token validation
@@ -1319,7 +1318,7 @@ public class Program {
     // Charge for endowment - is not reversible by rollback
     if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
         && senderAddress != contextAddress && msg.getEndowment().value().longValueExact() > 0) {
-      if (msg.getTokenId() == null) {
+      if (msg.getTokenId().longValue() == 0) {
         try {
           transfer(deposit, senderAddress, contextAddress,
               msg.getEndowment().value().longValueExact());
