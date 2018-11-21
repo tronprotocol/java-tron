@@ -108,7 +108,8 @@ public class IncrementalMerkleTreeContainer {
             combined =
                 SHA256CompressCapsule
                     .combine(treeCapsule.getParents().get(i), combined.getInstance(), i + 1);
-            treeCapsule.clearParents(i);
+//            treeCapsule.clearParents(i);
+            treeCapsule.setParents(i,SHA256CompressCapsule.uncommitted().getInstance());
           } else {
             treeCapsule.setParents(i, combined.getInstance());
             break;
