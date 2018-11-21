@@ -274,7 +274,6 @@ public class VM {
       }
 
       program.spendEnergy(energyCost, op.name());
-      program.checkCPUTimeLimit(op.name());
 
       // Execute operation
       switch (op) {
@@ -1322,6 +1321,7 @@ public class VM {
           break;
       }
 
+      program.checkCPUTimeLimit(op.name());
       program.setPreviouslyExecutedOp(op.val());
     } catch (RuntimeException e) {
       logger.info("VM halted: [{}]", e.getMessage());
