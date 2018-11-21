@@ -72,7 +72,7 @@ public class MerkleContainerTest {
 
     //root
     //todo : need check
-    Assert.assertEquals("835ea79627cfa5b773439220b4a8fba947be8b3faab18ffe12dd2343cd669d15",
+    Assert.assertEquals("9e337370cb3598c6ffcbce991a05ff343fdcc6c9960c0a2ffbdedc007866f06d",
         ByteArray.toHexString(tree.getMerkleTreeKey()));
 
     //save
@@ -96,7 +96,7 @@ public class MerkleContainerTest {
         .saveCmIntoMerkleTree(tree.getMerkleTreeKey(), ByteArray.fromHexString(s1),
             ByteArray.fromHexString(s2), hash);
     //todo : need check
-    Assert.assertEquals("18a4aa922c9f3f8aecb5cd469bc92da72297cda82c55c3a50c36e7b2956c8b80",
+    Assert.assertEquals("c06bcab726d37d35f049a1db7e1c238beb949bde46a02eaf2a435a3a03c1413d",
         ByteArray.toHexString(newTree.getMerkleTreeKey()));
 
     Assert.assertEquals(3, tree.size());
@@ -123,7 +123,7 @@ public class MerkleContainerTest {
     witness.append(a);
     Assert.assertEquals(true, path.getIndex().get(1));
 
-    Assert.assertEquals("eb9baf23d8d83a2f873a5fedb9f47b1d09b045f638fa1e3144aa16da57d02507",
+    Assert.assertEquals("ae308012692c14afb26cff2dc0178302b2fffcfd1c2e542c0ca9889a5db4cd6b",
         ByteArray.toHexString(witness.getRootArray()));
 
     witness.element();
