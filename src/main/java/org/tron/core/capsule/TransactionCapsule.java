@@ -478,7 +478,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public void validateZkSignature() throws ValidateSignatureException {
-    if (this.getInstance().getSignatureCount() !=
+    if (this.getInstance().getSignatureZkCount() !=
         this.getInstance().getRawData().getContractCount()) {
       throw new ValidateSignatureException("miss sig or contract");
     }
