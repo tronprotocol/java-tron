@@ -2,7 +2,11 @@ package org.tron.core.db2;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -13,6 +17,7 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.SessionOptional;
 import org.tron.core.Constant;
+import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.RevokingDbWithCacheNewValueTest.TestRevokingTronStore;
@@ -112,4 +117,28 @@ public class SnapshotRootTest {
     tronDatabase.close();
   }
 
+  @NoArgsConstructor
+  @AllArgsConstructor
+  @EqualsAndHashCode
+  public static class ProtoCapsuleTest implements ProtoCapsule<Object> {
+    private byte[] value;
+
+    @Override
+    public byte[] getData() {
+      return value;
+    }
+
+    @Override
+    public Object getInstance() {
+      return value;
+    }
+
+    @Override
+    public String toString() {
+      return "ProtoCapsuleTest{"
+        + "value=" + Arrays.toString(value)
+        + ", string=" + (value == null ? "" : new String(value))
+        + '}';
+    }
+  }
 }

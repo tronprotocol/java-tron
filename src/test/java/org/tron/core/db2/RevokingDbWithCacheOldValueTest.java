@@ -22,6 +22,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.AbstractRevokingStore;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.core.db2.SnapshotRootTest.ProtoCapsuleTest;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 
@@ -75,10 +76,10 @@ public class RevokingDbWithCacheOldValueTest {
       ProtoCapsuleTest testProtoCapsule = new ProtoCapsuleTest(("pop" + i).getBytes());
       try (ISession tmpSession = revokingDatabase.buildSession()) {
         tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
-        Assert.assertEquals(revokingDatabase.getActiveDialog(), 1);
+        Assert.assertEquals(1, revokingDatabase.getActiveDialog());
         tmpSession.commit();
-        Assert.assertEquals(revokingDatabase.getStack().size(), i);
-        Assert.assertEquals(revokingDatabase.getActiveDialog(), 0);
+        Assert.assertEquals(i, revokingDatabase.getStack().size());
+        Assert.assertEquals(0, revokingDatabase.getActiveDialog());
       }
     }
 
@@ -89,7 +90,7 @@ public class RevokingDbWithCacheOldValueTest {
 
     tronDatabase.close();
 
-    Assert.assertEquals(revokingDatabase.getStack().size(), 0);
+    Assert.assertEquals(0, revokingDatabase.getStack().size());
   }
 
   @Test
@@ -103,18 +104,18 @@ public class RevokingDbWithCacheOldValueTest {
       ProtoCapsuleTest testProtoCapsule = new ProtoCapsuleTest(("undo" + i).getBytes());
       try (ISession tmpSession = revokingDatabase.buildSession()) {
         tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
-        Assert.assertEquals(revokingDatabase.getStack().size(), 2);
+        Assert.assertEquals(2, revokingDatabase.getStack().size());
         tmpSession.merge();
-        Assert.assertEquals(revokingDatabase.getStack().size(), 1);
+        Assert.assertEquals(1, revokingDatabase.getStack().size());
       }
     }
 
-    Assert.assertEquals(revokingDatabase.getStack().size(), 1);
+    Assert.assertEquals(1, revokingDatabase.getStack().size());
 
     dialog.reset();
 
     Assert.assertTrue(revokingDatabase.getStack().isEmpty());
-    Assert.assertEquals(revokingDatabase.getActiveDialog(), 0);
+    Assert.assertEquals(0, revokingDatabase.getActiveDialog());
 
     dialog = SessionOptional.instance().setValue(revokingDatabase.buildSession());
     revokingDatabase.disable();
@@ -232,7 +233,7 @@ public class RevokingDbWithCacheOldValueTest {
       Assert.assertEquals(null, tronDatabase.getUnchecked(capsule.getData()).getData());
     }
 
-    Assert.assertEquals(revokingDatabase.getStack().size(), 0);
+    Assert.assertEquals(0, revokingDatabase.getStack().size());
     tronDatabase.close();
 
   }

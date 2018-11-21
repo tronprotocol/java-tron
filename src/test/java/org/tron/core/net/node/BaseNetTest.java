@@ -162,7 +162,6 @@ public abstract class BaseNetTest {
     for (PeerConnection peer : peerConnections) {
       peer.close();
     }
-    peerClient.close();
     context.destroy();
     node.shutDown();
     appT.shutdownServices();

@@ -18,10 +18,9 @@ import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.core.db2.SnapshotRootTest.ProtoCapsuleTest;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.SnapshotManager;
-import org.tron.core.exception.BadItemException;
-import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 
 @Slf4j
@@ -65,10 +64,10 @@ public class RevokingDbWithCacheNewValueTest {
       ProtoCapsuleTest testProtoCapsule = new ProtoCapsuleTest(("pop" + i).getBytes());
       try (ISession tmpSession = revokingDatabase.buildSession()) {
         tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
-        Assert.assertEquals(revokingDatabase.getActiveSession(), 1);
+        Assert.assertEquals(1, revokingDatabase.getActiveSession());
         tmpSession.commit();
-        Assert.assertEquals(revokingDatabase.getSize(), i);
-        Assert.assertEquals(revokingDatabase.getActiveSession(), 0);
+        Assert.assertEquals(i, revokingDatabase.getSize());
+        Assert.assertEquals(0, revokingDatabase.getActiveSession());
       }
     }
 
@@ -77,7 +76,7 @@ public class RevokingDbWithCacheNewValueTest {
       Assert.assertEquals(10 - i, revokingDatabase.getSize());
     }
 
-    Assert.assertEquals(revokingDatabase.getSize(), 0);
+    Assert.assertEquals(0, revokingDatabase.getSize());
   }
 
   @Test
@@ -127,16 +126,16 @@ public class RevokingDbWithCacheNewValueTest {
       ProtoCapsuleTest testProtoCapsule = new ProtoCapsuleTest(("undo" + i).getBytes());
       try (ISession tmpSession = revokingDatabase.buildSession()) {
         tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
-        Assert.assertEquals(revokingDatabase.getSize(), 2);
+        Assert.assertEquals(2, revokingDatabase.getSize());
         tmpSession.merge();
-        Assert.assertEquals(revokingDatabase.getSize(), 1);
+        Assert.assertEquals(1, revokingDatabase.getSize());
       }
     }
 
-    Assert.assertEquals(revokingDatabase.getSize(), 1);
+    Assert.assertEquals(1, revokingDatabase.getSize());
     dialog.reset();
     Assert.assertTrue(revokingDatabase.getSize() == 0);
-    Assert.assertEquals(revokingDatabase.getActiveSession(), 0);
+    Assert.assertEquals(0, revokingDatabase.getActiveSession());
 
     dialog.setValue(revokingDatabase.buildSession());
     ProtoCapsuleTest testProtoCapsule = new ProtoCapsuleTest("revoke".getBytes());
