@@ -3,31 +3,30 @@ package org.tron.stresstest.dispatch.creator.contract;
 import com.google.protobuf.ByteString;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
-import org.tron.protos.Contract;
+import org.tron.protos.Contract.TriggerSmartContract;
+import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.stresstest.AbiUtil;
 import org.tron.stresstest.dispatch.GoodCaseTransactonCreator;
 import org.tron.stresstest.dispatch.TransactionFactory;
 import org.tron.stresstest.dispatch.creator.CreatorCounter;
 import org.tron.stresstest.dispatch.creator.transfer.AbstractTransferTransactionCreator;
-import org.tron.common.utils.ByteArray;
-import org.tron.protos.Contract.TriggerSmartContract;
-import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.stresstest.exception.EncodingException;
 
-public class TriggerFibonacciCreator extends AbstractTransferTransactionCreator implements GoodCaseTransactonCreator {
+public class TransferTokenCreator extends AbstractTransferTransactionCreator implements GoodCaseTransactonCreator {
   @Override
   protected Protocol.Transaction create() {
     TransactionFactory.context.getBean(CreatorCounter.class).put(this.getClass().getName());
 
-    String param = "21";
+    String param = "\"27eXMYFzdLbkXe14gMvSZXWMAwFLqkjzkmC\",1000001,1";
 
     TriggerSmartContract contract = null;
     try {
       contract = triggerCallContract(ownerAddress.toByteArray(), Wallet
-          .decodeFromBase58Check("27iqZh9CCcphGjWYvA6d6w4WhxHKQsk6UYT"), 0L, Hex
-          .decode(AbiUtil.parseMethod("add2(uint256)", param, false)));
+          .decodeFromBase58Check("27nA7pNNLafLcJyzPrHEG5tCbmYFrMU6bXa"), 0L, Hex
+          .decode(AbiUtil.parseMethod("TransferTokenTo(address,trcToken,uint256)", param, false)));
     } catch (EncodingException e) {
       e.printStackTrace();
     }

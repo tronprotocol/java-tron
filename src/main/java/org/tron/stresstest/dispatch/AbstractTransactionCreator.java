@@ -27,7 +27,7 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
   protected ByteString toAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("27ZESitosJfKouTBrGg6Nk5yEjnJHXMbkZp"));
   protected Long amount = 1L;
   protected Long amountOneTrx = 1000_000L;
-  protected ByteString assetName = ByteString.copyFrom("pressure1", Charsets.UTF_8);
+  protected ByteString assetName = ByteString.copyFrom("1000001".getBytes());
 
   // deploy contract
   protected String contractName = "createContract";
@@ -57,6 +57,17 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
   protected byte[] secondTokeID = "1000001".getBytes();
   protected long quant = 10;
   protected long expected = 1;
+
+  // inject
+  protected long exchangeId2 = 2;
+  protected byte[] firstTokeID2 = "_".getBytes();
+  protected long quant2 = 1000000;
+
+  // participate
+  protected String ownerPrivateKey = "f7b2f476843bfa96a3cc97238f8ed017e0bdbc53bebb8e06efc6ca776a4a26c7";
+  protected byte[] participateOwnerAddressBytes = Wallet.decodeFromBase58Check("27kvcjMFKkiWYwoxk5gf4pwyqym4oCAaW79");
+  protected long participateAmount = 1;
+  protected byte[] participateAssetName = "1000001".getBytes();
 
   long time = System.currentTimeMillis();
   AtomicLong count = new AtomicLong();
@@ -125,5 +136,55 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
 
   public static Sha256Hash getID(Transaction transaction) {
     return Sha256Hash.of(transaction.getRawData().toByteArray());
+  }
+
+  public static org.tron.protos.Contract.ExchangeInjectContract createExchangeInjectContract(byte[] owner,
+      long exchangeId, byte[] tokenId, long quant) {
+    org.tron.protos.Contract.ExchangeInjectContract.Builder builder = org.tron.protos.Contract.ExchangeInjectContract.newBuilder();
+    builder
+        .setOwnerAddress(ByteString.copyFrom(owner))
+        .setExchangeId(exchangeId)
+        .setTokenId(ByteString.copyFrom(tokenId))
+        .setQuant(quant);
+    return builder.build();
+  }
+
+  public static org.tron.protos.Contract.ExchangeWithdrawContract createExchangeWithdrawContract(byte[] owner,
+      long exchangeId, byte[] tokenId, long quant) {
+    org.tron.protos.Contract.ExchangeWithdrawContract.Builder builder = org.tron.protos.Contract.ExchangeWithdrawContract
+        .newBuilder();
+    builder
+        .setOwnerAddress(ByteString.copyFrom(owner))
+        .setExchangeId(exchangeId)
+        .setTokenId(ByteString.copyFrom(tokenId))
+        .setQuant(quant);
+    return builder.build();
+  }
+
+  public static org.tron.protos.Contract.ParticipateAssetIssueContract createParticipateAssetIssueContract(byte[] to,
+      byte[] assertName, byte[] owner,
+      long amount) {
+    org.tron.protos.Contract.ParticipateAssetIssueContract.Builder builder = org.tron.protos.Contract.ParticipateAssetIssueContract
+        .newBuilder();
+    ByteString bsTo = ByteString.copyFrom(to);
+    ByteString bsName = ByteString.copyFrom(assertName);
+    ByteString bsOwner = ByteString.copyFrom(owner);
+    builder.setToAddress(bsTo);
+    builder.setAssetName(bsName);
+    builder.setOwnerAddress(bsOwner);
+    builder.setAmount(amount);
+
+    return builder.build();
+  }
+
+  public org.tron.protos.Contract.TriggerSmartContract triggerCallContract(byte[] address,
+      byte[] contractAddress,
+      long callValue, byte[] data) {
+    org.tron.protos.Contract.TriggerSmartContract.Builder builder = org.tron.protos.Contract.TriggerSmartContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(address));
+    builder.setContractAddress(ByteString.copyFrom(contractAddress));
+    builder.setData(ByteString.copyFrom(data));
+    builder.setCallValue(callValue);
+    return builder.build();
   }
 }

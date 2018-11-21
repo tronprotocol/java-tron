@@ -110,7 +110,7 @@ public class FullNode {
     NodeImpl nodeImpl = context.getBean(NodeImpl.class);
 
     if (cfgArgs.isGenerate()) {
-      new TransactionGenerator(context, 20000).start();
+      new TransactionGenerator(context, 10_000).start();
     }
 
     File f = new File("transaction.csv");

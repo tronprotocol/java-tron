@@ -72,6 +72,7 @@ public class TransactionGenerator {
   }
 
   public void start() throws FileNotFoundException {
+    System.out.println("Start generate transaction");
 
     savePool.submit(() -> {
       while (isGenerate) {
