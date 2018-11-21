@@ -218,7 +218,6 @@ public class HandleTransactionTest {
         for (PeerConnection peer : peerConnections) {
             peer.close();
         }
-        peerClient.close();
         handshakeHandlerTest.close();
         appT.shutdownServices();
         appT.shutdown();
