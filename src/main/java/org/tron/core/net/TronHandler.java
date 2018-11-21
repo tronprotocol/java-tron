@@ -19,6 +19,7 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
 
   private MessageQueue msgQueue;
 
+  @Autowired
   private TronNetService tronNetService;
 
 //  @Autowired

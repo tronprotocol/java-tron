@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
+import org.tron.core.net.TronNetService;
 
 @Slf4j
 @Component
@@ -13,6 +14,9 @@ public class ApplicationImpl implements Application {
 
   private BlockStore blockStoreDb;
   private ServiceContainer services;
+
+  @Autowired
+  private TronNetService tronNetService;
 
   @Autowired
   private Manager dbManager;
@@ -45,11 +49,13 @@ public class ApplicationImpl implements Application {
    * start up the app.
    */
   public void startup() {
+    tronNetService.start();
   }
 
   @Override
   public void shutdown() {
     logger.info("******** begin to shutdown ********");
+    tronNetService.close();
     synchronized (dbManager.getRevokingStore()) {
       closeRevokingStore();
       closeAllStore();

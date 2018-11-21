@@ -59,7 +59,7 @@ public class PeerConnection extends Channel {
   private Map<Item, Long> advInvRequest = new ConcurrentHashMap<>();
 
   @Getter
-  private BlockId blockBothHave = tronProxy.getGenesisBlockId();
+  private BlockId blockBothHave  = new BlockId();
   public void setBlockBothHave (BlockId blockId) {
     this.blockBothHave = blockId;
     this.blockBothHaveUpdateTime = System.currentTimeMillis();
@@ -150,6 +150,11 @@ public class PeerConnection extends Channel {
   }
 
   public String logSyncStats() {
+
+  }
+
+  @Override
+  public String toString () {
     return String.format(
         "Peer %s: [ %18s, ping %6s ms]-----------\n"
             + "connect time: %s\n"

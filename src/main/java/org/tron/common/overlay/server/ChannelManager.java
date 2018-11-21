@@ -47,17 +47,16 @@ public class ChannelManager {
 
   private int getMaxActivePeersWithSameIp = args.getNodeMaxActiveNodesWithSameIp();
 
+  @Autowired
   private PeerServer peerServer;
 
+  @Autowired
   private PeerClient peerClient;
 
   @Autowired
   private SyncPool syncPool;
 
-  @Autowired
-  private ChannelManager(final PeerServer peerServer, final PeerClient peerClient) {
-    this.peerServer = peerServer;
-    this.peerClient = peerClient;
+  public void init () {
 
     if (this.args.getNodeListenPort() > 0) {
       new Thread(() -> peerServer.start(Args.getInstance().getNodeListenPort()),

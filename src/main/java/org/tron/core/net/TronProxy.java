@@ -54,7 +54,7 @@ public class TronProxy {
   private Manager dbManager;
 
   @Getter
-  private Object blockLock;
+  private Object blockLock = new Object();
 
   private Queue<BlockId> freshBlockId = new ConcurrentLinkedQueue<BlockId>() {
     @Override
@@ -149,7 +149,7 @@ public class TronProxy {
   public void processBlock(BlockCapsule block) throws Exception {
     synchronized (blockLock) {
       try {
-        if (freshBlockId.contains(block.getBlockId())) {
+        if (!freshBlockId.contains(block.getBlockId())) {
           dbManager.preValidateTransactionSign(block);
           dbManager.pushBlock(block);
           freshBlockId.add(block.getBlockId());

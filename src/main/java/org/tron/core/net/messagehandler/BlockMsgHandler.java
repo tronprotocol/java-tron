@@ -65,7 +65,7 @@ public class BlockMsgHandler implements TronMsgHandler {
 
   private void check (PeerConnection peer, BlockMessage msg) throws Exception {
     Item item = new Item(msg.getBlockId(), InventoryType.BLOCK);
-    if (!peer.getSyncBlockRequested().containsKey(item) && !peer.getAdvInvRequest().containsKey(item)) {
+    if (!peer.getSyncBlockRequested().containsKey(msg.getBlockId()) && !peer.getAdvInvRequest().containsKey(item)) {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "no request");
     }
     BlockCapsule blockCapsule = msg.getBlockCapsule();
