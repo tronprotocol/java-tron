@@ -7,7 +7,6 @@ import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -1487,7 +1486,7 @@ public class PublicMethed {
       long consumeUserResourcePercent, String libraryAddress, String priKey, byte[] ownerAddress,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     return deployContract(contractName, abiString, code, data, feeLimit, value,
-        consumeUserResourcePercent, 1000L, "#", 0L, libraryAddress,
+        consumeUserResourcePercent, 1000L, "0", 0L, libraryAddress,
         priKey, ownerAddress, blockingStubFull);
   }
 
@@ -1623,7 +1622,7 @@ public class PublicMethed {
       long consumeUserResourcePercent, String libraryAddress, String priKey, byte[] ownerAddress,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     return deployContractAndGetTransactionInfoById(contractName, abiString, code, data, feeLimit,
-        value, consumeUserResourcePercent, 1000L, "#", 0L, libraryAddress,
+        value, consumeUserResourcePercent, 1000L, "0", 0L, libraryAddress,
         priKey, ownerAddress, blockingStubFull);
   }
 
@@ -2017,7 +2016,7 @@ public class PublicMethed {
       Boolean isHex, long callValue, long feeLimit, byte[] ownerAddress,
       String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     return triggerContract(contractAddress, method, argsStr, isHex, callValue, feeLimit,
-        "#", 0, ownerAddress, priKey, blockingStubFull);
+        "0", 0, ownerAddress, priKey, blockingStubFull);
   }
 
   public static String triggerContract(byte[] contractAddress, String method, String argsStr,
@@ -2421,7 +2420,7 @@ public class PublicMethed {
       long consumeUserResourcePercent, String libraryAddress, String priKey, byte[] ownerAddress,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     return deployContractWithConstantParame(contractName, abiString, code, constructorStr, argsStr,
-        data, feeLimit, value, consumeUserResourcePercent, 1000L, "#", 0L,
+        data, feeLimit, value, consumeUserResourcePercent, 1000L, "0", 0L,
         libraryAddress, priKey, ownerAddress, blockingStubFull);
   }
 
