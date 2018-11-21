@@ -117,9 +117,6 @@ public class PeerSync {
   }
 
   public void processBlock(PeerConnection peer,  BlockMessage blockMessage) {
-    BlockCapsule block = blockMessage.getBlockCapsule();
-    BlockId blockId = block.getBlockId();
-    peer.getSyncBlockRequested().remove(blockId);
     synchronized (blockJustReceived) {
       blockJustReceived.put(blockMessage, peer);
     }

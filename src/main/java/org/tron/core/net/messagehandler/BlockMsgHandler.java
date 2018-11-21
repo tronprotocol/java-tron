@@ -49,20 +49,25 @@ public class BlockMsgHandler implements TronMsgHandler {
 
     BlockId blockId = blockMessage.getBlockId();
     Item item = new Item(blockId, InventoryType.BLOCK);
-    boolean syncFlag = false;
+//    boolean syncFlag = false;
     if (peer.getSyncBlockRequested().containsKey(blockId)) {
+      peer.getSyncBlockRequested().remove(blockId);
       peerSync.processBlock(peer, blockMessage);
-      syncFlag = true;
-    }
-    if (peer.getAdvInvRequest().containsKey(item)) {
+//      syncFlag = true;
+    } else {
       peer.getAdvInvRequest().remove(item);
-      if (!syncFlag) {
-        processBlock(peer, blockMessage.getBlockCapsule());
-      }
+      processBlock(peer, blockMessage.getBlockCapsule());
+//      if (!syncFlag) {
+//        processBlock(peer, blockMessage.getBlockCapsule());
+//      }
     }
   }
 
   private void check (PeerConnection peer, BlockMessage msg) throws Exception {
+    Item item = new Item(msg.getBlockId(), InventoryType.BLOCK);
+    if (!peer.getSyncBlockRequested().containsKey(item) && !peer.getAdvInvRequest().containsKey(item)) {
+      throw new P2pException(TypeEnum.BAD_MESSAGE, "no request");
+    }
     BlockCapsule blockCapsule = msg.getBlockCapsule();
     if (blockCapsule.getInstance().getSerializedSize() > BLOCK_SIZE + 100) {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "block size over limit");
