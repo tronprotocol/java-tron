@@ -245,8 +245,8 @@ public class ProposalCreateActuator extends AbstractActuator {
               "This value[ALLOW_TVM_TRANSFER_TRC10] is only allowed to be 1");
         }
         if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-          throw new ContractValidateException("[ALLOW_SAME_TOKEN_NAME] proposal must be approved before "
-              + "[ALLOW_TVM_TRANSFER_TRC10] can be proposed");
+          throw new ContractValidateException("[ALLOW_SAME_TOKEN_NAME] proposal must be approved "
+              + "before [ALLOW_TVM_TRANSFER_TRC10] can be proposed");
         }
         break;
       }
