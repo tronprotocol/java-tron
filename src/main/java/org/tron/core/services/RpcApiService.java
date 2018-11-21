@@ -70,6 +70,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Contract;
@@ -352,6 +353,43 @@ public class RpcApiService implements Service {
       } else {
         responseObserver.onNext(null);
       }
+      responseObserver.onCompleted();
+    }
+
+
+    @Override
+    public void getDelegatedResource(DelegatedResourceMessage request,
+        StreamObserver<DelegatedResourceList> responseObserver) {
+      responseObserver
+          .onNext(wallet.getDelegatedResource(request.getFromAddress(), request.getToAddress()));
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getDelegatedResourceAccountIndex(BytesMessage request,
+        StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
+      responseObserver
+          .onNext(wallet.getDelegatedResourceAccountIndex(request.getValue()));
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getExchangeById(BytesMessage request,
+        StreamObserver<Exchange> responseObserver) {
+      ByteString exchangeId = request.getValue();
+
+      if (Objects.nonNull(exchangeId)) {
+        responseObserver.onNext(wallet.getExchangeById(exchangeId));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void listExchanges(EmptyMessage request,
+        StreamObserver<ExchangeList> responseObserver) {
+      responseObserver.onNext(wallet.getExchangeList());
       responseObserver.onCompleted();
     }
 
@@ -1173,10 +1211,40 @@ public class RpcApiService implements Service {
     @Override
     public void getAssetIssueByName(BytesMessage request,
         StreamObserver<AssetIssueContract> responseObserver) {
-      ByteString asertName = request.getValue();
+      ByteString assetName = request.getValue();
+      if (assetName != null) {
+        try {
+          responseObserver.onNext(wallet.getAssetIssueByName(assetName));
+        } catch (NonUniqueObjectException e) {
+          responseObserver.onNext(null);
+          logger.debug("NonUniqueObjectException: {}", e.getMessage());
+        }
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
 
-      if (asertName != null) {
-        responseObserver.onNext(wallet.getAssetIssueByName(asertName));
+    @Override
+    public void getAssetIssueListByName(BytesMessage request,
+        StreamObserver<AssetIssueList> responseObserver) {
+      ByteString assetName = request.getValue();
+
+      if (assetName != null) {
+        responseObserver.onNext(wallet.getAssetIssueListByName(assetName));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getAssetIssueById(BytesMessage request,
+        StreamObserver<AssetIssueContract> responseObserver) {
+      ByteString assetId = request.getValue();
+
+      if (assetId != null) {
+        responseObserver.onNext(wallet.getAssetIssueById(assetId.toStringUtf8()));
       } else {
         responseObserver.onNext(null);
       }

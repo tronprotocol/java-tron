@@ -56,7 +56,7 @@ public class DefaultConfig {
     }
   }
 
-  @Bean
+//  @Bean
   public RpcApiServiceOnSolidity getRpcApiServiceOnSolidity() {
     boolean isSolidityNode = Args.getInstance().isSolidityNode();
     int dbVersion = Args.getInstance().getStorage().getDbVersion();
@@ -67,7 +67,7 @@ public class DefaultConfig {
     return null;
   }
 
-  @Bean
+//  @Bean
   public HttpApiOnSolidityService getHttpApiOnSolidityService() {
     boolean isSolidityNode = Args.getInstance().isSolidityNode();
     int dbVersion = Args.getInstance().getStorage().getDbVersion();

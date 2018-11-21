@@ -88,6 +88,7 @@ public class SyncPool {
     this.peerDel = peerDel;
 
     channelManager = ctx.getBean(ChannelManager.class);
+    channelManager.init();
 
     peerClient = ctx.getBean(PeerClient.class);
 

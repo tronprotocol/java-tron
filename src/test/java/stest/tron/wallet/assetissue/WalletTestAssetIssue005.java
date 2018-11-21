@@ -76,7 +76,10 @@ public class WalletTestAssetIssue005 {
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+  }
 
+  @Test(enabled = true)
+  public void testGetAssetIssueByName() {
     ByteString addressBS1 = ByteString.copyFrom(fromAddress);
     Account request1 = Account.newBuilder().setAddress(addressBS1).build();
     GrpcAPI.AssetIssueList assetIssueList1 = blockingStubFull
@@ -94,14 +97,18 @@ public class WalletTestAssetIssue005 {
       Optional<GrpcAPI.AssetIssueList> queryAssetByAccount1 = Optional.ofNullable(assetIssueList1);
       name = ByteArray.toStr(queryAssetByAccount1.get().getAssetIssue(0).getName().toByteArray());
     }
-  }
 
-  @Test(enabled = true)
-  public void testGetAssetIssueByName() {
+    Account getAssetIdFromThisAccount;
+    getAssetIdFromThisAccount = PublicMethed.queryAccount(testKey002,blockingStubFull);
+    ByteString assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
+
+
     //Get asset issue by name success.
     ByteString assetNameBs = ByteString.copyFrom(name.getBytes());
-    GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
-    Contract.AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request);
+    GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder().setValue(assetAccountId)
+        .build();
+    Contract.AssetIssueContract assetIssueByName =
+        blockingStubFull.getAssetIssueByName(request);
 
     Assert.assertFalse(assetIssueByName.getUrl().isEmpty());
     Assert.assertFalse(assetIssueByName.getDescription().isEmpty());
@@ -118,18 +125,6 @@ public class WalletTestAssetIssue005 {
     Assert.assertFalse(assetIssueByName.getTrxNum() > 0);
     Assert.assertTrue(assetIssueByName.getUrl().isEmpty());
     Assert.assertTrue(assetIssueByName.getDescription().isEmpty());
-
-    //Get asset issue by name failed when the name is null, There is no exception.
-    wrongName = "";
-    assetNameBs = ByteString.copyFrom(wrongName.getBytes());
-    request = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
-    assetIssueByName = blockingStubFull.getAssetIssueByName(request);
-
-    Assert.assertFalse(assetIssueByName.getTotalSupply() > 0);
-    Assert.assertFalse(assetIssueByName.getTrxNum() > 0);
-    Assert.assertTrue(assetIssueByName.getUrl().isEmpty());
-    Assert.assertTrue(assetIssueByName.getDescription().isEmpty());
-
   }
 
   @AfterClass(enabled = true)

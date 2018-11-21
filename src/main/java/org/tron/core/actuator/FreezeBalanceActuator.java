@@ -13,6 +13,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -148,7 +149,9 @@ public class FreezeBalanceActuator extends AbstractActuator {
     long minFrozenTime = dbManager.getDynamicPropertiesStore().getMinFrozenTime();
     long maxFrozenTime = dbManager.getDynamicPropertiesStore().getMaxFrozenTime();
 
-    if (!(frozenDuration >= minFrozenTime && frozenDuration <= maxFrozenTime)) {
+    boolean needCheckFrozeTime = Args.getInstance().getCheckFrozenTime() == 1;//for test
+    if (needCheckFrozeTime && !(frozenDuration >= minFrozenTime
+        && frozenDuration <= maxFrozenTime)) {
       throw new ContractValidateException(
           "frozenDuration must be less than " + maxFrozenTime + " days "
               + "and more than " + minFrozenTime + " days");

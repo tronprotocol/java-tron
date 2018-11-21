@@ -72,10 +72,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
     //ONE_DAY_NET_LIMIT - PUBLIC_NET_LIMIT，current TOTAL_NET_LIMIT
     private static final byte[] TOTAL_NET_LIMIT = "TOTAL_NET_LIMIT".getBytes();
-    private static final byte[] TOTAL_ENERGY_TARGET_LIMIT = "TOTAL_NET_TARGET_LIMIT".getBytes();
-    private static final byte[] TOTAL_ENERGY_CURRENT_LIMIT = "TOTAL_NET_CURRENT_LIMIT".getBytes();
-    private static final byte[] TOTAL_ENERGY_AVERAGE_USAGE = "TOTAL_NET_AVERAGE_USAGE".getBytes();
-    private static final byte[] TOTAL_ENERGY_AVERAGE_TIME = "TOTAL_NET_AVERAGE_TIME".getBytes();
+    private static final byte[] TOTAL_ENERGY_TARGET_LIMIT = "TOTAL_ENERGY_TARGET_LIMIT".getBytes();
+    private static final byte[] TOTAL_ENERGY_CURRENT_LIMIT = "TOTAL_ENERGY_CURRENT_LIMIT"
+        .getBytes();
+    private static final byte[] TOTAL_ENERGY_AVERAGE_USAGE = "TOTAL_ENERGY_AVERAGE_USAGE"
+        .getBytes();
+    private static final byte[] TOTAL_ENERGY_AVERAGE_TIME = "TOTAL_ENERGY_AVERAGE_TIME".getBytes();
     private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
     private static final byte[] TOTAL_ENERGY_LIMIT = "TOTAL_ENERGY_LIMIT".getBytes();
   }
@@ -137,6 +139,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_CREATION_OF_CONTRACTS = "ALLOW_CREATION_OF_CONTRACTS"
       .getBytes();
 
+  //token id,Incremental，The initial value is 1000000
+  private static final byte[] TOKEN_ID_NUM = "TOKEN_ID_NUM".getBytes();
+
+  //Used only for token updates, once，value is {0,1}
+  private static final byte[] TOKEN_UPDATE_DONE = "TOKEN_UPDATE_DONE".getBytes();
+
+  //This value is only allowed to be 0, 1, -1
+  private static final byte[] ALLOW_TVM_TRANSFER_TRC10 = "ALLOW_TVM_TRANSFER_TRC10".getBytes();
+
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -187,6 +199,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getBlockFilledSlotsIndex();
     } catch (IllegalArgumentException e) {
       this.saveBlockFilledSlotsIndex(0);
+    }
+
+    try {
+      this.getTokenIdNum();
+    } catch (IllegalArgumentException e) {
+      this.saveTokenIdNum(1000000L);
+    }
+
+    try {
+      this.getTokenUpdateDone();
+    } catch (IllegalArgumentException e) {
+      this.saveTokenUpdateDone(0);
     }
 
     try {
@@ -408,7 +432,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowDelegateResource();
     } catch (IllegalArgumentException e) {
-      this.saveAllowDelegateResource(0);
+      this.saveAllowDelegateResource(Args.getInstance().getAllowDelegateResource());
     }
 
     try {
@@ -418,9 +442,15 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getAllowTvmTransferTrc10();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTvmTransferTrc10(Args.getInstance().getAllowTvmTransferTrc10());
+    }
+
+    try {
       this.getAllowSameTokenName();
     } catch (IllegalArgumentException e) {
-      this.saveAllowSameTokenName(0);
+      this.saveAllowSameTokenName(Args.getInstance().getAllowSameTokenName());
     }
 
     try {
@@ -491,6 +521,34 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
     return result;
   }
+
+
+  public void saveTokenIdNum(long num) {
+    this.put(TOKEN_ID_NUM,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getTokenIdNum() {
+    return Optional.ofNullable(getUnchecked(TOKEN_ID_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOKEN_ID_NUM"));
+  }
+
+  public void saveTokenUpdateDone(long num) {
+    this.put(TOKEN_UPDATE_DONE,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getTokenUpdateDone() {
+    return Optional.ofNullable(getUnchecked(TOKEN_UPDATE_DONE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOKEN_UPDATE_DONE"));
+  }
+
 
   public void saveBlockFilledSlotsIndex(int blockFilledSlotsIndex) {
     logger.debug("blockFilledSlotsIndex:" + blockFilledSlotsIndex);
@@ -1069,6 +1127,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found ALLOW_ADAPTIVE_ENERGY"));
   }
 
+  public void saveAllowTvmTransferTrc10(long value) {
+    this.put(ALLOW_TVM_TRANSFER_TRC10,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowTvmTransferTrc10() {
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_TRANSFER_TRC10))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_TVM_TRANSFER_TRC10"));
+  }
+
   public boolean supportDR() {
     return getAllowDelegateResource() == 1L;
   }
@@ -1237,7 +1308,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
    */
 
   public Sha256Hash getLatestBlockHeaderHashOnSolidity() {
-    byte[] blockHash = Optional.ofNullable(revokingDB.getUncheckedOnSolidity(LATEST_BLOCK_HEADER_HASH))
+    byte[] blockHash = Optional
+        .ofNullable(revokingDB.getUncheckedOnSolidity(LATEST_BLOCK_HEADER_HASH))
         .orElseThrow(() -> new IllegalArgumentException("not found block hash"));
     return Sha256Hash.wrap(blockHash);
   }

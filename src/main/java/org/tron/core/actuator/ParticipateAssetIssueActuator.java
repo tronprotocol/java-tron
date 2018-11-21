@@ -55,20 +55,21 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       long balance = Math.subtractExact(ownerAccount.getBalance(), cost);
       balance = Math.subtractExact(balance, fee);
       ownerAccount.setBalance(balance);
+      byte[] key = participateAssetIssueContract.getAssetName().toByteArray();
 
       //calculate the exchange amount
-      AssetIssueCapsule assetIssueCapsule =
-          this.dbManager.getAssetIssueStore()
-              .get(participateAssetIssueContract.getAssetName().toByteArray());
+      AssetIssueCapsule assetIssueCapsule;
+      assetIssueCapsule = this.dbManager.getAssetIssueStoreFinal().get(key);
+
       long exchangeAmount = Math.multiplyExact(cost, assetIssueCapsule.getNum());
       exchangeAmount = Math.floorDiv(exchangeAmount, assetIssueCapsule.getTrxNum());
-      ownerAccount.addAssetAmount(assetIssueCapsule.createDbKey(), exchangeAmount);
+      ownerAccount.addAssetAmountV2(key, exchangeAmount, dbManager);
 
       //add to to_address
       byte[] toAddress = participateAssetIssueContract.getToAddress().toByteArray();
       AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddress);
       toAccount.setBalance(Math.addExact(toAccount.getBalance(), cost));
-      if (!toAccount.reduceAssetAmount(assetIssueCapsule.createDbKey(), exchangeAmount)) {
+      if (!toAccount.reduceAssetAmountV2(key, exchangeAmount, dbManager)) {
         throw new ContractExeException("reduceAssetAmount failed !");
       }
 
@@ -147,7 +148,8 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       }
 
       //Whether have the mapping
-      AssetIssueCapsule assetIssueCapsule = this.dbManager.getAssetIssueStore().get(assetName);
+      AssetIssueCapsule assetIssueCapsule;
+      assetIssueCapsule = this.dbManager.getAssetIssueStoreFinal().get(assetName);
       if (assetIssueCapsule == null) {
         throw new ContractValidateException("No asset named " + ByteArray.toStr(assetName));
       }
@@ -176,7 +178,8 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
         throw new ContractValidateException("To account does not exist!");
       }
 
-      if (!toAccount.assetBalanceEnough(assetIssueCapsule.createDbKey(), exchangeAmount)) {
+      if (!toAccount.assetBalanceEnoughV2(assetName, exchangeAmount,
+          dbManager)) {
         throw new ContractValidateException("Asset balance is not enough !");
       }
     } catch (ArithmeticException e) {

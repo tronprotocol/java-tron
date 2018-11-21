@@ -77,6 +77,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.ProposalCapsule;
@@ -100,6 +101,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
+import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
@@ -471,13 +473,19 @@ public class Wallet {
   }
 
   public DelegatedResourceAccountIndex getDelegatedResourceAccountIndex(ByteString address) {
-    return dbManager.getDelegatedResourceAccountIndexStore()
-        .get(address.toByteArray()).getInstance();
+    DelegatedResourceAccountIndexCapsule accountIndexCapsule =
+        dbManager.getDelegatedResourceAccountIndexStore().get(address.toByteArray());
+    if (accountIndexCapsule != null) {
+      return accountIndexCapsule.getInstance();
+    } else {
+      return null;
+    }
   }
 
   public ExchangeList getExchangeList() {
     ExchangeList.Builder builder = ExchangeList.newBuilder();
-    List<ExchangeCapsule> exchangeCapsuleList = dbManager.getExchangeStore().getAllExchanges();
+    List<ExchangeCapsule> exchangeCapsuleList = dbManager.getExchangeStoreFinal().getAllExchanges();
+
     exchangeCapsuleList
         .forEach(exchangeCapsule -> builder.addExchanges(exchangeCapsule.getInstance()));
     return builder.build();
@@ -510,16 +518,19 @@ public class Wallet {
 
   public AssetIssueList getAssetIssueList() {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
-    dbManager.getAssetIssueStore().getAllAssetIssues()
+
+    dbManager.getAssetIssueStoreFinal().getAllAssetIssues()
         .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
+
     return builder.build();
   }
 
 
   public AssetIssueList getAssetIssueList(long offset, long limit) {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
-    List<AssetIssueCapsule> assetIssueList = dbManager.getAssetIssueStore()
-        .getAssetIssuesPaginated(offset, limit);
+
+    List<AssetIssueCapsule> assetIssueList =
+        dbManager.getAssetIssueStoreFinal().getAssetIssuesPaginated(offset, limit);
 
     if (CollectionUtils.isEmpty(assetIssueList)) {
       return null;
@@ -533,14 +544,17 @@ public class Wallet {
     if (accountAddress == null || accountAddress.isEmpty()) {
       return null;
     }
-    List<AssetIssueCapsule> assetIssueCapsuleList = dbManager.getAssetIssueStore()
-        .getAllAssetIssues();
+
+    List<AssetIssueCapsule> assetIssueCapsuleList =
+        dbManager.getAssetIssueStoreFinal().getAllAssetIssues();
+
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     assetIssueCapsuleList.stream()
         .filter(assetIssueCapsule -> assetIssueCapsule.getOwnerAddress().equals(accountAddress))
         .forEach(issueCapsule -> {
           builder.addAssetIssue(issueCapsule.getInstance());
         });
+
     return builder.build();
   }
 
@@ -564,10 +578,22 @@ public class Wallet {
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
-    accountCapsule.getAllFreeAssetNetUsage().keySet().forEach(asset -> {
-      byte[] key = ByteArray.fromString(asset);
-      assetNetLimitMap.put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
-    });
+    Map<String, Long> allFreeAssetNetUsage;
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsage();
+      allFreeAssetNetUsage.keySet().forEach(asset -> {
+        byte[] key = ByteArray.fromString(asset);
+        assetNetLimitMap
+            .put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
+      });
+    } else {
+      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsageV2();
+      allFreeAssetNetUsage.keySet().forEach(asset -> {
+        byte[] key = ByteArray.fromString(asset);
+        assetNetLimitMap
+            .put(asset, dbManager.getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
+      });
+    }
 
     builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
         .setFreeNetLimit(freeNetLimit)
@@ -575,7 +601,7 @@ public class Wallet {
         .setNetLimit(netLimit)
         .setTotalNetLimit(totalNetLimit)
         .setTotalNetWeight(totalNetWeight)
-        .putAllAssetNetUsed(accountCapsule.getAllFreeAssetNetUsage())
+        .putAllAssetNetUsed(allFreeAssetNetUsage)
         .putAllAssetNetLimit(assetNetLimitMap);
     return builder.build();
   }
@@ -610,10 +636,22 @@ public class Wallet {
     long storageUsage = accountCapsule.getAccountResource().getStorageUsage();
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
-    accountCapsule.getAllFreeAssetNetUsage().keySet().forEach(asset -> {
-      byte[] key = ByteArray.fromString(asset);
-      assetNetLimitMap.put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
-    });
+    Map<String, Long> allFreeAssetNetUsage;
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsage();
+      allFreeAssetNetUsage.keySet().forEach(asset -> {
+        byte[] key = ByteArray.fromString(asset);
+        assetNetLimitMap
+            .put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
+      });
+    } else {
+      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsageV2();
+      allFreeAssetNetUsage.keySet().forEach(asset -> {
+        byte[] key = ByteArray.fromString(asset);
+        assetNetLimitMap
+            .put(asset, dbManager.getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
+      });
+    }
 
     builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
         .setFreeNetLimit(freeNetLimit)
@@ -627,17 +665,91 @@ public class Wallet {
         .setTotalEnergyWeight(totalEnergyWeight)
         .setStorageLimit(storageLimit)
         .setStorageUsed(storageUsage)
-        .putAllAssetNetUsed(accountCapsule.getAllFreeAssetNetUsage())
+        .putAllAssetNetUsed(allFreeAssetNetUsage)
         .putAllAssetNetLimit(assetNetLimitMap);
     return builder.build();
   }
 
-  public AssetIssueContract getAssetIssueByName(ByteString assetName) {
+  public AssetIssueContract getAssetIssueByName(ByteString assetName)
+      throws NonUniqueObjectException {
     if (assetName == null || assetName.isEmpty()) {
       return null;
     }
-    AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
-        .get(assetName.toByteArray());
+
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      // fetch from old DB, same as old logic ops
+      AssetIssueCapsule assetIssueCapsule =
+          dbManager.getAssetIssueStore().get(assetName.toByteArray());
+      return assetIssueCapsule != null ? assetIssueCapsule.getInstance() : null;
+    } else {
+      // get asset issue by name from new DB
+      List<AssetIssueCapsule> assetIssueCapsuleList =
+          dbManager.getAssetIssueV2Store().getAllAssetIssues();
+      AssetIssueList.Builder builder = AssetIssueList.newBuilder();
+      assetIssueCapsuleList
+          .stream()
+          .filter(assetIssueCapsule -> assetIssueCapsule.getName().equals(assetName))
+          .forEach(
+              issueCapsule -> {
+                builder.addAssetIssue(issueCapsule.getInstance());
+              });
+
+      // check count
+      if (builder.getAssetIssueCount() > 1) {
+        throw new NonUniqueObjectException("get more than one asset, please use getassetissuebyid");
+      } else {
+        // fetch from DB by assetName as id
+        AssetIssueCapsule assetIssueCapsule =
+            dbManager.getAssetIssueV2Store().get(assetName.toByteArray());
+
+        if (assetIssueCapsule != null) {
+          // check already fetch
+          if (builder.getAssetIssueCount() > 0
+              && builder.getAssetIssue(0).getId().equals(assetIssueCapsule.getInstance().getId())) {
+            return assetIssueCapsule.getInstance();
+          }
+
+          builder.addAssetIssue(assetIssueCapsule.getInstance());
+          // check count
+          if (builder.getAssetIssueCount() > 1) {
+            throw new NonUniqueObjectException(
+                "get more than one asset, please use getassetissuebyid");
+          }
+        }
+      }
+
+      if (builder.getAssetIssueCount() > 0) {
+        return builder.getAssetIssue(0);
+      } else {
+        return null;
+      }
+    }
+  }
+
+  public AssetIssueList getAssetIssueListByName(ByteString assetName) {
+    if (assetName == null || assetName.isEmpty()) {
+      return null;
+    }
+
+    List<AssetIssueCapsule> assetIssueCapsuleList =
+        dbManager.getAssetIssueStoreFinal().getAllAssetIssues();
+
+    AssetIssueList.Builder builder = AssetIssueList.newBuilder();
+    assetIssueCapsuleList.stream()
+        .filter(assetIssueCapsule -> assetIssueCapsule.getName().equals(assetName))
+        .forEach(issueCapsule -> {
+          builder.addAssetIssue(issueCapsule.getInstance());
+        });
+
+    return builder.build();
+  }
+
+  public AssetIssueContract getAssetIssueById(String assetId) {
+    if (assetId == null || assetId.isEmpty()) {
+      return null;
+    }
+    AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueV2Store()
+        .get(ByteArray.fromString(assetId));
     return assetIssueCapsule != null ? assetIssueCapsule.getInstance() : null;
   }
 
@@ -736,8 +848,7 @@ public class Wallet {
     }
     ExchangeCapsule exchangeCapsule = null;
     try {
-      exchangeCapsule = dbManager.getExchangeStore()
-          .get(exchangeId.toByteArray());
+      exchangeCapsule = dbManager.getExchangeStoreFinal().get(exchangeId.toByteArray());
     } catch (StoreException e) {
     }
     if (exchangeCapsule != null) {
@@ -955,7 +1066,7 @@ public class Wallet {
         .create(Range.openClosed(offset, end), DiscreteDomain.longs()).asList();
     rangeList.stream().map(ExchangeCapsule::calculateDbKey).map(key -> {
       try {
-        return dbManager.getExchangeStore().get(key);
+        return dbManager.getExchangeStoreFinal().get(key);
       } catch (Exception ex) {
         return null;
       }

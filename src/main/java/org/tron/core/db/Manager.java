@@ -44,9 +44,11 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -56,8 +58,10 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
+import org.tron.core.db.api.AssetUpdateHelper;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.ITronChainBase;
+import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
@@ -101,6 +105,8 @@ public class Manager {
   @Autowired
   private AssetIssueStore assetIssueStore;
   @Autowired
+  private AssetIssueV2Store assetIssueV2Store;
+  @Autowired
   private DynamicPropertiesStore dynamicPropertiesStore;
   @Autowired
   @Getter
@@ -119,6 +125,8 @@ public class Manager {
   private ProposalStore proposalStore;
   @Autowired
   private ExchangeStore exchangeStore;
+  @Autowired
+  private ExchangeV2Store exchangeV2Store;
   @Autowired
   private TransactionHistoryStore transactionHistoryStore;
   @Autowired
@@ -187,6 +195,10 @@ public class Manager {
     return this.witnessStore;
   }
 
+  public boolean needToUpdateAsset() {
+    return getDynamicPropertiesStore().getTokenUpdateDone() == 0L;
+  }
+
   public DynamicPropertiesStore getDynamicPropertiesStore() {
     return this.dynamicPropertiesStore;
   }
@@ -230,6 +242,29 @@ public class Manager {
 
   public ExchangeStore getExchangeStore() {
     return this.exchangeStore;
+  }
+
+  public ExchangeV2Store getExchangeV2Store() {
+    return this.exchangeV2Store;
+  }
+
+  public ExchangeStore getExchangeStoreFinal() {
+    if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      return getExchangeStore();
+    } else {
+      return getExchangeV2Store();
+    }
+  }
+
+  public void putExchangeCapsule(ExchangeCapsule exchangeCapsule) {
+    if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
+      ExchangeCapsule exchangeCapsuleV2 = new ExchangeCapsule(exchangeCapsule.getData());
+      exchangeCapsuleV2.resetTokenWithID(this);
+      getExchangeV2Store().put(exchangeCapsuleV2.createDbKey(), exchangeCapsuleV2);
+    } else {
+      getExchangeV2Store().put(exchangeCapsule.createDbKey(), exchangeCapsule);
+    }
   }
 
   public List<TransactionCapsule> getPendingTransactions() {
@@ -359,6 +394,11 @@ public class Manager {
       System.exit(1);
     }
     forkController.init(this);
+
+    if (Args.getInstance().isNeedToUpdateAsset() && needToUpdateAsset()) {
+      new AssetUpdateHelper(this).doWork();
+    }
+
     revokingStore.enable();
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
@@ -640,6 +680,11 @@ public class Manager {
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
     updateFork();
+    if (System.currentTimeMillis() - block.getTimeStamp() >= 60_000) {
+      revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MAX_FLUSH_COUNT);
+    } else {
+      revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
+    }
   }
 
   private void switchFork(BlockCapsule newHead)
@@ -745,6 +790,7 @@ public class Manager {
       TaposException, TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException {
+    long start = System.currentTimeMillis();
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
@@ -836,6 +882,10 @@ public class Manager {
       }
       logger.info("save block: " + newBlock);
     }
+    logger.info("pushBlock block number:{}, cost/txs:{}/{}",
+        block.getNum(),
+        System.currentTimeMillis() - start,
+        block.getTransactions().size());
   }
 
   public void updateDynamicProperties(BlockCapsule block) {
@@ -982,6 +1032,7 @@ public class Manager {
     consumeBandwidth(trxCap, trace);
 
     VMConfig.initVmHardFork();
+    VMConfig.initAllowTvmTransferTrc10(dynamicPropertiesStore.getAllowTvmTransferTrc10());
     trace.init(blockCap);
     trace.checkIsConstant();
     trace.exec();
@@ -1071,8 +1122,16 @@ public class Manager {
     session.setValue(revokingStore.buildSession());
 
     Iterator iterator = pendingTransactions.iterator();
-    while (iterator.hasNext()) {
-      TransactionCapsule trx = (TransactionCapsule) iterator.next();
+    while (iterator.hasNext() || repushTransactions.size() > 0) {
+      boolean fromPending = false;
+      TransactionCapsule trx;
+      if (iterator.hasNext()) {
+        fromPending = true;
+        trx = (TransactionCapsule) iterator.next();
+      } else {
+        trx = repushTransactions.poll();
+      }
+
       if (DateTime.now().getMillis() - when
           > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5
           * Args.getInstance().getBlockProducedTimeOut()
@@ -1092,7 +1151,9 @@ public class Manager {
         tmpSeesion.merge();
         // push into block
         blockCapsule.addTransaction(trx);
-        iterator.remove();
+        if (fromPending){
+          iterator.remove();
+        }
       } catch (ContractExeException e) {
         logger.info("contract not processed during execute");
         logger.debug(e.getMessage(), e);
@@ -1404,6 +1465,28 @@ public class Manager {
   public AssetIssueStore getAssetIssueStore() {
     return assetIssueStore;
   }
+
+  public AssetIssueV2Store getAssetIssueV2Store() {
+    return assetIssueV2Store;
+  }
+
+  public AssetIssueStore getAssetIssueStoreFinal() {
+    if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      return getAssetIssueStore();
+    } else {
+      return getAssetIssueV2Store();
+    }
+  }
+
+  public void putAssetIssue(AssetIssueCapsule assetIssueCapsule) {
+    if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      getAssetIssueStore()
+          .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+    }
+    getAssetIssueV2Store()
+        .put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
+  }
+
 
   public void setAssetIssueStore(AssetIssueStore assetIssueStore) {
     this.assetIssueStore = assetIssueStore;

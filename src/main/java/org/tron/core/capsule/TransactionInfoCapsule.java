@@ -1,7 +1,5 @@
 package org.tron.core.capsule;
 
-import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
-
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
@@ -166,7 +164,13 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
     builder.addContractResult(contractResult);
     builder.setContractAddress(ContractAddress);
     builder.setUnfreezeAmount(programResult.getRet().getUnfreezeAmount());
+    builder.setAssetIssueID(programResult.getRet().getAssetIssueID());
+    builder.setExchangeId(programResult.getRet().getExchangeId());
     builder.setWithdrawAmount(programResult.getRet().getWithdrawAmount());
+    builder.setExchangeReceivedAmount(programResult.getRet().getExchangeReceivedAmount());
+    builder.setExchangeInjectAnotherAmount(programResult.getRet().getExchangeInjectAnotherAmount());
+    builder.setExchangeWithdrawAnotherAmount(
+        programResult.getRet().getExchangeWithdrawAnotherAmount());
 
     List<Log> logList = new ArrayList<>();
     programResult.getLogInfoList().forEach(
@@ -198,11 +202,17 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
         //TODO: "for loop" below in future for multiple token case, we only have one for now.
         Protocol.InternalTransaction.CallValueInfo.Builder callValueInfoBuilder =
             Protocol.InternalTransaction.CallValueInfo.newBuilder();
-        callValueInfoBuilder.setCallValue(internalTransaction.getValue());
         // trx will not be set token name
-        callValueInfoBuilder.setTokenId(internalTransaction.getTokenId());
+        callValueInfoBuilder.setCallValue(internalTransaction.getValue());
         // Just one transferBuilder for now.
         internalTrxBuilder.addCallValueInfo(callValueInfoBuilder);
+        internalTransaction.getTokenInfo().forEach((tokenId, amount) -> {
+          Protocol.InternalTransaction.CallValueInfo.Builder tokenInfoBuilder =
+              Protocol.InternalTransaction.CallValueInfo.newBuilder();
+          tokenInfoBuilder.setTokenId(tokenId);
+          tokenInfoBuilder.setCallValue(amount);
+          internalTrxBuilder.addCallValueInfo(tokenInfoBuilder);
+        });
         // Token for loop end here
         internalTrxBuilder.setNote(ByteString.copyFrom(internalTransaction.getNote().getBytes()));
         internalTrxBuilder.setRejected(internalTransaction.isRejected());

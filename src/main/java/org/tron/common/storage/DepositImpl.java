@@ -4,13 +4,11 @@ import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
-import java.util.Arrays;
 import java.util.HashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.Strings;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.config.VMConfig;
-import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.Storage;
 import org.tron.common.utils.ByteArray;
@@ -25,7 +23,6 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.CodeStore;
@@ -162,6 +159,13 @@ public class DepositImpl implements Deposit {
       accountCache.put(key, Value.create(accountCapsule.getData()));
     }
     return accountCapsule;
+  }
+
+  @Override
+  public byte[] getBlackHoleAddress() {
+    // using dbManager directly, black hole address should not be changed
+    // when executing smart contract.
+    return getAccountStore().getBlackhole().getAddress().toByteArray();
   }
 
   @Override
@@ -319,7 +323,7 @@ public class DepositImpl implements Deposit {
 
   @Override
   public synchronized AssetIssueCapsule getAssetIssue(byte[] tokenId) {
-    byte[] tokenIdWithoutLeadingZero =MUtil.removeZeroes(tokenId);
+    byte[] tokenIdWithoutLeadingZero =ByteUtil.stripLeadingZeroes(tokenId);
     Key key = Key.create(tokenIdWithoutLeadingZero);
     if (assetIssueCache.containsKey(key)) {
       return assetIssueCache.get(key).getAssetIssue();
@@ -329,7 +333,7 @@ public class DepositImpl implements Deposit {
     if (this.parent != null) {
       assetIssueCapsule = parent.getAssetIssue(tokenIdWithoutLeadingZero);
     } else {
-      assetIssueCapsule = this.dbManager.getAssetIssueStore().get(tokenIdWithoutLeadingZero);
+      assetIssueCapsule = this.dbManager.getAssetIssueStoreFinal().get(tokenIdWithoutLeadingZero);
     }
     if (assetIssueCapsule != null) {
       assetIssueCache.put(key, Value.create(assetIssueCapsule.getData()));
@@ -379,12 +383,12 @@ public class DepositImpl implements Deposit {
 
   @Override
   public synchronized long addTokenBalance(byte[] address, byte[] tokenId, long value) {
-    byte[] tokenIdWithoutLeadingZero = MUtil.removeZeroes(tokenId);
+    byte[] tokenIdWithoutLeadingZero = ByteUtil.stripLeadingZeroes(tokenId);
     AccountCapsule accountCapsule = getAccount(address);
     if (accountCapsule == null) {
       accountCapsule = createAccount(address, AccountType.Normal);
     }
-    long balance = accountCapsule.getAssetMap().getOrDefault(new String(tokenIdWithoutLeadingZero),new Long(0));
+    long balance = accountCapsule.getAssetMapV2().getOrDefault(new String(tokenIdWithoutLeadingZero),new Long(0));
     if (value == 0) {
       return balance;
     }
@@ -394,14 +398,19 @@ public class DepositImpl implements Deposit {
           StringUtil.createReadableString(accountCapsule.createDbKey())
               + " insufficient balance");
     }
-    accountCapsule.addAssetAmount(tokenIdWithoutLeadingZero, value);
+    if (value >= 0) {
+      accountCapsule.addAssetAmountV2(tokenIdWithoutLeadingZero, value, this.dbManager);
+    }
+    else {
+      accountCapsule.reduceAssetAmountV2(tokenIdWithoutLeadingZero, -value, this.dbManager);
+    }
 //    accountCapsule.getAssetMap().put(new String(tokenIdWithoutLeadingZero), Math.addExact(balance, value));
     Key key = Key.create(address);
     Value V = Value.create(accountCapsule.getData(),
         Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
     accountCache.put(key, V);
 //    accountCapsule.addAssetAmount(tokenIdWithoutLeadingZero, value);
-    return accountCapsule.getAssetMap().get(new String(tokenIdWithoutLeadingZero));
+    return accountCapsule.getAssetMapV2().get(new String(tokenIdWithoutLeadingZero));
   }
 
   @Override
@@ -429,11 +438,23 @@ public class DepositImpl implements Deposit {
     return accountCapsule.getBalance();
   }
 
+  /**
+   *
+   * @param address address
+   * @param tokenId
+   *
+   * tokenIdstr in assetV2map is a string like "1000001". So before using this function, we need to do some conversion.
+   * usually we will use a DataWord as input. so the byte tokenId should be like DataWord.shortHexWithoutZeroX().getbytes().
+   * @return
+   */
   @Override
   public synchronized long getTokenBalance(byte[] address, byte[] tokenId){
     AccountCapsule accountCapsule = getAccount(address);
-    String tokenStr = Arrays.toString(ByteUtil.stripLeadingZeroes(tokenId));
-    return accountCapsule.getAssetMap().getOrDefault(tokenStr, 0L);
+    if (accountCapsule == null) {
+      return 0;
+    }
+    String tokenStr = new String(ByteUtil.stripLeadingZeroes(tokenId));
+    return accountCapsule.getAssetMapV2().getOrDefault(tokenStr, 0L);
   }
 
   @Override

@@ -7,6 +7,8 @@ import static org.tron.common.runtime.vm.OpCode.CALLTOKEN;
 import static org.tron.common.runtime.vm.OpCode.PUSH1;
 import static org.tron.common.runtime.vm.OpCode.REVERT;
 import static org.tron.common.runtime.vm.OpCode.TOKENBALANCE;
+import static org.tron.common.runtime.vm.OpCode.CALLTOKENID;
+import static org.tron.common.runtime.vm.OpCode.CALLTOKENVALUE;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 
 import java.math.BigInteger;
@@ -83,8 +85,8 @@ public class VM {
       }
 
       // hard fork for 3.2
-      if (!VMConfig.getEnergyLimitHardFork()) {
-        if (op == CALLTOKEN || op == TOKENBALANCE) {
+      if (!VMConfig.allowTvmTransferTrc10()) {
+        if (op == CALLTOKEN || op == TOKENBALANCE || op == CALLTOKENVALUE || op == CALLTOKENID) {
           throw Program.Exception.invalidOpCode(program.getCurrentOp());
         }
       }
@@ -212,7 +214,7 @@ public class VM {
 
           int opOff = op.callHasValue() ? 4 : 3;
           if (op == CALLTOKEN) {
-            opOff ++;
+            opOff++;
           }
           BigInteger in = memNeeded(stack.get(stack.size() - opOff),
               stack.get(stack.size() - opOff - 1)); // in offset+size
@@ -694,6 +696,26 @@ public class VM {
           program.stackPush(callValue);
           program.step();
         }
+        break;
+        case CALLTOKENVALUE:
+          DataWord tokenValue = program.getTokenValue();
+
+          if (logger.isDebugEnabled()) {
+            hint = "tokenValue: " + tokenValue;
+          }
+
+          program.stackPush(tokenValue);
+          program.step();
+        break;
+        case CALLTOKENID:
+          DataWord _tokenId = program.getTokenId();
+
+          if (logger.isDebugEnabled()) {
+            hint = "tokenId: " + _tokenId;
+          }
+
+          program.stackPush(_tokenId);
+          program.step();
         break;
         case CALLDATALOAD: {
           DataWord dataOffs = program.stackPop();
@@ -1206,7 +1228,7 @@ public class VM {
             value = DataWord.ZERO;
           }
 
-          if (program.isStaticCall() && op == CALL && !value.isZero()) {
+          if (program.isStaticCall() && (op == CALL || op == CALLTOKEN) && !value.isZero()) {
             throw new Program.StaticCallModificationException();
           }
 
@@ -1214,7 +1236,7 @@ public class VM {
             adjustedCallEnergy.add(new DataWord(energyCosts.getSTIPEND_CALL()));
           }
 
-          DataWord tokenId = null;
+          DataWord tokenId = new DataWord(0);
           if (op == CALLTOKEN) {
             tokenId = program.stackPop();
           }

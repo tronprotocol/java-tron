@@ -3,15 +3,24 @@ package org.tron.core.db2.core;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
@@ -27,9 +36,10 @@ import org.tron.core.exception.RevokingStoreIllegalStateException;
 
 @Slf4j
 public class SnapshotManager implements RevokingDatabase {
-  private static final int DEFAULT_STACK_MAX_SIZE = 256;
-  private static final int DEFAULT_FLUSH_COUNT = 5;
 
+  private static final int DEFAULT_STACK_MAX_SIZE = 256;
+  public static final int DEFAULT_MAX_FLUSH_COUNT = 500;
+  public static final int DEFAULT_MIN_FLUSH_COUNT = 1;
   @Getter
   private List<RevokingDBWithCachingNewValue> dbs = new ArrayList<>();
   @Getter
@@ -37,10 +47,18 @@ public class SnapshotManager implements RevokingDatabase {
   private AtomicInteger maxSize = new AtomicInteger(DEFAULT_STACK_MAX_SIZE);
 
   private boolean disabled = true;
+  // for test
+  @Getter
   private int activeSession = 0;
+  // for test
+  @Setter
   private boolean unChecked = true;
 
   private volatile int flushCount = 0;
+
+  private Map<String, ListeningExecutorService> flushServices = new HashMap<>();
+  @Setter
+  private volatile int maxFlushCount = DEFAULT_MIN_FLUSH_COUNT;
 
   public ISession buildSession() {
     return buildSession(false);
@@ -70,7 +88,12 @@ public class SnapshotManager implements RevokingDatabase {
 
   @Override
   public void add(IRevokingDB db) {
-    dbs.add((RevokingDBWithCachingNewValue) db);
+    RevokingDBWithCachingNewValue revokingDB = (RevokingDBWithCachingNewValue) db;
+    dbs.add(revokingDB);
+    flushServices.put(revokingDB.getDbName(), MoreExecutors.listeningDecorator(
+        Executors.newSingleThreadExecutor(
+            new ThreadFactoryBuilder().setNameFormat(revokingDB.getDbName()).build()
+        )));
   }
 
   private void advance() {
@@ -183,8 +206,8 @@ public class SnapshotManager implements RevokingDatabase {
         TimeUnit.MILLISECONDS.sleep(10);
       }
     } catch (InterruptedException e) {
-        System.out.println(e.getMessage() + e);
-        Thread.currentThread().interrupt();
+      System.out.println(e.getMessage() + e);
+      Thread.currentThread().interrupt();
     }
     System.err.println("******** end to pop revokingDb ********");
   }
@@ -198,33 +221,46 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   private boolean shouldBeRefreshed() {
-    return flushCount >= DEFAULT_FLUSH_COUNT;
+    return flushCount >= maxFlushCount;
   }
 
   private void refresh() {
+    List<ListenableFuture<?>> futures = new ArrayList<>(dbs.size());
     for (RevokingDBWithCachingNewValue db : dbs) {
-      if (Snapshot.isRoot(db.getHead())) {
-        return;
-      }
+      futures.add(flushServices.get(db.getDbName()).submit(() -> refreshOne(db)));
+    }
+    Future<?> future = Futures.allAsList(futures);
+    try {
+      future.get();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    } catch (ExecutionException e) {
+      logger.error(e.getMessage(), e);
+    }
+  }
 
-      List<Snapshot> snapshots = new ArrayList<>();
+  private void refreshOne(RevokingDBWithCachingNewValue db) {
+    if (Snapshot.isRoot(db.getHead())) {
+      return;
+    }
 
-      SnapshotRoot root = (SnapshotRoot) db.getHead().getRoot();
-      Snapshot next = root;
-      for (int i = 0; i < flushCount; ++i) {
-        next = next.getNext();
-        snapshots.add(next);
-      }
+    List<Snapshot> snapshots = new ArrayList<>();
 
-      root.merge(snapshots);
+    SnapshotRoot root = (SnapshotRoot) db.getHead().getRoot();
+    Snapshot next = root;
+    for (int i = 0; i < flushCount; ++i) {
+      next = next.getNext();
+      snapshots.add(next);
+    }
 
-      root.resetSolidity();
-      if (db.getHead() == next) {
-       db.setHead(root);
-      } else {
-        next.getNext().setPrevious(root);
-        root.setNext(next.getNext());
-      }
+    root.merge(snapshots);
+
+    root.resetSolidity();
+    if (db.getHead() == next) {
+      db.setHead(root);
+    } else {
+      next.getNext().setPrevious(root);
+      root.setNext(next.getNext());
     }
   }
 
@@ -234,10 +270,17 @@ public class SnapshotManager implements RevokingDatabase {
     }
 
     if (shouldBeRefreshed()) {
+      long start = System.currentTimeMillis();
       deleteCheckPoint();
       createCheckPoint();
+      long checkPointEnd = System.currentTimeMillis();
       refresh();
       flushCount = 0;
+      logger.info("flush cost:{}, create checkpoint cost:{}, refresh cost:{}",
+          System.currentTimeMillis() - start,
+          checkPointEnd - start,
+          System.currentTimeMillis() - checkPointEnd
+      );
     }
   }
 
@@ -268,8 +311,9 @@ public class SnapshotManager implements RevokingDatabase {
         new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
     levelDbDataSource.initDB();
     levelDbDataSource.updateByBatch(batch.entrySet().stream()
-        .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
-        .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll), new WriteOptions().sync(true));
+            .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
+            .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll),
+        new WriteOptions().sync(true));
     levelDbDataSource.closeDB();
   }
 
@@ -338,7 +382,8 @@ public class SnapshotManager implements RevokingDatabase {
 
   @Slf4j
   @Getter // only for unit test
-  public static class Session  implements ISession {
+  public static class Session implements ISession {
+
     private SnapshotManager snapshotManager;
     private boolean applySnapshot = true;
     private boolean disableOnExit = false;
