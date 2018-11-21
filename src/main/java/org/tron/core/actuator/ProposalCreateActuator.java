@@ -14,6 +14,7 @@ import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ChainParameters;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Args;
@@ -242,6 +243,10 @@ public class ProposalCreateActuator extends AbstractActuator {
         if (entry.getValue() != 1) {
           throw new ContractValidateException(
               "This value[ALLOW_TVM_TRANSFER_TRC10] is only allowed to be 1");
+        }
+        if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+          throw new ContractValidateException("[ALLOW_SAME_TOKEN_NAME] proposal must be approved before "
+              + "[ALLOW_TVM_TRANSFER_TRC10] can be proposed");
         }
         break;
       }
