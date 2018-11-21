@@ -78,8 +78,9 @@ public class TestTransferTokenInContract {
     return (int) Math.round(Math.random() * (maxInt - minInt) + minInt);
   }
 
-  public void createAssetissue(byte[] devAddress, String devKey, String tokenName) {
+  public ByteString createAssetissue(byte[] devAddress, String devKey, String tokenName) {
 
+    ByteString assetAccountId = null;
     ByteString addressBS1 = ByteString.copyFrom(devAddress);
     Account request1 = Account.newBuilder().setAddress(addressBS1).build();
     GrpcAPI.AssetIssueList assetIssueList1 = blockingStubFull
@@ -95,12 +96,16 @@ public class TestTransferTokenInContract {
       Assert.assertTrue(PublicMethed.createAssetIssue(devAddress, tokenName, TotalSupply, 1,
           100, start, end, 1, description, url, 10000L,10000L,
           1L,1L, devKey, blockingStubFull));
+
+      Account getAssetIdFromThisAccount = PublicMethed.queryAccount(devAddress, blockingStubFull);
+      assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
     } else {
       logger.info("This account already create an assetisue");
       Optional<GrpcAPI.AssetIssueList> queryAssetByAccount1 = Optional.ofNullable(assetIssueList1);
       tokenName = ByteArray.toStr(queryAssetByAccount1.get().getAssetIssue(0)
           .getName().toByteArray());
     }
+    return assetAccountId;
   }
 
   @Test(enabled = true, threadPoolSize = 10, invocationCount = 10)
@@ -129,10 +134,10 @@ public class TestTransferTokenInContract {
         3, 1, user001Key, blockingStubFull));
 
     String tokenName = "testAI_" + randomInt(10000, 90000);
-    createAssetissue(user001Address, user001Key, tokenName);
+    ByteString tokenId = createAssetissue(user001Address, user001Key, tokenName);
 
     // devAddress transfer token to A
-    PublicMethed.transferAsset(dev001Address, tokenName.getBytes(), 101, user001Address,
+    PublicMethed.transferAsset(dev001Address, tokenId.toByteArray(), 101, user001Address,
         user001Key, blockingStubFull);
 
     // deploy transferTokenContract
@@ -141,8 +146,8 @@ public class TestTransferTokenInContract {
         + "000000000000000000000000000000000000000000000000006000350416633be9ece781146043575b600080"
         + "fd5b606873ffffffffffffffffffffffffffffffffffffffff60043516602435604435606a565b005b604051"
         + "73ffffffffffffffffffffffffffffffffffffffff84169082156108fc029083908590600081818185878a8a"
-        + "d094505050505015801560b0573d6000803e3d6000fd5b505050505600a165627a7a723058200819ce85092d"
-        + "c3c42778b167faeb01b34a78cff08d7976e6d09ae6b9fe5b305d0029";
+        + "d094505050505015801560b0573d6000803e3d6000fd5b505050505600a165627a7a723058200ba246bdb58b"
+        + "e0f221ad07e1b19de843ab541150b329ddd01558c2f1cefe1e270029";
     String abi = "[{\"constant\":false,\"inputs\":[{\"name\":\"toAddress\",\"type\":\"address\"},"
         + "{\"name\":\"id\",\"type\":\"trcToken\"},{\"name\":\"amount\",\"type\":\"uint256\"}],"
         + "\"name\":\"TransferTokenTo\",\"outputs\":[],\"payable\":true,\"stateMutability\":"
@@ -150,22 +155,24 @@ public class TestTransferTokenInContract {
         + ":\"payable\",\"type\":\"constructor\"}]";
     byte[] transferTokenContractAddress = PublicMethed
         .deployContract(contractName, abi, code, "", maxFeeLimit,
-            0L, 100, 10000, tokenName, 100, null, dev001Key, dev001Address, blockingStubFull);
+            0L, 100, 10000, tokenId.toStringUtf8(),
+            100, null, dev001Key, dev001Address,
+            blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     // deploy receiveTokenContract
     contractName = "recieveTokenContract";
-    code = "60806040526000805560ad806100166000396000f30060806040526004361060485763ffffffff7c0100000"
+    code = "60806040526000805560c5806100166000396000f30060806040526004361060485763ffffffff7c0100000"
         + "00000000000000000000000000000000000000000000000000060003504166362548c7b8114604a578063890"
-        + "eba68146050575b005b60486074565b348015605b57600080fd5b506062607b565b604080519182525190819"
-        + "00360200190f35b6001600055565b600054815600a165627a7a723058205ff7337a7efb79a71d196dead8f65"
-        + "6585d6342ae8698179984d637de663625270029";
-    abi = "[{\"constant\":false,\"inputs\":[],\"name\":\"setFlag\",\"outputs\":[],\"payable\":"
-        + "true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":true,\"inputs"
-        + "\":[],\"name\":\"flag\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":"
-        + "false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"payable\":"
-        + "true,\"stateMutability\":\"payable\",\"type\":\"constructor\"},{\"payable\":true,\""
-        + "stateMutability\":\"payable\",\"type\":\"fallback\"}]";
+        + "eba68146050575b005b6048608c565b348015605b57600080fd5b50d38015606757600080fd5b50d28015607"
+        + "357600080fd5b50607a6093565b60408051918252519081900360200190f35b6001600055565b60005481560"
+        + "0a165627a7a723058204c4f1bb8eca0c4f1678cc7cc1179e03d99da2a980e6792feebe4d55c89c022830029";
+    abi = "[{\"constant\":false,\"inputs\":[],\"name\":\"setFlag\",\"outputs\":[],\"payable\":true,"
+        + "\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],"
+        + "\"name\":\"flag\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,"
+        + "\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"payable\":true,"
+        + "\"stateMutability\":\"payable\",\"type\":\"constructor\"},{\"payable\":true,"
+        + "\"stateMutability\":\"payable\",\"type\":\"fallback\"}]";
     byte[] receiveTokenContractAddress = PublicMethed
         .deployContract(contractName, abi, code, "", maxFeeLimit,
             0L, 100, null, dev001Key, dev001Address, blockingStubFull);
@@ -173,25 +180,26 @@ public class TestTransferTokenInContract {
 
     // deploy tokenBalanceContract
     contractName = "tokenBalanceContract";
-    code = "608060405260e7806100126000396000f30060806040526004361060485763ffffffff7c010000000000000"
+    code = "608060405260ff806100126000396000f30060806040526004361060485763ffffffff7c010000000000000"
         + "0000000000000000000000000000000000000000000600035041663a730416e8114604d578063b69ef8a8146"
-        + "081575b600080fd5b606f73ffffffffffffffffffffffffffffffffffffffff600435166024356093565b604"
-        + "08051918252519081900360200190f35b348015608c57600080fd5b50606f60b5565b73fffffffffffffffff"
-        + "fffffffffffffffffffffff90911690d1600090815590565b600054815600a165627a7a72305820a446d3e64"
-        + "d50943dc9ace78503f9cfcc633fc607fac86ac3a264727c01e4d5340029";
-    abi = "[{\"constant\":false,\"inputs\":[{\"name\":\"toAddress\",\"type\":\"address\"},{\"name\""
-        + ":\"tokenId\",\"type\":\"trcToken\"}],\"name\":\"getTokenBalnce\",\"outputs\":[{\"name\":"
-        + "\"b\",\"type\":\"uint256\"}],\"payable\":true,\"stateMutability\":\"payable\",\"type\":"
-        + "\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"balance\",\"outputs\":[{"
-        + "\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\","
-        + "\"type\":\"function\"},{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\","
-        + "\"type\":\"constructor\"}]";
+        + "081575b600080fd5b606f73ffffffffffffffffffffffffffffffffffffffff6004351660243560ab565b604"
+        + "08051918252519081900360200190f35b348015608c57600080fd5b50d38015609857600080fd5b50d280156"
+        + "0a457600080fd5b50606f60cd565b73ffffffffffffffffffffffffffffffffffffffff90911690d16000908"
+        + "15590565b600054815600a165627a7a723058202b6235122df66c062c2e723ad58a9fea93346f3bc19898971"
+        + "8f211aa1dbd2d7a0029";
+    abi = "[{\"constant\":false,\"inputs\":[{\"name\":\"toAddress\",\"type\":\"address\"},"
+        + "{\"name\":\"tokenId\",\"type\":\"trcToken\"}],\"name\":\"getTokenBalnce\",\"outputs\":"
+        + "[{\"name\":\"b\",\"type\":\"uint256\"}],\"payable\":true,\"stateMutability\":"
+        + "\"payable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":"
+        + "\"balance\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,"
+        + "\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"payable\":true,"
+        + "\"stateMutability\":\"payable\",\"type\":\"constructor\"}]";
     byte[] tokenBalanceContractAddress = PublicMethed
         .deployContract(contractName, abi, code, "", maxFeeLimit,
             0L, 100, null, dev001Key, dev001Address, blockingStubFull);
 
     // devAddress transfer token to userAddress
-    PublicMethed.transferAsset(user001Address, tokenName.getBytes(), 100, dev001Address, dev001Key,
+    PublicMethed.transferAsset(user001Address, tokenId.toByteArray(), 100, dev001Address, dev001Key,
         blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -205,12 +213,16 @@ public class TestTransferTokenInContract {
             + ", avg:" + count.get() / cost + ", errCount:" + errorCount);
       }
       // user trigger A to transfer token to B
-      String param = "\"" + Base58.encode58Check(receiveTokenContractAddress) + "\",\"" + tokenName
+      String param =
+          "\"" + Base58.encode58Check(receiveTokenContractAddress) + "\",\"" + tokenId
+              .toStringUtf8()
           + "\",\"5\"";
 
       String triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
           "TransferTokenTo(address,trcToken,uint256)",
-          param, false, 0, 100000000L, tokenName, 10, user001Address, user001Key, blockingStubFull);
+          param, false, 0, 100000000L, tokenId.toStringUtf8(),
+          10, user001Address, user001Key,
+          blockingStubFull);
 
       Optional<TransactionInfo> infoById = PublicMethed
           .getTransactionInfoById(triggerTxid, blockingStubFull);
@@ -220,11 +232,14 @@ public class TestTransferTokenInContract {
       }
 
       // user trigger A to transfer token to devAddress
-      param = "\"" + Base58.encode58Check(dev001Address) + "\",\"" + tokenName + "\",\"5\"";
+      param =
+          "\"" + Base58.encode58Check(dev001Address) + "\",\"" + tokenId.toStringUtf8()
+              + "\",\"5\"";
 
       triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
           "TransferTokenTo(address,trcToken,uint256)",
-          param, false, 0, 100000000L, user001Address, user001Key, blockingStubFull);
+          param, false, 0, 100000000L, user001Address,
+          user001Key, blockingStubFull);
 
       infoById = PublicMethed
           .getTransactionInfoById(triggerTxid, blockingStubFull);
@@ -234,11 +249,15 @@ public class TestTransferTokenInContract {
       }
 
       // user trigger C to get B's token balance
-      param = "\"" + Base58.encode58Check(receiveTokenContractAddress) + "\",\"" + tokenName + "\"";
+      param =
+          "\"" + Base58.encode58Check(receiveTokenContractAddress) + "\",\"" + tokenId
+              .toStringUtf8()
+              + "\"";
 
       triggerTxid = PublicMethed
           .triggerContract(tokenBalanceContractAddress, "getTokenBalnce(address,trcToken)",
-              param, false, 0, 1000000000L, user001Address, user001Key, blockingStubFull);
+              param, false, 0, 1000000000L, user001Address,
+              user001Key, blockingStubFull);
 
       infoById = PublicMethed
           .getTransactionInfoById(triggerTxid, blockingStubFull);
@@ -248,14 +267,16 @@ public class TestTransferTokenInContract {
       }
 
       triggerTxid = PublicMethed.triggerContract(tokenBalanceContractAddress, "balance()",
-          "#", false, 0, 1000000000L, user001Address, user001Key,  blockingStubFull);
+          "#", false, 0, 1000000000L, user001Address,
+          user001Key, blockingStubFull);
 
       // user trigger C to get devAddress's token balance
-      param = "\"" + Base58.encode58Check(dev001Address) + "\",\"" + tokenName + "\"";
+      param = "\"" + Base58.encode58Check(dev001Address) + "\",\"" + tokenId.toStringUtf8() + "\"";
 
       triggerTxid = PublicMethed
           .triggerContract(tokenBalanceContractAddress, "getTokenBalnce(address,trcToken)",
-              param, false, 0, 1000000000L, user001Address, user001Key, blockingStubFull);
+              param, false, 0, 1000000000L, user001Address,
+              user001Key, blockingStubFull);
 
       infoById = PublicMethed
           .getTransactionInfoById(triggerTxid, blockingStubFull);
@@ -265,7 +286,8 @@ public class TestTransferTokenInContract {
       }
 
       triggerTxid = PublicMethed.triggerContract(tokenBalanceContractAddress, "balance()",
-          "#", false, 0, 1000000000L, user001Address, user001Key, blockingStubFull);
+          "#", false, 0, 1000000000L, user001Address,
+          user001Key, blockingStubFull);
     }
   }
 
