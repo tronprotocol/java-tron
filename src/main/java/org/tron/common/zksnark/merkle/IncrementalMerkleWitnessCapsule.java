@@ -4,7 +4,6 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.protos.Contract.IncrementalMerkleWitness;
 import org.tron.protos.Contract.OutputPoint;
@@ -70,11 +69,7 @@ public class IncrementalMerkleWitnessCapsule implements ProtoCapsule<Incremental
   }
 
   public void resetRt() {
-
-    byte[] bytes = toMerkleWitnessContainer().root().getContent().toByteArray();
-    ZksnarkUtils.sort(bytes);
-
-    this.witness = this.witness.toBuilder().setRt(ByteString.copyFrom(bytes))
+    this.witness = this.witness.toBuilder().setRt(toMerkleWitnessContainer().root().getContent())
         .build();
   }
 
