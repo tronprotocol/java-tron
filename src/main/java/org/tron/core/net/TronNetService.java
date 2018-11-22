@@ -55,16 +55,15 @@ public class TronNetService {
     peerAdv.init();
     peerSync.init();
     transactionsMsgHandler.init();
+    logger.info("TronNetService start.");
   }
 
   public void close () {
-    try {
-      peerAdv.close();
-      peerSync.close();
-      transactionsMsgHandler.close();
-    }catch (Exception e) {
-      logger.error("TronNetService closed failed.",e );
-    }
+    channelManager.close();
+    peerAdv.close();
+    peerSync.close();
+    transactionsMsgHandler.close();
+    logger.info("TronNetService closed.");
   }
 
   public void onMessage(PeerConnection peer, TronMessage msg) {
@@ -120,7 +119,7 @@ public class TronNetService {
           code = ReasonCode.UNLINKABLE;
           break;
         case DEFAULT:
-          code = ReasonCode.UNLINKABLE;
+          code = ReasonCode.UNKNOWN;
           break;
       }
       logger.error("Process {} from peer {} failed, reason: ", peer.getInetAddress(), msg.getType(), type.getDesc(), ex);

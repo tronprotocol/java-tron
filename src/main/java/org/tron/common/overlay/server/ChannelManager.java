@@ -28,6 +28,17 @@ import org.tron.protos.Protocol.ReasonCode;
 @Component
 public class ChannelManager {
 
+  @Autowired
+  private PeerServer peerServer;
+
+  @Autowired
+  private PeerClient peerClient;
+
+  @Autowired
+  private SyncPool syncPool;
+
+  private Args args = Args.getInstance();
+
   private static final Logger logger = LoggerFactory.getLogger("ChannelManager");
 
   private final Map<ByteArrayWrapper, Channel> activePeers = new ConcurrentHashMap<>();
@@ -41,20 +52,9 @@ public class ChannelManager {
   @Getter
   private Map<InetAddress, Node> trustPeers = new ConcurrentHashMap();
 
-  private Args args = Args.getInstance();
-
   private int maxActivePeers = args.getNodeMaxActiveNodes();
 
   private int getMaxActivePeersWithSameIp = args.getNodeMaxActiveNodesWithSameIp();
-
-  @Autowired
-  private PeerServer peerServer;
-
-  @Autowired
-  private PeerClient peerClient;
-
-  @Autowired
-  private SyncPool syncPool;
 
   public void init () {
 

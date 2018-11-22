@@ -44,6 +44,10 @@ public class PeerConnection extends Channel {
 
   @Setter
   @Getter
+  private BlockId signUpErrorBlockId;
+
+  @Setter
+  @Getter
   private HelloMessage helloMessage;
 
   @Setter
@@ -149,15 +153,12 @@ public class PeerConnection extends Channel {
     peerAdv.onDisconnect(this);
   }
 
-  public String logSyncStats() {
-
-  }
-
   @Override
   public String toString () {
+    long now = System.currentTimeMillis();
     return String.format(
         "Peer %s: [ %18s, ping %6s ms]-----------\n"
-            + "connect time: %s\n"
+            + "connect time: %d\n"
             + "last know block num: %s\n"
             + "needSyncFromPeer:%b\n"
             + "needSyncFromUs:%b\n"
@@ -165,12 +166,12 @@ public class PeerConnection extends Channel {
             + "syncToFetchSizePeekNum:%d\n"
             + "syncBlockRequestedSize:%d\n"
             + "remainNum:%d\n"
-            + "syncChainRequested:%s\n"
+            + "syncChainRequested:%d\n"
             + "blockInProcess:%d\n",
         this.getNode().getHost() + ":" + this.getNode().getPort(),
         this.getNode().getHexIdShort(),
         (int) this.getPeerStats().getAvgLatency(),
-        Time.getTimeString(super.getStartTime()),
+        (now - super.getStartTime()) / 1000,
         blockBothHave.getNum(),
         isNeedSyncFromPeer(),
         isNeedSyncFromUs(),
@@ -178,7 +179,7 @@ public class PeerConnection extends Channel {
         syncBlockToFetch.size() > 0 ? syncBlockToFetch.peek().getNum() : -1,
         syncBlockRequested.size(),
         remainNum,
-        syncChainRequested == null ? "NULL" : Time.getTimeString(syncChainRequested.getValue()),
+        syncChainRequested == null ? 0 : (now - syncChainRequested.getValue()) / 1000,
         syncBlockInProcess.size())
         + nodeStatistics.toString() + "\n";
   }

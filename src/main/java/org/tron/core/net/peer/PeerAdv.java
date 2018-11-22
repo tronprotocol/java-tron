@@ -144,7 +144,7 @@ public class PeerAdv {
 
   private void consumerAdvObjToFetch() {
     Collection<PeerConnection> peers = tronProxy.getActivePeer().stream()
-        .filter(peer -> peer.isIdle())
+        .filter(peer -> peer.isIdle() && !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
         .collect(Collectors.toList());
 
     if (invToFetch.isEmpty() || peers.isEmpty()) {
@@ -186,7 +186,7 @@ public class PeerAdv {
     }
 
     tronProxy.getActivePeer().stream()
-        .filter(peer -> !peer.isNeedSyncFromUs())
+        .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
         .forEach(peer -> spread.entrySet().stream()
             .filter(entry -> !peer.getAdvInvReceive().containsKey(entry.getKey()) && !peer.getAdvInvSpread().containsKey(entry.getKey()))
             .forEach(entry -> {

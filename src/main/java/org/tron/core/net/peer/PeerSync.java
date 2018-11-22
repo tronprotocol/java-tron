@@ -133,6 +133,7 @@ public class PeerSync {
   public void onDisconnect (PeerConnection peer) {
     if (!peer.getSyncBlockRequested().isEmpty()) {
       peer.getSyncBlockRequested().keySet().forEach(blockId -> invalid(blockId));
+      fetchFlag = true;
     }
   }
 
@@ -229,7 +230,6 @@ public class PeerSync {
   }
 
   private void processSyncBlock (BlockCapsule block) {
-    logger.info("Start process sync block: {}.", block.getBlockId().getNum());
     boolean flag = true;
     BlockId blockId = block.getBlockId();
     try {
@@ -253,8 +253,6 @@ public class PeerSync {
   }
 
   private synchronized void handleSyncBlock() {
-
-    logger.info("HHHHHHHHHHHHHH");logger.info("HHHHHHHHHHHHHH");logger.info("HHHHHHHHHHHHHH");
 
     synchronized (blockJustReceived) {
       blockWaitToProc.putAll(blockJustReceived);
