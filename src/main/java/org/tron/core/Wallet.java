@@ -845,6 +845,7 @@ public class Wallet {
         dbManager.getMerkleContainer().getWitness(hash, index);
 
     if (merkleWitnessCapsule != null) {
+      logger.info("getMerkleTreeWitness");
       merkleWitnessCapsule.resetRt();
       return merkleWitnessCapsule.getInstance();
     }
