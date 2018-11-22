@@ -54,6 +54,8 @@ public class AbiUtil {
         return new CoderBool();
       case "bytes":
         return new CoderDynamicBytes();
+      case "trcToken":
+        return new CoderNumber();
     }
 
     if (paramTypeBytes.matcher(type).find())

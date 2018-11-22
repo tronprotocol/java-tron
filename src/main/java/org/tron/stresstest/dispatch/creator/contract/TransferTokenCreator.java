@@ -1,6 +1,5 @@
 package org.tron.stresstest.dispatch.creator.contract;
 
-import com.google.protobuf.ByteString;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
