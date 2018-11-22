@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: java-tron-full-node
+  name: java-tron-full-node
+spec:
+  clusterIP: None
+  ports:
+  - name: grpc
+    port: 50051
+    protocol: TCP
+    targetPort: 50051
+  - name: node-api
+    port: 8090
+    protocol: TCP
+    targetPort: 8090
+  - name: tron-protocol
+    port: 18888
+    protocol: TCP
+    targetPort: 18888
+  selector:
+    app: java-tron-full-node
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: java-tron-full-node
+  labels:
+    app: java-tron-full-node
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: java-tron-full-node
+  serviceName: java-tron-full-node
+  template:
+    metadata:
+      labels:
+        app: java-tron-full-node
+    spec:
+      containers:
+        - name: java-tron-full-node
+          image: gettyio/java-tron-full-node
+          imagePullPolicy: IfNotPresent
+          env:
+          - name: JVM_ARGUMENTS
+            value: "-Xmx12g -XX:+HeapDumpOnOutOfMemoryError"
+          ports:
+          - containerPort: 8090
+            name: node-api
+            protocol: TCP
+          - containerPort: 50051
+            name: node-rpc
+            protocol: TCP
+          - containerPort: 18888
+            name: tron-protocol
+            protocol: TCP
+          - containerPort: 10001
+            protocol: UDP
+          - containerPort: 18888
+            protocol: UDP
+          volumeMounts:
+          - mountPath: /opt/java-tron/output-directory
+            name: output-directory
+          - mountPath: /opt/java-tron/logs
+            name: logs
+  volumeClaimTemplates:
+  - metadata:
+      name: output-directory
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "database-storage"
+      resources:
+        requests:
+          storage: 1Gi
+  - metadata:
+      name: logs
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "logs-storage"
+      resources:
+        requests:
+          storage: 1Gi

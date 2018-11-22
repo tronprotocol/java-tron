@@ -1,0 +1,64 @@
+# local storages for development env
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-database1
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: database-storage
+  hostPath:
+    path: /tmp/FullNode/output-directory1
+    type: Directory
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-database2
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: database-storage
+  hostPath:
+    path: /tmp/FullNode/output-directory2
+    type: Directory
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-logs1
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: logs-storage
+  hostPath:
+    path: /tmp/FullNode/logs1
+    type: Directory
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-logs2
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: logs-storage
+  hostPath:
+    path: /tmp/FullNode/logs2
+    type: Directory
