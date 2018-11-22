@@ -7,6 +7,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeCapsule;
@@ -56,18 +57,29 @@ public class MerkleContainerTest {
     compressCapsule1.setContent(ByteString.copyFrom(ByteArray.fromHexString(s1)));
     SHA256Compress a = compressCapsule1.getInstance();
 
-    String s2 = "9b3eba79a06c4f37edce2f0e7957c22c0f712d9c071ac87f253ae6ddefb24bb1";
+
+
+    String s2 = "3daa00c9a1966a37531c829b9b1cd928f8172d35174e1aecd31ba0ed36863017";
     SHA256CompressCapsule compressCapsule2 = new SHA256CompressCapsule();
-    compressCapsule2.setContent(ByteString.copyFrom(ByteArray.fromHexString(s2)));
+    byte[] bytes2 = ByteArray.fromHexString(s2);
+    ZksnarkUtils.sort(bytes2);
+    compressCapsule2.setContent(ByteString.copyFrom(bytes2));
     SHA256Compress b = compressCapsule2.getInstance();
 
-    String s3 = "13c45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab91";
+    String s3 = "c013c63be33194974dc555d445bac616fca794a0369f9d84fbb5a8556699bf62";
     SHA256CompressCapsule compressCapsule3 = new SHA256CompressCapsule();
-    compressCapsule3.setContent(ByteString.copyFrom(ByteArray.fromHexString(s3)));
+    byte[] bytes3 = ByteArray.fromHexString(s3);
+    ZksnarkUtils.sort(bytes3);
+    compressCapsule3.setContent(ByteString.copyFrom(bytes3));
     SHA256Compress c = compressCapsule3.getInstance();
 
     tree.append(a);
     tree.append(b);
+    IncrementalMerkleWitnessContainer witness1 = tree.toWitness();
+    witness1.append(c);
+
+    System.out.println(ByteArray.toHexString(witness1.root().getContent().toByteArray()));
+
     tree.append(c);
 
     //root
