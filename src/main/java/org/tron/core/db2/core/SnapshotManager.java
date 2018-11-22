@@ -220,6 +220,9 @@ public class SnapshotManager implements RevokingDatabase {
     }
   }
 
+  @Override
+  public void checkDB(){}
+
   private boolean shouldBeRefreshed() {
     return flushCount >= maxFlushCount;
   }

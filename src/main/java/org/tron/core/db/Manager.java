@@ -680,6 +680,8 @@ public class Manager {
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
     updateFork();
+
+    revokingStore.checkDB();
     if (System.currentTimeMillis() - block.getTimeStamp() >= 60_000) {
       revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MAX_FLUSH_COUNT);
     } else {
