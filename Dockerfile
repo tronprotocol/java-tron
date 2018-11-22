@@ -19,6 +19,9 @@ RUN	mkdir -p ${HOME} && \
 COPY build/libs/FullNode.jar ${HOME}/FullNode.jar
 COPY docker/main_net_config.conf ${HOME}/main_net_config.conf
 
+VOLUME ["${HOME}/output-directory"]
+VOLUME ["${HOME}/logs"]
+
 COPY docker/start.sh ${HOME}/start.sh
 RUN	chmod +x ${HOME}/start.sh
 
