@@ -166,7 +166,7 @@ public class PublicMethed {
         return false;
       } else {
         try {
-          Thread.sleep(30);
+          Thread.sleep(3000);
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
