@@ -1775,11 +1775,11 @@ public class AssetIssueActuatorTest {
   }
 
   /**
-   * SameTokenName close, check invalid precision
+   * SameTokenName open, check invalid precision
    */
   @Test
   public void SameTokenNameCloseInvalidPrecision() {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     long nowTime = new Date().getTime();
     Any any = Any.pack(
             Contract.AssetIssueContract.newBuilder()
