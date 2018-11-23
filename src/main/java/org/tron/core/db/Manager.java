@@ -1478,16 +1478,6 @@ public class Manager {
     }
   }
 
-  public void putAssetIssue(AssetIssueCapsule assetIssueCapsule) {
-    if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      getAssetIssueStore()
-          .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
-    }
-    getAssetIssueV2Store()
-        .put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
-  }
-
-
   public void setAssetIssueStore(AssetIssueStore assetIssueStore) {
     this.assetIssueStore = assetIssueStore;
   }
