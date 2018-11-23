@@ -33,6 +33,7 @@
         <ref bean="niceTransferAssetTransaction"/>
         <ref bean="participateAssetIssue"/>
         <ref bean="transferToken"/>
+        <ref bean="triggerFibonacciContractCreator"/>
       </list>
     </property>
   </bean>
@@ -69,13 +70,19 @@
     class="org.tron.stresstest.dispatch.creator.asset.ParticipateAssetIssueCreator">
     <property name="name" value="participateAssetIssue"/>
     <property name="begin" value="90"/>
-    <property name="end" value="94"/>
+    <property name="end" value="91"/>
   </bean>
 
   <bean id="transferToken"
     class="org.tron.stresstest.dispatch.creator.contract.TransferTokenCreator">
     <property name="name" value="transferToken"/>
-    <property name="begin" value="95"/>
+    <property name="begin" value="92"/>
+    <property name="end" value="97"/>
+  </bean>
+
+  <bean id="triggerFibonacciContractCreator" class="org.tron.stresstest.dispatch.creator.contract.TriggerFibonacciCreator">
+    <property name="name" value="triggerFibonacciContractCreator"/>
+    <property name="begin" value="98"/>
     <property name="end" value="99"/>
   </bean>
 

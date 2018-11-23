@@ -28,7 +28,6 @@
     <property name="source">
       <list>
         <ref bean="triggerFibonacciContractCreator"/>
-        <ref bean="niceTransferTransaction"/>
       </list>
     </property>
   </bean>

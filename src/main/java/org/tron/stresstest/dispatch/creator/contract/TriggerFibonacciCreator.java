@@ -21,12 +21,12 @@ public class TriggerFibonacciCreator extends AbstractTransferTransactionCreator 
   protected Protocol.Transaction create() {
     TransactionFactory.context.getBean(CreatorCounter.class).put(this.getClass().getName());
 
-    String param = "21";
+    String param = "2100";
 
     TriggerSmartContract contract = null;
     try {
       contract = triggerCallContract(ownerAddress.toByteArray(), Wallet
-          .decodeFromBase58Check("27iqZh9CCcphGjWYvA6d6w4WhxHKQsk6UYT"), 0L, Hex
+          .decodeFromBase58Check("TPj2gCtwRyGHaMmYDRUCuwp1bSvowrjunk"), 0L, Hex
           .decode(AbiUtil.parseMethod("add2(uint256)", param, false)));
     } catch (EncodingException e) {
       e.printStackTrace();
