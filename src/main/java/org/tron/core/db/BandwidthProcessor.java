@@ -220,7 +220,7 @@ public class BandwidthProcessor extends ResourceProcessor {
       throw new RuntimeException(ex.getMessage());
     }
 
-    AssetIssueCapsule assetIssueCapsule;
+    AssetIssueCapsule assetIssueCapsule, assetIssueCapsuleV2;
     assetIssueCapsule = dbManager.getAssetIssueStoreFinal().get(assetName.toByteArray());
     if (assetIssueCapsule == null) {
       throw new ContractValidateException("asset not exists");
@@ -302,9 +302,12 @@ public class BandwidthProcessor extends ResourceProcessor {
           latestAssetOperationTime);
       accountCapsule.putFreeAssetNetUsage(tokenName, newFreeAssetNetUsage);
       dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
-    }
 
-    {
+      assetIssueCapsuleV2 = dbManager.getAssetIssueV2Store().get(assetIssueCapsule.createDbV2Key());
+      assetIssueCapsuleV2.setPublicFreeAssetNetUsage(newPublicFreeAssetNetUsage);
+      assetIssueCapsuleV2.setPublicLatestFreeNetTime(publicLatestFreeNetTime);
+      dbManager.getAssetIssueV2Store().put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
+    } else {
       accountCapsule.putLatestAssetOperationTimeMapV2(tokenID,
           latestAssetOperationTime);
       accountCapsule.putFreeAssetNetUsageV2(tokenID, newFreeAssetNetUsage);
