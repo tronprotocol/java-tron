@@ -1776,44 +1776,6 @@ public class AssetIssueActuatorTest {
   }
 
   /**
-   * SameTokenName close, precision, Setting accuracy is not allowed
-   */
-  @Test
-  public void SameTokenNameCloseAccuracyNotAllow() {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
-    long nowTime = new Date().getTime();
-    Any any = Any.pack(
-            Contract.AssetIssueContract.newBuilder()
-                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-                    .setName(ByteString.copyFromUtf8(NAME))
-                    .setTotalSupply(TOTAL_SUPPLY)
-                    .setTrxNum(TRX_NUM)
-                    .setNum(NUM)
-                    .setStartTime(nowTime)
-                    .setEndTime(nowTime + 24 * 3600 * 1000)
-                    .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
-                    .setUrl(ByteString.copyFromUtf8(URL))
-                    .setPrecision(3)
-                    .build());
-
-    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager);
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-      Assert.assertTrue(false);
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Setting accuracy is not allowed", e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    } finally {
-      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
-    }
-  }
-
-  /**
    * SameTokenName close, check invalid precision
    */
   @Test
