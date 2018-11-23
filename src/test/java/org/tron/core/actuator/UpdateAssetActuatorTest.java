@@ -68,6 +68,8 @@ public class UpdateAssetActuatorTest {
   @Before
   public void createCapsule() {
     // address in accountStore and the owner of contract
+
+
     AccountCapsule accountCapsule =
         new AccountCapsule(
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
@@ -77,9 +79,13 @@ public class UpdateAssetActuatorTest {
     // add asset issue
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(getAssetIssueContract());
     dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+    dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
 
     accountCapsule.setAssetIssuedName(assetIssueCapsule.createDbKey());
     accountCapsule.addAsset(assetIssueCapsule.createDbKey(), TOTAL_SUPPLY);
+    accountCapsule.setAssetIssuedID( assetIssueCapsule.getId().getBytes());
+
+
     dbManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS), accountCapsule);
 
     // address in accountStore not the owner of contract
@@ -120,11 +126,15 @@ public class UpdateAssetActuatorTest {
   }
 
   private Contract.AssetIssueContract getAssetIssueContract() {
+    long tokenId = dbManager.getDynamicPropertiesStore().getTokenIdNum()+1;
+    dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenId);
+
     long nowTime = new Date().getTime();
     return Contract.AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
+            .setId(String.valueOf(tokenId))
         .setTrxNum(100)
         .setNum(10)
         .setStartTime(nowTime)
