@@ -27,7 +27,6 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.utils.TransactionUtil;
-import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -51,6 +50,7 @@ public class AssetIssueActuator extends AbstractActuator {
       AssetIssueContract assetIssueContract = contract.unpack(AssetIssueContract.class);
       byte[] ownerAddress = assetIssueContract.getOwnerAddress().toByteArray();
       AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
+      AssetIssueCapsule assetIssueCapsuleV2 = new AssetIssueCapsule(assetIssueContract);
 //      String name = new String(assetIssueCapsule.getName().toByteArray(),
 //          Charset.forName("UTF-8")); // getName().toStringUtf8()
 //      long order = 0;
@@ -64,14 +64,24 @@ public class AssetIssueActuator extends AbstractActuator {
       long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
       tokenIdNum++;
       assetIssueCapsule.setId(Long.toString(tokenIdNum));
-      int precision = assetIssueContract.getPrecision();
-      if (precision != 0
-          && dbManager.getForkController().pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
-        assetIssueCapsule.setPrecision(assetIssueContract.getPrecision());
-      }
+      assetIssueCapsuleV2.setId(Long.toString(tokenIdNum));
       dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenIdNum);
 
-      dbManager.putAssetIssue(assetIssueCapsule);
+      int precision = assetIssueContract.getPrecision();
+      if (precision != 0
+          && dbManager.getDynamicPropertiesStore().getAllowSameTokenName() != 0) {
+        assetIssueCapsuleV2.setPrecision(assetIssueContract.getPrecision());
+      }
+
+      if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+        dbManager.getAssetIssueStore()
+            .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+        dbManager.getAssetIssueV2Store()
+            .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
+      } else {
+        dbManager.getAssetIssueV2Store()
+            .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
+      }
 
       dbManager.adjustBalance(ownerAddress, -fee);
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().getAddress().toByteArray(),
@@ -100,7 +110,7 @@ public class AssetIssueActuator extends AbstractActuator {
       }
       accountCapsule.setAssetIssuedName(assetIssueCapsule.createDbKey());
       accountCapsule.setAssetIssuedID(assetIssueCapsule.createDbV2Key());
-      accountCapsule.addAssetV2(assetIssueCapsule.createDbV2Key(), remainSupply);
+      accountCapsule.addAssetV2(assetIssueCapsuleV2.createDbV2Key(), remainSupply);
       accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
           .addAllFrozenSupply(frozenList).build());
 
@@ -164,7 +174,7 @@ public class AssetIssueActuator extends AbstractActuator {
     }
 
     int precision = assetIssueContract.getPrecision();
-    if (precision != 0 && dbManager.getForkController().pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
+    if (precision != 0 && dbManager.getDynamicPropertiesStore().getAllowSameTokenName() != 0) {
       if (precision < 0 || precision > 6) {
         throw new ContractValidateException("precision cannot exceed 6");
       }
