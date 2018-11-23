@@ -39,6 +39,9 @@ public class DeployContractServlet extends HttpServlet {
       JSONObject jsonObject = JSONObject.parseObject(contract);
       byte[] ownerAddress = ByteArray.fromHexString(jsonObject.getString("owner_address"));
       build.setOwnerAddress(ByteString.copyFrom(ownerAddress));
+      build
+          .setCallTokenValue(jsonObject.getLongValue("call_token_value"))
+          .setTokenId(jsonObject.getLongValue("token_id"));
 
       String abi = jsonObject.getString("abi");
       StringBuffer abiSB = new StringBuffer("{");

@@ -28,12 +28,16 @@ public class GetAccountServlet extends HttpServlet {
 
   private String convertOutput(Account account) {
     // convert asset id
-    JSONObject accountJson = JSONObject.parseObject(JsonFormat.printToString(account));
-    String assetId = accountJson.get("asset_issued_ID").toString();
-    accountJson.put(
-        "asset_issued_ID",
-        ByteString.copyFrom(ByteArray.fromHexString(assetId)).toStringUtf8());
-    return accountJson.toJSONString();
+    if (account.getAssetIssuedID().isEmpty()) {
+      return JsonFormat.printToString(account);
+    } else {
+      JSONObject accountJson = JSONObject.parseObject(JsonFormat.printToString(account));
+      String assetId = accountJson.get("asset_issued_ID").toString();
+      accountJson.put(
+          "asset_issued_ID", ByteString.copyFrom(ByteArray.fromHexString(assetId)).toStringUtf8());
+      return accountJson.toJSONString();
+    }
+
   }
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
@@ -43,6 +47,7 @@ public class GetAccountServlet extends HttpServlet {
       JSONObject jsonObject = new JSONObject();
       jsonObject.put("address", address);
       JsonFormat.merge(jsonObject.toJSONString(), build);
+
       Account reply = wallet.getAccount(build.build());
       if (reply != null) {
         response.getWriter().println(convertOutput(reply));
@@ -65,6 +70,7 @@ public class GetAccountServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Account.Builder build = Account.newBuilder();
       JsonFormat.merge(account, build);
+
       Account reply = wallet.getAccount(build.build());
       if (reply != null) {
         response.getWriter().println(convertOutput(reply));

@@ -53,29 +53,31 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
     switch (freezeBalanceContract.getResource()) {
       case BANDWIDTH:
-        if (ArrayUtils.isEmpty(receiverAddress)) {
-          long newFrozenBalanceForBandwidth =
-              frozenBalance + accountCapsule.getFrozenBalance();
-          accountCapsule.setFrozenForBandwidth(newFrozenBalanceForBandwidth, expireTime);
-        } else {
+        if (!ArrayUtils.isEmpty(receiverAddress)
+            && dbManager.getDynamicPropertiesStore().supportDR()) {
           delegateResource(ownerAddress, receiverAddress, true,
               frozenBalance, expireTime);
           accountCapsule.addDelegatedFrozenBalanceForBandwidth(frozenBalance);
+        } else {
+          long newFrozenBalanceForBandwidth =
+              frozenBalance + accountCapsule.getFrozenBalance();
+          accountCapsule.setFrozenForBandwidth(newFrozenBalanceForBandwidth, expireTime);
         }
         dbManager.getDynamicPropertiesStore()
             .addTotalNetWeight(frozenBalance / 1000_000L);
         break;
       case ENERGY:
-        if (ArrayUtils.isEmpty(receiverAddress)) {
+        if (!ArrayUtils.isEmpty(receiverAddress)
+            && dbManager.getDynamicPropertiesStore().supportDR()) {
+          delegateResource(ownerAddress, receiverAddress, false,
+              frozenBalance, expireTime);
+          accountCapsule.addDelegatedFrozenBalanceForEnergy(frozenBalance);
+        } else {
           long newFrozenBalanceForEnergy =
               frozenBalance + accountCapsule.getAccountResource()
                   .getFrozenBalanceForEnergy()
                   .getFrozenBalance();
           accountCapsule.setFrozenForEnergy(newFrozenBalanceForEnergy, expireTime);
-        } else {
-          delegateResource(ownerAddress, receiverAddress, false,
-              frozenBalance, expireTime);
-          accountCapsule.addDelegatedFrozenBalanceForEnergy(frozenBalance);
         }
         dbManager.getDynamicPropertiesStore()
             .addTotalEnergyWeight(frozenBalance / 1000_000L);
@@ -170,12 +172,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
     //todo：need version control and config for delegating resource
     byte[] receiverAddress = freezeBalanceContract.getReceiverAddress().toByteArray();
     //If the receiver is included in the contract, the receiver will receive the resource.
-    if (!ArrayUtils.isEmpty(receiverAddress)) {
-      if (!dbManager.getDynamicPropertiesStore().supportDR()) {
-        throw new ContractValidateException("Delegating resource is NOT ALLOWED,"
-            + " need to be opened by the committee");
-      }
-
+    if (!ArrayUtils.isEmpty(receiverAddress) && dbManager.getDynamicPropertiesStore().supportDR()) {
       if (Arrays.equals(receiverAddress, ownerAddress)) {
         throw new ContractValidateException(
             "receiverAddress must not be the same as ownerAddress");

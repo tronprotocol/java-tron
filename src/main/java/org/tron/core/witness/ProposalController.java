@@ -171,14 +171,10 @@ public class ProposalController {
           break;
         }
         case (17): {
-          manager.getDynamicPropertiesStore().saveAllowAdaptiveEnergy(entry.getValue());
-          break;
-        }
-        case (18): {
           manager.getDynamicPropertiesStore().saveTotalEnergyLimit(entry.getValue());
           break;
         }
-        case (19): {
+        case (18): {
           manager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(entry.getValue());
           break;
         }
