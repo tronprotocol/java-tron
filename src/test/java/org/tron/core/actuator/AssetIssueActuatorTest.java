@@ -26,7 +26,6 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.Parameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
@@ -1776,11 +1775,11 @@ public class AssetIssueActuatorTest {
   }
 
   /**
-   * SameTokenName close, check invalid precision
+   * SameTokenName open, check invalid precision
    */
   @Test
   public void SameTokenNameCloseInvalidPrecision() {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     long nowTime = new Date().getTime();
     Any any = Any.pack(
             Contract.AssetIssueContract.newBuilder()
@@ -1801,6 +1800,7 @@ public class AssetIssueActuatorTest {
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
     dbManager.getDynamicPropertiesStore().statsByVersion(Parameter.ForkBlockVersionConsts.ENERGY_LIMIT, stats);
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
 
     try {
       actuator.validate();
