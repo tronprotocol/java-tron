@@ -64,7 +64,11 @@ public class AssetIssueActuator extends AbstractActuator {
       long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
       tokenIdNum++;
       assetIssueCapsule.setId(Long.toString(tokenIdNum));
-      assetIssueCapsule.setPrecision(assetIssueContract.getPrecision());
+      int precision = assetIssueContract.getPrecision();
+      if (precision != 0
+          && dbManager.getForkController().pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
+        assetIssueCapsule.setPrecision(assetIssueContract.getPrecision());
+      }
       dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenIdNum);
 
       dbManager.putAssetIssue(assetIssueCapsule);
@@ -160,14 +164,10 @@ public class AssetIssueActuator extends AbstractActuator {
     }
 
     int precision = assetIssueContract.getPrecision();
-    if (!dbManager.getForkController().pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
-      if (precision != 0) {
-        throw new ContractValidateException("Setting accuracy is not allowed");
+    if (precision != 0 && dbManager.getForkController().pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
+      if (precision < 0 || precision > 6) {
+        throw new ContractValidateException("precision cannot exceed 6");
       }
-    }
-
-    if (precision < 0 || precision > 6) {
-      throw new ContractValidateException("precision cannot exceed 6");
     }
 
     if ((!assetIssueContract.getAbbr().isEmpty()) && !TransactionUtil
