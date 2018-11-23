@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -1300,8 +1301,17 @@ public class PublicMethed {
     logger.info(ByteArray.toHexString(getFinalAddress(key)));
     logger.info(Base58.encode58Check(getFinalAddress(key)));
     return true;
-
   }
+
+  public static ArrayList<String>  getAddressInfo(String key) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ArrayList<String> accountList = new ArrayList<String>();
+    accountList.add(key);
+    accountList.add(ByteArray.toHexString(getFinalAddress(key)));
+    accountList.add(Base58.encode58Check(getFinalAddress(key)));
+    return accountList;
+  }
+
 
   public static boolean setAccountId(byte[] accountIdBytes, byte[] ownerAddress, String priKey,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
