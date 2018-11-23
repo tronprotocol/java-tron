@@ -301,6 +301,10 @@ public class BandwidthProcessor extends ResourceProcessor {
       accountCapsule.putLatestAssetOperationTimeMap(tokenName,
           latestAssetOperationTime);
       accountCapsule.putFreeAssetNetUsage(tokenName, newFreeAssetNetUsage);
+      accountCapsule.putLatestAssetOperationTimeMapV2(tokenID,
+          latestAssetOperationTime);
+      accountCapsule.putFreeAssetNetUsageV2(tokenID, newFreeAssetNetUsage);
+
       dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
 
       assetIssueCapsuleV2 = dbManager.getAssetIssueV2Store().get(assetIssueCapsule.createDbV2Key());
