@@ -108,8 +108,9 @@ public class AssetUpdateHelper {
       count++;
 
       assetIssueCapsule.setId(Long.toString(tokenIdNum));
-      dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
       dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+      assetIssueCapsule.setPrecision(0);
+      dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
 
       assetNameToIdMap.put(
           ByteArray.toStr(assetIssueCapsule.createDbKey()), assetIssueCapsule.createDbV2Key());
