@@ -515,6 +515,19 @@ public class Wallet {
     }
   }
 
+  public long getTransactionCountByBlockNum(long blockNum) {
+    long count = 0;
+
+    try {
+      Block block = dbManager.getBlockByNum(blockNum).getInstance();
+      count = block.getTransactionsCount();
+    } catch (StoreException e) {
+      logger.error(e.getMessage());
+    }
+
+    return count;
+  }
+
   public WitnessList getWitnessList() {
     WitnessList.Builder builder = WitnessList.newBuilder();
     List<WitnessCapsule> witnessCapsuleList = dbManager.getWitnessStore().getAllWitnesses();
