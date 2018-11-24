@@ -21,7 +21,7 @@
        </package>
        <package name="stest.tron.wallet.block">
        </package>
-       <package name="stest.tron.wallet.exchangeAndToken">
+       <package name="stest.tron.wallet.exchangeandtoken">
        </package>
        <package name="stest.tron.wallet.committee">
        </package>
