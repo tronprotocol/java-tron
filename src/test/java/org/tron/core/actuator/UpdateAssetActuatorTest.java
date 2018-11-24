@@ -45,7 +45,7 @@ public class UpdateAssetActuatorTest {
   private static final String URL = "tron-my.com";
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_NOTEXIST =
@@ -54,21 +54,16 @@ public class UpdateAssetActuatorTest {
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d427122222";
   }
 
-  /**
-   * Init data.
-   */
+  /** Init data. */
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
   }
 
-  /**
-   * create temp Capsule test need.
-   */
+  /** create temp Capsule test need. */
   @Before
   public void createCapsule() {
     // address in accountStore and the owner of contract
-
 
     AccountCapsule accountCapsule =
         new AccountCapsule(
@@ -83,8 +78,7 @@ public class UpdateAssetActuatorTest {
 
     accountCapsule.setAssetIssuedName(assetIssueCapsule.createDbKey());
     accountCapsule.addAsset(assetIssueCapsule.createDbKey(), TOTAL_SUPPLY);
-    accountCapsule.setAssetIssuedID( assetIssueCapsule.getId().getBytes());
-
+    accountCapsule.setAssetIssuedID(assetIssueCapsule.getId().getBytes());
 
     dbManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS), accountCapsule);
 
@@ -100,9 +94,7 @@ public class UpdateAssetActuatorTest {
     dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_NOTEXIST));
   }
 
-  /**
-   * Release resources.
-   */
+  /** Release resources. */
   @AfterClass
   public static void destroy() {
     Args.clearParam();
@@ -114,19 +106,20 @@ public class UpdateAssetActuatorTest {
     context.destroy();
   }
 
-  private Any getContract(String accountAddress, String description,
-      String url, long newLimit, long newPublicLimit) {
+  private Any getContract(
+      String accountAddress, String description, String url, long newLimit, long newPublicLimit) {
     return Any.pack(
         Contract.UpdateAssetContract.newBuilder()
             .setOwnerAddress(StringUtil.hexString2ByteString(accountAddress))
             .setDescription(ByteString.copyFromUtf8(description))
             .setUrl(ByteString.copyFromUtf8(url))
             .setNewLimit(newLimit)
-            .setNewPublicLimit(newPublicLimit).build());
+            .setNewPublicLimit(newPublicLimit)
+            .build());
   }
 
   private Contract.AssetIssueContract getAssetIssueContract() {
-    long tokenId = dbManager.getDynamicPropertiesStore().getTokenIdNum()+1;
+    long tokenId = dbManager.getDynamicPropertiesStore().getTokenIdNum() + 1;
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenId);
 
     long nowTime = new Date().getTime();
@@ -134,7 +127,7 @@ public class UpdateAssetActuatorTest {
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
-            .setId(String.valueOf(tokenId))
+        .setId(String.valueOf(tokenId))
         .setTrxNum(100)
         .setNum(10)
         .setStartTime(nowTime)
@@ -149,8 +142,9 @@ public class UpdateAssetActuatorTest {
   public void successUpdateAsset() {
     TransactionResultCapsule ret = new TransactionResultCapsule();
     UpdateAssetActuator actuator;
-    actuator = new UpdateAssetActuator(
-        getContract(OWNER_ADDRESS, DESCRIPTION, URL, 500L, 8000L), dbManager);
+    actuator =
+        new UpdateAssetActuator(
+            getContract(OWNER_ADDRESS, DESCRIPTION, URL, 500L, 8000L), dbManager);
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -158,8 +152,8 @@ public class UpdateAssetActuatorTest {
       AssetIssueCapsule assetIssueCapsule =
           dbManager.getAssetIssueStore().get(ByteString.copyFromUtf8(NAME).toByteArray());
       Assert.assertNotNull(assetIssueCapsule);
-      Assert.assertEquals(DESCRIPTION,
-          assetIssueCapsule.getInstance().getDescription().toStringUtf8());
+      Assert.assertEquals(
+          DESCRIPTION, assetIssueCapsule.getInstance().getDescription().toStringUtf8());
       Assert.assertEquals(URL, assetIssueCapsule.getInstance().getUrl().toStringUtf8());
       Assert.assertEquals(assetIssueCapsule.getFreeAssetNetLimit(), 500L);
       Assert.assertEquals(assetIssueCapsule.getPublicFreeAssetNetLimit(), 8000L);
@@ -172,8 +166,9 @@ public class UpdateAssetActuatorTest {
 
   @Test
   public void invalidAddress() {
-    UpdateAssetActuator actuator = new UpdateAssetActuator(
-        getContract(OWNER_ADDRESS_INVALID, DESCRIPTION, URL, 500L, 8000L), dbManager);
+    UpdateAssetActuator actuator =
+        new UpdateAssetActuator(
+            getContract(OWNER_ADDRESS_INVALID, DESCRIPTION, URL, 500L, 8000L), dbManager);
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -191,8 +186,9 @@ public class UpdateAssetActuatorTest {
 
   @Test
   public void noExistAccount() {
-    UpdateAssetActuator actuator = new UpdateAssetActuator(
-        getContract(OWNER_ADDRESS_NOTEXIST, DESCRIPTION, URL, 500L, 8000L), dbManager);
+    UpdateAssetActuator actuator =
+        new UpdateAssetActuator(
+            getContract(OWNER_ADDRESS_NOTEXIST, DESCRIPTION, URL, 500L, 8000L), dbManager);
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -210,8 +206,9 @@ public class UpdateAssetActuatorTest {
 
   @Test
   public void noAsset() {
-    UpdateAssetActuator actuator = new UpdateAssetActuator(
-        getContract(SECOND_ACCOUNT_ADDRESS, DESCRIPTION, URL, 500L, 8000L), dbManager);
+    UpdateAssetActuator actuator =
+        new UpdateAssetActuator(
+            getContract(SECOND_ACCOUNT_ADDRESS, DESCRIPTION, URL, 500L, 8000L), dbManager);
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -233,8 +230,9 @@ public class UpdateAssetActuatorTest {
   @Test
   public void invalidAssetUrl() {
     String localUrl = "";
-    UpdateAssetActuator actuator = new UpdateAssetActuator(
-        getContract(OWNER_ADDRESS, DESCRIPTION, localUrl, 500L, 8000L), dbManager);
+    UpdateAssetActuator actuator =
+        new UpdateAssetActuator(
+            getContract(OWNER_ADDRESS, DESCRIPTION, localUrl, 500L, 8000L), dbManager);
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -256,13 +254,13 @@ public class UpdateAssetActuatorTest {
   @Test
   public void invalidAssetDescription() {
     String localDescription =
-        "abchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuv" +
-            "wxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghij"
-            +
-            "klmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyz";
+        "abchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuv"
+            + "wxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghij"
+            + "klmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyz";
 
-    UpdateAssetActuator actuator = new UpdateAssetActuator(
-        getContract(OWNER_ADDRESS, localDescription, URL, 500L, 8000L), dbManager);
+    UpdateAssetActuator actuator =
+        new UpdateAssetActuator(
+            getContract(OWNER_ADDRESS, localDescription, URL, 500L, 8000L), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -283,8 +281,9 @@ public class UpdateAssetActuatorTest {
   @Test
   public void invalidNewLimit() {
     long localNewLimit = 57_600_000_001L;
-    UpdateAssetActuator actuator = new UpdateAssetActuator(
-        getContract(OWNER_ADDRESS, DESCRIPTION, URL, localNewLimit, 8000L), dbManager);
+    UpdateAssetActuator actuator =
+        new UpdateAssetActuator(
+            getContract(OWNER_ADDRESS, DESCRIPTION, URL, localNewLimit, 8000L), dbManager);
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -303,8 +302,9 @@ public class UpdateAssetActuatorTest {
   @Test
   public void invalidNewPublicLimit() {
     long localNewPublicLimit = -1L;
-    UpdateAssetActuator actuator = new UpdateAssetActuator(
-        getContract(OWNER_ADDRESS, DESCRIPTION, URL, 500L, localNewPublicLimit), dbManager);
+    UpdateAssetActuator actuator =
+        new UpdateAssetActuator(
+            getContract(OWNER_ADDRESS, DESCRIPTION, URL, 500L, localNewPublicLimit), dbManager);
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -319,5 +319,4 @@ public class UpdateAssetActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
-
 }
