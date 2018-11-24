@@ -134,6 +134,7 @@ public class AssetIssueActuatorTest {
                     .setEndTime(nowTime + 24 * 3600 * 1000)
                     .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
                     .setUrl(ByteString.copyFromUtf8(URL))
+                .setPrecision(6)
                     .build());
   }
 
@@ -156,11 +157,13 @@ public class AssetIssueActuatorTest {
       AssetIssueCapsule assetIssueCapsule =
               dbManager.getAssetIssueStore().get(ByteString.copyFromUtf8(NAME).toByteArray());
       Assert.assertNotNull(assetIssueCapsule);
+      Assert.assertEquals(6, assetIssueCapsule.getPrecision());
       // check V2
       long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
       AssetIssueCapsule assetIssueCapsuleV2 =
               dbManager.getAssetIssueV2Store().get(ByteArray.fromString(String.valueOf(tokenIdNum)));
       Assert.assertNotNull(assetIssueCapsuleV2);
+      Assert.assertEquals(0, assetIssueCapsuleV2.getPrecision());
 
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),

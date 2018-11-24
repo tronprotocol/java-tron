@@ -10,8 +10,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -25,7 +23,6 @@ import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.AccountResourceInsufficientException;
-import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.protos.Contract;
@@ -33,8 +30,6 @@ import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
-
-import javax.lang.model.element.NestingKind;
 
 @Slf4j
 public class BandwidthProcessorTest {
@@ -416,6 +411,7 @@ public class BandwidthProcessorTest {
             ? Constant.MAX_RESULT_SIZE_IN_TX : 0),
         ownerCapsuleNew.getFreeAssetNetUsageV2(ASSET_NAME_V2));
 
+    Assert.assertEquals(508882612L, ownerCapsuleNew.getLatestAssetOperationTimeV2 (ASSET_NAME_V2));
     Assert.assertEquals(0L, ret.getFee());
 
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526691038000L); // + 12h
