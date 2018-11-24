@@ -26,6 +26,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
@@ -141,6 +142,22 @@ public class TransferAssetActuator extends AbstractActuator {
     }
 
     if (!this.dbManager.getAssetIssueStoreFinal().has(assetName)) {
+      logger.info("start________debug");
+      logger.info("assetName==" + ByteString.copyFrom(assetName).toStringUtf8());
+      logger.info("getAllowSameTokenName==" + dbManager.getDynamicPropertiesStore().getAllowSameTokenName());
+      logger.info("owner_address=" + Wallet.encode58Check(ownerAddress));
+      for (AssetIssueCapsule assetIssueCapsule : dbManager.getAssetIssueStore()
+          .getAllAssetIssues()) {
+        logger.info("v1=" + assetIssueCapsule.getId() + "\t" + assetIssueCapsule.getName().toStringUtf8() + "\t" +
+           Wallet.encode58Check(assetIssueCapsule.getOwnerAddress().toByteArray()));
+      }
+
+      for (AssetIssueCapsule assetIssueCapsule : dbManager.getAssetIssueV2Store()
+          .getAllAssetIssues()) {
+        logger.info("v2=" + assetIssueCapsule.getId() + "\t" + assetIssueCapsule.getName().toStringUtf8() + "\t" +
+            Wallet.encode58Check(assetIssueCapsule.getOwnerAddress().toByteArray()));
+      }
+
       throw new ContractValidateException("No asset !");
     }
 
