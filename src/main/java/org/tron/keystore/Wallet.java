@@ -122,7 +122,7 @@ public class Wallet {
   }
 
   private static byte[] generateDerivedScryptKey(
-      byte[] password, byte[] salt, int n, int r, int p, int dkLen) throws CipherException {
+      byte[] password, byte[] salt, int n, int r, int p, int dkLen) {
     return SCrypt.generate(password, salt, n, r, p, dkLen);
   }
 

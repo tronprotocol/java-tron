@@ -58,7 +58,7 @@ public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel>
   }
 
   @Override
-  public void initChannel(NioSocketChannel ch) throws Exception {
+  public void initChannel(NioSocketChannel ch) {
     try {
       final Channel channel = ctx.getBean(PeerConnection.class);
 

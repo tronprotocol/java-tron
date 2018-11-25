@@ -19,7 +19,6 @@ package org.tron.common.runtime.vm.trace;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -40,7 +39,7 @@ public final class Serializers {
 
         @Override
         public void serialize(DataWord energy, JsonGenerator jgen, SerializerProvider provider)
-            throws IOException, JsonProcessingException {
+            throws IOException {
             jgen.writeString(energy.value().toString());
         }
     }
@@ -48,7 +47,7 @@ public final class Serializers {
     public static class ByteArraySerializer extends JsonSerializer<byte[]> {
 
         @Override
-        public void serialize(byte[] memory, JsonGenerator jgen, SerializerProvider provider) throws IOException, JsonProcessingException {
+        public void serialize(byte[] memory, JsonGenerator jgen, SerializerProvider provider) throws IOException {
             jgen.writeString(Hex.toHexString(memory));
         }
     }
@@ -56,7 +55,7 @@ public final class Serializers {
     public static class OpCodeSerializer extends JsonSerializer<Byte> {
 
         @Override
-        public void serialize(Byte op, JsonGenerator jgen, SerializerProvider provider) throws IOException, JsonProcessingException {
+        public void serialize(Byte op, JsonGenerator jgen, SerializerProvider provider) throws IOException {
             jgen.writeString(OpCode.code(op).name());
         }
     }

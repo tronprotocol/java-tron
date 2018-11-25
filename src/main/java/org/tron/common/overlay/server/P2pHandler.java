@@ -55,7 +55,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
   private ChannelHandlerContext ctx;
 
   @Override
-  public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+  public void handlerAdded(ChannelHandlerContext ctx) {
     this.ctx = ctx;
     pingTask = pingTimer.scheduleAtFixedRate(() -> {
       if (!hasPing) {

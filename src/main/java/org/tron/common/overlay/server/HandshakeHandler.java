@@ -65,7 +65,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   private SyncPool syncPool;
 
   @Override
-  public void channelActive(ChannelHandlerContext ctx) throws Exception {
+  public void channelActive(ChannelHandlerContext ctx) {
     logger.info("channel active, {}", ctx.channel().remoteAddress());
     channel.setChannelHandlerContext(ctx);
     if (remoteId.length == 64) {
@@ -101,7 +101,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   }
 
   @Override
-  public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+  public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
     channel.processException(cause);
   }
 

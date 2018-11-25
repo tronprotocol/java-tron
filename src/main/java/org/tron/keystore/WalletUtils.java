@@ -6,9 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.Console;
 import java.io.File;
 import java.io.IOException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -30,23 +27,20 @@ public class WalletUtils {
   }
 
   public static String generateFullNewWalletFile(String password, File destinationDirectory)
-      throws NoSuchAlgorithmException, NoSuchProviderException,
-      InvalidAlgorithmParameterException, CipherException, IOException {
+      throws CipherException, IOException {
 
     return generateNewWalletFile(password, destinationDirectory, true);
   }
 
   public static String generateLightNewWalletFile(String password, File destinationDirectory)
-      throws NoSuchAlgorithmException, NoSuchProviderException,
-      InvalidAlgorithmParameterException, CipherException, IOException {
+      throws CipherException, IOException {
 
     return generateNewWalletFile(password, destinationDirectory, false);
   }
 
   public static String generateNewWalletFile(
       String password, File destinationDirectory, boolean useFullScrypt)
-      throws CipherException, IOException, InvalidAlgorithmParameterException,
-      NoSuchAlgorithmException, NoSuchProviderException {
+      throws CipherException, IOException {
 
     ECKey ecKeyPair = new ECKey(Utils.getRandom());
     return generateWalletFile(password, ecKeyPair, destinationDirectory, useFullScrypt);
