@@ -25,17 +25,17 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
   protected ByteString toAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("TRxgBU7HFTQvU6zPheLHphqpwhDKNxB6Rk"));
   protected Long amount = 1L;
   protected Long amountOneTrx = 1000_000L;
-  protected ByteString assetName = ByteString.copyFrom("1001521".getBytes());
+  protected ByteString assetName = ByteString.copyFrom("1003425".getBytes());
 
   // exchange
-  protected long exchangeId = 1;
+  protected long exchangeId = 170;
   protected byte[] firstTokeID = "_".getBytes();
-  protected byte[] secondTokeID = "1001521".getBytes();
+  protected byte[] secondTokeID = "1003425".getBytes();
   protected long quant = 10;
   protected long expected = 1;
 
   // inject
-  protected long exchangeId2 = 2;
+  protected long exchangeId2 = 170;
   protected byte[] firstTokeID2 = "_".getBytes();
   protected long quant2 = 1000000;
 
@@ -43,7 +43,7 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
   protected String ownerPrivateKey = "763009595dd132aaf2d248999f2c6e7ba0acbbd9a9dfd88f7c2c158d97327645";
   protected byte[] participateOwnerAddressBytes = Wallet.decodeFromBase58Check("TRxgBU7HFTQvU6zPheLHphqpwhDKNxB6Rk");
   protected long participateAmount = 1;
-  protected byte[] participateAssetName = "1001521".getBytes();
+  protected byte[] participateAssetName = "1003425".getBytes();
 
   long time = System.currentTimeMillis();
   AtomicLong count = new AtomicLong();

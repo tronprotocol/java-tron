@@ -94,7 +94,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private MessageCount trxCount = new MessageCount();
 
-  private long TPS = 1500;
+  private long TPS = 1000;
 
   private Cache<Sha256Hash, TransactionMessage> TrxCache = CacheBuilder.newBuilder()
       .maximumSize(100_000_000).expireAfterWrite(1, TimeUnit.HOURS).initialCapacity(100_000_000)
