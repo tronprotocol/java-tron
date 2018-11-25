@@ -29,8 +29,6 @@ import org.tron.core.db.BlockStore;
 import org.tron.core.exception.StoreException;
 import org.tron.protos.Protocol;
 
-// import org.tron.core.db.BlockStoreDummy;
-
 /**
  * @author Roman Mandeleil
  * @since 03.06.2014
