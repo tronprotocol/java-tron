@@ -2,7 +2,6 @@ package org.tron.core.net.message;
 
 import java.util.List;
 
-import org.tron.core.exception.P2pException;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
 

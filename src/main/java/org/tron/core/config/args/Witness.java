@@ -16,7 +16,6 @@
 package org.tron.core.config.args;
 
 import java.io.Serializable;
-import java.util.Arrays;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -17,7 +17,6 @@ package org.tron.core.config.args;
 
 import com.google.protobuf.ByteString;
 import java.io.Serializable;
-import java.util.Arrays;
 
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;

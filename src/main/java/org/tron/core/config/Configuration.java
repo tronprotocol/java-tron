@@ -24,10 +24,8 @@ import static org.apache.commons.lang3.StringUtils.isNoneBlank;
 import com.typesafe.config.ConfigFactory;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.ResourceUtils;
 
 @Slf4j
 public class Configuration {

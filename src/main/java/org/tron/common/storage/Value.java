@@ -2,7 +2,6 @@ package org.tron.common.storage;
 
 import java.util.Arrays;
 import org.apache.commons.lang3.ArrayUtils;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;

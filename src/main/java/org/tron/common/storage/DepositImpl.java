@@ -5,7 +5,6 @@ import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicLong;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.Storage;
 import org.tron.common.utils.ByteArray;

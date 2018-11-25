@@ -5,7 +5,6 @@ import org.iq80.leveldb.DBIterator;
 
 import java.io.IOException;
 import java.util.Map.Entry;
-import java.util.function.Consumer;
 
 @Slf4j
 public final class StoreIterator implements org.tron.core.db.common.iterator.DBIterator {

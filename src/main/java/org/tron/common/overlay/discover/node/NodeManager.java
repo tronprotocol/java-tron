@@ -18,8 +18,6 @@
 
 package org.tron.common.overlay.discover.node;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -34,7 +32,6 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import org.slf4j.LoggerFactory;
@@ -50,7 +47,6 @@ import org.tron.common.net.udp.message.discover.PongMessage;
 import org.tron.common.overlay.discover.DiscoverListener;
 import org.tron.common.overlay.discover.RefreshTask;
 import org.tron.common.overlay.discover.node.NodeHandler.State;
-import org.tron.common.overlay.discover.node.statistics.MessageStatistics;
 import org.tron.common.overlay.discover.node.statistics.NodeStatistics;
 import org.tron.common.overlay.discover.table.NodeTable;
 import org.tron.common.utils.CollectionUtils;
