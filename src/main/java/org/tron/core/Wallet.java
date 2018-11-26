@@ -389,7 +389,7 @@ public class Wallet {
       trx.setExpiration(expiration);
       trx.setTimestamp();
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error("Create transaction capsule failed.", e);
     }
     return trx;
   }
