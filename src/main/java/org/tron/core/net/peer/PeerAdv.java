@@ -151,16 +151,15 @@ public class PeerAdv {
     }
 
     InvSender invSender = new InvSender();
-    long now = Time.getCurrentMillis();
+    long now = System.currentTimeMillis();
     invToFetch.forEach((item, time) -> {
-      Sha256Hash hash = item.getHash();
       if (time < now - MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL) {
         logger.info("This obj is too late to fetch, type: {} hash: {}.", item.getType(), item.getHash());
         invToFetch.remove(item);
         return;
       }
       peers.stream()
-          .filter(peer -> peer.getAdvInvReceive().containsKey(hash) && invSender.getSize(peer) < MAX_TRX_FETCH_PER_PEER)
+          .filter(peer -> peer.getAdvInvReceive().containsKey(item) && invSender.getSize(peer) < MAX_TRX_FETCH_PER_PEER)
           .sorted(Comparator.comparingInt(peer -> invSender.getSize(peer)))
           .findFirst().ifPresent(peer -> {
         invSender.add(item, peer);

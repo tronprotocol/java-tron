@@ -39,7 +39,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
   @Autowired
   private PeerSync peerSync;
 
-  @Setter
+  @Autowired
   private PeerAdv peerAdv;
 
   private int MAX_SIZE = 1_000_000;
@@ -103,14 +103,14 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
         throw new P2pException(TypeEnum.BAD_MESSAGE, "maxCount: " + maxCount + ", fetchCount: " + fetchCount);
       }
       for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
-        if (!peer.getAdvInvSpread().containsKey(hash)) {
+        if (!peer.getAdvInvSpread().containsKey(new Item(hash, InventoryType.TRX))) {
           throw new P2pException(TypeEnum.BAD_MESSAGE, "not spread inv: {}" + hash);
         }
       }
     } else {
       boolean isAdv = true;
       for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
-        if (!peer.getAdvInvSpread().containsKey(hash)) {
+        if (!peer.getAdvInvSpread().containsKey(new Item(hash, InventoryType.BLOCK))) {
           isAdv = false;
           break;
         }

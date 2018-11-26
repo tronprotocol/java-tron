@@ -98,8 +98,9 @@ public class ChainInventoryMsgHandler implements TronMsgHandler  {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "big blockIds size: " + blockIds.size());
     }
 
-    if (msg.getRemainNum() == 0 && blockIds.size() < NodeConstant.SYNC_FETCH_BATCH_NUM) {
-      throw new P2pException(TypeEnum.BAD_MESSAGE, "remain blockNum: 0, blockIds size: " + blockIds.size());
+    if (msg.getRemainNum() != 0 && blockIds.size() < NodeConstant.SYNC_FETCH_BATCH_NUM) {
+      throw new P2pException(TypeEnum.BAD_MESSAGE,
+          "remain: " + msg.getRemainNum() +", blockIds size: " + blockIds.size());
     }
 
     long num = blockIds.get(0).getNum();
