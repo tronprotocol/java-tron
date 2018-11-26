@@ -146,7 +146,7 @@ public class SyncPool {
       sb.append("============\n");
       Set<Node> activeSet = new HashSet<>();
       for (PeerConnection peer : new ArrayList<>(activePeers)) {
-        sb.append(peer).append('\n');
+        sb.append(peer.log()).append('\n');
         activeSet.add(peer.getNode());
       }
       sb.append("Other connected peers\n");

@@ -88,7 +88,7 @@ public class TronNetService {
           transactionsMsgHandler.processMessage(peer, msg);
           break;
         default:
-          throw new P2pException(TypeEnum.NO_SUCH_MESSAGE, "No such message");
+          throw new P2pException(TypeEnum.NO_SUCH_MESSAGE, "No such message: " + msg.getType());
       }
     }catch (Exception e) {
       processException(peer, msg, e);

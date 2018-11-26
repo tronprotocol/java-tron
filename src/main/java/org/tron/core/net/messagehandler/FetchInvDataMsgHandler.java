@@ -44,8 +44,6 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
 
   private int MAX_SIZE = 1_000_000;
 
-  private int MAX_COUNT = 200;
-
   @Override
   public void processMessage (PeerConnection peer, TronMessage msg) throws Exception {
 

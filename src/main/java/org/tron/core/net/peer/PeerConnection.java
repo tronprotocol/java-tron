@@ -153,9 +153,34 @@ public class PeerConnection extends Channel {
     peerAdv.onDisconnect(this);
   }
 
-  @Override
-  public String toString () {
+  public String log () {
     long now = System.currentTimeMillis();
+//    logger.info("Peer {}:{} [ {}, ping {} ms]-----------\n"
+//            + "connect time: {}\n"
+//            + "last know block num: {}\n"
+//            + "needSyncFromPeer:{}\n"
+//            + "needSyncFromUs:{}\n"
+//            + "syncToFetchSize:{}\n"
+//            + "syncToFetchSizePeekNum:{}\n"
+//            + "syncBlockRequestedSize:{}\n"
+//            + "remainNum:{}\n"
+//            + "syncChainRequested:{}\n"
+//            + "blockInProcess:{}\n"
+//            + "{}",
+//        this.getNode().getHost(), this.getNode().getPort(), this.getNode().getHexIdShort(),
+//        (int) this.getPeerStats().getAvgLatency(),
+//        (now - super.getStartTime()) / 1000,
+//        blockBothHave.getNum(),
+//        isNeedSyncFromPeer(),
+//        isNeedSyncFromUs(),
+//        syncBlockToFetch.size(),
+//        syncBlockToFetch.size() > 0 ? syncBlockToFetch.peek().getNum() : -1,
+//        syncBlockRequested.size(),
+//        remainNum,
+//        syncChainRequested == null ? 0 : (now - syncChainRequested.getValue()) / 1000,
+//        syncBlockInProcess.size(),
+//        nodeStatistics.toString());
+////
     return String.format(
         "Peer %s: [ %18s, ping %6s ms]-----------\n"
             + "connect time: %d\n"

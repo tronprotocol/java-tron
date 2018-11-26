@@ -52,9 +52,9 @@ public class InventoryMsgHandler implements TronMsgHandler{
     InventoryType type = inventoryMessage.getInventoryType();
     int size = inventoryMessage.getHashList().size();
 
-    if (size > NetConstants.MAX_INV_FETCH_PER_PEER) {
-      throw new P2pException(TypeEnum.BAD_MESSAGE, "size: " + size);
-    }
+//    if (size > NetConstants.MAX_INV_FETCH_PER_PEER) {
+//      throw new P2pException(TypeEnum.BAD_MESSAGE, "size: " + size);
+//    }
 
     if (peer.isNeedSyncFromPeer() || peer.isNeedSyncFromUs()) {
       logger.warn("Drop inv: {} size: {} from Peer {}, syncFromUs: {}, syncFromPeer: {}.",

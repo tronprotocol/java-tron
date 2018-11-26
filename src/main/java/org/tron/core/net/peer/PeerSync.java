@@ -1,6 +1,6 @@
 package org.tron.core.net.peer;
 
-import static org.tron.core.config.Parameter.NetConstants.MAX_INV_FETCH_PER_PEER;
+import static org.tron.core.config.Parameter.NetConstants.MAX_BLOCK_FETCH_PER_PEER;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -45,7 +45,7 @@ public class PeerSync {
   @Autowired
   private TronNetClient tronManager;
 
-  private Map<BlockMessage, PeerConnection> blockWaitToProc = new ConcurrentHashMap<>();
+  private Map<BlockMessage, PeerConnection> blockWaitToProcess = new ConcurrentHashMap<>();
 
   private Map<BlockMessage, PeerConnection> blockJustReceived = new ConcurrentHashMap<>();
 
@@ -207,7 +207,7 @@ public class PeerSync {
             if (!request.contains(blockId) && (requestBlockIds.getIfPresent(blockId) == null)) {
               send.get(peer).add(blockId);
               request.add(blockId);
-              if (send.get(peer).size() >= MAX_INV_FETCH_PER_PEER) {
+              if (send.get(peer).size() >= MAX_BLOCK_FETCH_PER_PEER) {
                 break;
               }
             }
@@ -255,7 +255,7 @@ public class PeerSync {
   private synchronized void handleSyncBlock() {
 
     synchronized (blockJustReceived) {
-      blockWaitToProc.putAll(blockJustReceived);
+      blockWaitToProcess.putAll(blockJustReceived);
       blockJustReceived.clear();
     }
 
@@ -265,10 +265,10 @@ public class PeerSync {
 
       isProcessed[0] = false;
 
-      blockWaitToProc.forEach((msg, peerConnection) -> {
+      blockWaitToProcess.forEach((msg, peerConnection) -> {
         if (peerConnection.isDisconnect()) {
           logger.warn("Peer {} is disconnect, drop block {}", peerConnection.getInetAddress(), msg.getBlockId().getString());
-          blockWaitToProc.remove(msg);
+          blockWaitToProcess.remove(msg);
           invalid(msg.getBlockId());
           return;
         }
@@ -281,7 +281,7 @@ public class PeerSync {
               isFound[0] = true;
             });
         if (isFound[0]) {
-          blockWaitToProc.remove(msg);
+          blockWaitToProcess.remove(msg);
           isProcessed[0] = true;
           processSyncBlock(msg.getBlockCapsule());
         }

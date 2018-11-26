@@ -1,7 +1,7 @@
 package org.tron.core.net.peer;
 
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
-import static org.tron.core.config.Parameter.NetConstants.MAX_INV_FETCH_PER_PEER;
+import static org.tron.core.config.Parameter.NetConstants.MAX_TRX_FETCH_PER_PEER;
 import static org.tron.core.config.Parameter.NetConstants.MSG_CACHE_DURATION_IN_BLOCKS;
 
 import com.google.common.cache.Cache;
@@ -67,7 +67,7 @@ public class PeerAdv {
   public void init () {
     spreadExecutor.scheduleWithFixedDelay(() -> {
       try {
-        consumerAdvObjToSpread();
+        consumerInvToSpread();
       } catch (Throwable t) {
         logger.error("Spread thread error.", t);
       }
@@ -75,9 +75,9 @@ public class PeerAdv {
 
     fetchExecutor.scheduleWithFixedDelay(() -> {
       try {
-        consumerAdvObjToFetch();
+        consumerInvToFetch();
       } catch (Throwable t) {
-        logger.error("fetch thread error.", t);
+        logger.error("Fetch thread error.", t);
       }
     }, 100, 30, TimeUnit.MILLISECONDS);
   }
@@ -105,26 +105,25 @@ public class PeerAdv {
   }
 
   public void broadcast(Message msg) {
-    InventoryType type;
+    Item item;
     if (msg instanceof BlockMessage) {
       BlockMessage blockMsg = (BlockMessage) msg;
+      item = new Item(blockMsg.getMessageId(), InventoryType.BLOCK);
       logger.info("Ready to broadcast block {}", blockMsg.getBlockId().getString());
-      messageCache.put(new Item(blockMsg.getMessageId(), InventoryType.BLOCK), blockMsg);
-      type = InventoryType.BLOCK;
-      blockMsg.getBlockCapsule().getTransactions().forEach(transactionCapsule -> {
-        invToSpread.remove(transactionCapsule.getTransactionId());
-      });
+      blockMsg.getBlockCapsule().getTransactions().forEach(transactionCapsule ->
+        invToSpread.remove(transactionCapsule.getTransactionId())
+      );
     } else if (msg instanceof TransactionMessage) {
       TransactionMessage trxMsg = (TransactionMessage) msg;
-      messageCache.put(new Item(trxMsg.getMessageId(), InventoryType.BLOCK), trxMsg);
-      type = InventoryType.TRX;
+      item = new Item(trxMsg.getMessageId(), InventoryType.TRX);
       trxCount.add();
     } else {
-      logger.error("Adv item is neither block nor trx.");
+      logger.error("Adv item is neither block nor trx, type: {}", msg.getType());
       return;
     }
+    messageCache.put(item, msg);
     synchronized (invToSpread) {
-      invToSpread.put(new Item(msg.getMessageId(), type), System.currentTimeMillis());
+      invToSpread.put(item, System.currentTimeMillis());
     }
   }
 
@@ -142,7 +141,7 @@ public class PeerAdv {
     }
   }
 
-  private void consumerAdvObjToFetch() {
+  private void consumerInvToFetch() {
     Collection<PeerConnection> peers = tronProxy.getActivePeer().stream()
         .filter(peer -> peer.isIdle() && !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
         .collect(Collectors.toList());
@@ -161,7 +160,7 @@ public class PeerAdv {
         return;
       }
       peers.stream()
-          .filter(peer -> peer.getAdvInvReceive().containsKey(hash) && invSender.getSize(peer) < MAX_INV_FETCH_PER_PEER)
+          .filter(peer -> peer.getAdvInvReceive().containsKey(hash) && invSender.getSize(peer) < MAX_TRX_FETCH_PER_PEER)
           .sorted(Comparator.comparingInt(peer -> invSender.getSize(peer)))
           .findFirst().ifPresent(peer -> {
         invSender.add(item, peer);
@@ -173,7 +172,7 @@ public class PeerAdv {
     invSender.sendFetch();
   }
 
-  private void consumerAdvObjToSpread() {
+  private void consumerInvToSpread() {
     if (invToSpread.isEmpty()) {
       return;
     }
