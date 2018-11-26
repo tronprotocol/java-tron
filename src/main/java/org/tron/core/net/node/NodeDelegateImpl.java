@@ -137,7 +137,7 @@ public class NodeDelegateImpl implements NodeDelegate {
         | TransactionExpirationException
         | ReceiptCheckErrException
         | TooBigTransactionResultException e) {
-      logger.warn("Handle transaction failed, reason: {}", e.getMessage());
+      logger.warn("Handle transaction {} failed, reason: {}", trx.getTransactionId(), e.getMessage());
       return false;
     }
     return true;
