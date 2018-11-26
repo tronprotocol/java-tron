@@ -296,11 +296,6 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public void updateSolidity(long oldSolidifiedBlockNum, long newSolidifedBlockNum) {
-
-  }
-
-  @Override
   public void setMaxSize(int maxSize) {
     this.maxSize.set(maxSize);
   }
@@ -309,17 +304,23 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
     return maxSize.get();
   }
 
+  @Override
+  public void setMaxFlushCount(int maxFlushCount) {
+  }
+
   public synchronized void shutdown() {
     System.err.println("******** begin to pop revokingDb ********");
     System.err.println("******** before revokingDb size:" + size());
     try {
       disable();
-      boolean exit = false;
-      while (!exit) {
+      while (true) {
         try {
           commit();
         } catch (RevokingStoreIllegalStateException e) {
-          exit = true;
+          break;
+        }
+        if (activeDialog <= 0) {
+          break;
         }
       }
 
@@ -327,6 +328,12 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
         try {
           pop();
         } catch (RevokingStoreIllegalStateException e) {
+          break;
+        }
+        if (activeDialog != 0) {
+          break;
+        }
+        if (stack.isEmpty()) {
           break;
         }
       }

@@ -229,7 +229,6 @@ public class HandleBlockMessageTest {
         for (PeerConnection peer : peerConnections) {
             peer.close();
         }
-        peerClient.close();
         handshakeHandlerTest.close();
         appT.shutdownServices();
         appT.shutdown();

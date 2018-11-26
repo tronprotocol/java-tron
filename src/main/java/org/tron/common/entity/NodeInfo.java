@@ -314,6 +314,7 @@ public class NodeInfo {
     private double minTimeRatio;
     private double maxTimeRatio;
     private long allowCreationOfContracts;
+    private long allowAdaptiveEnergy;
 
     public String getCodeVersion() {
       return codeVersion;
@@ -476,6 +477,16 @@ public class NodeInfo {
       this.allowCreationOfContracts = allowCreationOfContracts;
       return this;
     }
+
+    public long getAllowAdaptiveEnergy() {
+      return allowAdaptiveEnergy;
+    }
+
+    public ConfigNodeInfo setAllowAdaptiveEnergy(long allowAdaptiveEnergy) {
+      this.allowAdaptiveEnergy = allowAdaptiveEnergy;
+      return this;
+    }
+
   }
 
   public long getBeginSyncNum() {
@@ -639,6 +650,7 @@ public class NodeInfo {
       configBuilder.setMinTimeRatio(configNodeInfo.getMinTimeRatio());
       configBuilder.setMaxTimeRatio(configNodeInfo.getMaxTimeRatio());
       configBuilder.setAllowCreationOfContracts(configNodeInfo.getAllowCreationOfContracts());
+      configBuilder.setAllowAdaptiveEnergy(configNodeInfo.getAllowAdaptiveEnergy());
       builder.setConfigNodeInfo(configBuilder.build());
     }
     MachineInfo machineInfo = getMachineInfo();

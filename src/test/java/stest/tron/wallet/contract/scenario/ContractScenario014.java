@@ -60,18 +60,27 @@ public class ContractScenario014 {
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
-    PublicMethed.printAddress(contract014Key);
-    PublicMethed.printAddress(receiverKey);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(contract014Address,5000000000L,fromAddress,
-        testKey002,blockingStubFull));
   }
 
   @Test(enabled = true)
   public void testTripleTrigger() {
+    ecKey1 = new ECKey(Utils.getRandom());
+    contract014Address = ecKey1.getAddress();
+    contract014Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
+    ecKey2 = new ECKey(Utils.getRandom());
+    receiverAddress = ecKey2.getAddress();
+    receiverKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+    PublicMethed.printAddress(contract014Key);
+    PublicMethed.printAddress(receiverKey);
+
+
+    Assert.assertTrue(PublicMethed.sendcoin(contract014Address,5000000000L,fromAddress,
+        testKey002,blockingStubFull));
     //Deploy contract1, contract1 has a function to transaction 5 sun to target account
     String contractName = "Contract1";
     String code = "608060405260d2806100126000396000f300608060405260043610603e5763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416633d96d24c81146043575b600080fd5b606273ffffffffffffffffffffffffffffffffffffffff600435166064565b005b60405173ffffffffffffffffffffffffffffffffffffffff82169060009060059082818181858883f1935050505015801560a2573d6000803e3d6000fd5b50505600a165627a7a72305820e2d0e2bbf60a802771a52693e71a934ef01e5c5f6a584b5a3f24f5088866de4d0029";

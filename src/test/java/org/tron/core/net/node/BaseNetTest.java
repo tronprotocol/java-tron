@@ -87,7 +87,7 @@ public abstract class BaseNetTest {
         context = new TronApplicationContext(DefaultConfig.class);
 
         if (cfgArgs.isHelp()) {
-          logger.info("Here is the help message.");
+          logger.info("Here is the help message");
           return;
         }
         appT = ApplicationFactory.create(context);
@@ -106,7 +106,6 @@ public abstract class BaseNetTest {
         manager = context.getBean(Manager.class);
         NodeDelegate nodeDelegate = new NodeDelegateImpl(manager);
         node.setNodeDelegate(nodeDelegate);
-        pool.init(node);
 
         appT.startup();
         rpcApiService.blockUntilShutdown();
@@ -163,7 +162,6 @@ public abstract class BaseNetTest {
     for (PeerConnection peer : peerConnections) {
       peer.close();
     }
-    peerClient.close();
     context.destroy();
     node.shutDown();
     appT.shutdownServices();

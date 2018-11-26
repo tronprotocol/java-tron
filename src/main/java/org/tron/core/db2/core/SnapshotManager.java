@@ -1,20 +1,30 @@
 package org.tron.core.db2.core;
 
 import com.google.common.collect.Maps;
-import com.google.common.collect.Streams;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;
-import com.google.common.primitives.Longs;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.WriteOptions;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.tron.common.application.TronApplicationContext;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
-import org.tron.common.utils.Sha256Hash;
-import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.common.WrappedByteArray;
@@ -24,23 +34,12 @@ import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-
 @Slf4j
 public class SnapshotManager implements RevokingDatabase {
+
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
-  private static final int DEFAULT_FLUSH_COUNT = 5;
-
- @Autowired
-  private TronApplicationContext tronApplicationContext;
-
+  public static final int DEFAULT_MAX_FLUSH_COUNT = 500;
+  public static final int DEFAULT_MIN_FLUSH_COUNT = 1;
   @Getter
   private List<RevokingDBWithCachingNewValue> dbs = new ArrayList<>();
   @Getter
@@ -48,10 +47,18 @@ public class SnapshotManager implements RevokingDatabase {
   private AtomicInteger maxSize = new AtomicInteger(DEFAULT_STACK_MAX_SIZE);
 
   private boolean disabled = true;
+  // for test
+  @Getter
   private int activeSession = 0;
+  // for test
+  @Setter
   private boolean unChecked = true;
 
   private volatile int flushCount = 0;
+
+  private Map<String, ListeningExecutorService> flushServices = new HashMap<>();
+  @Setter
+  private volatile int maxFlushCount = DEFAULT_MIN_FLUSH_COUNT;
 
   public ISession buildSession() {
     return buildSession(false);
@@ -67,26 +74,26 @@ public class SnapshotManager implements RevokingDatabase {
       disabled = false;
     }
 
-    printDebug("before buildSession");
-
     if (size > maxSize.get()) {
       flushCount = flushCount + (size - maxSize.get());
+      updateSolidity(size - maxSize.get());
       size = maxSize.get();
       flush();
     }
 
-    // debug begin
-//    debug();
-    // debug end
     advance();
     ++activeSession;
-    printDebug("after buildSession");
     return new Session(this, disableOnExit);
   }
 
   @Override
   public void add(IRevokingDB db) {
-    dbs.add((RevokingDBWithCachingNewValue) db);
+    RevokingDBWithCachingNewValue revokingDB = (RevokingDBWithCachingNewValue) db;
+    dbs.add(revokingDB);
+    flushServices.put(revokingDB.getDbName(), MoreExecutors.listeningDecorator(
+        Executors.newSingleThreadExecutor(
+            new ThreadFactoryBuilder().setNameFormat(revokingDB.getDbName()).build()
+        )));
   }
 
   private void advance() {
@@ -111,35 +118,6 @@ public class SnapshotManager implements RevokingDatabase {
     dbs.forEach(db -> db.getHead().getPrevious().merge(db.getHead()));
     retreat();
     --activeSession;
-  }
-
-  private void printDebug(String tag) {
-    // debug begin
-    RevokingDBWithCachingNewValue debugDB = dbs.get(0);
-    Snapshot next = debugDB.getHead().getRoot();
-    List<Snapshot> snapshots = new ArrayList<>();
-    while (next != null) {
-      snapshots.add(next);
-      next = next.getNext();
-    }
-    logger.info("****debug snapshot {} db:{}, size:{}, maxSize:{}, diff:{}, flush count:{}, session:{}, solid:{}, head:{}, next:{}, all snapshot:{}",
-        tag,
-        debugDB.getDbName(),
-        size,
-        maxSize.get(),
-        size - maxSize.get(),
-        flushCount,
-        activeSession,
-        toClassString(debugDB.getHead().getSolidity()),
-        toClassString(debugDB.getHead()),
-        toClassString(debugDB.getHead().getSolidity().getNext()),
-        snapshots.stream().map(this::toClassString).collect(Collectors.toList())
-    );
-    // debug end
-  }
-
-  private String toClassString(Object o) {
-    return o == null ? null : o.getClass().getSimpleName() + "@" + o.hashCode();
   }
 
   public synchronized void revoke() {
@@ -228,85 +206,62 @@ public class SnapshotManager implements RevokingDatabase {
         TimeUnit.MILLISECONDS.sleep(10);
       }
     } catch (InterruptedException e) {
-        System.out.println(e.getMessage() + e);
-        Thread.currentThread().interrupt();
+      System.out.println(e.getMessage() + e);
+      Thread.currentThread().interrupt();
     }
     System.err.println("******** end to pop revokingDb ********");
   }
 
-  @Override
-  public void updateSolidity(long oldSolidifiedBlockNum, long newSolidifedBlockNum) {
-    long diff = newSolidifedBlockNum - oldSolidifiedBlockNum;
-    for (int i = 0; i < diff; i++) {
+  public void updateSolidity(int hops) {
+    for (int i = 0; i < hops; i++) {
       for (RevokingDBWithCachingNewValue db : dbs) {
-        db.getHead().updateSolidity(db.getHead());
+        db.getHead().updateSolidity();
       }
     }
   }
 
   private boolean shouldBeRefreshed() {
-    return flushCount >= DEFAULT_FLUSH_COUNT;
+    return flushCount >= maxFlushCount;
   }
 
   private void refresh() {
-    // debug begin
-//    List<String> debugBlockHashs = new ArrayList<>();
-//    Map<String, String> debugDumpDataMap = new HashMap<>();
-//    Multimap<String, byte[]> values = ArrayListMultimap.create();
-    // debug end
-
+    List<ListenableFuture<?>> futures = new ArrayList<>(dbs.size());
     for (RevokingDBWithCachingNewValue db : dbs) {
-      if (Snapshot.isRoot(db.getHead())) {
-        return;
-      }
-
-      List<Snapshot> snapshots = new ArrayList<>();
-
-      SnapshotRoot root = (SnapshotRoot) db.getHead().getRoot();
-      Snapshot next = root.getNext();
-      for (int i = 0; i < flushCount; ++i) {
-        // debug begin
-//        String dbName = db.getDbName();
-//        SnapshotImpl snapshot = (SnapshotImpl) next;
-//        DB<Key, Value> keyValueDB = snapshot.getDb();
-//        for (Map.Entry<Key, Value> e : keyValueDB) {
-//          Key k = e.getKey();
-//          Value v = e.getValue();
-//          debugDumpDataMap.put(dbName + ":" + ByteUtil.toHexString(k.getBytes()),
-//              dbName + ":" + ByteUtil.toHexString(k.getBytes()) + ":"
-//              + (e.getValue().getBytes() == null ? null : Sha256Hash.of(v.getBytes())));
-//          if ("block".equals(dbName)) {
-//            debugBlockHashs.add(Longs.fromByteArray(k.getBytes()) + ":" + ByteUtil.toHexString(k.getBytes()));
-//          }
-//          if ("account".equals(dbName) && v.getBytes() != null) {
-//            values.put(ByteUtil.toHexString(k.getBytes()), v.getBytes());
-//          }
-//        }
-        // debug end
-        snapshots.add(next);
-        next.getCause().resetSolidity();
-        next = next.getNext();
-      }
-
-      // debug begin
-//        if ("block".equals(db.getDbName())) {
-//            logger.info("**** debug previous:{}, next:{}, snapshots:{}",snapshots.get(0).getPrevious(), snapshots.get(snapshots.size() - 1).getNext(), snapshots);
-//        }
-      // debug end
-
-      root.merge(snapshots);
-
-      if (db.getHead() == next) {
-       db.setHead(root);
-      } else {
-        next.getNext().setPrevious(root);
-        root.setNext(next.getNext());
-      }
+      futures.add(flushServices.get(db.getDbName()).submit(() -> refreshOne(db)));
     }
-    // debug begin
-//    List<String> debugDumpDatas = debugDumpDataMap.entrySet().stream().map(Entry::getValue).sorted(String::compareTo).collect(Collectors.toList());
-//    logger.info("***debug refresh:    blocks={}, datahash:{}, accounts:{}\n", debugBlockHashs, Sha256Hash.of(debugDumpDatas.toString().getBytes()), printAccount(null));
-    // debug end
+    Future<?> future = Futures.allAsList(futures);
+    try {
+      future.get();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    } catch (ExecutionException e) {
+      logger.error(e.getMessage(), e);
+    }
+  }
+
+  private void refreshOne(RevokingDBWithCachingNewValue db) {
+    if (Snapshot.isRoot(db.getHead())) {
+      return;
+    }
+
+    List<Snapshot> snapshots = new ArrayList<>();
+
+    SnapshotRoot root = (SnapshotRoot) db.getHead().getRoot();
+    Snapshot next = root;
+    for (int i = 0; i < flushCount; ++i) {
+      next = next.getNext();
+      snapshots.add(next);
+    }
+
+    root.merge(snapshots);
+
+    root.resetSolidity();
+    if (db.getHead() == next) {
+      db.setHead(root);
+    } else {
+      next.getNext().setPrevious(root);
+      root.setNext(next.getNext());
+    }
   }
 
   public void flush() {
@@ -315,20 +270,22 @@ public class SnapshotManager implements RevokingDatabase {
     }
 
     if (shouldBeRefreshed()) {
+      long start = System.currentTimeMillis();
       deleteCheckPoint();
       createCheckPoint();
+      long checkPointEnd = System.currentTimeMillis();
       refresh();
       flushCount = 0;
+      logger.info("flush cost:{}, create checkpoint cost:{}, refresh cost:{}",
+          System.currentTimeMillis() - start,
+          checkPointEnd - start,
+          System.currentTimeMillis() - checkPointEnd
+      );
     }
   }
 
   private void createCheckPoint() {
     Map<WrappedByteArray, WrappedByteArray> batch = new HashMap<>();
-    // debug begin
-//    List<String> debugBlockHashs = new ArrayList<>();
-//    Map<String, String> debugDumpDataMap = new HashMap<>();
-//    Multimap<String, byte[]> values = ArrayListMultimap.create();
-    // debug end
     for (RevokingDBWithCachingNewValue db : dbs) {
       Snapshot head = db.getHead();
       if (Snapshot.isRoot(head)) {
@@ -336,9 +293,9 @@ public class SnapshotManager implements RevokingDatabase {
       }
 
       String dbName = db.getDbName();
-      Snapshot root = head.getRoot();
-      Snapshot next = root.getNext();
+      Snapshot next = head.getRoot();
       for (int i = 0; i < flushCount; ++i) {
+        next = next.getNext();
         SnapshotImpl snapshot = (SnapshotImpl) next;
         DB<Key, Value> keyValueDB = snapshot.getDb();
         for (Map.Entry<Key, Value> e : keyValueDB) {
@@ -346,31 +303,17 @@ public class SnapshotManager implements RevokingDatabase {
           Value v = e.getValue();
           batch.put(WrappedByteArray.of(Bytes.concat(simpleEncode(dbName), k.getBytes())),
               WrappedByteArray.of(v.encode()));
-          // debug begin
-//          debugDumpDataMap.put(dbName + ":" + ByteUtil.toHexString(k.getBytes()),
-//              dbName + ":" + ByteUtil.toHexString(k.getBytes()) + ":" + (v.getBytes() == null ? null : Sha256Hash.of(v.getBytes())));
-//          if ("block".equals(dbName)) {
-//            debugBlockHashs.add(Longs.fromByteArray(k.getBytes()) + ":" + ByteUtil.toHexString(k.getBytes()));
-//          }
-//          if ("account".equals(dbName) && v.getBytes() != null) {
-//            values.put(ByteUtil.toHexString(k.getBytes()), v.getBytes());
-//          }
-          // debug end
         }
-        next = next.getNext();
       }
     }
 
-    // debug begin
-//    List<String> debugDumpDatas = debugDumpDataMap.entrySet().stream().map(Entry::getValue).sorted(String::compareTo).collect(Collectors.toList());
-//    logger.info("***debug checkpoint: blocks={}, datahash:{}, accounts:{}\n", debugBlockHashs, Sha256Hash.of(debugDumpDatas.toString().getBytes()), printAccount(null));
-    // debug end
     LevelDbDataSourceImpl levelDbDataSource =
         new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
     levelDbDataSource.initDB();
     levelDbDataSource.updateByBatch(batch.entrySet().stream()
-        .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
-        .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll), new WriteOptions().sync(true));
+            .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
+            .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll),
+        new WriteOptions().sync(true));
     levelDbDataSource.closeDB();
   }
 
@@ -384,12 +327,6 @@ public class SnapshotManager implements RevokingDatabase {
   // ensure run this method first after process start.
   @Override
   public void check() {
-    // debug begin
-//    List<String> debugBlockHashs = new ArrayList<>();
-//    List<String> debugDumpDatas = new ArrayList<>();
-//    Multimap<String, byte[]> values = ArrayListMultimap.create();
-    // debug end
-
     for (RevokingDBWithCachingNewValue db : dbs) {
       if (!Snapshot.isRoot(db.getHead())) {
         throw new IllegalStateException("first check.");
@@ -417,28 +354,13 @@ public class SnapshotManager implements RevokingDatabase {
           dbMap.get(db).getHead().remove(realKey);
         }
 
-        // debug begin
-//        debugDumpDatas.add(db + ":" + ByteUtil.toHexString(realKey) + ":" + (realValue == null ? null : Sha256Hash.of(realValue)));
-//        if ("block".equals(db)) {
-//          debugBlockHashs.add(Longs.fromByteArray(realKey) + ":" + ByteUtil.toHexString(realKey));
-//        }
-//        if ("account".equals(db) && realValue != null) {
-//          values.put(ByteUtil.toHexString(realKey), realValue);
-//        }
-        // debug end
       }
 
       dbs.forEach(db -> db.getHead().getRoot().merge(db.getHead()));
       retreat();
     }
 
-    // debug begin
-//    debugDumpDatas.sort(String::compareTo);
-//    logger.info("***debug check:      blocks={}, datahash:{}, accounts:{}\n", debugBlockHashs, Sha256Hash.of(debugDumpDatas.toString().getBytes()), printAccount(null));
-    // debug end
-
     levelDbDataSource.closeDB();
-//    FileUtil.recursiveDelete(levelDbDataSource.getDbPath().toString());
     unChecked = false;
   }
 
@@ -458,53 +380,10 @@ public class SnapshotManager implements RevokingDatabase {
     return new String(value);
   }
 
-  private void debug() {
-    // debug begin
-    List<String> debugBlockHashs = new ArrayList<>();
-    List<String> debugDumpDatas = new ArrayList<>();
-    Map<String, byte[]> values = new HashMap<>();
-    for (RevokingDBWithCachingNewValue db : dbs) {
-      String dbName = db.getDbName();
-      Snapshot head = db.getHead();
-      if (!Snapshot.isImpl(head)) {
-        return;
-      }
-      SnapshotImpl snapshot = (SnapshotImpl) head;
-      Streams.stream(snapshot.db).forEach(e -> {
-        if ("block".equals(dbName)) {
-          debugBlockHashs.add(Longs.fromByteArray(e.getKey().getBytes()) + ":" + ByteUtil.toHexString(e.getKey().getBytes()));
-        }
-        debugDumpDatas.add(dbName + ":" + ByteUtil.toHexString(e.getKey().getBytes()) + ":" + (e.getValue().getBytes() == null ? null : Sha256Hash.of(e.getValue().getBytes())));
-        if ("account".equals(dbName) && e.getValue().getBytes() != null) {
-          values.put(ByteUtil.toHexString(e.getKey().getBytes()), e.getValue().getBytes());
-        }
-      });
-    }
-    if (!debugBlockHashs.isEmpty()) {
-      debugDumpDatas.sort(String::compareTo);
-      logger.info("***debug debug:      blocks={}, datahash:{}, account:{}\n", debugBlockHashs,
-          Sha256Hash.of(debugDumpDatas.toString().getBytes()), printAccount(values));
-    }
-    // debug end
-
-  }
-
-  private Map<String, AccountCapsule> printAccount(Map<String, byte[]> values) {
-    return null;
-//    if (unChecked) {
-//      return null;
-//    }
-//    return tronApplicationContext.getBean(Manager.class).getWitnessController().getActiveWitnesses().stream()
-//    .map(b -> b.toByteArray())
-//    .map(b -> Maps.immutableEntry(ByteUtil.toHexString(b), tronApplicationContext.getBean(
-//        AccountStore.class).get(b)))
-//        .map(e -> Maps.immutableEntry(e.getKey(), e.getValue()))
-//        .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (k, v) -> k));
-  }
-
   @Slf4j
   @Getter // only for unit test
-  public static class Session  implements ISession {
+  public static class Session implements ISession {
+
     private SnapshotManager snapshotManager;
     private boolean applySnapshot = true;
     private boolean disableOnExit = false;

@@ -135,7 +135,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
         .setNumber(number)
         .setParentHash(hash.getByteString())
         .setTimestamp(when)
-        .setVersion(ChainConstant.version)
+        .setVersion(ChainConstant.BLOCK_VERSION)
         .setWitnessAddress(witnessAddress)
         .build();
 

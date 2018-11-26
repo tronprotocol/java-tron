@@ -18,6 +18,7 @@ package org.tron.core.config.args;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 
+import org.apache.commons.lang3.StringUtils;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.Options;
 
@@ -46,6 +47,7 @@ public class Storage {
   private static final String DB_DIRECTORY_CONFIG_KEY = "storage.db.directory";
   private static final String DB_VERSION_CONFIG_KEY = "storage.db.version";
   private static final String INDEX_DIRECTORY_CONFIG_KEY = "storage.index.directory";
+  private static final String INDEX_SWITCH_CONFIG_KEY = "storage.index.switch";
   private static final String PROPERTIES_CONFIG_KEY = "storage.properties";
 
   private static final String NAME_CONFIG_KEY = "name";
@@ -65,6 +67,7 @@ public class Storage {
   private static final int DEFAULT_DB_VERSION = 1;
   private static final String DEFAULT_DB_DIRECTORY = "database";
   private static final String DEFAULT_INDEX_DIRECTORY = "index";
+  private static final String DEFAULT_INDEX_SWTICH = "on";
 
   /**
    * Default values of db options:
@@ -99,6 +102,10 @@ public class Storage {
   @Setter
   private String indexDirectory;
 
+  @Getter
+  @Setter
+  private String indexSwitch;
+
   /**
    * Other custom database configurations
    */
@@ -128,6 +135,12 @@ public class Storage {
   public static String getIndexDirectoryFromConfig(final Config config) {
     return config.hasPath(INDEX_DIRECTORY_CONFIG_KEY) ?
         config.getString(INDEX_DIRECTORY_CONFIG_KEY) : DEFAULT_INDEX_DIRECTORY;
+  }
+
+  public static String getIndexSwitchFromConfig(final Config config) {
+    return config.hasPath(INDEX_SWITCH_CONFIG_KEY)
+        && StringUtils.isNotEmpty(config.getString(INDEX_SWITCH_CONFIG_KEY)) ?
+        config.getString(INDEX_SWITCH_CONFIG_KEY) : DEFAULT_INDEX_SWTICH;
   }
 
   /**

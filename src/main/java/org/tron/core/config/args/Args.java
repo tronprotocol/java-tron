@@ -111,6 +111,9 @@ public class Args {
   @Parameter(names = {"--storage-index-directory"}, description = "Storage index directory")
   private String storageIndexDirectory = "";
 
+  @Parameter(names = {"--storage-index-switch"}, description = "Storage index switch.(on or off)")
+  private String storageIndexSwitch = "";
+
   @Getter
   private Storage storage;
 
@@ -214,6 +217,10 @@ public class Args {
 
   @Getter
   @Setter
+  private int rpcOnSolidityPort;
+
+  @Getter
+  @Setter
   private int fullNodeHttpPort;
 
   @Getter
@@ -272,7 +279,27 @@ public class Args {
 
   @Getter
   @Setter
+  private int checkFrozenTime; // for test only
+
+  @Getter
+  @Setter
   private long allowCreationOfContracts; //committee parameter
+
+  @Getter
+  @Setter
+  private long allowAdaptiveEnergy; //committee parameter
+
+  @Getter
+  @Setter
+  private long allowDelegateResource; //committee parameter
+
+  @Getter
+  @Setter
+  private long allowSameTokenName; //committee parameter
+
+  @Getter
+  @Setter
+  private long allowTvmTransferTrc10; //committee parameter
 
   @Getter
   @Setter
@@ -331,6 +358,14 @@ public class Args {
   @Setter
   private String logLevel;
 
+  @Getter
+  @Setter
+  private boolean vmTrace;
+
+  @Getter
+  @Setter
+  private boolean needToUpdateAsset;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -339,6 +374,7 @@ public class Args {
     INSTANCE.privateKey = "";
     INSTANCE.storageDbDirectory = "";
     INSTANCE.storageIndexDirectory = "";
+    INSTANCE.storageIndexSwitch = "";
 
     // FIXME: INSTANCE.storage maybe null ?
     if (INSTANCE.storage != null) {
@@ -370,11 +406,17 @@ public class Args {
     //INSTANCE.syncNodeCount = 0;
     INSTANCE.nodeP2pVersion = 0;
     INSTANCE.rpcPort = 0;
+    INSTANCE.rpcOnSolidityPort = 0;
     INSTANCE.fullNodeHttpPort = 0;
     INSTANCE.solidityHttpPort = 0;
     INSTANCE.maintenanceTimeInterval = 0;
     INSTANCE.proposalExpireTime = 0;
+    INSTANCE.checkFrozenTime = 1;
     INSTANCE.allowCreationOfContracts = 0;
+    INSTANCE.allowAdaptiveEnergy = 0;
+    INSTANCE.allowTvmTransferTrc10 = 0;
+    INSTANCE.allowDelegateResource = 0;
+    INSTANCE.allowSameTokenName = 0;
     INSTANCE.tcpNettyWorkThreadNum = 0;
     INSTANCE.udpNettyWorkThreadNum = 0;
     INSTANCE.p2pNodeId = "";
@@ -483,6 +525,10 @@ public class Args {
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getIndexDirectoryFromConfig(config)));
 
+    INSTANCE.storage.setIndexSwitch(Optional.ofNullable(INSTANCE.storageIndexSwitch)
+        .filter(StringUtils::isNotEmpty)
+        .orElse(Storage.getIndexSwitchFromConfig(config)));
+
     INSTANCE.storage.setPropertyMapFromConfig(config);
 
     INSTANCE.seedNode = new SeedNode();
@@ -569,6 +615,9 @@ public class Args {
     INSTANCE.rpcPort =
         config.hasPath("node.rpc.port") ? config.getInt("node.rpc.port") : 50051;
 
+    INSTANCE.rpcOnSolidityPort =
+        config.hasPath("node.rpc.solidityPort") ? config.getInt("node.rpc.solidityPort") : 50061;
+
     INSTANCE.fullNodeHttpPort =
         config.hasPath("node.http.fullNodePort") ? config.getInt("node.http.fullNodePort") : 8090;
 
@@ -613,9 +662,29 @@ public class Args {
         config.hasPath("block.proposalExpireTime") ? config
             .getInt("block.proposalExpireTime") : 259200000L;
 
+    INSTANCE.checkFrozenTime =
+        config.hasPath("block.checkFrozenTime") ? config
+            .getInt("block.checkFrozenTime") : 1;
+
     INSTANCE.allowCreationOfContracts =
         config.hasPath("committee.allowCreationOfContracts") ? config
             .getInt("committee.allowCreationOfContracts") : 0;
+
+    INSTANCE.allowAdaptiveEnergy =
+        config.hasPath("committee.allowAdaptiveEnergy") ? config
+            .getInt("committee.allowAdaptiveEnergy") : 0;
+
+    INSTANCE.allowDelegateResource =
+        config.hasPath("committee.allowDelegateResource") ? config
+            .getInt("committee.allowDelegateResource") : 0;
+
+    INSTANCE.allowSameTokenName =
+        config.hasPath("committee.allowSameTokenName") ? config
+            .getInt("committee.allowSameTokenName") : 0;
+
+    INSTANCE.allowTvmTransferTrc10 =
+        config.hasPath("committee.allowTvmTransferTrc10") ? config
+            .getInt("committee.allowTvmTransferTrc10") : 0;
 
     INSTANCE.tcpNettyWorkThreadNum = config.hasPath("node.tcpNettyWorkThreadNum") ? config
         .getInt("node.tcpNettyWorkThreadNum") : 0;
@@ -650,7 +719,14 @@ public class Args {
         .getBoolean("node.isOpenFullTcpDisconnect");
     INSTANCE.logLevel =
         config.hasPath("log.level.root") ? config.getString("log.level.root") : "INFO";
+    INSTANCE.needToUpdateAsset =
+        config.hasPath("storage.needToUpdateAsset") ? config
+            .getBoolean("storage.needToUpdateAsset")
+            : true;
 
+    INSTANCE.vmTrace =
+        config.hasPath("vm.vmTrace") ? config
+            .getBoolean("vm.vmTrace") : false;
     initBackupProperty(config);
 
     logConfig();

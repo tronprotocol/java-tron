@@ -19,40 +19,41 @@ package org.tron.common.runtime.vm.program.listener;
 
 import org.tron.common.runtime.vm.DataWord;
 
+// Empty ListenerAdapter
 public class ProgramListenerAdaptor implements ProgramListener {
 
     @Override
     public void onMemoryExtend(int delta) {
-
+        // do nothing
     }
 
     @Override
     public void onMemoryWrite(int address, byte[] data, int size) {
-
+        // do nothing
     }
 
     @Override
     public void onStackPop() {
-
+        // do nothing
     }
 
     @Override
     public void onStackPush(DataWord value) {
-
+        // do nothing
     }
 
     @Override
     public void onStackSwap(int from, int to) {
-
+        // do nothing
     }
 
     @Override
     public void onStoragePut(DataWord key, DataWord value) {
-
+        // do nothing
     }
 
     @Override
     public void onStorageClear() {
-
+        // do nothing
     }
 }

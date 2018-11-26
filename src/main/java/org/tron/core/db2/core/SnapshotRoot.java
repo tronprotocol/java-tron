@@ -14,12 +14,12 @@ import org.tron.core.db2.common.LevelDB;
 
 public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 
-//  @Getter
-//  private Snapshot solidity;
+  @Getter
+  private Snapshot solidity;
 
   public SnapshotRoot(String parentName, String name) {
     db = new LevelDB(parentName, name);
-    solidity = new WeakReference<>(this);
+    solidity = this;
   }
 
   @Override
@@ -85,13 +85,13 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
     ((LevelDB) db).reset();
   }
 
-//  @Override
-//  public void resetSolidity() {
-//    solidity = this;
-//  }
-//
-//  @Override
-//  public void updateSolidity() {
-//    solidity = solidity.getNext();
-//  }
+  @Override
+  public void resetSolidity() {
+    solidity = this;
+  }
+
+  @Override
+  public void updateSolidity() {
+    solidity = solidity.getNext();
+  }
 }

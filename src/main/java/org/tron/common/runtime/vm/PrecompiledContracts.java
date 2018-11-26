@@ -757,12 +757,12 @@ public class PrecompiledContracts {
       } catch (ContractExeException e) {
         logger.debug("ContractExeException when calling voteWitness in vm");
         logger.debug("ContractExeException: {}", e.getMessage());
-        this.getResult().setException(new Program.Exception().contractExecuteException(e));
+        this.getResult().setException(Program.Exception.contractExecuteException(e));
         return Pair.of(false, new DataWord(0).getData());
       } catch (ContractValidateException e) {
         logger.debug("ContractValidateException when calling voteWitness in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
-        this.getResult().setException(new Program.Exception().contractValidateException(e));
+        this.getResult().setException(Program.Exception.contractValidateException(e));
         return Pair.of(false, new DataWord(0).getData());
       }
       return Pair.of(true, new DataWord(1).getData());
@@ -944,12 +944,12 @@ public class PrecompiledContracts {
       } catch (ContractExeException e) {
         logger.debug("ContractExeException when calling withdrawBalanceNative in vm");
         logger.debug("ContractExeException: {}", e.getMessage());
-        this.getResult().setException(new Program.Exception().contractExecuteException(e));
+        this.getResult().setException(Program.Exception.contractExecuteException(e));
         return Pair.of(false, new DataWord(0).getData());
       } catch (ContractValidateException e) {
         logger.debug("ContractValidateException when calling withdrawBalanceNative in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
-        this.getResult().setException(new Program.Exception().contractValidateException(e));
+        this.getResult().setException(Program.Exception.contractValidateException(e));
         return Pair.of(false, new DataWord(0).getData());
       }
       return Pair.of(true, new DataWord(1).getData());
@@ -1020,7 +1020,7 @@ public class PrecompiledContracts {
       } catch (ContractExeException e) {
         logger.debug("ContractExeException when calling proposalApproveNative in vm");
         logger.debug("ContractExeException: {}", e.getMessage());
-        this.getResult().setException(new Program.Exception().contractExecuteException(e));
+        this.getResult().setException(Program.Exception.contractExecuteException(e));
         return Pair.of(false, new DataWord(0).getData());
       } catch (ContractValidateException e) {
         logger.debug("ContractValidateException when calling proposalApproveNative in vm");
@@ -1105,12 +1105,12 @@ public class PrecompiledContracts {
       } catch (ContractExeException e) {
         logger.debug("ContractExeException when calling proposalCreateNative in vm");
         logger.debug("ContractExeException: {}", e.getMessage());
-        this.getResult().setException(new Program.Exception().contractExecuteException(e));
+        this.getResult().setException(Program.Exception.contractExecuteException(e));
         return Pair.of(false, new DataWord(0).getData());
       } catch (ContractValidateException e) {
         logger.debug("ContractValidateException when calling proposalCreateNative in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
-        this.getResult().setException(new Program.Exception().contractValidateException(e));
+        this.getResult().setException(Program.Exception.contractValidateException(e));
         return Pair.of(false, new DataWord(0).getData());
       }
       return Pair.of(true, new DataWord(id).getData());
@@ -1174,12 +1174,12 @@ public class PrecompiledContracts {
       } catch (ContractExeException e) {
         logger.debug("ContractExeException when calling proposalDeleteContract in vm");
         logger.debug("ContractExeException: {}", e.getMessage());
-        this.getResult().setException(new Program.Exception().contractExecuteException(e));
+        this.getResult().setException(Program.Exception.contractExecuteException(e));
         return Pair.of(false, new DataWord(0).getData());
       } catch (ContractValidateException e) {
         logger.debug("ContractValidateException when calling proposalDeleteContract in vm");
         logger.debug("ContractValidateException: {}", e.getMessage());
-        this.getResult().setException(new Program.Exception().contractValidateException(e));
+        this.getResult().setException(Program.Exception.contractValidateException(e));
         return Pair.of(false, new DataWord(0).getData());
       }
       return Pair.of(true, new DataWord(1).getData());

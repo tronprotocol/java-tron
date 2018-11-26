@@ -72,7 +72,7 @@ public class HandleTransactionTest {
     }
 
     @Test
-    public void testHandleTransactionMessage() {
+    public void testHandleTransactionMessage() throws Exception{
 
         TransferContract tc =
             TransferContract.newBuilder()
@@ -218,7 +218,6 @@ public class HandleTransactionTest {
         for (PeerConnection peer : peerConnections) {
             peer.close();
         }
-        peerClient.close();
         handshakeHandlerTest.close();
         appT.shutdownServices();
         appT.shutdown();

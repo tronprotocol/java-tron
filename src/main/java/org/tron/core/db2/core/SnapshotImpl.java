@@ -25,7 +25,6 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   SnapshotImpl(Snapshot snapshot) {
     root = snapshot.getRoot();
     previous = snapshot;
-    solidity = new WeakReference<>(snapshot.getSolidity());
     snapshot.setNext(this);
     db = new HashDB();
   }
@@ -47,9 +46,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     } else {
       operator = Value.Operator.MODIFY;
     }
-    if (!Arrays.equals(value, v)) {
-      db.put(Key.copyOf(key), Value.copyOf(operator, value));
-    }
+    db.put(Key.copyOf(key), Value.copyOf(operator, value));
   }
 
   @Override
@@ -144,6 +141,11 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   }
 
   @Override
+  public Snapshot getSolidity() {
+    return root.getSolidity();
+  }
+
+  @Override
   public Iterator<Map.Entry<byte[],byte[]>> iterator() {
     Map<WrappedByteArray, WrappedByteArray> all = new HashMap<>();
     collect(all);
@@ -175,5 +177,15 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   @Override
   public void reset() {
     getRoot().reset();
+  }
+
+  @Override
+  public void resetSolidity() {
+    root.resetSolidity();
+  }
+
+  @Override
+  public void updateSolidity() {
+    root.updateSolidity();
   }
 }
