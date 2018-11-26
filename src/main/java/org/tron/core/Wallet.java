@@ -381,7 +381,7 @@ public class Wallet {
 
     try {
       BlockId blockId = dbManager.getHeadBlockId();
-      if (Args.getInstance().isExchangeSupport()){
+      if (Args.getInstance().getTrxReferenceBlock().equals("solid")){
         blockId = dbManager.getSolidBlockId();
       }
       trx.setReference(blockId.getNum(), blockId.getBytes());
@@ -400,13 +400,19 @@ public class Wallet {
   public GrpcAPI.Return broadcastTransaction(Transaction signaturedTransaction) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     try {
+      if (p2pNode.getActivePeer().isEmpty()) {
+        logger.info("Broadcast transaction failed, no connection.");
+        return builder.setResult(false).setCode(response_code.OTHER_ERROR)
+            .setMessage(ByteString.copyFromUtf8("no connection"))
+            .build();
+      }
       if (!p2pNode.getActivePeer().stream()
           .filter(p -> !p.isNeedSyncFromUs() && !p.isNeedSyncFromPeer())
           .findFirst()
           .isPresent()) {
-        logger.info("Broadcast transaction failed, no peer connection.");
+        logger.info("Broadcast transaction failed, no effective connection.");
         return builder.setResult(false).setCode(response_code.OTHER_ERROR)
-            .setMessage(ByteString.copyFromUtf8("no peer connection"))
+            .setMessage(ByteString.copyFromUtf8("no effective connection"))
             .build();
       }
       TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);

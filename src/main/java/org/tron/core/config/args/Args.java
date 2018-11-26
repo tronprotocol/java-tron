@@ -368,7 +368,7 @@ public class Args {
 
   @Getter
   @Setter
-  private boolean exchangeSupport;
+  private String trxReferenceBlock;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -728,8 +728,8 @@ public class Args {
             .getBoolean("storage.needToUpdateAsset")
             : true;
 
-    INSTANCE.exchangeSupport = config.hasPath("exchange.support") ?
-        config.getBoolean("exchange.support") : false;
+    INSTANCE.trxReferenceBlock = config.hasPath("trx.reference.block") ?
+        config.getString("trx.reference.block") : "head";
 
     INSTANCE.vmTrace =
         config.hasPath("vm.vmTrace") ? config
