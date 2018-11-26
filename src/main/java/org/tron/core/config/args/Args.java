@@ -366,6 +366,10 @@ public class Args {
   @Setter
   private boolean needToUpdateAsset;
 
+  @Getter
+  @Setter
+  private boolean exchangeSupport;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -723,6 +727,9 @@ public class Args {
         config.hasPath("storage.needToUpdateAsset") ? config
             .getBoolean("storage.needToUpdateAsset")
             : true;
+
+    INSTANCE.exchangeSupport = config.hasPath("exchange.support") ?
+        config.getBoolean("exchange.support") : false;
 
     INSTANCE.vmTrace =
         config.hasPath("vm.vmTrace") ? config
