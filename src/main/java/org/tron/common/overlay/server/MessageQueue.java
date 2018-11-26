@@ -91,7 +91,7 @@ public class MessageQueue {
     if (msg instanceof PingMessage && sendTime > System.currentTimeMillis() - 10_000) {
       return false;
     }
-    logger.info("Send to {}, {} ", ctx.channel().remoteAddress(), msg);
+    logger.debug("Send to {}, {} ", ctx.channel().remoteAddress(), msg);
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(msg);
     sendTime = System.currentTimeMillis();
     if (msg.getAnswerMessage() != null) {
@@ -103,7 +103,7 @@ public class MessageQueue {
   }
 
   public void receivedMessage(Message msg) {
-    logger.info("Receive from {}, {}", ctx.channel().remoteAddress(), msg);
+    logger.debug("Receive from {}, {}", ctx.channel().remoteAddress(), msg);
     channel.getNodeStatistics().messageStatistics.addTcpInMessage(msg);
     MessageRoundtrip messageRoundtrip = requestQueue.peek();
     if (messageRoundtrip != null && messageRoundtrip.getMsg().getAnswerMessage() == msg
