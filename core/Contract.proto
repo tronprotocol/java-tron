@@ -126,8 +126,8 @@ message ZksnarkV0TransferContract {
 }
 
 message ShieldAddress {
-  bytes private_key = 1;
-  bytes public_key = 2;
+  bytes private_address = 1;
+  bytes public_address = 2;
 }
 
 message TransferAssetContract {
