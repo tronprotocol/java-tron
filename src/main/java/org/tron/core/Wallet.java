@@ -309,8 +309,8 @@ public class Wallet {
     byte[] addPrivate = ByteUtil.merge(privateKey, privateKeyEnc);
     byte[] addPublic = ByteUtil.merge(publicKey, publicKeyEnc);
 
-    builder.setPrivateKey(ByteString.copyFrom(addPrivate));
-    builder.setPublicKey(ByteString.copyFrom(addPublic));
+    builder.setPrivateAddress(ByteString.copyFrom(addPrivate));
+    builder.setPublicAddress(ByteString.copyFrom(addPublic));
     return builder.build();
   }
 
