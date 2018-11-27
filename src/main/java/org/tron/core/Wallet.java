@@ -68,8 +68,10 @@ import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
+import org.tron.common.zksnark.ShieldAddressGenerator;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.merkle.IncrementalMerkleWitnessCapsule;
 import org.tron.core.actuator.Actuator;
@@ -113,6 +115,7 @@ import org.tron.protos.Contract.AuthenticationPath;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.IncrementalMerkleWitness;
 import org.tron.protos.Contract.MerklePath;
+import org.tron.protos.Contract.ShieldAddress;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol;
@@ -293,6 +296,23 @@ public class Wallet {
     return address;
   }
 
+  public ShieldAddress generateShieldAddress(){
+    ShieldAddress.Builder builder = ShieldAddress.newBuilder();
+    ShieldAddressGenerator shieldAddressGenerator = new ShieldAddressGenerator();
+
+    byte[] privateKey = shieldAddressGenerator.generatePrivateKey();
+    byte[] publicKey = shieldAddressGenerator.generatePublicKey(privateKey);
+
+    byte[] privateKeyEnc = shieldAddressGenerator.generatePrivateKeyEnc(privateKey);
+    byte[] publicKeyEnc = shieldAddressGenerator.generatePublicKeyEnc(privateKeyEnc);
+
+    byte[] addPrivate = ByteUtil.merge(privateKey, privateKeyEnc);
+    byte[] addPublic = ByteUtil.merge(publicKey, publicKeyEnc);
+
+    builder.setPrivateAddress(ByteString.copyFrom(addPrivate));
+    builder.setPublicAddress(ByteString.copyFrom(addPublic));
+    return builder.build();
+  }
 
   public Account getAccount(Account account) {
     AccountStore accountStore = dbManager.getAccountStore();
