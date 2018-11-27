@@ -30,6 +30,11 @@ public class LevelDB implements DB<byte[], byte[]> {
   }
 
   @Override
+  public void putAll(Map<byte[], byte[]> map) {
+    db.updateByBatch(map, writeOptions);
+  }
+
+  @Override
   public long size() {
     return db.getTotal();
   }
@@ -45,6 +50,16 @@ public class LevelDB implements DB<byte[], byte[]> {
   }
 
   @Override
+  public void clear() {
+    reset();
+  }
+
+  @Override
+  public Map<byte[], byte[]> asMap() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public DBIterator iterator() {
     return db.iterator();
   }
@@ -54,7 +69,6 @@ public class LevelDB implements DB<byte[], byte[]> {
         .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
         .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll);
     db.updateByBatch(rows, writeOptions);
-//    db.reOpen();
   }
 
   public void close() {

@@ -38,7 +38,7 @@ import org.tron.core.exception.RevokingStoreIllegalStateException;
 public class SnapshotManager implements RevokingDatabase {
 
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
-  public static final int DEFAULT_MAX_FLUSH_COUNT = 500;
+  public static final int DEFAULT_MAX_FLUSH_COUNT = 10000;
   public static final int DEFAULT_MIN_FLUSH_COUNT = 1;
   @Getter
   private List<RevokingDBWithCachingNewValue> dbs = new ArrayList<>();
@@ -76,7 +76,7 @@ public class SnapshotManager implements RevokingDatabase {
 
     if (size > maxSize.get()) {
       flushCount = flushCount + (size - maxSize.get());
-      updateSolidity(size - maxSize.get());
+      merge(size - maxSize.get());
       size = maxSize.get();
       flush();
     }
@@ -212,10 +212,18 @@ public class SnapshotManager implements RevokingDatabase {
     System.err.println("******** end to pop revokingDb ********");
   }
 
-  public void updateSolidity(int hops) {
+  private void merge(int hops) {
     for (int i = 0; i < hops; i++) {
       for (RevokingDBWithCachingNewValue db : dbs) {
-        db.getHead().updateSolidity();
+        Snapshot root = db.getHead().getRoot();
+        Snapshot next = root.getNext();
+        root.merge(root.getNext());
+        if (db.getHead() == next) {
+          db.setHead(root);
+        } else {
+          next.getNext().setPrevious(root);
+          root.setNext(next.getNext());
+        }
       }
     }
   }
@@ -240,28 +248,7 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   private void refreshOne(RevokingDBWithCachingNewValue db) {
-    if (Snapshot.isRoot(db.getHead())) {
-      return;
-    }
-
-    List<Snapshot> snapshots = new ArrayList<>();
-
-    SnapshotRoot root = (SnapshotRoot) db.getHead().getRoot();
-    Snapshot next = root;
-    for (int i = 0; i < flushCount; ++i) {
-      next = next.getNext();
-      snapshots.add(next);
-    }
-
-    root.merge(snapshots);
-
-    root.resetSolidity();
-    if (db.getHead() == next) {
-      db.setHead(root);
-    } else {
-      next.getNext().setPrevious(root);
-      root.setNext(next.getNext());
-    }
+    ((SnapshotRoot) db.getHead().getRoot()).flush();
   }
 
   public void flush() {
@@ -288,22 +275,14 @@ public class SnapshotManager implements RevokingDatabase {
     Map<WrappedByteArray, WrappedByteArray> batch = new HashMap<>();
     for (RevokingDBWithCachingNewValue db : dbs) {
       Snapshot head = db.getHead();
-      if (Snapshot.isRoot(head)) {
-        return;
-      }
-
       String dbName = db.getDbName();
-      Snapshot next = head.getRoot();
-      for (int i = 0; i < flushCount; ++i) {
-        next = next.getNext();
-        SnapshotImpl snapshot = (SnapshotImpl) next;
-        DB<Key, Value> keyValueDB = snapshot.getDb();
-        for (Map.Entry<Key, Value> e : keyValueDB) {
-          Key k = e.getKey();
-          Value v = e.getValue();
-          batch.put(WrappedByteArray.of(Bytes.concat(simpleEncode(dbName), k.getBytes())),
-              WrappedByteArray.of(v.encode()));
-        }
+      SnapshotRoot snapshot = (SnapshotRoot) head.getRoot();
+      DB<Key, Value> keyValueDB = snapshot.getCache();
+      for (Map.Entry<Key, Value> e : keyValueDB) {
+        Key k = e.getKey();
+        Value v = e.getValue();
+        batch.put(WrappedByteArray.of(Bytes.concat(simpleEncode(dbName), k.getBytes())),
+            WrappedByteArray.of(v.encode()));
       }
     }
 

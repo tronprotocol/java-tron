@@ -1,63 +1,60 @@
 package org.tron.core.db2.core;
 
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
-import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import org.tron.core.db.common.WrappedByteArray;
+import org.tron.core.db2.common.HashDB;
+import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.LevelDB;
+import org.tron.core.db2.common.Value;
+import org.tron.core.db2.common.Value.Operator;
 
 public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
-
   @Getter
-  private Snapshot solidity;
+  private HashDB cache = new HashDB();
 
   public SnapshotRoot(String parentName, String name) {
     db = new LevelDB(parentName, name);
-    solidity = this;
   }
 
   @Override
   public byte[] get(byte[] key) {
+    Value value = cache.get(Key.of(key));
+    if (value != null) {
+      return value.getBytes();
+    }
+
     return db.get(key);
   }
 
   @Override
   public void put(byte[] key, byte[] value) {
-    db.put(key, value);
+    cache.put(Key.of(key), Value.copyOf(Operator.MODIFY, value));
   }
 
   @Override
   public void remove(byte[] key) {
-    db.remove(key);
+    cache.put(Key.of(key), Value.of(Operator.DELETE, null));
   }
 
   @Override
   public void merge(Snapshot from) {
-    LevelDB levelDB = (LevelDB) db;
-    SnapshotImpl snapshot = (SnapshotImpl) from;
-    Map<WrappedByteArray, WrappedByteArray> batch = Streams.stream(snapshot.db)
-        .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey().getBytes()),
-            WrappedByteArray.of(e.getValue().getBytes())))
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    levelDB.flush(batch);
+    cache.putAll(((SnapshotImpl) from).db.asMap());
   }
 
-  public void merge(List<Snapshot> snapshots) {
-    Map<WrappedByteArray, WrappedByteArray> batch = new HashMap<>();
-    for (Snapshot snapshot : snapshots) {
-      SnapshotImpl from = (SnapshotImpl) snapshot;
-      Streams.stream(from.db)
-          .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey().getBytes()),
-              WrappedByteArray.of(e.getValue().getBytes())))
-          .forEach(e -> batch.put(e.getKey(), e.getValue()));
-    }
+  public void flush() {
+    Map<WrappedByteArray, WrappedByteArray> batch = new HashMap<>((int) cache.size());
+    Streams.stream(cache)
+        .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey().getBytes()),
+            WrappedByteArray.of(e.getValue().getBytes())))
+        .forEach(e -> batch.put(e.getKey(), e.getValue()));
     ((LevelDB) db).flush(batch);
+    cache.clear();
   }
 
   @Override
@@ -71,8 +68,17 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   }
 
   @Override
+  public Snapshot getSolidity() {
+    return this;
+  }
+
+  @Override
   public Iterator<Map.Entry<byte[],byte[]>> iterator() {
-    return db.iterator();
+    return Iterators.concat(
+        Iterators.transform(
+            Iterators.filter(cache.iterator(), e -> e.getValue().getBytes() != null),
+            e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes())),
+        Iterators.filter(db.iterator(), e -> cache.get(Key.of(e.getKey())) == null));
   }
 
   @Override
@@ -83,15 +89,5 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   @Override
   public void reset() {
     ((LevelDB) db).reset();
-  }
-
-  @Override
-  public void resetSolidity() {
-    solidity = this;
-  }
-
-  @Override
-  public void updateSolidity() {
-    solidity = solidity.getNext();
   }
 }

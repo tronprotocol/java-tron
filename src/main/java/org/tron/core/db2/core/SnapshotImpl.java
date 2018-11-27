@@ -4,19 +4,16 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
-import java.lang.ref.WeakReference;
-import lombok.Getter;
-import org.tron.core.db.common.WrappedByteArray;
-import org.tron.core.db2.common.HashDB;
-import org.tron.core.db2.common.Key;
-import org.tron.core.db2.common.Value;
-
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import lombok.Getter;
+import org.tron.core.db.common.WrappedByteArray;
+import org.tron.core.db2.common.HashDB;
+import org.tron.core.db2.common.Key;
+import org.tron.core.db2.common.Value;
 
 public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   @Getter
@@ -179,13 +176,4 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     getRoot().reset();
   }
 
-  @Override
-  public void resetSolidity() {
-    root.resetSolidity();
-  }
-
-  @Override
-  public void updateSolidity() {
-    root.updateSolidity();
-  }
 }
