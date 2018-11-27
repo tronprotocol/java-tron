@@ -318,13 +318,17 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 //    if (signature.size() % 65 != 0) {
 //      throw new SignatureFormatException("Signature size is " + signature.size());
 //    }
-//    if (signature.size() / 65 > permission.getKeysCount()) {
-//      throw new PermissionException(
-//          "Signature count is " + (signature.size() / 65) + " more than key counts of permission : "
-//              + permission.getKeysCount());
-//    }
+    if (sigs.size() > permission.getKeysCount()) {
+      throw new PermissionException(
+          "Signature count is " + (sigs.size()) + " more than key counts of permission : "
+              + permission.getKeysCount());
+    }
     HashMap addMap = new HashMap();
     for (ByteString sig : sigs) {
+      if (sig.size() < 65) {
+        throw new SignatureFormatException(
+            "Signature size is " + sig.size());
+      }
       String base64 = TransactionCapsule.getBase64FromByteString(sig);
       byte[] address = ECKey.signatureToAddress(hash, base64);
       long weight = getWeight(permission, address);
@@ -587,6 +591,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   public boolean validateSignature(AccountStore accountStore) throws ValidateSignatureException {
     if (isVerified == true) {
       return true;
+    }
+    if (this.transaction.getSignatureCount() <= 0
+        || this.transaction.getRawData().getContractCount() <= 0) {
+      throw new ValidateSignatureException("miss sig or contract");
     }
     byte[] hash = this.getRawHash().getBytes();
     try {
