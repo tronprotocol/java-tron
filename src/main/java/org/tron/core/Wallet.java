@@ -68,8 +68,10 @@ import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
+import org.tron.common.zksnark.ShieldAddressGenerator;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.merkle.IncrementalMerkleWitnessCapsule;
 import org.tron.core.actuator.Actuator;
@@ -293,6 +295,29 @@ public class Wallet {
     return address;
   }
 
+  public Map<String, byte[]> generateShieldAddress(){
+    ShieldAddressGenerator shieldAddressGenerator = new ShieldAddressGenerator();
+
+    byte[] privateKey = shieldAddressGenerator.generatePrivateKey();
+    byte[] publicKey = shieldAddressGenerator.generatePublicKey(privateKey);
+
+    byte[] privateKeyEnc = shieldAddressGenerator.generatePrivateKeyEnc(privateKey);
+    byte[] publicKeyEnc = shieldAddressGenerator.generatePublicKeyEnc(privateKeyEnc);
+
+    byte[] addPrivate = ByteUtil.merge(privateKey, privateKeyEnc);
+    byte[] addPublic = ByteUtil.merge(publicKey, publicKeyEnc);
+
+    Map<String, byte[]> shieldAddress = new HashMap<>();
+    shieldAddress.put("private_key", addPrivate);
+    shieldAddress.put("public_key", addPublic);
+
+    String addPri = encode58Check(addPrivate);
+    String addPub = encode58Check(addPublic);
+    System.out.printf("Private address : %s\n",addPri);
+    System.out.printf("Public address : %s\n", addPub);
+
+    return shieldAddress;
+  }
 
   public Account getAccount(Account account) {
     AccountStore accountStore = dbManager.getAccountStore();
