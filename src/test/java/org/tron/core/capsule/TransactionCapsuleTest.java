@@ -1012,6 +1012,7 @@ public class TransactionCapsuleTest {
 
     transactionCapsule = new TransactionCapsule(transferContract, accountStore);
     byte[] hash = transactionCapsule.getTransactionId().getBytes();
+    trxBuilder = transactionCapsule.getInstance().toBuilder();
     //SignatureFormatException
     ByteString test = ByteString.copyFromUtf8("test");
     trxBuilder.clearSignature();
