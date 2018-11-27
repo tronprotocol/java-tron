@@ -40,6 +40,8 @@ public class BlockMsgHandler implements TronMsgHandler {
   @Autowired
   private WitnessProductBlockService witnessProductBlockService;
 
+  private int maxBlockSize = BLOCK_SIZE + 1000;
+
   @Override
   public void processMessage (PeerConnection peer, TronMessage msg) throws Exception {
 
@@ -49,17 +51,12 @@ public class BlockMsgHandler implements TronMsgHandler {
 
     BlockId blockId = blockMessage.getBlockId();
     Item item = new Item(blockId, InventoryType.BLOCK);
-//    boolean syncFlag = false;
     if (peer.getSyncBlockRequested().containsKey(blockId)) {
       peer.getSyncBlockRequested().remove(blockId);
       peerSync.processBlock(peer, blockMessage);
-//      syncFlag = true;
     } else {
       peer.getAdvInvRequest().remove(item);
       processBlock(peer, blockMessage.getBlockCapsule());
-//      if (!syncFlag) {
-//        processBlock(peer, blockMessage.getBlockCapsule());
-//      }
     }
   }
 
@@ -69,7 +66,7 @@ public class BlockMsgHandler implements TronMsgHandler {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "no request");
     }
     BlockCapsule blockCapsule = msg.getBlockCapsule();
-    if (blockCapsule.getInstance().getSerializedSize() > BLOCK_SIZE + 100) {
+    if (blockCapsule.getInstance().getSerializedSize() > maxBlockSize) {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "block size over limit");
     }
     long gap = blockCapsule.getTimeStamp() - System.currentTimeMillis();

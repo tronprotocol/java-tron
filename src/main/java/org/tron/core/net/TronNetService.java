@@ -15,6 +15,7 @@ import org.tron.core.net.messagehandler.SyncBlockChainMsgHadler;
 import org.tron.core.net.messagehandler.TransactionsMsgHandler;
 import org.tron.core.net.peer.PeerAdv;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.core.net.peer.PeerStatusCheck;
 import org.tron.core.net.peer.PeerSync;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -30,6 +31,9 @@ public class TronNetService {
 
   @Autowired
   private PeerSync peerSync;
+
+  @Autowired
+  private PeerStatusCheck peerStatusCheck;
 
   @Autowired
   private SyncBlockChainMsgHadler syncBlockChainMsgHadler;
@@ -54,16 +58,18 @@ public class TronNetService {
     channelManager.init();
     peerAdv.init();
     peerSync.init();
+    peerStatusCheck.init();
     transactionsMsgHandler.init();
-    logger.info("TronNetService start.");
+    logger.info("TronNetService start successfully.");
   }
 
   public void close () {
     channelManager.close();
     peerAdv.close();
     peerSync.close();
+    peerStatusCheck.close();
     transactionsMsgHandler.close();
-    logger.info("TronNetService closed.");
+    logger.info("TronNetService closed successfully.");
   }
 
   public void onMessage(PeerConnection peer, TronMessage msg) {

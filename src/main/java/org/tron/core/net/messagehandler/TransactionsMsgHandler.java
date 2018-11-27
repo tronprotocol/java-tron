@@ -73,7 +73,6 @@ public class TransactionsMsgHandler implements TronMsgHandler {
 
   public void close() {
     smartContractExecutor.shutdown();
-    logger.info("TransactionsMsgHandler closed.");
   }
 
   public boolean isBusy() {

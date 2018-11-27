@@ -85,7 +85,6 @@ public class PeerAdv {
   public void close () {
     spreadExecutor.shutdown();
     fetchExecutor.shutdown();
-    logger.info("PeerAdv closed.");
   }
 
   synchronized public boolean addInv (Item item) {
@@ -131,8 +130,7 @@ public class PeerAdv {
     if (!peer.getAdvInvRequest().isEmpty()) {
       peer.getAdvInvRequest().keySet().forEach(item -> {
         if (tronProxy.getActivePeer().stream()
-            .filter(peerConnection -> !peerConnection.equals(peer))
-            .filter(peerConnection -> peerConnection.getAdvInvReceive().containsKey(item))
+            .filter(p -> !p.equals(peer) && p.getAdvInvReceive().containsKey(item))
             .findFirst()
             .isPresent()) {
           invToFetch.put(item, System.currentTimeMillis());

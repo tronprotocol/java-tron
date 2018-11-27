@@ -89,7 +89,6 @@ public class PeerSync {
   public void close () {
     fetchExecutor.shutdown();
     blockHandleExecutor.shutdown();
-    logger.info("PeerSync closed.");
   }
 
   public void startSync(PeerConnection peer) {
