@@ -38,51 +38,51 @@
     </property>
   </bean>
 
-  <bean id="niceExchangeTransaction"
-    class="org.tron.stresstest.dispatch.creator.exchange.NiceExchangeTransactionCreator">
-    <property name="name" value="niceExchangeTransaction"/>
-    <property name="begin" value="0"/>
-    <property name="end" value="39"/>
-  </bean>
-
   <bean id="exchangeInject"
     class="org.tron.stresstest.dispatch.creator.exchange.ExchangeInjectCreator">
     <property name="name" value="exchangeInject"/>
-    <property name="begin" value="40"/>
-    <property name="end" value="44"/>
+    <property name="begin" value="0"/>
+    <property name="end" value="1"/>
   </bean>
 
   <bean id="exchangeWithdraw"
     class="org.tron.stresstest.dispatch.creator.exchange.ExchangeWithdrawCreator">
     <property name="name" value="exchangeWithdraw"/>
-    <property name="begin" value="45"/>
-    <property name="end" value="49"/>
+    <property name="begin" value="2"/>
+    <property name="end" value="3"/>
+  </bean>
+
+  <bean id="niceExchangeTransaction"
+    class="org.tron.stresstest.dispatch.creator.exchange.NiceExchangeTransactionCreator">
+    <property name="name" value="niceExchangeTransaction"/>
+    <property name="begin" value="4"/>
+    <property name="end" value="13"/>
   </bean>
 
   <bean id="niceTransferAssetTransaction"
     class="org.tron.stresstest.dispatch.creator.asset.NiceTransferAssetTransactionCreator">
     <property name="name" value="niceTransferAssetTransaction"/>
-    <property name="begin" value="50"/>
-    <property name="end" value="89"/>
+    <property name="begin" value="14"/>
+    <property name="end" value="23"/>
   </bean>
 
   <bean id="participateAssetIssue"
     class="org.tron.stresstest.dispatch.creator.asset.ParticipateAssetIssueCreator">
     <property name="name" value="participateAssetIssue"/>
-    <property name="begin" value="90"/>
-    <property name="end" value="91"/>
+    <property name="begin" value="24"/>
+    <property name="end" value="29"/>
+  </bean>
+
+  <bean id="triggerFibonacciContractCreator" class="org.tron.stresstest.dispatch.creator.contract.TriggerFibonacciCreator">
+    <property name="name" value="triggerFibonacciContractCreator"/>
+    <property name="begin" value="30"/>
+    <property name="end" value="49"/>
   </bean>
 
   <bean id="transferToken"
     class="org.tron.stresstest.dispatch.creator.contract.TransferTokenCreator">
     <property name="name" value="transferToken"/>
-    <property name="begin" value="92"/>
-    <property name="end" value="97"/>
-  </bean>
-
-  <bean id="triggerFibonacciContractCreator" class="org.tron.stresstest.dispatch.creator.contract.TriggerFibonacciCreator">
-    <property name="name" value="triggerFibonacciContractCreator"/>
-    <property name="begin" value="98"/>
+    <property name="begin" value="50"/>
     <property name="end" value="99"/>
   </bean>
 
