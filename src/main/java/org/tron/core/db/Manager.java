@@ -1523,6 +1523,8 @@ public class Manager {
     closeOneStore(transactionHistoryStore);
     closeOneStore(votesStore);
     closeOneStore(delegatedResourceStore);
+    closeOneStore(assetIssueV2Store);
+    closeOneStore(exchangeV2Store);
     logger.info("******** end to close db ********");
   }
 
