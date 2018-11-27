@@ -328,6 +328,10 @@ public class Args {
 
   @Getter
   @Setter
+  private int allowMultiSign;
+
+  @Getter
+  @Setter
   private String logLevel;
 
   public static void clearParam() {
@@ -391,6 +395,7 @@ public class Args {
     INSTANCE.minTimeRatio = 0.0;
     INSTANCE.maxTimeRatio = 5.0;
     INSTANCE.longRunningTime = 10;
+    INSTANCE.allowMultiSign = 0;
   }
 
   /**
@@ -615,6 +620,10 @@ public class Args {
     INSTANCE.allowCreationOfContracts =
         config.hasPath("committee.allowCreationOfContracts") ? config
             .getInt("committee.allowCreationOfContracts") : 0;
+
+    INSTANCE.allowMultiSign =
+        config.hasPath("committee.allowMultiSign") ? config
+            .getInt("committee.allowMultiSign") : 0;
 
     INSTANCE.tcpNettyWorkThreadNum = config.hasPath("node.tcpNettyWorkThreadNum") ? config
         .getInt("node.tcpNettyWorkThreadNum") : 0;
