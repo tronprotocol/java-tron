@@ -115,6 +115,7 @@ import org.tron.protos.Contract.AuthenticationPath;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.IncrementalMerkleWitness;
 import org.tron.protos.Contract.MerklePath;
+import org.tron.protos.Contract.ShieldAddress;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol;
@@ -295,7 +296,8 @@ public class Wallet {
     return address;
   }
 
-  public Map<String, byte[]> generateShieldAddress(){
+  public ShieldAddress generateShieldAddress(){
+    ShieldAddress.Builder builder = ShieldAddress.newBuilder();
     ShieldAddressGenerator shieldAddressGenerator = new ShieldAddressGenerator();
 
     byte[] privateKey = shieldAddressGenerator.generatePrivateKey();
@@ -307,16 +309,9 @@ public class Wallet {
     byte[] addPrivate = ByteUtil.merge(privateKey, privateKeyEnc);
     byte[] addPublic = ByteUtil.merge(publicKey, publicKeyEnc);
 
-    Map<String, byte[]> shieldAddress = new HashMap<>();
-    shieldAddress.put("private_key", addPrivate);
-    shieldAddress.put("public_key", addPublic);
-
-    String addPri = encode58Check(addPrivate);
-    String addPub = encode58Check(addPublic);
-    System.out.printf("Private address : %s\n",addPri);
-    System.out.printf("Public address : %s\n", addPub);
-
-    return shieldAddress;
+    builder.setPrivateKey(ByteString.copyFrom(addPrivate));
+    builder.setPublicKey(ByteString.copyFrom(addPublic));
+    return builder.build();
   }
 
   public Account getAccount(Account account) {
