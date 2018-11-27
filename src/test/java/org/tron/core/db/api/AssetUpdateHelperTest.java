@@ -47,7 +47,7 @@ public class AssetUpdateHelperTest {
     dbManager = context.getBean(Manager.class);
 
     AssetIssueContract contract =
-        AssetIssueContract.newBuilder().setName(assetName).setNum(12581).build();
+        AssetIssueContract.newBuilder().setName(assetName).setNum(12581).setPrecision(5).build();
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(contract);
     dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
 
@@ -108,12 +108,14 @@ public class AssetUpdateHelperTest {
       AssetIssueCapsule assetIssueCapsule =
           dbManager.getAssetIssueStore().get(assetName.toByteArray());
       Assert.assertEquals(idNum, assetIssueCapsule.getId());
+      Assert.assertEquals(5L, assetIssueCapsule.getPrecision());
 
       AssetIssueCapsule assetIssueCapsule2 =
           dbManager.getAssetIssueV2Store().get(ByteArray.fromString(String.valueOf(idNum)));
 
       Assert.assertEquals(idNum, assetIssueCapsule2.getId());
       Assert.assertEquals(assetName, assetIssueCapsule2.getName());
+      Assert.assertEquals(0L, assetIssueCapsule2.getPrecision());
     }
 
     {

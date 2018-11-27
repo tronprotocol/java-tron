@@ -26,7 +26,6 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.Parameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
@@ -135,6 +134,7 @@ public class AssetIssueActuatorTest {
                     .setEndTime(nowTime + 24 * 3600 * 1000)
                     .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
                     .setUrl(ByteString.copyFromUtf8(URL))
+                .setPrecision(6)
                     .build());
   }
 
@@ -157,11 +157,13 @@ public class AssetIssueActuatorTest {
       AssetIssueCapsule assetIssueCapsule =
               dbManager.getAssetIssueStore().get(ByteString.copyFromUtf8(NAME).toByteArray());
       Assert.assertNotNull(assetIssueCapsule);
+      Assert.assertEquals(6, assetIssueCapsule.getPrecision());
       // check V2
       long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
       AssetIssueCapsule assetIssueCapsuleV2 =
               dbManager.getAssetIssueV2Store().get(ByteArray.fromString(String.valueOf(tokenIdNum)));
       Assert.assertNotNull(assetIssueCapsuleV2);
+      Assert.assertEquals(0, assetIssueCapsuleV2.getPrecision());
 
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
@@ -1776,49 +1778,11 @@ public class AssetIssueActuatorTest {
   }
 
   /**
-   * SameTokenName close, precision, Setting accuracy is not allowed
-   */
-  @Test
-  public void SameTokenNameCloseAccuracyNotAllow() {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
-    long nowTime = new Date().getTime();
-    Any any = Any.pack(
-            Contract.AssetIssueContract.newBuilder()
-                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-                    .setName(ByteString.copyFromUtf8(NAME))
-                    .setTotalSupply(TOTAL_SUPPLY)
-                    .setTrxNum(TRX_NUM)
-                    .setNum(NUM)
-                    .setStartTime(nowTime)
-                    .setEndTime(nowTime + 24 * 3600 * 1000)
-                    .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
-                    .setUrl(ByteString.copyFromUtf8(URL))
-                    .setPrecision(3)
-                    .build());
-
-    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager);
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-      Assert.assertTrue(false);
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Setting accuracy is not allowed", e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    } finally {
-      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
-    }
-  }
-
-  /**
-   * SameTokenName close, check invalid precision
+   * SameTokenName open, check invalid precision
    */
   @Test
   public void SameTokenNameCloseInvalidPrecision() {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     long nowTime = new Date().getTime();
     Any any = Any.pack(
             Contract.AssetIssueContract.newBuilder()
@@ -1839,6 +1803,7 @@ public class AssetIssueActuatorTest {
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
     dbManager.getDynamicPropertiesStore().statsByVersion(Parameter.ForkBlockVersionConsts.ENERGY_LIMIT, stats);
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
 
     try {
       actuator.validate();

@@ -39,22 +39,32 @@ public class UpdateAssetActuator extends AbstractActuator {
 
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
 
-      AssetIssueCapsule assetIssueCapsule;
+      AssetIssueCapsule assetIssueCapsule, assetIssueCapsuleV2;
+
+      AssetIssueStore assetIssueStoreV2 = dbManager.getAssetIssueV2Store();
+      assetIssueCapsuleV2 = assetIssueStoreV2.get(accountCapsule.getAssetIssuedID().toByteArray());
+
+      assetIssueCapsuleV2.setFreeAssetNetLimit(newLimit);
+      assetIssueCapsuleV2.setPublicFreeAssetNetLimit(newPublicLimit);
+      assetIssueCapsuleV2.setUrl(newUrl);
+      assetIssueCapsuleV2.setDescription(newDescription);
 
       if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
         AssetIssueStore assetIssueStore = dbManager.getAssetIssueStore();
         assetIssueCapsule = assetIssueStore.get(accountCapsule.getAssetIssuedName().toByteArray());
+        assetIssueCapsule.setFreeAssetNetLimit(newLimit);
+        assetIssueCapsule.setPublicFreeAssetNetLimit(newPublicLimit);
+        assetIssueCapsule.setUrl(newUrl);
+        assetIssueCapsule.setDescription(newDescription);
+
+        dbManager.getAssetIssueStore()
+            .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+        dbManager.getAssetIssueV2Store()
+            .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
       } else {
-        AssetIssueStore assetIssueStore = dbManager.getAssetIssueV2Store();
-        assetIssueCapsule = assetIssueStore.get(accountCapsule.getAssetIssuedID().toByteArray());
+        dbManager.getAssetIssueV2Store()
+            .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
       }
-
-      assetIssueCapsule.setFreeAssetNetLimit(newLimit);
-      assetIssueCapsule.setPublicFreeAssetNetLimit(newPublicLimit);
-      assetIssueCapsule.setUrl(newUrl);
-      assetIssueCapsule.setDescription(newDescription);
-
-      dbManager.putAssetIssue(assetIssueCapsule);
 
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {

@@ -647,6 +647,14 @@ service WalletSolidity {
         }
       };
   }
+
+  rpc GetAssetIssueByName (BytesMessage) returns (AssetIssueContract) {
+  }
+  rpc GetAssetIssueListByName (BytesMessage) returns (AssetIssueList) {
+  }
+  rpc GetAssetIssueById (BytesMessage) returns (AssetIssueContract) {
+  }
+
   //Please use GetNowBlock2 instead of this function.
   rpc GetNowBlock (EmptyMessage) returns (Block) {
     option (google.api.http) = {

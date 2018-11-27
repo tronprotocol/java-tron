@@ -9,6 +9,9 @@ import org.springframework.stereotype.Component;
 import org.tron.common.application.Service;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.http.GetAccountServlet;
+import org.tron.core.services.http.GetAssetIssueByIdServlet;
+import org.tron.core.services.http.GetAssetIssueByNameServlet;
+import org.tron.core.services.http.GetAssetIssueListByNameServlet;
 import org.tron.core.services.http.GetAssetIssueListServlet;
 import org.tron.core.services.http.GetBlockByNumServlet;
 import org.tron.core.services.http.GetDelegatedResourceAccountIndexServlet;
@@ -17,6 +20,7 @@ import org.tron.core.services.http.GetExchangeByIdServlet;
 import org.tron.core.services.http.GetNodeInfoServlet;
 import org.tron.core.services.http.GetNowBlockServlet;
 import org.tron.core.services.http.GetPaginatedAssetIssueListServlet;
+import org.tron.core.services.http.GetTransactionCountByBlockNumServlet;
 import org.tron.core.services.http.ListExchangesServlet;
 import org.tron.core.services.http.ListWitnessesServlet;
 
@@ -41,6 +45,8 @@ public class SolidityNodeHttpApiService implements Service {
   @Autowired
   private GetTransactionsToThisServlet getTransactionsToThisServlet;
   @Autowired
+  private GetTransactionCountByBlockNumServlet getTransactionCountByBlockNumServlet;
+  @Autowired
   private GetDelegatedResourceServlet getDelegatedResourceServlet;
   @Autowired
   private GetDelegatedResourceAccountIndexServlet getDelegatedResourceAccountIndexServlet;
@@ -55,6 +61,12 @@ public class SolidityNodeHttpApiService implements Service {
   private GetAssetIssueListServlet getAssetIssueListServlet;
   @Autowired
   private GetPaginatedAssetIssueListServlet getPaginatedAssetIssueListServlet;
+  @Autowired
+  private GetAssetIssueByNameServlet getAssetIssueByNameServlet;
+  @Autowired
+  private GetAssetIssueByIdServlet getAssetIssueByIdServlet;
+  @Autowired
+  private GetAssetIssueListByNameServlet getAssetIssueListByNameServlet;
   @Autowired
   private GetNowBlockServlet getNowBlockServlet;
   @Autowired
@@ -89,6 +101,12 @@ public class SolidityNodeHttpApiService implements Service {
           "/walletsolidity/getassetissuelist");
       context.addServlet(new ServletHolder(getPaginatedAssetIssueListServlet),
           "/walletsolidity/getpaginatedassetissuelist");
+      context.addServlet(new ServletHolder(getAssetIssueByNameServlet),
+          "/walletsolidity/getassetissuebyname");
+      context.addServlet(new ServletHolder(getAssetIssueByIdServlet),
+          "/walletsolidity/getassetissuebyid");
+      context.addServlet(new ServletHolder(getAssetIssueListByNameServlet),
+          "/walletsolidity/getassetissuelistbyname");
       context.addServlet(new ServletHolder(getNowBlockServlet), "/walletsolidity/getnowblock");
       context.addServlet(new ServletHolder(getBlockByNumServlet), "/walletsolidity/getblockbynum");
       context.addServlet(new ServletHolder(getDelegatedResourceServlet), "/walletsolidity/getdelegatedresource");
@@ -102,6 +120,9 @@ public class SolidityNodeHttpApiService implements Service {
       context
           .addServlet(new ServletHolder(getTransactionInfoByIdServlet),
               "/walletsolidity/gettransactioninfobyid");
+      context
+          .addServlet(new ServletHolder(getTransactionCountByBlockNumServlet),
+              "/walletsolidity/gettransactioncountbyblocknum");
 
       // for extension api
       if (args.isWalletExtensionApi()) {

@@ -1295,7 +1295,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     peer.setLastBlockUpdateTime(System.currentTimeMillis());
   }
 
-  private Collection<PeerConnection> getActivePeer() {
+  public Collection<PeerConnection> getActivePeer() {
     return pool.getActivePeers();
   }
 

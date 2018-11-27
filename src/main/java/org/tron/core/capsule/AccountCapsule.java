@@ -448,7 +448,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
           .putAssetV2(tokenID, Math.addExact(currentAmount, amount))
           .build();
     }
-    //key is token name
+    //key is token id
     if (manager.getDynamicPropertiesStore().getAllowSameTokenName() == 1) {
       String tokenIDStr = ByteArray.toStr(key);
       Map<String, Long> assetMapV2 = this.account.getAssetV2Map();

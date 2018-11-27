@@ -76,6 +76,7 @@ import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
@@ -379,19 +380,16 @@ public class Wallet {
     }
 
     try {
-      BlockCapsule headBlock = null;
-      List<BlockCapsule> blockList = dbManager.getBlockStore().getBlockByLatestNum(1);
-      if (CollectionUtils.isEmpty(blockList)) {
-        throw new HeaderNotFound("latest block not found");
-      } else {
-        headBlock = blockList.get(0);
+      BlockId blockId = dbManager.getHeadBlockId();
+      if (Args.getInstance().getTrxReferenceBlock().equals("solid")){
+        blockId = dbManager.getSolidBlockId();
       }
-      trx.setReference(headBlock.getNum(), headBlock.getBlockId().getBytes());
-      long expiration = headBlock.getTimeStamp() + Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME;
+      trx.setReference(blockId.getNum(), blockId.getBytes());
+      long expiration = dbManager.getHeadBlockTimeStamp() + Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME;
       trx.setExpiration(expiration);
       trx.setTimestamp();
-    } catch (HeaderNotFound headerNotFound) {
-      headerNotFound.printStackTrace();
+    } catch (Exception e) {
+      logger.error("Create transaction capsule failed.", e);
     }
     return trx;
   }
@@ -403,6 +401,23 @@ public class Wallet {
    * Broadcast a transaction.
    */
   public GrpcAPI.Return broadcastTransaction(Transaction signaturedTransaction) {
+    GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
+    try {
+      if (p2pNode.getActivePeer().isEmpty()) {
+        logger.info("Broadcast transaction failed, no connection.");
+        return builder.setResult(false).setCode(response_code.OTHER_ERROR)
+            .setMessage(ByteString.copyFromUtf8("no connection"))
+            .build();
+      }
+      if (!p2pNode.getActivePeer().stream()
+          .filter(p -> !p.isNeedSyncFromUs() && !p.isNeedSyncFromPeer())
+          .findFirst()
+          .isPresent()) {
+        logger.info("Broadcast transaction failed, no effective connection.");
+        return builder.setResult(false).setCode(response_code.OTHER_ERROR)
+            .setMessage(ByteString.copyFromUtf8("no effective connection"))
+            .build();
+      }
       TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
       Message message = new TransactionMessage(signaturedTransaction);
       nodeImpl.broadcast(message);
@@ -442,6 +457,19 @@ public class Wallet {
       logger.info(e.getMessage());
       return null;
     }
+  }
+
+  public long getTransactionCountByBlockNum(long blockNum) {
+    long count = 0;
+
+    try {
+      Block block = dbManager.getBlockByNum(blockNum).getInstance();
+      count = block.getTransactionsCount();
+    } catch (StoreException e) {
+      logger.error(e.getMessage());
+    }
+
+    return count;
   }
 
   public WitnessList getWitnessList() {

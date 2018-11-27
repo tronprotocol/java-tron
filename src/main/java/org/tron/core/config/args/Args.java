@@ -371,6 +371,10 @@ public class Args {
   @Setter
   private boolean needToUpdateAsset;
 
+  @Getter
+  @Setter
+  private String trxReferenceBlock;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -728,6 +732,9 @@ public class Args {
         config.hasPath("storage.needToUpdateAsset") ? config
             .getBoolean("storage.needToUpdateAsset")
             : true;
+
+    INSTANCE.trxReferenceBlock = config.hasPath("trx.reference.block") ?
+        config.getString("trx.reference.block") : "head";
 
     INSTANCE.vmTrace =
         config.hasPath("vm.vmTrace") ? config
