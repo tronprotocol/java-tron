@@ -1150,7 +1150,7 @@ public class Manager {
         tmpSeesion.merge();
         // push into block
         blockCapsule.addTransaction(trx);
-        if (fromPending){
+        if (fromPending) {
           iterator.remove();
         }
       } catch (ContractExeException e) {
