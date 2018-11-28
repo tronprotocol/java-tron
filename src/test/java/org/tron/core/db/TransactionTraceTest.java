@@ -19,16 +19,13 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.File;
-import java.util.Objects;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.runtime.Runtime;
-import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
-import org.tron.common.storage.DepositImpl;
+import org.tron.common.runtime.TVMTestUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Wallet;
@@ -65,21 +62,16 @@ public class TransactionTraceTest {
   private static ByteString contractAddress = ByteString.copyFrom(ByteArray.fromInt(2));
 
   /*
-   * DeployContract tracetestContract [{"constant":false,"inputs":[{"name":"accountId","type":"uint256"}],"name":"getVoters","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"voters","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"vote","type":"uint256"}],"name":"addVoters","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":"constructor"}] 608060405234801561001057600080fd5b5060015b620186a0811015610038576000818152602081905260409020819055600a01610014565b5061010b806100486000396000f30060806040526004361060525763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166386b646f281146057578063da58c7d914607e578063eb91a5ff146093575b600080fd5b348015606257600080fd5b50606c60043560aa565b60408051918252519081900360200190f35b348015608957600080fd5b50606c60043560bc565b348015609e57600080fd5b5060a860043560ce565b005b60009081526020819052604090205490565b60006020819052908152604090205481565b6000818152602081905260409020555600a165627a7a72305820f9935f89890e51bcf3ea98fa4841c91ac5957a197d99eeb7879a775b30ee9a2d0029   1000000000000 100
+   * DeployContract tracetestContract [{"constant":false,"inputs":[{"name":"accountId","type":"uint256"}],"name":"getVoters","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"voters","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"vote","type":"uint256"}],"name":"addVoters","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":"constructor"}] 608060405234801561001057600080fd5b5060015b620186a0811015610038576000818152602081905260409020819055600a01610014565b5061010b806100486000396000f30060806040526004361060525763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166386b646f281146057578063da58c7d914607e578063eb91a5ff146093575b600080fd5b348015606257600080fd5b50606c60043560aa565b60408051918252519081900360200190f35b348015608957600080fd5b50606c60043560bc565b348015609e57600080fd5b5060a860043560ce565b005b60009081526020819052604090205490565b60006020819052908152604090205481565b6000818152602081905260409020555600a165627a7a72305820f9935f89890e51bcf3ea98fa4841c91ac5957a197d99eeb7879a775b30ee9a2d0029   1000000000 100
    * */
-  private String trxDeployByte = "0a80050a0231ca220844c8b91d4d5d7e5f40e0f19aecd32c5ad904081e12d4040a30747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e437265617465536d617274436f6e7472616374129f040a15411bd09e9a1bf949b3d08b56f85ad3e3e3905763c81285040a15411bd09e9a1bf949b3d08b56f85ad3e3e3905763c81a80010a301a09676574566f74657273221412096163636f756e7449641a0775696e743235362a091a0775696e74323536300240030a2410011a06766f7465727322091a0775696e743235362a091a0775696e74323536300240020a201a09616464566f74657273220f1204766f74651a0775696e74323536300240030a043001400322d302608060405234801561001057600080fd5b5060015b620186a0811015610038576000818152602081905260409020819055600a01610014565b5061010b806100486000396000f30060806040526004361060525763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166386b646f281146057578063da58c7d914607e578063eb91a5ff146093575b600080fd5b348015606257600080fd5b50606c60043560aa565b60408051918252519081900360200190f35b348015608957600080fd5b50606c60043560bc565b348015609e57600080fd5b5060a860043560ce565b005b60009081526020819052604090205490565b60006020819052908152604090205481565b6000818152602081905260409020555600a165627a7a72305820f9935f89890e51bcf3ea98fa4841c91ac5957a197d99eeb7879a775b30ee9a2d002930643a11747261636574657374436f6e747261637470d7b297ecd32c900180a094a58d1d124165e6fe033d9ee0369c298f7ef263eab2ebf33a63e20c6fad38cf64e0f0a4f8fa0c562e6beafbd43a841ff9058e7a09c88381636db68a9ce17f4529d66f00111e00";
   /*
-   * DeployContract tracetestContract [{"constant":false,"inputs":[{"name":"accountId","type":"uint256"}],"name":"getVoters","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"voters","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"vote","type":"uint256"}],"name":"addVoters","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":"constructor"}] 608060405234801561001057600080fd5b5060015b620186a0811015610038576000818152602081905260409020819055600a01610014565b5061010b806100486000396000f30060806040526004361060525763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166386b646f281146057578063da58c7d914607e578063eb91a5ff146093575b600080fd5b348015606257600080fd5b50606c60043560aa565b60408051918252519081900360200190f35b348015608957600080fd5b50606c60043560bc565b348015609e57600080fd5b5060a860043560ce565b005b60009081526020819052604090205490565b60006020819052908152604090205481565b6000818152602081905260409020555600a165627a7a72305820f9935f89890e51bcf3ea98fa4841c91ac5957a197d99eeb7879a775b30ee9a2d0029   1000000000000 40
+   * DeployContract tracetestContract [{"constant":false,"inputs":[{"name":"accountId","type":"uint256"}],"name":"getVoters","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"voters","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"vote","type":"uint256"}],"name":"addVoters","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":"constructor"}] 608060405234801561001057600080fd5b5060015b620186a0811015610038576000818152602081905260409020819055600a01610014565b5061010b806100486000396000f30060806040526004361060525763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166386b646f281146057578063da58c7d914607e578063eb91a5ff146093575b600080fd5b348015606257600080fd5b50606c60043560aa565b60408051918252519081900360200190f35b348015608957600080fd5b50606c60043560bc565b348015609e57600080fd5b5060a860043560ce565b005b60009081526020819052604090205490565b60006020819052908152604090205481565b6000818152602081905260409020555600a165627a7a72305820f9935f89890e51bcf3ea98fa4841c91ac5957a197d99eeb7879a775b30ee9a2d0029   1000000000 40
    * */
-  private String trxDeploy2Byte = "0a80050a02b85f22088b46af8e4b7ce8f440b0af96abd52c5ad904081e12d4040a30747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e437265617465536d617274436f6e7472616374129f040a15411bd09e9a1bf949b3d08b56f85ad3e3e3905763c81285040a15411bd09e9a1bf949b3d08b56f85ad3e3e3905763c81a80010a301a09676574566f74657273221412096163636f756e7449641a0775696e743235362a091a0775696e74323536300240030a2410011a06766f7465727322091a0775696e743235362a091a0775696e74323536300240020a201a09616464566f74657273220f1204766f74651a0775696e74323536300240030a043001400322d302608060405234801561001057600080fd5b5060015b620186a0811015610038576000818152602081905260409020819055600a01610014565b5061010b806100486000396000f30060806040526004361060525763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166386b646f281146057578063da58c7d914607e578063eb91a5ff146093575b600080fd5b348015606257600080fd5b50606c60043560aa565b60408051918252519081900360200190f35b348015608957600080fd5b50606c60043560bc565b348015609e57600080fd5b5060a860043560ce565b005b60009081526020819052604090205490565b60006020819052908152604090205481565b6000818152602081905260409020555600a165627a7a72305820f9935f89890e51bcf3ea98fa4841c91ac5957a197d99eeb7879a775b30ee9a2d002930283a11747261636574657374436f6e747261637470dcde92abd52c900180a094a58d1d1241f7e5e4325ccc30c47f991de894b4a6dcb6b80e8745f2b464093ed41791e4a1ea10213fd158ec741cc5f6d39c635651b395b82be04f5ed4f822d0c735ff8664df01";
   private static String OwnerAddress = "TCWHANtDDdkZCTo2T2peyEq3Eg9c2XB7ut";
-  private String trx2ContractAddress = "TPMBUANrTwwQAPwShn7ZZjTJz1f3F8jknj";
   private static String TriggerOwnerAddress = "TCSgeWapPJhCqgWRxXCKb6jJ5AgNWSGjPA";
   /*
    * triggercontract TPMBUANrTwwQAPwShn7ZZjTJz1f3F8jknj addVoters(uint256) 113 false 1000000000 0
    * */
-
-  private static String trxTriggerByte = "0ab4010a02bad12208a38ea6cb83e39e4b40b8b59eacd52c5a8e01081f1289010a31747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e54726967676572536d617274436f6e747261637412540a15411b228f5d9f934c7bb18aaa86f90418932888e7b412154192c181c5423b247b4426792bc61e0fe5123630592224eb91a5ff000000000000000000000000000000000000000000000000000000000000007170bae39aacd52c90018094ebdc031241bf1b7448157f61b8c0cbab0263c7fdbdfbc7bc556fb66d77c79a4257f913d69869cdbf77f605506d32096faa8b1b71e827c134fe226de3f4922b1478d825937e01";
 
   static {
     Args.setParam(
@@ -103,165 +95,179 @@ public class TransactionTraceTest {
     dbManager = context.getBean(Manager.class);
     //init energy
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526647838000L);
-    dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(10_000_000L);
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(100_000L);
 
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(0);
 
   }
 
   @Test
-  public void testUseFee() throws InvalidProtocolBufferException {
-    deployInit(trxDeployByte);
+  public void testUseFee()
+      throws InvalidProtocolBufferException, VMIllegalException, BalanceInsufficientException, ContractExeException, ContractValidateException {
+    String contractName = "tracetestContract";
+    String code = "608060405234801561001057600080fd5b5060005b6103e8811015610037576000818152602081905260409020819055600a01610014565b5061010f806100476000396000f30060806040526004361060525763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416634903b0d181146057578063da31158814607e578063fe4ba936146093575b600080fd5b348015606257600080fd5b50606c60043560ad565b60408051918252519081900360200190f35b348015608957600080fd5b50606c60043560bf565b348015609e57600080fd5b5060ab60043560243560d1565b005b60006020819052908152604090205481565b60009081526020819052604090205490565b600091825260208290526040909120555600a165627a7a723058200596e6c0a5371c2c533eb97ba4c1c19b0521750a5624cb5d2e93249c8b7219d20029";
+    String abi = "[{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"balances\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"account\",\"type\":\"uint256\"}],\"name\":\"getCoin\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"receiver\",\"type\":\"uint256\"},{\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"setCoin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]";
+    CreateSmartContract smartContract = TVMTestUtils.createSmartContract(
+        Wallet.decodeFromBase58Check(OwnerAddress), contractName, abi, code, 0, 100);
+    Transaction transaction = Transaction.newBuilder().setRawData(raw.newBuilder().addContract(
+        Contract.newBuilder().setParameter(Any.pack(smartContract))
+            .setType(ContractType.CreateSmartContract)).setFeeLimit(1000000000)).build();
+
+    deployInit(transaction);
   }
 
   @Test
-  public void testUseUsage() throws InvalidProtocolBufferException, VMIllegalException {
+  public void testUseUsage()
+      throws VMIllegalException, BalanceInsufficientException, ContractValidateException, ContractExeException {
 
     AccountCapsule accountCapsule = new AccountCapsule(ByteString.copyFrom("owner".getBytes()),
         ByteString.copyFrom(Wallet.decodeFromBase58Check(OwnerAddress)), AccountType.Normal,
         totalBalance);
 
-    accountCapsule.setFrozenForEnergy(10_000_000L, 0L);
+    accountCapsule.setFrozenForEnergy(5_000_000_000L, 0L);
     dbManager.getAccountStore()
         .put(Wallet.decodeFromBase58Check(OwnerAddress), accountCapsule);
-    Transaction transaction = Transaction.parseFrom(ByteArray.fromHexString(trxDeployByte));
+    String contractName = "tracetestContract";
+    String code = "608060405234801561001057600080fd5b5060005b6103e8811015610037576000818152602081905260409020819055600a01610014565b5061010f806100476000396000f30060806040526004361060525763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416634903b0d181146057578063da31158814607e578063fe4ba936146093575b600080fd5b348015606257600080fd5b50606c60043560ad565b60408051918252519081900360200190f35b348015608957600080fd5b50606c60043560bf565b348015609e57600080fd5b5060ab60043560243560d1565b005b60006020819052908152604090205481565b60009081526020819052604090205490565b600091825260208290526040909120555600a165627a7a723058200596e6c0a5371c2c533eb97ba4c1c19b0521750a5624cb5d2e93249c8b7219d20029";
+    String abi = "[{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"balances\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"account\",\"type\":\"uint256\"}],\"name\":\"getCoin\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"receiver\",\"type\":\"uint256\"},{\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"setCoin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]";
+    CreateSmartContract smartContract = TVMTestUtils.createSmartContract(
+        Wallet.decodeFromBase58Check(OwnerAddress), contractName, abi, code, 0, 100);
+    Transaction transaction = Transaction.newBuilder().setRawData(raw.newBuilder().addContract(
+        Contract.newBuilder().setParameter(Any.pack(smartContract))
+            .setType(ContractType.CreateSmartContract)).setFeeLimit(1000000000)
+        .setTimestamp(System.currentTimeMillis()))
+        .build();
+
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     TransactionTrace trace = new TransactionTrace(transactionCapsule, dbManager);
-    DepositImpl deposit = DepositImpl.createRoot(dbManager);
-    Runtime runtime = new Runtime(trace, null, deposit,
-        new ProgramInvokeFactoryImpl());
-    try {
-      trace.exec(runtime);
-      trace.pay();
-      Assert.assertEquals(50000, trace.getReceipt().getEnergyUsage());
-      Assert.assertEquals(20110013100L, trace.getReceipt().getEnergyFee());
-      Assert.assertEquals(20115013100L,
-          trace.getReceipt().getEnergyUsage() * 100 + trace.getReceipt().getEnergyFee());
-      accountCapsule = dbManager.getAccountStore().get(accountCapsule.getAddress().toByteArray());
-      Assert.assertEquals(totalBalance,
-          accountCapsule.getBalance() + trace.getReceipt().getEnergyFee());
-    } catch (ContractExeException e) {
-      e.printStackTrace();
-    } catch (ContractValidateException e) {
-      e.printStackTrace();
-    } catch (BalanceInsufficientException e) {
-      e.printStackTrace();
-    }
+
+    trace.init(null);
+    trace.exec();
+    trace.pay();
+    Assert.assertEquals(2050831L, trace.getReceipt().getEnergyUsage());
+    Assert.assertEquals(0L, trace.getReceipt().getEnergyFee());
+    Assert.assertEquals(205083100L,
+        trace.getReceipt().getEnergyUsage() * 100 + trace.getReceipt().getEnergyFee());
+    accountCapsule = dbManager.getAccountStore().get(accountCapsule.getAddress().toByteArray());
+    Assert.assertEquals(totalBalance,
+        accountCapsule.getBalance() + trace.getReceipt().getEnergyFee());
+
   }
 
   @Test
-  public void testTriggerUseFee() throws InvalidProtocolBufferException {
-    deployInit(trxDeploy2Byte);
+  public void testTriggerUseFee()
+      throws InvalidProtocolBufferException, VMIllegalException, ContractExeException, ContractValidateException, BalanceInsufficientException {
+    String contractName = "tracetestContract";
+    String code = "608060405234801561001057600080fd5b5060005b6103e8811015610037576000818152602081905260409020819055600a01610014565b5061010f806100476000396000f30060806040526004361060525763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416634903b0d181146057578063da31158814607e578063fe4ba936146093575b600080fd5b348015606257600080fd5b50606c60043560ad565b60408051918252519081900360200190f35b348015608957600080fd5b50606c60043560bf565b348015609e57600080fd5b5060ab60043560243560d1565b005b60006020819052908152604090205481565b60009081526020819052604090205490565b600091825260208290526040909120555600a165627a7a723058200596e6c0a5371c2c533eb97ba4c1c19b0521750a5624cb5d2e93249c8b7219d20029";
+    String abi = "[{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"balances\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"account\",\"type\":\"uint256\"}],\"name\":\"getCoin\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"receiver\",\"type\":\"uint256\"},{\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"setCoin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]";
+    CreateSmartContract smartContract = TVMTestUtils.createSmartContract(
+        Wallet.decodeFromBase58Check(OwnerAddress), contractName, abi, code, 0, 100);
+    Transaction transaction = Transaction.newBuilder().setRawData(raw.newBuilder().addContract(
+        Contract.newBuilder().setParameter(Any.pack(smartContract))
+            .setType(ContractType.CreateSmartContract)).setFeeLimit(1000000000)
+        .setTimestamp(System.currentTimeMillis())).build();
+
+    byte[] contractAddress = deployInit(transaction);
     AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFrom("owner".getBytes()),
         ByteString.copyFrom(Wallet.decodeFromBase58Check(TriggerOwnerAddress)), AccountType.Normal,
         totalBalance);
     AccountCapsule originCapsule = new AccountCapsule(ByteString.copyFrom("origin".getBytes()),
         ByteString.copyFrom(Wallet.decodeFromBase58Check(OwnerAddress)), AccountType.Normal,
         totalBalance);
+    ownerCapsule.setFrozenForEnergy(5_000_000_000L, 0L);
+    originCapsule.setFrozenForEnergy(5_000_000_000L, 0L);
     dbManager.getAccountStore()
         .put(Wallet.decodeFromBase58Check(TriggerOwnerAddress), ownerCapsule);
     dbManager.getAccountStore()
         .put(Wallet.decodeFromBase58Check(TriggerOwnerAddress), originCapsule);
-    Transaction transaction = Transaction.parseFrom(ByteArray.fromHexString(trxTriggerByte));
-    TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
+    TriggerSmartContract triggerContract = TVMTestUtils.createTriggerContract(contractAddress,
+        "setCoin(uint256,uint256)", "133,133", false,
+        0, Wallet.decodeFromBase58Check(TriggerOwnerAddress));
+    Transaction transaction2 = Transaction.newBuilder().setRawData(raw.newBuilder().addContract(
+        Contract.newBuilder().setParameter(Any.pack(triggerContract))
+            .setType(ContractType.TriggerSmartContract)).setFeeLimit(1000000000L)).build();
+    TransactionCapsule transactionCapsule = new TransactionCapsule(transaction2);
     TransactionTrace trace = new TransactionTrace(transactionCapsule, dbManager);
-    DepositImpl deposit = DepositImpl.createRoot(dbManager);
-    Runtime runtime = new Runtime(trace, null, deposit,
-        new ProgramInvokeFactoryImpl());
-    try {
-      trace.exec(runtime);
-      trace.pay();
-      Assert.assertEquals(0, trace.getReceipt().getEnergyUsage());
-      Assert.assertEquals(2024300, trace.getReceipt().getEnergyFee());
-      ownerCapsule = dbManager.getAccountStore().get(ownerCapsule.getAddress().toByteArray());
-      originCapsule = dbManager.getAccountStore().get(originCapsule.getAddress().toByteArray());
-      Assert.assertEquals(totalBalance,
-          trace.getReceipt().getEnergyFee() + ownerCapsule
-              .getBalance());
-    } catch (ContractExeException e) {
-      e.printStackTrace();
-    } catch (ContractValidateException e) {
-      e.printStackTrace();
-    } catch (BalanceInsufficientException e) {
-      e.printStackTrace();
-    } catch (VMIllegalException e) {
-      e.printStackTrace();
-    }
+
+    trace.init(null);
+    trace.exec();
+    trace.pay();
+    Assert.assertEquals(20252, trace.getReceipt().getEnergyUsage());
+    Assert.assertEquals(0, trace.getReceipt().getEnergyFee());
+    ownerCapsule = dbManager.getAccountStore().get(ownerCapsule.getAddress().toByteArray());
+    Assert.assertEquals(totalBalance,
+        trace.getReceipt().getEnergyFee() + ownerCapsule
+            .getBalance());
   }
 
   @Test
-  public void testTriggerUseUsage() throws InvalidProtocolBufferException {
-    deployInit(trxDeploy2Byte);
+  public void testTriggerUseUsage()
+      throws VMIllegalException, ContractExeException, ContractValidateException, BalanceInsufficientException {
+    String contractName = "tracetestContract";
+    String code = "608060405234801561001057600080fd5b5060005b6103e8811015610037576000818152602081905260409020819055600a01610014565b5061010f806100476000396000f30060806040526004361060525763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416634903b0d181146057578063da31158814607e578063fe4ba936146093575b600080fd5b348015606257600080fd5b50606c60043560ad565b60408051918252519081900360200190f35b348015608957600080fd5b50606c60043560bf565b348015609e57600080fd5b5060ab60043560243560d1565b005b60006020819052908152604090205481565b60009081526020819052604090205490565b600091825260208290526040909120555600a165627a7a723058200596e6c0a5371c2c533eb97ba4c1c19b0521750a5624cb5d2e93249c8b7219d20029";
+    String abi = "[{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"balances\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"account\",\"type\":\"uint256\"}],\"name\":\"getCoin\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"receiver\",\"type\":\"uint256\"},{\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"setCoin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]";
+    CreateSmartContract smartContract = TVMTestUtils.createSmartContract(
+        Wallet.decodeFromBase58Check(OwnerAddress), contractName, abi, code, 0, 100);
+    Transaction transaction = Transaction.newBuilder().setRawData(raw.newBuilder().addContract(
+        Contract.newBuilder().setParameter(Any.pack(smartContract))
+            .setType(ContractType.CreateSmartContract)).setFeeLimit(1000000000)
+        .setTimestamp(System.currentTimeMillis()))
+        .build();
+
+    byte[] contractAddress = deployInit(transaction);
     AccountCapsule accountCapsule = new AccountCapsule(ByteString.copyFrom("owner".getBytes()),
-        ByteString.copyFrom(Wallet.decodeFromBase58Check(TriggerOwnerAddress)), AccountType.Normal,
+        ByteString.copyFrom(Wallet.decodeFromBase58Check(TriggerOwnerAddress)),
+        AccountType.Normal,
         totalBalance);
 
     accountCapsule.setFrozenForEnergy(10_000_000L, 0L);
     dbManager.getAccountStore()
         .put(Wallet.decodeFromBase58Check(TriggerOwnerAddress), accountCapsule);
-    Transaction transaction = Transaction.parseFrom(ByteArray.fromHexString(trxTriggerByte));
-    TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
+    TriggerSmartContract triggerContract = TVMTestUtils.createTriggerContract(contractAddress,
+        "setCoin(uint256,uint256)", "133,133", false,
+        0, Wallet.decodeFromBase58Check(TriggerOwnerAddress));
+    Transaction transaction2 = Transaction.newBuilder().setRawData(raw.newBuilder().addContract(
+        Contract.newBuilder().setParameter(Any.pack(triggerContract))
+            .setType(ContractType.TriggerSmartContract)).setFeeLimit(1000000000L)).build();
+    TransactionCapsule transactionCapsule = new TransactionCapsule(transaction2);
     TransactionTrace trace = new TransactionTrace(transactionCapsule, dbManager);
-    DepositImpl deposit = DepositImpl.createRoot(dbManager);
-    Runtime runtime = new Runtime(trace, null, deposit,
-        new ProgramInvokeFactoryImpl());
-    try {
-      trace.exec(runtime);
-      trace.pay();
-      Assert.assertEquals(5243, trace.getReceipt().getEnergyUsage());
-      Assert.assertEquals(0, trace.getReceipt().getEnergyFee());
-      Assert.assertEquals(524300,
-          trace.getReceipt().getEnergyUsage() * 100 + trace.getReceipt().getEnergyFee());
-      accountCapsule = dbManager.getAccountStore().get(accountCapsule.getAddress().toByteArray());
-      Assert.assertEquals(totalBalance,
-          accountCapsule.getBalance() + trace.getReceipt().getEnergyFee());
-    } catch (ContractExeException e) {
-      e.printStackTrace();
-    } catch (ContractValidateException e) {
-      e.printStackTrace();
-    } catch (VMIllegalException e) {
-      e.printStackTrace();
-    } catch (BalanceInsufficientException e) {
-      e.printStackTrace();
-    }
+
+    trace.init(null);
+    trace.exec();
+    trace.pay();
+    Assert.assertEquals(20252, trace.getReceipt().getEnergyUsage());
+    Assert.assertEquals(0, trace.getReceipt().getEnergyFee());
+    Assert.assertEquals(2025200,
+        trace.getReceipt().getEnergyUsage() * 100 + trace.getReceipt().getEnergyFee());
+    accountCapsule = dbManager.getAccountStore().get(accountCapsule.getAddress().toByteArray());
+    Assert.assertEquals(totalBalance,
+        accountCapsule.getBalance() + trace.getReceipt().getEnergyFee());
+
   }
 
-  private void deployInit(String trxDeploy2Byte)
-      throws InvalidProtocolBufferException {
+  private byte[] deployInit(Transaction transaction)
+      throws VMIllegalException, ContractExeException, ContractValidateException, BalanceInsufficientException {
 
     AccountCapsule accountCapsule = new AccountCapsule(ByteString.copyFrom("owner".getBytes()),
         ByteString.copyFrom(Wallet.decodeFromBase58Check(OwnerAddress)), AccountType.Normal,
         totalBalance);
     dbManager.getAccountStore()
         .put(Wallet.decodeFromBase58Check(OwnerAddress), accountCapsule);
-    Transaction transaction = Transaction.parseFrom(ByteArray.fromHexString(trxDeploy2Byte));
-    if (Objects.nonNull(
-        dbManager.getContractStore().get(Wallet.decodeFromBase58Check(trx2ContractAddress)))) {
-      return;
-    }
+
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     TransactionTrace trace = new TransactionTrace(transactionCapsule, dbManager);
-    DepositImpl deposit = DepositImpl.createRoot(dbManager);
-    Runtime runtime = new Runtime(trace, null, deposit,
-        new ProgramInvokeFactoryImpl());
-    try {
-      trace.exec(runtime);
-      trace.pay();
-      Assert.assertEquals(0, trace.getReceipt().getEnergyUsage());
-      Assert.assertEquals(20115013100L, trace.getReceipt().getEnergyFee());
-      accountCapsule = dbManager.getAccountStore().get(accountCapsule.getAddress().toByteArray());
-      Assert.assertEquals(totalBalance,
-          trace.getReceipt().getEnergyFee() + accountCapsule
-              .getBalance());
-    } catch (ContractExeException e) {
-      e.printStackTrace();
-    } catch (ContractValidateException e) {
-      e.printStackTrace();
-    } catch (BalanceInsufficientException e) {
-      e.printStackTrace();
-    } catch (VMIllegalException e) {
-      e.printStackTrace();
-    }
+
+    trace.init(null);
+    trace.exec();
+    trace.pay();
+    Assert.assertEquals(0, trace.getReceipt().getEnergyUsage());
+    Assert.assertEquals(205083100L, trace.getReceipt().getEnergyFee());
+    accountCapsule = dbManager.getAccountStore().get(accountCapsule.getAddress().toByteArray());
+    Assert.assertEquals(totalBalance,
+        trace.getReceipt().getEnergyFee() + accountCapsule
+            .getBalance());
+    return trace.getRuntime().getResult().getContractAddress();
+
   }
 
   @Test

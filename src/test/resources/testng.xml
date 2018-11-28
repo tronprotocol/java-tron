@@ -1,17 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 
-<suite name="Wallet case">
+<suite name="Stest suite" parallel="tests" thread-count="4">
   <listeners>
     <listener class-name="stest.tron.wallet.common.client.utils.RetryListener"/>
   </listeners>
-    <test name="Debug case" preserve-order="true">
-                <packages>
-                    <package name="stest.tron.wallet.*">
-                    </package>
-                </packages>
-<!--        <classes>
-            <class name="stest.tron.wallet.onlinestress.TestNetErc721Cat"/>
-        </classes>-->
-    </test>
+ <test name="Stest transfer">
+          <packages>
+       <package name="stest.tron.wallet.transfer">
+       </package>
+     </packages>
+   </test>
+   <test name="Stest account">
+     <packages>
+       <package name="stest.tron.wallet.account">
+       </package>
+       <package name="stest.tron.wallet.node">
+       </package>
+       <package name="stest.tron.wallet.witness">
+       </package>
+       <package name="stest.tron.wallet.block">
+       </package>
+       <package name="stest.tron.wallet.exchangeandtoken">
+       </package>
+       <package name="stest.tron.wallet.committee">
+       </package>
+     </packages>
+   </test>
+   <test name="Stest block,node,witness">
+     <packages>
+       <package name="stest.tron.wallet.contract.linkage">
+       </package>
+     </packages>
+   </test>
+   <test name="Stest contract">
+     <packages>
+       <package name="stest.tron.wallet.contract.exceptionfee">
+       </package>
+       <package name="stest.tron.wallet.contract.grammar">
+       </package>
+       <package name="stest.tron.wallet.contract.scenario">
+       </package>
+
+     </packages>
+<!--      <classes>
+            <class name="stest.tron.wallet.exchange.WalletExchange001"/>
+          </classes>-->
+<!--               <packages>
+            <package name="stest.tron.wallet.account">
+            </package>
+          </packages>-->
+  </test>
 </suite>

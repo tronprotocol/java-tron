@@ -52,14 +52,12 @@ public class ContractScenario007 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(contract007Address,20000000000L,fromAddress,
-        testKey002,blockingStubFull));
-    logger.info(Long.toString(PublicMethed.queryAccount(contract007Key,blockingStubFull)
-        .getBalance()));
   }
 
   @Test(enabled = true)
   public void deployErc721CardMigration() {
+    Assert.assertTrue(PublicMethed.sendcoin(contract007Address,20000000000L,fromAddress,
+        testKey002,blockingStubFull));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract007Address, 100000000L,
         3,1,contract007Key,blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract007Address,

@@ -32,6 +32,7 @@ service Wallet {
     };
   };
 
+
   //Please use CreateTransaction2 instead of this function.
   rpc CreateTransaction (TransferContract) returns (Transaction) {
     option (google.api.http) = {
@@ -94,6 +95,10 @@ service Wallet {
 
   //modify the consume_user_resource_percent
   rpc UpdateSetting (UpdateSettingContract) returns (TransactionExtention) {
+  };
+
+  //modify the energy_limit
+  rpc UpdateEnergyLimit (UpdateEnergyLimitContract) returns (TransactionExtention) {
   };
 
   //Use this function instead of VoteWitnessAccount.
@@ -312,6 +317,10 @@ service Wallet {
       }
     };
   }
+  rpc GetAssetIssueListByName (BytesMessage) returns (AssetIssueList) {
+  }
+  rpc GetAssetIssueById (BytesMessage) returns (AssetIssueContract) {
+  }
   //Please use GetNowBlock2 instead of this function.
   rpc GetNowBlock (EmptyMessage) returns (Block) {
     option (google.api.http) = {
@@ -406,6 +415,13 @@ service Wallet {
     };
   };
 
+
+  rpc GetDelegatedResource (DelegatedResourceMessage) returns (DelegatedResourceList) {
+  };
+
+  rpc GetDelegatedResourceAccountIndex (BytesMessage) returns (DelegatedResourceAccountIndex) {
+  };
+
   rpc ListProposals (EmptyMessage) returns (ProposalList) {
     option (google.api.http) = {
       post: "/wallet/listproposals"
@@ -415,7 +431,15 @@ service Wallet {
       }
     };
   };
-
+  rpc GetPaginatedProposalList (PaginatedMessage) returns (ProposalList) {
+    option (google.api.http) = {
+          post: "/wallet/getpaginatedproposallist"
+          body: "*"
+          additional_bindings {
+            get: "/wallet/getpaginatedproposallist"
+          }
+        };
+  }
   rpc GetProposalById (BytesMessage) returns (Proposal) {
     option (google.api.http) = {
         post: "/wallet/getproposalbyid"
@@ -435,7 +459,15 @@ service Wallet {
       }
     };
   };
-
+  rpc GetPaginatedExchangeList (PaginatedMessage) returns (ExchangeList) {
+    option (google.api.http) = {
+          post: "/wallet/getpaginatedexchangelist"
+          body: "*"
+          additional_bindings {
+            get: "/wallet/getpaginatedexchangelist"
+          }
+        };
+  }
   rpc GetExchangeById (BytesMessage) returns (Exchange) {
     option (google.api.http) = {
         post: "/wallet/getexchangebyid"
@@ -474,6 +506,8 @@ service Wallet {
         }
       };
   }
+
+
   rpc TotalTransaction (EmptyMessage) returns (NumberMessage) {
     option (google.api.http) = {
       post: "/wallet/totaltransaction"
@@ -558,6 +592,10 @@ service Wallet {
       }
     };
   }
+
+  rpc GetNodeInfo (EmptyMessage) returns (NodeInfo) {
+  };
+
 };
 
 
@@ -609,6 +647,14 @@ service WalletSolidity {
         }
       };
   }
+
+  rpc GetAssetIssueByName (BytesMessage) returns (AssetIssueContract) {
+  }
+  rpc GetAssetIssueListByName (BytesMessage) returns (AssetIssueList) {
+  }
+  rpc GetAssetIssueById (BytesMessage) returns (AssetIssueContract) {
+  }
+
   //Please use GetNowBlock2 instead of this function.
   rpc GetNowBlock (EmptyMessage) returns (Block) {
     option (google.api.http) = {
@@ -638,6 +684,19 @@ service WalletSolidity {
 
   rpc GetTransactionCountByBlockNum (NumberMessage) returns (NumberMessage) {
   }
+
+  rpc GetDelegatedResource (DelegatedResourceMessage) returns (DelegatedResourceList) {
+  };
+
+  rpc GetDelegatedResourceAccountIndex (BytesMessage) returns (DelegatedResourceAccountIndex) {
+  };
+
+  rpc GetExchangeById (BytesMessage) returns (Exchange) {
+  };
+
+  rpc ListExchanges (EmptyMessage) returns (ExchangeList) {
+  };
+
 
   rpc GetTransactionById (BytesMessage) returns (Transaction) {
     option (google.api.http) = {
@@ -763,6 +822,14 @@ message BlockList {
 message TransactionList {
   repeated Transaction transaction = 1;
 }
+message DelegatedResourceMessage {
+  bytes fromAddress = 1;
+  bytes toAddress = 2;
+}
+message DelegatedResourceList {
+  repeated DelegatedResource delegatedResource = 1;
+}
+
 
 // Gossip node list
 message NodeList {
@@ -860,7 +927,7 @@ message EasyTransferByPrivateMessage {
 message EasyTransferResponse {
   Transaction transaction = 1;
   Return result = 2;
-  bytes txid = 3;   //transaction id =  sha256(transaction.rowdata)
+  bytes txid = 3; //transaction id =  sha256(transaction.rowdata)
 }
 
 message AddressPrKeyPairMessage {
@@ -870,7 +937,7 @@ message AddressPrKeyPairMessage {
 
 message TransactionExtention {
   Transaction transaction = 1;
-  bytes txid = 2;   //transaction id =  sha256(transaction.rowdata)
+  bytes txid = 2; //transaction id =  sha256(transaction.rowdata)
   repeated bytes constant_result = 3;
   Return result = 4;
 }

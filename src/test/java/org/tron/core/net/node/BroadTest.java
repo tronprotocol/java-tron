@@ -9,11 +9,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
-import org.junit.*;
-import org.tron.common.application.TronApplicationContext;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
-import org.tron.common.overlay.client.PeerClient;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.Channel;
@@ -32,6 +34,9 @@ import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl.PriorItem;
+import org.tron.core.net.node.override.HandshakeHandlerTest;
+import org.tron.core.net.node.override.PeerClientTest;
+import org.tron.core.net.node.override.TronChannelInitializerTest;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
@@ -42,16 +47,19 @@ import org.tron.protos.Protocol.Transaction;
 @Slf4j
 public class BroadTest {
 
-  private static TronApplicationContext context;
-  private static NodeImpl node;
-  RpcApiService rpcApiService;
-  private static PeerClient peerClient;
-  ChannelManager channelManager;
-  SyncPool pool;
-  private static Application appT;
+  private TronApplicationContext context;
+  private NodeImpl nodeImpl;
+  private RpcApiService rpcApiService;
+  private PeerClientTest peerClient;
+  private ChannelManager channelManager;
+  private SyncPool pool;
+  private Application appT;
   private static final String dbPath = "output-nodeImplTest-broad";
   private static final String dbDirectory = "db_Broad_test";
   private static final String indexDirectory = "index_Broad_test";
+
+  private HandshakeHandlerTest handshakeHandlerTest;
+  private Node node;
 
   private class Condition {
 
@@ -76,9 +84,9 @@ public class BroadTest {
   private Sha256Hash testBlockBroad() {
     Block block = Block.getDefaultInstance();
     BlockMessage blockMessage = new BlockMessage(new BlockCapsule(block));
-    node.broadcast(blockMessage);
+    nodeImpl.broadcast(blockMessage);
     ConcurrentHashMap<Sha256Hash, InventoryType> advObjToSpread = ReflectUtils
-        .getFieldValue(node, "advObjToSpread");
+        .getFieldValue(nodeImpl, "advObjToSpread");
     Assert.assertEquals(advObjToSpread.get(blockMessage.getMessageId()), InventoryType.BLOCK);
     return blockMessage.getMessageId();
   }
@@ -86,9 +94,9 @@ public class BroadTest {
   private Sha256Hash testTransactionBroad() {
     Transaction transaction = Transaction.getDefaultInstance();
     TransactionMessage transactionMessage = new TransactionMessage(transaction);
-    node.broadcast(transactionMessage);
+    nodeImpl.broadcast(transactionMessage);
     ConcurrentHashMap<Sha256Hash, InventoryType> advObjToSpread = ReflectUtils
-        .getFieldValue(node, "advObjToSpread");
+        .getFieldValue(nodeImpl, "advObjToSpread");
     Assert.assertEquals(advObjToSpread.get(transactionMessage.getMessageId()), InventoryType.TRX);
     return transactionMessage.getMessageId();
   }
@@ -99,8 +107,8 @@ public class BroadTest {
     //remove the tx and block
     removeTheTxAndBlock(blockId, transactionId);
 
-    ReflectUtils.invokeMethod(node, "consumerAdvObjToSpread");
-    Collection<PeerConnection> activePeers = ReflectUtils.invokeMethod(node, "getActivePeer");
+    ReflectUtils.invokeMethod(nodeImpl, "consumerAdvObjToSpread");
+    Collection<PeerConnection> activePeers = ReflectUtils.invokeMethod(nodeImpl, "getActivePeer");
 
     boolean result = true;
     for (PeerConnection peerConnection : activePeers) {
@@ -119,8 +127,9 @@ public class BroadTest {
   }
 
   private void removeTheTxAndBlock(Sha256Hash blockId, Sha256Hash transactionId) {
-    Cache<Sha256Hash, TransactionMessage> trxCache = ReflectUtils.getFieldValue(node, "TrxCache");
-    Cache<Sha256Hash, BlockMessage> blockCache = ReflectUtils.getFieldValue(node, "BlockCache");
+    Cache<Sha256Hash, TransactionMessage> trxCache = ReflectUtils
+        .getFieldValue(nodeImpl, "TrxCache");
+    Cache<Sha256Hash, BlockMessage> blockCache = ReflectUtils.getFieldValue(nodeImpl, "BlockCache");
     trxCache.invalidate(transactionId);
     blockCache.invalidate(blockId);
   }
@@ -131,19 +140,19 @@ public class BroadTest {
     Thread.sleep(1000);
     //
     Map<Sha256Hash, PriorItem> advObjToFetch = ReflectUtils
-        .getFieldValue(node, "advObjToFetch");
+        .getFieldValue(nodeImpl, "advObjToFetch");
     logger.info("advObjToFetch:{}", advObjToFetch);
     logger.info("advObjToFetchSize:{}", advObjToFetch.size());
     //Assert.assertEquals(advObjToFetch.get(condition.getBlockId()), InventoryType.BLOCK);
     //Assert.assertEquals(advObjToFetch.get(condition.getTransactionId()), InventoryType.TRX);
     //To avoid writing the database, manually stop the sending of messages.
-    Collection<PeerConnection> activePeers = ReflectUtils.invokeMethod(node, "getActivePeer");
+    Collection<PeerConnection> activePeers = ReflectUtils.invokeMethod(nodeImpl, "getActivePeer");
     for (PeerConnection peerConnection : activePeers) {
       MessageQueue messageQueue = ReflectUtils.getFieldValue(peerConnection, "msgQueue");
       ReflectUtils.setFieldValue(messageQueue, "sendMsgFlag", false);
     }
     //
-    ReflectUtils.invokeMethod(node, "consumerAdvObjToFetch");
+    ReflectUtils.invokeMethod(nodeImpl, "consumerAdvObjToFetch");
     Thread.sleep(1000);
     boolean result = true;
     int count = 0;
@@ -174,6 +183,9 @@ public class BroadTest {
 
   @Before
   public void init() {
+    node = new Node(
+        "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:17889");
+
     new Thread(new Runnable() {
       @Override
       public void run() {
@@ -208,23 +220,25 @@ public class BroadTest {
 //        appT.initServices(cfgArgs);
 //        appT.startServices();
 //        appT.startup();
-        node = context.getBean(NodeImpl.class);
-        peerClient = context.getBean(PeerClient.class);
+        nodeImpl = context.getBean(NodeImpl.class);
+        peerClient = context.getBean(PeerClientTest.class);
         channelManager = context.getBean(ChannelManager.class);
         pool = context.getBean(SyncPool.class);
         Manager dbManager = context.getBean(Manager.class);
+        handshakeHandlerTest = context.getBean(HandshakeHandlerTest.class);
+        handshakeHandlerTest.setNode(node);
         NodeDelegate nodeDelegate = new NodeDelegateImpl(dbManager);
-        node.setNodeDelegate(nodeDelegate);
-        pool.init(node);
+        nodeImpl.setNodeDelegate(nodeDelegate);
+        pool.init(nodeImpl);
         prepare();
         rpcApiService.blockUntilShutdown();
       }
     }).start();
     int tryTimes = 1;
-    while (tryTimes <= 30 && (node == null || peerClient == null
+    while (tryTimes <= 30 && (nodeImpl == null || peerClient == null
         || channelManager == null || pool == null || !go)) {
       try {
-        logger.info("node:{},peerClient:{},channelManager:{},pool:{},{}", node, peerClient,
+        logger.info("nodeImpl:{},peerClient:{},channelManager:{},pool:{},{}", nodeImpl, peerClient,
             channelManager, pool, go);
         Thread.sleep(1000 * tryTimes);
       } catch (InterruptedException e) {
@@ -237,14 +251,18 @@ public class BroadTest {
 
   private void prepare() {
     try {
-      ExecutorService advertiseLoopThread = ReflectUtils.getFieldValue(node, "broadPool");
+      ExecutorService advertiseLoopThread = ReflectUtils.getFieldValue(nodeImpl, "broadPool");
       advertiseLoopThread.shutdownNow();
 
-      ReflectUtils.setFieldValue(node, "isAdvertiseActive", false);
-      ReflectUtils.setFieldValue(node, "isFetchActive", false);
+      peerClient.prepare(node.getHexId());
 
-      Node node = new Node(
-          "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:17889");
+      ReflectUtils.setFieldValue(nodeImpl, "isAdvertiseActive", false);
+      ReflectUtils.setFieldValue(nodeImpl, "isFetchActive", false);
+      TronChannelInitializerTest tronChannelInitializer = ReflectUtils
+          .getFieldValue(peerClient, "tronChannelInitializer");
+      tronChannelInitializer.prepare();
+      Channel channel = ReflectUtils.getFieldValue(tronChannelInitializer, "channel");
+      ReflectUtils.setFieldValue(channel, "handshakeHandler", handshakeHandlerTest);
       new Thread(new Runnable() {
         @Override
         public void run() {
@@ -264,15 +282,16 @@ public class BroadTest {
     }
   }
 
-  @AfterClass
-  public static void destroy() {
+  @After
+  public void destroy() {
     Args.clearParam();
-    Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(node, "getActivePeer");
+    Collection<PeerConnection> peerConnections = ReflectUtils
+        .invokeMethod(nodeImpl, "getActivePeer");
     for (PeerConnection peer : peerConnections) {
       peer.close();
     }
     context.destroy();
-    peerClient.close();
+    handshakeHandlerTest.close();
     appT.shutdownServices();
     appT.shutdown();
     FileUtil.deleteDir(new File(dbPath));

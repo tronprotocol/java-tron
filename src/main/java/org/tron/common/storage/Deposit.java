@@ -3,6 +3,7 @@ package org.tron.common.storage;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.Storage;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -41,8 +42,6 @@ public interface Deposit {
 
   byte[] getCode(byte[] codeHash);
 
-  //byte[] getCodeHash(byte[] address);
-
   void putStorageValue(byte[] address, DataWord key, DataWord value);
 
   DataWord getStorageValue(byte[] address, DataWord key);
@@ -53,12 +52,9 @@ public interface Deposit {
 
   long addBalance(byte[] address, long value);
 
-
   Deposit newDepositChild();
 
   void setParent(Deposit deposit);
-
-  void flush();
 
   void commit();
 
@@ -98,8 +94,16 @@ public interface Deposit {
 
   long getNextMaintenanceTime();
 
+  long addTokenBalance(byte[] address, byte[] tokenId, long value);
+
+  long getTokenBalance(byte[] address, byte[] tokenId);
+
+  AssetIssueCapsule getAssetIssue(byte[] tokenId);
+
   TransactionCapsule getTransaction(byte[] trxHash);
 
   BlockCapsule getBlock(byte[] blockHash);
+
+  byte[] getBlackHoleAddress();
 
 }

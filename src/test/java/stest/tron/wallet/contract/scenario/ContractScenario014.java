@@ -60,18 +60,27 @@ public class ContractScenario014 {
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
-    PublicMethed.printAddress(contract014Key);
-    PublicMethed.printAddress(receiverKey);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(contract014Address,5000000000L,fromAddress,
-        testKey002,blockingStubFull));
   }
 
   @Test(enabled = true)
   public void testTripleTrigger() {
+    ecKey1 = new ECKey(Utils.getRandom());
+    contract014Address = ecKey1.getAddress();
+    contract014Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
+    ecKey2 = new ECKey(Utils.getRandom());
+    receiverAddress = ecKey2.getAddress();
+    receiverKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+    PublicMethed.printAddress(contract014Key);
+    PublicMethed.printAddress(receiverKey);
+
+
+    Assert.assertTrue(PublicMethed.sendcoin(contract014Address,5000000000L,fromAddress,
+        testKey002,blockingStubFull));
     //Deploy contract1, contract1 has a function to transaction 5 sun to target account
     String contractName = "Contract1";
     String code = "608060405260d2806100126000396000f300608060405260043610603e5763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416633d96d24c81146043575b600080fd5b606273ffffffffffffffffffffffffffffffffffffffff600435166064565b005b60405173ffffffffffffffffffffffffffffffffffffffff82169060009060059082818181858883f1935050505015801560a2573d6000803e3d6000fd5b50505600a165627a7a72305820e2d0e2bbf60a802771a52693e71a934ef01e5c5f6a584b5a3f24f5088866de4d0029";
@@ -125,7 +134,8 @@ public class ContractScenario014 {
     Long receiverBeforeBalance = receiverAccountInfo.getBalance();
     Account contract1AccountInfo = PublicMethed.queryAccount(contractAddress1,blockingStubFull);
     Long contract1BeforeBalance = contract1AccountInfo.getBalance();
-    logger.info("contract1 balance is " + Long.toString(contract1BeforeBalance));
+    logger.info("before contract1 balance is " + Long.toString(contract1BeforeBalance));
+    logger.info("before receiver balance is " + Long.toString(receiverBeforeBalance));
     String receiveAddress = "\"" +  Base58.encode58Check(receiverAddress) + "\"";
     txid = PublicMethed.triggerContract(contractAddress2,
         "triggerContract1(address)", receiveAddress, false,
@@ -138,7 +148,7 @@ public class ContractScenario014 {
     Long receiverAfterBalance = receiverAccountInfo.getBalance();
     contract1AccountInfo = PublicMethed.queryAccount(contractAddress1,blockingStubFull);
     Long contract1AfterBalance = contract1AccountInfo.getBalance();
-    logger.info("contract1 balance is " + Long.toString(contract1AfterBalance));
+    logger.info("after contract1 balance is " + Long.toString(contract1AfterBalance));
     Assert.assertTrue(receiverAfterBalance - receiverBeforeBalance == 5);
     Assert.assertTrue(contract2BeforeBalance - contract2AfterBalance == 0);
     Assert.assertTrue(contract1BeforeBalance - contract1AfterBalance == 5);
@@ -158,6 +168,7 @@ public class ContractScenario014 {
     contract1AfterBalance = contract1AccountInfo.getBalance();
     receiverAccountInfo = PublicMethed.queryAccount(receiverAddress,blockingStubFull);
     receiverAfterBalance = receiverAccountInfo.getBalance();
+    logger.info("after receiver balance is " + Long.toString(receiverAfterBalance));
     Assert.assertTrue(receiverAfterBalance - receiverBeforeBalance == 0);
     Assert.assertTrue(contract1BeforeBalance - contract1AfterBalance == 0);
 
@@ -168,6 +179,8 @@ public class ContractScenario014 {
     Long contract3BeforeBalance = contract3AccountInfo.getBalance();
     receiverAccountInfo = PublicMethed.queryAccount(receiverAddress,blockingStubFull);
     receiverBeforeBalance = receiverAccountInfo.getBalance();
+    logger.info("before receiver balance is " + Long.toString(receiverBeforeBalance));
+    logger.info("before contract3 balance is " + Long.toString(contract3BeforeBalance));
     receiveAddress = "\"" +  Base58.encode58Check(receiverAddress) + "\"";
     txid = PublicMethed.triggerContract(contractAddress3,
         "triggerContract2(address)", receiveAddress, false,
@@ -178,6 +191,8 @@ public class ContractScenario014 {
     Long contract3AfterBalance = contract3AccountInfo.getBalance();
     receiverAccountInfo = PublicMethed.queryAccount(receiverAddress,blockingStubFull);
     receiverAfterBalance = receiverAccountInfo.getBalance();
+    logger.info("after receiver balance is " + Long.toString(receiverAfterBalance));
+    logger.info("after contract3 balance is " + Long.toString(contract3AfterBalance));
     contract1AccountInfo = PublicMethed.queryAccount(contractAddress1,blockingStubFull);
     contract1AfterBalance = contract1AccountInfo.getBalance();
 

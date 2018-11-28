@@ -16,6 +16,11 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.PingMessage;
+import org.tron.common.overlay.message.PongMessage;
+import org.tron.core.net.message.FetchInvDataMessage;
+import org.tron.core.net.message.InventoryMessage;
+import org.tron.core.net.message.TransactionsMessage;
+import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
 
 @Component
@@ -91,7 +96,9 @@ public class MessageQueue {
     if (msg instanceof PingMessage && sendTime > System.currentTimeMillis() - 10_000) {
       return false;
     }
-    logger.info("Send to {}, {} ", ctx.channel().remoteAddress(), msg);
+    if (needToLog(msg)) {
+      logger.info("Send to {}, {} ", ctx.channel().remoteAddress(), msg);
+    }
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(msg);
     sendTime = System.currentTimeMillis();
     if (msg.getAnswerMessage() != null) {
@@ -103,7 +110,9 @@ public class MessageQueue {
   }
 
   public void receivedMessage(Message msg) {
-    logger.info("Receive from {}, {}", ctx.channel().remoteAddress(), msg);
+    if (needToLog(msg)) {
+      logger.info("Receive from {}, {}", ctx.channel().remoteAddress(), msg);
+    }
     channel.getNodeStatistics().messageStatistics.addTcpInMessage(msg);
     MessageRoundtrip messageRoundtrip = requestQueue.peek();
     if (messageRoundtrip != null && messageRoundtrip.getMsg().getAnswerMessage() == msg
@@ -126,6 +135,22 @@ public class MessageQueue {
         logger.warn("Join send thread failed, peer {}", ctx.channel().remoteAddress());
       }
     }
+  }
+
+  private boolean needToLog(Message msg) {
+    if (msg instanceof PingMessage ||
+        msg instanceof PongMessage ||
+        msg instanceof TransactionsMessage){
+      return false;
+    }
+
+    if (msg instanceof InventoryMessage) {
+      if (((InventoryMessage) msg).getInventoryType().equals(InventoryType.TRX)){
+        return false;
+      }
+    }
+
+    return true;
   }
 
   private void send() {
