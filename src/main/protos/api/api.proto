@@ -598,6 +598,9 @@ service Wallet {
 
   rpc GetMerkleTreeWitness (OutputPoint) returns (IncrementalMerkleWitness) {
   }
+
+  rpc GenerateShieldAddress (EmptyMessage) returns (ShieldAddress) {
+  }
 };
 
 
