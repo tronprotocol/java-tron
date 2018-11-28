@@ -17,19 +17,15 @@ package org.tron.core.config.args;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
-
-import org.apache.commons.lang3.StringUtils;
-import org.iq80.leveldb.CompressionType;
-import org.iq80.leveldb.Options;
-
 import java.io.File;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import org.tron.common.utils.FileUtil;
-
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.StringUtils;
+import org.iq80.leveldb.CompressionType;
+import org.iq80.leveldb.Options;
+import org.tron.common.utils.FileUtil;
 
 /**
  * Custom storage configurations
@@ -64,7 +60,7 @@ public class Storage {
   /**
    * Default values of directory
    */
-  private static final int DEFAULT_DB_VERSION = 1;
+  private static final int DEFAULT_DB_VERSION = 2;
   private static final String DEFAULT_DB_DIRECTORY = "database";
   private static final String DEFAULT_INDEX_DIRECTORY = "index";
   private static final String DEFAULT_INDEX_SWTICH = "on";

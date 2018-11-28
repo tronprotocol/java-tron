@@ -953,6 +953,8 @@ public class Args {
     logger.info("Backup priority: {}", args.getBackupPriority());
     logger.info("************************ Code version *************************");
     logger.info("Code version : {}", Version.getVersion());
+    logger.info("************************ DB config *************************");
+    logger.info("DB version : {}", args.getStorage().getDbVersion());
     logger.info("***************************************************************");
     logger.info("\n");
   }
