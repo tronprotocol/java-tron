@@ -68,14 +68,8 @@ public class ExchangeCreateActuator extends AbstractActuator {
                 secondTokenID
             );
         exchangeCapsule.setBalance(firstTokenBalance, secondTokenBalance);
-        int size1 = dbManager.getExchangeStore().getAllExchanges().size();
         dbManager.getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
-        int size2 = dbManager.getExchangeStore().getAllExchanges().size();
 
-        if ((size1 + 1) != size2) {
-          logger.error("ExchangeCreateActuator,ExchangeStore keys number ,before:" + size1);
-          logger.error("ExchangeCreateActuator,ExchangeStore keys number ,after:" + size2);
-        }
         //save to new asset store
         if (!Arrays.equals(firstTokenID, "_".getBytes())) {
           String firstTokenRealID = dbManager.getAssetIssueStore().get(firstTokenID).getId();
@@ -98,21 +92,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
                 secondTokenID
             );
         exchangeCapsuleV2.setBalance(firstTokenBalance, secondTokenBalance);
-        int size1 = dbManager.getExchangeV2Store().getAllExchanges().size();
         dbManager.getExchangeV2Store().put(exchangeCapsuleV2.createDbKey(), exchangeCapsuleV2);
-        int size2 = dbManager.getExchangeV2Store().getAllExchanges().size();
-        if ((size1 + 1) != size2) {
-          logger.error("ExchangeCreateActuator,ExchangeV2Store keys number ,before:" + size1);
-          logger.error("ExchangeCreateActuator,ExchangeV2Store keys number ,after:" + size2);
-        }
-      }
-
-      if (dbManager.getExchangeStore().getAllExchanges().size() != dbManager.getExchangeV2Store()
-          .getAllExchanges().size()) {
-        logger.error("ExchangeCreateActuator,ExchangeStore keys number :" + dbManager
-            .getExchangeStore().getAllExchanges().size() + ",ExchangeV2Store keys number :"
-            + dbManager
-            .getExchangeV2Store().getAllExchanges().size());
       }
 
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
