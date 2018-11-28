@@ -1384,5 +1384,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     peer.disconnect(reason);
   }
 
+  public int getAdvObjToSpreadSize() {
+    return advObjToSpread.size();
+  }
 }
 

@@ -5,6 +5,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
 import org.tron.common.crypto.ECKey;
@@ -12,6 +13,8 @@ import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
+import org.tron.protos.Contract.FreezeBalanceContract;
+import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -22,7 +25,9 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
   protected String privateKey = "b6d8d3382c32d4d066c4f830a7e53c3da9ad8b9665dda4ca081b6cd4e807d09c";
   protected ByteString ownerAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("TRxETQim3Jn5TYqLeAnpyF5XdQeg7NUcSJ"));
   protected byte[] ownerAddressBytes = Wallet.decodeFromBase58Check("TRxETQim3Jn5TYqLeAnpyF5XdQeg7NUcSJ");
+  protected String toAddressStr = "TRxgBU7HFTQvU6zPheLHphqpwhDKNxB6Rk";
   protected ByteString toAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("TRxgBU7HFTQvU6zPheLHphqpwhDKNxB6Rk"));
+  protected byte[] toAddressBytes = Wallet.decodeFromBase58Check("TRxgBU7HFTQvU6zPheLHphqpwhDKNxB6Rk");
   protected Long amount = 1L;
   protected Long amountOneTrx = 1000_000L;
   protected ByteString assetName = ByteString.copyFrom("1003425".getBytes());
@@ -161,6 +166,36 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
     builder.setData(ByteString.copyFrom(data));
     builder.setCallValue(callValue);
+    return builder.build();
+  }
+
+  public FreezeBalanceContract createFreezeBalanceContract(byte[] ownerAddress, long frozen_balance,
+      long frozen_duration, int resourceCode, String receiverAddress) {
+    org.tron.protos.Contract.FreezeBalanceContract.Builder builder = org.tron.protos.Contract.FreezeBalanceContract.newBuilder();
+    ByteString byteAddress = ByteString.copyFrom(ownerAddress);
+    builder.setOwnerAddress(byteAddress).setFrozenBalance(frozen_balance)
+        .setFrozenDuration(frozen_duration).setResourceValue(resourceCode);
+
+    if(receiverAddress != null && !receiverAddress.equals("")){
+      ByteString receiverAddressBytes = ByteString.copyFrom(
+          Objects.requireNonNull(Wallet.decodeFromBase58Check(receiverAddress)));
+      builder.setReceiverAddress(receiverAddressBytes);
+    }
+    return builder.build();
+  }
+
+  public UnfreezeBalanceContract createUnfreezeBalanceContract(byte[] ownerAddress, int resourceCode,String receiverAddress) {
+    org.tron.protos.Contract.UnfreezeBalanceContract.Builder builder = org.tron.protos.Contract.UnfreezeBalanceContract
+        .newBuilder();
+    ByteString byteAddreess = ByteString.copyFrom(ownerAddress);
+    builder.setOwnerAddress(byteAddreess).setResourceValue(resourceCode);
+
+    if(receiverAddress != null && !receiverAddress.equals("")){
+      ByteString receiverAddressBytes = ByteString.copyFrom(
+          Objects.requireNonNull(Wallet.decodeFromBase58Check(receiverAddress)));
+      builder.setReceiverAddress(receiverAddressBytes);
+    }
+
     return builder.build();
   }
 }

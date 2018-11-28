@@ -22,6 +22,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
@@ -165,8 +166,15 @@ public class FullNode {
         Message message = new TransactionMessage(transaction);
 
         // 单线程广播交易
-        nodeImpl.broadcast(message);
-        transactionIDs.add(transaction);
+        while (true) {
+          if (nodeImpl.getAdvObjToSpreadSize() <= 100_000) {
+            nodeImpl.broadcast(message);
+            transactionIDs.add(transaction);
+            break;
+          } else {
+            Thread.sleep(500);
+          }
+        }
       }
 
       int emptyCount = 0;
