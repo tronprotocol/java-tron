@@ -13,6 +13,7 @@ import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.api.IndexHelper;
@@ -65,6 +66,11 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
     revokingDB.put(key, item.getData());
   }
+
+  public void put(byte[] key, long blockHigh) {
+    revokingDB.put(key, ByteArray.fromLong(blockHigh));
+  }
+
 
   @Override
   public void delete(byte[] key) {

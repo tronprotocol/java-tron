@@ -8,6 +8,9 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.StoreException;
@@ -17,13 +20,21 @@ import org.tron.core.exception.StoreException;
 public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> {
 
   @Autowired
+  private BlockStore blockStore;
+
+  @Autowired
   private TransactionStore(@Value("trans") String dbName) {
     super(dbName);
   }
 
   @Override
   public void put(byte[] key, TransactionCapsule item) {
-    super.put(key, item);
+    if (item.getBlockNum() != -1) {
+      super.put(key, item);
+    } else {
+      super.put(key, item.getBlockNum());
+    }
+
     if (Objects.nonNull(indexHelper)) {
       indexHelper.update(item.getInstance());
     }
@@ -32,7 +43,23 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
   @Override
   public TransactionCapsule get(byte[] key) throws BadItemException {
     byte[] value = revokingDB.getUnchecked(key);
-    return ArrayUtils.isEmpty(value) ? null : new TransactionCapsule(value);
+    if (ArrayUtils.isEmpty(value)) {
+      return null;
+    }
+
+    if (value.length == 8) {
+      long blockNum= ByteArray.toLong(value);
+      BlockCapsule block= blockStore.getLimitNumber(blockNum, 1).get(0);
+      if (Objects.nonNull(block)) {
+        for (TransactionCapsule e : block.getTransactions()) {
+          if (e.getTransactionId().equals(Sha256Hash.of(key))) {
+              return e;
+          }
+        }
+      }
+    }
+
+    return new TransactionCapsule(value);
   }
 
   /**
