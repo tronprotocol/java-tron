@@ -257,12 +257,38 @@ public class Manager {
 
   public void putExchangeCapsule(ExchangeCapsule exchangeCapsule) {
     if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      int size1 = getExchangeStore().getAllExchanges().size();
       getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
+      int size2 = getExchangeStore().getAllExchanges().size();
+      if(size1>size2 ){
+        logger.error("ExchangeCreateActuator,ExchangeStore keys number ,before:" + size1);
+        logger.error("ExchangeCreateActuator,ExchangeStore keys number ,after:" + size2);
+      }
       ExchangeCapsule exchangeCapsuleV2 = new ExchangeCapsule(exchangeCapsule.getData());
       exchangeCapsuleV2.resetTokenWithID(this);
+      size1 = getExchangeV2Store().getAllExchanges().size();
       getExchangeV2Store().put(exchangeCapsuleV2.createDbKey(), exchangeCapsuleV2);
+      size2 = getExchangeV2Store().getAllExchanges().size();
+
+      if(size1>size2 ){
+        logger.error("ExchangeCreateActuator,ExchangeV2Store keys number ,before:" + size1);
+        logger.error("ExchangeCreateActuator,ExchangeV2Store keys number ,after:" + size2);
+      }
+
+      if (getExchangeStore().getAllExchanges().size() != getExchangeV2Store()
+          .getAllExchanges().size()) {
+        logger.error("ExchangeCreateActuator,ExchangeStore keys number :" + getExchangeStore().getAllExchanges().size() + ",ExchangeV2Store keys number :" +
+            getExchangeV2Store().getAllExchanges().size()  );
+      }
+
     } else {
+      int size1 = getExchangeV2Store().getAllExchanges().size();
       getExchangeV2Store().put(exchangeCapsule.createDbKey(), exchangeCapsule);
+      int size2 = getExchangeV2Store().getAllExchanges().size();
+      if((size1+1)!=size2 ){
+        logger.error("ExchangeCreateActuator,ExchangeV2Store keys number ,before:" + size1);
+        logger.error("ExchangeCreateActuator,ExchangeV2Store keys number ,after:" + size2);
+      }
     }
   }
 
