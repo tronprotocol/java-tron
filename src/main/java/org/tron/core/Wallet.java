@@ -848,7 +848,7 @@ public class Wallet {
   }
 
   public byte[] getBestMerkleRoot() {
-    IncrementalMerkleTreeContainer lastTree = dbManager.getMerkleContainer().getBestMerkleRoot();
+    IncrementalMerkleTreeContainer lastTree = dbManager.getMerkleContainer().getBestMerkle();
     if (lastTree != null) {
       return lastTree.getRootArray();
     }

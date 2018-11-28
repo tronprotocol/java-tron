@@ -10,6 +10,8 @@ import org.tron.common.crypto.zksnark.VerifyingKey;
 import org.tron.common.crypto.zksnark.ZkVerify;
 import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
+import org.tron.common.zksnark.merkle.MerkleContainer;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
@@ -58,10 +60,15 @@ public class ZkV0TransferActuator extends AbstractActuator {
     dbManager.getNullfierStore().put(nf1, new BytesCapsule(nf1));
     dbManager.getNullfierStore().put(nf2, new BytesCapsule(nf2));
 
-    byte[] hash = getContractId(zkContract);
+    MerkleContainer merkleContainer = dbManager.getMerkleContainer();
+    IncrementalMerkleTreeContainer currentMerkle = dbManager.getMerkleContainer()
+        .getCurrentMerkle();
 
-    dbManager.getMerkleContainer().saveCmIntoMerkleTree(zkContract.getRt().toByteArray(),
-        zkContract.getCm1().toByteArray(), zkContract.getCm2().toByteArray(), hash);
+    merkleContainer.saveCmIntoMerkleTree(currentMerkle, zkContract.getCm1().toByteArray());
+    merkleContainer.saveCmIntoMerkleTree(currentMerkle, zkContract.getCm2().toByteArray());
+
+    merkleContainer.setCurrentMerkle(currentMerkle);
+
     return true;
   }
 

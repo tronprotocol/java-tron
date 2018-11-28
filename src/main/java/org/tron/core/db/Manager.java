@@ -1197,6 +1197,8 @@ public class Manager {
       processTransaction(transactionCapsule, block);
     }
 
+    merkleContainer.saveCurrentMerkleTreeAsBestMerkleTree();
+
     boolean needMaint = needMaintenance(block.getTimeStamp());
     if (needMaint) {
       if (block.getNum() == 1) {

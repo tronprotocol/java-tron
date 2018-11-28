@@ -24,8 +24,17 @@ public class MerkleContainer {
   }
 
   public static byte[] lastTreeKey = "LAST_TREE".getBytes();
+  public static byte[] currentTreeKey = "CURRENT_TREE".getBytes();
 
-  public IncrementalMerkleTreeContainer getBestMerkleRoot() {
+  public IncrementalMerkleTreeContainer getCurrentMerkle() {
+    IncrementalMerkleTreeCapsule capsule = manager.getMerkleTreeStore().get(currentTreeKey);
+    if (capsule == null) {
+      return getBestMerkle();
+    }
+    return capsule.toMerkleTreeContainer();
+  }
+
+  public IncrementalMerkleTreeContainer getBestMerkle() {
     IncrementalMerkleTreeCapsule capsule = manager.getMerkleTreeStore().get(lastTreeKey);
     if (capsule == null) {
       IncrementalMerkleTreeContainer container =
@@ -47,9 +56,20 @@ public class MerkleContainer {
     return capsule.toMerkleTreeContainer();
   }
 
-  public void setBestMerkleRoot(IncrementalMerkleTreeContainer lastTree) {
-    manager.getMerkleTreeStore().put(lastTreeKey, lastTree.getTreeCapsule());
+  public void saveCurrentMerkleTreeAsBestMerkleTree() {
+    IncrementalMerkleTreeContainer treeContainer = getCurrentMerkle();
+    setBestMerkle(treeContainer);
+    putMerkleTreeIntoStore(treeContainer.getMerkleTreeKey(), treeContainer.getTreeCapsule());
   }
+
+  public void setBestMerkle(IncrementalMerkleTreeContainer treeContainer) {
+    manager.getMerkleTreeStore().put(lastTreeKey, treeContainer.getTreeCapsule());
+  }
+
+  public void setCurrentMerkle(IncrementalMerkleTreeContainer treeContainer) {
+    manager.getMerkleTreeStore().put(currentTreeKey, treeContainer.getTreeCapsule());
+  }
+
 
   public boolean merkleRootIsExist(byte[] rt) {
     return this.manager.getMerkleTreeStore().contain(rt);
@@ -69,6 +89,8 @@ public class MerkleContainer {
     return tree;
   }
 
+  //todo : to delete later
+  @Deprecated
   public IncrementalMerkleTreeContainer saveCmIntoMerkleTree(
       byte[] rt, byte[] cm1, byte[] cm2, byte[] hash) {
 
