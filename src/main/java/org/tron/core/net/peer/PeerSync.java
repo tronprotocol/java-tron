@@ -49,8 +49,8 @@ public class PeerSync {
 
   private Map<BlockMessage, PeerConnection> blockJustReceived = new ConcurrentHashMap<>();
 
-  private Cache<BlockId, Long> requestBlockIds = CacheBuilder.newBuilder().maximumSize(10000)
-      .expireAfterWrite(1, TimeUnit.HOURS).initialCapacity(10000)
+  private Cache<BlockId, Long> requestBlockIds = CacheBuilder.newBuilder().maximumSize(10_000)
+      .expireAfterWrite(1, TimeUnit.HOURS).initialCapacity(10_000)
       .recordStats().build();
 
   private ScheduledExecutorService fetchExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -81,7 +81,7 @@ public class PeerSync {
           handleSyncBlock();
         }
       } catch (Throwable t) {
-        logger.error("Unhandled exception", t);
+        logger.error("Handle sync block error.", t);
       }
     }, 10, 1, TimeUnit.SECONDS);
   }
@@ -132,7 +132,6 @@ public class PeerSync {
   public void onDisconnect (PeerConnection peer) {
     if (!peer.getSyncBlockRequested().isEmpty()) {
       peer.getSyncBlockRequested().keySet().forEach(blockId -> invalid(blockId));
-      fetchFlag = true;
     }
   }
 
@@ -192,9 +191,9 @@ public class PeerSync {
     return summary;
   }
 
-  private synchronized void startFetchSyncBlock() {
+  private void startFetchSyncBlock() {
     HashMap<PeerConnection, List<BlockId>> send = new HashMap<>();
-    HashSet<BlockId> request = new HashSet<>();
+//    HashSet<BlockId> request = new HashSet<>();
 
     tronProxy.getActivePeer().stream()
         .filter(peer -> peer.isNeedSyncFromPeer() && peer.isIdle())
@@ -203,9 +202,11 @@ public class PeerSync {
             send.put(peer, new LinkedList<>());
           }
           for (BlockId blockId : peer.getSyncBlockToFetch()) {
-            if (!request.contains(blockId) && (requestBlockIds.getIfPresent(blockId) == null)) {
+            if (requestBlockIds.getIfPresent(blockId) == null) {
+              requestBlockIds.put(blockId, System.currentTimeMillis());
+              peer.getSyncBlockRequested().put(blockId, System.currentTimeMillis());
               send.get(peer).add(blockId);
-              request.add(blockId);
+//              request.add(blockId);
               if (send.get(peer).size() >= MAX_BLOCK_FETCH_PER_PEER) {
                 break;
               }
@@ -214,41 +215,16 @@ public class PeerSync {
         });
 
     send.forEach((peer, blockIds) -> {
-      blockIds.forEach(blockId -> {
-        requestBlockIds.put(blockId, System.currentTimeMillis());
-        peer.getSyncBlockRequested().put(blockId, System.currentTimeMillis());
-      });
-      List<Sha256Hash> ids = new LinkedList<>();
-      ids.addAll(blockIds);
-      if (!ids.isEmpty()) {
-        peer.sendMessage(new FetchInvDataMessage(ids, InventoryType.BLOCK));
+//      blockIds.forEach(blockId -> {
+//        requestBlockIds.put(blockId, System.currentTimeMillis());
+//        peer.getSyncBlockRequested().put(blockId, System.currentTimeMillis());
+//      });
+      if (!blockIds.isEmpty()) {
+        peer.sendMessage(new FetchInvDataMessage(new LinkedList<>(blockIds), InventoryType.BLOCK));
       }
     });
 
-    send.clear();
-  }
-
-  private void processSyncBlock (BlockCapsule block) {
-    boolean flag = true;
-    BlockId blockId = block.getBlockId();
-    try {
-      tronProxy.processBlock(block);
-    } catch (Exception e) {
-      logger.error("Process sync block {} failed.", blockId.getString(), e);
-      flag = false;
-    }
-    for (PeerConnection peer: tronProxy.getActivePeer()) {
-      if (peer.getSyncBlockInProcess().remove(blockId)) {
-        if (flag){
-          peer.setBlockBothHave(blockId);
-          if (peer.getSyncBlockToFetch().isEmpty()) {
-            syncNext(peer);
-          }
-        }else {
-          peer.disconnect(ReasonCode.BAD_BLOCK);
-        }
-      }
-    }
+//    send.clear();
   }
 
   private synchronized void handleSyncBlock() {
@@ -273,7 +249,7 @@ public class PeerSync {
         }
         final boolean[] isFound = {false};
         tronProxy.getActivePeer().stream()
-            .filter(peer -> !peer.getSyncBlockToFetch().isEmpty() && peer.getSyncBlockToFetch().peek().equals(msg.getBlockId()))
+            .filter(peer -> msg.getBlockId().equals(peer.getSyncBlockToFetch().peek()))
             .forEach(peer -> {
               peer.getSyncBlockToFetch().pop();
               peer.getSyncBlockInProcess().add(msg.getBlockId());
@@ -285,6 +261,29 @@ public class PeerSync {
           processSyncBlock(msg.getBlockCapsule());
         }
       });
+    }
+  }
+
+  private void processSyncBlock (BlockCapsule block) {
+    boolean flag = true;
+    BlockId blockId = block.getBlockId();
+    try {
+      tronProxy.processBlock(block);
+    } catch (Exception e) {
+      logger.error("Process sync block {} failed.", blockId.getString(), e);
+      flag = false;
+    }
+    for (PeerConnection peer: tronProxy.getActivePeer()) {
+      if (peer.getSyncBlockInProcess().remove(blockId)) {
+        if (flag){
+          peer.setBlockBothHave(blockId);
+          if (peer.getSyncBlockToFetch().isEmpty()) {
+            syncNext(peer);
+          }
+        }else {
+          peer.disconnect(ReasonCode.BAD_BLOCK);
+        }
+      }
     }
   }
 
