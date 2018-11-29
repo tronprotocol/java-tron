@@ -5,6 +5,9 @@ import static org.tron.core.witness.BlockProductionCondition.NOT_MY_TURN;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
@@ -21,6 +24,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -48,6 +52,8 @@ public class WitnessService implements Service {
   private Map<ByteString, byte[]> privateKeyMap = Maps.newHashMap();
   private volatile boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
 
+  private Manager manager;
+
   private WitnessController controller;
 
   private TronApplicationContext context;
@@ -55,6 +61,11 @@ public class WitnessService implements Service {
   private BackupManager backupManager;
 
   private BackupServer backupServer;
+
+  private AtomicInteger dupBlockCount = new AtomicInteger(0);
+  private AtomicLong dupBlockTime = new AtomicLong(0);
+  private long blockCycle =
+      ChainConstant.BLOCK_PRODUCED_INTERVAL * ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
   /**
    * Construction method.
@@ -65,7 +76,9 @@ public class WitnessService implements Service {
     backupManager = context.getBean(BackupManager.class);
     backupServer = context.getBean(BackupServer.class);
     generateThread = new Thread(scheduleProductionLoop);
-    controller = tronApp.getDbManager().getWitnessController();
+    manager = tronApp.getDbManager();
+    manager.setWitnessService(this);
+    controller = manager.getWitnessController();
     new Thread(() -> {
       while (needSyncCheck) {
         try {
@@ -141,6 +154,9 @@ public class WitnessService implements Service {
     if (!backupManager.getStatus().equals(BackupStatusEnum.MASTER)) {
       return BlockProductionCondition.BACKUP_STATUS_IS_NOT_MASTER;
     }
+    if (dupWitnessCheck()) {
+      return BlockProductionCondition.DUP_WITNESS;
+    }
     long now = DateTime.now().getMillis() + 50L;
     if (this.needSyncCheck) {
       long nexSlotTime = controller.getSlotTime(1);
@@ -209,23 +225,24 @@ public class WitnessService implements Service {
       return NOT_MY_TURN;
     }
 
-    long scheduledTime = controller.getSlotTime(slot);
-
-    if (scheduledTime - now > PRODUCE_TIME_OUT) {
-      return BlockProductionCondition.LAG;
-    }
-
-    if (!privateKeyMap.containsKey(scheduledWitness)) {
-      return BlockProductionCondition.NO_PRIVATE_KEY;
-    }
+    BlockCapsule block;
 
     try {
-
-      controller.getManager().lastHeadBlockIsMaintenance();
-
-      controller.setGeneratingBlock(true);
-      BlockCapsule block;
       synchronized (tronApp.getDbManager()) {
+        long scheduledTime = controller.getSlotTime(slot);
+
+        if (scheduledTime - now > PRODUCE_TIME_OUT) {
+          return BlockProductionCondition.LAG;
+        }
+
+        if (!privateKeyMap.containsKey(scheduledWitness)) {
+          return BlockProductionCondition.NO_PRIVATE_KEY;
+        }
+
+        controller.getManager().lastHeadBlockIsMaintenance();
+
+        controller.setGeneratingBlock(true);
+
         block = generateBlock(scheduledTime, scheduledWitness,
             controller.lastHeadBlockIsMaintenance());
 
@@ -277,6 +294,41 @@ public class WitnessService implements Service {
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException {
     return tronApp.getDbManager().generateBlock(this.localWitnessStateMap.get(witnessAddress), when,
         this.privateKeyMap.get(witnessAddress), lastHeadBlockIsMaintenance);
+  }
+
+  private boolean dupWitnessCheck() {
+    if (dupBlockCount.get() == 0) {
+      return false;
+    }
+
+    if (System.currentTimeMillis() - dupBlockTime.get() > dupBlockCount.get() * blockCycle) {
+      dupBlockCount.set(0);
+      return false;
+    }
+
+    return true;
+  }
+
+  public void processBlock(BlockCapsule block) {
+    if (block.generatedByMyself) {
+      return;
+    }
+
+    if (System.currentTimeMillis() - block.getTimeStamp() > ChainConstant.BLOCK_PRODUCED_INTERVAL) {
+      return;
+    }
+
+    if (!privateKeyMap.containsKey(block.getWitnessAddress())) {
+      return;
+    }
+
+    if (dupBlockCount.get() == 0) {
+      dupBlockCount.set(new Random().nextInt(10));
+    } else {
+      dupBlockCount.set(10);
+    }
+
+    dupBlockTime.set(System.currentTimeMillis());
   }
 
   /**

@@ -9,10 +9,19 @@ import org.springframework.stereotype.Component;
 import org.tron.common.application.Service;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.http.GetAccountServlet;
+import org.tron.core.services.http.GetAssetIssueByIdServlet;
+import org.tron.core.services.http.GetAssetIssueByNameServlet;
+import org.tron.core.services.http.GetAssetIssueListByNameServlet;
 import org.tron.core.services.http.GetAssetIssueListServlet;
 import org.tron.core.services.http.GetBlockByNumServlet;
+import org.tron.core.services.http.GetDelegatedResourceAccountIndexServlet;
+import org.tron.core.services.http.GetDelegatedResourceServlet;
+import org.tron.core.services.http.GetExchangeByIdServlet;
+import org.tron.core.services.http.GetNodeInfoServlet;
 import org.tron.core.services.http.GetNowBlockServlet;
 import org.tron.core.services.http.GetPaginatedAssetIssueListServlet;
+import org.tron.core.services.http.GetTransactionCountByBlockNumServlet;
+import org.tron.core.services.http.ListExchangesServlet;
 import org.tron.core.services.http.ListWitnessesServlet;
 
 @Component
@@ -30,11 +39,21 @@ public class SolidityNodeHttpApiService implements Service {
   @Autowired
   private GetTransactionByIdSolidityServlet getTransactionByIdServlet;
   @Autowired
-  private GetTransactionInfoByIdServlet getTransactionInfoByIdServlet;
+  private GetTransactionInfoByIdSolidityServlet getTransactionInfoByIdServlet;
   @Autowired
   private GetTransactionsFromThisServlet getTransactionsFromThisServlet;
   @Autowired
   private GetTransactionsToThisServlet getTransactionsToThisServlet;
+  @Autowired
+  private GetTransactionCountByBlockNumServlet getTransactionCountByBlockNumServlet;
+  @Autowired
+  private GetDelegatedResourceServlet getDelegatedResourceServlet;
+  @Autowired
+  private GetDelegatedResourceAccountIndexServlet getDelegatedResourceAccountIndexServlet;
+  @Autowired
+  private GetExchangeByIdServlet getExchangeByIdServlet;
+  @Autowired
+  private ListExchangesServlet listExchangesServlet;
 
   @Autowired
   private ListWitnessesServlet listWitnessesServlet;
@@ -43,10 +62,18 @@ public class SolidityNodeHttpApiService implements Service {
   @Autowired
   private GetPaginatedAssetIssueListServlet getPaginatedAssetIssueListServlet;
   @Autowired
+  private GetAssetIssueByNameServlet getAssetIssueByNameServlet;
+  @Autowired
+  private GetAssetIssueByIdServlet getAssetIssueByIdServlet;
+  @Autowired
+  private GetAssetIssueListByNameServlet getAssetIssueListByNameServlet;
+  @Autowired
   private GetNowBlockServlet getNowBlockServlet;
   @Autowired
   private GetBlockByNumServlet getBlockByNumServlet;
 
+  @Autowired
+  private GetNodeInfoServlet getNodeInfoServlet;
 
   @Override
   public void init() {
@@ -74,8 +101,18 @@ public class SolidityNodeHttpApiService implements Service {
           "/walletsolidity/getassetissuelist");
       context.addServlet(new ServletHolder(getPaginatedAssetIssueListServlet),
           "/walletsolidity/getpaginatedassetissuelist");
+      context.addServlet(new ServletHolder(getAssetIssueByNameServlet),
+          "/walletsolidity/getassetissuebyname");
+      context.addServlet(new ServletHolder(getAssetIssueByIdServlet),
+          "/walletsolidity/getassetissuebyid");
+      context.addServlet(new ServletHolder(getAssetIssueListByNameServlet),
+          "/walletsolidity/getassetissuelistbyname");
       context.addServlet(new ServletHolder(getNowBlockServlet), "/walletsolidity/getnowblock");
       context.addServlet(new ServletHolder(getBlockByNumServlet), "/walletsolidity/getblockbynum");
+      context.addServlet(new ServletHolder(getDelegatedResourceServlet), "/walletsolidity/getdelegatedresource");
+      context.addServlet(new ServletHolder(getDelegatedResourceAccountIndexServlet), "/walletsolidity/getdelegatedresourceaccountindex");
+      context.addServlet(new ServletHolder(getExchangeByIdServlet), "/walletsolidity/getexchangebyid");
+      context.addServlet(new ServletHolder(listExchangesServlet), "/walletsolidity/listexchanges");
 
       // only for SolidityNode
       context.addServlet(new ServletHolder(getTransactionByIdServlet),
@@ -83,6 +120,9 @@ public class SolidityNodeHttpApiService implements Service {
       context
           .addServlet(new ServletHolder(getTransactionInfoByIdServlet),
               "/walletsolidity/gettransactioninfobyid");
+      context
+          .addServlet(new ServletHolder(getTransactionCountByBlockNumServlet),
+              "/walletsolidity/gettransactioncountbyblocknum");
 
       // for extension api
       if (args.isWalletExtensionApi()) {
@@ -92,6 +132,8 @@ public class SolidityNodeHttpApiService implements Service {
             .addServlet(new ServletHolder(getTransactionsToThisServlet),
                 "/walletextension/gettransactionstothis");
       }
+
+      context.addServlet(new ServletHolder(getNodeInfoServlet), "/wallet/getnodeinfo");
 
       server.start();
     } catch (Exception e) {

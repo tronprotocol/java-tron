@@ -42,7 +42,7 @@ import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
 import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
 import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
 import org.tron.common.runtime.vm.program.Program.OutOfMemoryException;
-import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
+import org.tron.common.runtime.vm.program.Program.OutOfTimeException;
 import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
 import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
 import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
@@ -80,6 +80,7 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.UpdateAssetContract;
+import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Account;
@@ -469,6 +470,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           owner = contractParameter.unpack(UpdateSettingContract.class)
               .getOwnerAddress();
           break;
+        case UpdateEnergyLimitContract:
+          owner = contractParameter.unpack(UpdateEnergyLimitContract.class)
+              .getOwnerAddress();
+          break;
         case ExchangeCreateContract:
           owner = contractParameter.unpack(ExchangeCreateContract.class).getOwnerAddress();
           break;
@@ -544,6 +549,27 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case CreateSmartContract:
           return contractParameter.unpack(CreateSmartContract.class).getNewContract()
               .getCallValue();
+        default:
+          return 0L;
+      }
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
+      return 0L;
+    }
+  }
+
+  // todo mv this static function to capsule util
+  public static long getCallTokenValue(Transaction.Contract contract) {
+    int energyForTrx;
+    try {
+      Any contractParameter = contract.getParameter();
+      long callValue;
+      switch (contract.getType()) {
+        case TriggerSmartContract:
+          return contractParameter.unpack(TriggerSmartContract.class).getCallTokenValue();
+
+        case CreateSmartContract:
+          return contractParameter.unpack(CreateSmartContract.class).getCallTokenValue();
         default:
           return 0L;
       }
@@ -723,7 +749,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       this.setResultCode(contractResult.BAD_JUMP_DESTINATION);
       return;
     }
-    if (exception instanceof OutOfResourceException) {
+    if (exception instanceof OutOfTimeException) {
       this.setResultCode(contractResult.OUT_OF_TIME);
       return;
     }

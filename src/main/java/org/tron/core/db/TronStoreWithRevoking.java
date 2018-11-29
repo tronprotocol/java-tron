@@ -25,7 +25,7 @@ import org.tron.core.exception.ItemNotFoundException;
 
 @Slf4j
 public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements ITronChainBase<T> {
-
+  @Getter // only for unit test
   protected IRevokingDB revokingDB;
   private TypeToken<T> token = new TypeToken<T>(getClass()) {};
   @Autowired
@@ -87,6 +87,20 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     }
   }
 
+  public T getOnSolidity(byte[] key) throws ItemNotFoundException, BadItemException {
+    return of(revokingDB.getOnSolidity(key));
+  }
+
+  public T getUncheckedOnSolidity(byte[] key) {
+    byte[] value = revokingDB.getUncheckedOnSolidity(key);
+
+    try {
+      return of(value);
+    } catch (BadItemException e) {
+      return null;
+    }
+  }
+
   public T of(byte[] value) throws BadItemException {
     try {
       Constructor constructor = token.getRawType().getConstructor(byte[].class);
@@ -96,6 +110,10 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
       throw new BadItemException(e.getMessage());
     }
+  }
+
+  public boolean hasOnSolidity(byte[] key) {
+    return revokingDB.hasOnSolidity(key);
   }
 
   @Override
@@ -121,6 +139,17 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   @Override
   public Iterator<Map.Entry<byte[], T>> iterator() {
     return Iterators.transform(revokingDB.iterator(), e -> {
+      try {
+        return Maps.immutableEntry(e.getKey(), of(e.getValue()));
+      } catch (BadItemException e1) {
+        throw new RuntimeException(e1);
+      }
+    });
+  }
+
+  public Iterator<Map.Entry<byte[], T>> iteratorOnSolidity() {
+    return Iterators.transform(((RevokingDBWithCachingNewValue) revokingDB).iteratorOnSolidity(), e ->
+    {
       try {
         return Maps.immutableEntry(e.getKey(), of(e.getValue()));
       } catch (BadItemException e1) {

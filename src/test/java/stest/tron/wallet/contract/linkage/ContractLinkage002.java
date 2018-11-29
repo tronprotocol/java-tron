@@ -60,14 +60,13 @@ public class ContractLinkage002 {
         .usePlaintext(true)
         .build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
-    Assert.assertTrue(PublicMethed.sendcoin(linkage002Address, 200000000000L, fromAddress,
-        testKey002, blockingStubFull));
   }
 
   @Test(enabled = true)
   public void updateSetting() {
     Account info;
-
+    Assert.assertTrue(PublicMethed.sendcoin(linkage002Address, 200000000000L, fromAddress,
+        testKey002, blockingStubFull));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage002Address, 50000000L,
         3, 1, linkage002Key, blockingStubFull));
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(linkage002Address,

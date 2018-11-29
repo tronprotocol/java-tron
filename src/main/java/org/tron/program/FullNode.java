@@ -14,6 +14,9 @@ import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
 import org.tron.core.services.http.FullNodeHttpApiService;
+import org.tron.core.services.http.solidity.SolidityNodeHttpApiService;
+import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
+import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
 
 @Slf4j
 public class FullNode {
