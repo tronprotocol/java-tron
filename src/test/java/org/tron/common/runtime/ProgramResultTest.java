@@ -16,20 +16,26 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.storage.DepositImpl;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteString;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.TransactionInfo;
 
 
 @Slf4j
@@ -287,10 +293,10 @@ public class ProgramResultTest {
     // ======================================= Test Success =======================================
     byte[] triggerData1 = TVMTestUtils.parseABI("transfer(address,bool)",
         params);
-    runtime = TVMTestUtils
-        .triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
-            aContract, triggerData1,
-            0, 100000000, deposit, null);
+    Transaction trx1 = TVMTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), aContract,
+        triggerData1, 0, 100000000);
+    TransactionTrace traceSuccess = TVMTestUtils.processTransactionAndReturnTrace(trx1, deposit, null);
+    runtime = traceSuccess.getRuntime();
     byte[] bContract = runtime.getResult().getHReturn();
     List<InternalTransaction> internalTransactionsList = runtime.getResult().getInternalTransactions();
     Assert.assertEquals(internalTransactionsList.get(0).getValue(), 10);
@@ -313,6 +319,7 @@ public class ProgramResultTest {
     Assert.assertEquals(internalTransactionsList.get(3).getTransferToAddress() , cContract);
     Assert.assertEquals(internalTransactionsList.get(3).getNote(), "call");
     Assert.assertEquals(internalTransactionsList.get(3).isRejected(), false);
+    checkTransactionInfo(traceSuccess,trx1,null, internalTransactionsList);
 
     // ======================================= Test Fail =======================================
     // set revert == true
@@ -320,11 +327,11 @@ public class ProgramResultTest {
         "0000000000000000000000000000000000000000000000000000000000000001";
     byte[] triggerData2 = TVMTestUtils.parseABI("transfer(address,bool)",
         params);
-    Transaction trx = TVMTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), aContract,
+    Transaction trx2 = TVMTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), aContract,
         triggerData2, 0, 100000000);
-    runtime = TVMTestUtils.processTransactionAndReturnRuntime(trx, deposit, null);
-
-    byte[] bContract2 = Wallet.generateContractAddress(new TransactionCapsule(trx).getTransactionId().getBytes(), 0);
+    TransactionTrace traceFailed = TVMTestUtils.processTransactionAndReturnTrace(trx2, deposit, null);
+    runtime = traceFailed.getRuntime();
+    byte[] bContract2 = Wallet.generateContractAddress(new TransactionCapsule(trx2).getTransactionId().getBytes(), 0);
     List<InternalTransaction> internalTransactionsListFail = runtime.getResult().getInternalTransactions();
     Assert.assertEquals(internalTransactionsListFail.get(0).getValue(), 10);
     Assert.assertEquals(internalTransactionsListFail.get(0).getSender(), aContract);
@@ -346,6 +353,7 @@ public class ProgramResultTest {
     Assert.assertEquals(internalTransactionsListFail.get(3).getTransferToAddress() , cContract);
     Assert.assertEquals(internalTransactionsListFail.get(3).getNote(), "call");
     Assert.assertEquals(internalTransactionsListFail.get(3).isRejected(), true);
+    checkTransactionInfo(traceFailed,trx2,null, internalTransactionsListFail);
   }
 
 
@@ -408,6 +416,17 @@ public class ProgramResultTest {
   }
 
 
+  /**
+   * pragma solidity ^0.4.24;
+   *
+   * contract A{
+   *     constructor () payable public{}
+   *     function suicide(address toAddress) public payable{
+   *         selfdestruct(toAddress);
+   *     }
+   *     function () payable public{}
+   * }s
+   */
   @Test
   public void suicideResultTest()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
@@ -419,10 +438,10 @@ public class ProgramResultTest {
     // ======================================= Test Suicide =======================================
     byte[] triggerData1 = TVMTestUtils.parseABI("suicide(address)",
         params);
-    runtime = TVMTestUtils
-        .triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
-            suicideContract, triggerData1,
-            0, 100000000, deposit, null);
+    Transaction trx = TVMTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), suicideContract,
+        triggerData1, 0, 100000000);
+    TransactionTrace trace = TVMTestUtils.processTransactionAndReturnTrace(trx, deposit, null);
+    runtime = trace.getRuntime();
     List<InternalTransaction> internalTransactionsList = runtime.getResult().getInternalTransactions();
     Assert.assertEquals(dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getBalance(), 1000);
     Assert.assertEquals(dbManager.getAccountStore().get(suicideContract), null);
@@ -431,6 +450,7 @@ public class ProgramResultTest {
     Assert.assertEquals(internalTransactionsList.get(0).getTransferToAddress() , Hex.decode(TRANSFER_TO));
     Assert.assertEquals(internalTransactionsList.get(0).getNote(), "suicide");
     Assert.assertEquals(internalTransactionsList.get(0).isRejected(), false);
+    checkTransactionInfo(trace, trx,null, internalTransactionsList);
   }
 
   private byte[] deploySuicide()
@@ -454,6 +474,21 @@ public class ProgramResultTest {
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
             feeLimit, consumeUserResourcePercent, null,
             deposit, null);
+  }
+
+  public void checkTransactionInfo(TransactionTrace trace, Transaction trx, BlockCapsule block, List<InternalTransaction> internalTransactionsList ){
+    TransactionInfoCapsule trxInfoCapsule = TransactionInfoCapsule.buildInstance(new TransactionCapsule(trx),null, trace);
+    List<Protocol.InternalTransaction> internalTransactionListFromProtocol  = trxInfoCapsule.getInstance().getInternalTransactionsList();
+    for(int i=0; i< internalTransactionListFromProtocol.size(); i++){
+      Assert.assertEquals(internalTransactionListFromProtocol.get(i).getRejected(), internalTransactionsList.get(i).isRejected());
+      Assert.assertEquals(internalTransactionListFromProtocol.get(i).getCallerAddress().toByteArray(),internalTransactionsList.get(i).getSender());
+      Assert.assertEquals(internalTransactionListFromProtocol.get(i).getHash().toByteArray(), internalTransactionsList.get(i).getHash());
+      Assert.assertEquals(new String(internalTransactionListFromProtocol.get(i).getNote().toByteArray()), internalTransactionsList.get(i).getNote());
+      Assert.assertEquals(internalTransactionListFromProtocol.get(i).getTransferToAddress().toByteArray(), internalTransactionsList.get(i).getTransferToAddress());
+      List<Protocol.InternalTransaction.CallValueInfo> callValueInfoListFromProtocol = internalTransactionListFromProtocol.get(i).getCallValueInfoList();
+      // for now only one callValue. will be change to list in future.
+      Assert.assertEquals(callValueInfoListFromProtocol.get(0).getCallValue(), internalTransactionsList.get(i).getValue());
+    }
   }
 
   /**

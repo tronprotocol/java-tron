@@ -88,6 +88,7 @@ public class SyncPool {
     this.peerDel = peerDel;
 
     channelManager = ctx.getBean(ChannelManager.class);
+    channelManager.init();
 
     peerClient = ctx.getBean(PeerClient.class);
 
@@ -213,6 +214,14 @@ public class SyncPool {
     } catch (Exception e) {
       logger.warn("Problems shutting down executor", e);
     }
+  }
+
+  public AtomicInteger getPassivePeersCount() {
+    return passivePeersCount;
+  }
+
+  public AtomicInteger getActivePeersCount() {
+    return activePeersCount;
   }
 
   class NodeSelector implements Predicate<NodeHandler> {

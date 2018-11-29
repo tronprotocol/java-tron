@@ -10,7 +10,6 @@ import java.util.concurrent.ExecutorService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -292,7 +291,6 @@ public class BroadTest {
       peer.close();
     }
     context.destroy();
-    peerClient.close();
     handshakeHandlerTest.close();
     appT.shutdownServices();
     appT.shutdown();

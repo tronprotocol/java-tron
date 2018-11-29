@@ -16,6 +16,7 @@ import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -23,6 +24,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
+import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.AccountType;
@@ -40,6 +42,7 @@ public class UnfreezeAssetActuatorTest {
   private static final long initBalance = 10_000_000_000L;
   private static final long frozenBalance = 1_000_000_000L;
   private static final String assetName = "testCoin";
+  private static final String assetID = "123456";
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -84,6 +87,14 @@ public class UnfreezeAssetActuatorTest {
             initBalance);
     ownerCapsule.setAssetIssuedName(assetName.getBytes());
     dbManager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
+  }
+  @Before
+  public void createAsset(){
+    AssetIssueContract.Builder builder = AssetIssueContract.newBuilder();
+    builder.setName(ByteString.copyFromUtf8(assetName));
+    builder.setId(assetID);
+    AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(builder.build());
+    dbManager.getAssetIssueStore().put(assetName.getBytes(),assetIssueCapsule);
   }
 
   private Any getContract(String ownerAddress) {
