@@ -62,7 +62,7 @@ public class Storage {
    * Default values of directory
    */
   private static final int DEFAULT_DB_VERSION = 2;
-  private static final boolean DEFAULT_DB_SYNC = true;
+  private static final boolean DEFAULT_DB_SYNC = false;
   private static final String DEFAULT_DB_DIRECTORY = "database";
   private static final String DEFAULT_INDEX_DIRECTORY = "index";
   private static final String DEFAULT_INDEX_SWTICH = "on";
