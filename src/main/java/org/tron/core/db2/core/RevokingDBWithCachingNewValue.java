@@ -3,6 +3,7 @@ package org.tron.core.db2.core;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -147,7 +148,10 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
 
     if (snapshot.getPrevious() == null && tmp != 0) {
       List<Entry<Key, Value>> cache = Streams.stream(((SnapshotRoot) snapshot).getCache())
-          .sorted()
+          .sorted(
+              Comparator.comparing(
+                  (Entry<Key, Value> e) -> e.getKey().getBytes(), ByteUtil::compare)
+                  .reversed())
           .collect(Collectors.toList());
       for (Entry<Key, Value> e : cache) {
         if (tmp > 0) {
