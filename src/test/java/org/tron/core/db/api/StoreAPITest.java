@@ -157,6 +157,8 @@ public class StoreAPITest {
     addAssetIssueToStore(assetIssue4);
     dbManager.getAssetIssueStore().delete(ASSETISSUE_NAME_FOUR.getBytes());
     dbManager.getAssetIssueStore().delete(ASSETISSUE_NAME_THREE.getBytes());
+
+
   }
 
   private static void addAssetIssueToStore(AssetIssueContract assetIssueContract) {
@@ -164,6 +166,13 @@ public class StoreAPITest {
     dbManager
         .getAssetIssueStore()
         .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+  }
+
+  private static void addAssetIssueToStoreV2(AssetIssueContract assetIssueContract, byte[] id) {
+    AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
+    dbManager
+        .getAssetIssueV2Store()
+        .put(id, assetIssueCapsule);
   }
 
   private static AssetIssueContract getBuildAssetIssueContract(
@@ -325,6 +334,27 @@ public class StoreAPITest {
         .setAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
         .setAccountName(ByteString.copyFrom(name.getBytes()))
         .build();
+  }
+
+  @Test
+  public void addAssetIssueToStoreV2() {
+    byte[] id = ByteArray.fromString("100000");
+    addAssetIssueToStoreV2(assetIssue1, id);
+    AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueV2Store().get(id);
+    Assert.assertEquals(true, assetIssueCapsule.getName().equals(assetIssue1.getName()));
+  }
+
+  @Test
+  public void UpdateAssetV2() {
+    long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
+
+    for (AssetIssueCapsule assetIssueCapsule : dbManager.getAssetIssueStore().getAllAssetIssues()) {
+      dbManager.getAssetIssueV2Store().put(ByteArray.fromLong(tokenIdNum), assetIssueCapsule);
+      assetIssueCapsule.setId(String.valueOf(tokenIdNum));
+      tokenIdNum++;
+    }
+    Assert.assertEquals(2, dbManager.getAssetIssueV2Store().getAllAssetIssues().size());
+
   }
 
   @Test

@@ -18,6 +18,16 @@ public class HashDB implements DB<Key, Value> {
   }
 
   @Override
+  public long size() {
+    return db.size();
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return db.isEmpty();
+  }
+
+  @Override
   public void remove(Key key) {
     db.remove(key);
   }

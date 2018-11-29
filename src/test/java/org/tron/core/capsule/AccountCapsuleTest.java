@@ -8,24 +8,52 @@ import java.util.Random;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
+import org.tron.core.Wallet;
+import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
+import org.tron.protos.Contract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Vote;
 
+@Ignore
 public class AccountCapsuleTest {
 
-  private static String dbPath = "output_accountCapsule_test";
+  private static final String dbPath = "output_accountCapsule_test";
+  private static final Manager dbManager;
+  private static final TronApplicationContext context;
+  private static final String OWNER_ADDRESS;
+  private static final String ASSET_NAME = "trx";
+  private static final long TOTAL_SUPPLY = 10000L;
+  private static final int TRX_NUM = 10;
+  private static final int NUM = 1;
+  private static final long START_TIME = 1;
+  private static final long END_TIME = 2;
+  private static final int VOTE_SCORE = 2;
+  private static final String DESCRIPTION = "TRX";
+  private static final String URL = "https://tron.network";
+
+
   static AccountCapsule accountCapsuleTest;
   static AccountCapsule accountCapsule;
 
+  static {
+    Args.setParam(new String[]{"-d", dbPath, "-w"}, Constant.TEST_CONF);
+    context = new TronApplicationContext(DefaultConfig.class);
+    dbManager = context.getBean(Manager.class);
+
+    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "a06a17a49648a8ad32055c06f60fa14ae46df91234";
+  }
+
+
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"-d", dbPath, "-w"},
-        Constant.TEST_CONF);
     ByteString accountName = ByteString.copyFrom(AccountCapsuleTest.randomBytes(16));
     ByteString address = ByteString.copyFrom(AccountCapsuleTest.randomBytes(32));
     AccountType accountType = AccountType.forNumber(1);
@@ -38,6 +66,7 @@ public class AccountCapsuleTest {
   @AfterClass
   public static void removeDb() {
     Args.clearParam();
+    context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }
 
@@ -110,4 +139,172 @@ public class AccountCapsuleTest {
     new Random().nextBytes(result);
     return result;
   }
+
+  /**
+   * SameTokenName close, test assert amountV2 function
+   */
+  @Test
+  public void sameTokenNameCloseAssertAmountV2test() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    long id = dbManager.getDynamicPropertiesStore().getTokenIdNum() + 1;
+    dbManager.getDynamicPropertiesStore().saveTokenIdNum(id);
+
+    Contract.AssetIssueContract assetIssueContract =
+            Contract.AssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+                    .setName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
+                    .setId(Long.toString(id))
+                    .setTotalSupply(TOTAL_SUPPLY)
+                    .setTrxNum(TRX_NUM)
+                    .setNum(NUM)
+                    .setStartTime(START_TIME)
+                    .setEndTime(END_TIME)
+                    .setVoteScore(VOTE_SCORE)
+                    .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
+                    .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
+                    .build();
+    AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
+    dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+
+    Contract.AssetIssueContract assetIssueContract2 =
+            Contract.AssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+                    .setName(ByteString.copyFrom(ByteArray.fromString("abc")))
+                    .setId(Long.toString(id+1))
+                    .setTotalSupply(TOTAL_SUPPLY)
+                    .setTrxNum(TRX_NUM)
+                    .setNum(NUM)
+                    .setStartTime(START_TIME)
+                    .setEndTime(END_TIME)
+                    .setVoteScore(VOTE_SCORE)
+                    .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
+                    .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
+                    .build();
+    AssetIssueCapsule assetIssueCapsule2 = new AssetIssueCapsule(assetIssueContract2);
+    dbManager.getAssetIssueStore().put(assetIssueCapsule2.createDbKey(), assetIssueCapsule2);
+
+    AccountCapsule accountCapsule =
+            new AccountCapsule(
+                    ByteString.copyFromUtf8("owner"),
+                    ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+                    AccountType.Normal,
+                    10000);
+    accountCapsule.addAsset(ByteArray.fromString(ASSET_NAME),1000L);
+    dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
+
+
+    accountCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), 1000L);
+    Assert.assertEquals(accountCapsule.getAssetMap().get(ASSET_NAME).longValue(), 1000L);
+    Assert.assertEquals(accountCapsule.getAssetMapV2().get(String.valueOf(id)).longValue(),
+            1000L);
+
+    //assetBalanceEnoughV2
+    Assert.assertTrue(accountCapsule.assetBalanceEnoughV2(ByteArray.fromString(ASSET_NAME),
+            999, dbManager));
+    Assert.assertFalse(accountCapsule.assetBalanceEnoughV2(ByteArray.fromString(ASSET_NAME),
+            1001, dbManager));
+
+    //reduceAssetAmountV2
+    Assert.assertTrue(accountCapsule.reduceAssetAmountV2(ByteArray.fromString(ASSET_NAME),
+            999, dbManager));
+    Assert.assertFalse(accountCapsule.reduceAssetAmountV2(ByteArray.fromString(ASSET_NAME),
+            0, dbManager));
+    Assert.assertFalse(accountCapsule.reduceAssetAmountV2(ByteArray.fromString(ASSET_NAME),
+            1001, dbManager));
+    Assert.assertFalse(accountCapsule.reduceAssetAmountV2(ByteArray.fromString("abc"),
+            1001, dbManager));
+
+    //addAssetAmountV2
+    Assert.assertTrue(accountCapsule.addAssetAmountV2(ByteArray.fromString(ASSET_NAME),
+            500, dbManager));
+    // 1000-999 +500
+    Assert.assertEquals(accountCapsule.getAssetMap().get(ASSET_NAME).longValue(), 501L);
+    Assert.assertTrue(accountCapsule.addAssetAmountV2(ByteArray.fromString("abc"),
+            500, dbManager));
+    Assert.assertEquals(accountCapsule.getAssetMap().get("abc").longValue(), 500L);
+  }
+
+  /**
+   * SameTokenName open, test assert amountV2 function
+   */
+  @Test
+  public void sameTokenNameOpenAssertAmountV2test() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    long id = dbManager.getDynamicPropertiesStore().getTokenIdNum() + 1;
+    dbManager.getDynamicPropertiesStore().saveTokenIdNum(id);
+
+    Contract.AssetIssueContract assetIssueContract =
+            Contract.AssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+                    .setName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
+                    .setId(Long.toString(id))
+                    .setTotalSupply(TOTAL_SUPPLY)
+                    .setTrxNum(TRX_NUM)
+                    .setNum(NUM)
+                    .setStartTime(START_TIME)
+                    .setEndTime(END_TIME)
+                    .setVoteScore(VOTE_SCORE)
+                    .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
+                    .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
+                    .build();
+    AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
+    dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
+
+    Contract.AssetIssueContract assetIssueContract2 =
+            Contract.AssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+                    .setName(ByteString.copyFrom(ByteArray.fromString("abc")))
+                    .setId(Long.toString(id+1))
+                    .setTotalSupply(TOTAL_SUPPLY)
+                    .setTrxNum(TRX_NUM)
+                    .setNum(NUM)
+                    .setStartTime(START_TIME)
+                    .setEndTime(END_TIME)
+                    .setVoteScore(VOTE_SCORE)
+                    .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
+                    .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
+                    .build();
+    AssetIssueCapsule assetIssueCapsule2 = new AssetIssueCapsule(assetIssueContract2);
+    dbManager.getAssetIssueV2Store().put(assetIssueCapsule2.createDbV2Key(), assetIssueCapsule2);
+
+    AccountCapsule accountCapsule =
+            new AccountCapsule(
+                    ByteString.copyFromUtf8("owner"),
+                    ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+                    AccountType.Normal,
+                    10000);
+    accountCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)),1000L);
+    dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
+    Assert.assertEquals(accountCapsule.getAssetMapV2().get(String.valueOf(id)).longValue(),
+            1000L);
+
+    //assetBalanceEnoughV2
+    Assert.assertTrue(accountCapsule.assetBalanceEnoughV2(ByteArray.fromString(String.valueOf(id)),
+            999, dbManager));
+
+    Assert.assertFalse(accountCapsule.assetBalanceEnoughV2(ByteArray.fromString(String.valueOf(id)),
+            1001, dbManager));
+
+    //reduceAssetAmountV2
+    Assert.assertTrue(accountCapsule.reduceAssetAmountV2(ByteArray.fromString(String.valueOf(id)),
+            999, dbManager));
+    Assert.assertFalse(accountCapsule.reduceAssetAmountV2(ByteArray.fromString(String.valueOf(id)),
+            0, dbManager));
+    Assert.assertFalse(accountCapsule.reduceAssetAmountV2(ByteArray.fromString(String.valueOf(id)),
+            1001, dbManager));
+    // abc
+    Assert.assertFalse(accountCapsule.reduceAssetAmountV2(ByteArray.fromString(String.valueOf(id+1)),
+            1001, dbManager));
+
+    //addAssetAmountV2
+    Assert.assertTrue(accountCapsule.addAssetAmountV2(ByteArray.fromString(String.valueOf(id)),
+            500, dbManager));
+    // 1000-999 +500
+    Assert.assertEquals(accountCapsule.getAssetMapV2().get(String.valueOf(id)).longValue(), 501L);
+    //abc
+    Assert.assertTrue(accountCapsule.addAssetAmountV2(ByteArray.fromString(String.valueOf(id+1)),
+            500, dbManager));
+    Assert.assertEquals(accountCapsule.getAssetMapV2().get(String.valueOf(id+1)).longValue(), 500L);
+  }
+
 }

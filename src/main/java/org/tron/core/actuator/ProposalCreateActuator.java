@@ -15,6 +15,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.Parameter.ChainParameters;
+import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
@@ -204,7 +205,44 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         break;
       }
+      case (16): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
+          throw new ContractValidateException("Bad chain parameter id");
+        }
+        if (entry.getValue() != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_DELEGATE_RESOURCE] is only allowed to be 1");
+        }
+        break;
+      }
+      case (17): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
+          throw new ContractValidateException("Bad chain parameter id");
+        }
+        if (entry.getValue() < 0 || entry.getValue() > 100_000_000_000_000_000L) {
+          throw new ContractValidateException(
+              "Bad chain parameter value,valid range is [0,100_000_000_000_000_000L]");
+        }
+        break;
+      }
+      case (18): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
+          throw new ContractValidateException("Bad chain parameter id");
+        }
+        if (entry.getValue() != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_TVM_TRANSFER_TRC10] is only allowed to be 1");
+        }
+        if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+          throw new ContractValidateException("[ALLOW_SAME_TOKEN_NAME] proposal must be approved "
+              + "before [ALLOW_TVM_TRANSFER_TRC10] can be proposed");
+        }
+        break;
+      }
       case (19): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionConsts.MULTI_SIGN)) {
+          throw new ContractValidateException("Bad chain parameter id");
+        }
         if (entry.getValue() != 1) {
           throw new ContractValidateException(
               "This value[ALLOW_MULTI_SIGN] is only allowed to be 1");

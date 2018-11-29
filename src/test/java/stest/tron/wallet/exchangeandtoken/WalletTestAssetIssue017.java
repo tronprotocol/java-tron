@@ -1,11 +1,9 @@
-package stest.tron.wallet.assetissue;
+package stest.tron.wallet.exchangeandtoken;
 
 import com.google.protobuf.ByteString;
-import com.googlecode.cqengine.query.simple.In;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.math.BigInteger;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +13,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.AccountNetMessage;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.WalletGrpc;
@@ -24,11 +21,9 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.Account;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -47,14 +42,14 @@ public class WalletTestAssetIssue017 {
   private static long start;
   private static long end;
   private static  long now = System.currentTimeMillis();
-  private static String name = "AssetIssue016_" + Long.toString(now);
+  private static String name = "AssetIssue017_" + Long.toString(now);
   private static  long totalSupply = now;
   private static final long sendAmount = 10000000000L;
   private static final long netCostMeasure = 200L;
 
   Long freeAssetNetLimit = 30000L;
   Long publicFreeAssetNetLimit = 30000L;
-  String description = "for case assetissue016";
+  String description = "for case assetissue017";
   String url = "https://stest.assetissue016.url";
 
   private Manager dbManager;
@@ -93,35 +88,25 @@ public class WalletTestAssetIssue017 {
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
-
-    GrpcAPI.AssetIssueList assetIssueList = blockingStubFull
-        .getAssetIssueList(GrpcAPI.EmptyMessage.newBuilder().build());
-    Assert.assertTrue(PublicMethed.freezeBalance(fromAddress,10000000, 3, testKey002,
-        blockingStubFull));
-    while (assetIssueList.getAssetIssueCount() <= 1) {
-      //Sendcoin to this account
-      Assert.assertTrue(PublicMethed
-          .sendcoin(asset017Address, sendAmount, fromAddress, testKey002, blockingStubFull));
-      start = System.currentTimeMillis() + 2000;
-      end = System.currentTimeMillis() + 1000000000;
-      now = System.currentTimeMillis();
-      name = "AssetIssue017_" + Long.toString(now);
-      totalSupply = now;
-      Assert.assertTrue(createAssetIssue(asset017Address, name, totalSupply, 1, 1,
-          start, end, 1, description, url, freeAssetNetLimit, publicFreeAssetNetLimit, 1L,
-          1L, testKeyForAssetIssue017, blockingStubFull));
-
-      assetIssueList = blockingStubFull
-          .getAssetIssueList(GrpcAPI.EmptyMessage.newBuilder().build());
-
-      ecKey1 = new ECKey(Utils.getRandom());
-      asset017Address = ecKey1.getAddress();
-      testKeyForAssetIssue017 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    }
   }
 
   @Test(enabled = true)
   public void atestGetPaginatedAssetIssueList() {
+    //get account
+    ecKey1 = new ECKey(Utils.getRandom());
+    asset017Address = ecKey1.getAddress();
+    testKeyForAssetIssue017 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
+    Assert.assertTrue(PublicMethed
+        .sendcoin(asset017Address, sendAmount, fromAddress, testKey002, blockingStubFull));
+    start = System.currentTimeMillis() + 2000;
+    end = System.currentTimeMillis() + 1000000000;
+    now = System.currentTimeMillis();
+    name = "AssetIssue017_" + Long.toString(now);
+    totalSupply = now;
+    Assert.assertTrue(createAssetIssue(asset017Address, name, totalSupply, 1, 1,
+        start, end, 1, description, url, freeAssetNetLimit, publicFreeAssetNetLimit, 1L,
+        1L, testKeyForAssetIssue017, blockingStubFull));
 
     Integer offset = 0;
     Integer limit = 100;
@@ -131,7 +116,7 @@ public class WalletTestAssetIssue017 {
     pageMessageBuilder.setLimit(limit);
 
     AssetIssueList assetIssueList = blockingStubFull
-            .getPaginatedAssetIssueList(pageMessageBuilder.build());
+        .getPaginatedAssetIssueList(pageMessageBuilder.build());
     Optional<AssetIssueList> assetIssueListPaginated = Optional.ofNullable(assetIssueList);
     logger.info(Long.toString(assetIssueListPaginated.get().getAssetIssueCount()));
     Assert.assertTrue(assetIssueListPaginated.get().getAssetIssueCount() >= 1);
@@ -354,5 +339,3 @@ public class WalletTestAssetIssue017 {
     return TransactionUtils.sign(transaction, ecKey);
   }
 }
-
-

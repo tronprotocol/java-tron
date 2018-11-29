@@ -30,7 +30,7 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 public class BuyStorageActuatorTest {
 
   private static Manager dbManager;
-  private static final String dbPath = "output_buy_storage_test";
+  private static final String dbPath = "output_buy_storage_test1";
   private static TronApplicationContext context;
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_INVALID = "aaaa";

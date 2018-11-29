@@ -35,7 +35,7 @@ public class IndexHelper {
   @Resource
   private Index.Iface<AssetIssueContract> assetIssueIndex;
 
-  @PostConstruct
+  //@PostConstruct
   public void init() {
     transactionIndex.fill();
     //blockIndex.fill();

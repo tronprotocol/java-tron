@@ -33,7 +33,7 @@ public class ProgramStorageChangeListener extends ProgramListenerAdaptor {
 
     @Override
     public void onStorageClear() {
-        // TODO: ...
+        // do nothing
     }
 
     public Map<DataWord, DataWord> getDiff() {
