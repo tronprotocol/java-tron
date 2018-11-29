@@ -4,16 +4,17 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
 import lombok.Getter;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.HashDB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   @Getter
@@ -36,23 +37,13 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     Preconditions.checkNotNull(key, "key in db is not null.");
     Preconditions.checkNotNull(value, "value in db is not null.");
 
-    Value.Operator operator;
-    byte[] v;
-    if ((v = get(previous, key)) == null) {
-      operator = Value.Operator.CREATE;
-    } else {
-      operator = Value.Operator.MODIFY;
-    }
-    db.put(Key.copyOf(key), Value.copyOf(operator, value));
+    db.put(Key.copyOf(key), Value.copyOf(Value.Operator.PUT, value));
   }
 
   @Override
   public void remove(byte[] key) {
     Preconditions.checkNotNull(key, "key in db is not null.");
-
-    if (get(key) != null) {
-      db.put(Key.of(key), Value.of(Value.Operator.DELETE, null));
-    }
+    db.put(Key.of(key), Value.of(Value.Operator.DELETE, null));
   }
 
   private byte[] get(Snapshot head, byte[] key) {
@@ -69,6 +60,24 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     return snapshot == null ? null : snapshot.get(key);
   }
 
+  // we have a 3x3 matrix of all possibilities when merging previous snapshot and current snapshot :
+  //                  -------------- snapshot -------------
+  //                 /                                     \
+  //                +------------+------------+------------+
+  //                | put(Y)     | delete(Y)  | nop        |
+  //   +------------+------------+------------+------------+
+  // / | put(X)     | put(Y)     | del        | put(X)     |
+  // p +------------+------------+------------+------------+
+  // r | delete(X)  | put(Y)     | del        | del        |
+  // e +------------+------------+------------+------------+
+  // | | nop        | put(Y)     | del        | nop        |
+  // \ +------------+------------+------------+------------+
+  @Override
+  public void merge(Snapshot from) {
+    SnapshotImpl fromImpl = (SnapshotImpl) from;
+    Streams.stream(fromImpl.db).forEach(e -> db.put(e.getKey(), e.getValue()));
+  }
+
   // we have a 4x4 matrix of all possibilities when merging previous snapshot and current snapshot :
   //                  --------------------- snapshot ------------------
   //                 /                                                 \
@@ -83,8 +92,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   // | +------------+------------+------------+------------+------------+
   // \ | nop        | new(Y)     | upd(Y)     | del        | nop        |
   //   +------------+------------+------------+------------+------------+
-  @Override
-  public void merge(Snapshot from) {
+  public void merge2(Snapshot from) {
     SnapshotImpl fromImpl = (SnapshotImpl) from;
 
     Streams.stream(fromImpl.db)

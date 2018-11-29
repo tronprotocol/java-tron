@@ -6,13 +6,15 @@ import java.util.Map;
 import lombok.Getter;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db.common.iterator.DBIterator;
 
 public class LevelDB implements DB<byte[], byte[]> {
   @Getter
   private LevelDbDataSourceImpl db;
-  private WriteOptions writeOptions = new WriteOptions().sync(true);
+  private WriteOptions writeOptions = new WriteOptions()
+      .sync(Args.getInstance().getStorage().isDbSync());
 
   public LevelDB(String parentName, String name) {
     db = new LevelDbDataSourceImpl(parentName, name);
