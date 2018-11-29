@@ -108,6 +108,9 @@ public class Args {
   @Parameter(names = {"--storage-db-version"}, description = "Storage db version.(1 or 2)")
   private String storageDbVersion = "";
 
+  @Parameter(names = {"--storage-db-synchronous"}, description = "Storage db is synchronous or not.(true or flase)")
+  private String storageDbSynchronous = "";
+
   @Parameter(names = {"--storage-index-directory"}, description = "Storage index directory")
   private String storageIndexDirectory = "";
 
@@ -520,6 +523,11 @@ public class Args {
         .filter(StringUtils::isNotEmpty)
         .map(Integer::valueOf)
         .orElse(Storage.getDbVersionFromConfig(config)));
+
+    INSTANCE.storage.setDbSync(Optional.ofNullable(INSTANCE.storageDbSynchronous)
+      .filter(StringUtils::isNotEmpty)
+      .map(Boolean::valueOf)
+      .orElse(Storage.getDbVersionSyncFromConfig(config)));
 
     INSTANCE.storage.setDbDirectory(Optional.ofNullable(INSTANCE.storageDbDirectory)
         .filter(StringUtils::isNotEmpty)
