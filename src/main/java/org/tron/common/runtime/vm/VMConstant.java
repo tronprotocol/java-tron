@@ -5,4 +5,6 @@ public class VMConstant {
 
   public static final String REASON_ALREADY_TIME_OUT = "Haven Time Out";
   public static final int CONTRACT_NAME_LENGTH = 32;
+
+  private VMConstant() {}
 }

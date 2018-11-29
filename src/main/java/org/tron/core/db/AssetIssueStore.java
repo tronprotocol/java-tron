@@ -2,16 +2,14 @@ package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.DatabaseConstants.ASSET_ISSUE_COUNT_LIMIT_MAX;
 
+import com.google.common.collect.Streams;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-
-import com.google.common.collect.Streams;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 
 @Slf4j
@@ -19,7 +17,7 @@ import org.tron.core.capsule.AssetIssueCapsule;
 public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
 
   @Autowired
-  private AssetIssueStore(@Value("asset-issue") String dbName) {
+  protected AssetIssueStore(@Value("asset-issue") String dbName) {
     super(dbName);
   }
 
@@ -27,6 +25,11 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
   @Override
   public AssetIssueCapsule get(byte[] key) {
     return super.getUnchecked(key);
+  }
+
+  @Override
+  public AssetIssueCapsule getOnSolidity(byte[] key) {
+    return super.getUncheckedOnSolidity(key);
   }
 
   /**
@@ -38,7 +41,14 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
         .collect(Collectors.toList());
   }
 
-  public List<AssetIssueCapsule> getAssetIssuesPaginated(long offset, long limit) {
+  public List<AssetIssueCapsule> getAllAssetIssuesOnSolidity() {
+    return Streams.stream(iteratorOnSolidity())
+        .map(Entry::getValue)
+        .collect(Collectors.toList());
+  }
+
+  private List<AssetIssueCapsule> getAssetIssuesPaginated(List<AssetIssueCapsule> assetIssueList,
+      long offset, long limit) {
     if (limit < 0 || offset < 0) {
       return null;
     }
@@ -50,7 +60,6 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
 //        .limit(Math.min(limit, ASSET_ISSUE_COUNT_LIMIT_MAX))
 //        .collect(Collectors.toList());
 
-    List<AssetIssueCapsule> assetIssueList = getAllAssetIssues();
     if (assetIssueList.size() <= offset) {
       return null;
     }
@@ -64,6 +73,14 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
     long end = offset + limit;
     end = end > assetIssueList.size() ? assetIssueList.size() : end ;
     return assetIssueList.subList((int)offset,(int)end);
+  }
+
+  public List<AssetIssueCapsule> getAssetIssuesPaginated(long offset, long limit) {
+    return getAssetIssuesPaginated(getAllAssetIssues(), offset, limit);
+  }
+
+  public List<AssetIssueCapsule> getAssetIssuesPaginatedOnSolidity(long offset, long limit) {
+    return getAssetIssuesPaginated(getAllAssetIssuesOnSolidity(), offset, limit);
   }
 
 }

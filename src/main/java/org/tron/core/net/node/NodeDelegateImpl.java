@@ -124,46 +124,22 @@ public class NodeDelegateImpl implements NodeDelegate {
     }
     try {
       dbManager.pushTransaction(trx);
-    } catch (ContractSizeNotEqualToOneException e) {
-      logger.info("Contract validate failed" + e.getMessage());
-      throw new BadTransactionException();
-    } catch (ContractValidateException e) {
-      logger.info("Contract validate failed" + e.getMessage());
-      //throw new BadTransactionException();
-      return false;
-    } catch (ContractExeException e) {
-      logger.info("Contract execute failed" + e.getMessage());
-      //throw new BadTransactionException();
-      return false;
-    } catch (ValidateSignatureException e) {
-      logger.info("ValidateSignatureException" + e.getMessage());
-      throw new BadTransactionException();
-    } catch (AccountResourceInsufficientException e) {
-      logger.info("AccountResourceInsufficientException" + e.getMessage());
-      return false;
-    } catch (DupTransactionException e) {
-      logger.info("Dup trans" + e.getMessage());
-      return false;
-    } catch (TaposException e) {
-      logger.info("Tapos error" + e.getMessage());
-      return false;
-    } catch (TooBigTransactionException e) {
-      logger.info("Too big transaction" + e.getMessage());
-      return false;
-    } catch (TransactionExpirationException e) {
-      logger.info("Expiration transaction" + e.getMessage());
-      return false;
-    } catch (ReceiptCheckErrException e) {
-      logger.info("ReceiptCheckErrException Exception" + e.getMessage());
-      return false;
-    } catch (VMIllegalException e) {
-      logger.warn(e.getMessage());
-      throw new BadTransactionException();
-    } catch (TooBigTransactionResultException e) {
-      logger.info("Too big transactionresult" + e.getMessage());
+    } catch (ContractSizeNotEqualToOneException
+        | ValidateSignatureException
+        | VMIllegalException e) {
+      throw new BadTransactionException(e.getMessage());
+    } catch (ContractValidateException
+        | ContractExeException
+        | AccountResourceInsufficientException
+        | DupTransactionException
+        | TaposException
+        | TooBigTransactionException
+        | TransactionExpirationException
+        | ReceiptCheckErrException
+        | TooBigTransactionResultException e) {
+      logger.warn("Handle transaction {} failed, reason: {}", trx.getTransactionId(), e.getMessage());
       return false;
     }
-
     return true;
   }
 

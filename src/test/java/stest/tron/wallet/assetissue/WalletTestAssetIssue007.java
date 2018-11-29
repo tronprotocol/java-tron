@@ -125,14 +125,13 @@ public class WalletTestAssetIssue007 {
     final Long participateAccountBeforeNetUsed = participateAccountNetMessage.getFreeNetUsed();
     Assert.assertTrue(participateAccountBeforeNetUsed == 0);
 
+    Account getAssetIdFromThisAccount;
+    getAssetIdFromThisAccount = PublicMethed.queryAccount(asset007Address,blockingStubFull);
+    ByteString assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
+    logger.info(assetAccountId.toString());
+
     //Participate an assetIssue, then query the net information.
-    ByteString assetNameBs = ByteString.copyFrom(name.getBytes());
-    GrpcAPI.BytesMessage request1 = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
-    Contract.AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request1);
-    logger.info(Long.toString(assetIssueByName.getStartTime()));
-    logger.info(Long.toString(System.currentTimeMillis()));
-    
-    Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,name.getBytes(),
+    Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,assetAccountId.toByteArray(),
         1L,participateAssetAddress,participateAssetCreateKey,blockingStubFull));
 
     addressBs = ByteString.copyFrom(asset007Address);
@@ -154,14 +153,14 @@ public class WalletTestAssetIssue007 {
 
 
 
-    Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,name.getBytes(),
+    Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,assetAccountId.toByteArray(),
         1L,participateAssetAddress,participateAssetCreateKey,blockingStubFull));
-    Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,name.getBytes(),
+    Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,assetAccountId.toByteArray(),
         1L,participateAssetAddress,participateAssetCreateKey,blockingStubFull));
 
     Account participateInfo = PublicMethed.queryAccount(participateAssetCreateKey,blockingStubFull);
     final Long beforeBalance = participateInfo.getBalance();
-    Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,name.getBytes(),
+    Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,assetAccountId.toByteArray(),
         1L,participateAssetAddress,participateAssetCreateKey,blockingStubFull));
     participateInfo = PublicMethed.queryAccount(participateAssetCreateKey,blockingStubFull);
     final Long afterBalance = participateInfo.getBalance();

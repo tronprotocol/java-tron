@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Wallet;
 import org.tron.core.WalletSolidity;
 import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.Util;
@@ -21,12 +22,12 @@ import org.tron.protos.Protocol.Transaction;
 public class GetTransactionByIdSolidityServlet extends HttpServlet {
 
   @Autowired
-  private WalletSolidity walletSolidity;
+  private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       String input = request.getParameter("value");
-      Transaction reply = walletSolidity
+      Transaction reply = wallet
           .getTransactionById(ByteString.copyFrom(ByteArray.fromHexString(input)));
       if (reply != null) {
         response.getWriter().println(Util.printTransaction(reply));
@@ -49,7 +50,7 @@ public class GetTransactionByIdSolidityServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build);
-      Transaction reply = walletSolidity.getTransactionById(build.build().getValue());
+      Transaction reply = wallet.getTransactionById(build.build().getValue());
       if (reply != null) {
         response.getWriter().println(Util.printTransaction(reply));
       } else {

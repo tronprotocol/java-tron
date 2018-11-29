@@ -15,6 +15,7 @@
 
 package org.tron.core.db;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.db2.core.RevokingDBWithCachingNewValue;
 import org.tron.core.exception.BadItemException;
 
 @Slf4j
@@ -42,12 +44,27 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
         .map(bytes -> {
           try {
             return new BlockCapsule(bytes);
-          } catch (BadItemException e) {
-            e.printStackTrace();
+          } catch (BadItemException ignored) {
           }
           return null;
         })
         .filter(Objects::nonNull)
+        .sorted(Comparator.comparing(BlockCapsule::getNum))
+        .collect(Collectors.toList());
+  }
+
+  public List<BlockCapsule> getLimitNumberOnSolidity(long startNumber, long limit) {
+    BlockId startBlockId = new BlockId(Sha256Hash.ZERO_HASH, startNumber);
+    return ((RevokingDBWithCachingNewValue) revokingDB).getValuesNextOnSolidity(startBlockId.getBytes(), limit).stream()
+        .map(bytes -> {
+          try {
+            return new BlockCapsule(bytes);
+          } catch (BadItemException ignored) {
+          }
+          return null;
+        })
+        .filter(Objects::nonNull)
+        .sorted(Comparator.comparing(BlockCapsule::getNum))
         .collect(Collectors.toList());
   }
 
@@ -57,12 +74,27 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
         .map(bytes -> {
           try {
             return new BlockCapsule(bytes);
-          } catch (BadItemException e) {
-            e.printStackTrace();
+          } catch (BadItemException ignored) {
           }
           return null;
         })
         .filter(Objects::nonNull)
+        .sorted(Comparator.comparing(BlockCapsule::getNum))
+        .collect(Collectors.toList());
+  }
+
+  public List<BlockCapsule> getBlockByLatestNumOnSolidity(long getNum) {
+
+    return ((RevokingDBWithCachingNewValue) revokingDB).getlatestValuesOnSolidity(getNum).stream()
+        .map(bytes -> {
+          try {
+            return new BlockCapsule(bytes);
+          } catch (BadItemException ignored) {
+          }
+          return null;
+        })
+        .filter(Objects::nonNull)
+        .sorted(Comparator.comparing(BlockCapsule::getNum))
         .collect(Collectors.toList());
   }
 }
