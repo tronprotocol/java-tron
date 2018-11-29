@@ -168,7 +168,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowMultiSign();
     } catch (IllegalArgumentException e) {
-      this.saveAllowMultiSign(0);
+      this.saveAllowMultiSign(Args.getInstance().getAllowMultiSign());
     }
 
     try {

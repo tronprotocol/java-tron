@@ -540,7 +540,7 @@ public class Wallet {
       tswBuilder.setPermission(permission);
       if (trx.getSignatureCount() > 0) {
         List<ByteString> approveList = new ArrayList<ByteString>();
-        long currentWeight = TransactionCapsule.checkWeight(permission, trx.getSignature(0),
+        long currentWeight = TransactionCapsule.checkWeight(permission, trx.getSignatureList(),
             Sha256Hash.hash(trx.getRawData().toByteArray()), approveList);
         tswBuilder.addAllApprovedList(approveList);
         tswBuilder.setCurrentWeight(currentWeight);

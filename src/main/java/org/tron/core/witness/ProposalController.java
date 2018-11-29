@@ -178,6 +178,12 @@ public class ProposalController {
           manager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(entry.getValue());
           break;
         }
+        case (19): {
+          if (manager.getDynamicPropertiesStore().getAllowMultiSign() == 0) {
+            manager.getDynamicPropertiesStore().saveAllowMultiSign(entry.getValue());
+          }
+          break;
+        }
         default:
           break;
       }
