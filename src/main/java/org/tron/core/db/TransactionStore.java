@@ -3,6 +3,7 @@ package org.tron.core.db;
 import java.util.Objects;
 
 import com.google.common.collect.Streams;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ import org.tron.core.exception.StoreException;
 public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> {
 
   @Autowired
+  @Setter
   private BlockStore blockStore;
 
   @Autowired
@@ -29,7 +31,7 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
 
   @Override
   public void put(byte[] key, TransactionCapsule item) {
-    if (item.getBlockNum() != -1) {
+    if (item.getBlockNum() == -1) {
       super.put(key, item);
     } else {
       super.put(key, item.getBlockNum());
