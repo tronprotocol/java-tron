@@ -77,6 +77,7 @@ import org.tron.protos.Contract.IncrementalMerkleWitness;
 import org.tron.protos.Contract.MerklePath;
 import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
+import org.tron.protos.Contract.ShieldAddress;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
@@ -1486,6 +1487,13 @@ public class RpcApiService implements Service {
       } else {
         responseObserver.onNext(null);
       }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void generateShieldAddress(EmptyMessage request,
+        StreamObserver<ShieldAddress> responseObserver) {
+      responseObserver.onNext(wallet.generateShieldAddress());
       responseObserver.onCompleted();
     }
   }
