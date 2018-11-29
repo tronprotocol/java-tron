@@ -164,7 +164,7 @@ public class WalletTestAssetIssue017 {
     Assert.assertTrue(assetIssueListPaginated.get().getAssetIssueCount() == 0);
 
     //offset is 1, limit is 50.
-    offset = 1;
+    offset = 0;
     limit = 50;
     pageMessageBuilder = PaginatedMessage.newBuilder();
     pageMessageBuilder.setOffset(offset);
