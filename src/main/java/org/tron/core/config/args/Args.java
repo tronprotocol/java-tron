@@ -370,6 +370,10 @@ public class Args {
   @Setter
   private String trxReferenceBlock;
 
+  @Getter
+  @Setter
+  private boolean trxBroadcastWithoutConnection;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -731,10 +735,15 @@ public class Args {
     INSTANCE.trxReferenceBlock = config.hasPath("trx.reference.block") ?
         config.getString("trx.reference.block") : "head";
 
+    INSTANCE.trxBroadcastWithoutConnection = config.hasPath("trx.broadcastWithoutConnection") ?
+        config.getBoolean("trx.broadcastWithoutConnection") : false;
+
     INSTANCE.vmTrace =
         config.hasPath("vm.vmTrace") ? config
             .getBoolean("vm.vmTrace") : false;
     initBackupProperty(config);
+
+
 
     logConfig();
   }

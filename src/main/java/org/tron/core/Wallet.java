@@ -400,20 +400,22 @@ public class Wallet {
   public GrpcAPI.Return broadcastTransaction(Transaction signaturedTransaction) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     try {
-      if (p2pNode.getActivePeer().isEmpty()) {
-        logger.info("Broadcast transaction failed, no connection.");
-        return builder.setResult(false).setCode(response_code.OTHER_ERROR)
-            .setMessage(ByteString.copyFromUtf8("no connection"))
-            .build();
-      }
-      if (!p2pNode.getActivePeer().stream()
-          .filter(p -> !p.isNeedSyncFromUs() && !p.isNeedSyncFromPeer())
-          .findFirst()
-          .isPresent()) {
-        logger.info("Broadcast transaction failed, no effective connection.");
-        return builder.setResult(false).setCode(response_code.OTHER_ERROR)
-            .setMessage(ByteString.copyFromUtf8("no effective connection"))
-            .build();
+      if (!Args.getInstance().isTrxBroadcastWithoutConnection()){
+        if (p2pNode.getActivePeer().isEmpty()) {
+          logger.info("Broadcast transaction failed, no connection.");
+          return builder.setResult(false).setCode(response_code.OTHER_ERROR)
+              .setMessage(ByteString.copyFromUtf8("no connection"))
+              .build();
+        }
+        if (!p2pNode.getActivePeer().stream()
+            .filter(p -> !p.isNeedSyncFromUs() && !p.isNeedSyncFromPeer())
+            .findFirst()
+            .isPresent()) {
+          logger.info("Broadcast transaction failed, no effective connection.");
+          return builder.setResult(false).setCode(response_code.OTHER_ERROR)
+              .setMessage(ByteString.copyFromUtf8("no effective connection"))
+              .build();
+        }
       }
       TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
       Message message = new TransactionMessage(signaturedTransaction);
