@@ -23,7 +23,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   }
 
   @Override
-  public byte[] get(byte[] key) {
+  public synchronized byte[] get(byte[] key) {
     Value value = cache.get(Key.of(key));
     if (value != null) {
       return value.getBytes();
@@ -33,21 +33,21 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   }
 
   @Override
-  public void put(byte[] key, byte[] value) {
+  public synchronized void put(byte[] key, byte[] value) {
     cache.put(Key.of(key), Value.copyOf(Operator.MODIFY, value));
   }
 
   @Override
-  public void remove(byte[] key) {
+  public synchronized void remove(byte[] key) {
     cache.put(Key.of(key), Value.of(Operator.DELETE, null));
   }
 
   @Override
-  public void merge(Snapshot from) {
+  public synchronized void merge(Snapshot from) {
     cache.putAll(((SnapshotImpl) from).db.asMap());
   }
 
-  public void flush() {
+  public synchronized void flush() {
     Map<WrappedByteArray, WrappedByteArray> batch = new HashMap<>((int) cache.size());
     Streams.stream(cache)
         .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey().getBytes()),
@@ -58,22 +58,22 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   }
 
   @Override
-  public Snapshot retreat() {
+  public synchronized Snapshot retreat() {
     return this;
   }
 
   @Override
-  public Snapshot getRoot() {
+  public synchronized Snapshot getRoot() {
     return this;
   }
 
   @Override
-  public Snapshot getSolidity() {
+  public synchronized Snapshot getSolidity() {
     return this;
   }
 
   @Override
-  public Iterator<Map.Entry<byte[],byte[]>> iterator() {
+  public synchronized Iterator<Map.Entry<byte[],byte[]>> iterator() {
     return Iterators.concat(
         Iterators.transform(
             Iterators.filter(cache.iterator(), e -> e.getValue().getBytes() != null),
@@ -82,12 +82,12 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   }
 
   @Override
-  public void close() {
+  public synchronized void close() {
     ((LevelDB) db).close();
   }
 
   @Override
-  public void reset() {
+  public synchronized void reset() {
     ((LevelDB) db).reset();
   }
 }
