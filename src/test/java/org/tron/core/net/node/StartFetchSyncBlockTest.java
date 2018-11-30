@@ -243,7 +243,6 @@ public class StartFetchSyncBlockTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    peerClient.close();
     handshakeHandlerTest.close();
     context.destroy();
     appT.shutdownServices();
