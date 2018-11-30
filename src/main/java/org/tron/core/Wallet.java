@@ -400,7 +400,7 @@ public class Wallet {
   public GrpcAPI.Return broadcastTransaction(Transaction signaturedTransaction) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     try {
-      if (!Args.getInstance().isTrxBroadcastWithoutConnection()){
+      if (!Args.getInstance().isBroadcastWithoutConnection()){
         if (p2pNode.getActivePeer().isEmpty()) {
           logger.info("Broadcast transaction failed, no connection.");
           return builder.setResult(false).setCode(response_code.OTHER_ERROR)

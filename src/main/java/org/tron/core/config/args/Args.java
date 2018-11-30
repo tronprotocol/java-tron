@@ -372,7 +372,7 @@ public class Args {
 
   @Getter
   @Setter
-  private boolean trxBroadcastWithoutConnection;
+  private boolean broadcastWithoutConnection;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -735,8 +735,8 @@ public class Args {
     INSTANCE.trxReferenceBlock = config.hasPath("trx.reference.block") ?
         config.getString("trx.reference.block") : "head";
 
-    INSTANCE.trxBroadcastWithoutConnection = config.hasPath("trx.broadcastWithoutConnection") ?
-        config.getBoolean("trx.broadcastWithoutConnection") : false;
+    INSTANCE.broadcastWithoutConnection = config.hasPath("node.rpc.broadcastWithoutConnection") ?
+        config.getBoolean("node.rpc.broadcastWithoutConnection") : false;
 
     INSTANCE.vmTrace =
         config.hasPath("vm.vmTrace") ? config
