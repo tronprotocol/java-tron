@@ -67,11 +67,6 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     revokingDB.put(key, item.getData());
   }
 
-  public void put(byte[] key, long blockHigh) {
-    revokingDB.put(key, ByteArray.fromLong(blockHigh));
-  }
-
-
   @Override
   public void delete(byte[] key) {
     revokingDB.delete(key);

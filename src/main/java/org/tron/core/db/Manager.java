@@ -367,7 +367,6 @@ public class Manager {
   public void init() {
     revokingStore.disable();
     revokingStore.check();
-    transactionStore.setBlockStore(getBlockStore());
     this.setWitnessController(WitnessController.createInstance(this));
     this.setProposalController(ProposalController.createInstance(this));
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());

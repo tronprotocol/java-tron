@@ -21,7 +21,6 @@ import org.tron.core.exception.StoreException;
 public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> {
 
   @Autowired
-  @Setter
   private BlockStore blockStore;
 
   @Autowired
@@ -34,7 +33,7 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
     if (Objects.isNull(item) || item.getBlockNum() == -1) {
       super.put(key, item);
     } else {
-      super.put(key, item.getBlockNum());
+      revokingDB.put(key, ByteArray.fromLong(item.getBlockNum()));
     }
 
     if (Objects.nonNull(indexHelper)) {
