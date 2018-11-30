@@ -138,6 +138,7 @@ public class TransactionStoreTest {
     blockCapsule.sign(
         ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
 
+    // save in database with block number
     TransferContract tc =
         TransferContract.newBuilder()
         .setAmount(10)
