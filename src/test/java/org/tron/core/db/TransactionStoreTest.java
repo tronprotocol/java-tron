@@ -151,6 +151,28 @@ public class TransactionStoreTest {
     trxStore.put(trx.getTransactionId().getBytes(), trx);
     Assert.assertEquals("Get transaction is error",
         trxStore.get(trx.getTransactionId().getBytes()).getInstance(), trx.getInstance());
+
+    // no found in transaction store database
+    tc =
+      TransferContract.newBuilder()
+        .setAmount(1000)
+        .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
+        .setToAddress(ByteString.copyFromUtf8("bbb"))
+        .build();
+    trx = new TransactionCapsule(tc, ContractType.TransferContract);
+    Assert.assertNull(trxStore.get(trx.getTransactionId().getBytes()));
+
+    // no block number, directly save in database
+    tc =
+      TransferContract.newBuilder()
+        .setAmount(10000)
+        .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
+        .setToAddress(ByteString.copyFromUtf8("bbb"))
+        .build();
+    trx = new TransactionCapsule(tc, ContractType.TransferContract);
+    trxStore.put(trx.getTransactionId().getBytes(), trx);
+    Assert.assertEquals("Get transaction is error",
+      trxStore.get(trx.getTransactionId().getBytes()).getInstance(), trx.getInstance());
   }
 
   /**
