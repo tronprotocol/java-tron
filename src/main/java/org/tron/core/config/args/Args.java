@@ -370,6 +370,10 @@ public class Args {
   @Setter
   private String trxReferenceBlock;
 
+  @Getter
+  @Setter
+  private int minEffectiveConnection;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -731,10 +735,15 @@ public class Args {
     INSTANCE.trxReferenceBlock = config.hasPath("trx.reference.block") ?
         config.getString("trx.reference.block") : "head";
 
+    INSTANCE.minEffectiveConnection = config.hasPath("node.rpc.minEffectiveConnection") ?
+        config.getInt("node.rpc.minEffectiveConnection") : 1;
+
     INSTANCE.vmTrace =
         config.hasPath("vm.vmTrace") ? config
             .getBoolean("vm.vmTrace") : false;
     initBackupProperty(config);
+
+
 
     logConfig();
   }
