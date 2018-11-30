@@ -1,8 +1,8 @@
 package org.tron.core.db;
 
+import java.util.List;
 import java.util.Objects;
 
-import com.google.common.collect.Streams;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -31,7 +31,7 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
 
   @Override
   public void put(byte[] key, TransactionCapsule item) {
-    if (item.getBlockNum() == -1) {
+    if (Objects.isNull(item) || item.getBlockNum() == -1) {
       super.put(key, item);
     } else {
       super.put(key, item.getBlockNum());
@@ -48,17 +48,16 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
     if (ArrayUtils.isEmpty(value)) {
       return null;
     }
-
     if (value.length == 8) {
-      long blockNum= ByteArray.toLong(value);
-      BlockCapsule block= blockStore.getLimitNumber(blockNum, 1).get(0);
-      if (Objects.nonNull(block)) {
-        for (TransactionCapsule e : block.getTransactions()) {
-          if (e.getTransactionId().equals(Sha256Hash.of(key))) {
-              return e;
+      List<BlockCapsule> blocksList = blockStore.getLimitNumber(ByteArray.toLong(value), 1);
+      if (blocksList.size() != 0) {
+        for (TransactionCapsule e : blocksList.get(0).getTransactions()) {
+          if (e.getTransactionId().equals(Sha256Hash.wrap(key))) {
+            return e;
           }
         }
       }
+      return null;
     }
 
     return new TransactionCapsule(value);
