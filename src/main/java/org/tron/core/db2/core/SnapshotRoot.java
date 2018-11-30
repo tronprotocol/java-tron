@@ -73,7 +73,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   }
 
   @Override
-  public synchronized Iterator<Map.Entry<byte[],byte[]>> iterator() {
+  public synchronized Iterator<Map.Entry<byte[], byte[]>> iterator() {
     return Iterators.concat(
         Iterators.transform(
             Iterators.filter(cache.iterator(), e -> e.getValue().getBytes() != null),
