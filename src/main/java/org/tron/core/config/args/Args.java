@@ -372,7 +372,7 @@ public class Args {
 
   @Getter
   @Setter
-  private boolean broadcastWithoutConnection;
+  private int minEffectiveConnection;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -735,8 +735,8 @@ public class Args {
     INSTANCE.trxReferenceBlock = config.hasPath("trx.reference.block") ?
         config.getString("trx.reference.block") : "head";
 
-    INSTANCE.broadcastWithoutConnection = config.hasPath("node.rpc.broadcastWithoutConnection") ?
-        config.getBoolean("node.rpc.broadcastWithoutConnection") : false;
+    INSTANCE.minEffectiveConnection = config.hasPath("node.rpc.minEffectiveConnection") ?
+        config.getInt("node.rpc.minEffectiveConnection") : 1;
 
     INSTANCE.vmTrace =
         config.hasPath("vm.vmTrace") ? config

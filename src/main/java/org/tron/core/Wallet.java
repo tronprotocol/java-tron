@@ -111,6 +111,7 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
+import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TransferContract;
@@ -144,6 +145,8 @@ public class Wallet {
   private NodeManager nodeManager;
   private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_TESTNET;  //default testnet
   private static byte addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_TESTNET;
+
+  private int minEffectiveConnection = Args.getInstance().getMinEffectiveConnection();
 
   /**
    * Creates a new Wallet with a random ECKey.
@@ -399,24 +402,28 @@ public class Wallet {
    */
   public GrpcAPI.Return broadcastTransaction(Transaction signaturedTransaction) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
-    try {
-      if (!Args.getInstance().isBroadcastWithoutConnection()){
+    try{
+      if (minEffectiveConnection != 0) {
         if (p2pNode.getActivePeer().isEmpty()) {
           logger.info("Broadcast transaction failed, no connection.");
           return builder.setResult(false).setCode(response_code.OTHER_ERROR)
               .setMessage(ByteString.copyFromUtf8("no connection"))
               .build();
         }
-        if (!p2pNode.getActivePeer().stream()
+
+        int count = (int) p2pNode.getActivePeer().stream()
             .filter(p -> !p.isNeedSyncFromUs() && !p.isNeedSyncFromPeer())
-            .findFirst()
-            .isPresent()) {
-          logger.info("Broadcast transaction failed, no effective connection.");
+            .count();
+
+        if (count < minEffectiveConnection) {
+          String info = "effective connection:" + count + " lt minEffectiveConnection:" + minEffectiveConnection;
+          logger.info("Broadcast transaction failed, {}", info);
           return builder.setResult(false).setCode(response_code.OTHER_ERROR)
-              .setMessage(ByteString.copyFromUtf8("no effective connection"))
+              .setMessage(ByteString.copyFromUtf8(info))
               .build();
         }
       }
+
       TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
       Message message = new TransactionMessage(signaturedTransaction);
 
