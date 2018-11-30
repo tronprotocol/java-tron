@@ -56,7 +56,6 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
           }
         }
       }
-      return null;
     }
 
     return new TransactionCapsule(value);
