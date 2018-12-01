@@ -19,7 +19,6 @@ import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
@@ -42,64 +41,53 @@ import org.tron.protos.Protocol.Transaction;
 @Slf4j
 public class BlockCapsule implements ProtoCapsule<Block> {
 
-  private BlockId blockId = new BlockId(Sha256Hash.ZERO_HASH, 0);
-
-  private Block block;
   public boolean generatedByMyself = false;
-  private List<TransactionCapsule> transactions = new ArrayList<>();
 
-  public BlockCapsule(long number, Sha256Hash hash, long when, ByteString witnessAddress) {
-    // blockheader raw
-    BlockHeader.raw.Builder blockHeaderRawBuild = BlockHeader.raw.newBuilder();
-    BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild
+  private BlockId blockId;
+  private Block block;
+  private List<TransactionCapsule> transactions;
+
+  public BlockCapsule(long number, Sha256Hash hash, long timestamp, ByteString witnessAddress) {
+    BlockHeader.raw blockHeaderRaw = BlockHeader.raw.newBuilder()
         .setNumber(number)
         .setParentHash(hash.getByteString())
-        .setTimestamp(when)
+        .setTimestamp(timestamp)
         .setVersion(ChainConstant.BLOCK_VERSION)
         .setWitnessAddress(witnessAddress)
         .build();
 
-    // block header
-    BlockHeader.Builder blockHeaderBuild = BlockHeader.newBuilder();
-    BlockHeader blockHeader = blockHeaderBuild.setRawData(blockHeaderRaw).build();
+    BlockHeader blockHeader = BlockHeader.newBuilder().setRawData(blockHeaderRaw).build();
 
-    // block
-    Block.Builder blockBuild = Block.newBuilder();
-    this.block = blockBuild.setBlockHeader(blockHeader).build();
-    initTxs();
+    this.block = Block.newBuilder().setBlockHeader(blockHeader).build();
+    this.transactions = initTxs();
   }
-
 
   public BlockCapsule(long timestamp, ByteString parentHash, long number,
       List<Transaction> transactionList) {
-    // blockheader raw
-    BlockHeader.raw.Builder blockHeaderRawBuild = BlockHeader.raw.newBuilder();
-    BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild
+    BlockHeader.raw blockHeaderRaw = BlockHeader.raw.newBuilder()
         .setTimestamp(timestamp)
         .setParentHash(parentHash)
         .setNumber(number)
         .build();
 
-    // block header
-    BlockHeader.Builder blockHeaderBuild = BlockHeader.newBuilder();
-    BlockHeader blockHeader = blockHeaderBuild.setRawData(blockHeaderRaw).build();
+    BlockHeader blockHeader = BlockHeader.newBuilder().setRawData(blockHeaderRaw).build();
 
-    // block
     Block.Builder blockBuild = Block.newBuilder();
-    transactionList.forEach(trx -> blockBuild.addTransactions(trx));
+    transactionList.forEach(blockBuild::addTransactions);
     this.block = blockBuild.setBlockHeader(blockHeader).build();
-    initTxs();
+
+    this.transactions = initTxs();
   }
 
   public BlockCapsule(Block block) {
     this.block = block;
-    initTxs();
+    this.transactions = initTxs();
   }
 
   public BlockCapsule(byte[] data) throws BadItemException {
     try {
       this.block = Block.parseFrom(data);
-      initTxs();
+      this.transactions = initTxs();
     } catch (InvalidProtocolBufferException e) {
       throw new BadItemException("Block proto data parse exception");
     }
@@ -108,16 +96,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   public void addTransaction(TransactionCapsule pendingTrx) {
     this.block = this.block.toBuilder().addTransactions(pendingTrx.getInstance()).build();
     getTransactions().add(pendingTrx);
-  }
-
-  public List<TransactionCapsule> getTransactions() {
-    return transactions;
-  }
-
-  private void initTxs() {
-    transactions = this.block.getTransactionsList().stream()
-        .map(trx -> new TransactionCapsule(trx))
-        .collect(Collectors.toList());
   }
 
   public void sign(byte[] privateKey) {
@@ -132,10 +110,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     this.block = this.block.toBuilder().setBlockHeader(blockHeader).build();
   }
 
-  private Sha256Hash getRawHash() {
-    return Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray());
-  }
-
   public boolean validateSignature() throws ValidateSignatureException {
     try {
       return Arrays
@@ -148,26 +122,40 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     }
   }
 
-  public BlockId getBlockId() {
-    if (blockId.equals(Sha256Hash.ZERO_HASH)) {
-      blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray()), getNum());
-    }
-    return blockId;
-  }
-
   public Sha256Hash calcMerkleRoot() {
-    List<Transaction> transactionsList = this.block.getTransactionsList();
+    List<Transaction> transactions = this.block.getTransactionsList();
 
-    if (CollectionUtils.isEmpty(transactionsList)) {
+    if (CollectionUtils.isEmpty(transactions)) {
       return Sha256Hash.ZERO_HASH;
     }
 
-    Vector<Sha256Hash> ids = transactionsList.stream()
+    Vector<Sha256Hash> ids = transactions.stream()
         .map(TransactionCapsule::new)
         .map(TransactionCapsule::getMerkleHash)
         .collect(Collectors.toCollection(Vector::new));
 
     return MerkleTree.getInstance().createTree(ids).getRoot().getHash();
+  }
+
+  private List<TransactionCapsule> initTxs() {
+    return this.block.getTransactionsList().stream()
+        .map(TransactionCapsule::new)
+        .collect(Collectors.toList());
+  }
+
+  private Sha256Hash getRawHash() {
+    return Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray());
+  }
+
+  public BlockId getBlockId() {
+    if (null == this.blockId) {
+      this.blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray()), getNum());
+    }
+    return this.blockId;
+  }
+
+  public List<TransactionCapsule> getTransactions() {
+    return this.transactions;
   }
 
   public void setMerkleRoot() {
@@ -178,8 +166,9 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     this.block = this.block.toBuilder().setBlockHeader(
         this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
   }
+
   /* only for genisis */
-  public void  setWitness(String witness) {
+  public void setWitness(String witness) {
     BlockHeader.raw blockHeaderRaw =
         this.block.getBlockHeader().getRawData().toBuilder().setWitnessAddress(
             ByteString.copyFrom(witness.getBytes())).build();
@@ -214,22 +203,21 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     return new BlockId(getParentHash(), getNum() - 1);
   }
 
-  public ByteString getParentHashStr() {
-    return this.block.getBlockHeader().getRawData().getParentHash();
-  }
-
   public long getNum() {
     return this.block.getBlockHeader().getRawData().getNumber();
+  }
+
+  public ByteString getParentHashStr() {
+    return this.block.getBlockHeader().getRawData().getParentHash();
   }
 
   public long getTimeStamp() {
     return this.block.getBlockHeader().getRawData().getTimestamp();
   }
 
-  private StringBuffer toStringBuff = new StringBuffer();
-
   @Override
   public String toString() {
+    StringBuilder toStringBuff = new StringBuilder();
     toStringBuff.setLength(0);
 
     toStringBuff.append("BlockCapsule \n[ ");
