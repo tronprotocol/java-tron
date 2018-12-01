@@ -37,16 +37,34 @@ public class UpdateAssetActuator extends AbstractActuator {
       ByteString newUrl = updateAssetContract.getUrl();
       ByteString newDescription = updateAssetContract.getDescription();
 
-      AssetIssueStore assetIssueStore = dbManager.getAssetIssueStore();
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-      AssetIssueCapsule assetIssueCapsule =
-          assetIssueStore.get(accountCapsule.getAssetIssuedName().toByteArray());
 
-      assetIssueCapsule.setFreeAssetNetLimit(newLimit);
-      assetIssueCapsule.setPublicFreeAssetNetLimit(newPublicLimit);
-      assetIssueCapsule.setUrl(newUrl);
-      assetIssueCapsule.setDescription(newDescription);
-      assetIssueStore.put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+      AssetIssueCapsule assetIssueCapsule, assetIssueCapsuleV2;
+
+      AssetIssueStore assetIssueStoreV2 = dbManager.getAssetIssueV2Store();
+      assetIssueCapsuleV2 = assetIssueStoreV2.get(accountCapsule.getAssetIssuedID().toByteArray());
+
+      assetIssueCapsuleV2.setFreeAssetNetLimit(newLimit);
+      assetIssueCapsuleV2.setPublicFreeAssetNetLimit(newPublicLimit);
+      assetIssueCapsuleV2.setUrl(newUrl);
+      assetIssueCapsuleV2.setDescription(newDescription);
+
+      if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+        AssetIssueStore assetIssueStore = dbManager.getAssetIssueStore();
+        assetIssueCapsule = assetIssueStore.get(accountCapsule.getAssetIssuedName().toByteArray());
+        assetIssueCapsule.setFreeAssetNetLimit(newLimit);
+        assetIssueCapsule.setPublicFreeAssetNetLimit(newPublicLimit);
+        assetIssueCapsule.setUrl(newUrl);
+        assetIssueCapsule.setDescription(newDescription);
+
+        dbManager.getAssetIssueStore()
+            .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+        dbManager.getAssetIssueV2Store()
+            .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
+      } else {
+        dbManager.getAssetIssueV2Store()
+            .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
+      }
 
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
@@ -95,11 +113,25 @@ public class UpdateAssetActuator extends AbstractActuator {
       throw new ContractValidateException("Account has not existed");
     }
 
-    if (account.getAssetIssuedName().isEmpty()) {
-      throw new ContractValidateException("Account has not issue any asset");
-    }
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      if (account.getAssetIssuedName().isEmpty()) {
+        throw new ContractValidateException("Account has not issue any asset");
+      }
 
-    assert (dbManager.getAssetIssueStore().get(account.getAssetIssuedName().toByteArray()) != null);
+      if (dbManager.getAssetIssueStore().get(account.getAssetIssuedName().toByteArray())
+          == null) {
+        throw new ContractValidateException("Asset not exists in AssetIssueStore");
+      }
+    } else {
+      if (account.getAssetIssuedID().isEmpty()) {
+        throw new ContractValidateException("Account has not issue any asset");
+      }
+
+      if (dbManager.getAssetIssueV2Store().get(account.getAssetIssuedID().toByteArray())
+          == null) {
+        throw new ContractValidateException("Asset not exists  in AssetIssueV2Store");
+      }
+    }
 
     if (!TransactionUtil.validUrl(newUrl.toByteArray())) {
       throw new ContractValidateException("Invalid url");

@@ -6,6 +6,7 @@ import io.grpc.ManagedChannelBuilder;
 import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -40,9 +41,9 @@ public class WalletTestAccount003 {
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
-  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
   private static final long now = System.currentTimeMillis();
@@ -90,7 +91,7 @@ public class WalletTestAccount003 {
   }
 
   @Test
-  public void testCreateAccount() {
+  public void test1CreateAccount() {
     Account noCreateAccount = queryAccount(lowBalTest, blockingStubFull);
     while (noCreateAccount.getBalance() != 0) {
       ecKey = new ECKey(Utils.getRandom());
@@ -98,38 +99,27 @@ public class WalletTestAccount003 {
       lowBalTest = ByteArray.toHexString(ecKey.getPrivKeyBytes());
       noCreateAccount = queryAccount(lowBalTest, blockingStubFull);
     }
-
     Assert.assertTrue(sendCoin(lowBalAddress, 1L, fromAddress, testKey002));
     noCreateAccount = queryAccount(lowBalTest, blockingStubFull);
     logger.info(Long.toString(noCreateAccount.getBalance()));
     Assert.assertTrue(noCreateAccount.getBalance() == 1);
-
-    //TestVoteToNonWitnessAccount
-    HashMap<String, String> voteToNonWitnessAccount = new HashMap<String, String>();
-    voteToNonWitnessAccount.put("27dUQbeRLz6BavhUJE6UbNp5AtAtPuzNZv6", "3");
-    HashMap<String, String> voteToInvaildAddress = new HashMap<String, String>();
-    voteToInvaildAddress.put("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48", "4");
-    Assert.assertTrue(freezeBalance(fromAddress, 10000000L, 3L, testKey002));
-    voteWitness(voteToNonWitnessAccount, fromAddress, testKey002);
-    Assert.assertFalse(voteWitness(voteToNonWitnessAccount, fromAddress, testKey002));
-    Assert.assertFalse(voteWitness(voteToInvaildAddress, fromAddress, testKey002));
-
-  }
-
-  @Test(enabled = false)
-  public void testUpdateAccount() {
-    Assert.assertFalse(updateAccount(lowBalAddress,
-        mostLongNamePlusOneChar.getBytes(), lowBalTest));
-    Assert.assertTrue(updateAccount(lowBalAddress, "".getBytes(), lowBalTest));
-    Assert.assertTrue(updateAccount(lowBalAddress, mostLongName.getBytes(), lowBalTest));
-    Account tryToUpdateAccount = queryAccount(lowBalTest, blockingStubFull);
-    tryToUpdateAccount = queryAccount(lowBalTest, blockingStubFull);
-    Assert.assertFalse(tryToUpdateAccount.getAccountName().isEmpty());
-    Assert.assertTrue(updateAccount(lowBalAddress, "secondUpdateName".getBytes(), lowBalTest));
   }
 
   @Test(enabled = true)
-  public void testNoBalanceCreateAssetIssue() {
+  public void test2UpdateAccount() {
+    Assert.assertFalse(updateAccount(lowBalAddress,
+        mostLongNamePlusOneChar.getBytes(), lowBalTest));
+    //Assert.assertFalse(updateAccount(lowBalAddress, "".getBytes(), lowBalTest));
+    String mostLongName = getRandomStr(33);
+    Assert.assertTrue(updateAccount(lowBalAddress, mostLongName.getBytes(), lowBalTest));
+    String firstUpdateName = getRandomStr(32);
+    Assert.assertFalse(updateAccount(lowBalAddress, firstUpdateName.getBytes(), lowBalTest));
+    String secondUpdateName = getRandomStr(15);
+    Assert.assertFalse(updateAccount(lowBalAddress, secondUpdateName.getBytes(), lowBalTest));
+  }
+
+  @Test(enabled = true)
+  public void test3NoBalanceCreateAssetIssue() {
     Account lowaccount = queryAccount(lowBalTest, blockingStubFull);
     if (lowaccount.getBalance() > 0) {
       Assert.assertTrue(sendCoin(toAddress, lowaccount.getBalance(), lowBalAddress, lowBalTest));
@@ -142,19 +132,19 @@ public class WalletTestAccount003 {
   }
 
   @Test(enabled = true)
-  public void testNoBalanceTransferTrx() {
+  public void test4NoBalanceTransferTrx() {
     //Send Coin failed when there is no enough balance.
     Assert.assertFalse(sendCoin(toAddress, 100000000000000000L, lowBalAddress, lowBalTest));
   }
 
   @Test(enabled = true)
-  public void testNoBalanceCreateWitness() {
+  public void test5NoBalanceCreateWitness() {
     //Apply to be super witness failed when no enough balance.
     Assert.assertFalse(createWitness(lowBalAddress, fromAddress, lowBalTest));
   }
 
   @Test(enabled = true)
-  public void testNoFreezeBalanceToUnfreezeBalance() {
+  public void test6NoFreezeBalanceToUnfreezeBalance() {
     //Unfreeze account failed when no freeze balance
     Account noFreezeAccount = queryAccount(lowBalTest, blockingStubFull);
     if (noFreezeAccount.getFrozenCount() == 0) {
@@ -163,21 +153,6 @@ public class WalletTestAccount003 {
       logger.info("This account has freeze balance, please test this case for manual");
     }
   }
-
-
-  /*    @Test
-    public void TestVoteToNonWitnessAccount(){
-        HashMap<String,String> vote_to_non_witness_account=new HashMap<String,String>();
-        vote_to_non_witness_account.put("27XeWZUtufGk8jdjF3m1tuPnnRqqKgzS3pT", "1");
-        HashMap<String,String> vote_to_invaild_address=new HashMap<String,String>();
-        vote_to_invaild_address.put("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48", "1");
-        Assert.assertTrue(FreezeBalance(fromAddress,10000000L, 3L,testKey002));
-        Assert.assertFalse(VoteWitness(vote_to_non_witness_account,fromAddress,testKey002));
-        Assert.assertFalse(VoteWitness(vote_to_invaild_address,fromAddress,testKey002));
-
-        logger.info("vote to non witness account ok!!!");
-
-    }*/
 
   @AfterClass
   public void shutdown() throws InterruptedException {
@@ -510,6 +485,21 @@ public class WalletTestAccount003 {
     return true;
 
 
+  }
+
+  public static String getRandomStr(int length) {
+    String base = "abcdefghijklmnopqrstuvwxyz0123456789";
+    int randomNum;
+    char randomChar;
+    Random random = new Random();
+    StringBuffer str = new StringBuffer();
+
+    for (int i = 0; i < length; i++) {
+      randomNum = random.nextInt(base.length());
+      randomChar = base.charAt(randomNum);
+      str.append(randomChar);
+    }
+    return str.toString();
   }
 
 }

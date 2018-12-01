@@ -56,12 +56,11 @@ public class WalletTestAssetIssue001 {
 
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
-
-
-  //get account
   ECKey ecKey = new ECKey(Utils.getRandom());
   byte[] noBandwitchAddress = ecKey.getAddress();
   String noBandwitch = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+
+
 
   @BeforeSuite
   public void beforeSuite() {
@@ -69,73 +68,69 @@ public class WalletTestAssetIssue001 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
-    PublicMethed.printAddress(noBandwitch);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-
-    ByteString addressBS1 = ByteString.copyFrom(noBandwitchAddress);
-    Account request1 = Account.newBuilder().setAddress(addressBS1).build();
-    GrpcAPI.AssetIssueList assetIssueList1 = blockingStubFull
-        .getAssetIssueByAccount(request1);
-    Optional<GrpcAPI.AssetIssueList> queryAssetByAccount = Optional.ofNullable(assetIssueList1);
-    if (queryAssetByAccount.get().getAssetIssueCount() == 0) {
-      Assert
-          .assertTrue(PublicMethed.sendcoin(noBandwitchAddress, 2048000000, fromAddress, testKey002
-              , blockingStubFull));
-      Long start = System.currentTimeMillis() + 2000;
-      Long end = System.currentTimeMillis() + 1000000000;
-
-      //Create a new AssetIssue success.
-      Assert.assertTrue(PublicMethed.createAssetIssue(noBandwitchAddress, name, totalSupply, 1,
-          100, start, end, 1, description, url, 10000L,10000L,
-          1L,1L,noBandwitch,blockingStubFull));
-    } else {
-      logger.info("This account already create an assetisue");
-      Optional<GrpcAPI.AssetIssueList> queryAssetByAccount1 = Optional.ofNullable(assetIssueList1);
-      name = ByteArray.toStr(queryAssetByAccount1.get().getAssetIssue(0).getName().toByteArray());
-
-    }
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testTransferAssetBandwitchDecreaseWithin10Second() {
-    Assert.assertTrue(
-        transferAsset(toAddress, name.getBytes(), 100L, noBandwitchAddress, noBandwitch));
+    //get account
+    ecKey = new ECKey(Utils.getRandom());
+    noBandwitchAddress = ecKey.getAddress();
+    noBandwitch = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+
+    PublicMethed.printAddress(noBandwitch);
+
+    Assert.assertTrue(PublicMethed.sendcoin(noBandwitchAddress, 2048000000, fromAddress,
+        testKey002, blockingStubFull));
+    Long start = System.currentTimeMillis() + 2000;
+    Long end = System.currentTimeMillis() + 1000000000;
+
+    //Create a new AssetIssue success.
+    Assert.assertTrue(PublicMethed.createAssetIssue(noBandwitchAddress, name, totalSupply, 1,
+        100, start, end, 1, description, url, 10000L,10000L,
+        1L,1L,noBandwitch,blockingStubFull));
+
+    Account getAssetIdFromThisAccount;
+    getAssetIdFromThisAccount = PublicMethed.queryAccount(noBandwitch,blockingStubFull);
+    ByteString assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
+
+
+    Assert.assertTrue(transferAsset(toAddress, assetAccountId.toByteArray(), 100L,
+        noBandwitchAddress, noBandwitch));
 
     //Transfer Asset failed when transfer to yourself
-    Assert.assertFalse(transferAsset(toAddress, name.getBytes(), 100L, toAddress, testKey003));
+    Assert.assertFalse(transferAsset(toAddress, assetAccountId.toByteArray(), 100L,
+        toAddress, testKey003));
     //Transfer Asset failed when the transfer amount is large than the asset balance you have.
     Assert.assertFalse(
-        transferAsset(fromAddress, name.getBytes(), 9100000000000000000L, toAddress, testKey003));
+        transferAsset(fromAddress, assetAccountId.toByteArray(), 9100000000000000000L,
+            toAddress, testKey003));
     //Transfer Asset failed when the transfer amount is 0
-    Assert.assertFalse(transferAsset(fromAddress, name.getBytes(), 0L, toAddress, testKey003));
+    Assert.assertFalse(transferAsset(fromAddress, assetAccountId.toByteArray(), 0L,
+        toAddress, testKey003));
     //Transfer Asset failed when the transfer amount is -1
-    Assert.assertFalse(transferAsset(fromAddress, name.getBytes(), -1L, toAddress, testKey003));
-    //Transfer failed when you want to transfer to an invalid address
-    //Assert.assertFalse(TransferAsset(INVAILD_ADDRESS, name.getBytes(),
-    // 1L, toAddress, testKey003));
-    //Transfer failed when the asset issue name is not correct.
-    Assert.assertFalse(
-        transferAsset(fromAddress, (name + "wrong").getBytes(), 1L, toAddress, testKey003));
+    Assert.assertFalse(transferAsset(fromAddress, assetAccountId.toByteArray(), -1L,
+        toAddress, testKey003));
+
     //Transfer success.
-    Assert.assertTrue(transferAsset(fromAddress, name.getBytes(), 1L, toAddress, testKey003));
+    Assert.assertTrue(transferAsset(fromAddress, assetAccountId.toByteArray(), 1L,
+        toAddress, testKey003));
 
     //No freeze asset, try to unfreeze asset failed.
     Assert.assertFalse(unFreezeAsset(noBandwitchAddress, noBandwitch));
-    logger.info("Test no asset frozen balance, try to unfreeze asset, no exception. Test OK!!!");
 
     //Not create asset, try to unfreeze asset failed.No exception.
     Assert.assertFalse(unFreezeAsset(toAddress, testKey003));
-    logger.info("Test not create asset issue, try to unfreeze asset, no exception. Test OK!!!");
 
 
   }
 
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

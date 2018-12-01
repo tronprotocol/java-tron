@@ -27,23 +27,12 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class WalletTestAssetIssue015 {
-
-  //testng001、testng002、testng003、testng004
-  private final String testKey002 =
-      "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
-  private final String testKey003 =
-      "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
-
-
-
-  //testng001、testng002、testng003、testng004
-/*  private static final byte[] fromAddress = Base58
-      .decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");
-  private static final byte[] toAddress = Base58
-      .decodeFromBase58Check("TV75jZpdmP2juMe1dRwGrwpV6AMU6mr1EU");*/
-
+  private final String testKey002 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key1");
+  private final String testKey003 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-  private final byte[] toAddress   = PublicMethed.getFinalAddress(testKey003);
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
 
   private static final long now = System.currentTimeMillis();
@@ -56,6 +45,7 @@ public class WalletTestAssetIssue015 {
   Long publicFreeAssetNetLimit = 30000L;
   String description = "for case assetissue015";
   String url = "https://stest.assetissue015.url";
+  ByteString assetAccountId;
 
 
   private ManagedChannel channelFull = null;
@@ -85,7 +75,7 @@ public class WalletTestAssetIssue015 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     logger.info(testKeyForAssetIssue015);
     logger.info(transferAssetCreateKey);
@@ -95,37 +85,41 @@ public class WalletTestAssetIssue015 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-
-    //Sendcoin to this account
-    ByteString addressBS1 = ByteString.copyFrom(asset015Address);
-    Account request1 = Account.newBuilder().setAddress(addressBS1).build();
-    GrpcAPI.AssetIssueList assetIssueList1 = blockingStubFull
-        .getAssetIssueByAccount(request1);
-    Optional<GrpcAPI.AssetIssueList> queryAssetByAccount = Optional.ofNullable(assetIssueList1);
-    if (queryAssetByAccount.get().getAssetIssueCount() == 0) {
-      //Assert.assertTrue(PublicMethed.freezeBalance(fromAddress,10000000, 3, testKey002,
-      //    blockingStubFull));
-      Assert.assertTrue(PublicMethed
-          .sendcoin(asset015Address, sendAmount, fromAddress, testKey002, blockingStubFull));
-      Long start = System.currentTimeMillis() + 2000;
-      Long end = System.currentTimeMillis() + 1000000000;
-      Assert.assertTrue(PublicMethed
-          .createAssetIssue(asset015Address, name, totalSupply, 1, 1, start, end, 1, description,
-              url, freeAssetNetLimit, publicFreeAssetNetLimit, 1L, 1L, testKeyForAssetIssue015,
-              blockingStubFull));
-    } else {
-      logger.info("This account already create an assetisue");
-      Optional<GrpcAPI.AssetIssueList> queryAssetByAccount1 = Optional.ofNullable(assetIssueList1);
-      name = ByteArray.toStr(queryAssetByAccount1.get().getAssetIssue(0).getName().toByteArray());
-    }
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void atestWhenCreatorHasNoEnoughBandwidthUseTransferNet() {
+    ecKey1 = new ECKey(Utils.getRandom());
+    asset015Address = ecKey1.getAddress();
+    testKeyForAssetIssue015 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
+
+    ecKey2 = new ECKey(Utils.getRandom());
+    transferAssetAddress = ecKey2.getAddress();
+    transferAssetCreateKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+
+    ecKey3 = new ECKey(Utils.getRandom());
+    newAddress = ecKey3.getAddress();
+    testKeyForNewAddress = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
+
+    Assert.assertTrue(PublicMethed
+        .sendcoin(asset015Address, sendAmount, fromAddress, testKey002, blockingStubFull));
+    Long start = System.currentTimeMillis() + 2000;
+    Long end = System.currentTimeMillis() + 1000000000;
+    Assert.assertTrue(PublicMethed
+        .createAssetIssue(asset015Address, name, totalSupply, 1, 1, start, end, 1, description,
+            url, freeAssetNetLimit, publicFreeAssetNetLimit, 1L, 1L, testKeyForAssetIssue015,
+            blockingStubFull));
+
+    Account getAssetIdFromThisAccount;
+    getAssetIdFromThisAccount = PublicMethed.queryAccount(asset015Address,blockingStubFull);
+    assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
+    
+    
     //Transfer asset to an account.
     Assert.assertTrue(PublicMethed
-        .transferAsset(transferAssetAddress, name.getBytes(), 10000000L, asset015Address,
-            testKeyForAssetIssue015, blockingStubFull));
+        .transferAsset(transferAssetAddress, assetAccountId.toByteArray(), 10000000L,
+            asset015Address, testKeyForAssetIssue015, blockingStubFull));
 
     //Before use transfer net, query the net used from creator and transfer.
     AccountNetMessage assetCreatorNet = PublicMethed
@@ -139,7 +133,7 @@ public class WalletTestAssetIssue015 {
 
     //Transfer send some asset issue to default account, to test if this
     // transaction use the transaction free net.
-    Assert.assertTrue(PublicMethed.transferAsset(toAddress,name.getBytes(),1L,
+    Assert.assertTrue(PublicMethed.transferAsset(toAddress,assetAccountId.toByteArray(),1L,
         transferAssetAddress,transferAssetCreateKey,blockingStubFull));
     assetCreatorNet = PublicMethed
         .getAccountNet(asset015Address,blockingStubFull);
@@ -155,11 +149,11 @@ public class WalletTestAssetIssue015 {
     Assert.assertTrue(transferAfterFreeNetUsed - transferBeforeFreeNetUsed > netCostMeasure);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void btestWhenTransferHasNoEnoughBandwidthUseBalance() {
     Boolean ret = true;
     while (ret) {
-      ret = PublicMethed.transferAsset(toAddress,name.getBytes(),1L,
+      ret = PublicMethed.transferAsset(toAddress,assetAccountId.toByteArray(),1L,
           transferAssetAddress,transferAssetCreateKey,blockingStubFull);
     }
     AccountNetMessage assetTransferNet = PublicMethed
@@ -174,7 +168,7 @@ public class WalletTestAssetIssue015 {
     Long beforeBalance = transferAccount.getBalance();
     logger.info(Long.toString(beforeBalance));
 
-    Assert.assertTrue(PublicMethed.transferAsset(toAddress,name.getBytes(),1L,
+    Assert.assertTrue(PublicMethed.transferAsset(toAddress,assetAccountId.toByteArray(),1L,
         transferAssetAddress,transferAssetCreateKey,blockingStubFull));
 
     transferAccount = PublicMethed.queryAccount(transferAssetCreateKey,blockingStubFull);
@@ -184,7 +178,7 @@ public class WalletTestAssetIssue015 {
     Assert.assertTrue(beforeBalance - afterBalance > 2000);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void ctestWhenFreezeBalanceUseNet() {
     Assert.assertTrue(PublicMethed.freezeBalance(transferAssetAddress,5000000,
         3,transferAssetCreateKey,blockingStubFull));
@@ -196,7 +190,7 @@ public class WalletTestAssetIssue015 {
     final Long transferBalanceBefore = transferAccount.getBalance();
     logger.info("before  " + Long.toString(transferBalanceBefore));
 
-    Assert.assertTrue(PublicMethed.transferAsset(toAddress,name.getBytes(),1L,
+    Assert.assertTrue(PublicMethed.transferAsset(toAddress,assetAccountId.toByteArray(),1L,
         transferAssetAddress,transferAssetCreateKey,blockingStubFull));
 
     assetTransferNet = PublicMethed
@@ -214,7 +208,7 @@ public class WalletTestAssetIssue015 {
   }
 
 
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

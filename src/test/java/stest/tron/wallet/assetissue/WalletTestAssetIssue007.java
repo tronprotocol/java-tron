@@ -79,7 +79,7 @@ public class WalletTestAssetIssue007 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(testKeyForAssetIssue007);
     PublicMethed.printAddress(participateAssetCreateKey);
@@ -90,19 +90,19 @@ public class WalletTestAssetIssue007 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testParticipateAssetIssueUseParticipaterBandwidth() {
     Assert.assertTrue(PublicMethed
         .sendcoin(asset007Address, sendAmount, fromAddress, testKey002, blockingStubFull));
     //Assert.assertTrue(PublicMethed
     //    .freezeBalance(asset007Address, 100000000L, 3, testKeyForAssetIssue007,
-     //       blockingStubFull));
+    //       blockingStubFull));
     Long start = System.currentTimeMillis() + 2000;
     Long end = System.currentTimeMillis() + 1000000000;
     Assert.assertTrue(PublicMethed
-        .createAssetIssue(asset007Address, name, totalSupply, trxNum, icoNum, start, end, 1, description,
-            url, freeAssetNetLimit, publicFreeAssetNetLimit, 1L, 1L, testKeyForAssetIssue007,
-            blockingStubFull));
+        .createAssetIssue(asset007Address, name, totalSupply, trxNum, icoNum, start, end, 1,
+            description, url, freeAssetNetLimit, publicFreeAssetNetLimit, 1L, 1L,
+            testKeyForAssetIssue007, blockingStubFull));
 
     logger.info(name);
     Assert.assertTrue(PublicMethed.waitProduceNextBlock(blockingStubFull));
@@ -125,14 +125,13 @@ public class WalletTestAssetIssue007 {
     final Long participateAccountBeforeNetUsed = participateAccountNetMessage.getFreeNetUsed();
     Assert.assertTrue(participateAccountBeforeNetUsed == 0);
 
+    Account getAssetIdFromThisAccount;
+    getAssetIdFromThisAccount = PublicMethed.queryAccount(asset007Address,blockingStubFull);
+    ByteString assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
+    logger.info(assetAccountId.toString());
+
     //Participate an assetIssue, then query the net information.
-    ByteString assetNameBs = ByteString.copyFrom(name.getBytes());
-    GrpcAPI.BytesMessage request1 = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
-    Contract.AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request1);
-    logger.info(Long.toString(assetIssueByName.getStartTime()));
-    logger.info(Long.toString(System.currentTimeMillis()));
-    
-    Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,name.getBytes(),
+    Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,assetAccountId.toByteArray(),
         1L,participateAssetAddress,participateAssetCreateKey,blockingStubFull));
 
     addressBs = ByteString.copyFrom(asset007Address);
@@ -154,22 +153,22 @@ public class WalletTestAssetIssue007 {
 
 
 
-    Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,name.getBytes(),
+    Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,assetAccountId.toByteArray(),
         1L,participateAssetAddress,participateAssetCreateKey,blockingStubFull));
-    Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,name.getBytes(),
+    Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,assetAccountId.toByteArray(),
         1L,participateAssetAddress,participateAssetCreateKey,blockingStubFull));
 
     Account participateInfo = PublicMethed.queryAccount(participateAssetCreateKey,blockingStubFull);
     final Long beforeBalance = participateInfo.getBalance();
-    Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,name.getBytes(),
+    Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,assetAccountId.toByteArray(),
         1L,participateAssetAddress,participateAssetCreateKey,blockingStubFull));
     participateInfo = PublicMethed.queryAccount(participateAssetCreateKey,blockingStubFull);
     final Long afterBalance = participateInfo.getBalance();
 
-    Assert.assertTrue(beforeBalance  - trxNum*1*icoNum  >= afterBalance);
+    Assert.assertTrue(beforeBalance  - trxNum * 1 * icoNum  >= afterBalance);
   }
 
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

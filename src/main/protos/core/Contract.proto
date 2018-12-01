@@ -48,7 +48,7 @@ message TransferContract {
 }
 
 message TransferAssetContract {
-  bytes asset_name = 1;
+  bytes asset_name = 1; // this field is token name before the proposal ALLOW_SAME_TOKEN_NAME is active, otherwise it is token id and token is should be in string format.
   bytes owner_address = 2;
   bytes to_address = 3;
   int64 amount = 4;
@@ -78,6 +78,12 @@ message UpdateSettingContract {
   int64 consume_user_resource_percent = 3;
 }
 
+message UpdateEnergyLimitContract {
+  bytes owner_address = 1;
+  bytes contract_address = 2;
+  int64 origin_energy_limit = 3;
+}
+
 message WitnessCreateContract {
   bytes owner_address = 1;
   bytes url = 2;
@@ -89,6 +95,8 @@ message WitnessUpdateContract {
 }
 
 message AssetIssueContract {
+  string id = 41;
+
   message FrozenSupply {
     int64 frozen_amount = 1;
     int64 frozen_days = 2;
@@ -99,10 +107,11 @@ message AssetIssueContract {
   int64 total_supply = 4;
   repeated FrozenSupply frozen_supply = 5;
   int32 trx_num = 6;
+  int32 precision = 7;
   int32 num = 8;
   int64 start_time = 9;
   int64 end_time = 10;
-  int64 order = 11; // the order of tokens of the same name
+  int64 order = 11; // useless
   int32 vote_score = 16;
   bytes description = 20;
   bytes url = 21;
@@ -115,7 +124,7 @@ message AssetIssueContract {
 message ParticipateAssetIssueContract {
   bytes owner_address = 1;
   bytes to_address = 2;
-  bytes asset_name = 3; // the namekey of target asset, include name and order
+  bytes asset_name = 3; // this field is token name before the proposal ALLOW_SAME_TOKEN_NAME is active, otherwise it is token id and token is should be in string format.
   int64 amount = 4; // the amount of drops
 }
 
@@ -131,12 +140,14 @@ message FreezeBalanceContract {
   int64 frozen_duration = 3;
 
   ResourceCode resource = 10;
+  bytes receiver_address = 15;
 }
 
 message UnfreezeBalanceContract {
   bytes owner_address = 1;
 
   ResourceCode resource = 10;
+  bytes receiver_address = 15;
 }
 
 message UnfreezeAssetContract {
@@ -174,6 +185,8 @@ message ProposalDeleteContract {
 message CreateSmartContract {
   bytes owner_address = 1;
   SmartContract new_contract = 2;
+  int64 call_token_value = 3;
+  int64 token_id = 4;
 }
 
 message TriggerSmartContract {
@@ -181,6 +194,8 @@ message TriggerSmartContract {
   bytes contract_address = 2;
   int64 call_value = 3;
   bytes data = 4;
+  int64 call_token_value = 5;
+  int64 token_id = 6;
 }
 
 message BuyStorageContract {

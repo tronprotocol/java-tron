@@ -232,7 +232,7 @@ public class ProposalCreateActuatorTest {
   @Test
   public void invalidPara() {
     HashMap<Long, Long> paras = new HashMap<>();
-    paras.put(17L, 10000L);
+    paras.put(20L, 10000L);
     ProposalCreateActuator actuator =
         new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -274,7 +274,8 @@ public class ProposalCreateActuatorTest {
       fail("This proposal has been executed before and is only allowed to be executed once");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("This proposal has been executed before and is only allowed to be executed once",
+      Assert.assertEquals(
+          "This proposal has been executed before and is only allowed to be executed once",
           e.getMessage());
     }
 
@@ -294,13 +295,13 @@ public class ProposalCreateActuatorTest {
   }
 
   /**
-   *  parameter size = 0 , result is failed, exception is "This proposal has no parameter.".
+   * parameter size = 0 , result is failed, exception is "This proposal has no parameter.".
    */
   @Test
-  public void emptyProposal(){
+  public void emptyProposal() {
     HashMap<Long, Long> paras = new HashMap<>();
     ProposalCreateActuator actuator =
-            new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
+        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -310,18 +311,18 @@ public class ProposalCreateActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("This proposal has no parameter.",
-              e.getMessage());
+          e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 
   @Test
-  public void InvalidParaValue(){
+  public void InvalidParaValue() {
     HashMap<Long, Long> paras = new HashMap<>();
     paras.put(10L, 1000L);
     ProposalCreateActuator actuator =
-            new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
+        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -331,7 +332,7 @@ public class ProposalCreateActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("This value[REMOVE_THE_POWER_OF_THE_GR] is only allowed to be 1",
-              e.getMessage());
+          e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -345,25 +346,25 @@ public class ProposalCreateActuatorTest {
     dbManager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(0L);
 
     HashMap<Long, Long> paras = new HashMap<>();
-    paras.put(0L, 23*3600*1000L);
-    paras.put(1L,8_888_000_000L);
-    paras.put(2L,200_000L);
-    paras.put(3L,20L);
-    paras.put(4L,2048_000_000L);
-    paras.put(5L,64_000_000L);
-    paras.put(6L,64_000_000L);
-    paras.put(7L,64_000_000L);
-    paras.put(8L,64_000_000L);
-    paras.put(9L,1L);
-    paras.put(10L,1L);
-    paras.put(11L,64L);
-    paras.put(12L,64L);
-    paras.put(13L,64L);
+    paras.put(0L, 23 * 3600 * 1000L);
+    paras.put(1L, 8_888_000_000L);
+    paras.put(2L, 200_000L);
+    paras.put(3L, 20L);
+    paras.put(4L, 2048_000_000L);
+    paras.put(5L, 64_000_000L);
+    paras.put(6L, 64_000_000L);
+    paras.put(7L, 64_000_000L);
+    paras.put(8L, 64_000_000L);
+    paras.put(9L, 1L);
+    paras.put(10L, 1L);
+    paras.put(11L, 64L);
+    paras.put(12L, 64L);
+    paras.put(13L, 64L);
 
     ProposalCreateActuator actuator =
-            new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
+        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
     ProposalCreateActuator actuatorSecond =
-            new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
+        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
 
     dbManager.getDynamicPropertiesStore().saveLatestProposalNum(0L);
     Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestProposalNum(), 0);

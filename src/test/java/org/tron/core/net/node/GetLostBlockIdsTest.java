@@ -1,19 +1,36 @@
 package org.tron.core.net.node;
+
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import io.grpc.Channel;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
-import org.junit.*;
-import org.tron.common.application.TronApplicationContext;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
-import org.tron.common.utils.*;
-import org.tron.common.overlay.discover.node.Node;
-import org.tron.common.overlay.client.PeerClient;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.ReflectUtils;
+import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Utils;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -23,28 +40,27 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.StoreException;
+import org.tron.core.net.node.override.HandshakeHandlerTest;
+import org.tron.core.net.node.override.PeerClientTest;
+import org.tron.core.net.node.override.TronChannelInitializerTest;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol;
 
-import java.io.File;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 @Slf4j
 public class GetLostBlockIdsTest {
     private static TronApplicationContext context;
     private static NodeImpl node;
-    RpcApiService rpcApiService;
-    private static PeerClient peerClient;
-    ChannelManager channelManager;
-    SyncPool pool;
+    private RpcApiService rpcApiService;
+    private static PeerClientTest peerClient;
+    private ChannelManager channelManager;
+    private SyncPool pool;
     private static Application appT;
-    Manager dbManager;
+    private Manager dbManager;
+    private Node nodeEntity;
+    private static HandshakeHandlerTest handshakeHandlerTest;
 
     private static final String dbPath = "output-GetLostBlockIdsTest";
     private static final String dbDirectory = "db_GetLostBlockIds_test";
@@ -52,16 +68,13 @@ public class GetLostBlockIdsTest {
 
     @Test
     public void testGetLostBlockIds(){
-        Collection<PeerConnection> activePeers = ReflectUtils.invokeMethod(node, "getActivePeer");
-        Object[] peers = activePeers.toArray();
-        PeerConnection peer_me = (PeerConnection) peers[0];
         NodeDelegate del = ReflectUtils.getFieldValue(node, "del");
-        List<BlockId> blockChainSummary = null;
+        List<BlockId> blockChainSummary;
         LinkedList<BlockId> blockIds = null;
 
         long number;
         Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
-        BlockCapsule capsule = null;
+        BlockCapsule capsule;
         for (int i = 0; i<5; i++) {
             number = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1;
             capsule = createTestBlockCapsule(1533529947843L + 3000L * i ,number, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(), addressToProvateKeys);
@@ -142,7 +155,7 @@ public class GetLostBlockIdsTest {
         logger.info("finish2");
     }
 
-    private static boolean go = false;
+    private boolean go = false;
     private Map<ByteString, String> addTestWitnessAndAccount() {
         dbManager.getWitnesses().clear();
         return IntStream.range(0, 2)
@@ -183,6 +196,9 @@ public class GetLostBlockIdsTest {
 
     @Before
     public void init() {
+        nodeEntity = new Node(
+            "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:17892");
+
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -218,10 +234,12 @@ public class GetLostBlockIdsTest {
 //        appT.startServices();
 //        appT.startup();
                 node = context.getBean(NodeImpl.class);
-                peerClient = context.getBean(PeerClient.class);
+                peerClient = context.getBean(PeerClientTest.class);
                 channelManager = context.getBean(ChannelManager.class);
                 pool = context.getBean(SyncPool.class);
                 dbManager = context.getBean(Manager.class);
+                handshakeHandlerTest = context.getBean(HandshakeHandlerTest.class);
+                handshakeHandlerTest.setNode(nodeEntity);
                 NodeDelegate nodeDelegate = new NodeDelegateImpl(dbManager);
                 node.setNodeDelegate(nodeDelegate);
                 pool.init(node);
@@ -255,15 +273,21 @@ public class GetLostBlockIdsTest {
             ExecutorService advertiseLoopThread = ReflectUtils.getFieldValue(node, "broadPool");
             advertiseLoopThread.shutdownNow();
 
+            peerClient.prepare(nodeEntity.getHexId());
+
             ReflectUtils.setFieldValue(node, "isAdvertiseActive", false);
             ReflectUtils.setFieldValue(node, "isFetchActive", false);
 
-            Node node = new Node(
-                    "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:17892");
+            TronChannelInitializerTest tronChannelInitializer = ReflectUtils
+                .getFieldValue(peerClient, "tronChannelInitializer");
+            tronChannelInitializer.prepare();
+            org.tron.common.overlay.server.Channel channel = ReflectUtils.getFieldValue(tronChannelInitializer, "channel");
+            ReflectUtils.setFieldValue(channel, "handshakeHandler", handshakeHandlerTest);
+
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    peerClient.connect(node.getHost(), node.getPort(), node.getHexId());
+                    peerClient.connect(nodeEntity.getHost(), nodeEntity.getPort(), nodeEntity.getHexId());
                 }
             }).start();
             Thread.sleep(1000);
@@ -286,7 +310,7 @@ public class GetLostBlockIdsTest {
         for (PeerConnection peer : peerConnections) {
             peer.close();
         }
-        peerClient.close();
+        handshakeHandlerTest.close();
         appT.shutdownServices();
         appT.shutdown();
         context.destroy();

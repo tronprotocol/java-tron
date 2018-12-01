@@ -1,8 +1,11 @@
 package org.tron.core.capsule;
 
+import org.tron.common.runtime.RuntimeImpl;
+import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
+import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -89,7 +92,8 @@ public class ReceiptCapsule {
    * payEnergyBill pay receipt energy bill by energy processor.
    */
   public void payEnergyBill(Manager manager, AccountCapsule origin, AccountCapsule caller,
-      long percent, EnergyProcessor energyProcessor, long now) throws BalanceInsufficientException {
+      long percent, long originEnergyLimit, EnergyProcessor energyProcessor, long now)
+      throws BalanceInsufficientException {
     if (receipt.getEnergyUsageTotal() <= 0) {
       return;
     }
@@ -98,13 +102,24 @@ public class ReceiptCapsule {
       payEnergyBill(manager, caller, receipt.getEnergyUsageTotal(), energyProcessor, now);
     } else {
       long originUsage = Math.multiplyExact(receipt.getEnergyUsageTotal(), percent) / 100;
-      originUsage = Math
-          .min(originUsage, energyProcessor.getAccountLeftEnergyFromFreeze(origin));
+      originUsage = getOriginUsage(manager, origin, originEnergyLimit, energyProcessor, originUsage);
+
       long callerUsage = receipt.getEnergyUsageTotal() - originUsage;
       energyProcessor.useEnergy(origin, originUsage, now);
       this.setOriginEnergyUsage(originUsage);
       payEnergyBill(manager, caller, callerUsage, energyProcessor, now);
     }
+  }
+
+  private long getOriginUsage(Manager manager, AccountCapsule origin,
+      long originEnergyLimit,
+      EnergyProcessor energyProcessor, long originUsage) {
+
+    if (VMConfig.getEnergyLimitHardFork()) {
+      return Math.min(originUsage,
+          Math.min(energyProcessor.getAccountLeftEnergyFromFreeze(origin), originEnergyLimit));
+    }
+    return Math.min(originUsage, energyProcessor.getAccountLeftEnergyFromFreeze(origin));
   }
 
   private void payEnergyBill(
@@ -119,11 +134,13 @@ public class ReceiptCapsule {
       this.setEnergyUsage(usage);
     } else {
       energyProcessor.useEnergy(account, accountEnergyLeft, now);
-      long SUN_PER_ENERGY = manager.getDynamicPropertiesStore().getEnergyFee() == 0
-          ? Constant.SUN_PER_ENERGY
-          : manager.getDynamicPropertiesStore().getEnergyFee();
+      long sunPerEnergy = Constant.SUN_PER_ENERGY;
+      long dynamicEnergyFee = manager.getDynamicPropertiesStore().getEnergyFee();
+      if (dynamicEnergyFee > 0) {
+        sunPerEnergy = dynamicEnergyFee;
+      }
       long energyFee =
-          (usage - accountEnergyLeft) * SUN_PER_ENERGY;
+          (usage - accountEnergyLeft) * sunPerEnergy;
       this.setEnergyUsage(accountEnergyLeft);
       this.setEnergyFee(energyFee);
       long balance = account.getBalance();
@@ -133,8 +150,9 @@ public class ReceiptCapsule {
       }
       account.setBalance(balance - energyFee);
 
+      //send to blackHole
       manager.adjustBalance(manager.getAccountStore().getBlackhole().getAddress().toByteArray(),
-          energyFee);//send to blackhole
+          energyFee);
     }
 
     manager.getAccountStore().put(account.getAddress().toByteArray(), account);
