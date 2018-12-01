@@ -188,7 +188,7 @@ public class GetLostBlockIdsTest {
         ByteString witnessAddress =
                 witnessController.getScheduledWitness(witnessController.getSlotAtTime(time));
         BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Hash.wrap(hash), time, witnessAddress);
-        blockCapsule.generatedByMyself = true;
+        blockCapsule.setGeneratedByMyself(true);
         blockCapsule.setMerkleRoot();
         blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));
         return blockCapsule;

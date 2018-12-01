@@ -310,7 +310,7 @@ public class WitnessService implements Service {
   }
 
   public void processBlock(BlockCapsule block) {
-    if (block.generatedByMyself) {
+    if (block.isGeneratedByMyself()) {
       return;
     }
 

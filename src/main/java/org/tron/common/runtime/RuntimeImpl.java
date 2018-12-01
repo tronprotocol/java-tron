@@ -319,7 +319,7 @@ public class RuntimeImpl implements Runtime {
 
     if (ExecutorType.ET_NORMAL_TYPE == executorType) {
       // self witness generates block
-      if (this.blockCap != null && blockCap.generatedByMyself &&
+      if (this.blockCap != null && blockCap.isGeneratedByMyself() &&
           this.blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
         cpuLimitRatio = 1.0;
       } else {
@@ -554,7 +554,7 @@ public class RuntimeImpl implements Runtime {
     try {
       if (vm != null) {
         TransactionCapsule trxCap = new TransactionCapsule(trx);
-        if (null != blockCap && blockCap.generatedByMyself && null != trxCap.getContractRet()
+        if (null != blockCap && blockCap.isGeneratedByMyself() && null != trxCap.getContractRet()
             && contractResult.OUT_OF_TIME == trxCap.getContractRet()) {
           result = program.getResult();
           program.spendAllEnergy();

@@ -51,7 +51,7 @@ public class BlockUtil {
 
     blockCapsule.setMerkleRoot();
     blockCapsule.setWitness("A new system must allow existing systems to be linked together without requiring any central control or coordination");
-    blockCapsule.generatedByMyself = true;
+    blockCapsule.setGeneratedByMyself(true);
 
     return blockCapsule;
   }

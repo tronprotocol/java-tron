@@ -661,7 +661,7 @@ public class Manager {
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
       VMIllegalException, TooBigTransactionResultException, UnLinkedBlockException,
       NonCommonBlockException, BadNumberBlockException, BadBlockException {
-    block.generatedByMyself = true;
+    block.setGeneratedByMyself(true);
     long start = System.currentTimeMillis();
     pushBlock(block);
     logger.info("push block cost:{}ms, blockNum:{}, blockHash:{}, trx count:{}",
@@ -793,7 +793,7 @@ public class Manager {
     long start = System.currentTimeMillis();
     try (PendingManager pm = new PendingManager(this)) {
 
-      if (!block.generatedByMyself) {
+      if (!block.isGeneratedByMyself()) {
         if (!block.validateSignature()) {
           logger.warn("The signature is not validated.");
           throw new BadBlockException("The signature is not validated");
@@ -1117,7 +1117,7 @@ public class Manager {
 
     final BlockCapsule blockCapsule =
         new BlockCapsule(number + 1, preHash, when, witnessCapsule.getAddress());
-    blockCapsule.generatedByMyself = true;
+    blockCapsule.setGeneratedByMyself(true);
     session.reset();
     session.setValue(revokingStore.buildSession());
 
@@ -1265,7 +1265,7 @@ public class Manager {
     }
 
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-      if (block.generatedByMyself) {
+      if (block.isGeneratedByMyself()) {
         transactionCapsule.setVerified(true);
       }
       processTransaction(transactionCapsule, block);
