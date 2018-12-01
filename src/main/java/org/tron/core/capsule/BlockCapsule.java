@@ -116,7 +116,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
           .equals(ECKey.signatureToAddress(getRawHash().getBytes(),
               TransactionCapsule
                   .getBase64FromByteString(block.getBlockHeader().getWitnessSignature())),
-              block.getBlockHeader().getRawData().getWitnessAddress().toByteArray());
+              getBlockHeaderRawData().getWitnessAddress().toByteArray());
     } catch (SignatureException e) {
       throw new ValidateSignatureException(e.getMessage());
     }
@@ -144,12 +144,12 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   }
 
   private Sha256Hash getRawHash() {
-    return Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray());
+    return Sha256Hash.of(getBlockHeaderRawData().toByteArray());
   }
 
   public BlockId getBlockId() {
     if (null == this.blockId) {
-      this.blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray()), getNum());
+      this.blockId = new BlockId(Sha256Hash.of(getBlockHeaderRawData().toByteArray()), getNum());
     }
     return this.blockId;
   }
@@ -160,7 +160,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public void setMerkleRoot() {
     BlockHeader.raw blockHeaderRaw =
-        this.block.getBlockHeader().getRawData().toBuilder()
+        getBlockHeaderRawData().toBuilder()
             .setTxTrieRoot(calcMerkleRoot().getByteString()).build();
 
     this.block = this.block.toBuilder().setBlockHeader(
@@ -170,7 +170,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   /* only for genisis */
   public void setWitness(String witness) {
     BlockHeader.raw blockHeaderRaw =
-        this.block.getBlockHeader().getRawData().toBuilder().setWitnessAddress(
+        getBlockHeaderRawData().toBuilder().setWitnessAddress(
             ByteString.copyFrom(witness.getBytes())).build();
 
     this.block = this.block.toBuilder().setBlockHeader(
@@ -178,11 +178,11 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   }
 
   public Sha256Hash getMerkleRoot() {
-    return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getTxTrieRoot());
+    return Sha256Hash.wrap(getBlockHeaderRawData().getTxTrieRoot());
   }
 
   public ByteString getWitnessAddress() {
-    return this.block.getBlockHeader().getRawData().getWitnessAddress();
+    return getBlockHeaderRawData().getWitnessAddress();
   }
 
   @Override
@@ -196,7 +196,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   }
 
   public Sha256Hash getParentHash() {
-    return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getParentHash());
+    return Sha256Hash.wrap(getBlockHeaderRawData().getParentHash());
   }
 
   public BlockId getParentBlockId() {
@@ -204,15 +204,19 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   }
 
   public long getNum() {
-    return this.block.getBlockHeader().getRawData().getNumber();
+    return getBlockHeaderRawData().getNumber();
   }
 
   public ByteString getParentHashStr() {
-    return this.block.getBlockHeader().getRawData().getParentHash();
+    return getBlockHeaderRawData().getParentHash();
   }
 
   public long getTimeStamp() {
-    return this.block.getBlockHeader().getRawData().getTimestamp();
+    return getBlockHeaderRawData().getTimestamp();
+  }
+
+  private BlockHeader.raw getBlockHeaderRawData() {
+    return this.block.getBlockHeader().getRawData();
   }
 
   @Override
