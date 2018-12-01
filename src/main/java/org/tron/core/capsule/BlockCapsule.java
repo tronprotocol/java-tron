@@ -59,7 +59,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     BlockHeader blockHeader = BlockHeader.newBuilder().setRawData(blockHeaderRaw).build();
 
     this.block = Block.newBuilder().setBlockHeader(blockHeader).build();
-    this.transactions = initTxs();
+    this.transactions = initTxs(block);
   }
 
   public BlockCapsule(long timestamp, ByteString parentHash, long number,
@@ -76,18 +76,18 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     transactionList.forEach(blockBuild::addTransactions);
     this.block = blockBuild.setBlockHeader(blockHeader).build();
 
-    this.transactions = initTxs();
+    this.transactions = initTxs(block);
   }
 
   public BlockCapsule(Block block) {
     this.block = block;
-    this.transactions = initTxs();
+    this.transactions = initTxs(block);
   }
 
   public BlockCapsule(byte[] data) throws BadItemException {
     try {
       this.block = Block.parseFrom(data);
-      this.transactions = initTxs();
+      this.transactions = initTxs(block);
     } catch (InvalidProtocolBufferException e) {
       throw new BadItemException("Block proto data parse exception");
     }
@@ -137,8 +137,8 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     return MerkleTree.getInstance().createTree(ids).getRoot().getHash();
   }
 
-  private List<TransactionCapsule> initTxs() {
-    return this.block.getTransactionsList().stream()
+  private List<TransactionCapsule> initTxs(Block block) {
+    return block.getTransactionsList().stream()
         .map(TransactionCapsule::new)
         .collect(Collectors.toList());
   }
