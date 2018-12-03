@@ -118,8 +118,9 @@ public class RpcApiService implements Service {
 
   @Getter
   private DatabaseApi databaseApi = new DatabaseApi();
-  @Getter
   private WalletApi walletApi = new WalletApi();
+  @Getter
+  private WalletSolidityApi walletSolidityApi = new WalletSolidityApi();
 
   private static final long BLOCK_LIMIT_NUM = 100;
   private static final long TRANSACTION_LIMIT_NUM = 1000;
@@ -146,7 +147,7 @@ public class RpcApiService implements Service {
       }
 
       if (args.isSolidityNode()) {
-        serverBuilder = serverBuilder.addService(new WalletSolidityApi());
+        serverBuilder = serverBuilder.addService(walletSolidityApi);
         if (args.isWalletExtensionApi()) {
           serverBuilder = serverBuilder.addService(new WalletExtensionApi());
         }

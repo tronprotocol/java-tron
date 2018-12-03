@@ -19,6 +19,7 @@ import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.DelegatedResourceMessage;
 import org.tron.api.GrpcAPI.EmptyMessage;
+import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.GrpcAPI.Return;
@@ -34,9 +35,11 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
+import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
+import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
 
@@ -169,21 +172,37 @@ public class RpcApiServiceOnSolidity implements Service {
     @Override
     public void getAccount(Account request, StreamObserver<Account> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletApi().getAccount(request, responseObserver)
+          () -> rpcApiService.getWalletSolidityApi().getAccount(request, responseObserver)
       );
     }
 
     @Override
     public void getAccountById(Account request, StreamObserver<Account> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletApi().getAccountById(request, responseObserver)
+          () -> rpcApiService.getWalletSolidityApi().getAccountById(request, responseObserver)
       );
     }
 
     @Override
     public void listWitnesses(EmptyMessage request, StreamObserver<WitnessList> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletApi().listWitnesses(request, responseObserver)
+          () -> rpcApiService.getWalletSolidityApi().listWitnesses(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getAssetIssueById(BytesMessage request,
+        StreamObserver<AssetIssueContract> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().getAssetIssueById(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getAssetIssueByName(BytesMessage request,
+        StreamObserver<AssetIssueContract> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().getAssetIssueByName(request, responseObserver)
       );
     }
 
@@ -191,22 +210,41 @@ public class RpcApiServiceOnSolidity implements Service {
     public void getAssetIssueList(EmptyMessage request,
         StreamObserver<AssetIssueList> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletApi().getAssetIssueList(request, responseObserver)
+          () -> rpcApiService.getWalletSolidityApi().getAssetIssueList(request, responseObserver)
       );
     }
 
     @Override
+    public void getAssetIssueListByName(BytesMessage request,
+        StreamObserver<AssetIssueList> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .getAssetIssueListByName(request, responseObserver)
+      );
+    }
+    @Override
     public void getPaginatedAssetIssueList(PaginatedMessage request,
         StreamObserver<AssetIssueList> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletApi().getPaginatedAssetIssueList(request, responseObserver)
+          () -> rpcApiService.getWalletSolidityApi()
+              .getPaginatedAssetIssueList(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getExchangeById(BytesMessage request,
+        StreamObserver<Exchange> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().getExchangeById(
+              request, responseObserver
+          )
       );
     }
 
     @Override
     public void getNowBlock(EmptyMessage request, StreamObserver<Block> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletApi().getNowBlock(request, responseObserver)
+          () -> rpcApiService.getWalletSolidityApi().getNowBlock(request, responseObserver)
       );
     }
 
@@ -214,7 +252,7 @@ public class RpcApiServiceOnSolidity implements Service {
     public void getNowBlock2(EmptyMessage request,
         StreamObserver<BlockExtention> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletApi().getNowBlock2(request, responseObserver)
+          () -> rpcApiService.getWalletSolidityApi().getNowBlock2(request, responseObserver)
       );
 
     }
@@ -222,7 +260,7 @@ public class RpcApiServiceOnSolidity implements Service {
     @Override
     public void getBlockByNum(NumberMessage request, StreamObserver<Block> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletApi().getBlockByNum(request, responseObserver)
+          () -> rpcApiService.getWalletSolidityApi().getBlockByNum(request, responseObserver)
       );
     }
 
@@ -230,7 +268,7 @@ public class RpcApiServiceOnSolidity implements Service {
     public void getBlockByNum2(NumberMessage request,
         StreamObserver<BlockExtention> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletApi().getBlockByNum2(request, responseObserver)
+          () -> rpcApiService.getWalletSolidityApi().getBlockByNum2(request, responseObserver)
       );
     }
 
@@ -238,16 +276,15 @@ public class RpcApiServiceOnSolidity implements Service {
     public void getDelegatedResource(DelegatedResourceMessage request,
         StreamObserver<DelegatedResourceList> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletApi().getDelegatedResource(request, responseObserver)
+          () -> rpcApiService.getWalletSolidityApi().getDelegatedResource(request, responseObserver)
       );
-
     }
 
     @Override
     public void getDelegatedResourceAccountIndex(BytesMessage request,
         StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletApi()
+          () -> rpcApiService.getWalletSolidityApi()
               .getDelegatedResourceAccountIndex(request, responseObserver)
       );
     }
@@ -256,7 +293,7 @@ public class RpcApiServiceOnSolidity implements Service {
     public void getTransactionCountByBlockNum(NumberMessage request,
         StreamObserver<NumberMessage> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletApi()
+          () -> rpcApiService.getWalletSolidityApi()
               .getTransactionCountByBlockNum(request, responseObserver)
       );
     }
@@ -265,7 +302,7 @@ public class RpcApiServiceOnSolidity implements Service {
     public void getTransactionById(BytesMessage request,
         StreamObserver<Transaction> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletApi().getTransactionById(request, responseObserver)
+          () -> rpcApiService.getWalletSolidityApi().getTransactionById(request, responseObserver)
       );
 
     }
@@ -274,9 +311,18 @@ public class RpcApiServiceOnSolidity implements Service {
     public void getTransactionInfoById(BytesMessage request,
         StreamObserver<TransactionInfo> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletApi().getTransactionInfoById(request, responseObserver)
+          () -> rpcApiService.getWalletSolidityApi()
+              .getTransactionInfoById(request, responseObserver)
       );
 
+    }
+
+    @Override
+    public void listExchanges(EmptyMessage request,
+        StreamObserver<ExchangeList> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().listExchanges(request, responseObserver)
+      );
     }
 
     @Override
