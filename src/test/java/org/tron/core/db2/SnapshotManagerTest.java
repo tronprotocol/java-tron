@@ -79,7 +79,7 @@ public class SnapshotManagerTest {
 
     revokingDatabase.flush();
     Assert.assertEquals(new ProtoCapsuleTest("refresh4".getBytes()),
-        tronDatabase.getOnSolidity(protoCapsule.getData()));
+        tronDatabase.get(protoCapsule.getData()));
   }
 
   @Test

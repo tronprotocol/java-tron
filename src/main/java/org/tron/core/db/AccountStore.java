@@ -2,11 +2,8 @@ package org.tron.core.db;
 
 import com.typesafe.config.ConfigObject;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +11,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.db.common.iterator.AccountIterator;
 
 @Slf4j
 @Component
@@ -30,12 +26,6 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   @Override
   public AccountCapsule get(byte[] key) {
     byte[] value = revokingDB.getUnchecked(key);
-    return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
-  }
-
-  @Override
-  public AccountCapsule getOnSolidity(byte[] key) {
-    byte[] value = revokingDB.getUncheckedOnSolidity(key);
     return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
   }
 

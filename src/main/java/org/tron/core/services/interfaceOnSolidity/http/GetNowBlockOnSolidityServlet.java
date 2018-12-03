@@ -7,6 +7,7 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.core.Wallet;
 import org.tron.core.services.http.Util;
 import org.tron.core.services.interfaceOnSolidity.WalletOnSolidity;
 import org.tron.protos.Protocol.Block;
@@ -18,10 +19,14 @@ public class GetNowBlockOnSolidityServlet extends HttpServlet {
 
   @Autowired
   private WalletOnSolidity walletOnSolidity;
+  @Autowired
+  private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      Block reply = walletOnSolidity.getNowBlock();
+      Block reply = walletOnSolidity.futureGet(
+          () -> wallet.getNowBlock()
+      );
       if (reply != null) {
         response.getWriter().println(Util.printBlock(reply));
       } else {
