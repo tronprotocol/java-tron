@@ -36,13 +36,14 @@ public class EnergyProcessor extends ResourceProcessor {
 
   public void updateTotalEnergyAverageUsage(long now) {
     long blockEnergyUsage = dbManager.getDynamicPropertiesStore().getBlockEnergyUsage();
-    long totalNetAverageUsage = dbManager.getDynamicPropertiesStore().getTotalEnergyAverageUsage();
-    long totalNetAverageTime = dbManager.getDynamicPropertiesStore().getTotalEnergyAverageTime();
+    long totalEnergyAverageUsage = dbManager.getDynamicPropertiesStore()
+        .getTotalEnergyAverageUsage();
+    long totalEnergyAverageTime = dbManager.getDynamicPropertiesStore().getTotalEnergyAverageTime();
 
-    long newPublicNetAverageUsage = increase(totalNetAverageUsage, blockEnergyUsage,
-        totalNetAverageTime, now, averageWindowSize);
+    long newPublicEnergyAverageUsage = increase(totalEnergyAverageUsage, blockEnergyUsage,
+        totalEnergyAverageTime, now, averageWindowSize);
 
-    dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageUsage(newPublicNetAverageUsage);
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageUsage(newPublicEnergyAverageUsage);
     dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageTime(now);
   }
 
