@@ -173,6 +173,11 @@ public class Manager {
   @Setter
   private MerkleContainer merkleContainer;
 
+  // map<Long, IncrementalMerkleTree>
+  @Getter
+  @Setter
+  private TreeBlockIndexStore  merkleTreeIndexStore;
+
   private ExecutorService validateSignService;
 
   private Thread repushThread;
