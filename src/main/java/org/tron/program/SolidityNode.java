@@ -166,7 +166,8 @@ public class SolidityNode {
     while (true) {
       try {
         long blockNum = databaseGrpcClient.getDynamicProperties().getLastSolidityBlockNum();
-        logger.info("Get last remote solid blockNum: {}.", blockNum);
+        logger.info("Get last remote solid blockNum: {}, remoteLastSolidityBlockNum: {}.",
+            blockNum, remoteLastSolidityBlockNum);
         return blockNum;
       } catch (Exception e) {
         logger.error("Failed to get last solid blockNum: {}.", remoteLastSolidityBlockNum.get());
