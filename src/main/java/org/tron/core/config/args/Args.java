@@ -117,6 +117,9 @@ public class Args {
   @Parameter(names = {"--storage-index-switch"}, description = "Storage index switch.(on or off)")
   private String storageIndexSwitch = "";
 
+  @Parameter(names = {"--storage-transactionHistory-switch"}, description = "Storage transaction history switch.(on or off)")
+  private String storageTransactionHistoreSwitch = "";
+
   @Getter
   private Storage storage;
 
@@ -544,6 +547,11 @@ public class Args {
     INSTANCE.storage.setIndexSwitch(Optional.ofNullable(INSTANCE.storageIndexSwitch)
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getIndexSwitchFromConfig(config)));
+
+    INSTANCE.storage.setTransactionHistoreSwitch(Optional.ofNullable(INSTANCE.storageTransactionHistoreSwitch)
+      .filter(StringUtils::isNotEmpty)
+      .orElse(Storage.getTransactionHistoreSwitchFromConfig(config)));
+
 
     INSTANCE.storage.setPropertyMapFromConfig(config);
 

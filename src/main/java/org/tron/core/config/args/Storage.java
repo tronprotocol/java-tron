@@ -45,7 +45,9 @@ public class Storage {
   private static final String DB_SYNC_CONFIG_KEY = "storage.db.sync";
   private static final String INDEX_DIRECTORY_CONFIG_KEY = "storage.index.directory";
   private static final String INDEX_SWITCH_CONFIG_KEY = "storage.index.switch";
+  private static final String TRANSACTIONHISTORY_SWITCH_CONFIG_KEY = "storage.transHistory.switch";
   private static final String PROPERTIES_CONFIG_KEY = "storage.properties";
+  private static final String DEFAULT_TRANSACTIONHISTORY_SWITCH = "on";
 
   private static final String NAME_CONFIG_KEY = "name";
   private static final String PATH_CONFIG_KEY = "path";
@@ -108,6 +110,10 @@ public class Storage {
   @Setter
   private String indexSwitch;
 
+  @Getter
+  @Setter
+  private String transactionHistoreSwitch;
+
   /**
    * Other custom database configurations
    */
@@ -148,6 +154,11 @@ public class Storage {
     return config.hasPath(INDEX_SWITCH_CONFIG_KEY)
         && StringUtils.isNotEmpty(config.getString(INDEX_SWITCH_CONFIG_KEY)) ?
         config.getString(INDEX_SWITCH_CONFIG_KEY) : DEFAULT_INDEX_SWTICH;
+  }
+
+  public static String getTransactionHistoreSwitchFromConfig(final Config config) {
+    return config.hasPath(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY)?
+      config.getString(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY) : DEFAULT_TRANSACTIONHISTORY_SWITCH;
   }
 
   /**
