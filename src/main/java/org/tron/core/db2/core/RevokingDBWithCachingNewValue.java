@@ -24,6 +24,8 @@ import org.tron.core.exception.ItemNotFoundException;
 
 public class RevokingDBWithCachingNewValue implements IRevokingDB {
 
+  //false:fullnode, true:soliditynode
+  private ThreadLocal<Boolean> mode = new ThreadLocal<>();
   private Snapshot head;
   @Getter
   private String dbName;
@@ -31,10 +33,24 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
   public RevokingDBWithCachingNewValue(String dbName) {
     this.dbName = dbName;
     head = new SnapshotRoot(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName);
+    mode.set(true);
+  }
+
+  @Override
+  public void setMode(boolean mode) {
+    this.mode.set(mode);
+  }
+
+  private Snapshot head() {
+    if (mode.get()) {
+      return head.getSolidity();
+    } else {
+      return head;
+    }
   }
 
   public synchronized Snapshot getHead() {
-    return head;
+    return head();
   }
 
   public synchronized void setHead(Snapshot head) {
@@ -46,24 +62,24 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
    */
   @Override
   public synchronized void close() {
-    head.close();
+    head().close();
   }
 
   @Override
   public synchronized void reset() {
-    head.reset();
-    head.close();
+    head().reset();
+    head().close();
     head = new SnapshotRoot(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName);
   }
 
   @Override
   public synchronized void put(byte[] key, byte[] value) {
-    head.put(key, value);
+    head().put(key, value);
   }
 
   @Override
   public synchronized void delete(byte[] key) {
-    head.remove(key);
+    head().remove(key);
   }
 
   @Override
@@ -78,28 +94,7 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
 
   @Override
   public synchronized byte[] getUnchecked(byte[] key) {
-    return head.get(key);
-  }
-
-  @Override
-  public byte[] getOnSolidity(byte[] key) throws ItemNotFoundException {
-    byte[] value = getUncheckedOnSolidity(key);
-    if (value == null) {
-      throw new ItemNotFoundException();
-    }
-
-    return value;
-  }
-
-  @Override
-  public byte[] getUncheckedOnSolidity(byte[] key) {
-    Snapshot solidity = head.getSolidity();
-    return solidity.get(key);
-  }
-
-  @Override
-  public synchronized boolean hasOnSolidity(byte[] key) {
-    return getUncheckedOnSolidity(key) != null;
+    return head().get(key);
   }
 
   @Override
@@ -109,22 +104,13 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
 
   @Override
   public synchronized Iterator<Map.Entry<byte[], byte[]>> iterator() {
-    return head.iterator();
-  }
-
-  public synchronized Iterator<Map.Entry<byte[], byte[]>> iteratorOnSolidity() {
-    return head.getSolidity().iterator();
+    return head().iterator();
   }
 
   //for blockstore
   @Override
   public Set<byte[]> getlatestValues(long limit) {
-    return getlatestValues(head, limit);
-  }
-
-  //for blockstore
-  public Set<byte[]> getlatestValuesOnSolidity(long limit) {
-    return getlatestValues(head.getSolidity(), limit);
+    return getlatestValues(head(), limit);
   }
 
   //for blockstore
@@ -202,11 +188,6 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
 
   @Override
   public Set<byte[]> getValuesNext(byte[] key, long limit) {
-    return getValuesNext(head, key, limit);
+    return getValuesNext(head(), key, limit);
   }
-
-  public synchronized Set<byte[]> getValuesNextOnSolidity(byte[] key, long limit) {
-    return getValuesNext(head.getSolidity(), key, limit);
-  }
-
 }
