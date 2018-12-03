@@ -24,7 +24,7 @@ public class FullNode {
   /**
    * Start the FullNode.
    */
-  public static void main(String[] args) throws InterruptedException {
+  public static void main(String[] args) {
     logger.info("Full node running.");
     Args.setParam(args, Constant.TESTNET_CONF);
     Args cfgArgs = Args.getInstance();
