@@ -36,7 +36,9 @@ public class IncrementalMerkleWitnessContainer {
   public void append(SHA256Compress obj) {
 
     if (cursorIsExist()) {
-      witnessCapsule.getCursor().toMerkleTreeContainer().append(obj);
+      IncrementalMerkleTreeCapsule cursor = witnessCapsule.getCursor();
+      cursor.toMerkleTreeContainer().append(obj);
+      witnessCapsule.setCursor(cursor);
 
       long cursor_depth = witnessCapsule.getCursorDepth();
 
