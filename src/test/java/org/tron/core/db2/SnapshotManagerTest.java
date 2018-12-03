@@ -78,7 +78,7 @@ public class SnapshotManagerTest {
     }
 
     revokingDatabase.flush();
-    Assert.assertEquals(new ProtoCapsuleTest("refresh4".getBytes()),
+    Assert.assertEquals(new ProtoCapsuleTest("refresh10".getBytes()),
         tronDatabase.get(protoCapsule.getData()));
   }
 
