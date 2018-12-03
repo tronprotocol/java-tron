@@ -91,6 +91,11 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   @Override
+  public void setMode(boolean mode) {
+    dbs.forEach(db -> db.setMode(mode));
+  }
+
+  @Override
   public void add(IRevokingDB db) {
     RevokingDBWithCachingNewValue revokingDB = (RevokingDBWithCachingNewValue) db;
     dbs.add(revokingDB);
