@@ -86,11 +86,8 @@ public class SolidityNode {
 
   private void getSyncBlock() {
     long blockNum = getNextSyncBlockId();
-    while (syncFlag) {
+    while (blockNum != 0) {
       try {
-        if (blockNum == 0) {
-          break;
-        }
         if (blockMap.size() > 10000) {
           sleep(1000);
           continue;
