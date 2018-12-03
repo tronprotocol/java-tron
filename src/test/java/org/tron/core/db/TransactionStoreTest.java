@@ -124,23 +124,20 @@ public class TransactionStoreTest {
   public void GetTransactionTest() throws BadItemException, ItemNotFoundException {
     final BlockStore blockStore = dbManager.getBlockStore();
     final TransactionStore trxStore = dbManager.getTransactionStore();
+    String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
+
     BlockCapsule blockCapsule =
-        new BlockCapsule(
+      new BlockCapsule(
         1,
         Sha256Hash.wrap(dbManager.getGenesisBlockId().getByteString()),
         1,
         ByteString.copyFrom(
           ECKey.fromPrivate(
-            ByteArray.fromHexString(
-              Args.getInstance().getLocalWitnesses().getPrivateKey()))
-            .getAddress()));
-    blockCapsule.setMerkleRoot();
-    blockCapsule.sign(
-        ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
+            ByteArray.fromHexString(key)).getAddress()));
 
     // save in database with block number
     TransferContract tc =
-        TransferContract.newBuilder()
+      TransferContract.newBuilder()
         .setAmount(10)
         .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
         .setToAddress(ByteString.copyFromUtf8("bbb"))
