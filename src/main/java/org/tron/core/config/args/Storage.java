@@ -42,6 +42,7 @@ public class Storage {
    */
   private static final String DB_DIRECTORY_CONFIG_KEY = "storage.db.directory";
   private static final String DB_VERSION_CONFIG_KEY = "storage.db.version";
+  private static final String DB_SYNC_CONFIG_KEY = "storage.db.sync";
   private static final String INDEX_DIRECTORY_CONFIG_KEY = "storage.index.directory";
   private static final String INDEX_SWITCH_CONFIG_KEY = "storage.index.switch";
   private static final String PROPERTIES_CONFIG_KEY = "storage.properties";
@@ -61,6 +62,7 @@ public class Storage {
    * Default values of directory
    */
   private static final int DEFAULT_DB_VERSION = 2;
+  private static final boolean DEFAULT_DB_SYNC = false;
   private static final String DEFAULT_DB_DIRECTORY = "database";
   private static final String DEFAULT_INDEX_DIRECTORY = "index";
   private static final String DEFAULT_INDEX_SWTICH = "on";
@@ -90,6 +92,10 @@ public class Storage {
   @Getter
   @Setter
   private int dbVersion;
+
+  @Getter
+  @Setter
+  private boolean dbSync;
 
   /**
    * Index storage directory: /path/to/{indexDirectory}
@@ -121,6 +127,11 @@ public class Storage {
   public static int getDbVersionFromConfig(final Config config) {
     return config.hasPath(DB_VERSION_CONFIG_KEY) ?
         config.getInt(DB_VERSION_CONFIG_KEY) : DEFAULT_DB_VERSION;
+  }
+
+  public static Boolean getDbVersionSyncFromConfig(final Config config) {
+    return config.hasPath(DB_SYNC_CONFIG_KEY) ?
+      config.getBoolean(DB_SYNC_CONFIG_KEY) : DEFAULT_DB_SYNC;
   }
 
   public static String getDbDirectoryFromConfig(final Config config) {
