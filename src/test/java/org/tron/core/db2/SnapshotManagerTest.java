@@ -44,7 +44,6 @@ public class SnapshotManagerTest {
       new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("testSnapshotManager-tmp"), "testSnapshotManagerTmp");
     tmpLevelDbDataSource.initDB();
     revokingDatabase.setTmpLevelDbDataSource(tmpLevelDbDataSource);
-
   }
 
   @After

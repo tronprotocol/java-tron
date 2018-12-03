@@ -86,11 +86,8 @@ public class SolidityNode {
 
   private void getSyncBlock() {
     long blockNum = getNextSyncBlockId();
-    while (syncFlag) {
+    while (blockNum != 0) {
       try {
-        if (blockNum == 0) {
-          break;
-        }
         if (blockMap.size() > 10000) {
           sleep(1000);
           continue;
@@ -278,7 +275,7 @@ public class SolidityNode {
   /**
    * Start the SolidityNode.
    */
-  public static void main(String[] args) throws InterruptedException {
+  public static void main(String[] args) {
     logger.info("Solidity node running.");
     Args.setParam(args, Constant.TESTNET_CONF);
     Args cfgArgs = Args.getInstance();
