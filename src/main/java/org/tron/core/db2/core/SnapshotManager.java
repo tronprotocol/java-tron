@@ -37,7 +37,7 @@ import org.tron.core.exception.RevokingStoreIllegalStateException;
 public class SnapshotManager implements RevokingDatabase {
 
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
-  public static final int DEFAULT_MAX_FLUSH_COUNT = 5000;
+  public static final int DEFAULT_MAX_FLUSH_COUNT = 1000;
   public static final int DEFAULT_MIN_FLUSH_COUNT = 1;
   @Getter
   private List<RevokingDBWithCachingNewValue> dbs = new ArrayList<>();
@@ -346,7 +346,7 @@ public class SnapshotManager implements RevokingDatabase {
 
       }
 
-      dbs.forEach(db -> db.getHead().getRoot().merge(db.getHead()));
+      dbs.forEach(db -> ((SnapshotRoot) db.getHead().getRoot()).merge(db.getHead(), true));
       retreat();
     }
 

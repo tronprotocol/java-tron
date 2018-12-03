@@ -24,7 +24,7 @@ import org.tron.core.exception.ItemNotFoundException;
 
 public class RevokingDBWithCachingNewValue implements IRevokingDB {
 
-  //false:fullnode, true:soliditynode
+  //true:fullnode, false:soliditynode
   private ThreadLocal<Boolean> mode = new ThreadLocal<>();
   private Snapshot head;
   @Getter
@@ -42,10 +42,10 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
   }
 
   private Snapshot head() {
-    if (mode.get()) {
-      return head.getSolidity();
-    } else {
+    if (mode.get() == null || mode.get()) {
       return head;
+    } else {
+      return head.getSolidity();
     }
   }
 

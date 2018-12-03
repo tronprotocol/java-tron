@@ -59,6 +59,7 @@ public class SolidityNode {
   public SolidityNode(Manager dbManager, Args cfgArgs) {
     this.dbManager = dbManager;
     this.cfgArgs = cfgArgs;
+    resolveCompatibilityIssueIfUsingFullNodeDatabase();
     lastSolidityBlockNum = dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
     ID.set(lastSolidityBlockNum);
     databaseGrpcClient = new DatabaseGrpcClient(cfgArgs.getTrustNodeAddr());
@@ -323,7 +324,6 @@ public class SolidityNode {
     nodeManager.close();
 
     SolidityNode node = new SolidityNode(appT.getDbManager(), cfgArgs);
-    node.resolveCompatibilityIssueIfUsingFullNodeDatabase();
     node.start();
 
     rpcApiService.blockUntilShutdown();

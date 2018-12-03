@@ -44,7 +44,14 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 
   @Override
   public synchronized void merge(Snapshot from) {
+    merge(from, false);
+  }
+
+  public synchronized void merge(Snapshot from, boolean force) {
     cache.putAll(((SnapshotImpl) from).db.asMap());
+    if (force) {
+      flush();
+    }
   }
 
   public synchronized void flush() {
