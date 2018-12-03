@@ -47,6 +47,7 @@ import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.TransactionListExtention;
 import org.tron.api.GrpcAPI.WitnessList;
+import org.tron.api.GrpcAPI.BlockIncrementalMerkleTree;
 import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc.WalletImplBase;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
@@ -74,6 +75,7 @@ import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.IncrementalMerkleWitness;
+import org.tron.protos.Contract.IncrementalMerkleTree;
 import org.tron.protos.Contract.MerklePath;
 import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
@@ -1495,6 +1497,41 @@ public class RpcApiService implements Service {
         StreamObserver<ShieldAddress> responseObserver) {
       responseObserver.onNext(wallet.generateShieldAddress());
       responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getZKBlockByLimitNext(BlockLimit request,
+      StreamObserver<BlockListExtention> responseObserver) {
+      long startNum = request.getStartNum();
+      long endNum = request.getEndNum();
+
+      if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
+        responseObserver.onNext(blocklist2Extention(
+                wallet.getZKBlocksByLimitNext(startNum, endNum - startNum)));
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getMerkleTreeOfBlock(NumberMessage request,
+        StreamObserver<BlockIncrementalMerkleTree> responseObserver) {
+      long blockNumber = request.getNum();
+      if (blockNumber >= 0) {
+          BlockIncrementalMerkleTree.Builder builder = BlockIncrementalMerkleTree.newBuilder();
+          builder.setNumber(blockNumber);
+          IncrementalMerkleTree tree = wallet.getMerkleTreeOfBlock( blockNumber );
+          if (tree != null ) {
+              builder.setMerkleTree( tree );
+              responseObserver.onNext( builder.build() );
+          } else {
+              responseObserver.onNext(null);
+          }
+      } else {
+          responseObserver.onNext(null);
+      }
+        responseObserver.onCompleted();
     }
   }
 

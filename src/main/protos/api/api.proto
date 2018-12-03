@@ -601,6 +601,14 @@ service Wallet {
 
   rpc GenerateShieldAddress (EmptyMessage) returns (ShieldAddress) {
   }
+
+  //Get zero-snark blockExtention list
+  rpc GetZKBlockByLimitNext (BlockLimit) returns (BlockListExtention) {
+  }
+
+  //Get the specified height block merkleTree
+  rpc GetMerkleTreeOfBlock ( NumberMessage ) returns ( BlockIncrementalMerkleTree ) { }
+
 };
 
 
@@ -930,4 +938,9 @@ message BlockListExtention {
 
 message TransactionListExtention {
   repeated TransactionExtention transaction = 1;
+}
+
+message BlockIncrementalMerkleTree {
+  int64 number = 1;
+  IncrementalMerkleTree merkleTree = 2;
 }

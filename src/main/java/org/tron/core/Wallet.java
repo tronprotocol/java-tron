@@ -72,8 +72,10 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.common.zksnark.ShieldAddressGenerator;
+import org.tron.common.zksnark.merkle.IncrementalMerkleTreeCapsule;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.merkle.IncrementalMerkleWitnessCapsule;
+
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
@@ -110,10 +112,12 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
+import org.tron.protos.Contract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.AuthenticationPath;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.IncrementalMerkleWitness;
+import org.tron.protos.Contract.IncrementalMerkleTree;
 import org.tron.protos.Contract.MerklePath;
 import org.tron.protos.Contract.ShieldAddress;
 import org.tron.protos.Contract.TransferContract;
@@ -755,6 +759,16 @@ public class Wallet {
     return blockListBuilder.build();
   }
 
+  public BlockList getZKBlocksByLimitNext(long number, long limit) {
+    if (limit <= 0) {
+      return null;
+    }
+      BlockList.Builder blockListBuilder = BlockList.newBuilder();
+      dbManager.getBlockStore().getLimitNumber(number, limit).forEach(
+              blockCapsule -> blockListBuilder.addBlock(blockCapsule.getZKInstance()));
+      return blockListBuilder.build();
+  }
+
   public Transaction getTransactionById(ByteString transactionId) {
     if (Objects.isNull(transactionId)) {
       return null;
@@ -870,6 +884,21 @@ public class Wallet {
       return merkleWitnessCapsule.getInstance();
     }
 
+    return null;
+  }
+
+  public IncrementalMerkleTree getMerkleTreeOfBlock(long blockNum ) {
+    if (blockNum < 0 ) {
+      return null;
+    }
+
+    try {
+      if (dbManager.getMerkleTreeIndexStore().has(ByteArray.fromLong(blockNum))) {
+        return IncrementalMerkleTree.parseFrom(dbManager.getMerkleTreeIndexStore().get(blockNum));
+      }
+    } catch (Exception ex) {
+      return null;
+    }
     return null;
   }
 
