@@ -46,9 +46,9 @@ public class SolidityNode {
 
   private LinkedBlockingDeque<Block> blockBakQueue = new LinkedBlockingDeque(10000);
 
-  private volatile long remoteLastSolidityBlockNum = 0;
+  private AtomicLong remoteLastSolidityBlockNum = new AtomicLong();
 
-  private volatile long lastSolidityBlockNum;
+  private AtomicLong lastSolidityBlockNum = new AtomicLong();
 
   private long startTime = System.currentTimeMillis();
 
@@ -60,10 +60,10 @@ public class SolidityNode {
     this.dbManager = dbManager;
     this.cfgArgs = cfgArgs;
     resolveCompatibilityIssueIfUsingFullNodeDatabase();
-    lastSolidityBlockNum = dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
-    ID.set(lastSolidityBlockNum);
+    lastSolidityBlockNum.set(dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+    ID.set(lastSolidityBlockNum.get());
     databaseGrpcClient = new DatabaseGrpcClient(cfgArgs.getTrustNodeAddr());
-    remoteLastSolidityBlockNum = getLastSolidityBlockNum();
+    remoteLastSolidityBlockNum.set(getLastSolidityBlockNum());
   }
 
   private void start() {
@@ -110,18 +110,18 @@ public class SolidityNode {
       return 0;
     }
 
-    if (ID.get() < remoteLastSolidityBlockNum) {
+    if (ID.get() < remoteLastSolidityBlockNum.get()) {
       return ID.incrementAndGet();
     }
 
     long lastNum = getLastSolidityBlockNum();
-    if (lastNum - remoteLastSolidityBlockNum > 50) {
-      remoteLastSolidityBlockNum = lastNum;
+    if (lastNum - remoteLastSolidityBlockNum.get() > 50) {
+      remoteLastSolidityBlockNum.set(lastNum);
       return ID.incrementAndGet();
     }
 
     logger.warn("Sync mode switch to adv, ID = {}, lastNum = {}, remoteLastSolidityBlockNum = {}",
-        ID.get(), lastNum, remoteLastSolidityBlockNum);
+        ID.get(), lastNum, remoteLastSolidityBlockNum.get());
 
     syncFlag = false;
 
@@ -136,9 +136,9 @@ public class SolidityNode {
     long blockNum = ID.incrementAndGet();
     while (flag) {
       try {
-        if (blockNum > remoteLastSolidityBlockNum) {
+        if (blockNum > remoteLastSolidityBlockNum.get()) {
           sleep(3000);
-          remoteLastSolidityBlockNum = getLastSolidityBlockNum();
+          remoteLastSolidityBlockNum.set(getLastSolidityBlockNum());
           continue;
         }
         Block block = getBlockByNum(blockNum);
@@ -166,10 +166,10 @@ public class SolidityNode {
     while (true) {
       try {
         long blockNum = databaseGrpcClient.getDynamicProperties().getLastSolidityBlockNum();
-        logger.info("Get last remote solid blockNum: {}.", remoteLastSolidityBlockNum);
+        logger.info("Get last remote solid blockNum: {}.", blockNum);
         return blockNum;
       } catch (Exception e) {
-        logger.error("Failed to get last solid blockNum: {}.", remoteLastSolidityBlockNum);
+        logger.error("Failed to get last solid blockNum: {}.", remoteLastSolidityBlockNum.get());
         sleep(1000);
       }
     }
@@ -178,13 +178,13 @@ public class SolidityNode {
   private void pushBlock() {
     while (flag) {
       try {
-        Block block = blockMap.remove(lastSolidityBlockNum + 1);
+        Block block = blockMap.remove(lastSolidityBlockNum.get() + 1);
         if (block == null) {
           sleep(1000);
           continue;
         }
         blockQueue.put(block);
-        ++lastSolidityBlockNum;
+        lastSolidityBlockNum.incrementAndGet();
       } catch (Exception e) {
       }
     }
