@@ -3,13 +3,10 @@ package org.tron.core.db2.core;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -17,7 +14,6 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.IRevokingDB;
-import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.LevelDB;
 import org.tron.core.db2.common.Value;
 import org.tron.core.exception.ItemNotFoundException;
@@ -133,21 +129,6 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
     }
 
     if (snapshot.getPrevious() == null && tmp != 0) {
-      List<Entry<Key, Value>> cache = Streams.stream(((SnapshotRoot) snapshot).getCache())
-          .sorted(
-              Comparator.comparing(
-                  (Entry<Key, Value> e) -> e.getKey().getBytes(), ByteUtil::compare)
-                  .reversed())
-          .collect(Collectors.toList());
-      for (Entry<Key, Value> e : cache) {
-        if (tmp > 0) {
-          result.add(e.getValue().getBytes());
-        }
-        --tmp;
-      }
-    }
-
-    if (snapshot.getPrevious() == null && tmp != 0) {
       result.addAll(((LevelDB) ((SnapshotRoot) snapshot).db).getDb().getlatestValues(tmp));
     }
 
@@ -166,10 +147,6 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
     }
 
     Map<WrappedByteArray, WrappedByteArray> levelDBMap = new HashMap<>();
-    ((SnapshotRoot) head.getRoot()).getCache().asMap().entrySet().stream()
-        .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey().getBytes()),
-            WrappedByteArray.of(e.getValue().getBytes())))
-        .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
 
     ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getNext(key, limit).entrySet().stream()
         .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))

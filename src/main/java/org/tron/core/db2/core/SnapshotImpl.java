@@ -10,6 +10,7 @@ import org.tron.core.db2.common.HashDB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -184,4 +185,13 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     getRoot().reset();
   }
 
+  @Override
+  public void resetSolidity() {
+    root.resetSolidity();
+  }
+
+  @Override
+  public void updateSolidity() {
+    root.updateSolidity();
+  }
 }

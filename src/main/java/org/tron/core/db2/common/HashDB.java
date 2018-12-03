@@ -1,6 +1,5 @@
 package org.tron.core.db2.common;
 
-import com.google.common.collect.ImmutableMap;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -19,11 +18,6 @@ public class HashDB implements DB<Key, Value> {
   }
 
   @Override
-  public void putAll(Map<Key, Value> map) {
-    db.putAll(map);
-  }
-
-  @Override
   public long size() {
     return db.size();
   }
@@ -36,16 +30,6 @@ public class HashDB implements DB<Key, Value> {
   @Override
   public void remove(Key key) {
     db.remove(key);
-  }
-
-  @Override
-  public void clear() {
-    db.clear();
-  }
-
-  @Override
-  public Map<Key, Value> asMap() {
-    return ImmutableMap.copyOf(db);
   }
 
   @Override

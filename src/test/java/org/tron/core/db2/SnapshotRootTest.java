@@ -1,7 +1,9 @@
 package org.tron.core.db2;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -20,7 +22,10 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.RevokingDbWithCacheNewValueTest.TestRevokingTronStore;
 import org.tron.core.db2.RevokingDbWithCacheNewValueTest.TestSnapshotManager;
+import org.tron.core.db2.core.ISession;
+import org.tron.core.db2.core.Snapshot;
 import org.tron.core.db2.core.SnapshotManager;
+import org.tron.core.db2.core.SnapshotRoot;
 
 public class SnapshotRootTest {
 
@@ -71,6 +76,44 @@ public class SnapshotRootTest {
     dialog.reset();
     Assert.assertEquals(tronDatabase.get(testProtoCapsule.getData()), testProtoCapsule);
 
+    tronDatabase.close();
+  }
+
+  @Test
+  public synchronized void testMergeList() {
+    tronDatabase = new TestRevokingTronStore("testSnapshotRoot-testMergeList");
+    revokingDatabase = new TestSnapshotManager();
+    revokingDatabase.enable();
+    revokingDatabase.add(tronDatabase.getRevokingDB());
+
+    SessionOptional.instance().setValue(revokingDatabase.buildSession());
+    ProtoCapsuleTest testProtoCapsule = new ProtoCapsuleTest("test".getBytes());
+    tronDatabase.put("merge".getBytes(), testProtoCapsule);
+    for (int i = 1; i < 11; i++) {
+      ProtoCapsuleTest tmpProtoCapsule = new ProtoCapsuleTest(("mergeList" + i).getBytes());
+      try (ISession tmpSession = revokingDatabase.buildSession()) {
+        tronDatabase.put(tmpProtoCapsule.getData(), tmpProtoCapsule);
+        tmpSession.commit();
+      }
+    }
+    revokingDatabase.getDbs().forEach(db -> {
+      List<Snapshot> snapshots = new ArrayList<>();
+      SnapshotRoot root = (SnapshotRoot) db.getHead().getRoot();
+      Snapshot next = root;
+      for (int i = 0; i < 11; ++i) {
+        next = next.getNext();
+        snapshots.add(next);
+      }
+      root.merge(snapshots);
+      root.resetSolidity();
+
+      for (int i = 1; i < 11; i++) {
+        ProtoCapsuleTest tmpProtoCapsule = new ProtoCapsuleTest(("mergeList" + i).getBytes());
+        Assert.assertEquals(tmpProtoCapsule, tronDatabase.get(tmpProtoCapsule.getData()));
+      }
+
+    });
+    revokingDatabase.updateSolidity(10);
     tronDatabase.close();
   }
 

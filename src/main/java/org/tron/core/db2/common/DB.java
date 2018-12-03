@@ -7,15 +7,9 @@ public interface DB<K, V> extends Iterable<Map.Entry<K, V>> {
 
   void put(K k, V v);
 
-  void putAll(Map<K, V> map);
-
   long size();
 
   boolean isEmpty();
 
   void remove(K k);
-
-  void clear();
-
-  Map<K, V> asMap();
 }
