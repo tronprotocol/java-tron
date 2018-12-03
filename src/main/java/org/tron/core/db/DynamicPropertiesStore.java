@@ -60,24 +60,27 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] WITNESS_STANDBY_ALLOWANCE = "WITNESS_STANDBY_ALLOWANCE".getBytes();
 
-  private static final byte[] ONE_DAY_NET_LIMIT = "ONE_DAY_NET_LIMIT".getBytes();
+  private static class DynamicResourceProperties {
 
-  //public free bandwidth
-  private static final byte[] PUBLIC_NET_USAGE = "PUBLIC_NET_USAGE".getBytes();
-
-  private static final byte[] PUBLIC_NET_LIMIT = "PUBLIC_NET_LIMIT".getBytes();
-
-  private static final byte[] PUBLIC_NET_TIME = "PUBLIC_NET_TIME".getBytes();
-
-  private static final byte[] FREE_NET_LIMIT = "FREE_NET_LIMIT".getBytes();
-
-  private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
-  //ONE_DAY_NET_LIMIT - PUBLIC_NET_LIMIT
-  private static final byte[] TOTAL_NET_LIMIT = "TOTAL_NET_LIMIT".getBytes();
-
-  private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
-
-  private static final byte[] TOTAL_ENERGY_LIMIT = "TOTAL_ENERGY_LIMIT".getBytes();
+    private static final byte[] ONE_DAY_NET_LIMIT = "ONE_DAY_NET_LIMIT".getBytes();
+    //public free bandwidth
+    private static final byte[] PUBLIC_NET_USAGE = "PUBLIC_NET_USAGE".getBytes();
+    //fixed
+    private static final byte[] PUBLIC_NET_LIMIT = "PUBLIC_NET_LIMIT".getBytes();
+    private static final byte[] PUBLIC_NET_TIME = "PUBLIC_NET_TIME".getBytes();
+    private static final byte[] FREE_NET_LIMIT = "FREE_NET_LIMIT".getBytes();
+    private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
+    //ONE_DAY_NET_LIMIT - PUBLIC_NET_LIMIT，current TOTAL_NET_LIMIT
+    private static final byte[] TOTAL_NET_LIMIT = "TOTAL_NET_LIMIT".getBytes();
+    private static final byte[] TOTAL_ENERGY_TARGET_LIMIT = "TOTAL_ENERGY_TARGET_LIMIT".getBytes();
+    private static final byte[] TOTAL_ENERGY_CURRENT_LIMIT = "TOTAL_ENERGY_CURRENT_LIMIT"
+        .getBytes();
+    private static final byte[] TOTAL_ENERGY_AVERAGE_USAGE = "TOTAL_ENERGY_AVERAGE_USAGE"
+        .getBytes();
+    private static final byte[] TOTAL_ENERGY_AVERAGE_TIME = "TOTAL_ENERGY_AVERAGE_TIME".getBytes();
+    private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
+    private static final byte[] TOTAL_ENERGY_LIMIT = "TOTAL_ENERGY_LIMIT".getBytes();
+  }
 
   private static final byte[] ENERGY_FEE = "ENERGY_FEE".getBytes();
 
@@ -115,9 +118,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] STORAGE_EXCHANGE_TAX_RATE = "STORAGE_EXCHANGE_TAX_RATE".getBytes();
 
   private static final byte[] FORK_CONTROLLER = "FORK_CONTROLLER".getBytes();
+  private static final String FORK_PREFIX = "FORK_VERSION_";
 
   //This value is only allowed to be 0, 1, -1
   private static final byte[] REMOVE_THE_POWER_OF_THE_GR = "REMOVE_THE_POWER_OF_THE_GR".getBytes();
+
+  //This value is only allowed to be 0, 1, -1
+  private static final byte[] ALLOW_DELEGATE_RESOURCE = "ALLOW_DELEGATE_RESOURCE".getBytes();
+
+  //This value is only allowed to be 0, 1, -1
+  private static final byte[] ALLOW_ADAPTIVE_ENERGY = "ALLOW_ADAPTIVE_ENERGY".getBytes();
 
   //This value is only allowed to be 0, 1, -1
   private static final byte[] ALLOW_UPDATE_ACCOUNT_NAME = "ALLOW_UPDATE_ACCOUNT_NAME".getBytes();
@@ -128,6 +138,15 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   //If the parameter is larger than 0, the contract is allowed to be created.
   private static final byte[] ALLOW_CREATION_OF_CONTRACTS = "ALLOW_CREATION_OF_CONTRACTS"
       .getBytes();
+
+  //token id,Incremental，The initial value is 1000000
+  private static final byte[] TOKEN_ID_NUM = "TOKEN_ID_NUM".getBytes();
+
+  //Used only for token updates, once，value is {0,1}
+  private static final byte[] TOKEN_UPDATE_DONE = "TOKEN_UPDATE_DONE".getBytes();
+
+  //This value is only allowed to be 0, 1, -1
+  private static final byte[] ALLOW_TVM_TRANSFER_TRC10 = "ALLOW_TVM_TRANSFER_TRC10".getBytes();
 
 
   @Autowired
@@ -180,6 +199,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getBlockFilledSlotsIndex();
     } catch (IllegalArgumentException e) {
       this.saveBlockFilledSlotsIndex(0);
+    }
+
+    try {
+      this.getTokenIdNum();
+    } catch (IllegalArgumentException e) {
+      this.saveTokenIdNum(1000000L);
+    }
+
+    try {
+      this.getTokenUpdateDone();
+    } catch (IllegalArgumentException e) {
+      this.saveTokenUpdateDone(0);
     }
 
     try {
@@ -303,9 +334,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getMaxCpuTimeOfOneTX();
+      this.getMaxCpuTimeOfOneTx();
     } catch (IllegalArgumentException e) {
-      this.saveMaxCpuTimeOfOneTX(50L);
+      this.saveMaxCpuTimeOfOneTx(50L);
     }
 
     try {
@@ -399,9 +430,27 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getAllowDelegateResource();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowDelegateResource(Args.getInstance().getAllowDelegateResource());
+    }
+
+    try {
+      this.getAllowAdaptiveEnergy();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowAdaptiveEnergy(Args.getInstance().getAllowAdaptiveEnergy());
+    }
+
+    try {
+      this.getAllowTvmTransferTrc10();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTvmTransferTrc10(Args.getInstance().getAllowTvmTransferTrc10());
+    }
+
+    try {
       this.getAllowSameTokenName();
     } catch (IllegalArgumentException e) {
-      this.saveAllowSameTokenName(0);
+      this.saveAllowSameTokenName(Args.getInstance().getAllowSameTokenName());
     }
 
     try {
@@ -431,6 +480,29 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
           Long.parseLong(Args.getInstance().getGenesisBlock().getTimestamp()));
     }
 
+    try {
+      this.getTotalEnergyCurrentLimit();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalEnergyCurrentLimit(getTotalEnergyLimit());
+    }
+
+    try {
+      this.getTotalEnergyTargetLimit();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalEnergyTargetLimit(getTotalEnergyLimit() / 14400);
+    }
+
+    try {
+      this.getTotalEnergyAverageUsage();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalEnergyAverageUsage(0);
+    }
+
+    try {
+      this.getTotalEnergyAverageTime();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalEnergyAverageTime(0);
+    }
   }
 
   public String intArrayToString(int[] a) {
@@ -449,6 +521,34 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
     return result;
   }
+
+
+  public void saveTokenIdNum(long num) {
+    this.put(TOKEN_ID_NUM,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getTokenIdNum() {
+    return Optional.ofNullable(getUnchecked(TOKEN_ID_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOKEN_ID_NUM"));
+  }
+
+  public void saveTokenUpdateDone(long num) {
+    this.put(TOKEN_UPDATE_DONE,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getTokenUpdateDone() {
+    return Optional.ofNullable(getUnchecked(TOKEN_UPDATE_DONE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOKEN_UPDATE_DONE"));
+  }
+
 
   public void saveBlockFilledSlotsIndex(int blockFilledSlotsIndex) {
     logger.debug("blockFilledSlotsIndex:" + blockFilledSlotsIndex);
@@ -605,12 +705,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void saveOneDayNetLimit(long oneDayNetLimit) {
-    this.put(ONE_DAY_NET_LIMIT,
+    this.put(DynamicResourceProperties.ONE_DAY_NET_LIMIT,
         new BytesCapsule(ByteArray.fromLong(oneDayNetLimit)));
   }
 
   public long getOneDayNetLimit() {
-    return Optional.ofNullable(getUnchecked(ONE_DAY_NET_LIMIT))
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.ONE_DAY_NET_LIMIT))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
@@ -618,12 +718,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void savePublicNetUsage(long publicNetUsage) {
-    this.put(PUBLIC_NET_USAGE,
+    this.put(DynamicResourceProperties.PUBLIC_NET_USAGE,
         new BytesCapsule(ByteArray.fromLong(publicNetUsage)));
   }
 
   public long getPublicNetUsage() {
-    return Optional.ofNullable(getUnchecked(PUBLIC_NET_USAGE))
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.PUBLIC_NET_USAGE))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
@@ -631,12 +731,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void savePublicNetLimit(long publicNetLimit) {
-    this.put(PUBLIC_NET_LIMIT,
+    this.put(DynamicResourceProperties.PUBLIC_NET_LIMIT,
         new BytesCapsule(ByteArray.fromLong(publicNetLimit)));
   }
 
   public long getPublicNetLimit() {
-    return Optional.ofNullable(getUnchecked(PUBLIC_NET_LIMIT))
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.PUBLIC_NET_LIMIT))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
@@ -644,12 +744,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void savePublicNetTime(long publicNetTime) {
-    this.put(PUBLIC_NET_TIME,
+    this.put(DynamicResourceProperties.PUBLIC_NET_TIME,
         new BytesCapsule(ByteArray.fromLong(publicNetTime)));
   }
 
   public long getPublicNetTime() {
-    return Optional.ofNullable(getUnchecked(PUBLIC_NET_TIME))
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.PUBLIC_NET_TIME))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
@@ -657,12 +757,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void saveFreeNetLimit(long freeNetLimit) {
-    this.put(FREE_NET_LIMIT,
+    this.put(DynamicResourceProperties.FREE_NET_LIMIT,
         new BytesCapsule(ByteArray.fromLong(freeNetLimit)));
   }
 
   public long getFreeNetLimit() {
-    return Optional.ofNullable(getUnchecked(FREE_NET_LIMIT))
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.FREE_NET_LIMIT))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
@@ -670,12 +770,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void saveTotalNetWeight(long totalNetWeight) {
-    this.put(TOTAL_NET_WEIGHT,
+    this.put(DynamicResourceProperties.TOTAL_NET_WEIGHT,
         new BytesCapsule(ByteArray.fromLong(totalNetWeight)));
   }
 
   public long getTotalNetWeight() {
-    return Optional.ofNullable(getUnchecked(TOTAL_NET_WEIGHT))
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.TOTAL_NET_WEIGHT))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
@@ -683,12 +783,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void saveTotalEnergyWeight(long totalEnergyWeight) {
-    this.put(TOTAL_ENERGY_WEIGHT,
+    this.put(DynamicResourceProperties.TOTAL_ENERGY_WEIGHT,
         new BytesCapsule(ByteArray.fromLong(totalEnergyWeight)));
   }
 
   public long getTotalEnergyWeight() {
-    return Optional.ofNullable(getUnchecked(TOTAL_ENERGY_WEIGHT))
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.TOTAL_ENERGY_WEIGHT))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
@@ -697,12 +797,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
 
   public void saveTotalNetLimit(long totalNetLimit) {
-    this.put(TOTAL_NET_LIMIT,
+    this.put(DynamicResourceProperties.TOTAL_NET_LIMIT,
         new BytesCapsule(ByteArray.fromLong(totalNetLimit)));
   }
 
   public long getTotalNetLimit() {
-    return Optional.ofNullable(getUnchecked(TOTAL_NET_LIMIT))
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.TOTAL_NET_LIMIT))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
@@ -710,16 +810,71 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void saveTotalEnergyLimit(long totalEnergyLimit) {
-    this.put(TOTAL_ENERGY_LIMIT,
+    this.put(DynamicResourceProperties.TOTAL_ENERGY_LIMIT,
         new BytesCapsule(ByteArray.fromLong(totalEnergyLimit)));
+
+    saveTotalEnergyTargetLimit(totalEnergyLimit / 14400);
+
   }
 
   public long getTotalEnergyLimit() {
-    return Optional.ofNullable(getUnchecked(TOTAL_ENERGY_LIMIT))
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.TOTAL_ENERGY_LIMIT))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_ENERGY_LIMIT"));
+  }
+
+  public void saveTotalEnergyCurrentLimit(long totalEnergyCurrentLimit) {
+    this.put(DynamicResourceProperties.TOTAL_ENERGY_CURRENT_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(totalEnergyCurrentLimit)));
+  }
+
+  public long getTotalEnergyCurrentLimit() {
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.TOTAL_ENERGY_CURRENT_LIMIT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_ENERGY_CURRENT_LIMIT"));
+  }
+
+  public void saveTotalEnergyTargetLimit(long targetTotalEnergyLimit) {
+    this.put(DynamicResourceProperties.TOTAL_ENERGY_TARGET_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(targetTotalEnergyLimit)));
+  }
+
+  public long getTotalEnergyTargetLimit() {
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.TOTAL_ENERGY_TARGET_LIMIT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_ENERGY_TARGET_LIMIT"));
+  }
+
+  public void saveTotalEnergyAverageUsage(long totalEnergyAverageUsage) {
+    this.put(DynamicResourceProperties.TOTAL_ENERGY_AVERAGE_USAGE,
+        new BytesCapsule(ByteArray.fromLong(totalEnergyAverageUsage)));
+  }
+
+  public long getTotalEnergyAverageUsage() {
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.TOTAL_ENERGY_AVERAGE_USAGE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_ENERGY_AVERAGE_USAGE"));
+  }
+
+  public void saveTotalEnergyAverageTime(long totalEnergyAverageTime) {
+    this.put(DynamicResourceProperties.TOTAL_ENERGY_AVERAGE_TIME,
+        new BytesCapsule(ByteArray.fromLong(totalEnergyAverageTime)));
+  }
+
+  public long getTotalEnergyAverageTime() {
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.TOTAL_ENERGY_AVERAGE_TIME))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_NET_AVERAGE_TIME"));
   }
 
 
@@ -736,12 +891,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found ENERGY_FEE"));
   }
 
-  public void saveMaxCpuTimeOfOneTX(long time) {
+  public void saveMaxCpuTimeOfOneTx(long time) {
     this.put(MAX_CPU_TIME_OF_ONE_TX,
         new BytesCapsule(ByteArray.fromLong(time)));
   }
 
-  public long getMaxCpuTimeOfOneTX() {
+  public long getMaxCpuTimeOfOneTx() {
     return Optional.ofNullable(getUnchecked(MAX_CPU_TIME_OF_ONE_TX))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
@@ -773,7 +928,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT"));
+            () -> new IllegalArgumentException(
+                "not found CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT"));
   }
 
   public void saveCreateNewAccountBandwidthRate(long rate) {
@@ -945,6 +1101,49 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found REMOVE_THE_POWER_OF_THE_GR"));
   }
 
+  public void saveAllowDelegateResource(long value) {
+    this.put(ALLOW_DELEGATE_RESOURCE,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowDelegateResource() {
+    return Optional.ofNullable(getUnchecked(ALLOW_DELEGATE_RESOURCE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_DELEGATE_RESOURCE"));
+  }
+
+  public void saveAllowAdaptiveEnergy(long value) {
+    this.put(ALLOW_ADAPTIVE_ENERGY,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowAdaptiveEnergy() {
+    return Optional.ofNullable(getUnchecked(ALLOW_ADAPTIVE_ENERGY))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_ADAPTIVE_ENERGY"));
+  }
+
+  public void saveAllowTvmTransferTrc10(long value) {
+    this.put(ALLOW_TVM_TRANSFER_TRC10,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowTvmTransferTrc10() {
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_TRANSFER_TRC10))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_TVM_TRANSFER_TRC10"));
+  }
+
+  public boolean supportDR() {
+    return getAllowDelegateResource() == 1L;
+  }
+
   public void saveAllowUpdateAccountName(long rate) {
     this.put(ALLOW_UPDATE_ACCOUNT_NAME,
         new BytesCapsule(ByteArray.fromLong(rate)));
@@ -1077,6 +1276,15 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElseThrow(() -> new IllegalArgumentException("not found latest block header number"));
   }
 
+  /**
+   * get number of global latest solidity block.
+   */
+  public long getLatestBlockHeaderNumberOnSolidity() {
+    return Optional.ofNullable(revokingDB.getUncheckedOnSolidity(LATEST_BLOCK_HEADER_NUMBER))
+        .map(ByteArray::toLong)
+        .orElseThrow(() -> new IllegalArgumentException("not found latest block header number"));
+  }
+
   public int getStateFlag() {
     return Optional.ofNullable(getUnchecked(STATE_FLAG))
         .map(BytesCapsule::getData)
@@ -1091,6 +1299,17 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public Sha256Hash getLatestBlockHeaderHash() {
     byte[] blockHash = Optional.ofNullable(getUnchecked(LATEST_BLOCK_HEADER_HASH))
         .map(BytesCapsule::getData)
+        .orElseThrow(() -> new IllegalArgumentException("not found block hash"));
+    return Sha256Hash.wrap(blockHash);
+  }
+
+  /**
+   * get id of global latest solidity block.
+   */
+
+  public Sha256Hash getLatestBlockHeaderHashOnSolidity() {
+    byte[] blockHash = Optional
+        .ofNullable(revokingDB.getUncheckedOnSolidity(LATEST_BLOCK_HEADER_HASH))
         .orElseThrow(() -> new IllegalArgumentException("not found block hash"));
     return Sha256Hash.wrap(blockHash);
   }
@@ -1164,14 +1383,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void addTotalNetWeight(long amount) {
     long totalNetWeight = getTotalNetWeight();
     totalNetWeight += amount;
-    saveTotalNetWeight( totalNetWeight );
+    saveTotalNetWeight(totalNetWeight);
   }
 
   //The unit is trx
   public void addTotalEnergyWeight(long amount) {
     long totalEnergyWeight = getTotalEnergyWeight();
     totalEnergyWeight += amount;
-    saveTotalEnergyWeight( totalEnergyWeight );
+    saveTotalEnergyWeight(totalEnergyWeight);
   }
 
   public void addTotalCreateAccountCost(long fee) {
@@ -1191,6 +1410,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void forked() {
     put(FORK_CONTROLLER, new BytesCapsule(Boolean.toString(true).getBytes()));
+  }
+
+  public void statsByVersion(int version, byte[] stats) {
+    String statsKey = FORK_PREFIX + version;
+    put(statsKey.getBytes(), new BytesCapsule(stats));
+  }
+
+  public byte[] statsByVersion(int version) {
+    String statsKey = FORK_PREFIX + version;
+    return revokingDB.getUnchecked(statsKey.getBytes());
   }
 
   public boolean getForked() {

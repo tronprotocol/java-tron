@@ -31,16 +31,12 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class WalletTestAssetIssue006 {
 
-  //testng001、testng002、testng003、testng004
-  private final String testKey002 =
-      "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
-
-
-  /*  //testng001、testng002、testng003、testng004
-  private static final byte[] fromAddress = Base58
-      .decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");*/
-
+  private final String testKey002 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key1");
+  private final String testKey003 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
@@ -68,7 +64,7 @@ public class WalletTestAssetIssue006 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -92,7 +88,7 @@ public class WalletTestAssetIssue006 {
         1000L,1L,1L,queryAssetIssueKey,blockingStubFull));
   }
 
-  /*  @Test(enabled = false)
+  /*  @Test(enabled = true)
   public void testGetAssetIssueListByTimestamp() {
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Block solidityCurrentBlock = blockingStubSolidity.getNowBlock(GrpcAPI.EmptyMessage
@@ -136,7 +132,7 @@ public class WalletTestAssetIssue006 {
 
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testExceptionGetAssetIssueListByTimestamp() {
     //Time stamp is below zero.
     long time = -1000000000;
@@ -158,7 +154,7 @@ public class WalletTestAssetIssue006 {
 
   }*/
 
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

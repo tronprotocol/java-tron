@@ -1,12 +1,20 @@
 package org.tron.core.net.node;
 
+import com.google.protobuf.ByteString;
+import java.io.File;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
-import org.junit.*;
-import org.tron.common.application.TronApplicationContext;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.Test;
+import org.testng.collections.Lists;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
-import org.tron.common.overlay.client.PeerClient;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.ChannelManager;
@@ -14,22 +22,23 @@ import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.Constant;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.TraitorPeerException;
 import org.tron.core.net.message.TransactionMessage;
+import org.tron.core.net.message.TransactionsMessage;
+import org.tron.core.net.node.override.HandshakeHandlerTest;
+import org.tron.core.net.node.override.PeerClientTest;
+import org.tron.core.net.node.override.TronChannelInitializerTest;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
+import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory.InventoryType;
-
-import java.io.File;
-import java.util.Collection;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 
 @Slf4j
@@ -37,12 +46,14 @@ public class HandleTransactionTest {
 
     private static TronApplicationContext context;
     private static NodeImpl node;
-    RpcApiService rpcApiService;
-    private static PeerClient peerClient;
-    ChannelManager channelManager;
-    SyncPool pool;
+    private RpcApiService rpcApiService;
+    private static PeerClientTest peerClient;
+    private ChannelManager channelManager;
+    private SyncPool pool;
     private static Application appT;
     private static Manager dbManager;
+    private Node nodeEntity;
+    private static HandshakeHandlerTest handshakeHandlerTest;
 
     private static final String dbPath = "output-HandleTransactionTest";
     private static final String dbDirectory = "db_HandleTransaction_test";
@@ -61,11 +72,25 @@ public class HandleTransactionTest {
     }
 
     @Test
-    public void testHandleTransactionMessage() throws TraitorPeerException {
-        PeerConnection peer = new PeerConnection();
-        Protocol.Transaction transaction = Protocol.Transaction.getDefaultInstance();
-        TransactionMessage transactionMessage = new TransactionMessage(transaction);
+    public void testHandleTransactionMessage() throws Exception{
 
+        TransferContract tc =
+            TransferContract.newBuilder()
+                .setAmount(10)
+                .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
+                .setToAddress(ByteString.copyFromUtf8("bbb"))
+                .build();
+
+        TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
+
+        Protocol.Transaction transaction = trx.getInstance();
+
+        TransactionMessage transactionMessage = new TransactionMessage(transaction);
+        List list = Lists.newArrayList();
+        list.add(transaction);
+        TransactionsMessage transactionsMessage = new TransactionsMessage(list);
+
+        PeerConnection peer = new PeerConnection();
         //没有向peer广播请求过交易信息
         peer.getAdvObjWeRequested().clear();
         peer.setSyncFlag(true);
@@ -75,7 +100,7 @@ public class HandleTransactionTest {
         //向peer广播请求过交易信息
         peer.getAdvObjWeRequested().put(new Item(transactionMessage.getMessageId(), InventoryType.TRX), System.currentTimeMillis());
         peer.setSyncFlag(true);
-        node.onMessage(peer, transactionMessage);
+        node.onMessage(peer, transactionsMessage);
         //Assert.assertEquals(peer.getAdvObjWeRequested().isEmpty(), true);
         //ConcurrentHashMap<Sha256Hash, InventoryType> advObjToSpread = ReflectUtils.getFieldValue(nodeImpl, "advObjToSpread");
         //Assert.assertEquals(advObjToSpread.contains(transactionMessage.getMessageId()), true);
@@ -85,6 +110,9 @@ public class HandleTransactionTest {
 
     @Before
     public void init() {
+        nodeEntity = new Node(
+            "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:17891");
+
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -120,10 +148,12 @@ public class HandleTransactionTest {
 //        appT.startServices();
 //        appT.startup();
                 node = context.getBean(NodeImpl.class);
-                peerClient = context.getBean(PeerClient.class);
+                peerClient = context.getBean(PeerClientTest.class);
                 channelManager = context.getBean(ChannelManager.class);
                 pool = context.getBean(SyncPool.class);
                 dbManager = context.getBean(Manager.class);
+                handshakeHandlerTest = context.getBean(HandshakeHandlerTest.class);
+                handshakeHandlerTest.setNode(nodeEntity);
                 NodeDelegate nodeDelegate = new NodeDelegateImpl(dbManager);
                 node.setNodeDelegate(nodeDelegate);
                 pool.init(node);
@@ -151,15 +181,21 @@ public class HandleTransactionTest {
             ExecutorService advertiseLoopThread = ReflectUtils.getFieldValue(node, "broadPool");
             advertiseLoopThread.shutdownNow();
 
+            peerClient.prepare(nodeEntity.getHexId());
+
             ReflectUtils.setFieldValue(node, "isAdvertiseActive", false);
             ReflectUtils.setFieldValue(node, "isFetchActive", false);
 
-            Node node = new Node(
-                    "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:17891");
+            TronChannelInitializerTest tronChannelInitializer = ReflectUtils
+                .getFieldValue(peerClient, "tronChannelInitializer");
+            tronChannelInitializer.prepare();
+            Channel channel = ReflectUtils.getFieldValue(tronChannelInitializer, "channel");
+            ReflectUtils.setFieldValue(channel, "handshakeHandler", handshakeHandlerTest);
+
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    peerClient.connect(node.getHost(), node.getPort(), node.getHexId());
+                    peerClient.connect(nodeEntity.getHost(), nodeEntity.getPort(), nodeEntity.getHexId());
                 }
             }).start();
             Thread.sleep(1000);
@@ -182,7 +218,7 @@ public class HandleTransactionTest {
         for (PeerConnection peer : peerConnections) {
             peer.close();
         }
-        peerClient.close();
+        handshakeHandlerTest.close();
         appT.shutdownServices();
         appT.shutdown();
         context.destroy();

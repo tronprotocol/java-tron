@@ -72,7 +72,7 @@ public class WalletTestAssetIssue003 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -151,8 +151,8 @@ public class WalletTestAssetIssue003 {
           start, end, 2, description, url,10000L,10000L,
           1L, 3652L, testKey002,blockingStubFull));
       //The asset issue name is chinese name.
-      Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, chineseAssetIssuename, totalSupply, 1,
-          10, start, end, 2, description, url,10000L,
+      Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, chineseAssetIssuename,
+          totalSupply, 1, 10, start, end, 2, description, url,10000L,
           10000L,1L, 3652L, testKey002,blockingStubFull));
       //The URL is null.
       Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, name, totalSupply, 1, 10,
@@ -209,7 +209,7 @@ public class WalletTestAssetIssue003 {
     }
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testGetAllAssetIssue() {
     GrpcAPI.AssetIssueList assetIssueList = blockingStubFull
         .getAssetIssueList(GrpcAPI.EmptyMessage.newBuilder().build());
@@ -237,7 +237,7 @@ public class WalletTestAssetIssue003 {
 
   }
 
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

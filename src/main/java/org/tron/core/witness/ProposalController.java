@@ -128,7 +128,8 @@ public class ProposalController {
           break;
         }
         case (7): {
-          manager.getDynamicPropertiesStore().saveCreateNewAccountFeeInSystemContract(entry.getValue());
+          manager.getDynamicPropertiesStore()
+              .saveCreateNewAccountFeeInSystemContract(entry.getValue());
           break;
         }
         case (8): {
@@ -154,7 +155,7 @@ public class ProposalController {
           break;
         }
         case (13): {
-          manager.getDynamicPropertiesStore().saveMaxCpuTimeOfOneTX(entry.getValue());
+          manager.getDynamicPropertiesStore().saveMaxCpuTimeOfOneTx(entry.getValue());
           break;
         }
         case (14): {
@@ -163,6 +164,18 @@ public class ProposalController {
         }
         case (15): {
           manager.getDynamicPropertiesStore().saveAllowSameTokenName(entry.getValue());
+          break;
+        }
+        case (16): {
+          manager.getDynamicPropertiesStore().saveAllowDelegateResource(entry.getValue());
+          break;
+        }
+        case (17): {
+          manager.getDynamicPropertiesStore().saveTotalEnergyLimit(entry.getValue());
+          break;
+        }
+        case (18): {
+          manager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(entry.getValue());
           break;
         }
         default:

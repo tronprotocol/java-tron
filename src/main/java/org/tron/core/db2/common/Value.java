@@ -63,13 +63,12 @@ public final class Value {
     this.data = data;
   }
 
-  public static Value of(Operator operator, byte[] data) {
-    byte[] value = null;
-    if (data != null) {
-      value = Arrays.copyOf(data, data.length);
-    }
+  public static Value copyOf(Operator operator, byte[] data) {
+    return new Value(operator, WrappedByteArray.copyOf(data));
+  }
 
-    return new Value(operator, WrappedByteArray.of(value));
+  public static Value of(Operator operator, byte[] data) {
+    return new Value(operator, WrappedByteArray.of(data));
   }
 
   public byte[] getBytes() {

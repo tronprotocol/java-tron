@@ -18,8 +18,6 @@
 
 package org.tron.common.overlay.discover.node;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -34,7 +32,6 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import org.slf4j.LoggerFactory;
@@ -50,7 +47,6 @@ import org.tron.common.net.udp.message.discover.PongMessage;
 import org.tron.common.overlay.discover.DiscoverListener;
 import org.tron.common.overlay.discover.RefreshTask;
 import org.tron.common.overlay.discover.node.NodeHandler.State;
-import org.tron.common.overlay.discover.node.statistics.MessageStatistics;
 import org.tron.common.overlay.discover.node.statistics.NodeStatistics;
 import org.tron.common.overlay.discover.table.NodeTable;
 import org.tron.common.utils.CollectionUtils;
@@ -95,7 +91,8 @@ public class NodeManager implements EventHandler {
     this.dbManager = dbManager;
     discoveryEnabled = args.isNodeDiscoveryEnable();
 
-    homeNode = new Node(RefreshTask.getNodeId(), args.getNodeExternalIp(), args.getNodeListenPort());
+    homeNode = new Node(RefreshTask.getNodeId(), args.getNodeExternalIp(),
+        args.getNodeListenPort());
 
     for (String boot : args.getSeedNode().getIpList()) {
       bootNodes.add(Node.instanceOf(boot));
@@ -206,7 +203,7 @@ public class NodeManager implements EventHandler {
       // reverse sort by reputation
       sorted.sort(Comparator.comparingInt(o -> o.getNodeStatistics().getReputation()));
       for (NodeHandler handler : sorted) {
-        nodeHandlerMap.remove(getKey(handler.getNode()));
+        nodeHandlerMap.values().remove(handler);
         if (nodeHandlerMap.size() <= MAX_NODES) {
           break;
         }
