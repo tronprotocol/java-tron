@@ -187,7 +187,8 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
 
     builder.setReceipt(traceReceipt.getReceipt());
 
-    if (null != programResult.getInternalTransactions()) {
+    boolean saveInternalTx = false;
+    if (saveInternalTx && null != programResult.getInternalTransactions()) {
       for (InternalTransaction internalTransaction : programResult
           .getInternalTransactions()) {
         Protocol.InternalTransaction.Builder internalTrxBuilder = Protocol.InternalTransaction
