@@ -1064,7 +1064,7 @@ public class Manager {
 
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
         .buildInstance(trxCap, blockCap, trace);
-
+    blockCap.putTransactionInfo(trxCap.getTransactionId(),transactionInfo);
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
 
     return true;
@@ -1199,6 +1199,7 @@ public class Manager {
         "postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTransactions.size()
             + "],repushTrxCount[" + repushTransactions.size() + "]");
     blockCapsule.setMerkleRoot();
+    blockCapsule.setReceiptRoot();
     blockCapsule.sign(privateKey);
 
     try {
