@@ -1570,8 +1570,6 @@ public class Manager {
     public Boolean call() throws ValidateSignatureException {
       try {
         trx.validateSignature();
-      } catch (ValidateSignatureException e) {
-        throw e;
       } finally {
         countDownLatch.countDown();
       }
