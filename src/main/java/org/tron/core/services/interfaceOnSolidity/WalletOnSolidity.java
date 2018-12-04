@@ -46,7 +46,7 @@ public class WalletOnSolidity {
 
   public <T> T futureGet(Callable<T> callable) {
     ListenableFuture<T> future = executorService.submit(() -> {
-      dbManager.getRevokingStore().setMode(false);
+      dbManager.setMode(false);
       return callable.call();
     });
 
@@ -63,7 +63,7 @@ public class WalletOnSolidity {
 
   public void futureGet(Runnable runnable) {
     ListenableFuture<?> future = executorService.submit(() -> {
-      dbManager.getRevokingStore().setMode(false);
+      dbManager.setMode(false);
       runnable.run();
     });
 
