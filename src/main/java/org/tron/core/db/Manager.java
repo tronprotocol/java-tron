@@ -1640,4 +1640,8 @@ public class Manager {
     }
   }
 
+  public void setMode(boolean mode) {
+    revokingStore.setMode(mode);
+  }
+
 }
