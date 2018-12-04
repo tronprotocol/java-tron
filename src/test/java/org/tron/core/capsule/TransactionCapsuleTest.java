@@ -778,18 +778,6 @@ public class TransactionCapsuleTest {
     prikeys.add(ByteArray.fromHexString(KEY_21));
     ArrayList<ByteString> sign = sign(prikeys, Sha256Hash.hash(rawBuilder.build().toByteArray()));
     trxBuilder.addAllSignature(sign);
-    //Accout not exist
-    try {
-      TransactionCapsule.validateSignature(trxBuilder.build(),
-          Sha256Hash.hash(trxBuilder.getRawData().toByteArray()), accountStore);
-      Assert.assertFalse(true);
-    } catch (SignatureException e) {
-      Assert.assertFalse(true);
-    } catch (PermissionException e) {
-      Assert.assertEquals(e.getMessage(), "Account is not exist!");
-    } catch (SignatureFormatException e) {
-      Assert.assertFalse(true);
-    }
 
     Account account = accountStore.get(ByteArray.fromHexString(OWNER_ADDRESS)).getInstance();
     Account.Builder builder = account.toBuilder();
@@ -975,13 +963,6 @@ public class TransactionCapsuleTest {
     ArrayList<ByteString> sign = sign(prikeys, Sha256Hash.hash(rawBuilder.build().toByteArray()));
     trxBuilder.addAllSignature(sign);
     transactionCapsule = new TransactionCapsule(trxBuilder.build());
-    //Accout not exist
-    try {
-      transactionCapsule.validateSignature(accountStore);
-      Assert.assertFalse(true);
-    } catch (ValidateSignatureException e) {
-      Assert.assertEquals(e.getMessage(), "Account is not exist!");
-    }
 
     // no contract
     prikeys.clear();
