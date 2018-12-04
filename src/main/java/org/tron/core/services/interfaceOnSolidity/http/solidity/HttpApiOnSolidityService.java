@@ -81,7 +81,6 @@ public class HttpApiOnSolidityService implements Service {
 
   @Override
   public void start() {
-    Args args = Args.getInstance();
     try {
       server = new Server(port);
       ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
