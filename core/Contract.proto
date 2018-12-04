@@ -86,6 +86,12 @@ message OutputPoint{
   int32 index = 2;
 }
 
+message OutputPointInfo{
+  OutputPoint out_point_1 = 1;
+  OutputPoint out_point_2 = 2;
+  int32 block_num = 3;
+}
+
 message SHA256Compress{
   bytes content = 1;
 }
@@ -103,6 +109,12 @@ message IncrementalMerkleWitness{
   int64 cursor_depth = 4;
   bytes rt = 5;
   OutputPoint output_point = 10;
+}
+
+message IncrementalMerkleWitnessInfo{
+  IncrementalMerkleWitness witness1 = 1;
+  IncrementalMerkleWitness witness2 = 2;
+  int32 block_num = 3;
 }
 
 message ZksnarkV0TransferContract {
