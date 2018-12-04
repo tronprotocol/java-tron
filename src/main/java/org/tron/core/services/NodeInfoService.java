@@ -47,7 +47,7 @@ public class NodeInfoService {
   private NodeManager nodeManager;
 
   @Autowired
-  protected Manager dbManager;
+  private Manager dbManager;
 
   @Autowired
   private WitnessProductBlockService witnessProductBlockService;
