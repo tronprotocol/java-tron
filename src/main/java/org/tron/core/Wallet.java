@@ -29,6 +29,7 @@ import com.google.common.collect.Range;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -980,13 +981,13 @@ public class Wallet {
 
   }
 
-  private void updateBothWitness(IncrementalMerkleWitnessContainer witness1, long blockNum1,
-      IncrementalMerkleWitnessContainer witness2, long blockNum2, int synBlockNum)
+  private void updateBothWitness(List<IncrementalMerkleWitnessContainer> witnessList, long large,
+      int synBlockNum)
       throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException {
 
-    long start = Math.max(blockNum1, blockNum2) + 1;
-    long end = blockNum2 + synBlockNum;
+    long start = large;
+    long end = large + synBlockNum - 1;
     for (long n = start; n <= end; n++) {
       BlockCapsule block = dbManager.getBlockByNum(n);
       for (Transaction transaction1 : block.getInstance().getTransactionsList()) {
@@ -1005,11 +1006,11 @@ public class Wallet {
           cmCapsule2.setContent(zkContract.getCm2());
           SHA256Compress cm2 = cmCapsule2.getInstance();
 
-          witness1.append(cm1);
-          witness1.append(cm2);
+          witnessList.forEach(wit -> {
+            wit.append(cm1);
+            wit.append(cm2);
+          });
 
-          witness2.append(cm1);
-          witness2.append(cm2);
         }
       }
     }
@@ -1062,33 +1063,74 @@ public class Wallet {
   public IncrementalMerkleWitnessInfo getMerkleTreeWitnessInfo(OutputPointInfo request)
       throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException {
+    IncrementalMerkleWitnessInfo.Builder result = IncrementalMerkleWitnessInfo.newBuilder();
+    result.setBlockNum(request.getBlockNum());
+
     int synBlockNum = request.getBlockNum();
-    OutputPoint outPoint1 = request.getOutPoint1();
-    OutputPoint outPoint2 = request.getOutPoint2();
 
-    Long blockNum1 = getBlockNumber(outPoint1);
-    Long blockNum2 = getBlockNumber(outPoint2);
+    if (request.hasOutPoint1() && request.hasOutPoint2()) {
+      OutputPoint outPoint1 = request.getOutPoint1();
+      OutputPoint outPoint2 = request.getOutPoint2();
 
-    IncrementalMerkleWitnessContainer witness1 = createWitness(outPoint1, blockNum1);
-    IncrementalMerkleWitnessContainer witness2 = createWitness(outPoint2, blockNum2);
+      Long blockNum1 = getBlockNumber(outPoint1);
+      Long blockNum2 = getBlockNumber(outPoint2);
 
-    System.out.println("wit1Size:" + witness1.size());
-    System.out.println("wit2Size:" + witness2.size());
-    //Skip the next step when the two witness blocks are equal
-    if (blockNum1 != blockNum2) {
-      //Get the block between two witness blockNum, [block1+1, block2], update the low witness, make the root the same
-      updateLowWitness(witness1, blockNum1, witness2, blockNum2);
+      IncrementalMerkleWitnessContainer witness1 = createWitness(outPoint1, blockNum1);
+      IncrementalMerkleWitnessContainer witness2 = createWitness(outPoint2, blockNum2);
+
+      //Skip the next step when the two witness blocks are equal
+      if (blockNum1 != blockNum2) {
+        //Get the block between two witness blockNum, [block1+1, block2], update the low witness, make the root the same
+        updateLowWitness(witness1, blockNum1, witness2, blockNum2);
+      }
+
+      if (synBlockNum != 0) {
+        long large = Math.max(blockNum1, blockNum2) + 1;
+        //According to the blockNum in the request, obtain the block before [block2+1, blockNum], and update the two witnesses.
+        List<IncrementalMerkleWitnessContainer> list = new ArrayList<>();
+        list.add(witness1);
+        list.add(witness2);
+        updateBothWitness(list, large, synBlockNum);
+        result.setWitness1(witness1.getWitnessCapsule().getInstance()).
+            setWitness2(witness2.getWitnessCapsule().getInstance());
+      }
     }
 
-    if (synBlockNum != 0) {
-      //According to the blockNum in the request, obtain the block before [block2+1, blockNum], and update the two witnesses.
-      updateBothWitness(witness1, blockNum1, witness2, blockNum2, synBlockNum);
-      return IncrementalMerkleWitnessInfo.newBuilder().setBlockNum(synBlockNum).
-          setWitness1(witness1.getWitnessCapsule().getInstance()).
-          setWitness2(witness2.getWitnessCapsule().getInstance()).build();
+    if (request.hasOutPoint1() && !request.hasOutPoint2()) {
+      OutputPoint outPoint1 = request.getOutPoint1();
+
+      Long blockNum1 = getBlockNumber(outPoint1);
+
+      IncrementalMerkleWitnessContainer witness1 = createWitness(outPoint1, blockNum1);
+
+      if (synBlockNum != 0) {
+        //According to the blockNum in the request, obtain the block before [block2+1, blockNum], and update the two witnesses.
+        List<IncrementalMerkleWitnessContainer> list = new ArrayList<>();
+        list.add(witness1);
+        updateBothWitness(list, blockNum1, synBlockNum);
+        return result.setBlockNum(synBlockNum).
+            setWitness1(witness1.getWitnessCapsule().getInstance()).build();
+      }
     }
 
-    return null;
+    if (!request.hasOutPoint1() && request.hasOutPoint2()) {
+      OutputPoint outPoint2 = request.getOutPoint2();
+
+      Long blockNum2 = getBlockNumber(outPoint2);
+
+      IncrementalMerkleWitnessContainer witness2 = createWitness(outPoint2, blockNum2);
+
+      if (synBlockNum != 0) {
+        //According to the blockNum in the request, obtain the block before [block2+1, blockNum], and update the two witnesses.
+        List<IncrementalMerkleWitnessContainer> list = new ArrayList<>();
+        list.add(witness2);
+        updateBothWitness(list, blockNum2, synBlockNum);
+        return result.setBlockNum(synBlockNum).
+            setWitness1(witness2.getWitnessCapsule().getInstance()).build();
+      }
+    }
+
+    return result.build();
   }
 
   public IncrementalMerkleTree getMerkleTreeOfBlock(long blockNum ) {

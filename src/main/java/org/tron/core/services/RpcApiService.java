@@ -1504,24 +1504,27 @@ public class RpcApiService implements Service {
         return;
       }
 
-      if (!request.hasOutPoint1() || !request.hasOutPoint2()) {
+      if (!request.hasOutPoint1() && !request.hasOutPoint2()) {
         responseObserver.onNext(null);
         responseObserver.onCompleted();
         return;
       }
-
-      OutputPoint outPoint1 = request.getOutPoint1();
-      OutputPoint outPoint2 = request.getOutPoint2();
-
-      if (outPoint1.getHash() == null || outPoint1.getIndex() > 1 || outPoint1.getIndex() < 0) {
-        responseObserver.onNext(null);
-        responseObserver.onCompleted();
-        return;
+      if (request.hasOutPoint1()) {
+        OutputPoint outPoint1 = request.getOutPoint1();
+        if (outPoint1.getHash() == null || outPoint1.getIndex() > 1 || outPoint1.getIndex() < 0) {
+          responseObserver.onNext(null);
+          responseObserver.onCompleted();
+          return;
+        }
       }
-      if (outPoint2.getHash() == null || outPoint2.getIndex() > 1 || outPoint2.getIndex() < 0) {
-        responseObserver.onNext(null);
-        responseObserver.onCompleted();
-        return;
+      if (request.hasOutPoint2()) {
+        OutputPoint outPoint2 = request.getOutPoint2();
+
+        if (outPoint2.getHash() == null || outPoint2.getIndex() > 1 || outPoint2.getIndex() < 0) {
+          responseObserver.onNext(null);
+          responseObserver.onCompleted();
+          return;
+        }
       }
 
       try {
