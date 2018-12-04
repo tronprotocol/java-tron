@@ -56,7 +56,7 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
     return null;
   }
 
-  private TransactionCapsule getTransactionCapsuleFromKhaosDatabase(byte[] key, long high) {
+  private TransactionCapsule getTransactionFromKhaosDatabase(byte[] key, long high) {
     List<KhaosBlock> khaosBlocks = khaosDatabase.getMiniStore().getBlockByNum(high);
     for (KhaosBlock bl : khaosBlocks) {
       for (TransactionCapsule e : bl.blk.getTransactions()) {
@@ -77,9 +77,9 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
     TransactionCapsule transactionCapsule = null;
     if (value.length == 8) {
       long blockHigh = ByteArray.toLong(value);
-      transactionCapsule =  getTransactionFromBlockStore(key, blockHigh);
+      transactionCapsule = getTransactionFromBlockStore(key, blockHigh);
       if (transactionCapsule == null) {
-        transactionCapsule = getTransactionCapsuleFromKhaosDatabase(key, blockHigh);
+        transactionCapsule = getTransactionFromKhaosDatabase(key, blockHigh);
       }
     }
 
