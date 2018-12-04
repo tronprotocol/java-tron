@@ -26,6 +26,7 @@ import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AddressPrKeyPairMessage;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockExtention;
+import org.tron.api.GrpcAPI.BlockIncrementalMerkleTree;
 import org.tron.api.GrpcAPI.BlockLimit;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.BlockListExtention;
@@ -47,7 +48,6 @@ import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.TransactionListExtention;
 import org.tron.api.GrpcAPI.WitnessList;
-import org.tron.api.GrpcAPI.BlockIncrementalMerkleTree;
 import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc.WalletImplBase;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
@@ -74,10 +74,12 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.IncrementalMerkleWitness;
 import org.tron.protos.Contract.IncrementalMerkleTree;
+import org.tron.protos.Contract.IncrementalMerkleWitness;
+import org.tron.protos.Contract.IncrementalMerkleWitnessInfo;
 import org.tron.protos.Contract.MerklePath;
 import org.tron.protos.Contract.OutputPoint;
+import org.tron.protos.Contract.OutputPointInfo;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.ShieldAddress;
 import org.tron.protos.Contract.TransferAssetContract;
@@ -1489,6 +1491,50 @@ public class RpcApiService implements Service {
       } else {
         responseObserver.onNext(null);
       }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getMerkleTreeWitnessInfo(OutputPointInfo request,
+        StreamObserver<IncrementalMerkleWitnessInfo> responseObserver) {
+
+      if (request.getBlockNum() < 0) {
+        responseObserver.onNext(null);
+        responseObserver.onCompleted();
+        return;
+      }
+
+      if (!request.hasOutPoint1() || !request.hasOutPoint2()) {
+        responseObserver.onNext(null);
+        responseObserver.onCompleted();
+        return;
+      }
+
+      OutputPoint outPoint1 = request.getOutPoint1();
+      OutputPoint outPoint2 = request.getOutPoint2();
+
+      if (outPoint1.getHash() == null || outPoint1.getIndex() > 1 || outPoint1.getIndex() < 0) {
+        responseObserver.onNext(null);
+        responseObserver.onCompleted();
+        return;
+      }
+      if (outPoint2.getHash() == null || outPoint2.getIndex() > 1 || outPoint2.getIndex() < 0) {
+        responseObserver.onNext(null);
+        responseObserver.onCompleted();
+        return;
+      }
+
+      try {
+        IncrementalMerkleWitnessInfo witnessInfo = wallet
+            .getMerkleTreeWitnessInfo(request);
+        responseObserver.onNext(witnessInfo);
+      } catch (Exception ex) {
+        //todo,return error message
+        responseObserver.onNext(null);
+        responseObserver.onCompleted();
+        return;
+      }
+
       responseObserver.onCompleted();
     }
 

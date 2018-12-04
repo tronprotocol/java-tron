@@ -28,6 +28,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Range;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -71,11 +72,11 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
+import org.tron.common.zksnark.SHA256CompressCapsule;
 import org.tron.common.zksnark.ShieldAddressGenerator;
-import org.tron.common.zksnark.merkle.IncrementalMerkleTreeCapsule;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.merkle.IncrementalMerkleWitnessCapsule;
-
+import org.tron.common.zksnark.merkle.IncrementalMerkleWitnessContainer;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
@@ -86,6 +87,7 @@ import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
@@ -100,10 +102,12 @@ import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.db.PendingManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
@@ -112,16 +116,20 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
-import org.tron.protos.Contract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.AuthenticationPath;
 import org.tron.protos.Contract.CreateSmartContract;
-import org.tron.protos.Contract.IncrementalMerkleWitness;
 import org.tron.protos.Contract.IncrementalMerkleTree;
+import org.tron.protos.Contract.IncrementalMerkleWitness;
+import org.tron.protos.Contract.IncrementalMerkleWitnessInfo;
 import org.tron.protos.Contract.MerklePath;
+import org.tron.protos.Contract.OutputPoint;
+import org.tron.protos.Contract.OutputPointInfo;
+import org.tron.protos.Contract.SHA256Compress;
 import org.tron.protos.Contract.ShieldAddress;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.TriggerSmartContract;
+import org.tron.protos.Contract.ZksnarkV0TransferContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -131,6 +139,7 @@ import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.SmartContract.ABI.Entry.StateMutabilityType;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.Protocol.TransactionSign;
@@ -882,6 +891,190 @@ public class Wallet {
       logger.info("getMerkleTreeWitness");
       merkleWitnessCapsule.resetRt();
       return merkleWitnessCapsule.getInstance();
+    }
+
+    return null;
+  }
+
+  //in:outPoint,out:blockNumber
+  private IncrementalMerkleWitnessContainer createWitness(OutputPoint outPoint, long blockNumber)
+      throws ItemNotFoundException, BadItemException,
+      InvalidProtocolBufferException{
+
+    ByteString txId = outPoint.getHash();
+
+    //Get blockNum from transactionInfo
+    TransactionInfoCapsule transactionInfoCapsule1 = dbManager.getTransactionHistoryStore()
+        .get(txId.toByteArray());
+    blockNumber = transactionInfoCapsule1.getBlockNumber();
+
+    //Get the tree in blockNum-1 position
+    byte[] treeRoot = dbManager.getMerkleTreeIndexStore().get(blockNumber - 1);
+    IncrementalMerkleTreeContainer tree = dbManager.getMerkleTreeStore()
+        .get(treeRoot).toMerkleTreeContainer();
+
+    //Get the block of blockNum
+    BlockCapsule block = dbManager.getBlockByNum(blockNumber);
+
+    IncrementalMerkleWitnessContainer witness = null;
+
+    //get the witness in three parts
+    boolean found = false;
+    for (Transaction transaction1 : block.getInstance().getTransactionsList()) {
+
+      Contract contract1 = transaction1.getRawData().getContract(0);
+      if (contract1.getType() == ContractType.ZksnarkV0TransferContract) {
+        ZksnarkV0TransferContract zkContract = contract1.getParameter()
+            .unpack(ZksnarkV0TransferContract.class);
+
+        SHA256CompressCapsule cmCapsule1 = new SHA256CompressCapsule();
+        cmCapsule1.setContent(zkContract.getCm1());
+        SHA256Compress cm1 = cmCapsule1.getInstance();
+
+        SHA256CompressCapsule cmCapsule2 = new SHA256CompressCapsule();
+        cmCapsule2.setContent(zkContract.getCm2());
+        SHA256Compress cm2 = cmCapsule2.getInstance();
+
+        System.out.println("Update existing witness");
+
+        if (witness != null) {
+          witness.append(cm1);
+          witness.append(cm2);
+        }
+
+        if (new TransactionCapsule(transaction1).getTransactionId().getByteString().equals(txId)) {
+          System.out.println("foundTx");
+          found = true;
+          if (outPoint.getIndex() == 0) {
+            tree.append(cm1);
+            witness = tree.getTreeCapsule().deepCopy()
+                .toMerkleTreeContainer().toWitness();
+            witness.append(cm2);
+          } else {
+            tree.append(cm1);
+            tree.append(cm2);
+            witness = tree.getTreeCapsule().deepCopy()
+                .toMerkleTreeContainer().toWitness();
+          }
+
+        } else {
+          tree.append(cm1);
+          tree.append(cm2);
+        }
+
+
+      }
+    }
+
+    if (!found) {
+      logger.warn("not found valid cm");
+      return null;
+    }
+
+    return witness;
+
+  }
+
+  private void updateBothWitness(IncrementalMerkleWitnessContainer witness1, long blockNum1,
+      IncrementalMerkleWitnessContainer witness2, long blockNum2, int synBlockNum)
+      throws ItemNotFoundException, BadItemException,
+      InvalidProtocolBufferException {
+
+    long start = Math.max(blockNum1, blockNum2) + 1;
+    long end = blockNum2 + synBlockNum;
+    for (long n = start; n <= end; n++) {
+      BlockCapsule block = dbManager.getBlockByNum(n);
+      for (Transaction transaction1 : block.getInstance().getTransactionsList()) {
+
+        Contract contract1 = transaction1.getRawData().getContract(0);
+        if (contract1.getType() == ContractType.ZksnarkV0TransferContract) {
+
+          ZksnarkV0TransferContract zkContract = contract1.getParameter()
+              .unpack(ZksnarkV0TransferContract.class);
+
+          SHA256CompressCapsule cmCapsule1 = new SHA256CompressCapsule();
+          cmCapsule1.setContent(zkContract.getCm1());
+          SHA256Compress cm1 = cmCapsule1.getInstance();
+
+          SHA256CompressCapsule cmCapsule2 = new SHA256CompressCapsule();
+          cmCapsule2.setContent(zkContract.getCm2());
+          SHA256Compress cm2 = cmCapsule2.getInstance();
+
+          witness1.append(cm1);
+          witness1.append(cm2);
+
+          witness2.append(cm1);
+          witness2.append(cm2);
+        }
+      }
+    }
+  }
+
+
+  private void updateLowWitness(IncrementalMerkleWitnessContainer witness1, long blockNum1,
+      IncrementalMerkleWitnessContainer witness2, long blockNum2)
+      throws ItemNotFoundException, BadItemException,
+      InvalidProtocolBufferException {
+    IncrementalMerkleWitnessContainer witness;
+    long start;
+    long end;
+    if (blockNum1 < blockNum2) {
+      start = blockNum1 + 1;
+      end = blockNum2;
+      witness = witness1;
+    } else {
+      start = blockNum2 + 1;
+      end = blockNum1;
+      witness = witness2;
+    }
+
+    for (long n = start; n <= end; n++) {
+      BlockCapsule block = dbManager.getBlockByNum(n);
+      for (Transaction transaction1 : block.getInstance().getTransactionsList()) {
+
+        Contract contract1 = transaction1.getRawData().getContract(0);
+        if (contract1.getType() == ContractType.ZksnarkV0TransferContract) {
+
+          ZksnarkV0TransferContract zkContract = contract1.getParameter()
+              .unpack(ZksnarkV0TransferContract.class);
+
+          SHA256CompressCapsule cmCapsule1 = new SHA256CompressCapsule();
+          cmCapsule1.setContent(zkContract.getCm1());
+          SHA256Compress cm1 = cmCapsule1.getInstance();
+
+          SHA256CompressCapsule cmCapsule2 = new SHA256CompressCapsule();
+          cmCapsule2.setContent(zkContract.getCm2());
+          SHA256Compress cm2 = cmCapsule2.getInstance();
+
+          witness.append(cm1);
+          witness.append(cm2);
+
+        }
+      }
+    }
+  }
+
+  public IncrementalMerkleWitnessInfo getMerkleTreeWitnessInfo(OutputPointInfo request)
+      throws ItemNotFoundException, BadItemException,
+      InvalidProtocolBufferException {
+    int synBlockNum = request.getBlockNum();
+    OutputPoint outPoint1 = request.getOutPoint1();
+    OutputPoint outPoint2 = request.getOutPoint2();
+
+    long blockNum1 = 0;
+    long blockNum2 = 0;
+    IncrementalMerkleWitnessContainer witness1 = createWitness(outPoint1, blockNum1);
+    IncrementalMerkleWitnessContainer witness2 = createWitness(outPoint2, blockNum2);
+
+    //Skip the next step when the two witness blocks are equal
+    if (blockNum1 != blockNum2) {
+      //Get the block between two witness blockNum, [block1+1, block2], update the low witness, make the root the same
+      updateLowWitness(witness1, blockNum1, witness2, blockNum2);
+    }
+
+    if (synBlockNum != 0) {
+      //According to the blockNum in the request, obtain the block before [block2+1, blockNum], and update the two witnesses.
+      updateBothWitness(witness1, blockNum1, witness2, blockNum2, synBlockNum);
     }
 
     return null;
