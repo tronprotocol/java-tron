@@ -25,6 +25,7 @@ import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.net.message.BlockMessage;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.http.solidity.SolidityNodeHttpApiService;
 import org.tron.protos.Protocol.Block;
@@ -232,7 +233,7 @@ public class SolidityNode {
         dbManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(blockNum);
         return;
       } catch (Exception e) {
-        logger.error("Failed to process block {}, reason: {}", blockNum, e.getMessage());
+        logger.error("Failed to process block {}", new BlockCapsule(block), e);
         try {
           sleep(100);
           block = getBlockByNum(blockNum);
