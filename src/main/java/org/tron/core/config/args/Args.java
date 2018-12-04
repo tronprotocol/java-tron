@@ -117,6 +117,9 @@ public class Args {
   @Parameter(names = {"--storage-index-switch"}, description = "Storage index switch.(on or off)")
   private String storageIndexSwitch = "";
 
+  @Parameter(names = {"--storage-transactionHistory-switch"}, description = "Storage transaction history switch.(on or off)")
+  private String storageTransactionHistoreSwitch = "";
+
   @Getter
   private Storage storage;
 
@@ -200,6 +203,10 @@ public class Args {
 //  @Getter
 //  @Setter
 //  private long syncNodeCount;
+  @Getter
+  @Setter
+  @Parameter(names = {"--save-internaltx"})
+  private boolean saveInternalTx;
 
   @Getter
   @Setter
@@ -545,6 +552,11 @@ public class Args {
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getIndexSwitchFromConfig(config)));
 
+    INSTANCE.storage.setTransactionHistoreSwitch(Optional.ofNullable(INSTANCE.storageTransactionHistoreSwitch)
+      .filter(StringUtils::isNotEmpty)
+      .orElse(Storage.getTransactionHistoreSwitchFromConfig(config)));
+
+
     INSTANCE.storage.setPropertyMapFromConfig(config);
 
     INSTANCE.seedNode = new SeedNode();
@@ -749,6 +761,10 @@ public class Args {
     INSTANCE.vmTrace =
         config.hasPath("vm.vmTrace") ? config
             .getBoolean("vm.vmTrace") : false;
+
+    INSTANCE.saveInternalTx =
+        config.hasPath("vm.saveInternalTx") && config.getBoolean("vm.saveInternalTx");
+
     initBackupProperty(config);
 
 
