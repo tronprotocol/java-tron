@@ -600,10 +600,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     String permissionName = getPermissionName(contract);
     byte[] owner = getOwner(contract);
     AccountCapsule account = accountStore.get(owner);
+    Permission permission;
     if (account == null) {
-      throw new PermissionException("Account is not exist!");
+      permission = getDefaultPermission(ByteString.copyFrom(owner), permissionName);
+    } else {
+      permission = getPermission(account.getInstance(), permissionName);
     }
-    Permission permission = getPermission(account.getInstance(), permissionName);
     long weight = checkWeight(permission, transaction.getSignatureList(), hash, null);
     if (weight >= permission.getThreshold()) {
       return true;
