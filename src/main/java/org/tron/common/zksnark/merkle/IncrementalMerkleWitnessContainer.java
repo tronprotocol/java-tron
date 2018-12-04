@@ -117,4 +117,19 @@ public class IncrementalMerkleWitnessContainer {
       return rs;
     }
   }
+
+  public int size() {
+    return witnessCapsule.getTree().toMerkleTreeContainer().size() + witnessCapsule.getFilled()
+        .size()
+        + witnessCapsule.getCursor().toMerkleTreeContainer().size();
+  }
+
+  public void printSize() {
+    System.out.println(
+        "TreeSize:" + witnessCapsule.getTree().toMerkleTreeContainer().size() + ",FillSize:" +
+            witnessCapsule.getFilled().size() + ",CursorSize:" + witnessCapsule.getCursor()
+            .toMerkleTreeContainer().size());
+  }
+
+
 }

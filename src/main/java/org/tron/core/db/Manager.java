@@ -103,6 +103,7 @@ public class Manager {
   @Autowired
   private DynamicPropertiesStore dynamicPropertiesStore;
   @Autowired
+  @Getter
   private BlockIndexStore blockIndexStore;
   @Autowired
   private AccountIdIndexStore accountIdIndexStore;
@@ -174,6 +175,8 @@ public class Manager {
   private MerkleContainer merkleContainer;
 
   // map<Long, IncrementalMerkleTree>
+
+  @Autowired
   @Getter
   @Setter
   private TreeBlockIndexStore  merkleTreeIndexStore;
