@@ -103,10 +103,14 @@ public class HttpApiOnSolidityService implements Service {
           "/walletsolidity/getassetissuelistbyname");
       context.addServlet(new ServletHolder(getNowBlockOnSolidityServlet), "/walletsolidity/getnowblock");
       context.addServlet(new ServletHolder(getBlockByNumOnSolidityServlet), "/walletsolidity/getblockbynum");
-      context.addServlet(new ServletHolder(getDelegatedResourceOnSolidityServlet), "/walletsolidity/getdelegatedresource");
-      context.addServlet(new ServletHolder(getDelegatedResourceAccountIndexOnSolidityServlet), "/walletsolidity/getdelegatedresourceaccountindex");
-      context.addServlet(new ServletHolder(getExchangeByIdOnSolidityServlet), "/walletsolidity/getexchangebyid");
-      context.addServlet(new ServletHolder(listExchangesOnSolidityServlet), "/walletsolidity/listexchanges");
+      context.addServlet(new ServletHolder(getDelegatedResourceOnSolidityServlet),
+          "/walletsolidity/getdelegatedresource");
+      context.addServlet(new ServletHolder(getDelegatedResourceAccountIndexOnSolidityServlet),
+          "/walletsolidity/getdelegatedresourceaccountindex");
+      context.addServlet(new ServletHolder(getExchangeByIdOnSolidityServlet),
+          "/walletsolidity/getexchangebyid");
+      context.addServlet(new ServletHolder(listExchangesOnSolidityServlet),
+          "/walletsolidity/listexchanges");
 
       // only for SolidityNode
       context.addServlet(new ServletHolder(getTransactionByIdOnSolidityServlet),
@@ -119,7 +123,6 @@ public class HttpApiOnSolidityService implements Service {
               "/walletsolidity/gettransactioncountbyblocknum");
 
       context.addServlet(new ServletHolder(getNodeInfoOnSolidityServlet), "/wallet/getnodeinfo");
-
 
       server.start();
     } catch (Exception e) {
