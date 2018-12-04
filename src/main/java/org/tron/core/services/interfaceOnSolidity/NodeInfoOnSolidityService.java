@@ -10,8 +10,8 @@ public class NodeInfoOnSolidityService extends NodeInfoService {
   @Override
   protected void setBlockInfo(NodeInfo nodeInfo) {
 //    nodeInfo.setBeginSyncNum(dbManager.getSyncBeginNumber());
-    nodeInfo.setBlock(dbManager.getHeadBlockId().getString());
-    nodeInfo.setSolidityBlock(dbManager.getHeadBlockId().getString());
+    nodeInfo.setBlock(dbManager.getSolidBlockId().getString());
+    nodeInfo.setSolidityBlock(dbManager.getSolidBlockId().getString());
   }
 
   @Override
