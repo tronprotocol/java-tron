@@ -50,7 +50,7 @@ public class NodeInfoService {
   protected Manager dbManager;
 
   @Autowired
-  protected WitnessProductBlockService witnessProductBlockService;
+  private WitnessProductBlockService witnessProductBlockService;
 
   public NodeInfo getNodeInfo() {
     NodeInfo nodeInfo = new NodeInfo();
