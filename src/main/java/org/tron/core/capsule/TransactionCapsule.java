@@ -339,7 +339,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
                 .encode58Check(address) + " but it is not contained of permission.");
       }
       if (addMap.containsKey(base64)) {
-        throw new PermissionException(Wallet.encode58Check(address) + " has sign twices!");
+        throw new PermissionException(Wallet.encode58Check(address) + " has sign twice!");
       }
       addMap.put(base64, weight);
       if (approveList != null) {
