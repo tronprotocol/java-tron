@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.utils.FastByteComparisons;
 import org.tron.core.capsule.utils.RLP;
 import org.tron.core.db2.common.ConcurrentHashDB;
@@ -454,7 +455,7 @@ public class TrieImpl implements Trie<byte[]> {
     void doOnValue(byte[] nodeHash, Node node, byte[] key, byte[] value);
   }
 
-  private DB<byte[], byte[]> cache;
+  private DB<byte[], BytesCapsule> cache;
   private Node root;
   private boolean async = true;
 
@@ -466,11 +467,11 @@ public class TrieImpl implements Trie<byte[]> {
     this(new ConcurrentHashDB(), root);
   }
 
-  public TrieImpl(DB<byte[], byte[]> cache) {
+  public TrieImpl(DB<byte[], BytesCapsule> cache) {
     this(cache, null);
   }
 
-  public TrieImpl(DB<byte[], byte[]> cache, byte[] root) {
+  public TrieImpl(DB<byte[], BytesCapsule> cache, byte[] root) {
     this.cache = cache;
     setRoot(root);
   }
@@ -498,16 +499,17 @@ public class TrieImpl implements Trie<byte[]> {
     return root != null && root.resolveCheck();
   }
 
-  public DB<byte[], byte[]> getCache() {
+  public DB<byte[], BytesCapsule> getCache() {
     return cache;
   }
 
   private byte[] getHash(byte[] hash) {
-    return cache.get(hash);
+    BytesCapsule bytesCapsule = cache.get(hash);
+    return bytesCapsule == null ? null : bytesCapsule.getData();
   }
 
   private void addHash(byte[] hash, byte[] ret) {
-    cache.put(hash, ret);
+    cache.put(hash, new BytesCapsule(ret));
   }
 
   private void deleteHash(byte[] hash) {

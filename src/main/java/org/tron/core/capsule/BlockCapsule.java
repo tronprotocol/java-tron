@@ -264,6 +264,15 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     logger.info("calcReceiptRoot : {}", calcReceiptRoot());
   }
 
+  public void setAccountStateRoot(byte[] root) {
+    BlockHeader.raw blockHeaderRaw =
+        this.block.getBlockHeader().getRawData().toBuilder()
+            .setAccountStateRoot(ByteString.copyFrom(root)).build();
+
+    this.block = this.block.toBuilder().setBlockHeader(
+        this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
+  }
+
   public ByteString calcReceiptRoot() {
     Collection<TransactionInfoCapsule> transactionInfoCapsules = this.transactionInfoCapsuleMap
         .values();

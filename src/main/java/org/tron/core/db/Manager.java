@@ -83,6 +83,7 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.services.WitnessService;
+import org.tron.core.trie.AccountCallBack;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
@@ -189,6 +190,9 @@ public class Manager {
 
   @Getter
   private ForkController forkController = ForkController.instance();
+
+  @Autowired
+  private AccountCallBack accountCallBack;
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -365,6 +369,7 @@ public class Manager {
 
   @PostConstruct
   public void init() {
+    accountCallBack.setManager(this);
     revokingStore.disable();
     revokingStore.check();
     this.setWitnessController(WitnessController.createInstance(this));
@@ -675,7 +680,7 @@ public class Manager {
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
-      VMIllegalException, TooBigTransactionResultException {
+      VMIllegalException, TooBigTransactionResultException, BadBlockException {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
@@ -692,7 +697,7 @@ public class Manager {
       ValidateScheduleException, AccountResourceInsufficientException, TaposException,
       TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TransactionExpirationException,
       NonCommonBlockException, ReceiptCheckErrException,
-      VMIllegalException {
+      VMIllegalException, BadBlockException {
     Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
     try {
       binaryTree =
@@ -737,7 +742,8 @@ public class Manager {
             | TooBigTransactionException
             | TooBigTransactionResultException
             | ValidateScheduleException
-            | VMIllegalException e) {
+            | VMIllegalException
+            | BadBlockException e) {
           logger.warn(e.getMessage(), e);
           exception = e;
           throw e;
@@ -770,7 +776,8 @@ public class Manager {
                   | DupTransactionException
                   | TransactionExpirationException
                   | TooBigTransactionException
-                  | ValidateScheduleException e) {
+                  | ValidateScheduleException
+                  | BadBlockException e) {
                 logger.warn(e.getMessage(), e);
               }
             }
@@ -1064,7 +1071,7 @@ public class Manager {
 
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
         .buildInstance(trxCap, blockCap, trace);
-    blockCap.putTransactionInfo(trxCap.getTransactionId(),transactionInfo);
+    blockCap.putTransactionInfo(trxCap.getTransactionId(), transactionInfo);
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
 
     return true;
@@ -1120,6 +1127,8 @@ public class Manager {
     blockCapsule.generatedByMyself = true;
     session.reset();
     session.setValue(revokingStore.buildSession());
+    //
+    accountCallBack.execute(blockCapsule);
 
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext() || repushTransactions.size() > 0) {
@@ -1190,6 +1199,8 @@ public class Manager {
     }
 
     session.reset();
+    //
+    accountCallBack.executeGenerateFinish();
 
     if (postponedTrxCount > 0) {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
@@ -1253,7 +1264,7 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
       DupTransactionException, TransactionExpirationException, ValidateScheduleException,
-      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
+      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, BadBlockException {
     // todo set revoking db max size.
 
     if (witnessService != null) {
@@ -1264,13 +1275,14 @@ public class Manager {
     if (!witnessController.validateWitnessSchedule(block)) {
       throw new ValidateScheduleException("validateWitnessSchedule error");
     }
-
+    accountCallBack.execute(block);
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       if (block.generatedByMyself) {
         transactionCapsule.setVerified(true);
       }
       processTransaction(transactionCapsule, block);
     }
+    accountCallBack.executePushFinish();
 
     boolean needMaint = needMaintenance(block.getTimeStamp());
     if (needMaint) {
@@ -1562,7 +1574,8 @@ public class Manager {
     private CountDownLatch countDownLatch;
     private AccountStore accountStore;
 
-    ValidateSignTask(TransactionCapsule trx, CountDownLatch countDownLatch, AccountStore accountStore) {
+    ValidateSignTask(TransactionCapsule trx, CountDownLatch countDownLatch,
+        AccountStore accountStore) {
       this.trx = trx;
       this.countDownLatch = countDownLatch;
       this.accountStore = accountStore;
