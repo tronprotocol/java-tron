@@ -53,6 +53,7 @@ public class EnergyProcessor extends ResourceProcessor {
     long targetTotalEnergyLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyTargetLimit();
     long totalEnergyCurrentLimit = dbManager.getDynamicPropertiesStore()
         .getTotalEnergyCurrentLimit();
+    long totalEnergyLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyLimit();
 
     long result;
     if (totalEnergyAverageUsage > targetTotalEnergyLimit) {
@@ -66,9 +67,9 @@ public class EnergyProcessor extends ResourceProcessor {
     }
 
     result = Math.min(
-        Math.max(result, dbManager.getDynamicPropertiesStore().getTotalEnergyLimit()),
-        dbManager.getDynamicPropertiesStore().getTotalEnergyLimit()
-            * AdaptiveResourceLimitConstants.LIMIT_MULTIPLIER);
+        Math.max(result, totalEnergyLimit),
+        totalEnergyLimit * AdaptiveResourceLimitConstants.LIMIT_MULTIPLIER
+    );
 
     dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(result);
     logger.debug(
