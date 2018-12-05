@@ -179,7 +179,7 @@ public class Manager {
   @Autowired
   @Getter
   @Setter
-  private TreeBlockIndexStore  merkleTreeIndexStore;
+  private TreeBlockIndexStore merkleTreeIndexStore;
 
   private ExecutorService validateSignService;
 
@@ -1206,7 +1206,7 @@ public class Manager {
       processTransaction(transactionCapsule, block);
     }
 
-    merkleContainer.saveCurrentMerkleTreeAsBestMerkleTree();
+    merkleContainer.saveCurrentMerkleTreeAsBestMerkleTree(block.getNum());
 
     boolean needMaint = needMaintenance(block.getTimeStamp());
     if (needMaint) {

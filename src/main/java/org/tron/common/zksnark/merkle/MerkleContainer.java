@@ -56,14 +56,15 @@ public class MerkleContainer {
     return capsule.toMerkleTreeContainer();
   }
 
-  public void saveCurrentMerkleTreeAsBestMerkleTree() {
+  public void saveCurrentMerkleTreeAsBestMerkleTree(long blockNum) {
     IncrementalMerkleTreeContainer treeContainer = getCurrentMerkle();
-    setBestMerkle(treeContainer);
+    setBestMerkle(blockNum, treeContainer);
     putMerkleTreeIntoStore(treeContainer.getMerkleTreeKey(), treeContainer.getTreeCapsule());
   }
 
-  public void setBestMerkle(IncrementalMerkleTreeContainer treeContainer) {
+  public void setBestMerkle(long blockNum, IncrementalMerkleTreeContainer treeContainer) {
     manager.getMerkleTreeStore().put(lastTreeKey, treeContainer.getTreeCapsule());
+    manager.getMerkleTreeIndexStore().put(blockNum, treeContainer.getMerkleTreeKey());
   }
 
   public void setCurrentMerkle(IncrementalMerkleTreeContainer treeContainer) {
