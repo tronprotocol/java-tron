@@ -374,6 +374,11 @@ public class Args {
   @Setter
   private String trxReferenceBlock;
 
+  @Getter
+  @Setter
+  @Parameter(names = {"-f", "--fast"})
+  private boolean isFastSync;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -383,6 +388,7 @@ public class Args {
     INSTANCE.storageDbDirectory = "";
     INSTANCE.storageIndexDirectory = "";
     INSTANCE.storageIndexSwitch = "";
+    INSTANCE.isFastSync = false;
 
     // FIXME: INSTANCE.storage maybe null ?
     if (INSTANCE.storage != null) {
