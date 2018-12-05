@@ -50,6 +50,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.db.AccountStore;
+import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.PermissionException;
@@ -606,7 +607,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   /**
    * validate signature
    */
-  public boolean validateSignature(AccountStore accountStore) throws ValidateSignatureException {
+  public boolean validateSignature(Manager manager)
+      throws ValidateSignatureException {
     if (isVerified == true) {
       return true;
     }
@@ -614,9 +616,13 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         || this.transaction.getRawData().getContractCount() <= 0) {
       throw new ValidateSignatureException("miss sig or contract");
     }
+    if (this.transaction.getSignatureCount() >
+        manager.getDynamicPropertiesStore().getTotalSignNum()) {
+      throw new ValidateSignatureException("too many signatures");
+    }
     byte[] hash = this.getRawHash().getBytes();
     try {
-      if (!validateSignature(this.transaction, hash, accountStore)) {
+      if (!validateSignature(this.transaction, hash, manager.getAccountStore())) {
         isVerified = false;
         throw new ValidateSignatureException("sig error");
       }

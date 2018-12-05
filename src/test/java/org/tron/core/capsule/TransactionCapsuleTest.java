@@ -945,15 +945,16 @@ public class TransactionCapsuleTest {
   // test   public boolean validateSignature(AccountStore accountStore)
   public void validateSignature1() {
     //Update permission, can signed by key21 key22 key23
-    AccountStore accountStore = dbManager.getAccountStore();
     List<Permission> permissions = buildPermissions();
-    Account account = accountStore.get(ByteArray.fromHexString(OWNER_ADDRESS)).getInstance();
+    Account account = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS))
+        .getInstance();
     Account.Builder builder = account.toBuilder();
     builder.clearPermissions();
     builder.addPermissions(permissions.get(0));
     builder.addPermissions(permissions.get(1));
     builder.addPermissions(permissions.get(2));
-    accountStore.put(ByteArray.fromHexString(OWNER_ADDRESS), new AccountCapsule(builder.build()));
+    dbManager.getAccountStore()
+        .put(ByteArray.fromHexString(OWNER_ADDRESS), new AccountCapsule(builder.build()));
 
     byte[] to = ByteArray.fromHexString(TO_ADDRESS);
     byte[] owner_not_exist = ByteArray.fromHexString(OWNER_ACCOUNT_NOT_Exist);
@@ -983,7 +984,7 @@ public class TransactionCapsuleTest {
     trxBuilder.addAllSignature(sign);
     transactionCapsule = new TransactionCapsule(trxBuilder.build());
     try {
-      transactionCapsule.validateSignature(accountStore);
+      transactionCapsule.validateSignature(dbManager);
       Assert.assertFalse(true);
     } catch (ValidateSignatureException e) {
       Assert.assertEquals(e.getMessage(), "miss sig or contract");
@@ -991,15 +992,15 @@ public class TransactionCapsuleTest {
     // no sign
     byte[] owner = ByteArray.fromHexString(OWNER_ADDRESS);
     transferContract = createTransferContract(to, owner, 1);
-    transactionCapsule = new TransactionCapsule(transferContract, accountStore);
+    transactionCapsule = new TransactionCapsule(transferContract, dbManager.getAccountStore());
     try {
-      transactionCapsule.validateSignature(accountStore);
+      transactionCapsule.validateSignature(dbManager);
       Assert.assertFalse(true);
     } catch (ValidateSignatureException e) {
       Assert.assertEquals(e.getMessage(), "miss sig or contract");
     }
 
-    transactionCapsule = new TransactionCapsule(transferContract, accountStore);
+    transactionCapsule = new TransactionCapsule(transferContract, dbManager.getAccountStore());
     byte[] hash = transactionCapsule.getTransactionId().getBytes();
     trxBuilder = transactionCapsule.getInstance().toBuilder();
     //SignatureFormatException
@@ -1008,7 +1009,7 @@ public class TransactionCapsuleTest {
     trxBuilder.addSignature(test);
     transactionCapsule = new TransactionCapsule(trxBuilder.build());
     try {
-      transactionCapsule.validateSignature(accountStore);
+      transactionCapsule.validateSignature(dbManager);
       Assert.assertFalse(true);
     } catch (ValidateSignatureException e) {
       Assert.assertEquals(e.getMessage(), "Signature size is " + test.size());
@@ -1022,7 +1023,7 @@ public class TransactionCapsuleTest {
     trxBuilder.addSignature(ByteString.copyFrom(rand));
     transactionCapsule = new TransactionCapsule(trxBuilder.build());
     try {
-      transactionCapsule.validateSignature(accountStore);
+      transactionCapsule.validateSignature(dbManager);
       Assert.assertFalse(true);
     } catch (ValidateSignatureException e) {
       Assert.assertEquals(e.getMessage(), "Header byte out of range: 35");
@@ -1036,7 +1037,7 @@ public class TransactionCapsuleTest {
     trxBuilder.addAllSignature(sign21_11);
     transactionCapsule = new TransactionCapsule(trxBuilder.build());
     try {
-      transactionCapsule.validateSignature(accountStore);
+      transactionCapsule.validateSignature(dbManager);
       Assert.assertFalse(true);
     } catch (ValidateSignatureException e) {
       ByteString sign21 = sign21_11.get(1);
@@ -1053,7 +1054,7 @@ public class TransactionCapsuleTest {
     trxBuilder.addAllSignature(sign21_11_22_23);
     transactionCapsule = new TransactionCapsule(trxBuilder.build());
     try {
-      transactionCapsule.validateSignature(accountStore);
+      transactionCapsule.validateSignature(dbManager);
       Assert.assertFalse(true);
     } catch (ValidateSignatureException e) {
       Assert.assertEquals(e.getMessage(),
@@ -1071,7 +1072,7 @@ public class TransactionCapsuleTest {
     trxBuilder.addAllSignature(sign21_22_21);
     transactionCapsule = new TransactionCapsule(trxBuilder.build());
     try {
-      transactionCapsule.validateSignature(accountStore);
+      transactionCapsule.validateSignature(dbManager);
       Assert.assertFalse(true);
     } catch (ValidateSignatureException e) {
       Assert.assertEquals(e.getMessage(),
@@ -1086,7 +1087,7 @@ public class TransactionCapsuleTest {
     trxBuilder.addAllSignature(sign21);
     transactionCapsule = new TransactionCapsule(trxBuilder.build());
     try {
-      transactionCapsule.validateSignature(accountStore);
+      transactionCapsule.validateSignature(dbManager);
       Assert.assertFalse(true);
     } catch (ValidateSignatureException e) {
       Assert.assertEquals(e.getMessage(), "sig error");
@@ -1098,7 +1099,7 @@ public class TransactionCapsuleTest {
     trxBuilder.addAllSignature(sign21_22);
     transactionCapsule = new TransactionCapsule(trxBuilder.build());
     try {
-      boolean result = transactionCapsule.validateSignature(accountStore);
+      boolean result = transactionCapsule.validateSignature(dbManager);
       Assert.assertTrue(result);
     } catch (ValidateSignatureException e) {
       Assert.assertFalse(true);
@@ -1110,7 +1111,7 @@ public class TransactionCapsuleTest {
     trxBuilder.addAllSignature(sign21_22_23);
     transactionCapsule = new TransactionCapsule(trxBuilder.build());
     try {
-      boolean result = transactionCapsule.validateSignature(accountStore);
+      boolean result = transactionCapsule.validateSignature(dbManager);
       Assert.assertTrue(result);
     } catch (ValidateSignatureException e) {
       Assert.assertFalse(true);
