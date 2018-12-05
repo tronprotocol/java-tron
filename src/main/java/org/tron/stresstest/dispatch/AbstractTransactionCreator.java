@@ -23,11 +23,11 @@ import org.tron.stresstest.dispatch.strategy.Level2Strategy;
 @Getter
 public abstract class AbstractTransactionCreator extends Level2Strategy {
   protected String privateKey = "b6d8d3382c32d4d066c4f830a7e53c3da9ad8b9665dda4ca081b6cd4e807d09c";
-  protected ByteString ownerAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("TRxETQim3Jn5TYqLeAnpyF5XdQeg7NUcSJ"));
-  protected byte[] ownerAddressBytes = Wallet.decodeFromBase58Check("TRxETQim3Jn5TYqLeAnpyF5XdQeg7NUcSJ");
-  protected String toAddressStr = "TRxgBU7HFTQvU6zPheLHphqpwhDKNxB6Rk";
-  protected ByteString toAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("TRxgBU7HFTQvU6zPheLHphqpwhDKNxB6Rk"));
-  protected byte[] toAddressBytes = Wallet.decodeFromBase58Check("TRxgBU7HFTQvU6zPheLHphqpwhDKNxB6Rk");
+  protected ByteString ownerAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("27meR2d4HodFPYX2V8YRDrLuFpYdbLvBEWi"));
+  protected byte[] ownerAddressBytes = Wallet.decodeFromBase58Check("27meR2d4HodFPYX2V8YRDrLuFpYdbLvBEWi");
+  protected String toAddressStr = "27ZESitosJfKouTBrGg6Nk5yEjnJHXMbkZp";
+  protected ByteString toAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("27ZESitosJfKouTBrGg6Nk5yEjnJHXMbkZp"));
+  protected byte[] toAddressBytes = Wallet.decodeFromBase58Check("27ZESitosJfKouTBrGg6Nk5yEjnJHXMbkZp");
   protected Long amount = 1L;
   protected Long amountOneTrx = 1000_000L;
   protected ByteString assetName = ByteString.copyFrom("1003425".getBytes());
@@ -46,7 +46,7 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
 
   // participate
   protected String ownerPrivateKey = "763009595dd132aaf2d248999f2c6e7ba0acbbd9a9dfd88f7c2c158d97327645";
-  protected byte[] participateOwnerAddressBytes = Wallet.decodeFromBase58Check("TRxgBU7HFTQvU6zPheLHphqpwhDKNxB6Rk");
+  protected byte[] participateOwnerAddressBytes = Wallet.decodeFromBase58Check("27ZESitosJfKouTBrGg6Nk5yEjnJHXMbkZp");
   protected long participateAmount = 1;
   protected byte[] participateAssetName = "1003425".getBytes();
 
