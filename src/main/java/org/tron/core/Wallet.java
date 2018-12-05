@@ -310,7 +310,7 @@ public class Wallet {
     return address;
   }
 
-  public ShieldAddress generateShieldAddress(){
+  public ShieldAddress generateShieldAddress() {
     ShieldAddress.Builder builder = ShieldAddress.newBuilder();
     ShieldAddressGenerator shieldAddressGenerator = new ShieldAddressGenerator();
 
@@ -773,10 +773,10 @@ public class Wallet {
     if (limit <= 0) {
       return null;
     }
-      BlockList.Builder blockListBuilder = BlockList.newBuilder();
-      dbManager.getBlockStore().getLimitNumber(number, limit).forEach(
-              blockCapsule -> blockListBuilder.addBlock(blockCapsule.getZKInstance()));
-      return blockListBuilder.build();
+    BlockList.Builder blockListBuilder = BlockList.newBuilder();
+    dbManager.getBlockStore().getLimitNumber(number, limit).forEach(
+        blockCapsule -> blockListBuilder.addBlock(blockCapsule.getZKInstance()));
+    return blockListBuilder.build();
   }
 
   public Transaction getTransactionById(ByteString transactionId) {
@@ -1108,9 +1108,11 @@ public class Wallet {
         List<IncrementalMerkleWitnessContainer> list = new ArrayList<>();
         list.add(witness1);
         updateBothWitness(list, blockNum1, synBlockNum);
-        return result.setBlockNum(synBlockNum).
-            setWitness1(witness1.getWitnessCapsule().getInstance()).build();
       }
+      IncrementalMerkleWitnessCapsule witnessCapsule = witness1.getWitnessCapsule();
+      witnessCapsule.resetRt();
+      return result.setBlockNum(synBlockNum).
+          setWitness1(witnessCapsule.getInstance()).build();
     }
 
     if (!request.hasOutPoint1() && request.hasOutPoint2()) {
@@ -1125,16 +1127,18 @@ public class Wallet {
         List<IncrementalMerkleWitnessContainer> list = new ArrayList<>();
         list.add(witness2);
         updateBothWitness(list, blockNum2, synBlockNum);
-        return result.setBlockNum(synBlockNum).
-            setWitness1(witness2.getWitnessCapsule().getInstance()).build();
       }
+      IncrementalMerkleWitnessCapsule witnessCapsule = witness2.getWitnessCapsule();
+      witnessCapsule.resetRt();
+      return result.setBlockNum(synBlockNum).
+          setWitness2(witnessCapsule.getInstance()).build();
     }
 
     return result.build();
   }
 
-  public IncrementalMerkleTree getMerkleTreeOfBlock(long blockNum ) {
-    if (blockNum < 0 ) {
+  public IncrementalMerkleTree getMerkleTreeOfBlock(long blockNum) {
+    if (blockNum < 0) {
       return null;
     }
 
