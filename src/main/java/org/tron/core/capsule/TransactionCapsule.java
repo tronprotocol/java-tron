@@ -378,17 +378,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
               .encode58Check(address) + " but it is not contained of permission.");
     }
     ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
-    int signCount = this.transaction.getSignatureCount();
-    if (signCount > 0) {
-      ByteString sign = this.transaction.getSignature(signCount - 1);
-      byte[] signa = ByteUtil.merge(sign.toByteArray(), signature.toByteArray());
-      this.transaction = this.transaction.toBuilder()
-          .setSignature(signCount - 1, ByteString.copyFrom(signa))
-          .build();//add sign at last default.
-    } else {
-      ByteString sig = ByteString.copyFrom(signature.toByteArray());
-      this.transaction = this.transaction.toBuilder().addSignature(sig).build();
-    }
+    ByteString sig = ByteString.copyFrom(signature.toByteArray());
+    this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
 
   // todo mv this static function to capsule util
