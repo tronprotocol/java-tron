@@ -29,8 +29,8 @@ public class AccountCallBack {
       .initialCapacity(100).maximumSize(100).build();
 
   private BlockCapsule blockCapsule;
-  private long count = 0;
   private boolean execute = false;
+  private TrieImpl trie;
 
   @Setter
   private Manager manager;
@@ -39,47 +39,42 @@ public class AccountCallBack {
   private AccountStateStore db;
 
   public void callBack(byte[] key, AccountCapsule item) {
-    if (!execute) {
+    if (!exe()) {
       return;
     }
-    if (blockCapsule.getNum() < 0) {//Agreement same block high to generate account state root
+    trie.put(RLP.encodeString(Wallet.encode58Check(key)), item.getData());
+  }
+
+  public void preExecute(BlockCapsule blockCapsule) {
+    this.blockCapsule = blockCapsule;
+    this.execute = true;
+    if (!exe()) {
       return;
     }
     byte[] rootHash = null;
-    if (count == 0) {
-      try {
-        BlockCapsule parentBlockCapsule = manager.getBlockById(blockCapsule.getParentBlockId());
-        rootHash = parentBlockCapsule.getInstance().getBlockHeader().getRawData()
-            .getAccountStateRoot().toByteArray();
-      } catch (BadItemException e) {
-        e.printStackTrace();
-      } catch (ItemNotFoundException e) {
-        e.printStackTrace();
-      }
-    } else {
-      rootHash = rootHashCache.getIfPresent(blockCapsule.getBlockId().toString());
+    try {
+      BlockCapsule parentBlockCapsule = manager.getBlockById(blockCapsule.getParentBlockId());
+      rootHash = parentBlockCapsule.getInstance().getBlockHeader().getRawData()
+          .getAccountStateRoot().toByteArray();
+    } catch (BadItemException e) {
+      e.printStackTrace();
+    } catch (ItemNotFoundException e) {
+      e.printStackTrace();
     }
-    TrieImpl trie = new TrieImpl(db, rootHash);
-    trie.put(RLP.encodeString(Wallet.encode58Check(key)), item.getData());
-    rootHash = trie.getRootHash();
-    rootHashCache.put(blockCapsule.getBlockId().toString(), rootHash);
-    ++count;
-  }
-
-  public void execute(BlockCapsule blockCapsule) {
-    this.blockCapsule = blockCapsule;
-    count = 0;
-    execute = true;
+    trie = new TrieImpl(db, rootHash);
   }
 
   public void executePushFinish() throws BadBlockException {
+    if (!exe()) {
+      return;
+    }
     ByteString oldRoot = blockCapsule.getInstance().getBlockHeader().getRawData()
         .getAccountStateRoot();
-    byte[] newRoot = rootHashCache.getIfPresent(blockCapsule.getBlockId().toString());
+    execute = false;
+    byte[] newRoot = trie.getRootHash();
     if (ArrayUtils.isEmpty(newRoot)) {
       newRoot = Hash.EMPTY_TRIE_HASH;
     }
-    execute = false;
     if (oldRoot.isEmpty()) {
 //      blockCapsule.setAccountStateRoot(newRoot);
     } else if (!Arrays.equals(oldRoot.toByteArray(), newRoot)) {
@@ -91,11 +86,26 @@ public class AccountCallBack {
   }
 
   public void executeGenerateFinish() {
-    byte[] newRoot = rootHashCache.getIfPresent(blockCapsule.getBlockId().toString());
+    if (!exe()) {
+      return;
+    }
+    byte[] newRoot = trie.getRootHash();
     if (ArrayUtils.isEmpty(newRoot)) {
       newRoot = Hash.EMPTY_TRIE_HASH;
     }
     blockCapsule.setAccountStateRoot(newRoot);
     execute = false;
+  }
+
+  public void exceptionFinish() {
+    execute = false;
+  }
+
+  private boolean exe() {
+    if (!execute || blockCapsule.getNum() < 0) {
+      //Agreement same block high to generate account state root
+      return false;
+    }
+    return true;
   }
 }

@@ -23,6 +23,9 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   private AccountCallBack accountCallBack;
 
   @Autowired
+  private AccountStateStore accountStateStore;
+
+  @Autowired
   private AccountStore(@Value("account") String dbName) {
     super(dbName);
   }
@@ -30,7 +33,10 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   @Override
   public AccountCapsule get(byte[] key) {
     byte[] value = revokingDB.getUnchecked(key);
-    return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
+    if (ArrayUtils.isEmpty(value)) {
+      return accountStateStore.getAccount(key);
+    }
+    return new AccountCapsule(value);
   }
 
   @Override

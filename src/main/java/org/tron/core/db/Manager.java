@@ -1128,7 +1128,7 @@ public class Manager {
     session.reset();
     session.setValue(revokingStore.buildSession());
     //
-    accountCallBack.execute(blockCapsule);
+    accountCallBack.preExecute(blockCapsule);
 
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext() || repushTransactions.size() > 0) {
@@ -1275,14 +1275,18 @@ public class Manager {
     if (!witnessController.validateWitnessSchedule(block)) {
       throw new ValidateScheduleException("validateWitnessSchedule error");
     }
-    accountCallBack.execute(block);
-    for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-      if (block.generatedByMyself) {
-        transactionCapsule.setVerified(true);
+    try {
+      accountCallBack.preExecute(block);
+      for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+        if (block.generatedByMyself) {
+          transactionCapsule.setVerified(true);
+        }
+        processTransaction(transactionCapsule, block);
       }
-      processTransaction(transactionCapsule, block);
+      accountCallBack.executePushFinish();
+    } finally {
+      accountCallBack.exceptionFinish();
     }
-    accountCallBack.executePushFinish();
 
     boolean needMaint = needMaintenance(block.getTimeStamp());
     if (needMaint) {
