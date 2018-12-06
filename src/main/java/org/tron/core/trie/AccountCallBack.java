@@ -3,6 +3,7 @@ package org.tron.core.trie;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Internal;
 import java.util.Arrays;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -60,6 +61,9 @@ public class AccountCallBack {
       e.printStackTrace();
     } catch (ItemNotFoundException e) {
       e.printStackTrace();
+    }
+    if (Arrays.equals(Internal.EMPTY_BYTE_ARRAY, rootHash)) {
+      rootHash = Hash.EMPTY_TRIE_HASH;
     }
     trie = new TrieImpl(db, rootHash);
   }

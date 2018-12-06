@@ -377,7 +377,7 @@ public class Args {
   @Getter
   @Setter
   @Parameter(names = {"-f", "--fast"})
-  private boolean isFastSync;
+  private volatile boolean isFastSync;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";

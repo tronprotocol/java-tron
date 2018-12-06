@@ -1275,17 +1275,19 @@ public class Manager {
     if (!witnessController.validateWitnessSchedule(block)) {
       throw new ValidateScheduleException("validateWitnessSchedule error");
     }
-    try {
-      accountCallBack.preExecute(block);
-      for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-        if (block.generatedByMyself) {
-          transactionCapsule.setVerified(true);
+    if (!Args.getInstance().isFastSync()) {
+      try {
+        accountCallBack.preExecute(block);
+        for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+          if (block.generatedByMyself) {
+            transactionCapsule.setVerified(true);
+          }
+          processTransaction(transactionCapsule, block);
         }
-        processTransaction(transactionCapsule, block);
+        accountCallBack.executePushFinish();
+      } finally {
+        accountCallBack.exceptionFinish();
       }
-      accountCallBack.executePushFinish();
-    } finally {
-      accountCallBack.exceptionFinish();
     }
 
     boolean needMaint = needMaintenance(block.getTimeStamp());
