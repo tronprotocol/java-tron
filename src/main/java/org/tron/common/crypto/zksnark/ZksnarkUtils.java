@@ -35,9 +35,8 @@ public class ZksnarkUtils {
     byte[] message = ByteUtil
         .merge(zkContract.getRandomSeed().toByteArray(), zkContract.getNf1().toByteArray(),
             zkContract.getNf2().toByteArray(), zkContract.getPksig().toByteArray());
-    byte[] personal = {'Z', 'c', 'a', 's', 'h', 'C', 'o', 'm', 'p', 'u', 't', 'e', 'h', 'S', 'i',
-        'g'};
-    System.out.println(ByteArray.toHexString(message));
+    byte[] personal = {'T', 'r', 'o', 'n', 'C', 'o', 'm', 'p', 'u', 't', 'e', 'h', 'S', 'i', 'g',
+        '0'};
     return Blake2b.blake2b_personal(message, personal);
   }
 
