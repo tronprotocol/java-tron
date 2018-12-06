@@ -47,10 +47,10 @@ import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
 import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
 import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.db.AccountStore;
+import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.PermissionException;
@@ -339,7 +339,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
                 .encode58Check(address) + " but it is not contained of permission.");
       }
       if (addMap.containsKey(base64)) {
-        throw new PermissionException(Wallet.encode58Check(address) + " has sign twices!");
+        throw new PermissionException(Wallet.encode58Check(address) + " has signed twice!");
       }
       addMap.put(base64, weight);
       if (approveList != null) {
@@ -378,17 +378,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
               .encode58Check(address) + " but it is not contained of permission.");
     }
     ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
-    int signCount = this.transaction.getSignatureCount();
-    if (signCount > 0) {
-      ByteString sign = this.transaction.getSignature(signCount - 1);
-      byte[] signa = ByteUtil.merge(sign.toByteArray(), signature.toByteArray());
-      this.transaction = this.transaction.toBuilder()
-          .setSignature(signCount - 1, ByteString.copyFrom(signa))
-          .build();//add sign at last default.
-    } else {
-      ByteString sig = ByteString.copyFrom(signature.toByteArray());
-      this.transaction = this.transaction.toBuilder().addSignature(sig).build();
-    }
+    ByteString sig = ByteString.copyFrom(signature.toByteArray());
+    this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
 
   // todo mv this static function to capsule util
@@ -600,10 +591,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     String permissionName = getPermissionName(contract);
     byte[] owner = getOwner(contract);
     AccountCapsule account = accountStore.get(owner);
+    Permission permission;
     if (account == null) {
-      throw new PermissionException("Account is not exist!");
+      permission = getDefaultPermission(ByteString.copyFrom(owner), permissionName);
+    } else {
+      permission = getPermission(account.getInstance(), permissionName);
     }
-    Permission permission = getPermission(account.getInstance(), permissionName);
     long weight = checkWeight(permission, transaction.getSignatureList(), hash, null);
     if (weight >= permission.getThreshold()) {
       return true;
@@ -614,7 +607,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   /**
    * validate signature
    */
-  public boolean validateSignature(AccountStore accountStore) throws ValidateSignatureException {
+  public boolean validateSignature(Manager manager)
+      throws ValidateSignatureException {
     if (isVerified == true) {
       return true;
     }
@@ -622,9 +616,13 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         || this.transaction.getRawData().getContractCount() <= 0) {
       throw new ValidateSignatureException("miss sig or contract");
     }
+    if (this.transaction.getSignatureCount() >
+        manager.getDynamicPropertiesStore().getTotalSignNum()) {
+      throw new ValidateSignatureException("too many signatures");
+    }
     byte[] hash = this.getRawHash().getBytes();
     try {
-      if (!validateSignature(this.transaction, hash, accountStore)) {
+      if (!validateSignature(this.transaction, hash, manager.getAccountStore())) {
         isVerified = false;
         throw new ValidateSignatureException("sig error");
       }
