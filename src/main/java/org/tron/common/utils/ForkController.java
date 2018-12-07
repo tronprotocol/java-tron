@@ -17,6 +17,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.Manager;
 
@@ -41,6 +42,10 @@ public class ForkController {
   }
 
   public synchronized boolean pass(int version) {
+    if (!check(version)) {
+      return false;
+    }
+
     if (passSet.contains(version)) {
       return true;
     }
@@ -51,6 +56,15 @@ public class ForkController {
       passSet.add(version);
     }
     return pass;
+  }
+
+  private boolean check(int version) {
+    if (version != ForkBlockVersionConsts.ENERGY_LIMIT) {
+      return true;
+    }
+
+    long blockNum = manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    return blockNum >= 4727890L;
   }
 
   private boolean check(byte[] stats) {
