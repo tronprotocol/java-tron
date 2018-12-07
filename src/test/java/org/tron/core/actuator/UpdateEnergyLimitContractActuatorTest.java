@@ -12,6 +12,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.config.VMConfig;
@@ -35,6 +36,7 @@ import org.tron.protos.Protocol;
 
 
 @Slf4j
+@Ignore
 public class UpdateEnergyLimitContractActuatorTest {
 
   private static TronApplicationContext context;
