@@ -41,6 +41,11 @@ public class ForkController {
   }
 
   public synchronized boolean pass(int version) {
+    long blockNum = manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    if (blockNum <= 4727890) {
+      return false;
+    }
+
     if (passSet.contains(version)) {
       return true;
     }
