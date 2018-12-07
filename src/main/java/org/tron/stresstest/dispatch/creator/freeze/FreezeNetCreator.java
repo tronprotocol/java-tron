@@ -16,7 +16,7 @@ public class FreezeNetCreator extends AbstractTransactionCreator implements Good
     TransactionFactory.context.getBean(CreatorCounter.class).put(this.getClass().getName());
     Contract.FreezeBalanceContract contract = createFreezeBalanceContract(ownerAddressBytes, 1_000_000L, 0, 0, toAddressStr);
     Protocol.Transaction transaction = createTransaction(contract, ContractType.FreezeBalanceContract);
-    transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(ownerPrivateKey)));
+    transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(privateKey)));
     return transaction;
   }
 }

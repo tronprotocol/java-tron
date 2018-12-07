@@ -19,12 +19,12 @@ public class TransferTokenCreator extends AbstractTransferTransactionCreator imp
   protected Protocol.Transaction create() {
     TransactionFactory.context.getBean(CreatorCounter.class).put(this.getClass().getName());
 
-    String param = "\"TGLkYabZg4ufbZPCCJ1aE1dirEbfeXmVVS\",1003425,1";
+    String param = "\"27aZKAxDmy3fEHUfdy6h37expQAqvyqpiBk\",1000001,1";
 
     TriggerSmartContract contract = null;
     try {
       contract = triggerCallContract(ownerAddress.toByteArray(), Wallet
-          .decodeFromBase58Check("TAxfv46LVQzNk9zr1wfFZsFg6xmRJ3rMYr"), 0L, Hex
+          .decodeFromBase58Check("27RoeXwrdWJcABXijXmb9iVTRGfd4FgniHU"), 0L, Hex
           .decode(AbiUtil.parseMethod("TransferTokenTo(address,trcToken,uint256)", param, false)));
     } catch (EncodingException e) {
       e.printStackTrace();

@@ -16,7 +16,7 @@ public class UnFreezeEnergyCreator extends AbstractTransactionCreator implements
     TransactionFactory.context.getBean(CreatorCounter.class).put(this.getClass().getName());
     Contract.UnfreezeBalanceContract contract = createUnfreezeBalanceContract(ownerAddressBytes, 1, toAddressStr);
     Protocol.Transaction transaction = createTransaction(contract, ContractType.UnfreezeBalanceContract);
-    transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(ownerPrivateKey)));
+    transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(privateKey)));
     return transaction;
   }
 }
