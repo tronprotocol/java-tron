@@ -113,11 +113,17 @@ public class Args {
   @Parameter(names = {"--storage-db-version"}, description = "Storage db version.(1 or 2)")
   private String storageDbVersion = "";
 
+  @Parameter(names = {"--storage-db-synchronous"}, description = "Storage db is synchronous or not.(true or flase)")
+  private String storageDbSynchronous = "";
+
   @Parameter(names = {"--storage-index-directory"}, description = "Storage index directory")
   private String storageIndexDirectory = "";
 
   @Parameter(names = {"--storage-index-switch"}, description = "Storage index switch.(on or off)")
   private String storageIndexSwitch = "";
+
+  @Parameter(names = {"--storage-transactionHistory-switch"}, description = "Storage transaction history switch.(on or off)")
+  private String storageTransactionHistoreSwitch = "";
 
   @Getter
   private Storage storage;
@@ -202,6 +208,10 @@ public class Args {
 //  @Getter
 //  @Setter
 //  private long syncNodeCount;
+  @Getter
+  @Setter
+  @Parameter(names = {"--save-internaltx"})
+  private boolean saveInternalTx;
 
   @Getter
   @Setter
@@ -375,6 +385,10 @@ public class Args {
   @Setter
   private String trxReferenceBlock;
 
+  @Getter
+  @Setter
+  private int minEffectiveConnection;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -526,6 +540,11 @@ public class Args {
         .map(Integer::valueOf)
         .orElse(Storage.getDbVersionFromConfig(config)));
 
+    INSTANCE.storage.setDbSync(Optional.ofNullable(INSTANCE.storageDbSynchronous)
+      .filter(StringUtils::isNotEmpty)
+      .map(Boolean::valueOf)
+      .orElse(Storage.getDbVersionSyncFromConfig(config)));
+
     INSTANCE.storage.setDbDirectory(Optional.ofNullable(INSTANCE.storageDbDirectory)
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getDbDirectoryFromConfig(config)));
@@ -537,6 +556,11 @@ public class Args {
     INSTANCE.storage.setIndexSwitch(Optional.ofNullable(INSTANCE.storageIndexSwitch)
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getIndexSwitchFromConfig(config)));
+
+    INSTANCE.storage.setTransactionHistoreSwitch(Optional.ofNullable(INSTANCE.storageTransactionHistoreSwitch)
+      .filter(StringUtils::isNotEmpty)
+      .orElse(Storage.getTransactionHistoreSwitchFromConfig(config)));
+
 
     INSTANCE.storage.setPropertyMapFromConfig(config);
 
@@ -736,10 +760,19 @@ public class Args {
     INSTANCE.trxReferenceBlock = config.hasPath("trx.reference.block") ?
         config.getString("trx.reference.block") : "head";
 
+    INSTANCE.minEffectiveConnection = config.hasPath("node.rpc.minEffectiveConnection") ?
+        config.getInt("node.rpc.minEffectiveConnection") : 1;
+
     INSTANCE.vmTrace =
         config.hasPath("vm.vmTrace") ? config
             .getBoolean("vm.vmTrace") : false;
+
+    INSTANCE.saveInternalTx =
+        config.hasPath("vm.saveInternalTx") && config.getBoolean("vm.saveInternalTx");
+
     initBackupProperty(config);
+
+
 
     logConfig();
   }
@@ -958,6 +991,8 @@ public class Args {
     logger.info("Backup priority: {}", args.getBackupPriority());
     logger.info("************************ Code version *************************");
     logger.info("Code version : {}", Version.getVersion());
+    logger.info("************************ DB config *************************");
+    logger.info("DB version : {}", args.getStorage().getDbVersion());
     logger.info("***************************************************************");
     logger.info("\n");
   }

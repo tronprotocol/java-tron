@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.core.Wallet;
 import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.Util;
 import org.tron.core.services.interfaceOnSolidity.WalletOnSolidity;
@@ -20,11 +21,14 @@ public class GetBlockByNumOnSolidityServlet extends HttpServlet {
 
   @Autowired
   private WalletOnSolidity walletOnSolidity;
-
+  @Autowired
+  private Wallet wallet;
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       long num = Long.parseLong(request.getParameter("num"));
-      Block reply = walletOnSolidity.getBlockByNum(num);
+      Block reply = walletOnSolidity.futureGet(
+          () -> wallet.getBlockByNum(num)
+      );
       if (reply != null) {
         response.getWriter().println(Util.printBlock(reply));
       } else {
@@ -46,7 +50,9 @@ public class GetBlockByNumOnSolidityServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       NumberMessage.Builder build = NumberMessage.newBuilder();
       JsonFormat.merge(input, build);
-      Block reply = walletOnSolidity.getBlockByNum(build.getNum());
+      Block reply = walletOnSolidity.futureGet(
+          () -> wallet.getBlockByNum(build.getNum())
+      );
       if (reply != null) {
         response.getWriter().println(Util.printBlock(reply));
       } else {

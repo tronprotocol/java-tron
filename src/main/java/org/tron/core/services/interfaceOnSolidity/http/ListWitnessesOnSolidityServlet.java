@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.WitnessList;
+import org.tron.core.Wallet;
 import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.Util;
 import org.tron.core.services.interfaceOnSolidity.WalletOnSolidity;
@@ -19,10 +20,14 @@ public class ListWitnessesOnSolidityServlet extends HttpServlet {
 
   @Autowired
   private WalletOnSolidity walletOnSolidity;
+  @Autowired
+  private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      WitnessList reply = walletOnSolidity.getWitnessList();
+      WitnessList reply = walletOnSolidity.futureGet(
+          () -> wallet.getWitnessList()
+      );
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply));
       } else {

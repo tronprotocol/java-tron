@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.PaginatedMessage;
+import org.tron.core.Wallet;
 import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.Util;
 import org.tron.core.services.interfaceOnSolidity.WalletOnSolidity;
@@ -21,6 +22,8 @@ public class GetPaginatedAssetIssueListOnSolidityServlet extends HttpServlet {
 
   @Autowired
   private WalletOnSolidity walletOnSolidity;
+  @Autowired
+  private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
 
@@ -32,7 +35,9 @@ public class GetPaginatedAssetIssueListOnSolidityServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       PaginatedMessage.Builder build = PaginatedMessage.newBuilder();
       JsonFormat.merge(input, build);
-      AssetIssueList reply = walletOnSolidity.getAssetIssueList(build.getOffset(), build.getLimit());
+      AssetIssueList reply = walletOnSolidity.futureGet(
+          () -> wallet.getAssetIssueList(build.getOffset(), build.getLimit())
+      );
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply));
       } else {

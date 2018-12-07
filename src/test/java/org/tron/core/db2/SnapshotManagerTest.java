@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
@@ -35,6 +36,14 @@ public class SnapshotManagerTest {
         Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);
+    revokingDatabase = new TestSnapshotManager();
+    revokingDatabase.enable();
+    tronDatabase = new TestRevokingTronStore("testSnapshotManager-test");
+    revokingDatabase.add(tronDatabase.getRevokingDB());
+    LevelDbDataSourceImpl tmpLevelDbDataSource  =
+      new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("testSnapshotManager-tmp"), "testSnapshotManagerTmp");
+    tmpLevelDbDataSource.initDB();
+    revokingDatabase.setTmpLevelDbDataSource(tmpLevelDbDataSource);
   }
 
   @After
@@ -45,15 +54,13 @@ public class SnapshotManagerTest {
     context.destroy();
     tronDatabase.close();
     FileUtil.deleteDir(new File("output_revokingStore_test"));
+    revokingDatabase.getTmpLevelDbDataSource().closeDB();
+    tronDatabase.close();
   }
 
   @Test
   public synchronized void testRefresh()
       throws BadItemException, ItemNotFoundException {
-    revokingDatabase = new TestSnapshotManager();
-    revokingDatabase.enable();
-    tronDatabase = new TestRevokingTronStore("testSnapshotManager-testRefresh");
-    revokingDatabase.add(tronDatabase.getRevokingDB());
     while (revokingDatabase.size() != 0) {
       revokingDatabase.pop();
     }
@@ -71,16 +78,12 @@ public class SnapshotManagerTest {
     }
 
     revokingDatabase.flush();
-    Assert.assertEquals(new ProtoCapsuleTest("refresh4".getBytes()),
-        tronDatabase.getOnSolidity(protoCapsule.getData()));
+    Assert.assertEquals(new ProtoCapsuleTest("refresh10".getBytes()),
+        tronDatabase.get(protoCapsule.getData()));
   }
 
   @Test
   public synchronized void testClose() {
-    revokingDatabase = new TestSnapshotManager();
-    revokingDatabase.enable();
-    tronDatabase = new TestRevokingTronStore("testSnapshotManager-testClose");
-    revokingDatabase.add(tronDatabase.getRevokingDB());
     while (revokingDatabase.size() != 0) {
       revokingDatabase.pop();
     }
@@ -97,38 +100,6 @@ public class SnapshotManagerTest {
     }
     Assert.assertEquals(null,
         tronDatabase.get(protoCapsule.getData()));
-
-  }
-
-  @Test
-  public synchronized void testCheck()
-      throws BadItemException, ItemNotFoundException {
-    revokingDatabase = new TestSnapshotManager();
-    revokingDatabase.enable();
-    tronDatabase = new TestRevokingTronStore("testSnapshotManager-testCheck");
-    revokingDatabase.add(tronDatabase.getRevokingDB());
-    while (revokingDatabase.size() != 0) {
-      revokingDatabase.pop();
-    }
-
-    revokingDatabase.setMaxFlushCount(0);
-    revokingDatabase.setUnChecked(false);
-    revokingDatabase.setMaxSize(5);
-    ProtoCapsuleTest protoCapsule = new ProtoCapsuleTest("check".getBytes());
-    for (int i = 1; i < 11; i++) {
-      ProtoCapsuleTest testProtoCapsule = new ProtoCapsuleTest(("check" + i).getBytes());
-      try (ISession tmpSession = revokingDatabase.buildSession()) {
-        tronDatabase.put(protoCapsule.getData(), testProtoCapsule);
-        tmpSession.commit();
-      }
-    }
-
-    while (revokingDatabase.size() != 0) {
-      revokingDatabase.pop();
-    }
-    revokingDatabase.check();
-    Assert.assertEquals(new ProtoCapsuleTest("check4".getBytes()),
-        tronDatabase.getOnSolidity(protoCapsule.getData()));
 
   }
 }

@@ -27,22 +27,12 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
     return super.getUnchecked(key);
   }
 
-  @Override
-  public AssetIssueCapsule getOnSolidity(byte[] key) {
-    return super.getUncheckedOnSolidity(key);
-  }
 
   /**
    * get all asset issues.
    */
   public List<AssetIssueCapsule> getAllAssetIssues() {
     return Streams.stream(iterator())
-        .map(Entry::getValue)
-        .collect(Collectors.toList());
-  }
-
-  public List<AssetIssueCapsule> getAllAssetIssuesOnSolidity() {
-    return Streams.stream(iteratorOnSolidity())
         .map(Entry::getValue)
         .collect(Collectors.toList());
   }
@@ -78,9 +68,4 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
   public List<AssetIssueCapsule> getAssetIssuesPaginated(long offset, long limit) {
     return getAssetIssuesPaginated(getAllAssetIssues(), offset, limit);
   }
-
-  public List<AssetIssueCapsule> getAssetIssuesPaginatedOnSolidity(long offset, long limit) {
-    return getAssetIssuesPaginated(getAllAssetIssuesOnSolidity(), offset, limit);
-  }
-
 }

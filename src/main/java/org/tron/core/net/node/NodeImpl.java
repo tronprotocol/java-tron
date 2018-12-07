@@ -670,8 +670,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
     for (Sha256Hash id : msg.getHashList()) {
       if (msg.getInventoryType().equals(InventoryType.TRX) && TrxCache.getIfPresent(id) != null) {
-        logger.info("{} {} from peer {} Already exist.", msg.getInventoryType(), id,
-            peer.getNode().getHost());
         continue;
       }
       final boolean[] spreaded = {false};

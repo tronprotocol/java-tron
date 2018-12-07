@@ -9,7 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.core.db.Manager;
+import org.tron.core.Wallet;
 import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.Util;
 import org.tron.core.services.interfaceOnSolidity.WalletOnSolidity;
@@ -24,7 +24,7 @@ public class GetAccountOnSolidityServlet extends HttpServlet {
   private WalletOnSolidity walletOnSolidity;
 
   @Autowired
-  private Manager dbManager;
+  private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
@@ -33,7 +33,9 @@ public class GetAccountOnSolidityServlet extends HttpServlet {
       JSONObject jsonObject = new JSONObject();
       jsonObject.put("address", address);
       JsonFormat.merge(jsonObject.toJSONString(), build);
-      Account reply = walletOnSolidity.getAccount(build.build());
+      Account reply = walletOnSolidity.futureGet(
+          () -> wallet.getAccount(build.build())
+      );
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply));
       } else {
@@ -55,7 +57,9 @@ public class GetAccountOnSolidityServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Account.Builder build = Account.newBuilder();
       JsonFormat.merge(account, build);
-      Account reply = walletOnSolidity.getAccount(build.build());
+      Account reply = walletOnSolidity.futureGet(
+          () -> wallet.getAccount(build.build())
+      );
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply));
       } else {
