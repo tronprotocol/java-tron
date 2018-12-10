@@ -4,8 +4,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.Arrays;
 import org.tron.common.utils.ByteArray;
+import sun.jvm.hotspot.utilities.Assert;
 
 public class VerifyingKey {
 
@@ -157,6 +159,7 @@ public class VerifyingKey {
     return vk;
   }
 
+  // zcash
   public static VerifyingKey initVk() {
     if (vk == null) {
       vk = new VerifyingKey();
@@ -173,11 +176,6 @@ public class VerifyingKey {
           "752476689148090443252690606274719847522796924289184281944322016120845872819",
           "9346016947773545029940290874113526292203330783138316933543286726319309993747",
           "10657101118636466197534311304303971390099046792106599174009327086566056805776");
-      vk.Z = new G2Point(
-          "15147055940817099984713168864119185960995485721468434382981947300642935581737",
-          "4631727067030503710010688256995134761045201948838871620017875546783390086460",
-          "17623047202600292659611642134440671974256480551657416500487803939184025704533",
-          "21638878652776235365545898652250152098523031965244840843903617079107891864279");
       vk.gamma = new G2Point(
           "17174171333098854828033634539500164902488935492941049779522958919502622588081",
           "15684072703239714088748884492940919778409948011906556607893998678768263898205",
@@ -191,6 +189,11 @@ public class VerifyingKey {
           "18203970449465878141055527247672796515569702004956673464850250575302350363961",
           "9070274571799942693810232181825350369966811716654884009331987967306715939422",
           "3344169380239392314048474373026629561296701202792428464496597755254021991380");
+      vk.Z = new G2Point(
+              "15147055940817099984713168864119185960995485721468434382981947300642935581737",
+              "4631727067030503710010688256995134761045201948838871620017875546783390086460",
+              "17623047202600292659611642134440671974256480551657416500487803939184025704533",
+              "21638878652776235365545898652250152098523031965244840843903617079107891864279");
       vk.IC = new G1Point[10];
       vk.IC[0] = new G1Point(
           "4944125736493822447335225095051526251764804673819722614680138374080051759962",
@@ -223,10 +226,74 @@ public class VerifyingKey {
           "7742642460569273216539674856471756904887522145302233146876244281004809392495",
           "13338610944590869762446817049541912676528855874207736821753831893421715974960");
     }
-
     return vk;
   }
 
+  // load verify from file
+  public static VerifyingKey initVkFromFile() {
+    if (vk == null) {
+      vk = new VerifyingKey();
+      File file = new File("sprout-verifying.key");
+      Long filelength = file.length();
+      System.out.println("file size: " + filelength);
+      byte[] filecontent = new byte[filelength.intValue()];
+      try {
+        FileInputStream in = new FileInputStream(file);
+        in.read(filecontent);
+        int startPos = 0;
+
+        //A (x>y 0>1)
+        vk.A = readG2(startPos, filecontent);
+        startPos += 129;
+
+        //B
+        vk.B  = readG1(startPos, filecontent);
+        startPos += 65;
+
+        //C
+        vk.C = readG2(startPos, filecontent);
+        startPos += 129;
+
+        //gamma_g2
+        vk.gamma = readG2(startPos, filecontent);
+        startPos += 129;
+
+        //gamma_beta_g1
+        vk.gammaBeta1 = readG1(startPos, filecontent);
+        startPos += 65;
+
+        //gamma_beta_g2
+        vk.gammaBeta2 = readG2(startPos, filecontent);
+        startPos += 129;
+
+        //rC_Z_g2
+        vk.Z = readG2(startPos, filecontent);
+        startPos += 129;
+
+        vk.IC = new G1Point[10];
+        vk.IC[0] = readG1(startPos, filecontent);
+        startPos += 65;
+
+        // 1-10
+        startPos += 24;
+        for(int i=1; i<10; i++) {
+          vk.IC[i] = readG1(startPos, filecontent);
+          startPos += 65;
+        }
+
+        if ( startPos != filelength.intValue() ) {
+            System.out.println("init vk failure!");
+            return null;
+        }
+        in.close();
+      } catch (FileNotFoundException e) {
+        e.printStackTrace();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+    return vk;
+  }
 
   public static boolean checkG1Poin(G1Point g1) {
     BN128G1 g11 = g1.toBN128G1();
@@ -278,33 +345,70 @@ public class VerifyingKey {
     }
   }
 
+  public static String bytesToHex(byte[] bytes) {
+    StringBuffer sb = new StringBuffer();
+    for(int i = 0; i < bytes.length; i++) {
+      int c =  bytes[i] & 0xFF;
+      String hex = Integer.toHexString(c);
+      sb.append(" ");
+      if(hex.length() < 2){
+        sb.append(0);
+      }
+      sb.append(hex);
+    }
+    return sb.toString();
+  }
+
+  public static G1Point readG1( int startPos, final byte[] filecontent ) {
+    byte[] cx = new byte[32];
+    byte[] cy = new byte[32];
+    startPos += 1;
+    System.arraycopy(filecontent, startPos, cx, 0, cx.length);
+    startPos += 32;
+    System.arraycopy(filecontent, startPos, cy, 0, cy.length);
+    startPos += 32;
+
+    ZksnarkUtils.sort(cx);
+    ZksnarkUtils.sort(cy);
+
+    System.out.println((new BigInteger(cx)).toString(10));
+    System.out.println((new BigInteger(cy)).toString(10));
+    System.out.println("");
+
+    return new G1Point(cx, cy);
+  }
+
+  public static G2Point readG2( int startPos, final byte[] filecontent  ) {
+    byte[] cx0 = new byte[32];
+    byte[] cx1 = new byte[32];
+    byte[] cy0 = new byte[32];
+    byte[] cy1 = new byte[32];
+    startPos += 1;
+    System.arraycopy(filecontent, startPos, cx0, 0, cx0.length);
+    startPos += 32;
+    System.arraycopy(filecontent, startPos, cx1, 0, cx1.length);
+    startPos += 32;
+    System.arraycopy(filecontent, startPos, cy0, 0, cy0.length);
+    startPos += 32;
+    System.arraycopy(filecontent, startPos, cy1, 0, cy1.length);
+    startPos += 32;
+
+    ZksnarkUtils.sort(cx0);
+    ZksnarkUtils.sort(cx1);
+    ZksnarkUtils.sort(cy0);
+    ZksnarkUtils.sort(cy1);
+
+    System.out.println((new BigInteger(cx1)).toString(10));
+    System.out.println((new BigInteger(cx0)).toString(10));
+    System.out.println((new BigInteger(cy1)).toString(10));
+    System.out.println((new BigInteger(cy0)).toString(10));
+    System.out.println("");
+
+    return new G2Point(cx1, cx0, cy1, cy0);
+  }
+
+
   public static void main(String[] args) throws Exception {
-    test();
-//    if (!checkG2Poin(vk.A)) {
-//      throw new Exception("Check false!");
-//    }
-//    if (!checkG1Poin(vk.B)) {
-//      throw new Exception("Check false!");
-//    }
-//    if (!checkG2Poin(vk.C)) {
-//      throw new Exception("Check false!");
-//    }
-//    if (!checkG2Poin(vk.gamma)) {
-//      throw new Exception("Check false!");
-//    }
-//    if (!checkG1Poin(vk.gammaBeta1)) {
-//      throw new Exception("Check false!");
-//    }
-//    if (!checkG2Poin(vk.gammaBeta2)) {
-//      throw new Exception("Check false!");
-//    }
-//    if (!checkG2Poin(vk.Z)) {
-//      throw new Exception("Check false!");
-//    }
-//    for (int i = 0; i < 10; i++) {
-//      if (!checkG1Poin(vk.IC[i])) {
-//        throw new Exception("Check false!");
-//      }
-//    }
+    initVkFromFile();
   }
 }
