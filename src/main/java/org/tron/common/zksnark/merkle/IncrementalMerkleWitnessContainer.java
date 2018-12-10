@@ -42,7 +42,7 @@ public class IncrementalMerkleWitnessContainer {
 
       long cursor_depth = witnessCapsule.getCursorDepth();
 
-      if (witnessCapsule.getCursor().toMerkleTreeContainer().isComplete()) {
+      if (witnessCapsule.getCursor().toMerkleTreeContainer().isComplete(cursor_depth)) {
         witnessCapsule.addFilled(
             witnessCapsule.getCursor().toMerkleTreeContainer().root(cursor_depth));
         witnessCapsule.clearCursor();

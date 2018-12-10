@@ -3,6 +3,7 @@ package org.tron.common.zksnark;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.util.Arrays;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -357,5 +358,41 @@ public class MerkleContainerTest {
 
   }
 
+  @Test
+  public void append() {
+    IncrementalMerkleTreeCapsule tree = new IncrementalMerkleTreeCapsule();
+    int b = 255;
+
+    for ( int a = 1; a < b; a++){
+      int i = 1;
+      for (; i <= a; i++) {
+        byte[] bytes = new byte[32];
+        bytes[0] = (byte) i;
+        SHA256Compress c = SHA256Compress.newBuilder().setContent(ByteString.copyFrom(bytes)).build();
+        tree.toMerkleTreeContainer().append(c);
+      }
+      IncrementalMerkleWitnessContainer witnessa = tree.toMerkleTreeContainer().toWitness();
+      for (int j = i; j <= b; j++) {
+        byte[] bytes = new byte[32];
+        bytes[0] = (byte) j;
+        SHA256Compress c = SHA256Compress.newBuilder().setContent(ByteString.copyFrom(bytes)).build();
+        witnessa.append(c);
+      }
+
+
+      for (int j = i; j <= b; j++) {
+        byte[] bytes = new byte[32];
+        bytes[0] = (byte) j;
+        SHA256Compress c = SHA256Compress.newBuilder().setContent(ByteString.copyFrom(bytes)).build();
+        tree.toMerkleTreeContainer().append(c);
+      }
+      IncrementalMerkleWitnessContainer witnessb = tree.toMerkleTreeContainer().toWitness();
+
+      byte[] roota = witnessa.root().getContent().toByteArray();
+      byte[] rootb = witnessb.root().getContent().toByteArray();
+
+      Assert.assertTrue(Arrays.equals(roota, rootb));
+    }
+  }
 
 }
