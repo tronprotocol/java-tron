@@ -50,7 +50,7 @@ public class SolidityNode {
 
   private AtomicLong lastSolidityBlockNum = new AtomicLong();
 
-  private long maxBlockCacheSize = 10_000;
+  private int maxBlockCacheSize = 10_000;
 
   private volatile boolean syncFlag = true;
 
