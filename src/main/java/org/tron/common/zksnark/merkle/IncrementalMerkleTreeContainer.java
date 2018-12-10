@@ -202,7 +202,7 @@ public class IncrementalMerkleTreeContainer {
 
     SHA256Compress combineLeft =
         leftIsExist() ? treeCapsule.getLeft() : filler.next(0);
-    SHA256Compress combine_right =
+    SHA256Compress combineRight =
         rightIsExist() ? treeCapsule.getRight() : filler.next(0);
 
     logger.info("leftIsExist:" + leftIsExist());
@@ -211,10 +211,10 @@ public class IncrementalMerkleTreeContainer {
     logger.info("\n");
     logger.info("rightIsExist:" + rightIsExist());
     logger.info("\n");
-    logger.info("combine_right:" + ByteArray.toHexString(combine_right.getContent().toByteArray()));
+    logger.info("combineRight:" + ByteArray.toHexString(combineRight.getContent().toByteArray()));
     logger.info("\n");
 
-    SHA256CompressCapsule root = SHA256CompressCapsule.combine(combineLeft, combine_right, 0);
+    SHA256CompressCapsule root = SHA256CompressCapsule.combine(combineLeft, combineRight, 0);
     logger.info("root:" + ByteArray.toHexString(root.getContent().toByteArray()));
     logger.info("\n");
     int d = 1;
