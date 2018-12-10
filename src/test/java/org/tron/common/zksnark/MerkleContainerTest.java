@@ -15,6 +15,7 @@ import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeCapsule;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
+import org.tron.common.zksnark.merkle.IncrementalMerkleWitnessCapsule;
 import org.tron.common.zksnark.merkle.IncrementalMerkleWitnessContainer;
 import org.tron.common.zksnark.merkle.MerkleContainer;
 import org.tron.common.zksnark.merkle.MerklePath;
@@ -27,7 +28,6 @@ import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.protos.Contract.IncrementalMerkleWitness;
 import org.tron.protos.Contract.IncrementalMerkleWitnessInfo;
 import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.OutputPointInfo;
@@ -188,7 +188,7 @@ public class MerkleContainerTest {
 
       {
         long blockNum = 99;
-        String s1 = "2ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab91";
+        String s1 = "2ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab01";
         SHA256CompressCapsule compressCapsule1 = new SHA256CompressCapsule();
         compressCapsule1.setContent(ByteString.copyFrom(ByteArray.fromHexString(s1)));
         SHA256Compress a = compressCapsule1.getInstance();
@@ -201,11 +201,11 @@ public class MerkleContainerTest {
       //two transaction,the first transaction is the currentTransaction
       {
         long blockNum = 100L;
-        String cm1 = "3ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab91";
-        String cm2 = "4ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab91";
+        String cm1 = "3ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab02";
+        String cm2 = "4ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab03";
         Transaction transaction = createTransaction(cm1, cm2);
-        String cm3 = "3ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab92";
-        String cm4 = "4ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab93";
+        String cm3 = "3ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab04";
+        String cm4 = "4ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab05";
         Transaction transaction2 = createTransaction(cm3, cm4);
         Block block = Block.newBuilder().addTransactions(0, transaction).
             addTransactions(1, transaction2).build();
@@ -232,19 +232,20 @@ public class MerkleContainerTest {
         SHA256Compress b = compressCapsule2.getInstance();
         tree.toMerkleTreeContainer().append(b);
         SHA256CompressCapsule compressCapsule3 = new SHA256CompressCapsule();
-        compressCapsule1.setContent(ByteString.copyFrom(ByteArray.fromHexString(cm3)));
+        compressCapsule3.setContent(ByteString.copyFrom(ByteArray.fromHexString(cm3)));
         SHA256Compress c = compressCapsule3.getInstance();
         tree.toMerkleTreeContainer().append(c);
         SHA256CompressCapsule compressCapsule4 = new SHA256CompressCapsule();
-        compressCapsule2.setContent(ByteString.copyFrom(ByteArray.fromHexString(cm4)));
+        compressCapsule4.setContent(ByteString.copyFrom(ByteArray.fromHexString(cm4)));
+
         SHA256Compress d = compressCapsule4.getInstance();
         tree.toMerkleTreeContainer().append(d);
         dbManager.getMerkleTreeStore().put(tree.toMerkleTreeContainer().getMerkleTreeKey(), tree);
       }
       {
         long blockNum = 101;
-        String cm1 = "5ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab91";
-        String cm2 = "6ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab91";
+        String cm1 = "5ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab06";
+        String cm2 = "6ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab07";
         Transaction transaction = createTransaction(cm1, cm2);
         Block block = Block.newBuilder().addTransactions(0, transaction).build();
         Sha256Hash blockKey = Sha256Hash.of(ByteArray.fromLong(blockNum));
@@ -268,11 +269,11 @@ public class MerkleContainerTest {
       //two transaction,the second transaction is the currentTransaction
       {
         long blockNum = 102L;
-        String cm1 = "7ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab91";
-        String cm2 = "8ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab91";
+        String cm1 = "7ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab08";
+        String cm2 = "8ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab09";
         Transaction transaction = createTransaction(cm1, cm2);
-        String cm3 = "7ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab92";
-        String cm4 = "8ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab93";
+        String cm3 = "7ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab10";
+        String cm4 = "8ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab11";
         Transaction transaction2 = createTransaction(cm3, cm4);
         Block block = Block.newBuilder().addTransactions(0, transaction).
             addTransactions(1, transaction2).build();
@@ -300,11 +301,20 @@ public class MerkleContainerTest {
         SHA256Compress b = compressCapsule2.getInstance();
         tree.toMerkleTreeContainer().append(b);
         dbManager.getMerkleTreeStore().put(tree.toMerkleTreeContainer().getMerkleTreeKey(), tree);
+        SHA256CompressCapsule compressCapsule3 = new SHA256CompressCapsule();
+        compressCapsule3.setContent(ByteString.copyFrom(ByteArray.fromHexString(cm3)));
+        SHA256Compress c = compressCapsule3.getInstance();
+        tree.toMerkleTreeContainer().append(c);
+        SHA256CompressCapsule compressCapsule4 = new SHA256CompressCapsule();
+        compressCapsule4.setContent(ByteString.copyFrom(ByteArray.fromHexString(cm4)));
+        SHA256Compress d = compressCapsule4.getInstance();
+        tree.toMerkleTreeContainer().append(d);
+        dbManager.getMerkleTreeStore().put(tree.toMerkleTreeContainer().getMerkleTreeKey(), tree);
       }
       {
         long blockNum = 103L;
-        String cm1 = "9ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab91";
-        String cm2 = "0cc45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab91";
+        String cm1 = "9ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab12";
+        String cm2 = "0cc45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab13";
         Transaction transaction = createTransaction(cm1, cm2);
         Block block = Block.newBuilder().addTransactions(0, transaction).build();
         Sha256Hash blockKey = Sha256Hash.of(ByteArray.fromLong(blockNum));
@@ -332,11 +342,11 @@ public class MerkleContainerTest {
 
     //blockNum:100,txNum:1
     ByteString txId1 = ByteString.copyFrom(ByteArray
-        .fromHexString("e56e85111c9fc813a10261720ea75facc69f7946ac09af5e0cee4e930aa2ea45"));
+        .fromHexString("c001df659956bb7c157a49f8976e866b7dcd84b93101fe418725b2960519e2c1"));
     OutputPoint outputPoint1 = OutputPoint.newBuilder().setHash(txId1).setIndex(0).build();
     //blockNum:103,txNum:2
     ByteString txId2 = ByteString.copyFrom(ByteArray.
-        fromHexString("b97f32acbb38801af81dce7dc823df359965dc52e2a9dd4a9a86244b2232de1e"));
+        fromHexString("f50bb10bf4ecfa098af06500c66b71d268d96366fbbdd078453819cbc07bf050"));
     OutputPoint outputPoint2 = OutputPoint.newBuilder().setHash(txId2).setIndex(0).build();
     int number = 1;
     OutputPointInfo outputPointInfo = OutputPointInfo.newBuilder().setOutPoint1(outputPoint1).
@@ -355,65 +365,23 @@ public class MerkleContainerTest {
 //    Assert
 //        .assertEquals(13, new IncrementalMerkleWitnessCapsule(merkleTreeWitnessInfo.getWitness2()).
 //            toMerkleWitnessContainer().size());
-    System.out.println("Witness 1 start!!!!");
-    printWitness(merkleTreeWitnessInfo.getWitness1());
-    System.out.println("Witness 1 end!!!!");
-    System.out.println("Witness 2 start!!!!");
-    printWitness(merkleTreeWitnessInfo.getWitness2());
-    System.out.println("Witness 2 end!!!!");
-    Assert.assertTrue(merkleTreeWitnessInfo.getWitness1().getRt().equals(merkleTreeWitnessInfo.getWitness2().getRt()));
 
-  }
+    IncrementalMerkleWitnessCapsule capsule1 = new IncrementalMerkleWitnessCapsule(
+        merkleTreeWitnessInfo.getWitness1());
+    capsule1.toMerkleWitnessContainer().printSize();
 
-  private void printWitness(IncrementalMerkleWitness witness) {
-    System.out.println("Tree----------");
-    for (int i = witness.getTree().getParentsCount() - 1; i >= 0; i--) {
-      System.out.println("Parents");
-      if (witness.getTree().getParents(i).getContent().isEmpty()) {
-        System.out.println(i + " empty");
-      } else {
-        System.out.println(
-            ByteArray.toHexString(witness.getTree().getParents(i).getContent().toByteArray()));
-      }
-    }
-    if (witness.getTree().hasLeft()) {
-      System.out.println("Left");
-      System.out
-          .println(ByteArray.toHexString(witness.getTree().getLeft().getContent().toByteArray()));
-    }
-    if (witness.getTree().hasRight()) {
-      System.out.println("Right");
-      System.out
-          .println(ByteArray.toHexString(witness.getTree().getRight().getContent().toByteArray()));
-    }
+    IncrementalMerkleWitnessCapsule capsule2 = new IncrementalMerkleWitnessCapsule(
+        merkleTreeWitnessInfo.getWitness2());
+    capsule2.toMerkleWitnessContainer().printSize();
 
-    System.out.println("filled----------");
-    if (witness.getFilledCount() > 0){
-      for (int i = 0; i < witness.getFilledCount(); i++){
-        System.out.println(ByteArray.toHexString(witness.getFilled(i).getContent().toByteArray()));
-      }
-    }
-
-    System.out.println("Cursor----------");
-    for (int i = witness.getCursor().getParentsCount() - 1; i >= 0; i--) {
-      System.out.println("Parents");
-      if (witness.getCursor().getParents(i).getContent().isEmpty()) {
-        System.out.println(i + " empty");
-      } else {
-        System.out.println(
-            ByteArray.toHexString(witness.getCursor().getParents(i).getContent().toByteArray()));
-      }
-    }
-    if (witness.getCursor().hasLeft()) {
-      System.out.println("Left");
-      System.out
-          .println(ByteArray.toHexString(witness.getCursor().getLeft().getContent().toByteArray()));
-    }
-    if (witness.getCursor().hasRight()) {
-      System.out.println("Right");
-      System.out.println(
-          ByteArray.toHexString(witness.getCursor().getRight().getContent().toByteArray()));
-    }
+    System.out
+        .println("kkkkkk" + ByteArray
+            .toHexString(merkleTreeWitnessInfo.getWitness1().getRt().toByteArray()));
+    Assert
+        .assertEquals(
+            ByteArray.toHexString(merkleTreeWitnessInfo.getWitness1().getRt().toByteArray()),
+            ByteArray.toHexString(merkleTreeWitnessInfo.getWitness2().getRt().toByteArray())
+        );
 
   }
 
