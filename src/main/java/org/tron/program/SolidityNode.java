@@ -49,7 +49,7 @@ public class SolidityNode {
 
   private volatile long lastSolidityBlockNum;
 
-  private long startTime = System.currentTimeMillis();
+  private long maxBlockCacheSize = 10_000;
 
   private volatile boolean syncFlag = true;
 
@@ -89,7 +89,7 @@ public class SolidityNode {
         if (blockNum == 0) {
           break;
         }
-        if (blockMap.size() > 10000) {
+        if (blockMap.size() > maxBlockCacheSize) {
           sleep(1000);
           continue;
         }
@@ -137,7 +137,7 @@ public class SolidityNode {
     long blockNum = ID.incrementAndGet();
     while (flag) {
       try {
-        if (blockNum > remoteLastSolidityBlockNum) {
+        if (blockNum > remoteLastSolidityBlockNum || blockMap.size() > maxBlockCacheSize) {
           sleep(3000);
           remoteLastSolidityBlockNum = getLastSolidityBlockNum();
           continue;
@@ -198,12 +198,11 @@ public class SolidityNode {
         loopProcessBlock(block);
         blockBakQueue.put(block);
         logger.info(
-            "Success to process block: {}, blockMapSize: {}, blockQueueSize: {}, blockBakQueue: {}, cost {}.",
+            "Success to process block: {}, blockMapSize: {}, blockQueueSize: {}, blockBakQueue: {}",
             block.getBlockHeader().getRawData().getNumber(),
             blockMap.size(),
             blockQueue.size(),
-            blockBakQueue.size(),
-            (System.currentTimeMillis() - startTime));
+            blockBakQueue.size());
       } catch (Exception e) {
         logger.error(e.getMessage());
         sleep(100);
