@@ -196,25 +196,25 @@ public class IncrementalMerkleTreeContainer {
     return root(depth, filler_hashes);
   }
 
-  public SHA256Compress root(long depth, Deque<SHA256Compress> filler_hashes) {
+  public SHA256Compress root(long depth, Deque<SHA256Compress> fillerHashes) {
 
-    PathFiller filler = new PathFiller(filler_hashes);
+    PathFiller filler = new PathFiller(fillerHashes);
 
-    SHA256Compress combine_left =
+    SHA256Compress combineLeft =
         leftIsExist() ? treeCapsule.getLeft() : filler.next(0);
     SHA256Compress combine_right =
         rightIsExist() ? treeCapsule.getRight() : filler.next(0);
 
     logger.info("leftIsExist:" + leftIsExist());
     logger.info("\n");
-    logger.info("combine_left:" + ByteArray.toHexString(combine_left.getContent().toByteArray()));
+    logger.info("combineLeft:" + ByteArray.toHexString(combineLeft.getContent().toByteArray()));
     logger.info("\n");
     logger.info("rightIsExist:" + rightIsExist());
     logger.info("\n");
     logger.info("combine_right:" + ByteArray.toHexString(combine_right.getContent().toByteArray()));
     logger.info("\n");
 
-    SHA256CompressCapsule root = SHA256CompressCapsule.combine(combine_left, combine_right, 0);
+    SHA256CompressCapsule root = SHA256CompressCapsule.combine(combineLeft, combine_right, 0);
     logger.info("root:" + ByteArray.toHexString(root.getContent().toByteArray()));
     logger.info("\n");
     int d = 1;
