@@ -140,7 +140,7 @@ public class ForkController {
 
   public synchronized void updateWhenMaintenance(BlockCapsule blockCapsule) {
     int version = blockCapsule.getInstance().getBlockHeader().getRawData().getVersion();
-    if (version < ForkBlockVersionConsts.version_3_2_2 || passSet.contains(version)) {
+    if (version < ForkBlockVersionConsts.VERSION_3_2_2 || passSet.contains(version)) {
       return;
     }
 
