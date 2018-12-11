@@ -1,19 +1,36 @@
 package org.tron.core.net.node;
+
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import io.grpc.Channel;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
-import org.junit.*;
-import org.tron.common.application.TronApplicationContext;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
-import org.tron.common.utils.*;
-import org.tron.common.overlay.discover.node.Node;
-import org.tron.common.overlay.client.PeerClient;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.ReflectUtils;
+import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Utils;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -31,12 +48,6 @@ import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol;
-
-import java.io.File;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @Slf4j
 public class GetLostBlockIdsTest {
@@ -57,16 +68,13 @@ public class GetLostBlockIdsTest {
 
     @Test
     public void testGetLostBlockIds(){
-        Collection<PeerConnection> activePeers = ReflectUtils.invokeMethod(node, "getActivePeer");
-        Object[] peers = activePeers.toArray();
-        PeerConnection peer_me = (PeerConnection) peers[0];
         NodeDelegate del = ReflectUtils.getFieldValue(node, "del");
-        List<BlockId> blockChainSummary = null;
+        List<BlockId> blockChainSummary;
         LinkedList<BlockId> blockIds = null;
 
         long number;
         Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
-        BlockCapsule capsule = null;
+        BlockCapsule capsule;
         for (int i = 0; i<5; i++) {
             number = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1;
             capsule = createTestBlockCapsule(1533529947843L + 3000L * i ,number, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(), addressToProvateKeys);
@@ -302,7 +310,6 @@ public class GetLostBlockIdsTest {
         for (PeerConnection peer : peerConnections) {
             peer.close();
         }
-        peerClient.close();
         handshakeHandlerTest.close();
         appT.shutdownServices();
         appT.shutdown();

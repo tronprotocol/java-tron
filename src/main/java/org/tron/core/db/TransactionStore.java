@@ -38,8 +38,9 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
   /**
    * get total transaction.
    */
+  @Deprecated
   public long getTotalTransactions() {
-    return Streams.stream(iterator()).count();
+    return 0; //Streams.stream(iterator()).count();
   }
 
   @Override

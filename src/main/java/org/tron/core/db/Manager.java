@@ -36,6 +36,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.SessionOptional;
@@ -46,16 +47,20 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
+import org.tron.core.config.Parameter.AdaptiveResourceLimitConstants;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
+import org.tron.core.db.api.AssetUpdateHelper;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.ITronChainBase;
+import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
@@ -99,8 +104,11 @@ public class Manager {
   @Autowired
   private AssetIssueStore assetIssueStore;
   @Autowired
+  private AssetIssueV2Store assetIssueV2Store;
+  @Autowired
   private DynamicPropertiesStore dynamicPropertiesStore;
   @Autowired
+  @Getter
   private BlockIndexStore blockIndexStore;
   @Autowired
   private AccountIdIndexStore accountIdIndexStore;
@@ -117,11 +125,17 @@ public class Manager {
   @Autowired
   private ExchangeStore exchangeStore;
   @Autowired
+  private ExchangeV2Store exchangeV2Store;
+  @Autowired
   private TransactionHistoryStore transactionHistoryStore;
   @Autowired
   private CodeStore codeStore;
   @Autowired
   private ContractStore contractStore;
+  @Autowired
+  private DelegatedResourceStore delegatedResourceStore;
+  @Autowired
+  private DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore;
   @Autowired
   @Getter
   private StorageRowStore storageRowStore;
@@ -174,11 +188,14 @@ public class Manager {
       .newBuilder().maximumSize(100_000).recordStats().build();
 
   @Getter
-  @Autowired
-  private ForkController forkController;
+  private ForkController forkController = ForkController.instance();
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
+  }
+
+  public boolean needToUpdateAsset() {
+    return getDynamicPropertiesStore().getTokenUpdateDone() == 0L;
   }
 
   public DynamicPropertiesStore getDynamicPropertiesStore() {
@@ -195,6 +212,15 @@ public class Manager {
 
   public void setWitnessScheduleStore(final WitnessScheduleStore witnessScheduleStore) {
     this.witnessScheduleStore = witnessScheduleStore;
+  }
+
+
+  public DelegatedResourceStore getDelegatedResourceStore() {
+    return delegatedResourceStore;
+  }
+
+  public DelegatedResourceAccountIndexStore getDelegatedResourceAccountIndexStore() {
+    return delegatedResourceAccountIndexStore;
   }
 
   public CodeStore getCodeStore() {
@@ -215,6 +241,29 @@ public class Manager {
 
   public ExchangeStore getExchangeStore() {
     return this.exchangeStore;
+  }
+
+  public ExchangeV2Store getExchangeV2Store() {
+    return this.exchangeV2Store;
+  }
+
+  public ExchangeStore getExchangeStoreFinal() {
+    if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      return getExchangeStore();
+    } else {
+      return getExchangeV2Store();
+    }
+  }
+
+  public void putExchangeCapsule(ExchangeCapsule exchangeCapsule) {
+    if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
+      ExchangeCapsule exchangeCapsuleV2 = new ExchangeCapsule(exchangeCapsule.getData());
+      exchangeCapsuleV2.resetTokenWithID(this);
+      getExchangeV2Store().put(exchangeCapsuleV2.createDbKey(), exchangeCapsuleV2);
+    } else {
+      getExchangeV2Store().put(exchangeCapsule.createDbKey(), exchangeCapsule);
+    }
   }
 
   public List<TransactionCapsule> getPendingTransactions() {
@@ -344,6 +393,11 @@ public class Manager {
       System.exit(1);
     }
     forkController.init(this);
+
+    if (Args.getInstance().isNeedToUpdateAsset() && needToUpdateAsset()) {
+      new AssetUpdateHelper(this).doWork();
+    }
+
     revokingStore.enable();
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
@@ -414,6 +468,7 @@ public class Manager {
                       account.getBalance());
               this.accountStore.put(account.getAddress(), accountCapsule);
               this.accountIdIndexStore.put(accountCapsule);
+              this.accountIndexStore.put(accountCapsule);
             });
   }
 
@@ -555,7 +610,7 @@ public class Manager {
       TooBigTransactionException, TransactionExpirationException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
 
-    if (!trx.validateSignature(this.accountStore)) {
+    if (!trx.validateSignature(this)) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
@@ -607,7 +662,13 @@ public class Manager {
       VMIllegalException, TooBigTransactionResultException, UnLinkedBlockException,
       NonCommonBlockException, BadNumberBlockException, BadBlockException {
     block.generatedByMyself = true;
+    long start = System.currentTimeMillis();
     pushBlock(block);
+    logger.info("push block cost:{}ms, blockNum:{}, blockHash:{}, trx count:{}",
+        System.currentTimeMillis() - start,
+        block.getNum(),
+        block.getBlockId(),
+        block.getTransactions().size());
   }
 
   private void applyBlock(BlockCapsule block) throws ContractValidateException,
@@ -619,6 +680,11 @@ public class Manager {
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
     updateFork();
+    if (System.currentTimeMillis() - block.getTimeStamp() >= 60_000) {
+      revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MAX_FLUSH_COUNT);
+    } else {
+      revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
+    }
   }
 
   private void switchFork(BlockCapsule newHead)
@@ -724,6 +790,7 @@ public class Manager {
       TaposException, TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException {
+    long start = System.currentTimeMillis();
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
@@ -815,6 +882,10 @@ public class Manager {
       }
       logger.info("save block: " + newBlock);
     }
+    logger.info("pushBlock block number:{}, cost/txs:{}/{}",
+        block.getNum(),
+        System.currentTimeMillis() - start,
+        block.getTransactions().size());
   }
 
   public void updateDynamicProperties(BlockCapsule block) {
@@ -948,11 +1019,10 @@ public class Manager {
       throw new ContractSizeNotEqualToOneException(
           "act size should be exactly 1, this is extend feature");
     }
-    forkController.hardFork(trxCap);
 
     validateDup(trxCap);
 
-    if (!trxCap.validateSignature(this.accountStore)) {
+    if (!trxCap.validateSignature(this)) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
@@ -961,6 +1031,8 @@ public class Manager {
 
     consumeBandwidth(trxCap, trace);
 
+    VMConfig.initVmHardFork();
+    VMConfig.initAllowTvmTransferTrc10(dynamicPropertiesStore.getAllowTvmTransferTrc10());
     trace.init(blockCap);
     trace.checkIsConstant();
     trace.exec();
@@ -985,7 +1057,7 @@ public class Manager {
     trace.finalization();
     if (Objects.nonNull(blockCap)) {
       if (getDynamicPropertiesStore().supportVM()) {
-        trxCap.setResultCode(trace.getReceipt().getResult());
+        trxCap.setResult(trace.getRuntime());
       }
     }
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
@@ -1050,8 +1122,16 @@ public class Manager {
     session.setValue(revokingStore.buildSession());
 
     Iterator iterator = pendingTransactions.iterator();
-    while (iterator.hasNext()) {
-      TransactionCapsule trx = (TransactionCapsule) iterator.next();
+    while (iterator.hasNext() || repushTransactions.size() > 0) {
+      boolean fromPending = false;
+      TransactionCapsule trx;
+      if (iterator.hasNext()) {
+        fromPending = true;
+        trx = (TransactionCapsule) iterator.next();
+      } else {
+        trx = repushTransactions.poll();
+      }
+
       if (DateTime.now().getMillis() - when
           > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5
           * Args.getInstance().getBlockProducedTimeOut()
@@ -1071,7 +1151,9 @@ public class Manager {
         tmpSeesion.merge();
         // push into block
         blockCapsule.addTransaction(trx);
-        iterator.remove();
+        if (fromPending) {
+          iterator.remove();
+        }
       } catch (ContractExeException e) {
         logger.info("contract not processed during execute");
         logger.debug(e.getMessage(), e);
@@ -1173,7 +1255,7 @@ public class Manager {
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
     // todo set revoking db max size.
 
-    if (witnessService != null){
+    if (witnessService != null) {
       witnessService.processBlock(block);
     }
 
@@ -1197,12 +1279,44 @@ public class Manager {
         this.processMaintenance(block);
       }
     }
+    if (getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 1) {
+      updateAdaptiveTotalEnergyLimit();
+    }
     this.updateDynamicProperties(block);
     this.updateSignedWitness(block);
     this.updateLatestSolidifiedBlock();
     this.updateTransHashCache(block);
     updateMaintenanceState(needMaint);
     updateRecentBlock(block);
+  }
+
+  public void updateAdaptiveTotalEnergyLimit() {
+    long totalEnergyAverageUsage = getDynamicPropertiesStore()
+        .getTotalEnergyAverageUsage();
+    long targetTotalEnergyLimit = getDynamicPropertiesStore().getTotalEnergyTargetLimit();
+    long totalEnergyCurrentLimit = getDynamicPropertiesStore()
+        .getTotalEnergyCurrentLimit();
+
+    long result;
+    if (totalEnergyAverageUsage > targetTotalEnergyLimit) {
+      result = totalEnergyCurrentLimit * AdaptiveResourceLimitConstants.CONTRACT_RATE_NUMERATOR
+          / AdaptiveResourceLimitConstants.CONTRACT_RATE_DENOMINATOR;
+      // logger.info(totalEnergyAverageUsage + ">" + targetTotalEnergyLimit + "\n" + result);
+    } else {
+      result = totalEnergyCurrentLimit * AdaptiveResourceLimitConstants.EXPAND_RATE_NUMERATOR
+          / AdaptiveResourceLimitConstants.EXPAND_RATE_DENOMINATOR;
+      // logger.info(totalEnergyAverageUsage + "<" + targetTotalEnergyLimit + "\n" + result);
+    }
+
+    result = Math.min(
+        Math.max(result, getDynamicPropertiesStore().getTotalEnergyLimit()),
+        getDynamicPropertiesStore().getTotalEnergyLimit()
+            * AdaptiveResourceLimitConstants.LIMIT_MULTIPLIER);
+
+    getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(result);
+    logger.debug(
+        "adjust totalEnergyCurrentLimit, old[" + totalEnergyCurrentLimit + "], new[" + result
+            + "]");
   }
 
   private void updateTransHashCache(BlockCapsule block) {
@@ -1244,22 +1358,12 @@ public class Manager {
       logger.warn("latestSolidifiedBlockNum = 0,LatestBlockNum:{}", numbers);
       return;
     }
-    try {
-      if (!blockStore.hasOnSolidity(getBlockIdByNum(latestSolidifiedBlockNum).getBytes())) {
-        revokingStore.updateSolidity(dynamicPropertiesStore.getLatestSolidifiedBlockNum(), latestSolidifiedBlockNum);
-      }
-    } catch (ItemNotFoundException e) {
-      throw new RuntimeException(e);
-    }
+
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
     logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
   }
 
   public void updateFork() {
-    if (forkController.shouldBeForked()) {
-      return;
-    }
-
     try {
       long latestSolidifiedBlockNum = dynamicPropertiesStore.getLatestSolidifiedBlockNum();
       BlockCapsule solidifiedBlock = getBlockByNum(latestSolidifiedBlockNum);
@@ -1301,7 +1405,7 @@ public class Manager {
     proposalController.processProposals();
     witnessController.updateWitness();
     this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
-    forkController.reset();
+    forkController.reset(block);
   }
 
   /**
@@ -1362,6 +1466,18 @@ public class Manager {
     return assetIssueStore;
   }
 
+  public AssetIssueV2Store getAssetIssueV2Store() {
+    return assetIssueV2Store;
+  }
+
+  public AssetIssueStore getAssetIssueStoreFinal() {
+    if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      return getAssetIssueStore();
+    } else {
+      return getAssetIssueV2Store();
+    }
+  }
+
   public void setAssetIssueStore(AssetIssueStore assetIssueStore) {
     this.assetIssueStore = assetIssueStore;
   }
@@ -1407,6 +1523,9 @@ public class Manager {
     closeOneStore(recentBlockStore);
     closeOneStore(transactionHistoryStore);
     closeOneStore(votesStore);
+    closeOneStore(delegatedResourceStore);
+    closeOneStore(assetIssueV2Store);
+    closeOneStore(exchangeV2Store);
     logger.info("******** end to close db ********");
   }
 
@@ -1440,18 +1559,19 @@ public class Manager {
 
     private TransactionCapsule trx;
     private CountDownLatch countDownLatch;
-    private AccountStore accountStore;
+    private Manager manager;
 
-    ValidateSignTask(TransactionCapsule trx, CountDownLatch countDownLatch, AccountStore accountStore) {
+    ValidateSignTask(TransactionCapsule trx, CountDownLatch countDownLatch,
+        Manager manager) {
       this.trx = trx;
       this.countDownLatch = countDownLatch;
-      this.accountStore = accountStore;
+      this.manager = manager;
     }
 
     @Override
     public Boolean call() throws ValidateSignatureException {
       try {
-        trx.validateSignature(accountStore);
+        trx.validateSignature(manager);
       } catch (ValidateSignatureException e) {
         throw e;
       } finally {
@@ -1471,7 +1591,7 @@ public class Manager {
 
     for (TransactionCapsule transaction : block.getTransactions()) {
       Future<Boolean> future = validateSignService
-          .submit(new ValidateSignTask(transaction, countDownLatch, this.accountStore));
+          .submit(new ValidateSignTask(transaction, countDownLatch, this));
       futures.add(future);
     }
     countDownLatch.await();
@@ -1521,4 +1641,5 @@ public class Manager {
       logger.debug("too big transaction result");
     }
   }
+
 }

@@ -167,6 +167,18 @@ public class ProposalController {
           break;
         }
         case (16): {
+          manager.getDynamicPropertiesStore().saveAllowDelegateResource(entry.getValue());
+          break;
+        }
+        case (17): {
+          manager.getDynamicPropertiesStore().saveTotalEnergyLimit(entry.getValue());
+          break;
+        }
+        case (18): {
+          manager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(entry.getValue());
+          break;
+        }
+        case (19): {
           if (manager.getDynamicPropertiesStore().getAllowMultiSign() == 0) {
             manager.getDynamicPropertiesStore().saveAllowMultiSign(entry.getValue());
           }

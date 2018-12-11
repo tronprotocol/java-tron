@@ -99,7 +99,8 @@ public class TransactionsMsgHandler implements TronMsgHandler {
     for (Transaction trx : msg.getTransactions().getTransactionsList()) {
       Item item = new Item(new TransactionMessage(trx).getMessageId(), InventoryType.TRX);
       if (!peer.getAdvInvRequest().containsKey(item)) {
-        throw new P2pException(TypeEnum.BAD_MESSAGE, "trx: " + msg.getMessageId() + " without request.");
+        throw new P2pException(TypeEnum.BAD_MESSAGE,
+            "trx: " + msg.getMessageId() + " without request.");
       }
       peer.getAdvInvRequest().remove(item);
     }

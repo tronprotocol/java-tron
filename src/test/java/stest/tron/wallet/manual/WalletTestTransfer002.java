@@ -70,7 +70,7 @@ public class WalletTestTransfer002 {
     blockingStubExtension = WalletExtensionGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testGetTotalTransaction() {
     NumberMessage beforeGetTotalTransaction = blockingStubFull
         .totalTransaction(GrpcAPI.EmptyMessage.newBuilder().build());

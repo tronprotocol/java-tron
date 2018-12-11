@@ -56,8 +56,7 @@ public class ChannelManager {
 
   private int getMaxActivePeersWithSameIp = args.getNodeMaxActiveNodesWithSameIp();
 
-  public void init () {
-
+  public void init() {
     if (this.args.getNodeListenPort() > 0) {
       new Thread(() -> peerServer.start(Args.getInstance().getNodeListenPort()),
           "PeerServerThread").start();
@@ -126,8 +125,8 @@ public class ChannelManager {
       }
     }
 
-    if (activePeers.containsKey(peer.getNodeIdWrapper())) {
-      Channel channel = activePeers.get(peer.getNodeIdWrapper());
+    Channel channel = activePeers.get(peer.getNodeIdWrapper());
+    if (channel != null) {
       if (channel.getStartTime() > peer.getStartTime()) {
         logger.info("Disconnect connection established later, {}", channel.getNode());
         channel.disconnect(DUPLICATE_PEER);

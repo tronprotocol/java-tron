@@ -182,6 +182,7 @@ public class NodeInfoService {
     configNodeInfo.setMinTimeRatio(args.getMinTimeRatio());
     configNodeInfo.setMaxTimeRatio(args.getMaxTimeRatio());
     configNodeInfo.setAllowCreationOfContracts(args.getAllowCreationOfContracts());
+    configNodeInfo.setAllowAdaptiveEnergy(args.getAllowAdaptiveEnergy());
     nodeInfo.setConfigNodeInfo(configNodeInfo);
   }
 

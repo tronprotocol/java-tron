@@ -55,7 +55,7 @@ public class NodeImplTest {
   }
 
   @Test
-  public void testSyncBlockMessage() {
+  public void testSyncBlockMessage() throws Exception {
     PeerConnection peer = new PeerConnection();
     BlockCapsule genesisBlockCapsule = BlockUtil.newGenesisBlockCapsule();
 
@@ -87,7 +87,7 @@ public class NodeImplTest {
   }
 
   @Test
-  public void testAdvBlockMessage(){
+  public void testAdvBlockMessage() throws Exception{
     PeerConnection peer = new PeerConnection();
     BlockCapsule genesisBlockCapsule = BlockUtil.newGenesisBlockCapsule();
 

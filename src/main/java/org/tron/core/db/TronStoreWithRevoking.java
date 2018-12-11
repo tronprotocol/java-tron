@@ -25,7 +25,7 @@ import org.tron.core.exception.ItemNotFoundException;
 
 @Slf4j
 public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements ITronChainBase<T> {
-
+  @Getter // only for unit test
   protected IRevokingDB revokingDB;
   private TypeToken<T> token = new TypeToken<T>(getClass()) {};
   @Autowired
@@ -139,6 +139,17 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   @Override
   public Iterator<Map.Entry<byte[], T>> iterator() {
     return Iterators.transform(revokingDB.iterator(), e -> {
+      try {
+        return Maps.immutableEntry(e.getKey(), of(e.getValue()));
+      } catch (BadItemException e1) {
+        throw new RuntimeException(e1);
+      }
+    });
+  }
+
+  public Iterator<Map.Entry<byte[], T>> iteratorOnSolidity() {
+    return Iterators.transform(((RevokingDBWithCachingNewValue) revokingDB).iteratorOnSolidity(), e ->
+    {
       try {
         return Maps.immutableEntry(e.getKey(), of(e.getValue()));
       } catch (BadItemException e1) {

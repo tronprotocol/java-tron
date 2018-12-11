@@ -20,7 +20,7 @@ public class ApplicationImpl implements Application {
 
   @Autowired
   private Manager dbManager;
-  
+
   private boolean isProducer;
 
   @Override

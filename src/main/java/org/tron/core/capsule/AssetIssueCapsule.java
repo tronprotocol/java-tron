@@ -17,9 +17,10 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.nio.charset.Charset;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.db.Manager;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.AssetIssueContract.FrozenSupply;
 
@@ -61,6 +62,26 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
     return this.assetIssueContract.getName();
   }
 
+  public void setId(String id) {
+    this.assetIssueContract = this.assetIssueContract.toBuilder()
+        .setId(id)
+        .build();
+  }
+
+  public String getId() {
+    return this.assetIssueContract.getId();
+  }
+
+  public void setPrecision(int precision) {
+    this.assetIssueContract = this.assetIssueContract.toBuilder()
+        .setPrecision(precision)
+        .build();
+  }
+
+  public int getPrecision() {
+    return this.assetIssueContract.getPrecision();
+  }
+
   public void setOrder(long order) {
     this.assetIssueContract = this.assetIssueContract.toBuilder()
         .setOrder(order)
@@ -71,14 +92,27 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
     return this.assetIssueContract.getOrder();
   }
 
+  public byte[] createDbV2Key() {
+    return ByteArray.fromString(this.assetIssueContract.getId());
+  }
+
   public byte[] createDbKey() {
-    long order = getOrder();
-    if (order == 0) {
-      return getName().toByteArray();
+//    long order = getOrder();
+//    if (order == 0) {
+//      return getName().toByteArray();
+//    }
+//    String name = new String(getName().toByteArray(), Charset.forName("UTF-8"));
+//    String nameKey = createDbKeyString(name, order);
+//    return nameKey.getBytes();
+    return getName().toByteArray();
+  }
+
+  public byte[] createDbKeyFinal(Manager manager) {
+    if (manager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      return createDbKey();
+    } else {
+      return createDbV2Key();
     }
-    String name = new String(getName().toByteArray(), Charset.forName("UTF-8"));
-    String nameKey = createDbKeyString(name, order);
-    return nameKey.getBytes();
   }
 
   public static String createDbKeyString(String name, long order) {

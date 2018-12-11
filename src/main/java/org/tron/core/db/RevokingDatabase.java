@@ -26,13 +26,13 @@ public interface RevokingDatabase {
 
   int size();
 
-  void updateSolidity(long oldSolidifiedBlockNum, long newSolidifedBlockNum);
-
   void check();
 
   void setMaxSize(int maxSize);
 
   void disable();
+
+  void setMaxFlushCount(int maxFlushCount);
 
   void shutdown();
 }

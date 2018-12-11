@@ -292,7 +292,6 @@ public class BroadTest {
       peer.close();
     }
     context.destroy();
-    peerClient.close();
     handshakeHandlerTest.close();
     appT.shutdownServices();
     appT.shutdown();

@@ -31,10 +31,28 @@ public class AccountIdIndexStore extends TronStoreWithRevoking<BytesCapsule> {
     return null;
   }
 
+  public byte[] getOnSolidity(ByteString name) {
+    BytesCapsule bytesCapsule = getOnSolidity(name.toByteArray());
+    if (Objects.nonNull(bytesCapsule)) {
+      return bytesCapsule.getData();
+    }
+    return null;
+  }
+
   @Override
   public BytesCapsule get(byte[] key) {
     byte[] lowerCaseKey = getLowerCaseAccountId(key);
     byte[] value = revokingDB.getUnchecked(lowerCaseKey);
+    if (ArrayUtils.isEmpty(value)) {
+      return null;
+    }
+    return new BytesCapsule(value);
+  }
+
+  @Override
+  public BytesCapsule getOnSolidity(byte[] key) {
+    byte[] lowerCaseKey = getLowerCaseAccountId(key);
+    byte[] value = revokingDB.getUncheckedOnSolidity(lowerCaseKey);
     if (ArrayUtils.isEmpty(value)) {
       return null;
     }
