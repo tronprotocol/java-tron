@@ -9,8 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.entity.NodeInfo;
-import org.tron.core.services.NodeInfoService;
 import org.tron.core.services.http.Util;
+import org.tron.core.services.interfaceOnSolidity.NodeInfoOnSolidityService;
 
 
 @Component
@@ -18,7 +18,7 @@ import org.tron.core.services.http.Util;
 public class GetNodeInfoOnSolidityServlet extends HttpServlet {
 
   @Autowired
-  private NodeInfoService nodeInfoService;
+  private NodeInfoOnSolidityService nodeInfoService;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
