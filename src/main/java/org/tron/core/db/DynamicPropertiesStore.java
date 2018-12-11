@@ -816,6 +816,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     saveTotalEnergyTargetLimit(totalEnergyLimit / 14400);
   }
 
+  public void saveTotalEnergyLimit2(long totalEnergyLimit) {
+    this.put(DynamicResourceProperties.TOTAL_ENERGY_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(totalEnergyLimit)));
+
+    saveTotalEnergyTargetLimit(totalEnergyLimit / 14400);
+    if (getAllowAdaptiveEnergy() == 0) {
+      saveTotalEnergyCurrentLimit(totalEnergyLimit);
+    }
+  }
+
   public long getTotalEnergyLimit() {
     return Optional.ofNullable(getUnchecked(DynamicResourceProperties.TOTAL_ENERGY_LIMIT))
         .map(BytesCapsule::getData)
