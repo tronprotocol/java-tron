@@ -1,5 +1,7 @@
-package org.tron.core.db;
+package org.tron.core.db.fast.storetrie;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,33 +10,26 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.core.db.common.WrappedByteArray;
+import org.tron.core.db.fast.TrieService;
 import org.tron.core.db2.common.DB;
-import org.tron.core.trie.AccountCallBack;
 import org.tron.core.trie.TrieImpl;
 
 @Slf4j
 @Component
-public class AccountStateStore extends TronStoreWithRevoking<BytesCapsule> implements
+public class DelegatedResourceStoreTrie extends TronStoreWithRevoking<BytesCapsule> implements
     DB<byte[], BytesCapsule> {
 
-  @Autowired
-  private DynamicPropertiesStore dynamicPropertiesStore;
+  private Cache<WrappedByteArray, BytesCapsule> cache = CacheBuilder.newBuilder()
+      .initialCapacity(1000).maximumSize(1000).build();
 
   @Autowired
-  private AccountStateStore(@Value("accountState") String dbName) {
+  private TrieService trieService;
+
+  @Autowired
+  private DelegatedResourceStoreTrie(@Value("delegatedResourceTrie") String dbName) {
     super(dbName);
-  }
-
-  public AccountCapsule getAccount(byte[] key) {
-    long latestNumber = dynamicPropertiesStore.getLatestBlockHeaderNumber();
-    byte[] rootHash = AccountCallBack.rootHashCache.getIfPresent(latestNumber);
-    return getAccount(key, rootHash);
-  }
-
-  public AccountCapsule getAccount(byte[] key, byte[] rootHash) {
-    TrieImpl trie = new TrieImpl(this, rootHash);
-    byte[] value = trie.get(key);
-    return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
   }
 
   @Override
@@ -44,17 +39,20 @@ public class AccountStateStore extends TronStoreWithRevoking<BytesCapsule> imple
 
   @Override
   public void remove(byte[] bytes) {
+    cache.invalidate(WrappedByteArray.of(bytes));
     super.delete(bytes);
   }
 
   @Override
   public BytesCapsule get(byte[] key) {
-    return super.getUnchecked(key);
+    BytesCapsule bytesCapsule = cache.getIfPresent(WrappedByteArray.of(key));
+    return bytesCapsule != null ? bytesCapsule : super.getUnchecked(key);
   }
 
   @Override
   public void put(byte[] key, BytesCapsule item) {
     logger.info("put key: {}", ByteUtil.toHexString(key));
     super.put(key, item);
+    cache.put(WrappedByteArray.of(key), item);
   }
 }

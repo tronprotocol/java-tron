@@ -11,7 +11,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.trie.AccountCallBack;
+import org.tron.core.db.fast.callback.FastSyncCallBack;
+import org.tron.core.db.fast.storetrie.AccountStateStoreTrie;
 
 @Slf4j
 @Component
@@ -20,10 +21,10 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   private static Map<String, byte[]> assertsAddress = new HashMap<>(); // key = name , value = address
 
   @Autowired
-  private AccountCallBack accountCallBack;
+  private FastSyncCallBack fastSyncCallBack;
 
   @Autowired
-  private AccountStateStore accountStateStore;
+  private AccountStateStoreTrie accountStateStoreTrie;
 
   @Autowired
   private AccountStore(@Value("account") String dbName) {
@@ -32,23 +33,27 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   @Override
   public AccountCapsule get(byte[] key) {
-    byte[] value = revokingDB.getUnchecked(key);
-    if (ArrayUtils.isEmpty(value)) {
-      return accountStateStore.getAccount(key);
+    AccountCapsule accountCapsule = accountStateStoreTrie.getAccount(key);
+    if (accountCapsule != null) {
+      return accountCapsule;
     }
-    return new AccountCapsule(value);
+    byte[] value = revokingDB.getUnchecked(key);
+    return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
   }
 
   @Override
   public AccountCapsule getOnSolidity(byte[] key) {
     byte[] value = revokingDB.getUncheckedOnSolidity(key);
-    return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
+    if (ArrayUtils.isEmpty(value)) {
+      return accountStateStoreTrie.getSolidityAccount(key);
+    }
+    return new AccountCapsule(value);
   }
 
   @Override
   public void put(byte[] key, AccountCapsule item) {
     super.put(key, item);
-    accountCallBack.callBack(key, item);
+    fastSyncCallBack.accountCallBack(key, item);
   }
 
   /**

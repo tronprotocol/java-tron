@@ -1,4 +1,4 @@
-package org.tron.core.trie;
+package org.tron.core.db.fast.callback;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -16,11 +16,12 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.utils.RLP;
-import org.tron.core.db.AccountStateStore;
+import org.tron.core.db.fast.storetrie.AccountStateStoreTrie;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.trie.TrieImpl;
 
 @Slf4j
 @Component
@@ -37,7 +38,7 @@ public class AccountCallBack {
   private Manager manager;
 
   @Autowired
-  private AccountStateStore db;
+  private AccountStateStoreTrie db;
 
   public void callBack(byte[] key, AccountCapsule item) {
     if (!exe()) {
@@ -75,6 +76,8 @@ public class AccountCallBack {
     ByteString oldRoot = blockCapsule.getInstance().getBlockHeader().getRawData()
         .getAccountStateRoot();
     execute = false;
+    //
+    //
     byte[] newRoot = trie.getRootHash();
     if (ArrayUtils.isEmpty(newRoot)) {
       newRoot = Hash.EMPTY_TRIE_HASH;
@@ -93,6 +96,9 @@ public class AccountCallBack {
     if (!exe()) {
       return;
     }
+    //
+
+    //
     byte[] newRoot = trie.getRootHash();
     if (ArrayUtils.isEmpty(newRoot)) {
       newRoot = Hash.EMPTY_TRIE_HASH;

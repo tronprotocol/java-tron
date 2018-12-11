@@ -58,6 +58,8 @@ import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.api.AssetUpdateHelper;
+import org.tron.core.db.fast.TrieService;
+import org.tron.core.db.fast.callback.FastSyncCallBack;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotManager;
@@ -83,7 +85,6 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.services.WitnessService;
-import org.tron.core.trie.AccountCallBack;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
@@ -192,7 +193,10 @@ public class Manager {
   private ForkController forkController = ForkController.instance();
 
   @Autowired
-  private AccountCallBack accountCallBack;
+  private FastSyncCallBack fastSyncCallBack;
+
+  @Autowired
+  private TrieService trieService;
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -369,7 +373,8 @@ public class Manager {
 
   @PostConstruct
   public void init() {
-    accountCallBack.setManager(this);
+    fastSyncCallBack.setManager(this);
+    trieService.setManager(this);
     revokingStore.disable();
     revokingStore.check();
     this.setWitnessController(WitnessController.createInstance(this));
@@ -1128,7 +1133,7 @@ public class Manager {
     session.reset();
     session.setValue(revokingStore.buildSession());
     //
-    accountCallBack.preExecute(blockCapsule);
+    fastSyncCallBack.preExecute(blockCapsule);
 
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext() || repushTransactions.size() > 0) {
@@ -1200,7 +1205,7 @@ public class Manager {
 
     session.reset();
     //
-    accountCallBack.executeGenerateFinish();
+    fastSyncCallBack.executeGenerateFinish();
 
     if (postponedTrxCount > 0) {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
@@ -1277,16 +1282,16 @@ public class Manager {
     }
     if (!Args.getInstance().isFastSync()) {
       try {
-        accountCallBack.preExecute(block);
+        fastSyncCallBack.preExecute(block);
         for (TransactionCapsule transactionCapsule : block.getTransactions()) {
           if (block.generatedByMyself) {
             transactionCapsule.setVerified(true);
           }
           processTransaction(transactionCapsule, block);
         }
-        accountCallBack.executePushFinish();
+        fastSyncCallBack.executePushFinish();
       } finally {
-        accountCallBack.exceptionFinish();
+        fastSyncCallBack.exceptionFinish();
       }
     }
 

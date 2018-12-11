@@ -7,14 +7,24 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.db.fast.FastSyncStoreConstant.TrieEnum;
+import org.tron.core.db.fast.callback.FastSyncCallBack;
+import org.tron.core.db.fast.storetrie.AssetIssueStoreTrie;
 
 @Slf4j
 @Component
 public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
+
+  @Autowired
+  private FastSyncCallBack fastSyncCallBack;
+
+  @Autowired
+  private AssetIssueStoreTrie assetIssueStoreTrie;
 
   @Autowired
   protected AssetIssueStore(@Value("asset-issue") String dbName) {
@@ -36,12 +46,21 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
    * get all asset issues.
    */
   public List<AssetIssueCapsule> getAllAssetIssues() {
+    List<AssetIssueCapsule> assetIssueCapsuleList = assetIssueStoreTrie.getAllAssetIssues();
+    if (CollectionUtils.isNotEmpty(assetIssueCapsuleList)) {
+      return assetIssueCapsuleList;
+    }
     return Streams.stream(iterator())
         .map(Entry::getValue)
         .collect(Collectors.toList());
   }
 
   public List<AssetIssueCapsule> getAllAssetIssuesOnSolidity() {
+    List<AssetIssueCapsule> assetIssueCapsuleList = assetIssueStoreTrie
+        .getAllAssetIssuesOnSolidity();
+    if (CollectionUtils.isNotEmpty(assetIssueCapsuleList)) {
+      return assetIssueCapsuleList;
+    }
     return Streams.stream(iteratorOnSolidity())
         .map(Entry::getValue)
         .collect(Collectors.toList());
@@ -71,8 +90,8 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
     });
     limit = limit > ASSET_ISSUE_COUNT_LIMIT_MAX ? ASSET_ISSUE_COUNT_LIMIT_MAX : limit;
     long end = offset + limit;
-    end = end > assetIssueList.size() ? assetIssueList.size() : end ;
-    return assetIssueList.subList((int)offset,(int)end);
+    end = end > assetIssueList.size() ? assetIssueList.size() : end;
+    return assetIssueList.subList((int) offset, (int) end);
   }
 
   public List<AssetIssueCapsule> getAssetIssuesPaginated(long offset, long limit) {
@@ -83,4 +102,9 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
     return getAssetIssuesPaginated(getAllAssetIssuesOnSolidity(), offset, limit);
   }
 
+  @Override
+  public void put(byte[] key, AssetIssueCapsule item) {
+    super.put(key, item);
+    fastSyncCallBack.callBack(key, item.getData(), TrieEnum.ASSET);
+  }
 }
