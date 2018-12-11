@@ -240,6 +240,7 @@ public class ProposalCreateActuator extends AbstractActuator {
         break;
       }
       case (19): {
+        // todo: use new block version
         if (!dbManager.getForkController().pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
           throw new ContractValidateException("Bad chain parameter id");
         }
