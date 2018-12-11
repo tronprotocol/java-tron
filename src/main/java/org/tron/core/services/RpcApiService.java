@@ -68,7 +68,6 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.NonUniqueObjectException;
@@ -272,14 +271,7 @@ public class RpcApiService implements Service {
       ByteString addressBs = request.getAddress();
       if (addressBs != null) {
         Account reply = wallet.getAccount(request);
-        if (reply == null) {
-          responseObserver.onNext(null);
-        } else {
-          AccountCapsule accountCapsule = new AccountCapsule(reply);
-          BandwidthProcessor processor = new BandwidthProcessor(dbManager);
-          processor.updateUsage(accountCapsule);
-          responseObserver.onNext(accountCapsule.getInstance());
-        }
+        responseObserver.onNext(reply);
       } else {
         responseObserver.onNext(null);
       }
@@ -291,14 +283,7 @@ public class RpcApiService implements Service {
       ByteString id = request.getAccountId();
       if (id != null) {
         Account reply = wallet.getAccountById(request);
-        if (reply == null) {
-          responseObserver.onNext(null);
-        } else {
-          AccountCapsule accountCapsule = new AccountCapsule(reply);
-          BandwidthProcessor processor = new BandwidthProcessor(dbManager);
-          processor.updateUsage(accountCapsule);
-          responseObserver.onNext(accountCapsule.getInstance());
-        }
+        responseObserver.onNext(reply);
       } else {
         responseObserver.onNext(null);
       }
