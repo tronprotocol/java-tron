@@ -94,7 +94,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private MessageCount trxCount = new MessageCount();
 
-  private long TPS = 1000;
+  private long TPS = 0;
 
   private Cache<Sha256Hash, TransactionMessage> TrxCache = CacheBuilder.newBuilder()
       .maximumSize(100_000_000).expireAfterWrite(1, TimeUnit.HOURS).initialCapacity(100_000_000)
@@ -515,6 +515,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void consumerAdvObjToSpread() {
+    TPS = Args.getInstance().getStressTps();
+
     long starTime = System.currentTimeMillis();
     if (advObjToSpread.isEmpty()) {
       return;

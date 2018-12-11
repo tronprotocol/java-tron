@@ -22,12 +22,12 @@ import org.tron.stresstest.dispatch.strategy.Level2Strategy;
 
 @Getter
 public abstract class AbstractTransactionCreator extends Level2Strategy {
-  protected String privateKey = "cbe57d98134c118ed0d219c0c8bc4154372c02c1e13b5cce30dd22ecd7bed19e";
-  protected ByteString ownerAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("27meR2d4HodFPYX2V8YRDrLuFpYdbLvBEWi"));
-  protected byte[] ownerAddressBytes = Wallet.decodeFromBase58Check("27meR2d4HodFPYX2V8YRDrLuFpYdbLvBEWi");
-  protected String toAddressStr = "27kvcjMFKkiWYwoxk5gf4pwyqym4oCAaW79";
-  protected ByteString toAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("27kvcjMFKkiWYwoxk5gf4pwyqym4oCAaW79"));
-  protected byte[] toAddressBytes = Wallet.decodeFromBase58Check("27kvcjMFKkiWYwoxk5gf4pwyqym4oCAaW79");
+  protected String privateKey = "549c7797b351e48ab1c6bb5857138b418012d97526fc2acba022357d49c93ac0";
+  protected ByteString ownerAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm"));
+  protected byte[] ownerAddressBytes = Wallet.decodeFromBase58Check("TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm");
+  protected String toAddressStr = "TQjKWNDCLSgqUtg9vrjzZnWhhmsgNgTfmj";
+  protected ByteString toAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("TQjKWNDCLSgqUtg9vrjzZnWhhmsgNgTfmj"));
+  protected byte[] toAddressBytes = Wallet.decodeFromBase58Check("TQjKWNDCLSgqUtg9vrjzZnWhhmsgNgTfmj");
   protected Long amount = 1L;
   protected Long amountOneTrx = 1000_000L;
   protected ByteString assetName = ByteString.copyFrom("1000001".getBytes());
@@ -45,8 +45,8 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
   protected long quant2 = 1000000;
 
   // participate
-  protected String ownerPrivateKey = "f7b2f476843bfa96a3cc97238f8ed017e0bdbc53bebb8e06efc6ca776a4a26c7";
-  protected byte[] participateOwnerAddressBytes = Wallet.decodeFromBase58Check("27kvcjMFKkiWYwoxk5gf4pwyqym4oCAaW79");
+  protected String ownerPrivateKey = "76fb5f55710c7ad6a98f73dd38a732f9a69a7b3ce700a694363a50572fa2842a";
+  protected byte[] participateOwnerAddressBytes = Wallet.decodeFromBase58Check("TQjKWNDCLSgqUtg9vrjzZnWhhmsgNgTfmj");
   protected long participateAmount = 1;
   protected byte[] participateAssetName = "1000001".getBytes();
 

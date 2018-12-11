@@ -59,6 +59,14 @@ public class Args {
   private String outputDirectory = "output-directory";
 
   @Getter
+  @Parameter(names = {"--stress-count"})
+  private int stressCount = 100;
+
+  @Getter
+  @Parameter(names = {"--stress-tps"})
+  private int stressTps = 1;
+
+  @Getter
   @Parameter(names = {"-h", "--help"}, help = true, description = "HELP message")
   private boolean help = false;
 
@@ -391,6 +399,8 @@ public class Args {
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
+    INSTANCE.stressCount = 100;
+    INSTANCE.stressTps = 1;
     INSTANCE.help = false;
     INSTANCE.witness = false;
     INSTANCE.seedNodes = new ArrayList<>();
