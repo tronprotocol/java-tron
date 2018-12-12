@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component;
 import org.tron.core.db.TronStoreWithRevoking;
 
 @Component
-public class IncrementalMerkleTreeStore extends
-    TronStoreWithRevoking<IncrementalMerkleTreeCapsule> {
+public class IncrementalMerkleTreeStore
+    extends TronStoreWithRevoking<IncrementalMerkleTreeCapsule> {
 
   @Autowired
   public IncrementalMerkleTreeStore(@Value("IncrementalMerkleTree") String dbName) {
@@ -25,6 +25,4 @@ public class IncrementalMerkleTreeStore extends
     byte[] value = revokingDB.getUnchecked(key);
     return !ArrayUtils.isEmpty(value);
   }
-
-
 }

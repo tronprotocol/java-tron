@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component;
 import org.tron.core.db.TronStoreWithRevoking;
 
 @Component
-public class IncrementalMerkleWitnessStore extends
-    TronStoreWithRevoking<IncrementalMerkleWitnessCapsule> {
+public class IncrementalMerkleWitnessStore
+    extends TronStoreWithRevoking<IncrementalMerkleWitnessCapsule> {
 
   @Autowired
   public IncrementalMerkleWitnessStore(@Value("IncrementalMerkleWitness") String dbName) {

@@ -34,13 +34,9 @@ public class SHA256CompressCapsule implements ProtoCapsule<SHA256Compress> {
     return this.sha256Compress.getContent();
   }
 
-
   public void setContent(ByteString content) {
-    this.sha256Compress = SHA256Compress.newBuilder()
-        .setContent(content)
-        .build();
+    this.sha256Compress = SHA256Compress.newBuilder().setContent(content).build();
   }
-
 
   @Override
   public byte[] getData() {
@@ -53,10 +49,7 @@ public class SHA256CompressCapsule implements ProtoCapsule<SHA256Compress> {
   }
 
   public static SHA256CompressCapsule combine(
-      final SHA256Compress a,
-      final SHA256Compress b,
-      int depth
-  ) {
+      final SHA256Compress a, final SHA256Compress b, int depth) {
     byte[] res;
     byte[] blob = new byte[64];
 
@@ -79,26 +72,28 @@ public class SHA256CompressCapsule implements ProtoCapsule<SHA256Compress> {
     return sha256CompressCapsule;
   }
 
-  static public SHA256CompressCapsule uncommitted() {
+  public static SHA256CompressCapsule uncommitted() {
     SHA256CompressCapsule compressCapsule = new SHA256CompressCapsule();
-    compressCapsule.setContent(ByteString.copyFrom(ByteArray
-        .fromHexString("0000000000000000000000000000000000000000000000000000000000000000")));
+    compressCapsule.setContent(
+        ByteString.copyFrom(
+            ByteArray.fromHexString(
+                "0000000000000000000000000000000000000000000000000000000000000000")));
     return compressCapsule;
   }
-
 
   public boolean isExist() {
     return !sha256Compress.getContent().isEmpty();
   }
 
-  public static void main(String[] args){
-    byte[] a = ByteArray.fromHexString("c9b350fc5221e4b4db929307a628ec6ca751f309d0653608d90e41ad5a2dc1d4");
+  public static void main(String[] args) {
+    byte[] a =
+        ByteArray.fromHexString("c9b350fc5221e4b4db929307a628ec6ca751f309d0653608d90e41ad5a2dc1d4");
     ZksnarkUtils.sort(a);
-    byte[] b = ByteArray.fromHexString("d8a93718eaf9feba4362d2c091d4e58ccabe9f779957336269b4b917be9856da");
+    byte[] b =
+        ByteArray.fromHexString("d8a93718eaf9feba4362d2c091d4e58ccabe9f779957336269b4b917be9856da");
     ZksnarkUtils.sort(b);
     SHA256Compress sa = SHA256Compress.newBuilder().setContent(ByteString.copyFrom(a)).build();
     SHA256Compress sb = SHA256Compress.newBuilder().setContent(ByteString.copyFrom(b)).build();
     combine(sa, sb, 0);
-
   }
 }

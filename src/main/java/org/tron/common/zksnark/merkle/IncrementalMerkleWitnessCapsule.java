@@ -14,7 +14,6 @@ public class IncrementalMerkleWitnessCapsule implements ProtoCapsule<Incremental
 
   private IncrementalMerkleWitness witness;
 
-
   public IncrementalMerkleWitnessCapsule() {
     witness = IncrementalMerkleWitness.getDefaultInstance();
   }
@@ -30,7 +29,6 @@ public class IncrementalMerkleWitnessCapsule implements ProtoCapsule<Incremental
       logger.debug(e.getMessage(), e);
     }
   }
-
 
   public IncrementalMerkleTreeCapsule getTree() {
     return new IncrementalMerkleTreeCapsule(this.witness.getTree());
@@ -69,8 +67,8 @@ public class IncrementalMerkleWitnessCapsule implements ProtoCapsule<Incremental
   }
 
   public void resetRt() {
-    this.witness = this.witness.toBuilder().setRt(toMerkleWitnessContainer().root().getContent())
-        .build();
+    this.witness =
+        this.witness.toBuilder().setRt(toMerkleWitnessContainer().root().getContent()).build();
   }
 
   public OutputPoint getOutputPoint() {
@@ -78,9 +76,11 @@ public class IncrementalMerkleWitnessCapsule implements ProtoCapsule<Incremental
   }
 
   public void setOutputPoint(ByteString hash, int index) {
-    this.witness = this.witness.toBuilder()
-        .setOutputPoint(OutputPoint.newBuilder().setHash(hash).setIndex(index).build())
-        .build();
+    this.witness =
+        this.witness
+            .toBuilder()
+            .setOutputPoint(OutputPoint.newBuilder().setHash(hash).setIndex(index).build())
+            .build();
   }
 
   @Override

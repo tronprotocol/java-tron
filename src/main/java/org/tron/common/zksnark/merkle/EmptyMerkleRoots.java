@@ -14,16 +14,13 @@ public class EmptyMerkleRoots {
   public EmptyMerkleRoots() {
     emptyRoots.add(SHA256CompressCapsule.uncommitted());
     for (int d = 1; d <= IncrementalMerkleTreeContainer.DEPTH; d++) {
-      emptyRoots
-          .add(SHA256CompressCapsule
-              .combine(emptyRoots.get(d - 1).getInstance(), emptyRoots.get(d - 1).getInstance(),
-                  d - 1));
+      emptyRoots.add(
+          SHA256CompressCapsule.combine(
+              emptyRoots.get(d - 1).getInstance(), emptyRoots.get(d - 1).getInstance(), d - 1));
     }
   }
 
   public SHA256Compress emptyRoot(int depth) {
     return emptyRoots.get(depth).getInstance();
   }
-
-
 }

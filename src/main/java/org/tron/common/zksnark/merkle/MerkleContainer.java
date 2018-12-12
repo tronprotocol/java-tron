@@ -13,9 +13,7 @@ import org.tron.protos.Contract.SHA256Compress;
 @Slf4j
 public class MerkleContainer {
 
-  @Setter
-  @Getter
-  private Manager manager;
+  @Setter @Getter private Manager manager;
 
   public static MerkleContainer createInstance(Manager manager) {
     MerkleContainer instance = new MerkleContainer();
@@ -71,7 +69,6 @@ public class MerkleContainer {
     manager.getMerkleTreeStore().put(currentTreeKey, treeContainer.getTreeCapsule());
   }
 
-
   public boolean merkleRootIsExist(byte[] rt) {
     return this.manager.getMerkleTreeStore().contain(rt);
   }
@@ -90,7 +87,7 @@ public class MerkleContainer {
     return tree;
   }
 
-  //todo : to delete later
+  // todo : to delete later
   @Deprecated
   public IncrementalMerkleTreeContainer saveCmIntoMerkleTree(
       byte[] rt, byte[] cm1, byte[] cm2, byte[] hash) {
