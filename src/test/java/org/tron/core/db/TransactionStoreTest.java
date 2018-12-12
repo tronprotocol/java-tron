@@ -174,7 +174,7 @@ public class TransactionStoreTest {
     Assert.assertEquals("Get transaction is error",
       trxStore.get(trx.getTransactionId().getBytes()).getInstance(), trx.getInstance());
   }
-  
+
   /**
    * put and get CreateAccountTransaction.
    */
