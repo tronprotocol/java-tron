@@ -25,7 +25,6 @@ import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.net.message.BlockMessage;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.http.solidity.SolidityNodeHttpApiService;
 import org.tron.protos.Protocol.Block;
@@ -51,7 +50,7 @@ public class SolidityNode {
 
   private AtomicLong lastSolidityBlockNum = new AtomicLong();
 
-  private long startTime = System.currentTimeMillis();
+  private int maxBlockCacheSize = 10_000;
 
   private volatile boolean syncFlag = true;
 
@@ -89,7 +88,7 @@ public class SolidityNode {
     long blockNum = getNextSyncBlockId();
     while (blockNum != 0) {
       try {
-        if (blockMap.size() > 10000) {
+        if (blockMap.size() > maxBlockCacheSize) {
           sleep(1000);
           continue;
         }
@@ -137,7 +136,7 @@ public class SolidityNode {
     long blockNum = ID.incrementAndGet();
     while (flag) {
       try {
-        if (blockNum > remoteLastSolidityBlockNum.get()) {
+        if (blockNum > remoteLastSolidityBlockNum.get() || blockMap.size() > maxBlockCacheSize) {
           sleep(3000);
           remoteLastSolidityBlockNum.set(getLastSolidityBlockNum());
           continue;
@@ -200,12 +199,11 @@ public class SolidityNode {
         loopProcessBlock(block);
         blockBakQueue.put(block);
         logger.info(
-            "Success to process block: {}, blockMapSize: {}, blockQueueSize: {}, blockBakQueue: {}, cost {}.",
+            "Success to process block: {}, blockMapSize: {}, blockQueueSize: {}, blockBakQueue: {}.",
             block.getBlockHeader().getRawData().getNumber(),
             blockMap.size(),
             blockQueue.size(),
-            blockBakQueue.size(),
-            (System.currentTimeMillis() - startTime));
+            blockBakQueue.size());
       } catch (Exception e) {
         logger.error(e.getMessage());
         sleep(100);
