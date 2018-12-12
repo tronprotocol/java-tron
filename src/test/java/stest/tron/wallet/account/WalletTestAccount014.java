@@ -113,29 +113,23 @@ public class WalletTestAccount014 {
     final long createTimeInFullnode = account014.getCreateTime();
     final long lastOperationTimeInFullnode = account014.getLatestOprationTime();
     final long lastCustomeFreeTimeInFullnode = account014.getLatestConsumeFreeTime();
-    final long lastCustomeTimeInFullnode = account014.getLatestConsumeTime();
-    logger.info("freeNetUsageInFullnode " + freeNetUsageInFullnode);
     PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSoliInFull);
     account014 = PublicMethed.queryAccount(account014Address, blockingStubSoliInFull);
     final long freeNetUsageInSoliInFull = account014.getFreeNetUsage();
     final long createTimeInSoliInFull = account014.getCreateTime();
     final long lastOperationTimeInSoliInFull = account014.getLatestOprationTime();
     final long lastCustomeFreeTimeInSoliInFull = account014.getLatestConsumeFreeTime();
-    final long lastCustomeTimeInSoliInFull = account014.getLatestConsumeTime();
-    logger.info("freeNetUsageInSoliInFull " + freeNetUsageInSoliInFull);
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    //PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
     account014 = PublicMethed.queryAccount(account014Address, blockingStubSolidity);
     final long freeNetUsageInSolidity = account014.getFreeNetUsage();
     final long createTimeInSolidity = account014.getCreateTime();
     final long lastOperationTimeInSolidity = account014.getLatestOprationTime();
     final long lastCustomeFreeTimeInSolidity = account014.getLatestConsumeFreeTime();
-    final long lastCustomeTimeInSolidity = account014.getLatestConsumeTime();
-    logger.info("freeNetUsageInSolidity " + freeNetUsageInSolidity);
     Assert.assertTrue(freeNetUsageInSoliInFull > 0 && freeNetUsageInSolidity > 0
         && freeNetUsageInFullnode > 0);
-    Assert.assertTrue(freeNetUsageInFullnode <= freeNetUsageInSoliInFull
+    Assert.assertTrue(freeNetUsageInFullnode <= freeNetUsageInSoliInFull + 5
         && freeNetUsageInFullnode >= freeNetUsageInSoliInFull - 5);
-    Assert.assertTrue(freeNetUsageInFullnode <= freeNetUsageInSolidity
+    Assert.assertTrue(freeNetUsageInFullnode <= freeNetUsageInSolidity + 5
         && freeNetUsageInFullnode >= freeNetUsageInSolidity - 5);
     Assert.assertTrue(createTimeInFullnode == createTimeInSolidity && createTimeInFullnode
         == createTimeInSoliInFull);
@@ -146,9 +140,6 @@ public class WalletTestAccount014 {
     Assert.assertTrue(lastCustomeFreeTimeInFullnode == lastCustomeFreeTimeInSolidity
         && lastCustomeFreeTimeInFullnode == lastCustomeFreeTimeInSoliInFull);
     Assert.assertTrue(lastCustomeFreeTimeInSoliInFull != 0);
-    Assert.assertTrue(lastCustomeTimeInFullnode == lastCustomeTimeInSolidity
-        && lastCustomeTimeInFullnode == lastCustomeTimeInSoliInFull);
-    Assert.assertTrue(lastCustomeTimeInSoliInFull != 0);
   }
 
   @Test(enabled = true)
@@ -175,6 +166,7 @@ public class WalletTestAccount014 {
 
 
     Account account014 = PublicMethed.queryAccount(account014Address, blockingStubFull);
+    final long lastCustomeTimeInFullnode = account014.getLatestConsumeTime();
     final long netUsageInFullnode = account014.getNetUsage();
     final long acquiredForBandwidthInFullnode = account014
         .getAcquiredDelegatedFrozenBalanceForBandwidth();
@@ -186,6 +178,8 @@ public class WalletTestAccount014 {
     logger.info("delegatedForEnergyInFullnode " + delegatedForEnergyInFullnode);
     PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSoliInFull);
     account014 = PublicMethed.queryAccount(account014Address, blockingStubSoliInFull);
+    final long lastCustomeTimeInSoliInFull = account014.getLatestConsumeTime();
+    logger.info("freeNetUsageInSoliInFull " + lastCustomeTimeInSoliInFull);
     final long netUsageInSoliInFull = account014.getNetUsage();
     final long acquiredForBandwidthInSoliInFull = account014
         .getAcquiredDelegatedFrozenBalanceForBandwidth();
@@ -195,9 +189,10 @@ public class WalletTestAccount014 {
     final long delegatedForEnergyInSoliInFull = account014
         .getAccountResource().getDelegatedFrozenBalanceForEnergy();
     logger.info("delegatedForEnergyInSoliInFull " + delegatedForEnergyInSoliInFull);
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    //PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
     account014 = PublicMethed.queryAccount(account014Address, blockingStubSolidity);
     final long netUsageInSolidity = account014.getNetUsage();
+    final long lastCustomeTimeInSolidity = account014.getLatestConsumeTime();
     final long acquiredForBandwidthInSolidity = account014
         .getAcquiredDelegatedFrozenBalanceForBandwidth();
     final long delegatedBandwidthInSolidity = account014.getDelegatedFrozenBalanceForBandwidth();
@@ -205,12 +200,13 @@ public class WalletTestAccount014 {
         .getAcquiredDelegatedFrozenBalanceForEnergy();
     final long delegatedForEnergyInSolidity = account014.getAccountResource()
         .getDelegatedFrozenBalanceForEnergy();
+
     logger.info("delegatedForEnergyInSolidity " + delegatedForEnergyInSolidity);
     Assert.assertTrue(netUsageInSoliInFull > 0 && netUsageInSolidity > 0
         && netUsageInFullnode > 0);
-    Assert.assertTrue(netUsageInFullnode <= netUsageInSoliInFull
+    Assert.assertTrue(netUsageInFullnode <= netUsageInSoliInFull + 5
         && netUsageInFullnode >= netUsageInSoliInFull - 5);
-    Assert.assertTrue(netUsageInFullnode <= netUsageInSolidity
+    Assert.assertTrue(netUsageInFullnode <= netUsageInSolidity + 5
         && netUsageInFullnode >= netUsageInSolidity - 5);
     Assert.assertTrue(acquiredForBandwidthInFullnode == acquiredForBandwidthInSoliInFull
         && acquiredForBandwidthInFullnode == acquiredForBandwidthInSolidity);
@@ -223,6 +219,11 @@ public class WalletTestAccount014 {
     Assert.assertTrue(acquiredForBandwidthInSoliInFull == 1000000
         && delegatedBandwidthInSoliInFull == 1000000 && acquiredForEnergyInSoliInFull == 1000000
         && delegatedForEnergyInSoliInFull == 1000000);
+    logger.info("lastCustomeTimeInSoliInFull " + lastCustomeTimeInSoliInFull);
+    Assert.assertTrue(lastCustomeTimeInFullnode == lastCustomeTimeInSolidity
+        && lastCustomeTimeInFullnode == lastCustomeTimeInSoliInFull);
+    logger.info("lastCustomeTimeInSoliInFull " + lastCustomeTimeInSoliInFull);
+    Assert.assertTrue(lastCustomeTimeInSoliInFull != 0);
 
   }
 
