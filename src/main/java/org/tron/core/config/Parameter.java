@@ -23,7 +23,7 @@ public interface Parameter {
     int BLOCK_FILLED_SLOTS_NUMBER = 128;
     int MAX_VOTE_NUMBER = 30;
     int MAX_FROZEN_NUMBER = 1;
-    int BLOCK_VERSION = 5;
+    int BLOCK_VERSION = 6;
   }
 
   interface NodeConstant {
