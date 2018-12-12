@@ -415,7 +415,7 @@ public class WalletTest {
         exchangeList.getExchangesList().get(1).getCreatorAddress().toStringUtf8());
   }
 
-  @Test
+  //@Test
   public void testChainParameters() {
 
     Protocol.ChainParameters.Builder builder = Protocol.ChainParameters.newBuilder();
