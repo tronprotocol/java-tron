@@ -384,6 +384,15 @@ public class Args {
   @Setter
   private int minEffectiveConnection;
 
+  @Getter
+  @Setter
+  private int solidSyncThreadNum;
+
+  @Getter
+  @Setter
+  private int solidBlockCacheSize;
+
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -764,6 +773,12 @@ public class Args {
 
     INSTANCE.saveInternalTx =
         config.hasPath("vm.saveInternalTx") && config.getBoolean("vm.saveInternalTx");
+
+    INSTANCE.solidSyncThreadNum = config.hasPath("node.solidSyncThreadNum") ?
+        config.getInt("node.solidSyncThreadNum") : Runtime.getRuntime().availableProcessors();
+
+    INSTANCE.solidBlockCacheSize = config.hasPath("node.solidBlockCacheSize") ?
+        config.getInt("node.solidBlockCacheSize") : 100;
 
     initBackupProperty(config);
 

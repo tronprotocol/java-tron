@@ -34,7 +34,7 @@ public class SolidityNode {
 
   private Manager dbManager;
 
-  private Args cfgArgs;
+  private Args cfgArgs = Args.getInstance();
 
   private DatabaseGrpcClient databaseGrpcClient;
 
@@ -42,23 +42,24 @@ public class SolidityNode {
 
   private Map<Long, Block> blockMap = Maps.newConcurrentMap();
 
-  private LinkedBlockingDeque<Block> blockQueue = new LinkedBlockingDeque(10000);
+  private int syncThreadNum = cfgArgs.getSolidSyncThreadNum();
 
-  private LinkedBlockingDeque<Block> blockBakQueue = new LinkedBlockingDeque(10000);
+  private int blockCacheSize = cfgArgs.getSolidBlockCacheSize();
+
+  private LinkedBlockingDeque<Block> blockQueue = new LinkedBlockingDeque(blockCacheSize);
+
+  private LinkedBlockingDeque<Block> blockBakQueue = new LinkedBlockingDeque(blockCacheSize);
 
   private AtomicLong remoteLastSolidityBlockNum = new AtomicLong();
 
   private AtomicLong lastSolidityBlockNum = new AtomicLong();
 
-  private int maxBlockCacheSize = 10_000;
-
   private volatile boolean syncFlag = true;
 
   private volatile boolean flag = true;
 
-  public SolidityNode(Manager dbManager, Args cfgArgs) {
+  public SolidityNode(Manager dbManager) {
     this.dbManager = dbManager;
-    this.cfgArgs = cfgArgs;
     resolveCompatibilityIssueIfUsingFullNodeDatabase();
     lastSolidityBlockNum.set(dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
     ID.set(lastSolidityBlockNum.get());
@@ -68,16 +69,16 @@ public class SolidityNode {
 
   private void start() {
     try {
-      for (int i = 0; i < 50; i++) {
+      for (int i = 0; i < syncThreadNum; i++) {
         new Thread(() -> getSyncBlock()).start();
       }
       new Thread(() -> getAdvBlock()).start();
       new Thread(() -> pushBlock()).start();
       new Thread(() -> processBlock()).start();
       new Thread(() -> processTrx()).start();
-      logger.info(
-          "Success to start solid node, lastSolidityBlockNum: {}, ID: {}, remoteLastSolidityBlockNum: {}.",
-          lastSolidityBlockNum, ID.get(), remoteLastSolidityBlockNum);
+      logger.info( "Success to start solid node, lastSolidityBlockNum: {}, ID: {}, "
+              + "remoteLastSolidityBlockNum: {}, syncThreadNum: {}, blockCacheSize: {}.",
+          lastSolidityBlockNum, ID.get(), remoteLastSolidityBlockNum, syncThreadNum, blockCacheSize);
     } catch (Exception e) {
       logger.error("Failed to start solid node, address: {}.", cfgArgs.getTrustNodeAddr());
       System.exit(0);
@@ -88,7 +89,7 @@ public class SolidityNode {
     long blockNum = getNextSyncBlockId();
     while (blockNum != 0) {
       try {
-        if (blockMap.size() > maxBlockCacheSize) {
+        if (blockMap.size() > blockCacheSize) {
           sleep(1000);
           continue;
         }
@@ -136,7 +137,7 @@ public class SolidityNode {
     long blockNum = ID.incrementAndGet();
     while (flag) {
       try {
-        if (blockNum > remoteLastSolidityBlockNum.get() || blockMap.size() > maxBlockCacheSize) {
+        if (blockNum > remoteLastSolidityBlockNum.get() || blockMap.size() > blockCacheSize) {
           sleep(3000);
           remoteLastSolidityBlockNum.set(getLastSolidityBlockNum());
           continue;
@@ -324,7 +325,7 @@ public class SolidityNode {
     NodeManager nodeManager = context.getBean(NodeManager.class);
     nodeManager.close();
 
-    SolidityNode node = new SolidityNode(appT.getDbManager(), cfgArgs);
+    SolidityNode node = new SolidityNode(appT.getDbManager());
     node.start();
 
     rpcApiService.blockUntilShutdown();
