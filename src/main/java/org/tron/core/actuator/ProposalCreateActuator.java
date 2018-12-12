@@ -215,7 +215,7 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         break;
       }
-      case (17): {
+      case (17): { // deprecated
         if (!dbManager.getForkController().pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
           throw new ContractValidateException("Bad chain parameter id");
         }
