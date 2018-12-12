@@ -594,8 +594,7 @@ public class Manager {
   }
 
   void validateDup(TransactionCapsule transactionCapsule) throws DupTransactionException {
-    if (getTransactionStore().getUnchecked(transactionCapsule.getTransactionId().getBytes())
-        != null) {
+    if (getTransactionStore().has(transactionCapsule.getTransactionId().getBytes())) {
       logger.debug(ByteArray.toHexString(transactionCapsule.getTransactionId().getBytes()));
       throw new DupTransactionException("dup trans");
     }
@@ -1406,6 +1405,7 @@ public class Manager {
     proposalController.processProposals();
     witnessController.updateWitness();
     this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
+    forkController.updateWhenMaintenance(block);
     forkController.reset(block);
   }
 

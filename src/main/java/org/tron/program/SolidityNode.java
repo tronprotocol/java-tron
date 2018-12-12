@@ -257,6 +257,9 @@ public class SolidityNode {
             logger.warn("Failed to get trx: {}, reason: {}", trx.getTransactionId(), ex.getMessage());
             continue;
           }
+          if (ret == null) {
+            continue;
+          }
           ret.setBlockNumber(blockCapsule.getNum());
           ret.setBlockTimeStamp(blockCapsule.getTimeStamp());
           dbManager.getTransactionHistoryStore().put(trx.getTransactionId().getBytes(), ret);

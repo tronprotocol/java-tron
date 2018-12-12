@@ -108,6 +108,7 @@ public interface Parameter {
 
     int START_NEW_TRANSACTION = 4;
     int ENERGY_LIMIT = 5;
+    int VERSION_3_2_2 = 6;
   }
 
 }

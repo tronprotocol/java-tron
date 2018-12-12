@@ -86,6 +86,15 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
     return transactionCapsule == null ? new TransactionCapsule(value) : transactionCapsule;
   }
 
+  @Override
+  public TransactionCapsule getUnchecked(byte[] key) {
+    try {
+      return get(key);
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
   /**
    * get total transaction.
    */
