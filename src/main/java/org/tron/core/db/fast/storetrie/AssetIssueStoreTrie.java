@@ -68,6 +68,11 @@ public class AssetIssueStoreTrie extends TronStoreWithRevoking<BytesCapsule> imp
     return trie.get(RLP.encodeElement(key));
   }
 
+  public byte[] getSolidityValue(byte[] key) {
+    TrieImpl trie = trieService.getSolidityChildTrie(RLP.encodeString(ASSET_ISSUE_STORE_KEY), this);
+    return trie.get(RLP.encodeElement(key));
+  }
+
   public List<AssetIssueCapsule> getAllAssetIssues() {
     TrieImpl trie = trieService.getChildTrie(RLP.encodeString(ASSET_ISSUE_STORE_KEY), this);
     return scanAll(trie);

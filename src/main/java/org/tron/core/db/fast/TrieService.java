@@ -7,6 +7,8 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.Hash;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.Manager;
@@ -69,4 +71,8 @@ public class TrieService {
     return new TrieImpl(db, accountStateTrie.get(key));
   }
 
+  public static void main(String[] args) {
+    System.out.println(Wallet.encode58Check(ByteArray.fromHexString("41d376d829440505ea13c9d1c455317d51b62e4ab6")));
+    System.out.println(Wallet.encode58Check(ByteArray.fromHexString("417b88db9da8aacae0a7e967d24c0fc00129e815f6")));
+  }
 }

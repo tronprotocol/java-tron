@@ -1,6 +1,7 @@
 package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.DatabaseConstants.ASSET_ISSUE_COUNT_LIMIT_MAX;
+import static org.tron.core.db.fast.FastSyncStoreConstant.TrieEnum.ASSET;
 
 import com.google.common.collect.Streams;
 import java.util.List;
@@ -8,11 +9,11 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.AssetIssueCapsule;
-import org.tron.core.db.fast.FastSyncStoreConstant.TrieEnum;
 import org.tron.core.db.fast.callback.FastSyncCallBack;
 import org.tron.core.db.fast.storetrie.AssetIssueStoreTrie;
 
@@ -34,11 +35,19 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
 
   @Override
   public AssetIssueCapsule get(byte[] key) {
+    AssetIssueCapsule assetIssueCapsule = getValue(key);
+    if (assetIssueCapsule != null) {
+      return assetIssueCapsule;
+    }
     return super.getUnchecked(key);
   }
 
   @Override
   public AssetIssueCapsule getOnSolidity(byte[] key) {
+    AssetIssueCapsule assetIssueCapsule = getSolidityValue(key);
+    if (assetIssueCapsule != null) {
+      return assetIssueCapsule;
+    }
     return super.getUncheckedOnSolidity(key);
   }
 
@@ -102,9 +111,31 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
     return getAssetIssuesPaginated(getAllAssetIssuesOnSolidity(), offset, limit);
   }
 
+  public AssetIssueCapsule getValue(byte[] key) {
+    byte[] value = assetIssueStoreTrie.getValue(key);
+    if (ArrayUtils.isNotEmpty(value)) {
+      return new AssetIssueCapsule(value);
+    }
+    return null;
+  }
+
+  private AssetIssueCapsule getSolidityValue(byte[] key) {
+    byte[] value = assetIssueStoreTrie.getSolidityValue(key);
+    if (ArrayUtils.isNotEmpty(value)) {
+      return new AssetIssueCapsule(value);
+    }
+    return null;
+  }
+
+  @Override
+  public void delete(byte[] key) {
+    super.delete(key);
+    fastSyncCallBack.delete(key, ASSET);
+  }
+
   @Override
   public void put(byte[] key, AssetIssueCapsule item) {
     super.put(key, item);
-    fastSyncCallBack.callBack(key, item.getData(), TrieEnum.ASSET);
+    fastSyncCallBack.callBack(key, item.getData(), ASSET);
   }
 }

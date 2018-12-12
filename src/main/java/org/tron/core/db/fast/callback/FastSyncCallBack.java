@@ -114,23 +114,31 @@ public class FastSyncCallBack {
     trie.put(RLP.encodeElement(key), item.getData());
   }
 
+  public void deleteAccount(byte[] key) {
+    if (!exe()) {
+      return;
+    }
+    trie.delete(RLP.encodeElement(key));
+  }
+
   public void callBack(byte[] key, byte[] value, TrieEnum trieEnum) {
     if (!exe()) {
       return;
     }
     TrieImpl trieImpl = selectTrie(trieEnum);
     if (trieImpl != null) {
-      trieImpl.put(getKey(key, trieEnum), value);
+      trieImpl.put(RLP.encodeElement(key), value);
     }
   }
 
-  private byte[] getKey(byte[] key, TrieEnum trieEnum) {
-    switch (trieEnum) {
-      case DYNAMIC:
-      case ACCOUNT_ID_INDEX:
-        return RLP.encodeElement(key);
+  public void delete(byte[] key, TrieEnum trieEnum) {
+    if (!exe()) {
+      return;
     }
-    return key;
+    TrieImpl trieImpl = selectTrie(trieEnum);
+    if (trieImpl != null) {
+      trieImpl.delete(RLP.encodeElement(key));
+    }
   }
 
   public void preExecute(BlockCapsule blockCapsule) {
@@ -288,7 +296,7 @@ public class FastSyncCallBack {
   }
 
   private boolean exe() {
-    if (!execute || blockCapsule.getNum() < 0) {
+    if (!execute || blockCapsule.getNum() < 1) {
       //Agreement same block high to generate account state root
       return false;
     }

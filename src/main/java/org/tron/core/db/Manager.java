@@ -1202,11 +1202,10 @@ public class Manager {
         logger.warn(e.getMessage(), e);
       }
     }
-
-    session.reset();
     //
     fastSyncCallBack.executeGenerateFinish();
 
+    session.reset();
     if (postponedTrxCount > 0) {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
     }

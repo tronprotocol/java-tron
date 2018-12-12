@@ -56,6 +56,12 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     fastSyncCallBack.accountCallBack(key, item);
   }
 
+  @Override
+  public void delete(byte[] key) {
+    super.delete(key);
+    fastSyncCallBack.deleteAccount(key);
+  }
+
   /**
    * Max TRX account.
    */
