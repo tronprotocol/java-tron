@@ -1604,13 +1604,8 @@ public class Manager {
   }
 
   public void rePush(TransactionCapsule tx) {
-
-    try {
-      if (transactionStore.get(tx.getTransactionId().getBytes()) != null) {
-        return;
-      }
-    } catch (BadItemException e) {
-      // do nothing
+    if (transactionStore.has(tx.getTransactionId().getBytes())) {
+      return;
     }
 
     try {
