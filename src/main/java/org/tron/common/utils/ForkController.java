@@ -17,7 +17,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.Manager;
 
@@ -25,10 +24,15 @@ import org.tron.core.db.Manager;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ForkController {
 
+  private static final byte VERSION_UPGRADE = (byte) 1;
+  private static final byte HARD_FORK_EFFECTIVE = (byte) 2;
   private static final byte[] check;
+  private static final byte[] check2;
   static {
     check = new byte[1024];
-    Arrays.fill(check, (byte) 1);
+    Arrays.fill(check, VERSION_UPGRADE);
+    check2 = new byte[1024];
+    Arrays.fill(check2, HARD_FORK_EFFECTIVE);
   }
 
   @Getter
@@ -42,7 +46,7 @@ public class ForkController {
   }
 
   public synchronized boolean pass(int version) {
-    if (!check(version)) {
+    if (!checkEnergy(version)) {
       return false;
     }
 
@@ -51,14 +55,23 @@ public class ForkController {
     }
 
     byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(version);
-    boolean pass = check(stats);
+    boolean pass;
+    if (version == ForkBlockVersionConsts.ENERGY_LIMIT) {
+      pass = check(stats);
+    } else {
+      pass = check2(stats);
+    }
+
     if (pass) {
       passSet.add(version);
     }
     return pass;
   }
 
-  private boolean check(int version) {
+  // when block.version = 5,
+  // it make block use new energy to handle transaction when block number >= 4727890L.
+  // version !=5, skip this.
+  private boolean checkEnergy(int version) {
     if (version != ForkBlockVersionConsts.ENERGY_LIMIT) {
       return true;
     }
@@ -68,6 +81,14 @@ public class ForkController {
   }
 
   private boolean check(byte[] stats) {
+    return check(check, stats);
+  }
+
+  private boolean check2(byte[] stats) {
+    return check(check2, stats);
+  }
+
+  private boolean check(byte[] check, byte[] stats) {
     if (stats == null || stats.length == 0) {
       return false;
     }
@@ -95,8 +116,7 @@ public class ForkController {
     }
 
     byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(version);
-    if (check(stats)) {
-      passSet.add(version);
+    if (check(stats) || check2(stats)) {
       return;
     }
 
@@ -104,7 +124,7 @@ public class ForkController {
       stats = new byte[witnesses.size()];
     }
 
-    stats[slot] = (byte) 1;
+    stats[slot] = VERSION_UPGRADE;
     manager.getDynamicPropertiesStore().statsByVersion(version, stats);
     logger.info(
         "*******update hard fork:{}, witness size:{}, solt:{}, witness:{}, version:{}",
@@ -118,6 +138,24 @@ public class ForkController {
         version);
   }
 
+  public synchronized void updateWhenMaintenance(BlockCapsule blockCapsule) {
+    int version = blockCapsule.getInstance().getBlockHeader().getRawData().getVersion();
+    if (version < ForkBlockVersionConsts.VERSION_3_2_2 || passSet.contains(version)) {
+      return;
+    }
+
+    byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(version);
+    if (check2(stats)) {
+      return;
+    }
+
+    if (check(stats)) {
+      Arrays.fill(stats, HARD_FORK_EFFECTIVE);
+      manager.getDynamicPropertiesStore().statsByVersion(version, stats);
+      logger.info("*******hard fork is effective in the maintenance, version is {}", version);
+    }
+  }
+
   public synchronized void reset(BlockCapsule blockCapsule) {
     int version = blockCapsule.getInstance().getBlockHeader().getRawData().getVersion();
     if (version < ForkBlockVersionConsts.ENERGY_LIMIT || passSet.contains(version)) {
@@ -125,8 +163,7 @@ public class ForkController {
     }
 
     byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(version);
-    if (check(stats)) {
-      passSet.add(version);
+    if (check(stats) || check2(stats)) {
       return;
     }
 
