@@ -5,11 +5,13 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
@@ -49,6 +51,15 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
   protected byte[] participateOwnerAddressBytes = Wallet.decodeFromBase58Check("TQjKWNDCLSgqUtg9vrjzZnWhhmsgNgTfmj");
   protected long participateAmount = 1;
   protected byte[] participateAssetName = "1000001".getBytes();
+
+  // vote
+  protected String voteWitnessAddress = "TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE"; // Base58 address
+  protected String voteCount = "1"; // Tron power
+
+  // witness update
+  protected String witnessUpdatePrivateKey = "0528dc17428585fc4dece68b79fa7912270a1fe8e85f244372f59eb7e8925e04";
+  protected ByteString witnessUpdateAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE"));
+  protected byte[] witnessUpdateAddressBytes = Wallet.decodeFromBase58Check("TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE");
 
   long time = System.currentTimeMillis();
   AtomicLong count = new AtomicLong();
@@ -158,6 +169,60 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
     return builder.build();
   }
 
+  public org.tron.protos.Contract.AssetIssueContract createAssetIssueContract(
+      byte[] owner,
+      String name,
+      long totalSupply,
+      int trxNum,
+      int icoNum,
+      int precision,
+      long startTime,
+      long endTime,
+      int voteScore,
+      String description,
+      String url,
+      long freeNetLimit,
+      long publicFreeNetLimit,
+      HashMap<String, String> frozenSupply
+  ) {
+    org.tron.protos.Contract.AssetIssueContract.Builder builder = org.tron.protos.Contract.AssetIssueContract
+        .newBuilder();
+
+    builder.setOwnerAddress(ByteString.copyFrom(owner));
+    builder.setName(ByteString.copyFrom(name.getBytes()));
+
+    builder.setTotalSupply(totalSupply);
+
+    builder.setTrxNum(trxNum);
+
+    builder.setNum(icoNum);
+
+    builder.setPrecision(precision);
+
+    long now = System.currentTimeMillis();
+
+    builder.setStartTime(startTime);
+    builder.setEndTime(endTime);
+    builder.setVoteScore(voteScore);
+    builder.setDescription(ByteString.copyFrom(description.getBytes()));
+    builder.setUrl(ByteString.copyFrom(url.getBytes()));
+    builder.setFreeAssetNetLimit(freeNetLimit);
+    builder.setPublicFreeAssetNetLimit(publicFreeNetLimit);
+
+    for (String daysStr : frozenSupply.keySet()) {
+      String amountStr = frozenSupply.get(daysStr);
+      long amount = Long.parseLong(amountStr);
+      long days = Long.parseLong(daysStr);
+      org.tron.protos.Contract.AssetIssueContract.FrozenSupply.Builder frozenSupplyBuilder
+          = org.tron.protos.Contract.AssetIssueContract.FrozenSupply.newBuilder();
+      frozenSupplyBuilder.setFrozenAmount(amount);
+      frozenSupplyBuilder.setFrozenDays(days);
+      builder.addFrozenSupply(frozenSupplyBuilder.build());
+    }
+
+    return builder.build();
+  }
+
   public org.tron.protos.Contract.TriggerSmartContract triggerCallContract(byte[] address,
       byte[] contractAddress,
       long callValue, byte[] data) {
@@ -195,6 +260,64 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
           Objects.requireNonNull(Wallet.decodeFromBase58Check(receiverAddress)));
       builder.setReceiverAddress(receiverAddressBytes);
     }
+
+    return builder.build();
+  }
+
+  public org.tron.protos.Contract.AccountCreateContract createAccountCreateContract(byte[] owner,
+      byte[] address) {
+    org.tron.protos.Contract.AccountCreateContract.Builder builder = org.tron.protos.Contract.AccountCreateContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner));
+    builder.setAccountAddress(ByteString.copyFrom(address));
+
+    return builder.build();
+  }
+
+  public org.tron.protos.Contract.VoteWitnessContract createVoteWitnessContract(byte[] owner,
+      HashMap<String, String> witness) {
+    org.tron.protos.Contract.VoteWitnessContract.Builder builder = org.tron.protos.Contract.VoteWitnessContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner));
+    for (String addressBase58 : witness.keySet()) {
+      String value = witness.get(addressBase58);
+      long count = Long.parseLong(value);
+      org.tron.protos.Contract.VoteWitnessContract.Vote.Builder voteBuilder = org.tron.protos.Contract.VoteWitnessContract.Vote
+          .newBuilder();
+      byte[] address = Wallet.decodeFromBase58Check(addressBase58);
+      if (address == null) {
+        continue;
+      }
+      voteBuilder.setVoteAddress(ByteString.copyFrom(address));
+      voteBuilder.setVoteCount(count);
+      builder.addVotes(voteBuilder.build());
+    }
+
+    return builder.build();
+  }
+
+  public org.tron.protos.Contract.WitnessUpdateContract createWitnessUpdateContract(byte[] owner,
+      byte[] url) {
+    org.tron.protos.Contract.WitnessUpdateContract.Builder builder = org.tron.protos.Contract.WitnessUpdateContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner));
+    builder.setUpdateUrl(ByteString.copyFrom(url));
+
+    return builder.build();
+  }
+
+  public org.tron.protos.Contract.UpdateAssetContract createUpdateAssetContract(
+      byte[] address,
+      byte[] description,
+      byte[] url,
+      long newLimit,
+      long newPublicLimit
+  ) {
+    org.tron.protos.Contract.UpdateAssetContract.Builder builder =
+        org.tron.protos.Contract.UpdateAssetContract.newBuilder();
+    ByteString basAddreess = ByteString.copyFrom(address);
+    builder.setDescription(ByteString.copyFrom(description));
+    builder.setUrl(ByteString.copyFrom(url));
+    builder.setNewLimit(newLimit);
+    builder.setNewPublicLimit(newPublicLimit);
+    builder.setOwnerAddress(basAddreess);
 
     return builder.build();
   }

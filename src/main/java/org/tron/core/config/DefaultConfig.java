@@ -1,5 +1,6 @@
 package org.tron.core.config;
 
+import java.util.concurrent.atomic.LongAdder;
 import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +20,7 @@ import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidit
 
 @Configuration
 @Import(CommonConfig.class)
-@ImportResource("classpath:context/MultiTransaction2.xml")
+@ImportResource("classpath:context/UpdateAsset.xml")
 public class DefaultConfig {
 
   private static Logger logger = LoggerFactory.getLogger("general");
