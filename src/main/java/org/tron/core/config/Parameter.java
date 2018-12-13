@@ -23,7 +23,7 @@ public interface Parameter {
     int BLOCK_FILLED_SLOTS_NUMBER = 128;
     int MAX_VOTE_NUMBER = 30;
     int MAX_FROZEN_NUMBER = 1;
-    int BLOCK_VERSION = 5;
+    int BLOCK_VERSION = 6;
   }
 
   interface NodeConstant {
@@ -89,6 +89,7 @@ public interface Parameter {
     ALLOW_DELEGATE_RESOURCE, // 0, 16
     TOTAL_ENERGY_LIMIT, // 50,000,000,000, 17
     ALLOW_TVM_TRANSFER_TRC10, // 1, 18
+    TOTAL_CURRENT_ENERGY_LIMIT, // 50,000,000,000, 19
 //    ALLOW_ADAPTIVE_ENERGY,
 //    ONE_DAY_NET_LIMIT,
 //    MAX_FROZEN_TIME,
@@ -107,6 +108,7 @@ public interface Parameter {
 
     int START_NEW_TRANSACTION = 4;
     int ENERGY_LIMIT = 5;
+    int VERSION_3_2_2 = 6;
   }
 
 }

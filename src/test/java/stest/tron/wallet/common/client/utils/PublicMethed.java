@@ -275,6 +275,15 @@ public class PublicMethed {
     return blockingStubFull.getAccount(request);
   }
 
+  public static Account queryAccount(byte[] address, WalletSolidityGrpc.WalletSolidityBlockingStub
+      blockingStubSoliInFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ByteString addressBs = ByteString.copyFrom(address);
+    Account request = Account.newBuilder().setAddress(addressBs).build();
+    return blockingStubSoliInFull.getAccount(request);
+  }
+
+
   public static Protocol.Account queryAccount(String priKey,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -2602,6 +2611,22 @@ public class PublicMethed {
     return Optional.ofNullable(delegatedResource);
   }
 
+  public static Optional<DelegatedResourceList> getDelegatedResource(byte[] fromAddress,
+      byte[] toAddress, WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ByteString fromAddressBs = ByteString.copyFrom(fromAddress);
+    ByteString toAddressBs = ByteString.copyFrom(toAddress);
+
+    DelegatedResourceMessage request = DelegatedResourceMessage.newBuilder()
+        .setFromAddress(fromAddressBs)
+        .setToAddress(toAddressBs)
+        .build();
+    DelegatedResourceList delegatedResource = blockingStubSolidity.getDelegatedResource(request);
+    return Optional.ofNullable(delegatedResource);
+  }
+
+
+
   public static Optional<DelegatedResourceAccountIndex> getDelegatedResourceAccountIndex(
       byte[] address, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -2615,6 +2640,20 @@ public class PublicMethed {
     return Optional.ofNullable(accountIndex);
   }
 
+  public static Optional<DelegatedResourceAccountIndex> getDelegatedResourceAccountIndex(
+      byte[] address, WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+
+    ByteString addressBs = ByteString.copyFrom(address);
+
+    BytesMessage bytesMessage = BytesMessage.newBuilder().setValue(addressBs).build();
+
+    DelegatedResourceAccountIndex accountIndex = blockingStubSolidity
+        .getDelegatedResourceAccountIndex(bytesMessage);
+    return Optional.ofNullable(accountIndex);
+  }
+
+
   public static Contract.AssetIssueContract getAssetIssueByName(String assetName,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -2622,6 +2661,15 @@ public class PublicMethed {
     BytesMessage request = BytesMessage.newBuilder().setValue(assetNameBs).build();
     return blockingStubFull.getAssetIssueByName(request);
   }
+
+  public static Contract.AssetIssueContract getAssetIssueByName(String assetName,
+      WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ByteString assetNameBs = ByteString.copyFrom(assetName.getBytes());
+    BytesMessage request = BytesMessage.newBuilder().setValue(assetNameBs).build();
+    return blockingStubSolidity.getAssetIssueByName(request);
+  }
+
 
   public static Optional<AssetIssueList> getAssetIssueListByName(String assetName,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
@@ -2632,6 +2680,16 @@ public class PublicMethed {
     return Optional.ofNullable(assetIssueList);
   }
 
+  public static Optional<AssetIssueList> getAssetIssueListByName(String assetName,
+      WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ByteString assetNameBs = ByteString.copyFrom(assetName.getBytes());
+    BytesMessage request = BytesMessage.newBuilder().setValue(assetNameBs).build();
+    AssetIssueList assetIssueList = blockingStubSolidity.getAssetIssueListByName(request);
+    return Optional.ofNullable(assetIssueList);
+  }
+
+
   public static Contract.AssetIssueContract getAssetIssueById(String assetId,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -2639,6 +2697,53 @@ public class PublicMethed {
     BytesMessage request = BytesMessage.newBuilder().setValue(assetIdBs).build();
     return blockingStubFull.getAssetIssueById(request);
   }
+
+  public static Contract.AssetIssueContract getAssetIssueById(String assetId,
+      WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ByteString assetIdBs = ByteString.copyFrom(assetId.getBytes());
+    BytesMessage request = BytesMessage.newBuilder().setValue(assetIdBs).build();
+    return blockingStubSolidity.getAssetIssueById(request);
+  }
+
+
+  public static int sendcoinGetCode(byte[] to, long amount, byte[] owner, String priKey,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    //String priKey = testKey002;
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+    //Protocol.Account search = queryAccount(priKey, blockingStubFull);
+
+    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+    ByteString bsTo = ByteString.copyFrom(to);
+    ByteString bsOwner = ByteString.copyFrom(owner);
+    builder.setToAddress(bsTo);
+    builder.setOwnerAddress(bsOwner);
+    builder.setAmount(amount);
+
+    Contract.TransferContract contract = builder.build();
+    Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      logger.info("transaction ==null");
+      return 12;
+    }
+    transaction = signTransaction(ecKey, transaction);
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    if (response.getResult() == false) {
+      return response.getCodeValue();
+    } else {
+      return response.getCodeValue();
+    }
+  }
+
+
 
 
 

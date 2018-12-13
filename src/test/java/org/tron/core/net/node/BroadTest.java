@@ -176,7 +176,7 @@ public class BroadTest {
         }
       }
     }
-    Assert.assertTrue(count >= 2);
+    Assert.assertTrue(count >= 1);
   }
 
   private static boolean go = false;

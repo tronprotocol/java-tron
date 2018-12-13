@@ -186,13 +186,13 @@ public class NodeInfoService {
     nodeInfo.setConfigNodeInfo(configNodeInfo);
   }
 
-  private void setBlockInfo(NodeInfo nodeInfo) {
+  protected void setBlockInfo(NodeInfo nodeInfo) {
     nodeInfo.setBeginSyncNum(dbManager.getSyncBeginNumber());
     nodeInfo.setBlock(dbManager.getHeadBlockId().getString());
     nodeInfo.setSolidityBlock(dbManager.getSolidBlockId().getString());
   }
 
-  private void setCheatWitnessInfo(NodeInfo nodeInfo) {
+  protected void setCheatWitnessInfo(NodeInfo nodeInfo) {
     for (Entry<String, CheatWitnessInfo> entry : witnessProductBlockService.queryCheatWitnessInfo()
         .entrySet()) {
       nodeInfo.getCheatWitnessInfoMap().put(entry.getKey(), entry.getValue().toString());
