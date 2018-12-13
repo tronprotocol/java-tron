@@ -219,6 +219,9 @@ public class ProposalCreateActuator extends AbstractActuator {
         if (!dbManager.getForkController().pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
           throw new ContractValidateException("Bad chain parameter id");
         }
+        if (dbManager.getForkController().pass(ForkBlockVersionConsts.VERSION_3_2_2)) {
+          throw new ContractValidateException("Bad chain parameter id");
+        }
         if (entry.getValue() < 0 || entry.getValue() > 100_000_000_000_000_000L) {
           throw new ContractValidateException(
               "Bad chain parameter value,valid range is [0,100_000_000_000_000_000L]");
