@@ -71,7 +71,7 @@ message zkv0proof {
   BN128G1 h = 8;
 }
 
-message AuthenticationPath{
+message AuthenticationPath {
   repeated bool  value = 1;
 }
 
