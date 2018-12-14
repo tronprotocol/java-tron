@@ -18,16 +18,19 @@ import org.apache.commons.lang3.StringUtils;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
+import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.db.Manager;
 
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ForkController {
 
+  private static final byte VERSION_DOWNGRADE = (byte) 0;
   private static final byte VERSION_UPGRADE = (byte) 1;
   private static final byte HARD_FORK_EFFECTIVE = (byte) 2;
   private static final byte[] check;
   private static final byte[] check2;
+
   static {
     check = new byte[1024];
     Arrays.fill(check, VERSION_UPGRADE);
@@ -43,6 +46,10 @@ public class ForkController {
   public void init(Manager manager) {
     this.manager = manager;
     passSet.clear();
+  }
+
+  public boolean pass(ForkBlockVersionEnum forkBlockVersionEnum) {
+    return pass(forkBlockVersionEnum.getValue());
   }
 
   public synchronized boolean pass(int version) {
@@ -102,6 +109,18 @@ public class ForkController {
     return true;
   }
 
+  private void downgrade(int version, int slot) {
+    for (ForkBlockVersionEnum versionEnum : ForkBlockVersionEnum.values()) {
+      if (versionEnum.getValue() > version) {
+        byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(versionEnum.getValue());
+        if (!check2(stats) && stats != null) {
+          stats[slot] = VERSION_DOWNGRADE;
+          manager.getDynamicPropertiesStore().statsByVersion(versionEnum.getValue(), stats);
+        }
+      }
+    }
+  }
+
   public synchronized void update(BlockCapsule blockCapsule) {
     List<ByteString> witnesses = manager.getWitnessController().getActiveWitnesses();
     ByteString witness = blockCapsule.getWitnessAddress();
@@ -114,6 +133,8 @@ public class ForkController {
     if (version < ForkBlockVersionConsts.ENERGY_LIMIT || passSet.contains(version)) {
       return;
     }
+
+    downgrade(version, slot);
 
     byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(version);
     if (check(stats) || check2(stats)) {
@@ -138,9 +159,13 @@ public class ForkController {
         version);
   }
 
+  private void setSolidNumWithVersion5BeEffective() {
+
+  }
+
   public synchronized void updateWhenMaintenance(BlockCapsule blockCapsule) {
     int version = blockCapsule.getInstance().getBlockHeader().getRawData().getVersion();
-    if (version < ForkBlockVersionConsts.VERSION_3_2_2 || passSet.contains(version)) {
+    if (version < ForkBlockVersionEnum.VERSION_3_2_2.getValue() || passSet.contains(version)) {
       return;
     }
 
@@ -152,7 +177,10 @@ public class ForkController {
     if (check(stats)) {
       Arrays.fill(stats, HARD_FORK_EFFECTIVE);
       manager.getDynamicPropertiesStore().statsByVersion(version, stats);
-      logger.info("*******hard fork is effective in the maintenance, version is {}", version);
+      logger.info(
+          "*******hard fork is effective in the maintenance:{}, version:{}",
+          ArrayUtils.toObject(stats),
+          version);
     }
   }
 

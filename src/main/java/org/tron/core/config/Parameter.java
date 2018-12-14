@@ -1,5 +1,7 @@
 package org.tron.core.config;
 
+import lombok.Getter;
+
 public interface Parameter {
 
   interface ChainConstant {
@@ -104,11 +106,22 @@ public interface Parameter {
 //    EXCHANGE_BALANCE_LIMIT,
   }
 
+  @Deprecated
   interface ForkBlockVersionConsts {
 
     int START_NEW_TRANSACTION = 4;
     int ENERGY_LIMIT = 5;
-    int VERSION_3_2_2 = 6;
+  }
+
+  enum ForkBlockVersionEnum {
+    VERSION_3_2_2(6);
+
+    @Getter
+    int value;
+
+    ForkBlockVersionEnum(int value) {
+      this.value = value;
+    }
   }
 
 }
