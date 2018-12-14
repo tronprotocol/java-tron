@@ -117,7 +117,7 @@ public interface Parameter {
     VERSION_3_2_2(6);
 
     @Getter
-    int value;
+    private int value;
 
     ForkBlockVersionEnum(int value) {
       this.value = value;
