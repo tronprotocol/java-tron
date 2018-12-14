@@ -19,7 +19,7 @@ import org.tron.stresstest.exception.EncodingException;
 public class TriggerTimeoutContractCreator extends AbstractTransactionCreator implements GoodCaseTransactonCreator {
 
   private String ownerAddress = commonOwnerAddress;
-  private String contractAddress;
+  private String contractAddress = commonContractAddress3;
   private long callValue = 0L;
   private String methodSign = "add2(uint256)";
   private boolean hex = false;

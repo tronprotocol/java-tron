@@ -19,11 +19,11 @@ import org.tron.stresstest.exception.EncodingException;
 public class TransferTokenCreator extends AbstractTransactionCreator implements GoodCaseTransactonCreator {
 
   private String ownerAddress = commonOwnerAddress;
-  private String contractAddress;
+  private String contractAddress = commonContractAddress1;
   private long callValue = 0L;
   private String methodSign = "TransferTokenTo(address,trcToken,uint256)";
   private boolean hex = false;
-  private String param;
+  private String param = "\"" + commonContractAddress2 + "\",1000001,1";
   private long feeLimit = 1000000000L;
   private String privateKey = commonOwnerPrivateKey;
 

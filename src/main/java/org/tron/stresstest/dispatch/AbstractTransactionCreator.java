@@ -27,8 +27,9 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
   protected String commonToPrivateKey = "76fb5f55710c7ad6a98f73dd38a732f9a69a7b3ce700a694363a50572fa2842a";
   protected String commonWitnessAddress = "TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE";
   protected String commonWitnessPrivateKey = "0528dc17428585fc4dece68b79fa7912270a1fe8e85f244372f59eb7e8925e04";
-
-
+  protected String commonContractAddress1 = "TYAGQ9Q8k9n4XUvqcWpUtG2PDBUaRiogBP";
+  protected String commonContractAddress2 = "TKeCCpeXBv6NGZDRhAdwXRgTrFy7TUmyKM";
+  protected String commonContractAddress3 = "TXcyBDPSeRPewZ8mu3WQGDWsSXvZRUzzkp";
 
   long time = System.currentTimeMillis();
   AtomicLong count = new AtomicLong();

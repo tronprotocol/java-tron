@@ -39,13 +39,13 @@
         <ref bean="triggerFibonacciContractCreator"/>
         <ref bean="transferToken"/>
 
-        <!--<ref bean="accountCreateTransaction"/>-->
-        <!--<ref bean="voteWitnessTransaction"/>-->
-        <!--<ref bean="witnessUpdateTransaction"/>-->
-        <!--<ref bean="updateAssetTransaction"/>-->
-        <!--<ref bean="deployContractTransactionCreator"/>-->
-        <!--<ref bean="updateSettingTransaction"/>-->
-        <!--<ref bean="exchangeCreate"/>-->
+        <ref bean="accountCreateTransaction"/>
+        <ref bean="voteWitnessTransaction"/>
+        <ref bean="witnessUpdateTransaction"/>
+        <ref bean="updateAssetTransaction"/>
+        <ref bean="deployContractTransactionCreator"/>
+        <ref bean="updateSettingTransaction"/>
+        <ref bean="exchangeCreate"/>
       </list>
     </property>
   </bean>
@@ -113,66 +113,59 @@
     <property name="name" value="triggerFibonacciContractCreator"/>
     <property name="begin" value="50"/>
     <property name="end" value="59"/>
-
-    <property name="contractAddress" value="TWrWTnm3wVngQhDY9Q6CWvVuM1CNWQagiZ"/>
   </bean>
 
   <bean id="transferToken"
     class="org.tron.stresstest.dispatch.creator.contract.TransferTokenCreator">
     <property name="name" value="transferToken"/>
     <property name="begin" value="60"/>
-    <property name="end" value="99"/>
-
-    <property name="contractAddress" value="TGvUfk8h4UfsDPHSGcem6VYmuZButoVxZy"/>
-    <property name="param" value="TCp69JEM2mP9D5y3fEo8mc4H34axqBfrBg,1000001,1"/>
+    <property name="end" value="69"/>
   </bean>
 
-  <!--<bean id="accountCreateTransaction"-->
-    <!--class="org.tron.stresstest.dispatch.creator.account.AccountCreateTransactionCreator">-->
-    <!--<property name="name" value="accountCreateTransaction"/>-->
-    <!--<property name="begin" value="0"/>-->
-    <!--<property name="end" value="99"/>-->
-  <!--</bean>-->
+  <bean id="accountCreateTransaction"
+    class="org.tron.stresstest.dispatch.creator.account.AccountCreateTransactionCreator">
+    <property name="name" value="accountCreateTransaction"/>
+    <property name="begin" value="70"/>
+    <property name="end" value="79"/>
+  </bean>
 
-  <!--<bean id="voteWitnessTransaction"-->
-    <!--class="org.tron.stresstest.dispatch.creator.vote.VoteWitnessTransactionCreator">-->
-    <!--<property name="name" value="voteWitnessTransaction"/>-->
-    <!--<property name="begin" value="0"/>-->
-    <!--<property name="end" value="99"/>-->
-  <!--</bean>-->
+  <bean id="voteWitnessTransaction"
+    class="org.tron.stresstest.dispatch.creator.vote.VoteWitnessTransactionCreator">
+    <property name="name" value="voteWitnessTransaction"/>
+    <property name="begin" value="80"/>
+    <property name="end" value="89"/>
+  </bean>
 
-  <!--<bean id="witnessUpdateTransaction"-->
-    <!--class="org.tron.stresstest.dispatch.creator.witness.WitnessUpdateTransactionCreator">-->
-    <!--<property name="name" value="witnessUpdateTransaction"/>-->
-    <!--<property name="begin" value="0"/>-->
-    <!--<property name="end" value="99"/>-->
-  <!--</bean>-->
+  <bean id="witnessUpdateTransaction"
+    class="org.tron.stresstest.dispatch.creator.witness.WitnessUpdateTransactionCreator">
+    <property name="name" value="witnessUpdateTransaction"/>
+    <property name="begin" value="90"/>
+    <property name="end" value="91"/>
+  </bean>
 
-  <!--<bean id="updateAssetTransaction"-->
-    <!--class="org.tron.stresstest.dispatch.creator.asset.UpdateAssetTransactionCreator">-->
-    <!--<property name="name" value="updateAssetTransaction"/>-->
-    <!--<property name="begin" value="0"/>-->
-    <!--<property name="end" value="99"/>-->
-  <!--</bean>-->
+  <bean id="updateAssetTransaction"
+    class="org.tron.stresstest.dispatch.creator.asset.UpdateAssetTransactionCreator">
+    <property name="name" value="updateAssetTransaction"/>
+    <property name="begin" value="92"/>
+    <property name="end" value="93"/>
+  </bean>
 
-  <!--<bean id="deployContractTransactionCreator" class="org.tron.stresstest.dispatch.creator.contract.DeployContractTransactionCreator">-->
-    <!--<property name="name" value="deployContractTransactionCreator"/>-->
-    <!--<property name="begin" value="0"/>-->
-    <!--<property name="end" value="99"/>-->
-  <!--</bean>-->
+  <bean id="deployContractTransactionCreator" class="org.tron.stresstest.dispatch.creator.contract.DeployContractTransactionCreator">
+    <property name="name" value="deployContractTransactionCreator"/>
+    <property name="begin" value="94"/>
+    <property name="end" value="95"/>
+  </bean>
 
-  <!--<bean id="updateSettingTransaction" class="org.tron.stresstest.dispatch.creator.contract.UpdateSettingTransactionCreator">-->
-    <!--<property name="name" value="updateSettingTransaction"/>-->
-    <!--<property name="begin" value="0"/>-->
-    <!--<property name="end" value="99"/>-->
+  <bean id="updateSettingTransaction" class="org.tron.stresstest.dispatch.creator.contract.UpdateSettingTransactionCreator">
+    <property name="name" value="updateSettingTransaction"/>
+    <property name="begin" value="96"/>
+    <property name="end" value="97"/>
+  </bean>
 
-    <!--<property name="contractAddress" value="TNp65uzyaBeHikaCLa13Ub5pQkoqx9WVZw"/>-->
-  <!--</bean>-->
-
-  <!--<bean id="exchangeCreate" class="org.tron.stresstest.dispatch.creator.exchange.ExchangeCreateCreator">-->
-    <!--<property name="name" value="exchangeCreate"/>-->
-    <!--<property name="begin" value="0"/>-->
-    <!--<property name="end" value="99"/>-->
-  <!--</bean>-->
+  <bean id="exchangeCreate" class="org.tron.stresstest.dispatch.creator.exchange.ExchangeCreateCreator">
+    <property name="name" value="exchangeCreate"/>
+    <property name="begin" value="98"/>
+    <property name="end" value="99"/>
+  </bean>
 
 </beans>

@@ -17,7 +17,7 @@ public class UpdateSettingTransactionCreator extends AbstractTransactionCreator 
     GoodCaseTransactonCreator {
 
   private String ownerAddress = commonOwnerAddress;
-  private String contractAddress;
+  private String contractAddress = commonContractAddress1;
   private long consumeUserResourcePercent = 100L;
   private String privateKey = commonOwnerPrivateKey;
 

@@ -36,8 +36,6 @@
     <property name="name" value="updateSettingTransaction"/>
     <property name="begin" value="0"/>
     <property name="end" value="99"/>
-
-    <property name="contractAddress" value="TNp65uzyaBeHikaCLa13Ub5pQkoqx9WVZw"/>
   </bean>
 
 </beans>

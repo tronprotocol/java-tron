@@ -36,8 +36,6 @@
     <property name="name" value="triggerFibonacciContractCreator"/>
     <property name="begin" value="0"/>
     <property name="end" value="99"/>
-
-    <property name="contractAddress" value="TWrWTnm3wVngQhDY9Q6CWvVuM1CNWQagiZ"/>
   </bean>
 
 </beans>
