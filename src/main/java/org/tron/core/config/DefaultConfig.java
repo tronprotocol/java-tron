@@ -1,6 +1,5 @@
 package org.tron.core.config;
 
-import java.util.concurrent.atomic.LongAdder;
 import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +8,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.ImportResource;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.RevokingStore;
@@ -20,7 +18,6 @@ import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidit
 
 @Configuration
 @Import(CommonConfig.class)
-@ImportResource("classpath:context/MultiTransaction2.xml")
 public class DefaultConfig {
 
   private static Logger logger = LoggerFactory.getLogger("general");

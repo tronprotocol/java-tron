@@ -1,8 +1,8 @@
 package org.tron.stresstest.dispatch;
 
 import java.io.IOException;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
-import org.tron.common.application.TronApplicationContext;
 import org.tron.stresstest.dispatch.strategy.Dispatcher;
 import org.tron.stresstest.dispatch.strategy.Level1Strategy;
 import org.tron.stresstest.dispatch.strategy.Level2Strategy;
@@ -11,11 +11,11 @@ import org.tron.protos.Protocol;
 @Component
 public class TransactionFactory {
 
-  public static TronApplicationContext context;
+  public static ApplicationContext context;
 
   private static Dispatcher dispatcher;
 
-  public static void init(TronApplicationContext ctx) {
+  public static void init(ApplicationContext ctx) {
     context = ctx;
     dispatcher = context.getBean(Dispatcher.class);
   }

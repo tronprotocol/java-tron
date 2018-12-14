@@ -11,13 +11,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.stream.LongStream;
-import org.tron.common.application.TronApplicationContext;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.FileSystemXmlApplicationContext;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.stresstest.dispatch.TransactionFactory;
 
+@Slf4j
 public class TransactionGenerator {
 
-  private TronApplicationContext context;
+  private ApplicationContext context;
   private int count;
   private String outputFile;
 
@@ -39,13 +42,14 @@ public class TransactionGenerator {
     }
   });
 
-  public TransactionGenerator(TronApplicationContext context, String outputFile, int count) {
-    this.context = context;
+  public TransactionGenerator(String context, String outputFile, int count) {
+    logger.info("context: {}", context);
+    this.context = new FileSystemXmlApplicationContext(context);
     this.outputFile = outputFile;
     this.count = count;
   }
 
-  public TransactionGenerator(TronApplicationContext context, int count) {
+  public TransactionGenerator(String context, int count) {
     this(context, "transaction.csv", count);
   }
 

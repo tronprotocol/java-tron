@@ -111,7 +111,7 @@ public class FullNode {
     NodeImpl nodeImpl = context.getBean(NodeImpl.class);
 
     if (cfgArgs.isGenerate()) {
-      new TransactionGenerator(context, cfgArgs.getStressCount()).start();
+      new TransactionGenerator("TransferTRX.xml", cfgArgs.getStressCount()).start();
     }
 
     File f = new File("transaction.csv");
