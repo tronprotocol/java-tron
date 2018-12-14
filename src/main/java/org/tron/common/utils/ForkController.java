@@ -77,11 +77,12 @@ public class ForkController {
 
   private void downgrade(int version, int slot) {
     for (ForkBlockVersionEnum versionEnum : ForkBlockVersionEnum.values()) {
-      if (versionEnum.getValue() > version) {
-        byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(versionEnum.getValue());
+      int versionValue = versionEnum.getValue();
+      if (versionValue > version) {
+        byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(versionValue);
         if (!check(stats) && Objects.nonNull(stats)) {
           stats[slot] = VERSION_DOWNGRADE;
-          manager.getDynamicPropertiesStore().statsByVersion(versionEnum.getValue(), stats);
+          manager.getDynamicPropertiesStore().statsByVersion(versionValue, stats);
         }
       }
     }
@@ -96,22 +97,23 @@ public class ForkController {
     }
 
     int version = blockCapsule.getInstance().getBlockHeader().getRawData().getVersion();
-    if (version < ForkBlockVersionEnum.VERSION_3_2_2.getValue()) {
+    if (version < ForkBlockVersionConsts.ENERGY_LIMIT) {
       return;
     }
+
+    downgrade(version, slot);
 
     byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(version);
     if (check(stats)) {
       return;
     }
 
-    if (stats == null || stats.length != witnesses.size()) {
+    if (Objects.isNull(stats) || stats.length != witnesses.size()) {
       stats = new byte[witnesses.size()];
     }
 
     stats[slot] = VERSION_UPGRADE;
     manager.getDynamicPropertiesStore().statsByVersion(version, stats);
-    downgrade(version, slot);
     logger.info(
         "*******update hard fork:{}, witness size:{}, solt:{}, witness:{}, version:{}",
         Streams.zip(witnesses.stream(), Stream.of(ArrayUtils.toObject(stats)), Maps::immutableEntry)
@@ -126,10 +128,11 @@ public class ForkController {
 
   public synchronized void reset() {
     for (ForkBlockVersionEnum versionEnum : ForkBlockVersionEnum.values()) {
-      byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(versionEnum.getValue());
+      int versionValue = versionEnum.getValue();
+      byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(versionValue);
       if (!check(stats) && Objects.nonNull(stats)) {
         Arrays.fill(stats, VERSION_DOWNGRADE);
-        manager.getDynamicPropertiesStore().statsByVersion(versionEnum.getValue(), stats);
+        manager.getDynamicPropertiesStore().statsByVersion(versionValue, stats);
       }
     }
   }
