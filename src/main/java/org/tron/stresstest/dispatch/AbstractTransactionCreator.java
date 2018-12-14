@@ -61,6 +61,15 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
   protected ByteString witnessUpdateAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE"));
   protected byte[] witnessUpdateAddressBytes = Wallet.decodeFromBase58Check("TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE");
 
+  // deploy contract
+  protected String contractName = "createContract";
+  protected String ABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"a\",\"type\":\"int256\"},{\"name\":\"b\",\"type\":\"int256\"}],\"name\":\"multiply\",\"outputs\":[{\"name\":\"output\",\"type\":\"int256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"a\",\"type\":\"int256\"},{\"indexed\":false,\"name\":\"b\",\"type\":\"int256\"},{\"indexed\":false,\"name\":\"output\",\"type\":\"int256\"}],\"name\":\"MultiplyEvent\",\"type\":\"event\"}]";
+  protected String code = "6080604052348015600f57600080fd5b5060e98061001e6000396000f300608060405260043610603e5763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416633c4308a881146043575b600080fd5b348015604e57600080fd5b50605b600435602435606d565b60408051918252519081900360200190f35b60408051338152602081018490528082018390528383026060820181905291517feb4e4c25ee4bb2b9466eb38f13989c0c221efa6f1c631b8b4820f00afcf5a3e59181900360800190a1929150505600a165627a7a723058200dbf85f2b87350cd0aaa578b300b50d62fb3508880a151d2db70356c1fe463da0029";
+  protected String data = null;
+  protected long value = 0;
+  protected long consumeUserResourcePercent = 100;
+  protected String libraryAddress = null;
+
   long time = System.currentTimeMillis();
   AtomicLong count = new AtomicLong();
   public Transaction createTransaction(com.google.protobuf.Message message,
@@ -319,6 +328,41 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
     builder.setNewPublicLimit(newPublicLimit);
     builder.setOwnerAddress(basAddreess);
 
+    return builder.build();
+  }
+
+  public org.tron.protos.Contract.UpdateSettingContract createUpdateSettingContract(byte[] owner,
+      byte[] contractAddress, long consumeUserResourcePercent) {
+
+    org.tron.protos.Contract.UpdateSettingContract.Builder builder = org.tron.protos.Contract.UpdateSettingContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner));
+    builder.setContractAddress(ByteString.copyFrom(contractAddress));
+    builder.setConsumeUserResourcePercent(consumeUserResourcePercent);
+    return builder.build();
+  }
+
+  public org.tron.protos.Contract.ExchangeCreateContract createExchangeCreateContract(byte[] owner,
+      byte[] firstTokenId, long firstTokenBalance,
+      byte[] secondTokenId, long secondTokenBalance) {
+    org.tron.protos.Contract.ExchangeCreateContract.Builder builder = org.tron.protos.Contract.ExchangeCreateContract.newBuilder();
+    builder
+        .setOwnerAddress(ByteString.copyFrom(owner))
+        .setFirstTokenId(ByteString.copyFrom(firstTokenId))
+        .setFirstTokenBalance(firstTokenBalance)
+        .setSecondTokenId(ByteString.copyFrom(secondTokenId))
+        .setSecondTokenBalance(secondTokenBalance);
+    return builder.build();
+  }
+
+  public org.tron.protos.Contract.UpdateEnergyLimitContract createUpdateEnergyLimitContract(
+      byte[] owner,
+      byte[] contractAddress, long originEnergyLimit) {
+
+    org.tron.protos.Contract.UpdateEnergyLimitContract.Builder builder = org.tron.protos.Contract.UpdateEnergyLimitContract
+        .newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner));
+    builder.setContractAddress(ByteString.copyFrom(contractAddress));
+    builder.setOriginEnergyLimit(originEnergyLimit);
     return builder.build();
   }
 }
