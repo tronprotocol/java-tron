@@ -159,8 +159,16 @@ public class ForkController {
         version);
   }
 
-  private void setSolidNumWithVersion5BeEffective() {
+  private void setSolidNumWithVersion5BeEffective(int version, int witnessSize) {
+    if (version != ForkBlockVersionConsts.ENERGY_LIMIT) {
+      return;
+    }
 
+    long num = manager.getDynamicPropertiesStore().getSolidNumWithVersion5();
+    if (num == -1) {
+      long blockNum = manager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+      manager.getDynamicPropertiesStore().setSolidNumWithVersion5(blockNum + witnessSize * 2 / 3);
+    }
   }
 
   public synchronized void updateWhenMaintenance(BlockCapsule blockCapsule) {

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.Parameter;
@@ -119,6 +120,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] FORK_CONTROLLER = "FORK_CONTROLLER".getBytes();
   private static final String FORK_PREFIX = "FORK_VERSION_";
+  private static final byte[] SOLID_NUM_WITH_VERSION_5 = "SOLID_NUM_WITH_VERSION_5".getBytes();
 
   //This value is only allowed to be 0, 1, -1
   private static final byte[] REMOVE_THE_POWER_OF_THE_GR = "REMOVE_THE_POWER_OF_THE_GR".getBytes();
@@ -1409,6 +1411,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public byte[] statsByVersion(int version) {
     String statsKey = FORK_PREFIX + version;
     return revokingDB.getUnchecked(statsKey.getBytes());
+  }
+
+  public void setSolidNumWithVersion5(long blockNum) {
+    byte[] longBytes = ByteArray.fromLong(blockNum);
+    put(SOLID_NUM_WITH_VERSION_5, new BytesCapsule(longBytes));
+  }
+
+  public long getSolidNumWithVersion5() {
+    return Optional.ofNullable(getUnchecked(SOLID_NUM_WITH_VERSION_5))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(-1L);
   }
 
   public boolean getForked() {
