@@ -19,7 +19,7 @@ import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidit
 
 @Configuration
 @Import(CommonConfig.class)
-@ImportResource(locations = "file:TransferTRX.xml")
+@ImportResource(locations = "file:TransactionConfiguration.xml")
 public class DefaultConfig {
 
   private static Logger logger = LoggerFactory.getLogger("general");
