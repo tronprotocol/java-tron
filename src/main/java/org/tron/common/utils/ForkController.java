@@ -105,7 +105,7 @@ public class ForkController {
       return;
     }
 
-    if (stats == null) {
+    if (stats == null || stats.length != witnesses.size()) {
       stats = new byte[witnesses.size()];
     }
 
