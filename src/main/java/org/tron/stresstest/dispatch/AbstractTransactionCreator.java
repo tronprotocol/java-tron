@@ -1,17 +1,14 @@
 package org.tron.stresstest.dispatch;
 
-import com.google.common.base.Charsets;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
-import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
@@ -24,51 +21,14 @@ import org.tron.stresstest.dispatch.strategy.Level2Strategy;
 
 @Getter
 public abstract class AbstractTransactionCreator extends Level2Strategy {
-  protected String privateKey = "549c7797b351e48ab1c6bb5857138b418012d97526fc2acba022357d49c93ac0";
-  protected ByteString ownerAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm"));
-  protected byte[] ownerAddressBytes = Wallet.decodeFromBase58Check("TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm");
-  protected String toAddressStr = "TQjKWNDCLSgqUtg9vrjzZnWhhmsgNgTfmj";
-  protected ByteString toAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("TQjKWNDCLSgqUtg9vrjzZnWhhmsgNgTfmj"));
-  protected byte[] toAddressBytes = Wallet.decodeFromBase58Check("TQjKWNDCLSgqUtg9vrjzZnWhhmsgNgTfmj");
-  protected Long amount = 1L;
-  protected Long amountOneTrx = 1000_000L;
-  protected ByteString assetName = ByteString.copyFrom("1000001".getBytes());
+  protected String commonOwnerAddress = "TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm";
+  protected String commonOwnerPrivateKey = "549c7797b351e48ab1c6bb5857138b418012d97526fc2acba022357d49c93ac0";
+  protected String commonToAddress = "TQjKWNDCLSgqUtg9vrjzZnWhhmsgNgTfmj";
+  protected String commonToPrivateKey = "76fb5f55710c7ad6a98f73dd38a732f9a69a7b3ce700a694363a50572fa2842a";
+  protected String commonWitnessAddress = "TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE";
+  protected String commonWitnessPrivateKey = "0528dc17428585fc4dece68b79fa7912270a1fe8e85f244372f59eb7e8925e04";
 
-  // exchange
-  protected long exchangeId = 1;
-  protected byte[] firstTokeID = "_".getBytes();
-  protected byte[] secondTokeID = "1000001".getBytes();
-  protected long quant = 10;
-  protected long expected = 1;
 
-  // inject
-  protected long exchangeId2 = 1;
-  protected byte[] firstTokeID2 = "_".getBytes();
-  protected long quant2 = 1000000;
-
-  // participate
-  protected String ownerPrivateKey = "76fb5f55710c7ad6a98f73dd38a732f9a69a7b3ce700a694363a50572fa2842a";
-  protected byte[] participateOwnerAddressBytes = Wallet.decodeFromBase58Check("TQjKWNDCLSgqUtg9vrjzZnWhhmsgNgTfmj");
-  protected long participateAmount = 1;
-  protected byte[] participateAssetName = "1000001".getBytes();
-
-  // vote
-  protected String voteWitnessAddress = "TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE"; // Base58 address
-  protected String voteCount = "1"; // Tron power
-
-  // witness update
-  protected String witnessUpdatePrivateKey = "0528dc17428585fc4dece68b79fa7912270a1fe8e85f244372f59eb7e8925e04";
-  protected ByteString witnessUpdateAddress = ByteString.copyFrom(Wallet.decodeFromBase58Check("TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE"));
-  protected byte[] witnessUpdateAddressBytes = Wallet.decodeFromBase58Check("TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE");
-
-  // deploy contract
-  protected String contractName = "createContract";
-  protected String ABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"a\",\"type\":\"int256\"},{\"name\":\"b\",\"type\":\"int256\"}],\"name\":\"multiply\",\"outputs\":[{\"name\":\"output\",\"type\":\"int256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"a\",\"type\":\"int256\"},{\"indexed\":false,\"name\":\"b\",\"type\":\"int256\"},{\"indexed\":false,\"name\":\"output\",\"type\":\"int256\"}],\"name\":\"MultiplyEvent\",\"type\":\"event\"}]";
-  protected String code = "6080604052348015600f57600080fd5b5060e98061001e6000396000f300608060405260043610603e5763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416633c4308a881146043575b600080fd5b348015604e57600080fd5b50605b600435602435606d565b60408051918252519081900360200190f35b60408051338152602081018490528082018390528383026060820181905291517feb4e4c25ee4bb2b9466eb38f13989c0c221efa6f1c631b8b4820f00afcf5a3e59181900360800190a1929150505600a165627a7a723058200dbf85f2b87350cd0aaa578b300b50d62fb3508880a151d2db70356c1fe463da0029";
-  protected String data = null;
-  protected long value = 0;
-  protected long consumeUserResourcePercent = 100;
-  protected String libraryAddress = null;
 
   long time = System.currentTimeMillis();
   AtomicLong count = new AtomicLong();

@@ -1,8 +1,9 @@
 package org.tron.stresstest.dispatch.creator.exchange;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import lombok.Setter;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Wallet;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -11,15 +12,23 @@ import org.tron.stresstest.dispatch.GoodCaseTransactonCreator;
 import org.tron.stresstest.dispatch.TransactionFactory;
 import org.tron.stresstest.dispatch.creator.CreatorCounter;
 
+@Setter
 public class ExchangeInjectCreator extends AbstractTransactionCreator implements GoodCaseTransactonCreator {
-  AtomicInteger integer = new AtomicInteger(0);
+  private String firstTokenID = "_";
+  private String ownerAddress = commonOwnerAddress;
+  private long exchangeID = 1L;
+  private long quant = 1000000L;
+  private String privateKey = commonOwnerPrivateKey;
+
   @Override
   protected Protocol.Transaction create() {
-    byte[] tokenId = firstTokeID2;
+    byte[] tokenId = firstTokenID.getBytes();
+    byte[] ownerAddressBytes = Wallet.decodeFromBase58Check(ownerAddress);
+
     TransactionFactory.context.getBean(CreatorCounter.class).put(this.getClass().getName());
 
     Contract.ExchangeInjectContract contract = createExchangeInjectContract(ownerAddressBytes,
-        exchangeId, tokenId, quant2);
+        exchangeID, tokenId, quant);
 
     Protocol.Transaction transaction = createTransaction(contract, ContractType.ExchangeInjectContract);
     transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(privateKey)));

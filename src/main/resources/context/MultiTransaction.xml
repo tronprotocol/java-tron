@@ -33,17 +33,18 @@
     </property>
   </bean>
 
+  <bean id="triggerFibonacciContractCreator" class="org.tron.stresstest.dispatch.creator.contract.TriggerTimeoutContractCreator">
+    <property name="name" value="triggerFibonacciContractCreator"/>
+    <property name="begin" value="0"/>
+    <property name="end" value="79"/>
+
+    <property name="contractAddress" value="TWrWTnm3wVngQhDY9Q6CWvVuM1CNWQagiZ"/>
+  </bean>
+
   <bean id="niceExchangeTransaction"
     class="org.tron.stresstest.dispatch.creator.exchange.NiceExchangeTransactionCreator">
     <property name="name" value="niceExchangeTransaction"/>
     <property name="begin" value="80"/>
     <property name="end" value="99"/>
   </bean>
-
-  <bean id="triggerFibonacciContractCreator" class="org.tron.stresstest.dispatch.creator.contract.TriggerFibonacciCreator">
-    <property name="name" value="triggerFibonacciContractCreator"/>
-    <property name="begin" value="0"/>
-    <property name="end" value="79"/>
-  </bean>
-
 </beans>

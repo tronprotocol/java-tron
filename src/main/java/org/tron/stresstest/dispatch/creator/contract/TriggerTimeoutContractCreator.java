@@ -16,14 +16,14 @@ import org.tron.stresstest.dispatch.creator.CreatorCounter;
 import org.tron.stresstest.exception.EncodingException;
 
 @Setter
-public class TransferTokenCreator extends AbstractTransactionCreator implements GoodCaseTransactonCreator {
+public class TriggerTimeoutContractCreator extends AbstractTransactionCreator implements GoodCaseTransactonCreator {
 
   private String ownerAddress = commonOwnerAddress;
   private String contractAddress;
   private long callValue = 0L;
-  private String methodSign = "TransferTokenTo(address,trcToken,uint256)";
+  private String methodSign = "add2(uint256)";
   private boolean hex = false;
-  private String param;
+  private String param = "2100";
   private long feeLimit = 1000000000L;
   private String privateKey = commonOwnerPrivateKey;
 

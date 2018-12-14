@@ -32,10 +32,12 @@
     </property>
   </bean>
 
-  <bean id="triggerFibonacciContractCreator" class="org.tron.stresstest.dispatch.creator.contract.TriggerFibonacciCreator">
+  <bean id="triggerFibonacciContractCreator" class="org.tron.stresstest.dispatch.creator.contract.TriggerTimeoutContractCreator">
     <property name="name" value="triggerFibonacciContractCreator"/>
     <property name="begin" value="0"/>
     <property name="end" value="99"/>
+
+    <property name="contractAddress" value="TWrWTnm3wVngQhDY9Q6CWvVuM1CNWQagiZ"/>
   </bean>
 
 </beans>

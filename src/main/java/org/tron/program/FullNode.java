@@ -80,6 +80,11 @@ public class FullNode {
 
     context.refresh();
 
+    if (cfgArgs.isGenerate()) {
+      logger.info("is generate is true");
+      new TransactionGenerator(context, cfgArgs.getStressCount()).start();
+    }
+
     Application appT = ApplicationFactory.create(context);
     shutdown(appT);
 
@@ -109,10 +114,6 @@ public class FullNode {
     appT.startup();
 
     NodeImpl nodeImpl = context.getBean(NodeImpl.class);
-
-    if (cfgArgs.isGenerate()) {
-      new TransactionGenerator("TransferTRX.xml", cfgArgs.getStressCount()).start();
-    }
 
     File f = new File("transaction.csv");
     FileInputStream fis = null;

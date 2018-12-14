@@ -101,10 +101,12 @@
     <property name="end" value="49"/>
   </bean>
 
-  <bean id="triggerFibonacciContractCreator" class="org.tron.stresstest.dispatch.creator.contract.TriggerFibonacciCreator">
+  <bean id="triggerFibonacciContractCreator" class="org.tron.stresstest.dispatch.creator.contract.TriggerTimeoutContractCreator">
     <property name="name" value="triggerFibonacciContractCreator"/>
     <property name="begin" value="50"/>
     <property name="end" value="59"/>
+
+    <property name="contractAddress" value="TWrWTnm3wVngQhDY9Q6CWvVuM1CNWQagiZ"/>
   </bean>
 
   <bean id="transferToken"
@@ -112,6 +114,9 @@
     <property name="name" value="transferToken"/>
     <property name="begin" value="60"/>
     <property name="end" value="99"/>
+
+    <property name="contractAddress" value="TGvUfk8h4UfsDPHSGcem6VYmuZButoVxZy"/>
+    <property name="param" value="TCp69JEM2mP9D5y3fEo8mc4H34axqBfrBg,1000001,1"/>
   </bean>
 
 </beans>
