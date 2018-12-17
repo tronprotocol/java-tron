@@ -147,6 +147,7 @@ public class FullNodeHttpApiService implements Service {
   private PermissionDeleteKeyServlet permissionDeleteKeyServlet;
   @Autowired
   private PermissionUpdateKeyServlet permissionUpdateKeyServlet;
+  @Autowired
   private GetNodeInfoServlet getNodeInfoServlet;
   @Autowired
   private UpdateSettingServlet updateSettingServlet;
