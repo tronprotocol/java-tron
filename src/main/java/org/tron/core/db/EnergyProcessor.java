@@ -2,7 +2,6 @@ package org.tron.core.db;
 
 import static java.lang.Long.max;
 
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -10,7 +9,6 @@ import org.tron.core.config.Parameter.AdaptiveResourceLimitConstants;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.Account.AccountResource;
-import org.tron.protos.Protocol.Transaction.Contract;
 
 @Slf4j
 public class EnergyProcessor extends ResourceProcessor {
@@ -81,79 +79,10 @@ public class EnergyProcessor extends ResourceProcessor {
   public void consume(TransactionCapsule trx,
       TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException {
-    List<Contract> contracts =
-        trx.getInstance().getRawData().getContractList();
-
-    for (Contract contract : contracts) {
-
-      //todo
-//      if (contract.isPrecompiled()) {
-//        continue;
-//      }
-      //todo
-//      long energy = trx.getReceipt().getEnergy();
-      long energy = 100L;
-      logger.debug("trxId {},energy cost :{}", trx.getTransactionId(), energy);
-      byte[] address = TransactionCapsule.getOwner(contract);
-      AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
-      if (accountCapsule == null) {
-        throw new ContractValidateException("account not exists");
-      }
-      long now = dbManager.getWitnessController().getHeadSlot();
-
-      //todo
-//      int creatorRatio = contract.getUserEnergyConsumeRatio();
-      int creatorRatio = 50;
-
-      long creatorEnergy = energy * creatorRatio / 100;
-      AccountCapsule contractProvider = dbManager.getAccountStore()
-          .get(contract.getProvider().toByteArray());
-
-      if (!useEnergy(contractProvider, creatorEnergy, now)) {
-        throw new ContractValidateException(
-            "creator has not enough energy[" + creatorEnergy + "]");
-      }
-
-      long userEnergy = energy * (100 - creatorRatio) / 100;
-      //1.The creator and the use of this have sufficient resources
-      if (useEnergy(accountCapsule, userEnergy, now)) {
-        continue;
-      }
-
-//     todo  long feeLimit = getUserFeeLimit();
-      long feeLimit = 1000000;//sun
-      long fee = calculateFee(userEnergy);
-      if (fee > feeLimit) {
-        throw new AccountResourceInsufficientException(
-            "Account has Insufficient Energy[" + userEnergy + "] and feeLimit[" + feeLimit
-                + "] is not enough to trigger this contract");
-      }
-
-      //2.The creator of this have sufficient resources
-      if (useFee(accountCapsule, fee, trace)) {
-        continue;
-      }
-
-      throw new AccountResourceInsufficientException(
-          "Account has insufficient Energy[" + userEnergy + "] and balance[" + fee
-              + "] to trigger this contract");
-    }
-  }
-
-  private long calculateFee(long userEnergy) {
-    return userEnergy * 30;// 30 drop / macroSecond, move to dynamicStore later
+    throw new RuntimeException("Not support");
   }
 
 
-  private boolean useFee(AccountCapsule accountCapsule, long fee,
-      TransactionTrace trace) {
-    if (consumeFee(accountCapsule, fee)) {
-      trace.setNetBill(0, fee);
-      return true;
-    } else {
-      return false;
-    }
-  }
 
   public boolean useEnergy(AccountCapsule accountCapsule, long energy, long now) {
 
