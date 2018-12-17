@@ -284,8 +284,6 @@ public class ExchangeTransactionActuatorTest {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
-    } catch (ItemNotFoundException e) {
-      Assert.assertFalse(e instanceof ItemNotFoundException);
     } finally {
       dbManager.getExchangeStore().delete(ByteArray.fromLong(1L));
       dbManager.getExchangeStore().delete(ByteArray.fromLong(2L));
@@ -362,8 +360,6 @@ public class ExchangeTransactionActuatorTest {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
-    } catch (ItemNotFoundException e) {
-      Assert.assertFalse(e instanceof ItemNotFoundException);
     } finally {
       dbManager.getExchangeStore().delete(ByteArray.fromLong(1L));
       dbManager.getExchangeStore().delete(ByteArray.fromLong(2L));
@@ -436,9 +432,7 @@ public class ExchangeTransactionActuatorTest {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
-    } catch (ItemNotFoundException e) {
-      Assert.assertFalse(e instanceof ItemNotFoundException);
-    }finally {
+    } finally {
       dbManager.getExchangeStore().delete(ByteArray.fromLong(1L));
       dbManager.getExchangeStore().delete(ByteArray.fromLong(2L));
       dbManager.getExchangeV2Store().delete(ByteArray.fromLong(1L));
@@ -519,9 +513,7 @@ public class ExchangeTransactionActuatorTest {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
-    } catch (ItemNotFoundException e) {
-      Assert.assertFalse(e instanceof ItemNotFoundException);
-    }finally {
+    } finally {
       dbManager.getExchangeStore().delete(ByteArray.fromLong(1L));
       dbManager.getExchangeStore().delete(ByteArray.fromLong(2L));
       dbManager.getExchangeV2Store().delete(ByteArray.fromLong(1L));
@@ -594,8 +586,6 @@ public class ExchangeTransactionActuatorTest {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
-    } catch (ItemNotFoundException e) {
-      Assert.assertFalse(e instanceof ItemNotFoundException);
     } finally {
       dbManager.getExchangeStore().delete(ByteArray.fromLong(1L));
       dbManager.getExchangeStore().delete(ByteArray.fromLong(2L));
@@ -976,6 +966,9 @@ public class ExchangeTransactionActuatorTest {
     try {
       ExchangeCapsule exchangeCapsule = dbManager.getExchangeStore()
           .get(ByteArray.fromLong(exchangeId));
+      if (exchangeCapsule == null) {
+        throw new ItemNotFoundException();
+      }
       exchangeCapsule.setBalance(0, 0);
       dbManager.getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
 
@@ -1027,6 +1020,9 @@ public class ExchangeTransactionActuatorTest {
     try {
       ExchangeCapsule exchangeCapsuleV2 = dbManager.getExchangeV2Store()
               .get(ByteArray.fromLong(exchangeId));
+      if (exchangeCapsuleV2 == null) {
+        throw new ItemNotFoundException();
+      }
       exchangeCapsuleV2.setBalance(0, 0);
       dbManager.getExchangeV2Store().put(exchangeCapsuleV2.createDbKey(), exchangeCapsuleV2);
 
@@ -1416,6 +1412,9 @@ public class ExchangeTransactionActuatorTest {
     try {
       ExchangeCapsule exchangeCapsule = dbManager.getExchangeStore()
           .get(ByteArray.fromLong(exchangeId));
+      if (exchangeCapsule == null) {
+        throw new ItemNotFoundException();
+      }
       expected = exchangeCapsule.transaction(tokenId.getBytes(), quant);
     } catch (ItemNotFoundException e) {
       fail();
@@ -1468,6 +1467,9 @@ public class ExchangeTransactionActuatorTest {
     try {
       ExchangeCapsule exchangeCapsuleV2 = dbManager.getExchangeV2Store()
               .get(ByteArray.fromLong(exchangeId));
+      if (exchangeCapsuleV2 == null) {
+        throw new ItemNotFoundException();
+      }
       expected = exchangeCapsuleV2.transaction(tokenId.getBytes(), quant);
     } catch (ItemNotFoundException e) {
       fail();

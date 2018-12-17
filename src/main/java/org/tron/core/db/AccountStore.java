@@ -85,4 +85,9 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     }
   }
 
+  @Override
+  public void close() {
+    super.close();
+    accountStateStoreTrie.close();
+  }
 }

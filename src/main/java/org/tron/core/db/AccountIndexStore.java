@@ -67,4 +67,10 @@ public class AccountIndexStore extends TronStoreWithRevoking<BytesCapsule> {
     }
     return value;
   }
+
+  @Override
+  public void close() {
+    super.close();
+    accountIndexStoreTrie.close();
+  }
 }

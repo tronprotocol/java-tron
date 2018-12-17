@@ -1,17 +1,27 @@
 package org.tron.core.db.fast.storetrie;
 
+import static org.tron.core.db.fast.FastSyncStoreConstant.PROPOSAL_STORE_KEY;
+
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.ProposalCapsule;
+import org.tron.core.capsule.utils.RLP;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db.fast.TrieService;
 import org.tron.core.db2.common.DB;
+import org.tron.core.trie.TrieImpl;
+import org.tron.core.trie.TrieImpl.Node;
+import org.tron.core.trie.TrieImpl.ScanAction;
 
 @Slf4j
 @Component
@@ -51,5 +61,33 @@ public class ProposalStoreTrie extends TronStoreWithRevoking<BytesCapsule> imple
     logger.info("put key: {}", ByteUtil.toHexString(key));
     super.put(key, item);
     cache.put(WrappedByteArray.of(key), item);
+  }
+
+  public byte[] getValue(byte[] key) {
+    TrieImpl trie = trieService.getChildTrie(RLP.encodeString(PROPOSAL_STORE_KEY), this);
+    return trie.get(RLP.encodeElement(key));
+  }
+
+  public List<ProposalCapsule> getAllProposals() {
+    TrieImpl trie = trieService.getChildTrie(RLP.encodeString(PROPOSAL_STORE_KEY), this);
+    return scanAll(trie);
+  }
+
+  private List<ProposalCapsule> scanAll(TrieImpl trie) {
+    List<ProposalCapsule> result = new ArrayList<>();
+    trie.scanTree(new ScanAction() {
+      @Override
+      public void doOnNode(byte[] hash, Node node) {
+
+      }
+
+      @Override
+      public void doOnValue(byte[] nodeHash, Node node, byte[] key, byte[] value) {
+        if (ArrayUtils.isNotEmpty(value)) {
+          result.add(new ProposalCapsule(value));
+        }
+      }
+    });
+    return result;
   }
 }

@@ -221,12 +221,7 @@ public class DepositImpl implements Deposit {
     if (parent != null) {
       proposalCapsule = parent.getProposalCapsule(id);
     } else {
-      try {
-        proposalCapsule = getProposalStore().get(id);
-      } catch (ItemNotFoundException e) {
-        logger.warn("Not found proposal, id:" + Hex.toHexString(id));
-        proposalCapsule = null;
-      }
+      proposalCapsule = getProposalStore().get(id);
     }
 
     if (proposalCapsule != null) {

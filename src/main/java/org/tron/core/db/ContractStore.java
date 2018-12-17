@@ -69,4 +69,10 @@ public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
     super.put(key, item);
     fastSyncCallBack.callBack(key, item.getData(), CONTRACT);
   }
+
+  @Override
+  public void close() {
+    super.close();
+    contractStoreTrie.close();
+  }
 }

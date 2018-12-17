@@ -101,7 +101,6 @@ import org.tron.core.db.ContractStore;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
-import org.tron.core.db.PendingManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -118,7 +117,6 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
-import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TransferContract;
@@ -415,7 +413,7 @@ public class Wallet {
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
     Message message = new TransactionMessage(signaturedTransaction);
 
-    try{
+    try {
       if (minEffectiveConnection != 0) {
         if (p2pNode.getActivePeer().isEmpty()) {
           logger.warn("Broadcast transaction {} failed, no connection.", trx.getTransactionId());
@@ -429,7 +427,8 @@ public class Wallet {
             .count();
 
         if (count < minEffectiveConnection) {
-          String info = "effective connection:" + count + " lt minEffectiveConnection:" + minEffectiveConnection;
+          String info = "effective connection:" + count + " lt minEffectiveConnection:"
+              + minEffectiveConnection;
           logger.warn("Broadcast transaction {} failed, {}.", trx.getTransactionId(), info);
           return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
               .setMessage(ByteString.copyFromUtf8(info))
@@ -443,7 +442,8 @@ public class Wallet {
       }
 
       if (dbManager.isGeneratingBlock()) {
-        logger.warn("Broadcast transaction {} failed, is generating block.", trx.getTransactionId());
+        logger
+            .warn("Broadcast transaction {} failed, is generating block.", trx.getTransactionId());
         return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
       }
 
@@ -1000,12 +1000,7 @@ public class Wallet {
     if (Objects.isNull(proposalId)) {
       return null;
     }
-    ProposalCapsule proposalCapsule = null;
-    try {
-      proposalCapsule = dbManager.getProposalStore()
-          .get(proposalId.toByteArray());
-    } catch (StoreException e) {
-    }
+    ProposalCapsule proposalCapsule = dbManager.getProposalStore().get(proposalId.toByteArray());
     if (proposalCapsule != null) {
       return proposalCapsule.getInstance();
     }
@@ -1016,11 +1011,7 @@ public class Wallet {
     if (Objects.isNull(exchangeId)) {
       return null;
     }
-    ExchangeCapsule exchangeCapsule = null;
-    try {
-      exchangeCapsule = dbManager.getExchangeStoreFinal().get(exchangeId.toByteArray());
-    } catch (StoreException e) {
-    }
+    ExchangeCapsule exchangeCapsule = dbManager.getExchangeStoreFinal().get(exchangeId.toByteArray());
     if (exchangeCapsule != null) {
       return exchangeCapsule.getInstance();
     }

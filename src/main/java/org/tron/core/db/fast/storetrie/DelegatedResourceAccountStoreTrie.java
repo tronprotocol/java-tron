@@ -1,5 +1,7 @@
 package org.tron.core.db.fast.storetrie;
 
+import static org.tron.core.db.fast.FastSyncStoreConstant.DELEGATED_RESOURCE_ACCOUNT_STORE_KEY;
+
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -8,10 +10,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.utils.RLP;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db.fast.TrieService;
 import org.tron.core.db2.common.DB;
+import org.tron.core.trie.TrieImpl;
 
 @Slf4j
 @Component
@@ -51,5 +55,11 @@ public class DelegatedResourceAccountStoreTrie extends
     logger.info("put key: {}", ByteUtil.toHexString(key));
     super.put(key, item);
     cache.put(WrappedByteArray.of(key), item);
+  }
+
+  public byte[] getValue(byte[] key) {
+    TrieImpl trie = trieService
+        .getChildTrie(RLP.encodeString(DELEGATED_RESOURCE_ACCOUNT_STORE_KEY), this);
+    return trie.get(RLP.encodeElement(key));
   }
 }

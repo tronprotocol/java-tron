@@ -106,4 +106,10 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
     super.put(key, item);
     fastSyncCallBack.callBack(key, item.getData(), ASSET);
   }
+
+  @Override
+  public void close() {
+    super.close();
+    assetIssueStoreTrie.close();
+  }
 }

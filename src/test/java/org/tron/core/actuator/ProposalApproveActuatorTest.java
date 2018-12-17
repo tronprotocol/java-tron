@@ -142,8 +142,6 @@ public class ProposalApproveActuatorTest {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
-    } catch (ItemNotFoundException e) {
-      Assert.assertFalse(e instanceof ItemNotFoundException);
     }
   }
 
@@ -177,10 +175,8 @@ public class ProposalApproveActuatorTest {
         getContract(OWNER_ADDRESS_FIRST, id, true), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     ProposalCapsule proposalCapsule;
-    try {
-      proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
-    } catch (ItemNotFoundException e) {
-      Assert.assertFalse(e instanceof ItemNotFoundException);
+    proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
+    if (proposalCapsule == null) {
       return;
     }
     Assert.assertEquals(proposalCapsule.getApprovals().size(), 0);
@@ -188,10 +184,8 @@ public class ProposalApproveActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      try {
-        proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
-      } catch (ItemNotFoundException e) {
-        Assert.assertFalse(e instanceof ItemNotFoundException);
+      proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
+      if (proposalCapsule == null) {
         return;
       }
       Assert.assertEquals(proposalCapsule.getApprovals().size(), 1);
@@ -207,10 +201,8 @@ public class ProposalApproveActuatorTest {
     ProposalApproveActuator actuator2 = new ProposalApproveActuator(
         getContract(OWNER_ADDRESS_FIRST, 1, false), dbManager);
     TransactionResultCapsule ret2 = new TransactionResultCapsule();
-    try {
-      proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
-    } catch (ItemNotFoundException e) {
-      Assert.assertFalse(e instanceof ItemNotFoundException);
+    proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
+    if (proposalCapsule == null) {
       return;
     }
     Assert.assertEquals(proposalCapsule.getApprovals().size(), 1);
@@ -218,10 +210,8 @@ public class ProposalApproveActuatorTest {
       actuator2.validate();
       actuator2.execute(ret2);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      try {
-        proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
-      } catch (ItemNotFoundException e) {
-        Assert.assertFalse(e instanceof ItemNotFoundException);
+      proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
+      if (proposalCapsule == null) {
         return;
       }
       Assert.assertEquals(proposalCapsule.getApprovals().size(), 0);
@@ -245,10 +235,8 @@ public class ProposalApproveActuatorTest {
         getContract(OWNER_ADDRESS_INVALID, id, true), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     ProposalCapsule proposalCapsule;
-    try {
-      proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
-    } catch (ItemNotFoundException e) {
-      Assert.assertFalse(e instanceof ItemNotFoundException);
+    proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
+    if (proposalCapsule == null) {
       return;
     }
     Assert.assertEquals(proposalCapsule.getApprovals().size(), 0);
@@ -277,10 +265,8 @@ public class ProposalApproveActuatorTest {
         getContract(OWNER_ADDRESS_NOACCOUNT, id, true), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     ProposalCapsule proposalCapsule;
-    try {
-      proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
-    } catch (ItemNotFoundException e) {
-      Assert.assertFalse(e instanceof ItemNotFoundException);
+    proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
+    if (proposalCapsule == null) {
       return;
     }
     Assert.assertEquals(proposalCapsule.getApprovals().size(), 0);
@@ -310,10 +296,8 @@ public class ProposalApproveActuatorTest {
         getContract(OWNER_ADDRESS_SECOND, id, true), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     ProposalCapsule proposalCapsule;
-    try {
-      proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
-    } catch (ItemNotFoundException e) {
-      Assert.assertFalse(e instanceof ItemNotFoundException);
+    proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
+    if (proposalCapsule == null) {
       return;
     }
     Assert.assertEquals(proposalCapsule.getApprovals().size(), 0);
@@ -367,10 +351,8 @@ public class ProposalApproveActuatorTest {
         getContract(OWNER_ADDRESS_FIRST, id, true), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     ProposalCapsule proposalCapsule;
-    try {
-      proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
-    } catch (ItemNotFoundException e) {
-      Assert.assertFalse(e instanceof ItemNotFoundException);
+    proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
+    if (proposalCapsule == null) {
       return;
     }
     proposalCapsule
@@ -431,14 +413,12 @@ public class ProposalApproveActuatorTest {
         getContract(OWNER_ADDRESS_FIRST, id, true), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     ProposalCapsule proposalCapsule;
-    try {
-      proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
-      proposalCapsule.setState(State.CANCELED);
-      dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
-    } catch (ItemNotFoundException e) {
-      Assert.assertFalse(e instanceof ItemNotFoundException);
+    proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
+    if (proposalCapsule == null) {
       return;
     }
+    proposalCapsule.setState(State.CANCELED);
+    dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
     Assert.assertEquals(proposalCapsule.getApprovals().size(), 0);
     try {
       actuator.validate();
@@ -469,13 +449,11 @@ public class ProposalApproveActuatorTest {
     String readableOwnerAddress = StringUtil.createReadableString(
         ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)));
     ProposalCapsule proposalCapsule;
-    try {
-      proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
-      dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
-    } catch (ItemNotFoundException e) {
-      Assert.assertFalse(e instanceof ItemNotFoundException);
+    proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
+    if (proposalCapsule == null) {
       return;
     }
+    dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
     Assert.assertEquals(proposalCapsule.getApprovals().size(), 0);
     try {
       actuator.validate();
