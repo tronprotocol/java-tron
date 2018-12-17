@@ -1,4 +1,4 @@
-package org.tron.core.net.peer;
+package org.tron.core.net.service;
 
 import static org.tron.core.config.Parameter.NetConstants.MAX_BLOCK_FETCH_PER_PEER;
 
@@ -32,12 +32,13 @@ import org.tron.core.net.TronProxy;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.FetchInvDataMessage;
 import org.tron.core.net.message.SyncBlockChainMessage;
+import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j
 @Component
-public class PeerSync {
+public class SyncService {
 
   @Autowired
   private TronProxy tronProxy;

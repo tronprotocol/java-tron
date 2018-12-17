@@ -13,10 +13,10 @@ import org.tron.core.net.messagehandler.FetchInvDataMsgHandler;
 import org.tron.core.net.messagehandler.InventoryMsgHandler;
 import org.tron.core.net.messagehandler.SyncBlockChainMsgHadler;
 import org.tron.core.net.messagehandler.TransactionsMsgHandler;
-import org.tron.core.net.peer.PeerAdv;
+import org.tron.core.net.service.AdvService;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerStatusCheck;
-import org.tron.core.net.peer.PeerSync;
+import org.tron.core.net.service.SyncService;
 import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j
@@ -27,10 +27,10 @@ public class TronNetService {
   private ChannelManager channelManager;
 
   @Autowired
-  private PeerAdv peerAdv;
+  private AdvService advService;
 
   @Autowired
-  private PeerSync peerSync;
+  private SyncService syncService;
 
   @Autowired
   private PeerStatusCheck peerStatusCheck;
@@ -56,8 +56,8 @@ public class TronNetService {
 
   public void start () {
     channelManager.init();
-    peerAdv.init();
-    peerSync.init();
+    advService.init();
+    syncService.init();
     peerStatusCheck.init();
     transactionsMsgHandler.init();
     logger.info("TronNetService start successfully.");
@@ -65,8 +65,8 @@ public class TronNetService {
 
   public void close () {
     channelManager.close();
-    peerAdv.close();
-    peerSync.close();
+    advService.close();
+    syncService.close();
     peerStatusCheck.close();
     transactionsMsgHandler.close();
     logger.info("TronNetService closed successfully.");

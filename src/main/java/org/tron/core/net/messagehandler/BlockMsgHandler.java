@@ -15,9 +15,9 @@ import org.tron.core.net.TronProxy;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.Item;
-import org.tron.core.net.peer.PeerAdv;
 import org.tron.core.net.peer.PeerConnection;
-import org.tron.core.net.peer.PeerSync;
+import org.tron.core.net.service.AdvService;
+import org.tron.core.net.service.SyncService;
 import org.tron.core.services.WitnessProductBlockService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
@@ -32,10 +32,10 @@ public class BlockMsgHandler implements TronMsgHandler {
   private TronNetClient tronManager;
 
   @Autowired
-  private PeerAdv peerAdv;
+  private AdvService advService;
 
   @Autowired
-  private PeerSync peerSync;
+  private SyncService syncService;
 
   @Autowired
   private WitnessProductBlockService witnessProductBlockService;
@@ -53,7 +53,7 @@ public class BlockMsgHandler implements TronMsgHandler {
     Item item = new Item(blockId, InventoryType.BLOCK);
     if (peer.getSyncBlockRequested().containsKey(blockId)) {
       peer.getSyncBlockRequested().remove(blockId);
-      peerSync.processBlock(peer, blockMessage);
+      syncService.processBlock(peer, blockMessage);
     } else {
       peer.getAdvInvRequest().remove(item);
       processBlock(peer, blockMessage.getBlockCapsule());
@@ -79,17 +79,17 @@ public class BlockMsgHandler implements TronMsgHandler {
     BlockId blockId = block.getBlockId();
     if (!tronProxy.containBlock(block.getParentBlockId())) {
       logger.warn("Get unlink block {} from {}, head is {}.", blockId.getString(), peer.getInetAddress(), tronProxy.getHeadBlockId().getString());
-      peerSync.startSync(peer);
+      syncService.startSync(peer);
       return;
     }
     tronProxy.processBlock(block);
     witnessProductBlockService.validWitnessProductTwoBlock(block);
     tronProxy.getActivePeer().forEach(p -> {
-      if (p.getAdvInvReceive().containsKey(blockId)) {
+      if (p.getAdvInvReceive().getIfPresent(blockId) != null) {
         p.setBlockBothHave(blockId);
       }
     });
-    peerAdv.broadcast(new BlockMessage(block));
+    advService.broadcast(new BlockMessage(block));
   }
 
 }

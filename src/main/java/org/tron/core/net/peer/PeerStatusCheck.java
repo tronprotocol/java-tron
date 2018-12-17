@@ -51,7 +51,7 @@ public class PeerStatusCheck {
       }
 
       if (!isDisconnected[0]) {
-        peer.getAdvInvSpread().values().stream()
+        peer.getAdvInvRequest().values().stream()
             .filter(time -> time < now - NetConstants.ADV_TIME_OUT)
             .findFirst()
             .ifPresent(time -> isDisconnected[0] = true);

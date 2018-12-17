@@ -2,7 +2,6 @@ package org.tron.core.net.messagehandler;
 
 import com.google.common.collect.Lists;
 import java.util.List;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -22,9 +21,9 @@ import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.message.TransactionsMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.Item;
-import org.tron.core.net.peer.PeerAdv;
 import org.tron.core.net.peer.PeerConnection;
-import org.tron.core.net.peer.PeerSync;
+import org.tron.core.net.service.AdvService;
+import org.tron.core.net.service.SyncService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
 import org.tron.protos.Protocol.Transaction;
@@ -37,10 +36,10 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
   private TronProxy tronProxy;
 
   @Autowired
-  private PeerSync peerSync;
+  private SyncService syncService;
 
   @Autowired
-  private PeerAdv peerAdv;
+  private AdvService advService;
 
   private int MAX_SIZE = 1_000_000;
 
@@ -58,7 +57,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
 
     for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
       Item item = new Item(hash, type);
-      Message message = peerAdv.getMessage(item);
+      Message message = advService.getMessage(item);
       if (message == null) {
         try {
           message = tronProxy.getData(hash, type);
@@ -98,19 +97,19 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
     if (type == MessageTypes.TRX) {
       int fetchCount = peer.getNodeStatistics().messageStatistics.tronInTrxFetchInvDataElement
           .getCount(10);
-      int maxCount = peerAdv.getTrxCount().getCount(60);
+      int maxCount = advService.getTrxCount().getCount(60);
       if (fetchCount > maxCount) {
         throw new P2pException(TypeEnum.BAD_MESSAGE, "maxCount: " + maxCount + ", fetchCount: " + fetchCount);
       }
       for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
-        if (!peer.getAdvInvSpread().containsKey(new Item(hash, InventoryType.TRX))) {
+        if (peer.getAdvInvSpread().getIfPresent(new Item(hash, InventoryType.TRX)) == null) {
           throw new P2pException(TypeEnum.BAD_MESSAGE, "not spread inv: {}" + hash);
         }
       }
     } else {
       boolean isAdv = true;
       for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
-        if (!peer.getAdvInvSpread().containsKey(new Item(hash, InventoryType.BLOCK))) {
+        if (peer.getAdvInvSpread().getIfPresent(new Item(hash, InventoryType.BLOCK)) == null) {
           isAdv = false;
           break;
         }

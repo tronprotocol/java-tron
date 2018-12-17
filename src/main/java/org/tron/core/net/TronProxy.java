@@ -56,10 +56,12 @@ public class TronProxy {
   @Getter
   private Object blockLock = new Object();
 
+  private int blockIdCacheSize = 100;
+
   private Queue<BlockId> freshBlockId = new ConcurrentLinkedQueue<BlockId>() {
     @Override
     public boolean offer(BlockId blockId) {
-      if (size() > 200) {
+      if (size() > blockIdCacheSize) {
         super.poll();
       }
       return super.offer(blockId);

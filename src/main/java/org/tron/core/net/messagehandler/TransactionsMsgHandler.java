@@ -19,7 +19,7 @@ import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.message.TransactionsMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.Item;
-import org.tron.core.net.peer.PeerAdv;
+import org.tron.core.net.service.AdvService;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
@@ -34,7 +34,7 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   private TronProxy tronProxy;
 
   @Autowired
-  private PeerAdv peerAdv;
+  private AdvService advService;
 
   private static int MAX_TRX_SIZE = 50_000;
 
@@ -130,7 +130,7 @@ public class TransactionsMsgHandler implements TronMsgHandler {
     }
     try {
       tronProxy.pushTransaction(trx.getTransactionCapsule());
-      peerAdv.broadcast(trx);
+      advService.broadcast(trx);
     }catch (P2pException e) {
       logger.warn("Trx {} from peer {} process failed. type: {}, reason: {}",
           trx.getMessageId(), peer.getInetAddress(), e.getType(), e.getMessage());

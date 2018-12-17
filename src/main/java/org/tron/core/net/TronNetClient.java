@@ -3,16 +3,16 @@ package org.tron.core.net;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
-import org.tron.core.net.peer.PeerAdv;
+import org.tron.core.net.service.AdvService;
 
 @Component
 public class TronNetClient {
 
   @Autowired
-  private PeerAdv peerAdv;
+  private AdvService advService;
 
   public void broadcast(Message msg) {
-    peerAdv.broadcast(msg);
+    advService.broadcast(msg);
   }
 
 }

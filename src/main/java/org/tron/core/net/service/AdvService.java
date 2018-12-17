@@ -1,4 +1,4 @@
-package org.tron.core.net.peer;
+package org.tron.core.net.service;
 
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.NetConstants.MAX_TRX_FETCH_PER_PEER;
@@ -30,11 +30,13 @@ import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.FetchInvDataMessage;
 import org.tron.core.net.message.InventoryMessage;
 import org.tron.core.net.message.TransactionMessage;
+import org.tron.core.net.peer.Item;
+import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
 @Slf4j
 @Component
-public class PeerAdv {
+public class AdvService {
 
   @Autowired
   private TronProxy tronProxy;
@@ -130,9 +132,7 @@ public class PeerAdv {
     if (!peer.getAdvInvRequest().isEmpty()) {
       peer.getAdvInvRequest().keySet().forEach(item -> {
         if (tronProxy.getActivePeer().stream()
-            .filter(p -> !p.equals(peer) && p.getAdvInvReceive().containsKey(item))
-            .findFirst()
-            .isPresent()) {
+            .anyMatch(p -> !p.equals(peer) && p.getAdvInvReceive().getIfPresent(item) != null)){
           invToFetch.put(item, System.currentTimeMillis());
         }
       });
@@ -157,7 +157,7 @@ public class PeerAdv {
         return;
       }
       peers.stream()
-          .filter(peer -> peer.getAdvInvReceive().containsKey(item) && invSender.getSize(peer) < MAX_TRX_FETCH_PER_PEER)
+          .filter(peer -> peer.getAdvInvReceive().getIfPresent(item) != null && invSender.getSize(peer) < MAX_TRX_FETCH_PER_PEER)
           .sorted(Comparator.comparingInt(peer -> invSender.getSize(peer)))
           .findFirst().ifPresent(peer -> {
         invSender.add(item, peer);
@@ -184,7 +184,7 @@ public class PeerAdv {
     tronProxy.getActivePeer().stream()
         .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
         .forEach(peer -> spread.entrySet().stream()
-            .filter(entry -> !peer.getAdvInvReceive().containsKey(entry.getKey()) && !peer.getAdvInvSpread().containsKey(entry.getKey()))
+            .filter(entry -> peer.getAdvInvReceive().getIfPresent(entry.getKey()) == null && peer.getAdvInvSpread().getIfPresent(entry.getKey()) == null)
             .forEach(entry -> {
               peer.getAdvInvSpread().put(entry.getKey(), Time.getCurrentMillis());
               invSender.add(entry.getKey(), peer);

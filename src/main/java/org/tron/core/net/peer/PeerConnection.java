@@ -1,7 +1,5 @@
 package org.tron.core.net.peer;
 
-import static org.tron.core.config.Parameter.NetConstants.MAX_INVENTORY_SIZE_IN_MINUTES;
-
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.util.Deque;
@@ -12,6 +10,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.TimeUnit;
 import javafx.util.Pair;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,10 +22,11 @@ import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.net.TronProxy;
+import org.tron.core.net.service.AdvService;
+import org.tron.core.net.service.SyncService;
 
 @Slf4j
 @Component
@@ -37,10 +37,12 @@ public class PeerConnection extends Channel {
   private TronProxy tronProxy;
 
   @Autowired
-  private PeerSync peerSync;
+  private SyncService syncService;
 
   @Autowired
-  private PeerAdv peerAdv;
+  private AdvService advService;
+
+  private int invCacheSize = 500_000;
 
   @Setter
   @Getter
@@ -52,11 +54,13 @@ public class PeerConnection extends Channel {
 
   @Setter
   @Getter
-  private Map<Item, Long> advInvReceive = new ConcurrentHashMap<>();
+  private Cache<Item, Long> advInvReceive = CacheBuilder.newBuilder().maximumSize(invCacheSize)
+      .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
 
   @Setter
   @Getter
-  private Map<Item, Long> advInvSpread = new ConcurrentHashMap<>();
+  private Cache<Item, Long> advInvSpread = CacheBuilder.newBuilder().maximumSize(invCacheSize)
+      .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
 
   @Setter
   @Getter
@@ -108,19 +112,6 @@ public class PeerConnection extends Channel {
   @Getter
   private boolean needSyncFromUs;
 
-  public void cleanInvGarbage() {
-
-    long time = Time.getCurrentMillis() - MAX_INVENTORY_SIZE_IN_MINUTES * 60 * 1000;
-
-    Iterator<Entry<Item, Long>> iterator = this.advInvReceive.entrySet().iterator();
-
-    removeIterator(iterator, time);
-
-    iterator = this.advInvSpread.entrySet().iterator();
-
-    removeIterator(iterator, time);
-  }
-
   private void removeIterator(Iterator<Entry<Item, Long>> iterator, long oldestTimestamp) {
     while (iterator.hasNext()) {
       Map.Entry entry = iterator.next();
@@ -142,15 +133,23 @@ public class PeerConnection extends Channel {
   public void onConnectPeer() {
     if (getHelloMessage().getHeadBlockId().getNum() > tronProxy.getHeadBlockId().getNum()) {
       setTronState(TronState.SYNCING);
-      peerSync.startSync(this);
+      syncService.startSync(this);
     } else {
       setTronState(TronState.SYNC_COMPLETED);
     }
   }
 
   public void onDisconnectPeer() {
-    peerSync.onDisconnect(this);
-    peerAdv.onDisconnect(this);
+    syncService.onDisconnect(this);
+    advService.onDisconnect(this);
+    advInvReceive.cleanUp();
+    advInvSpread.cleanUp();
+    advInvRequest.clear();
+    syncBlockIdCache.cleanUp();
+    syncBlockToFetch.clear();
+    syncBlockRequested.clear();
+    syncBlockInProcess.clear();
+    syncBlockInProcess.clear();
   }
 
   public String log () {

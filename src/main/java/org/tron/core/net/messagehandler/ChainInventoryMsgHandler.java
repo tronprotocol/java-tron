@@ -20,7 +20,7 @@ import org.tron.core.net.TronProxy;
 import org.tron.core.net.message.ChainInventoryMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.PeerConnection;
-import org.tron.core.net.peer.PeerSync;
+import org.tron.core.net.service.SyncService;
 
 @Slf4j
 @Component
@@ -30,7 +30,7 @@ public class ChainInventoryMsgHandler implements TronMsgHandler  {
   private TronProxy tronProxy;
 
   @Autowired
-  private PeerSync peerSync;
+  private SyncService syncService;
 
   @Setter
   private TronNetClient tronManager;
@@ -78,9 +78,9 @@ public class ChainInventoryMsgHandler implements TronMsgHandler  {
 
     if ((chainInventoryMessage.getRemainNum() == 0 && !peer.getSyncBlockToFetch().isEmpty()) ||
         (chainInventoryMessage.getRemainNum() != 0 && peer.getSyncBlockToFetch().size() > NodeConstant.SYNC_FETCH_BATCH_NUM)) {
-      peerSync.setFetchFlag(true);
+      syncService.setFetchFlag(true);
     }else {
-      peerSync.syncNext(peer);
+      syncService.syncNext(peer);
     }
   }
 
