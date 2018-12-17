@@ -39,7 +39,6 @@ import org.tron.core.db.Manager;
 @Component
 public class WalletOnSolidity {
 
-  @Getter
   private ListeningExecutorService executorService = MoreExecutors.listeningDecorator(
       Executors.newFixedThreadPool(Args.getInstance().getSolidityThreads(),
           new ThreadFactoryBuilder().setNameFormat("WalletOnSolidity-%d").build()));
