@@ -60,7 +60,7 @@ public class WalletOnSolidity {
     });
 
     try {
-      return future.get(500, TimeUnit.MILLISECONDS);
+      return future.get(1000, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     } catch (ExecutionException ignored) {
@@ -82,7 +82,7 @@ public class WalletOnSolidity {
     });
 
     try {
-      future.get(500, TimeUnit.MILLISECONDS);
+      future.get(1000, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     } catch (ExecutionException ignored) {
