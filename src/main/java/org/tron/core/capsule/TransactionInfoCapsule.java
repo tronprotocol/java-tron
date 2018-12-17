@@ -11,6 +11,7 @@ import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
 import org.tron.protos.Protocol;
@@ -194,7 +195,7 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
 
     builder.setReceipt(traceReceipt.getReceipt());
 
-    if (null != programResult.getInternalTransactions()) {
+    if (Args.getInstance().isSaveInternalTx() && null != programResult.getInternalTransactions()) {
       for (InternalTransaction internalTransaction : programResult
           .getInternalTransactions()) {
         Protocol.InternalTransaction.Builder internalTrxBuilder = Protocol.InternalTransaction

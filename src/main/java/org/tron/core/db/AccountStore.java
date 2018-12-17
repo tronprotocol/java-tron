@@ -41,14 +41,6 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
   }
 
-  @Override
-  public AccountCapsule getOnSolidity(byte[] key) {
-    byte[] value = revokingDB.getUncheckedOnSolidity(key);
-    if (ArrayUtils.isEmpty(value)) {
-      return accountStateStoreTrie.getSolidityAccount(key);
-    }
-    return new AccountCapsule(value);
-  }
 
   @Override
   public void put(byte[] key, AccountCapsule item) {

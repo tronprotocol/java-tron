@@ -43,28 +43,10 @@ public class AccountIdIndexStore extends TronStoreWithRevoking<BytesCapsule> {
     return null;
   }
 
-  public byte[] getOnSolidity(ByteString name) {
-    BytesCapsule bytesCapsule = getOnSolidity(name.toByteArray());
-    if (Objects.nonNull(bytesCapsule)) {
-      return bytesCapsule.getData();
-    }
-    return null;
-  }
-
   @Override
   public BytesCapsule get(byte[] key) {
     byte[] lowerCaseKey = getLowerCaseAccountId(key);
     byte[] value = getValue(lowerCaseKey);
-    if (ArrayUtils.isEmpty(value)) {
-      return null;
-    }
-    return new BytesCapsule(value);
-  }
-
-  @Override
-  public BytesCapsule getOnSolidity(byte[] key) {
-    byte[] lowerCaseKey = getLowerCaseAccountId(key);
-    byte[] value = getSolidityValue(lowerCaseKey);
     if (ArrayUtils.isEmpty(value)) {
       return null;
     }
@@ -87,14 +69,6 @@ public class AccountIdIndexStore extends TronStoreWithRevoking<BytesCapsule> {
     byte[] value = accountIdIndexStoreTrie.getValue(key);
     if (ArrayUtils.isEmpty(value)) {
       value = revokingDB.getUnchecked(key);
-    }
-    return value;
-  }
-
-  private byte[] getSolidityValue(byte[] key) {
-    byte[] value = accountIdIndexStoreTrie.getSolidityValue(key);
-    if (ArrayUtils.isEmpty(value)) {
-      value = revokingDB.getUncheckedOnSolidity(key);
     }
     return value;
   }

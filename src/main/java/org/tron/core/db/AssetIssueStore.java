@@ -42,15 +42,6 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
     return super.getUnchecked(key);
   }
 
-  @Override
-  public AssetIssueCapsule getOnSolidity(byte[] key) {
-    AssetIssueCapsule assetIssueCapsule = getSolidityValue(key);
-    if (assetIssueCapsule != null) {
-      return assetIssueCapsule;
-    }
-    return super.getUncheckedOnSolidity(key);
-  }
-
   /**
    * get all asset issues.
    */
@@ -60,17 +51,6 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
       return assetIssueCapsuleList;
     }
     return Streams.stream(iterator())
-        .map(Entry::getValue)
-        .collect(Collectors.toList());
-  }
-
-  public List<AssetIssueCapsule> getAllAssetIssuesOnSolidity() {
-    List<AssetIssueCapsule> assetIssueCapsuleList = assetIssueStoreTrie
-        .getAllAssetIssuesOnSolidity();
-    if (CollectionUtils.isNotEmpty(assetIssueCapsuleList)) {
-      return assetIssueCapsuleList;
-    }
-    return Streams.stream(iteratorOnSolidity())
         .map(Entry::getValue)
         .collect(Collectors.toList());
   }
@@ -107,10 +87,6 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
     return getAssetIssuesPaginated(getAllAssetIssues(), offset, limit);
   }
 
-  public List<AssetIssueCapsule> getAssetIssuesPaginatedOnSolidity(long offset, long limit) {
-    return getAssetIssuesPaginated(getAllAssetIssuesOnSolidity(), offset, limit);
-  }
-
   public AssetIssueCapsule getValue(byte[] key) {
     byte[] value = assetIssueStoreTrie.getValue(key);
     if (ArrayUtils.isNotEmpty(value)) {
@@ -118,15 +94,7 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
     }
     return null;
   }
-
-  private AssetIssueCapsule getSolidityValue(byte[] key) {
-    byte[] value = assetIssueStoreTrie.getSolidityValue(key);
-    if (ArrayUtils.isNotEmpty(value)) {
-      return new AssetIssueCapsule(value);
-    }
-    return null;
-  }
-
+  
   @Override
   public void delete(byte[] key) {
     super.delete(key);
