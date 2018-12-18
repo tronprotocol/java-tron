@@ -1771,8 +1771,6 @@ public class RpcApiService implements Service {
       }
         responseObserver.onCompleted();
     }
-  }
-
     @Override
     public void permissionUpdateKey(PermissionUpdateKeyContract request,
         StreamObserver<TransactionExtention> responseObserver) {

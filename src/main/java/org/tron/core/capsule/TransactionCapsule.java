@@ -35,7 +35,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.util.StringUtils;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
@@ -617,9 +616,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return false;
   }
 
-  public void validatePubSignature() throws ValidateSignatureException {
-    if (this.getInstance().getSignatureCount() !=
-        this.getInstance().getRawData().getContractCount()) {
   /**
    * validate signature
    */
@@ -652,6 +648,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       isVerified = false;
       throw new ValidateSignatureException(e.getMessage());
     }
+    isVerified = true;
+    return true;
   }
 
   public void validateZkSignature() throws ValidateSignatureException {
@@ -688,28 +686,28 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
   }
 
-  /**
-   * validate signature
-   */
-  public boolean validateSignature() throws ValidateSignatureException {
-    if (isVerified == true) {
-      return true;
-    }
-    //Do not support multi contracts in one transaction
-    Transaction.Contract contract = this.getInstance().getRawData().getContract(0);
-    if (contract.getType() != ContractType.ZksnarkV0TransferContract) {
-      validatePubSignature();
-    } else {
-      byte[] owner = getOwner(contract);
-      if (!ArrayUtils.isEmpty(owner)) {
-        validatePubSignature();   //If no pub input , need not signature.
-      }
-      validateZkSignature();
-    }
-
-    isVerified = true;
-    return true;
-  }
+//  /**
+//   * validate signature
+//   */
+//  public boolean validateSignature() throws ValidateSignatureException {
+//    if (isVerified == true) {
+//      return true;
+//    }
+//    //Do not support multi contracts in one transaction
+//    Transaction.Contract contract = this.getInstance().getRawData().getContract(0);
+//    if (contract.getType() != ContractType.ZksnarkV0TransferContract) {
+//      validatePubSignature();
+//    } else {
+//      byte[] owner = getOwner(contract);
+//      if (!ArrayUtils.isEmpty(owner)) {
+//        validatePubSignature();   //If no pub input , need not signature.
+//      }
+//      validateZkSignature();
+//    }
+//
+//    isVerified = true;
+//    return true;
+//  }
 
   public Sha256Hash getTransactionId() {
     return getRawHash();
