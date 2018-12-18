@@ -67,6 +67,10 @@ public class ContractScenario011 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(deployKey);
@@ -430,6 +434,9 @@ public class ContractScenario011 {
     Assert.assertTrue(beforeBalance == afterBalance + fee);
   }
 
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {

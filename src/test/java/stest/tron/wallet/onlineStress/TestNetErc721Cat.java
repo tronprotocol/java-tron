@@ -68,6 +68,10 @@ public class TestNetErc721Cat {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(deployKey);
@@ -376,6 +380,9 @@ public class TestNetErc721Cat {
 
   }
 
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {

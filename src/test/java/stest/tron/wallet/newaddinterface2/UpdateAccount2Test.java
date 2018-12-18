@@ -86,6 +86,10 @@ public class UpdateAccount2Test {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass
   public void beforeClass() {
     PublicMethed.printAddress(lowBalTest);
@@ -248,6 +252,9 @@ public class UpdateAccount2Test {
       logger.info("This account has freeze balance, please test this case for manual");
     }
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {
@@ -255,6 +262,9 @@ public class UpdateAccount2Test {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+  /**
+   * constructor.
+   */
 
   public Boolean createWitness(byte[] owner, byte[] url, String priKey) {
     ECKey temKey = null;
@@ -282,7 +292,9 @@ public class UpdateAccount2Test {
       return true;
     }
   }
-
+  /**
+   * constructor.
+   */
 
   public GrpcAPI.Return createWitness2(byte[] owner, byte[] url, String priKey) {
     ECKey temKey = null;
@@ -327,6 +339,9 @@ public class UpdateAccount2Test {
     return ret;
   }
 
+  /**
+   * constructor.
+   */
 
   public Boolean sendCoin(byte[] to, long amount, byte[] owner, String priKey) {
     //String priKey = testKey002;
@@ -361,6 +376,9 @@ public class UpdateAccount2Test {
       return true;
     }
   }
+  /**
+   * constructor.
+   */
 
   public GrpcAPI.Return sendCoin2(byte[] to, long amount, byte[] owner, String priKey) {
     //String priKey = testKey002;
@@ -413,6 +431,9 @@ public class UpdateAccount2Test {
     return ret;
   }
 
+  /**
+   * constructor.
+   */
 
   public Boolean createAssetIssue(byte[] address, String name, Long totalSupply, Integer trxNum,
       Integer icoNum, Long startTime, Long endTime,
@@ -465,6 +486,9 @@ public class UpdateAccount2Test {
       return Long.compare(((Account) o2).getBalance(), ((Account) o1).getBalance());
     }
   }
+  /**
+   * constructor.
+   */
 
   public Account queryAccount(String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     byte[] address;
@@ -498,12 +522,18 @@ public class UpdateAccount2Test {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+  /**
+   * constructor.
+   */
 
   public Account grpcQueryAccount(byte[] address, WalletGrpc.WalletBlockingStub blockingStubFull) {
     ByteString addressBs = ByteString.copyFrom(address);
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+  /**
+   * constructor.
+   */
 
   public Block getBlock(long blockNum, WalletGrpc.WalletBlockingStub blockingStubFull) {
     NumberMessage.Builder builder = NumberMessage.newBuilder();
@@ -521,6 +551,9 @@ public class UpdateAccount2Test {
     return TransactionUtils.sign(transaction, ecKey);
   }
 
+  /**
+   * constructor.
+   */
 
   public boolean updateAccount(byte[] addressBytes, byte[] accountNameBytes, String priKey) {
     ECKey temKey = null;
@@ -557,6 +590,9 @@ public class UpdateAccount2Test {
       return true;
     }
   }
+  /**
+   * constructor.
+   */
 
   public GrpcAPI.Return updateAccount2(byte[] addressBytes, byte[] accountNameBytes,
       String priKey) {
@@ -610,7 +646,9 @@ public class UpdateAccount2Test {
       return response;
     }
   }
-
+  /**
+   * constructor.
+   */
 
   public boolean unFreezeBalance(byte[] address, String priKey) {
     ECKey temKey = null;
@@ -644,6 +682,9 @@ public class UpdateAccount2Test {
       return true;
     }
   }
+  /**
+   * constructor.
+   */
 
   public GrpcAPI.Return unFreezeBalance2(byte[] address, String priKey) {
     //byte[] address = address;
@@ -692,6 +733,9 @@ public class UpdateAccount2Test {
     }
     return ret;
   }
+  /**
+   * constructor.
+   */
 
   public Boolean voteWitness(HashMap<String, String> witness, byte[] address, String priKey) {
 
@@ -735,6 +779,9 @@ public class UpdateAccount2Test {
     }
     return true;
   }
+  /**
+   * constructor.
+   */
 
   public GrpcAPI.Return voteWitness2(HashMap<String, String> witness, byte[] address,
       String priKey) {
@@ -797,6 +844,9 @@ public class UpdateAccount2Test {
     return ret;
   }
 
+  /**
+   * constructor.
+   */
 
   public Boolean freezeBalance(byte[] addRess, long freezeBalance, long freezeDuration,
       String priKey) {
@@ -837,6 +887,9 @@ public class UpdateAccount2Test {
 
 
   }
+  /**
+   * constructor.
+   */
 
   public GrpcAPI.Return freezeBalance2(byte[] addRess, long freezeBalance, long freezeDuration,
       String priKey) {

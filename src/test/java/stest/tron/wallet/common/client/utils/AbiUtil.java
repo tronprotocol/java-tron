@@ -28,6 +28,9 @@ public class AbiUtil {
     abstract byte[] decode();
 
   }
+  /**
+   * constructor.
+   */
 
   public static String[] getTypes(String methodSign) {
     int start = methodSign.indexOf('(') + 1;
@@ -41,6 +44,9 @@ public class AbiUtil {
   public static String geMethodId(String methodSign) {
     return null;
   }
+  /**
+   * constructor.
+   */
 
   public static Coder getParamCoder(String type) {
 
@@ -250,6 +256,9 @@ public class AbiUtil {
       return new byte[0];
     }
   }
+  /**
+   * constructor.
+   */
 
   public static byte[] encodeDynamicBytes(String value) {
     byte[] data = value.getBytes();
@@ -277,6 +286,9 @@ public class AbiUtil {
 
     return retBytes;
   }
+  /**
+   * constructor.
+   */
 
   public static byte[] pack(List<Coder> codes, List<Object> values) {
 
@@ -323,10 +335,16 @@ public class AbiUtil {
 
     return data;
   }
+  /**
+   * constructor.
+   */
 
   public static String parseMethod(String methodSign, String params) {
     return parseMethod(methodSign, params, false);
   }
+  /**
+   * constructor.
+   */
 
   public static String parseMethod(String methodSign, String input, boolean isHex) {
     byte[] selector = new byte[4];
@@ -342,6 +360,9 @@ public class AbiUtil {
 
     return Hex.toHexString(selector) + Hex.toHexString(encodedParms);
   }
+  /**
+   * constructor.
+   */
 
   public static byte[] encodeInput(String methodSign, String input) {
     ObjectMapper mapper = new ObjectMapper();
@@ -361,6 +382,9 @@ public class AbiUtil {
 
     return pack(coders, items);
   }
+  /**
+   * constructor.
+   */
 
   public  static void main(String[] args) {
     //    String method = "test(address,string,int)";
@@ -401,6 +425,9 @@ public class AbiUtil {
     System.out.println(parseMethod(byteMethod1, bytesValue1));
 
   }
+  /**
+   * constructor.
+   */
 
   public static byte[] concat(byte[]... bytesArray) {
     int length = 0;

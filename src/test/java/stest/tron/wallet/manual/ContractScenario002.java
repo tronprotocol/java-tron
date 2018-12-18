@@ -49,6 +49,9 @@ public class ContractScenario002 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+  /**
+   * constructor.
+   */
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
@@ -186,6 +189,9 @@ public class ContractScenario002 {
     logger.info(smartContract.getAbi().toString());
     Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {

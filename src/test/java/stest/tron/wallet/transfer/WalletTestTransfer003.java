@@ -87,6 +87,10 @@ public class WalletTestTransfer003 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }*/
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass
   public void beforeClass() {
     logger.info(testKeyForSendCoin);
@@ -235,6 +239,9 @@ public class WalletTestTransfer003 {
 
   }
 
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {
@@ -248,6 +255,9 @@ public class WalletTestTransfer003 {
       channelFull1.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+  /**
+   * constructor.
+   */
 
   public Account queryAccount(ECKey ecKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     byte[] address;
@@ -272,12 +282,18 @@ public class WalletTestTransfer003 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+  /**
+   * constructor.
+   */
 
   public Account grpcQueryAccount(byte[] address, WalletGrpc.WalletBlockingStub blockingStubFull) {
     ByteString addressBs = ByteString.copyFrom(address);
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+  /**
+   * constructor.
+   */
 
   public Block getBlock(long blockNum, WalletGrpc.WalletBlockingStub blockingStubFull) {
     NumberMessage.Builder builder = NumberMessage.newBuilder();
@@ -294,6 +310,9 @@ public class WalletTestTransfer003 {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, ecKey);
   }
+  /**
+   * constructor.
+   */
 
   public static Protocol.Transaction sendcoin(byte[] to, long amount, byte[] owner, String priKey,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
@@ -329,6 +348,9 @@ public class WalletTestTransfer003 {
 
     return transaction;
   }
+  /**
+   * constructor.
+   */
 
   public Protocol.Transaction updateAccount(byte[] addressBytes, byte[] accountNameBytes,
       String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {

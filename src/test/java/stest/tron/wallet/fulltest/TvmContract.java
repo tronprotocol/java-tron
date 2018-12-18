@@ -43,6 +43,10 @@ public class TvmContract {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(contract008Key);
@@ -135,6 +139,9 @@ public class TvmContract {
     logger.info("after storage limit is " + Long.toString(storageLimit));
     logger.info("after storage usaged is " + Long.toString(storageUsage));
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {

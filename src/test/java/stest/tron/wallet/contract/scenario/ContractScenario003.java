@@ -50,6 +50,10 @@ public class ContractScenario003 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(contract003Key);
@@ -211,6 +215,9 @@ public class ContractScenario003 {
     Assert.assertTrue(energyUsage == 0);
     Assert.assertTrue(balanceBefore == balanceAfter + infoById.get().getFee());
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {

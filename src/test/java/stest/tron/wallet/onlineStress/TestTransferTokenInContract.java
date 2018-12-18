@@ -60,6 +60,10 @@ public class TestTransferTokenInContract {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
 
@@ -77,6 +81,9 @@ public class TestTransferTokenInContract {
   private static int randomInt(int minInt, int maxInt) {
     return (int) Math.round(Math.random() * (maxInt - minInt) + minInt);
   }
+  /**
+   * constructor.
+   */
 
   public ByteString createAssetissue(byte[] devAddress, String devKey, String tokenName) {
 
@@ -290,6 +297,9 @@ public class TestTransferTokenInContract {
           user001Key, blockingStubFull);
     }
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {

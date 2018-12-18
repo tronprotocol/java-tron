@@ -85,6 +85,10 @@ public class TransferAssetIssue {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = false)
   public void beforeClass() {
     logger.info(testKeyForCreate);
@@ -153,6 +157,10 @@ public class TransferAssetIssue {
           createAddress,testKeyForCreate,blockingStubFull);
     }
   }
+
+  /**
+   * constructor.
+   */
 
 
   @AfterClass(enabled = false)
@@ -273,6 +281,10 @@ public class TransferAssetIssue {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+  /**
+   * constructor.
+   */
+
 
   public static boolean participateAssetIssue(byte[] to, byte[] assertName, long amount,
       byte[] from, String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
@@ -306,6 +318,10 @@ public class TransferAssetIssue {
     }
   }
 
+  /**
+   * constructor.
+   */
+
   public static Protocol.Transaction signTransaction(ECKey ecKey,
       Protocol.Transaction transaction) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -316,6 +332,9 @@ public class TransferAssetIssue {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, ecKey);
   }
+  /**
+   * constructor.
+   */
 
   public static boolean transferAsset(byte[] to, byte[] assertName, long amount, byte[] address,
       String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
