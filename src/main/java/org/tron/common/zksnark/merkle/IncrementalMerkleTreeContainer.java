@@ -197,51 +197,33 @@ public class IncrementalMerkleTreeContainer {
     SHA256Compress combineLeft = leftIsPresent() ? treeCapsule.getLeft() : filler.next(0);
     SHA256Compress combineRight = rightIsPresent() ? treeCapsule.getRight() : filler.next(0);
 
-    logger.info("leftIsPresent:" + leftIsPresent());
-    logger.info("\n");
-    logger.info("combineLeft:" + ByteArray.toHexString(combineLeft.getContent().toByteArray()));
-    logger.info("\n");
-    logger.info("rightIsPresent:" + rightIsPresent());
-    logger.info("\n");
-    logger.info("combineRight:" + ByteArray.toHexString(combineRight.getContent().toByteArray()));
-    logger.info("\n");
+
 
     SHA256CompressCapsule root = SHA256CompressCapsule.combine(combineLeft, combineRight, 0);
-    logger.info("root:" + ByteArray.toHexString(root.getContent().toByteArray()));
-    logger.info("\n");
+
     int d = 1;
-    logger.info("parent size:" + treeCapsule.getParents().size());
-    logger.info("\n");
+
     for (SHA256Compress parent : treeCapsule.getParents()) {
-      logger.info("d:" + d);
-      logger.info("\n");
+
       SHA256CompressCapsule parentCompressCapsule = new SHA256CompressCapsule(parent);
       if (parentCompressCapsule.isPresent()) {
-        logger.info(
-            "parent:" + ByteArray.toHexString(parentCompressCapsule.getContent().toByteArray()));
-        logger.info("\n");
+
         root = SHA256CompressCapsule.combine(parent, root.getInstance(), d);
       } else {
         SHA256Compress next = filler.next(d);
-        logger.info("filler.next(d):" + ByteArray.toHexString(next.getContent().toByteArray()));
-        logger.info("\n");
+
         root = SHA256CompressCapsule.combine(root.getInstance(), next, d);
       }
       d++;
     }
 
     while (d < depth) {
-      logger.info("d:" + d);
-      logger.info("\n");
+
       SHA256Compress left = root.getInstance();
       SHA256Compress right = filler.next(d);
-      logger.info("left:" + ByteArray.toHexString(left.getContent().toByteArray()));
-      logger.info("\n");
-      logger.info("right:" + ByteArray.toHexString(right.getContent().toByteArray()));
-      logger.info("\n");
+
       SHA256CompressCapsule result = SHA256CompressCapsule.combine(left, right, d);
-      logger.info("result:" + ByteArray.toHexString(right.getContent().toByteArray()));
-      logger.info("\n");
+
       root = result;
       d++;
     }

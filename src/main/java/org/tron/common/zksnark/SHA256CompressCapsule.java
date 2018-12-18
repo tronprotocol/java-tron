@@ -61,14 +61,12 @@ public class SHA256CompressCapsule implements ProtoCapsule<SHA256Compress> {
 
     byte[] temp = a.getContent().toByteArray();
     ZksnarkUtils.sort(temp);
-    System.out.print(ByteArray.toHexString(temp));
-    System.out.print(" : ");
+
     temp = b.getContent().toByteArray();
     ZksnarkUtils.sort(temp);
-    System.out.print(ByteArray.toHexString(temp));
-    System.out.print(" : ");
+
     ZksnarkUtils.sort(res);
-    System.out.println(ByteArray.toHexString(res));
+
     return sha256CompressCapsule;
   }
 
