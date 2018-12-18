@@ -9,7 +9,6 @@ import org.junit.Test;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletGrpc.WalletBlockingStub;
-import org.tron.api.WalletGrpc.WalletStub;
 import org.tron.common.entity.NodeInfo;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -34,7 +33,7 @@ public class NodeInfoServiceTest extends BaseNetTest {
 
   @Test
   public void test() {
-    nodeInfoService = context.getBean(NodeInfoService.class);
+    nodeInfoService = context.getBean("nodeInfoService", NodeInfoService.class);
     witnessProductBlockService = context.getBean(WitnessProductBlockService.class);
     BlockCapsule blockCapsule1 = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
         100, ByteString.EMPTY);

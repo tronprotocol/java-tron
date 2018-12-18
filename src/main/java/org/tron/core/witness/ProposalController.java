@@ -179,11 +179,16 @@ public class ProposalController {
           break;
         }
         case (19): {
+          manager.getDynamicPropertiesStore().saveTotalEnergyLimit2(entry.getValue());
+          break;
+        }
+        case (20): {
           if (manager.getDynamicPropertiesStore().getAllowMultiSign() == 0) {
             manager.getDynamicPropertiesStore().saveAllowMultiSign(entry.getValue());
           }
           break;
         }
+
         default:
           break;
       }

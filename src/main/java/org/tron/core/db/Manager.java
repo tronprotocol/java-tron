@@ -593,8 +593,7 @@ public class Manager {
   }
 
   void validateDup(TransactionCapsule transactionCapsule) throws DupTransactionException {
-    if (getTransactionStore().getUnchecked(transactionCapsule.getTransactionId().getBytes())
-        != null) {
+    if (getTransactionStore().has(transactionCapsule.getTransactionId().getBytes())) {
       logger.debug(ByteArray.toHexString(transactionCapsule.getTransactionId().getBytes()));
       throw new DupTransactionException("dup trans");
     }
@@ -609,7 +608,7 @@ public class Manager {
       TooBigTransactionException, TransactionExpirationException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
 
-    if (!trx.validateSignature(this.accountStore)) {
+    if (!trx.validateSignature(this)) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
@@ -678,7 +677,7 @@ public class Manager {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
-    updateFork();
+    updateFork(block);
     if (System.currentTimeMillis() - block.getTimeStamp() >= 60_000) {
       revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MAX_FLUSH_COUNT);
     } else {
@@ -1021,7 +1020,7 @@ public class Manager {
 
     validateDup(trxCap);
 
-    if (!trxCap.validateSignature(this.accountStore)) {
+    if (!trxCap.validateSignature(this)) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
@@ -1264,6 +1263,7 @@ public class Manager {
     }
 
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+      transactionCapsule.setBlockNum(block.getNum());
       if (block.generatedByMyself) {
         transactionCapsule.setVerified(true);
       }
@@ -1338,14 +1338,8 @@ public class Manager {
     logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
   }
 
-  public void updateFork() {
-    try {
-      long latestSolidifiedBlockNum = dynamicPropertiesStore.getLatestSolidifiedBlockNum();
-      BlockCapsule solidifiedBlock = getBlockByNum(latestSolidifiedBlockNum);
-      forkController.update(solidifiedBlock);
-    } catch (ItemNotFoundException | BadItemException e) {
-      logger.error("solidified block not found");
-    }
+  public void updateFork(BlockCapsule block) {
+    forkController.update(block);
   }
 
   public long getSyncBeginNumber() {
@@ -1380,7 +1374,7 @@ public class Manager {
     proposalController.processProposals();
     witnessController.updateWitness();
     this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
-    forkController.reset(block);
+    forkController.reset();
   }
 
   /**
@@ -1534,18 +1528,19 @@ public class Manager {
 
     private TransactionCapsule trx;
     private CountDownLatch countDownLatch;
-    private AccountStore accountStore;
+    private Manager manager;
 
-    ValidateSignTask(TransactionCapsule trx, CountDownLatch countDownLatch, AccountStore accountStore) {
+    ValidateSignTask(TransactionCapsule trx, CountDownLatch countDownLatch,
+        Manager manager) {
       this.trx = trx;
       this.countDownLatch = countDownLatch;
-      this.accountStore = accountStore;
+      this.manager = manager;
     }
 
     @Override
     public Boolean call() throws ValidateSignatureException {
       try {
-        trx.validateSignature(accountStore);
+        trx.validateSignature(manager);
       } catch (ValidateSignatureException e) {
         throw e;
       } finally {
@@ -1565,7 +1560,7 @@ public class Manager {
 
     for (TransactionCapsule transaction : block.getTransactions()) {
       Future<Boolean> future = validateSignService
-          .submit(new ValidateSignTask(transaction, countDownLatch, this.accountStore));
+          .submit(new ValidateSignTask(transaction, countDownLatch, this));
       futures.add(future);
     }
     countDownLatch.await();
@@ -1580,13 +1575,8 @@ public class Manager {
   }
 
   public void rePush(TransactionCapsule tx) {
-
-    try {
-      if (transactionStore.get(tx.getTransactionId().getBytes()) != null) {
-        return;
-      }
-    } catch (BadItemException e) {
-      // do nothing
+    if (transactionStore.has(tx.getTransactionId().getBytes())) {
+      return;
     }
 
     try {
@@ -1614,6 +1604,10 @@ public class Manager {
     } catch (TooBigTransactionResultException e) {
       logger.debug("too big transaction result");
     }
+  }
+
+  public void setMode(boolean mode) {
+    revokingStore.setMode(mode);
   }
 
 }

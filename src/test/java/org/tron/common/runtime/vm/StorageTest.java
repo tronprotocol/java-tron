@@ -5,6 +5,7 @@ import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
@@ -192,6 +193,7 @@ public class StorageTest {
   }
 
   @Test
+  @Ignore
   public void testParentChild() {
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
