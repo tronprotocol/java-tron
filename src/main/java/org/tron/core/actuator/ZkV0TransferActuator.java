@@ -16,7 +16,6 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -90,6 +89,12 @@ public class ZkV0TransferActuator extends AbstractActuator {
               .getClass() + "]");
     }
 
+    //TODO chech is it enougth?
+    if( !dbManager.getDynamicPropertiesStore().supportZKSnarkTransaction() ) {
+        throw new ContractValidateException("Not support ZKSnarkTransaction, need to be opened by" +
+                " the committee");
+    }
+
     ZksnarkV0TransferContract zkContract;
     try {
       zkContract = contract.unpack(ZksnarkV0TransferContract.class);
@@ -122,6 +127,11 @@ public class ZkV0TransferActuator extends AbstractActuator {
     if (ownerAddress.isEmpty() ^ (vFromPub == 0)) {
       throw new ContractValidateException(
           "OwnerAddress needs to be empty and the vFromPub is zero, or neither.");
+    }
+
+    if (zkContract.getFee() != calcFee() ) {
+      throw new ContractValidateException(
+              "Contract transaction fee is inconsistent with system transaction fee");
     }
 
     ByteString toAddress = zkContract.getToAddress();
@@ -256,7 +266,7 @@ public class ZkV0TransferActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    return ChainConstant.TRANSFER_FEE;
+    return dbManager.getDynamicPropertiesStore().getZksnarkTransactionFee();
   }
 
 }

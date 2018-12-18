@@ -129,6 +129,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_CREATION_OF_CONTRACTS = "ALLOW_CREATION_OF_CONTRACTS"
       .getBytes();
 
+  // zkSnark
+  private static final byte[] ZKSNARK_TRANSACTION_FEE = "ZKSNARK_TRANSACTION_FEE".getBytes();
+
+  //If the parameter is larger than 0, allow ZKsnark Transaction
+  private static final byte[] ALLOW_ZKSNARK_TRANSACTION = "ALLOW_ZKSNARK_TRANSACTION".getBytes();
+
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -339,6 +345,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getZksnarkTransactionFee();
+    } catch (IllegalArgumentException e) {
+      this.saveZksnarkTransactionFee(1_000_000L); // 1TRX
+    }
+
+    try {
       this.getExchangeCreateFee();
     } catch (IllegalArgumentException e) {
       this.saveExchangeCreateFee(1024000000L);
@@ -414,6 +426,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getAllowCreationOfContracts();
     } catch (IllegalArgumentException e) {
       this.saveAllowCreationOfContracts(Args.getInstance().getAllowCreationOfContracts());
+    }
+
+    try {
+      this.getAllowZksnarkTransaction();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowZksnarkTransaction(Args.getInstance().getAllowZKSnarkTransaction());
     }
 
     try {
@@ -815,6 +833,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found ASSET_ISSUE_FEE"));
   }
 
+  public void saveZksnarkTransactionFee(long fee) {
+    this.put(ZKSNARK_TRANSACTION_FEE,
+            new BytesCapsule(ByteArray.fromLong(fee)));
+  }
+
+  public long getZksnarkTransactionFee() {
+    return Optional.ofNullable(getUnchecked(ZKSNARK_TRANSACTION_FEE))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("not found ZKSNARK_TRANSACTION_FEE"));
+  }
+
   public void saveExchangeCreateFee(long fee) {
     this.put(EXCHANGE_CREATE_FEE,
         new BytesCapsule(ByteArray.fromLong(fee)));
@@ -986,6 +1017,23 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean supportVM() {
     return getAllowCreationOfContracts() == 1L;
+  }
+
+  public void saveAllowZksnarkTransaction(long allowZkSnarkTransaction) {
+    this.put(DynamicPropertiesStore.ALLOW_ZKSNARK_TRANSACTION,
+            new BytesCapsule(ByteArray.fromLong(allowZkSnarkTransaction)));
+  }
+
+  public long getAllowZksnarkTransaction() {
+    return Optional.ofNullable(getUnchecked(ALLOW_ZKSNARK_TRANSACTION))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("not found ALLOW_ZKSNARK_TRANSACTION"));
+  }
+
+  public boolean supportZKSnarkTransaction() {
+    return getAllowZksnarkTransaction() == 1L;
   }
 
   public void saveBlockFilledSlots(int[] blockFilledSlots) {
