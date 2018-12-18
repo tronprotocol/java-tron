@@ -10,7 +10,10 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
+import org.tron.api.GrpcAPI.AssetIssueList;
+import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
@@ -41,9 +44,13 @@ public class WalletTestAssetIssue020 {
 
 
   private ManagedChannel channelFull = null;
+  private ManagedChannel channelSolidity = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
+  private String soliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(1);
 
   //get account
   ECKey ecKey1 = new ECKey(Utils.getRandom());
@@ -67,6 +74,11 @@ public class WalletTestAssetIssue020 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
+        .usePlaintext(true)
+        .build();
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
   @Test(enabled = true)
@@ -150,23 +162,27 @@ public class WalletTestAssetIssue020 {
 
     assetIssueInfo = PublicMethed.getAssetIssueByName(name,blockingStubFull);
     Assert.assertTrue(assetIssueInfo.getName().isEmpty());
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    assetIssueInfo = PublicMethed.getAssetIssueByName(name,blockingStubSolidity);
+    Assert.assertTrue(assetIssueInfo.getName().isEmpty());
 
+    ByteString assetNameBs = ByteString.copyFrom(name.getBytes());
+    BytesMessage request = BytesMessage.newBuilder().setValue(assetNameBs).build();
+    AssetIssueList assetIssueList = blockingStubSolidity.getAssetIssueListByName(request);
+    Assert.assertTrue(assetIssueList.getAssetIssueCount() >= 1);
 
-
-
-
-
-
+    assetIssueInfo = PublicMethed.getAssetIssueById(ByteArray.toStr(assetAccountId
+        .toByteArray()),blockingStubSolidity);
+    Assert.assertTrue(assetIssueInfo.getTotalSupply() > 0);
   }
-
-
-
-
 
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelSolidity != null) {
+      channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
 }

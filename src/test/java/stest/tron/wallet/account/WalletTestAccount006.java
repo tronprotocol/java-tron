@@ -70,6 +70,9 @@ public class WalletTestAccount006 {
 
   @Test(enabled = true)
   public void testGetAccountNet() {
+    ecKey = new ECKey(Utils.getRandom());
+    account006Address = ecKey.getAddress();
+    account006Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
     //Sendcoin to this account
     ByteString addressBS1 = ByteString.copyFrom(account006Address);
     Account request1 = Account.newBuilder().setAddress(addressBS1).build();

@@ -82,7 +82,6 @@ public class NodeManager implements EventHandler {
   private Map<DiscoverListener, ListenerHandler> listeners = new IdentityHashMap<>();
 
   private boolean inited = false;
-  private Timer logStatsTimer = new Timer();
   private Timer nodeManagerTasksTimer = new Timer("NodeManagerTasks");
   private ScheduledExecutorService pongTimer;
 
@@ -102,13 +101,6 @@ public class NodeManager implements EventHandler {
     logger.info("bootNodes : size= {}", bootNodes.size());
 
     table = new NodeTable(homeNode);
-
-    logStatsTimer.scheduleAtFixedRate(new TimerTask() {
-      @Override
-      public void run() {
-        logger.trace("Statistics:\n {}", dumpAllStatistics());
-      }
-    }, 1 * 1000L, 60 * 1000L);
 
     this.pongTimer = Executors.newSingleThreadScheduledExecutor();
   }
@@ -318,24 +310,6 @@ public class NodeManager implements EventHandler {
     listeners.put(listener, new ListenerHandler(listener, filter));
   }
 
-  public synchronized String dumpAllStatistics() {
-    List<NodeHandler> l = new ArrayList<>(nodeHandlerMap.values());
-    l.sort(Comparator.comparingInt((NodeHandler o) -> o.getNodeStatistics().getReputation())
-        .reversed());
-
-    StringBuilder sb = new StringBuilder();
-    int zeroReputCount = 0;
-    for (NodeHandler nodeHandler : l) {
-      if (nodeHandler.getNodeStatistics().getReputation() > 0) {
-        sb.append(nodeHandler).append("\t").append(nodeHandler.getNodeStatistics()).append("\n");
-      } else {
-        zeroReputCount++;
-      }
-    }
-    sb.append("0 reputation: ").append(zeroReputCount).append(" nodes.\n");
-    return sb.toString();
-  }
-
   public Node getPublicHomeNode() {
     return homeNode;
   }
@@ -344,7 +318,6 @@ public class NodeManager implements EventHandler {
     try {
       nodeManagerTasksTimer.cancel();
       pongTimer.shutdownNow();
-      logStatsTimer.cancel();
     } catch (Exception e) {
       logger.warn("close failed.", e);
     }
