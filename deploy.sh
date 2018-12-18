@@ -1,9 +1,5 @@
 #!/bin/bash
 stestlogname="`date +%Y%m%d%H%M%S`_stest.log"
-#testnet=(
-#47.94.231.67
-#47.94.10.122
-#)
 stest_server=""
 docker_num_in_67=`ssh -p 22008 -t java-tron@47.94.231.67 'docker ps -a | wc -l'`
 docker_num_in_67=`echo $docker_num_in_67 | tr -d "\r"`
