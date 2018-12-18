@@ -3,22 +3,20 @@ package org.tron.common.zksnark.merkle;
 import java.util.List;
 import lombok.Getter;
 
-
 public class MerklePath {
 
   @Getter
-  List<List<Boolean>> authentication_path;
+  List<List<Boolean>> authenticationPath;
 
-  @Getter
-  List<Boolean> index;
+  @Getter List<Boolean> index;
 
-  public MerklePath(List<List<Boolean>> authentication_path, List<Boolean> index) {
-    this.authentication_path = authentication_path;
+  public MerklePath(List<List<Boolean>> authenticationPath, List<Boolean> index) {
+    this.authenticationPath = authenticationPath;
     this.index = index;
   }
 
   public List<List<Boolean>> getAuthenticationPath() {
-    return this.authentication_path;
+    return this.authenticationPath;
   }
 
   public List<Boolean> getIndex() {

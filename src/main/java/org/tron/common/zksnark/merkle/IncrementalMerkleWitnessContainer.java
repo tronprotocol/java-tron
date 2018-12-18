@@ -36,34 +36,31 @@ public class IncrementalMerkleWitnessContainer {
   public void append(SHA256Compress obj) {
 
     if (cursorExist()) {
-      System.out.println("append ,cursorExist,cursor_depth +  " + witnessCapsule.getCursorDepth());
       IncrementalMerkleTreeCapsule cursor = witnessCapsule.getCursor();
       cursor.toMerkleTreeContainer().append(obj);
       witnessCapsule.setCursor(cursor);
 
-      long cursor_depth = witnessCapsule.getCursorDepth();
+      long cursorDepth = witnessCapsule.getCursorDepth();
 
-      if (witnessCapsule.getCursor().toMerkleTreeContainer().isComplete(cursor_depth)) {
+      if (witnessCapsule.getCursor().toMerkleTreeContainer().isComplete(cursorDepth)) {
         witnessCapsule.addFilled(
-            witnessCapsule.getCursor().toMerkleTreeContainer().root(cursor_depth));
+            witnessCapsule.getCursor().toMerkleTreeContainer().root(cursorDepth));
         witnessCapsule.clearCursor();
       }
     } else {
-      long cursor_depth =
+      long nextDepth =
           witnessCapsule
               .getTree()
               .toMerkleTreeContainer()
-              .next_depth(witnessCapsule.getFilled().size());
+              .nextDepth(witnessCapsule.getFilled().size());
 
-      System.out.println("append ,cursor not Exist,cursor_depth +  " + cursor_depth);
+      witnessCapsule.setCursorDepth(nextDepth);
 
-      witnessCapsule.setCursorDepth(cursor_depth);
-
-      if (cursor_depth >= DEPTH) {
+      if (nextDepth >= DEPTH) {
         throw new RuntimeException("tree is full");
       }
 
-      if (cursor_depth == 0) {
+      if (nextDepth == 0) {
         witnessCapsule.addFilled(obj);
       } else {
         IncrementalMerkleTreeCapsule cursor = new IncrementalMerkleTreeCapsule();
@@ -122,18 +119,19 @@ public class IncrementalMerkleWitnessContainer {
   }
 
   public int size() {
-    return witnessCapsule.getTree().toMerkleTreeContainer().size() + witnessCapsule.getFilled()
-        .size()
+    return witnessCapsule.getTree().toMerkleTreeContainer().size()
+        + witnessCapsule.getFilled().size()
         + witnessCapsule.getCursor().toMerkleTreeContainer().size();
   }
 
+  //for test only
   public void printSize() {
     System.out.println(
-        "TreeSize:" + witnessCapsule.getTree().toMerkleTreeContainer().size() +
-            ",FillSize:" + witnessCapsule.getFilled().size() +
-            ",CursorSize:" + witnessCapsule.getCursor()
-            .toMerkleTreeContainer().size());
+        "TreeSize:"
+            + witnessCapsule.getTree().toMerkleTreeContainer().size()
+            + ",FillSize:"
+            + witnessCapsule.getFilled().size()
+            + ",CursorSize:"
+            + witnessCapsule.getCursor().toMerkleTreeContainer().size());
   }
-
-
 }

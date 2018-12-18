@@ -13,7 +13,6 @@ public class IncrementalMerkleTreeCapsule implements ProtoCapsule<IncrementalMer
 
   private IncrementalMerkleTree merkleTree;
 
-
   public IncrementalMerkleTreeCapsule() {
     merkleTree = IncrementalMerkleTree.getDefaultInstance();
   }
@@ -70,10 +69,6 @@ public class IncrementalMerkleTreeCapsule implements ProtoCapsule<IncrementalMer
     return this.merkleTree.getParentsList().isEmpty();
   }
 
-  public void setParents(List<SHA256Compress> parents) {
-    this.merkleTree = this.merkleTree.toBuilder().addAllParents(parents).build();
-  }
-
   public void setParents(int index, SHA256Compress parents) {
     this.merkleTree = this.merkleTree.toBuilder().setParents(index, parents).build();
   }
@@ -83,14 +78,13 @@ public class IncrementalMerkleTreeCapsule implements ProtoCapsule<IncrementalMer
   }
 
   public void clearParents(int index) {
-    this.merkleTree = this.merkleTree.toBuilder()
-        .setParents(index, SHA256Compress.newBuilder().build()).build();
+    this.merkleTree =
+        this.merkleTree.toBuilder().setParents(index, SHA256Compress.newBuilder().build()).build();
   }
 
   public boolean isEmptyTree() {
     return parentsIsEmpty() && leftIsEmpty() && rightIsEmpty();
   }
-
 
   public boolean notEmptyTree() {
     return !isEmptyTree();
@@ -114,5 +108,4 @@ public class IncrementalMerkleTreeCapsule implements ProtoCapsule<IncrementalMer
     byte[] data = Arrays.copyOf(this.getData(), this.getData().length);
     return new IncrementalMerkleTreeCapsule(data);
   }
-
 }

@@ -166,6 +166,7 @@ public class ProposalController {
           manager.getDynamicPropertiesStore().saveAllowSameTokenName(entry.getValue());
           break;
         }
+<<<<<<< HEAD
         case (16): {
           manager.getDynamicPropertiesStore().saveAllowDelegateResource(entry.getValue());
           break;
@@ -181,6 +182,17 @@ public class ProposalController {
         case (19):
           manager.getDynamicPropertiesStore().saveTotalEnergyLimit2(entry.getValue());
           break;
+=======
+
+        case (22): {
+          manager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(entry.getValue());
+          break;
+        }
+        case (23): {
+          manager.getDynamicPropertiesStore().saveZksnarkTransactionFee(entry.getValue());
+          break;
+        }
+>>>>>>> f48ba0a814495aeb512cc5dc43a03e47cfd0178b
         default:
           break;
       }

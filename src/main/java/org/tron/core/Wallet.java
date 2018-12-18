@@ -1263,7 +1263,7 @@ public class Wallet {
       witness2 = createWitness(outPoint2, blockNum2);
 
       //Skip the next step when the two witness blocks are equal
-      if (blockNum1 != blockNum2) {
+      if (!blockNum1.equals(blockNum2)) {
         //Get the block between two witness blockNum, [block1+1, block2], update the low witness, make the root the same
         updateLowWitness(witness1, blockNum1, witness2, blockNum2);
       }

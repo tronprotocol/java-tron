@@ -375,6 +375,7 @@ public class Args {
 
   @Getter
   @Setter
+<<<<<<< HEAD
   private boolean vmTrace;
 
   @Getter
@@ -388,6 +389,9 @@ public class Args {
   @Getter
   @Setter
   private int minEffectiveConnection;
+=======
+  private long allowZKSnarkTransaction; //committee parameter
+>>>>>>> f48ba0a814495aeb512cc5dc43a03e47cfd0178b
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -457,6 +461,7 @@ public class Args {
     INSTANCE.minTimeRatio = 0.0;
     INSTANCE.maxTimeRatio = 5.0;
     INSTANCE.longRunningTime = 10;
+    INSTANCE.allowZKSnarkTransaction = 0;
   }
 
   /**
@@ -773,6 +778,10 @@ public class Args {
 
     INSTANCE.saveInternalTx =
         config.hasPath("vm.saveInternalTx") && config.getBoolean("vm.saveInternalTx");
+
+    INSTANCE.allowZKSnarkTransaction =
+            config.hasPath("committee.allowZKSnarkTransaction") ? config
+                    .getInt("committee.allowZKSnarkTransaction") : 0;
 
     initBackupProperty(config);
 

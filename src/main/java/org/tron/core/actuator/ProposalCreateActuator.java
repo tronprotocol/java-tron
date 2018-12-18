@@ -206,6 +206,7 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         break;
       }
+<<<<<<< HEAD
       case (16): {
         if (!dbManager.getForkController().pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
           throw new ContractValidateException("Bad chain parameter id");
@@ -253,6 +254,27 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         break;
       }
+=======
+      case (22): {
+        if (entry.getValue() != 1) {
+          throw new ContractValidateException(
+                  "This value[ALLOW_ZKSNARK_TRANSACTION] is only allowed to be 1");
+        }
+        break;
+      }
+      case (23): {
+        if ( !dbManager.getDynamicPropertiesStore().supportZKSnarkTransaction() ) {
+          throw new ContractValidateException(
+                  "ZKSnark Transaction is not activated,Can't set ZKSnark Transaction fee");
+        }
+        if (entry.getValue() < 0 || entry.getValue() > 100_000_000_000_000_000L) {
+          throw new ContractValidateException(
+                  "Bad chain parameter value,valid range is [0,100_000_000_000_000_000L]");
+        }
+        break;
+      }
+
+>>>>>>> f48ba0a814495aeb512cc5dc43a03e47cfd0178b
       default:
         break;
     }

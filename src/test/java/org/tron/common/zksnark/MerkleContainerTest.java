@@ -114,7 +114,7 @@ public class MerkleContainerTest {
 
     //other
     Assert.assertEquals(false, tree.isComplete());
-    Assert.assertEquals(0, tree.next_depth(0));
+    Assert.assertEquals(0, tree.nextDepth(0));
     Assert.assertEquals(96, tree.DynamicMemoryUsage());
     tree.wfcheck();
 

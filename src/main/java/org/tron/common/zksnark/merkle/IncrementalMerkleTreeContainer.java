@@ -1,13 +1,11 @@
 package org.tron.common.zksnark.merkle;
 
-
 import com.google.common.collect.Lists;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.SHA256CompressCapsule;
 import org.tron.protos.Contract.SHA256Compress;
 
@@ -30,61 +28,58 @@ public class IncrementalMerkleTreeContainer {
     return 32 + 32 + treeCapsule.getParents().size() * 32;
   }
 
-
   public void wfcheck() {
     if (treeCapsule.getParents().size() >= DEPTH) {
       throw new RuntimeException("tree has too many parents");
     }
     if (!treeCapsule.parentsIsEmpty()) {
-      SHA256CompressCapsule parentCompressCapsule = new SHA256CompressCapsule(
-          treeCapsule.getParents().get(treeCapsule.getParents().size() - 1));
-      if (!parentCompressCapsule.isExist()) {
+      SHA256CompressCapsule parentCompressCapsule =
+          new SHA256CompressCapsule(
+              treeCapsule.getParents().get(treeCapsule.getParents().size() - 1));
+      if (!parentCompressCapsule.isPresent()) {
         throw new RuntimeException("tree has non-canonical representation of parent");
       }
     }
 
-    if ((!leftIsExist()) && rightIsExist()) {
+    if ((!leftIsPresent()) && rightIsPresent()) {
       throw new RuntimeException("tree has non-canonical representation; right should not exist");
     }
 
-    if ((!leftIsExist()) && treeCapsule.getParents().size() > 0) {
+    if ((!leftIsPresent()) && treeCapsule.getParents().size() > 0) {
       throw new RuntimeException(
           "tree has non-canonical representation; parents should not be unempty");
     }
   }
 
-
   public SHA256Compress last() {
 
-    if (rightIsExist()) {
+    if (rightIsPresent()) {
       return treeCapsule.getRight();
-    } else if (leftIsExist()) {
+    } else if (leftIsPresent()) {
       return treeCapsule.getLeft();
     } else {
       throw new RuntimeException("tree has no cursor");
     }
   }
 
-
   public int size() {
 
     int ret = 0;
-    if (leftIsExist()) {
+    if (leftIsPresent()) {
       ret++;
     }
-    if (rightIsExist()) {
+    if (rightIsPresent()) {
       ret++;
     }
     for (int i = 0; i < treeCapsule.getParents().size(); i++) {
-      SHA256CompressCapsule parentCompressCapsule = new SHA256CompressCapsule(
-          treeCapsule.getParents().get(i));
-      if (parentCompressCapsule.isExist()) {
+      SHA256CompressCapsule parentCompressCapsule =
+          new SHA256CompressCapsule(treeCapsule.getParents().get(i));
+      if (parentCompressCapsule.isPresent()) {
         ret += (1 << (i + 1));
       }
     }
     return ret;
   }
-
 
   public void append(SHA256Compress obj) {
 
@@ -92,9 +87,9 @@ public class IncrementalMerkleTreeContainer {
       throw new RuntimeException("tree is full");
     }
 
-    if (!leftIsExist()) {
+    if (!leftIsPresent()) {
       treeCapsule.setLeft(obj);
-    } else if (!rightIsExist()) {
+    } else if (!rightIsPresent()) {
       treeCapsule.setRight(obj);
     } else {
       SHA256CompressCapsule combined =
@@ -105,14 +100,13 @@ public class IncrementalMerkleTreeContainer {
 
       for (int i = 0; i < DEPTH; i++) {
         if (i < treeCapsule.getParents().size()) {
-          SHA256CompressCapsule parentCompressCapsule = new SHA256CompressCapsule(
-              treeCapsule.getParents().get(i));
-          if (parentCompressCapsule.isExist()) {
+          SHA256CompressCapsule parentCompressCapsule =
+              new SHA256CompressCapsule(treeCapsule.getParents().get(i));
+          if (parentCompressCapsule.isPresent()) {
             combined =
-                SHA256CompressCapsule
-                    .combine(treeCapsule.getParents().get(i), combined.getInstance(), i + 1);
+                SHA256CompressCapsule.combine(
+                    treeCapsule.getParents().get(i), combined.getInstance(), i + 1);
             treeCapsule.clearParents(i);
-//            treeCapsule.setParents(i,SHA256CompressCapsule.uncommitted().getInstance());
           } else {
             treeCapsule.setParents(i, combined.getInstance());
             break;
@@ -125,14 +119,13 @@ public class IncrementalMerkleTreeContainer {
     }
   }
 
-
   public boolean isComplete() {
     return isComplete(DEPTH);
   }
 
   public boolean isComplete(long depth) {
 
-    if (!leftIsExist() || !rightIsExist()) {
+    if (!leftIsPresent() || !rightIsPresent()) {
       return false;
     }
 
@@ -142,7 +135,7 @@ public class IncrementalMerkleTreeContainer {
 
     for (SHA256Compress parent : treeCapsule.getParents()) {
       SHA256CompressCapsule parentCompressCapsule = new SHA256CompressCapsule(parent);
-      if (!parentCompressCapsule.isExist()) {
+      if (!parentCompressCapsule.isPresent()) {
         return false;
       }
     }
@@ -150,10 +143,9 @@ public class IncrementalMerkleTreeContainer {
     return true;
   }
 
+  public int nextDepth(int skip) {
 
-  public int next_depth(int skip) {
-
-    if (!leftIsExist()) {
+    if (!leftIsPresent()) {
       if (skip != 0) {
         skip--;
       } else {
@@ -161,7 +153,7 @@ public class IncrementalMerkleTreeContainer {
       }
     }
 
-    if (!rightIsExist()) {
+    if (!rightIsPresent()) {
       if (skip != 0) {
         skip--;
       } else {
@@ -173,7 +165,7 @@ public class IncrementalMerkleTreeContainer {
 
     for (SHA256Compress parent : treeCapsule.getParents()) {
       SHA256CompressCapsule parentCompressCapsule = new SHA256CompressCapsule(parent);
-      if (!parentCompressCapsule.isExist()) {
+      if (!parentCompressCapsule.isPresent()) {
         if (skip != 0) {
           skip--;
         } else {
@@ -190,66 +182,43 @@ public class IncrementalMerkleTreeContainer {
     return root(DEPTH, new ArrayDeque<SHA256Compress>());
   }
 
-
   public SHA256Compress root(long depth) {
-    Deque<SHA256Compress> filler_hashes = new ArrayDeque<SHA256Compress>();
-    return root(depth, filler_hashes);
+    Deque<SHA256Compress> fillerHashes = new ArrayDeque<SHA256Compress>();
+    return root(depth, fillerHashes);
   }
 
   public SHA256Compress root(long depth, Deque<SHA256Compress> fillerHashes) {
 
     PathFiller filler = new PathFiller(fillerHashes);
 
-    SHA256Compress combineLeft =
-        leftIsExist() ? treeCapsule.getLeft() : filler.next(0);
-    SHA256Compress combineRight =
-        rightIsExist() ? treeCapsule.getRight() : filler.next(0);
-
-    logger.info("leftIsExist:" + leftIsExist());
-    logger.info("\n");
-    logger.info("combineLeft:" + ByteArray.toHexString(combineLeft.getContent().toByteArray()));
-    logger.info("\n");
-    logger.info("rightIsExist:" + rightIsExist());
-    logger.info("\n");
-    logger.info("combineRight:" + ByteArray.toHexString(combineRight.getContent().toByteArray()));
-    logger.info("\n");
+    SHA256Compress combineLeft = leftIsPresent() ? treeCapsule.getLeft() : filler.next(0);
+    SHA256Compress combineRight = rightIsPresent() ? treeCapsule.getRight() : filler.next(0);
 
     SHA256CompressCapsule root = SHA256CompressCapsule.combine(combineLeft, combineRight, 0);
-    logger.info("root:" + ByteArray.toHexString(root.getContent().toByteArray()));
-    logger.info("\n");
+
     int d = 1;
-    logger.info("parent size:" + treeCapsule.getParents().size());
-    logger.info("\n");
+
     for (SHA256Compress parent : treeCapsule.getParents()) {
-      logger.info("d:" + d);
-      logger.info("\n");
+
       SHA256CompressCapsule parentCompressCapsule = new SHA256CompressCapsule(parent);
-      if (parentCompressCapsule.isExist()) {
-        logger.info(
-            "parent:" + ByteArray.toHexString(parentCompressCapsule.getContent().toByteArray()));
-        logger.info("\n");
+      if (parentCompressCapsule.isPresent()) {
+
         root = SHA256CompressCapsule.combine(parent, root.getInstance(), d);
       } else {
         SHA256Compress next = filler.next(d);
-        logger.info("filler.next(d):" + ByteArray.toHexString(next.getContent().toByteArray()));
-        logger.info("\n");
+
         root = SHA256CompressCapsule.combine(root.getInstance(), next, d);
       }
       d++;
     }
 
     while (d < depth) {
-      logger.info("d:" + d);
-      logger.info("\n");
+
       SHA256Compress left = root.getInstance();
       SHA256Compress right = filler.next(d);
-      logger.info("left:" + ByteArray.toHexString(left.getContent().toByteArray()));
-      logger.info("\n");
-      logger.info("right:" + ByteArray.toHexString(right.getContent().toByteArray()));
-      logger.info("\n");
+
       SHA256CompressCapsule result = SHA256CompressCapsule.combine(left, right, d);
-      logger.info("result:" + ByteArray.toHexString(right.getContent().toByteArray()));
-      logger.info("\n");
+
       root = result;
       d++;
     }
@@ -257,25 +226,24 @@ public class IncrementalMerkleTreeContainer {
     return root.getInstance();
   }
 
-
   public MerklePath path() {
-    Deque<SHA256Compress> filler_hashes = new ArrayDeque<>();
-    return path(filler_hashes);
+    Deque<SHA256Compress> fillerHashes = new ArrayDeque<>();
+    return path(fillerHashes);
   }
 
-  public MerklePath path(Deque<SHA256Compress> filler_hashes) {
+  public MerklePath path(Deque<SHA256Compress> fillerHashes) {
 
-    if (!leftIsExist()) {
+    if (!leftIsPresent()) {
       throw new RuntimeException(
           "can't create an authentication path for the beginning of the tree");
     }
 
-    PathFiller filler = new PathFiller(filler_hashes);
+    PathFiller filler = new PathFiller(fillerHashes);
 
     List<SHA256Compress> path = new ArrayList<>();
     List<Boolean> index = new ArrayList<>();
 
-    if (rightIsExist()) {
+    if (rightIsPresent()) {
       index.add(true);
       path.add(treeCapsule.getLeft());
     } else {
@@ -287,7 +255,7 @@ public class IncrementalMerkleTreeContainer {
 
     for (SHA256Compress parent : treeCapsule.getParents()) {
       SHA256CompressCapsule parentCompressCapsule = new SHA256CompressCapsule(parent);
-      if (parentCompressCapsule.isExist()) {
+      if (parentCompressCapsule.isPresent()) {
         index.add(true);
         path.add(parent);
       } else {
@@ -304,17 +272,16 @@ public class IncrementalMerkleTreeContainer {
       d++;
     }
 
-    List<List<Boolean>> merkle_path = new ArrayList<>();
+    List<List<Boolean>> merklePath = new ArrayList<>();
 
     for (SHA256Compress b : path) {
-      merkle_path.add(MerkleUtils.convertBytesVectorToVector(b.getContent().toByteArray()));
+      merklePath.add(MerkleUtils.convertBytesVectorToVector(b.getContent().toByteArray()));
     }
-    Lists.reverse(merkle_path);
+    Lists.reverse(merklePath);
     Lists.reverse(index);
 
-    return new MerklePath(merkle_path, index);
+    return new MerklePath(merklePath, index);
   }
-
 
   public byte[] getMerkleTreeKey() {
     return getRootArray();
@@ -328,18 +295,15 @@ public class IncrementalMerkleTreeContainer {
     return new IncrementalMerkleWitnessContainer(this);
   }
 
-  public static SHA256Compress empty_root() {
+  public static SHA256Compress emptyRoot() {
     return EmptyMerkleRoots.emptyMerkleRootsInstance.emptyRoot(DEPTH);
   }
 
-
-  private boolean leftIsExist() {
+  private boolean leftIsPresent() {
     return !treeCapsule.getLeft().getContent().isEmpty();
   }
 
-  private boolean rightIsExist() {
+  private boolean rightIsPresent() {
     return !treeCapsule.getRight().getContent().isEmpty();
   }
-
-
 }

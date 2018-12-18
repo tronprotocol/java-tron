@@ -13,8 +13,7 @@ public class PathFiller {
 
   public SHA256Compress next(int depth) {
     if (queue.size() > 0) {
-      SHA256Compress h = queue.poll();
-      return h;
+      return queue.poll();
     } else {
       return EmptyMerkleRoots.emptyMerkleRootsInstance.emptyRoot(depth);
     }

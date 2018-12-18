@@ -24,14 +24,13 @@ public class ShieldAddressGenerator {
     return result;
   }
 
-
   public static byte[] generatePublicKey(byte[] privateKey) {
-//    if (privateKey.length != 32) {
-//      throw new RuntimeException("Wrong length，expect：256，real：" + privateKey.length);
-//    }
-//    if ((privateKey[0] & 0xF0) != 0) {
-//      throw new RuntimeException("The first 4 digits must be 0");
-//    }
+    //    if (privateKey.length != 32) {
+    //      throw new RuntimeException("Wrong length，expect：256，real：" + privateKey.length);
+    //    }
+    //    if ((privateKey[0] & 0xF0) != 0) {
+    //      throw new RuntimeException("The first 4 digits must be 0");
+    //    }
     return Prf.prfAddrAPk(privateKey);
   }
 
@@ -39,14 +38,14 @@ public class ShieldAddressGenerator {
     return Prf.prfAddrSkEnc(privateKey);
   }
 
-
   public static byte[] generatePublicKeyEnc(byte[] privateKeyEnc) {
-    byte[] base = new byte[]{
-        9, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0
-    };
+    byte[] base =
+        new byte[] {
+          9, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0
+        };
     byte[] output = new byte[32];
     MontgomeryOperations.scalarmult(output, 0, privateKeyEnc, 0, base, 0);
     return output;
@@ -71,9 +70,5 @@ public class ShieldAddressGenerator {
     System.out.println("publicKey :" + publicKeyString);
     System.out.println("privateKeyEnc :" + privateKeyEncString);
     System.out.println("publicKeyEnc :" + publicKeyEncString);
-
-
   }
-
-
 }
