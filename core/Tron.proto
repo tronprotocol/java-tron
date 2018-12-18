@@ -254,7 +254,10 @@ message Transaction {
       ExchangeWithdrawContract = 43;
       ExchangeTransactionContract = 44;
       UpdateEnergyLimitContract = 45;
-      ZksnarkV0TransferContract = 48;
+      PermissionAddKeyContract = 46;
+      PermissionUpdateKeyContract = 47;
+      PermissionDeleteKeyContract = 48;
+      ZksnarkV0TransferContract = 49;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
