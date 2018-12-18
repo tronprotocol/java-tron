@@ -116,7 +116,7 @@ public interface Parameter {
 
   enum ForkBlockVersionEnum {
     VERSION_3_2_2(6),
-    MULTI_SIGN(7);
+    VERSION_3_5(7);
     @Getter
     private int value;
 
