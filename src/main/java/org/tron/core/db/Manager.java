@@ -1497,7 +1497,6 @@ public class Manager {
   }
 
   public void closeAllStore() {
-    logger.info("******** begin to close db ********");
     closeOneStore(accountStore);
     closeOneStore(blockStore);
     closeOneStore(blockIndexStore);
@@ -1520,7 +1519,6 @@ public class Manager {
     closeOneStore(delegatedResourceStore);
     closeOneStore(assetIssueV2Store);
     closeOneStore(exchangeV2Store);
-    logger.info("******** end to close db ********");
   }
 
   public void closeOneStore(ITronChainBase database) {

@@ -20,14 +20,18 @@ import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.RevokingDBWithCachingNewValue;
 import org.tron.core.db2.core.RevokingDBWithCachingOldValue;
+import org.tron.core.db2.core.RevokingRocksDBWithCachingOldValue;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 
 @Slf4j
 public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements ITronChainBase<T> {
+
   @Getter // only for unit test
   protected IRevokingDB revokingDB;
-  private TypeToken<T> token = new TypeToken<T>(getClass()) {};
+  private TypeToken<T> token = new TypeToken<T>(getClass()) {
+  };
+
   @Autowired
   private RevokingDatabase revokingDatabase;
   @Autowired(required = false)
@@ -42,6 +46,8 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
       this.revokingDB = new RevokingDBWithCachingOldValue(dbName);
     } else if (dbVersion == 2) {
       this.revokingDB = new RevokingDBWithCachingNewValue(dbName);
+    } else if (dbVersion == 3) {
+      this.revokingDB = new RevokingRocksDBWithCachingOldValue(dbName);
     } else {
       throw new RuntimeException("db version is error.");
     }
@@ -54,7 +60,8 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
   // only for test
   protected TronStoreWithRevoking(String dbName, RevokingDatabase revokingDatabase) {
-      this.revokingDB = new RevokingDBWithCachingOldValue(dbName, (AbstractRevokingStore) revokingDatabase);
+    this.revokingDB = new RevokingDBWithCachingOldValue(dbName,
+        (AbstractRevokingStore) revokingDatabase);
   }
 
   @Override
@@ -136,5 +143,4 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   public void setMode(boolean mode) {
     revokingDB.setMode(mode);
   }
-
 }

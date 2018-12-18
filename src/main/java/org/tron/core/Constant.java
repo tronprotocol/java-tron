@@ -32,6 +32,7 @@ public class Constant {
 
   //config for junit test
   public static final String TEST_CONF = "config-test.conf";
+  public static final String TESTBACKUP_CONF = "config-dbbackup.conf";
 
   public static final String DATABASE_DIR = "storage.directory";
 
