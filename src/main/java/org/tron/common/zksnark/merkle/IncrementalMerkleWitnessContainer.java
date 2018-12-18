@@ -40,28 +40,28 @@ public class IncrementalMerkleWitnessContainer {
       cursor.toMerkleTreeContainer().append(obj);
       witnessCapsule.setCursor(cursor);
 
-      long cursor_depth = witnessCapsule.getCursorDepth();
+      long cursorDepth = witnessCapsule.getCursorDepth();
 
-      if (witnessCapsule.getCursor().toMerkleTreeContainer().isComplete(cursor_depth)) {
+      if (witnessCapsule.getCursor().toMerkleTreeContainer().isComplete(cursorDepth)) {
         witnessCapsule.addFilled(
-            witnessCapsule.getCursor().toMerkleTreeContainer().root(cursor_depth));
+            witnessCapsule.getCursor().toMerkleTreeContainer().root(cursorDepth));
         witnessCapsule.clearCursor();
       }
     } else {
-      long cursor_depth =
+      long nextDepth =
           witnessCapsule
               .getTree()
               .toMerkleTreeContainer()
-              .next_depth(witnessCapsule.getFilled().size());
+              .nextDepth(witnessCapsule.getFilled().size());
 
 
-      witnessCapsule.setCursorDepth(cursor_depth);
+      witnessCapsule.setCursorDepth(nextDepth);
 
-      if (cursor_depth >= DEPTH) {
+      if (nextDepth >= DEPTH) {
         throw new RuntimeException("tree is full");
       }
 
-      if (cursor_depth == 0) {
+      if (nextDepth == 0) {
         witnessCapsule.addFilled(obj);
       } else {
         IncrementalMerkleTreeCapsule cursor = new IncrementalMerkleTreeCapsule();

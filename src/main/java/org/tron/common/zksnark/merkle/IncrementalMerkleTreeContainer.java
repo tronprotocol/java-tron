@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.SHA256CompressCapsule;
 import org.tron.protos.Contract.SHA256Compress;
 
@@ -146,7 +145,7 @@ public class IncrementalMerkleTreeContainer {
     return true;
   }
 
-  public int next_depth(int skip) {
+  public int nextDepth(int skip) {
 
     if (!leftIsPresent()) {
       if (skip != 0) {
@@ -186,8 +185,8 @@ public class IncrementalMerkleTreeContainer {
   }
 
   public SHA256Compress root(long depth) {
-    Deque<SHA256Compress> filler_hashes = new ArrayDeque<SHA256Compress>();
-    return root(depth, filler_hashes);
+    Deque<SHA256Compress> fillerHashes = new ArrayDeque<SHA256Compress>();
+    return root(depth, fillerHashes);
   }
 
   public SHA256Compress root(long depth, Deque<SHA256Compress> fillerHashes) {
@@ -196,8 +195,6 @@ public class IncrementalMerkleTreeContainer {
 
     SHA256Compress combineLeft = leftIsPresent() ? treeCapsule.getLeft() : filler.next(0);
     SHA256Compress combineRight = rightIsPresent() ? treeCapsule.getRight() : filler.next(0);
-
-
 
     SHA256CompressCapsule root = SHA256CompressCapsule.combine(combineLeft, combineRight, 0);
 
@@ -232,18 +229,18 @@ public class IncrementalMerkleTreeContainer {
   }
 
   public MerklePath path() {
-    Deque<SHA256Compress> filler_hashes = new ArrayDeque<>();
-    return path(filler_hashes);
+    Deque<SHA256Compress> fillerHashes = new ArrayDeque<>();
+    return path(fillerHashes);
   }
 
-  public MerklePath path(Deque<SHA256Compress> filler_hashes) {
+  public MerklePath path(Deque<SHA256Compress> fillerHashes) {
 
     if (!leftIsPresent()) {
       throw new RuntimeException(
           "can't create an authentication path for the beginning of the tree");
     }
 
-    PathFiller filler = new PathFiller(filler_hashes);
+    PathFiller filler = new PathFiller(fillerHashes);
 
     List<SHA256Compress> path = new ArrayList<>();
     List<Boolean> index = new ArrayList<>();
