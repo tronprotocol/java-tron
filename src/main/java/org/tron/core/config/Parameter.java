@@ -25,7 +25,7 @@ public interface Parameter {
     int BLOCK_FILLED_SLOTS_NUMBER = 128;
     int MAX_VOTE_NUMBER = 30;
     int MAX_FROZEN_NUMBER = 1;
-    int BLOCK_VERSION = 6;
+    int BLOCK_VERSION = 7;
   }
 
   interface NodeConstant {
@@ -116,8 +116,8 @@ public interface Parameter {
   }
 
   enum ForkBlockVersionEnum {
-    VERSION_3_2_2(6);
-
+    VERSION_3_2_2(6),
+    MULTI_SIGN(7);
     @Getter
     private int value;
 

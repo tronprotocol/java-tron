@@ -371,6 +371,10 @@ public class Args {
 
   @Getter
   @Setter
+  private int allowMultiSign;
+
+  @Getter
+  @Setter
   private String logLevel;
 
   @Getter
@@ -461,6 +465,7 @@ public class Args {
     INSTANCE.maxTimeRatio = 5.0;
     INSTANCE.longRunningTime = 10;
     INSTANCE.allowZKSnarkTransaction = 0;
+    INSTANCE.allowMultiSign = 0;
   }
 
   /**
@@ -711,6 +716,9 @@ public class Args {
         config.hasPath("committee.allowCreationOfContracts") ? config
             .getInt("committee.allowCreationOfContracts") : 0;
 
+    INSTANCE.allowMultiSign =
+        config.hasPath("committee.allowMultiSign") ? config
+            .getInt("committee.allowMultiSign") : 0;
     INSTANCE.allowAdaptiveEnergy =
         config.hasPath("committee.allowAdaptiveEnergy") ? config
             .getInt("committee.allowAdaptiveEnergy") : 0;

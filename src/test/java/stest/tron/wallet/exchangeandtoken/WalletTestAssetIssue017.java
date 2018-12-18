@@ -31,6 +31,7 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 @Slf4j
 public class WalletTestAssetIssue017 {
+
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final String testKey003 = Configuration.getByPath("testng.conf")
@@ -41,9 +42,9 @@ public class WalletTestAssetIssue017 {
 
   private static long start;
   private static long end;
-  private static  long now = System.currentTimeMillis();
+  private static long now = System.currentTimeMillis();
   private static String name = "AssetIssue017_" + Long.toString(now);
-  private static  long totalSupply = now;
+  private static long totalSupply = now;
   private static final long sendAmount = 10000000000L;
   private static final long netCostMeasure = 200L;
 
@@ -163,7 +164,8 @@ public class WalletTestAssetIssue017 {
     logger.info(Long.toString(assetIssueListPaginated.get().getAssetIssueCount()));
     Assert.assertTrue(assetIssueListPaginated.get().getAssetIssueCount() == 0);
 
-    //offset is 1, limit is 50.
+    //offset is 0, limit is 50.
+
     offset = 0;
     limit = 50;
     pageMessageBuilder = PaginatedMessage.newBuilder();
@@ -247,7 +249,6 @@ public class WalletTestAssetIssue017 {
     assetIssueListPaginated = Optional.ofNullable(assetIssueList);
     logger.info(Long.toString(assetIssueListPaginated.get().getAssetIssueCount()));
     Assert.assertTrue(assetIssueListPaginated.get().getAssetIssueCount() >= 1);
-
 
     //offset is -1, limit is 100.
     offset = -1;

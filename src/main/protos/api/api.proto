@@ -33,7 +33,6 @@ service Wallet {
     };
   };
 
-
   //Please use CreateTransaction2 instead of this function.
   rpc CreateTransaction (TransferContract) returns (Transaction) {
     option (google.api.http) = {
@@ -629,9 +628,56 @@ service Wallet {
   rpc GetMerkleTreeOfBlock ( NumberMessage ) returns ( BlockIncrementalMerkleTree ) { }
 
 
+  rpc AccountPermissionUpdate (AccountPermissionUpdateContract) returns (TransactionExtention) {
+    option (google.api.http) = {
+      post: "/wallet/accountpermissionupdate"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/accountpermissionupdate"
+      }
+    };
+  }
+
+  rpc PermissionAddKey (PermissionAddKeyContract) returns (TransactionExtention) {
+    option (google.api.http) = {
+      post: "/wallet/permissionaddkey"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/permissionaddkey"
+      }
+    };
+  }
+
+  rpc PermissionUpdateKey (PermissionUpdateKeyContract) returns (TransactionExtention) {
+    option (google.api.http) = {
+      post: "/wallet/permissionupdatekey"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/permissionupdatekey"
+      }
+    };
+  }
+
+  rpc PermissionDeleteKey (PermissionDeleteKeyContract) returns (TransactionExtention) {
+    option (google.api.http) = {
+      post: "/wallet/permissiondeletekey"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/permissiondeletekey"
+      }
+    };
+  }
+
+  rpc AddSign (TransactionSign) returns (TransactionExtention) {
+
+  }
+
+  rpc GetTransactionSignWeight (Transaction) returns (TransactionSignWeight) {
+
+  }
+
   rpc GetNodeInfo (EmptyMessage) returns (NodeInfo) {
   };
-
 };
 
 
@@ -997,4 +1043,25 @@ message TransactionListExtention {
 message BlockIncrementalMerkleTree {
   int64 number = 1;
   IncrementalMerkleTree merkleTree = 2;
+}
+
+message TransactionSignWeight {
+  message Result {
+    enum response_code {
+      ENOUGH_PERMISSION = 0;
+      NOT_ENOUGH_PERMISSION = 1; // error in
+      SIGNATURE_FORMAT_ERROR = 2;
+      COMPUTE_ADDRESS_ERROR = 3;
+      PERMISSION_ERROR = 4; //The key is not in permission
+      OTHER_ERROR = 20;
+    }
+    response_code code = 1;
+    string message = 2;
+  }
+
+  Permission permission = 1;
+  repeated bytes approved_list = 2;
+  int64 current_weight = 3;
+  Result result = 4;
+  TransactionExtention transaction = 5;
 }

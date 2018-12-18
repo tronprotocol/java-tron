@@ -253,6 +253,16 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         break;
       }
+      case (20): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.MULTI_SIGN)) {
+          throw new ContractValidateException("Bad chain parameter id: ALLOW_MULTI_SIGN");
+        }
+        if (entry.getValue() != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_MULTI_SIGN] is only allowed to be 1");
+        }
+        break;
+      }
       case (22): {
         if (entry.getValue() != 1) {
           throw new ContractValidateException(
