@@ -678,6 +678,17 @@ public class Wallet {
 
     });
 
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("TOTAL_ENERGY_TARGET_LIMIT")
+        .setValue(dbManager.getDynamicPropertiesStore().getTotalEnergyTargetLimit())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("TOTAL_ENERGY_AVERAGE_USAGE")
+        .setValue(dbManager.getDynamicPropertiesStore().getTotalEnergyAverageUsage())
+        .build());
+
     return builder.build();
   }
 
