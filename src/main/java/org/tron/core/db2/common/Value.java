@@ -31,7 +31,8 @@ public final class Value {
   public enum Operator {
     CREATE((byte) 0),
     MODIFY((byte) 1),
-    DELETE((byte) 2);
+    DELETE((byte) 2),
+    PUT((byte) 3);
 
     @Getter
     private byte value;
@@ -48,6 +49,8 @@ public final class Value {
           return Operator.MODIFY;
         case 2:
           return Operator.DELETE;
+        case 3:
+          return Operator.PUT;
         default:
           return null;
       }
@@ -63,13 +66,12 @@ public final class Value {
     this.data = data;
   }
 
-  public static Value of(Operator operator, byte[] data) {
-    byte[] value = null;
-    if (data != null) {
-      value = Arrays.copyOf(data, data.length);
-    }
+  public static Value copyOf(Operator operator, byte[] data) {
+    return new Value(operator, WrappedByteArray.copyOf(data));
+  }
 
-    return new Value(operator, WrappedByteArray.of(value));
+  public static Value of(Operator operator, byte[] data) {
+    return new Value(operator, WrappedByteArray.of(data));
   }
 
   public byte[] getBytes() {

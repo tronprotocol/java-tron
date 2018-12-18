@@ -3,18 +3,27 @@ package org.tron.core.db2.core;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.common.WrappedByteArray;
@@ -26,17 +35,34 @@ import org.tron.core.exception.RevokingStoreIllegalStateException;
 
 @Slf4j
 public class SnapshotManager implements RevokingDatabase {
-  private static final int DEFAULT_STACK_MAX_SIZE = 256;
 
+  private static final int DEFAULT_STACK_MAX_SIZE = 256;
+  public static final int DEFAULT_MAX_FLUSH_COUNT = 500;
+  public static final int DEFAULT_MIN_FLUSH_COUNT = 1;
+  @Getter
   private List<RevokingDBWithCachingNewValue> dbs = new ArrayList<>();
   @Getter
   private int size = 0;
   private AtomicInteger maxSize = new AtomicInteger(DEFAULT_STACK_MAX_SIZE);
 
   private boolean disabled = true;
+  // for test
+  @Getter
   private int activeSession = 0;
+  // for test
+  @Setter
   private boolean unChecked = true;
-  private WriteOptions writeOptions = new WriteOptions().sync(true);
+
+  private volatile int flushCount = 0;
+
+  private Map<String, ListeningExecutorService> flushServices = new HashMap<>();
+
+  @Setter
+  @Getter
+  private LevelDbDataSourceImpl tmpLevelDbDataSource;
+
+  @Setter
+  private volatile int maxFlushCount = DEFAULT_MIN_FLUSH_COUNT;
 
   public ISession buildSession() {
     return buildSession(false);
@@ -52,7 +78,10 @@ public class SnapshotManager implements RevokingDatabase {
       disabled = false;
     }
 
-    while (size > maxSize.get()) {
+    if (size > maxSize.get()) {
+      flushCount = flushCount + (size - maxSize.get());
+      updateSolidity(size - maxSize.get());
+      size = maxSize.get();
       flush();
     }
 
@@ -62,8 +91,18 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   @Override
+  public void setMode(boolean mode) {
+    dbs.forEach(db -> db.setMode(mode));
+  }
+
+  @Override
   public void add(IRevokingDB db) {
-    dbs.add((RevokingDBWithCachingNewValue) db);
+    RevokingDBWithCachingNewValue revokingDB = (RevokingDBWithCachingNewValue) db;
+    dbs.add(revokingDB);
+    flushServices.put(revokingDB.getDbName(), MoreExecutors.listeningDecorator(
+        Executors.newSingleThreadExecutor(
+            new ThreadFactoryBuilder().setNameFormat(revokingDB.getDbName()).build()
+        )));
   }
 
   private void advance() {
@@ -99,6 +138,10 @@ public class SnapshotManager implements RevokingDatabase {
       throw new RevokingStoreIllegalStateException("activeSession has to be greater than 0");
     }
 
+    if (size <= 0) {
+      return;
+    }
+
     disabled = true;
 
     try {
@@ -122,6 +165,10 @@ public class SnapshotManager implements RevokingDatabase {
       throw new RevokingStoreIllegalStateException("activeSession has to be equal 0");
     }
 
+    if (size <= 0) {
+      throw new RevokingStoreIllegalStateException("there is not snapshot to be popped");
+    }
+
     disabled = true;
 
     try {
@@ -132,7 +179,7 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   @Override
-  public void fastPop() throws RevokingStoreIllegalStateException {
+  public void fastPop() {
     pop();
   }
 
@@ -162,7 +209,69 @@ public class SnapshotManager implements RevokingDatabase {
   public void shutdown() {
     System.err.println("******** begin to pop revokingDb ********");
     System.err.println("******** before revokingDb size:" + size);
+    try {
+      while (shouldBeRefreshed()) {
+        logger.info("waiting leveldb flush done");
+        TimeUnit.MILLISECONDS.sleep(10);
+      }
+    } catch (InterruptedException e) {
+      System.out.println(e.getMessage() + e);
+      Thread.currentThread().interrupt();
+    }
+    tmpLevelDbDataSource.closeDB();
     System.err.println("******** end to pop revokingDb ********");
+  }
+
+  public void updateSolidity(int hops) {
+    for (int i = 0; i < hops; i++) {
+      for (RevokingDBWithCachingNewValue db : dbs) {
+        db.getHead().updateSolidity();
+      }
+    }
+  }
+
+  private boolean shouldBeRefreshed() {
+    return flushCount >= maxFlushCount;
+  }
+
+  private void refresh() {
+    List<ListenableFuture<?>> futures = new ArrayList<>(dbs.size());
+    for (RevokingDBWithCachingNewValue db : dbs) {
+      futures.add(flushServices.get(db.getDbName()).submit(() -> refreshOne(db)));
+    }
+    Future<?> future = Futures.allAsList(futures);
+    try {
+      future.get();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    } catch (ExecutionException e) {
+      logger.error(e.getMessage(), e);
+    }
+  }
+
+  private void refreshOne(RevokingDBWithCachingNewValue db) {
+    if (Snapshot.isRoot(db.getHead())) {
+      return;
+    }
+
+    List<Snapshot> snapshots = new ArrayList<>();
+
+    SnapshotRoot root = (SnapshotRoot) db.getHead().getRoot();
+    Snapshot next = root;
+    for (int i = 0; i < flushCount; ++i) {
+      next = next.getNext();
+      snapshots.add(next);
+    }
+
+    root.merge(snapshots);
+
+    root.resetSolidity();
+    if (db.getHead() == next) {
+      db.setHead(root);
+    } else {
+      next.getNext().setPrevious(root);
+      root.setNext(next.getNext());
+    }
   }
 
   public void flush() {
@@ -170,87 +279,86 @@ public class SnapshotManager implements RevokingDatabase {
       return;
     }
 
-    createCheckPoint();
-
-    dbs.forEach(db -> {
-      Snapshot head = db.getHead();
-      if (head.getPrevious() == null) {
-        return;
-      }
-
-      if (head.getPrevious().getClass() == SnapshotRoot.class) {
-        head.getPrevious().merge(head);
-        db.setHead(head.getPrevious());
-        return;
-      }
-
-      while (head.getPrevious().getPrevious().getClass() == SnapshotImpl.class) {
-        head = head.getPrevious();
-      }
-
-      head.getPrevious().getPrevious().merge(head.getPrevious());
-      head.setPrevious(head.getPrevious().getPrevious());
-    });
-
-    --size;
-    deleteCheckPoint();
+    if (shouldBeRefreshed()) {
+      long start = System.currentTimeMillis();
+      deleteCheckPoint();
+      createCheckPoint();
+      long checkPointEnd = System.currentTimeMillis();
+      refresh();
+      flushCount = 0;
+      logger.info("flush cost:{}, create checkpoint cost:{}, refresh cost:{}",
+          System.currentTimeMillis() - start,
+          checkPointEnd - start,
+          System.currentTimeMillis() - checkPointEnd
+      );
+    }
   }
 
   private void createCheckPoint() {
-    LevelDbDataSourceImpl levelDbDataSource =
-        new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
-    levelDbDataSource.initDB();
     Map<WrappedByteArray, WrappedByteArray> batch = new HashMap<>();
     for (RevokingDBWithCachingNewValue db : dbs) {
       Snapshot head = db.getHead();
-      while (head.getPrevious().getPrevious() != null) {
-        head = head.getPrevious();
+      if (Snapshot.isRoot(head)) {
+        return;
       }
 
-      SnapshotImpl snapshot = (SnapshotImpl) head;
-      DB<Key, Value> keyValueDB = snapshot.getDb();
       String dbName = db.getDbName();
-      for (Map.Entry<Key, Value> e : keyValueDB) {
-        Key k = e.getKey();
-        Value v = e.getValue();
-        batch.put(WrappedByteArray.of(Bytes.concat(simpleEncode(dbName), k.getBytes())), WrappedByteArray.of(v.encode()));
+      Snapshot next = head.getRoot();
+      for (int i = 0; i < flushCount; ++i) {
+        next = next.getNext();
+        SnapshotImpl snapshot = (SnapshotImpl) next;
+        DB<Key, Value> keyValueDB = snapshot.getDb();
+        for (Map.Entry<Key, Value> e : keyValueDB) {
+          Key k = e.getKey();
+          Value v = e.getValue();
+          batch.put(WrappedByteArray.of(Bytes.concat(simpleEncode(dbName), k.getBytes())),
+              WrappedByteArray.of(v.encode()));
+        }
       }
     }
 
-    levelDbDataSource.updateByBatch(batch.entrySet().stream()
-        .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
-        .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll), writeOptions);
-    levelDbDataSource.closeDB();
+    tmpLevelDbDataSource.updateByBatch(batch.entrySet().stream()
+            .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
+            .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll),
+        new WriteOptions().sync(Args.getInstance().getStorage().isDbSync()));
   }
 
   private void deleteCheckPoint() {
-    LevelDbDataSourceImpl levelDbDataSource =
-        new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
+    Map <byte[], byte[]> hmap = new HashMap<byte[], byte[]>();
+   if (!tmpLevelDbDataSource.allKeys().isEmpty()) {
+     for (Map.Entry<byte[], byte[]> e : tmpLevelDbDataSource) {
+       hmap.put(e.getKey(), null);
+     }
+   }
 
-    FileUtil.recursiveDelete(levelDbDataSource.getDbPath().toString());
+   tmpLevelDbDataSource.updateByBatch(hmap,  new WriteOptions()
+       .sync(Args.getInstance().getStorage().isDbSync()));
   }
 
   // ensure run this method first after process start.
   @Override
   public void check() {
     for (RevokingDBWithCachingNewValue db : dbs) {
-      if (db.getHead().getClass() != SnapshotRoot.class) {
+      if (!Snapshot.isRoot(db.getHead())) {
         throw new IllegalStateException("first check.");
       }
     }
 
-    LevelDbDataSourceImpl levelDbDataSource =
+    tmpLevelDbDataSource =
         new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
-    levelDbDataSource.initDB();
-    if (!levelDbDataSource.allKeys().isEmpty()) {
+    tmpLevelDbDataSource.initDB();
+    if (!tmpLevelDbDataSource.allKeys().isEmpty()) {
       Map<String, RevokingDBWithCachingNewValue> dbMap = dbs.stream()
           .map(db -> Maps.immutableEntry(db.getDbName(), db))
           .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
       advance();
-      for (Map.Entry<byte[], byte[]> e : levelDbDataSource) {
+      for (Map.Entry<byte[], byte[]> e : tmpLevelDbDataSource) {
         byte[] key = e.getKey();
         byte[] value = e.getValue();
         String db = simpleDecode(key);
+        if (dbMap.get(db) == null) {
+          continue;
+        }
         byte[] realKey = Arrays.copyOfRange(key, db.getBytes().length + 4, key.length);
 
         byte[] realValue = value.length == 1 ? null : Arrays.copyOfRange(value, 1, value.length);
@@ -259,17 +367,13 @@ public class SnapshotManager implements RevokingDatabase {
         } else {
           dbMap.get(db).getHead().remove(realKey);
         }
+
       }
 
-      dbs.forEach(db -> {
-        db.getHead().getRoot().merge(db.getHead());
-        db.setHead(db.getHead().getPrevious());
-      });
+      dbs.forEach(db -> db.getHead().getRoot().merge(db.getHead()));
       retreat();
     }
 
-    levelDbDataSource.closeDB();
-    FileUtil.recursiveDelete(levelDbDataSource.getDbPath().toString());
     unChecked = false;
   }
 
@@ -291,7 +395,8 @@ public class SnapshotManager implements RevokingDatabase {
 
   @Slf4j
   @Getter // only for unit test
-  public static class Session  implements ISession {
+  public static class Session implements ISession {
+
     private SnapshotManager snapshotManager;
     private boolean applySnapshot = true;
     private boolean disableOnExit = false;

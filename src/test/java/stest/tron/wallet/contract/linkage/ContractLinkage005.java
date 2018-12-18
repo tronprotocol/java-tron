@@ -245,100 +245,20 @@ public class ContractLinkage005 {
     Assert.assertTrue(afterEnergyUsed1 > beforeEnergyUsed1);
     Assert.assertTrue(afterNetUsed1 > beforeNetUsed1);
     //use EnergyUsed and NetUsed.balance not change
-    AccountResourceMessage resourceInfo2 = PublicMethed.getAccountResource(linkage005Address,
-        blockingStubFull);
-    Account info2 = PublicMethed.queryAccount(linkage005Address, blockingStubFull);
-    Long beforeBalance2 = info2.getBalance();
-    Long beforeEnergyLimit2 = resourceInfo2.getEnergyLimit();
-    Long beforeEnergyUsed2 = resourceInfo2.getEnergyUsed();
-    Long beforeFreeNetLimit2 = resourceInfo2.getFreeNetLimit();
-    Long beforeNetLimit2 = resourceInfo2.getNetLimit();
-    Long beforeNetUsed2 = resourceInfo2.getNetUsed();
-    Long beforeFreeNetUsed2 = resourceInfo2.getFreeNetUsed();
-    logger.info("beforeBalance2:" + beforeBalance2);
-    logger.info("beforeEnergyLimit2:" + beforeEnergyLimit2);
-    logger.info("beforeEnergyUsed2:" + beforeEnergyUsed2);
-    logger.info("beforeFreeNetLimit2:" + beforeFreeNetLimit2);
-    logger.info("beforeNetLimit2:" + beforeNetLimit2);
-    logger.info("beforeNetUsed2:" + beforeNetUsed2);
-    logger.info("beforeFreeNetUsed2:" + beforeFreeNetUsed2);
+
     txid = PublicMethed.triggerContract(contractAddress,
         "testUseCpu(uint256)", secondForCycleTimes.toString(), false,
         0, 100000000L, linkage005Address, linkage005Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     secondForCycleCost = infoById.get().getReceipt().getEnergyUsageTotal();
-    Account infoafter2 = PublicMethed.queryAccount(linkage005Address, blockingStubFull1);
-    AccountResourceMessage resourceInfoafter2 = PublicMethed.getAccountResource(linkage005Address,
-        blockingStubFull1);
-    Long afterBalance2 = infoafter2.getBalance();
-    Long afterEnergyLimit2 = resourceInfoafter2.getEnergyLimit();
-    Long afterEnergyUsed2 = resourceInfoafter2.getEnergyUsed();
-    Long afterFreeNetLimit2 = resourceInfoafter2.getFreeNetLimit();
-    Long afterNetLimit2 = resourceInfoafter2.getNetLimit();
-    Long afterNetUsed2 = resourceInfoafter2.getNetUsed();
-    Long afterFreeNetUsed2 = resourceInfoafter2.getFreeNetUsed();
-    logger.info("afterBalance2:" + afterBalance2);
-    logger.info("afterEnergyLimit2:" + afterEnergyLimit2);
-    logger.info("afterEnergyUsed2:" + afterEnergyUsed2);
-    logger.info("afterFreeNetLimit2:" + afterFreeNetLimit2);
-    logger.info("afterNetLimit2:" + afterNetLimit2);
-    logger.info("afterNetUsed2:" + afterNetUsed2);
-    logger.info("afterFreeNetUsed2:" + afterFreeNetUsed2);
-    logger.info("---------------:");
-    Assert.assertEquals(beforeBalance2, afterBalance2);
-    Assert.assertTrue(afterEnergyUsed2 > beforeEnergyUsed2);
-    Assert.assertTrue(afterNetUsed2 > beforeNetUsed2);
-
-    AccountResourceMessage resourceInfo3 = PublicMethed.getAccountResource(linkage005Address,
-        blockingStubFull);
-    Account info3 = PublicMethed.queryAccount(linkage005Address, blockingStubFull);
-    Long beforeBalance3 = info3.getBalance();
-    Long beforeEnergyLimit3 = resourceInfo3.getEnergyLimit();
-    Long beforeEnergyUsed3 = resourceInfo3.getEnergyUsed();
-    Long beforeFreeNetLimit3 = resourceInfo3.getFreeNetLimit();
-    Long beforeNetLimit3 = resourceInfo3.getNetLimit();
-    Long beforeNetUsed3 = resourceInfo3.getNetUsed();
-    Long beforeFreeNetUsed3 = resourceInfo3.getFreeNetUsed();
-    logger.info("beforeBalance3:" + beforeBalance3);
-    logger.info("beforeEnergyLimit3:" + beforeEnergyLimit3);
-    logger.info("beforeEnergyUsed3:" + beforeEnergyUsed3);
-    logger.info("beforeFreeNetLimit3:" + beforeFreeNetLimit3);
-    logger.info("beforeNetLimit3:" + beforeNetLimit3);
-    logger.info("beforeNetUsed3:" + beforeNetUsed3);
-    logger.info("beforeFreeNetUsed3:" + beforeFreeNetUsed3);
 
     txid = PublicMethed.triggerContract(contractAddress,
         "testUseCpu(uint256)", thirdForCycleTimes.toString(), false,
         0, 100000000L, linkage005Address, linkage005Key, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Account infoafter3 = PublicMethed.queryAccount(linkage005Address, blockingStubFull1);
-    AccountResourceMessage resourceInfoafter3 = PublicMethed.getAccountResource(linkage005Address,
-        blockingStubFull1);
-    Long afterBalance3 = infoafter3.getBalance();
-    Long afterEnergyLimit3 = resourceInfoafter3.getEnergyLimit();
-    Long afterEnergyUsed3 = resourceInfoafter3.getEnergyUsed();
-    Long afterFreeNetLimit3 = resourceInfoafter3.getFreeNetLimit();
-    Long afterNetLimit3 = resourceInfoafter3.getNetLimit();
-    Long afterNetUsed3 = resourceInfoafter3.getNetUsed();
-    Long afterFreeNetUsed3 = resourceInfoafter3.getFreeNetUsed();
-    logger.info("afterBalance3:" + afterBalance3);
-    logger.info("afterEnergyLimit3:" + afterEnergyLimit3);
-    logger.info("afterEnergyUsed3:" + afterEnergyUsed3);
-    logger.info("afterFreeNetLimit3:" + afterFreeNetLimit3);
-    logger.info("afterNetLimit3:" + afterNetLimit3);
-    logger.info("afterNetUsed3:" + afterNetUsed3);
-    logger.info("afterFreeNetUsed3:" + afterFreeNetUsed3);
-    logger.info("---------------:");
-    Assert.assertEquals(beforeBalance3, afterBalance3);
-    Assert.assertTrue(afterEnergyUsed3 > beforeEnergyUsed3);
-    Assert.assertTrue(afterNetUsed3 > beforeNetUsed3);
+
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     thirdForCycleCost = infoById.get().getReceipt().getEnergyUsageTotal();
-
-    logger.info(firstForCycleCost.toString());
-    logger.info(secondForCycleCost.toString());
-    logger.info(thirdForCycleCost.toString());
 
     Assert.assertTrue(thirdForCycleCost - secondForCycleCost
         == secondForCycleCost - firstForCycleCost);
@@ -394,252 +314,40 @@ public class ContractLinkage005 {
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     zeroForCycleCost = infoById.get().getReceipt().getEnergyUsageTotal();
 
-    AccountResourceMessage resourceInfo5 = PublicMethed.getAccountResource(linkage005Address,
-        blockingStubFull);
-    Account info5 = PublicMethed.queryAccount(linkage005Address, blockingStubFull);
-    Long beforeBalance5 = info5.getBalance();
-    Long beforeEnergyLimit5 = resourceInfo5.getEnergyLimit();
-    Long beforeEnergyUsed5 = resourceInfo5.getEnergyUsed();
-    Long beforeFreeNetLimit5 = resourceInfo5.getFreeNetLimit();
-    Long beforeNetLimit5 = resourceInfo5.getNetLimit();
-    Long beforeNetUsed5 = resourceInfo5.getNetUsed();
-    Long beforeFreeNetUsed5 = resourceInfo5.getFreeNetUsed();
-    logger.info("beforeBalance5:" + beforeBalance5);
-    logger.info("beforeEnergyLimit5:" + beforeEnergyLimit5);
-    logger.info("beforeEnergyUsed5:" + beforeEnergyUsed5);
-    logger.info("beforeFreeNetLimit5:" + beforeFreeNetLimit5);
-    logger.info("beforeNetLimit5:" + beforeNetLimit5);
-    logger.info("beforeNetUsed5:" + beforeNetUsed5);
-    logger.info("beforeFreeNetUsed5:" + beforeFreeNetUsed5);
     txid = PublicMethed.triggerContract(contractAddress,
         "testUseStorage(uint256)", firstForCycleTimes.toString(), false,
         0, 100000000L, linkage005Address, linkage005Key, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Account infoafter5 = PublicMethed.queryAccount(linkage005Address, blockingStubFull1);
-    AccountResourceMessage resourceInfoafter5 = PublicMethed.getAccountResource(linkage005Address,
-        blockingStubFull1);
-    Long afterBalance5 = infoafter5.getBalance();
-    Long afterEnergyLimit5 = resourceInfoafter5.getEnergyLimit();
-    Long afterEnergyUsed5 = resourceInfoafter5.getEnergyUsed();
-    Long afterFreeNetLimit5 = resourceInfoafter5.getFreeNetLimit();
-    Long afterNetLimit5 = resourceInfoafter5.getNetLimit();
-    Long afterNetUsed5 = resourceInfoafter5.getNetUsed();
-    Long afterFreeNetUsed5 = resourceInfoafter5.getFreeNetUsed();
-    logger.info("afterBalance5:" + afterBalance5);
-    logger.info("afterEnergyLimit5:" + afterEnergyLimit5);
-    logger.info("afterEnergyUsed5:" + afterEnergyUsed5);
-    logger.info("afterFreeNetLimit5:" + afterFreeNetLimit5);
-    logger.info("afterNetLimit5:" + afterNetLimit5);
-    logger.info("afterNetUsed5:" + afterNetUsed5);
-    logger.info("afterFreeNetUsed5:" + afterFreeNetUsed5);
-    logger.info("---------------:");
-    Assert.assertEquals(beforeBalance5, afterBalance5);
-    Assert.assertTrue(afterEnergyUsed5 > beforeEnergyUsed5);
-    Assert.assertTrue(afterNetUsed5 > beforeNetUsed5);
 
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     firstForCycleCost = infoById.get().getReceipt().getEnergyUsageTotal();
-
-    AccountResourceMessage resourceInfo6 = PublicMethed.getAccountResource(linkage005Address,
-        blockingStubFull);
-    Account info6 = PublicMethed.queryAccount(linkage005Address, blockingStubFull);
-    Long beforeBalance6 = info6.getBalance();
-    Long beforeEnergyLimit6 = resourceInfo6.getEnergyLimit();
-    Long beforeEnergyUsed6 = resourceInfo6.getEnergyUsed();
-    Long beforeFreeNetLimit6 = resourceInfo6.getFreeNetLimit();
-    Long beforeNetLimit6 = resourceInfo6.getNetLimit();
-    Long beforeNetUsed6 = resourceInfo6.getNetUsed();
-    Long beforeFreeNetUsed6 = resourceInfo6.getFreeNetUsed();
-    logger.info("beforeBalance6:" + beforeBalance6);
-    logger.info("beforeEnergyLimit6:" + beforeEnergyLimit6);
-    logger.info("beforeEnergyUsed6:" + beforeEnergyUsed6);
-    logger.info("beforeFreeNetLimit6:" + beforeFreeNetLimit6);
-    logger.info("beforeNetLimit6:" + beforeNetLimit6);
-    logger.info("beforeNetUsed6:" + beforeNetUsed6);
-    logger.info("beforeFreeNetUsed6:" + beforeFreeNetUsed6);
 
     txid = PublicMethed.triggerContract(contractAddress,
         "testUseStorage(uint256)", secondForCycleTimes.toString(), false,
         0, 100000000L, linkage005Address, linkage005Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Account infoafter6 = PublicMethed.queryAccount(linkage005Address, blockingStubFull1);
-    AccountResourceMessage resourceInfoafter6 = PublicMethed.getAccountResource(linkage005Address,
-        blockingStubFull1);
-    Long afterBalance6 = infoafter6.getBalance();
-    Long afterEnergyLimit6 = resourceInfoafter6.getEnergyLimit();
-    Long afterEnergyUsed6 = resourceInfoafter6.getEnergyUsed();
-    Long afterFreeNetLimit6 = resourceInfoafter6.getFreeNetLimit();
-    Long afterNetLimit6 = resourceInfoafter6.getNetLimit();
-    Long afterNetUsed6 = resourceInfoafter6.getNetUsed();
-    Long afterFreeNetUsed6 = resourceInfoafter6.getFreeNetUsed();
-    logger.info("afterBalance6:" + afterBalance6);
-    logger.info("afterEnergyLimit6:" + afterEnergyLimit6);
-    logger.info("afterEnergyUsed6:" + afterEnergyUsed6);
-    logger.info("afterFreeNetLimit6:" + afterFreeNetLimit6);
-    logger.info("afterNetLimit6:" + afterNetLimit6);
-    logger.info("afterNetUsed6:" + afterNetUsed6);
-    logger.info("afterFreeNetUsed6:" + afterFreeNetUsed6);
-    logger.info("---------------:");
-    Assert.assertEquals(beforeBalance6, afterBalance6);
-    Assert.assertTrue(afterEnergyUsed6 > beforeEnergyUsed6);
-    Assert.assertTrue(afterNetUsed6 > beforeNetUsed6);
 
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     secondForCycleCost = infoById.get().getReceipt().getEnergyUsageTotal();
-    AccountResourceMessage resourceInfo7 = PublicMethed.getAccountResource(linkage005Address,
-        blockingStubFull);
-    Account info7 = PublicMethed.queryAccount(linkage005Address, blockingStubFull);
-    Long beforeBalance7 = info7.getBalance();
-    Long beforeEnergyLimit7 = resourceInfo7.getEnergyLimit();
-    Long beforeEnergyUsed7 = resourceInfo7.getEnergyUsed();
-    Long beforeFreeNetLimit7 = resourceInfo7.getFreeNetLimit();
-    Long beforeNetLimit7 = resourceInfo7.getNetLimit();
-    Long beforeNetUsed7 = resourceInfo7.getNetUsed();
-    Long beforeFreeNetUsed7 = resourceInfo7.getFreeNetUsed();
-    logger.info("beforeBalance7:" + beforeBalance7);
-    logger.info("beforeEnergyLimit7:" + beforeEnergyLimit7);
-    logger.info("beforeEnergyUsed7:" + beforeEnergyUsed7);
-    logger.info("beforeFreeNetLimit7:" + beforeFreeNetLimit7);
-    logger.info("beforeNetLimit7:" + beforeNetLimit7);
-    logger.info("beforeNetUsed7:" + beforeNetUsed7);
-    logger.info("beforeFreeNetUsed7:" + beforeFreeNetUsed7);
 
     txid = PublicMethed.triggerContract(contractAddress,
         "testUseStorage(uint256)", thirdForCycleTimes.toString(), false,
         0, 100000000L, linkage005Address, linkage005Key, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Account infoafter7 = PublicMethed.queryAccount(linkage005Address, blockingStubFull1);
-    AccountResourceMessage resourceInfoafter7 = PublicMethed.getAccountResource(linkage005Address,
-        blockingStubFull1);
-    Long afterBalance7 = infoafter7.getBalance();
-    Long afterEnergyLimit7 = resourceInfoafter7.getEnergyLimit();
-    Long afterEnergyUsed7 = resourceInfoafter7.getEnergyUsed();
-    Long afterFreeNetLimit7 = resourceInfoafter7.getFreeNetLimit();
-    Long afterNetLimit7 = resourceInfoafter7.getNetLimit();
-    Long afterNetUsed7 = resourceInfoafter7.getNetUsed();
-    Long afterFreeNetUsed7 = resourceInfoafter7.getFreeNetUsed();
-    logger.info("afterBalance7:" + afterBalance7);
-    logger.info("afterEnergyLimit7:" + afterEnergyLimit7);
-    logger.info("afterEnergyUsed7:" + afterEnergyUsed7);
-    logger.info("afterFreeNetLimit7:" + afterFreeNetLimit7);
-    logger.info("afterNetLimit7:" + afterNetLimit7);
-    logger.info("afterNetUsed7:" + afterNetUsed7);
-    logger.info("afterFreeNetUsed7:" + afterFreeNetUsed7);
-    logger.info("---------------:");
-    Assert.assertEquals(beforeBalance7, afterBalance7);
-    Assert.assertTrue(afterEnergyUsed7 > beforeEnergyUsed7);
-    Assert.assertTrue(afterNetUsed7 > beforeNetUsed7);
-
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     thirdForCycleCost = infoById.get().getReceipt().getEnergyUsageTotal();
-
-    AccountResourceMessage resourceInfo8 = PublicMethed.getAccountResource(linkage005Address,
-        blockingStubFull);
-    Account info8 = PublicMethed.queryAccount(linkage005Address, blockingStubFull);
-    Long beforeBalance8 = info8.getBalance();
-    Long beforeEnergyLimit8 = resourceInfo8.getEnergyLimit();
-    Long beforeEnergyUsed8 = resourceInfo8.getEnergyUsed();
-    Long beforeFreeNetLimit8 = resourceInfo8.getFreeNetLimit();
-    Long beforeNetLimit8 = resourceInfo8.getNetLimit();
-    Long beforeNetUsed8 = resourceInfo8.getNetUsed();
-    Long beforeFreeNetUsed8 = resourceInfo8.getFreeNetUsed();
-    logger.info("beforeBalance8:" + beforeBalance8);
-    logger.info("beforeEnergyLimit8:" + beforeEnergyLimit8);
-    logger.info("beforeEnergyUsed8:" + beforeEnergyUsed8);
-    logger.info("beforeFreeNetLimit8:" + beforeFreeNetLimit8);
-    logger.info("beforeNetLimit8:" + beforeNetLimit8);
-    logger.info("beforeNetUsed8:" + beforeNetUsed8);
-    logger.info("beforeFreeNetUsed8:" + beforeFreeNetUsed8);
 
     txid = PublicMethed.triggerContract(contractAddress,
         "testUseStorage(uint256)", forthForCycleTimes.toString(), false,
         0, 100000000L, linkage005Address, linkage005Key, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    Account infoafter8 = PublicMethed.queryAccount(linkage005Address, blockingStubFull1);
-    AccountResourceMessage resourceInfoafter8 = PublicMethed.getAccountResource(linkage005Address,
-        blockingStubFull1);
-    Long afterBalance8 = infoafter8.getBalance();
-    Long afterEnergyLimit8 = resourceInfoafter8.getEnergyLimit();
-    Long afterEnergyUsed8 = resourceInfoafter8.getEnergyUsed();
-    Long afterFreeNetLimit8 = resourceInfoafter8.getFreeNetLimit();
-    Long afterNetLimit8 = resourceInfoafter8.getNetLimit();
-    Long afterNetUsed8 = resourceInfoafter8.getNetUsed();
-    Long afterFreeNetUsed8 = resourceInfoafter8.getFreeNetUsed();
-    logger.info("afterBalance8:" + afterBalance8);
-    logger.info("afterEnergyLimit8:" + afterEnergyLimit8);
-    logger.info("afterEnergyUsed8:" + afterEnergyUsed8);
-    logger.info("afterFreeNetLimit8:" + afterFreeNetLimit8);
-    logger.info("afterNetLimit8:" + afterNetLimit8);
-    logger.info("afterNetUsed8:" + afterNetUsed8);
-    logger.info("afterFreeNetUsed8:" + afterFreeNetUsed8);
-    logger.info("---------------:");
-    Assert.assertEquals(beforeBalance8, afterBalance8);
-    Assert.assertTrue(afterEnergyUsed8 > beforeEnergyUsed8);
-    Assert.assertTrue(afterNetUsed8 > beforeNetUsed8);
 
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     forthForCycleCost = infoById.get().getReceipt().getEnergyUsageTotal();
 
-    AccountResourceMessage resourceInfo9 = PublicMethed.getAccountResource(linkage005Address,
-        blockingStubFull);
-    Account info9 = PublicMethed.queryAccount(linkage005Address, blockingStubFull);
-    Long beforeBalance9 = info9.getBalance();
-    Long beforeEnergyLimit9 = resourceInfo9.getEnergyLimit();
-    Long beforeEnergyUsed9 = resourceInfo9.getEnergyUsed();
-    Long beforeFreeNetLimit9 = resourceInfo9.getFreeNetLimit();
-    Long beforeNetLimit9 = resourceInfo9.getNetLimit();
-    Long beforeNetUsed9 = resourceInfo9.getNetUsed();
-    Long beforeFreeNetUsed9 = resourceInfo9.getFreeNetUsed();
-    logger.info("beforeBalance9:" + beforeBalance9);
-    logger.info("beforeEnergyLimit9:" + beforeEnergyLimit9);
-    logger.info("beforeEnergyUsed9:" + beforeEnergyUsed9);
-    logger.info("beforeFreeNetLimit9:" + beforeFreeNetLimit9);
-    logger.info("beforeNetLimit9:" + beforeNetLimit9);
-    logger.info("beforeNetUsed9:" + beforeNetUsed9);
-    logger.info("beforeFreeNetUsed9:" + beforeFreeNetUsed9);
-
     txid = PublicMethed.triggerContract(contractAddress,
         "testUseStorage(uint256)", fifthForCycleTimes.toString(), false,
         0, 100000000L, linkage005Address, linkage005Key, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    Account infoafter9 = PublicMethed.queryAccount(linkage005Address, blockingStubFull1);
-    AccountResourceMessage resourceInfoafter9 = PublicMethed.getAccountResource(linkage005Address,
-        blockingStubFull1);
-    Long afterBalance9 = infoafter9.getBalance();
-    Long afterEnergyLimit9 = resourceInfoafter9.getEnergyLimit();
-    Long afterEnergyUsed9 = resourceInfoafter9.getEnergyUsed();
-    Long afterFreeNetLimit9 = resourceInfoafter9.getFreeNetLimit();
-    Long afterNetLimit9 = resourceInfoafter9.getNetLimit();
-    Long afterNetUsed9 = resourceInfoafter9.getNetUsed();
-    Long afterFreeNetUsed9 = resourceInfoafter9.getFreeNetUsed();
-    logger.info("afterBalance9:" + afterBalance9);
-    logger.info("afterEnergyLimit9:" + afterEnergyLimit9);
-    logger.info("afterEnergyUsed9:" + afterEnergyUsed9);
-    logger.info("afterFreeNetLimit9:" + afterFreeNetLimit9);
-    logger.info("afterNetLimit9:" + afterNetLimit9);
-    logger.info("afterNetUsed9:" + afterNetUsed9);
-    logger.info("afterFreeNetUsed9:" + afterFreeNetUsed9);
-    logger.info("---------------:");
-    Assert.assertEquals(beforeBalance9, afterBalance9);
-    Assert.assertTrue(afterEnergyUsed9 > beforeEnergyUsed9);
-    Assert.assertTrue(afterNetUsed9 > beforeNetUsed9);
 
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     fifthForCycleCost = infoById.get().getReceipt().getEnergyUsageTotal();
-
-    logger.info("Zero cost is " + zeroForCycleCost);
-    logger.info("First cost is " + firstForCycleCost);
-    logger.info("Second cost is " + secondForCycleCost);
-    logger.info("Third cost is " + thirdForCycleCost);
-    logger.info("Forth cost is " + forthForCycleCost);
-    logger.info("Fifth cost is " + fifthForCycleCost);
-    logger.info(Long.toString(firstForCycleCost - zeroForCycleCost));
-    logger.info(Long.toString(secondForCycleCost - firstForCycleCost));
-    logger.info(Long.toString(thirdForCycleCost - secondForCycleCost));
-    logger.info(Long.toString(forthForCycleCost - thirdForCycleCost));
-    logger.info(Long.toString(fifthForCycleCost - forthForCycleCost));
 
     Assert.assertTrue(thirdForCycleCost - secondForCycleCost
         == secondForCycleCost - firstForCycleCost);

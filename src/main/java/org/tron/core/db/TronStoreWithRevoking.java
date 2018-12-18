@@ -25,7 +25,7 @@ import org.tron.core.exception.ItemNotFoundException;
 
 @Slf4j
 public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements ITronChainBase<T> {
-
+  @Getter // only for unit test
   protected IRevokingDB revokingDB;
   private TypeToken<T> token = new TypeToken<T>(getClass()) {};
   @Autowired
@@ -131,6 +131,10 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
   public long size() {
     return Streams.stream(revokingDB.iterator()).count();
+  }
+
+  public void setMode(boolean mode) {
+    revokingDB.setMode(mode);
   }
 
 }

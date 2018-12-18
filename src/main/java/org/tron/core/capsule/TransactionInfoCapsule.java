@@ -1,7 +1,5 @@
 package org.tron.core.capsule;
 
-import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
-
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
@@ -12,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.ProgramResult;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
 import org.tron.protos.Protocol;
@@ -166,7 +165,13 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
     builder.addContractResult(contractResult);
     builder.setContractAddress(ContractAddress);
     builder.setUnfreezeAmount(programResult.getRet().getUnfreezeAmount());
+    builder.setAssetIssueID(programResult.getRet().getAssetIssueID());
+    builder.setExchangeId(programResult.getRet().getExchangeId());
     builder.setWithdrawAmount(programResult.getRet().getWithdrawAmount());
+    builder.setExchangeReceivedAmount(programResult.getRet().getExchangeReceivedAmount());
+    builder.setExchangeInjectAnotherAmount(programResult.getRet().getExchangeInjectAnotherAmount());
+    builder.setExchangeWithdrawAnotherAmount(
+        programResult.getRet().getExchangeWithdrawAnotherAmount());
 
     List<Log> logList = new ArrayList<>();
     programResult.getLogInfoList().forEach(
@@ -183,7 +188,7 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
 
     builder.setReceipt(traceReceipt.getReceipt());
 
-    if (null != programResult.getInternalTransactions()) {
+    if (Args.getInstance().isSaveInternalTx() && null != programResult.getInternalTransactions()) {
       for (InternalTransaction internalTransaction : programResult
           .getInternalTransactions()) {
         Protocol.InternalTransaction.Builder internalTrxBuilder = Protocol.InternalTransaction
@@ -195,14 +200,20 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
         // set TransferTo
         internalTrxBuilder
             .setTransferToAddress(ByteString.copyFrom(internalTransaction.getTransferToAddress()));
-        //TODO: for loop below in future for Tokens if we design involve token in
+        //TODO: "for loop" below in future for multiple token case, we only have one for now.
         Protocol.InternalTransaction.CallValueInfo.Builder callValueInfoBuilder =
             Protocol.InternalTransaction.CallValueInfo.newBuilder();
-        callValueInfoBuilder.setCallValue(internalTransaction.getValue());
         // trx will not be set token name
-        callValueInfoBuilder.setTokenName(ByteString.copyFrom(EMPTY_BYTE_ARRAY));
+        callValueInfoBuilder.setCallValue(internalTransaction.getValue());
         // Just one transferBuilder for now.
         internalTrxBuilder.addCallValueInfo(callValueInfoBuilder);
+        internalTransaction.getTokenInfo().forEach((tokenId, amount) -> {
+          Protocol.InternalTransaction.CallValueInfo.Builder tokenInfoBuilder =
+              Protocol.InternalTransaction.CallValueInfo.newBuilder();
+          tokenInfoBuilder.setTokenId(tokenId);
+          tokenInfoBuilder.setCallValue(amount);
+          internalTrxBuilder.addCallValueInfo(tokenInfoBuilder);
+        });
         // Token for loop end here
         internalTrxBuilder.setNote(ByteString.copyFrom(internalTransaction.getNote().getBytes()));
         internalTrxBuilder.setRejected(internalTransaction.isRejected());

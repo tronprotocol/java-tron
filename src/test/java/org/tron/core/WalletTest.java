@@ -34,9 +34,9 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.api.GrpcAPI.AssetIssueList;
-import org.tron.api.GrpcAPI.BlockList; 
+import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.ExchangeList;
-import org.tron.api.GrpcAPI.ProposalList; 
+import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
@@ -415,7 +415,7 @@ public class WalletTest {
         exchangeList.getExchangesList().get(1).getCreatorAddress().toStringUtf8());
   }
 
-  @Test
+  //@Test
   public void testChainParameters() {
 
     Protocol.ChainParameters.Builder builder = Protocol.ChainParameters.newBuilder();
