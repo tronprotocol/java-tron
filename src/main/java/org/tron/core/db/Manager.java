@@ -688,7 +688,6 @@ public class Manager {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
-    this.updateDynamicProperties(block);
     updateFork(block);
     if (System.currentTimeMillis() - block.getTimeStamp() >= 60_000) {
       revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MAX_FLUSH_COUNT);
@@ -1306,12 +1305,12 @@ public class Manager {
     if (getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 1) {
       updateAdaptiveTotalEnergyLimit();
     }
-
-    this.updateSignedWitness(block);
-    this.updateLatestSolidifiedBlock();
-    this.updateTransHashCache(block);
+    updateSignedWitness(block);
+    updateLatestSolidifiedBlock();
+    updateTransHashCache(block);
     updateMaintenanceState(needMaint);
     updateRecentBlock(block);
+    updateDynamicProperties(block);
   }
 
   public void updateAdaptiveTotalEnergyLimit() {

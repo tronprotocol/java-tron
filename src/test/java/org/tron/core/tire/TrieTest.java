@@ -17,7 +17,10 @@
  */
 package org.tron.core.tire;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
@@ -112,6 +115,27 @@ public class TrieTest {
         }
       }
     }
+  }
+
+  @Test
+  public void testOrder() {
+    TrieImpl trie = new TrieImpl();
+    int n = 100;
+    List<Integer> value = new ArrayList<>();
+    for (int i = 1; i < n; i++) {
+      value.add(i);
+      trie.put(RLP.encodeInt(i), String.valueOf(i).getBytes());
+    }
+    trie.put(RLP.encodeInt(10), String.valueOf(10).getBytes());
+    value.add(10);
+    byte[] rootHash1 = trie.getRootHash();
+    Collections.shuffle(value);
+    TrieImpl trie2 = new TrieImpl();
+    for (int i : value) {
+      trie2.put(RLP.encodeInt(i), String.valueOf(i).getBytes());
+    }
+    byte[] rootHash2 = trie2.getRootHash();
+    Assert.assertTrue(java.util.Arrays.equals(rootHash1, rootHash2));
   }
 
   private void assertTrue(byte[] key, TrieImpl trieCopy) {

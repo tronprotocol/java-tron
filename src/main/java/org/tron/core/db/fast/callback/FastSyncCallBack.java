@@ -246,9 +246,9 @@ public class FastSyncCallBack {
 
   private void setStoreKeyAndHash() {
     for (TrieEnum trieEnum : TrieEnum.values()) {
-      TrieImpl trie = selectTrie(trieEnum);
+      TrieImpl childTrie = selectTrie(trieEnum);
       trie.put(RLP.encodeString(trieEnum.getKey()),
-          trie == null ? Hash.EMPTY_TRIE_HASH : trie.getRootHash());
+          childTrie == null ? Hash.EMPTY_TRIE_HASH : childTrie.getRootHash());
     }
   }
 
