@@ -388,7 +388,8 @@ public class Args {
   @Getter
   @Setter
   private int minEffectiveConnection;
-
+  @Getter
+  @Setter
   private long allowZKSnarkTransaction; //committee parameter
 
   public static void clearParam() {
