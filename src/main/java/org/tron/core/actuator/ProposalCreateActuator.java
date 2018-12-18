@@ -206,7 +206,6 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         break;
       }
-<<<<<<< HEAD
       case (16): {
         if (!dbManager.getForkController().pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
           throw new ContractValidateException("Bad chain parameter id");
@@ -254,7 +253,6 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         break;
       }
-=======
       case (22): {
         if (entry.getValue() != 1) {
           throw new ContractValidateException(
@@ -273,8 +271,6 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         break;
       }
-
->>>>>>> f48ba0a814495aeb512cc5dc43a03e47cfd0178b
       default:
         break;
     }

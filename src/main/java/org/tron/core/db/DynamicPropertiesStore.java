@@ -139,7 +139,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_CREATION_OF_CONTRACTS = "ALLOW_CREATION_OF_CONTRACTS"
       .getBytes();
 
-<<<<<<< HEAD
   //token id,Incremental，The initial value is 1000000
   private static final byte[] TOKEN_ID_NUM = "TOKEN_ID_NUM".getBytes();
 
@@ -148,13 +147,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   //This value is only allowed to be 0, 1, -1
   private static final byte[] ALLOW_TVM_TRANSFER_TRC10 = "ALLOW_TVM_TRANSFER_TRC10".getBytes();
-=======
   // zkSnark
   private static final byte[] ZKSNARK_TRANSACTION_FEE = "ZKSNARK_TRANSACTION_FEE".getBytes();
 
   //If the parameter is larger than 0, allow ZKsnark Transaction
   private static final byte[] ALLOW_ZKSNARK_TRANSACTION = "ALLOW_ZKSNARK_TRANSACTION".getBytes();
->>>>>>> f48ba0a814495aeb512cc5dc43a03e47cfd0178b
 
 
   @Autowired
