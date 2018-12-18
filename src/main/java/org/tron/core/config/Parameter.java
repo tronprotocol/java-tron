@@ -75,6 +75,9 @@ public interface Parameter {
     MAX_CPU_TIME_OF_ONE_TX, // ms, 13
     ALLOW_UPDATE_ACCOUNT_NAME, // 1, 14
     ALLOW_SAME_TOKEN_NAME, // 1, 15
+
+    ALLOW_ZKSNARK_TRANSACTION, // 1, 22
+    ZKSNARK_TRANSACTION_FEE, // sun, 23
 //    ONE_DAY_NET_LIMIT,
 //    MAX_FROZEN_TIME,
 //    MIN_FROZEN_TIME,

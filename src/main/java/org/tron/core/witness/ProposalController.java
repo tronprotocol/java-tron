@@ -165,6 +165,15 @@ public class ProposalController {
           manager.getDynamicPropertiesStore().saveAllowSameTokenName(entry.getValue());
           break;
         }
+
+        case (22): {
+          manager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(entry.getValue());
+          break;
+        }
+        case (23): {
+          manager.getDynamicPropertiesStore().saveZksnarkTransactionFee(entry.getValue());
+          break;
+        }
         default:
           break;
       }

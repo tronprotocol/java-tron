@@ -330,6 +330,10 @@ public class Args {
   @Setter
   private String logLevel;
 
+  @Getter
+  @Setter
+  private long allowZKSnarkTransaction; //committee parameter
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -391,6 +395,7 @@ public class Args {
     INSTANCE.minTimeRatio = 0.0;
     INSTANCE.maxTimeRatio = 5.0;
     INSTANCE.longRunningTime = 10;
+    INSTANCE.allowZKSnarkTransaction = 0;
   }
 
   /**
@@ -649,6 +654,10 @@ public class Args {
         .getBoolean("node.isOpenFullTcpDisconnect");
     INSTANCE.logLevel =
         config.hasPath("log.level.root") ? config.getString("log.level.root") : "INFO";
+
+    INSTANCE.allowZKSnarkTransaction =
+            config.hasPath("committee.allowZKSnarkTransaction") ? config
+                    .getInt("committee.allowZKSnarkTransaction") : 0;
 
     initBackupProperty(config);
 

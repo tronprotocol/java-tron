@@ -130,6 +130,7 @@ message ZksnarkV0TransferContract {
   bytes pksig = 10;
   bytes randomSeed = 11;
   bytes epk = 12;
+  int64 fee = 13;
   bytes h1 = 20;
   bytes h2 = 21;
   bytes C1 = 22;
