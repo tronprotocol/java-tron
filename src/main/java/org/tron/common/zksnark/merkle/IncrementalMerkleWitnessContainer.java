@@ -54,7 +54,6 @@ public class IncrementalMerkleWitnessContainer {
               .toMerkleTreeContainer()
               .nextDepth(witnessCapsule.getFilled().size());
 
-
       witnessCapsule.setCursorDepth(nextDepth);
 
       if (nextDepth >= DEPTH) {

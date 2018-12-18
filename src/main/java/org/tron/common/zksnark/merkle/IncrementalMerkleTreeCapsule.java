@@ -69,10 +69,6 @@ public class IncrementalMerkleTreeCapsule implements ProtoCapsule<IncrementalMer
     return this.merkleTree.getParentsList().isEmpty();
   }
 
-  public void setParents(List<SHA256Compress> parents) {
-    this.merkleTree = this.merkleTree.toBuilder().addAllParents(parents).build();
-  }
-
   public void setParents(int index, SHA256Compress parents) {
     this.merkleTree = this.merkleTree.toBuilder().setParents(index, parents).build();
   }

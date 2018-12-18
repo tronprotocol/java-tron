@@ -5,7 +5,8 @@ import lombok.Getter;
 
 public class MerklePath {
 
-  @Getter List<List<Boolean>> authenticationPath;
+  @Getter
+  List<List<Boolean>> authenticationPath;
 
   @Getter List<Boolean> index;
 
