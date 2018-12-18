@@ -81,7 +81,7 @@ public class SHA256CompressCapsule implements ProtoCapsule<SHA256Compress> {
     return compressCapsule;
   }
 
-  public boolean isExist() {
+  public boolean isPresent() {
     return !sha256Compress.getContent().isEmpty();
   }
 
