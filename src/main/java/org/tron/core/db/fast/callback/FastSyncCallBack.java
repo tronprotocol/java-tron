@@ -46,8 +46,6 @@ import org.tron.core.db.fast.storetrie.ProposalStoreTrie;
 import org.tron.core.db.fast.storetrie.VotesStoreTrie;
 import org.tron.core.db.fast.storetrie.WitnessStoreTrie;
 import org.tron.core.exception.BadBlockException;
-import org.tron.core.exception.BadItemException;
-import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.trie.TrieImpl;
 
 @Slf4j
@@ -152,10 +150,8 @@ public class FastSyncCallBack {
       BlockCapsule parentBlockCapsule = manager.getBlockById(blockCapsule.getParentBlockId());
       rootHash = parentBlockCapsule.getInstance().getBlockHeader().getRawData()
           .getAccountStateRoot().toByteArray();
-    } catch (BadItemException e) {
-      e.printStackTrace();
-    } catch (ItemNotFoundException e) {
-      e.printStackTrace();
+    } catch (Exception e) {
+      logger.error("", e);
     }
     if (Arrays.equals(Internal.EMPTY_BYTE_ARRAY, rootHash)) {
       rootHash = Hash.EMPTY_TRIE_HASH;

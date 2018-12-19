@@ -16,7 +16,7 @@ public class FastSyncStoreConstant {
   public static final String VOTES_STORE_KEY = "12";
   public static final String ACCOUNT_INDEX_STORE_KEY = "13";
 
-  public static enum TrieEnum {
+  public enum TrieEnum {
     DYNAMIC(DYNAMIC_PROPERTIES_STORE_KEY),
     ASSET(ASSET_ISSUE_STORE_KEY),
     ASSET2(ASSET_ISSUE_V_2_STORE_KEY),
