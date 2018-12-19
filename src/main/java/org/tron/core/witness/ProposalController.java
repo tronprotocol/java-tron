@@ -188,9 +188,10 @@ public class ProposalController {
           }
           break;
         }
-
         case (22): {
-          manager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(entry.getValue());
+          if ( manager.getDynamicPropertiesStore().getAllowZksnarkTransaction() == 0 ) {
+            manager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(entry.getValue());
+          }
           break;
         }
         case (23): {
