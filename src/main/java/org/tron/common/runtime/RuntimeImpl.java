@@ -402,6 +402,9 @@ public class RuntimeImpl implements Runtime {
         if (callValue < 0) {
           throw new ContractValidateException("callValue must >= 0");
         }
+        if (tokenValue < 0) {
+          throw new ContractValidateException("tokenValue must >= 0");
+        }
         if (newSmartContract.getOriginEnergyLimit() <= 0) {
           throw new ContractValidateException("The originEnergyLimit must be > 0");
         }
@@ -493,6 +496,10 @@ public class RuntimeImpl implements Runtime {
     if (VMConfig.allowTvmTransferTrc10()) {
       tokenValue = contract.getCallTokenValue();
       tokenId = contract.getTokenId();
+    }
+
+    if (VMConfig.getEnergyLimitHardFork() && tokenValue < 0) {
+      throw new ContractValidateException("tokenValue must >= 0");
     }
 
     byte[] code = this.deposit.getCode(contractAddress);
