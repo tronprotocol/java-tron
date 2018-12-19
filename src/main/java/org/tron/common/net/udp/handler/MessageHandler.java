@@ -25,14 +25,11 @@ import io.netty.channel.socket.DatagramPacket;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import java.net.InetSocketAddress;
 import java.util.function.Consumer;
-import org.slf4j.LoggerFactory;
-import org.tron.common.overlay.discover.node.NodeManager;
+import lombok.extern.slf4j.Slf4j;
 
-
+@Slf4j(topic = "net")
 public class MessageHandler extends SimpleChannelInboundHandler<UdpEvent>
     implements Consumer<UdpEvent> {
-
-  private static final org.slf4j.Logger logger = LoggerFactory.getLogger("MessageHandler");
 
   private Channel channel;
 

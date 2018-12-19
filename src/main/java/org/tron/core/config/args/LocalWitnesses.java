@@ -24,7 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ChainConstant;
 
-@Slf4j
+@Slf4j(topic = "app")
 public class LocalWitnesses {
 
   @Getter

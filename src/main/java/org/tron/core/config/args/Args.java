@@ -45,7 +45,7 @@ import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
 import org.tron.program.Version;
 
-@Slf4j
+@Slf4j(topic = "app")
 @NoArgsConstructor
 @Component
 public class Args {
