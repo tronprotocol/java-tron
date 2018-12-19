@@ -51,6 +51,10 @@ public class ContractLinkage001 {
   }
 
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(linkage001Key);
@@ -382,6 +386,9 @@ public class ContractLinkage001 {
     Assert.assertTrue(PublicMethed.queryAccount(contractAddress, blockingStubFull)
         .getBalance() == valueBalance);
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {

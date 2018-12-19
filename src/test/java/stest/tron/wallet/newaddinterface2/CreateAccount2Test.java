@@ -53,6 +53,10 @@ public class CreateAccount2Test {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
     logger.info(account007Key);
@@ -105,6 +109,9 @@ public class CreateAccount2Test {
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
         "contract validate error : Invalid account address");
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {

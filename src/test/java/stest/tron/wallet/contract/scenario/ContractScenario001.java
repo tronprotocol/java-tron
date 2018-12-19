@@ -47,6 +47,9 @@ public class ContractScenario001 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+  /**
+   * constructor.
+   */
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
@@ -113,6 +116,9 @@ public class ContractScenario001 {
     Assert.assertTrue(energyUsage > 0);
     Assert.assertEquals(balanceBefore, balanceAfter);
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {

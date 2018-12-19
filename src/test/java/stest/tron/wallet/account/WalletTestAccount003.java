@@ -81,6 +81,10 @@ public class WalletTestAccount003 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass
   public void beforeClass() {
     PublicMethed.printAddress(lowBalTest);
@@ -153,6 +157,9 @@ public class WalletTestAccount003 {
       logger.info("This account has freeze balance, please test this case for manual");
     }
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {
@@ -160,6 +167,9 @@ public class WalletTestAccount003 {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+  /**
+   * constructor.
+   */
 
   public Boolean createWitness(byte[] owner, byte[] url, String priKey) {
     ECKey temKey = null;
@@ -188,6 +198,9 @@ public class WalletTestAccount003 {
     }
   }
 
+  /**
+   * constructor.
+   */
 
   public Boolean sendCoin(byte[] to, long amount, byte[] owner, String priKey) {
     //String priKey = testKey002;
@@ -222,6 +235,9 @@ public class WalletTestAccount003 {
       return true;
     }
   }
+  /**
+   * constructor.
+   */
 
   public Boolean createAssetIssue(byte[] address, String name, Long totalSupply, Integer trxNum,
       Integer icoNum, Long startTime, Long endTime,
@@ -274,6 +290,9 @@ public class WalletTestAccount003 {
       return Long.compare(((Account) o2).getBalance(), ((Account) o1).getBalance());
     }
   }
+  /**
+   * constructor.
+   */
 
   public Account queryAccount(String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     byte[] address;
@@ -307,12 +326,18 @@ public class WalletTestAccount003 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+  /**
+   * constructor.
+   */
 
   public Account grpcQueryAccount(byte[] address, WalletGrpc.WalletBlockingStub blockingStubFull) {
     ByteString addressBs = ByteString.copyFrom(address);
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+  /**
+   * constructor.
+   */
 
   public Block getBlock(long blockNum, WalletGrpc.WalletBlockingStub blockingStubFull) {
     NumberMessage.Builder builder = NumberMessage.newBuilder();
@@ -329,7 +354,9 @@ public class WalletTestAccount003 {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, ecKey);
   }
-
+  /**
+   * constructor.
+   */
 
   public boolean updateAccount(byte[] addressBytes, byte[] accountNameBytes, String priKey) {
     ECKey temKey = null;
@@ -366,7 +393,9 @@ public class WalletTestAccount003 {
       return true;
     }
   }
-
+  /**
+   * constructor.
+   */
 
   public boolean unFreezeBalance(byte[] address, String priKey) {
     //byte[] address = address;
@@ -402,6 +431,9 @@ public class WalletTestAccount003 {
       return true;
     }
   }
+  /**
+   * constructor.
+   */
 
   public Boolean voteWitness(HashMap<String, String> witness, byte[] address, String priKey) {
 
@@ -445,6 +477,9 @@ public class WalletTestAccount003 {
     }
     return true;
   }
+  /**
+   * constructor.
+   */
 
   public Boolean freezeBalance(byte[] addRess, long freezeBalance, long freezeDuration,
       String priKey) {
@@ -486,6 +521,9 @@ public class WalletTestAccount003 {
 
 
   }
+  /**
+   * constructor.
+   */
 
   public static String getRandomStr(int length) {
     String base = "abcdefghijklmnopqrstuvwxyz0123456789";

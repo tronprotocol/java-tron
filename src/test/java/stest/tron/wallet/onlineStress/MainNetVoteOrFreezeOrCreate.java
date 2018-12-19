@@ -91,6 +91,10 @@ public class MainNetVoteOrFreezeOrCreate {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = false)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -176,6 +180,9 @@ public class MainNetVoteOrFreezeOrCreate {
       }
     }
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
@@ -188,6 +195,9 @@ public class MainNetVoteOrFreezeOrCreate {
     }
 
   }
+  /**
+   * constructor.
+   */
 
   public Boolean voteWitness(HashMap<String, String> witness, byte[] addRess, String priKey) {
 
@@ -246,6 +256,9 @@ public class MainNetVoteOrFreezeOrCreate {
     }*/
     return true;
   }
+  /**
+   * constructor.
+   */
 
   public Account queryAccount(ECKey ecKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     byte[] address;
@@ -270,12 +283,18 @@ public class MainNetVoteOrFreezeOrCreate {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+  /**
+   * constructor.
+   */
 
   public Account grpcQueryAccount(byte[] address, WalletGrpc.WalletBlockingStub blockingStubFull) {
     ByteString addressBs = ByteString.copyFrom(address);
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+  /**
+   * constructor.
+   */
 
   public Block getBlock(long blockNum, WalletGrpc.WalletBlockingStub blockingStubFull) {
     NumberMessage.Builder builder = NumberMessage.newBuilder();
@@ -292,6 +311,9 @@ public class MainNetVoteOrFreezeOrCreate {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, ecKey);
   }
+  /**
+   * constructor.
+   */
 
   public static Boolean freezeBalance(byte[] addRess, long freezeBalance, long freezeDuration,
       String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {

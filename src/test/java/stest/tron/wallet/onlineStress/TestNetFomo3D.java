@@ -49,6 +49,10 @@ public class TestNetFomo3D {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(testNetAccountKey);
@@ -174,7 +178,9 @@ public class TestNetFomo3D {
 
   }
 
-
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {
@@ -182,6 +188,9 @@ public class TestNetFomo3D {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+  /**
+   * constructor.
+   */
 
   public String readFromXieChang() throws IOException {
     File file = new File(

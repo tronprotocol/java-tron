@@ -55,6 +55,10 @@ public class WalletTestAccount010 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(account010Key);
@@ -120,6 +124,9 @@ public class WalletTestAccount010 {
   }
 
 
+  /**
+   * constructor.
+   */
 
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {

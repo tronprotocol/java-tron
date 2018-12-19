@@ -86,6 +86,10 @@ public class fuzzytest {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = false)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -146,6 +150,9 @@ public class fuzzytest {
 
 
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
@@ -156,6 +163,9 @@ public class fuzzytest {
       channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }*/
   }
+  /**
+   * constructor.
+   */
 
   public static Boolean createAssetIssue(byte[] address, String name, Long totalSupply,
       Integer trxNum, Integer icoNum, Long startTime, Long endTime, Integer voteScore,
@@ -211,6 +221,9 @@ public class fuzzytest {
       return false;
     }
   }
+  /**
+   * constructor.
+   */
 
   public static Protocol.Transaction signTransaction(ECKey ecKey,
       Protocol.Transaction transaction) {

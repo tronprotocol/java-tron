@@ -56,6 +56,10 @@ public class WalletTestTransfer007 {
 
 
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -128,6 +132,9 @@ public class WalletTestTransfer007 {
 
 
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {

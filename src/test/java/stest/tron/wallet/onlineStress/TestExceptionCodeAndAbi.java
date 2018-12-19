@@ -87,6 +87,10 @@ public class TestExceptionCodeAndAbi {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(testKeyForAssetIssue016);
@@ -318,6 +322,9 @@ public class TestExceptionCodeAndAbi {
 
 
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {
@@ -325,6 +332,9 @@ public class TestExceptionCodeAndAbi {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+  /**
+   * constructor.
+   */
 
   public static void serachInfo(String txid, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Optional<TransactionInfo> infoById = PublicMethed.getTransactionInfoById(txid, 
@@ -342,6 +352,9 @@ public class TestExceptionCodeAndAbi {
 
 
 
+  /**
+   * constructor.
+   */
 
   public static String getRandomCode(int length) {
     String str = "0123456789";
@@ -356,6 +369,9 @@ public class TestExceptionCodeAndAbi {
 
 
 
+  /**
+   * constructor.
+   */
 
   public static void writeCsv(String minBalance, String beforeBalance,String beforeNetLimit,
       String beforeFreeNet, String beforeNetUsed, String beforeEnergyLimit,String beforeEnergyUsed, 

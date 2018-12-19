@@ -72,6 +72,10 @@ public class TestMapBigLongAndNumbers {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(triggerKey);
@@ -181,6 +185,9 @@ public class TestMapBigLongAndNumbers {
     }
   }
 
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {

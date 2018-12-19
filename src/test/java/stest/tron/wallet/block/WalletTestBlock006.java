@@ -35,6 +35,9 @@ public class WalletTestBlock006 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+  /**
+   * constructor.
+   */
 
   @BeforeClass
   public void beforeClass() {
@@ -93,6 +96,9 @@ public class WalletTestBlock006 {
     Assert.assertTrue(transactionNumInBlock == -1);
   }
 
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {
