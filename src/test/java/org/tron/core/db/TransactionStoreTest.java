@@ -191,6 +191,59 @@ public class TransactionStoreTest {
     Assert.assertTrue(transactionStore.has(key1));
   }
 
+  @Test
+  public void GetUncheckedTransactionTest(){
+    final BlockStore blockStore = dbManager.getBlockStore();
+    final TransactionStore trxStore = dbManager.getTransactionStore();
+    String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
+
+    BlockCapsule blockCapsule =
+      new BlockCapsule(
+        1,
+        Sha256Hash.wrap(dbManager.getGenesisBlockId().getByteString()),
+        1,
+        ByteString.copyFrom(
+          ECKey.fromPrivate(
+            ByteArray.fromHexString(key)).getAddress()));
+
+    // save in database with block number
+    TransferContract tc =
+      TransferContract.newBuilder()
+        .setAmount(10)
+        .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
+        .setToAddress(ByteString.copyFromUtf8("bbb"))
+        .build();
+    TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
+    blockCapsule.addTransaction(trx);
+    trx.setBlockNum(blockCapsule.getNum());
+    blockStore.put(blockCapsule.getBlockId().getBytes(), blockCapsule);
+    trxStore.put(trx.getTransactionId().getBytes(), trx);
+    Assert.assertEquals("Get transaction is error",
+      trxStore.getUnchecked(trx.getTransactionId().getBytes()).getInstance(), trx.getInstance());
+
+    // no found in transaction store database
+    tc =
+      TransferContract.newBuilder()
+        .setAmount(1000)
+        .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
+        .setToAddress(ByteString.copyFromUtf8("bbb"))
+        .build();
+    trx = new TransactionCapsule(tc, ContractType.TransferContract);
+    Assert.assertNull(trxStore.getUnchecked(trx.getTransactionId().getBytes()));
+
+    // no block number, directly save in database
+    tc =
+      TransferContract.newBuilder()
+        .setAmount(10000)
+        .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
+        .setToAddress(ByteString.copyFromUtf8("bbb"))
+        .build();
+    trx = new TransactionCapsule(tc, ContractType.TransferContract);
+    trxStore.put(trx.getTransactionId().getBytes(), trx);
+    Assert.assertEquals("Get transaction is error",
+      trxStore.getUnchecked(trx.getTransactionId().getBytes()).getInstance(), trx.getInstance());
+  }
+
   /**
    * put and get CreateWitnessTransaction.
    */
