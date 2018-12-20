@@ -10,7 +10,7 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.Proposal.State;
 
-@Slf4j
+@Slf4j(topic = "witness")
 public class ProposalController {
 
   @Setter
