@@ -11,7 +11,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Transaction.Contract;
 
-@Slf4j
+@Slf4j(topic = "DB")
 public class EnergyProcessor extends ResourceProcessor {
 
   public EnergyProcessor(Manager manager) {

@@ -20,7 +20,7 @@ import org.tron.core.db2.core.ITronChainBase;
 import org.tron.protos.Protocol.Transaction;
 
 @Component
-@Slf4j
+@Slf4j(topic = "DB")
 public class TransactionIndex extends AbstractIndex<TransactionCapsule, Transaction> {
 
   public static SimpleAttribute<WrappedByteArray, String> Transaction_ID;

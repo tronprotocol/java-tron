@@ -7,7 +7,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocol.Witness;
 
-@Slf4j
+@Slf4j(topic = "capsule")
 public class WitnessCapsule implements ProtoCapsule<Witness>, Comparable<WitnessCapsule> {
 
   private Witness witness;

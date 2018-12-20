@@ -20,7 +20,7 @@ import org.tron.common.utils.Sha256Hash;
 
 import java.util.Arrays;
 
-@Slf4j
+@Slf4j(topic = "capsule")
 public class CodeCapsule implements ProtoCapsule<byte[]> {
 
   private byte[] code;

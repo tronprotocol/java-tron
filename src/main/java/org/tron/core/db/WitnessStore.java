@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.WitnessCapsule;
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Component
 public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
 

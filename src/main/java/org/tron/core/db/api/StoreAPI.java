@@ -21,7 +21,7 @@ import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.protos.Protocol.Transaction;
 
 @Component
-@Slf4j
+@Slf4j(topic = "DB")
 public class StoreAPI {
 
   @Autowired(required = false)
