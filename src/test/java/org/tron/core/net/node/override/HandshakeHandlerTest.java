@@ -1,19 +1,17 @@
 package org.tron.core.net.node.override;
 
 import io.netty.channel.ChannelHandlerContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.server.HandshakeHandler;
 
+@Slf4j(topic = "test")
 @Component
 @Scope("prototype")
 public class HandshakeHandlerTest extends HandshakeHandler {
-
-  private static final Logger logger = LoggerFactory.getLogger("HandshakeHandler");
 
   private Node node;
 
