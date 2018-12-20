@@ -680,12 +680,12 @@ public class Wallet {
 
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-        .setKey("TOTAL_ENERGY_TARGET_LIMIT")
+        .setKey("getTotalEnergyTargetLimit")
         .setValue(dbManager.getDynamicPropertiesStore().getTotalEnergyTargetLimit())
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-        .setKey("TOTAL_ENERGY_AVERAGE_USAGE")
+        .setKey("getTotalEnergyAverageUsage")
         .setValue(dbManager.getDynamicPropertiesStore().getTotalEnergyAverageUsage())
         .build());
 
