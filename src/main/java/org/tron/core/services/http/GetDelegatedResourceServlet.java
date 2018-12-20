@@ -15,7 +15,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetDelegatedResourceServlet extends HttpServlet {
 
   @Autowired private Wallet wallet;

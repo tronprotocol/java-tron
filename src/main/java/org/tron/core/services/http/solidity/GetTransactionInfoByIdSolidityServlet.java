@@ -18,7 +18,7 @@ import org.tron.protos.Protocol.TransactionInfo;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetTransactionInfoByIdSolidityServlet extends HttpServlet {
 
   @Autowired

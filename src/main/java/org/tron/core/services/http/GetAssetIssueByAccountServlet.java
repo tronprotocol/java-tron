@@ -16,7 +16,7 @@ import org.tron.protos.Protocol.Account;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetAssetIssueByAccountServlet extends HttpServlet {
 
   @Autowired

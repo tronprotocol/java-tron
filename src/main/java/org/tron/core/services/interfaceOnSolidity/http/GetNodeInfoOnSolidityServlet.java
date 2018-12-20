@@ -14,7 +14,7 @@ import org.tron.core.services.interfaceOnSolidity.NodeInfoOnSolidityService;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetNodeInfoOnSolidityServlet extends HttpServlet {
 
   @Autowired

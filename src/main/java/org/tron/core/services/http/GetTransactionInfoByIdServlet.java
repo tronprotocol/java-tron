@@ -15,7 +15,7 @@ import org.tron.core.Wallet;
 import org.tron.protos.Protocol.TransactionInfo;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetTransactionInfoByIdServlet extends HttpServlet {
 
   @Autowired

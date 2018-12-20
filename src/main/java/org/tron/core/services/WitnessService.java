@@ -36,7 +36,7 @@ import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
 import org.tron.core.witness.WitnessController;
 
-@Slf4j
+@Slf4j(topic = "API")
 public class WitnessService implements Service {
 
   private static final int MIN_PARTICIPATION_RATE = Args.getInstance()
