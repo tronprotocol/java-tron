@@ -79,6 +79,10 @@ public class WalletTestAssetIssue007 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(testKeyForAssetIssue007);
@@ -167,6 +171,9 @@ public class WalletTestAssetIssue007 {
 
     Assert.assertTrue(beforeBalance  - trxNum * 1 * icoNum  >= afterBalance);
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {

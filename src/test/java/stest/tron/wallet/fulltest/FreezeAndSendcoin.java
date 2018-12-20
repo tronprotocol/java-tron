@@ -66,6 +66,10 @@ public class FreezeAndSendcoin {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = false)
   public void beforeClass() {
     /*    Random rand = new Random();
@@ -153,7 +157,7 @@ public class FreezeAndSendcoin {
       sendRet = false;
       i++;
 
-/*      if (channelFull != null) {
+      /*      if (channelFull != null) {
         channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
         try {
           //randNum = rand.nextInt(10000) + 3000;
@@ -167,13 +171,19 @@ public class FreezeAndSendcoin {
 
     }
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
-        if (channelFull != null) {
+    if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+  /**
+   * constructor.
+   */
 
   public static Boolean freezeBalance(byte[] addRess, long freezeBalance, long freezeDuration,
       String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
@@ -228,6 +238,9 @@ public class FreezeAndSendcoin {
     }
     return true;
   }
+  /**
+   * constructor.
+   */
 
   public boolean unFreezeBalance(byte[] addRess, String priKey) {
     byte[] address = addRess;
@@ -265,6 +278,9 @@ public class FreezeAndSendcoin {
       return true;
     }
   }
+  /**
+   * constructor.
+   */
 
   public boolean withdrawBalance(byte[] address, String priKey) {
     ECKey temKey = null;

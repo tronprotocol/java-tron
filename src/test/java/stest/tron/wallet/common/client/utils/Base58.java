@@ -8,6 +8,9 @@ public class Base58 {
   private static final int BASE58CHECK_ADDRESS_SIZE = 35;
   private static final int ADDRESS_SIZE = 21;
   private static final byte ADD_PRE_FIX_BYTE = (byte) 0xa0;
+  /**
+   * constructor.
+   */
 
   public static final char[] ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
             .toCharArray();
@@ -21,6 +24,9 @@ public class Base58 {
       INDEXES[ALPHABET[i]] = i;
     }
   }
+  /**
+   * constructor.
+   */
 
   public static String encode(byte[] input) {
     if (input.length == 0) {
@@ -59,6 +65,9 @@ public class Base58 {
       throw new RuntimeException(e);  // Cannot happen.
     }
   }
+  /**
+   * constructor.
+   */
 
   public static byte[] decode(String input) throws IllegalArgumentException {
     if (input.length() == 0) {
@@ -143,6 +152,9 @@ public class Base58 {
 
     return range;
   }
+  /**
+   * constructor.
+   */
 
   public static byte[] decodeFromBase58Check(String addressBase58) {
     if (addressBase58 == null || addressBase58.length() == 0) {
@@ -180,6 +192,9 @@ public class Base58 {
     }
     return null;
   }
+  /**
+   * constructor.
+   */
 
   public static boolean addressValid(byte[] address) {
     if (address == null || address.length == 0) {
@@ -201,6 +216,9 @@ public class Base58 {
     //Other rule;
     return true;
   }
+  /**
+   * constructor.
+   */
 
   public static String encode58Check(byte[] input) {
     byte[] hash0 = Sha256Hash.hash(input);

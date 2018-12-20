@@ -56,6 +56,10 @@ public class ContractLinkage007 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(linkage007Key);
@@ -351,6 +355,9 @@ public class ContractLinkage007 {
     logger.info(Integer.toString(infoById.get().getResultValue()));
     Assert.assertTrue(infoById.get().getFee() == 0);
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {

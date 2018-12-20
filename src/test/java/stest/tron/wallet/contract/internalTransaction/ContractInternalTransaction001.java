@@ -63,6 +63,10 @@ public class ContractInternalTransaction001 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(testKeyForinternalTxsAddress);
@@ -616,6 +620,9 @@ public class ContractInternalTransaction001 {
     }
   }
 
+  /**
+   * constructor.
+   */
 
   public void dupInternalTrsansactionHash(
       List<org.tron.protos.Protocol.InternalTransaction> internalTransactionList) {

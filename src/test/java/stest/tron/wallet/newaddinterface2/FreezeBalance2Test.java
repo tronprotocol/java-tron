@@ -58,6 +58,10 @@ public class FreezeBalance2Test {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -134,6 +138,9 @@ public class FreezeBalance2Test {
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
         "contract validate error : no frozenBalance");
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {
@@ -144,6 +151,9 @@ public class FreezeBalance2Test {
       searchChannelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+  /**
+   * constructor.
+   */
 
   public Boolean freezeBalance(byte[] addRess, long freezeBalance, long freezeDuration,
       String priKey) {
@@ -222,6 +232,9 @@ public class FreezeBalance2Test {
 
 
   }
+  /**
+   * constructor.
+   */
 
   public Return freezeBalance2(byte[] addRess, long freezeBalance, long freezeDuration,
       String priKey) {
@@ -316,6 +329,9 @@ public class FreezeBalance2Test {
 
 
   }
+  /**
+   * constructor.
+   */
 
   public boolean unFreezeBalance(byte[] addRess, String priKey) {
     byte[] address = addRess;
@@ -354,6 +370,9 @@ public class FreezeBalance2Test {
     }
   }
 
+  /**
+   * constructor.
+   */
 
   public Return unFreezeBalance2(byte[] addRess, String priKey) {
     byte[] address = addRess;
@@ -405,6 +424,9 @@ public class FreezeBalance2Test {
     }
     return ret;
   }
+  /**
+   * constructor.
+   */
 
   public Account queryAccount(ECKey ecKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     byte[] address;
@@ -429,12 +451,18 @@ public class FreezeBalance2Test {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+  /**
+   * constructor.
+   */
 
   public Account grpcQueryAccount(byte[] address, WalletGrpc.WalletBlockingStub blockingStubFull) {
     ByteString addressBs = ByteString.copyFrom(address);
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+  /**
+   * constructor.
+   */
 
   public Block getBlock(long blockNum, WalletGrpc.WalletBlockingStub blockingStubFull) {
     NumberMessage.Builder builder = NumberMessage.newBuilder();

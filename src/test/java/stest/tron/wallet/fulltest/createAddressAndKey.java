@@ -48,13 +48,16 @@ public class createAddressAndKey {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
   @BeforeClass(enabled = false)
   public void beforeClass() {
 
   }
 
   @Test(enabled = false)
-  public void createAddressAndKey() {
+  public void createAddressesAndKeys() {
     Integer i = 0;
     String accountIndex;
     String keyIndex;
@@ -117,7 +120,9 @@ public class createAddressAndKey {
   }
 
 
-
+  /**
+   * constructor.
+   */
   public static boolean createFile(String fileName,String filecontent) {
     Boolean bool = false;
     filenameTemp = fileName;//文件路径+名称+文件类型
@@ -144,7 +149,9 @@ public class createAddressAndKey {
   }
 
 
-
+  /**
+   * constructor.
+   */
   public static void clearInfoForFile(String fileName) {
     File file = new File(fileName);
     try {
@@ -160,7 +167,9 @@ public class createAddressAndKey {
     }
   }
 
-
+  /**
+   * constructor.
+  */
   public static boolean writeFileContent(String filepath,String newstr) throws IOException {
     Boolean bool = false;
     String filein = newstr + "\r\n";
@@ -211,6 +220,9 @@ public class createAddressAndKey {
     }
     return bool;
   }
+  /**
+   * constructor.
+   */
 
   public static boolean delFile(String fileName) {
     Boolean bool = false;
