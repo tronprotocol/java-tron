@@ -253,11 +253,10 @@ public class WitnessService implements Service {
 
         int blockProducedTimeOut = Args.getInstance().getBlockProducedTimeOut();
 
-        if (DateTime.now().getMillis() - now
-            > ChainConstant.BLOCK_PRODUCED_INTERVAL * blockProducedTimeOut / 100) {
-          logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}",
-              ChainConstant.BLOCK_PRODUCED_INTERVAL * blockProducedTimeOut / 100,
-              new DateTime(now), DateTime.now());
+        long timeout = Math.min(ChainConstant.BLOCK_PRODUCED_INTERVAL * blockProducedTimeOut / 100 + 500,
+            ChainConstant.BLOCK_PRODUCED_INTERVAL);
+        if (DateTime.now().getMillis() - now > timeout) {
+          logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}", timeout, new DateTime(now), DateTime.now());
           tronApp.getDbManager().eraseBlock();
           return BlockProductionCondition.TIME_OUT;
         }
