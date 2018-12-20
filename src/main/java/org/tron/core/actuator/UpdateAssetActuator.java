@@ -17,7 +17,7 @@ import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.UpdateAssetContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-@Slf4j
+@Slf4j(topic = "actuator")
 public class UpdateAssetActuator extends AbstractActuator {
 
   UpdateAssetActuator(Any contract, Manager dbManager) {

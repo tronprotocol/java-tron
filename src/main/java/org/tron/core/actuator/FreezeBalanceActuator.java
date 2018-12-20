@@ -20,7 +20,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-@Slf4j
+@Slf4j(topic = "actuator")
 public class FreezeBalanceActuator extends AbstractActuator {
 
   FreezeBalanceActuator(Any contract, Manager dbManager) {

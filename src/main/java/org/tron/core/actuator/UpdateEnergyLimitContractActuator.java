@@ -5,14 +5,12 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
@@ -20,7 +18,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-@Slf4j
+@Slf4j(topic = "actuator")
 public class UpdateEnergyLimitContractActuator extends AbstractActuator {
 
   UpdateEnergyLimitContractActuator(Any contract, Manager dbManager) {
