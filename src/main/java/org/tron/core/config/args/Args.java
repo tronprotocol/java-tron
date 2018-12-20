@@ -59,6 +59,10 @@ public class Args {
   private String outputDirectory = "output-directory";
 
   @Getter
+  @Parameter(names = {"--log-config"})
+  private String logbackPath = "";
+
+  @Getter
   @Parameter(names = {"-h", "--help"}, help = true, description = "HELP message")
   private boolean help = false;
 
