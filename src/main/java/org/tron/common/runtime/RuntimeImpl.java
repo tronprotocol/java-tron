@@ -402,6 +402,9 @@ public class RuntimeImpl implements Runtime {
         if (callValue < 0) {
           throw new ContractValidateException("callValue must >= 0");
         }
+        if (tokenValue < 0) {
+          throw new ContractValidateException("tokenValue must >= 0");
+        }
         if (newSmartContract.getOriginEnergyLimit() <= 0) {
           throw new ContractValidateException("The originEnergyLimit must be > 0");
         }
