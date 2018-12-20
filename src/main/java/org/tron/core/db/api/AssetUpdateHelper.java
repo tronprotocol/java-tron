@@ -18,7 +18,7 @@ import org.tron.core.db.Manager;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
-@Slf4j
+@Slf4j(topic = "DB")
 public class AssetUpdateHelper {
 
   private Manager dbManager;

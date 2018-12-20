@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 
-@Slf4j
+@Slf4j(topic = "DB")
 public class StorageMarket {
 
   private Manager dbManager;

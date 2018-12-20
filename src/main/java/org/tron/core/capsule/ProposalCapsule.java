@@ -13,7 +13,7 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Proposal.State;
 
-@Slf4j
+@Slf4j(topic = "capsule")
 public class ProposalCapsule implements ProtoCapsule<Proposal> {
 
   private Proposal proposal;

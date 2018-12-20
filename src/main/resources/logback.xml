@@ -59,6 +59,8 @@
   <logger name="actuator" level="INFO"/>
   <logger name="API" level="INFO"/>
   <logger name="witness" level="INFO"/>
+  <logger name="DB" level="INFO"/>
+  <logger name="capsule" level="INFO"/>
 
 </configuration>
 
