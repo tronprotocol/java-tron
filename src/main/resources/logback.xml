@@ -54,6 +54,11 @@
   <logger name="net" level="INFO"/>
   <logger name="backup" level="INFO"/>
   <logger name="discover" level="INFO"/>
+  <logger name="crypto" level="INFO"/>
+  <logger name="utils" level="INFO"/>
+  <logger name="actuator" level="INFO"/>
+  <logger name="API" level="INFO"/>
+  <logger name="witness" level="INFO"/>
 
 </configuration>
 
