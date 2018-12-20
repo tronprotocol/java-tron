@@ -4,11 +4,11 @@ import static org.tron.common.crypto.Hash.sha3;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.vm.OpCode.CALL;
 import static org.tron.common.runtime.vm.OpCode.CALLTOKEN;
+import static org.tron.common.runtime.vm.OpCode.CALLTOKENID;
+import static org.tron.common.runtime.vm.OpCode.CALLTOKENVALUE;
 import static org.tron.common.runtime.vm.OpCode.PUSH1;
 import static org.tron.common.runtime.vm.OpCode.REVERT;
 import static org.tron.common.runtime.vm.OpCode.TOKENBALANCE;
-import static org.tron.common.runtime.vm.OpCode.CALLTOKENID;
-import static org.tron.common.runtime.vm.OpCode.CALLTOKENVALUE;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 
 import java.math.BigInteger;
@@ -706,7 +706,7 @@ public class VM {
 
           program.stackPush(tokenValue);
           program.step();
-        break;
+          break;
         case CALLTOKENID:
           DataWord _tokenId = program.getTokenId();
 
@@ -716,7 +716,7 @@ public class VM {
 
           program.stackPush(_tokenId);
           program.step();
-        break;
+          break;
         case CALLDATALOAD: {
           DataWord dataOffs = program.stackPop();
           DataWord value = program.getDataValue(dataOffs);
