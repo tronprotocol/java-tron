@@ -16,7 +16,11 @@ public class ContractLogTrigger{
 
     @Getter
     @Setter
-    private long blockNumber;
+    private long blockNum;
+
+    @Getter
+    @Setter
+    private long blockTimestamp;
 
     @Getter
     @Setter
@@ -32,7 +36,7 @@ public class ContractLogTrigger{
 
     @Getter
     @Setter
-    private long transactionIndex;
+    private long txId;
 
     @Getter
     @Setter
@@ -52,13 +56,9 @@ public class ContractLogTrigger{
 
     @Getter
     @Setter
-    private String eventSignature;
-
-    @Getter
-    @Setter
     private String data;
 
     @Getter
     @Setter
-    private boolean removedFlag;
+    private boolean removed;
 }
