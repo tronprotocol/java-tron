@@ -43,6 +43,7 @@ public class EnergyProcessor extends ResourceProcessor {
         totalEnergyAverageTime, now, averageWindowSize);
 
     dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageUsage(newPublicEnergyAverageUsage);
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageTime(now);
   }
 
   public void updateAdaptiveTotalEnergyLimit() {
@@ -108,7 +109,6 @@ public class EnergyProcessor extends ResourceProcessor {
     if (dbManager.getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 1) {
       long blockEnergyUsage = dbManager.getDynamicPropertiesStore().getBlockEnergyUsage() + energy;
       dbManager.getDynamicPropertiesStore().saveBlockEnergyUsage(blockEnergyUsage);
-      dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageTime(latestConsumeTime);
     }
 
     return true;
