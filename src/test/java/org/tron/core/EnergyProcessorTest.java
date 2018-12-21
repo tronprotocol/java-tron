@@ -146,8 +146,7 @@ public class EnergyProcessorTest {
 
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(
         1526647838000L + AdaptiveResourceLimitConstants.PERIODS_MS / 2);
-    now = dbManager.getWitnessController().getHeadSlot();
-    processor.updateTotalEnergyAverageUsage(now);
+    processor.updateTotalEnergyAverageUsage();
     Assert.assertEquals(2000L,
         dbManager.getDynamicPropertiesStore().getTotalEnergyAverageUsage());
 

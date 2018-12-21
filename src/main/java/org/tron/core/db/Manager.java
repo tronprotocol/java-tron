@@ -1283,8 +1283,7 @@ public class Manager {
     }
     if (getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 1) {
       EnergyProcessor energyProcessor = new EnergyProcessor(this);
-
-      energyProcessor.updateTotalEnergyAverageUsage(block.getTimeStamp());
+      energyProcessor.updateTotalEnergyAverageUsage();
       energyProcessor.updateAdaptiveTotalEnergyLimit();
     }
     this.updateDynamicProperties(block);

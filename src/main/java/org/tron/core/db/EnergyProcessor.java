@@ -32,7 +32,8 @@ public class EnergyProcessor extends ResourceProcessor {
     accountCapsule.setEnergyUsage(increase(oldEnergyUsage, 0, latestConsumeTime, now));
   }
 
-  public void updateTotalEnergyAverageUsage(long now) {
+  public void updateTotalEnergyAverageUsage() {
+    long now = dbManager.getWitnessController().getHeadSlot();
     long blockEnergyUsage = dbManager.getDynamicPropertiesStore().getBlockEnergyUsage();
     long totalEnergyAverageUsage = dbManager.getDynamicPropertiesStore()
         .getTotalEnergyAverageUsage();
