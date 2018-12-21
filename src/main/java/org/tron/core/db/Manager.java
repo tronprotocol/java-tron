@@ -1262,6 +1262,9 @@ public class Manager {
       throw new ValidateScheduleException("validateWitnessSchedule error");
     }
 
+    //reset BlockEnergyUsage
+    this.dynamicPropertiesStore.saveBlockEnergyUsage(0);
+
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       transactionCapsule.setBlockNum(block.getNum());
       if (block.generatedByMyself) {
