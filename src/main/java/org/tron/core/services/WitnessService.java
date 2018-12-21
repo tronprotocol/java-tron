@@ -194,40 +194,41 @@ public class WitnessService implements Service {
       return BlockProductionCondition.UNELECTED;
     }
 
-    synchronized (tronApp.getDbManager()) {
-      long slot = controller.getSlotAtTime(now);
-      logger.debug("Slot:" + slot);
-      if (slot == 0) {
-        logger.info("Not time yet,now:{},headBlockTime:{},headBlockNumber:{},headBlockId:{}",
-            new DateTime(now),
-            new DateTime(
-                this.tronApp.getDbManager().getDynamicPropertiesStore()
-                    .getLatestBlockHeaderTimestamp()),
-            this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
-            this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderHash());
-        return BlockProductionCondition.NOT_TIME_YET;
-      }
-
-      if (now < controller.getManager().getDynamicPropertiesStore().getLatestBlockHeaderTimestamp()) {
-        logger.warn("have a timestamp:{} less than or equal to the previous block:{}",
-            new DateTime(now), new DateTime(
-                this.tronApp.getDbManager().getDynamicPropertiesStore()
-                    .getLatestBlockHeaderTimestamp()));
-        return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
-      }
-
-      final ByteString scheduledWitness = controller.getScheduledWitness(slot);
-
-      if (!this.getLocalWitnessStateMap().containsKey(scheduledWitness)) {
-        logger.info("It's not my turn, ScheduledWitness[{}],slot[{}],abSlot[{}],",
-            ByteArray.toHexString(scheduledWitness.toByteArray()), slot,
-            controller.getAbSlotAtTime(now));
-        return NOT_MY_TURN;
-      }
+    try {
 
       BlockCapsule block;
 
-      try {
+      synchronized (tronApp.getDbManager()) {
+        long slot = controller.getSlotAtTime(now);
+        logger.debug("Slot:" + slot);
+        if (slot == 0) {
+          logger.info("Not time yet,now:{},headBlockTime:{},headBlockNumber:{},headBlockId:{}",
+              new DateTime(now),
+              new DateTime(
+                  this.tronApp.getDbManager().getDynamicPropertiesStore()
+                      .getLatestBlockHeaderTimestamp()),
+              this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
+              this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderHash());
+          return BlockProductionCondition.NOT_TIME_YET;
+        }
+
+        if (now < controller.getManager().getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp()) {
+          logger.warn("have a timestamp:{} less than or equal to the previous block:{}",
+              new DateTime(now), new DateTime(
+                  this.tronApp.getDbManager().getDynamicPropertiesStore()
+                      .getLatestBlockHeaderTimestamp()));
+          return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
+        }
+
+        final ByteString scheduledWitness = controller.getScheduledWitness(slot);
+
+        if (!this.getLocalWitnessStateMap().containsKey(scheduledWitness)) {
+          logger.info("It's not my turn, ScheduledWitness[{}],slot[{}],abSlot[{}],",
+              ByteArray.toHexString(scheduledWitness.toByteArray()), slot,
+              controller.getAbSlotAtTime(now));
+          return NOT_MY_TURN;
+        }
 
         long scheduledTime = controller.getSlotTime(slot);
 
@@ -245,37 +246,40 @@ public class WitnessService implements Service {
 
         block = generateBlock(scheduledTime, scheduledWitness,
             controller.lastHeadBlockIsMaintenance());
-
-        if (block == null) {
-          logger.warn("exception when generate block");
-          return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
-        }
-
-        int blockProducedTimeOut = Args.getInstance().getBlockProducedTimeOut();
-
-        long timeout = Math.min(ChainConstant.BLOCK_PRODUCED_INTERVAL * blockProducedTimeOut / 100 + 500,
-            ChainConstant.BLOCK_PRODUCED_INTERVAL);
-        if (DateTime.now().getMillis() - now > timeout) {
-          logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}", timeout, new DateTime(now), DateTime.now());
-          tronApp.getDbManager().eraseBlock();
-          return BlockProductionCondition.TIME_OUT;
-        }
-
-        logger.info(
-            "Produce block successfully, blockNumber:{}, abSlot[{}], blockId:{}, transactionSize:{}, blockTime:{}, parentBlockId:{}",
-            block.getNum(), controller.getAbSlotAtTime(now), block.getBlockId(),
-            block.getTransactions().size(),
-            new DateTime(block.getTimeStamp()),
-            block.getParentHash());
-        broadcastBlock(block);
-
-        return BlockProductionCondition.PRODUCED;
-      } catch (TronException e) {
-        logger.error(e.getMessage(), e);
-        return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
-      } finally {
-        controller.setGeneratingBlock(false);
       }
+
+      if (block == null) {
+        logger.warn("exception when generate block");
+        return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
+      }
+
+      int blockProducedTimeOut = Args.getInstance().getBlockProducedTimeOut();
+
+      long timeout = Math
+          .min(ChainConstant.BLOCK_PRODUCED_INTERVAL * blockProducedTimeOut / 100 + 500,
+              ChainConstant.BLOCK_PRODUCED_INTERVAL);
+      if (DateTime.now().getMillis() - now > timeout) {
+        logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}", timeout, new DateTime(now),
+            DateTime.now());
+        tronApp.getDbManager().eraseBlock();
+        return BlockProductionCondition.TIME_OUT;
+      }
+
+      logger.info(
+          "Produce block successfully, blockNumber:{}, abSlot[{}], blockId:{}, transactionSize:{}, blockTime:{}, parentBlockId:{}",
+          block.getNum(), controller.getAbSlotAtTime(now), block.getBlockId(),
+          block.getTransactions().size(),
+          new DateTime(block.getTimeStamp()),
+          block.getParentHash());
+
+      broadcastBlock(block);
+
+      return BlockProductionCondition.PRODUCED;
+    } catch (TronException e) {
+      logger.error(e.getMessage(), e);
+      return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
+    } finally {
+      controller.setGeneratingBlock(false);
     }
   }
 
