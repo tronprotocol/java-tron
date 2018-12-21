@@ -1,4 +1,4 @@
-package org.tron.common.logsfilter;
+package org.tron.common.logsfilter.trigger;
 
 import lombok.Getter;
 import lombok.Setter;
