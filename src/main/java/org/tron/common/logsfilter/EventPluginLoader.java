@@ -1,5 +1,6 @@
 package org.tron.common.logsfilter;
 
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.pf4j.*;
 import org.tron.common.logsfilter.trigger.BlockLogTrigger;
@@ -22,10 +23,13 @@ public class EventPluginLoader {
     List<IPluginEventListener> eventListeners;
 
     public static EventPluginLoader getInstance(){
-        if (instance == null){
-            instance = new EventPluginLoader();
+        if (Objects.isNull(instance)){
+            synchronized(EventPluginLoader.class) {
+                if (Objects.isNull(instance)) {
+                    instance = new EventPluginLoader();
+                }
+            }
         }
-
         return instance;
     }
 
@@ -41,7 +45,7 @@ public class EventPluginLoader {
             return false;
         }
 
-        if (pluginManager == null){
+        if (Objects.isNull(pluginManager)){
 
             pluginManager = new DefaultPluginManager(pluginPath.toPath()) {
                 @Override
@@ -75,45 +79,45 @@ public class EventPluginLoader {
     }
 
     private void printPluginInfo(){
-        if (pluginManager == null){
-            return;
-        }
-
+        if (Objects.isNull(pluginManager)) return;
         List<PluginWrapper> startedPlugins = pluginManager.getStartedPlugins();
-        for (PluginWrapper plugin : startedPlugins) {
+        startedPlugins.forEach(plugin -> {
             String pluginId = plugin.getDescriptor().getPluginId();
             logger.info(String.format("Extensions added by plugin '%s':", pluginId));
-        }
+        });
     }
 
     public void postBlockTrigger(BlockLogTrigger trigger){
-        for (IPluginEventListener listener : eventListeners) {
+        if (Objects.isNull(eventListeners)) return;
+        eventListeners.forEach(listener -> {
             listener.handleBlockEvent(trigger);
-        }
+        });
     }
 
     public void postTransactionTrigger(TransactionLogTrigger trigger){
-        for (IPluginEventListener listener : eventListeners) {
+        if (Objects.isNull(eventListeners)) return;
+        eventListeners.forEach(listener -> {
             listener.handleTransactionTrigger(trigger);
-        }
+        });
     }
 
     public void postContractLogTrigger(ContractLogTrigger trigger){
-        for (IPluginEventListener listener : eventListeners) {
+        if (Objects.isNull(eventListeners)) return;
+        eventListeners.forEach(listener -> {
             listener.handleContractLogTrigger(trigger);
-        }
+        });
     }
 
     public void postContractEventTrigger(ContractEventTrigger trigger){
+        if (Objects.isNull(eventListeners)) return;
         for (IPluginEventListener listener : eventListeners) {
             listener.handleContractEventTrigger(trigger);
         }
     }
 
-
     public static void main(String[] args) {
 
-        String path = "/Users/tron/sourcecode/pf4j/eventplugin/plugins/kafkaplugin/build/libs/kafkaplugin-1.0.0.jar";
+        String path = "/Users/tron/workplace/java-tronSubmit/java-tronUseSubmit/develop_event_subscribe/eventplugin/plugins/kafkaplugin/build/libs/kafkaplugin-1.0.0.jar";
 
         EventPluginLoader.getInstance().startPlugin(path);
 
