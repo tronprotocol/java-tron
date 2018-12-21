@@ -231,9 +231,9 @@ public class WalletClient {
     loginState = false;
   }
 
-
+  /**
    * Get a Wallet from storage
-
+   */
 
   public static WalletClient GetWalletByStorage(String password) {
     String priKeyEnced = loadPriKey();
