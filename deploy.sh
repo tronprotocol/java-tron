@@ -1,9 +1,5 @@
 #!/bin/bash
 stestlogname="`date +%Y%m%d%H%M%S`_stest.log"
-#testnet=(
-#47.94.231.67
-#47.94.10.122
-#)
 stest_server=""
 docker_num_in_67=`ssh -p 22008 -t java-tron@47.94.231.67 'docker ps -a | wc -l'`
 docker_num_in_67=`echo $docker_num_in_67 | tr -d "\r"`
@@ -35,8 +31,10 @@ change_branch_CMD="sed -i '1c branch_name_in_CI=$TRAVIS_BRANCH' /data/workspace/
 
 echo "$TRAVIS_BRANCH"
 
-if [[ "$TRAVIS_BRANCH" = "develop" || "$TRAVIS_BRANCH" = "master" || "$TRAVIS_BRANCH" = "Odyssey_v3.2.1" ]];then
+
+if [[ "$TRAVIS_BRANCH" = "develop" || "$TRAVIS_BRANCH" = "master" ]];then
   echo "Init the docker stest env"
+
   ssh java-tron@$stest_server -p 22008 $change_branch_CMD
   ssh java-tron@$stest_server -p 22008 sh /data/workspace/docker_workspace/do_stest.sh >$stestlogname 2>&1
   if [[ `find $stestlogname -type f | xargs grep "Connection refused"` =~ "Connection refused" || `find $stestlogname -type f | xargs grep "stest FAILED"` =~ "stest FAILED" ]];
