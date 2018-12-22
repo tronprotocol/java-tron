@@ -397,6 +397,7 @@ public class Args {
   @Setter
   private String trxReferenceBlock;
 
+  @Getter
   @Setter
   private int minEffectiveConnection;
 

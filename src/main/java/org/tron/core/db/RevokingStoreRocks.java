@@ -94,6 +94,11 @@ public class RevokingStoreRocks implements RevokingDatabase {
     return new Dialog(this, disableOnExit);
   }
 
+  @Override
+  public void setMode(boolean mode) {
+
+  }
+
 
   @Override
   public synchronized void check() {
