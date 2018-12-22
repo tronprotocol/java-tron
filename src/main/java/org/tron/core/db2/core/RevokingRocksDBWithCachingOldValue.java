@@ -65,11 +65,6 @@ public class RevokingRocksDBWithCachingOldValue implements IRevokingDB {
   }
 
   @Override
-  public boolean hasOnSolidity(byte[] key) {
-    return false;
-  }
-
-  @Override
   public boolean has(byte[] key) {
     return dbSource.getData(key) != null;
   }
@@ -93,16 +88,6 @@ public class RevokingRocksDBWithCachingOldValue implements IRevokingDB {
   }
 
   @Override
-  public byte[] getOnSolidity(byte[] key) throws ItemNotFoundException {
-    return new byte[0];
-  }
-
-  @Override
-  public byte[] getUncheckedOnSolidity(byte[] key) {
-    return new byte[0];
-  }
-
-  @Override
   public void close() {
     dbSource.closeDB();
   }
@@ -110,6 +95,11 @@ public class RevokingRocksDBWithCachingOldValue implements IRevokingDB {
   @Override
   public void reset() {
     dbSource.resetDb();
+  }
+
+  @Override
+  public void setMode(boolean mode) {
+
   }
 
   /**
