@@ -102,7 +102,7 @@ import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionSign;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class RpcApiService implements Service {
 
   private int port = Args.getInstance().getRpcPort();

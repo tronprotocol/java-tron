@@ -34,7 +34,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.net.udp.handler.EventHandler;
@@ -53,10 +53,9 @@ import org.tron.common.utils.CollectionUtils;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 
+@Slf4j(topic = "discover")
 @Component
 public class NodeManager implements EventHandler {
-
-  private static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeManager");
 
   private Args args = Args.getInstance();
 

@@ -19,7 +19,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.ReasonCode;
 
-@Slf4j
+@Slf4j(topic = "net")
 @Service
 public class PeerConnectionCheckService {
 

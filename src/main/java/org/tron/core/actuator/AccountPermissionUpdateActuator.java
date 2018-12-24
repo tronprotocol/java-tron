@@ -21,7 +21,7 @@ import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 
-@Slf4j
+@Slf4j(topic = "actuator")
 public class AccountPermissionUpdateActuator extends AbstractActuator {
 
   AccountPermissionUpdateActuator(Any contract, Manager dbManager) {

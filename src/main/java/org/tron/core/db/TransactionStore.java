@@ -16,7 +16,7 @@ import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.StoreException;
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Component
 public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> {
 

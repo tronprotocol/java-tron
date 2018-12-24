@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BytesCapsule;
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Component
 public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule> {
 

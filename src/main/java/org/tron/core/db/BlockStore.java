@@ -28,7 +28,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.exception.BadItemException;
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Component
 public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
 

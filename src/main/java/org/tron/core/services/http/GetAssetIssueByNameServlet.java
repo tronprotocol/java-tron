@@ -16,7 +16,7 @@ import org.tron.core.Wallet;
 import org.tron.protos.Contract.AssetIssueContract;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetAssetIssueByNameServlet extends HttpServlet {
 
   @Autowired

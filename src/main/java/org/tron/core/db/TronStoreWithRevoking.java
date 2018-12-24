@@ -23,7 +23,7 @@ import org.tron.core.db2.core.RevokingDBWithCachingOldValue;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 
-@Slf4j
+@Slf4j(topic = "DB")
 public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements ITronChainBase<T> {
   @Getter // only for unit test
   protected IRevokingDB revokingDB;

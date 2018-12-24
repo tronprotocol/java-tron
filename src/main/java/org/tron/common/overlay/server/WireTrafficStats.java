@@ -29,17 +29,12 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.PreDestroy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/**
- * Created by Anton Nashatyrev on 27.02.2017.
- */
+@Slf4j(topic = "net")
 @Component
 public class WireTrafficStats implements Runnable {
-
-  private final static Logger logger = LoggerFactory.getLogger("WireTrafficStats");
 
   private ScheduledExecutorService executor;
   public final TrafficStatHandler tcp = new TrafficStatHandler();

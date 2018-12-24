@@ -11,7 +11,7 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.core.Wallet;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetNextMaintenanceTimeServlet extends HttpServlet {
 
   @Autowired

@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.CodeCapsule;
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Component
 public class CodeStore extends TronStoreWithRevoking<CodeCapsule> {
 

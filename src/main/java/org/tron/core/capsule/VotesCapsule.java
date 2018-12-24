@@ -8,7 +8,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocol.Vote;
 import org.tron.protos.Protocol.Votes;
 
-@Slf4j
+@Slf4j(topic = "capsule")
 public class VotesCapsule implements ProtoCapsule<Votes> {
 
   private Votes votes;

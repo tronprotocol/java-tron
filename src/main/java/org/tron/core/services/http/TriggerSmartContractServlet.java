@@ -26,7 +26,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class TriggerSmartContractServlet extends HttpServlet {
 
   @Autowired

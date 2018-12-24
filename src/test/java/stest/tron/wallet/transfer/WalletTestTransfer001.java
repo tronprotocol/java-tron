@@ -82,12 +82,12 @@ public class WalletTestTransfer001 {
   public void testSendCoin() {
     //send account
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    byte[] sendAccountAddress = ecKey1.getAddress();
+    final byte[] sendAccountAddress = ecKey1.getAddress();
     String sendAccountKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
     //receipt account
     ECKey ecKey2 = new ECKey(Utils.getRandom());
-    byte[] receiptAccountAddress = ecKey2.getAddress();
+    final byte[] receiptAccountAddress = ecKey2.getAddress();
     String receiptAccountKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
     Assert.assertTrue(PublicMethed.sendcoin(sendAccountAddress,90000000000L,

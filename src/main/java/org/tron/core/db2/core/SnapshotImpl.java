@@ -25,7 +25,10 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     root = snapshot.getRoot();
     previous = snapshot;
     snapshot.setNext(this);
-    db = new HashDB();
+    synchronized (this){
+      db = new HashDB();
+    }
+
   }
 
   @Override
@@ -165,7 +168,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
             e -> !keys.contains(WrappedByteArray.of(e.getKey()))));
   }
 
-  void collect(Map<WrappedByteArray, WrappedByteArray> all) {
+  synchronized void collect(Map<WrappedByteArray, WrappedByteArray> all) {
     Snapshot next = getRoot().getNext();
     while (next != null) {
       Streams.stream(((SnapshotImpl) next).db)

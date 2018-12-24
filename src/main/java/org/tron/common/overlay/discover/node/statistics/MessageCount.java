@@ -2,7 +2,7 @@ package org.tron.common.overlay.discover.node.statistics;
 
 import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
+@Slf4j(topic = "discover")
 public class MessageCount {
 
   private static int SIZE = 60;

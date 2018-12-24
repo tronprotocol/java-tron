@@ -57,7 +57,7 @@ public class createAddressAndKey {
   }
 
   @Test(enabled = false)
-  public void createAddressAndKey() {
+  public void createAddressesAndKeys() {
     Integer i = 0;
     String accountIndex;
     String keyIndex;

@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 
-@Slf4j
+@Slf4j(topic = "capsule")
 public class DelegatedResourceAccountIndexCapsule implements
     ProtoCapsule<DelegatedResourceAccountIndex> {
 

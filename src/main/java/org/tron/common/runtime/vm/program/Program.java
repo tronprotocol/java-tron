@@ -81,7 +81,7 @@ import org.tron.protos.Protocol.SmartContract;
  * @since 01.06.2014
  */
 
-@Slf4j(topic = "Program")
+@Slf4j(topic = "VM")
 public class Program {
 
   private static final int MAX_DEPTH = 64;
@@ -500,7 +500,8 @@ public class Program {
         programCode, "create", nonce, null);
     long vmStartInUs = System.nanoTime() / 1000;
     ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
-        this, new DataWord(newAddress), getContractAddress(), value, new DataWord(0), new DataWord(0),
+        this, new DataWord(newAddress), getContractAddress(), value, new DataWord(0),
+        new DataWord(0),
         newBalance, null, deposit, false, byTestingSuite(), vmStartInUs,
         getVmShouldEndInUs(), energyLimit.longValueSafe());
 
@@ -927,13 +928,18 @@ public class Program {
   }
 
   public DataWord getTokenBalance(DataWord address, DataWord tokenId) {
-    long ret = getContractState().getTokenBalance(convertToTronAddress(address.getLast20Bytes()), String.valueOf(tokenId.longValue()).getBytes());
+    long ret = getContractState().getTokenBalance(convertToTronAddress(address.getLast20Bytes()),
+        String.valueOf(tokenId.longValue()).getBytes());
     return ret == 0 ? new DataWord(0) : new DataWord(ret);
   }
 
-  public DataWord getTokenValue() { return invoke.getTokenValue().clone(); }
+  public DataWord getTokenValue() {
+    return invoke.getTokenValue().clone();
+  }
 
-  public DataWord getTokenId() { return invoke.getTokenId().clone(); }
+  public DataWord getTokenId() {
+    return invoke.getTokenId().clone();
+  }
 
   public DataWord getPrevHash() {
     return invoke.getPrevHash().clone();
@@ -1325,14 +1331,14 @@ public class Program {
         } catch (ContractValidateException e) {
           throw new BytecodeExecutionException("transfer failure");
         }
-      }
-      else {
+      } else {
         try {
-          TransferAssetActuator.validateForSmartContract(deposit,senderAddress,contextAddress, tokenId, endowment);
+          TransferAssetActuator
+              .validateForSmartContract(deposit, senderAddress, contextAddress, tokenId, endowment);
         } catch (ContractValidateException e) {
           throw new BytecodeExecutionException("validateForSmartContract failure");
         }
-        deposit.addTokenBalance(senderAddress,tokenId,-endowment);
+        deposit.addTokenBalance(senderAddress, tokenId, -endowment);
         deposit.addTokenBalance(contextAddress, tokenId, endowment);
       }
     }

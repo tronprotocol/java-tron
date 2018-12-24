@@ -25,7 +25,7 @@ import org.tron.core.services.http.ListExchangesServlet;
 import org.tron.core.services.http.ListWitnessesServlet;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class SolidityNodeHttpApiService implements Service {
 
   private int port = Args.getInstance().getSolidityHttpPort();

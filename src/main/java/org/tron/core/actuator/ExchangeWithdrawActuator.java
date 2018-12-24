@@ -21,7 +21,7 @@ import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Contract.ExchangeWithdrawContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-@Slf4j
+@Slf4j(topic = "actuator")
 public class ExchangeWithdrawActuator extends AbstractActuator {
 
   ExchangeWithdrawActuator(final Any contract, final Manager dbManager) {

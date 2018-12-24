@@ -24,7 +24,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-@Slf4j
+@Slf4j(topic = "actuator")
 public class ProposalCreateActuator extends AbstractActuator {
 
   ProposalCreateActuator(final Any contract, final Manager dbManager) {

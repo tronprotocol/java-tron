@@ -9,7 +9,7 @@ import org.tron.core.capsule.utils.ExchangeProcessor;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.Exchange;
 
-@Slf4j
+@Slf4j(topic = "capsule")
 public class ExchangeCapsule implements ProtoCapsule<Exchange> {
 
   private Exchange exchange;

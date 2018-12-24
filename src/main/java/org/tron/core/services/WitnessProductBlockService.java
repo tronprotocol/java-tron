@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BlockCapsule;
 
-@Slf4j
+@Slf4j(topic = "witness")
 @Service
 public class WitnessProductBlockService {
 

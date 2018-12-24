@@ -33,8 +33,7 @@ import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-
-@Slf4j
+@Slf4j(topic = "actuator")
 public class ParticipateAssetIssueActuator extends AbstractActuator {
 
   ParticipateAssetIssueActuator(Any contract, Manager dbManager) {

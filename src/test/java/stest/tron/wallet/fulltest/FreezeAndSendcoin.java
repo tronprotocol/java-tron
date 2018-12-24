@@ -157,7 +157,7 @@ public class FreezeAndSendcoin {
       sendRet = false;
       i++;
 
-/*      if (channelFull != null) {
+      /*      if (channelFull != null) {
         channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
         try {
           //randNum = rand.nextInt(10000) + 3000;
@@ -177,7 +177,7 @@ public class FreezeAndSendcoin {
 
   @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
-        if (channelFull != null) {
+    if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }

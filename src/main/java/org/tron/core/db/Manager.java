@@ -88,7 +88,7 @@ import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
 
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Component
 public class Manager {
 
