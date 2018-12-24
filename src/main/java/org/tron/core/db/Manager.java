@@ -2,7 +2,7 @@ package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
-
+import static org.tron.common.logsfilter.trigger.Trigger.*;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
@@ -39,7 +39,10 @@ import org.springframework.stereotype.Component;
 import org.tron.common.logsfilter.ContractTriggerListener;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.trigger.BlockLogTrigger;
+import org.tron.common.logsfilter.trigger.ContractEventTrigger;
+import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
+import org.tron.common.logsfilter.trigger.Trigger;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.event.ContractEvent;
@@ -184,9 +187,13 @@ public class Manager {
 
   private ExecutorService validateSignService;
 
-  private Thread repushThread;
+  private Thread repushTransationThread;
 
-  private boolean isRunRepushThread = true;
+  private Thread repushTriggerThread;
+
+  private boolean isRunRepushTransactionThread = true;
+
+  private boolean isRunRepushTriggerThread = true;
 
   private ContractTriggerListener contractTriggerListener;
 
@@ -287,6 +294,10 @@ public class Manager {
     return repushTransactions;
   }
 
+  public BlockingQueue<Trigger> getRepushTrigger() {
+    return repushTriggers;
+  }
+
   // transactions cache
   private List<TransactionCapsule> pendingTransactions;
 
@@ -296,6 +307,8 @@ public class Manager {
 
   // the capacity is equal to Integer.MAX_VALUE default
   private BlockingQueue<TransactionCapsule> repushTransactions;
+
+  private BlockingQueue<Trigger> repushTriggers;
 
   // for test only
   public List<ByteString> getWitnesses() {
@@ -345,9 +358,9 @@ public class Manager {
   /**
    * Cycle thread to repush Transactions
    */
-  private Runnable repushLoop =
+  private Runnable repushTransactionsLoop =
       () -> {
-        while (isRunRepushThread) {
+        while (isRunRepushTransactionThread) {
           try {
             if (isGeneratingBlock()) {
               TimeUnit.MILLISECONDS.sleep(10L);
@@ -361,15 +374,59 @@ public class Manager {
             logger.info(ex.getMessage());
             Thread.currentThread().interrupt();
           } catch (Exception ex) {
-            logger.error("unknown exception happened in repush loop", ex);
+            logger.error("unknown exception happened in repush transaction loop", ex);
           } catch (Throwable throwable) {
-            logger.error("unknown throwable happened in repush loop", throwable);
+            logger.error("unknown throwable happened in repush transaction loop", throwable);
           }
         }
       };
 
-  public void stopRepushThread() {
-    isRunRepushThread = false;
+  private Runnable repushTriggersLoop =
+    () -> {
+      while (isRunRepushTriggerThread) {
+        try {
+          Trigger tigger = this.getRepushTrigger().poll(1, TimeUnit.SECONDS);
+          if (tigger == null) {
+            continue;
+          }
+          switch (tigger.getTriggerType()) {
+            case BLOCK_TRIGGER:
+              EventPluginLoader.getInstance().postBlockTrigger((BlockLogTrigger)tigger);
+              break;
+
+            case TRANSACTION_TRIGGER:
+              EventPluginLoader.getInstance().postTransactionTrigger((TransactionLogTrigger)tigger);
+              break;
+
+            case CONTRACTLOG_TRIGGER:
+              EventPluginLoader.getInstance().postContractLogTrigger((ContractLogTrigger) tigger);
+              break;
+
+            case CONTRACTEVENT_TRIGGER:
+              EventPluginLoader.getInstance().postContractEventTrigger((ContractEventTrigger) tigger);
+              break;
+
+            default:
+              logger.error("unknown trigger type");
+          }
+
+        } catch (InterruptedException ex) {
+          logger.info(ex.getMessage());
+          Thread.currentThread().interrupt();
+        } catch (Exception ex) {
+          logger.error("unknown exception happened in repush triggers loop", ex);
+        } catch (Throwable throwable) {
+          logger.error("unknown throwable happened in repush triggers loop", throwable);
+        }
+      }
+    };
+
+  public void stopRepushTransactionThread() {
+    isRunRepushTransactionThread = false;
+  }
+
+  public void stopRepushTriggerThread() {
+    isRunRepushTriggerThread = false;
   }
 
   @PostConstruct
@@ -380,6 +437,7 @@ public class Manager {
     this.setProposalController(ProposalController.createInstance(this));
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
     this.repushTransactions = new LinkedBlockingQueue<>();
+    this.repushTriggers = new LinkedBlockingQueue<>();
 
     this.initGenesis();
     try {
@@ -410,18 +468,27 @@ public class Manager {
     revokingStore.enable();
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
-    repushThread = new Thread(repushLoop);
-    repushThread.start();
+    repushTransationThread = new Thread(repushTransactionsLoop);
+    repushTransationThread.start();
+    repushTriggerThread = new Thread(repushTriggersLoop);
+    repushTriggerThread.start();
 
     // add contract event listener for subscribing
     if (Args.getInstance().isEventSubscribe()) {
       contractTriggerListener = new ContractTriggerListener();
+<<<<<<< HEAD
 
       try{
         eventPluginLoaded = EventPluginLoader.getInstance().start(Args.getInstance().getEventPluginConfig());
       }
       catch (Exception e){
           logger.error("Failed to load eventPlugin, '{}'", e);
+=======
+      if (Objects.nonNull(Args.getInstance().getEventPluginConfig())) {
+        String path =  Args.getInstance().getEventPluginConfig().getPluginPath();
+        eventPluginLoaded = EventPluginLoader.getInstance().startPlugin(
+          Args.getInstance().getEventPluginConfig().getPluginPath());
+>>>>>>> add repush triggers thread
       }
     }
   }
@@ -901,9 +968,8 @@ public class Manager {
           applyBlock(newBlock);
           tmpSession.commit();
           if (eventPluginLoaded) {
-            postBlockTrigger(newBlock);
+            addBlockTrigger(newBlock);
           }
-
         } catch (Throwable throwable) {
           logger.error(throwable.getMessage(), throwable);
           khaosDb.removeBlk(block.getBlockId());
@@ -921,15 +987,16 @@ public class Manager {
 
   }
 
-  private void postTransactionTrigger(TransactionCapsule trx, BlockCapsule blockCapsule) {
+  private void addTransactionTrigger(TransactionCapsule trx, BlockCapsule blockCapsule) {
     TransactionLogTrigger trxTrigger = new TransactionLogTrigger();
     if (Objects.nonNull(blockCapsule)) {
       trxTrigger.setBlockId(blockCapsule.getBlockId().toString());
     }
     trxTrigger.setTransactionId(trx.getTransactionId().toString());
     trxTrigger.setTimestamp(trx.getTimestamp());
-    EventPluginLoader.getInstance().postTransactionTrigger(trxTrigger);
+    repushTriggers.add(trxTrigger);
   }
+<<<<<<< HEAD
   private void postBlockTrigger(BlockCapsule block) {
     try{
       BlockLogTrigger trigger = new BlockLogTrigger();
@@ -942,6 +1009,15 @@ public class Manager {
         logger.error("{}", e);
     }
 
+=======
+
+  private void addBlockTrigger(BlockCapsule block) {
+    BlockLogTrigger trigger = new BlockLogTrigger();
+    trigger.setBlockHash(block.getBlockId().toString());
+    trigger.setTimeStamp(System.currentTimeMillis());
+    trigger.setBlockNumber(block.getNum());
+    repushTriggers.add(trigger);
+>>>>>>> add repush triggers thread
   }
 
   public void updateDynamicProperties(BlockCapsule block) {
@@ -1122,7 +1198,7 @@ public class Manager {
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
     if (eventPluginLoaded) {
-      postTransactionTrigger(trxCap, blockCap);
+      addTransactionTrigger(trxCap, blockCap);
     }
 
     return true;
