@@ -3,7 +3,6 @@ package org.tron.common.logsfilter.trigger;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.logsfilter.EventPluginLoader;
 
 @Slf4j
 public class Trigger {
