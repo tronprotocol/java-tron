@@ -416,9 +416,15 @@ public class Manager {
     // add contract event listener for subscribing
     if (Args.getInstance().isEventSubscribe()) {
       contractTriggerListener = new ContractTriggerListener();
-      if (Objects.nonNull(Args.getInstance().getEventPluginConfig())) {
-        eventPluginLoaded = EventPluginLoader.getInstance().startPlugin(
-          Args.getInstance().getEventPluginConfig().getPluginPath());
+
+      try{
+        if (Objects.nonNull(Args.getInstance().getEventPluginConfig())) {
+          eventPluginLoaded = EventPluginLoader.getInstance().startPlugin(
+                  Args.getInstance().getEventPluginConfig().getPluginPath());
+        }
+      }
+      catch (Exception e){
+          logger.error("'{}'", e);
       }
     }
   }

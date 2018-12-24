@@ -1,7 +1,5 @@
 package org.tron.common.logsfilter.trigger;
 
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
 
