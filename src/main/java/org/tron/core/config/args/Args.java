@@ -17,11 +17,7 @@ import java.io.Writer;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,6 +28,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.logsfilter.EventPluginConfig;
+import org.tron.common.logsfilter.TriggerConfig;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
@@ -396,6 +394,14 @@ public class Args {
   @Getter
   @Setter
   private int minEffectiveConnection;
+
+  @Getter
+  @Setter
+  @Parameter(names = {"--es"})
+  private boolean eventSubscribe = false;
+
+  @Getter
+  private EventPluginConfig eventPluginConfig;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -792,13 +798,14 @@ public class Args {
     INSTANCE.saveInternalTx =
         config.hasPath("vm.saveInternalTx") && config.getBoolean("vm.saveInternalTx");
 
+    INSTANCE.eventPluginConfig =
+            config.hasPath("event.subscribe")?
+                    getEventPluginConfig(config) : null;
+
     initBackupProperty(config);
-
-
 
     logConfig();
   }
-
 
   private static List<Witness> getWitnessesFromConfig(final com.typesafe.config.Config config) {
     return config.getObjectList("genesis.block.witnesses").stream()
@@ -882,6 +889,44 @@ public class Args {
       INSTANCE.privateKey = getGeneratedNodePrivateKey();
     }
   }
+
+  private static EventPluginConfig getEventPluginConfig(final com.typesafe.config.Config config){
+    EventPluginConfig eventPluginConfig = new EventPluginConfig();
+
+    String pluginPath = config.getString("event.subscribe.path").trim();
+    eventPluginConfig.setPluginPath(pluginPath);
+
+    String serverAddress = config.getString("event.subscribe.server").trim();
+    eventPluginConfig.setServerAddress(serverAddress);
+
+    List<TriggerConfig> triggerConfigList = config.getObjectList("event.subscribe.topics").stream()
+            .map(Args::createTriggerConfig)
+            .collect(Collectors.toCollection(ArrayList::new));
+
+    eventPluginConfig.setTriggerConfigList(triggerConfigList);
+
+    return eventPluginConfig;
+  }
+
+  private static TriggerConfig createTriggerConfig(ConfigObject triggerObject){
+    if (Objects.isNull(triggerObject)){
+      return null;
+    }
+
+    TriggerConfig triggerConfig = new TriggerConfig();
+
+    String triggerName = triggerObject.get("triggerName").unwrapped().toString();
+    triggerConfig.setTriggerName(triggerName);
+
+    String enabled = triggerObject.get("enable").unwrapped().toString();
+    triggerConfig.setEnabled("true".equalsIgnoreCase(enabled) ? true: false);
+
+    String topic = triggerObject.get("topic").unwrapped().toString();
+    triggerConfig.setTopic(topic);
+
+    return triggerConfig;
+  }
+
 
   private static String getGeneratedNodePrivateKey() {
     String nodeId;
