@@ -1,6 +1,5 @@
 package org.tron.common.logsfilter;
 
-import java.util.Map;
 import java.util.Objects;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -8,10 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.pf4j.*;
 import org.springframework.util.StringUtils;
-import org.tron.common.logsfilter.trigger.BlockLogTrigger;
-import org.tron.common.logsfilter.trigger.ContractEventTrigger;
-import org.tron.common.logsfilter.trigger.ContractLogTrigger;
-import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
+import org.tron.common.logsfilter.trigger.*;
 
 import java.io.File;
 import java.util.List;
@@ -33,9 +29,6 @@ public class EventPluginLoader {
 
     private List<TriggerConfig> triggerConfigList;
 
-    private Map<Integer, TriggerConfig> triggerConfigMap;
-
-
     public static EventPluginLoader getInstance(){
         if (Objects.isNull(instance)){
             synchronized(EventPluginLoader.class) {
@@ -56,17 +49,68 @@ public class EventPluginLoader {
 
         this.pluginPath = config.getPluginPath();
         this.serverAddress = config.getServerAddress();
-        triggerConfigList = config.getTriggerConfigList();
+        this.triggerConfigList = config.getTriggerConfigList();
 
         if (false == startPlugin(this.pluginPath)){
             logger.error("failed to load '{}'", this.pluginPath);
             return success;
         }
 
+        setPluginConfig();
+
         return true;
     }
 
-    public boolean startPlugin(String path){
+    private void setPluginConfig(){
+
+        if (Objects.isNull(eventListeners)){
+            return;
+        }
+
+        eventListeners.forEach(listener -> {
+            listener.setServerAddress(this.serverAddress);
+        });
+
+        triggerConfigList.forEach(triggerConfig -> {
+            if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
+                if (triggerConfig.isEnabled()){
+                    setPluginTopic(Trigger.BLOCK_TRIGGER, triggerConfig.getTopic());
+                }else {
+                    setPluginTopic(Trigger.BLOCK_TRIGGER, "");
+                }
+            }
+            else if (EventPluginConfig.TRANSACTION_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
+                if (triggerConfig.isEnabled()){
+                    setPluginTopic(Trigger.TRANSACTION_TRIGGER, triggerConfig.getTopic());
+                }else {
+                    setPluginTopic(Trigger.TRANSACTION_TRIGGER, "");
+                }
+            }
+            else if (EventPluginConfig.CONTRACTEVENT_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
+                if (triggerConfig.isEnabled()){
+                    setPluginTopic(Trigger.CONTRACTEVENT_TRIGGER, triggerConfig.getTopic());
+                }else {
+                    setPluginTopic(Trigger.CONTRACTEVENT_TRIGGER, "");
+                }
+            }
+            else if (EventPluginConfig.CONTRACTLOG_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
+                if (triggerConfig.isEnabled()){
+                    setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, triggerConfig.getTopic());
+                }else {
+                    setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, "");
+                }
+            }
+        });
+    }
+
+    private void setPluginTopic(int eventType, String topic){
+
+        eventListeners.forEach(listener -> {
+            listener.setTopic(eventType, topic);
+        });
+    }
+
+    private boolean startPlugin(String path){
         boolean loaded = false;
         logger.info("start loading '{}'", path);
 

@@ -1,15 +1,10 @@
 package org.tron.common.logsfilter.trigger;
 
-import java.util.List;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 
 public class ContractEventTrigger extends Trigger{
-  public ContractEventTrigger() {
-    triggerType = CONTRACTEVENT_TRIGGER;
-  }
-
   @Getter
   @Setter
   private String eventType;

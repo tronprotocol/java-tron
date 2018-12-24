@@ -6,11 +6,6 @@ import lombok.Setter;
 import java.util.List;
 
 public class ContractLogTrigger extends Trigger{
-
-    public ContractLogTrigger() {
-      triggerType = CONTRACTLOG_TRIGGER;
-    }
-
     @Getter
     @Setter
     private String eventType;
