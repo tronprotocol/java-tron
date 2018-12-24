@@ -10,7 +10,7 @@ import org.tron.common.application.Service;
 import org.tron.core.config.args.Args;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class FullNodeHttpApiService implements Service {
 
   private int port = Args.getInstance().getFullNodeHttpPort();

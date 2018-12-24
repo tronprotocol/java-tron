@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TransactionTrace.TimeResultType;
 
-@Slf4j
+@Slf4j(topic = "DB")
 public class PendingManager implements AutoCloseable {
 
   @Getter

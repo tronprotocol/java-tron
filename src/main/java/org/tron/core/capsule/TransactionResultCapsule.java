@@ -7,7 +7,7 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Result;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
-@Slf4j
+@Slf4j(topic = "capsule")
 public class TransactionResultCapsule implements ProtoCapsule<Transaction.Result> {
 
   private Transaction.Result transactionResult;

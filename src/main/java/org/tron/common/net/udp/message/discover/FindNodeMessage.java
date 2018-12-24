@@ -3,7 +3,6 @@ package org.tron.common.net.udp.message.discover;
 import static org.tron.common.net.udp.message.UdpMessageTypeEnum.DISCOVER_FIND_NODE;
 
 import com.google.protobuf.ByteString;
-import lombok.extern.slf4j.Slf4j;
 import org.tron.common.net.udp.message.Message;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.utils.ByteArray;
@@ -11,7 +10,6 @@ import org.tron.protos.Discover;
 import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Discover.FindNeighbours;
 
-@Slf4j
 public class FindNodeMessage extends Message {
 
   private Discover.FindNeighbours findNeighbours;

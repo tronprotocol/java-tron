@@ -9,7 +9,7 @@ import org.tron.core.services.http.GetAssetIssueByIdServlet;
 import org.tron.core.services.interfaceOnSolidity.WalletOnSolidity;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetAssetIssueByIdOnSolidityServlet extends GetAssetIssueByIdServlet {
 
   @Autowired

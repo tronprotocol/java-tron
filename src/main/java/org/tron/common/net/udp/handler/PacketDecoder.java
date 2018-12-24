@@ -22,12 +22,11 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.socket.DatagramPacket;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import java.util.List;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.net.udp.message.Message;
 
+@Slf4j(topic = "net")
 public class PacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
-
-  private static final org.slf4j.Logger logger = LoggerFactory.getLogger("PacketDecoder");
 
   private static final int MAXSIZE = 2048;
 

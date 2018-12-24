@@ -9,7 +9,7 @@ import org.tron.core.db.Manager;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract;
 
-@Slf4j
+@Slf4j(topic = "actuator")
 public class ActuatorFactory {
 
   public static final ActuatorFactory INSTANCE = new ActuatorFactory();

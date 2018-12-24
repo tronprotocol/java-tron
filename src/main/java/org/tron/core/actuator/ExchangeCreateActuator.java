@@ -18,7 +18,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.ExchangeCreateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-@Slf4j
+@Slf4j(topic = "actuator")
 public class ExchangeCreateActuator extends AbstractActuator {
 
   ExchangeCreateActuator(final Any contract, final Manager dbManager) {

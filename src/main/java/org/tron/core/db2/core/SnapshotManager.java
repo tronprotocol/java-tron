@@ -33,7 +33,7 @@ import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 
-@Slf4j
+@Slf4j(topic = "DB")
 public class SnapshotManager implements RevokingDatabase {
 
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
@@ -393,7 +393,7 @@ public class SnapshotManager implements RevokingDatabase {
     return new String(value);
   }
 
-  @Slf4j
+  @Slf4j(topic = "DB")
   @Getter // only for unit test
   public static class Session implements ISession {
 

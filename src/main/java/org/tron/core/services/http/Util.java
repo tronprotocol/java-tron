@@ -52,7 +52,7 @@ import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 
 
-@Slf4j
+@Slf4j(topic = "API")
 public class Util {
 
   public static String printErrorMsg(Exception e) {

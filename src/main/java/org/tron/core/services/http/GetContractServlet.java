@@ -15,7 +15,7 @@ import org.tron.protos.Protocol.SmartContract;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetContractServlet extends HttpServlet {
 
   @Autowired

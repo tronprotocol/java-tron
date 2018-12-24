@@ -29,7 +29,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 
-@Slf4j
+@Slf4j(topic = "utils")
 public class ByteArray {
 
   public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];

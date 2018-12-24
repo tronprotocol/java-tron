@@ -36,7 +36,7 @@ import org.tron.protos.Contract.AssetIssueContract.FrozenSupply;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-@Slf4j
+@Slf4j(topic = "actuator")
 public class AssetIssueActuator extends AbstractActuator {
 
   AssetIssueActuator(Any contract, Manager dbManager) {

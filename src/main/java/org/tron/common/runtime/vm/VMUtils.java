@@ -17,21 +17,27 @@
  */
 package org.tron.common.runtime.vm;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.tron.common.runtime.config.VMConfig;
-import java.io.*;
-import java.util.zip.Deflater;
-import java.util.zip.DeflaterOutputStream;
-import java.util.zip.Inflater;
-import java.util.zip.InflaterOutputStream;
-
 import static java.lang.String.format;
 import static org.apache.commons.codec.binary.Base64.decodeBase64;
 import static org.apache.commons.codec.binary.Base64.encodeBase64String;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.zip.Deflater;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.Inflater;
+import java.util.zip.InflaterOutputStream;
+import lombok.extern.slf4j.Slf4j;
+import org.tron.common.runtime.config.VMConfig;
+
+@Slf4j(topic = "VM")
 public final class VMUtils {
-  private static final Logger LOGGER = LoggerFactory.getLogger("VM");
 
   private VMUtils() {
   }
@@ -78,8 +84,8 @@ public final class VMUtils {
       if (data != null) {
         out.write(data.getBytes("UTF-8"));
       }
-    } catch (Exception e){
-      LOGGER.error(format("Cannot write to file '%s': ", file.getAbsolutePath()), e);
+    } catch (Exception e) {
+      logger.error(format("Cannot write to file '%s': ", file.getAbsolutePath()), e);
     } finally {
       closeQuietly(out);
     }
@@ -136,7 +142,7 @@ public final class VMUtils {
     try {
       return encodeBase64String(compress(content));
     } catch (Exception e) {
-      LOGGER.error("Cannot zip or encode: ", e);
+      logger.error("Cannot zip or encode: ", e);
       return content;
     }
   }
@@ -146,7 +152,7 @@ public final class VMUtils {
       byte[] decoded = decodeBase64(content);
       return new String(decompress(decoded), "UTF-8");
     } catch (Exception e) {
-      LOGGER.error("Cannot unzip or decode: ", e);
+      logger.error("Cannot unzip or decode: ", e);
       return content;
     }
   }

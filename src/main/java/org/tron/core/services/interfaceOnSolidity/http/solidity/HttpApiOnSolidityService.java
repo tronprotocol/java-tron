@@ -23,7 +23,7 @@ import org.tron.core.services.interfaceOnSolidity.http.GetTransactionCountByBloc
 import org.tron.core.services.interfaceOnSolidity.http.ListExchangesOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ListWitnessesOnSolidityServlet;
 
-@Slf4j
+@Slf4j(topic = "API")
 public class HttpApiOnSolidityService implements Service {
 
   private int port = Args.getInstance().getSolidityHttpPort();

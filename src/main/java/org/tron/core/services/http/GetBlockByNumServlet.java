@@ -13,7 +13,7 @@ import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Block;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetBlockByNumServlet extends HttpServlet {
 
   @Autowired

@@ -25,9 +25,8 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
-import java.net.BindException;
 import java.util.concurrent.TimeUnit;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.net.udp.handler.MessageHandler;
@@ -36,10 +35,9 @@ import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.server.WireTrafficStats;
 import org.tron.core.config.args.Args;
 
+@Slf4j(topic = "discover")
 @Component
 public class DiscoverServer {
-
-  private static final org.slf4j.Logger logger = LoggerFactory.getLogger("DiscoverServer");
 
   @Autowired
   private NodeManager nodeManager;

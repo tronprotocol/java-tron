@@ -17,8 +17,7 @@ import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
 
-
-@Slf4j
+@Slf4j(topic = "app")
 public class FullNode {
 
   /**

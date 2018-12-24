@@ -17,7 +17,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-@Slf4j
+@Slf4j(topic = "actuator")
 public class UpdateSettingContractActuator extends AbstractActuator {
 
   UpdateSettingContractActuator(Any contract, Manager dbManager) {
