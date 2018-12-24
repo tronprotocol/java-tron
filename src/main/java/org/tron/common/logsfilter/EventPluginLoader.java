@@ -7,10 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.pf4j.*;
 import org.springframework.util.StringUtils;
-import org.tron.common.logsfilter.trigger.BlockLogTrigger;
-import org.tron.common.logsfilter.trigger.ContractEventTrigger;
-import org.tron.common.logsfilter.trigger.ContractLogTrigger;
-import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
+import org.tron.common.logsfilter.trigger.*;
 
 import java.io.File;
 import java.util.List;
@@ -77,30 +74,54 @@ public class EventPluginLoader {
         triggerConfigList.forEach(triggerConfig -> {
             if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
                 if (triggerConfig.isEnabled()){
+<<<<<<< HEAD
                     setPluginTopic(EventPluginConfig.BLOCK_TRIGGER, triggerConfig.getTopic());
                 }else {
                     setPluginTopic(EventPluginConfig.BLOCK_TRIGGER, "");
+=======
+                    setPluginTopic(Trigger.BLOCK_TRIGGER, triggerConfig.getTopic());
+                }else {
+                    setPluginTopic(Trigger.BLOCK_TRIGGER, "");
+>>>>>>> merge conflict
                 }
             }
             else if (EventPluginConfig.TRANSACTION_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
                 if (triggerConfig.isEnabled()){
+<<<<<<< HEAD
                     setPluginTopic(EventPluginConfig.TRANSACTION_TRIGGER, triggerConfig.getTopic());
                 }else {
                     setPluginTopic(EventPluginConfig.TRANSACTION_TRIGGER, "");
+=======
+                    setPluginTopic(Trigger.TRANSACTION_TRIGGER, triggerConfig.getTopic());
+                }else {
+                    setPluginTopic(Trigger.TRANSACTION_TRIGGER, "");
+>>>>>>> merge conflict
                 }
             }
             else if (EventPluginConfig.CONTRACTEVENT_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
                 if (triggerConfig.isEnabled()){
+<<<<<<< HEAD
                     setPluginTopic(EventPluginConfig.CONTRACTEVENT_TRIGGER, triggerConfig.getTopic());
                 }else {
                     setPluginTopic(EventPluginConfig.CONTRACTEVENT_TRIGGER, "");
+=======
+                    setPluginTopic(Trigger.CONTRACTEVENT_TRIGGER, triggerConfig.getTopic());
+                }else {
+                    setPluginTopic(Trigger.CONTRACTEVENT_TRIGGER, "");
+>>>>>>> merge conflict
                 }
             }
             else if (EventPluginConfig.CONTRACTLOG_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
                 if (triggerConfig.isEnabled()){
+<<<<<<< HEAD
                     setPluginTopic(EventPluginConfig.CONTRACTLOG_TRIGGER, triggerConfig.getTopic());
                 }else {
                     setPluginTopic(EventPluginConfig.CONTRACTLOG_TRIGGER, "");
+=======
+                    setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, triggerConfig.getTopic());
+                }else {
+                    setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, "");
+>>>>>>> merge conflict
                 }
             }
         });
@@ -113,7 +134,10 @@ public class EventPluginLoader {
         });
     }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> merge conflict
     private boolean startPlugin(String path){
         boolean loaded = false;
         logger.info("start loading '{}'", path);

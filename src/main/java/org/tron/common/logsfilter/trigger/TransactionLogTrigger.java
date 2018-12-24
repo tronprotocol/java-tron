@@ -2,13 +2,9 @@ package org.tron.common.logsfilter.trigger;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.tron.common.logsfilter.EventPluginLoader;
 
 public class TransactionLogTrigger extends Trigger{
-
-    public TransactionLogTrigger() {
-      triggerType = TRANSACTION_TRIGGER;
-    }
-
     public void setTimestamp(long ts) {
         timeStamp = ts;
     }
@@ -23,4 +19,9 @@ public class TransactionLogTrigger extends Trigger{
     @Getter
     @Setter
     private String blockId;
+
+    @Override
+    public void processTrigger(){
+        EventPluginLoader.getInstance().postTransactionTrigger(this);
+    }
 }

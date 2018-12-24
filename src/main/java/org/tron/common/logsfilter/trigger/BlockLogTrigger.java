@@ -4,12 +4,9 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
+import org.tron.common.logsfilter.EventPluginLoader;
 
 public class BlockLogTrigger extends Trigger {
-    public BlockLogTrigger() {
-      triggerType = BLOCK_TRIGGER;
-    }
-
     @Getter
     @Setter
     private long blockNumber;
@@ -38,6 +35,11 @@ public class BlockLogTrigger extends Trigger {
                 .append(transactionSize)
                 .append(", transaction list: ")
                 .append(transactionList).toString();
+    }
+
+    @Override
+    public void processTrigger(){
+        EventPluginLoader.getInstance().postBlockTrigger(this);
     }
 
 }

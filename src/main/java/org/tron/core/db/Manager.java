@@ -187,11 +187,11 @@ public class Manager {
 
   private ExecutorService validateSignService;
 
-  private Thread repushTransationThread;
+  private Thread repushThread;
 
   private Thread repushTriggerThread;
 
-  private boolean isRunRepushTransactionThread = true;
+  private boolean isRunRepushThread = true;
 
   private boolean isRunRepushTriggerThread = true;
 
@@ -358,9 +358,9 @@ public class Manager {
   /**
    * Cycle thread to repush Transactions
    */
-  private Runnable repushTransactionsLoop =
+  private Runnable repushLoop =
       () -> {
-        while (isRunRepushTransactionThread) {
+        while (isRunRepushThread) {
           try {
             if (isGeneratingBlock()) {
               TimeUnit.MILLISECONDS.sleep(10L);
@@ -374,9 +374,9 @@ public class Manager {
             logger.info(ex.getMessage());
             Thread.currentThread().interrupt();
           } catch (Exception ex) {
-            logger.error("unknown exception happened in repush transaction loop", ex);
+            logger.error("unknown exception happened in repush loop", ex);
           } catch (Throwable throwable) {
-            logger.error("unknown throwable happened in repush transaction loop", throwable);
+            logger.error("unknown throwable happened in repush loop", throwable);
           }
         }
       };
@@ -386,30 +386,9 @@ public class Manager {
       while (isRunRepushTriggerThread) {
         try {
           Trigger tigger = this.getRepushTrigger().poll(1, TimeUnit.SECONDS);
-          if (tigger == null) {
-            continue;
+          if (tigger != null) {
+            tigger.processTrigger();
           }
-          switch (tigger.getTriggerType()) {
-            case BLOCK_TRIGGER:
-              EventPluginLoader.getInstance().postBlockTrigger((BlockLogTrigger)tigger);
-              break;
-
-            case TRANSACTION_TRIGGER:
-              EventPluginLoader.getInstance().postTransactionTrigger((TransactionLogTrigger)tigger);
-              break;
-
-            case CONTRACTLOG_TRIGGER:
-              EventPluginLoader.getInstance().postContractLogTrigger((ContractLogTrigger) tigger);
-              break;
-
-            case CONTRACTEVENT_TRIGGER:
-              EventPluginLoader.getInstance().postContractEventTrigger((ContractEventTrigger) tigger);
-              break;
-
-            default:
-              logger.error("unknown trigger type");
-          }
-
         } catch (InterruptedException ex) {
           logger.info(ex.getMessage());
           Thread.currentThread().interrupt();
@@ -421,8 +400,8 @@ public class Manager {
       }
     };
 
-  public void stopRepushTransactionThread() {
-    isRunRepushTransactionThread = false;
+  public void stopRepushThread() {
+    isRunRepushThread = false;
   }
 
   public void stopRepushTriggerThread() {
@@ -468,14 +447,16 @@ public class Manager {
     revokingStore.enable();
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
-    repushTransationThread = new Thread(repushTransactionsLoop);
-    repushTransationThread.start();
-    repushTriggerThread = new Thread(repushTriggersLoop);
-    repushTriggerThread.start();
+    repushThread = new Thread(repushLoop);
+    repushThread.start();
 
     // add contract event listener for subscribing
     if (Args.getInstance().isEventSubscribe()) {
+      startEventSubscribing();
+      repushTriggerThread = new Thread(repushTriggersLoop);
+      repushTriggerThread.start();
       contractTriggerListener = new ContractTriggerListener();
+<<<<<<< HEAD
 <<<<<<< HEAD
 
       try{
@@ -490,6 +471,8 @@ public class Manager {
           Args.getInstance().getEventPluginConfig().getPluginPath());
 >>>>>>> add repush triggers thread
       }
+=======
+>>>>>>> merge conflict
     }
   }
 
@@ -994,7 +977,12 @@ public class Manager {
     }
     trxTrigger.setTransactionId(trx.getTransactionId().toString());
     trxTrigger.setTimestamp(trx.getTimestamp());
-    repushTriggers.add(trxTrigger);
+    try {
+      repushTriggers.put(trxTrigger);
+    } catch (InterruptedException e) {
+      logger.error(e.getMessage());
+      Thread.currentThread().interrupt();
+    }
   }
 <<<<<<< HEAD
   private void postBlockTrigger(BlockCapsule block) {
@@ -1016,8 +1004,17 @@ public class Manager {
     trigger.setBlockHash(block.getBlockId().toString());
     trigger.setTimeStamp(System.currentTimeMillis());
     trigger.setBlockNumber(block.getNum());
+<<<<<<< HEAD
     repushTriggers.add(trigger);
 >>>>>>> add repush triggers thread
+=======
+    try {
+      repushTriggers.put(trigger);
+    } catch (InterruptedException e) {
+      logger.error(e.getMessage());
+      Thread.currentThread().interrupt();
+    }
+>>>>>>> merge conflict
   }
 
   public void updateDynamicProperties(BlockCapsule block) {
@@ -1744,7 +1741,26 @@ public class Manager {
     revokingStore.setMode(mode);
   }
 
+<<<<<<< HEAD
   public void notifyTriggerListener(ContractEvent event) {
+=======
+  private void startEventSubscribing(){
+    contractTriggerListener = new ContractTriggerListener();
+
+    try{
+      eventPluginLoaded = EventPluginLoader.getInstance().start(Args.getInstance().getEventPluginConfig());
+
+      if (!eventPluginLoaded){
+        logger.error("failed to load eventPlugin");
+      }
+    }
+    catch (Exception e){
+      logger.error("{}", e);
+    }
+  }
+
+  public void notifyListener(ContractEvent event, ContractEvent.EventType type) {
+>>>>>>> merge conflict
 
     if (Args.getInstance().isEventSubscribe() && contractTriggerListener != null){
         contractTriggerListener.onEvent(event);
