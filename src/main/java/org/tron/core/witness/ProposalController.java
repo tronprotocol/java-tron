@@ -188,6 +188,12 @@ public class ProposalController {
           }
           break;
         }
+        case (21): {
+          if (manager.getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 0) {
+            manager.getDynamicPropertiesStore().saveAllowAdaptiveEnergy(entry.getValue());
+          }
+          break;
+        }
 
         default:
           break;

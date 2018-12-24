@@ -101,7 +101,6 @@ import org.tron.core.db.ContractStore;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
-import org.tron.core.db.PendingManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -118,7 +117,6 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
-import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TransferContract;
@@ -677,6 +675,22 @@ public class Wallet {
       }
 
     });
+
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getTotalEnergyCurrentLimit")
+        .setValue(dbManager.getDynamicPropertiesStore().getTotalEnergyCurrentLimit())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getTotalEnergyTargetLimit")
+        .setValue(dbManager.getDynamicPropertiesStore().getTotalEnergyTargetLimit())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getTotalEnergyAverageUsage")
+        .setValue(dbManager.getDynamicPropertiesStore().getTotalEnergyAverageUsage())
+        .build());
 
     return builder.build();
   }

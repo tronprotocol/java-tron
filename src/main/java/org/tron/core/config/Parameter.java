@@ -92,7 +92,8 @@ public interface Parameter {
     TOTAL_ENERGY_LIMIT, // 50,000,000,000, 17
     ALLOW_TVM_TRANSFER_TRC10, // 1, 18
     TOTAL_CURRENT_ENERGY_LIMIT, // 50,000,000,000, 19
-//    ALLOW_ADAPTIVE_ENERGY,
+    ALLOW_MULTI_SIGN, // 1, 20
+    ALLOW_ADAPTIVE_ENERGY, // 1, 21
 //    ONE_DAY_NET_LIMIT,
 //    MAX_FROZEN_TIME,
 //    MIN_FROZEN_TIME,
@@ -115,7 +116,7 @@ public interface Parameter {
 
   enum ForkBlockVersionEnum {
     VERSION_3_2_2(6),
-    MULTI_SIGN(7);
+    VERSION_3_5(7);
     @Getter
     private int value;
 
