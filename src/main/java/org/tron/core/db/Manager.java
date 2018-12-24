@@ -36,10 +36,10 @@ import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.logsfilter.ContractTriggerListener;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.event.ContractEvent;
-import org.tron.common.runtime.vm.event.ContractEventListener;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.SessionOptional;
@@ -185,7 +185,7 @@ public class Manager {
 
   private boolean isRunRepushThread = true;
 
-  private ContractEventListener contractEventListener;
+  private ContractTriggerListener contractTriggerListener;
 
   @Getter
   private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
@@ -410,7 +410,7 @@ public class Manager {
 
     // add contract event listener for subscribing
     if (Args.getInstance().isEventSubscribe()){
-        addContractListener();
+      contractTriggerListener = new ContractTriggerListener();
     }
   }
 
@@ -1622,15 +1622,10 @@ public class Manager {
     revokingStore.setMode(mode);
   }
 
-  private void addContractListener(){
-    contractEventListener = new ContractEventListener() {
-      @Override
-      public void onEvent(ContractEvent event, ContractEvent.EventType type) {
-          logger.info("receive ContractEvent");
+  public void notifyListener(ContractEvent event, ContractEvent.EventType type) {
 
-          // todo: relay the event to plugin
-      }
-    };
+    if (Args.getInstance().isEventSubscribe() && contractTriggerListener != null){
+        contractTriggerListener.onEvent(event, type);
+    }
   }
-
 }
