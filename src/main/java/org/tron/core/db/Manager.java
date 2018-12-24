@@ -418,13 +418,10 @@ public class Manager {
       contractTriggerListener = new ContractTriggerListener();
 
       try{
-        if (Objects.nonNull(Args.getInstance().getEventPluginConfig())) {
-          eventPluginLoaded = EventPluginLoader.getInstance().startPlugin(
-                  Args.getInstance().getEventPluginConfig().getPluginPath());
-        }
+        eventPluginLoaded = EventPluginLoader.getInstance().start(Args.getInstance().getEventPluginConfig());
       }
       catch (Exception e){
-          logger.error("'{}'", e);
+          logger.error("Failed to load eventPlugin, '{}'", e);
       }
     }
   }
@@ -930,11 +927,17 @@ public class Manager {
     EventPluginLoader.getInstance().postTransactionTrigger(trxTrigger);
   }
   private void postBlockTrigger(BlockCapsule block) {
-    BlockLogTrigger trigger = new BlockLogTrigger();
-    trigger.setBlockHash(block.getBlockId().toString());
-    trigger.setTimeStamp(System.currentTimeMillis());
-    trigger.setBlockNumber(block.getNum());
-    EventPluginLoader.getInstance().postBlockTrigger(trigger);
+    try{
+      BlockLogTrigger trigger = new BlockLogTrigger();
+      trigger.setBlockHash(block.getBlockId().toString());
+      trigger.setTimeStamp(System.currentTimeMillis());
+      trigger.setBlockNumber(block.getNum());
+      EventPluginLoader.getInstance().postBlockTrigger(trigger);
+    }
+    catch (Exception e){
+        logger.error("{}", e);
+    }
+
   }
 
   public void updateDynamicProperties(BlockCapsule block) {
