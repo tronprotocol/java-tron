@@ -61,6 +61,7 @@
   <logger name="witness" level="INFO"/>
   <logger name="DB" level="INFO"/>
   <logger name="capsule" level="INFO"/>
+  <logger name="VM" level="INFO"/>
 
 </configuration>
 
