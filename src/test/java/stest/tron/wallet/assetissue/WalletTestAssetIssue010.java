@@ -103,9 +103,11 @@ public class WalletTestAssetIssue010 {
 
     Assert.assertTrue(PublicMethed
         .sendcoin(asset010Address, sendAmount, fromAddress, testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .freezeBalance(asset010Address, 200000000L, 3, testKeyForAssetIssue010,
             blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long start = System.currentTimeMillis() + 2000;
     Long end = System.currentTimeMillis() + 1000000000;
     Assert.assertTrue(PublicMethed.createAssetIssue(asset010Address, name, totalSupply, 1, 1,
@@ -113,6 +115,9 @@ public class WalletTestAssetIssue010 {
         1L, 1L, testKeyForAssetIssue010, blockingStubFull));
 
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account getAssetIdFromThisAccount;
     getAssetIdFromThisAccount = PublicMethed.queryAccount(testKeyForAssetIssue010,blockingStubFull);
     ByteString assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
@@ -132,6 +137,9 @@ public class WalletTestAssetIssue010 {
         .updateAsset(asset010Address, updateDescription.getBytes(), updateUrl.getBytes(),
             updateFreeAssetNetLimit,
             updatePublicFreeAssetNetLimit, testKeyForAssetIssue010, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //After update asset issue ,query the description and url,
     // freeAssetNetLimit and publicFreeAssetNetLimit

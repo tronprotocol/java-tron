@@ -172,6 +172,8 @@ public class ContractLinkage001 {
         payableCode, "", maxFeeLimit, accountBalance, 100, null,
         linkage001Key, linkage001Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Long energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
@@ -238,6 +240,8 @@ public class ContractLinkage001 {
         .deployContractAndGetTransactionInfoById(contractName, payableAbi, payableCode,
             "", maxFeeLimit, 1L, 100, null, linkage001Key,
             linkage001Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById1 = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
@@ -306,6 +310,8 @@ public class ContractLinkage001 {
         maxFeeLimit, valueBalance + 1, 100, null, linkage001Key,
         linkage001Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Assert.assertTrue(contractAddress == null);
     Account infoafter2 = PublicMethed.queryAccount(linkage001Address, blockingStubFull1);
@@ -333,6 +339,7 @@ public class ContractLinkage001 {
     //Value is account all balance.use freezeBalanceGetEnergy ,freezeBalanceGetNet .Balance ==0
     Assert.assertTrue(PublicMethed.freezeBalance(linkage001Address, 5000000L,
         3, linkage001Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     AccountResourceMessage resourceInfo3 = PublicMethed.getAccountResource(linkage001Address,
         blockingStubFull);
     Account info3 = PublicMethed.queryAccount(linkage001Address, blockingStubFull);
@@ -356,6 +363,8 @@ public class ContractLinkage001 {
         .deployContractAndGetTransactionInfoById(contractName, payableAbi, payableCode,
             "", maxFeeLimit, valueBalance, 100, null, linkage001Key,
             linkage001Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
