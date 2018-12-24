@@ -7,10 +7,10 @@ import lombok.Setter;
 
 import java.util.List;
 
-public class BlockLogTrigger {
-    @Getter
-    @Setter
-    private long timeStamp;
+public class BlockLogTrigger extends Trigger {
+    public BlockLogTrigger() {
+      triggerType = BLOCK_TRIGGER;
+    }
 
     @Getter
     @Setter

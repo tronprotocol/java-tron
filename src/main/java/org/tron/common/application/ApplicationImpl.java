@@ -73,7 +73,8 @@ public class ApplicationImpl implements Application {
       closeAllStore();
     }
     closeConnection();
-    dbManager.stopRepushThread();
+    dbManager.stopRepushTransactionThread();
+    dbManager.stopRepushTriggerThread();
     EventPluginLoader.getInstance().stopPlugin();
     logger.info("******** end to shutdown ********");
   }

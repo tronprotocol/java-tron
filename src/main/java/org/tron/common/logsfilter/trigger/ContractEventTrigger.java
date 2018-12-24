@@ -5,10 +5,10 @@ import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 
-public class ContractEventTrigger {
-  @Getter
-  @Setter
-  private long timeStamp;
+public class ContractEventTrigger extends Trigger{
+  public ContractEventTrigger() {
+    triggerType = CONTRACTEVENT_TRIGGER;
+  }
 
   @Getter
   @Setter

@@ -2,15 +2,16 @@ package org.tron.common.logsfilter.trigger;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.tron.common.utils.Sha256Hash;
-import org.tron.core.capsule.BlockCapsule.BlockId;
 
-public class TransactionLogTrigger {
+public class TransactionLogTrigger extends Trigger{
 
-    @Getter
-    @Setter
-    private long timestamp;
+    public TransactionLogTrigger() {
+      triggerType = TRANSACTION_TRIGGER;
+    }
 
+    public void setTimestamp(long ts) {
+        timeStamp = ts;
+    }
     @Getter
     @Setter
     private String transactionId;
