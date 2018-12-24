@@ -52,9 +52,7 @@ public class WalletTestAccount003 {
   String mostLongNamePlusOneChar = "1abcdeabcdefabcdefg1abcdefg10o0og1abcdefg10o0oabcd"
       + "efabcdefg1abcdefg10o0og1abcdefg10o0oabcdefabcdefg1abcdefg10o0og1abcdefg10o0oab"
       + "cdefabcdefg1abcdefg10o0og1abcdefg10o0ofabcdefg1abcdefg10o0og1abcdefg10o0o";
-  String mostLongName = "abcdeabcdefabcdefg1abcdefg10o0og1abcdefg10o0oabcd"
-      + "efabcdefg1abcdefg10o0og1abcdefg10o0oabcdefabcdefg1abcdefg10o0og1abcdefg10o0oab"
-      + "cdefabcdefg1abcdefg10o0og1abcdefg10o0ofabcdefg1abcdefg10o0og1abcdefg10o0o";
+
   String description = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.assetDescription");
   String url = Configuration.getByPath("testng.conf")

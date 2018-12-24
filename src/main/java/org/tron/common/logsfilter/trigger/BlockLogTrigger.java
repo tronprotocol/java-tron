@@ -1,6 +1,7 @@
 package org.tron.common.logsfilter.trigger;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,10 +22,24 @@ public class BlockLogTrigger {
 
     @Getter
     @Setter
-    private String transactionSize;
+    private long transactionSize;
 
     @Getter
     @Setter
     private List<String> transactionList;
+
+    @Override
+    public String toString(){
+        return new StringBuilder().append("timestamp: ")
+                .append(timeStamp)
+                .append(", blockNumber: ")
+                .append(blockNumber)
+                .append(", blockhash: ")
+                .append(blockHash)
+                .append(", transaction size: ")
+                .append(transactionSize)
+                .append(", transaction list: ")
+                .append(transactionList).toString();
+    }
 
 }

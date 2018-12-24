@@ -5,7 +5,7 @@ import lombok.Setter;
 
 public class ContractEvent {
 
-  enum  EventType {
+  public enum  EventType {
     BASIC_LOG,           // Successfully generated block
     EMIT_EVENT,
   }

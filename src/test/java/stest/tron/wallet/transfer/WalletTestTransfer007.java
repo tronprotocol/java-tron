@@ -80,7 +80,8 @@ public class WalletTestTransfer007 {
     /*    channelSolidityInFullnode = ManagedChannelBuilder.forTarget(solidityInFullnode)
         .usePlaintext(true)
         .build();
-    blockingStubSolidityInFullnode = WalletSolidityGrpc.newBlockingStub(channelSolidityInFullnode);*/
+    blockingStubSolidityInFullnode = WalletSolidityGrpc.newBlockingStub(channelSolidityInFullnode);
+    */
   }
 
 
@@ -101,7 +102,6 @@ public class WalletTestTransfer007 {
     String transactionId = PublicMethed.sendcoinGetTransactionId(sendAccountAddress, 90000000000L,
         fromAddress, testKey002, blockingStubFull);
     PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSolidity);
-    //PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSolidityInFullnode);
 
     Optional<Transaction> infoById = PublicMethed
         .getTransactionById(transactionId, blockingStubSolidity);

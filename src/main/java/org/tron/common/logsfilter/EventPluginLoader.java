@@ -1,7 +1,13 @@
 package org.tron.common.logsfilter;
 
+import java.util.Map;
+import java.util.Objects;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.pf4j.*;
+import org.springframework.util.StringUtils;
 import org.tron.common.logsfilter.trigger.BlockLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
@@ -17,31 +23,60 @@ public class EventPluginLoader {
 
     private PluginManager pluginManager = null;
 
-    private String pluginPath = "";
+    private List<IPluginEventListener> eventListeners;
 
-    List<IPluginEventListener> eventListeners;
+    private ObjectMapper objectMapper = new ObjectMapper();
+
+    private String serverAddress;
+
+    private String pluginPath;
+
+    private List<TriggerConfig> triggerConfigList;
+
+    private Map<Integer, TriggerConfig> triggerConfigMap;
+
 
     public static EventPluginLoader getInstance(){
-        if (instance == null){
-            instance = new EventPluginLoader();
+        if (Objects.isNull(instance)){
+            synchronized(EventPluginLoader.class) {
+                if (Objects.isNull(instance)) {
+                    instance = new EventPluginLoader();
+                }
+            }
         }
-
         return instance;
     }
 
-    public boolean startPlugin(String path){
-        logger.info("Load plugin'{}'", path);
+    public boolean start(EventPluginConfig config){
+        boolean success = false;
 
-        this.pluginPath = path;
-
-        File pluginPath = new File(path);
-
-        if (false == pluginPath.exists()){
-            logger.error("'{}' doesn't exist", path);
-            return false;
+        if (Objects.isNull(config)){
+            return success;
         }
 
-        if (pluginManager == null){
+        this.pluginPath = config.getPluginPath();
+        this.serverAddress = config.getServerAddress();
+        triggerConfigList = config.getTriggerConfigList();
+
+        if (false == startPlugin(this.pluginPath)){
+            logger.error("failed to load '{}'", this.pluginPath);
+            return success;
+        }
+
+        return true;
+    }
+
+    public boolean startPlugin(String path){
+        boolean loaded = false;
+        logger.info("start loading '{}'", path);
+
+        File pluginPath = new File(path);
+        if (false == pluginPath.exists()){
+            logger.error("'{}' doesn't exist", path);
+            return loaded;
+        }
+
+        if (Objects.isNull(pluginManager)){
 
             pluginManager = new DefaultPluginManager(pluginPath.toPath()) {
                 @Override
@@ -52,84 +87,120 @@ public class EventPluginLoader {
             };
         }
 
+        if (Objects.isNull(pluginManager)){
+            logger.error("PluginManager is null");
+            return loaded;
+        }
 
-        pluginManager.loadPlugin(pluginPath.toPath());
+        String pluginID = pluginManager.loadPlugin(pluginPath.toPath());
+        if (StringUtils.isEmpty(pluginID)){
+            logger.error("invalid pluginID");
+            return loaded;
+        }
 
         pluginManager.startPlugins();
 
         eventListeners = pluginManager.getExtensions(IPluginEventListener.class);
 
+        if (Objects.isNull(eventListeners) || eventListeners.size() == 0){
+            logger.error("No eventListener is registered");
+            return loaded;
+        }
+
+        loaded = true;
+
         logger.info("'{}' loaded", path);
 
-        return true;
+        return loaded;
     }
 
     public void stopPlugin(){
-        if (pluginManager == null){
+        if (Objects.isNull(pluginManager)){
             logger.info("pluginManager is null");
             return;
         }
 
         pluginManager.stopPlugins();
-        logger.info("'{}' stopped", pluginPath);
-    }
-
-    private void printPluginInfo(){
-        if (pluginManager == null){
-            return;
-        }
-
-        List<PluginWrapper> startedPlugins = pluginManager.getStartedPlugins();
-        for (PluginWrapper plugin : startedPlugins) {
-            String pluginId = plugin.getDescriptor().getPluginId();
-            logger.info(String.format("Extensions added by plugin '%s':", pluginId));
-        }
+        logger.info("eventPlugin stopped");
     }
 
     public void postBlockTrigger(BlockLogTrigger trigger){
-        for (IPluginEventListener listener : eventListeners) {
-            listener.handleBlockEvent(trigger);
-        }
+        if (Objects.isNull(eventListeners))
+            return;
+
+        eventListeners.forEach(listener -> {
+            listener.handleBlockEvent(toJsonString(trigger));
+        });
     }
 
     public void postTransactionTrigger(TransactionLogTrigger trigger){
-        for (IPluginEventListener listener : eventListeners) {
-            listener.handleTransactionTrigger(trigger);
-        }
+        if (Objects.isNull(eventListeners))
+            return;
+
+        eventListeners.forEach(listener -> {
+            listener.handleTransactionTrigger(toJsonString(trigger));
+        });
     }
 
     public void postContractLogTrigger(ContractLogTrigger trigger){
-        for (IPluginEventListener listener : eventListeners) {
-            listener.handleContractLogTrigger(trigger);
-        }
+        if (Objects.isNull(eventListeners))
+            return;
+
+        eventListeners.forEach(listener -> {
+            listener.handleContractLogTrigger(toJsonString(trigger));
+        });
     }
 
     public void postContractEventTrigger(ContractEventTrigger trigger){
-        for (IPluginEventListener listener : eventListeners) {
-            listener.handleContractEventTrigger(trigger);
-        }
+        if (Objects.isNull(eventListeners))
+            return;
+
+        eventListeners.forEach(listener -> {
+            listener.handleContractEventTrigger(toJsonString(trigger));
+        });
     }
 
+    private String toJsonString(Object data){
+        String jsonData = "";
+
+        try {
+            jsonData = objectMapper.writeValueAsString(data);
+        } catch (JsonProcessingException e) {
+            logger.error("'{}'", e);
+        }
+
+        return jsonData;
+    }
 
     public static void main(String[] args) {
 
-        String path = "/Users/tron/sourcecode/pf4j/eventplugin/plugins/kafkaplugin/build/libs/kafkaplugin-1.0.0.jar";
+        String path = "/Users/tron/sourcecode/eventplugin/plugins/kafkaplugin/build/libs/plugin-kafka-1.0.0.zip";
 
-        EventPluginLoader.getInstance().startPlugin(path);
+        boolean loaded = EventPluginLoader.getInstance().startPlugin(path);
 
-        EventPluginLoader.getInstance().printPluginInfo();
+        if (!loaded){
+            logger.error("failed to load '{}'", path);
+            return;
+        }
 
+        for (int index = 0; index < 1000; ++index){
+            BlockLogTrigger trigger = new BlockLogTrigger();
+            trigger.setBlockHash("0X123456789A");
+            trigger.setTimeStamp(System.currentTimeMillis());
+            trigger.setBlockNumber(index);
+            EventPluginLoader.getInstance().postBlockTrigger(trigger);
+        }
 
-        BlockLogTrigger trigger = new BlockLogTrigger();
-        trigger.setBlockHash("block hash");
-        trigger.setBlockNumber(1000000);
-        trigger.setTimeStamp(System.currentTimeMillis());
+        //EventPluginLoader.getInstance().stopPlugin();
 
-        EventPluginLoader.getInstance().postBlockTrigger(trigger);
-
-        EventPluginLoader.getInstance().stopPlugin();
+        while (true){
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
-
 }
 
 
