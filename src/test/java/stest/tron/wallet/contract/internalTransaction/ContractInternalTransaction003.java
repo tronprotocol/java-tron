@@ -267,6 +267,9 @@ public class ContractInternalTransaction003 {
         .deployContract(contractName2, abi2, code2, "", maxFeeLimit,
             1000000L, 100, null, testKeyForinternalTxsAddress,
             internalTxsAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String initParmes = "\"" + Base58.encode58Check(contractAddress1)
         + "\",\"" + Base58.encode58Check(contractAddress2) + "\"";
     String txid = "";
