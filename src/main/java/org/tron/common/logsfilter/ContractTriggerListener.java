@@ -7,7 +7,7 @@ import org.tron.common.runtime.vm.event.ContractEventListener;
 @Slf4j
 public class ContractTriggerListener implements ContractEventListener {
     @Override
-    public synchronized void onEvent(ContractEvent event, ContractEvent.EventType type) {
+    public synchronized void onEvent(ContractEvent event) {
         logger.info("receive contractEvent");
     }
 }
