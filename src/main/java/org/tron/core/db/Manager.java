@@ -925,7 +925,7 @@ public class Manager {
           applyBlock(newBlock);
           tmpSession.commit();
           if (eventPluginLoaded) {
-            repushTriggers.put(EventPluginLoader
+            this.getRepushTrigger().put(EventPluginLoader
                .getInstance().toBlockLogTrigger(newBlock));
           }
         } catch (InterruptedException e) {
@@ -945,6 +945,21 @@ public class Manager {
         System.currentTimeMillis() - start,
         block.getTransactions().size());
 
+  }
+
+  private void addTransactionTrigger(TransactionCapsule trx, BlockCapsule blockCapsule) {
+    TransactionLogTrigger trxTrigger = new TransactionLogTrigger();
+    if (Objects.nonNull(blockCapsule)) {
+      trxTrigger.setBlockId(blockCapsule.getBlockId().toString());
+    }
+    trxTrigger.setTransactionId(trx.getTransactionId().toString());
+    trxTrigger.setTimestamp(trx.getTimestamp());
+    try {
+      repushTriggers.put(trxTrigger);
+    } catch (InterruptedException e) {
+      logger.error(e.getMessage());
+      Thread.currentThread().interrupt();
+    }
   }
 
   public void updateDynamicProperties(BlockCapsule block) {
@@ -1126,7 +1141,7 @@ public class Manager {
 
     if (eventPluginLoaded) {
       try {
-        repushTriggers.put(EventPluginLoader
+        this.getRepushTrigger().put(EventPluginLoader
           .getInstance().toTransactionLogTrigger(trxCap, blockCap));
       } catch (InterruptedException e) {
         logger.error(e.getMessage());
