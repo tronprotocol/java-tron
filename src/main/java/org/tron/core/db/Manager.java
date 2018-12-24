@@ -1665,10 +1665,10 @@ public class Manager {
     revokingStore.setMode(mode);
   }
 
-  public void notifyListener(ContractEvent event, ContractEvent.EventType type) {
+  public void notifyTriggerListener(ContractEvent event) {
 
     if (Args.getInstance().isEventSubscribe() && contractTriggerListener != null){
-        contractTriggerListener.onEvent(event, type);
+        contractTriggerListener.onEvent(event);
     }
   }
 }
