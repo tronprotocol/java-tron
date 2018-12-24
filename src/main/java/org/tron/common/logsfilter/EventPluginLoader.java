@@ -37,6 +37,11 @@ public class EventPluginLoader {
         return instance;
     }
 
+    public boolean start(EventPluginConfig config){
+
+        return false;
+    }
+
     public boolean startPlugin(String path){
         boolean loaded = false;
         logger.info("start loading '{}'", path);
@@ -145,7 +150,7 @@ public class EventPluginLoader {
 
     public static void main(String[] args) {
 
-        String path = " /Users/tron/sourcecode/eventplugin/plugins/kafkaplugin/build/libs/plugin-kafka-1.0.0.zip";
+        String path = "/Users/tron/sourcecode/eventplugin/plugins/kafkaplugin/build/libs/plugin-kafka-1.0.0.zip";
 
         boolean loaded = EventPluginLoader.getInstance().startPlugin(path);
 
@@ -172,7 +177,6 @@ public class EventPluginLoader {
             }
         }
     }
-
 }
 
 
