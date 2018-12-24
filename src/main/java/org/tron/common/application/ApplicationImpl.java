@@ -3,6 +3,7 @@ package org.tron.common.application;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
@@ -73,6 +74,7 @@ public class ApplicationImpl implements Application {
     }
     closeConnection();
     dbManager.stopRepushThread();
+    EventPluginLoader.getInstance().stopPlugin();
     logger.info("******** end to shutdown ********");
   }
 

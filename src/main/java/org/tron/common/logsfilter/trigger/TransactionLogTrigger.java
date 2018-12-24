@@ -2,6 +2,8 @@ package org.tron.common.logsfilter.trigger;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.tron.common.utils.Sha256Hash;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 
 public class TransactionLogTrigger {
 
@@ -11,7 +13,7 @@ public class TransactionLogTrigger {
 
     @Getter
     @Setter
-    private long transactionId;
+    private Sha256Hash transactionId;
 
     @Getter
     @Setter
@@ -19,5 +21,5 @@ public class TransactionLogTrigger {
 
     @Getter
     @Setter
-    private long blockId;
+    private BlockId blockId;
 }
