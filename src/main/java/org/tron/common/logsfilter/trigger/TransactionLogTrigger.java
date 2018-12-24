@@ -13,7 +13,7 @@ public class TransactionLogTrigger {
 
     @Getter
     @Setter
-    private Sha256Hash transactionId;
+    private String transactionId;
 
     @Getter
     @Setter
@@ -21,5 +21,5 @@ public class TransactionLogTrigger {
 
     @Getter
     @Setter
-    private BlockId blockId;
+    private String blockId;
 }
