@@ -294,6 +294,73 @@ public class VerifyingKey {
     return vk;
   }
 
+
+    // load verify from file
+    public static VerifyingKey initVkFromFileRaw() throws Exception {
+        if (vk == null) {
+            vk = new VerifyingKey();
+            File file = new File("sprout-verifying.key");
+            Long filelength = file.length();
+            System.out.println("file size: " + filelength);
+            byte[] filecontent = new byte[filelength.intValue()];
+            try {
+                FileInputStream in = new FileInputStream(file);
+                in.read(filecontent);
+                int startPos = 0;
+
+                //A (x>y 0>1)
+                vk.A = readG2Raw(startPos, filecontent);
+                startPos += 129;
+
+                //B
+                vk.B  = readG1Raw(startPos, filecontent);
+                startPos += 65;
+
+                //C
+                vk.C = readG2Raw(startPos, filecontent);
+                startPos += 129;
+
+                //gamma_g2
+                vk.gamma = readG2Raw(startPos, filecontent);
+                startPos += 129;
+
+                //gamma_beta_g1
+                vk.gammaBeta1 = readG1Raw(startPos, filecontent);
+                startPos += 65;
+
+                //gamma_beta_g2
+                vk.gammaBeta2 = readG2Raw(startPos, filecontent);
+                startPos += 129;
+
+                //rC_Z_g2
+                vk.Z = readG2Raw(startPos, filecontent);
+                startPos += 129;
+
+                vk.IC = new G1Point[10];
+                vk.IC[0] = readG1Raw(startPos, filecontent);
+                startPos += 65;
+
+                // 1-10
+                startPos += 24;
+                for(int i=1; i<10; i++) {
+                    vk.IC[i] = readG1Raw(startPos, filecontent);
+                    startPos += 65;
+                }
+
+                if ( startPos != filelength.intValue() ) {
+                    System.out.println("init vk failure!");
+                    return null;
+                }
+                in.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return vk;
+    }
+
   public static boolean checkG1Poin(G1Point g1) {
     BN128G1 g11 = g1.toBN128G1();
     if (g11 == null) {
@@ -407,7 +474,74 @@ public class VerifyingKey {
   }
 
 
+    public static G1Point readG1Raw( int startPos, final byte[] filecontent ) throws Exception {
+        byte[] cx = new byte[32];
+        byte[] cy = new byte[32];
+        startPos += 1;
+        System.arraycopy(filecontent, startPos, cx, 0, cx.length);
+        startPos += 32;
+        System.arraycopy(filecontent, startPos, cy, 0, cy.length);
+        startPos += 32;
+
+        ZksnarkUtils.sort(cx);
+        ZksnarkUtils.sort(cy);
+
+//        System.out.println((new BigInteger(cx)).toString(10));
+//        System.out.println((new BigInteger(cy)).toString(10));
+//        System.out.println("");
+
+        BigInteger x = MulReduce.mul_reduce(new BigInteger(cx), BigInteger.ONE);
+        BigInteger y = MulReduce.mul_reduce(new BigInteger(cy), BigInteger.ONE);
+
+        System.out.println(x.toString(10));
+        System.out.println(y.toString(10));
+        System.out.println("");
+
+        return new G1Point(x, y);
+    }
+
+    public static G2Point readG2Raw( int startPos, final byte[] filecontent  ) throws Exception {
+        byte[] cx0 = new byte[32];
+        byte[] cx1 = new byte[32];
+        byte[] cy0 = new byte[32];
+        byte[] cy1 = new byte[32];
+        startPos += 1;
+        System.arraycopy(filecontent, startPos, cx0, 0, cx0.length);
+        startPos += 32;
+        System.arraycopy(filecontent, startPos, cx1, 0, cx1.length);
+        startPos += 32;
+        System.arraycopy(filecontent, startPos, cy0, 0, cy0.length);
+        startPos += 32;
+        System.arraycopy(filecontent, startPos, cy1, 0, cy1.length);
+        startPos += 32;
+
+        ZksnarkUtils.sort(cx0);
+        ZksnarkUtils.sort(cx1);
+        ZksnarkUtils.sort(cy0);
+        ZksnarkUtils.sort(cy1);
+
+//        System.out.println((new BigInteger(cx1)).toString(10));
+//        System.out.println((new BigInteger(cx0)).toString(10));
+//        System.out.println((new BigInteger(cy1)).toString(10));
+//        System.out.println((new BigInteger(cy0)).toString(10));
+//        System.out.println("");
+
+        BigInteger x1 = MulReduce.mul_reduce(new BigInteger(cx1), BigInteger.ONE);
+        BigInteger x0 = MulReduce.mul_reduce(new BigInteger(cx0), BigInteger.ONE);
+        BigInteger y1 = MulReduce.mul_reduce(new BigInteger(cy1), BigInteger.ONE);
+        BigInteger y0 = MulReduce.mul_reduce(new BigInteger(cy0), BigInteger.ONE);
+
+        System.out.println(x1.toString(10));
+        System.out.println(x0.toString(10));
+        System.out.println(y1.toString(10));
+        System.out.println(y0.toString(10));
+        System.out.println("");
+
+        return new G2Point(x1, x0, y1, y0);
+    }
+
+
   public static void main(String[] args) throws Exception {
-    initVkFromFile();
+      initVkFromFileRaw();
   }
 }
