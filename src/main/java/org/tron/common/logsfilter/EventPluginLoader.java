@@ -114,7 +114,7 @@ public class EventPluginLoader {
     }
 
 
-    public boolean startPlugin(String path){
+    private boolean startPlugin(String path){
         boolean loaded = false;
         logger.info("start loading '{}'", path);
 
