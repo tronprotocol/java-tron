@@ -909,8 +909,7 @@ public class Manager {
       }
       logger.info("save block: " + newBlock);
     }
-
-
+    
     logger.info("pushBlock block number:{}, cost/txs:{}/{}",
         block.getNum(),
         System.currentTimeMillis() - start,
