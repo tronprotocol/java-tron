@@ -39,8 +39,7 @@ public class EventPluginLoader {
 
     public boolean startPlugin(String path){
         boolean loaded = false;
-
-        logger.info("start loading event plugin: '{}'", path);
+        logger.info("start loading '{}'", path);
 
         File pluginPath = new File(path);
         if (false == pluginPath.exists()){
@@ -60,7 +59,7 @@ public class EventPluginLoader {
         }
 
         if (Objects.isNull(pluginManager)){
-            logger.error("Evetn PluginManager is null");
+            logger.error("PluginManager is null");
             return loaded;
         }
 
@@ -75,7 +74,7 @@ public class EventPluginLoader {
         eventListeners = pluginManager.getExtensions(IPluginEventListener.class);
 
         if (Objects.isNull(eventListeners) || eventListeners.size() == 0){
-            logger.error("No event listener is registered");
+            logger.error("No eventListener is registered");
             return loaded;
         }
 
@@ -93,7 +92,7 @@ public class EventPluginLoader {
         }
 
         pluginManager.stopPlugins();
-        logger.info("event plugin stopped");
+        logger.info("eventPlugin stopped");
     }
 
     public void postBlockTrigger(BlockLogTrigger trigger){
@@ -126,6 +125,7 @@ public class EventPluginLoader {
     public void postContractEventTrigger(ContractEventTrigger trigger){
         if (Objects.isNull(eventListeners))
             return;
+
         eventListeners.forEach(listener -> {
             listener.handleContractEventTrigger(toJsonString(trigger));
         });
@@ -145,7 +145,7 @@ public class EventPluginLoader {
 
     public static void main(String[] args) {
 
-        String path = "/Users/tron/sourcecode/eventplugin/plugins/kafkaplugin/build/libs/plugin-kafka-1.0.0.zip";
+        String path = " /Users/tron/sourcecode/eventplugin/plugins/kafkaplugin/build/libs/plugin-kafka-1.0.0.zip";
 
         boolean loaded = EventPluginLoader.getInstance().startPlugin(path);
 
