@@ -215,7 +215,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(
           new ServletHolder(getPaginatedAssetIssueListServlet), "/getpaginatedassetissuelist");
       context.addServlet(
-          new ServletHolder(getPaginatedProposalListServlet), "/getpaginatedproposalist");
+          new ServletHolder(getPaginatedProposalListServlet), "/getpaginatedproposallist");
       context.addServlet(
           new ServletHolder(getPaginatedExchangeListServlet), "/getpaginatedexchangelist");
       context.addServlet(new ServletHolder(totalTransactionServlet), "/totaltransaction");
