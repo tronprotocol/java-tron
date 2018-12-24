@@ -11,6 +11,8 @@ import org.tron.common.logsfilter.trigger.*;
 
 import java.io.File;
 import java.util.List;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 
 @Slf4j
 public class EventPluginLoader {
@@ -168,6 +170,24 @@ public class EventPluginLoader {
         logger.info("eventPlugin stopped");
     }
 
+    public BlockLogTrigger toBlockLogTrigger(BlockCapsule block) {
+        BlockLogTrigger tigger = new BlockLogTrigger();
+        tigger.setBlockHash(block.getBlockId().toString());
+        tigger.setTimeStamp(System.currentTimeMillis());
+        tigger.setBlockNumber(block.getNum());
+        return tigger;
+    }
+
+    public TransactionLogTrigger toTransactionLogTrigger(TransactionCapsule trx, BlockCapsule blockCapsule) {
+        TransactionLogTrigger trxTrigger = new TransactionLogTrigger();
+        if (Objects.nonNull(blockCapsule)) {
+            trxTrigger.setBlockId(blockCapsule.getBlockId().toString());
+        }
+        trxTrigger.setTransactionId(trx.getTransactionId().toString());
+        trxTrigger.setTimestamp(trx.getTimestamp());
+        return trxTrigger;
+    }
+
     public void postBlockTrigger(BlockLogTrigger trigger){
         if (Objects.isNull(eventListeners))
             return;
@@ -218,21 +238,38 @@ public class EventPluginLoader {
 
     public static void main(String[] args) {
 
-        String path = "/Users/tron/sourcecode/eventplugin/plugins/kafkaplugin/build/libs/plugin-kafka-1.0.0.zip";
+        EventPluginConfig config = new EventPluginConfig();
+        config.setServerAddress("127.0.0.1:9092");
+        config.setPluginPath("/Users/tron/sourcecode/eventplugin/plugins/kafkaplugin/build/libs/plugin-kafka-1.0.0.zip");
 
-        boolean loaded = EventPluginLoader.getInstance().startPlugin(path);
+        TriggerConfig triggerConfig = new TriggerConfig();
+        triggerConfig.setTopic("transaction");
+        triggerConfig.setEnabled(true);
+        triggerConfig.setTriggerName("transaction");
+
+        config.getTriggerConfigList().add(triggerConfig);
+
+
+        boolean loaded = EventPluginLoader.getInstance().start(config);
 
         if (!loaded){
-            logger.error("failed to load '{}'", path);
+            logger.error("failed to load '{}'", config.getServerAddress());
             return;
         }
 
-        for (int index = 0; index < 1000; ++index){
-            BlockLogTrigger trigger = new BlockLogTrigger();
+        for (int index = 0; index < 2000; ++index){
+            /*BlockLogTrigger trigger = new BlockLogTrigger();
             trigger.setBlockHash("0X123456789A");
             trigger.setTimeStamp(System.currentTimeMillis());
             trigger.setBlockNumber(index);
-            EventPluginLoader.getInstance().postBlockTrigger(trigger);
+            EventPluginLoader.getInstance().postBlockTrigger(trigger);*/
+
+            TransactionLogTrigger trigger = new TransactionLogTrigger();
+            trigger.setBlockId(String.valueOf(index));
+            trigger.setTimestamp(System.currentTimeMillis());
+            trigger.setTransactionHash("XXXXXX");
+
+            EventPluginLoader.getInstance().postTransactionTrigger(trigger);
         }
 
         //EventPluginLoader.getInstance().stopPlugin();

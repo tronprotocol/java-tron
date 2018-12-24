@@ -1,8 +1,11 @@
 package org.tron.common.logsfilter.trigger;
 
+import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.logsfilter.EventPluginLoader;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 
 public class TransactionLogTrigger extends Trigger{
     public void setTimestamp(long ts) {

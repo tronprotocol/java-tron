@@ -2,7 +2,7 @@ package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
-import static org.tron.common.logsfilter.trigger.Trigger.*;
+
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
@@ -37,9 +37,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.logsfilter.ContractTriggerListener;
 import org.tron.common.logsfilter.EventPluginLoader;
-import org.tron.common.logsfilter.trigger.BlockLogTrigger;
-import org.tron.common.logsfilter.trigger.ContractEventTrigger;
-import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
 import org.tron.common.logsfilter.trigger.Trigger;
 import org.tron.common.overlay.discover.node.Node;
@@ -732,8 +729,6 @@ public class Manager {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
-
-
     updateFork(block);
     if (System.currentTimeMillis() - block.getTimeStamp() >= 60_000) {
       revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MAX_FLUSH_COUNT);
@@ -930,8 +925,12 @@ public class Manager {
           applyBlock(newBlock);
           tmpSession.commit();
           if (eventPluginLoaded) {
-            addBlockTrigger(newBlock);
+            repushTriggers.put(EventPluginLoader
+               .getInstance().toBlockLogTrigger(newBlock));
           }
+        } catch (InterruptedException e) {
+          logger.error(e.getMessage());
+          Thread.currentThread().interrupt();
         } catch (Throwable throwable) {
           logger.error(throwable.getMessage(), throwable);
           khaosDb.removeBlk(block.getBlockId());
@@ -946,35 +945,6 @@ public class Manager {
         System.currentTimeMillis() - start,
         block.getTransactions().size());
 
-
-  }
-
-  private void addTransactionTrigger(TransactionCapsule trx, BlockCapsule blockCapsule) {
-    TransactionLogTrigger trxTrigger = new TransactionLogTrigger();
-    if (Objects.nonNull(blockCapsule)) {
-      trxTrigger.setBlockId(blockCapsule.getBlockId().toString());
-    }
-    trxTrigger.setTransactionId(trx.getTransactionId().toString());
-    trxTrigger.setTimestamp(trx.getTimestamp());
-    try {
-      repushTriggers.put(trxTrigger);
-    } catch (InterruptedException e) {
-      logger.error(e.getMessage());
-      Thread.currentThread().interrupt();
-    }
-  }
-
-  private void addBlockTrigger(BlockCapsule block) {
-    BlockLogTrigger trigger = new BlockLogTrigger();
-    trigger.setBlockHash(block.getBlockId().toString());
-    trigger.setTimeStamp(System.currentTimeMillis());
-    trigger.setBlockNumber(block.getNum());
-    try {
-      repushTriggers.put(trigger);
-    } catch (InterruptedException e) {
-      logger.error(e.getMessage());
-      Thread.currentThread().interrupt();
-    }
   }
 
   public void updateDynamicProperties(BlockCapsule block) {
@@ -1152,10 +1122,16 @@ public class Manager {
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
         .buildInstance(trxCap, blockCap, trace);
-
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
+
     if (eventPluginLoaded) {
-      addTransactionTrigger(trxCap, blockCap);
+      try {
+        repushTriggers.put(EventPluginLoader
+          .getInstance().toTransactionLogTrigger(trxCap, blockCap));
+      } catch (InterruptedException e) {
+        logger.error(e.getMessage());
+        Thread.currentThread().interrupt();
+      }
     }
 
     return true;
