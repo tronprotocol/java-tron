@@ -909,7 +909,7 @@ public class Manager {
       }
       logger.info("save block: " + newBlock);
     }
-    
+
     logger.info("pushBlock block number:{}, cost/txs:{}/{}",
         block.getNum(),
         System.currentTimeMillis() - start,
@@ -921,9 +921,9 @@ public class Manager {
   private void postTransactionTrigger(TransactionCapsule trx, BlockCapsule blockCapsule) {
     TransactionLogTrigger trxTrigger = new TransactionLogTrigger();
     if (Objects.nonNull(blockCapsule)) {
-      trxTrigger.setBlockId(blockCapsule.getBlockId());
+      trxTrigger.setBlockId(blockCapsule.getBlockId().toString());
     }
-    trxTrigger.setTransactionId(trx.getTransactionId());
+    trxTrigger.setTransactionId(trx.getTransactionId().toString());
     trxTrigger.setTimestamp(trx.getTimestamp());
     EventPluginLoader.getInstance().postTransactionTrigger(trxTrigger);
   }
