@@ -1,5 +1,6 @@
 package org.tron.common.logsfilter;
 
+import java.util.Map;
 import java.util.Objects;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -26,6 +27,15 @@ public class EventPluginLoader {
 
     private ObjectMapper objectMapper = new ObjectMapper();
 
+    private String serverAddress;
+
+    private String pluginPath;
+
+    private List<TriggerConfig> triggerConfigList;
+
+    private Map<Integer, TriggerConfig> triggerConfigMap;
+
+
     public static EventPluginLoader getInstance(){
         if (Objects.isNull(instance)){
             synchronized(EventPluginLoader.class) {
@@ -38,8 +48,22 @@ public class EventPluginLoader {
     }
 
     public boolean start(EventPluginConfig config){
+        boolean success = false;
 
-        return false;
+        if (Objects.isNull(config)){
+            return success;
+        }
+
+        this.pluginPath = config.getPluginPath();
+        this.serverAddress = config.getServerAddress();
+        triggerConfigList = config.getTriggerConfigList();
+
+        if (false == startPlugin(this.pluginPath)){
+            logger.error("failed to load '{}'", this.pluginPath);
+            return success;
+        }
+
+        return true;
     }
 
     public boolean startPlugin(String path){

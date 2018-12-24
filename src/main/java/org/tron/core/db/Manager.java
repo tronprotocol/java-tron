@@ -38,6 +38,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.config.VMConfig;
+import org.tron.common.runtime.vm.event.ContractEvent;
+import org.tron.common.runtime.vm.event.ContractEventListener;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.SessionOptional;
@@ -182,6 +184,8 @@ public class Manager {
   private Thread repushThread;
 
   private boolean isRunRepushThread = true;
+
+  private ContractEventListener contractEventListener;
 
   @Getter
   private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
@@ -403,6 +407,11 @@ public class Manager {
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
     repushThread = new Thread(repushLoop);
     repushThread.start();
+
+    // add contract event listener for subscribing
+    if (Args.getInstance().isEventSubscribe()){
+        addContractListener();
+    }
   }
 
   public BlockId getGenesisBlockId() {
@@ -1611,6 +1620,17 @@ public class Manager {
 
   public void setMode(boolean mode) {
     revokingStore.setMode(mode);
+  }
+
+  private void addContractListener(){
+    contractEventListener = new ContractEventListener() {
+      @Override
+      public void onEvent(ContractEvent event, ContractEvent.EventType type) {
+          logger.info("receive ContractEvent");
+
+          // todo: relay the event to plugin
+      }
+    };
   }
 
 }
