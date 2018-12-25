@@ -37,6 +37,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.logsfilter.ContractTriggerListener;
 import org.tron.common.logsfilter.EventPluginLoader;
+import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
+import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
+import org.tron.common.logsfilter.capsule.TriggerCapsule;
+import org.tron.common.logsfilter.trigger.BlockLogTrigger;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
 import org.tron.common.logsfilter.trigger.Trigger;
 import org.tron.common.overlay.discover.node.Node;
@@ -291,7 +295,7 @@ public class Manager {
     return repushTransactions;
   }
 
-  public BlockingQueue<Trigger> getRepushTrigger() {
+  public BlockingQueue<TriggerCapsule> getRepushTrigger() {
     return repushTriggers;
   }
 
@@ -305,7 +309,7 @@ public class Manager {
   // the capacity is equal to Integer.MAX_VALUE default
   private BlockingQueue<TransactionCapsule> repushTransactions;
 
-  private BlockingQueue<Trigger> repushTriggers;
+  private BlockingQueue<TriggerCapsule> repushTriggers;
 
   // for test only
   public List<ByteString> getWitnesses() {
@@ -382,9 +386,9 @@ public class Manager {
     () -> {
       while (isRunRepushTriggerThread) {
         try {
-          Trigger tigger = this.getRepushTrigger().poll(1, TimeUnit.SECONDS);
-          if (tigger != null) {
-            tigger.processTrigger();
+          TriggerCapsule tiggerCapsule = this.getRepushTrigger().poll(1, TimeUnit.SECONDS);
+          if (tiggerCapsule != null) {
+            tiggerCapsule.processTrigger();
           }
         } catch (InterruptedException ex) {
           logger.info(ex.getMessage());
@@ -925,8 +929,7 @@ public class Manager {
           applyBlock(newBlock);
           tmpSession.commit();
           if (eventPluginLoaded) {
-            this.getRepushTrigger().put(EventPluginLoader
-               .getInstance().toBlockLogTrigger(newBlock));
+            this.getRepushTrigger().put(new BlockLogTriggerCapsule(newBlock));
           }
         } catch (InterruptedException e) {
           logger.error(e.getMessage());
@@ -945,21 +948,6 @@ public class Manager {
         System.currentTimeMillis() - start,
         block.getTransactions().size());
 
-  }
-
-  private void addTransactionTrigger(TransactionCapsule trx, BlockCapsule blockCapsule) {
-    TransactionLogTrigger trxTrigger = new TransactionLogTrigger();
-    if (Objects.nonNull(blockCapsule)) {
-      trxTrigger.setBlockId(blockCapsule.getBlockId().toString());
-    }
-    trxTrigger.setTransactionId(trx.getTransactionId().toString());
-    trxTrigger.setTimestamp(trx.getTimestamp());
-    try {
-      repushTriggers.put(trxTrigger);
-    } catch (InterruptedException e) {
-      logger.error(e.getMessage());
-      Thread.currentThread().interrupt();
-    }
   }
 
   public void updateDynamicProperties(BlockCapsule block) {
@@ -1141,8 +1129,7 @@ public class Manager {
 
     if (eventPluginLoaded) {
       try {
-        this.getRepushTrigger().put(EventPluginLoader
-          .getInstance().toTransactionLogTrigger(trxCap, blockCap));
+        this.getRepushTrigger().put(new TransactionLogTriggerCapsule(trxCap, blockCap));
       } catch (InterruptedException e) {
         logger.error(e.getMessage());
         Thread.currentThread().interrupt();
