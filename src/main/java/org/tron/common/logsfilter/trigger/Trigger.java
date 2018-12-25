@@ -10,8 +10,6 @@ public class Trigger {
   @Setter
   protected long timeStamp;
 
-  public void processTrigger() {}
-
   public static final int BLOCK_TRIGGER = 0;
   public static final int TRANSACTION_TRIGGER = 1;
   public static final int CONTRACTLOG_TRIGGER = 2;

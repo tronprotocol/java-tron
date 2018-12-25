@@ -40,9 +40,6 @@ import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TriggerCapsule;
-import org.tron.common.logsfilter.trigger.BlockLogTrigger;
-import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
-import org.tron.common.logsfilter.trigger.Trigger;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.event.ContractEvent;
@@ -190,11 +187,11 @@ public class Manager {
 
   private Thread repushThread;
 
-  private Thread repushTriggerThread;
+  private Thread triggerCapsuleProcessThread;
 
   private boolean isRunRepushThread = true;
 
-  private boolean isRunRepushTriggerThread = true;
+  private boolean isRunTriggerCapsuleProcessThread = true;
 
   private ContractTriggerListener contractTriggerListener;
 
@@ -295,8 +292,8 @@ public class Manager {
     return repushTransactions;
   }
 
-  public BlockingQueue<TriggerCapsule> getRepushTrigger() {
-    return repushTriggers;
+  public BlockingQueue<TriggerCapsule> getTriggerCapsuleQueue() {
+    return triggerCapsuleQueue;
   }
 
   // transactions cache
@@ -309,7 +306,7 @@ public class Manager {
   // the capacity is equal to Integer.MAX_VALUE default
   private BlockingQueue<TransactionCapsule> repushTransactions;
 
-  private BlockingQueue<TriggerCapsule> repushTriggers;
+  private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
 
   // for test only
   public List<ByteString> getWitnesses() {
@@ -382,11 +379,11 @@ public class Manager {
         }
       };
 
-  private Runnable repushTriggersLoop =
+  private Runnable triggerCapsuleProcessLoop =
     () -> {
-      while (isRunRepushTriggerThread) {
+      while (isRunTriggerCapsuleProcessThread) {
         try {
-          TriggerCapsule tiggerCapsule = this.getRepushTrigger().poll(1, TimeUnit.SECONDS);
+          TriggerCapsule tiggerCapsule = this.getTriggerCapsuleQueue().poll(1, TimeUnit.SECONDS);
           if (tiggerCapsule != null) {
             tiggerCapsule.processTrigger();
           }
@@ -394,9 +391,9 @@ public class Manager {
           logger.info(ex.getMessage());
           Thread.currentThread().interrupt();
         } catch (Exception ex) {
-          logger.error("unknown exception happened in repush triggers loop", ex);
+          logger.error("unknown exception happened in process capsule loop", ex);
         } catch (Throwable throwable) {
-          logger.error("unknown throwable happened in repush triggers loop", throwable);
+          logger.error("unknown throwable happened in process capsule loop", throwable);
         }
       }
     };
@@ -406,7 +403,7 @@ public class Manager {
   }
 
   public void stopRepushTriggerThread() {
-    isRunRepushTriggerThread = false;
+    isRunTriggerCapsuleProcessThread = false;
   }
 
   @PostConstruct
@@ -417,7 +414,7 @@ public class Manager {
     this.setProposalController(ProposalController.createInstance(this));
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
     this.repushTransactions = new LinkedBlockingQueue<>();
-    this.repushTriggers = new LinkedBlockingQueue<>();
+    this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
 
     this.initGenesis();
     try {
@@ -454,8 +451,8 @@ public class Manager {
     // add contract event listener for subscribing
     if (Args.getInstance().isEventSubscribe()) {
       startEventSubscribing();
-      repushTriggerThread = new Thread(repushTriggersLoop);
-      repushTriggerThread.start();
+      triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
+      triggerCapsuleProcessThread.start();
       contractTriggerListener = new ContractTriggerListener();
     }
   }
@@ -929,7 +926,7 @@ public class Manager {
           applyBlock(newBlock);
           tmpSession.commit();
           if (eventPluginLoaded) {
-            this.getRepushTrigger().put(new BlockLogTriggerCapsule(newBlock));
+            this.getTriggerCapsuleQueue().put(new BlockLogTriggerCapsule(newBlock));
           }
         } catch (InterruptedException e) {
           logger.error(e.getMessage());
@@ -942,12 +939,10 @@ public class Manager {
       }
       logger.info("save block: " + newBlock);
     }
-
     logger.info("pushBlock block number:{}, cost/txs:{}/{}",
         block.getNum(),
         System.currentTimeMillis() - start,
         block.getTransactions().size());
-
   }
 
   public void updateDynamicProperties(BlockCapsule block) {
@@ -1123,13 +1118,15 @@ public class Manager {
       }
     }
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
+
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
         .buildInstance(trxCap, blockCap, trace);
+
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
 
     if (eventPluginLoaded) {
       try {
-        this.getRepushTrigger().put(new TransactionLogTriggerCapsule(trxCap, blockCap));
+        this.getTriggerCapsuleQueue().put(new TransactionLogTriggerCapsule(trxCap, blockCap));
       } catch (InterruptedException e) {
         logger.error(e.getMessage());
         Thread.currentThread().interrupt();

@@ -36,10 +36,4 @@ public class BlockLogTrigger extends Trigger {
                 .append(", transaction list: ")
                 .append(transactionList).toString();
     }
-
-    @Override
-    public void processTrigger(){
-        EventPluginLoader.getInstance().postBlockTrigger(this);
-    }
-
 }

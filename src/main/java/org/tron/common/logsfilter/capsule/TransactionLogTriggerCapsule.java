@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
-import org.tron.common.logsfilter.trigger.Trigger;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 
