@@ -1,7 +1,6 @@
 package org.tron.common.logsfilter.trigger;
 import lombok.Getter;
 import lombok.Setter;
-import org.tron.common.logsfilter.EventPluginLoader;
 
 public class TransactionLogTrigger extends Trigger{
     public void setTimestamp(long ts) {
@@ -18,9 +17,4 @@ public class TransactionLogTrigger extends Trigger{
     @Getter
     @Setter
     private String blockId;
-
-    @Override
-    public void processTrigger(){
-        EventPluginLoader.getInstance().postTransactionTrigger(this);
-    }
 }
