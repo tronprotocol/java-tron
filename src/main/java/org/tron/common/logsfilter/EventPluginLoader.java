@@ -52,7 +52,7 @@ public class EventPluginLoader {
         }
         return instance;
     }
-    
+
     public boolean start(EventPluginConfig config){
         boolean success = false;
 
@@ -135,7 +135,7 @@ public class EventPluginLoader {
                     setPluginTopic(EventPluginConfig.CONTRACTLOG_TRIGGER, "");
 =======
                     setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, triggerConfig.getTopic());
-                    transactionLogTriggerEnable = true;
+                    contractLogTriggerEnable = true;
                 }else {
                     setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, "");
 >>>>>>> merge conflict
