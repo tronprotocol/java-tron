@@ -16,6 +16,11 @@ public class BlockLogTriggerCapsule extends TriggerCapsule {
     blockLogTrigger.setBlockHash(block.getBlockId().toString());
     blockLogTrigger.setTimeStamp(System.currentTimeMillis());
     blockLogTrigger.setBlockNumber(block.getNum());
+    blockLogTrigger.setTransactionSize(block.getTransactions().size());
+    block.getTransactions().forEach(trx -> {
+      blockLogTrigger.getTransactionList().add(trx.getTransactionId().toString());
+    });
+
   }
 
   @Override
