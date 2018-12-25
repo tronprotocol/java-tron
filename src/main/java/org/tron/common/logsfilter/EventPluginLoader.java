@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.pf4j.*;
 import org.springframework.util.StringUtils;
@@ -29,6 +30,18 @@ public class EventPluginLoader {
 
     private List<TriggerConfig> triggerConfigList;
 
+    @Getter
+    private boolean blockLogTriggerEnable = false;
+
+    @Getter
+    private boolean transactionLogTriggerEnable = false;
+
+    @Getter
+    private boolean contractEventTriggerEnable = false;
+
+    @Getter
+    private boolean contractLogTriggerEnable = false;
+
     public static EventPluginLoader getInstance(){
         if (Objects.isNull(instance)){
             synchronized(EventPluginLoader.class) {
@@ -39,6 +52,7 @@ public class EventPluginLoader {
         }
         return instance;
     }
+
 
     public boolean start(EventPluginConfig config){
         boolean success = false;
@@ -75,6 +89,7 @@ public class EventPluginLoader {
             if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
                 if (triggerConfig.isEnabled()){
                     setPluginTopic(Trigger.BLOCK_TRIGGER, triggerConfig.getTopic());
+                    blockLogTriggerEnable = true;
                 }else {
                     setPluginTopic(Trigger.BLOCK_TRIGGER, "");
                 }
@@ -82,6 +97,7 @@ public class EventPluginLoader {
             else if (EventPluginConfig.TRANSACTION_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
                 if (triggerConfig.isEnabled()){
                     setPluginTopic(Trigger.TRANSACTION_TRIGGER, triggerConfig.getTopic());
+                    transactionLogTriggerEnable = true;
                 }else {
                     setPluginTopic(Trigger.TRANSACTION_TRIGGER, "");
                 }
@@ -89,6 +105,7 @@ public class EventPluginLoader {
             else if (EventPluginConfig.CONTRACTEVENT_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
                 if (triggerConfig.isEnabled()){
                     setPluginTopic(Trigger.CONTRACTEVENT_TRIGGER, triggerConfig.getTopic());
+                    contractEventTriggerEnable = true;
                 }else {
                     setPluginTopic(Trigger.CONTRACTEVENT_TRIGGER, "");
                 }
@@ -96,6 +113,7 @@ public class EventPluginLoader {
             else if (EventPluginConfig.CONTRACTLOG_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
                 if (triggerConfig.isEnabled()){
                     setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, triggerConfig.getTopic());
+                    transactionLogTriggerEnable = true;
                 }else {
                     setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, "");
                 }
