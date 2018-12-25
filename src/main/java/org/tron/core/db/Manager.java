@@ -925,7 +925,7 @@ public class Manager {
         try (ISession tmpSession = revokingStore.buildSession()) {
           applyBlock(newBlock);
           tmpSession.commit();
-          if (eventPluginLoaded) {
+          if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
             this.getTriggerCapsuleQueue().put(new BlockLogTriggerCapsule(newBlock));
           }
         } catch (InterruptedException e) {
@@ -1124,7 +1124,7 @@ public class Manager {
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
 
-    if (eventPluginLoaded) {
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
       try {
         this.getTriggerCapsuleQueue().put(new TransactionLogTriggerCapsule(trxCap, blockCap));
       } catch (InterruptedException e) {

@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.pf4j.*;
 import org.springframework.util.StringUtils;
@@ -29,6 +30,18 @@ public class EventPluginLoader {
 
     private List<TriggerConfig> triggerConfigList;
 
+    @Getter
+    private boolean blockLogTriggerEnable = false;
+
+    @Getter
+    private boolean transactionLogTriggerEnable = false;
+
+    @Getter
+    private boolean contractEventTriggerEnable = false;
+
+    @Getter
+    private boolean contractLogTriggerEnable = false;
+
     public static EventPluginLoader getInstance(){
         if (Objects.isNull(instance)){
             synchronized(EventPluginLoader.class) {
@@ -39,6 +52,7 @@ public class EventPluginLoader {
         }
         return instance;
     }
+
 
     public boolean start(EventPluginConfig config){
         boolean success = false;
@@ -80,6 +94,7 @@ public class EventPluginLoader {
                     setPluginTopic(EventPluginConfig.BLOCK_TRIGGER, "");
 =======
                     setPluginTopic(Trigger.BLOCK_TRIGGER, triggerConfig.getTopic());
+                    blockLogTriggerEnable = true;
                 }else {
                     setPluginTopic(Trigger.BLOCK_TRIGGER, "");
 >>>>>>> merge conflict
@@ -93,6 +108,7 @@ public class EventPluginLoader {
                     setPluginTopic(EventPluginConfig.TRANSACTION_TRIGGER, "");
 =======
                     setPluginTopic(Trigger.TRANSACTION_TRIGGER, triggerConfig.getTopic());
+                    transactionLogTriggerEnable = true;
                 }else {
                     setPluginTopic(Trigger.TRANSACTION_TRIGGER, "");
 >>>>>>> merge conflict
@@ -106,6 +122,7 @@ public class EventPluginLoader {
                     setPluginTopic(EventPluginConfig.CONTRACTEVENT_TRIGGER, "");
 =======
                     setPluginTopic(Trigger.CONTRACTEVENT_TRIGGER, triggerConfig.getTopic());
+                    contractEventTriggerEnable = true;
                 }else {
                     setPluginTopic(Trigger.CONTRACTEVENT_TRIGGER, "");
 >>>>>>> merge conflict
@@ -119,6 +136,7 @@ public class EventPluginLoader {
                     setPluginTopic(EventPluginConfig.CONTRACTLOG_TRIGGER, "");
 =======
                     setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, triggerConfig.getTopic());
+                    transactionLogTriggerEnable = true;
                 }else {
                     setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, "");
 >>>>>>> merge conflict
