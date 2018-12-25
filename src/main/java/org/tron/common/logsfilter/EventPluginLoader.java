@@ -198,24 +198,6 @@ public class EventPluginLoader {
         logger.info("eventPlugin stopped");
     }
 
-    public BlockLogTrigger toBlockLogTrigger(BlockCapsule block) {
-        BlockLogTrigger tigger = new BlockLogTrigger();
-        tigger.setBlockHash(block.getBlockId().toString());
-        tigger.setTimeStamp(System.currentTimeMillis());
-        tigger.setBlockNumber(block.getNum());
-        return tigger;
-    }
-
-    public TransactionLogTrigger toTransactionLogTrigger(TransactionCapsule trx, BlockCapsule blockCapsule) {
-        TransactionLogTrigger trxTrigger = new TransactionLogTrigger();
-        if (Objects.nonNull(blockCapsule)) {
-            trxTrigger.setBlockId(blockCapsule.getBlockId().toString());
-        }
-        trxTrigger.setTransactionId(trx.getTransactionId().toString());
-        trxTrigger.setTimestamp(trx.getTimestamp());
-        return trxTrigger;
-    }
-
     public void postBlockTrigger(BlockLogTrigger trigger){
         if (Objects.isNull(eventListeners))
             return;
