@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.exception.ContractValidateException;
 
 public class VerifyingKey {
 
@@ -296,7 +297,7 @@ public class VerifyingKey {
 
 
     // load verify from file
-    public static VerifyingKey initVkFromFileRaw() throws Exception {
+    public static VerifyingKey initVkFromFileRaw() throws ContractValidateException {
         if (vk == null) {
             vk = new VerifyingKey();
             File file = new File("sprout-verifying.key");
@@ -474,7 +475,7 @@ public class VerifyingKey {
   }
 
 
-    public static G1Point readG1Raw( int startPos, final byte[] filecontent ) throws Exception {
+    public static G1Point readG1Raw( int startPos, final byte[] filecontent ) throws ContractValidateException {
         byte[] cx = new byte[32];
         byte[] cy = new byte[32];
         startPos += 1;
@@ -500,7 +501,7 @@ public class VerifyingKey {
         return new G1Point(x, y);
     }
 
-    public static G2Point readG2Raw( int startPos, final byte[] filecontent  ) throws Exception {
+    public static G2Point readG2Raw( int startPos, final byte[] filecontent  ) throws ContractValidateException {
         byte[] cx0 = new byte[32];
         byte[] cx1 = new byte[32];
         byte[] cy0 = new byte[32];
