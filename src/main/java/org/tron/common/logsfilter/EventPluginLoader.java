@@ -52,8 +52,7 @@ public class EventPluginLoader {
         }
         return instance;
     }
-
-
+    
     public boolean start(EventPluginConfig config){
         boolean success = false;
 
