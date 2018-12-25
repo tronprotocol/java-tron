@@ -14,6 +14,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -807,6 +808,10 @@ public class Manager {
         }
       }
 
+      if (witnessService != null) {
+        witnessService.checkDupWitness(block);
+      }
+
       BlockCapsule newBlock = this.khaosDb.push(block);
 
       // DB don't need lower block
@@ -1252,10 +1257,6 @@ public class Manager {
       DupTransactionException, TransactionExpirationException, ValidateScheduleException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
     // todo set revoking db max size.
-
-    if (witnessService != null) {
-      witnessService.processBlock(block);
-    }
 
     // checkWitness
     if (!witnessController.validateWitnessSchedule(block)) {
