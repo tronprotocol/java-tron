@@ -2,12 +2,10 @@ package org.tron.common.logsfilter;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Slf4j
 public class EventPluginConfig {
 
     public static final String BLOCK_TRIGGER_NAME = "block";

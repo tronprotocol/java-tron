@@ -11,8 +11,6 @@ import org.tron.common.logsfilter.trigger.*;
 
 import java.io.File;
 import java.util.List;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.TransactionCapsule;
 
 @Slf4j
 public class EventPluginLoader {
