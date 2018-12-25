@@ -529,6 +529,9 @@ public class RequireException {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Integer times = 0;
     String contractName1 = "TestContract";
     String code1 = "6080604052348015600f57600080fd5b50604380601d6000396000f3006080604052348015600f"
@@ -609,6 +612,9 @@ public class RequireException {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String contractName1 = "ContractGasNoenough";
     String code1 = "608060405234801561001057600080fd5b50610182806100206000396000f30060806040526004"
@@ -695,6 +701,9 @@ public class RequireException {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     final String saleContractString = "\"" + Base58.encode58Check(contractAddress) + "\"";
     String contractName1 = "MessageUseContract";
@@ -780,6 +789,9 @@ public class RequireException {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     final String saleContractString = "\"" + Base58.encode58Check(contractAddress) + "\"";
 

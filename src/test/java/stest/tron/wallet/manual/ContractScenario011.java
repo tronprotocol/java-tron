@@ -252,6 +252,9 @@ public class ContractScenario011 {
     String saleContractString = "\"" + Base58.encode58Check(saleClockAuctionContractAddress) + "\"";
     txid = PublicMethed.triggerContract(kittyCoreContractAddress, "setSaleAuctionAddress(address)",
         saleContractString, false, 0, 10000000L, deployAddress, deployKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
 
@@ -262,6 +265,9 @@ public class ContractScenario011 {
         .triggerContract(kittyCoreContractAddress, "setSiringAuctionAddress(address)",
             siringContractString, false, 0, 10000000L, deployAddress, deployKey, blockingStubFull);
     logger.info(txid);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
 
     //Set gen contract to kitty core
@@ -270,6 +276,9 @@ public class ContractScenario011 {
     txid = PublicMethed.triggerContract(kittyCoreContractAddress,
         "setGeneScienceAddress(address)", genContractString,
         false, 0, 10000000L, deployAddress, deployKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
 
@@ -279,6 +288,9 @@ public class ContractScenario011 {
     while (result == 1) {
       txid = PublicMethed.triggerContract(kittyCoreContractAddress, "unpause()", "", false, 0,
           10000000L, deployAddress, deployKey, blockingStubFull);
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
       infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
       result = infoById.get().getResultValue();
       if (times++ == 3) {
@@ -369,21 +381,26 @@ public class ContractScenario011 {
     txid1 = PublicMethed.triggerContract(kittyCoreContractAddress,
         "setCOO(address)", newCxoAddress, false, 0, maxFeeLimit, triggerAddress,
         triggerKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info("COO " + txid);
 
     txid2 = PublicMethed.triggerContract(kittyCoreContractAddress,
         "setCFO(address)", newCxoAddress, false, 0, maxFeeLimit, triggerAddress,
         triggerKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info("CFO " + txid);
 
     txid3 = PublicMethed.triggerContract(kittyCoreContractAddress,
         "setCEO(address)", newCxoAddress, false, 0, maxFeeLimit, triggerAddress,
         triggerKey, blockingStubFull);
-    logger.info("CEO " + txid);
-
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    logger.info("CEO " + txid);
 
     infoById = PublicMethed.getTransactionInfoById(txid1, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
@@ -432,6 +449,9 @@ public class ContractScenario011 {
     Assert.assertTrue(
         PublicMethed.freezeBalanceGetEnergy(triggerUseTriggerEnergyUsageAddress, 100000000L,
             3, 1, triggerUseTriggerEnergyUsageKey, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     beforeBalance = PublicMethed.queryAccount(triggerUseTriggerEnergyUsageKey, blockingStubFull)
         .getBalance();
     logger.info("before balance is " + Long.toString(beforeBalance));

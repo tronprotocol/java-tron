@@ -81,10 +81,15 @@ public class ContractLinkage006 {
 
     Assert.assertTrue(PublicMethed.sendcoin(linkage006Address, 20000000000L, fromAddress,
         testKey003, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalance(linkage006Address, 1000000L,
         3, linkage006Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage006Address, 1000000L,
         3, 1, linkage006Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     contractName = "stackOutByContract";
     code = "60806040526000805561026c806100176000396000f3006080604052600436106100565763ffffffff7c01"

@@ -88,20 +88,18 @@ public class WalletTestAssetIssue002 {
         testKey002,blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(toAddress,2048000000,fromAddress,
         testKey002,blockingStubFull));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Create a new Asset Issue
     Assert.assertTrue(PublicMethed.createAssetIssue(participateAccountAddress,
-        name, totalSupply, 1, 1, System.currentTimeMillis() + 2000,
+        name, totalSupply, 1, 1, System.currentTimeMillis() + 5000,
         System.currentTimeMillis() + 1000000000, 1, description, url,
         2000L,2000L, 1L, 1L,
         participateAccountKey,blockingStubFull));
 
-    try {
-      Thread.sleep(16000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account getAssetIdFromThisAccount;
     getAssetIdFromThisAccount = PublicMethed.queryAccount(participateAccountKey,blockingStubFull);
     ByteString assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
@@ -112,6 +110,9 @@ public class WalletTestAssetIssue002 {
     logger.info("toaddress balance is " + PublicMethed.queryAccount(toAddress,blockingStubFull).getBalance());
     Assert.assertTrue(PublicMethed.freezeBalance(toAddress, 10000000, 3, testKey003,
         blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.participateAssetIssue(participateAccountAddress,
         assetAccountId.toByteArray(),
         100L, toAddress, testKey003,blockingStubFull));
