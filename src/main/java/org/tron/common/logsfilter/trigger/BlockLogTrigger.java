@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
-import org.tron.common.logsfilter.EventPluginLoader;
 
 public class BlockLogTrigger extends Trigger {
     @Getter
