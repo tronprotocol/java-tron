@@ -1,5 +1,6 @@
 package org.tron.common.logsfilter.trigger;
 
+import java.util.ArrayList;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -20,7 +21,7 @@ public class BlockLogTrigger extends Trigger {
 
     @Getter
     @Setter
-    private List<String> transactionList;
+    private List<String> transactionList = new ArrayList<String>();
 
     @Override
     public String toString(){
