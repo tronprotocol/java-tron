@@ -52,7 +52,7 @@ public class EventPluginLoader {
         }
         return instance;
     }
-    
+
     public boolean start(EventPluginConfig config){
         boolean success = false;
 
@@ -112,7 +112,7 @@ public class EventPluginLoader {
             else if (EventPluginConfig.CONTRACTLOG_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
                 if (triggerConfig.isEnabled()){
                     setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, triggerConfig.getTopic());
-                    transactionLogTriggerEnable = true;
+                    contractLogTriggerEnable = true;
                 }else {
                     setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, "");
                 }
