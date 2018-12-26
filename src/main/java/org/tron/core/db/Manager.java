@@ -37,12 +37,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.logsfilter.ContractTriggerListener;
 import org.tron.common.logsfilter.EventPluginLoader;
-import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
-import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
-import org.tron.common.logsfilter.capsule.TriggerCapsule;
+import org.tron.common.logsfilter.capsule.*;
+import org.tron.common.logsfilter.trigger.*;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.config.VMConfig;
-import org.tron.common.runtime.vm.event.ContractEvent;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.SessionOptional;
@@ -91,6 +89,7 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 
 
@@ -195,7 +194,9 @@ public class Manager {
 
   private ContractTriggerListener contractTriggerListener;
 
-  private boolean eventPluginLoaded = false;
+  @Getter
+  @Setter
+  public boolean eventPluginLoaded = false;
 
   @Getter
   private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
@@ -453,7 +454,7 @@ public class Manager {
       startEventSubscribing();
       triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
       triggerCapsuleProcessThread.start();
-      contractTriggerListener = new ContractTriggerListener();
+//      contractTriggerListener = new ContractTriggerListener();
     }
   }
 
@@ -942,6 +943,16 @@ public class Manager {
         block.getTransactions().size());
   }
 
+//  private void postContractEventTrigger(ProgramResult result, BlockCapsule blockCap) {
+//
+//    List<ContractEvent> events = result.getEventList();
+//    if (events != null && events.size() > 0){
+//      for (ContractEvent event: events) {
+//        contractTriggerListener.onEvent(event);
+//      }
+//    }
+//  }
+
   public void updateDynamicProperties(BlockCapsule block) {
     long slot = 1;
     if (block.getNum() != 1) {
@@ -1120,9 +1131,30 @@ public class Manager {
         .buildInstance(trxCap, blockCap, trace);
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
+<<<<<<< HEAD
 
     // if event subscribe is enabled, post transaction trigger to queue
     postTransactionTrigger(trxCap, blockCap);
+=======
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
+      try {
+
+        // be careful, trace.getRuntimeResult().getEventList() should never return null
+        for (ContractTrigger trigger: trace.getRuntimeResult().getEventList()) {
+          if (trigger instanceof ContractEventTrigger){
+            this.getTriggerCapsuleQueue().put(new ContractEventTriggerCapsule((ContractEventTrigger) trigger));
+          }else if (trigger instanceof ContractLogTrigger){
+            this.getTriggerCapsuleQueue().put(new ContractLogTriggerCapsule((ContractLogTrigger) trigger));
+          }
+        }
+
+        this.getTriggerCapsuleQueue().put(new TransactionLogTriggerCapsule(trxCap, blockCap));
+      } catch (InterruptedException e) {
+        logger.error(e.getMessage());
+        Thread.currentThread().interrupt();
+      }
+    }
+>>>>>>> add event trigger
 
     return true;
   }
@@ -1694,7 +1726,7 @@ public class Manager {
   }
 
   private void startEventSubscribing(){
-    contractTriggerListener = new ContractTriggerListener();
+//    contractTriggerListener = new ContractTriggerListener();
 
     try{
       eventPluginLoaded = EventPluginLoader.getInstance().start(Args.getInstance().getEventPluginConfig());
@@ -1708,6 +1740,7 @@ public class Manager {
     }
   }
 
+<<<<<<< HEAD
   public void notifyListener(ContractEvent event, ContractEvent.EventType type) {
 
     if (Args.getInstance().isEventSubscribe() && contractTriggerListener != null){
@@ -1737,4 +1770,6 @@ public class Manager {
       }
     }
   }
+=======
+>>>>>>> add event trigger
 }
