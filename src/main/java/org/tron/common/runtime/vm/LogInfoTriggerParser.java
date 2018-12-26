@@ -27,16 +27,16 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-public class LogInfoEventParser {
+public class LogInfoTriggerParser {
 
-  public static List<ContractTrigger> getEventList(ABI abi,
-                                                   BlockCapsule block,
-                                                   List<LogInfo> logInfos,
-                                                   byte[] txId,
-                                                   byte[] callerAddress,
-                                                   byte[] creatorAddress,
-                                                   byte[] originAddress,
-                                                   byte[] contractAddress) {
+  public static List<ContractTrigger> parseLogInfos(ABI abi,
+                                                    BlockCapsule block,
+                                                    List<LogInfo> logInfos,
+                                                    byte[] txId,
+                                                    byte[] callerAddress,
+                                                    byte[] creatorAddress,
+                                                    byte[] originAddress,
+                                                    byte[] contractAddress) {
 
     List<ContractTrigger> list = new LinkedList<>();
     if (logInfos == null || logInfos.size() <= 0){
