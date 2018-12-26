@@ -29,6 +29,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.logsfilter.EventPluginConfig;
+import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.TriggerConfig;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.utils.ByteArray;
@@ -402,6 +403,9 @@ public class Args {
 
   @Getter
   private EventPluginConfig eventPluginConfig;
+
+  @Getter
+  private FilterQuery eventFilter;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -802,6 +806,9 @@ public class Args {
             config.hasPath("event.subscribe")?
                     getEventPluginConfig(config) : null;
 
+    INSTANCE.eventFilter =
+            config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
+
     initBackupProperty(config);
 
     logConfig();
@@ -925,6 +932,24 @@ public class Args {
     triggerConfig.setTopic(topic);
 
     return triggerConfig;
+  }
+
+  private static FilterQuery getEventFilter(final com.typesafe.config.Config config){
+    FilterQuery filter = new FilterQuery();
+
+    String fromBlock = config.getString("event.subscribe.filter.fromblock").trim();
+    filter.setFromBlock(fromBlock);
+
+    String toBlock = config.getString("event.subscribe.filter.toblock").trim();
+    filter.setToBlock(toBlock);
+
+    List<String> addresses = config.getStringList("event.subscribe.filter.contractAddress");
+    filter.setContractAddress(addresses);
+
+    List<String> topics = config.getStringList("event.subscribe.filter.contractTopic");
+    filter.setContractTopics(topics);
+
+    return filter;
   }
 
 

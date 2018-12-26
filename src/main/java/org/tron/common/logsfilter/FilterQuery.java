@@ -8,11 +8,11 @@ import java.util.List;
 public class FilterQuery {
     @Getter
     @Setter
-    private long fromBlock;
+    private String fromBlock;
 
     @Getter
     @Setter
-    private long toBlock;
+    private String toBlock;
 
     @Getter
     @Setter
