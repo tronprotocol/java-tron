@@ -1,15 +1,12 @@
 package org.tron.common.logsfilter.trigger;
 
+import java.util.ArrayList;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
 
-public class BlockLogTrigger {
-    @Getter
-    @Setter
-    private long timeStamp;
-
+public class BlockLogTrigger extends Trigger {
     @Getter
     @Setter
     private long blockNumber;
@@ -24,7 +21,7 @@ public class BlockLogTrigger {
 
     @Getter
     @Setter
-    private List<String> transactionList;
+    private List<String> transactionList = new ArrayList<>();
 
     @Override
     public String toString(){
@@ -39,5 +36,4 @@ public class BlockLogTrigger {
                 .append(", transaction list: ")
                 .append(transactionList).toString();
     }
-
 }

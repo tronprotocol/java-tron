@@ -1,13 +1,13 @@
 package org.tron.common.logsfilter.trigger;
-
 import lombok.Getter;
 import lombok.Setter;
 
-public class TransactionLogTrigger {
+public class TransactionLogTrigger extends Trigger{
 
-    @Getter
-    @Setter
-    private long timestamp;
+    @Override
+    public void setTimeStamp(long ts) {
+        super.timeStamp = ts;
+    }
 
     @Getter
     @Setter

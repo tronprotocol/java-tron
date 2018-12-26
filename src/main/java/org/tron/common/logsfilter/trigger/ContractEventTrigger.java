@@ -4,11 +4,7 @@ import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 
-public class ContractEventTrigger {
-  @Getter
-  @Setter
-  private long timeStamp;
-
+public class ContractEventTrigger extends Trigger{
   @Getter
   @Setter
   private String eventType;

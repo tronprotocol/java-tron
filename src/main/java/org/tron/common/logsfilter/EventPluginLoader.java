@@ -4,13 +4,11 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.pf4j.*;
 import org.springframework.util.StringUtils;
-import org.tron.common.logsfilter.trigger.BlockLogTrigger;
-import org.tron.common.logsfilter.trigger.ContractEventTrigger;
-import org.tron.common.logsfilter.trigger.ContractLogTrigger;
-import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
+import org.tron.common.logsfilter.trigger.*;
 
 import java.io.File;
 import java.util.List;
@@ -28,9 +26,19 @@ public class EventPluginLoader {
 
     private String serverAddress;
 
-    private String pluginPath;
-
     private List<TriggerConfig> triggerConfigList;
+
+    @Getter
+    private boolean blockLogTriggerEnable = false;
+
+    @Getter
+    private boolean transactionLogTriggerEnable = false;
+
+    @Getter
+    private boolean contractEventTriggerEnable = false;
+
+    @Getter
+    private boolean contractLogTriggerEnable = false;
 
     public static EventPluginLoader getInstance(){
         if (Objects.isNull(instance)){
@@ -50,12 +58,12 @@ public class EventPluginLoader {
             return success;
         }
 
-        this.pluginPath = config.getPluginPath();
+        String pluginPath = config.getPluginPath();
         this.serverAddress = config.getServerAddress();
         this.triggerConfigList = config.getTriggerConfigList();
 
-        if (false == startPlugin(this.pluginPath)){
-            logger.error("failed to load '{}'", this.pluginPath);
+        if (!startPlugin(pluginPath)){
+            logger.error("failed to load '{}'", pluginPath);
             return success;
         }
 
@@ -70,56 +78,59 @@ public class EventPluginLoader {
             return;
         }
 
-        eventListeners.forEach(listener -> {
-            listener.setServerAddress(this.serverAddress);
-        });
+        eventListeners.forEach(listener -> listener.setServerAddress(this.serverAddress));
 
         triggerConfigList.forEach(triggerConfig -> {
             if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
                 if (triggerConfig.isEnabled()){
-                    setPluginTopic(EventPluginConfig.BLOCK_TRIGGER, triggerConfig.getTopic());
-                }else {
-                    setPluginTopic(EventPluginConfig.BLOCK_TRIGGER, "");
+                    setPluginTopic(Trigger.BLOCK_TRIGGER, triggerConfig.getTopic());
+                    blockLogTriggerEnable = true;
+                }
+                else {
+                    setPluginTopic(Trigger.BLOCK_TRIGGER, "");
+                    blockLogTriggerEnable = false;
                 }
             }
             else if (EventPluginConfig.TRANSACTION_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
                 if (triggerConfig.isEnabled()){
-                    setPluginTopic(EventPluginConfig.TRANSACTION_TRIGGER, triggerConfig.getTopic());
+                    setPluginTopic(Trigger.TRANSACTION_TRIGGER, triggerConfig.getTopic());
+                    transactionLogTriggerEnable = true;
                 }else {
-                    setPluginTopic(EventPluginConfig.TRANSACTION_TRIGGER, "");
+                    setPluginTopic(Trigger.TRANSACTION_TRIGGER, "");
+                    transactionLogTriggerEnable = false;
                 }
             }
             else if (EventPluginConfig.CONTRACTEVENT_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
                 if (triggerConfig.isEnabled()){
-                    setPluginTopic(EventPluginConfig.CONTRACTEVENT_TRIGGER, triggerConfig.getTopic());
+                    setPluginTopic(Trigger.CONTRACTEVENT_TRIGGER, triggerConfig.getTopic());
+                    contractEventTriggerEnable = true;
                 }else {
-                    setPluginTopic(EventPluginConfig.CONTRACTEVENT_TRIGGER, "");
+                    setPluginTopic(Trigger.CONTRACTEVENT_TRIGGER, "");
+                    contractEventTriggerEnable = false;
                 }
             }
             else if (EventPluginConfig.CONTRACTLOG_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
                 if (triggerConfig.isEnabled()){
-                    setPluginTopic(EventPluginConfig.CONTRACTLOG_TRIGGER, triggerConfig.getTopic());
+                    setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, triggerConfig.getTopic());
+                    contractLogTriggerEnable = true;
                 }else {
-                    setPluginTopic(EventPluginConfig.CONTRACTLOG_TRIGGER, "");
+                    setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, "");
+                    contractLogTriggerEnable = false;
                 }
             }
         });
     }
 
     private void setPluginTopic(int eventType, String topic){
-
-        eventListeners.forEach(listener -> {
-            listener.setTopic(eventType, topic);
-        });
+        eventListeners.forEach(listener -> listener.setTopic(eventType, topic));
     }
-
 
     private boolean startPlugin(String path){
         boolean loaded = false;
         logger.info("start loading '{}'", path);
 
         File pluginPath = new File(path);
-        if (false == pluginPath.exists()){
+        if (!pluginPath.exists()){
             logger.error("'{}' doesn't exist", path);
             return loaded;
         }
@@ -135,11 +146,6 @@ public class EventPluginLoader {
             };
         }
 
-        if (Objects.isNull(pluginManager)){
-            logger.error("PluginManager is null");
-            return loaded;
-        }
-
         String pluginID = pluginManager.loadPlugin(pluginPath.toPath());
         if (StringUtils.isEmpty(pluginID)){
             logger.error("invalid pluginID");
@@ -150,7 +156,7 @@ public class EventPluginLoader {
 
         eventListeners = pluginManager.getExtensions(IPluginEventListener.class);
 
-        if (Objects.isNull(eventListeners) || eventListeners.size() == 0){
+        if (Objects.isNull(eventListeners) || eventListeners.isEmpty()){
             logger.error("No eventListener is registered");
             return loaded;
         }
@@ -176,36 +182,31 @@ public class EventPluginLoader {
         if (Objects.isNull(eventListeners))
             return;
 
-        eventListeners.forEach(listener -> {
-            listener.handleBlockEvent(toJsonString(trigger));
-        });
+        eventListeners.forEach(listener ->
+            listener.handleBlockEvent(toJsonString(trigger)));
     }
 
     public void postTransactionTrigger(TransactionLogTrigger trigger){
         if (Objects.isNull(eventListeners))
             return;
 
-        eventListeners.forEach(listener -> {
-            listener.handleTransactionTrigger(toJsonString(trigger));
-        });
+        eventListeners.forEach(listener -> listener.handleTransactionTrigger(toJsonString(trigger)));
     }
 
     public void postContractLogTrigger(ContractLogTrigger trigger){
         if (Objects.isNull(eventListeners))
             return;
 
-        eventListeners.forEach(listener -> {
-            listener.handleContractLogTrigger(toJsonString(trigger));
-        });
+        eventListeners.forEach(listener ->
+            listener.handleContractLogTrigger(toJsonString(trigger)));
     }
 
     public void postContractEventTrigger(ContractEventTrigger trigger){
         if (Objects.isNull(eventListeners))
             return;
 
-        eventListeners.forEach(listener -> {
-            listener.handleContractEventTrigger(toJsonString(trigger));
-        });
+        eventListeners.forEach(listener ->
+            listener.handleContractEventTrigger(toJsonString(trigger)));
     }
 
     private String toJsonString(Object data){
@@ -222,16 +223,26 @@ public class EventPluginLoader {
 
     public static void main(String[] args) {
 
-        String path = "/Users/tron/sourcecode/eventplugin/plugins/kafkaplugin/build/libs/plugin-kafka-1.0.0.zip";
+        EventPluginConfig config = new EventPluginConfig();
+        config.setServerAddress("127.0.0.1:9092");
+        config.setPluginPath("/Users/tron/sourcecode/eventplugin/plugins/kafkaplugin/build/libs/plugin-kafka-1.0.0.zip");
 
-        boolean loaded = EventPluginLoader.getInstance().startPlugin(path);
+        TriggerConfig triggerConfig = new TriggerConfig();
+        triggerConfig.setTopic("transaction");
+        triggerConfig.setEnabled(true);
+        triggerConfig.setTriggerName("transaction");
+
+        config.getTriggerConfigList().add(triggerConfig);
+
+
+        boolean loaded = EventPluginLoader.getInstance().start(config);
 
         if (!loaded){
-            logger.error("failed to load '{}'", path);
+            logger.error("failed to load '{}'", config.getServerAddress());
             return;
         }
 
-        for (int index = 0; index < 1000; ++index){
+        for (int index = 0; index < 2000; ++index){
             BlockLogTrigger trigger = new BlockLogTrigger();
             trigger.setBlockHash("0X123456789A");
             trigger.setTimeStamp(System.currentTimeMillis());
@@ -239,15 +250,7 @@ public class EventPluginLoader {
             EventPluginLoader.getInstance().postBlockTrigger(trigger);
         }
 
-        //EventPluginLoader.getInstance().stopPlugin();
-
-        while (true){
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+        EventPluginLoader.getInstance().stopPlugin();
     }
 }
 

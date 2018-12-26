@@ -5,11 +5,7 @@ import lombok.Setter;
 
 import java.util.List;
 
-public class ContractLogTrigger{
-    @Getter
-    @Setter
-    private long timeStamp;
-
+public class ContractLogTrigger extends Trigger{
     @Getter
     @Setter
     private String eventType;
