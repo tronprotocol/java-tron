@@ -14,7 +14,7 @@ public interface Parameter {
     int BLOCK_SIZE = 2_000_000;
     int BLOCK_PRODUCED_INTERVAL = 3000; //ms,produce block period, must be divisible by 60. millisecond
     long CLOCK_MAX_DELAY = 3600000; // 3600 * 1000 ms
-    int BLOCK_PRODUCED_TIME_OUT = 75; // 75%
+    int BLOCK_PRODUCED_TIME_OUT = 50; // 50%
     long PRECISION = 1000_000;
     long WINDOW_SIZE_MS = 24 * 3600 * 1000L;
     long MS_PER_DAY = 24 * 3600 * 1000L;
