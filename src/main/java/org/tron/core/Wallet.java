@@ -1365,5 +1365,23 @@ public class Wallet {
 
   }
 
+  public GrpcAPI.Return setEventFilter(GrpcAPI.EventFilter.Builder filter) {
+    GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
 
+    if (Objects.isNull(filter)) {
+      return builder.setResult(false).build();
+    }
+
+    return builder.setResult(true).build();
+  }
+
+  public GrpcAPI.Return setEventPluginInfo(GrpcAPI.EventPluginInfo.Builder pluginInfo){
+    GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
+
+    if (Objects.isNull(pluginInfo)) {
+      return builder.setResult(false).build();
+    }
+
+    return builder.setResult(true).build();
+  }
 }

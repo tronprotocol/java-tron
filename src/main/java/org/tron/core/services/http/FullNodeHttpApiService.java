@@ -158,6 +158,12 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetDelegatedResourceServlet getDelegatedResourceServlet;
 
+  @Autowired
+  private SetEventFilterServlet setEventFilterServlet;
+
+  @Autowired
+  private SetEventPluginServlet setEventPluginServlet;
+
   @Override
   public void init() {
 
@@ -256,6 +262,12 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(
           new ServletHolder(getDelegatedResourceAccountIndexServlet),
           "/getdelegatedresourceaccountindex");
+
+      if (Args.getInstance().isEventSubscribe()){
+        context.addServlet(new ServletHolder(setEventFilterServlet), "/seteventfilter");
+        context.addServlet(new ServletHolder(setEventPluginServlet), "/setpluginconfig");
+      }
+
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());
