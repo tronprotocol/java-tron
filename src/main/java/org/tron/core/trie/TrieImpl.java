@@ -509,7 +509,7 @@ public class TrieImpl implements Trie<byte[]> {
     if (bytesCapsule == null) {
       return null;
     }
-    RLPList rlpList = RLP.decode2(NodeImpl.javabytesCapsule.getData());
+    RLPList rlpList = RLP.decode2(bytesCapsule.getData());
     return rlpList.get(0).getRLPData();
   }
 
