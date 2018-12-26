@@ -58,6 +58,7 @@ public class EventPluginLoader {
             return success;
         }
 
+        // parsing subscribe config from config.conf
         String pluginPath = config.getPluginPath();
         this.serverAddress = config.getServerAddress();
         this.triggerConfigList = config.getTriggerConfigList();
@@ -225,12 +226,12 @@ public class EventPluginLoader {
 
         EventPluginConfig config = new EventPluginConfig();
         config.setServerAddress("127.0.0.1:9092");
-        config.setPluginPath("/Users/tron/sourcecode/eventplugin/plugins/kafkaplugin/build/libs/plugin-kafka-1.0.0.zip");
+        config.setPluginPath("/Users/tron/sourcecode/eventplugin/build/plugins/plugin-kafka-1.0.0.zip");
 
         TriggerConfig triggerConfig = new TriggerConfig();
-        triggerConfig.setTopic("transaction");
+        triggerConfig.setTopic("block");
         triggerConfig.setEnabled(true);
-        triggerConfig.setTriggerName("transaction");
+        triggerConfig.setTriggerName("block");
 
         config.getTriggerConfigList().add(triggerConfig);
 
@@ -247,6 +248,7 @@ public class EventPluginLoader {
             trigger.setBlockHash("0X123456789A");
             trigger.setTimeStamp(System.currentTimeMillis());
             trigger.setBlockNumber(index);
+            trigger.setTransactionSize(index);
             EventPluginLoader.getInstance().postBlockTrigger(trigger);
         }
 
