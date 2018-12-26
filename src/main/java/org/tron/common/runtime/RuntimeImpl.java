@@ -388,7 +388,6 @@ public class RuntimeImpl implements Runtime {
       tokenValue = contract.getCallTokenValue();
       tokenId = contract.getTokenId();
     }
-    byte[] txId = new TransactionCapsule(trx).getTransactionId().getBytes();
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
     // create vm to constructor smart contract
     try {
@@ -431,7 +430,7 @@ public class RuntimeImpl implements Runtime {
       this.vm = new VM(config);
       this.program = new Program(ops, programInvoke, rootInternalTransaction, config,
           this.blockCap);
-
+      byte[] txId = new TransactionCapsule(trx).getTransactionId().getBytes();
       this.program.setRootTransactionId(txId);
       this.program.setRootCallConstant(isCallConstant());
       if (enableEventLinstener &&
@@ -456,7 +455,6 @@ public class RuntimeImpl implements Runtime {
     deposit.saveCode(contractAddress, ProgramPrecompile.getCode(code));
 
     // transfer from callerAddress to contractAddress according to callValue
-
     if (callValue > 0) {
       transfer(this.deposit, callerAddress, contractAddress, callValue);
     }
@@ -518,7 +516,7 @@ public class RuntimeImpl implements Runtime {
         throw new ContractValidateException(
             "feeLimit must be >= 0 and <= " + VMConfig.MAX_FEE_LIMIT);
       }
-      AccountCapsule caller = this.deposit.getAccount(contractAddress);
+      AccountCapsule caller = this.deposit.getAccount(callerAddress);
       long energyLimit;
       byte[] creatorAddress = null;
       byte[] originAddress = null;
