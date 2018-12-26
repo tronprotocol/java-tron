@@ -26,8 +26,6 @@ public class EventPluginLoader {
 
     private String serverAddress;
 
-    private String pluginPath;
-
     private List<TriggerConfig> triggerConfigList;
 
     @Getter
@@ -60,12 +58,12 @@ public class EventPluginLoader {
             return success;
         }
 
-        this.pluginPath = config.getPluginPath();
+        String pluginPath = config.getPluginPath();
         this.serverAddress = config.getServerAddress();
         this.triggerConfigList = config.getTriggerConfigList();
 
-        if (false == startPlugin(this.pluginPath)){
-            logger.error("failed to load '{}'", this.pluginPath);
+        if (!startPlugin(pluginPath)){
+            logger.error("failed to load '{}'", pluginPath);
             return success;
         }
 
@@ -80,17 +78,17 @@ public class EventPluginLoader {
             return;
         }
 
-        eventListeners.forEach(listener -> {
-            listener.setServerAddress(this.serverAddress);
-        });
+        eventListeners.forEach(listener -> listener.setServerAddress(this.serverAddress));
 
         triggerConfigList.forEach(triggerConfig -> {
             if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
                 if (triggerConfig.isEnabled()){
                     setPluginTopic(Trigger.BLOCK_TRIGGER, triggerConfig.getTopic());
                     blockLogTriggerEnable = true;
-                }else {
+                }
+                else {
                     setPluginTopic(Trigger.BLOCK_TRIGGER, "");
+                    blockLogTriggerEnable = false;
                 }
             }
             else if (EventPluginConfig.TRANSACTION_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
@@ -99,6 +97,7 @@ public class EventPluginLoader {
                     transactionLogTriggerEnable = true;
                 }else {
                     setPluginTopic(Trigger.TRANSACTION_TRIGGER, "");
+                    transactionLogTriggerEnable = false;
                 }
             }
             else if (EventPluginConfig.CONTRACTEVENT_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
@@ -107,6 +106,7 @@ public class EventPluginLoader {
                     contractEventTriggerEnable = true;
                 }else {
                     setPluginTopic(Trigger.CONTRACTEVENT_TRIGGER, "");
+                    contractEventTriggerEnable = false;
                 }
             }
             else if (EventPluginConfig.CONTRACTLOG_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
@@ -115,16 +115,14 @@ public class EventPluginLoader {
                     contractLogTriggerEnable = true;
                 }else {
                     setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, "");
+                    contractLogTriggerEnable = false;
                 }
             }
         });
     }
 
     private void setPluginTopic(int eventType, String topic){
-
-        eventListeners.forEach(listener -> {
-            listener.setTopic(eventType, topic);
-        });
+        eventListeners.forEach(listener -> listener.setTopic(eventType, topic));
     }
 
     private boolean startPlugin(String path){
@@ -132,7 +130,7 @@ public class EventPluginLoader {
         logger.info("start loading '{}'", path);
 
         File pluginPath = new File(path);
-        if (false == pluginPath.exists()){
+        if (!pluginPath.exists()){
             logger.error("'{}' doesn't exist", path);
             return loaded;
         }
@@ -148,11 +146,6 @@ public class EventPluginLoader {
             };
         }
 
-        if (Objects.isNull(pluginManager)){
-            logger.error("PluginManager is null");
-            return loaded;
-        }
-
         String pluginID = pluginManager.loadPlugin(pluginPath.toPath());
         if (StringUtils.isEmpty(pluginID)){
             logger.error("invalid pluginID");
@@ -163,7 +156,7 @@ public class EventPluginLoader {
 
         eventListeners = pluginManager.getExtensions(IPluginEventListener.class);
 
-        if (Objects.isNull(eventListeners) || eventListeners.size() == 0){
+        if (Objects.isNull(eventListeners) || eventListeners.isEmpty()){
             logger.error("No eventListener is registered");
             return loaded;
         }
@@ -189,36 +182,31 @@ public class EventPluginLoader {
         if (Objects.isNull(eventListeners))
             return;
 
-        eventListeners.forEach(listener -> {
-            listener.handleBlockEvent(toJsonString(trigger));
-        });
+        eventListeners.forEach(listener ->
+            listener.handleBlockEvent(toJsonString(trigger)));
     }
 
     public void postTransactionTrigger(TransactionLogTrigger trigger){
         if (Objects.isNull(eventListeners))
             return;
 
-        eventListeners.forEach(listener -> {
-            listener.handleTransactionTrigger(toJsonString(trigger));
-        });
+        eventListeners.forEach(listener -> listener.handleTransactionTrigger(toJsonString(trigger)));
     }
 
     public void postContractLogTrigger(ContractLogTrigger trigger){
         if (Objects.isNull(eventListeners))
             return;
 
-        eventListeners.forEach(listener -> {
-            listener.handleContractLogTrigger(toJsonString(trigger));
-        });
+        eventListeners.forEach(listener ->
+            listener.handleContractLogTrigger(toJsonString(trigger)));
     }
 
     public void postContractEventTrigger(ContractEventTrigger trigger){
         if (Objects.isNull(eventListeners))
             return;
 
-        eventListeners.forEach(listener -> {
-            listener.handleContractEventTrigger(toJsonString(trigger));
-        });
+        eventListeners.forEach(listener ->
+            listener.handleContractEventTrigger(toJsonString(trigger)));
     }
 
     private String toJsonString(Object data){
@@ -255,29 +243,14 @@ public class EventPluginLoader {
         }
 
         for (int index = 0; index < 2000; ++index){
-            /*BlockLogTrigger trigger = new BlockLogTrigger();
+            BlockLogTrigger trigger = new BlockLogTrigger();
             trigger.setBlockHash("0X123456789A");
             trigger.setTimeStamp(System.currentTimeMillis());
             trigger.setBlockNumber(index);
-            EventPluginLoader.getInstance().postBlockTrigger(trigger);*/
-
-            TransactionLogTrigger trigger = new TransactionLogTrigger();
-            trigger.setBlockId(String.valueOf(index));
-            trigger.setTimestamp(System.currentTimeMillis());
-            trigger.setTransactionHash("XXXXXX");
-
-            EventPluginLoader.getInstance().postTransactionTrigger(trigger);
+            EventPluginLoader.getInstance().postBlockTrigger(trigger);
         }
 
-        //EventPluginLoader.getInstance().stopPlugin();
-
-        while (true){
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+        EventPluginLoader.getInstance().stopPlugin();
     }
 }
 

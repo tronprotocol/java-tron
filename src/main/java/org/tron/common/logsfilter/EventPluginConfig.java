@@ -5,6 +5,7 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class EventPluginConfig {
 
@@ -26,11 +27,10 @@ public class EventPluginConfig {
     @Setter
     private List<TriggerConfig> triggerConfigList;
 
-
     public EventPluginConfig(){
         pluginPath = "";
         serverAddress = "";
-        triggerConfigList = new ArrayList<TriggerConfig>();
+        triggerConfigList = new ArrayList<>();
     }
 }
 
