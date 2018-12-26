@@ -925,12 +925,9 @@ public class Manager {
         try (ISession tmpSession = revokingStore.buildSession()) {
           applyBlock(newBlock);
           tmpSession.commit();
-          if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
-            this.getTriggerCapsuleQueue().put(new BlockLogTriggerCapsule(newBlock));
-          }
-        } catch (InterruptedException e) {
-          logger.error(e.getMessage());
-          Thread.currentThread().interrupt();
+
+          // if event subscribe is enabled, post block trigger to queue
+          postBlockTrigger(newBlock);
         } catch (Throwable throwable) {
           logger.error(throwable.getMessage(), throwable);
           khaosDb.removeBlk(block.getBlockId());
@@ -1124,14 +1121,8 @@ public class Manager {
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
 
-    if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
-      try {
-        this.getTriggerCapsuleQueue().put(new TransactionLogTriggerCapsule(trxCap, blockCap));
-      } catch (InterruptedException e) {
-        logger.error(e.getMessage());
-        Thread.currentThread().interrupt();
-      }
-    }
+    // if event subscribe is enabled, post transaction trigger to queue
+    postTransactionTrigger(trxCap, blockCap);
 
     return true;
   }
@@ -1721,6 +1712,29 @@ public class Manager {
 
     if (Args.getInstance().isEventSubscribe() && contractTriggerListener != null){
         contractTriggerListener.onEvent(event, type);
+    }
+  }
+
+  private void postBlockTrigger(BlockCapsule newBlock){
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
+      try {
+        this.getTriggerCapsuleQueue().put(new BlockLogTriggerCapsule(newBlock));
+      } catch (InterruptedException e) {
+        logger.error(e.getMessage());
+        Thread.currentThread().interrupt();
+      }
+    }
+  }
+
+  private void postTransactionTrigger(final TransactionCapsule trxCap, BlockCapsule blockCap){
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
+      try {
+        this.getTriggerCapsuleQueue().put(new TransactionLogTriggerCapsule(trxCap, blockCap));
+      }
+      catch (InterruptedException e) {
+        logger.error(e.getMessage());
+        Thread.currentThread().interrupt();
+      }
     }
   }
 }
