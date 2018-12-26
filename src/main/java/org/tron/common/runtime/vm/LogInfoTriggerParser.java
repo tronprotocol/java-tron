@@ -73,35 +73,28 @@ public class LogInfoTriggerParser {
     String originAddrStr = ArrayUtils.isEmpty(originAddress) ? null :Wallet.encode58Check(originAddress);
     String creatorAddrStr = ArrayUtils.isEmpty(creatorAddress) ? null : Wallet.encode58Check(creatorAddress);
 
-
     for (LogInfo logInfo: logInfos) {
       List<DataWord> topics = logInfo.getTopics();
       if (topics.size() > 0 && fullMap.size() > 0){
         byte[] firstTopic = logInfo.getTopics().get(0).getData();
         ABI.Entry entry = fullMap.get(firstTopic);
 
-        ContractTrigger event;
-        if (entry == null){
-          event = new ContractLogTrigger(txIdStr, contractAddrStr, callerAddrStr, originAddrStr, creatorAddrStr, blockNum, blockTimestamp);
-          ((ContractLogTrigger) event).setTopicList(logInfo.getHexTopics());
-          ((ContractLogTrigger) event).setData(Hex.toHexString(logInfo.getData()));
-        }else {
-          event = new ContractEventTrigger(txIdStr, contractAddrStr, callerAddrStr, originAddrStr, creatorAddrStr, blockNum, blockTimestamp);
+        boolean isEvent = (entry == null || entry.getAnonymous());
+        ContractLogTrigger event = isEvent ?
+            new ContractEventTrigger(txIdStr, contractAddrStr, callerAddrStr, originAddrStr, creatorAddrStr, blockNum, blockTimestamp) :
+            new ContractLogTrigger(txIdStr, contractAddrStr, callerAddrStr, originAddrStr, creatorAddrStr, blockNum, blockTimestamp);
+
+        event.setTopicList(logInfo.getClonedTopics());
+        event.setData(ByteUtil.cloneBytes(logInfo.getData()));
+
+        if (isEvent){
           ((ContractEventTrigger) event).setEventSignature(signMap.get(firstTopic));
-          ((ContractEventTrigger) event).setTopicMap(parseEventTopics(logInfo.getTopics(), entry.getInputsList()));
-          ((ContractEventTrigger) event).setDataMap(parseEventData(logInfo.getData(), entry.getInputsList()));
+          ((ContractEventTrigger) event).setAbiEntry(entry);
         }
+        list.add(event);
       }
 
     }
     return list;
-  }
-
-  private static Map<String, Object> parseEventTopics(List<DataWord> topicList, List< ABI.Entry.Param > abiInputList) {
-    return null;
-  }
-
-  private static Map<String, Object> parseEventData(byte[] data, List< ABI.Entry.Param > abiInputList) {
-    return null;
   }
 }
