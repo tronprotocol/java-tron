@@ -926,12 +926,9 @@ public class Manager {
         try (ISession tmpSession = revokingStore.buildSession()) {
           applyBlock(newBlock);
           tmpSession.commit();
-          if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
-            this.getTriggerCapsuleQueue().put(new BlockLogTriggerCapsule(newBlock));
-          }
-        } catch (InterruptedException e) {
-          logger.error(e.getMessage());
-          Thread.currentThread().interrupt();
+
+          // if event subscribe is enabled, post block trigger to queue
+          postBlockTrigger(newBlock);
         } catch (Throwable throwable) {
           logger.error(throwable.getMessage(), throwable);
           khaosDb.removeBlk(block.getBlockId());
@@ -1134,24 +1131,8 @@ public class Manager {
         .buildInstance(trxCap, blockCap, trace);
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
-    if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
-      try {
-
-        // be careful, trace.getRuntimeResult().getEventList() should never return null
-        for (ContractTrigger trigger: trace.getRuntimeResult().getEventList()) {
-          if (trigger instanceof ContractEventTrigger){
-            this.getTriggerCapsuleQueue().put(new ContractEventTriggerCapsule((ContractEventTrigger) trigger));
-          }else if (trigger instanceof ContractLogTrigger){
-            this.getTriggerCapsuleQueue().put(new ContractLogTriggerCapsule((ContractLogTrigger) trigger));
-          }
-        }
-
-        this.getTriggerCapsuleQueue().put(new TransactionLogTriggerCapsule(trxCap, blockCap));
-      } catch (InterruptedException e) {
-        logger.error(e.getMessage());
-        Thread.currentThread().interrupt();
-      }
-    }
+    // if event subscribe is enabled, post transaction trigger to queue
+    postTransactionTrigger(trxCap, blockCap, trace);
 
     return true;
   }
@@ -1737,4 +1718,46 @@ public class Manager {
     }
   }
 
+  private void postBlockTrigger(BlockCapsule newBlock){
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
+      try {
+        this.getTriggerCapsuleQueue().put(new BlockLogTriggerCapsule(newBlock));
+      } catch (InterruptedException e) {
+        logger.error(e.getMessage());
+        Thread.currentThread().interrupt();
+      }
+    }
+  }
+
+  private void postTransactionTrigger(final TransactionCapsule trxCap, BlockCapsule blockCap, TransactionTrace trace){
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
+      try {
+        // be careful, trace.getRuntimeResult().getEventList() should never return null
+        for (ContractTrigger trigger: trace.getRuntimeResult().getEventList()) {
+          TriggerCapsule capsule = getContractTriggerCapsule(trigger);
+          if (capsule != null){
+            this.getTriggerCapsuleQueue().put(capsule);
+          }
+        }
+
+        this.getTriggerCapsuleQueue().put(new TransactionLogTriggerCapsule(trxCap, blockCap));
+      }
+      catch (InterruptedException e) {
+        logger.error(e.getMessage());
+        Thread.currentThread().interrupt();
+      }
+    }
+  }
+
+  private TriggerCapsule getContractTriggerCapsule(ContractTrigger trigger){
+    if (trigger == null){
+      return null;
+    }
+    if (trigger instanceof ContractEventTrigger){
+      return new ContractEventTriggerCapsule((ContractEventTrigger) trigger);
+    }else if (trigger instanceof ContractLogTrigger){
+      return new ContractLogTriggerCapsule((ContractLogTrigger) trigger);
+    }
+    return null;
+  }
 }

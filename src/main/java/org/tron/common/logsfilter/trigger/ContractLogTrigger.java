@@ -20,9 +20,31 @@ public class ContractLogTrigger extends ContractTrigger{
     @Setter
     private String data;
 
-
     public ContractLogTrigger(String txId, String contractAddress, String callerAddress,
-                              String originAddress, String creatorAddress, Long blockNum, Long blockTimestamp){
+                              String originAddress, String creatorAddress, Long blockNum, Long blockTimestamp) {
         super(txId, contractAddress, callerAddress, originAddress, creatorAddress, blockNum, blockTimestamp);
+    }
+    @Override
+    public String toString(){
+        return new StringBuilder().append("timestamp: ")
+            .append(timeStamp)
+            .append(", blockNum: ")
+            .append(getBlockNum())
+            .append(", blockTimestamp: ")
+            .append(getTimeStamp())
+            .append(", txId: ")
+            .append(getTxId())
+            .append(", contractAddress: ")
+            .append(getContractAddress())
+            .append(", callerAddress: ")
+            .append(getCallerAddress())
+            .append(", creatorAddress: ")
+            .append(getCallerAddress())
+            .append(", data: ")
+            .append(data)
+            .append(", contractTopicMap")
+            .append(topicList)
+            .append(", removed: ")
+            .append(isRemoved()).toString();
     }
 }
