@@ -30,6 +30,22 @@ public class ByteUtil {
   public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
   public static final byte[] ZERO_BYTE_ARRAY = new byte[]{0};
 
+
+  /**
+   * return a cloned byte array.
+   * return null if parameter data is null
+   * @param data
+   * @return
+   */
+  public static byte[] cloneBytes(byte[] data){
+    byte[] rc = (data == null) ? null : ByteUtil.EMPTY_BYTE_ARRAY;
+    if (data != null && data.length > 0) {
+      rc = new byte[data.length];
+      System.arraycopy(data, 0, rc, 0, data.length);
+    }
+    return rc;
+  }
+
   /**
    * The regular {@link java.math.BigInteger#toByteArray()} method isn't quite what we often need:
    * it appends a leading zero to indicate that the number is positive and may need padding.

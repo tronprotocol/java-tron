@@ -3,8 +3,9 @@ package org.tron.common.logsfilter.trigger;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
+import org.tron.protos.Protocol.SmartContract.ABI.Entry;
 
-public class ContractEventTrigger extends ContractTrigger{
+public class ContractEventTrigger extends ContractLogTrigger{
   /**
    * decode from sha3($EventSignature) with the ABI of this contract.
    */
@@ -14,6 +15,7 @@ public class ContractEventTrigger extends ContractTrigger{
 
   /**
    * decode from topicList with the ABI of this contract.
+   * this item is null if not called ContractEventParser::parseTopics(ContractEventTrigger trigger)
    */
   @Getter
   @Setter
@@ -21,11 +23,18 @@ public class ContractEventTrigger extends ContractTrigger{
 
   /**
    * multi data items will be concat into a single string.
-   * Each item is 32 bytes.
+   * this item is null if not called ContractEventParser::parseData(ContractEventTrigger trigger)
    */
   @Getter
   @Setter
   private Map<String, Object> dataMap;
+
+  /**
+   * ABI Entry of this event.
+   */
+  @Getter
+  @Setter
+  private Entry abiEntry;
 
 
   public ContractEventTrigger(String txId, String contractAddress, String callerAddress,

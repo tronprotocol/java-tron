@@ -2,7 +2,10 @@ package org.tron.common.logsfilter.trigger;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.spongycastle.util.encoders.Hex;
+import org.tron.common.runtime.vm.DataWord;
 
+import java.util.LinkedList;
 import java.util.List;
 
 public class ContractLogTrigger extends ContractTrigger{
@@ -11,19 +14,20 @@ public class ContractLogTrigger extends ContractTrigger{
      */
     @Getter
     @Setter
-    private List<String> topicList;
+    private List<DataWord> topicList;
 
     /**
      * data produced by the smart contract LOG function
      */
     @Getter
     @Setter
-    private String data;
+    private byte[] data;
 
     public ContractLogTrigger(String txId, String contractAddress, String callerAddress,
                               String originAddress, String creatorAddress, Long blockNum, Long blockTimestamp) {
         super(txId, contractAddress, callerAddress, originAddress, creatorAddress, blockNum, blockTimestamp);
     }
+
     @Override
     public String toString(){
         return new StringBuilder().append("timestamp: ")
@@ -41,10 +45,20 @@ public class ContractLogTrigger extends ContractTrigger{
             .append(", creatorAddress: ")
             .append(getCallerAddress())
             .append(", data: ")
-            .append(data)
+            .append(Hex.toHexString(data))
             .append(", contractTopicMap")
-            .append(topicList)
+            .append(getHexTopics())
             .append(", removed: ")
             .append(isRemoved()).toString();
+    }
+
+    private List<String> getHexTopics() {
+        List<String> list = new LinkedList<>();
+        if (topicList != null && topicList.size() > 0){
+            for (DataWord dataword: topicList) {
+                list.add(Hex.toHexString(dataword.getData()));
+            }
+        }
+        return list;
     }
 }
