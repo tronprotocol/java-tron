@@ -35,7 +35,6 @@ import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.logsfilter.ContractTriggerListener;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.capsule.*;
 import org.tron.common.logsfilter.trigger.*;
@@ -89,7 +88,6 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
-import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 
 
@@ -191,8 +189,6 @@ public class Manager {
   private boolean isRunRepushThread = true;
 
   private boolean isRunTriggerCapsuleProcessThread = true;
-
-  private ContractTriggerListener contractTriggerListener;
 
   @Getter
   @Setter
@@ -1726,7 +1722,6 @@ public class Manager {
   }
 
   private void startEventSubscribing(){
-//    contractTriggerListener = new ContractTriggerListener();
 
     try{
       eventPluginLoaded = EventPluginLoader.getInstance().start(Args.getInstance().getEventPluginConfig());
