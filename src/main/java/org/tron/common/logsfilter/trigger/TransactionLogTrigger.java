@@ -20,4 +20,16 @@ public class TransactionLogTrigger extends Trigger{
     @Getter
     @Setter
     private String blockId;
+
+    @Override
+    public String toString(){
+        return new StringBuilder().append("timestamp: ")
+                .append(timeStamp)
+                .append(", transactionId: ")
+                .append(transactionId)
+                .append(", transactionHash: ")
+                .append(transactionHash)
+                .append(", blockId: ")
+                .append(blockId).toString();
+    }
 }

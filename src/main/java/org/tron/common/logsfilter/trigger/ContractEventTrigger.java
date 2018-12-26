@@ -60,4 +60,38 @@ public class ContractEventTrigger extends Trigger{
   @Getter
   @Setter
   private Map<String, String> contractTopicMap;
+
+  @Override
+  public String toString(){
+    return new StringBuilder().append("timestamp: ")
+            .append(timeStamp)
+            .append(", eventType: ")
+            .append(eventType)
+            .append(", blockNum: ")
+            .append(blockNum)
+            .append(", blockTimestamp: ")
+            .append(blockTimestamp)
+            .append(", trxHash: ")
+            .append(trxHash)
+            .append(", blockHash: ")
+            .append(blockHash)
+            .append(", logIndex: ")
+            .append(logIndex)
+            .append(", txId: ")
+            .append(txId)
+            .append(", contractAddress: ")
+            .append(contractAddress)
+            .append(", callerAddress: ")
+            .append(callerAddress)
+            .append(", creatorAddress: ")
+            .append(creatorAddress)
+            .append(", eventSignature: ")
+            .append(eventSignature)
+            .append(", data: ")
+            .append(data)
+            .append(", contractTopicMap")
+            .append(contractTopicMap)
+            .append(", removed: ")
+            .append(removed).toString();
+  }
 }
