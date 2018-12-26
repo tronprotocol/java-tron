@@ -2,59 +2,77 @@ package org.tron.common.logsfilter.trigger;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.tron.common.runtime.vm.event.ContractEvent;
 
 import java.util.List;
 
 public class ContractTrigger extends Trigger{
+
+    /**
+     * id of the transaction which produce this event.
+     */
     @Getter
     @Setter
-    private String eventType;
+    private String txId;
 
-    @Getter
-    @Setter
-    private long blockNum;
-
-    @Getter
-    @Setter
-    private long blockTimestamp;
-
-    @Getter
-    @Setter
-    private String trxHash;
-
-    @Getter
-    @Setter
-    private String blockHash;
-
-    @Getter
-    @Setter
-    private long logIndex;
-
-    @Getter
-    @Setter
-    private long txId;
-
+    /**
+     * address of the contract triggered by the callerAddress.
+     */
     @Getter
     @Setter
     private String contractAddress;
 
+    /**
+     * caller of the transaction which produce this event.
+     */
     @Getter
     @Setter
     private String callerAddress;
 
+    /**
+     * origin address of the contract which produce this event.
+     */
+    @Getter
+    @Setter
+    private String originAddress;
+
+    /**
+     * caller address of the contract which produce this event.
+     */
     @Getter
     @Setter
     private String creatorAddress;
 
+    /**
+     * block number of the transaction
+     */
     @Getter
     @Setter
-    private List<String> contractTopics;
+    private Long blockNum;
 
+    /**
+     * block timestamp of the transaction
+     */
     @Getter
     @Setter
-    private String data;
+    private Long blockTimestamp;
 
+    /**
+     * true if the transaction has been revoked
+     */
     @Getter
     @Setter
     private boolean removed;
+
+
+    public ContractTrigger(String txId, String contractAddress, String callerAddress,
+                         String originAddress, String creatorAddress, Long blockNum, Long blockTimestamp){
+        this.txId = txId;
+        this.contractAddress = contractAddress;
+        this.callerAddress = callerAddress;
+        this.originAddress = originAddress;
+        this.creatorAddress = creatorAddress;
+        this.blockNum = blockNum;
+        this.blockTimestamp = blockTimestamp;
+    }
 }
