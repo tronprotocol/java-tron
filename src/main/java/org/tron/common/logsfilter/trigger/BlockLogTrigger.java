@@ -21,7 +21,7 @@ public class BlockLogTrigger extends Trigger {
 
     @Getter
     @Setter
-    private List<String> transactionList = new ArrayList<String>();
+    private List<String> transactionList = new ArrayList<>();
 
     @Override
     public String toString(){
