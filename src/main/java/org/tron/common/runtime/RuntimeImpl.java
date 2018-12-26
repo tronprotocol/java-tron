@@ -384,6 +384,9 @@ public class RuntimeImpl implements Runtime {
       tokenValue = contract.getCallTokenValue();
       tokenId = contract.getTokenId();
     }
+
+    checkTokenValueAndId(tokenValue, tokenId);
+
     // create vm to constructor smart contract
     try {
       long feeLimit = trx.getRawData().getFeeLimit();
@@ -503,6 +506,8 @@ public class RuntimeImpl implements Runtime {
         throw new ContractValidateException("tokenValue must >= 0");
       }
     }
+
+    checkTokenValueAndId(tokenValue, tokenId);
 
     byte[] code = this.deposit.getCode(contractAddress);
     if (isNotEmpty(code)) {
@@ -719,6 +724,17 @@ public class RuntimeImpl implements Runtime {
       VMUtils.saveProgramTraceFile(config, txHash, traceContent);
     }
 
+  }
+  public void checkTokenValueAndId(long tokenValue, long tokenId) throws ContractValidateException {
+    if (true) { //3.5 hard fork
+      if (tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0){
+        throw new ContractValidateException("tokenId must > " + VMConstant.MIN_TOKEN_ID);
+      }
+      if (tokenValue > 0 && tokenId == 0) {
+        throw new ContractValidateException("invalid arguments with tokenValue = " + tokenValue +
+            ", tokenId = " + tokenId);
+      }
+    }
   }
 
   public ProgramResult getResult() {

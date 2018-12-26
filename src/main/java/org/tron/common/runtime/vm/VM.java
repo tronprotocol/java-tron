@@ -1244,8 +1244,12 @@ public class VM {
           }
 
           DataWord tokenId = new DataWord(0);
+          boolean isTokenTransferMsg = false;
           if (op == CALLTOKEN) {
             tokenId = program.stackPop();
+            if (true) { // 3.5 hard fork
+              isTokenTransferMsg = true;
+            }
           }
 
           DataWord inDataOffs = program.stackPop();
@@ -1269,7 +1273,7 @@ public class VM {
 
           MessageCall msg = new MessageCall(
               op, adjustedCallEnergy, codeAddress, value, inDataOffs, inDataSize,
-              outDataOffs, outDataSize, tokenId);
+              outDataOffs, outDataSize, tokenId, isTokenTransferMsg);
 
           PrecompiledContracts.PrecompiledContract contract =
               PrecompiledContracts.getContractForAddress(codeAddress);
