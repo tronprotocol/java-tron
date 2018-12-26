@@ -1131,9 +1131,6 @@ public class Manager {
     // if event subscribe is enabled, post contract triggers to queue
     postContractTrigger(trace);
 
-    // if event subscribe is enabled, post transaction trigger to queue
-    postTransactionTrigger(trxCap, blockCap);
-
     return true;
   }
 
@@ -1717,7 +1714,7 @@ public class Manager {
     }
   }
 
-  private void postBlockTrigger(BlockCapsule newBlock){
+  private void postBlockTrigger(final BlockCapsule newBlock){
     if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
       try {
         this.getTriggerCapsuleQueue().put(new BlockLogTriggerCapsule(newBlock));
@@ -1726,9 +1723,13 @@ public class Manager {
         Thread.currentThread().interrupt();
       }
     }
+
+    for (TransactionCapsule e : newBlock.getTransactions()) {
+      postTransactionTrigger(e, newBlock);
+    }
   }
 
-  private void postTransactionTrigger(final TransactionCapsule trxCap, BlockCapsule blockCap){
+  private void postTransactionTrigger(final TransactionCapsule trxCap, final BlockCapsule blockCap){
     if (eventPluginLoaded && EventPluginLoader.getInstance().isContractEventTriggerEnable()) {
       try {
         this.getTriggerCapsuleQueue().put(new TransactionLogTriggerCapsule(trxCap, blockCap));
