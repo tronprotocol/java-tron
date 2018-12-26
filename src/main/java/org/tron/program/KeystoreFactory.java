@@ -4,9 +4,8 @@ import com.beust.jcommander.JCommander;
 import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
@@ -16,10 +15,9 @@ import org.tron.keystore.CipherException;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
 
-
+@Slf4j(topic = "app")
 public class KeystoreFactory {
 
-  private static final Logger logger = LoggerFactory.getLogger("KeystoreFactory");
   private static final String FilePath = "Wallet";
 
   private boolean priKeyValid(String priKey) {

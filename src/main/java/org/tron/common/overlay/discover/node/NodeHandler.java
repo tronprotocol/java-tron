@@ -21,8 +21,7 @@ package org.tron.common.overlay.discover.node;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.net.udp.handler.UdpEvent;
 import org.tron.common.net.udp.message.Message;
 import org.tron.common.net.udp.message.discover.FindNodeMessage;
@@ -32,13 +31,8 @@ import org.tron.common.net.udp.message.discover.PongMessage;
 import org.tron.common.overlay.discover.node.statistics.NodeStatistics;
 import org.tron.core.config.args.Args;
 
-/**
- * The instance of this class responsible for discovery messages exchange with the specified Node It
- * also manages itself regarding inclusion/eviction from Kademlia table
- **/
+@Slf4j(topic = "discover")
 public class NodeHandler {
-
-  private static final Logger logger = LoggerFactory.getLogger("NodeHandler");
 
   private static long PingTimeout = 15000;
 

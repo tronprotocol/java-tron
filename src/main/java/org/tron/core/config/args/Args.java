@@ -45,7 +45,7 @@ import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
 import org.tron.program.Version;
 
-@Slf4j
+@Slf4j(topic = "app")
 @NoArgsConstructor
 @Component
 public class Args {
@@ -57,6 +57,10 @@ public class Args {
 
   @Parameter(names = {"-d", "--output-directory"}, description = "Directory")
   private String outputDirectory = "output-directory";
+
+  @Getter
+  @Parameter(names = {"--log-config"})
+  private String logbackPath = "";
 
   @Getter
   @Parameter(names = {"-h", "--help"}, help = true, description = "HELP message")
@@ -683,6 +687,12 @@ public class Args {
 
     INSTANCE.blockProducedTimeOut = config.hasPath("node.blockProducedTimeOut") ?
         config.getInt("node.blockProducedTimeOut") : ChainConstant.BLOCK_PRODUCED_TIME_OUT;
+    if (INSTANCE.blockProducedTimeOut < 30) {
+      INSTANCE.blockProducedTimeOut = 30;
+    }
+    if (INSTANCE.blockProducedTimeOut > 100) {
+      INSTANCE.blockProducedTimeOut = 100;
+    }
 
     INSTANCE.netMaxTrxPerSecond = config.hasPath("node.netMaxTrxPerSecond") ?
         config.getInt("node.netMaxTrxPerSecond") : NetConstants.NET_MAX_TRX_PER_SECOND;

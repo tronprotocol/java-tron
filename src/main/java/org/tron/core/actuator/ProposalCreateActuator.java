@@ -24,7 +24,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-@Slf4j
+@Slf4j(topic = "actuator")
 public class ProposalCreateActuator extends AbstractActuator {
 
   ProposalCreateActuator(final Any contract, final Manager dbManager) {
@@ -254,12 +254,22 @@ public class ProposalCreateActuator extends AbstractActuator {
         break;
       }
       case (20): {
-        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.MULTI_SIGN)) {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_5)) {
           throw new ContractValidateException("Bad chain parameter id: ALLOW_MULTI_SIGN");
         }
         if (entry.getValue() != 1) {
           throw new ContractValidateException(
               "This value[ALLOW_MULTI_SIGN] is only allowed to be 1");
+        }
+        break;
+      }
+      case (21): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_5)) {
+          throw new ContractValidateException("Bad chain parameter id: ALLOW_ADAPTIVE_ENERGY");
+        }
+        if (entry.getValue() != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_ADAPTIVE_ENERGY] is only allowed to be 1");
         }
         break;
       }

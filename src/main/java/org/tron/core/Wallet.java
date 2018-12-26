@@ -101,7 +101,6 @@ import org.tron.core.db.ContractStore;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
-import org.tron.core.db.PendingManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -118,7 +117,6 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
-import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TransferContract;
@@ -664,19 +662,139 @@ public class Wallet {
   public Protocol.ChainParameters getChainParameters() {
     Protocol.ChainParameters.Builder builder = Protocol.ChainParameters.newBuilder();
 
-    Arrays.stream(ChainParameters.values()).forEach(parameters -> {
-      try {
-        String methodName = Wallet.makeUpperCamelMethod(parameters.name());
-        builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey(methodName)
-            .setValue((Long) DynamicPropertiesStore.class.getDeclaredMethod(methodName)
-                .invoke(dbManager.getDynamicPropertiesStore()))
+    // MAINTENANCE_TIME_INTERVAL, //ms  ,0
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getMaintenanceTimeInterval")
+            .setValue(dbManager.getDynamicPropertiesStore().getMaintenanceTimeInterval())
             .build());
-      } catch (Exception ex) {
-        logger.error("get chainParameter error,", ex);
-      }
+    //    ACCOUNT_UPGRADE_COST, //drop ,1
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAccountUpgradeCost")
+            .setValue(dbManager.getDynamicPropertiesStore().getAccountUpgradeCost())
+            .build());
+    //    CREATE_ACCOUNT_FEE, //drop ,2
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getCreateAccountFee")
+            .setValue(dbManager.getDynamicPropertiesStore().getCreateAccountFee())
+            .build());
+    //    TRANSACTION_FEE, //drop ,3
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getTransactionFee")
+            .setValue(dbManager.getDynamicPropertiesStore().getTransactionFee())
+            .build());
+    //    ASSET_ISSUE_FEE, //drop ,4
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAssetIssueFee")
+            .setValue(dbManager.getDynamicPropertiesStore().getAssetIssueFee())
+            .build());
+    //    WITNESS_PAY_PER_BLOCK, //drop ,5
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getWitnessPayPerBlock")
+            .setValue(dbManager.getDynamicPropertiesStore().getWitnessPayPerBlock())
+            .build());
+    //    WITNESS_STANDBY_ALLOWANCE, //drop ,6
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getWitnessStandbyAllowance")
+            .setValue(dbManager.getDynamicPropertiesStore().getWitnessStandbyAllowance())
+            .build());
+    //    CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT, //drop ,7
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getCreateNewAccountFeeInSystemContract")
+            .setValue(
+                dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract())
+            .build());
+    //    CREATE_NEW_ACCOUNT_BANDWIDTH_RATE, // 1 ~ ,8
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getCreateNewAccountBandwidthRate")
+            .setValue(dbManager.getDynamicPropertiesStore().getCreateNewAccountBandwidthRate())
+            .build());
+    //    ALLOW_CREATION_OF_CONTRACTS, // 0 / >0 ,9
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowCreationOfContracts")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowCreationOfContracts())
+            .build());
+    //    REMOVE_THE_POWER_OF_THE_GR,  // 1 ,10
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getRemoveThePowerOfTheGr")
+            .setValue(dbManager.getDynamicPropertiesStore().getRemoveThePowerOfTheGr())
+            .build());
+    //    ENERGY_FEE, // drop, 11
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getEnergyFee")
+            .setValue(dbManager.getDynamicPropertiesStore().getEnergyFee())
+            .build());
+    //    EXCHANGE_CREATE_FEE, // drop, 12
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getExchangeCreateFee")
+            .setValue(dbManager.getDynamicPropertiesStore().getExchangeCreateFee())
+            .build());
+    //    MAX_CPU_TIME_OF_ONE_TX, // ms, 13
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getMaxCpuTimeOfOneTx")
+            .setValue(dbManager.getDynamicPropertiesStore().getMaxCpuTimeOfOneTx())
+            .build());
+    //    ALLOW_UPDATE_ACCOUNT_NAME, // 1, 14
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowUpdateAccountName")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowUpdateAccountName())
+            .build());
+    //    ALLOW_SAME_TOKEN_NAME, // 1, 15
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowSameTokenName")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowSameTokenName())
+            .build());
+    //    ALLOW_DELEGATE_RESOURCE, // 0, 16
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowDelegateResource")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowDelegateResource())
+            .build());
+    //    TOTAL_ENERGY_LIMIT, // 50,000,000,000, 17
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getTotalEnergyLimit")
+            .setValue(dbManager.getDynamicPropertiesStore().getTotalEnergyLimit())
+            .build());
+    //    ALLOW_TVM_TRANSFER_TRC10, // 1, 18
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowTvmTransferTrc10")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10())
+            .build());
+    //    TOTAL_CURRENT_ENERGY_LIMIT, // 50,000,000,000, 19
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getTotalEnergyCurrentLimit")
+            .setValue(dbManager.getDynamicPropertiesStore().getTotalEnergyCurrentLimit())
+            .build());
 
-    });
+
+    //other chainParameters
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getTotalEnergyTargetLimit")
+        .setValue(dbManager.getDynamicPropertiesStore().getTotalEnergyTargetLimit())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getTotalEnergyAverageUsage")
+        .setValue(dbManager.getDynamicPropertiesStore().getTotalEnergyAverageUsage())
+        .build());
 
     return builder.build();
   }

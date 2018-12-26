@@ -24,7 +24,7 @@ import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 
-@Slf4j
+@Slf4j(topic = "capsule")
 public class TransactionUtil {
 
   public static Transaction newGenesisTransaction(byte[] key, long value)

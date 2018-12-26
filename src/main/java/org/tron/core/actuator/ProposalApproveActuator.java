@@ -23,7 +23,7 @@ import org.tron.protos.Contract.ProposalApproveContract;
 import org.tron.protos.Protocol.Proposal.State;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-@Slf4j
+@Slf4j(topic = "actuator")
 public class ProposalApproveActuator extends AbstractActuator {
 
   ProposalApproveActuator(final Any contract, final Manager dbManager) {

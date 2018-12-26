@@ -5,7 +5,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.protos.Protocol.DelegatedResource;
 
-@Slf4j
+@Slf4j(topic = "capsule")
 public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource> {
 
   private DelegatedResource delegatedResource;
