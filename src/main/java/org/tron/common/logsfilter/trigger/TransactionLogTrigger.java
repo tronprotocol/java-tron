@@ -3,9 +3,12 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class TransactionLogTrigger extends Trigger{
-    public void setTimestamp(long ts) {
-        timeStamp = ts;
+
+    @Override
+    public void setTimeStamp(long ts) {
+        super.timeStamp = ts;
     }
+
     @Getter
     @Setter
     private String transactionId;

@@ -19,7 +19,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
       transactionLogTrigger.setBlockId(blockCapsule.getBlockId().toString());
     }
     transactionLogTrigger.setTransactionId(trxCasule.getTransactionId().toString());
-    transactionLogTrigger.setTimestamp(trxCasule.getTimestamp());
+    transactionLogTrigger.setTimeStamp(trxCasule.getTimestamp());
   }
 
   @Override
