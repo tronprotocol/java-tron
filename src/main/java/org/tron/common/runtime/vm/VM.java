@@ -637,6 +637,9 @@ public class VM {
          */
         case ADDRESS: {
           DataWord address = program.getContractAddress();
+          if (true) { //3.5 hard fork
+            address = new DataWord(address.getLast20Bytes());
+          }
 
           if (logger.isDebugEnabled()) {
             hint = "address: " + Hex.toHexString(address.getLast20Bytes());
@@ -662,6 +665,10 @@ public class VM {
         break;
         case ORIGIN: {
           DataWord originAddress = program.getOriginAddress();
+
+          if (true) { //3.5 hard fork
+            originAddress = new DataWord(originAddress.getLast20Bytes());
+          }
 
           if (logger.isDebugEnabled()) {
             hint = "address: " + Hex.toHexString(originAddress.getLast20Bytes());
