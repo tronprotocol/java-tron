@@ -150,6 +150,7 @@ public class FastSyncCallBack {
       BlockCapsule parentBlockCapsule = manager.getBlockById(blockCapsule.getParentBlockId());
       rootHash = parentBlockCapsule.getInstance().getBlockHeader().getRawData()
           .getAccountStateRoot().toByteArray();
+      rootHash = rootHashCache.getIfPresent(parentBlockCapsule.getBlockId().toString());
     } catch (Exception e) {
       logger.error("", e);
     }
@@ -270,6 +271,7 @@ public class FastSyncCallBack {
           ByteUtil.toHexString(newRoot));
       throw new BadBlockException("The accountStateRoot hash is not validated");
     }
+    setRootHashCache(newRoot);
   }
 
   public void executeGenerateFinish() {
@@ -285,6 +287,7 @@ public class FastSyncCallBack {
     }
     blockCapsule.setAccountStateRoot(newRoot);
     execute = false;
+    setRootHashCache(newRoot);
   }
 
   public void exceptionFinish() {
@@ -297,5 +300,9 @@ public class FastSyncCallBack {
       return false;
     }
     return true;
+  }
+
+  private void setRootHashCache(byte[] rootHash) {
+    rootHashCache.put(blockCapsule.getBlockId().toString(), rootHash);
   }
 }

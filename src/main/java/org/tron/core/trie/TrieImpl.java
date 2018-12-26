@@ -26,6 +26,7 @@ import org.tron.common.crypto.Hash;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.utils.FastByteComparisons;
 import org.tron.core.capsule.utils.RLP;
+import org.tron.core.capsule.utils.RLPList;
 import org.tron.core.db2.common.ConcurrentHashDB;
 import org.tron.core.db2.common.DB;
 
@@ -505,10 +506,16 @@ public class TrieImpl implements Trie<byte[]> {
 
   private byte[] getHash(byte[] hash) {
     BytesCapsule bytesCapsule = cache.get(hash);
-    return bytesCapsule == null ? null : bytesCapsule.getData();
+    if (bytesCapsule == null) {
+      return null;
+    }
+    RLPList rlpList = RLP.decode2(NodeImpl.javabytesCapsule.getData());
+    return rlpList.get(0).getRLPData();
   }
 
   private void addHash(byte[] hash, byte[] ret) {
+    ret = RLP.encodeElement(ret);
+    ret = RLP.encodeList(ret);
     cache.put(hash, new BytesCapsule(ret));
   }
 

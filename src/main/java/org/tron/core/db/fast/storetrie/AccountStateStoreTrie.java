@@ -2,6 +2,7 @@ package org.tron.core.db.fast.storetrie;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -24,7 +25,7 @@ public class AccountStateStoreTrie extends TronStoreWithRevoking<BytesCapsule> i
     DB<byte[], BytesCapsule> {
 
   private Cache<WrappedByteArray, BytesCapsule> cache = CacheBuilder.newBuilder()
-      .initialCapacity(1000).maximumSize(1000).build();
+      .initialCapacity(1000).maximumSize(1000).expireAfterAccess(5, TimeUnit.MINUTES).build();
 
   @Autowired
   private TrieService trieService;
@@ -72,7 +73,6 @@ public class AccountStateStoreTrie extends TronStoreWithRevoking<BytesCapsule> i
 
   @Override
   public void put(byte[] key, BytesCapsule item) {
-    logger.info("put key: {}", ByteUtil.toHexString(key));
     super.put(key, item);
     cache.put(WrappedByteArray.of(key), item);
   }

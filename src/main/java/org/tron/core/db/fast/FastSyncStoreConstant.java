@@ -15,6 +15,7 @@ public class FastSyncStoreConstant {
   public static final String ACCOUNT_ID_INDEX_STORE_KEY = "11";
   public static final String VOTES_STORE_KEY = "12";
   public static final String ACCOUNT_INDEX_STORE_KEY = "13";
+  public static final String STORAGE_STORE_KEY = "14";
 
   public enum TrieEnum {
     DYNAMIC(DYNAMIC_PROPERTIES_STORE_KEY),
@@ -29,7 +30,8 @@ public class FastSyncStoreConstant {
     PROPOSAL(PROPOSAL_STORE_KEY),
     ACCOUNT_ID_INDEX(ACCOUNT_ID_INDEX_STORE_KEY),
     VOTES(VOTES_STORE_KEY),
-    ACCOUNT_INDEX(ACCOUNT_INDEX_STORE_KEY);
+    ACCOUNT_INDEX(ACCOUNT_INDEX_STORE_KEY),
+    STORAGE(STORAGE_STORE_KEY);
 
     TrieEnum(String key) {
       this.key = key;

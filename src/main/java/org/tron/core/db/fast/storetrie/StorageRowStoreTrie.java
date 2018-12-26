@@ -1,16 +1,17 @@
 package org.tron.core.db.fast.storetrie;
 
+import static org.tron.core.db.fast.FastSyncStoreConstant.STORAGE_STORE_KEY;
+
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteUtil;
-import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.utils.RLP;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db.fast.TrieService;
@@ -19,7 +20,7 @@ import org.tron.core.trie.TrieImpl;
 
 @Slf4j
 @Component
-public class AssetIssueV2StoreTrie extends TronStoreWithRevoking<BytesCapsule> implements
+public class StorageRowStoreTrie extends TronStoreWithRevoking<BytesCapsule> implements
     DB<byte[], BytesCapsule> {
 
   private Cache<WrappedByteArray, BytesCapsule> cache = CacheBuilder.newBuilder()
@@ -29,7 +30,7 @@ public class AssetIssueV2StoreTrie extends TronStoreWithRevoking<BytesCapsule> i
   private TrieService trieService;
 
   @Autowired
-  private AssetIssueV2StoreTrie(@Value("assetIssueV2Trie") String dbName) {
+  protected StorageRowStoreTrie(@Value("storageTrie") String dbName) {
     super(dbName);
   }
 
@@ -52,7 +53,20 @@ public class AssetIssueV2StoreTrie extends TronStoreWithRevoking<BytesCapsule> i
 
   @Override
   public void put(byte[] key, BytesCapsule item) {
+    logger.info("put key: {}", ByteUtil.toHexString(key));
     super.put(key, item);
     cache.put(WrappedByteArray.of(key), item);
   }
+
+  @Override
+  public void delete(byte[] key) {
+    cache.invalidate(WrappedByteArray.of(key));
+    super.delete(key);
+  }
+
+  public byte[] getValue(byte[] key) {
+    TrieImpl trie = trieService.getChildTrie(RLP.encodeString(STORAGE_STORE_KEY), this);
+    return trie.get(RLP.encodeElement(key));
+  }
+
 }

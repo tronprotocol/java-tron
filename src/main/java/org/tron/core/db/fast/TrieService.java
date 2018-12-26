@@ -70,9 +70,4 @@ public class TrieService {
     TrieImpl accountStateTrie = getSolidityAccountStateTrie();
     return new TrieImpl(db, accountStateTrie.get(key));
   }
-
-  public static void main(String[] args) {
-    System.out.println(Wallet.encode58Check(ByteArray.fromHexString("41d376d829440505ea13c9d1c455317d51b62e4ab6")));
-    System.out.println(Wallet.encode58Check(ByteArray.fromHexString("417b88db9da8aacae0a7e967d24c0fc00129e815f6")));
-  }
 }

@@ -2,6 +2,7 @@ package org.tron.core.db.fast.storetrie;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,7 +20,7 @@ public class ExchangeV2StoreTrie extends TronStoreWithRevoking<BytesCapsule> imp
     DB<byte[], BytesCapsule> {
 
   private Cache<WrappedByteArray, BytesCapsule> cache = CacheBuilder.newBuilder()
-      .initialCapacity(1000).maximumSize(1000).build();
+      .initialCapacity(1000).maximumSize(1000).expireAfterAccess(5, TimeUnit.MINUTES).build();
 
   @Autowired
   private TrieService trieService;

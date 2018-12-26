@@ -6,6 +6,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,7 @@ public class AssetIssueStoreTrie extends TronStoreWithRevoking<BytesCapsule> imp
     DB<byte[], BytesCapsule> {
 
   private Cache<WrappedByteArray, BytesCapsule> cache = CacheBuilder.newBuilder()
-      .initialCapacity(10000).maximumSize(10000).build();
+      .initialCapacity(1000).maximumSize(1000).expireAfterAccess(5, TimeUnit.MINUTES).build();
 
   @Autowired
   private TrieService trieService;
@@ -58,7 +59,6 @@ public class AssetIssueStoreTrie extends TronStoreWithRevoking<BytesCapsule> imp
 
   @Override
   public void put(byte[] key, BytesCapsule item) {
-    logger.info("put key: {}", ByteUtil.toHexString(key));
     super.put(key, item);
     cache.put(WrappedByteArray.of(key), item);
   }
