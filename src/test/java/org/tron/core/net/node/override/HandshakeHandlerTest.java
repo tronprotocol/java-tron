@@ -27,7 +27,7 @@ public class HandshakeHandlerTest extends HandshakeHandler {
         manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId());
     ctx.writeAndFlush(message.getSendData());
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(message);
-    logger.info("Handshake Send to {}, {} ", ctx.channel().remoteAddress(), message);
+    logger.info("Handshake Send to {}, {}", ctx.channel().remoteAddress(), message);
   }
 
   public void close() {

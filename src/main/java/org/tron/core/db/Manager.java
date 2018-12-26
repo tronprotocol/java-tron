@@ -1106,7 +1106,7 @@ public class Manager {
     // if (lastHeadBlockIsMaintenanceBefore != lastHeadBlockIsMaintenance()) {
     if (!witnessController.validateWitnessSchedule(witnessCapsule.getAddress(), when)) {
       logger.info("It's not my turn, "
-          + "and the first block after the maintenance period has just been processed");
+          + "and the first block after the maintenance period has just been processed.");
 
       logger.info("when:{},lastHeadBlockIsMaintenanceBefore:{},lastHeadBlockIsMaintenanceAfter:{}",
           when, lastHeadBlockIsMaintenanceBefore, lastHeadBlockIsMaintenance());
