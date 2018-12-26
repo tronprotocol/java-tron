@@ -4,60 +4,32 @@ import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 
-public class ContractEventTrigger extends Trigger{
-  @Getter
-  @Setter
-  private String eventType;
-
-  @Getter
-  @Setter
-  private long blockNum;
-
-  @Getter
-  @Setter
-  private long blockTimestamp;
-
-  @Getter
-  @Setter
-  private String trxHash;
-
-  @Getter
-  @Setter
-  private String blockHash;
-
-  @Getter
-  @Setter
-  private long logIndex;
-
-  @Getter
-  @Setter
-  private long txId;
-
-  @Getter
-  @Setter
-  private String contractAddress;
-
-  @Getter
-  @Setter
-  private String callerAddress;
-
-  @Getter
-  @Setter
-  private String creatorAddress;
-
+public class ContractEventTrigger extends ContractTrigger{
+  /**
+   * decode from sha3($EventSignature) with the ABI of this contract.
+   */
   @Getter
   @Setter
   private String eventSignature;
 
+  /**
+   * decode from topicList with the ABI of this contract.
+   */
   @Getter
   @Setter
-  private String data;
+  private Map<String, Object> topicMap;
 
+  /**
+   * multi data items will be concat into a single string.
+   * Each item is 32 bytes.
+   */
   @Getter
   @Setter
-  private boolean removed;
+  private Map<String, Object> dataMap;
 
-  @Getter
-  @Setter
-  private Map<String, String> contractTopicMap;
+
+  public ContractEventTrigger(String txId, String contractAddress, String callerAddress,
+                              String originAddress, String creatorAddress, Long blockNum, Long blockTimestamp){
+    super(txId, contractAddress, callerAddress, originAddress, creatorAddress, blockNum, blockTimestamp);
+  }
 }

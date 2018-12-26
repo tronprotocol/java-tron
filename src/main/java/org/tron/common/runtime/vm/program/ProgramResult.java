@@ -4,17 +4,24 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.size;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
+import com.googlecode.cqengine.query.simple.Has;
+import lombok.Getter;
+import lombok.Setter;
+import org.spongycastle.util.encoders.Hex;
+import org.tron.common.crypto.Hash;
+import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.vm.CallCreate;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.ByteArraySet;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.SmartContract.ABI;
 
 public class ProgramResult {
 
@@ -32,6 +39,9 @@ public class ProgramResult {
   private List<LogInfo> logInfoList;
 
   private TransactionResultCapsule ret = new TransactionResultCapsule();
+
+  @Setter
+  private List<ContractTrigger> eventList;
 
   /*
    * for testing runs ,
@@ -72,6 +82,8 @@ public class ProgramResult {
   public byte[] getHReturn() {
     return hReturn;
   }
+
+  public List<ContractTrigger> getEventList() { return eventList != null ? eventList : new LinkedList<>();}
 
   public TransactionResultCapsule getRet() {
     return ret;

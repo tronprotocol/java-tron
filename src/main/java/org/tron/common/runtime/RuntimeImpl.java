@@ -19,11 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.config.VMConfig;
-import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.runtime.vm.EnergyCost;
-import org.tron.common.runtime.vm.VM;
-import org.tron.common.runtime.vm.VMConstant;
-import org.tron.common.runtime.vm.VMUtils;
+import org.tron.common.runtime.vm.*;
+import org.tron.common.runtime.vm.LogInfoEventParser;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.vm.program.InternalTransaction.TrxType;
@@ -88,6 +85,8 @@ public class RuntimeImpl implements Runtime {
   private TransactionTrace trace;
   private boolean isStaticCall;
 
+  @Setter
+  private boolean enableEventLinstener;
 
   /**
    * For blockCap's trx run
@@ -239,7 +238,7 @@ public class RuntimeImpl implements Runtime {
   }
 
   private long getTotalEnergyLimitWithFloatRatio(AccountCapsule creator, AccountCapsule caller,
-      TriggerSmartContract contract, long feeLimit, long callValue) {
+                                                 ContractCapsule contract, long feeLimit, long callValue) {
 
     long callerEnergyLimit = getAccountEnergyLimitWithFloatRatio(caller, feeLimit, callValue);
     if (Arrays.equals(creator.getAddress().toByteArray(), caller.getAddress().toByteArray())) {
@@ -249,9 +248,7 @@ public class RuntimeImpl implements Runtime {
     // creatorEnergyFromFreeze
     long creatorEnergyLimit = energyProcessor.getAccountLeftEnergyFromFreeze(creator);
 
-    ContractCapsule contractCapsule = this.deposit
-        .getContract(contract.getContractAddress().toByteArray());
-    long consumeUserResourcePercent = contractCapsule.getConsumeUserResourcePercent();
+    long consumeUserResourcePercent = contract.getConsumeUserResourcePercent();
 
     if (creatorEnergyLimit * consumeUserResourcePercent
         > (Constant.ONE_HUNDRED - consumeUserResourcePercent) * callerEnergyLimit) {
@@ -260,9 +257,17 @@ public class RuntimeImpl implements Runtime {
       return Math.addExact(callerEnergyLimit, creatorEnergyLimit);
     }
   }
+  public long getTotalEnergyLimitWithFixRatio(AccountCapsule creator, AccountCapsule caller,
+                                              TriggerSmartContract contract, long feeLimit, long callValue)
+      throws ContractValidateException
+  {
+    ContractCapsule contractCapsule = this.deposit
+        .getContract(contract.getContractAddress().toByteArray());
+    return getTotalEnergyLimitWithFixRatio(creator, caller, contractCapsule, feeLimit, callValue);
+  }
 
   public long getTotalEnergyLimitWithFixRatio(AccountCapsule creator, AccountCapsule caller,
-      TriggerSmartContract contract, long feeLimit, long callValue)
+                                              ContractCapsule contract, long feeLimit, long callValue)
       throws ContractValidateException {
 
     long callerEnergyLimit = getAccountEnergyLimitWithFixRatio(caller, feeLimit, callValue);
@@ -274,11 +279,9 @@ public class RuntimeImpl implements Runtime {
     }
 
     long creatorEnergyLimit = 0;
-    ContractCapsule contractCapsule = this.deposit
-        .getContract(contract.getContractAddress().toByteArray());
-    long consumeUserResourcePercent = contractCapsule.getConsumeUserResourcePercent();
+    long consumeUserResourcePercent = contract.getConsumeUserResourcePercent();
 
-    long originEnergyLimit = contractCapsule.getOriginEnergyLimit();
+    long originEnergyLimit = contract.getOriginEnergyLimit();
     if (originEnergyLimit < 0) {
       throw new ContractValidateException("originEnergyLimit can't be < 0");
     }
@@ -303,7 +306,7 @@ public class RuntimeImpl implements Runtime {
   }
 
   public long getTotalEnergyLimit(AccountCapsule creator, AccountCapsule caller,
-      TriggerSmartContract contract, long feeLimit, long callValue)
+                                  ContractCapsule contract, long feeLimit, long callValue)
       throws ContractValidateException {
     //  according to version
     if (VMConfig.getEnergyLimitHardFork()) {
@@ -384,6 +387,8 @@ public class RuntimeImpl implements Runtime {
       tokenValue = contract.getCallTokenValue();
       tokenId = contract.getTokenId();
     }
+    byte[] txId = new TransactionCapsule(trx).getTransactionId().getBytes();
+    byte[] callerAddress = contract.getOwnerAddress().toByteArray();
     // create vm to constructor smart contract
     try {
       long feeLimit = trx.getRawData().getFeeLimit();
@@ -425,13 +430,18 @@ public class RuntimeImpl implements Runtime {
       this.vm = new VM(config);
       this.program = new Program(ops, programInvoke, rootInternalTransaction, config,
           this.blockCap);
-      this.program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
+
+      this.program.setRootTransactionId(txId);
       this.program.setRootCallConstant(isCallConstant());
+      if (enableEventLinstener){
+        program.getResult().setEventList(
+            LogInfoEventParser.getEventList(newSmartContract.getAbi(), blockCap, program.getResult().getLogInfoList(), txId,
+                callerAddress, callerAddress, callerAddress, contractAddress));
+      }
     } catch (Exception e) {
       logger.info(e.getMessage());
       throw new ContractValidateException(e.getMessage());
     }
-
     program.getResult().setContractAddress(contractAddress);
 
     deposit.createAccount(contractAddress, newSmartContract.getName(),
@@ -442,7 +452,7 @@ public class RuntimeImpl implements Runtime {
     deposit.saveCode(contractAddress, ProgramPrecompile.getCode(code));
 
     // transfer from callerAddress to contractAddress according to callValue
-    byte[] callerAddress = contract.getOwnerAddress().toByteArray();
+
     if (callValue > 0) {
       transfer(this.deposit, callerAddress, contractAddress, callValue);
     }
@@ -494,7 +504,7 @@ public class RuntimeImpl implements Runtime {
       tokenValue = contract.getCallTokenValue();
       tokenId = contract.getTokenId();
     }
-
+    byte[] callerAddress = contract.getOwnerAddress().toByteArray();
     byte[] code = this.deposit.getCode(contractAddress);
     if (isNotEmpty(code)) {
 
@@ -504,8 +514,10 @@ public class RuntimeImpl implements Runtime {
         throw new ContractValidateException(
             "feeLimit must be >= 0 and <= " + VMConfig.MAX_FEE_LIMIT);
       }
-      AccountCapsule caller = this.deposit.getAccount(contract.getOwnerAddress().toByteArray());
+      AccountCapsule caller = this.deposit.getAccount(contractAddress);
       long energyLimit;
+      byte[] creatorAddress = null;
+      byte[] originAddress = null;
       if (isCallConstant(contractAddress)) {
         isStaticCall = true;
         energyLimit = Constant.ENERGY_LIMIT_IN_CONSTANT_TX;
@@ -513,7 +525,10 @@ public class RuntimeImpl implements Runtime {
         AccountCapsule creator = this.deposit.getAccount(
             deployedContract.getInstance()
                 .getOriginAddress().toByteArray());
-        energyLimit = getTotalEnergyLimit(creator, caller, contract, feeLimit, callValue);
+
+        originAddress = deployedContract.getInstance().getOriginAddress().toByteArray();
+        creatorAddress = creator.getAddress().toByteArray();
+        energyLimit = getTotalEnergyLimit(creator, caller, deployedContract, feeLimit, callValue);
       }
       long maxCpuTimeOfOneTx = deposit.getDbManager().getDynamicPropertiesStore()
           .getMaxCpuTimeOfOneTx() * Constant.ONE_THOUSAND;
@@ -532,13 +547,20 @@ public class RuntimeImpl implements Runtime {
       rootInternalTransaction = new InternalTransaction(trx, trxType);
       this.program = new Program(code, programInvoke, rootInternalTransaction, config,
           this.blockCap);
-      this.program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
+      byte[] txId = new TransactionCapsule(trx).getTransactionId().getBytes();
+      this.program.setRootTransactionId(txId);
       this.program.setRootCallConstant(isCallConstant());
+
+      if (enableEventLinstener){
+        program.getResult().setEventList(
+            LogInfoEventParser.getEventList(deployedContract.getInstance().getAbi(), blockCap, program.getResult().getLogInfoList(), txId,
+                callerAddress, creatorAddress, originAddress, contractAddress));
+      }
     }
 
     program.getResult().setContractAddress(contractAddress);
     //transfer from callerAddress to targetAddress according to callValue
-    byte[] callerAddress = contract.getOwnerAddress().toByteArray();
+
     if (callValue > 0) {
       transfer(this.deposit, callerAddress, contractAddress, callValue);
     }
@@ -718,4 +740,5 @@ public class RuntimeImpl implements Runtime {
   public String getRuntimeError() {
     return runtimeError;
   }
+
 }

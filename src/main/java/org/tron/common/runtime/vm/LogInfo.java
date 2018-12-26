@@ -20,7 +20,10 @@ package org.tron.common.runtime.vm;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+
+import org.apache.commons.collections4.ListUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.protos.Protocol.TransactionInfo.Log;
 
@@ -46,6 +49,16 @@ public class LogInfo {
 
   public List<DataWord> getTopics() {
     return topics;
+  }
+
+  public List<String> getHexTopics() {
+    List<String> list = new LinkedList<>();
+    if (topics != null && topics.size() > 0){
+      for (DataWord dataword: topics) {
+        list.add(Hex.toHexString(dataword.getData()));
+      }
+    }
+    return list;
   }
 
   public byte[] getData() {
