@@ -941,7 +941,7 @@ public class Manager {
 
 //  private void postContractEventTrigger(ProgramResult result, BlockCapsule blockCap) {
 //
-//    List<ContractEvent> events = result.getEventList();
+//    List<ContractEvent> events = result.getTriggerList();
 //    if (events != null && events.size() > 0){
 //      for (ContractEvent event: events) {
 //        contractTriggerListener.onEvent(event);
@@ -1127,8 +1127,12 @@ public class Manager {
         .buildInstance(trxCap, blockCap, trace);
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
+
+    // if event subscribe is enabled, post contract triggers to queue
+    postContractTrigger(trace);
+
     // if event subscribe is enabled, post transaction trigger to queue
-    postTransactionTrigger(trxCap, blockCap, trace);
+    postTransactionTrigger(trxCap, blockCap);
 
     return true;
   }
@@ -1724,17 +1728,9 @@ public class Manager {
     }
   }
 
-  private void postTransactionTrigger(final TransactionCapsule trxCap, BlockCapsule blockCap, TransactionTrace trace){
-    if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
+  private void postTransactionTrigger(final TransactionCapsule trxCap, BlockCapsule blockCap){
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isContractEventTriggerEnable()) {
       try {
-        // be careful, trace.getRuntimeResult().getEventList() should never return null
-        for (ContractTrigger trigger: trace.getRuntimeResult().getEventList()) {
-          TriggerCapsule capsule = getContractTriggerCapsule(trigger);
-          if (capsule != null){
-            this.getTriggerCapsuleQueue().put(capsule);
-          }
-        }
-
         this.getTriggerCapsuleQueue().put(new TransactionLogTriggerCapsule(trxCap, blockCap));
       }
       catch (InterruptedException e) {
@@ -1744,15 +1740,23 @@ public class Manager {
     }
   }
 
-  private TriggerCapsule getContractTriggerCapsule(ContractTrigger trigger){
-    if (trigger == null){
-      return null;
+  private void postContractTrigger(final TransactionTrace trace){
+    if (eventPluginLoaded &&
+        (EventPluginLoader.getInstance().isContractEventTriggerEnable()
+            || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
+      // be careful, trace.getRuntimeResult().getTriggerList() should never return null
+      for (ContractTrigger trigger: trace.getRuntimeResult().getTriggerList()) {
+        try {
+          if (trigger instanceof ContractEventTrigger && EventPluginLoader.getInstance().isContractEventTriggerEnable()){
+            this.getTriggerCapsuleQueue().put(new ContractEventTriggerCapsule((ContractEventTrigger) trigger));
+          }else if (trigger instanceof ContractLogTrigger && EventPluginLoader.getInstance().isContractLogTriggerEnable()){
+            this.getTriggerCapsuleQueue().put(new ContractLogTriggerCapsule((ContractLogTrigger) trigger));
+          }
+        } catch (InterruptedException e) {
+          logger.error(e.getMessage());
+          Thread.currentThread().interrupt();
+        }
+      }
     }
-    if (trigger instanceof ContractEventTrigger){
-      return new ContractEventTriggerCapsule((ContractEventTrigger) trigger);
-    }else if (trigger instanceof ContractLogTrigger){
-      return new ContractLogTriggerCapsule((ContractLogTrigger) trigger);
-    }
-    return null;
   }
 }

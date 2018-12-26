@@ -18,9 +18,10 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.*;
-import org.tron.common.runtime.vm.LogInfoEventParser;
+import org.tron.common.runtime.vm.LogInfoTriggerParser;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.vm.program.InternalTransaction.TrxType;
@@ -433,9 +434,12 @@ public class RuntimeImpl implements Runtime {
 
       this.program.setRootTransactionId(txId);
       this.program.setRootCallConstant(isCallConstant());
-      if (enableEventLinstener){
-        program.getResult().setEventList(
-            LogInfoEventParser.getEventList(newSmartContract.getAbi(), blockCap, program.getResult().getLogInfoList(), txId,
+      if (enableEventLinstener &&
+          (EventPluginLoader.getInstance().isContractEventTriggerEnable()
+              || EventPluginLoader.getInstance().isContractLogTriggerEnable())){
+        program.getResult().setTriggerList(
+            LogInfoTriggerParser.parseLogInfos(newSmartContract.getAbi(), blockCap,
+                program.getResult().getLogInfoList(), txId,
                 callerAddress, callerAddress, callerAddress, contractAddress));
       }
     } catch (Exception e) {
@@ -551,9 +555,12 @@ public class RuntimeImpl implements Runtime {
       this.program.setRootTransactionId(txId);
       this.program.setRootCallConstant(isCallConstant());
 
-      if (enableEventLinstener){
-        program.getResult().setEventList(
-            LogInfoEventParser.getEventList(deployedContract.getInstance().getAbi(), blockCap, program.getResult().getLogInfoList(), txId,
+      if (enableEventLinstener &&
+          (EventPluginLoader.getInstance().isContractEventTriggerEnable()
+              || EventPluginLoader.getInstance().isContractLogTriggerEnable())){
+        program.getResult().setTriggerList(
+            LogInfoTriggerParser.parseLogInfos(deployedContract.getInstance().getAbi(), blockCap,
+                program.getResult().getLogInfoList(), txId,
                 callerAddress, creatorAddress, originAddress, contractAddress));
       }
     }
