@@ -2,9 +2,6 @@ package org.tron.common.logsfilter.trigger;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.tron.common.runtime.vm.event.ContractEvent;
-
-import java.util.List;
 
 public class ContractTrigger extends Trigger{
 
@@ -66,7 +63,7 @@ public class ContractTrigger extends Trigger{
 
 
     public ContractTrigger(String txId, String contractAddress, String callerAddress,
-                         String originAddress, String creatorAddress, Long blockNum, Long blockTimestamp){
+      String originAddress, String creatorAddress, Long blockNum, Long blockTimestamp){
         this.txId = txId;
         this.contractAddress = contractAddress;
         this.callerAddress = callerAddress;
