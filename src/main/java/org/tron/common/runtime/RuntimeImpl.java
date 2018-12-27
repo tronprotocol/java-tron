@@ -384,9 +384,6 @@ public class RuntimeImpl implements Runtime {
       tokenValue = contract.getCallTokenValue();
       tokenId = contract.getTokenId();
     }
-
-    checkTokenValueAndId(tokenValue, tokenId);
-
     // create vm to constructor smart contract
     try {
       long feeLimit = trx.getRawData().getFeeLimit();
@@ -415,6 +412,8 @@ public class RuntimeImpl implements Runtime {
       } else {
         energyLimit = getAccountEnergyLimitWithFloatRatio(creator, feeLimit, callValue);
       }
+
+      checkTokenValueAndId(tokenValue, tokenId);
 
       byte[] ops = newSmartContract.getBytecode().toByteArray();
       rootInternalTransaction = new InternalTransaction(trx, trxType);

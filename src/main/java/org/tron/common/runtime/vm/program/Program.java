@@ -1396,6 +1396,28 @@ public class Program {
     void output(String out);
   }
 
+  /**
+   * check TokenId
+   *
+   * TokenId  \ isTransferToken
+   * ---------------------------------------------------------------------------------------------
+   *                       false                                     true
+   * ---------------------------------------------------------------------------------------------
+   * (-∞,Long.Min)        Not possible            error: msg.getTokenId().value().longValueExact()
+   * ---------------------------------------------------------------------------------------------
+   * [Long.Min, 0)        Not possible                               error
+   * ---------------------------------------------------------------------------------------------
+   * 0                   allowed and only allowed                    error
+   *                    (guaranteed in CALLTOKEN)   transfertoken id=0 should not transfer trx）
+   * ---------------------------------------------------------------------------------------------
+   * (0-100_0000]          Not possible                              error
+   * ---------------------------------------------------------------------------------------------
+   * (100_0000, Long.Max]  Not possible                             allowed
+   * ---------------------------------------------------------------------------------------------
+   * (Long.Max,+∞)         Not possible          error: msg.getTokenId().value().longValueExact()
+   * ---------------------------------------------------------------------------------------------
+   * @param msg
+   */
   public void checkTokenId(MessageCall msg) {
     if(true){ //3.5 hard fork
       long tokenId = msg.getTokenId().value().longValueExact();
