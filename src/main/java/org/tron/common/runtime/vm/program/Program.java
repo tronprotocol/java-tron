@@ -1408,7 +1408,7 @@ public class Program {
    * @param msg
    */
   public void checkTokenId(MessageCall msg) {
-    if(true){ //3.5 hard fork
+    if(VMConfig.isVERSION_3_5_HARD_FORK()){ //3.5 hard fork
       long tokenId = msg.getTokenId().value().longValueExact();
       if (tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0 ||
           tokenId == 0 && msg.isTokenTransferMsg()) {
@@ -1419,7 +1419,7 @@ public class Program {
   }
 
   public boolean isTokenTransfer(MessageCall msg) {
-    if(true) { //3.5 hard fork
+    if(VMConfig.isVERSION_3_5_HARD_FORK()) { //3.5 hard fork
       return msg.isTokenTransferMsg();
     }
     else {

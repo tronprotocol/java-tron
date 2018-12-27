@@ -768,7 +768,7 @@ public class RuntimeImpl implements Runtime {
 
   }
   public void checkTokenValueAndId(long tokenValue, long tokenId) throws ContractValidateException {
-    if (true) { //3.5 hard fork
+    if (VMConfig.isVERSION_3_5_HARD_FORK()) { //3.5 hard fork
       if (tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0){
         throw new ContractValidateException("tokenId must > " + VMConstant.MIN_TOKEN_ID);
       }
