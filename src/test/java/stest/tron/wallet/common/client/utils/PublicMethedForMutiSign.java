@@ -7,6 +7,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,13 +32,16 @@ import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
+import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
+import org.tron.core.exception.CancelException;
 import org.tron.keystore.WalletFile;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.CreateSmartContract;
@@ -117,6 +121,19 @@ public class PublicMethedForMutiSign {
       ex.printStackTrace();
       return null;
     }
+  }
+
+  public static boolean broadcastTransaction(Transaction transaction,WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Return response = blockingStubFull.broadcastTransaction(transaction);
+    if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      logger.info(Integer.toString(response.getCode().getNumber()));
+      logger.info(Integer.toString(response.getCodeValue()));
+      return false;
+    } else {
+      return true;
+    }
+
   }
   /**
    * constructor.
@@ -3004,7 +3021,7 @@ public class PublicMethedForMutiSign {
     return response.getResult();
   }
 
-  public static boolean accountPermissionUpdate(String permissionJson, byte[] owner,String priKey,WalletGrpc.WalletBlockingStub blockingStubFull)
+  public static boolean accountPermissionUpdate(String permissionJson, byte[] owner,String priKey,WalletGrpc.WalletBlockingStub blockingStubFull,String[] priKeys)
   {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
@@ -3068,7 +3085,8 @@ public class PublicMethedForMutiSign {
     }
     System.out.println(
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
-    transaction = signTransaction(ecKey,transaction);
+
+    transaction = signTransaction(transaction,blockingStubFull,priKeys);
     int i = 10;
     Return response = blockingStubFull.broadcastTransaction(transaction);
     while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
@@ -3113,4 +3131,41 @@ public class PublicMethedForMutiSign {
   }
 
 
+  private static Transaction signTransaction(Transaction transaction,WalletGrpc.WalletBlockingStub blockingStubFull,String[] priKeys)
+       {
+    if (transaction.getRawData().getTimestamp() == 0) {
+      transaction = TransactionUtils.setTimestamp(transaction);
+    }
+
+         long currentTime = System.currentTimeMillis();//*1000000 + System.nanoTime()%1000000;
+         Transaction.Builder builder = transaction.toBuilder();
+         org.tron.protos.Protocol.Transaction.raw.Builder rowBuilder = transaction.getRawData()
+             .toBuilder();
+         rowBuilder.setTimestamp(currentTime);
+         builder.setRawData(rowBuilder.build());
+    transaction = builder.build();
+
+         for (int i = 0; i < priKeys.length; i += 1) {
+           String priKey = priKeys[i];
+           ECKey temKey = null;
+           try {
+             BigInteger priK = new BigInteger(priKey, 16);
+             temKey = ECKey.fromPrivate(priK);
+           } catch (Exception ex) {
+             ex.printStackTrace();
+           }
+           ECKey ecKey = temKey;
+
+           transaction = TransactionUtils.sign(transaction, ecKey);
+           TransactionSignWeight weight = blockingStubFull.getTransactionSignWeight(transaction);
+           if (weight.getResult().getCode() == TransactionSignWeight.Result.response_code.ENOUGH_PERMISSION) {
+             break;
+           }
+           if (weight.getResult().getCode() == TransactionSignWeight.Result.response_code.NOT_ENOUGH_PERMISSION) {
+             continue;
+           }
+
+         }
+    return transaction;
+  }
 }
