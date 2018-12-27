@@ -20,7 +20,7 @@ import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.db.Manager;
 
-@Slf4j
+@Slf4j(topic = "utils")
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ForkController {
 

@@ -16,7 +16,7 @@ import org.tron.core.Wallet;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class ValidateAddressServlet extends HttpServlet {
 
   private String validAddress(String input) {

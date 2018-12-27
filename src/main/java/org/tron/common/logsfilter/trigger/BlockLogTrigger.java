@@ -25,15 +25,15 @@ public class BlockLogTrigger extends Trigger {
 
     @Override
     public String toString(){
-        return new StringBuilder().append("timestamp: ")
-                .append(timeStamp)
-                .append(", blockNumber: ")
-                .append(blockNumber)
-                .append(", blockhash: ")
-                .append(blockHash)
-                .append(", transaction size: ")
-                .append(transactionSize)
-                .append(", transaction list: ")
-                .append(transactionList).toString();
+      return new StringBuilder().append("timestamp: ")
+        .append(timeStamp)
+        .append(", blockNumber: ")
+        .append(blockNumber)
+        .append(", blockhash: ")
+        .append(blockHash)
+        .append(", transaction size: ")
+        .append(transactionSize)
+        .append(", transaction list: ")
+        .append(transactionList).toString();
     }
 }

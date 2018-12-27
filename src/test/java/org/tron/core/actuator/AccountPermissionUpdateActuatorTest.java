@@ -595,35 +595,35 @@ public class AccountPermissionUpdateActuatorTest {
         actuator, ret, "key is not a validate address", "key is not a validate address");
   }
 
-  @Test
-  public void notExistKeyAddress() {
-    ByteString address = ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS));
-
-    Permission ownerPermission = TransactionCapsule.getDefaultPermission(address, "owner");
-    Permission activePermission =
-        Permission.newBuilder()
-            .setName("active")
-            .setParent("owner")
-            .setThreshold(1)
-            .addKeys(Key.newBuilder().setAddress(address).setWeight(1).build())
-            .addKeys(
-                Key.newBuilder()
-                    .setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS)))
-                    .setWeight(1)
-                    .build())
-            .build();
-
-    List<Permission> initPermissions = new ArrayList<>();
-    initPermissions.add(ownerPermission);
-    initPermissions.add(activePermission);
-
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(address, initPermissions), dbManager);
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-
-    processAndCheckInvalid(
-        actuator, ret, "key address does not exist", "key address does not exist");
-  }
+//  @Test
+//  public void notExistKeyAddress() {
+//    ByteString address = ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS));
+//
+//    Permission ownerPermission = TransactionCapsule.getDefaultPermission(address, "owner");
+//    Permission activePermission =
+//        Permission.newBuilder()
+//            .setName("active")
+//            .setParent("owner")
+//            .setThreshold(1)
+//            .addKeys(Key.newBuilder().setAddress(address).setWeight(1).build())
+//            .addKeys(
+//                Key.newBuilder()
+//                    .setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS)))
+//                    .setWeight(1)
+//                    .build())
+//            .build();
+//
+//    List<Permission> initPermissions = new ArrayList<>();
+//    initPermissions.add(ownerPermission);
+//    initPermissions.add(activePermission);
+//
+//    AccountPermissionUpdateActuator actuator =
+//        new AccountPermissionUpdateActuator(getContract(address, initPermissions), dbManager);
+//    TransactionResultCapsule ret = new TransactionResultCapsule();
+//
+//    processAndCheckInvalid(
+//        actuator, ret, "key address does not exist", "key address does not exist");
+//  }
 
   @Test
   public void weighValueInvalid() {

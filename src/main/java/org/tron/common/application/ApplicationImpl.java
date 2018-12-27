@@ -12,7 +12,7 @@ import org.tron.core.net.node.NodeDelegate;
 import org.tron.core.net.node.NodeDelegateImpl;
 import org.tron.core.net.node.NodeImpl;
 
-@Slf4j
+@Slf4j(topic = "app")
 @Component
 public class ApplicationImpl implements Application {
 

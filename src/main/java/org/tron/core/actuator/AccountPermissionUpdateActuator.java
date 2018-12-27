@@ -21,7 +21,7 @@ import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 
-@Slf4j
+@Slf4j(topic = "actuator")
 public class AccountPermissionUpdateActuator extends AbstractActuator {
 
   AccountPermissionUpdateActuator(Any contract, Manager dbManager) {
@@ -89,7 +89,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
     boolean containOwner = false;
     boolean containActive = false;
     for (Permission permission : accountPermissionUpdateContract.getPermissionsList()) {
-      if (permission.getKeysCount() >= dbManager.getDynamicPropertiesStore().getTotalSignNum()) {
+      if (permission.getKeysCount() > dbManager.getDynamicPropertiesStore().getTotalSignNum()) {
         throw new ContractValidateException("number of keys in permission should not be greater "
             + "than " + dbManager.getDynamicPropertiesStore().getTotalSignNum());
       }
@@ -99,6 +99,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
       if (permission.getThreshold() <= 0) {
         throw new ContractValidateException("permission's threshold should be greater than 0");
       }
+
       if (StringUtils.isEmpty(permission.getName())) {
         throw new ContractValidateException("permission's name should not be empty");
       }
@@ -134,9 +135,6 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
       for (Key key : permission.getKeysList()) {
         if (!Wallet.addressValid(key.getAddress().toByteArray())) {
           throw new ContractValidateException("key is not a validate address");
-        }
-        if (dbManager.getAccountStore().get(key.getAddress().toByteArray()) == null) {
-          throw new ContractValidateException("key address does not exist");
         }
         if (key.getWeight() <= 0) {
           throw new ContractValidateException("key's weight should be greater than 0");

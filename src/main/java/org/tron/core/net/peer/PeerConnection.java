@@ -30,7 +30,7 @@ import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.node.Item;
 
-@Slf4j
+@Slf4j(topic = "net")
 @Component
 @Scope("prototype")
 public class PeerConnection extends Channel {

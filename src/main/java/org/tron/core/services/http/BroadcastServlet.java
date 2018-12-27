@@ -13,7 +13,7 @@ import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Transaction;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class BroadcastServlet extends HttpServlet {
 
   @Autowired
