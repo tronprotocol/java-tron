@@ -271,8 +271,8 @@ public class PublicMethedForMutiSign {
    * constructor.
    */
 
-  public static String freezeBalance(byte[] addRess, long freezeBalance, long freezeDuration,
-      String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
+  public static Boolean freezeBalance(byte[] addRess, long freezeBalance, long freezeDuration,
+      String priKey, WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     byte[] address = addRess;
     long frozenBalance = freezeBalance;
@@ -313,7 +313,9 @@ public class PublicMethedForMutiSign {
     }
 
     transaction = TransactionUtils.setTimestamp(transaction);
-    return ByteArray.toHexString(transaction.toByteArray());
+    transaction = signTransaction(transaction,blockingStubFull,permissionKeyString);
+
+    return broadcastTransaction(transaction,blockingStubFull);
 
   }
 
@@ -322,7 +324,7 @@ public class PublicMethedForMutiSign {
    */
 
   public static Boolean unFreezeBalance(byte[] address, String priKey, int resourceCode,
-      byte[] receiverAddress, WalletGrpc.WalletBlockingStub blockingStubFull) {
+      byte[] receiverAddress, WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -343,21 +345,16 @@ public class PublicMethedForMutiSign {
 
     Contract.UnfreezeBalanceContract contract = builder.build();
     Transaction transaction =  blockingStubFull.unfreezeBalance(contract);
-    transaction = signTransaction(ecKey, transaction);
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return false;
-    } else {
-      return true;
-    }
+    transaction = signTransaction(transaction,blockingStubFull,permissionKeyString);
+
+    return broadcastTransaction(transaction,blockingStubFull);
   }
   /**
    * constructor.
    */
 
-  public static String sendcoin(byte[] to, long amount, byte[] owner, String priKey,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
+  public static Boolean sendcoin(byte[] to, long amount, byte[] owner, String priKey,
+      WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     //String priKey = testKey002;
     ECKey temKey = null;
@@ -383,13 +380,9 @@ public class PublicMethedForMutiSign {
       logger.info("transaction ==null");
       return null;
     }
-    //Test raw data
-    /*    Protocol.Transaction.raw.Builder builder1 = transaction.getRawData().toBuilder();
-    builder1.setData(ByteString.copyFromUtf8("12345678"));
-    Transaction.Builder builder2 = transaction.toBuilder();
-    builder2.setRawData(builder1);
-    transaction = builder2.build();*/
-    return ByteArray.toHexString(transaction.toByteArray());
+    transaction = signTransaction(transaction,blockingStubFull,permissionKeyString);
+
+    return broadcastTransaction(transaction,blockingStubFull);
 
   }
 
@@ -474,7 +467,7 @@ public class PublicMethedForMutiSign {
    */
 
   public static boolean updateAccount(byte[] addressBytes, byte[] accountNameBytes, String priKey,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
+      WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -499,15 +492,9 @@ public class PublicMethedForMutiSign {
       logger.info("Please check!!! transaction == null");
       return false;
     }
-    transaction = signTransaction(ecKey, transaction);
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      logger.info("Please check!!! response.getresult==false");
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return false;
-    } else {
-      return true;
-    }
+    transaction = signTransaction(transaction,blockingStubFull,permissionKeyString);
+
+    return broadcastTransaction(transaction,blockingStubFull);
   }
 
   /**
@@ -550,7 +537,7 @@ public class PublicMethedForMutiSign {
    */
 
   public static boolean createAccount(byte[] ownerAddress, byte[] newAddress, String priKey,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
+      WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -570,14 +557,9 @@ public class PublicMethedForMutiSign {
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("transaction == null");
     }
-    transaction = signTransaction(ecKey, transaction);
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return false;
-    } else {
-      return true;
-    }
+    transaction = signTransaction(transaction,blockingStubFull,permissionKeyString);
+
+    return broadcastTransaction(transaction,blockingStubFull);
 
   }
 
@@ -769,8 +751,7 @@ public class PublicMethedForMutiSign {
    */
 
   public static Boolean freezeBalanceGetEnergy(byte[] addRess, long freezeBalance,
-      long freezeDuration,
-      int resourceCode, String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
+      long freezeDuration, int resourceCode, String priKey, WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     byte[] address = addRess;
     long frozenBalance = freezeBalance;
@@ -798,14 +779,9 @@ public class PublicMethedForMutiSign {
       return false;
     }
     transaction = TransactionUtils.setTimestamp(transaction);
-    transaction = TransactionUtils.sign(transaction, ecKey);
-    Return response = blockingStubFull.broadcastTransaction(transaction);
+    transaction = signTransaction(transaction,blockingStubFull,permissionKeyString);
 
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return false;
-    }
-    return true;
+    return broadcastTransaction(transaction,blockingStubFull);
   }
 
   /**
@@ -1803,7 +1779,7 @@ public class PublicMethedForMutiSign {
 
   public static Boolean freezeBalanceForReceiver(byte[] addRess, long freezeBalance,
       long freezeDuration, int resourceCode, ByteString receiverAddressBytes,String priKey,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
+      WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     byte[] address = addRess;
     long frozenBalance = freezeBalance;
@@ -1831,14 +1807,9 @@ public class PublicMethedForMutiSign {
       return false;
     }
     transaction = TransactionUtils.setTimestamp(transaction);
-    transaction = TransactionUtils.sign(transaction, ecKey);
-    Return response = blockingStubFull.broadcastTransaction(transaction);
+    transaction = signTransaction(transaction,blockingStubFull,permissionKeyString);
 
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return false;
-    }
-    return true;
+    return broadcastTransaction(transaction,blockingStubFull);
   }
 
   /**
