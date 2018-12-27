@@ -790,10 +790,10 @@ public class PublicMethedForMutiSign {
   public static byte[] deployContract(String contractName, String abiString, String code,
       String data, Long feeLimit, long value,
       long consumeUserResourcePercent, String libraryAddress, String priKey, byte[] ownerAddress,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
+      WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
     return deployContract(contractName, abiString, code, data, feeLimit, value,
         consumeUserResourcePercent, 1000L, "0", 0L, libraryAddress,
-        priKey, ownerAddress, blockingStubFull);
+        priKey, ownerAddress, blockingStubFull,permissionKeyString);
   }
   /**
    * constructor.
@@ -803,7 +803,7 @@ public class PublicMethedForMutiSign {
       String data, Long feeLimit, long value,
       long consumeUserResourcePercent, long originEnergyLimit, String tokenId, long tokenValue,
       String libraryAddress, String priKey, byte[] ownerAddress,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
+      WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -896,35 +896,18 @@ public class PublicMethedForMutiSign {
       System.out.println("Transaction is empty");
       return null;
     }
-    transaction = signTransaction(ecKey, transaction);
+    transaction = signTransaction(transaction,blockingStubFull,permissionKeyString);
+
+
     System.out.println(
         "txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray())));
     contractAddress = PublicMethed.generateContractAddress(transaction, owner);
     System.out.println(
         "Your smart contract address will be: " + WalletClient.encode58Check(contractAddress));
-
-    int i = 10;
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeate times = " + (11 - i));
-      try {
-        Thread.sleep(300);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
-    if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
-      return null;
-    } else {
-      //logger.info("brodacast succesfully");
+    broadcastTransaction(transaction,blockingStubFull);
       return contractAddress;
     }
-  }
+
   /**
    * constructor.
    */
@@ -1321,9 +1304,9 @@ public class PublicMethedForMutiSign {
    */
   public static String triggerContract(byte[] contractAddress, String method, String argsStr,
       Boolean isHex, long callValue, long feeLimit, byte[] ownerAddress,
-      String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
+      String priKey, WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
     return triggerContract(contractAddress, method, argsStr, isHex, callValue, feeLimit,
-        "0", 0, ownerAddress, priKey, blockingStubFull);
+        "0", 0, ownerAddress, priKey, blockingStubFull, permissionKeyString);
   }
   /**
    * constructor.
@@ -1332,7 +1315,7 @@ public class PublicMethedForMutiSign {
   public static String triggerContract(byte[] contractAddress, String method, String argsStr,
       Boolean isHex, long callValue, long feeLimit, String tokenId, long tokenValue,
       byte[] ownerAddress,
-      String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
+      String priKey, WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -1411,31 +1394,13 @@ public class PublicMethedForMutiSign {
       System.out.println("Transaction is empty");
       return null;
     }
-    transaction = signTransaction(ecKey, transaction);
     System.out.println(
         "trigger txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData()
             .toByteArray())));
-    int i = 10;
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeate times = " + (11 - i));
-      try {
-        Thread.sleep(300);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
-    if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
-      return null;
-    } else {
-      //logger.info("brodacast succesfully");
-      return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
-    }
+    transaction = signTransaction(transaction,blockingStubFull,permissionKeyString);
+
+    broadcastTransaction(transaction,blockingStubFull);
+    return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
   }
   /**
    * constructor.
