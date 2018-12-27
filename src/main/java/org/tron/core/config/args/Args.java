@@ -108,11 +108,17 @@ public class Args {
   @Parameter(names = {"--storage-db-version"}, description = "Storage db version.(1 or 2)")
   private String storageDbVersion = "";
 
+  @Parameter(names = {"--storage-db-synchronous"}, description = "Storage db is synchronous or not.(true or flase)")
+  private String storageDbSynchronous = "";
+
   @Parameter(names = {"--storage-index-directory"}, description = "Storage index directory")
   private String storageIndexDirectory = "";
 
   @Parameter(names = {"--storage-index-switch"}, description = "Storage index switch.(on or off)")
   private String storageIndexSwitch = "";
+
+  @Parameter(names = {"--storage-transactionHistory-switch"}, description = "Storage transaction history switch.(on or off)")
+  private String storageTransactionHistoreSwitch = "";
 
   @Getter
   private Storage storage;
@@ -197,6 +203,10 @@ public class Args {
 //  @Getter
 //  @Setter
 //  private long syncNodeCount;
+  @Getter
+  @Setter
+  @Parameter(names = {"--save-internaltx"})
+  private boolean saveInternalTx;
 
   @Getter
   @Setter
@@ -231,6 +241,11 @@ public class Args {
   @Setter
   @Parameter(names = {"--rpc-thread"}, description = "Num of gRPC thread")
   private int rpcThreadNum;
+
+  @Getter
+  @Setter
+  @Parameter(names = {"--solidity-thread"}, description = "Num of solidity thread")
+  private int solidityThreads;
 
   @Getter
   @Setter
@@ -525,6 +540,11 @@ public class Args {
         .map(Integer::valueOf)
         .orElse(Storage.getDbVersionFromConfig(config)));
 
+    INSTANCE.storage.setDbSync(Optional.ofNullable(INSTANCE.storageDbSynchronous)
+      .filter(StringUtils::isNotEmpty)
+      .map(Boolean::valueOf)
+      .orElse(Storage.getDbVersionSyncFromConfig(config)));
+
     INSTANCE.storage.setDbDirectory(Optional.ofNullable(INSTANCE.storageDbDirectory)
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getDbDirectoryFromConfig(config)));
@@ -536,6 +556,11 @@ public class Args {
     INSTANCE.storage.setIndexSwitch(Optional.ofNullable(INSTANCE.storageIndexSwitch)
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getIndexSwitchFromConfig(config)));
+
+    INSTANCE.storage.setTransactionHistoreSwitch(Optional.ofNullable(INSTANCE.storageTransactionHistoreSwitch)
+      .filter(StringUtils::isNotEmpty)
+      .orElse(Storage.getTransactionHistoreSwitchFromConfig(config)));
+
 
     INSTANCE.storage.setPropertyMapFromConfig(config);
 
@@ -636,6 +661,10 @@ public class Args {
         config.hasPath("node.rpc.thread") ? config.getInt("node.rpc.thread")
             : Runtime.getRuntime().availableProcessors() / 2;
 
+    INSTANCE.solidityThreads =
+        config.hasPath("node.solidity.threads") ? config.getInt("node.solidity.threads")
+            : Runtime.getRuntime().availableProcessors();
+
     INSTANCE.maxConcurrentCallsPerConnection =
         config.hasPath("node.rpc.maxConcurrentCallsPerConnection") ?
             config.getInt("node.rpc.maxConcurrentCallsPerConnection") : Integer.MAX_VALUE;
@@ -649,6 +678,12 @@ public class Args {
 
     INSTANCE.blockProducedTimeOut = config.hasPath("node.blockProducedTimeOut") ?
         config.getInt("node.blockProducedTimeOut") : ChainConstant.BLOCK_PRODUCED_TIME_OUT;
+    if (INSTANCE.blockProducedTimeOut < 30) {
+      INSTANCE.blockProducedTimeOut = 30;
+    }
+    if (INSTANCE.blockProducedTimeOut > 100) {
+      INSTANCE.blockProducedTimeOut = 100;
+    }
 
     INSTANCE.netMaxTrxPerSecond = config.hasPath("node.netMaxTrxPerSecond") ?
         config.getInt("node.netMaxTrxPerSecond") : NetConstants.NET_MAX_TRX_PER_SECOND;
@@ -741,6 +776,10 @@ public class Args {
     INSTANCE.vmTrace =
         config.hasPath("vm.vmTrace") ? config
             .getBoolean("vm.vmTrace") : false;
+
+    INSTANCE.saveInternalTx =
+        config.hasPath("vm.saveInternalTx") && config.getBoolean("vm.saveInternalTx");
+
     initBackupProperty(config);
 
 
@@ -956,6 +995,7 @@ public class Args {
     logger.info("Seed node size: {}", args.getSeedNode().getIpList().size());
     logger.info("Max connection: {}", args.getNodeMaxActiveNodes());
     logger.info("Max connection with same IP: {}", args.getNodeMaxActiveNodesWithSameIp());
+    logger.info("Solidity threads: {}", args.getSolidityThreads());
     logger.info("************************ Backup config ************************");
     logger.info("Backup listen port: {}", args.getBackupPort());
     logger.info("Backup member size: {}", args.getBackupMembers().size());

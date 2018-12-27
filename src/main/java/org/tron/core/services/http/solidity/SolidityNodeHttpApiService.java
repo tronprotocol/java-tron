@@ -33,7 +33,7 @@ public class SolidityNodeHttpApiService implements Service {
   private Server server;
 
   @Autowired
-  private GetAccountServlet accountServlet;
+  private GetAccountServlet getAccountServlet;
 
 
   @Autowired
@@ -95,7 +95,7 @@ public class SolidityNodeHttpApiService implements Service {
       server.setHandler(context);
 
       // same as FullNode
-      context.addServlet(new ServletHolder(accountServlet), "/walletsolidity/getaccount");
+      context.addServlet(new ServletHolder(getAccountServlet), "/walletsolidity/getaccount");
       context.addServlet(new ServletHolder(listWitnessesServlet), "/walletsolidity/listwitnesses");
       context.addServlet(new ServletHolder(getAssetIssueListServlet),
           "/walletsolidity/getassetissuelist");

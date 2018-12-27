@@ -24,7 +24,6 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.common.WrappedByteArray;
@@ -57,6 +56,11 @@ public class SnapshotManager implements RevokingDatabase {
   private volatile int flushCount = 0;
 
   private Map<String, ListeningExecutorService> flushServices = new HashMap<>();
+
+  @Setter
+  @Getter
+  private LevelDbDataSourceImpl tmpLevelDbDataSource;
+
   @Setter
   private volatile int maxFlushCount = DEFAULT_MIN_FLUSH_COUNT;
 
@@ -84,6 +88,11 @@ public class SnapshotManager implements RevokingDatabase {
     advance();
     ++activeSession;
     return new Session(this, disableOnExit);
+  }
+
+  @Override
+  public void setMode(boolean mode) {
+    dbs.forEach(db -> db.setMode(mode));
   }
 
   @Override
@@ -209,6 +218,7 @@ public class SnapshotManager implements RevokingDatabase {
       System.out.println(e.getMessage() + e);
       Thread.currentThread().interrupt();
     }
+    tmpLevelDbDataSource.closeDB();
     System.err.println("******** end to pop revokingDb ********");
   }
 
@@ -307,21 +317,22 @@ public class SnapshotManager implements RevokingDatabase {
       }
     }
 
-    LevelDbDataSourceImpl levelDbDataSource =
-        new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
-    levelDbDataSource.initDB();
-    levelDbDataSource.updateByBatch(batch.entrySet().stream()
+    tmpLevelDbDataSource.updateByBatch(batch.entrySet().stream()
             .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
             .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll),
-        new WriteOptions().sync(true));
-    levelDbDataSource.closeDB();
+        new WriteOptions().sync(Args.getInstance().getStorage().isDbSync()));
   }
 
   private void deleteCheckPoint() {
-    LevelDbDataSourceImpl levelDbDataSource =
-        new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
+    Map <byte[], byte[]> hmap = new HashMap<byte[], byte[]>();
+   if (!tmpLevelDbDataSource.allKeys().isEmpty()) {
+     for (Map.Entry<byte[], byte[]> e : tmpLevelDbDataSource) {
+       hmap.put(e.getKey(), null);
+     }
+   }
 
-    FileUtil.recursiveDelete(levelDbDataSource.getDbPath().toString());
+   tmpLevelDbDataSource.updateByBatch(hmap,  new WriteOptions()
+       .sync(Args.getInstance().getStorage().isDbSync()));
   }
 
   // ensure run this method first after process start.
@@ -333,18 +344,21 @@ public class SnapshotManager implements RevokingDatabase {
       }
     }
 
-    LevelDbDataSourceImpl levelDbDataSource =
+    tmpLevelDbDataSource =
         new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
-    levelDbDataSource.initDB();
-    if (!levelDbDataSource.allKeys().isEmpty()) {
+    tmpLevelDbDataSource.initDB();
+    if (!tmpLevelDbDataSource.allKeys().isEmpty()) {
       Map<String, RevokingDBWithCachingNewValue> dbMap = dbs.stream()
           .map(db -> Maps.immutableEntry(db.getDbName(), db))
           .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
       advance();
-      for (Map.Entry<byte[], byte[]> e : levelDbDataSource) {
+      for (Map.Entry<byte[], byte[]> e : tmpLevelDbDataSource) {
         byte[] key = e.getKey();
         byte[] value = e.getValue();
         String db = simpleDecode(key);
+        if (dbMap.get(db) == null) {
+          continue;
+        }
         byte[] realKey = Arrays.copyOfRange(key, db.getBytes().length + 4, key.length);
 
         byte[] realValue = value.length == 1 ? null : Arrays.copyOfRange(value, 1, value.length);
@@ -360,7 +374,6 @@ public class SnapshotManager implements RevokingDatabase {
       retreat();
     }
 
-    levelDbDataSource.closeDB();
     unChecked = false;
   }
 

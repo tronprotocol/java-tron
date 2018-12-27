@@ -314,6 +314,77 @@ public class UnfreezeBalanceActuatorTest {
   }
 
 
+  /**
+   * when SameTokenName close,delegate balance frozen, unfreoze show error
+   */
+  @Test
+  public void testUnfreezeDelegatedBalanceForBandwidthSameTokenNameClose() {
+    dbManager.getDynamicPropertiesStore().saveAllowDelegateResource(0);
+
+    long now = System.currentTimeMillis();
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
+
+    AccountCapsule owner = dbManager.getAccountStore()
+            .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    owner.setDelegatedFrozenBalanceForBandwidth(frozenBalance);
+    Assert.assertEquals(frozenBalance, owner.getTronPower());
+
+    AccountCapsule receiver = dbManager.getAccountStore()
+            .get(ByteArray.fromHexString(RECEIVER_ADDRESS));
+    receiver.setAcquiredDelegatedFrozenBalanceForBandwidth(frozenBalance);
+    Assert.assertEquals(0L, receiver.getTronPower());
+
+    dbManager.getAccountStore().put(owner.createDbKey(), owner);
+    dbManager.getAccountStore().put(receiver.createDbKey(), receiver);
+
+    //init DelegatedResourceCapsule
+    DelegatedResourceCapsule delegatedResourceCapsule = new DelegatedResourceCapsule(
+            owner.getAddress(),
+            receiver.getAddress()
+    );
+    delegatedResourceCapsule.setFrozenBalanceForBandwidth(
+            frozenBalance,
+            now - 100L);
+    dbManager.getDelegatedResourceStore().put(DelegatedResourceCapsule
+            .createDbKey(ByteArray.fromHexString(OWNER_ADDRESS),
+                    ByteArray.fromHexString(RECEIVER_ADDRESS)), delegatedResourceCapsule);
+
+    //init DelegatedResourceAccountIndex
+    {
+      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndex = new DelegatedResourceAccountIndexCapsule(
+              owner.getAddress());
+      delegatedResourceAccountIndex
+              .addToAccount(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)));
+      dbManager.getDelegatedResourceAccountIndexStore()
+              .put(ByteArray.fromHexString(OWNER_ADDRESS), delegatedResourceAccountIndex);
+    }
+
+    {
+      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndex = new DelegatedResourceAccountIndexCapsule(
+              receiver.getAddress());
+      delegatedResourceAccountIndex
+              .addFromAccount(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
+      dbManager.getDelegatedResourceAccountIndexStore()
+              .put(ByteArray.fromHexString(RECEIVER_ADDRESS), delegatedResourceAccountIndex);
+    }
+
+    UnfreezeBalanceActuator actuator = new UnfreezeBalanceActuator(
+            getDelegatedContractForBandwidth(OWNER_ADDRESS, RECEIVER_ADDRESS), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail("cannot run here.");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("no frozenBalance(BANDWIDTH)", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertTrue(e instanceof ContractExeException);
+    }
+  }
+
+
   @Test
   public void testUnfreezeDelegatedBalanceForCpu() {
     dbManager.getDynamicPropertiesStore().saveAllowDelegateResource(1);

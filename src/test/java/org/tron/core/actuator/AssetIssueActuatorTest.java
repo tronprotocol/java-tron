@@ -134,7 +134,7 @@ public class AssetIssueActuatorTest {
                     .setEndTime(nowTime + 24 * 3600 * 1000)
                     .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
                     .setUrl(ByteString.copyFromUtf8(URL))
-                .setPrecision(6)
+                    .setPrecision(6)
                     .build());
   }
 
@@ -151,24 +151,68 @@ public class AssetIssueActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule owner =
-              dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule owner =dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      Assert.assertEquals(owner.getBalance(), 0L);
+      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
+              blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       // check V1
       AssetIssueCapsule assetIssueCapsule =
               dbManager.getAssetIssueStore().get(ByteString.copyFromUtf8(NAME).toByteArray());
       Assert.assertNotNull(assetIssueCapsule);
       Assert.assertEquals(6, assetIssueCapsule.getPrecision());
+      Assert.assertEquals(NUM, assetIssueCapsule.getNum());
+      Assert.assertEquals(TRX_NUM, assetIssueCapsule.getTrxNum());
+      Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(), TOTAL_SUPPLY);
       // check V2
       long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
       AssetIssueCapsule assetIssueCapsuleV2 =
               dbManager.getAssetIssueV2Store().get(ByteArray.fromString(String.valueOf(tokenIdNum)));
       Assert.assertNotNull(assetIssueCapsuleV2);
       Assert.assertEquals(0, assetIssueCapsuleV2.getPrecision());
+      Assert.assertEquals(NUM, assetIssueCapsuleV2.getNum());
+      Assert.assertEquals(TRX_NUM, assetIssueCapsuleV2.getTrxNum());
+      Assert.assertEquals(owner.getAssetMapV2().get(String.valueOf(tokenIdNum)).longValue(), TOTAL_SUPPLY);
 
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
+    }
+  }
+
+
+  /**
+   * Init close SameTokenName,after init data,open SameTokenName
+   */
+  @Test
+  public void oldNotUpdateAssetIssueSuccess() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    AssetIssueActuator actuator = new AssetIssueActuator(getContract(), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    Long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      AccountCapsule owner =dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
               blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(), TOTAL_SUPPLY);
+      // V1,Data is no longer update
+      Assert.assertFalse(dbManager.getAssetIssueStore().has(ByteString.copyFromUtf8(NAME).toByteArray()));
+      // check V2
+      long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
+      AssetIssueCapsule assetIssueCapsuleV2 =
+              dbManager.getAssetIssueV2Store().get(ByteArray.fromString(String.valueOf(tokenIdNum)));
+      Assert.assertNotNull(assetIssueCapsuleV2);
+      Assert.assertEquals(6, assetIssueCapsuleV2.getPrecision());
+      Assert.assertEquals(NUM, assetIssueCapsuleV2.getNum());
+      Assert.assertEquals(TRX_NUM, assetIssueCapsuleV2.getTrxNum());
+      Assert.assertEquals(owner.getAssetMapV2().get(String.valueOf(tokenIdNum)).longValue(), TOTAL_SUPPLY);
+
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -191,20 +235,23 @@ public class AssetIssueActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule owner =
-              dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-
-      long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
-      byte[] assertKey = ByteArray.fromString(String.valueOf(tokenIdNum));
-      AssetIssueCapsule assetIssueCapsuleV2 =
-              dbManager.getAssetIssueV2Store().get(assertKey);
-      Assert.assertNotNull(assetIssueCapsuleV2);
-
+      AccountCapsule owner=dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
               blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
+      // V1,Data is no longer update
+      Assert.assertFalse(dbManager.getAssetIssueStore().has(ByteString.copyFromUtf8(NAME).toByteArray()));
+      //V2
+      long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
+      byte[] assertKey = ByteArray.fromString(String.valueOf(tokenIdNum));
+      AssetIssueCapsule assetIssueCapsuleV2 = dbManager.getAssetIssueV2Store().get(assertKey);
+      Assert.assertNotNull(assetIssueCapsuleV2);
+      Assert.assertEquals(6, assetIssueCapsuleV2.getPrecision());
+      Assert.assertEquals(NUM, assetIssueCapsuleV2.getNum());
+      Assert.assertEquals(TRX_NUM, assetIssueCapsuleV2.getTrxNum());
       Assert.assertEquals(owner.getAssetMapV2().get(String.valueOf(tokenIdNum)).longValue(),
               TOTAL_SUPPLY);
+
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -213,63 +260,6 @@ public class AssetIssueActuatorTest {
       dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
     }
   }
-
-//  @Test
-//  public void repeatAssetIssue() {
-//    long nowTime = new Date().getTime();
-//    Any contract = Any.pack(
-//        Contract.AssetIssueContract.newBuilder()
-//            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)))
-//            .setName(ByteString.copyFromUtf8(NAME))
-//            .setTotalSupply(TOTAL_SUPPLY)
-//            .setTrxNum(TRX_NUM)
-//            .setNum(NUM)
-//            .setStartTime(nowTime)
-//            .setEndTime(nowTime + 24 * 3600 * 1000)
-//            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
-//            .setUrl(ByteString.copyFromUtf8(URL))
-//            .build());
-//    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager); // second asset
-//    TransactionResultCapsule ret = new TransactionResultCapsule();
-//    long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
-//    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-//    try {
-//      // put first assetissue
-//      dbManager
-//          .getAssetIssueStore()
-//          .put(
-//              ByteArray.fromString(NAME),
-//              new AssetIssueCapsule(getContract().unpack(Contract.AssetIssueContract.class)));
-//      // execute second assetissue
-//      actuator.validate();
-//      actuator.execute(ret);
-//      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-//      AccountCapsule ownerSecond =
-//          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS_SECOND));
-//      String nameKey = NAME + "_1";
-//      AssetIssueCapsule assetIssueCapsule =
-//          dbManager.getAssetIssueStore().get(ByteArray.fromString(nameKey));
-//      Assert.assertNotNull(assetIssueCapsule);
-//      String dbKey = new String(assetIssueCapsule.createDbKey());
-//      Assert.assertEquals(dbKey, nameKey);
-//      Assert.assertEquals(assetIssueCapsule.getOwnerAddress(),
-//          ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)));
-//      Assert.assertEquals(ownerSecond.getBalance(), 0);
-//      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-//          blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-//      Assert.assertEquals(ownerSecond.getAssetMap().get(nameKey).longValue(), TOTAL_SUPPLY);
-//    } catch (ContractValidateException e) {
-//      logger.info(e.getMessage());
-//      Assert.assertFalse(e instanceof ContractValidateException);
-//
-//    } catch (ContractExeException e) {
-//      Assert.assertFalse(e instanceof ContractExeException);
-//    } catch (InvalidProtocolBufferException e) {
-//      Assert.assertFalse(e instanceof InvalidProtocolBufferException);
-//    } finally {
-//      dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
-//    }
-//  }
 
   @Test
   /**

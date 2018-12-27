@@ -3,7 +3,6 @@ package org.tron.core.config;
 import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowire;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -54,7 +53,7 @@ public class DefaultConfig {
     }
   }
 
-//  @Bean
+  @Bean
   public RpcApiServiceOnSolidity getRpcApiServiceOnSolidity() {
     boolean isSolidityNode = Args.getInstance().isSolidityNode();
     int dbVersion = Args.getInstance().getStorage().getDbVersion();
@@ -65,7 +64,7 @@ public class DefaultConfig {
     return null;
   }
 
-//  @Bean
+  @Bean
   public HttpApiOnSolidityService getHttpApiOnSolidityService() {
     boolean isSolidityNode = Args.getInstance().isSolidityNode();
     int dbVersion = Args.getInstance().getStorage().getDbVersion();

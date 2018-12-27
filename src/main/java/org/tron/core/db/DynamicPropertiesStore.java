@@ -322,6 +322,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getAllowAdaptiveEnergy();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowAdaptiveEnergy(Args.getInstance().getAllowAdaptiveEnergy());
+    }
+
+    try {
       this.getTotalEnergyLimit();
     } catch (IllegalArgumentException e) {
       this.saveTotalEnergyLimit(50_000_000_000L);
@@ -433,12 +439,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getAllowDelegateResource();
     } catch (IllegalArgumentException e) {
       this.saveAllowDelegateResource(Args.getInstance().getAllowDelegateResource());
-    }
-
-    try {
-      this.getAllowAdaptiveEnergy();
-    } catch (IllegalArgumentException e) {
-      this.saveAllowAdaptiveEnergy(Args.getInstance().getAllowAdaptiveEnergy());
     }
 
     try {
@@ -814,7 +814,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         new BytesCapsule(ByteArray.fromLong(totalEnergyLimit)));
 
     saveTotalEnergyTargetLimit(totalEnergyLimit / 14400);
+  }
 
+  public void saveTotalEnergyLimit2(long totalEnergyLimit) {
+    this.put(DynamicResourceProperties.TOTAL_ENERGY_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(totalEnergyLimit)));
+
+    saveTotalEnergyTargetLimit(totalEnergyLimit / 14400);
+    if (getAllowAdaptiveEnergy() == 0) {
+      saveTotalEnergyCurrentLimit(totalEnergyLimit);
+    }
   }
 
   public long getTotalEnergyLimit() {
@@ -1276,15 +1285,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElseThrow(() -> new IllegalArgumentException("not found latest block header number"));
   }
 
-  /**
-   * get number of global latest solidity block.
-   */
-  public long getLatestBlockHeaderNumberOnSolidity() {
-    return Optional.ofNullable(revokingDB.getUncheckedOnSolidity(LATEST_BLOCK_HEADER_NUMBER))
-        .map(ByteArray::toLong)
-        .orElseThrow(() -> new IllegalArgumentException("not found latest block header number"));
-  }
-
   public int getStateFlag() {
     return Optional.ofNullable(getUnchecked(STATE_FLAG))
         .map(BytesCapsule::getData)
@@ -1299,17 +1299,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public Sha256Hash getLatestBlockHeaderHash() {
     byte[] blockHash = Optional.ofNullable(getUnchecked(LATEST_BLOCK_HEADER_HASH))
         .map(BytesCapsule::getData)
-        .orElseThrow(() -> new IllegalArgumentException("not found block hash"));
-    return Sha256Hash.wrap(blockHash);
-  }
-
-  /**
-   * get id of global latest solidity block.
-   */
-
-  public Sha256Hash getLatestBlockHeaderHashOnSolidity() {
-    byte[] blockHash = Optional
-        .ofNullable(revokingDB.getUncheckedOnSolidity(LATEST_BLOCK_HEADER_HASH))
         .orElseThrow(() -> new IllegalArgumentException("not found block hash"));
     return Sha256Hash.wrap(blockHash);
   }

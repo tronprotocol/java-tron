@@ -83,17 +83,42 @@ public class WalletTestAssetIssue018 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+  }
+
+  @Test(enabled = true)
+  public void testAssetIssueNameBelow32Char() {
+    //get account
+    ecKey1 = new ECKey(Utils.getRandom());
+    assetAccount1Address = ecKey1.getAddress();
+    assetAccount1Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
+    ecKey2 = new ECKey(Utils.getRandom());
+    assetAccount2Address = ecKey2.getAddress();
+    assetAccount2Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+
+    ecKey3 = new ECKey(Utils.getRandom());
+    assetAccount3Address = ecKey3.getAddress();
+    assetAccount3Key = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
+
+    ecKey4 = new ECKey(Utils.getRandom());
+    assetAccount4Address = ecKey4.getAddress();
+    assetAccount4Key = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
+
+
+    ecKey5 = new ECKey(Utils.getRandom());
+    assetAccount5Address = ecKey5.getAddress();
+    assetAccount5Key = ByteArray.toHexString(ecKey5.getPrivKeyBytes());
+
+    ecKey6 = new ECKey(Utils.getRandom());
+    assetAccount6Address = ecKey6.getAddress();
+    assetAccount6Key = ByteArray.toHexString(ecKey6.getPrivKeyBytes());
+
     PublicMethed.printAddress(assetAccount1Key);
     PublicMethed.printAddress(assetAccount2Key);
     PublicMethed.printAddress(assetAccount3Key);
     PublicMethed.printAddress(assetAccount4Key);
     PublicMethed.printAddress(assetAccount5Key);
     PublicMethed.printAddress(assetAccount6Key);
-  }
-
-  @Test(enabled = true)
-  public void testAssetIssueNameBelow32Char() {
-
 
     Assert.assertTrue(PublicMethed.sendcoin(assetAccount4Address,2048000000,fromAddress,
         testKey002,blockingStubFull));

@@ -51,7 +51,6 @@ public class ContractLinkage002 {
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
-    PublicMethed.printAddress(linkage002Key);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
@@ -64,6 +63,10 @@ public class ContractLinkage002 {
 
   @Test(enabled = true)
   public void updateSetting() {
+    ecKey1 = new ECKey(Utils.getRandom());
+    linkage002Address = ecKey1.getAddress();
+    linkage002Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    PublicMethed.printAddress(linkage002Key);
     Account info;
     Assert.assertTrue(PublicMethed.sendcoin(linkage002Address, 200000000000L, fromAddress,
         testKey002, blockingStubFull));
