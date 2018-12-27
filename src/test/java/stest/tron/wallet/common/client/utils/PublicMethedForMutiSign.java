@@ -568,7 +568,7 @@ public class PublicMethedForMutiSign {
    */
 
   public static boolean createProposal(byte[] ownerAddress, String priKey,
-      HashMap<Long, Long> parametersMap, WalletGrpc.WalletBlockingStub blockingStubFull) {
+      HashMap<Long, Long> parametersMap, WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -602,21 +602,16 @@ public class PublicMethedForMutiSign {
     }
     System.out.println(
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
-    transaction = signTransaction(ecKey, transaction);
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return false;
-    } else {
-      return true;
-    }
+    transaction = signTransaction(transaction,blockingStubFull,permissionKeyString);
+
+    return broadcastTransaction(transaction,blockingStubFull);
   }
   /**
    * constructor.
    */
 
   public static boolean approveProposal(byte[] ownerAddress, String priKey, long id,
-      boolean isAddApproval, WalletGrpc.WalletBlockingStub blockingStubFull) {
+      boolean isAddApproval, WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -651,21 +646,16 @@ public class PublicMethedForMutiSign {
     }
     System.out.println(
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
-    transaction = signTransaction(ecKey, transaction);
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return false;
-    } else {
-      return true;
-    }
+    transaction = signTransaction(transaction,blockingStubFull,permissionKeyString);
+
+    return broadcastTransaction(transaction,blockingStubFull);
   }
   /**
    * constructor.
    */
 
   public static boolean deleteProposal(byte[] ownerAddress, String priKey, long id,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
+      WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -699,14 +689,9 @@ public class PublicMethedForMutiSign {
     }
     System.out.println(
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
-    transaction = signTransaction(ecKey, transaction);
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return false;
-    } else {
-      return true;
-    }
+    transaction = signTransaction(transaction,blockingStubFull,permissionKeyString);
+
+    return broadcastTransaction(transaction,blockingStubFull);
   }
 
   /**
@@ -2054,4 +2039,50 @@ public class PublicMethedForMutiSign {
          }
     return transaction;
   }
+
+  /**
+   * constructor.
+   */
+
+  public static Boolean voteWitness(HashMap<String, String> witness, byte[] addRess, String priKey,WalletGrpc.WalletBlockingStub blockingStubFull,String[] permissionKeyString) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    ECKey ecKey = temKey;
+
+
+    Contract.VoteWitnessContract.Builder builder = Contract.VoteWitnessContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(addRess));
+    for (String addressBase58 : witness.keySet()) {
+      String value = witness.get(addressBase58);
+      final long count = Long.parseLong(value);
+      Contract.VoteWitnessContract.Vote.Builder voteBuilder = Contract.VoteWitnessContract.Vote
+          .newBuilder();
+      byte[] address = WalletClient.decodeFromBase58Check(addressBase58);
+      if (address == null) {
+        continue;
+      }
+      voteBuilder.setVoteAddress(ByteString.copyFrom(address));
+      voteBuilder.setVoteCount(count);
+      builder.addVotes(voteBuilder.build());
+    }
+
+    Contract.VoteWitnessContract contract = builder.build();
+
+    Transaction transaction = blockingStubFull.voteWitnessAccount(contract);
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      logger.info("transaction == null");
+      return false;
+    }
+    transaction = signTransaction(transaction,blockingStubFull,permissionKeyString);
+
+    return broadcastTransaction(transaction,blockingStubFull);
+  }
+
 }
