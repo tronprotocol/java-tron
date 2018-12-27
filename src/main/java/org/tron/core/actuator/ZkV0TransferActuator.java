@@ -9,7 +9,6 @@ import org.tron.common.crypto.zksnark.Proof;
 import org.tron.common.crypto.zksnark.VerifyingKey;
 import org.tron.common.crypto.zksnark.ZkVerify;
 import org.tron.common.crypto.zksnark.ZksnarkUtils;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.merkle.MerkleContainer;
 import org.tron.core.Wallet;
@@ -22,6 +21,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.ZksnarkV0TransferContract;
 import org.tron.protos.Contract.zkv0proof;
+import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
 public class ZkV0TransferActuator extends AbstractActuator {
@@ -40,12 +40,27 @@ public class ZkV0TransferActuator extends AbstractActuator {
         long vFromPub = zkContract.getVFromPub();
         dbManager.adjustBalance(ownerAddress.toByteArray(), -vFromPub);
       }
+
+      long fee = calcFee();
+
       ByteString toAddress = zkContract.getToAddress();
       if (!toAddress.isEmpty()) {
         long vToPub = zkContract.getVToPub();
-        dbManager.adjustBalance(toAddress.toByteArray(), vToPub);
+        // if account with to_address does not exist, create it first.
+        AccountCapsule toAccount = dbManager.getAccountStore().get(toAddress.toByteArray());
+        if (toAccount == null) {
+          toAccount = new AccountCapsule(toAddress, AccountType.Normal,
+              dbManager.getHeadBlockTimeStamp());
+          dbManager.getAccountStore().put(toAddress.toByteArray(), toAccount);
+          if (dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract() != 0) {
+            fee += dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
+          } else {
+            fee += dbManager.getDynamicPropertiesStore().getCreateAccountFee();
+          }
+        }
+        dbManager.adjustBalance(toAccount, vToPub);
       }
-      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), calcFee());
+      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractExeException(e.getMessage());
@@ -71,10 +86,6 @@ public class ZkV0TransferActuator extends AbstractActuator {
     return true;
   }
 
-  private byte[] getContractId(ZksnarkV0TransferContract contract) {
-    return Sha256Hash.of(contract.toByteArray()).getBytes();
-  }
-
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.contract == null) {
@@ -89,9 +100,9 @@ public class ZkV0TransferActuator extends AbstractActuator {
               .getClass() + "]");
     }
 
-    if( !dbManager.getDynamicPropertiesStore().supportZKSnarkTransaction() ) {
-        throw new ContractValidateException("Not support ZKSnarkTransaction, need to be opened by" +
-                " the committee");
+    if (!dbManager.getDynamicPropertiesStore().supportZKSnarkTransaction()) {
+      throw new ContractValidateException("Not support ZKSnarkTransaction, need to be opened by" +
+          " the committee");
     }
 
     ZksnarkV0TransferContract zkContract;
@@ -128,10 +139,7 @@ public class ZkV0TransferActuator extends AbstractActuator {
           "OwnerAddress needs to be empty and the vFromPub is zero, or neither.");
     }
 
-    if (zkContract.getFee() != calcFee() ) {
-      throw new ContractValidateException(
-              "Contract transaction fee is inconsistent with system transaction fee");
-    }
+    long fee = calcFee();
 
     ByteString toAddress = zkContract.getToAddress();
     long vToPub = zkContract.getVToPub();
@@ -144,15 +152,25 @@ public class ZkV0TransferActuator extends AbstractActuator {
       }
       AccountCapsule toAccount = dbManager.getAccountStore().get(toAddress.toByteArray());
       if (toAccount == null) {
-        throw new ContractValidateException(
-            "Validate ZkV0TransferActuator error, no toAccount.");
-      }
-      try {
-        Math.addExact(toAccount.getBalance(), vToPub);
-      } catch (ArithmeticException e) {
-        throw new ContractValidateException(e.getMessage());
+        if (dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract() != 0) {
+          fee += dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
+        } else {
+          fee += dbManager.getDynamicPropertiesStore().getCreateAccountFee();
+        }
+      } else {
+        try {
+          Math.addExact(toAccount.getBalance(), vToPub);
+        } catch (ArithmeticException e) {
+          throw new ContractValidateException(e.getMessage());
+        }
       }
     }
+
+    if (zkContract.getFee() != fee) {
+      throw new ContractValidateException(
+          "Contract transaction fee is inconsistent with system transaction fee");
+    }
+
     if (vToPub < 0) {
       throw new ContractValidateException("vToPub can not less than 0.");
     }
