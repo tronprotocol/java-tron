@@ -64,21 +64,16 @@ import stest.tron.wallet.common.client.WalletClient;
 public class PublicMethedForMutiSign {
 
   Wallet wallet = new Wallet();
-  //Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  private static final String FilePath = "Wallet";
-  private static List<WalletFile> walletFile = new ArrayList<>();
   private static final Logger logger = LoggerFactory.getLogger("TestLogger");
-  //private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-  //private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   /**
    * constructor.
    */
 
-  public static String createAssetIssue(byte[] address, String name, Long totalSupply,
+  public static Boolean createAssetIssue(byte[] address, String name, Long totalSupply,
       Integer trxNum, Integer icoNum, Long startTime, Long endTime, Integer voteScore,
       String description, String url, Long freeAssetNetLimit, Long publicFreeAssetNetLimit,
       Long fronzenAmount, Long frozenDay, String priKey,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
+      WalletGrpc.WalletBlockingStub blockingStubFull,String[] permissionKeyString) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -111,15 +106,14 @@ public class PublicMethedForMutiSign {
       Transaction transaction = blockingStubFull.createAssetIssue(builder.build());
       if (transaction == null || transaction.getRawData().getContractCount() == 0) {
         logger.info("transaction == null");
-        return null;
+        return false;
       }
-      return ByteArray.toHexString(transaction.toByteArray());
-      //transaction = signTransaction(ecKey, transaction);
+      transaction = signTransaction(transaction,blockingStubFull,permissionKeyString);
 
-      //Return response = blockingStubFull.broadcastTransaction(transaction);
+      return broadcastTransaction(transaction,blockingStubFull);
     } catch (Exception ex) {
       ex.printStackTrace();
-      return null;
+      return false;
     }
   }
 
@@ -133,157 +127,8 @@ public class PublicMethedForMutiSign {
     } else {
       return true;
     }
-
-  }
-  /**
-   * constructor.
-   */
-
-  public static String createAssetIssue(byte[] address, String name, Long totalSupply,
-      Integer trxNum, Integer icoNum, int precision,Long startTime, Long endTime, Integer voteScore,
-      String description, String url, Long freeAssetNetLimit, Long publicFreeAssetNetLimit,
-      Long fronzenAmount, Long frozenDay, String priKey,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    ECKey ecKey = temKey;
-    try {
-      Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
-      builder.setOwnerAddress(ByteString.copyFrom(address));
-      builder.setName(ByteString.copyFrom(name.getBytes()));
-      builder.setTotalSupply(totalSupply);
-      builder.setTrxNum(trxNum);
-      builder.setNum(icoNum);
-      builder.setStartTime(startTime);
-      builder.setEndTime(endTime);
-      builder.setVoteScore(voteScore);
-      builder.setPrecision(precision);
-      builder.setDescription(ByteString.copyFrom(description.getBytes()));
-      builder.setUrl(ByteString.copyFrom(url.getBytes()));
-      builder.setFreeAssetNetLimit(freeAssetNetLimit);
-      builder.setPublicFreeAssetNetLimit(publicFreeAssetNetLimit);
-      Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder =
-          Contract.AssetIssueContract.FrozenSupply.newBuilder();
-      frozenBuilder.setFrozenAmount(fronzenAmount);
-      frozenBuilder.setFrozenDays(frozenDay);
-      builder.addFrozenSupply(0, frozenBuilder);
-
-      Transaction transaction = blockingStubFull.createAssetIssue(builder.build());
-      if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-        logger.info("transaction == null");
-        return null;
-      }
-      //transaction = signTransaction(ecKey, transaction);
-
-      //Return response = blockingStubFull.broadcastTransaction(transaction);
-      return ByteArray
-          .toHexString(transaction.toByteArray());
-    } catch (Exception ex) {
-      ex.printStackTrace();
-      return null;
-    }
   }
 
-  /**
-   * constructor.
-   */
-
-  public static Return createAssetIssue2(byte[] address, String name, Long totalSupply,
-      Integer trxNum, Integer icoNum, Long startTime, Long endTime, Integer voteScore,
-      String description, String url, Long freeAssetNetLimit, Long publicFreeAssetNetLimit,
-      Long fronzenAmount, Long frozenDay, String priKey,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    ECKey ecKey = temKey;
-    //Protocol.Account search = queryAccount(ecKey, blockingStubFull);
-    try {
-      Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
-      builder.setOwnerAddress(ByteString.copyFrom(address));
-      builder.setName(ByteString.copyFrom(name.getBytes()));
-      builder.setTotalSupply(totalSupply);
-      builder.setTrxNum(trxNum);
-      builder.setNum(icoNum);
-      builder.setStartTime(startTime);
-      builder.setEndTime(endTime);
-      builder.setVoteScore(voteScore);
-      builder.setDescription(ByteString.copyFrom(description.getBytes()));
-      builder.setUrl(ByteString.copyFrom(url.getBytes()));
-      builder.setFreeAssetNetLimit(freeAssetNetLimit);
-      builder.setPublicFreeAssetNetLimit(publicFreeAssetNetLimit);
-      //builder.setPublicFreeAssetNetUsage();
-      //builder.setPublicLatestFreeNetTime();
-      Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder =
-          Contract.AssetIssueContract.FrozenSupply.newBuilder();
-      frozenBuilder.setFrozenAmount(fronzenAmount);
-      frozenBuilder.setFrozenDays(frozenDay);
-      builder.addFrozenSupply(0, frozenBuilder);
-
-      TransactionExtention transactionExtention = blockingStubFull
-          .createAssetIssue2(builder.build());
-
-      if (transactionExtention == null) {
-        return transactionExtention.getResult();
-      }
-      Return ret = transactionExtention.getResult();
-      if (!ret.getResult()) {
-        System.out.println("Code = " + ret.getCode());
-        System.out.println("Message = " + ret.getMessage().toStringUtf8());
-        return ret;
-      } else {
-        System.out.println("Code = " + ret.getCode());
-        System.out.println("Message = " + ret.getMessage().toStringUtf8());
-      }
-      Transaction transaction = transactionExtention.getTransaction();
-      if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-        System.out.println("Transaction is empty");
-        return transactionExtention.getResult();
-      }
-      System.out.println(
-          "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
-      transaction = signTransaction(ecKey, transaction);
-
-      Return response = blockingStubFull.broadcastTransaction(transaction);
-      if (response.getResult() == false) {
-        logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-        return response;
-      } else {
-        try {
-          Thread.sleep(3000);
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-        }
-      }
-      return ret;
-    } catch (Exception ex) {
-      ex.printStackTrace();
-      //return false;
-      return Return.getDefaultInstance();
-    }
-  }
-  /**
-   * constructor.
-   */
-
-  public static Account queryAccountByAddress(byte[] address,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ByteString addressBs = ByteString.copyFrom(address);
-    Account request = Account.newBuilder().setAddress(addressBs).build();
-    return blockingStubFull.getAccount(request);
-  }
   /**
    * constructor.
    */
@@ -295,9 +140,6 @@ public class PublicMethedForMutiSign {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
-  /**
-   * constructor.
-   */
 
   /**
    * constructor.
@@ -358,6 +200,7 @@ public class PublicMethedForMutiSign {
 
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -388,7 +231,6 @@ public class PublicMethedForMutiSign {
       Transaction transaction) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     if (ecKey == null || ecKey.getPrivKey() == null) {
-      //logger.warn("Warning: Can't sign,there is no private key !!");
       return null;
     }
     transaction = TransactionUtils.setTimestamp(transaction);
@@ -399,7 +241,7 @@ public class PublicMethedForMutiSign {
    */
 
   public static boolean participateAssetIssue(byte[] to, byte[] assertName, long amount,
-      byte[] from, String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
+      byte[] from, String priKey, WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -421,76 +263,9 @@ public class PublicMethedForMutiSign {
     builder.setAmount(amount);
     Contract.ParticipateAssetIssueContract contract = builder.build();
     Transaction transaction = blockingStubFull.participateAssetIssue(contract);
-    transaction = signTransaction(ecKey, transaction);
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      logger.info(Integer.toString(response.getCode().getNumber()));
-      logger.info(Integer.toString(response.getCodeValue()));
+    transaction = signTransaction(transaction,blockingStubFull,permissionKeyString);
 
-      return false;
-    } else {
-      //logger.info(name);
-      return true;
-    }
-  }
-  /**
-   * constructor.
-   */
-
-  public static Return participateAssetIssue2(byte[] to, byte[] assertName, long amount,
-      byte[] from, String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    final ECKey ecKey = temKey;
-
-    Contract.ParticipateAssetIssueContract.Builder builder = Contract.ParticipateAssetIssueContract
-        .newBuilder();
-    ByteString bsTo = ByteString.copyFrom(to);
-    ByteString bsName = ByteString.copyFrom(assertName);
-    ByteString bsOwner = ByteString.copyFrom(from);
-    builder.setToAddress(bsTo);
-    builder.setAssetName(bsName);
-    builder.setOwnerAddress(bsOwner);
-    builder.setAmount(amount);
-    Contract.ParticipateAssetIssueContract contract = builder.build();
-
-    TransactionExtention transactionExtention = blockingStubFull.participateAssetIssue2(contract);
-    if (transactionExtention == null) {
-      return transactionExtention.getResult();
-    }
-    Return ret = transactionExtention.getResult();
-    if (!ret.getResult()) {
-      System.out.println("Code = " + ret.getCode());
-      System.out.println("Message = " + ret.getMessage().toStringUtf8());
-      return ret;
-    }
-    Transaction transaction = transactionExtention.getTransaction();
-    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      System.out.println("Transaction is empty");
-      return transactionExtention.getResult();
-    }
-    System.out.println(
-        "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
-
-    //Protocol.Transaction transaction = blockingStubFull.participateAssetIssue(contract);
-
-    transaction = signTransaction(ecKey, transaction);
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      logger.info(Integer.toString(response.getCode().getNumber()));
-      logger.info(Integer.toString(response.getCodeValue()));
-
-      return response;
-    }
-    return ret;
+    return broadcastTransaction(transaction,blockingStubFull);
   }
   /**
    * constructor.
@@ -540,90 +315,6 @@ public class PublicMethedForMutiSign {
     transaction = TransactionUtils.setTimestamp(transaction);
     return ByteArray.toHexString(transaction.toByteArray());
 
-  }
-  /**
-   * constructor.
-   */
-
-  public static Return freezeBalance2(byte[] addRess, long freezeBalance, long freezeDuration,
-      String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    byte[] address = addRess;
-    long frozenBalance = freezeBalance;
-    long frozenDuration = freezeDuration;
-    //String priKey = testKey002;
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    final ECKey ecKey = temKey;
-    Block currentBlock = blockingStubFull.getNowBlock(EmptyMessage.newBuilder().build());
-    final Long beforeBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
-    Account beforeFronzen = queryAccount(priKey, blockingStubFull);
-    Long beforeFrozenBalance = 0L;
-    //Long beforeBandwidth     = beforeFronzen.getBandwidth();
-    if (beforeFronzen.getFrozenCount() != 0) {
-      beforeFrozenBalance = beforeFronzen.getFrozen(0).getFrozenBalance();
-      //beforeBandwidth     = beforeFronzen.getBandwidth();
-      //logger.info(Long.toString(beforeFronzen.getBandwidth()));
-      logger.info(Long.toString(beforeFronzen.getFrozen(0).getFrozenBalance()));
-    }
-
-    Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
-    ByteString byteAddreess = ByteString.copyFrom(address);
-
-    builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
-        .setFrozenDuration(frozenDuration);
-
-    Contract.FreezeBalanceContract contract = builder.build();
-
-    TransactionExtention transactionExtention = blockingStubFull.freezeBalance2(contract);
-    if (transactionExtention == null) {
-      return transactionExtention.getResult();
-    }
-    Return ret = transactionExtention.getResult();
-    if (!ret.getResult()) {
-      System.out.println("Code = " + ret.getCode());
-      System.out.println("Message = " + ret.getMessage().toStringUtf8());
-      return ret;
-    } else {
-      System.out.println("Code = " + ret.getCode());
-      System.out.println("Message = " + ret.getMessage().toStringUtf8());
-    }
-    Transaction transaction = transactionExtention.getTransaction();
-    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      System.out.println("Transaction is empty");
-      return transactionExtention.getResult();
-    }
-    System.out.println(
-        "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
-
-    transaction = TransactionUtils.setTimestamp(transaction);
-    transaction = TransactionUtils.sign(transaction, ecKey);
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return response;
-    }
-
-    Long afterBlockNum = 0L;
-
-    while (afterBlockNum < beforeBlockNum) {
-      Block currentBlock1 = blockingStubFull.getNowBlock(EmptyMessage.newBuilder().build());
-      afterBlockNum = currentBlock1.getBlockHeader().getRawData().getNumber();
-    }
-
-    Account afterFronzen = queryAccount(priKey, blockingStubFull);
-    Long afterFrozenBalance = afterFronzen.getFrozen(0).getFrozenBalance();
-    logger.info(Long.toString(afterFronzen.getFrozen(0).getFrozenBalance()));
-    logger.info("beforefronen" + beforeFrozenBalance.toString() + "    afterfronzen"
-        + afterFrozenBalance.toString());
-    Assert.assertTrue(afterFrozenBalance - beforeFrozenBalance == freezeBalance);
-    return ret;
   }
 
   /**
@@ -705,181 +396,8 @@ public class PublicMethedForMutiSign {
   /**
    * constructor.
    */
-
-  public static Return sendcoin2(byte[] to, long amount, byte[] owner, String priKey,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    final ECKey ecKey = temKey;
-    //Protocol.Account search = queryAccount(priKey, blockingStubFull);
-
-    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
-    ByteString bsTo = ByteString.copyFrom(to);
-    ByteString bsOwner = ByteString.copyFrom(owner);
-    builder.setToAddress(bsTo);
-    builder.setOwnerAddress(bsOwner);
-    builder.setAmount(amount);
-
-    Contract.TransferContract contract = builder.build();
-    TransactionExtention transactionExtention = blockingStubFull.createTransaction2(contract);
-    if (transactionExtention == null) {
-      return transactionExtention.getResult();
-    }
-
-    Return ret = transactionExtention.getResult();
-    if (!ret.getResult()) {
-      System.out.println("Code = " + ret.getCode());
-      System.out.println("Message = " + ret.getMessage().toStringUtf8());
-      return ret;
-    } else {
-      System.out.println("Code = " + ret.getCode());
-      System.out.println("Message = " + ret.getMessage().toStringUtf8());
-    }
-
-    Transaction transaction = transactionExtention.getTransaction();
-    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      System.out.println("Transaction is empty");
-      return transactionExtention.getResult();
-    }
-    System.out.println(
-        "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
-
-    transaction = signTransaction(ecKey, transaction);
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return response;
-    }
-    return ret;
-  }
-  /**
-   * constructor.
-   */
-
-  public static String sendcoinGetTransactionId(byte[] to, long amount, byte[] owner, String priKey,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    //String priKey = testKey002;
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    final ECKey ecKey = temKey;
-    //Protocol.Account search = queryAccount(priKey, blockingStubFull);
-
-    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
-    ByteString bsTo = ByteString.copyFrom(to);
-    ByteString bsOwner = ByteString.copyFrom(owner);
-    builder.setToAddress(bsTo);
-    builder.setOwnerAddress(bsOwner);
-    builder.setAmount(amount);
-
-    Contract.TransferContract contract = builder.build();
-    Transaction transaction = blockingStubFull.createTransaction(contract);
-    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      logger.info("transaction ==null");
-      return null;
-    }
-    //Test raw data
-    /*    Protocol.Transaction.raw.Builder builder1 = transaction.getRawData().toBuilder();
-    builder1.setData(ByteString.copyFromUtf8("12345678"));
-    Transaction.Builder builder2 = transaction.toBuilder();
-    builder2.setRawData(builder1);
-    transaction = builder2.build();*/
-
-    transaction = signTransaction(ecKey, transaction);
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return null;
-    } else {
-      return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
-    }
-  }
-  /**
-   * constructor.
-   */
-
-  public static Optional<Transaction> getTransactionById(String txId,
-      WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubFull) {
-    ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
-    BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
-    Transaction transaction = blockingStubFull.getTransactionById(request);
-    return Optional.ofNullable(transaction);
-  }
-  /**
-   * constructor.
-   */
-
-  public static Optional<Transaction> getTransactionById(String txId,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
-    ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
-    BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
-    Transaction transaction = blockingStubFull.getTransactionById(request);
-    return Optional.ofNullable(transaction);
-  }
-  /**
-   * constructor.
-   */
-
-  public static Optional<Transaction> getTransactionByIdSolidity(String txId,
-      WalletGrpc.WalletBlockingStub blockingStubSolidity) {
-    ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
-    BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
-    Transaction transaction = blockingStubSolidity.getTransactionById(request);
-    return Optional.ofNullable(transaction);
-  }
-  /**
-   * constructor.
-   */
-
-  public static String printTransaction(Transaction transaction) {
-    String result = "";
-    result += "hash: ";
-    result += "\n";
-    result += ByteArray.toHexString(Sha256Hash.hash(transaction.toByteArray()));
-    result += "\n";
-    result += "txid: ";
-    result += "\n";
-    result += ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
-    result += "\n";
-
-    if (transaction.getRawData() != null) {
-      result += "raw_data: ";
-      result += "\n";
-      result += "{";
-      result += "\n";
-      result += printTransactionRow(transaction.getRawData());
-      result += "}";
-      result += "\n";
-    }
-
-    return result;
-  }
-  /**
-   * constructor.
-   */
-
-  public static long printTransactionRow(Transaction.raw raw) {
-    long timestamp = raw.getTimestamp();
-
-    return timestamp;
-  }
-  /**
-   * constructor.
-   */
-
   public static boolean updateAsset(byte[] address, byte[] description, byte[] url, long newLimit,
-      long newPublicLimit, String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
+      long newPublicLimit, String priKey, WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -906,77 +424,17 @@ public class PublicMethedForMutiSign {
       return false;
     }
 
-    transaction = signTransaction(ecKey, transaction);
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return false;
-    } else {
-      return true;
-    }
+    transaction = signTransaction(transaction,blockingStubFull,permissionKeyString);
+
+    return broadcastTransaction(transaction,blockingStubFull);
   }
-  /**
-   * constructor.
-   */
 
-  public static Return updateAsset2(byte[] address, byte[] description, byte[] url, long newLimit,
-      long newPublicLimit, String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    final ECKey ecKey = temKey;
-    Contract.UpdateAssetContract.Builder builder =
-        Contract.UpdateAssetContract.newBuilder();
-    ByteString basAddreess = ByteString.copyFrom(address);
-    builder.setDescription(ByteString.copyFrom(description));
-    builder.setUrl(ByteString.copyFrom(url));
-    builder.setNewLimit(newLimit);
-    builder.setNewPublicLimit(newPublicLimit);
-    builder.setOwnerAddress(basAddreess);
-
-    Contract.UpdateAssetContract contract
-        = builder.build();
-
-    TransactionExtention transactionExtention = blockingStubFull.updateAsset2(contract);
-    if (transactionExtention == null) {
-      return transactionExtention.getResult();
-    }
-    Return ret = transactionExtention.getResult();
-    if (!ret.getResult()) {
-      System.out.println("Code = " + ret.getCode());
-      System.out.println("Message = " + ret.getMessage().toStringUtf8());
-      return ret;
-    } else {
-      System.out.println("Code = " + ret.getCode());
-      System.out.println("Message = " + ret.getMessage().toStringUtf8());
-    }
-    Transaction transaction = transactionExtention.getTransaction();
-    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      System.out.println("Transaction is empty");
-      return transactionExtention.getResult();
-    }
-    System.out.println(
-        "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
-
-    transaction = signTransaction(ecKey, transaction);
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return response;
-    }
-    return ret;
-  }
   /**
    * constructor.
    */
 
   public static boolean transferAsset(byte[] to, byte[] assertName, long amount, byte[] address,
-      String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
+      String priKey, WalletGrpc.WalletBlockingStub blockingStubFull,String[] permissionKeyString) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -1007,15 +465,9 @@ public class PublicMethedForMutiSign {
       }
       return false;
     }
-    transaction = signTransaction(ecKey, transaction);
+    transaction = signTransaction(transaction,blockingStubFull,permissionKeyString);
 
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return false;
-    } else {
-      return true;
-    }
+    return broadcastTransaction(transaction,blockingStubFull);
   }
   /**
    * constructor.
@@ -1057,38 +509,7 @@ public class PublicMethedForMutiSign {
       return true;
     }
   }
-  /**
-   * constructor.
-   */
 
-  public static boolean waitSolidityNodeSynFullNodeData(WalletGrpc.WalletBlockingStub
-      blockingStubFull, WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    Block currentBlock = blockingStubFull.getNowBlock(EmptyMessage.newBuilder().build());
-    Block solidityCurrentBlock = blockingStubSolidity.getNowBlock(EmptyMessage
-        .newBuilder().build());
-    Integer wait = 0;
-    logger.info("Fullnode block num is " + Long.toString(currentBlock
-        .getBlockHeader().getRawData().getNumber()));
-    while (solidityCurrentBlock.getBlockHeader().getRawData().getNumber()
-        < currentBlock.getBlockHeader().getRawData().getNumber() + 1 && wait <= 10) {
-      try {
-        Thread.sleep(3000);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-      logger.info("Soliditynode num is " + Long.toString(solidityCurrentBlock
-          .getBlockHeader().getRawData().getNumber()));
-      solidityCurrentBlock = blockingStubSolidity.getNowBlock(EmptyMessage.newBuilder()
-          .build());
-      if (wait == 10) {
-        logger.info("Didn't syn,skip to next case.");
-        return false;
-      }
-      wait++;
-    }
-    return true;
-  }
   /**
    * constructor.
    */
@@ -1123,48 +544,7 @@ public class PublicMethedForMutiSign {
     logger.info("quit normally");
     return true;
   }
-  /**
-   * constructor.
-   */
 
-  public static AccountNetMessage getAccountNet(byte[] address, WalletGrpc.WalletBlockingStub
-      blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ByteString addressBs = ByteString.copyFrom(address);
-    Account request = Account.newBuilder().setAddress(addressBs).build();
-    return blockingStubFull.getAccountNet(request);
-  }
-
-  /*  public static byte[] addPreFix(byte[] address) {
-  Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  Config config = Configuration.getByPath("testng.conf");
-  byte ADD_PRE_FIX_BYTE_MAINNET = (byte) 0x41;   //41 + address
-  byte ADD_PRE_FIX_BYTE_TESTNET = (byte) 0xa0;   //a0 + address
-  byte[] preFix = new byte[1];
-  if (config.hasPath("net.type") && "mainnet".equalsIgnoreCase(config.getString("net.type"))) {
-    WalletClient.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
-    preFix[0] = ADD_PRE_FIX_BYTE_MAINNET;
-   }else {
-      WalletClient.setAddressPreFixByte(ADD_PRE_FIX_BYTE_TESTNET);
-      preFix[0] = ADD_PRE_FIX_BYTE_TESTNET;
-    }
-    byte[] finalAddress = new byte[preFix.length+address.length];
-    System.arraycopy(preFix, 0, finalAddress, 0, preFix.length);
-    System.arraycopy(address, 0, finalAddress, preFix.length, address.length);
-    return finalAddress;
-
-  }*/
-  /**
-   * constructor.
-   */
-
-  public static byte[] getFinalAddress(String priKey) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    WalletClient walletClient;
-    walletClient = new WalletClient(priKey);
-    //walletClient.init(0);
-    return walletClient.getAddress();
-  }
   /**
    * constructor.
    */
@@ -1200,58 +580,7 @@ public class PublicMethedForMutiSign {
     }
 
   }
-  /**
-   * constructor.
-   */
 
-  public static Return createAccount2(byte[] ownerAddress, byte[] newAddress, String priKey,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    final ECKey ecKey = temKey;
-
-    byte[] owner = ownerAddress;
-    Contract.AccountCreateContract.Builder builder = Contract.AccountCreateContract.newBuilder();
-    builder.setOwnerAddress(ByteString.copyFrom(owner));
-    builder.setAccountAddress(ByteString.copyFrom(newAddress));
-    Contract.AccountCreateContract contract = builder.build();
-
-    TransactionExtention transactionExtention = blockingStubFull.createAccount2(contract);
-
-    if (transactionExtention == null) {
-      return transactionExtention.getResult();
-    }
-    Return ret = transactionExtention.getResult();
-    if (!ret.getResult()) {
-      System.out.println("Code = " + ret.getCode());
-      System.out.println("Message = " + ret.getMessage().toStringUtf8());
-      return ret;
-    } else {
-      System.out.println("Code = " + ret.getCode());
-      System.out.println("Message = " + ret.getMessage().toStringUtf8());
-    }
-    Transaction transaction = transactionExtention.getTransaction();
-    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      System.out.println("Transaction is empty");
-      return transactionExtention.getResult();
-    }
-    System.out.println(
-        "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
-
-    transaction = signTransaction(ecKey, transaction);
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return response;
-    }
-    return ret;
-  }
   /**
    * constructor.
    */
@@ -1397,29 +726,6 @@ public class PublicMethedForMutiSign {
       return true;
     }
   }
-  /**
-   * constructor.
-   */
-
-  public static boolean printAddress(String key) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    logger.info(key);
-    logger.info(ByteArray.toHexString(getFinalAddress(key)));
-    logger.info(Base58.encode58Check(getFinalAddress(key)));
-    return true;
-  }
-  /**
-   * constructor.
-   */
-
-  public static ArrayList<String>  getAddressInfo(String key) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ArrayList<String> accountList = new ArrayList<String>();
-    accountList.add(key);
-    accountList.add(ByteArray.toHexString(getFinalAddress(key)));
-    accountList.add(Base58.encode58Check(getFinalAddress(key)));
-    return accountList;
-  }
 
   /**
    * constructor.
@@ -1501,113 +807,10 @@ public class PublicMethedForMutiSign {
     }
     return true;
   }
+
   /**
    * constructor.
    */
-
-  public static AccountResourceMessage getAccountResource(byte[] address,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ByteString addressBs = ByteString.copyFrom(address);
-    Account request = Account.newBuilder().setAddress(addressBs).build();
-    return blockingStubFull.getAccountResource(request);
-  }
-  /**
-   * constructor.
-   */
-
-  public static boolean buyStorage(long quantity, byte[] address,
-      String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    final ECKey ecKey = temKey;
-
-    Contract.BuyStorageContract.Builder builder = Contract.BuyStorageContract.newBuilder();
-    ByteString byteAddress = ByteString.copyFrom(address);
-    builder.setOwnerAddress(byteAddress).setQuant(quantity);
-    Contract.BuyStorageContract contract = builder.build();
-    TransactionExtention transactionExtention = blockingStubFull.buyStorage(contract);
-    if (transactionExtention == null) {
-      return false;
-    }
-    Return ret = transactionExtention.getResult();
-    if (!ret.getResult()) {
-      System.out.println("Code = " + ret.getCode());
-      System.out.println("Message = " + ret.getMessage().toStringUtf8());
-      return false;
-    }
-    Transaction transaction = transactionExtention.getTransaction();
-    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      System.out.println("Transaction is empty");
-      return false;
-    }
-    System.out.println(
-        "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
-    transaction = signTransaction(ecKey, transaction);
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return false;
-    } else {
-      return true;
-    }
-  }
-  /**
-   * constructor.
-   */
-
-  public static boolean sellStorage(long quantity, byte[] address,
-      String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    final ECKey ecKey = temKey;
-
-    Contract.SellStorageContract.Builder builder = Contract.SellStorageContract.newBuilder();
-    ByteString byteAddress = ByteString.copyFrom(address);
-    builder.setOwnerAddress(byteAddress).setStorageBytes(quantity);
-    Contract.SellStorageContract contract = builder.build();
-    TransactionExtention transactionExtention = blockingStubFull.sellStorage(contract);
-    if (transactionExtention == null) {
-      return false;
-    }
-    Return ret = transactionExtention.getResult();
-    if (!ret.getResult()) {
-      System.out.println("Code = " + ret.getCode());
-      System.out.println("Message = " + ret.getMessage().toStringUtf8());
-      return false;
-    }
-    Transaction transaction = transactionExtention.getTransaction();
-    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      System.out.println("Transaction is empty");
-      return false;
-    }
-    System.out.println(
-        "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
-    transaction = signTransaction(ecKey, transaction);
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return false;
-    } else {
-      return true;
-    }
-  }
-  /**
-   * constructor.
-   */
-
   public static byte[] deployContract(String contractName, String abiString, String code,
       String data, Long feeLimit, long value,
       long consumeUserResourcePercent, String libraryAddress, String priKey, byte[] ownerAddress,
@@ -1700,7 +903,7 @@ public class PublicMethedForMutiSign {
     texBuilder.setTxid(transactionExtention.getTxid());
     transactionExtention = texBuilder.build();
 
-    byte[] contractAddress = generateContractAddress(transactionExtention.getTransaction(), owner);
+    byte[] contractAddress = PublicMethed.generateContractAddress(transactionExtention.getTransaction(), owner);
     System.out.println(
         "Your smart contract address will be: " + WalletClient.encode58Check(contractAddress));
     if (transactionExtention == null) {
@@ -1720,7 +923,7 @@ public class PublicMethedForMutiSign {
     transaction = signTransaction(ecKey, transaction);
     System.out.println(
         "txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray())));
-    contractAddress = generateContractAddress(transaction, owner);
+    contractAddress = PublicMethed.generateContractAddress(transaction, owner);
     System.out.println(
         "Your smart contract address will be: " + WalletClient.encode58Check(contractAddress));
 
@@ -1859,7 +1062,7 @@ public class PublicMethedForMutiSign {
     transaction = signTransaction(ecKey, transaction);
     System.out.println(
         "txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray())));
-    byte[] contractAddress = generateContractAddress(transaction, owner);
+    byte[] contractAddress = PublicMethed.generateContractAddress(transaction, owner);
     System.out.println(
         "Your smart contract address will be: " + WalletClient.encode58Check(contractAddress));
     int i = 10;
@@ -2020,27 +1223,7 @@ public class PublicMethedForMutiSign {
         return SmartContract.ABI.Entry.StateMutabilityType.UNRECOGNIZED;
     }
   }
-  /**
-   * constructor.
-   */
 
-  public static byte[] generateContractAddress(Transaction trx, byte[] owneraddress) {
-
-    // get owner address
-    // this address should be as same as the onweraddress in trx, DONNOT modify it
-    byte[] ownerAddress = owneraddress;
-
-    // get tx hash
-    byte[] txRawDataHash = Sha256Hash.of(trx.getRawData().toByteArray()).getBytes();
-
-    // combine
-    byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
-    System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
-    System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
-
-    return Hash.sha3omit12(combined);
-
-  }
   /**
    * constructor.
    */
@@ -2156,19 +1339,10 @@ public class PublicMethedForMutiSign {
       return true;
     }
   }
+
   /**
    * constructor.
    */
-
-  public static Optional<TransactionInfo> getTransactionInfoById(String txId, WalletGrpc
-      .WalletBlockingStub blockingStubFull) {
-    ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
-    BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
-    TransactionInfo transactionInfo;
-    transactionInfo = blockingStubFull.getTransactionInfoById(request);
-    return Optional.ofNullable(transactionInfo);
-  }
-
   public static String triggerContract(byte[] contractAddress, String method, String argsStr,
       Boolean isHex, long callValue, long feeLimit, byte[] ownerAddress,
       String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
@@ -2424,42 +1598,6 @@ public class PublicMethedForMutiSign {
     ExchangeList exchangeList = blockingStubFull.listExchanges(EmptyMessage.newBuilder().build());
     return Optional.ofNullable(exchangeList);
   }
-  /**
-   * constructor.
-   */
-
-  public static Optional<ExchangeList> getExchangeList(WalletSolidityGrpc
-      .WalletSolidityBlockingStub blockingStubSolidity) {
-    ExchangeList exchangeList = blockingStubSolidity.listExchanges(EmptyMessage.newBuilder()
-        .build());
-    return Optional.ofNullable(exchangeList);
-  }
-
-
-  /**
-   * constructor.
-   */
-
-  public static Optional<Exchange> getExchange(String id, WalletSolidityGrpc
-      .WalletSolidityBlockingStub blockingStubSolidity) {
-    BytesMessage request = BytesMessage.newBuilder().setValue(ByteString.copyFrom(
-        ByteArray.fromLong(Long.parseLong(id))))
-        .build();
-    Exchange exchange = blockingStubSolidity.getExchangeById(request);
-    return Optional.ofNullable(exchange);
-  }
-  /**
-   * constructor.
-   */
-
-  public static Optional<Exchange> getExchange(String id, WalletGrpc.WalletBlockingStub
-      blockingStubFull) {
-    BytesMessage request = BytesMessage.newBuilder().setValue(ByteString.copyFrom(
-        ByteArray.fromLong(Long.parseLong(id))))
-        .build();
-    Exchange exchange = blockingStubFull.getExchangeById(request);
-    return Optional.ofNullable(exchange);
-  }
 
   /**
    * constructor.
@@ -2709,7 +1847,7 @@ public class PublicMethedForMutiSign {
     transaction = signTransaction(ecKey, transaction);
     System.out.println(
         "txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray())));
-    byte[] contractAddress = generateContractAddress(transaction, owner);
+    byte[] contractAddress = PublicMethed.generateContractAddress(transaction, owner);
     System.out.println(
         "Your smart contract address will be: " + WalletClient.encode58Check(contractAddress));
     int i = 10;
@@ -2777,74 +1915,10 @@ public class PublicMethedForMutiSign {
     }
     return true;
   }
+
   /**
    * constructor.
    */
-
-  public static Optional<DelegatedResourceList> getDelegatedResource(byte[] fromAddress,
-      byte[] toAddress, WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ByteString fromAddressBs = ByteString.copyFrom(fromAddress);
-    ByteString toAddressBs = ByteString.copyFrom(toAddress);
-
-    DelegatedResourceMessage request = DelegatedResourceMessage.newBuilder()
-        .setFromAddress(fromAddressBs)
-        .setToAddress(toAddressBs)
-        .build();
-    DelegatedResourceList delegatedResource = blockingStubFull.getDelegatedResource(request);
-    return Optional.ofNullable(delegatedResource);
-  }
-  /**
-   * constructor.
-   */
-
-  public static Optional<DelegatedResourceAccountIndex> getDelegatedResourceAccountIndex(
-      byte[] address, WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-
-    ByteString addressBs = ByteString.copyFrom(address);
-
-    BytesMessage bytesMessage = BytesMessage.newBuilder().setValue(addressBs).build();
-
-    DelegatedResourceAccountIndex accountIndex = blockingStubFull
-        .getDelegatedResourceAccountIndex(bytesMessage);
-    return Optional.ofNullable(accountIndex);
-  }
-  /**
-   * constructor.
-   */
-
-  public static Contract.AssetIssueContract getAssetIssueByName(String assetName,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ByteString assetNameBs = ByteString.copyFrom(assetName.getBytes());
-    BytesMessage request = BytesMessage.newBuilder().setValue(assetNameBs).build();
-    return blockingStubFull.getAssetIssueByName(request);
-  }
-  /**
-   * constructor.
-   */
-
-  public static Optional<AssetIssueList> getAssetIssueListByName(String assetName,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ByteString assetNameBs = ByteString.copyFrom(assetName.getBytes());
-    BytesMessage request = BytesMessage.newBuilder().setValue(assetNameBs).build();
-    AssetIssueList assetIssueList = blockingStubFull.getAssetIssueListByName(request);
-    return Optional.ofNullable(assetIssueList);
-  }
-  /**
-   * constructor.
-   */
-
-  public static Contract.AssetIssueContract getAssetIssueById(String assetId,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ByteString assetIdBs = ByteString.copyFrom(assetId.getBytes());
-    BytesMessage request = BytesMessage.newBuilder().setValue(assetIdBs).build();
-    return blockingStubFull.getAssetIssueById(request);
-  }
-
   public static boolean permissionAddKey(String permission, byte[] addAddress, int weight, byte[] owner,String priKey,WalletGrpc.WalletBlockingStub blockingStubFull)
        {
          Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -3164,7 +2238,6 @@ public class PublicMethedForMutiSign {
            if (weight.getResult().getCode() == TransactionSignWeight.Result.response_code.NOT_ENOUGH_PERMISSION) {
              continue;
            }
-
          }
     return transaction;
   }

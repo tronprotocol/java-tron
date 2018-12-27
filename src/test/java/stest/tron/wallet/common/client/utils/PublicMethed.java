@@ -1449,9 +1449,20 @@ public class PublicMethed {
     logger.info(Base58.encode58Check(getFinalAddress(key)));
     return true;
   }
+
   /**
    * constructor.
    */
+
+  public static String getAddressString(String key) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    return Base58.encode58Check(getFinalAddress(key));
+  }
+
+  /**
+   * constructor.
+   */
+
 
   public static ArrayList<String>  getAddressInfo(String key) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
