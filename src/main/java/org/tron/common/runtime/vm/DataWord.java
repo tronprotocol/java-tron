@@ -168,6 +168,13 @@ public class DataWord implements Comparable<DataWord> {
         return new BigInteger(data).toString();
     }
 
+    public static boolean isZero(byte[] data) {
+        for (byte tmp : data) {
+            if (tmp != 0) return false;
+        }
+        return true;
+    }
+
     public boolean isZero() {
         for (byte tmp : data) {
             if (tmp != 0) return false;
