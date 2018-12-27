@@ -396,13 +396,9 @@ public class RuntimeImpl implements Runtime {
       tokenValue = contract.getCallTokenValue();
       tokenId = contract.getTokenId();
     }
-<<<<<<< HEAD
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
-=======
-
     checkTokenValueAndId(tokenValue, tokenId);
 
->>>>>>> 663908cda... restrict tokenvalue and tokenid value
     // create vm to constructor smart contract
     try {
       long feeLimit = trx.getRawData().getFeeLimit();
@@ -531,8 +527,8 @@ public class RuntimeImpl implements Runtime {
         throw new ContractValidateException("tokenValue must >= 0");
       }
     }
-    byte[] callerAddress = contract.getOwnerAddress().toByteArray();
 
+    byte[] callerAddress = contract.getOwnerAddress().toByteArray();
     checkTokenValueAndId(tokenValue, tokenId);
 
     byte[] code = this.deposit.getCode(contractAddress);
