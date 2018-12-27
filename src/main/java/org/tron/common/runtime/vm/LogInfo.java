@@ -61,11 +61,11 @@ public class LogInfo {
     return list;
   }
 
-  public List<DataWord> getClonedTopics() {
-    List<DataWord> list = new LinkedList<>();
+  public List<byte[]> getClonedTopics() {
+    List<byte[]> list = new LinkedList<>();
     if (topics != null && topics.size() > 0){
       for (DataWord dataword: topics) {
-        list.add(new DataWord(dataword.getData()));
+        list.add(new DataWord(dataword.getData()).getData());
       }
     }
     return list;

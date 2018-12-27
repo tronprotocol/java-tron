@@ -44,17 +44,15 @@ public class ContractEventParser {
    * @param trigger
    * @return
    */
-  public static Map<String, Object> parseTopics(ContractEventTrigger trigger) {
-    List<DataWord> topicList = trigger.getTopicList();
+  public static Map<String, Object> parseTopics(ContractEventTrigger trigger, ABI.Entry entry) {
+    List<byte[]> topicList = trigger.getTopicList();
     Map<String, Object> map = new HashMap<>();
     if (topicList.size() <= 0){
       return map;
     }
-    ABI.Entry entry = trigger.getAbiEntry();
-
 
     // topic0,  sha3 of the signature
-    map.put("0", Hex.toHexString(topicList.get(0).getData()));
+    map.put("0", Hex.toHexString(topicList.get(0)));
 
     // the first is the signature.
     int index = 1;
@@ -74,7 +72,6 @@ public class ContractEventParser {
     return map;
   }
 
-
   /**
    * parse Event Data into map<String, Object>
    *   If parser failed, then return {"0", Hex.toHexString(data)}
@@ -83,14 +80,12 @@ public class ContractEventParser {
    * @param trigger
    * @return
    */
-  public static Map<String, Object> parseEventData(ContractEventTrigger trigger) {
+  public static Map<String, Object> parseEventData(ContractEventTrigger trigger, ABI.Entry entry) {
     byte[] data = trigger.getData();
     Map<String, Object> map = new HashMap<>();
     if (ArrayUtils.isEmpty(data)){
       return map;
     }
-    ABI.Entry entry = trigger.getAbiEntry();
-
     // the first is the signature.
     List<ABI.Entry.Param> list = entry.getInputsList();
     try{
@@ -183,20 +178,20 @@ public class ContractEventParser {
    *  This is only for decode Topic.
    *  Since Topic and Data use different encode methods when deal dynamic length types,
    *  such as bytes and string.
-   * @param dataWord
+   * @param bytes
    * @param typeStr
    * @return
    */
-  private static Object parseTopic(DataWord dataWord, String typeStr){
-    if (dataWord == null || ArrayUtils.isEmpty(dataWord.getData()) || StringUtils.isNullOrEmpty(typeStr)){
+  private static Object parseTopic(byte[] bytes, String typeStr){
+    if (bytes == null || ArrayUtils.isEmpty(bytes) || StringUtils.isNullOrEmpty(typeStr)){
       return "";
     }
     Type type = basicType(typeStr);
     if (type == Type.INT_NUMBER){
-      return dataWord.bigIntValue();
+      return DataWord.bigIntValue(bytes);
     }else if (type == Type.BOOL){
-      return !dataWord.isZero();
+      return !DataWord.isZero(bytes);
     }
-    return dataWord.shortHex();
+    return DataWord.shortHex(bytes);
   }
 }

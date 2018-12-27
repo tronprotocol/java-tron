@@ -14,7 +14,7 @@ public class ContractLogTrigger extends ContractTrigger{
      */
     @Getter
     @Setter
-    private List<DataWord> topicList;
+    private List<byte[]> topicList;
 
     /**
      * data produced by the smart contract LOG function
@@ -55,8 +55,8 @@ public class ContractLogTrigger extends ContractTrigger{
     private List<String> getHexTopics() {
         List<String> list = new LinkedList<>();
         if (topicList != null && topicList.size() > 0){
-            for (DataWord dataword: topicList) {
-                list.add(Hex.toHexString(dataword.getData()));
+            for (byte[] bytes: topicList) {
+                list.add(Hex.toHexString(bytes));
             }
         }
         return list;

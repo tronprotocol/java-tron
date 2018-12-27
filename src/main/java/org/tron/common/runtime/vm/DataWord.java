@@ -164,6 +164,10 @@ public class DataWord implements Comparable<DataWord> {
         return new BigInteger(data);
     }
 
+    public static String  bigIntValue(byte[] data) {
+        return new BigInteger(data).toString();
+    }
+
     public String  bigIntValue() {
         return new BigInteger(data).toString();
     }
@@ -361,11 +365,16 @@ public class DataWord implements Comparable<DataWord> {
         return Hex.toHexString(pref).substring(0, 6);
     }
 
+    public static String shortHex(byte[] data) {
+        byte[] bytes = ByteUtil.stripLeadingZeroes(data);
+        String hexValue = Hex.toHexString(bytes).toUpperCase();
+        return "0x" + hexValue.replaceFirst("^0+(?!$)", "");
+    }
+
     public String shortHex() {
         String hexValue = Hex.toHexString(getNoLeadZeroesData()).toUpperCase();
         return "0x" + hexValue.replaceFirst("^0+(?!$)", "");
     }
-
 
     public DataWord clone() {
         return new DataWord(Arrays.clone(data));
