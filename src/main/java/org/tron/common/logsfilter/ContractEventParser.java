@@ -38,7 +38,12 @@ public class ContractEventParser {
     ADDRESS,
   }
 
-
+  /**
+   * parse Event Topic into map
+   *    NOTICE: In solidity, Indexed Dynamic types's topic is just EVENT_INDEXED_ARGS
+   * @param trigger
+   * @return
+   */
   public static Map<String, Object> parseTopics(ContractEventTrigger trigger) {
     List<DataWord> topicList = trigger.getTopicList();
     Map<String, Object> map = new HashMap<>();
@@ -69,6 +74,15 @@ public class ContractEventParser {
     return map;
   }
 
+
+  /**
+   * parse Event Data into map<String, Object>
+   *   If parser failed, then return {"0", Hex.toHexString(data)}
+   *   Only support basic solidity type, String, Bytes.
+   *   Fixed Array or dynamic Array are not support yet (then return {"0": Hex.toHexString(data)}).
+   * @param trigger
+   * @return
+   */
   public static Map<String, Object> parseEventData(ContractEventTrigger trigger) {
     byte[] data = trigger.getData();
     Map<String, Object> map = new HashMap<>();
@@ -79,20 +93,26 @@ public class ContractEventParser {
 
     // the first is the signature.
     List<ABI.Entry.Param> list = entry.getInputsList();
-    for (int i = 0; i < list.size(); ++i) {
-      ABI.Entry.Param param = list.get(i);
-      if (param.getIndexed()){
-        continue;
-      }
+    try{
+      for (int i = 0; i < list.size(); ++i) {
+        ABI.Entry.Param param = list.get(i);
+        if (param.getIndexed()){
+          continue;
+        }
 
-      Object obj = parseDataBytes(data, param.getType(), i);
-      map.put(param.getName(), obj);
-      map.put("" + (i + 1), obj);
+        Object obj = parseDataBytes(data, param.getType(), i);
+        map.put(param.getName(), obj);
+        map.put("" + (i + 1), obj);
+      }
+    }catch (UnsupportedOperationException e){
+      logger.warn("UnsupportedOperationException", e);
+      map.clear();
+      map.put("0", Hex.toHexString(data));
     }
     return map;
   }
 
-  private static Object parseDataBytes(byte[] data, String typeStr, int index){
+  private static Object parseDataBytes(byte[] data, String typeStr, int index) throws UnsupportedOperationException{
 
     try{
       byte[] startBytes = subBytes(data, index * DATAWORD_UNIT_SIZE, DATAWORD_UNIT_SIZE);
@@ -114,11 +134,10 @@ public class ContractEventParser {
 //      else if (Pattern.matches("\\[\\d*\\]$", typeStr)){
 //        throw new UnsupportedOperationException("unsupported type:" + typeStr);
 //      }
-      throw new UnsupportedOperationException("unsupported type:" + typeStr);
     }catch (OutputLengthException | ArithmeticException e){
       logger.warn("", e);
     }
-    return "";
+    throw new UnsupportedOperationException("unsupported type:" + typeStr);
   }
 
   // don't support this type yet : bytes32[10][10]  OR  bytes32[][10]
