@@ -7,6 +7,7 @@ import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.db.TransactionTrace;
 
 public class TransactionLogTriggerCapsule extends TriggerCapsule {
   @Getter
@@ -20,6 +21,15 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
     }
     transactionLogTrigger.setTransactionId(trxCasule.getTransactionId().toString());
     transactionLogTrigger.setTimeStamp(trxCasule.getTimestamp());
+    transactionLogTrigger.setBlockNum(trxCasule.getBlockNum());
+    TransactionTrace trxTrace = trxCasule.getTrxTrace();
+    if (Objects.nonNull(trxTrace) && Objects.nonNull(trxTrace.getReceipt())) {
+      transactionLogTrigger.setEnergyFee(trxTrace.getReceipt().getEnergyFee());
+      transactionLogTrigger.setOriginEnergyUsage(trxTrace.getReceipt().getOriginEnergyUsage());
+      transactionLogTrigger.setEnergyUsageTotal(trxTrace.getReceipt().getEnergyUsageTotal());
+      transactionLogTrigger.setNetUsage(trxTrace.getReceipt().getNetUsage());
+      transactionLogTrigger.setNetFee(trxTrace.getReceipt().getNetFee());
+    }
   }
 
   @Override
