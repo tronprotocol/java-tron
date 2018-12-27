@@ -38,6 +38,7 @@ public class TriggerTimeoutContractCreator extends AbstractTransactionCreator im
       contract = triggerCallContract(
           ownerAddressBytes,
           Wallet.decodeFromBase58Check(contractAddress),
+//              contractAddress.getBytes(),
           callValue,
           Hex.decode(AbiUtil.parseMethod(
               methodSign,

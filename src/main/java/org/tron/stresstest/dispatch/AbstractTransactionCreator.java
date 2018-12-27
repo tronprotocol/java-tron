@@ -31,6 +31,9 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
   protected String commonContractAddress2 = "TEKtGxq16xmf6nDPaVYQ4wZXjrtBUjiuzi";
   protected String commonContractAddress3 = "TE2SuSLEgpnGjhWrA7DkAfi4BKQL2bX14k";
 
+
+
+
   long time = System.currentTimeMillis();
   AtomicLong count = new AtomicLong();
   public Transaction createTransaction(com.google.protobuf.Message message,
@@ -49,7 +52,10 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
 
     transaction = setExpiration(transaction, gTime);
 
+
+
     return transaction;
+
   }
 
   private Transaction setReference(Transaction transaction, long blockNum,

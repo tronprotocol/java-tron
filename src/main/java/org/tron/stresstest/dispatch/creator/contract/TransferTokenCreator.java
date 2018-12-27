@@ -14,16 +14,19 @@ import org.tron.stresstest.dispatch.GoodCaseTransactonCreator;
 import org.tron.stresstest.dispatch.TransactionFactory;
 import org.tron.stresstest.dispatch.creator.CreatorCounter;
 import org.tron.stresstest.exception.EncodingException;
+import org.tron.core.Wallet;
 
 @Setter
 public class TransferTokenCreator extends AbstractTransactionCreator implements GoodCaseTransactonCreator {
 
   private String ownerAddress = commonOwnerAddress;
+
   private String contractAddress = commonContractAddress1;
   private long callValue = 0L;
   private String methodSign = "TransferTokenTo(address,trcToken,uint256)";
   private boolean hex = false;
   private String param = "\"" + commonContractAddress2 + "\",1000001,1";
+//  private String param = "\"" + Wallet.encode58Check(commonContractAddress2.getBytes()) + "\",1000001,1";
   private long feeLimit = 1000000000L;
   private String privateKey = commonOwnerPrivateKey;
 
@@ -35,15 +38,10 @@ public class TransferTokenCreator extends AbstractTransactionCreator implements 
 
     TriggerSmartContract contract = null;
     try {
+
       contract = triggerCallContract(
-          ownerAddressBytes,
-          Wallet.decodeFromBase58Check(contractAddress),
-          callValue,
-          Hex.decode(AbiUtil.parseMethod(
-              methodSign,
-              param,
-              hex
-          )));
+          ownerAddressBytes, Wallet.decodeFromBase58Check(contractAddress), callValue, Hex.decode(AbiUtil.parseMethod(methodSign, param, hex)));
+//          ownerAddressBytes, contractAddress.getBytes(), callValue, Hex.decode(AbiUtil.parseMethod(methodSign, param, hex)));
     } catch (EncodingException e) {
       e.printStackTrace();
     }
