@@ -11,6 +11,7 @@ import static org.tron.core.db.fast.FastSyncStoreConstant.DYNAMIC_PROPERTIES_STO
 import static org.tron.core.db.fast.FastSyncStoreConstant.EXCHANGE_STORE_KEY;
 import static org.tron.core.db.fast.FastSyncStoreConstant.EXCHANGE_V_2_STORE_KEY;
 import static org.tron.core.db.fast.FastSyncStoreConstant.PROPOSAL_STORE_KEY;
+import static org.tron.core.db.fast.FastSyncStoreConstant.STORAGE_STORE_KEY;
 import static org.tron.core.db.fast.FastSyncStoreConstant.VOTES_STORE_KEY;
 import static org.tron.core.db.fast.FastSyncStoreConstant.WITNESS_STORE_KEY;
 
@@ -43,6 +44,7 @@ import org.tron.core.db.fast.storetrie.DynamicPropertiesStoreTrie;
 import org.tron.core.db.fast.storetrie.ExchangeStoreTrie;
 import org.tron.core.db.fast.storetrie.ExchangeV2StoreTrie;
 import org.tron.core.db.fast.storetrie.ProposalStoreTrie;
+import org.tron.core.db.fast.storetrie.StorageRowStoreTrie;
 import org.tron.core.db.fast.storetrie.VotesStoreTrie;
 import org.tron.core.db.fast.storetrie.WitnessStoreTrie;
 import org.tron.core.exception.BadBlockException;
@@ -72,6 +74,7 @@ public class FastSyncCallBack {
   private TrieImpl accountIdIndexTrieImpl;
   private TrieImpl votesTrieImpl;
   private TrieImpl accountIndexTrieImpl;
+  private TrieImpl storageTrieImpl;
 
   @Setter
   private Manager manager;
@@ -104,6 +107,8 @@ public class FastSyncCallBack {
   private VotesStoreTrie votesStoreTrie;
   @Autowired
   private AccountIndexStoreTrie accountIndexStoreTrie;
+  @Autowired
+  private StorageRowStoreTrie storageRowStoreTrie;
 
   public void accountCallBack(byte[] key, AccountCapsule item) {
     if (!exe()) {
@@ -176,6 +181,7 @@ public class FastSyncCallBack {
     byte[] accountIdIndexRootHash = null;
     byte[] votesRootHash = null;
     byte[] accountIndexRootHash = null;
+    byte[] storageRootHash = null;
 
     if (ArrayUtils.isNotEmpty(rootHash)) {
       dynamicRootHash = trie.get(RLP.encodeString(DYNAMIC_PROPERTIES_STORE_KEY));
@@ -192,6 +198,7 @@ public class FastSyncCallBack {
       accountIdIndexRootHash = trie.get(RLP.encodeString(ACCOUNT_ID_INDEX_STORE_KEY));
       votesRootHash = trie.get(RLP.encodeString(VOTES_STORE_KEY));
       accountIndexRootHash = trie.get(RLP.encodeString(ACCOUNT_INDEX_STORE_KEY));
+      storageRootHash = trie.get(RLP.encodeString(STORAGE_STORE_KEY));
     }
     dynamicTrieImpl = new TrieImpl(dynamicStoreTrie, dynamicRootHash);
     assetIssueTrieImpl = new TrieImpl(assetIssueStoreTrie, assetIssueRootHash);
@@ -207,6 +214,7 @@ public class FastSyncCallBack {
     accountIdIndexTrieImpl = new TrieImpl(accountIdIndexStoreTrie, accountIdIndexRootHash);
     votesTrieImpl = new TrieImpl(votesStoreTrie, votesRootHash);
     accountIndexTrieImpl = new TrieImpl(accountIndexStoreTrie, accountIndexRootHash);
+    storageTrieImpl = new TrieImpl(storageRowStoreTrie, storageRootHash);
   }
 
   private TrieImpl selectTrie(TrieEnum trieEnum) {
@@ -237,6 +245,8 @@ public class FastSyncCallBack {
         return delegatedResourceTrieImpl;
       case DELEGATED_RESOURCE_ACCOUNT_INDEX:
         return delegatedResourceAccountTrieImpl;
+      case STORAGE:
+        return storageTrieImpl;
     }
     return null;
   }

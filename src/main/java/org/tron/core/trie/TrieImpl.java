@@ -516,7 +516,6 @@ public class TrieImpl implements Trie<byte[]> {
     cache.remove(hash);
   }
 
-
   public byte[] get(byte[] key) {
     if (!hasRoot()) {
       return null; // treating unknown root hash as empty trie
