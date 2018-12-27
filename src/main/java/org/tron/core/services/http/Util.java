@@ -10,6 +10,7 @@ import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionList;
+import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -17,6 +18,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.CreateSmartContract;
@@ -26,6 +28,9 @@ import org.tron.protos.Contract.ExchangeTransactionContract;
 import org.tron.protos.Contract.ExchangeWithdrawContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
+import org.tron.protos.Contract.PermissionAddKeyContract;
+import org.tron.protos.Contract.PermissionDeleteKeyContract;
+import org.tron.protos.Contract.PermissionUpdateKeyContract;
 import org.tron.protos.Contract.ProposalApproveContract;
 import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Contract.ProposalDeleteContract;
@@ -35,6 +40,8 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.UpdateAssetContract;
+import org.tron.protos.Contract.UpdateEnergyLimitContract;
+import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.VoteAssetContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
@@ -118,6 +125,17 @@ public class Util {
     if (transactionExtention.getResult().getResult()) {
       jsonObject.put("transaction", printTransactionToJSON(transactionExtention.getTransaction()));
     }
+    return jsonObject.toJSONString();
+  }
+
+  public static String printTransactionSignWeight(TransactionSignWeight transactionSignWeight) {
+    String string = JsonFormat.printToString(transactionSignWeight);
+    JSONObject jsonObject = JSONObject.parseObject(string);
+    JSONObject jsonObjectExt = jsonObject.getJSONObject("transaction");
+    jsonObjectExt
+        .put("transaction",
+            printTransactionToJSON(transactionSignWeight.getTransaction().getTransaction()));
+    jsonObject.put("transaction", jsonObjectExt);
     return jsonObject.toJSONString();
   }
 
@@ -274,6 +292,41 @@ public class Util {
             contractJson = JSONObject
                 .parseObject(JsonFormat.printToString(zksnarkV0TransferContract));
             break;
+          case AccountPermissionUpdateContract:
+            AccountPermissionUpdateContract accountPermissionUpdateContract = contractParameter
+                .unpack(AccountPermissionUpdateContract.class);
+            contractJson = JSONObject
+                .parseObject(JsonFormat.printToString(accountPermissionUpdateContract));
+            break;
+          case PermissionAddKeyContract:
+            PermissionAddKeyContract permissionAddKeyContract = contractParameter
+                .unpack(PermissionAddKeyContract.class);
+            contractJson = JSONObject
+                .parseObject(JsonFormat.printToString(permissionAddKeyContract));
+            break;
+          case PermissionUpdateKeyContract:
+            PermissionUpdateKeyContract permissionUpdateKeyContract = contractParameter
+                .unpack(PermissionUpdateKeyContract.class);
+            contractJson = JSONObject
+                .parseObject(JsonFormat.printToString(permissionUpdateKeyContract));
+            break;
+          case PermissionDeleteKeyContract:
+            PermissionDeleteKeyContract permissionDeleteKeyContract = contractParameter
+                .unpack(PermissionDeleteKeyContract.class);
+            contractJson = JSONObject
+                .parseObject(JsonFormat.printToString(permissionDeleteKeyContract));
+            break;
+          case UpdateSettingContract:
+            UpdateSettingContract updateSettingContract = contractParameter
+                .unpack(UpdateSettingContract.class);
+            contractJson = JSONObject.parseObject(JsonFormat.printToString(updateSettingContract));
+            break;
+          case UpdateEnergyLimitContract:
+            UpdateEnergyLimitContract updateEnergyLimitContract = contractParameter
+                .unpack(UpdateEnergyLimitContract.class);
+            contractJson = JSONObject
+                .parseObject(JsonFormat.printToString(updateEnergyLimitContract));
+            break;
           // todo add other contract
           default:
         }
@@ -292,6 +345,8 @@ public class Util {
     JSONObject rawData = JSONObject.parseObject(jsonTransaction.get("raw_data").toString());
     rawData.put("contract", contracts);
     jsonTransaction.put("raw_data", rawData);
+    String rawDataHex = ByteArray.toHexString(transaction.getRawData().toByteArray());
+    jsonTransaction.put("raw_data_hex", rawDataHex);
     String txID = ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
     jsonTransaction.put("txID", txID);
     return jsonTransaction;
@@ -489,6 +544,54 @@ public class Util {
                 .merge(parameter.getJSONObject("value").toJSONString(),
                     ProposalDeleteContractBuilder);
             any = Any.pack(ProposalDeleteContractBuilder.build());
+            break;
+          case "AccountPermissionUpdateContract":
+            AccountPermissionUpdateContract.Builder AccountPermissionUpdateContractBuilder =
+                AccountPermissionUpdateContract.newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    AccountPermissionUpdateContractBuilder);
+            any = Any.pack(AccountPermissionUpdateContractBuilder.build());
+            break;
+          case "PermissionAddKeyContract":
+            PermissionAddKeyContract.Builder PermissionAddKeyContractBuilder = PermissionAddKeyContract
+                .newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    PermissionAddKeyContractBuilder);
+            any = Any.pack(PermissionAddKeyContractBuilder.build());
+            break;
+          case "PermissionUpdateKeyContract":
+            PermissionUpdateKeyContract.Builder PermissionUpdateKeyContractBuilder = PermissionUpdateKeyContract
+                .newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    PermissionUpdateKeyContractBuilder);
+            any = Any.pack(PermissionUpdateKeyContractBuilder.build());
+            break;
+          case "PermissionDeleteKeyContract":
+            PermissionDeleteKeyContract.Builder PermissionDeleteKeyContractBuilder = PermissionDeleteKeyContract
+                .newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    PermissionDeleteKeyContractBuilder);
+            any = Any.pack(PermissionDeleteKeyContractBuilder.build());
+            break;
+          case "UpdateSettingContract":
+            UpdateSettingContract.Builder UpdateSettingContractBuilder = UpdateSettingContract
+                .newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    UpdateSettingContractBuilder);
+            any = Any.pack(UpdateSettingContractBuilder.build());
+            break;
+          case "UpdateEnergyLimitContract":
+            UpdateEnergyLimitContract.Builder UpdateEnergyLimitContractBuilder = UpdateEnergyLimitContract
+                .newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    UpdateEnergyLimitContractBuilder);
+            any = Any.pack(UpdateEnergyLimitContractBuilder.build());
             break;
           // todo add other contract
           default:

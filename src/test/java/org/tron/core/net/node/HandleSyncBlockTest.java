@@ -9,12 +9,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
-import org.junit.*;
-import org.tron.common.application.TronApplicationContext;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.ChannelManager;
@@ -260,7 +262,6 @@ public class HandleSyncBlockTest {
     for (PeerConnection peer : peerConnections) {
       peer.close();
     }
-    peerClient.close();
     handshakeHandlerTest.close();
     context.destroy();
     appT.shutdownServices();

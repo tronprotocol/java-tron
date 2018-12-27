@@ -27,7 +27,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.InvalidKeyException;
 import java.security.PublicKey;
 import java.security.SignatureException;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -46,7 +47,7 @@ import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
 import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
 import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
 import org.tron.common.runtime.vm.program.Program.OutOfMemoryException;
-import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
+import org.tron.common.runtime.vm.program.Program.OutOfTimeException;
 import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
 import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
 import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
@@ -54,11 +55,15 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.db.AccountStore;
+import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.PermissionException;
+import org.tron.core.exception.SignatureFormatException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.ExchangeCreateContract;
@@ -67,6 +72,9 @@ import org.tron.protos.Contract.ExchangeTransactionContract;
 import org.tron.protos.Contract.ExchangeWithdrawContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
+import org.tron.protos.Contract.PermissionAddKeyContract;
+import org.tron.protos.Contract.PermissionDeleteKeyContract;
+import org.tron.protos.Contract.PermissionUpdateKeyContract;
 import org.tron.protos.Contract.ProposalApproveContract;
 import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Contract.ProposalDeleteContract;
@@ -77,9 +85,13 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.UpdateAssetContract;
+import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Contract.ZksnarkV0TransferContract;
+import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Key;
+import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result;
@@ -92,6 +104,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   private Transaction transaction;
   @Setter
   private boolean isVerified = false;
+
+  @Setter
+  @Getter
+  private long blockNum = -1;
 
   @Getter
   @Setter
@@ -250,35 +266,127 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return Sha256Hash.of(this.transaction.getRawData().toByteArray());
   }
 
-  /**
-   * check balance of the address.
-   */
-  public boolean checkBalance(byte[] address, byte[] to, long amount, long balance) {
-    if (!Wallet.addressValid(address)) {
-      logger.error("address invalid");
-      return false;
-    }
-
-    if (!Wallet.addressValid(to)) {
-      logger.error("address invalid");
-      return false;
-    }
-
-    if (amount <= 0) {
-      logger.error("amount required a positive number");
-      return false;
-    }
-
-    if (amount > balance) {
-      logger.error("don't have enough money");
-      return false;
-    }
-
-    return true;
-  }
-
   public void sign(byte[] privateKey) {
     ECKey ecKey = ECKey.fromPrivate(privateKey);
+    ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
+    ByteString sig = ByteString.copyFrom(signature.toByteArray());
+    this.transaction = this.transaction.toBuilder().addSignature(sig).build();
+  }
+
+  public static String getPermissionName(Transaction.Contract contract) {
+    switch (contract.getType()) {
+      case AccountPermissionUpdateContract:
+      case PermissionAddKeyContract:
+      case PermissionUpdateKeyContract:
+      case PermissionDeleteKeyContract:
+        return "owner";
+      default:
+        return "active";
+    }
+  }
+
+  public static Permission getDefaultPermission(ByteString owner, String name) {
+    Permission.Builder builder = Permission.newBuilder();
+    Key.Builder key = Key.newBuilder();
+    key.setAddress(owner).setWeight(1);
+    builder.addKeys(key);
+    builder.setThreshold(1);
+    builder.setName(name);
+    if (!"owner".equalsIgnoreCase(name)) {
+      builder.setParent("owner");
+    }
+    return builder.build();
+  }
+
+  public static Permission getPermission(Account account, String name)
+      throws PermissionException {
+    List<Permission> list = account.getPermissionsList();
+    if (list.isEmpty()) {
+      return getDefaultPermission(account.getAddress(), name);
+    }
+    for (Permission permission : list) {
+      if (name.equalsIgnoreCase(permission.getName())) {
+        return permission;
+      }
+    }
+    throw new PermissionException("Permission of " + name + " is null.");
+  }
+
+  public static long getWeight(Permission permission, byte[] address) {
+    List<Key> list = permission.getKeysList();
+    for (Key key : list) {
+      if (key.getAddress().equals(ByteString.copyFrom(address))) {
+        return key.getWeight();
+      }
+    }
+    return 0;
+  }
+
+  public static long checkWeight(Permission permission, List<ByteString> sigs, byte[] hash,
+      List<ByteString> approveList)
+      throws SignatureException, PermissionException, SignatureFormatException {
+    long currentWeight = 0;
+//    if (signature.size() % 65 != 0) {
+//      throw new SignatureFormatException("Signature size is " + signature.size());
+//    }
+    if (sigs.size() > permission.getKeysCount()) {
+      throw new PermissionException(
+          "Signature count is " + (sigs.size()) + " more than key counts of permission : "
+              + permission.getKeysCount());
+    }
+    HashMap addMap = new HashMap();
+    for (ByteString sig : sigs) {
+      if (sig.size() < 65) {
+        throw new SignatureFormatException(
+            "Signature size is " + sig.size());
+      }
+      String base64 = TransactionCapsule.getBase64FromByteString(sig);
+      byte[] address = ECKey.signatureToAddress(hash, base64);
+      long weight = getWeight(permission, address);
+      if (weight == 0) {
+        throw new PermissionException(
+            ByteArray.toHexString(sig.toByteArray()) + " is signed by " + Wallet
+                .encode58Check(address) + " but it is not contained of permission.");
+      }
+      if (addMap.containsKey(base64)) {
+        throw new PermissionException(Wallet.encode58Check(address) + " has signed twice!");
+      }
+      addMap.put(base64, weight);
+      if (approveList != null) {
+        approveList.add(ByteString.copyFrom(address)); //out put approve list.
+      }
+      currentWeight += weight;
+    }
+    return currentWeight;
+  }
+
+  public void addSign(byte[] privateKey, AccountStore accountStore)
+      throws PermissionException, SignatureException, SignatureFormatException {
+    Transaction.Contract contract = this.transaction.getRawData().getContract(0);
+    String permissionName = getPermissionName(contract);
+    byte[] owner = getOwner(contract);
+    AccountCapsule account = accountStore.get(owner);
+    if (account == null) {
+      throw new PermissionException("Account is not exist!");
+    }
+    Permission permission = getPermission(account.getInstance(), permissionName);
+    List<ByteString> approveList = new ArrayList<>();
+    ECKey ecKey = ECKey.fromPrivate(privateKey);
+    byte[] address = ecKey.getAddress();
+    if (this.transaction.getSignatureCount() > 0) {
+      checkWeight(permission, this.transaction.getSignatureList(), this.getRawHash().getBytes(),
+          approveList);
+      if (approveList.contains(ByteString.copyFrom(address))) {
+        throw new PermissionException(Wallet.encode58Check(address) + " had signed!");
+      }
+    }
+
+    long weight = getWeight(permission, address);
+    if (weight == 0) {
+      throw new PermissionException(
+          ByteArray.toHexString(privateKey) + "'s address is " + Wallet
+              .encode58Check(address) + " but it is not contained of permission.");
+    }
     ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
     ByteString sig = ByteString.copyFrom(signature.toByteArray());
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
@@ -369,6 +477,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           owner = contractParameter.unpack(UpdateSettingContract.class)
               .getOwnerAddress();
           break;
+        case UpdateEnergyLimitContract:
+          owner = contractParameter.unpack(UpdateEnergyLimitContract.class)
+              .getOwnerAddress();
+          break;
         case ExchangeCreateContract:
           owner = contractParameter.unpack(ExchangeCreateContract.class).getOwnerAddress();
           break;
@@ -380,6 +492,18 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           break;
         case ExchangeTransactionContract:
           owner = contractParameter.unpack(ExchangeTransactionContract.class).getOwnerAddress();
+          break;
+        case AccountPermissionUpdateContract:
+          owner = contractParameter.unpack(AccountPermissionUpdateContract.class).getOwnerAddress();
+          break;
+        case PermissionAddKeyContract:
+          owner = contractParameter.unpack(PermissionAddKeyContract.class).getOwnerAddress();
+          break;
+        case PermissionUpdateKeyContract:
+          owner = contractParameter.unpack(PermissionUpdateKeyContract.class).getOwnerAddress();
+          break;
+        case PermissionDeleteKeyContract:
+          owner = contractParameter.unpack(PermissionDeleteKeyContract.class).getOwnerAddress();
           break;
         // todo add other contract
         default:
@@ -441,6 +565,27 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
   }
 
+  // todo mv this static function to capsule util
+  public static long getCallTokenValue(Transaction.Contract contract) {
+    int energyForTrx;
+    try {
+      Any contractParameter = contract.getParameter();
+      long callValue;
+      switch (contract.getType()) {
+        case TriggerSmartContract:
+          return contractParameter.unpack(TriggerSmartContract.class).getCallTokenValue();
+
+        case CreateSmartContract:
+          return contractParameter.unpack(CreateSmartContract.class).getCallTokenValue();
+        default:
+          return 0L;
+      }
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
+      return 0L;
+    }
+  }
+
   public static String getBase64FromByteString(ByteString sign) {
     byte[] r = sign.substring(0, 32).toByteArray();
     byte[] s = sign.substring(32, 64).toByteArray();
@@ -452,29 +597,60 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return signature.toBase64();
   }
 
+  public static boolean validateSignature(Transaction transaction,
+      byte[] hash, AccountStore accountStore)
+      throws PermissionException, SignatureException, SignatureFormatException {
+    Transaction.Contract contract = transaction.getRawData().getContractList().get(0);
+    String permissionName = getPermissionName(contract);
+    byte[] owner = getOwner(contract);
+    AccountCapsule account = accountStore.get(owner);
+    Permission permission;
+    if (account == null) {
+      permission = getDefaultPermission(ByteString.copyFrom(owner), permissionName);
+    } else {
+      permission = getPermission(account.getInstance(), permissionName);
+    }
+    long weight = checkWeight(permission, transaction.getSignatureList(), hash, null);
+    if (weight >= permission.getThreshold()) {
+      return true;
+    }
+    return false;
+  }
 
-  public void validatePubSignature() throws ValidateSignatureException {
-    if (this.getInstance().getSignatureCount() !=
-        this.getInstance().getRawData().getContractCount()) {
+  /**
+   * validate signature
+   */
+  public boolean validatePubSignature(Manager manager)
+      throws ValidateSignatureException {
+    if (isVerified == true) {
+      return true;
+    }
+    if (this.transaction.getSignatureCount() <= 0
+        || this.transaction.getRawData().getContractCount() <= 0) {
       throw new ValidateSignatureException("miss sig or contract");
     }
-
-    List<Transaction.Contract> listContract = this.transaction.getRawData().getContractList();
-    for (int i = 0; i < this.transaction.getSignatureCount(); ++i) {
-      try {
-        Transaction.Contract contract = listContract.get(i);
-        byte[] owner = getOwner(contract);
-        byte[] address = ECKey.signatureToAddress(getRawHash().getBytes(),
-            getBase64FromByteString(this.transaction.getSignature(i)));
-        if (!Arrays.equals(owner, address)) {
-          isVerified = false;
-          throw new ValidateSignatureException("sig error");
-        }
-      } catch (SignatureException e) {
-        isVerified = false;
-        throw new ValidateSignatureException(e.getMessage());
-      }
+    if (this.transaction.getSignatureCount() >
+        manager.getDynamicPropertiesStore().getTotalSignNum()) {
+      throw new ValidateSignatureException("too many signatures");
     }
+    byte[] hash = this.getRawHash().getBytes();
+    try {
+      if (!validateSignature(this.transaction, hash, manager.getAccountStore())) {
+        isVerified = false;
+        throw new ValidateSignatureException("sig error");
+      }
+    } catch (SignatureException e) {
+      isVerified = false;
+      throw new ValidateSignatureException(e.getMessage());
+    } catch (PermissionException e) {
+      isVerified = false;
+      throw new ValidateSignatureException(e.getMessage());
+    } catch (SignatureFormatException e) {
+      isVerified = false;
+      throw new ValidateSignatureException(e.getMessage());
+    }
+    isVerified = true;
+    return true;
   }
 
   public void validateZkSignature() throws ValidateSignatureException {
@@ -514,18 +690,18 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   /**
    * validate signature
    */
-  public boolean validateSignature() throws ValidateSignatureException {
+  public boolean validateSignature(Manager manager) throws ValidateSignatureException {
     if (isVerified == true) {
       return true;
     }
     //Do not support multi contracts in one transaction
     Transaction.Contract contract = this.getInstance().getRawData().getContract(0);
     if (contract.getType() != ContractType.ZksnarkV0TransferContract) {
-      validatePubSignature();
+      validatePubSignature(manager);
     } else {
       byte[] owner = getOwner(contract);
       if (!ArrayUtils.isEmpty(owner)) {
-        validatePubSignature();   //If no pub input , need not signature.
+        validatePubSignature(manager);   //If no pub input , need not signature.
       }
       validateZkSignature();
     }
@@ -637,7 +813,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       this.setResultCode(contractResult.BAD_JUMP_DESTINATION);
       return;
     }
-    if (exception instanceof OutOfResourceException) {
+    if (exception instanceof OutOfTimeException) {
       this.setResultCode(contractResult.OUT_OF_TIME);
       return;
     }

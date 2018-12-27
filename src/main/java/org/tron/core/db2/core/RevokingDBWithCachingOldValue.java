@@ -86,6 +86,10 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
     dbSource.resetDb();
   }
 
+  @Override
+  public void setMode(boolean mode) {
+  }
+
   /**
    * This should be called just after an object is created
    */

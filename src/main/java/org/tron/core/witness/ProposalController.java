@@ -128,7 +128,8 @@ public class ProposalController {
           break;
         }
         case (7): {
-          manager.getDynamicPropertiesStore().saveCreateNewAccountFeeInSystemContract(entry.getValue());
+          manager.getDynamicPropertiesStore()
+              .saveCreateNewAccountFeeInSystemContract(entry.getValue());
           break;
         }
         case (8): {
@@ -165,9 +166,32 @@ public class ProposalController {
           manager.getDynamicPropertiesStore().saveAllowSameTokenName(entry.getValue());
           break;
         }
-
+        case (16): {
+          manager.getDynamicPropertiesStore().saveAllowDelegateResource(entry.getValue());
+          break;
+        }
+        case (17): {
+          manager.getDynamicPropertiesStore().saveTotalEnergyLimit(entry.getValue());
+          break;
+        }
+        case (18): {
+          manager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(entry.getValue());
+          break;
+        }
+        case (19): {
+          manager.getDynamicPropertiesStore().saveTotalEnergyLimit2(entry.getValue());
+          break;
+        }
+        case (20): {
+          if (manager.getDynamicPropertiesStore().getAllowMultiSign() == 0) {
+            manager.getDynamicPropertiesStore().saveAllowMultiSign(entry.getValue());
+          }
+          break;
+        }
         case (22): {
-          manager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(entry.getValue());
+          if ( manager.getDynamicPropertiesStore().getAllowZksnarkTransaction() == 0 ) {
+            manager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(entry.getValue());
+          }
           break;
         }
         case (23): {

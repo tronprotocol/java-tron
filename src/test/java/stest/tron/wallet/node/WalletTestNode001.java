@@ -14,6 +14,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
+import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
@@ -74,6 +75,13 @@ public class WalletTestNode001 {
     nodeList.isInitialized();
 
   }
+
+  @Test(enabled = true)
+  public void testgetNodewInfo() {
+    EmptyMessage.Builder builder = EmptyMessage.newBuilder();
+    blockingStubFull.getNodeInfo(builder.build());
+  }
+
 
   @AfterClass
   public void shutdown() throws InterruptedException {

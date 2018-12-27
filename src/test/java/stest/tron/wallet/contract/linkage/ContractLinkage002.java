@@ -51,7 +51,6 @@ public class ContractLinkage002 {
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
-    PublicMethed.printAddress(linkage002Key);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
@@ -60,14 +59,17 @@ public class ContractLinkage002 {
         .usePlaintext(true)
         .build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
-    Assert.assertTrue(PublicMethed.sendcoin(linkage002Address, 200000000000L, fromAddress,
-        testKey002, blockingStubFull));
   }
 
   @Test(enabled = true)
   public void updateSetting() {
+    ecKey1 = new ECKey(Utils.getRandom());
+    linkage002Address = ecKey1.getAddress();
+    linkage002Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    PublicMethed.printAddress(linkage002Key);
     Account info;
-
+    Assert.assertTrue(PublicMethed.sendcoin(linkage002Address, 200000000000L, fromAddress,
+        testKey002, blockingStubFull));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage002Address, 50000000L,
         3, 1, linkage002Key, blockingStubFull));
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(linkage002Address,
@@ -230,50 +232,9 @@ public class ContractLinkage002 {
     Assert.assertTrue(afterFreeNetUsed3 > 0);
 
     //Set consumeUserResourcePercent is 100,balance not change,use FreeNet freezeBalanceGetEnergy.
-    AccountResourceMessage resourceInfo1 = PublicMethed.getAccountResource(linkage002Address,
-        blockingStubFull);
-    Account info1 = PublicMethed.queryAccount(linkage002Address, blockingStubFull);
-    Long beforeBalance1 = info1.getBalance();
-    Long beforeEnergyLimit1 = resourceInfo1.getEnergyLimit();
-    Long beforeEnergyUsed1 = resourceInfo1.getEnergyUsed();
-    Long beforeFreeNetLimit1 = resourceInfo1.getFreeNetLimit();
-    Long beforeNetLimit1 = resourceInfo1.getNetLimit();
-    Long beforeNetUsed1 = resourceInfo1.getNetUsed();
-    Long beforeFreeNetUsed1 = resourceInfo1.getFreeNetUsed();
-    logger.info("beforeBalance1:" + beforeBalance1);
-    logger.info("beforeEnergyLimit1:" + beforeEnergyLimit1);
-    logger.info("beforeEnergyUsed1:" + beforeEnergyUsed1);
-    logger.info("beforeFreeNetLimit1:" + beforeFreeNetLimit1);
-    logger.info("beforeNetLimit1:" + beforeNetLimit1);
-    logger.info("beforeNetUsed1:" + beforeNetUsed1);
-    logger.info("beforeFreeNetUsed1:" + beforeFreeNetUsed1);
 
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, linkage002Key, linkage002Address, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Account infoafter1 = PublicMethed.queryAccount(linkage002Address, blockingStubFull1);
-    AccountResourceMessage resourceInfoafter1 = PublicMethed.getAccountResource(linkage002Address,
-        blockingStubFull1);
-    Long afterBalance1 = infoafter1.getBalance();
-    Long afterEnergyLimit1 = resourceInfoafter1.getEnergyLimit();
-    Long afterEnergyUsed1 = resourceInfoafter1.getEnergyUsed();
-    Long afterFreeNetLimit1 = resourceInfoafter1.getFreeNetLimit();
-    Long afterNetLimit1 = resourceInfoafter1.getNetLimit();
-    Long afterNetUsed1 = resourceInfoafter1.getNetUsed();
-    Long afterFreeNetUsed1 = resourceInfoafter1.getFreeNetUsed();
-    logger.info("afterBalance1:" + afterBalance1);
-    logger.info("afterEnergyLimit1:" + afterEnergyLimit1);
-    logger.info("afterEnergyUsed1:" + afterEnergyUsed1);
-    logger.info("afterFreeNetLimit1:" + afterFreeNetLimit1);
-    logger.info("afterNetLimit1:" + afterNetLimit1);
-    logger.info("afterNetUsed1:" + afterNetUsed1);
-    logger.info("afterFreeNetUsed1:" + afterFreeNetUsed1);
-
-    Assert.assertEquals(beforeBalance1, afterBalance1);
-    Assert.assertTrue(afterNetUsed1 == 0);
-    Assert.assertTrue(afterEnergyUsed1 > 0);
-    Assert.assertTrue(afterFreeNetUsed1 > 0);
-    Assert.assertTrue(afterFreeNetUsed1 > 0);
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertTrue(smartContract.getConsumeUserResourcePercent() == 100);
 

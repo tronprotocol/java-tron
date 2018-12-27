@@ -17,13 +17,14 @@
  */
 package org.tron.common.runtime.vm.program;
 
+import java.util.Objects;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.listener.ProgramListener;
 import org.tron.common.runtime.vm.program.listener.ProgramListenerAware;
 
 public class Stack extends java.util.Stack<DataWord> implements ProgramListenerAware {
 
-  private ProgramListener programListener;
+  private transient ProgramListener programListener;
 
   @Override
   public void setProgramListener(ProgramListener listener) {
@@ -58,5 +59,29 @@ public class Stack extends java.util.Stack<DataWord> implements ProgramListenerA
 
   private boolean isAccessible(int from) {
     return from >= 0 && from < size();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null) {
+      return false;
+    }
+    if (this == o) {
+      return true;
+    }
+    if (o.getClass() != this.getClass()) {
+      return false;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
+    Stack dataWords = (Stack) o;
+    return Objects.equals(programListener, dataWords.programListener);
+  }
+
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), programListener);
   }
 }

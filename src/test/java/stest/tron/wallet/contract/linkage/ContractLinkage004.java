@@ -94,6 +94,9 @@ public class ContractLinkage004 {
 
   @Test(enabled = true)
   public void getTransactionInfoById() {
+    ecKey1 = new ECKey(Utils.getRandom());
+    linkage004Address = ecKey1.getAddress();
+    linkage004Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
     Assert.assertTrue(PublicMethed.sendcoin(linkage004Address, 2000000000000L, fromAddress,
         testKey003, blockingStubFull));
@@ -235,68 +238,6 @@ public class ContractLinkage004 {
 
   @Test(enabled = true)
   public void testFeeLimitIsTooSmall() {
-    Account account = PublicMethed.queryAccount(linkage004Address, blockingStubFull);
-    //When the fee limit is 0,falied.Only use freezeBalanceGetNet,balance is not change.
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(linkage004Address,
-        blockingStubFull);
-    info = PublicMethed.queryAccount(linkage004Address, blockingStubFull);
-    beforeBalance = info.getBalance();
-    beforeEnergyLimit = resourceInfo.getEnergyLimit();
-    beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    beforeFreeNetLimit = resourceInfo.getFreeNetLimit();
-    beforeNetLimit = resourceInfo.getNetLimit();
-    beforeNetUsed = resourceInfo.getNetUsed();
-    beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyLimit:" + beforeEnergyLimit);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeFreeNetLimit:" + beforeFreeNetLimit);
-    logger.info("beforeNetLimit:" + beforeNetLimit);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-
-    Long maxFeeLimit = 0L;
-    String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code,
-        "", maxFeeLimit, 0L, 50, null, linkage004Key, linkage004Address, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Optional<TransactionInfo> infoById = PublicMethed
-        .getTransactionInfoById(txid, blockingStubFull);
-    energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
-    fee = infoById.get().getFee();
-    energyFee = infoById.get().getReceipt().getEnergyFee();
-    netUsed = infoById.get().getReceipt().getNetUsage();
-    energyUsed = infoById.get().getReceipt().getEnergyUsage();
-    netFee = infoById.get().getReceipt().getNetFee();
-    logger.info("energyUsageTotal:" + energyUsageTotal);
-    logger.info("fee:" + fee);
-    logger.info("energyFee:" + energyFee);
-    logger.info("netUsed:" + netUsed);
-    logger.info("energyUsed:" + energyUsed);
-    logger.info("netFee:" + netFee);
-
-    Account infoafter = PublicMethed.queryAccount(linkage004Address, blockingStubFull1);
-    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(linkage004Address,
-        blockingStubFull1);
-    afterBalance = infoafter.getBalance();
-    afterEnergyLimit = resourceInfoafter.getEnergyLimit();
-    afterEnergyUsed = resourceInfoafter.getEnergyUsed();
-    afterFreeNetLimit = resourceInfoafter.getFreeNetLimit();
-    afterNetLimit = resourceInfoafter.getNetLimit();
-    afterNetUsed = resourceInfoafter.getNetUsed();
-    afterFreeNetUsed = resourceInfoafter.getFreeNetUsed();
-    logger.info("afterBalance:" + afterBalance);
-    logger.info("afterEnergyLimit:" + afterEnergyLimit);
-    logger.info("afterEnergyUsed:" + afterEnergyUsed);
-    logger.info("afterFreeNetLimit:" + afterFreeNetLimit);
-    logger.info("afterNetLimit:" + afterNetLimit);
-    logger.info("afterNetUsed:" + afterNetUsed);
-    logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
-
-    Assert.assertEquals(beforeBalance, afterBalance);
-    Assert.assertTrue(beforeNetUsed < afterNetUsed);
-    Assert.assertTrue(afterEnergyUsed == 0);
-    Assert.assertTrue(infoById.get().getResultValue() == 1);
-
     //When the fee limit is only short with 1 sun,failed.use freezeBalanceGetNet.
     maxFeeLimit = currentFee - 1L;
     AccountResourceMessage resourceInfo1 = PublicMethed.getAccountResource(linkage004Address,
@@ -316,7 +257,7 @@ public class ContractLinkage004 {
     logger.info("beforeNetLimit1:" + beforeNetLimit1);
     logger.info("beforeNetUsed1:" + beforeNetUsed1);
     logger.info("beforeFreeNetUsed1:" + beforeFreeNetUsed1);
-    txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code,
+    String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code,
         "", maxFeeLimit, 0L, 50, null, linkage004Key, linkage004Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 

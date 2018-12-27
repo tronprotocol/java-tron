@@ -655,6 +655,7 @@
       __`GetBlockByNum`__：采用参数`EmptyMessage`，返回对象`Block`。  
       __`TotalTransaction`__：采用参数`EmptyMessage`，返回对象`NumberMessage`。   
       __`getTransactionById`__：采用参数`EmptyMessage`，返回对象`Transaction`。  
+      __`getTransactionInfoById`__：采用参数`BytesMessage`，返回对象`Transaction`。  
       __`getTransactionsByTimestamp`__：采用参数`TimeMessage`，返回对象`Transactionlist`。  
       __`getTransactionsFromThis`__：采用参数`Account`，返回对象`Transactionlist`。  
       __`getTransactionsToThis`__：采用参数`Account`，返回对象`NumberMessage`。 

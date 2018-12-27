@@ -336,7 +336,7 @@ Then, run `FullNode::main()` again.
 
 # Quick Start
 
-Read the [Quick Start](http://wiki.tron.network/en/latest/The_TRON_Network.html#how-to-build).
+Read the [Quick Start](https://developers.tron.network/docs/getting-started-1).
 
 # Advanced Configurations
 

@@ -1,5 +1,7 @@
 package org.tron.core.config;
 
+import lombok.Getter;
+
 public interface Parameter {
 
   interface ChainConstant {
@@ -23,7 +25,7 @@ public interface Parameter {
     int BLOCK_FILLED_SLOTS_NUMBER = 128;
     int MAX_VOTE_NUMBER = 30;
     int MAX_FROZEN_NUMBER = 1;
-    int version = 3;
+    int BLOCK_VERSION = 7;
   }
 
   interface NodeConstant {
@@ -52,10 +54,21 @@ public interface Parameter {
   }
 
   interface DatabaseConstants {
+
     int TRANSACTIONS_COUNT_LIMIT_MAX = 1000;
     int ASSET_ISSUE_COUNT_LIMIT_MAX = 1000;
     int PROPOSAL_COUNT_LIMIT_MAX = 1000;
     int EXCHANGE_COUNT_LIMIT_MAX = 1000;
+  }
+
+  interface AdaptiveResourceLimitConstants {
+
+    int CONTRACT_RATE_NUMERATOR = 99;
+    int CONTRACT_RATE_DENOMINATOR = 100;
+    int EXPAND_RATE_NUMERATOR = 1000;
+    int EXPAND_RATE_DENOMINATOR = 999;
+    int PERIODS_MS = 60_000;
+    int LIMIT_MULTIPLIER = 1000; //s
   }
 
   enum ChainParameters {
@@ -75,7 +88,11 @@ public interface Parameter {
     MAX_CPU_TIME_OF_ONE_TX, // ms, 13
     ALLOW_UPDATE_ACCOUNT_NAME, // 1, 14
     ALLOW_SAME_TOKEN_NAME, // 1, 15
-
+    ALLOW_DELEGATE_RESOURCE, // 0, 16
+    TOTAL_ENERGY_LIMIT, // 50,000,000,000, 17
+    ALLOW_TVM_TRANSFER_TRC10, // 1, 18
+    TOTAL_CURRENT_ENERGY_LIMIT, // 50,000,000,000, 19
+//    ALLOW_ADAPTIVE_ENERGY,
     ALLOW_ZKSNARK_TRANSACTION, // 1, 22
     ZKSNARK_TRANSACTION_FEE, // sun, 23
 //    ONE_DAY_NET_LIMIT,
@@ -89,7 +106,24 @@ public interface Parameter {
 //    FREE_NET_LIMIT,
 //    TOTAL_NET_LIMIT,
 //    EXCHANGE_BALANCE_LIMIT,
-//    TOTAL_ENERGY_LIMIT,
+  }
+
+  @Deprecated
+  interface ForkBlockVersionConsts {
+
+    int START_NEW_TRANSACTION = 4;
+    int ENERGY_LIMIT = 5;
+  }
+
+  enum ForkBlockVersionEnum {
+    VERSION_3_2_2(6),
+    MULTI_SIGN(7);
+    @Getter
+    private int value;
+
+    ForkBlockVersionEnum(int value) {
+      this.value = value;
+    }
   }
 
 }

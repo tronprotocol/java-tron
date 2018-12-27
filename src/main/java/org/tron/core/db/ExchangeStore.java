@@ -14,7 +14,7 @@ import org.tron.core.exception.ItemNotFoundException;
 public class ExchangeStore extends TronStoreWithRevoking<ExchangeCapsule> {
 
   @Autowired
-  public ExchangeStore(@Value("exchange") String dbName) {
+  protected ExchangeStore(@Value("exchange") String dbName) {
     super(dbName);
   }
 
@@ -23,6 +23,7 @@ public class ExchangeStore extends TronStoreWithRevoking<ExchangeCapsule> {
     byte[] value = revokingDB.get(key);
     return new ExchangeCapsule(value);
   }
+
 
   /**
    * get all exchanges.

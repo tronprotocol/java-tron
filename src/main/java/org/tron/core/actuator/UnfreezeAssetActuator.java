@@ -47,10 +47,19 @@ public class UnfreezeAssetActuator extends AbstractActuator {
         }
       }
 
-      accountCapsule
-          .addAssetAmount(accountCapsule.getAssetIssuedName().toByteArray(), unfreezeAsset);
+      if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+        accountCapsule
+            .addAssetAmountV2(accountCapsule.getAssetIssuedName().toByteArray(), unfreezeAsset,
+                dbManager);
+      } else {
+        accountCapsule
+            .addAssetAmountV2(accountCapsule.getAssetIssuedID().toByteArray(), unfreezeAsset,
+                dbManager);
+      }
+
       accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
           .clearFrozenSupply().addAllFrozenSupply(frozenList).build());
+
       dbManager.getAccountStore().put(ownerAddress, accountCapsule);
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
@@ -102,8 +111,14 @@ public class UnfreezeAssetActuator extends AbstractActuator {
       throw new ContractValidateException("no frozen supply balance");
     }
 
-    if (accountCapsule.getAssetIssuedName().isEmpty()) {
-      throw new ContractValidateException("this account did not issue any asset");
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      if (accountCapsule.getAssetIssuedName().isEmpty()) {
+        throw new ContractValidateException("this account did not issue any asset");
+      }
+    } else {
+      if (accountCapsule.getAssetIssuedID().isEmpty()) {
+        throw new ContractValidateException("this account did not issue any asset");
+      }
     }
 
     long now = dbManager.getHeadBlockTimeStamp();

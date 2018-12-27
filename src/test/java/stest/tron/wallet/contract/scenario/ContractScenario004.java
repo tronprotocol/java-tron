@@ -51,15 +51,12 @@ public class ContractScenario004 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(contract004Address,200000000L,fromAddress,
-        testKey002,blockingStubFull));
-    logger.info(Long.toString(PublicMethed.queryAccount(contract004Key,blockingStubFull)
-        .getBalance()));
-
   }
 
   @Test(enabled = true)
   public void deployErc20TronToken() {
+    Assert.assertTrue(PublicMethed.sendcoin(contract004Address,200000000L,fromAddress,
+        testKey002,blockingStubFull));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract004Address, 100000000L,
         3,1,contract004Key,blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract004Address,

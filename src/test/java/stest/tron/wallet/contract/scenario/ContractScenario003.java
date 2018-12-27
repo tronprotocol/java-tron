@@ -57,8 +57,6 @@ public class ContractScenario003 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(contract003Address, 500000000L, fromAddress,
-        testKey002,blockingStubFull));
     logger.info(Long.toString(PublicMethed.queryAccount(contract003Key,blockingStubFull)
         .getBalance()));
     channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
@@ -69,8 +67,8 @@ public class ContractScenario003 {
 
   @Test(enabled = true)
   public void deployErc223() {
-//    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract003Address, 10000000L,
-//        3,1,contract003Key,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(contract003Address, 500000000L, fromAddress,
+        testKey002,blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract003Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();

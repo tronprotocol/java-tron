@@ -89,6 +89,8 @@ public class ActuatorFactory {
 //        return new SellStorageActuator(contract.getParameter(), manager);
       case UpdateSettingContract:
         return new UpdateSettingContractActuator(contract.getParameter(), manager);
+      case UpdateEnergyLimitContract:
+        return new UpdateEnergyLimitContractActuator(contract.getParameter(), manager);
       case ExchangeCreateContract:
         return new ExchangeCreateActuator(contract.getParameter(), manager);
       case ExchangeInjectContract:
@@ -97,6 +99,14 @@ public class ActuatorFactory {
         return new ExchangeWithdrawActuator(contract.getParameter(), manager);
       case ExchangeTransactionContract:
         return new ExchangeTransactionActuator(contract.getParameter(), manager);
+      case AccountPermissionUpdateContract:
+        return new AccountPermissionUpdateActuator(contract.getParameter(), manager);
+      case PermissionAddKeyContract:
+        return new PermissionAddKeyActuator(contract.getParameter(), manager);
+      case PermissionUpdateKeyContract:
+        return new PermissionUpdateKeyActuator(contract.getParameter(), manager);
+      case PermissionDeleteKeyContract:
+        return new PermissionDeleteKeyActuator(contract.getParameter(), manager);
       default:
         break;
 

@@ -18,17 +18,15 @@ package org.tron.common.runtime.vm;
 import static org.junit.Assert.assertTrue;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import java.io.*;
 import org.tron.common.runtime.vm.program.InternalTransaction.TrxType;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.common.runtime.vm.program.InternalTransaction;
-import org.tron.common.runtime.vm.VM;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeMockImpl;
 
@@ -44,7 +42,7 @@ public class InterpreterTest {
   }
 
   @Test
-  public void testVMException() {
+  public void testVMException() throws ContractValidateException {
     VM vm = new VM();
     invoke = new ProgramInvokeMockImpl();
     byte[] op = { 0x5b, 0x60, 0x00, 0x56 };
@@ -69,7 +67,7 @@ public class InterpreterTest {
   }
 
   @Test
-  public void JumpSingleOperation() {
+  public void JumpSingleOperation() throws ContractValidateException {
     VM vm = new VM();
     invoke = new ProgramInvokeMockImpl();
     byte[] op = { 0x56 };
@@ -93,7 +91,7 @@ public class InterpreterTest {
   }
 
   @Test
-  public void JumpToInvalidDestination() {
+  public void JumpToInvalidDestination() throws ContractValidateException {
     VM vm = new VM();
     invoke = new ProgramInvokeMockImpl();
     byte[] op = { 0x60, 0x20,0x56 };
@@ -120,7 +118,7 @@ public class InterpreterTest {
   }
 
   @Test
-  public void JumpToLargeNumberDestination() {
+  public void JumpToLargeNumberDestination() throws ContractValidateException {
     VM vm = new VM();
     invoke = new ProgramInvokeMockImpl();
     byte[] op = { 0x64, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f,0x56 };

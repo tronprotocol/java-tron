@@ -359,9 +359,12 @@ public class DataWord implements Comparable<DataWord> {
         return "0x" + hexValue.replaceFirst("^0+(?!$)", "");
     }
 
+
     public DataWord clone() {
         return new DataWord(Arrays.clone(data));
     }
+
+
 
     @Override
     public boolean equals(Object o) {

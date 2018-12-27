@@ -2,6 +2,7 @@ package org.tron.core.db;
 
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.Parameter.AdaptiveResourceLimitConstants;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -13,11 +14,14 @@ abstract class ResourceProcessor {
   protected Manager dbManager;
   protected long precision;
   protected long windowSize;
+  protected long averageWindowSize;
 
   public ResourceProcessor(Manager manager) {
     this.dbManager = manager;
     this.precision = ChainConstant.PRECISION;
     this.windowSize = ChainConstant.WINDOW_SIZE_MS / ChainConstant.BLOCK_PRODUCED_INTERVAL;
+    this.averageWindowSize =
+        AdaptiveResourceLimitConstants.PERIODS_MS / ChainConstant.BLOCK_PRODUCED_INTERVAL;
   }
 
   abstract void updateUsage(AccountCapsule accountCapsule);
@@ -26,6 +30,10 @@ abstract class ResourceProcessor {
       throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException;
 
   protected long increase(long lastUsage, long usage, long lastTime, long now) {
+    return increase(lastUsage, usage, lastTime, now, windowSize);
+  }
+
+  protected long increase(long lastUsage, long usage, long lastTime, long now, long windowSize) {
     long averageLastUsage = divideCeil(lastUsage * precision, windowSize);
     long averageUsage = divideCeil(usage * precision, windowSize);
 
@@ -40,7 +48,7 @@ abstract class ResourceProcessor {
       }
     }
     averageLastUsage += averageUsage;
-    return getUsage(averageLastUsage);
+    return getUsage(averageLastUsage, windowSize);
   }
 
   private long divideCeil(long numerator, long denominator) {
@@ -48,6 +56,10 @@ abstract class ResourceProcessor {
   }
 
   private long getUsage(long usage) {
+    return usage * windowSize / precision;
+  }
+
+  private long getUsage(long usage, long windowSize) {
     return usage * windowSize / precision;
   }
 

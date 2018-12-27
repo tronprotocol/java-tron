@@ -5,6 +5,7 @@ import io.grpc.ManagedChannelBuilder;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
@@ -22,7 +23,7 @@ public class MainNetTransferSendOrAsset {
   //testng001、testng002、testng003、testng004
   //fromAssetIssue
   private final String testKey001 =
-      "BC70ADC5A0971BA3F7871FBB7249E345D84CE7E5458828BE1E28BF8F98F2795B";
+      "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
   //toAssetIssue
   private final String testKey002 =
       "F153A0E1A65193846A3D48A091CD0335594C0A3D9817B3441390FDFF71684C84";
@@ -51,13 +52,28 @@ public class MainNetTransferSendOrAsset {
   private Long beforeToAssetBalance = 0L;
   private Long afterToAssetBalance = 0L;
   private final Long sendAmount = 1L;
-
+  private Long beforeBalance;
+  private Long afterBalance;
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
 
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
 
+  Integer codeValue;
+  Integer success = 0;
+  Integer sigerror = 0;
+  Integer contractValidateError = 0;
+  Integer contractExeError = 0;
+  Integer bandwithError = 0;
+  Integer dupTransactionError = 0;
+  Integer taposError = 0;
+  Integer tooBigTransactionError = 0;
+  Integer transactionExpirationError = 0;
+  Integer serverBusy = 0;
+  Integer otherError = 0;
+  Integer clientWrong = 0;
+  Integer times = 0;
 
   @BeforeSuite
   public void beforeSuite() {
@@ -65,85 +81,98 @@ public class MainNetTransferSendOrAsset {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Account fromAccount = PublicMethed.queryAccount(testKey001,blockingStubFull);
-    Account toAccount   = PublicMethed.queryAccount(testKey002,blockingStubFull);
-    if (fromAccount.getBalance() < 10000000000L) {
-      PublicMethed.sendcoin(fromAddress,10000000000L,defaultAddress,defaultKey,blockingStubFull);
-    }
-    if (fromAccount.getAssetCount() == 0) {
-      start = System.currentTimeMillis() + 2000;
-      end = System.currentTimeMillis() + 1000000000;
-      PublicMethed.createAssetIssue(fromAddress, "testNetAsset", 1000000000000L,
-          1, 1, start, end, 1, "wwwwww","wwwwwwww", 100000L,
-          100000L, 1L, 1L, testKey001, blockingStubFull);
-    }
-    beforeToBalance = toAccount.getBalance();
-    beforeToAssetBalance = toAccount.getAssetMap().get("testNetAsset");
+    Account fromAccount = PublicMethed.queryAccount(testKey002,blockingStubFull);
+    beforeBalance = fromAccount.getBalance();
 
-    Account fromSendAccount = PublicMethed.queryAccount(testKey003,blockingStubFull);
-    Account toSendAccount   = PublicMethed.queryAccount(testKey004,blockingStubFull);
-    if (fromSendAccount.getBalance() < 1000000000L) {
-      PublicMethed.sendcoin(fromSendAddress,1000000000L,defaultAddress,defaultKey,blockingStubFull);
-    }
-    beforeToBalance = toAccount.getBalance();
-    logger.info("Before From account balance is " + Long.toString(fromAccount.getBalance()));
-    logger.info("Before To account balance is " + Long.toString(toAccount.getBalance()));
-    start = System.currentTimeMillis();
   }
 
-  @Test(enabled = false,threadPoolSize = 20, invocationCount = 100000)
+  @Test(enabled = true,threadPoolSize = 10, invocationCount = 10)
   public void freezeAnd() throws InterruptedException {
-    Random rand = new Random();
-    Integer randNum = 0;
-    randNum = rand.nextInt(1000);
-    try {
-      Thread.sleep(randNum);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-
-
     Integer i = 0;
-    while (i < 60) {
-      PublicMethed
-          .transferAsset(toAddress,"testNetAsset".getBytes(),transferAmount,fromAddress,
-              testKey001,blockingStubFull);
-      try {
-        Thread.sleep(200);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-      PublicMethed.sendcoin(toSendAddress, sendAmount, fromSendAddress, testKey003,
-          blockingStubFull);
-      try {
-        Thread.sleep(200);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
+
+    while (i++ < 50) {
+
+      codeValue = PublicMethed.sendcoinGetCode(toAddress,1,fromAddress,testKey001,blockingStubFull);
+      times++;
+
+      switch (codeValue) {
+        case 0:
+          success++;
+          break;
+        case 1:
+          sigerror++;
+          break;
+        case 2:
+          contractValidateError++;
+          break;
+        case 3:
+          contractExeError++;
+          break;
+        case 4:
+          bandwithError++;
+          break;
+        case 5:
+          dupTransactionError++;
+          break;
+        case 6:
+          taposError++;
+          break;
+        case 7:
+          tooBigTransactionError++;
+          break;
+        case 8:
+          transactionExpirationError++;
+          break;
+        case 9:
+          serverBusy++;
+          break;
+        case 10:
+          otherError++;
+          break;
+        case 12:
+          clientWrong++;
+          break;
+        default:
+          logger.info("No code value");
       }
     }
   }
 
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
-    end = System.currentTimeMillis();
-    logger.info("Time is " + Long.toString(end - start));
-    Account fromAccount = PublicMethed.queryAccount(testKey001,blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account toAccount   = PublicMethed.queryAccount(testKey002,blockingStubFull);
-    afterToBalance = toAccount.getBalance();
-    afterToAssetBalance = toAccount.getAssetMap().get("testNetAsset");
 
-    logger.info("Success times is " + Long.toString(afterToAssetBalance - beforeToAssetBalance));
+    afterBalance = toAccount.getBalance();
+    logger.info("min is " + (afterBalance - beforeBalance));
+    logger.info("times is " + times);
+
+    logger.info("success " + success);
+    logger.info("sigerror " + sigerror);
+    logger.info("contractValidateError " + contractValidateError);
+    logger.info("contractExeError " + contractExeError);
+    logger.info("bandwithError " + bandwithError);
+    logger.info("dupTransactionError " + dupTransactionError);
+    logger.info("taposError " + taposError);
+    logger.info("tooBigTransactionError " + tooBigTransactionError);
+    logger.info("transactionExpirationError " + transactionExpirationError);
+    logger.info("otherError " + otherError);
+    logger.info("clientWrong " + clientWrong);
+
+
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
-
   }
+
+
 }
 
 

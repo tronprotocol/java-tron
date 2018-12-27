@@ -17,7 +17,7 @@ import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
 import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
 import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
 import org.tron.common.runtime.vm.program.Program.OutOfMemoryException;
-import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
+import org.tron.common.runtime.vm.program.Program.OutOfTimeException;
 import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
 import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
 import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
@@ -25,6 +25,7 @@ import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -93,7 +94,7 @@ public class TransactionTrace {
     this.energyProcessor = new EnergyProcessor(this.dbManager);
   }
 
-  public boolean needVM() {
+  private boolean needVM() {
     return this.trxType == TRX_CONTRACT_CALL_TYPE || this.trxType == TRX_CONTRACT_CREATION_TYPE;
   }
 
@@ -102,24 +103,14 @@ public class TransactionTrace {
     txStartTimeInMs = System.currentTimeMillis();
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
     runtime = new RuntimeImpl(this, blockCap, deposit, new ProgramInvokeFactoryImpl());
-
-    // switch (trxType) {
-    //   case TRX_PRECOMPILED_TYPE:
-    //     break;
-    //   case TRX_CONTRACT_CREATION_TYPE:
-    //   case TRX_CONTRACT_CALL_TYPE:
-    //     // checkForSmartContract();
-    //     break;
-    //   default:
-    //     break;
-    // }
-
   }
-public void checkIsConstant() throws ContractValidateException, VMIllegalException {
-  if (runtime.isCallConstant()) {
-    throw new VMIllegalException("cannot call constant method ");
+
+  public void checkIsConstant() throws ContractValidateException, VMIllegalException {
+    if (runtime.isCallConstant()) {
+      throw new VMIllegalException("cannot call constant method ");
+    }
   }
-}
+
   //set bill
   public void setBill(long energyUsage) {
     if (energyUsage < 0) {
@@ -136,7 +127,7 @@ public void checkIsConstant() throws ContractValidateException, VMIllegalExcepti
 
   public void exec()
       throws ContractExeException, ContractValidateException, VMIllegalException {
-    /**  VM execute  **/
+    /*  VM execute  */
     runtime.execute();
     runtime.go();
 
@@ -167,6 +158,7 @@ public void checkIsConstant() throws ContractValidateException, VMIllegalExcepti
     byte[] originAccount;
     byte[] callerAccount;
     long percent = 0;
+    long originEnergyLimit = 0;
     switch (trxType) {
       case TRX_CONTRACT_CREATION_TYPE:
         callerAccount = TransactionCapsule.getOwner(trx.getInstance().getRawData().getContract(0));
@@ -175,13 +167,15 @@ public void checkIsConstant() throws ContractValidateException, VMIllegalExcepti
       case TRX_CONTRACT_CALL_TYPE:
         TriggerSmartContract callContract = ContractCapsule
             .getTriggerContractFromTransaction(trx.getInstance());
-        callerAccount = callContract.getOwnerAddress().toByteArray();
-
-        ContractCapsule contract =
+        ContractCapsule contractCapsule =
             dbManager.getContractStore().get(callContract.getContractAddress().toByteArray());
-        originAccount = contract.getInstance().getOriginAddress().toByteArray();
-        percent = Math.max(100 - contract.getConsumeUserResourcePercent(), 0);
-        percent = Math.min(percent, 100);
+
+        callerAccount = callContract.getOwnerAddress().toByteArray();
+        originAccount = contractCapsule.getOriginAddress();
+        percent = Math
+            .max(Constant.ONE_HUNDRED - contractCapsule.getConsumeUserResourcePercent(), 0);
+        percent = Math.min(percent, Constant.ONE_HUNDRED);
+        originEnergyLimit = contractCapsule.getOriginEnergyLimit();
         break;
       default:
         return;
@@ -194,7 +188,7 @@ public void checkIsConstant() throws ContractValidateException, VMIllegalExcepti
         dbManager,
         origin,
         caller,
-        percent,
+        percent, originEnergyLimit,
         energyProcessor,
         dbManager.getWitnessController().getHeadSlot());
   }
@@ -255,7 +249,7 @@ public void checkIsConstant() throws ContractValidateException, VMIllegalExcepti
       receipt.setResult(contractResult.BAD_JUMP_DESTINATION);
       return;
     }
-    if (exception instanceof OutOfResourceException) {
+    if (exception instanceof OutOfTimeException) {
       receipt.setResult(contractResult.OUT_OF_TIME);
       return;
     }
@@ -280,7 +274,6 @@ public void checkIsConstant() throws ContractValidateException, VMIllegalExcepti
       return;
     }
     receipt.setResult(contractResult.UNKNOWN);
-    return;
   }
 
   public String getRuntimeError() {

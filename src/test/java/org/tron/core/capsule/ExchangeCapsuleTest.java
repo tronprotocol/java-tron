@@ -24,7 +24,7 @@ public class ExchangeCapsuleTest {
 
   private static Manager dbManager;
   private static StorageMarket storageMarket;
-  private static final String dbPath = "output_buy_storage_test";
+  private static final String dbPath = "output_exchange_capsule_test_test";
   private static TronApplicationContext context;
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
@@ -121,5 +121,6 @@ public class ExchangeCapsuleTest {
     }
 
   }
+
 
 }

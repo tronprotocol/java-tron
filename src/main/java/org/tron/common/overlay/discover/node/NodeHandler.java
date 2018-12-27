@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.net.udp.handler.UdpEvent;
 import org.tron.common.net.udp.message.Message;
 import org.tron.common.net.udp.message.discover.FindNodeMessage;
@@ -294,8 +293,7 @@ public class NodeHandler {
 
   @Override
   public String toString() {
-    return "NodeHandler[state: " + state + ", node: " + node.getHost() + ":" + node.getPort()
-        + ", id=" + (node.getId().length > 0 ? Hex.toHexString(node.getId(), 0, 4) : "empty") + "]";
+    return "NodeHandler[state: " + state + ", node: " + node.getHost() + ":" + node.getPort() + "]";
   }
 
 }

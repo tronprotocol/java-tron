@@ -89,7 +89,6 @@ public class ZkV0TransferActuator extends AbstractActuator {
               .getClass() + "]");
     }
 
-    //TODO chech is it enougth?
     if( !dbManager.getDynamicPropertiesStore().supportZKSnarkTransaction() ) {
         throw new ContractValidateException("Not support ZKSnarkTransaction, need to be opened by" +
                 " the committee");
@@ -235,7 +234,7 @@ public class ZkV0TransferActuator extends AbstractActuator {
       throw new ContractValidateException("C2 is empty.");
     }
 
-    if (zkContract.getProof() == zkv0proof.getDefaultInstance()) {
+    if (zkv0proof.getDefaultInstance().equals(zkContract.getProof())) {
       throw new ContractValidateException("Proof is null.");
     }
 

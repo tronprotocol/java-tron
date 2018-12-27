@@ -11,6 +11,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Base64;
@@ -82,6 +83,34 @@ public class createAddressAndKey {
     createFile(filename,jsonarray.toString());
 
   }
+
+  @Test(enabled = true)
+  public void create() {
+    Integer i = 0;
+    String accountIndex;
+    String keyIndex;
+    JsonObject jsonobject = new JsonObject();
+    JsonArray jsonarray = new JsonArray();
+    HashMap<String, String> addressAndKey = new HashMap<String, String>();
+    while (i++ < 600) {
+      ECKey ecKey1 = new ECKey(Utils.getRandom());
+      byte[] address = ecKey1.getAddress();
+      String key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
+      ArrayList<String> accountList = new ArrayList<String>();
+      accountList = PublicMethed.getAddressInfo(key);
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("address",accountList.get(1));
+      userBaseObj2.addProperty("key",accountList.get(0));
+      jsonarray.add(userBaseObj2);
+    }
+    Gson gson = new Gson();
+    String jsonMap = gson.toJson(addressAndKey);
+    //createFile(filename,jsonobject.toString());
+    createFile(filename,jsonarray.toString());
+
+  }
+
 
   @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
