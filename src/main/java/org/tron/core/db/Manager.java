@@ -1715,7 +1715,7 @@ public class Manager {
   }
 
   private void postTransactionTrigger(final TransactionCapsule trxCap, final BlockCapsule blockCap){
-    if (eventPluginLoaded && EventPluginLoader.getInstance().isContractEventTriggerEnable()) {
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
       try {
         this.getTriggerCapsuleQueue().put(new TransactionLogTriggerCapsule(trxCap, blockCap));
       }
