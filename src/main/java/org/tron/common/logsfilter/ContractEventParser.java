@@ -152,7 +152,7 @@ public class ContractEventParser {
         // this length is byte count. no need X 32
         int length = intValueExact(lengthBytes);
         byte[] realBytes = subBytes(data, start + DATAWORD_UNIT_SIZE, length);
-        return typeStr.equals("string")? new String(realBytes) : DataWord.shortHex(realBytes);//Hex.toHexString(realBytes);
+        return typeStr.equals("string")? new String(realBytes) : DataWord.shortHex(realBytes);
       }
     }catch (OutputLengthException | ArithmeticException e){
       logger.debug("parseDataBytes ", e);
@@ -160,7 +160,7 @@ public class ContractEventParser {
     throw new UnsupportedOperationException("unsupported type:" + typeStr);
   }
 
-  // don't support this type yet : bytes32[10][10]  OR  bytes32[][10]
+  // don't support these type yet : bytes32[10][10]  OR  bytes32[][10]
   private static Type basicType(String type){
     if (!Pattern.matches("^.*\\[\\d*\\]$", type)){
       // ignore not valide type such as "int92", "bytes33", these types will be compiled failed.
