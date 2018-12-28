@@ -1694,11 +1694,9 @@ public class Manager {
 
   private void postBlockTrigger(final BlockCapsule newBlock){
     if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
-      try {
-        this.getTriggerCapsuleQueue().put(new BlockLogTriggerCapsule(newBlock));
-      } catch (InterruptedException e) {
-        logger.error(e.getMessage());
-        Thread.currentThread().interrupt();
+      boolean result = this.getTriggerCapsuleQueue().offer(new BlockLogTriggerCapsule(newBlock));
+      if (result == false) {
+        logger.info("too many trigger, lost block trigger: {}", newBlock.getBlockId());
       }
     }
 
@@ -1709,12 +1707,9 @@ public class Manager {
 
   private void postTransactionTrigger(final TransactionCapsule trxCap, final BlockCapsule blockCap){
     if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
-      try {
-        this.getTriggerCapsuleQueue().put(new TransactionLogTriggerCapsule(trxCap, blockCap));
-      }
-      catch (InterruptedException e) {
-        logger.error(e.getMessage());
-        Thread.currentThread().interrupt();
+      boolean result = this.getTriggerCapsuleQueue().offer(new TransactionLogTriggerCapsule(trxCap, blockCap));
+      if (result == false) {
+        logger.info("too many trigger, lost transaction trigger: {}", trxCap.getTransactionId());
       }
     }
   }
@@ -1724,18 +1719,17 @@ public class Manager {
       (EventPluginLoader.getInstance().isContractEventTriggerEnable()
         || EventPluginLoader.getInstance().isContractLogTriggerEnable()
       && trace.getRuntimeResult().getTriggerList().size() > 0)) {
+      boolean result = false;
       // be careful, trace.getRuntimeResult().getTriggerList() should never return null
       for (ContractTrigger trigger: trace.getRuntimeResult().getTriggerList()) {
-        try {
           if (trigger instanceof LogEventWrapper && EventPluginLoader.getInstance().isContractEventTriggerEnable()){
-            this.getTriggerCapsuleQueue().put(new ContractEventTriggerCapsule((LogEventWrapper) trigger));
+            result = this.getTriggerCapsuleQueue().offer(new ContractEventTriggerCapsule((LogEventWrapper) trigger));
           }else if (trigger instanceof ContractLogTrigger && EventPluginLoader.getInstance().isContractLogTriggerEnable()){
-            this.getTriggerCapsuleQueue().put(new ContractLogTriggerCapsule((ContractLogTrigger) trigger));
+            result = this.getTriggerCapsuleQueue().offer(new ContractLogTriggerCapsule((ContractLogTrigger) trigger));
           }
-        } catch (InterruptedException e) {
-          logger.error(e.getMessage());
-          Thread.currentThread().interrupt();
-        }
+          if (result == false) {
+            logger.info("too many tigger, lost contract log trigger: {}", trigger.getTxId());
+          }
       }
     }
   }
