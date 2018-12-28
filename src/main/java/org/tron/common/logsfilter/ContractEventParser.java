@@ -65,7 +65,7 @@ public class ContractEventParser {
 
     // in case indexed topics doesn't match
     if (topicsMatched(trigger, entry)){
-      for (Integer i = 0; i < list.size(); ++i) {
+      for (int i = 0; i < list.size(); ++i) {
         ABI.Entry.Param param = list.get(i);
         if (!param.getIndexed()) {
           continue;
@@ -76,10 +76,10 @@ public class ContractEventParser {
         }
         Object obj = parseTopic(topicList.get(index++), param.getType());
         map.put(param.getName(), obj);
-        map.put(i.toString(), obj);
+        map.put("" + i, obj);
       }
     }else{
-      for (Integer i = 1; i < topicList.size(); ++i) {
+      for (int i = 1; i < topicList.size(); ++i) {
         map.put("" + (i - 1), DataWord.shortHex(topicList.get(i)));
       }
     }
