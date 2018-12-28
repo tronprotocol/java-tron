@@ -16,7 +16,7 @@ public class PendingManager implements AutoCloseable {
 
   Manager dbManager;
 
-  private long longTime = Args.getInstance().getLongRunningTime();
+  private long maxRunningTime = Args.getInstance().getLongRunningTime();
 
   public PendingManager(Manager db) {
 
@@ -31,7 +31,7 @@ public class PendingManager implements AutoCloseable {
 
     for (TransactionCapsule tx : PendingManager.tmpTransactions) {
       try {
-        if (tx.getCost() < longTime) {
+        if (tx.getCost() <= maxRunningTime) {
           dbManager.getRepushTransactions().put(tx);
         }
       } catch (InterruptedException e) {
@@ -43,7 +43,7 @@ public class PendingManager implements AutoCloseable {
 
     for (TransactionCapsule tx : dbManager.getPoppedTransactions()) {
       try {
-        if (tx.getCost() < longTime) {
+        if (tx.getCost() <= maxRunningTime) {
           dbManager.getRepushTransactions().put(tx);
         }
       } catch (InterruptedException e) {
