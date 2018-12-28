@@ -36,7 +36,7 @@ public class ContractEventParser {
   public static Map<String, Object> parseTopics(ContractEventTrigger trigger, ABI.Entry entry) {
     List<byte[]> topicList = trigger.getTopicList();
     Map<String, Object> map = new HashMap<>();
-    if (topicList.size() <= 0){
+    if (topicList.isEmpty()){
       return map;
     }
 
@@ -48,15 +48,14 @@ public class ContractEventParser {
     List<ABI.Entry.Param> list = entry.getInputsList();
     for (int i = 0; i < list.size(); ++i) {
       ABI.Entry.Param param = list.get(i);
-      if (!param.getIndexed()){
-        continue;
+      if (param.getIndexed()) {
+        if (index >= topicList.size()) {
+          break;
+        }
+        Object obj = parseTopic(topicList.get(index++), param.getType());
+        map.put(param.getName(), obj);
+        map.put("" + (i + 1), obj);
       }
-      if (index >= topicList.size()){
-        break;
-      }
-      Object obj = parseTopic(topicList.get(index++), param.getType());
-      map.put(param.getName(), obj);
-      map.put("" + (i + 1), obj);
     }
     return map;
   }
@@ -96,7 +95,7 @@ public class ContractEventParser {
     return map;
   }
 
-  private static Object parseDataBytes(byte[] data, String typeStr, int index) throws UnsupportedOperationException{
+  private static Object parseDataBytes(byte[] data, String typeStr, int index) {
 
     try{
       byte[] startBytes = subBytes(data, index * DATAWORD_UNIT_SIZE, DATAWORD_UNIT_SIZE);
@@ -138,11 +137,11 @@ public class ContractEventParser {
     return Type.UNKNOWN;
   }
 
-  private static Integer intValueExact(byte[] data) throws ArithmeticException {
+  private static Integer intValueExact(byte[] data) {
     return new BigInteger(data).intValueExact();
   }
 
-  private static byte[] subBytes(byte[] src, int start, int length) throws OutputLengthException {
+  private static byte[] subBytes(byte[] src, int start, int length) {
     if (ArrayUtils.isEmpty(src) || start >= src.length || length < 0){
       throw new OutputLengthException("data start:" + start + ", length:" + length);
     }
