@@ -32,11 +32,15 @@ public class ContractEventParser {
     if (topicList == null || topicList.isEmpty()){
       return true;
     }
-    int indexSize = 0; // the first is signature
+    int indexSize = 0;
     for (ABI.Entry.Param param : entry.getInputsList()){
       if (param.getIndexed()) {
-        indexSize = (indexSize == 0) ? 1: indexSize;
-        indexSize++;
+        if (indexSize == 0){
+          // the first is signature
+          indexSize = 2;
+        }else{
+          indexSize++;
+        }
       }
     }
     return indexSize == topicList.size();
@@ -151,7 +155,7 @@ public class ContractEventParser {
         return typeStr.equals("string")? new String(realBytes) : DataWord.shortHex(realBytes);//Hex.toHexString(realBytes);
       }
     }catch (OutputLengthException | ArithmeticException e){
-      logger.warn("", e);
+      logger.debug("parseDataBytes ", e);
     }
     throw new UnsupportedOperationException("unsupported type:" + typeStr);
   }
