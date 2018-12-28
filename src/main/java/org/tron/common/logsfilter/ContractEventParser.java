@@ -97,12 +97,13 @@ public class ContractEventParser {
 
         Object obj = parseDataBytes(data, param.getType(), i);
         map.put(param.getName(), obj);
+        // position 0 is the signature.
         map.put("" + (i + 1), obj);
       }
     }catch (UnsupportedOperationException e){
       logger.warn("UnsupportedOperationException", e);
       map.clear();
-      map.put("0", Hex.toHexString(data));
+      map.put("1", Hex.toHexString(data));
     }
     return map;
   }
@@ -183,7 +184,7 @@ public class ContractEventParser {
    * @return
    */
   private static Object parseTopic(byte[] bytes, String typeStr){
-    if (bytes == null || ArrayUtils.isEmpty(bytes) || StringUtils.isNullOrEmpty(typeStr)){
+    if (ArrayUtils.isEmpty(bytes) || StringUtils.isNullOrEmpty(typeStr)){
       return "";
     }
     Type type = basicType(typeStr);
@@ -192,6 +193,6 @@ public class ContractEventParser {
     }else if (type == Type.BOOL){
       return !DataWord.isZero(bytes);
     }
-    return DataWord.shortHex(bytes);
+    return Hex.toHexString(bytes);//DataWord.shortHex(bytes);
   }
 }

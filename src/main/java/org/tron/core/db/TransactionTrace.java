@@ -98,11 +98,15 @@ public class TransactionTrace {
     return this.trxType == TRX_CONTRACT_CALL_TYPE || this.trxType == TRX_CONTRACT_CREATION_TYPE;
   }
 
-  //pre transaction check
   public void init(BlockCapsule blockCap) {
+    init(blockCap, false);
+  }
+  //pre transaction check
+  public void init(BlockCapsule blockCap, boolean eventPluginLoaded) {
     txStartTimeInMs = System.currentTimeMillis();
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
     runtime = new RuntimeImpl(this, blockCap, deposit, new ProgramInvokeFactoryImpl());
+    runtime.setEnableEventLinstener(eventPluginLoaded);
   }
 
   public void checkIsConstant() throws ContractValidateException, VMIllegalException {

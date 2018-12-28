@@ -38,10 +38,14 @@ public class ByteUtil {
    * @return
    */
   public static byte[] cloneBytes(byte[] data){
-    byte[] rc = (data == null) ? null : ByteUtil.EMPTY_BYTE_ARRAY;
-    if (data != null && data.length > 0) {
-      rc = new byte[data.length];
-      System.arraycopy(data, 0, rc, 0, data.length);
+    if (data == null){
+      return null;
+    }
+
+    int length = data.length;
+    byte[] rc = new byte[length];
+    if (length > 0){
+      System.arraycopy(data, 0, rc, 0, length);
     }
     return rc;
   }

@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.logsfilter.EventPluginLoader;
+import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.EnergyCost;
@@ -443,10 +444,14 @@ public class RuntimeImpl implements Runtime {
       if (enableEventLinstener &&
         (EventPluginLoader.getInstance().isContractEventTriggerEnable()
           || EventPluginLoader.getInstance().isContractLogTriggerEnable())){
-        program.getResult().setTriggerList(
-          LogInfoTriggerParser.parseLogInfos(newSmartContract.getAbi(), blockCap,
-            program.getResult().getLogInfoList(), txId,
-            callerAddress, callerAddress, callerAddress, contractAddress));
+
+        List<ContractTrigger> triggers = LogInfoTriggerParser.parseLogInfos(
+            newSmartContract.getAbi(),
+            program.getResult().getLogInfoList(),
+            blockCap.getNum(), blockCap.getTimeStamp(), txId,
+            callerAddress, callerAddress, callerAddress, contractAddress);
+
+        program.getResult().setTriggerList(triggers);
       }
     } catch (Exception e) {
       logger.info(e.getMessage());
@@ -537,10 +542,8 @@ public class RuntimeImpl implements Runtime {
         isStaticCall = true;
         energyLimit = Constant.ENERGY_LIMIT_IN_CONSTANT_TX;
       } else {
-        AccountCapsule creator = this.deposit.getAccount(
-          deployedContract.getInstance()
-            .getOriginAddress().toByteArray());
         originAddress = deployedContract.getInstance().getOriginAddress().toByteArray();
+        AccountCapsule creator = this.deposit.getAccount(originAddress);
         creatorAddress = creator.getAddress().toByteArray();
         energyLimit = getTotalEnergyLimit(creator, caller, deployedContract, feeLimit, callValue);
       }
@@ -568,10 +571,13 @@ public class RuntimeImpl implements Runtime {
       if (enableEventLinstener &&
         (EventPluginLoader.getInstance().isContractEventTriggerEnable()
           || EventPluginLoader.getInstance().isContractLogTriggerEnable())){
-        program.getResult().setTriggerList(
-          LogInfoTriggerParser.parseLogInfos(deployedContract.getInstance().getAbi(), blockCap,
-            program.getResult().getLogInfoList(), txId,
-            callerAddress, creatorAddress, originAddress, contractAddress));
+
+        List<ContractTrigger> triggers = LogInfoTriggerParser.parseLogInfos(deployedContract.getInstance().getAbi(),
+            program.getResult().getLogInfoList(),
+            blockCap.getNum(), blockCap.getTimeStamp(), txId,
+            callerAddress, creatorAddress, originAddress, contractAddress);
+
+        program.getResult().setTriggerList(triggers);
       }
     }
 

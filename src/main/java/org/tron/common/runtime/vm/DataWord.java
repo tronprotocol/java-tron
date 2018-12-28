@@ -90,6 +90,20 @@ public class DataWord implements Comparable<DataWord> {
         return data;
     }
 
+    /**
+     * be careful, this one will not throw Exception when data.length > DATAWORD_UNIT_SIZE
+     * @return
+     */
+    public byte[] getClonedData() {
+        byte[] ret = ByteUtil.EMPTY_BYTE_ARRAY;
+        if (data != null){
+            ret = new byte[DATAWORD_UNIT_SIZE];
+            int dataSize = Math.min(data.length, DATAWORD_UNIT_SIZE);
+            System.arraycopy(data, 0, ret, DATAWORD_UNIT_SIZE - dataSize, dataSize);
+        }
+        return ret;
+    }
+
     public byte[] getNoLeadZeroesData() {
         return ByteUtil.stripLeadingZeroes(data);
     }
@@ -174,7 +188,9 @@ public class DataWord implements Comparable<DataWord> {
 
     public static boolean isZero(byte[] data) {
         for (byte tmp : data) {
-            if (tmp != 0) return false;
+            if (tmp != 0) {
+                return false;
+            }
         }
         return true;
     }

@@ -1103,7 +1103,7 @@ public class Manager {
 
     VMConfig.initVmHardFork();
     VMConfig.initAllowTvmTransferTrc10(dynamicPropertiesStore.getAllowTvmTransferTrc10());
-    trace.init(blockCap);
+    trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
     trace.exec();
 
@@ -1113,7 +1113,7 @@ public class Manager {
         if (trace.checkNeedRetry()) {
           String txId = Hex.toHexString(trxCap.getTransactionId().getBytes());
           logger.info("Retry for tx id: {}", txId);
-          trace.init(blockCap);
+          trace.init(blockCap, eventPluginLoaded);
           trace.checkIsConstant();
           trace.exec();
           trace.setResult();
