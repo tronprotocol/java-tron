@@ -27,25 +27,6 @@ public class ContractEventParser {
     ADDRESS,
   }
 
-  public static boolean topicsMatched(ContractEventTrigger trigger, ABI.Entry entry){
-    List<byte[]> topicList = trigger.getTopicList();
-    if (topicList == null || topicList.isEmpty()){
-      return true;
-    }
-    int indexSize = 0;
-    for (ABI.Entry.Param param : entry.getInputsList()){
-      if (param.getIndexed()) {
-        if (indexSize == 0){
-          // the first is signature
-          indexSize = 2;
-        }else{
-          indexSize++;
-        }
-      }
-    }
-    return indexSize == topicList.size();
-  }
-
   /**
    * parse Event Topic into map
    *    NOTICE: In solidity, Indexed Dynamic types's topic is just EVENT_INDEXED_ARGS
@@ -132,6 +113,25 @@ public class ContractEventParser {
       map.put(startIndex.toString(), Hex.toHexString(data));
     }
     return map;
+  }
+
+  private static boolean topicsMatched(ContractEventTrigger trigger, ABI.Entry entry){
+    List<byte[]> topicList = trigger.getTopicList();
+    if (topicList == null || topicList.isEmpty()){
+      return true;
+    }
+    int indexSize = 0;
+    for (ABI.Entry.Param param : entry.getInputsList()){
+      if (param.getIndexed()) {
+        if (indexSize == 0){
+          // the first is signature
+          indexSize = 2;
+        }else{
+          indexSize++;
+        }
+      }
+    }
+    return indexSize == topicList.size();
   }
 
   private static Object parseDataBytes(byte[] data, String typeStr, int index) {
