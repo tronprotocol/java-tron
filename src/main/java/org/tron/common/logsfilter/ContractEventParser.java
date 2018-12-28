@@ -77,13 +77,14 @@ public class ContractEventParser {
     // the first is the signature.
     List<ABI.Entry.Param> list = entry.getInputsList();
     try{
+      int index = 0;
       for (int i = 0; i < list.size(); ++i) {
         ABI.Entry.Param param = list.get(i);
         if (param.getIndexed()){
           continue;
         }
 
-        Object obj = parseDataBytes(data, param.getType(), i);
+        Object obj = parseDataBytes(data, param.getType(), index++);
         map.put(param.getName(), obj);
         // position 0 is the signature.
         map.put("" + (i + 1), obj);
