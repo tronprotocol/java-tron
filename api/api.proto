@@ -1057,5 +1057,5 @@ message TriggerInfo{
     string topic = 3;
 }
 message EventPluginInfo{
-    repeated TriggerInfo triggerList = 1;
+    repeated TriggerInfo triggerInfo = 1;
 }
