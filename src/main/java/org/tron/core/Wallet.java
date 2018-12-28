@@ -1369,7 +1369,6 @@ public class Wallet {
   public GrpcAPI.Return setEventFilter(GrpcAPI.EventFilter.Builder filter) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
 
-
     if (Objects.isNull(filter)) {
       return builder.setResult(false).build();
     }
