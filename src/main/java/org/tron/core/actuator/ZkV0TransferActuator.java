@@ -41,7 +41,7 @@ public class ZkV0TransferActuator extends AbstractActuator {
         dbManager.adjustBalance(ownerAddress.toByteArray(), -vFromPub);
       }
 
-      long fee = calcFee();
+      long fee = zkContract.getFee();
 
       ByteString toAddress = zkContract.getToAddress();
       if (!toAddress.isEmpty()) {
@@ -52,11 +52,6 @@ public class ZkV0TransferActuator extends AbstractActuator {
           toAccount = new AccountCapsule(toAddress, AccountType.Normal,
               dbManager.getHeadBlockTimeStamp());
           dbManager.getAccountStore().put(toAddress.toByteArray(), toAccount);
-          if (dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract() != 0) {
-            fee += dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
-          } else {
-            fee += dbManager.getDynamicPropertiesStore().getCreateAccountFee();
-          }
         }
         dbManager.adjustBalance(toAccount, vToPub);
       }
@@ -153,9 +148,10 @@ public class ZkV0TransferActuator extends AbstractActuator {
       AccountCapsule toAccount = dbManager.getAccountStore().get(toAddress.toByteArray());
       if (toAccount == null) {
         if (dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract() != 0) {
-          fee += dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
+          fee = Math.addExact(fee,
+              dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract());
         } else {
-          fee += dbManager.getDynamicPropertiesStore().getCreateAccountFee();
+          fee = Math.addExact(fee, dbManager.getDynamicPropertiesStore().getCreateAccountFee());
         }
       } else {
         try {
@@ -263,7 +259,7 @@ public class ZkV0TransferActuator extends AbstractActuator {
 
     //computer witness rt h_sig h1 h2 nf1 nf2 cm1 cm2 v_pub_old v_pub_new
     byte[] hSig = ZksnarkUtils.computeHSig(zkContract);
-    long vPubNew = Math.addExact(vToPub, calcFee());
+    long vPubNew = Math.addExact(vToPub, fee);
     BigInteger[] witness = ZksnarkUtils
         .witnessMap(rt.toByteArray(), hSig, zkContract.getH1().toByteArray(),
             zkContract.getH2().toByteArray(), nf1.toByteArray(), nf2.toByteArray(),
