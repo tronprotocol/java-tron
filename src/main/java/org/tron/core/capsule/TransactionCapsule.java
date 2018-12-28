@@ -96,6 +96,11 @@ import org.tron.protos.Protocol.Transaction.raw;
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   private Transaction transaction;
+
+  @Getter
+  @Setter
+  private TransactionTrace trxTrace;
+
   @Setter
   private boolean isVerified = false;
 
@@ -103,9 +108,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Getter
   private long blockNum = -1;
 
-  @Getter
   @Setter
-  private TransactionTrace trxTrace;
+  @Getter
+  private long cost;
 
   /**
    * constructor TransactionCapsule.

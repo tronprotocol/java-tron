@@ -619,7 +619,9 @@ public class Manager {
       }
 
       try (ISession tmpSession = revokingStore.buildSession()) {
+        long time = System.currentTimeMillis();
         processTransaction(trx, null);
+        trx.setCost(System.currentTimeMillis() - time);
         pendingTransactions.add(trx);
         tmpSession.merge();
       }
@@ -1070,6 +1072,8 @@ public class Manager {
         .buildInstance(trxCap, blockCap, trace);
 
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
+
+    trxCap.setTrxTrace(null);
 
     return true;
   }
