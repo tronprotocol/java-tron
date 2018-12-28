@@ -32,9 +32,10 @@ public class ContractEventParser {
     if (topicList == null || topicList.isEmpty()){
       return true;
     }
-    int indexSize = 1; // the first is signature
+    int indexSize = 0; // the first is signature
     for (ABI.Entry.Param param : entry.getInputsList()){
       if (param.getIndexed()) {
+        indexSize = (indexSize == 0) ? 1: indexSize;
         indexSize++;
       }
     }
@@ -122,7 +123,7 @@ public class ContractEventParser {
         map.put(i.toString(), obj);
       }
     }catch (UnsupportedOperationException e){
-      logger.warn("UnsupportedOperationException", e);
+      logger.debug("UnsupportedOperationException", e);
       map.clear();
       map.put(startIndex.toString(), Hex.toHexString(data));
     }
