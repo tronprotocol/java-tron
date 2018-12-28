@@ -2,28 +2,17 @@ package org.tron.common.logsfilter;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.math.exception.OutOfRangeException;
 import org.pf4j.util.StringUtils;
 import org.spongycastle.crypto.OutputLengthException;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.Hash;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
-import org.tron.common.logsfilter.trigger.ContractLogTrigger;
-import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.runtime.vm.LogInfo;
-import org.tron.common.utils.StringUtil;
-import org.tron.core.Wallet;
-import org.tron.core.capsule.BlockCapsule;
 import org.tron.protos.Protocol.SmartContract.ABI;
 
-import javax.xml.crypto.Data;
 import java.math.BigInteger;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Slf4j(topic = "Parser")
@@ -47,7 +36,7 @@ public class ContractEventParser {
   public static Map<String, Object> parseTopics(ContractEventTrigger trigger, ABI.Entry entry) {
     List<byte[]> topicList = trigger.getTopicList();
     Map<String, Object> map = new HashMap<>();
-    if (topicList.size() <= 0){
+    if (topicList.isEmpty()){
       return map;
     }
 
@@ -59,15 +48,14 @@ public class ContractEventParser {
     List<ABI.Entry.Param> list = entry.getInputsList();
     for (int i = 0; i < list.size(); ++i) {
       ABI.Entry.Param param = list.get(i);
-      if (!param.getIndexed()){
-        continue;
+      if (param.getIndexed()) {
+        if (index >= topicList.size()) {
+          break;
+        }
+        Object obj = parseTopic(topicList.get(index++), param.getType());
+        map.put(param.getName(), obj);
+        map.put("" + (i + 1), obj);
       }
-      if (index >= topicList.size()){
-        break;
-      }
-      Object obj = parseTopic(topicList.get(index++), param.getType());
-      map.put(param.getName(), obj);
-      map.put("" + (i + 1), obj);
     }
     return map;
   }
@@ -108,7 +96,7 @@ public class ContractEventParser {
     return map;
   }
 
-  private static Object parseDataBytes(byte[] data, String typeStr, int index) throws UnsupportedOperationException{
+  private static Object parseDataBytes(byte[] data, String typeStr, int index) {
 
     try{
       byte[] startBytes = subBytes(data, index * DATAWORD_UNIT_SIZE, DATAWORD_UNIT_SIZE);
@@ -127,9 +115,6 @@ public class ContractEventParser {
             (int) (Math.ceil(length * 1.0 / DATAWORD_UNIT_SIZE)) * DATAWORD_UNIT_SIZE);
         return typeStr.equals("string")? new String(realBytes) : Hex.toHexString(realBytes);
       }
-//      else if (Pattern.matches("\\[\\d*\\]$", typeStr)){
-//        throw new UnsupportedOperationException("unsupported type:" + typeStr);
-//      }
     }catch (OutputLengthException | ArithmeticException e){
       logger.warn("", e);
     }
@@ -153,11 +138,11 @@ public class ContractEventParser {
     return Type.UNKNOWN;
   }
 
-  private static Integer intValueExact(byte[] data) throws ArithmeticException {
+  private static Integer intValueExact(byte[] data) {
     return new BigInteger(data).intValueExact();
   }
 
-  private static byte[] subBytes(byte[] src, int start, int length) throws OutputLengthException {
+  private static byte[] subBytes(byte[] src, int start, int length) {
     if (ArrayUtils.isEmpty(src) || start >= src.length || length < 0){
       throw new OutputLengthException("data start:" + start + ", length:" + length);
     }

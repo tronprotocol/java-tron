@@ -1691,6 +1691,8 @@ public class Manager {
       if (!eventPluginLoaded){
         logger.error("failed to load eventPlugin");
       }
+
+      EventPluginLoader.getInstance().setFilterQuery(Args.getInstance().getEventFilter());
     }
     catch (Exception e){
       logger.error("{}", e);

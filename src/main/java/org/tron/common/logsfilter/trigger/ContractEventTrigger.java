@@ -3,7 +3,6 @@ package org.tron.common.logsfilter.trigger;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
-import org.tron.protos.Protocol.SmartContract.ABI.Entry;
 
 public class ContractEventTrigger extends ContractLogTrigger{
   /**

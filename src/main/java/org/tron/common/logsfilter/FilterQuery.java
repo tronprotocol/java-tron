@@ -8,11 +8,11 @@ import java.util.List;
 public class FilterQuery {
     @Getter
     @Setter
-    private String fromBlock;
+    private long fromBlock;
 
     @Getter
     @Setter
-    private String toBlock;
+    private long toBlock;
 
     @Getter
     @Setter
@@ -21,6 +21,12 @@ public class FilterQuery {
     @Getter
     @Setter
     private List<String> contractTopics;
+
+    public static final int EARLIEST_BLOCK_NUM = 0;
+    public static final int LATEST_BLOCK_NUM = -1;
+
+    public static final String EARLIEST = "earliest";
+    public static final String LATEST = "latest";
 
     @Override
     public String toString(){
