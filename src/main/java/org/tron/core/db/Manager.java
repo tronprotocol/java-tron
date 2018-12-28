@@ -42,11 +42,11 @@ import org.tron.common.logsfilter.capsule.ContractEventTriggerCapsule;
 import org.tron.common.logsfilter.capsule.ContractLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TriggerCapsule;
-import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.config.VMConfig;
+import org.tron.common.runtime.vm.LogEventWrapper;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.SessionOptional;
@@ -1733,8 +1733,8 @@ public class Manager {
       // be careful, trace.getRuntimeResult().getTriggerList() should never return null
       for (ContractTrigger trigger: trace.getRuntimeResult().getTriggerList()) {
         try {
-          if (trigger instanceof ContractEventTrigger && EventPluginLoader.getInstance().isContractEventTriggerEnable()){
-            this.getTriggerCapsuleQueue().put(new ContractEventTriggerCapsule((ContractEventTrigger) trigger));
+          if (trigger instanceof LogEventWrapper && EventPluginLoader.getInstance().isContractEventTriggerEnable()){
+            this.getTriggerCapsuleQueue().put(new ContractEventTriggerCapsule((LogEventWrapper) trigger));
           }else if (trigger instanceof ContractLogTrigger && EventPluginLoader.getInstance().isContractLogTriggerEnable()){
             this.getTriggerCapsuleQueue().put(new ContractLogTriggerCapsule((ContractLogTrigger) trigger));
           }

@@ -88,8 +88,8 @@ public class LogInfoTriggerParser {
         event.setData(ByteUtil.cloneBytes(logInfo.getData()));
 
         if (isEvent){
-          ((ContractEventTrigger) event).setEventSignature(signMap.get(firstTopic));
-          ((ContractEventTrigger) event).setAbiEntry(entry);
+          ((LogEventWrapper) event).setEventSignature(signMap.get(firstTopic));
+          ((LogEventWrapper) event).setAbiEntry(entry);
         }
         list.add(event);
       }

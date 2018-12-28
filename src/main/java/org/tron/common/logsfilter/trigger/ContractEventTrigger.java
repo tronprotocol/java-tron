@@ -29,13 +29,6 @@ public class ContractEventTrigger extends ContractLogTrigger{
   @Setter
   private Map<String, Object> dataMap;
 
-  /**
-   * ABI Entry of this event.
-   */
-  @Getter
-  @Setter
-  private Entry abiEntry;
-
 
   public ContractEventTrigger(String txId, String contractAddress, String callerAddress,
                               String originAddress, String creatorAddress, Long blockNum, Long blockTimestamp){
