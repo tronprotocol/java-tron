@@ -48,9 +48,15 @@ public class TransactionLogTrigger extends Trigger{
     @Getter
     @Setter
     private  long netFee;
+
+    public TransactionLogTrigger(){
+        setTriggerName(Trigger.TRANSACTION_TRIGGER_NAME);
+    }
     @Override
     public String toString(){
-        return new StringBuilder().append("timestamp: ")
+        return new StringBuilder().append("triggerName: ")
+                .append(getTriggerName())
+                .append("timestamp: ")
                 .append(timeStamp)
                 .append(", transactionId: ")
                 .append(transactionId)

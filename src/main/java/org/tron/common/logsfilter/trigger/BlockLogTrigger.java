@@ -23,9 +23,14 @@ public class BlockLogTrigger extends Trigger {
     @Setter
     private List<String> transactionList = new ArrayList<>();
 
+    public BlockLogTrigger(){
+        setTriggerName(Trigger.BLOCK_TRIGGER_NAME);
+    }
+
     @Override
     public String toString(){
-      return new StringBuilder().append("timestamp: ")
+      return new StringBuilder().append("triggerName: ").append(getTriggerName())
+        .append("timestamp: ")
         .append(timeStamp)
         .append(", blockNumber: ")
         .append(blockNumber)
