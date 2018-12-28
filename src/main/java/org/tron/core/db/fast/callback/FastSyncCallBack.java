@@ -254,8 +254,10 @@ public class FastSyncCallBack {
   private void setStoreKeyAndHash() {
     for (TrieEnum trieEnum : TrieEnum.values()) {
       TrieImpl childTrie = selectTrie(trieEnum);
-      trie.put(RLP.encodeString(trieEnum.getKey()),
-          childTrie == null ? Hash.EMPTY_TRIE_HASH : childTrie.getRootHash());
+      if (childTrie == null || ArrayUtils.isEmpty(childTrie.getRootHash())) {
+        continue;
+      }
+      trie.put(RLP.encodeString(trieEnum.getKey()), childTrie.getRootHash());
     }
   }
 
