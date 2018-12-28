@@ -3,10 +3,8 @@ package org.tron.common.logsfilter.capsule;
 import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.logsfilter.EventPluginLoader;
+import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
-import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.TransactionCapsule;
 
 import java.util.Objects;
 
@@ -21,6 +19,34 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
 
   @Override
   public void processTrigger(){
-    EventPluginLoader.getInstance().postContractEventTrigger(contractEventTrigger);
+    if (matchFilter(contractEventTrigger)){
+      EventPluginLoader.getInstance().postContractEventTrigger(contractEventTrigger);
+    }
+  }
+
+  private boolean matchFilter(ContractEventTrigger contractEventTrigger){
+    boolean matched = false;
+
+    long blockNumber = contractEventTrigger.getBlockNum();
+
+    FilterQuery filterQuery = EventPluginLoader.getInstance().getFilterQuery();
+    if (Objects.isNull(filterQuery)){
+      return true;
+    }
+
+    long fromBlockNumber = filterQuery.getFromBlock();
+    long toBlockNumber = filterQuery.getToBlock();
+
+    if (blockNumber <= fromBlockNumber){
+      return matched;
+    }
+
+    if (toBlockNumber != FilterQuery.LATEST_BLOCK_NUM && blockNumber > toBlockNumber){
+      return matched;
+    }
+
+    // add address topic filter here
+
+    return true;
   }
 }

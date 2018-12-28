@@ -40,6 +40,8 @@ public class EventPluginLoader {
   @Getter
   private boolean contractLogTriggerEnable = false;
 
+  private FilterQuery filterQuery;
+
   public static EventPluginLoader getInstance(){
     if (Objects.isNull(instance)){
       synchronized(EventPluginLoader.class) {
@@ -221,6 +223,15 @@ public class EventPluginLoader {
 
     return jsonData;
   }
+
+  public synchronized void setFilterQuery(FilterQuery filterQuery){
+    this.filterQuery = filterQuery;
+  }
+
+  public FilterQuery getFilterQuery(){
+    return filterQuery;
+  }
+
 
   public static void main(String[] args) {
 

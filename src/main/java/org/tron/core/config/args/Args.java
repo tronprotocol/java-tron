@@ -938,10 +938,28 @@ public class Args {
     FilterQuery filter = new FilterQuery();
 
     String fromBlock = config.getString("event.subscribe.filter.fromblock").trim();
-    filter.setFromBlock(fromBlock);
+
+    if (StringUtils.isEmpty(fromBlock) || FilterQuery.LATEST.equalsIgnoreCase(fromBlock)){
+      filter.setFromBlock(FilterQuery.LATEST_BLOCK_NUM);
+    }
+    else if (FilterQuery.EARLIEST.equalsIgnoreCase(fromBlock)){
+      filter.setFromBlock(FilterQuery.EARLIEST_BLOCK_NUM);
+    }
+    else {
+      filter.setFromBlock(Long.parseLong(fromBlock));
+    }
+
 
     String toBlock = config.getString("event.subscribe.filter.toblock").trim();
-    filter.setToBlock(toBlock);
+    if (StringUtils.isEmpty(toBlock) || FilterQuery.LATEST.equalsIgnoreCase(toBlock)){
+      filter.setToBlock(FilterQuery.LATEST_BLOCK_NUM);
+    }
+    else if (FilterQuery.EARLIEST.equalsIgnoreCase(fromBlock)){
+      filter.setToBlock(FilterQuery.EARLIEST_BLOCK_NUM);
+    }
+    else {
+      filter.setToBlock(Long.parseLong(toBlock));
+    }
 
     List<String> addresses = config.getStringList("event.subscribe.filter.contractAddress");
     filter.setContractAddress(addresses);
