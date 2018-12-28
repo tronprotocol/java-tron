@@ -36,17 +36,17 @@ public class ContractEventParser {
   public static Map<String, Object> parseTopics(ContractEventTrigger trigger, ABI.Entry entry) {
     List<byte[]> topicList = trigger.getTopicList();
     Map<String, Object> map = new HashMap<>();
-    if (topicList.isEmpty()){
+    if (topicList == null || topicList.isEmpty()){
       return map;
     }
 
     // topic0,  sha3 of the signature
-    map.put("0", Hex.toHexString(topicList.get(0)));
+//    map.put("0", Hex.toHexString(topicList.get(0)));
 
     // the first is the signature.
     int index = 1;
     List<ABI.Entry.Param> list = entry.getInputsList();
-    for (int i = 0; i < list.size(); ++i) {
+    for (Integer i = 0; i < list.size(); ++i) {
       ABI.Entry.Param param = list.get(i);
       if (!param.getIndexed()) {
         continue;
@@ -57,7 +57,7 @@ public class ContractEventParser {
       }
       Object obj = parseTopic(topicList.get(index++), param.getType());
       map.put(param.getName(), obj);
-      map.put("" + (i + 1), obj);
+      map.put(i.toString(), obj);
     }
     return map;
   }
@@ -81,7 +81,7 @@ public class ContractEventParser {
     try{
       // this one starts from the first position.
       int index = 0;
-      for (int i = 0; i < list.size(); ++i) {
+      for (Integer i = 0; i < list.size(); ++i) {
         ABI.Entry.Param param = list.get(i);
         if (param.getIndexed()){
           continue;
@@ -90,12 +90,12 @@ public class ContractEventParser {
         Object obj = parseDataBytes(data, param.getType(), index++);
         map.put(param.getName(), obj);
         // position 0 is the signature.
-        map.put("" + (i + 1), obj);
+        map.put(i.toString(), obj);
       }
     }catch (UnsupportedOperationException e){
       logger.warn("UnsupportedOperationException", e);
       map.clear();
-      map.put("1", Hex.toHexString(data));
+      map.put("0", Hex.toHexString(data));
     }
     return map;
   }
@@ -112,8 +112,8 @@ public class ContractEventParser {
         return !DataWord.isZero(startBytes);
       }else if (type == Type.FIXED_BYTES){
         return Hex.toHexString(startBytes);
-      }else if (typeStr.equals("string") || typeStr.equals("bytes")){
-        byte[] lengthBytes = subBytes(data, intValueExact(data), DATAWORD_UNIT_SIZE);
+      }else if (typeStr.equals("string") || typeStr.equals("bytes") || type == Type.ADDRESS){
+        byte[] lengthBytes = subBytes(data, intValueExact(startBytes), DATAWORD_UNIT_SIZE);
         // this length is byte count. no need X 32
         int length = intValueExact(lengthBytes);
         byte[] realBytes = subBytes(data, length,
