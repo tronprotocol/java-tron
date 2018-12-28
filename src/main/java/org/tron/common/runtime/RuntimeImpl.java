@@ -94,6 +94,9 @@ public class RuntimeImpl implements Runtime {
   @Setter
   private boolean enableEventLinstener;
 
+
+  private LogInfoTriggerParser logInfoTriggerParser;
+
   /**
    * For blockCap's trx run
    */
@@ -322,6 +325,10 @@ public class RuntimeImpl implements Runtime {
     }
   }
 
+  private  boolean isCheckTransaction(){
+    return this.blockCap != null && !this.blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty();
+  }
+
   private double getCpuLimitInUsRatio() {
 
     double cpuLimitRatio;
@@ -443,15 +450,13 @@ public class RuntimeImpl implements Runtime {
       this.program.setRootCallConstant(isCallConstant());
       if (enableEventLinstener &&
         (EventPluginLoader.getInstance().isContractEventTriggerEnable()
-          || EventPluginLoader.getInstance().isContractLogTriggerEnable())){
+          || EventPluginLoader.getInstance().isContractLogTriggerEnable())
+          && isCheckTransaction()){
 
-        List<ContractTrigger> triggers = LogInfoTriggerParser.parseLogInfos(
-            newSmartContract.getAbi(),
-            program.getResult().getLogInfoList(),
+        logInfoTriggerParser = new LogInfoTriggerParser(newSmartContract.getAbi(),
             blockCap.getNum(), blockCap.getTimeStamp(), txId,
             callerAddress, callerAddress, callerAddress, contractAddress);
 
-        program.getResult().setTriggerList(triggers);
       }
     } catch (Exception e) {
       logger.info(e.getMessage());
@@ -569,15 +574,13 @@ public class RuntimeImpl implements Runtime {
       this.program.setRootCallConstant(isCallConstant());
 
       if (enableEventLinstener &&
-        (EventPluginLoader.getInstance().isContractEventTriggerEnable()
-          || EventPluginLoader.getInstance().isContractLogTriggerEnable())){
+          (EventPluginLoader.getInstance().isContractEventTriggerEnable()
+              || EventPluginLoader.getInstance().isContractLogTriggerEnable())
+          && isCheckTransaction()){
 
-        List<ContractTrigger> triggers = LogInfoTriggerParser.parseLogInfos(deployedContract.getInstance().getAbi(),
-            program.getResult().getLogInfoList(),
+        logInfoTriggerParser = new LogInfoTriggerParser(deployedContract.getInstance().getAbi(),
             blockCap.getNum(), blockCap.getTimeStamp(), txId,
             callerAddress, creatorAddress, originAddress, contractAddress);
-
-        program.getResult().setTriggerList(triggers);
       }
     }
 
@@ -654,6 +657,12 @@ public class RuntimeImpl implements Runtime {
           }
         } else {
           deposit.commit();
+
+          if (logInfoTriggerParser != null){
+            List<ContractTrigger> triggers = logInfoTriggerParser.parseLogInfos(program.getResult().getLogInfoList());
+            program.getResult().setTriggerList(triggers);
+          }
+
         }
       } else {
         deposit.commit();

@@ -29,23 +29,46 @@ import java.util.Map;
 
 public class LogInfoTriggerParser {
 
-  public static List<ContractTrigger> parseLogInfos(ABI abi,
-                                                    List<LogInfo> logInfos,
-                                                    Long blockNum,
-                                                    Long blockTimestamp,
-                                                    byte[] txId,
-                                                    byte[] callerAddress,
-                                                    byte[] creatorAddress,
-                                                    byte[] originAddress,
-                                                    byte[] contractAddress) {
+  private ABI abi;
+  private Long blockNum;
+  private Long blockTimestamp;
+  private String txId;
+  private String callerAddress;
+  private String creatorAddress;
+  private String originAddress;
+  private String contractAddress;
+
+
+  public LogInfoTriggerParser(ABI abi,
+                              Long blockNum,
+                              Long blockTimestamp,
+                              byte[] txId,
+                              byte[] callerAddress,
+                              byte[] creatorAddress,
+                              byte[] originAddress,
+                              byte[] contractAddress)
+  {
+
+    this.abi = abi;
+    this.blockNum = blockNum;
+    this.blockTimestamp = blockTimestamp;
+    this.txId = ArrayUtils.isEmpty(txId) ? "" : Hex.toHexString(txId);
+    this.callerAddress = ArrayUtils.isEmpty(callerAddress) ? "" : Wallet.encode58Check(callerAddress);
+    this.contractAddress = ArrayUtils.isEmpty(contractAddress) ? "" : Wallet.encode58Check(contractAddress);
+    this.originAddress = ArrayUtils.isEmpty(originAddress) ? "" :Wallet.encode58Check(originAddress);
+    this.creatorAddress = ArrayUtils.isEmpty(creatorAddress) ? "" : Wallet.encode58Check(creatorAddress);
+
+  }
+
+  public List<ContractTrigger> parseLogInfos(List<LogInfo> logInfos) {
 
     List<ContractTrigger> list = new LinkedList<>();
     if (logInfos == null || logInfos.size() <= 0){
       return list;
     }
 
-    Map<byte[], ABI.Entry> fullMap = new HashMap<>();
-    Map<byte[], String> signMap = new HashMap<>();
+    Map<String, ABI.Entry> fullMap = new HashMap<>();
+    Map<String, String> signMap = new HashMap<>();
 
     // calculate the sha3 of the event signature first.
     if (abi != null && abi.getEntrysCount() > 0){
@@ -54,32 +77,26 @@ public class LogInfoTriggerParser {
           continue;
         }
         String signature = getEntrySignature(entry);
-        byte[] sha3 = Hash.sha3(signature.getBytes());
+        String sha3 = Hex.toHexString(Hash.sha3(signature.getBytes()));
         fullMap.put(sha3, entry);
         signMap.put(sha3, signature);
       }
     }
-
-    String txIdStr = ArrayUtils.isEmpty(txId) ? "" : Hex.toHexString(txId);
-    String callerAddrStr = ArrayUtils.isEmpty(callerAddress) ? "" : Wallet.encode58Check(callerAddress);
-    String contractAddrStr = ArrayUtils.isEmpty(contractAddress) ? "" : Wallet.encode58Check(contractAddress);
-    String originAddrStr = ArrayUtils.isEmpty(originAddress) ? "" :Wallet.encode58Check(originAddress);
-    String creatorAddrStr = ArrayUtils.isEmpty(creatorAddress) ? "" : Wallet.encode58Check(creatorAddress);
 
     for (LogInfo logInfo: logInfos) {
       List<DataWord> topics = logInfo.getTopics();
       ABI.Entry entry = null;
       String signature = "";
       if (topics != null && topics.size() > 0 && !ArrayUtils.isEmpty(topics.get(0).getData()) && fullMap.size() > 0) {
-        byte[] firstTopic = topics.get(0).getData();
+        String firstTopic = topics.get(0).toString();
         entry = fullMap.get(firstTopic);
         signature = signMap.get(firstTopic);
       }
 
       boolean isEvent = (entry != null);
       ContractLogTrigger event = isEvent ?
-          new LogEventWrapper(txIdStr, contractAddrStr, callerAddrStr, originAddrStr, creatorAddrStr, blockNum, blockTimestamp) :
-          new ContractLogTrigger(txIdStr, contractAddrStr, callerAddrStr, originAddrStr, creatorAddrStr, blockNum, blockTimestamp);
+          new LogEventWrapper(txId, contractAddress, callerAddress, originAddress, creatorAddress, blockNum, blockTimestamp) :
+          new ContractLogTrigger(txId, contractAddress, callerAddress, originAddress, creatorAddress, blockNum, blockTimestamp);
 
       event.setTopicList(logInfo.getClonedTopics());
       event.setData(logInfo.getClonedData());

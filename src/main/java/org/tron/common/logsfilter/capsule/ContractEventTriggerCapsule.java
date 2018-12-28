@@ -23,7 +23,7 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
   public ContractEventTriggerCapsule(LogEventWrapper log) {
     this.contractEventTrigger = new ContractEventTrigger(
         log.getTxId(), log.getContractAddress(), log.getCallerAddress(),
-        log.getOriginAddress(), log.getCreatorAddress(), log.getBlockNum(), log.getBlockTimestamp());
+        log.getOriginAddress(), log.getCreatorAddress(), log.getBlockNum(), log.getTimeStamp());
     this.abiEntry = log.getAbiEntry();
   }
 

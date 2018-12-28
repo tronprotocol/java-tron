@@ -1729,7 +1729,8 @@ public class Manager {
   private void postContractTrigger(final TransactionTrace trace){
     if (eventPluginLoaded &&
       (EventPluginLoader.getInstance().isContractEventTriggerEnable()
-        || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
+        || EventPluginLoader.getInstance().isContractLogTriggerEnable()
+      && trace.getRuntimeResult().getTriggerList().size() > 0)) {
       // be careful, trace.getRuntimeResult().getTriggerList() should never return null
       for (ContractTrigger trigger: trace.getRuntimeResult().getTriggerList()) {
         try {
