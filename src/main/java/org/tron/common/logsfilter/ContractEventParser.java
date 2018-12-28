@@ -27,6 +27,20 @@ public class ContractEventParser {
     ADDRESS,
   }
 
+  public static boolean topicsMatched(ContractEventTrigger trigger, ABI.Entry entry){
+    List<byte[]> topicList = trigger.getTopicList();
+    if (topicList == null || topicList.isEmpty()){
+      return true;
+    }
+    int indexSize = 1; // the first is signature
+    for (ABI.Entry.Param param : entry.getInputsList()){
+      if (param.getIndexed()) {
+        indexSize++;
+      }
+    }
+    return indexSize == topicList.size();
+  }
+
   /**
    * parse Event Topic into map
    *    NOTICE: In solidity, Indexed Dynamic types's topic is just EVENT_INDEXED_ARGS
@@ -40,24 +54,29 @@ public class ContractEventParser {
       return map;
     }
 
-    // topic0,  sha3 of the signature
-//    map.put("0", Hex.toHexString(topicList.get(0)));
-
     // the first is the signature.
     int index = 1;
     List<ABI.Entry.Param> list = entry.getInputsList();
-    for (Integer i = 0; i < list.size(); ++i) {
-      ABI.Entry.Param param = list.get(i);
-      if (!param.getIndexed()) {
-        continue;
-      }
 
-      if (index >= topicList.size()) {
-        break;
+    // in case indexed topics doesn't match
+    if (topicsMatched(trigger, entry)){
+      for (Integer i = 0; i < list.size(); ++i) {
+        ABI.Entry.Param param = list.get(i);
+        if (!param.getIndexed()) {
+          continue;
+        }
+
+        if (index >= topicList.size()) {
+          break;
+        }
+        Object obj = parseTopic(topicList.get(index++), param.getType());
+        map.put(param.getName(), obj);
+        map.put(i.toString(), obj);
       }
-      Object obj = parseTopic(topicList.get(index++), param.getType());
-      map.put(param.getName(), obj);
-      map.put(i.toString(), obj);
+    }else{
+      for (Integer i = 1; i < topicList.size(); ++i) {
+        map.put("" + (i - 1), DataWord.shortHex(topicList.get(i)));
+      }
     }
     return map;
   }
@@ -76,8 +95,15 @@ public class ContractEventParser {
     if (ArrayUtils.isEmpty(data)){
       return map;
     }
+    // in case indexed topics doesn't match
+    if (!topicsMatched(trigger, entry)){
+      map.put("" + (trigger.getTopicList().size() - 1), Hex.toHexString(data));
+      return map;
+    }
+
     // the first is the signature.
     List<ABI.Entry.Param> list = entry.getInputsList();
+    Integer startIndex = 0;
     try{
       // this one starts from the first position.
       int index = 0;
@@ -85,6 +111,9 @@ public class ContractEventParser {
         ABI.Entry.Param param = list.get(i);
         if (param.getIndexed()){
           continue;
+        }
+        if (startIndex == 0){
+          startIndex = i;
         }
 
         Object obj = parseDataBytes(data, param.getType(), index++);
@@ -95,7 +124,7 @@ public class ContractEventParser {
     }catch (UnsupportedOperationException e){
       logger.warn("UnsupportedOperationException", e);
       map.clear();
-      map.put("0", Hex.toHexString(data));
+      map.put(startIndex.toString(), Hex.toHexString(data));
     }
     return map;
   }
@@ -128,15 +157,15 @@ public class ContractEventParser {
 
   // don't support this type yet : bytes32[10][10]  OR  bytes32[][10]
   private static Type basicType(String type){
-    if (!Pattern.matches("\\[\\d?\\]", type)){
+    if (!Pattern.matches("^.*\\[\\d*\\]$", type)){
       // ignore not valide type such as "int92", "bytes33", these types will be compiled failed.
-      if (type.startsWith("int") || type.startsWith("uint")){
+      if ((type.startsWith("int") || type.startsWith("uint"))){
         return Type.INT_NUMBER;
       }else if (type.equals("bool")){
         return Type.BOOL;
       }else if (type.equals("address")){
         return Type.ADDRESS;
-      }else if (Pattern.matches("bytes\\d+$", type)){
+      }else if (Pattern.matches("^bytes\\d+$", type)){
         return Type.FIXED_BYTES;
       }
     }

@@ -28,14 +28,13 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
     this.contractEventTrigger.setData(log.getData());
     this.contractEventTrigger.setEventSignature(log.getEventSignature());
     this.abiEntry = log.getAbiEntry();
-
   }
 
   @Override
   public void processTrigger(){
     if (matchFilter(contractEventTrigger)){
-      contractEventTrigger.setDataMap(ContractEventParser.parseEventData(contractEventTrigger, abiEntry));
       contractEventTrigger.setTopicMap(ContractEventParser.parseTopics(contractEventTrigger, abiEntry));
+      contractEventTrigger.setDataMap(ContractEventParser.parseEventData(contractEventTrigger, abiEntry));
       EventPluginLoader.getInstance().postContractEventTrigger(contractEventTrigger);
     }
   }
