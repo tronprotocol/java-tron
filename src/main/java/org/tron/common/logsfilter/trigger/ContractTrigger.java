@@ -48,6 +48,13 @@ public class ContractTrigger extends Trigger{
     private Long blockNum;
 
     /**
+     * block timestamp of the transaction
+     */
+    @Getter
+    @Setter
+    private Long blockTimestamp;
+
+    /**
      * true if the transaction has been revoked
      */
     @Getter
@@ -63,6 +70,6 @@ public class ContractTrigger extends Trigger{
         this.originAddress = originAddress;
         this.creatorAddress = creatorAddress;
         this.blockNum = blockNum;
-        this.timeStamp = blockTimestamp;
+        this.blockTimestamp = blockTimestamp;
     }
 }
