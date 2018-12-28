@@ -36,6 +36,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.logsfilter.EventPluginLoader;
+import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.ContractEventTriggerCapsule;
 import org.tron.common.logsfilter.capsule.ContractLogTriggerCapsule;
@@ -1680,7 +1681,11 @@ public class Manager {
         logger.error("failed to load eventPlugin");
       }
 
-      EventPluginLoader.getInstance().setFilterQuery(Args.getInstance().getEventFilter());
+      FilterQuery eventFilter = Args.getInstance().getEventFilter();
+      if (!Objects.isNull(eventFilter)){
+        EventPluginLoader.getInstance().setFilterQuery(eventFilter);
+      }
+
     }
     catch (Exception e){
       logger.error("{}", e);
