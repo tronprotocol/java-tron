@@ -1234,6 +1234,15 @@ public class Wallet {
 
     long start = large;
     long end = large + synBlockNum - 1;
+
+    long latestBlockHeaderNumber = dbManager.getDynamicPropertiesStore()
+        .getLatestBlockHeaderNumber();
+
+    if (end >= latestBlockHeaderNumber) {
+      throw new RuntimeException(
+          "synBlockNum is too large, cmBlockNum plus synBlockNum must be less than latestBlockNumber");
+    }
+
     for (long n = start; n <= end; n++) {
       BlockCapsule block = dbManager.getBlockByNum(n);
       for (Transaction transaction1 : block.getInstance().getTransactionsList()) {
