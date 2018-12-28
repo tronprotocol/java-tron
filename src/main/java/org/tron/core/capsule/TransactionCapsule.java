@@ -97,7 +97,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   private Transaction transaction;
 
-  @Getter
   @Setter
   private TransactionTrace trxTrace;
 

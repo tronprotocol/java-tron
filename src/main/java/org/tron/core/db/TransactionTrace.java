@@ -57,8 +57,6 @@ public class TransactionTrace {
 
   private InternalTransaction.TrxType trxType;
 
-  private long txStartTimeInMs;
-
   public TransactionCapsule getTrx() {
     return trx;
   }
@@ -68,10 +66,6 @@ public class TransactionTrace {
     LONG_RUNNING,
     OUT_OF_TIME
   }
-
-  @Getter
-  @Setter
-  private TimeResultType timeResultType = TimeResultType.NORMAL;
 
   public TransactionTrace(TransactionCapsule trx, Manager dbManager) {
     this.trx = trx;
@@ -100,7 +94,6 @@ public class TransactionTrace {
 
   //pre transaction check
   public void init(BlockCapsule blockCap) {
-    txStartTimeInMs = System.currentTimeMillis();
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
     runtime = new RuntimeImpl(this, blockCap, deposit, new ProgramInvokeFactoryImpl());
   }
@@ -130,16 +123,6 @@ public class TransactionTrace {
     /*  VM execute  */
     runtime.execute();
     runtime.go();
-
-    if (TRX_PRECOMPILED_TYPE != runtime.getTrxType()) {
-      if (contractResult.OUT_OF_TIME
-          .equals(receipt.getResult())) {
-        setTimeResultType(TimeResultType.OUT_OF_TIME);
-      } else if (System.currentTimeMillis() - txStartTimeInMs
-          > Args.getInstance().getLongRunningTime()) {
-        setTimeResultType(TimeResultType.LONG_RUNNING);
-      }
-    }
   }
 
   public void finalization() throws ContractExeException {
