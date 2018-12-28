@@ -946,7 +946,13 @@ public class Args {
       filter.setFromBlock(FilterQuery.EARLIEST_BLOCK_NUM);
     }
     else {
-      filter.setFromBlock(Long.parseLong(fromBlock));
+      try {
+        filter.setFromBlock(Long.parseLong(fromBlock));
+      }
+      catch (Exception e){
+        logger.error("{}", e);
+        return null;
+      }
     }
 
 
@@ -954,11 +960,18 @@ public class Args {
     if (StringUtils.isEmpty(toBlock) || FilterQuery.LATEST.equalsIgnoreCase(toBlock)){
       filter.setToBlock(FilterQuery.LATEST_BLOCK_NUM);
     }
-    else if (FilterQuery.EARLIEST.equalsIgnoreCase(fromBlock)){
+    else if (FilterQuery.EARLIEST.equalsIgnoreCase(toBlock)){
       filter.setToBlock(FilterQuery.EARLIEST_BLOCK_NUM);
     }
     else {
-      filter.setToBlock(Long.parseLong(toBlock));
+
+      try {
+        filter.setFromBlock(Long.parseLong(toBlock));
+      }
+      catch (Exception e){
+        logger.error("{}", e);
+        return null;
+      }
     }
 
     List<String> addresses = config.getStringList("event.subscribe.filter.contractAddress");

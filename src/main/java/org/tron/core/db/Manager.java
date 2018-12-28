@@ -14,7 +14,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -456,7 +455,6 @@ public class Manager {
       startEventSubscribing();
       triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
       triggerCapsuleProcessThread.start();
-      //      contractTriggerListener = new ContractTriggerListener();
     }
   }
 
@@ -947,16 +945,6 @@ public class Manager {
       System.currentTimeMillis() - start,
       block.getTransactions().size());
   }
-
-  //  private void postContractEventTrigger(ProgramResult result, BlockCapsule blockCap) {
-  //
-  //    List<ContractEvent> events = result.getTriggerList();
-  //    if (events != null && events.size() > 0){
-  //      for (ContractEvent event: events) {
-  //        contractTriggerListener.onEvent(event);
-  //      }
-  //    }
-  //  }
 
   public void updateDynamicProperties(BlockCapsule block) {
     long slot = 1;
