@@ -14,7 +14,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -37,6 +36,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.logsfilter.EventPluginLoader;
+import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.ContractEventTriggerCapsule;
 import org.tron.common.logsfilter.capsule.ContractLogTriggerCapsule;
@@ -456,7 +456,6 @@ public class Manager {
       startEventSubscribing();
       triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
       triggerCapsuleProcessThread.start();
-      //      contractTriggerListener = new ContractTriggerListener();
     }
   }
 
@@ -947,16 +946,6 @@ public class Manager {
       System.currentTimeMillis() - start,
       block.getTransactions().size());
   }
-
-  //  private void postContractEventTrigger(ProgramResult result, BlockCapsule blockCap) {
-  //
-  //    List<ContractEvent> events = result.getTriggerList();
-  //    if (events != null && events.size() > 0){
-  //      for (ContractEvent event: events) {
-  //        contractTriggerListener.onEvent(event);
-  //      }
-  //    }
-  //  }
 
   public void updateDynamicProperties(BlockCapsule block) {
     long slot = 1;
@@ -1692,7 +1681,11 @@ public class Manager {
         logger.error("failed to load eventPlugin");
       }
 
-      EventPluginLoader.getInstance().setFilterQuery(Args.getInstance().getEventFilter());
+      FilterQuery eventFilter = Args.getInstance().getEventFilter();
+      if (!Objects.isNull(eventFilter)){
+        EventPluginLoader.getInstance().setFilterQuery(eventFilter);
+      }
+
     }
     catch (Exception e){
       logger.error("{}", e);
