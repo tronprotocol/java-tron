@@ -4,7 +4,6 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.pf4j.*;
 import org.springframework.util.StringUtils;
@@ -28,16 +27,12 @@ public class EventPluginLoader {
 
   private List<TriggerConfig> triggerConfigList;
 
-  @Getter
   private boolean blockLogTriggerEnable = false;
 
-  @Getter
   private boolean transactionLogTriggerEnable = false;
 
-  @Getter
   private boolean contractEventTriggerEnable = false;
 
-  @Getter
   private boolean contractLogTriggerEnable = false;
 
   private FilterQuery filterQuery;
@@ -122,6 +117,34 @@ public class EventPluginLoader {
         }
       }
     });
+  }
+
+  public synchronized void updateTriggerConfig(String tiggerName, boolean enable) {
+      if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(tiggerName)){
+        blockLogTriggerEnable = enable;
+      } else if (EventPluginConfig.CONTRACTEVENT_TRIGGER_NAME.equalsIgnoreCase(tiggerName)) {
+        contractEventTriggerEnable = enable;
+      } else if (EventPluginConfig.CONTRACTLOG_TRIGGER_NAME.equalsIgnoreCase(tiggerName)) {
+        contractLogTriggerEnable = enable;
+      } else if (EventPluginConfig.TRANSACTION_TRIGGER_NAME.equalsIgnoreCase(tiggerName)) {
+        transactionLogTriggerEnable = enable;
+      }
+  }
+
+  public synchronized boolean isBlockLogTriggerEnable() {
+    return blockLogTriggerEnable;
+  }
+
+  public synchronized boolean isTransactionLogTriggerEnable() {
+    return transactionLogTriggerEnable;
+  }
+
+  public synchronized boolean isContractEventTriggerEnable() {
+    return contractEventTriggerEnable;
+  }
+
+  public synchronized boolean isContractLogTriggerEnable() {
+    return contractLogTriggerEnable;
   }
 
   private void setPluginTopic(int eventType, String topic){

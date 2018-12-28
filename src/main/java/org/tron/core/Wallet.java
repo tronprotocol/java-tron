@@ -63,6 +63,7 @@ import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
+import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
@@ -1377,6 +1378,12 @@ public class Wallet {
 
   public GrpcAPI.Return setEventPluginInfo(GrpcAPI.EventPluginInfo.Builder pluginInfo){
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
+
+    pluginInfo.getTriggerInfoList().forEach(
+      triggerInfo -> {
+        EventPluginLoader.getInstance().updateTriggerConfig(triggerInfo.getTriggerName(), triggerInfo.getEnable());
+      }
+    );
 
     if (Objects.isNull(pluginInfo)) {
       return builder.setResult(false).build();
