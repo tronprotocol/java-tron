@@ -228,7 +228,7 @@ public class EventPluginLoader {
     this.filterQuery = filterQuery;
   }
 
-  public FilterQuery getFilterQuery(){
+  public synchronized FilterQuery getFilterQuery(){
     return filterQuery;
   }
 

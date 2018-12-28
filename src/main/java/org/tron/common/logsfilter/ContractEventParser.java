@@ -2,28 +2,17 @@ package org.tron.common.logsfilter;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.math.exception.OutOfRangeException;
 import org.pf4j.util.StringUtils;
 import org.spongycastle.crypto.OutputLengthException;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.Hash;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
-import org.tron.common.logsfilter.trigger.ContractLogTrigger;
-import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.runtime.vm.LogInfo;
-import org.tron.common.utils.StringUtil;
-import org.tron.core.Wallet;
-import org.tron.core.capsule.BlockCapsule;
 import org.tron.protos.Protocol.SmartContract.ABI;
 
-import javax.xml.crypto.Data;
 import java.math.BigInteger;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Slf4j(topic = "Parser")
@@ -126,9 +115,6 @@ public class ContractEventParser {
             (int) (Math.ceil(length * 1.0 / DATAWORD_UNIT_SIZE)) * DATAWORD_UNIT_SIZE);
         return typeStr.equals("string")? new String(realBytes) : Hex.toHexString(realBytes);
       }
-//      else if (Pattern.matches("\\[\\d*\\]$", typeStr)){
-//        throw new UnsupportedOperationException("unsupported type:" + typeStr);
-//      }
     }catch (OutputLengthException | ArithmeticException e){
       logger.warn("", e);
     }

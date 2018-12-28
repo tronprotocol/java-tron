@@ -3,7 +3,6 @@ package org.tron.common.logsfilter.trigger;
 import lombok.Getter;
 import lombok.Setter;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.runtime.vm.DataWord;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -54,7 +53,7 @@ public class ContractLogTrigger extends ContractTrigger{
 
     private List<String> getHexTopics() {
         List<String> list = new LinkedList<>();
-        if (topicList != null && topicList.size() > 0){
+        if (topicList != null && !topicList.isEmpty()){
             for (byte[] bytes: topicList) {
                 list.add(Hex.toHexString(bytes));
             }
