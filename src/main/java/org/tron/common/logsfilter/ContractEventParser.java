@@ -48,14 +48,16 @@ public class ContractEventParser {
     List<ABI.Entry.Param> list = entry.getInputsList();
     for (int i = 0; i < list.size(); ++i) {
       ABI.Entry.Param param = list.get(i);
-      if (param.getIndexed()) {
-        if (index >= topicList.size()) {
-          break;
-        }
-        Object obj = parseTopic(topicList.get(index++), param.getType());
-        map.put(param.getName(), obj);
-        map.put("" + (i + 1), obj);
+      if (!param.getIndexed()) {
+        continue;
       }
+
+      if (index >= topicList.size()) {
+        break;
+      }
+      Object obj = parseTopic(topicList.get(index++), param.getType());
+      map.put(param.getName(), obj);
+      map.put("" + (i + 1), obj);
     }
     return map;
   }
@@ -77,6 +79,7 @@ public class ContractEventParser {
     // the first is the signature.
     List<ABI.Entry.Param> list = entry.getInputsList();
     try{
+      // this one starts from the first position.
       int index = 0;
       for (int i = 0; i < list.size(); ++i) {
         ABI.Entry.Param param = list.get(i);
@@ -111,7 +114,8 @@ public class ContractEventParser {
         return Hex.toHexString(startBytes);
       }else if (typeStr.equals("string") || typeStr.equals("bytes")){
         byte[] lengthBytes = subBytes(data, intValueExact(data), DATAWORD_UNIT_SIZE);
-        int length = new BigInteger(lengthBytes).intValueExact();
+        // this length is byte count. no need X 32
+        int length = intValueExact(lengthBytes);
         byte[] realBytes = subBytes(data, length,
             (int) (Math.ceil(length * 1.0 / DATAWORD_UNIT_SIZE)) * DATAWORD_UNIT_SIZE);
         return typeStr.equals("string")? new String(realBytes) : Hex.toHexString(realBytes);
@@ -132,7 +136,7 @@ public class ContractEventParser {
         return Type.BOOL;
       }else if (type.equals("address")){
         return Type.ADDRESS;
-      }else if (Pattern.matches("bytes\\d+", type)){
+      }else if (Pattern.matches("bytes\\d+$", type)){
         return Type.FIXED_BYTES;
       }
     }
