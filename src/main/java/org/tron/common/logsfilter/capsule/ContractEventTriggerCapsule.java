@@ -24,7 +24,11 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
     this.contractEventTrigger = new ContractEventTrigger(
         log.getTxId(), log.getContractAddress(), log.getCallerAddress(),
         log.getOriginAddress(), log.getCreatorAddress(), log.getBlockNum(), log.getTimeStamp());
+    this.contractEventTrigger.setTopicList(log.getTopicList());
+    this.contractEventTrigger.setData(log.getData());
+    this.contractEventTrigger.setEventSignature(log.getEventSignature());
     this.abiEntry = log.getAbiEntry();
+
   }
 
   @Override

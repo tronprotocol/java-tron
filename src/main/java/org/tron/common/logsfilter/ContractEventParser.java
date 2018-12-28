@@ -113,12 +113,12 @@ public class ContractEventParser {
       }else if (type == Type.FIXED_BYTES){
         return Hex.toHexString(startBytes);
       }else if (typeStr.equals("string") || typeStr.equals("bytes") || type == Type.ADDRESS){
-        byte[] lengthBytes = subBytes(data, intValueExact(startBytes), DATAWORD_UNIT_SIZE);
+        int start = intValueExact(startBytes);
+        byte[] lengthBytes = subBytes(data, start, DATAWORD_UNIT_SIZE);
         // this length is byte count. no need X 32
         int length = intValueExact(lengthBytes);
-        byte[] realBytes = subBytes(data, length,
-            (int) (Math.ceil(length * 1.0 / DATAWORD_UNIT_SIZE)) * DATAWORD_UNIT_SIZE);
-        return typeStr.equals("string")? new String(realBytes) : Hex.toHexString(realBytes);
+        byte[] realBytes = subBytes(data, start + DATAWORD_UNIT_SIZE, length);
+        return typeStr.equals("string")? new String(realBytes) : DataWord.shortHex(realBytes);//Hex.toHexString(realBytes);
       }
     }catch (OutputLengthException | ArithmeticException e){
       logger.warn("", e);
@@ -183,6 +183,6 @@ public class ContractEventParser {
     }else if (type == Type.BOOL){
       return !DataWord.isZero(bytes);
     }
-    return Hex.toHexString(bytes);//DataWord.shortHex(bytes);
+    return DataWord.shortHex(bytes);
   }
 }
