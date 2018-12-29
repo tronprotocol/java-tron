@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.protos.Protocol.TransactionInfo.Log;
 
@@ -50,18 +51,18 @@ public class LogInfo {
     return topics;
   }
 
-  public List<byte[]> getClonedTopics() {
-    List<byte[]> list = new LinkedList<>();
-    if (topics != null && topics.size() > 0){
-      for (DataWord dataword: topics) {
-        list.add(dataword.getClonedData());
+  public List<String> getClonedTopics() {
+    List<String> list = new LinkedList<>();
+    if (topics != null && topics.size() > 0) {
+      for (DataWord dataword : topics) {
+        list.add(ByteArray.toHexString(dataword.getClonedData()));
       }
     }
     return list;
   }
 
-  public byte[] getClonedData() {
-    return ByteUtil.cloneBytes(data);
+  public String getClonedData() {
+    return ByteArray.toHexString(ByteUtil.cloneBytes(data));
   }
 
   public byte[] getData() {

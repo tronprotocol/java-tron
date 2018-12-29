@@ -1,16 +1,22 @@
 package org.tron.common.logsfilter;
 
-import java.util.Objects;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
-import org.pf4j.*;
-import org.springframework.util.StringUtils;
-import org.tron.common.logsfilter.trigger.*;
-
+import com.fasterxml.jackson.databind.ObjectWriter;
 import java.io.File;
 import java.util.List;
+import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
+import org.pf4j.CompoundPluginDescriptorFinder;
+import org.pf4j.DefaultPluginManager;
+import org.pf4j.ManifestPluginDescriptorFinder;
+import org.pf4j.PluginManager;
+import org.springframework.util.StringUtils;
+import org.tron.common.logsfilter.trigger.BlockLogTrigger;
+import org.tron.common.logsfilter.trigger.ContractEventTrigger;
+import org.tron.common.logsfilter.trigger.ContractLogTrigger;
+import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
+import org.tron.common.logsfilter.trigger.Trigger;
 
 @Slf4j
 public class EventPluginLoader {
@@ -37,9 +43,9 @@ public class EventPluginLoader {
 
   private FilterQuery filterQuery;
 
-  public static EventPluginLoader getInstance(){
-    if (Objects.isNull(instance)){
-      synchronized(EventPluginLoader.class) {
+  public static EventPluginLoader getInstance() {
+    if (Objects.isNull(instance)) {
+      synchronized (EventPluginLoader.class) {
         if (Objects.isNull(instance)) {
           instance = new EventPluginLoader();
         }
@@ -48,10 +54,10 @@ public class EventPluginLoader {
     return instance;
   }
 
-  public boolean start(EventPluginConfig config){
+  public boolean start(EventPluginConfig config) {
     boolean success = false;
 
-    if (Objects.isNull(config)){
+    if (Objects.isNull(config)) {
       return success;
     }
 
@@ -60,7 +66,7 @@ public class EventPluginLoader {
     this.serverAddress = config.getServerAddress();
     this.triggerConfigList = config.getTriggerConfigList();
 
-    if (!startPlugin(pluginPath)){
+    if (!startPlugin(pluginPath)) {
       logger.error("failed to load '{}'", pluginPath);
       return success;
     }
@@ -70,48 +76,47 @@ public class EventPluginLoader {
     return true;
   }
 
-  private void setPluginConfig(){
+  private void setPluginConfig() {
 
-    if (Objects.isNull(eventListeners)){
+    if (Objects.isNull(eventListeners)) {
       return;
     }
 
     eventListeners.forEach(listener -> listener.setServerAddress(this.serverAddress));
 
     triggerConfigList.forEach(triggerConfig -> {
-      if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
-        if (triggerConfig.isEnabled()){
+      if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())) {
+        if (triggerConfig.isEnabled()) {
           setPluginTopic(Trigger.BLOCK_TRIGGER, triggerConfig.getTopic());
           blockLogTriggerEnable = true;
-        }
-        else {
+        } else {
           setPluginTopic(Trigger.BLOCK_TRIGGER, "");
           blockLogTriggerEnable = false;
         }
-      }
-      else if (EventPluginConfig.TRANSACTION_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
-        if (triggerConfig.isEnabled()){
+      } else if (EventPluginConfig.TRANSACTION_TRIGGER_NAME
+          .equalsIgnoreCase(triggerConfig.getTriggerName())) {
+        if (triggerConfig.isEnabled()) {
           setPluginTopic(Trigger.TRANSACTION_TRIGGER, triggerConfig.getTopic());
           transactionLogTriggerEnable = true;
-        }else {
+        } else {
           setPluginTopic(Trigger.TRANSACTION_TRIGGER, "");
           transactionLogTriggerEnable = false;
         }
-      }
-      else if (EventPluginConfig.CONTRACTEVENT_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
-        if (triggerConfig.isEnabled()){
+      } else if (EventPluginConfig.CONTRACTEVENT_TRIGGER_NAME
+          .equalsIgnoreCase(triggerConfig.getTriggerName())) {
+        if (triggerConfig.isEnabled()) {
           setPluginTopic(Trigger.CONTRACTEVENT_TRIGGER, triggerConfig.getTopic());
           contractEventTriggerEnable = true;
-        }else {
+        } else {
           setPluginTopic(Trigger.CONTRACTEVENT_TRIGGER, "");
           contractEventTriggerEnable = false;
         }
-      }
-      else if (EventPluginConfig.CONTRACTLOG_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())){
-        if (triggerConfig.isEnabled()){
+      } else if (EventPluginConfig.CONTRACTLOG_TRIGGER_NAME
+          .equalsIgnoreCase(triggerConfig.getTriggerName())) {
+        if (triggerConfig.isEnabled()) {
           setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, triggerConfig.getTopic());
           contractLogTriggerEnable = true;
-        }else {
+        } else {
           setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, "");
           contractLogTriggerEnable = false;
         }
@@ -120,15 +125,15 @@ public class EventPluginLoader {
   }
 
   public synchronized void updateTriggerConfig(String tiggerName, boolean enable) {
-      if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(tiggerName)){
-        blockLogTriggerEnable = enable;
-      } else if (EventPluginConfig.CONTRACTEVENT_TRIGGER_NAME.equalsIgnoreCase(tiggerName)) {
-        contractEventTriggerEnable = enable;
-      } else if (EventPluginConfig.CONTRACTLOG_TRIGGER_NAME.equalsIgnoreCase(tiggerName)) {
-        contractLogTriggerEnable = enable;
-      } else if (EventPluginConfig.TRANSACTION_TRIGGER_NAME.equalsIgnoreCase(tiggerName)) {
-        transactionLogTriggerEnable = enable;
-      }
+    if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(tiggerName)) {
+      blockLogTriggerEnable = enable;
+    } else if (EventPluginConfig.CONTRACTEVENT_TRIGGER_NAME.equalsIgnoreCase(tiggerName)) {
+      contractEventTriggerEnable = enable;
+    } else if (EventPluginConfig.CONTRACTLOG_TRIGGER_NAME.equalsIgnoreCase(tiggerName)) {
+      contractLogTriggerEnable = enable;
+    } else if (EventPluginConfig.TRANSACTION_TRIGGER_NAME.equalsIgnoreCase(tiggerName)) {
+      transactionLogTriggerEnable = enable;
+    }
   }
 
   public synchronized boolean isBlockLogTriggerEnable() {
@@ -147,33 +152,33 @@ public class EventPluginLoader {
     return contractLogTriggerEnable;
   }
 
-  private void setPluginTopic(int eventType, String topic){
+  private void setPluginTopic(int eventType, String topic) {
     eventListeners.forEach(listener -> listener.setTopic(eventType, topic));
   }
 
-  private boolean startPlugin(String path){
+  private boolean startPlugin(String path) {
     boolean loaded = false;
     logger.info("start loading '{}'", path);
 
     File pluginPath = new File(path);
-    if (!pluginPath.exists()){
+    if (!pluginPath.exists()) {
       logger.error("'{}' doesn't exist", path);
       return loaded;
     }
 
-    if (Objects.isNull(pluginManager)){
+    if (Objects.isNull(pluginManager)) {
 
       pluginManager = new DefaultPluginManager(pluginPath.toPath()) {
         @Override
         protected CompoundPluginDescriptorFinder createPluginDescriptorFinder() {
           return new CompoundPluginDescriptorFinder()
-            .add(new ManifestPluginDescriptorFinder());
+              .add(new ManifestPluginDescriptorFinder());
         }
       };
     }
 
     String pluginID = pluginManager.loadPlugin(pluginPath.toPath());
-    if (StringUtils.isEmpty(pluginID)){
+    if (StringUtils.isEmpty(pluginID)) {
       logger.error("invalid pluginID");
       return loaded;
     }
@@ -182,7 +187,7 @@ public class EventPluginLoader {
 
     eventListeners = pluginManager.getExtensions(IPluginEventListener.class);
 
-    if (Objects.isNull(eventListeners) || eventListeners.isEmpty()){
+    if (Objects.isNull(eventListeners) || eventListeners.isEmpty()) {
       logger.error("No eventListener is registered");
       return loaded;
     }
@@ -194,8 +199,8 @@ public class EventPluginLoader {
     return loaded;
   }
 
-  public void stopPlugin(){
-    if (Objects.isNull(pluginManager)){
+  public void stopPlugin() {
+    if (Objects.isNull(pluginManager)) {
       logger.info("pluginManager is null");
       return;
     }
@@ -204,41 +209,47 @@ public class EventPluginLoader {
     logger.info("eventPlugin stopped");
   }
 
-  public void postBlockTrigger(BlockLogTrigger trigger){
-    if (Objects.isNull(eventListeners))
+  public void postBlockTrigger(BlockLogTrigger trigger) {
+    if (Objects.isNull(eventListeners)) {
       return;
+    }
 
     eventListeners.forEach(listener ->
-      listener.handleBlockEvent(toJsonString(trigger)));
+        listener.handleBlockEvent(toJsonString(trigger)));
   }
 
-  public void postTransactionTrigger(TransactionLogTrigger trigger){
-    if (Objects.isNull(eventListeners))
+  public void postTransactionTrigger(TransactionLogTrigger trigger) {
+    if (Objects.isNull(eventListeners)) {
       return;
+    }
 
     eventListeners.forEach(listener -> listener.handleTransactionTrigger(toJsonString(trigger)));
   }
 
-  public void postContractLogTrigger(ContractLogTrigger trigger){
-    if (Objects.isNull(eventListeners))
+  public void postContractLogTrigger(ContractLogTrigger trigger) {
+    if (Objects.isNull(eventListeners)) {
       return;
+    }
 
     eventListeners.forEach(listener ->
-      listener.handleContractLogTrigger(toJsonString(trigger)));
+        listener.handleContractLogTrigger(toJsonString(trigger)));
   }
 
-  public void postContractEventTrigger(ContractEventTrigger trigger){
-    if (Objects.isNull(eventListeners))
+  public void postContractEventTrigger(ContractEventTrigger trigger) {
+    if (Objects.isNull(eventListeners)) {
       return;
+    }
 
     eventListeners.forEach(listener ->
-      listener.handleContractEventTrigger(toJsonString(trigger)));
+        listener.handleContractEventTrigger(toJsonString(trigger)));
   }
 
-  private String toJsonString(Object data){
+  private String toJsonString(Object data) {
     String jsonData = "";
 
     try {
+      ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+
       jsonData = objectMapper.writeValueAsString(data);
     } catch (JsonProcessingException e) {
       logger.error("'{}'", e);
@@ -247,11 +258,11 @@ public class EventPluginLoader {
     return jsonData;
   }
 
-  public synchronized void setFilterQuery(FilterQuery filterQuery){
+  public synchronized void setFilterQuery(FilterQuery filterQuery) {
     this.filterQuery = filterQuery;
   }
 
-  public synchronized FilterQuery getFilterQuery(){
+  public synchronized FilterQuery getFilterQuery() {
     return filterQuery;
   }
 
@@ -269,15 +280,14 @@ public class EventPluginLoader {
 
     config.getTriggerConfigList().add(triggerConfig);
 
-
     boolean loaded = EventPluginLoader.getInstance().start(config);
 
-    if (!loaded){
+    if (!loaded) {
       logger.error("failed to load '{}'", config.getServerAddress());
       return;
     }
 
-    for (int index = 0; index < 2000; ++index){
+    for (int index = 0; index < 2000; ++index) {
       BlockLogTrigger trigger = new BlockLogTrigger();
       trigger.setBlockHash("0X123456789A");
       trigger.setTimeStamp(System.currentTimeMillis());
