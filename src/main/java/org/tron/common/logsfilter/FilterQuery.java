@@ -34,8 +34,6 @@ public class FilterQuery {
     public static final String LATEST = "latest";
 
     public static boolean matchFilter(ContractTrigger trigger){
-        boolean matched = false;
-
         long blockNumber = trigger.getBlockNum();
 
         FilterQuery filterQuery = EventPluginLoader.getInstance().getFilterQuery();
@@ -45,8 +43,6 @@ public class FilterQuery {
 
         long fromBlockNumber = filterQuery.getFromBlock();
         long toBlockNumber = filterQuery.getToBlock();
-        List<String> topList = filterQuery.getContractAddressList();
-        List<String> addressList = filterQuery.getContractAddressList();
 
         if (blockNumber < fromBlockNumber){
             return false;
@@ -56,17 +52,24 @@ public class FilterQuery {
             return false;
         }
 
+        return filterContractAddress(trigger, filterQuery.getContractAddressList())
+          && filterContractTopicList(trigger, filterQuery.getContractTopicList());
+    }
+
+    private static boolean filterContractAddress(ContractTrigger trigger, List<String> addressList) {
+        if (addressList.isEmpty()) return true;
+
         String contractAddress = trigger.getContractAddress();
-        for (String address: addressList){
+            for (String address: addressList){
             if (contractAddress.equalsIgnoreCase(address)){
-                matched = true;
-                break;
+                return true;
             }
         }
+        return false;
+    }
 
-        if (matched == false) {
-            return false;
-        }
+   private static boolean filterContractTopicList(ContractTrigger trigger, List<String> topList) {
+        if (topList.isEmpty()) return true;
 
         Set<String> hset = topList.stream().collect(Collectors.toSet());
         for (String top : ((ContractLogTrigger)trigger).getTopicList()) {
@@ -74,7 +77,6 @@ public class FilterQuery {
                 return true;
             }
         }
-
         return false;
     }
 
