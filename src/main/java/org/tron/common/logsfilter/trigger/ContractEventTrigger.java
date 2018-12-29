@@ -4,7 +4,7 @@ import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 
-public class ContractEventTrigger extends ContractLogTrigger{
+public class ContractEventTrigger extends ContractTrigger{
   /**
    * decode from sha3($EventSignature) with the ABI of this contract.
    */

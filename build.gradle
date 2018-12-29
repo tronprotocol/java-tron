@@ -167,6 +167,8 @@ dependencies {
     // http
     compile 'org.eclipse.jetty:jetty-server:9.4.11.v20180605'
     compile 'org.eclipse.jetty:jetty-servlet:9.4.11.v20180605'
+    // https://mvnrepository.com/artifact/org.eclipse.jetty/jetty-servlets
+    compile group: 'org.eclipse.jetty', name: 'jetty-servlets', version: '9.4.12.v20180830'
     compile 'com.alibaba:fastjson:1.2.47'
     // end http
 

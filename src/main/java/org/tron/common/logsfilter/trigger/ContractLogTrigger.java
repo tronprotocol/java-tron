@@ -13,14 +13,14 @@ public class ContractLogTrigger extends ContractTrigger{
      */
     @Getter
     @Setter
-    private List<byte[]> topicList;
+    private List<String> topicList;
 
     /**
      * data produced by the smart contract LOG function
      */
     @Getter
     @Setter
-    private byte[] data;
+    private String data;
 
     public ContractLogTrigger(String txId, String contractAddress, String callerAddress,
                               String originAddress, String creatorAddress, Long blockNum, Long blockTimestamp) {
@@ -45,20 +45,11 @@ public class ContractLogTrigger extends ContractTrigger{
             .append(", creatorAddress: ")
             .append(getCallerAddress())
             .append(", data: ")
-            .append(Hex.toHexString(data))
+            .append(data)
             .append(", contractTopicMap")
-            .append(getHexTopics())
+            .append(topicList)
             .append(", removed: ")
             .append(isRemoved()).toString();
     }
 
-    private List<String> getHexTopics() {
-        List<String> list = new LinkedList<>();
-        if (topicList != null && !topicList.isEmpty()){
-            for (byte[] bytes: topicList) {
-                list.add(Hex.toHexString(bytes));
-            }
-        }
-        return list;
-    }
 }

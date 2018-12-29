@@ -9,6 +9,7 @@ import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.runtime.vm.LogEventWrapper;
 import org.tron.protos.Protocol.SmartContract.ABI.Entry;
 
+import java.util.List;
 import java.util.Objects;
 
 public class ContractEventTriggerCapsule extends TriggerCapsule {
@@ -20,12 +21,20 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
   @Setter
   private Entry abiEntry;
 
+  @Getter
+  @Setter
+  private List<byte[]> topicList;
+
+  @Getter
+  @Setter
+  private byte[] data;
+
   public ContractEventTriggerCapsule(LogEventWrapper log) {
+    this.topicList = log.getTopicList();
+    this.data = log.getData();
     this.contractEventTrigger = new ContractEventTrigger(
         log.getTxId(), log.getContractAddress(), log.getCallerAddress(),
         log.getOriginAddress(), log.getCreatorAddress(), log.getBlockNum(), log.getTimeStamp());
-    this.contractEventTrigger.setTopicList(log.getTopicList());
-    this.contractEventTrigger.setData(log.getData());
     this.contractEventTrigger.setEventSignature(log.getEventSignature());
     this.abiEntry = log.getAbiEntry();
   }
@@ -33,8 +42,8 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
   @Override
   public void processTrigger(){
     if (matchFilter(contractEventTrigger)){
-      contractEventTrigger.setTopicMap(ContractEventParser.parseTopics(contractEventTrigger, abiEntry));
-      contractEventTrigger.setDataMap(ContractEventParser.parseEventData(contractEventTrigger, abiEntry));
+      contractEventTrigger.setTopicMap(ContractEventParser.parseTopics(topicList, abiEntry));
+      contractEventTrigger.setDataMap(ContractEventParser.parseEventData(topicList, data, abiEntry));
       EventPluginLoader.getInstance().postContractEventTrigger(contractEventTrigger);
     }
   }
@@ -59,10 +68,6 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
     if (toBlockNumber != FilterQuery.LATEST_BLOCK_NUM && blockNumber > toBlockNumber){
       return matched;
     }
-
-    EventPluginLoader.getInstance().postContractEventTrigger(contractEventTrigger);
-
-    // add address topic filter here
 
     return true;
     

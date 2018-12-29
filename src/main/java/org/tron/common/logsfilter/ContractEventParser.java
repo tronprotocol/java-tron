@@ -30,11 +30,11 @@ public class ContractEventParser {
   /**
    * parse Event Topic into map
    *    NOTICE: In solidity, Indexed Dynamic types's topic is just EVENT_INDEXED_ARGS
-   * @param trigger
+   * @param topicList
+   * @param entry
    * @return
    */
-  public static Map<String, Object> parseTopics(ContractEventTrigger trigger, ABI.Entry entry) {
-    List<byte[]> topicList = trigger.getTopicList();
+  public static Map<String, Object> parseTopics(List<byte[]> topicList, ABI.Entry entry) {
     Map<String, Object> map = new HashMap<>();
     if (topicList == null || topicList.isEmpty()){
       return map;
@@ -45,7 +45,7 @@ public class ContractEventParser {
     List<ABI.Entry.Param> list = entry.getInputsList();
 
     // in case indexed topics doesn't match
-    if (topicsMatched(trigger, entry)){
+    if (topicsMatched(topicList, entry)){
       for (int i = 0; i < list.size(); ++i) {
         ABI.Entry.Param param = list.get(i);
         if (!param.getIndexed()) {
@@ -72,18 +72,19 @@ public class ContractEventParser {
    *   If parser failed, then return {"0", Hex.toHexString(data)}
    *   Only support basic solidity type, String, Bytes.
    *   Fixed Array or dynamic Array are not support yet (then return {"0": Hex.toHexString(data)}).
-   * @param trigger
+   * @param topicList
+   * @param data
+   * @param entry
    * @return
    */
-  public static Map<String, Object> parseEventData(ContractEventTrigger trigger, ABI.Entry entry) {
-    byte[] data = trigger.getData();
+  public static Map<String, Object> parseEventData(List<byte[]> topicList, byte[] data, ABI.Entry entry) {
     Map<String, Object> map = new HashMap<>();
     if (ArrayUtils.isEmpty(data)){
       return map;
     }
     // in case indexed topics doesn't match
-    if (!topicsMatched(trigger, entry)){
-      map.put("" + (trigger.getTopicList().size() - 1), Hex.toHexString(data));
+    if (!topicsMatched(topicList, entry)){
+      map.put("" + (topicList.size() - 1), Hex.toHexString(data));
       return map;
     }
 
@@ -115,8 +116,7 @@ public class ContractEventParser {
     return map;
   }
 
-  private static boolean topicsMatched(ContractEventTrigger trigger, ABI.Entry entry){
-    List<byte[]> topicList = trigger.getTopicList();
+  private static boolean topicsMatched(List<byte[]> topicList, ABI.Entry entry){
     if (topicList == null || topicList.isEmpty()){
       return true;
     }

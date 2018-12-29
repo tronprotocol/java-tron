@@ -2,12 +2,17 @@ package org.tron.core.services.http;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.application.Service;
 import org.tron.core.config.args.Args;
+
+import javax.servlet.DispatcherType;
+import java.util.EnumSet;
 
 @Component
 @Slf4j(topic = "API")
@@ -180,6 +185,15 @@ public class FullNodeHttpApiService implements Service {
       ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
       context.setContextPath("/wallet/");
       server.setHandler(context);
+
+      // Add the filter, and then use the provided FilterHolder to configure it
+      FilterHolder cors = context.addFilter(CrossOriginFilter.class,"/*", EnumSet.of(DispatcherType.REQUEST));
+      cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "*");
+      cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_METHODS_HEADER, "GET,POST,HEAD");
+      cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_ORIGIN_HEADER, "*");
+      cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_HEADERS_HEADER, "X-Requested-With,Content-Type,Accept,Origin");
+//      context.addFilter(cors, "/wallet/*", null);
+
       context.addServlet(new ServletHolder(getAccountServlet), "/getaccount");
       context.addServlet(new ServletHolder(transferServlet), "/createtransaction");
       context.addServlet(new ServletHolder(broadcastServlet), "/broadcasttransaction");

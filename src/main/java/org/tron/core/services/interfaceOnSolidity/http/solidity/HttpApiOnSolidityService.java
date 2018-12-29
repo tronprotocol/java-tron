@@ -2,8 +2,10 @@ package org.tron.core.services.interfaceOnSolidity.http.solidity;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.Service;
 import org.tron.core.config.args.Args;
@@ -22,6 +24,9 @@ import org.tron.core.services.interfaceOnSolidity.http.GetPaginatedAssetIssueLis
 import org.tron.core.services.interfaceOnSolidity.http.GetTransactionCountByBlockNumOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ListExchangesOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ListWitnessesOnSolidityServlet;
+
+import javax.servlet.DispatcherType;
+import java.util.EnumSet;
 
 @Slf4j(topic = "API")
 public class HttpApiOnSolidityService implements Service {
@@ -86,6 +91,13 @@ public class HttpApiOnSolidityService implements Service {
       ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
       context.setContextPath("/");
       server.setHandler(context);
+
+      FilterHolder cors = context.addFilter(CrossOriginFilter.class,"/*", EnumSet.of(DispatcherType.REQUEST));
+      cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "*");
+      cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_METHODS_HEADER, "GET,POST,HEAD");
+      cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_ORIGIN_HEADER, "*");
+      cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_HEADERS_HEADER, "X-Requested-With,Content-Type,Accept,Origin");
+
 
       // same as FullNode
       context.addServlet(new ServletHolder(accountOnSolidityServlet), "/walletsolidity/getaccount");

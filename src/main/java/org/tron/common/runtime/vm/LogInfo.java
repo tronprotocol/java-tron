@@ -50,6 +50,16 @@ public class LogInfo {
     return topics;
   }
 
+  public List<String> getHexTopics() {
+    List<String> list = new LinkedList<>();
+    if (topics != null && !topics.isEmpty()){
+      for (DataWord bytes: topics) {
+        list.add(bytes.toHexString());
+      }
+    }
+    return list;
+  }
+
   public List<byte[]> getClonedTopics() {
     List<byte[]> list = new LinkedList<>();
     if (topics != null && topics.size() > 0){
@@ -58,6 +68,10 @@ public class LogInfo {
       }
     }
     return list;
+  }
+
+  public String getHexData() {
+    return Hex.toHexString(data);
   }
 
   public byte[] getClonedData() {
