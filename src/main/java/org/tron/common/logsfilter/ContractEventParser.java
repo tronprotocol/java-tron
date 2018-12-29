@@ -33,9 +33,9 @@ public class ContractEventParser {
    * @param trigger
    * @return
    */
-  public static Map<String, Object> parseTopics(ContractEventTrigger trigger, ABI.Entry entry) {
+  public static Map<String, String> parseTopics(ContractEventTrigger trigger, ABI.Entry entry) {
     List<byte[]> topicList = trigger.getTopicList();
-    Map<String, Object> map = new HashMap<>();
+    Map<String, String> map = new HashMap<>();
     if (topicList == null || topicList.isEmpty()){
       return map;
     }
@@ -55,9 +55,9 @@ public class ContractEventParser {
         if (index >= topicList.size()) {
           break;
         }
-        Object obj = parseTopic(topicList.get(index++), param.getType());
-        map.put(param.getName(), obj);
-        map.put("" + i, obj);
+        String str = parseTopic(topicList.get(index++), param.getType());
+        map.put(param.getName(), str);
+        map.put("" + i, str);
       }
     }else{
       for (int i = 1; i < topicList.size(); ++i) {
@@ -75,9 +75,9 @@ public class ContractEventParser {
    * @param trigger
    * @return
    */
-  public static Map<String, Object> parseEventData(ContractEventTrigger trigger, ABI.Entry entry) {
+  public static Map<String, String> parseEventData(ContractEventTrigger trigger, ABI.Entry entry) {
     byte[] data = trigger.getData();
-    Map<String, Object> map = new HashMap<>();
+    Map<String, String> map = new HashMap<>();
     if (ArrayUtils.isEmpty(data)){
       return map;
     }
@@ -102,10 +102,10 @@ public class ContractEventParser {
           startIndex = i;
         }
 
-        Object obj = parseDataBytes(data, param.getType(), index++);
-        map.put(param.getName(), obj);
+        String str = parseDataBytes(data, param.getType(), index++);
+        map.put(param.getName(), str);
         // position 0 is the signature.
-        map.put(i.toString(), obj);
+        map.put(i.toString(), str);
       }
     }catch (UnsupportedOperationException e){
       logger.debug("UnsupportedOperationException", e);
@@ -134,7 +134,7 @@ public class ContractEventParser {
     return indexSize == topicList.size();
   }
 
-  private static Object parseDataBytes(byte[] data, String typeStr, int index) {
+  private static String parseDataBytes(byte[] data, String typeStr, int index) {
 
     try{
       byte[] startBytes = subBytes(data, index * DATAWORD_UNIT_SIZE, DATAWORD_UNIT_SIZE);
@@ -143,7 +143,7 @@ public class ContractEventParser {
       if (type == Type.INT_NUMBER){
         return new BigInteger(startBytes).toString();
       }else if (type == Type.BOOL) {
-        return !DataWord.isZero(startBytes);
+        return String.valueOf(!DataWord.isZero(startBytes));
       }else if (type == Type.FIXED_BYTES){
         return Hex.toHexString(startBytes);
       }else if (typeStr.equals("string") || typeStr.equals("bytes") || type == Type.ADDRESS){
@@ -207,7 +207,7 @@ public class ContractEventParser {
    * @param typeStr
    * @return
    */
-  private static Object parseTopic(byte[] bytes, String typeStr){
+  private static String parseTopic(byte[] bytes, String typeStr){
     if (ArrayUtils.isEmpty(bytes) || StringUtils.isNullOrEmpty(typeStr)){
       return "";
     }
@@ -215,7 +215,7 @@ public class ContractEventParser {
     if (type == Type.INT_NUMBER){
       return DataWord.bigIntValue(bytes);
     }else if (type == Type.BOOL){
-      return !DataWord.isZero(bytes);
+      return String.valueOf(!DataWord.isZero(bytes));
     }
     return DataWord.shortHex(bytes);
   }

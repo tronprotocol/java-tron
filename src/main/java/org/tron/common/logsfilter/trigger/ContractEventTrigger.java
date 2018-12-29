@@ -18,7 +18,7 @@ public class ContractEventTrigger extends ContractLogTrigger{
    */
   @Getter
   @Setter
-  private Map<String, Object> topicMap;
+  private Map<String, String> topicMap;
 
   /**
    * multi data items will be concat into a single string.
@@ -26,7 +26,7 @@ public class ContractEventTrigger extends ContractLogTrigger{
    */
   @Getter
   @Setter
-  private Map<String, Object> dataMap;
+  private Map<String, String> dataMap;
 
 
   public ContractEventTrigger(String txId, String contractAddress, String callerAddress,
