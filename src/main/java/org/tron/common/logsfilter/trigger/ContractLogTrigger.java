@@ -1,9 +1,5 @@
 package org.tron.common.logsfilter.trigger;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.spongycastle.util.encoders.Hex;
-
 import java.util.LinkedList;
 import java.util.List;
 
