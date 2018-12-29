@@ -1,8 +1,11 @@
 package org.tron.common.logsfilter;
 
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import org.pf4j.util.StringUtils;
+import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 
 import java.util.List;
@@ -43,14 +46,15 @@ public class FilterQuery {
 
         long fromBlockNumber = filterQuery.getFromBlock();
         long toBlockNumber = filterQuery.getToBlock();
+        List<String> topList = filterQuery.getContractAddressList();
         List<String> addressList = filterQuery.getContractAddressList();
 
-        if (blockNumber <= fromBlockNumber){
-            return matched;
+        if (blockNumber < fromBlockNumber){
+            return false;
         }
 
         if (toBlockNumber != FilterQuery.LATEST_BLOCK_NUM && blockNumber > toBlockNumber){
-            return matched;
+            return false;
         }
 
         String contractAddress = trigger.getContractAddress();
@@ -61,9 +65,18 @@ public class FilterQuery {
             }
         }
 
-        // add topic filter here
+        if (matched == false) {
+            return false;
+        }
 
-        return true;
+        Set<String> hset = topList.stream().collect(Collectors.toSet());
+        for (String top : ((ContractLogTrigger)trigger).getTopicList()) {
+            if (hset.contains(top)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Override
