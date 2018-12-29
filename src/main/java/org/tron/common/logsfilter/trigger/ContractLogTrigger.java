@@ -1,6 +1,8 @@
 package org.tron.common.logsfilter.trigger;
 
-import java.util.LinkedList;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 
 public class ContractLogTrigger extends ContractTrigger{
