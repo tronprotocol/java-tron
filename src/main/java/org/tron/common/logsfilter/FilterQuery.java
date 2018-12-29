@@ -60,7 +60,7 @@ public class FilterQuery {
         if (addressList.isEmpty()) return true;
 
         String contractAddress = trigger.getContractAddress();
-            for (String address: addressList){
+        for (String address: addressList){
             if (contractAddress.equalsIgnoreCase(address)){
                 return true;
             }
