@@ -96,16 +96,26 @@ public class LogInfoTriggerParser {
       boolean isEvent = (entry != null);
       ContractTrigger event;
       if (isEvent){
-        event = new LogEventWrapper(txId, contractAddress, callerAddress, originAddress, creatorAddress, blockNum, blockTimestamp);
+        event = new LogEventWrapper();
         ((LogEventWrapper) event).setTopicList(logInfo.getClonedTopics());
         ((LogEventWrapper) event).setData(logInfo.getClonedData());
         ((LogEventWrapper) event).setEventSignature(signature);
         ((LogEventWrapper) event).setAbiEntry(entry);
-      }else{
-        event = new ContractLogTrigger(txId, contractAddress, callerAddress, originAddress, creatorAddress, blockNum, blockTimestamp);
+      }
+      else{
+        event = new ContractLogTrigger();
         ((ContractLogTrigger) event).setTopicList(logInfo.getHexTopics());
         ((ContractLogTrigger) event).setData(logInfo.getHexData());
       }
+
+      event.setTxId(txId);
+      event.setContractAddress(contractAddress);
+      event.setCallerAddress(callerAddress);
+      event.setOriginAddress(originAddress);
+      event.setCreatorAddress(creatorAddress);
+      event.setBlockNum(blockNum);
+      event.setBlockTimestamp(blockTimestamp);
+
       list.add(event);
     }
     return list;

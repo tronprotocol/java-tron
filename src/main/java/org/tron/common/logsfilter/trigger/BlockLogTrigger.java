@@ -36,9 +36,9 @@ public class BlockLogTrigger extends Trigger {
         .append(blockNumber)
         .append(", blockhash: ")
         .append(blockHash)
-        .append(", transaction size: ")
+        .append(", transactionSize: ")
         .append(transactionSize)
-        .append(", transaction list: ")
+        .append(", transactionList: ")
         .append(transactionList).toString();
     }
 }

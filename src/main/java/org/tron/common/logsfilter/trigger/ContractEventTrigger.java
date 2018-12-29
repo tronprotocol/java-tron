@@ -29,35 +29,8 @@ public class ContractEventTrigger extends ContractTrigger{
   private Map<String, String> dataMap;
 
 
-  public ContractEventTrigger(String txId, String contractAddress, String callerAddress,
-                              String originAddress, String creatorAddress, Long blockNum, Long blockTimestamp){
-    super(txId, contractAddress, callerAddress, originAddress, creatorAddress, blockNum, blockTimestamp);
+  public ContractEventTrigger(){
+    super();
     setTriggerName(Trigger.CONTRACTEVENT_TRIGGER_NAME);
-  }
-
-  @Override
-  public String toString(){
-    return new StringBuilder().append("timestamp: ")
-            .append(timeStamp)
-            .append(", blockNum: ")
-            .append(getBlockNum())
-            .append(", blockTimestamp: ")
-            .append(getTimeStamp())
-            .append(", txId: ")
-            .append(getTxId())
-            .append(", contractAddress: ")
-            .append(getContractAddress())
-            .append(", callerAddress: ")
-            .append(getCallerAddress())
-            .append(", creatorAddress: ")
-            .append(getCallerAddress())
-            .append(", eventSignature: ")
-            .append(eventSignature)
-            .append(", data: ")
-            .append(dataMap)
-            .append(", contractTopicMap")
-            .append(topicMap)
-            .append(", removed: ")
-            .append(isRemoved()).toString();
   }
 }

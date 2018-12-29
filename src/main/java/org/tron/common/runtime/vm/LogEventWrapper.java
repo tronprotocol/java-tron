@@ -33,9 +33,8 @@ public class LogEventWrapper extends ContractTrigger {
   @Setter
   private Protocol.SmartContract.ABI.Entry abiEntry;
 
-  public LogEventWrapper(String txId, String contractAddress, String callerAddress,
-                         String originAddress, String creatorAddress, Long blockNum, Long blockTimestamp){
-    super(txId, contractAddress, callerAddress, originAddress, creatorAddress, blockNum, blockTimestamp);
+  public LogEventWrapper(){
+    super();
   }
 
 }

@@ -64,6 +64,8 @@ public class TransactionLogTrigger extends Trigger{
                 .append(transactionHash)
                 .append(", blockId: ")
                 .append(blockId)
+                .append(", blockNum: ")
+                .append(blockNum)
                 .append(", energyUsage: ")
                 .append(energyUsage)
                 .append(", energyFee: ")
