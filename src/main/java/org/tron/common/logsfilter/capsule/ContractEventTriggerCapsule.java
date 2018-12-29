@@ -37,7 +37,7 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
     this.contractEventTrigger.setOriginAddress(log.getOriginAddress());
     this.contractEventTrigger.setCreatorAddress(log.getCreatorAddress());
     this.contractEventTrigger.setBlockNum(log.getBlockNum());
-    this.contractEventTrigger.setBlockTimestamp(log.getBlockTimestamp());
+    this.contractEventTrigger.setTimeStamp(log.getTimeStamp());
 
     this.topicList = log.getTopicList();
     this.data = log.getData();

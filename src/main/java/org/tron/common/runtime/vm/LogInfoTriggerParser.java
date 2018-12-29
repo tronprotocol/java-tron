@@ -114,7 +114,7 @@ public class LogInfoTriggerParser {
       event.setOriginAddress(originAddress);
       event.setCreatorAddress(creatorAddress);
       event.setBlockNum(blockNum);
-      event.setBlockTimestamp(blockTimestamp);
+      event.setTimeStamp(blockTimestamp);
 
       list.add(event);
     }

@@ -48,13 +48,6 @@ public class ContractTrigger extends Trigger{
     private Long blockNum;
 
     /**
-     * block timestamp of the transaction
-     */
-    @Getter
-    @Setter
-    private Long blockTimestamp;
-
-    /**
      * true if the transaction has been revoked
      */
     @Getter
