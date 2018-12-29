@@ -40,7 +40,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.*;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
@@ -1409,9 +1408,12 @@ public class Program {
    */
   public void checkTokenId(MessageCall msg) {
     if(VMConfig.isVERSION_3_5_HARD_FORK()){ //3.5 hard fork
+      // tokenid not get Long type overflow
       long tokenId = msg.getTokenId().value().longValueExact();
-      if (tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0 ||
-          tokenId == 0 && msg.isTokenTransferMsg()) {
+      // tokenId can only be 0 when isTokenTransferMsg == false
+      // or tokenId can be (MIN_TOKEN_ID, Long.Max] when isTokenTransferMsg == true
+      if ((tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0) ||
+          (tokenId == 0 && msg.isTokenTransferMsg())) {
         // tokenId == 0 is a default value for token id DataWord.
         throw new BytecodeExecutionException("validateForSmartContract failure, not valid token id");
       }
