@@ -15,10 +15,6 @@ public class TransactionLogTrigger extends Trigger{
 
     @Getter
     @Setter
-    private String transactionHash;
-
-    @Getter
-    @Setter
     private String blockId;
 
     @Getter
@@ -60,8 +56,6 @@ public class TransactionLogTrigger extends Trigger{
                 .append(timeStamp)
                 .append(", transactionId: ")
                 .append(transactionId)
-                .append(", transactionHash: ")
-                .append(transactionHash)
                 .append(", blockId: ")
                 .append(blockId)
                 .append(", blockNum: ")

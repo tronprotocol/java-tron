@@ -29,6 +29,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
       transactionLogTrigger.setEnergyUsageTotal(trxTrace.getReceipt().getEnergyUsageTotal());
       transactionLogTrigger.setNetUsage(trxTrace.getReceipt().getNetUsage());
       transactionLogTrigger.setNetFee(trxTrace.getReceipt().getNetFee());
+      transactionLogTrigger.setEnergyUsage(trxTrace.getReceipt().getEnergyUsage());
     }
   }
 
