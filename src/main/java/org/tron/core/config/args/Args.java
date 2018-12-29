@@ -936,43 +936,25 @@ public class Args {
 
   private static FilterQuery getEventFilter(final com.typesafe.config.Config config){
     FilterQuery filter = new FilterQuery();
+    long fromBlockLong = 0,  toBlockLong = 0;
 
     String fromBlock = config.getString("event.subscribe.filter.fromblock").trim();
-
-    if (StringUtils.isEmpty(fromBlock) || FilterQuery.LATEST.equalsIgnoreCase(fromBlock)){
-      filter.setFromBlock(FilterQuery.LATEST_BLOCK_NUM);
+    try {
+       fromBlockLong = FilterQuery.parseFilterQueryBlockNumber(fromBlock);
+    } catch (Exception e){
+      logger.error("{}", e);
+      return null;
     }
-    else if (FilterQuery.EARLIEST.equalsIgnoreCase(fromBlock)){
-      filter.setFromBlock(FilterQuery.EARLIEST_BLOCK_NUM);
-    }
-    else {
-      try {
-        filter.setFromBlock(Long.parseLong(fromBlock));
-      }
-      catch (Exception e){
-        logger.error("{}", e);
-        return null;
-      }
-    }
-
+    filter.setFromBlock(fromBlockLong);
 
     String toBlock = config.getString("event.subscribe.filter.toblock").trim();
-    if (StringUtils.isEmpty(toBlock) || FilterQuery.LATEST.equalsIgnoreCase(toBlock)){
-      filter.setToBlock(FilterQuery.LATEST_BLOCK_NUM);
+    try {
+      toBlockLong = FilterQuery.parseFilterQueryBlockNumber(toBlock);
+    } catch (Exception e){
+      logger.error("{}", e);
+      return null;
     }
-    else if (FilterQuery.EARLIEST.equalsIgnoreCase(toBlock)){
-      filter.setToBlock(FilterQuery.EARLIEST_BLOCK_NUM);
-    }
-    else {
-
-      try {
-        filter.setFromBlock(Long.parseLong(toBlock));
-      }
-      catch (Exception e){
-        logger.error("{}", e);
-        return null;
-      }
-    }
+    filter.setToBlock(toBlockLong);
 
     List<String> addressList = config.getStringList("event.subscribe.filter.contractAddress");
     filter.setContractAddressList(addressList);

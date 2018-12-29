@@ -4,6 +4,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.StringUtils;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 
@@ -32,6 +33,25 @@ public class FilterQuery {
 
     public static final String EARLIEST = "earliest";
     public static final String LATEST = "latest";
+
+
+  public static long parseFilterQueryBlockNumber(String blockNum) {
+    long number = 0;
+    if (StringUtils.isEmpty(blockNum) || FilterQuery.LATEST.equalsIgnoreCase(blockNum)){
+      number =  FilterQuery.LATEST_BLOCK_NUM;
+    }
+    else if (FilterQuery.EARLIEST.equalsIgnoreCase(blockNum)){
+      number = FilterQuery.EARLIEST_BLOCK_NUM;
+    }
+    else {
+      try {
+        number =  Long.parseLong(blockNum);
+      } catch (Exception e) {
+        throw e;
+      }
+    }
+    return number;
+  }
 
     public static boolean matchFilter(ContractTrigger trigger){
         long blockNumber = trigger.getBlockNum();

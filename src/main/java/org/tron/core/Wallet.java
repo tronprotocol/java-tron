@@ -64,6 +64,7 @@ import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.logsfilter.EventPluginLoader;
+import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
@@ -1368,6 +1369,26 @@ public class Wallet {
 
   public GrpcAPI.Return setEventFilter(GrpcAPI.EventFilter.Builder filter) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
+    FilterQuery filterQuery = new FilterQuery();
+    long fromBlockLong = 0,  toBlockLong = 0;
+    try {
+      fromBlockLong = FilterQuery.parseFilterQueryBlockNumber(filter.getFromBlock());
+    } catch (Exception e) {
+      logger.error("{}", e);
+      return builder.setResult(false).build();
+    }
+
+    try {
+      toBlockLong = FilterQuery.parseFilterQueryBlockNumber(filter.getToBlock());
+    } catch (Exception e) {
+      logger.error("{}", e);
+      return builder.setResult(false).build();
+    }
+
+    filterQuery.setFromBlock(fromBlockLong);
+    filterQuery.setToBlock(toBlockLong);
+    filterQuery.setContractAddressList(filter.getContractAddressList());
+    filterQuery.setContractTopicList(filter.getContractTopicList());
 
     if (Objects.isNull(filter)) {
       return builder.setResult(false).build();
