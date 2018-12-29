@@ -1,10 +1,14 @@
 package org.tron.common.logsfilter;
 
+import com.google.common.collect.Streams;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 
@@ -88,12 +92,17 @@ public class FilterQuery {
         return false;
     }
 
-   private static boolean filterContractTopicList(ContractTrigger trigger, List<String> topList) {
+    private static boolean filterContractTopicList(ContractTrigger trigger, List<String> topList) {
         if (topList.isEmpty()) return true;
+        Set<String> hset = null;
+        if (trigger instanceof ContractLogTrigger) {
+            hset = ((ContractLogTrigger) trigger).getTopicList().stream().collect(Collectors.toSet());
+        } else {
+            hset = new HashSet<>(((ContractEventTrigger)trigger).getTopicMap().values());
+        }
 
-        Set<String> hset = topList.stream().collect(Collectors.toSet());
-        for (String top : ((ContractLogTrigger)trigger).getTopicList()) {
-            if (hset.contains(top)) {
+        for (String top : topList) {
+            if (hset.contains(top)){
                 return true;
             }
         }
