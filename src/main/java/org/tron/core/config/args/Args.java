@@ -974,11 +974,11 @@ public class Args {
       }
     }
 
-    List<String> addresses = config.getStringList("event.subscribe.filter.contractAddress");
-    filter.setContractAddress(addresses);
+    List<String> addressList = config.getStringList("event.subscribe.filter.contractAddress");
+    filter.setContractAddressList(addressList);
 
-    List<String> topics = config.getStringList("event.subscribe.filter.contractTopic");
-    filter.setContractTopics(topics);
+    List<String> topicList = config.getStringList("event.subscribe.filter.contractTopic");
+    filter.setContractTopicList(topicList);
 
     return filter;
   }

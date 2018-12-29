@@ -9,8 +9,6 @@ import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.runtime.vm.LogEventWrapper;
 import org.tron.protos.Protocol.SmartContract.ABI.Entry;
 
-import java.util.Objects;
-
 public class ContractEventTriggerCapsule extends TriggerCapsule {
   @Getter
   @Setter
@@ -32,39 +30,11 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
 
   @Override
   public void processTrigger(){
-    if (matchFilter(contractEventTrigger)){
-      contractEventTrigger.setTopicMap(ContractEventParser.parseTopics(contractEventTrigger, abiEntry));
-      contractEventTrigger.setDataMap(ContractEventParser.parseEventData(contractEventTrigger, abiEntry));
+    contractEventTrigger.setTopicMap(ContractEventParser.parseTopics(contractEventTrigger, abiEntry));
+    contractEventTrigger.setDataMap(ContractEventParser.parseEventData(contractEventTrigger, abiEntry));
+
+    if (FilterQuery.matchFilter(contractEventTrigger)){
       EventPluginLoader.getInstance().postContractEventTrigger(contractEventTrigger);
     }
-  }
-
-  private boolean matchFilter(ContractEventTrigger contractEventTrigger){
-    boolean matched = false;
-
-    long blockNumber = contractEventTrigger.getBlockNum();
-
-    FilterQuery filterQuery = EventPluginLoader.getInstance().getFilterQuery();
-    if (Objects.isNull(filterQuery)){
-      return true;
-    }
-
-    long fromBlockNumber = filterQuery.getFromBlock();
-    long toBlockNumber = filterQuery.getToBlock();
-
-    if (blockNumber <= fromBlockNumber){
-      return matched;
-    }
-
-    if (toBlockNumber != FilterQuery.LATEST_BLOCK_NUM && blockNumber > toBlockNumber){
-      return matched;
-    }
-
-    EventPluginLoader.getInstance().postContractEventTrigger(contractEventTrigger);
-
-    // add address topic filter here
-
-    return true;
-    
   }
 }
