@@ -1389,6 +1389,7 @@ public class Wallet {
     filterQuery.setToBlock(toBlockLong);
     filterQuery.setContractAddressList(filter.getContractAddressList());
     filterQuery.setContractTopicList(filter.getContractTopicList());
+    EventPluginLoader.getInstance().setFilterQuery(filterQuery);
 
     if (Objects.isNull(filter)) {
       return builder.setResult(false).build();
