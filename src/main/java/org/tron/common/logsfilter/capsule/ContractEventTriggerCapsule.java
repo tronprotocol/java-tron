@@ -9,7 +9,17 @@ import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.runtime.vm.LogEventWrapper;
 import org.tron.protos.Protocol.SmartContract.ABI.Entry;
 
+import java.util.List;
+
 public class ContractEventTriggerCapsule extends TriggerCapsule {
+  @Getter
+  @Setter
+  private List<byte[]> topicList;
+
+  @Getter
+  @Setter
+  private byte[] data;
+
   @Getter
   @Setter
   ContractEventTrigger contractEventTrigger;
@@ -22,16 +32,16 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
     this.contractEventTrigger = new ContractEventTrigger(
         log.getTxId(), log.getContractAddress(), log.getCallerAddress(),
         log.getOriginAddress(), log.getCreatorAddress(), log.getBlockNum(), log.getTimeStamp());
-    this.contractEventTrigger.setTopicList(log.getTopicList());
-    this.contractEventTrigger.setData(log.getData());
+    this.topicList = log.getTopicList();
+    this.data = log.getData();
     this.contractEventTrigger.setEventSignature(log.getEventSignature());
     this.abiEntry = log.getAbiEntry();
   }
 
   @Override
   public void processTrigger(){
-    contractEventTrigger.setTopicMap(ContractEventParser.parseTopics(contractEventTrigger, abiEntry));
-    contractEventTrigger.setDataMap(ContractEventParser.parseEventData(contractEventTrigger, abiEntry));
+    contractEventTrigger.setTopicMap(ContractEventParser.parseTopics(topicList, abiEntry));
+    contractEventTrigger.setDataMap(ContractEventParser.parseEventData(data, topicList, abiEntry));
 
     if (FilterQuery.matchFilter(contractEventTrigger)){
       EventPluginLoader.getInstance().postContractEventTrigger(contractEventTrigger);
