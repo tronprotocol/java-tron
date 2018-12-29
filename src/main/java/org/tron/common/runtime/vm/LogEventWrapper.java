@@ -2,12 +2,10 @@ package org.tron.common.runtime.vm;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.protos.Protocol;
 
 import java.util.List;
-import java.util.Map;
 
 public class LogEventWrapper extends ContractTrigger {
 
