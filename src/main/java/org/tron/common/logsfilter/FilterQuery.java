@@ -78,9 +78,11 @@ public class FilterQuery {
     }
 
     private static boolean filterContractAddress(ContractTrigger trigger, List<String> addressList) {
-        if (addressList.isEmpty()) return true;
+        if (Objects.isNull(addressList)|| addressList.isEmpty()) return true;
 
         String contractAddress = trigger.getContractAddress();
+        if (Objects.isNull(contractAddress)) return false;
+
         for (String address: addressList){
             if (contractAddress.equalsIgnoreCase(address)){
                 return true;
@@ -90,7 +92,7 @@ public class FilterQuery {
     }
 
     private static boolean filterContractTopicList(ContractTrigger trigger, List<String> topList) {
-        if (topList.isEmpty()) return true;
+        if (Objects.isNull(topList)|| topList.isEmpty()) return true;
         Set<String> hset = null;
         if (trigger instanceof ContractLogTrigger) {
             hset = ((ContractLogTrigger) trigger).getTopicList().stream().collect(Collectors.toSet());

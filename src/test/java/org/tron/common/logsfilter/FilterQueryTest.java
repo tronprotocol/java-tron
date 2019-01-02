@@ -3,7 +3,10 @@ import static org.tron.common.logsfilter.FilterQuery.matchFilter;
 import static org.tron.common.logsfilter.FilterQuery.parseFilterQueryBlockNumber;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.logsfilter.capsule.ContractEventTriggerCapsule;
@@ -30,11 +33,14 @@ public class FilterQueryTest {
 
   @Test
   public synchronized void testMatchFilter() {
-    String[] topAddressList = {"address1", "address2"};
+    String[] addrList = {"address1", "address2"};
+    String[] topList = {"top1", "top2"};
+    Map topMap = new HashMap<String, String>();
     List<byte[]> addressList = new ArrayList<>();
-    addressList.add(topAddressList[0].getBytes());
-    addressList.add(topAddressList[1].getBytes());
-
+    addressList.add(addrList[0].getBytes());
+    addressList.add(addrList[1].getBytes());
+    topMap.put("1", topList[0]);
+    topMap.put("2", topList[1]);
     LogEventWrapper event = new LogEventWrapper();
     ((LogEventWrapper) event).setTopicList(addressList);
     ((LogEventWrapper) event).setData(new byte[]{});
@@ -42,7 +48,9 @@ public class FilterQueryTest {
     ((LogEventWrapper) event).setAbiEntry(null);
     event.setBlockNum(new Long(123));
     ContractEventTriggerCapsule capsule =  new ContractEventTriggerCapsule(event);
+    capsule.getContractEventTrigger().setContractAddress("address1");
 
+    capsule.getContractEventTrigger().setTopicMap(topMap);
     {
       Assert.assertEquals(true, matchFilter(capsule.getContractEventTrigger()));
     }
@@ -67,8 +75,10 @@ public class FilterQueryTest {
       FilterQuery filterQuery = new FilterQuery();
       filterQuery.setFromBlock(100);
       filterQuery.setToBlock(190);
+      filterQuery.setContractAddressList(Arrays.asList(addrList));
+      filterQuery.setContractTopicList(Arrays.asList(topList));
       EventPluginLoader.getInstance().setFilterQuery(filterQuery);
-      Assert.assertEquals(false, matchFilter(capsule.getContractEventTrigger()));
+      Assert.assertEquals(true, matchFilter(capsule.getContractEventTrigger()));
     }
   }
 }
