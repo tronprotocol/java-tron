@@ -123,14 +123,26 @@ public class EventPluginLoader {
     });
   }
 
-  public synchronized void updateTriggerConfig(String tiggerName, boolean enable) {
+  public synchronized void updateTriggerConfig(String tiggerName, String topic,  boolean enable) {
     if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(tiggerName)) {
+      if (enable == true) {
+        setPluginTopic(Trigger.BLOCK_TRIGGER, topic);
+      }
       blockLogTriggerEnable = enable;
     } else if (EventPluginConfig.CONTRACTEVENT_TRIGGER_NAME.equalsIgnoreCase(tiggerName)) {
+      if (enable == true) {
+        setPluginTopic(Trigger.CONTRACTEVENT_TRIGGER, topic);
+      }
       contractEventTriggerEnable = enable;
     } else if (EventPluginConfig.CONTRACTLOG_TRIGGER_NAME.equalsIgnoreCase(tiggerName)) {
+      if (enable == true) {
+        setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, topic);
+      }
       contractLogTriggerEnable = enable;
     } else if (EventPluginConfig.TRANSACTION_TRIGGER_NAME.equalsIgnoreCase(tiggerName)) {
+      if (enable == true) {
+        setPluginTopic(Trigger.TRANSACTION_TRIGGER, topic);
+      }
       transactionLogTriggerEnable = enable;
     }
   }

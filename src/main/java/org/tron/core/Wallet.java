@@ -1403,7 +1403,7 @@ public class Wallet {
 
     pluginInfo.getTriggerInfoList().forEach(
       triggerInfo -> {
-        EventPluginLoader.getInstance().updateTriggerConfig(triggerInfo.getTriggerName(), triggerInfo.getEnable());
+        EventPluginLoader.getInstance().updateTriggerConfig(triggerInfo.getTriggerName(), triggerInfo.getTopic(), triggerInfo.getEnable());
       }
     );
 
