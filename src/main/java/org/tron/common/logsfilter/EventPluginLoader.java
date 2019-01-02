@@ -244,35 +244,4 @@ public class EventPluginLoader {
   }
 
 
-  public static void main(String[] args) {
-
-    EventPluginConfig config = new EventPluginConfig();
-    config.setServerAddress("127.0.0.1:9092");
-    config.setPluginPath("/Users/tron/sourcecode/eventplugin/build/plugins/plugin-kafka-1.0.0.zip");
-
-    TriggerConfig triggerConfig = new TriggerConfig();
-    triggerConfig.setTopic("block");
-    triggerConfig.setEnabled(true);
-    triggerConfig.setTriggerName("block");
-
-    config.getTriggerConfigList().add(triggerConfig);
-
-    boolean loaded = EventPluginLoader.getInstance().start(config);
-
-    if (!loaded) {
-      logger.error("failed to load '{}'", config.getServerAddress());
-      return;
-    }
-
-    for (int index = 0; index < 2000; ++index) {
-      BlockLogTrigger trigger = new BlockLogTrigger();
-      trigger.setBlockHash("0X123456789A");
-      trigger.setTimeStamp(System.currentTimeMillis());
-      trigger.setBlockNumber(index);
-      trigger.setTransactionSize(index);
-      EventPluginLoader.getInstance().postBlockTrigger(trigger);
-    }
-
-    EventPluginLoader.getInstance().stopPlugin();
-  }
 }
