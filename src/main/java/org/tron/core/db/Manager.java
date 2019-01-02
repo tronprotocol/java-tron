@@ -751,8 +751,7 @@ public class Manager {
       binaryTree =
         khaosDb.getBranch(
           newHead.getBlockId(), getDynamicPropertiesStore().getLatestBlockHeaderHash());
-    } //全部清了
-    catch (NonCommonBlockException e) {
+    } catch (NonCommonBlockException e) {
       logger.info(
         "there is not the most recent common ancestor, need to remove all blocks in the fork chain.");
       BlockCapsule tmp = newHead;
@@ -764,7 +763,6 @@ public class Manager {
       throw e;
     }
 
-    // 回退 eraseBlock
     if (CollectionUtils.isNotEmpty(binaryTree.getValue())) {
       while (!getDynamicPropertiesStore()
         .getLatestBlockHeaderHash()
@@ -773,8 +771,6 @@ public class Manager {
         eraseBlock();
       }
     }
-
-
 
     if (CollectionUtils.isNotEmpty(binaryTree.getKey())) {
       List<KhaosBlock> first = new ArrayList<>(binaryTree.getKey());
