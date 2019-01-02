@@ -247,7 +247,7 @@ public class RuntimeImpl implements Runtime {
   }
 
   private long getTotalEnergyLimitWithFloatRatio(AccountCapsule creator, AccountCapsule caller,
-    ContractCapsule contract, long feeLimit, long callValue) {
+      TriggerSmartContract contract, long feeLimit, long callValue) {
 
     long callerEnergyLimit = getAccountEnergyLimitWithFloatRatio(caller, feeLimit, callValue);
     if (Arrays.equals(creator.getAddress().toByteArray(), caller.getAddress().toByteArray())) {
@@ -256,8 +256,10 @@ public class RuntimeImpl implements Runtime {
 
     // creatorEnergyFromFreeze
     long creatorEnergyLimit = energyProcessor.getAccountLeftEnergyFromFreeze(creator);
-    long consumeUserResourcePercent = contract.getConsumeUserResourcePercent();
 
+    ContractCapsule contractCapsule = this.deposit
+        .getContract(contract.getContractAddress().toByteArray());
+    long consumeUserResourcePercent = contractCapsule.getConsumeUserResourcePercent();
 
     if (creatorEnergyLimit * consumeUserResourcePercent
       > (Constant.ONE_HUNDRED - consumeUserResourcePercent) * callerEnergyLimit) {
@@ -269,14 +271,6 @@ public class RuntimeImpl implements Runtime {
 
   public long getTotalEnergyLimitWithFixRatio(AccountCapsule creator, AccountCapsule caller,
     TriggerSmartContract contract, long feeLimit, long callValue)
-    throws ContractValidateException
-  {
-    ContractCapsule contractCapsule = this.deposit.getContract(contract.getContractAddress().toByteArray());
-    return getTotalEnergyLimitWithFixRatio(creator, caller, contractCapsule, feeLimit, callValue);
-  }
-
-  public long getTotalEnergyLimitWithFixRatio(AccountCapsule creator, AccountCapsule caller,
-    ContractCapsule contract, long feeLimit, long callValue)
     throws ContractValidateException {
 
     long callerEnergyLimit = getAccountEnergyLimitWithFixRatio(caller, feeLimit, callValue);
@@ -288,9 +282,11 @@ public class RuntimeImpl implements Runtime {
     }
 
     long creatorEnergyLimit = 0;
-    long consumeUserResourcePercent = contract.getConsumeUserResourcePercent();
-    long originEnergyLimit = contract.getOriginEnergyLimit();
+    ContractCapsule contractCapsule = this.deposit
+        .getContract(contract.getContractAddress().toByteArray());
+    long consumeUserResourcePercent = contractCapsule.getConsumeUserResourcePercent();
 
+    long originEnergyLimit = contractCapsule.getOriginEnergyLimit();
     if (originEnergyLimit < 0) {
       throw new ContractValidateException("originEnergyLimit can't be < 0");
     }
@@ -315,7 +311,7 @@ public class RuntimeImpl implements Runtime {
   }
 
   public long getTotalEnergyLimit(AccountCapsule creator, AccountCapsule caller,
-    ContractCapsule contract, long feeLimit, long callValue)
+      TriggerSmartContract contract, long feeLimit, long callValue)
     throws ContractValidateException {
     //  according to version
     if (VMConfig.getEnergyLimitHardFork()) {
@@ -550,7 +546,7 @@ public class RuntimeImpl implements Runtime {
         originAddress = deployedContract.getInstance().getOriginAddress().toByteArray();
         AccountCapsule creator = this.deposit.getAccount(originAddress);
         creatorAddress = creator.getAddress().toByteArray();
-        energyLimit = getTotalEnergyLimit(creator, caller, deployedContract, feeLimit, callValue);
+        energyLimit = getTotalEnergyLimit(creator, caller, contract, feeLimit, callValue);
       }
       long maxCpuTimeOfOneTx = deposit.getDbManager().getDynamicPropertiesStore()
         .getMaxCpuTimeOfOneTx() * Constant.ONE_THOUSAND;

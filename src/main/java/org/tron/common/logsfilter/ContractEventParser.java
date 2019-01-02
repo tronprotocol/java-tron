@@ -100,6 +100,9 @@ public class ContractEventParser {
         // position 0 is the signature.
         map.put(i.toString(), str);
       }
+      if (list.size() == 0){
+        map.put("0", Hex.toHexString(data));
+      }
     } catch (UnsupportedOperationException e) {
       logger.debug("UnsupportedOperationException", e);
       map.clear();
@@ -112,18 +115,13 @@ public class ContractEventParser {
     if (topicList == null || topicList.isEmpty()){
       return true;
     }
-    int indexSize = 0;
+    int inputSize = 1;
     for (ABI.Entry.Param param : entry.getInputsList()) {
       if (param.getIndexed()) {
-        if (indexSize == 0) {
-          // the first is signature
-          indexSize = 2;
-        } else {
-          indexSize++;
-        }
+        inputSize++;
       }
     }
-    return indexSize == topicList.size();
+    return inputSize == topicList.size();
   }
 
   private static String parseDataBytes(byte[] data, String typeStr, int index) {
