@@ -2,7 +2,6 @@ package org.tron.common.logsfilter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import java.io.File;
 import java.util.List;
 import java.util.Objects;
@@ -210,36 +209,20 @@ public class EventPluginLoader {
   }
 
   public void postBlockTrigger(BlockLogTrigger trigger) {
-    if (Objects.isNull(eventListeners)) {
-      return;
-    }
-
     eventListeners.forEach(listener ->
         listener.handleBlockEvent(toJsonString(trigger)));
   }
 
   public void postTransactionTrigger(TransactionLogTrigger trigger) {
-    if (Objects.isNull(eventListeners)) {
-      return;
-    }
-
     eventListeners.forEach(listener -> listener.handleTransactionTrigger(toJsonString(trigger)));
   }
 
   public void postContractLogTrigger(ContractLogTrigger trigger) {
-    if (Objects.isNull(eventListeners)) {
-      return;
-    }
-
     eventListeners.forEach(listener ->
         listener.handleContractLogTrigger(toJsonString(trigger)));
   }
 
   public void postContractEventTrigger(ContractEventTrigger trigger) {
-    if (Objects.isNull(eventListeners)) {
-      return;
-    }
-
     eventListeners.forEach(listener ->
         listener.handleContractEventTrigger(toJsonString(trigger)));
   }
@@ -248,8 +231,6 @@ public class EventPluginLoader {
     String jsonData = "";
 
     try {
-      ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-
       jsonData = objectMapper.writeValueAsString(data);
     } catch (JsonProcessingException e) {
       logger.error("'{}'", e);
