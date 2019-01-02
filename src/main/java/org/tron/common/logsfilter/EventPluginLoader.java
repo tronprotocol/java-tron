@@ -86,63 +86,47 @@ public class EventPluginLoader {
     triggerConfigList.forEach(triggerConfig -> {
       if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())) {
         if (triggerConfig.isEnabled()) {
-          setPluginTopic(Trigger.BLOCK_TRIGGER, triggerConfig.getTopic());
           blockLogTriggerEnable = true;
         } else {
-          setPluginTopic(Trigger.BLOCK_TRIGGER, "");
           blockLogTriggerEnable = false;
         }
+        setPluginTopic(Trigger.BLOCK_TRIGGER, triggerConfig.getTopic());
       } else if (EventPluginConfig.TRANSACTION_TRIGGER_NAME
           .equalsIgnoreCase(triggerConfig.getTriggerName())) {
         if (triggerConfig.isEnabled()) {
-          setPluginTopic(Trigger.TRANSACTION_TRIGGER, triggerConfig.getTopic());
           transactionLogTriggerEnable = true;
         } else {
-          setPluginTopic(Trigger.TRANSACTION_TRIGGER, "");
           transactionLogTriggerEnable = false;
         }
+        setPluginTopic(Trigger.TRANSACTION_TRIGGER, triggerConfig.getTopic());
       } else if (EventPluginConfig.CONTRACTEVENT_TRIGGER_NAME
           .equalsIgnoreCase(triggerConfig.getTriggerName())) {
         if (triggerConfig.isEnabled()) {
-          setPluginTopic(Trigger.CONTRACTEVENT_TRIGGER, triggerConfig.getTopic());
           contractEventTriggerEnable = true;
         } else {
-          setPluginTopic(Trigger.CONTRACTEVENT_TRIGGER, "");
           contractEventTriggerEnable = false;
         }
+        setPluginTopic(Trigger.CONTRACTEVENT_TRIGGER, triggerConfig.getTopic());
       } else if (EventPluginConfig.CONTRACTLOG_TRIGGER_NAME
           .equalsIgnoreCase(triggerConfig.getTriggerName())) {
         if (triggerConfig.isEnabled()) {
-          setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, triggerConfig.getTopic());
           contractLogTriggerEnable = true;
         } else {
-          setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, "");
           contractLogTriggerEnable = false;
         }
+        setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, triggerConfig.getTopic());
       }
     });
   }
 
-  public synchronized void updateTriggerConfig(String tiggerName, String topic,  boolean enable) {
+  public synchronized void updateTriggerConfig(String tiggerName, boolean enable) {
     if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(tiggerName)) {
-      if (enable == true) {
-        setPluginTopic(Trigger.BLOCK_TRIGGER, topic);
-      }
       blockLogTriggerEnable = enable;
     } else if (EventPluginConfig.CONTRACTEVENT_TRIGGER_NAME.equalsIgnoreCase(tiggerName)) {
-      if (enable == true) {
-        setPluginTopic(Trigger.CONTRACTEVENT_TRIGGER, topic);
-      }
       contractEventTriggerEnable = enable;
     } else if (EventPluginConfig.CONTRACTLOG_TRIGGER_NAME.equalsIgnoreCase(tiggerName)) {
-      if (enable == true) {
-        setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, topic);
-      }
       contractLogTriggerEnable = enable;
     } else if (EventPluginConfig.TRANSACTION_TRIGGER_NAME.equalsIgnoreCase(tiggerName)) {
-      if (enable == true) {
-        setPluginTopic(Trigger.TRANSACTION_TRIGGER, topic);
-      }
       transactionLogTriggerEnable = enable;
     }
   }
