@@ -1,4 +1,5 @@
 package org.tron.common.logsfilter;
+
 import static org.tron.common.logsfilter.FilterQuery.matchFilter;
 import static org.tron.common.logsfilter.FilterQuery.parseFilterQueryBlockNumber;
 
@@ -49,8 +50,8 @@ public class FilterQueryTest {
     event.setBlockNum(new Long(123));
     ContractEventTriggerCapsule capsule =  new ContractEventTriggerCapsule(event);
     capsule.getContractEventTrigger().setContractAddress("address1");
-
     capsule.getContractEventTrigger().setTopicMap(topMap);
+
     {
       Assert.assertEquals(true, matchFilter(capsule.getContractEventTrigger()));
     }
