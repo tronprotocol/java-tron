@@ -767,7 +767,7 @@ public class Manager {
       while (!getDynamicPropertiesStore()
         .getLatestBlockHeaderHash()
         .equals(binaryTree.getValue().peekLast().getParentHash())) {
-        reorgContractTrigger(binaryTree);
+        reorgContractTrigger();
         eraseBlock();
       }
     }
