@@ -1716,7 +1716,7 @@ public class Manager {
     }
   }
 
-  private void reorgContractTrigger(Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree) {
+  private void reorgContractTrigger() {
     if (eventPluginLoaded &&
       (EventPluginLoader.getInstance().isContractEventTriggerEnable()
         || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
