@@ -17,7 +17,7 @@ import org.tron.protos.Protocol.Account;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetAccountServlet extends HttpServlet {
 
   @Autowired

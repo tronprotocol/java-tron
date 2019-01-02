@@ -36,7 +36,7 @@ import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
 import org.tron.core.witness.WitnessController;
 
-@Slf4j
+@Slf4j(topic = "witness")
 public class WitnessService implements Service {
 
   private static final int MIN_PARTICIPATION_RATE = Args.getInstance()
@@ -151,12 +151,6 @@ public class WitnessService implements Service {
    */
   private BlockProductionCondition tryProduceBlock() throws InterruptedException {
     logger.info("Try Produce Block");
-    if (!backupManager.getStatus().equals(BackupStatusEnum.MASTER)) {
-      return BlockProductionCondition.BACKUP_STATUS_IS_NOT_MASTER;
-    }
-    if (dupWitnessCheck()) {
-      return BlockProductionCondition.DUP_WITNESS;
-    }
     long now = DateTime.now().getMillis() + 50L;
     if (this.needSyncCheck) {
       long nexSlotTime = controller.getSlotTime(1);
@@ -173,6 +167,14 @@ public class WitnessService implements Service {
             this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderHash());
         return BlockProductionCondition.NOT_SYNCED;
       }
+    }
+
+    if (!backupManager.getStatus().equals(BackupStatusEnum.MASTER)) {
+      return BlockProductionCondition.BACKUP_STATUS_IS_NOT_MASTER;
+    }
+
+    if (dupWitnessCheck()) {
+      return BlockProductionCondition.DUP_WITNESS;
     }
 
     final int participation = this.controller.calculateParticipationRate();
@@ -312,7 +314,7 @@ public class WitnessService implements Service {
     return true;
   }
 
-  public void processBlock(BlockCapsule block) {
+  public void checkDupWitness(BlockCapsule block) {
     if (block.generatedByMyself) {
       return;
     }
@@ -325,6 +327,10 @@ public class WitnessService implements Service {
       return;
     }
 
+    if (backupManager.getStatus() != BackupStatusEnum.MASTER) {
+      return;
+    }
+
     if (dupBlockCount.get() == 0) {
       dupBlockCount.set(new Random().nextInt(10));
     } else {
@@ -332,6 +338,8 @@ public class WitnessService implements Service {
     }
 
     dupBlockTime.set(System.currentTimeMillis());
+
+    logger.warn("Dup block produced: {}", block);
   }
 
   /**

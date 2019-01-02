@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 import static com.googlecode.cqengine.query.QueryFactory.attribute;
 
 @Component
-@Slf4j
+@Slf4j(topic = "DB")
 public class BlockIndex extends AbstractIndex<BlockCapsule, Block> {
 
   public static SimpleAttribute<WrappedByteArray, String> Block_ID;

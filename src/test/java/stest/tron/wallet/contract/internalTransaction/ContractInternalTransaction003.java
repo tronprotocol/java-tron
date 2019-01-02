@@ -62,6 +62,9 @@ public class ContractInternalTransaction003 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+  /**
+   * constructor.
+   */
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
@@ -1261,6 +1264,9 @@ public class ContractInternalTransaction003 {
 
 
   }
+  /**
+   * constructor.
+   */
 
   public void dupInternalTrsansactionHash(
       List<org.tron.protos.Protocol.InternalTransaction> internalTransactionList) {

@@ -76,7 +76,7 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
 
-@Slf4j
+@Slf4j(topic = "net")
 @Component
 public class NodeImpl extends PeerConnectionDelegate implements Node {
 

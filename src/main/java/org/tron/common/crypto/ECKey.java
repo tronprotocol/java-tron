@@ -76,7 +76,7 @@ import org.tron.common.crypto.jce.ECSignatureFactory;
 import org.tron.common.crypto.jce.TronCastleProvider;
 import org.tron.common.utils.ByteUtil;
 
-@Slf4j
+@Slf4j(topic = "crypto")
 public class ECKey implements Serializable {
 
   /**

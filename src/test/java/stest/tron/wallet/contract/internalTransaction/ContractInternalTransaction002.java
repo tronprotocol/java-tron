@@ -63,7 +63,11 @@ public class ContractInternalTransaction002 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  @BeforeClass(enabled = true)
+    /**
+     * constructor.
+     */
+
+    @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(testKeyForinternalTxsAddress);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -829,8 +833,11 @@ public class ContractInternalTransaction002 {
 
   }
 
+    /**
+     * constructor.
+     */
 
-  public void dupInternalTrsansactionHash(
+    public void dupInternalTrsansactionHash(
       List<org.tron.protos.Protocol.InternalTransaction> internalTransactionList) {
     List<String> hashList = new ArrayList<>();
     internalTransactionList.forEach(

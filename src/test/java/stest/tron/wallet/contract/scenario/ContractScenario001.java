@@ -47,6 +47,9 @@ public class ContractScenario001 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+  /**
+   * constructor.
+   */
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
@@ -70,7 +73,7 @@ public class ContractScenario001 {
     Assert.assertTrue(PublicMethed.sendcoin(contract001Address, 20000000L, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract001Address, 1000000L,
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract001Address, 10000000L,
         3, 1, contract001Key, blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract001Address,
         blockingStubFull);
@@ -113,6 +116,9 @@ public class ContractScenario001 {
     Assert.assertTrue(energyUsage > 0);
     Assert.assertEquals(balanceBefore, balanceAfter);
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {

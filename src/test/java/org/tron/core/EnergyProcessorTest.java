@@ -146,8 +146,7 @@ public class EnergyProcessorTest {
 
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(
         1526647838000L + AdaptiveResourceLimitConstants.PERIODS_MS / 2);
-    now = dbManager.getWitnessController().getHeadSlot();
-    processor.updateTotalEnergyAverageUsage(now, 0);
+    processor.updateTotalEnergyAverageUsage();
     Assert.assertEquals(2000L,
         dbManager.getDynamicPropertiesStore().getTotalEnergyAverageUsage());
 
@@ -160,21 +159,21 @@ public class EnergyProcessorTest {
     //Test exceeds resource limit
     dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(10000L * ratio);
     dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageUsage(3000L);
-    dbManager.updateAdaptiveTotalEnergyLimit();
+    processor.updateAdaptiveTotalEnergyLimit();
     Assert.assertEquals(10000L * ratio,
         dbManager.getDynamicPropertiesStore().getTotalEnergyCurrentLimit());
 
     //Test exceeds resource limit 2
     dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(20000L * ratio);
     dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageUsage(3000L);
-    dbManager.updateAdaptiveTotalEnergyLimit();
+    processor.updateAdaptiveTotalEnergyLimit();
     Assert.assertEquals(20000L * ratio * 99 / 100L,
         dbManager.getDynamicPropertiesStore().getTotalEnergyCurrentLimit());
 
     //Test less than resource limit
     dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(20000L * ratio);
     dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageUsage(500L);
-    dbManager.updateAdaptiveTotalEnergyLimit();
+    processor.updateAdaptiveTotalEnergyLimit();
     Assert.assertEquals(20000L * ratio * 1000 / 999L,
         dbManager.getDynamicPropertiesStore().getTotalEnergyCurrentLimit());
   }

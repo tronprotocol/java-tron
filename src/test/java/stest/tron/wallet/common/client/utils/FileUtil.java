@@ -20,6 +20,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FileUtil {
+  /**
+   * constructor.
+   */
 
   public static List<String> recursiveList(String path) throws IOException {
 
@@ -50,6 +53,9 @@ public class FileUtil {
 
     return files;
   }
+  /**
+   * constructor.
+   */
 
   public static boolean recursiveDelete(String fileName) {
     File file = new File(fileName);
@@ -71,6 +77,9 @@ public class FileUtil {
       return false;
     }
   }
+  /**
+   * constructor.
+   */
 
   public static void saveData(String filePath, byte[] data) {
     FileOutputStream fos = null;
@@ -91,6 +100,9 @@ public class FileUtil {
       }
     }
   }
+  /**
+   * constructor.
+   */
 
   public static byte[] readData(String filePath) {
     FileInputStream fi = null;

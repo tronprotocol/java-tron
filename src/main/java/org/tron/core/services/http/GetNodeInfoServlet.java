@@ -13,7 +13,7 @@ import org.tron.core.services.NodeInfoService;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetNodeInfoServlet extends HttpServlet {
 
   @Autowired
