@@ -751,7 +751,8 @@ public class Manager {
       binaryTree =
         khaosDb.getBranch(
           newHead.getBlockId(), getDynamicPropertiesStore().getLatestBlockHeaderHash());
-    } catch (NonCommonBlockException e) {
+    } //全部清了
+    catch (NonCommonBlockException e) {
       logger.info(
         "there is not the most recent common ancestor, need to remove all blocks in the fork chain.");
       BlockCapsule tmp = newHead;
@@ -762,13 +763,18 @@ public class Manager {
 
       throw e;
     }
+
+    // 回退 eraseBlock
     if (CollectionUtils.isNotEmpty(binaryTree.getValue())) {
       while (!getDynamicPropertiesStore()
         .getLatestBlockHeaderHash()
         .equals(binaryTree.getValue().peekLast().getParentHash())) {
+        reorgContractTrigger(binaryTree);
         eraseBlock();
       }
     }
+
+
 
     if (CollectionUtils.isNotEmpty(binaryTree.getKey())) {
       List<KhaosBlock> first = new ArrayList<>(binaryTree.getKey());
@@ -1127,7 +1133,7 @@ public class Manager {
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
 
     // if event subscribe is enabled, post contract triggers to queue
-    postContractTrigger(trace);
+    postContractTrigger(trace, false);
 
     return true;
   }
@@ -1714,7 +1720,25 @@ public class Manager {
     }
   }
 
-  private void postContractTrigger(final TransactionTrace trace){
+  private void reorgContractTrigger(Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree) {
+    if (eventPluginLoaded &&
+      (EventPluginLoader.getInstance().isContractEventTriggerEnable()
+        || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
+      try {
+        BlockCapsule oldHeadBlock = getBlockById(
+          getDynamicPropertiesStore().getLatestBlockHeaderHash());
+        for (TransactionCapsule trx : oldHeadBlock.getTransactions()) {
+          postContractTrigger(trx.getTrxTrace(), true);
+        }
+      } catch (BadItemException e) {
+        e.printStackTrace();
+      } catch (ItemNotFoundException e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
+  private void postContractTrigger(final TransactionTrace trace, boolean remove){
     if (eventPluginLoaded &&
       (EventPluginLoader.getInstance().isContractEventTriggerEnable()
         || EventPluginLoader.getInstance().isContractLogTriggerEnable()
@@ -1723,9 +1747,13 @@ public class Manager {
       // be careful, trace.getRuntimeResult().getTriggerList() should never return null
       for (ContractTrigger trigger: trace.getRuntimeResult().getTriggerList()) {
           if (trigger instanceof LogEventWrapper && EventPluginLoader.getInstance().isContractEventTriggerEnable()){
-            result = this.getTriggerCapsuleQueue().offer(new ContractEventTriggerCapsule((LogEventWrapper) trigger));
+            ContractEventTriggerCapsule contractEventTriggerCapsule = new ContractEventTriggerCapsule((LogEventWrapper) trigger);
+            contractEventTriggerCapsule.getContractEventTrigger().setRemoved(remove);
+            result = this.getTriggerCapsuleQueue().offer(contractEventTriggerCapsule);
           }else if (trigger instanceof ContractLogTrigger && EventPluginLoader.getInstance().isContractLogTriggerEnable()){
-            result = this.getTriggerCapsuleQueue().offer(new ContractLogTriggerCapsule((ContractLogTrigger) trigger));
+            ContractLogTriggerCapsule contractLogTriggerCapsule = new ContractLogTriggerCapsule((ContractLogTrigger) trigger);
+            contractLogTriggerCapsule.getContractLogTrigger().setRemoved(remove);
+            result = this.getTriggerCapsuleQueue().offer(contractLogTriggerCapsule);
           }
           if (result == false) {
             logger.info("too many tigger, lost contract log trigger: {}", trigger.getTxId());
