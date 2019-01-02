@@ -94,13 +94,11 @@ import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
-import org.tron.core.config.Parameter.ChainParameters;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.AccountIdIndexStore;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.ContractStore;
-import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.AccountResourceInsufficientException;
@@ -415,27 +413,28 @@ public class Wallet {
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
     Message message = new TransactionMessage(signaturedTransaction);
 
-    try{
-//      if (minEffectiveConnection != 0) {
-//        if (p2pNode.getActivePeer().isEmpty()) {
-//          logger.warn("Broadcast transaction {} failed, no connection.", trx.getTransactionId());
-//          return builder.setResult(false).setCode(response_code.NO_CONNECTION)
-//              .setMessage(ByteString.copyFromUtf8("no connection"))
-//              .build();
-//        }
-//
-//        int count = (int) p2pNode.getActivePeer().stream()
-//            .filter(p -> !p.isNeedSyncFromUs() && !p.isNeedSyncFromPeer())
-//            .count();
-//
-//        if (count < minEffectiveConnection) {
-//          String info = "effective connection:" + count + " lt minEffectiveConnection:" + minEffectiveConnection;
-//          logger.warn("Broadcast transaction {} failed, {}.", trx.getTransactionId(), info);
-//          return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
-//              .setMessage(ByteString.copyFromUtf8(info))
-//              .build();
-//        }
-//      }
+    try {
+      if (minEffectiveConnection != 0) {
+        if (p2pNode.getActivePeer().isEmpty()) {
+          logger.warn("Broadcast transaction {} failed, no connection.", trx.getTransactionId());
+          return builder.setResult(false).setCode(response_code.NO_CONNECTION)
+              .setMessage(ByteString.copyFromUtf8("no connection"))
+              .build();
+        }
+
+        int count = (int) p2pNode.getActivePeer().stream()
+            .filter(p -> !p.isNeedSyncFromUs() && !p.isNeedSyncFromPeer())
+            .count();
+
+        if (count < minEffectiveConnection) {
+          String info = "effective connection:" + count + " lt minEffectiveConnection:"
+              + minEffectiveConnection;
+          logger.warn("Broadcast transaction {} failed, {}.", trx.getTransactionId(), info);
+          return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
+              .setMessage(ByteString.copyFromUtf8(info))
+              .build();
+        }
+      }
 
       if (dbManager.isTooManyPending()) {
         logger.warn("Broadcast transaction {} failed, too many pending.", trx.getTransactionId());
@@ -443,7 +442,8 @@ public class Wallet {
       }
 
       if (dbManager.isGeneratingBlock()) {
-        logger.warn("Broadcast transaction {} failed, is generating block.", trx.getTransactionId());
+        logger
+            .warn("Broadcast transaction {} failed, is generating block.", trx.getTransactionId());
         return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
       }
 
@@ -785,8 +785,18 @@ public class Wallet {
             .setKey("getTotalEnergyCurrentLimit")
             .setValue(dbManager.getDynamicPropertiesStore().getTotalEnergyCurrentLimit())
             .build());
-
-
+    //    ALLOW_MULTI_SIGN, // 1, 20
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowMultiSign")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowMultiSign())
+            .build());
+    //    ALLOW_ADAPTIVE_ENERGY, // 1, 21
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowAdaptiveEnergy")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowAdaptiveEnergy())
+            .build());
     //other chainParameters
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getTotalEnergyTargetLimit")
