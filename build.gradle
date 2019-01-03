@@ -102,7 +102,7 @@ dependencies {
     compile group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.25'
     compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
 
-    //    compile "org.projectlombok:lombok:1.16.18"
+//    compile "org.projectlombok:lombok:1.16.18"
     compile group: 'org.projectlombok', name: 'lombok', version: '1.18.2'
 
     compile group: 'commons-codec', name: 'commons-codec', version: '1.11'
@@ -168,7 +168,6 @@ dependencies {
     // http
     compile 'org.eclipse.jetty:jetty-server:9.4.11.v20180605'
     compile 'org.eclipse.jetty:jetty-servlet:9.4.11.v20180605'
-    compile group: 'org.eclipse.jetty', name: 'jetty-servlets', version: '9.4.12.v20180830'
     compile 'com.alibaba:fastjson:1.2.47'
     // end http
 
