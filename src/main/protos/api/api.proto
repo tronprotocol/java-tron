@@ -1031,8 +1031,9 @@ message TransactionSignWeight {
 message TransactionApprovedList {
   message Result {
     enum response_code {
-      SIGNATURE_FORMAT_ERROR = 0;
-      COMPUTE_ADDRESS_ERROR = 1;
+      SUCCESS = 0;
+      SIGNATURE_FORMAT_ERROR = 1;
+      COMPUTE_ADDRESS_ERROR = 2;
       OTHER_ERROR = 20;
     }
     response_code code = 1;
