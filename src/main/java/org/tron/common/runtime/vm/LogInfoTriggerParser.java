@@ -121,7 +121,7 @@ public class LogInfoTriggerParser {
     return list;
   }
 
-  private static String getEntrySignature(ABI.Entry entry) {
+  public static String getEntrySignature(ABI.Entry entry) {
     String signature = entry.getName() + "(";
     StringBuilder builder = new StringBuilder();
     for (ABI.Entry.Param param: entry.getInputsList()) {
