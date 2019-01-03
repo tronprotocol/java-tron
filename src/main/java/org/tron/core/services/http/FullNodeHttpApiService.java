@@ -167,7 +167,7 @@ public class FullNodeHttpApiService implements Service {
   private SetEventFilterServlet setEventFilterServlet;
 
   @Autowired
-  private SetEventPluginServlet setEventPluginServlet;
+  private SetEventPluginConfigServlet setEventPluginConfigServlet;
 
   @Override
   public void init() {
@@ -279,7 +279,7 @@ public class FullNodeHttpApiService implements Service {
 
       if (Args.getInstance().isEventSubscribe()){
         context.addServlet(new ServletHolder(setEventFilterServlet), "/seteventfilter");
-        context.addServlet(new ServletHolder(setEventPluginServlet), "/setpluginconfig");
+        context.addServlet(new ServletHolder(setEventPluginConfigServlet), "/seteventpluginconfig");
       }
 
       server.start();

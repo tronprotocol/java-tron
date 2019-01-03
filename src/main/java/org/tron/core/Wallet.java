@@ -1372,14 +1372,14 @@ public class Wallet {
     FilterQuery filterQuery = new FilterQuery();
     long fromBlockLong = 0,  toBlockLong = 0;
     try {
-      fromBlockLong = FilterQuery.parseFilterQueryBlockNumber(filter.getFromBlock());
+      fromBlockLong = FilterQuery.parseFromBlockNumber(filter.getFromBlock());
     } catch (Exception e) {
       logger.error("{}", e);
       return builder.setResult(false).build();
     }
 
     try {
-      toBlockLong = FilterQuery.parseFilterQueryBlockNumber(filter.getToBlock());
+      toBlockLong = FilterQuery.parseToBlockNumber(filter.getToBlock());
     } catch (Exception e) {
       logger.error("{}", e);
       return builder.setResult(false).build();
@@ -1399,17 +1399,18 @@ public class Wallet {
   }
 
   public GrpcAPI.Return setEventPluginInfo(GrpcAPI.EventPluginInfo.Builder pluginInfo){
+
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
+
+    if (Objects.isNull(pluginInfo) || pluginInfo.getTriggerInfoList().size() == 0) {
+      return builder.setResult(false).build();
+    }
 
     pluginInfo.getTriggerInfoList().forEach(
       triggerInfo -> {
         EventPluginLoader.getInstance().updateTriggerConfig(triggerInfo.getTriggerName(), triggerInfo.getEnable());
       }
     );
-
-    if (Objects.isNull(pluginInfo)) {
-      return builder.setResult(false).build();
-    }
 
     return builder.setResult(true).build();
   }
