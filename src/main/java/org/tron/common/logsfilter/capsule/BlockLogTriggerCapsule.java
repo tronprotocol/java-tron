@@ -18,12 +18,12 @@ public class BlockLogTriggerCapsule extends TriggerCapsule {
     blockLogTrigger.setBlockNumber(block.getNum());
     blockLogTrigger.setTransactionSize(block.getTransactions().size());
     block.getTransactions().forEach(trx ->
-      blockLogTrigger.getTransactionList().add(trx.getTransactionId().toString())
+        blockLogTrigger.getTransactionList().add(trx.getTransactionId().toString())
     );
   }
 
   @Override
-  public void processTrigger(){
+  public void processTrigger() {
     EventPluginLoader.getInstance().postBlockTrigger(blockLogTrigger);
   }
 }

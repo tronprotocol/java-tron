@@ -128,8 +128,7 @@ public class EventPluginLoader {
       contractLogTriggerEnable = enable;
     } else if (EventPluginConfig.TRANSACTION_TRIGGER_NAME.equalsIgnoreCase(tiggerName)) {
       transactionLogTriggerEnable = enable;
-    }
-    else {
+    } else {
       logger.error("unknown trigger name");
     }
   }
@@ -175,8 +174,8 @@ public class EventPluginLoader {
       };
     }
 
-    String pluginID = pluginManager.loadPlugin(pluginPath.toPath());
-    if (StringUtils.isEmpty(pluginID)) {
+    String pluginId = pluginManager.loadPlugin(pluginPath.toPath());
+    if (StringUtils.isEmpty(pluginId)) {
       logger.error("invalid pluginID");
       return loaded;
     }
