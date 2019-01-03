@@ -184,7 +184,10 @@ check.dependsOn 'lint'
 //}
     checkstyle {
         toolVersion = "${versions.checkstyle}"
+        configFile = file("config/checkstyle/checkStyleAll.xml")
     }
+
+
     checkstyleMain {
     source = 'src/main/java'
 }
