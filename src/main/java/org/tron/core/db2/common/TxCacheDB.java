@@ -1,7 +1,9 @@
 package org.tron.core.db2.common;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.common.primitives.Longs;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -12,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.WeakHashMap;
 import java.util.stream.Collectors;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.common.WrappedByteArray;
@@ -19,21 +22,8 @@ import org.tron.core.db.common.WrappedByteArray;
 public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   private final int BLOCK_COUNT = 70_000; // > 65_536(= 2^16) blocks
 
-  private Map<Key, Long> db = new HashMap<>();
-  private Map<Long, ArrayList<Key>> blockNumMap = new LinkedHashMap<Long, ArrayList<Key>>() {
-    @Override
-    protected boolean removeEldestEntry(Map.Entry<Long, ArrayList<Key>> entry) {
-      if (blockNumMap.size() > BLOCK_COUNT) {
-        blockNumMap.entrySet().stream()
-            .min(Comparator.comparing(Entry::getKey))
-            .ifPresent(e -> {
-              e.getValue().forEach(db::remove);
-              blockNumMap.remove(e.getKey());
-            });
-      }
-      return false;
-    }
-  };
+  private Map<Key, Long> db = new WeakHashMap<>();
+  private Multimap<Long, Key> blockNumMap = ArrayListMultimap.create();
 
   @Override
   public byte[] get(byte[] key) {
@@ -44,8 +34,17 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   public void put(byte[] key, byte[] value) {
     Key k = Key.copyOf(key);
     Long v = Longs.fromByteArray(value);
-    blockNumMap.computeIfAbsent(Longs.fromByteArray(value), listBlk -> new ArrayList<>()).add(k);
+    blockNumMap.put(v, k);
     db.put(k, v);
+    removeEldest();
+  }
+
+  private void removeEldest() {
+    if (blockNumMap.keySet().size() > BLOCK_COUNT) {
+      blockNumMap.keySet().stream()
+          .min(Long::compareTo)
+          .ifPresent(blockNumMap::removeAll);
+    }
   }
 
   @Override
