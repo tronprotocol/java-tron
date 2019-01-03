@@ -10,7 +10,7 @@ import org.tron.common.application.Service;
 import org.tron.core.config.args.Args;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class FullNodeHttpApiService implements Service {
 
   private int port = Args.getInstance().getFullNodeHttpPort();
@@ -147,6 +147,7 @@ public class FullNodeHttpApiService implements Service {
   private PermissionDeleteKeyServlet permissionDeleteKeyServlet;
   @Autowired
   private PermissionUpdateKeyServlet permissionUpdateKeyServlet;
+  @Autowired
   private GetNodeInfoServlet getNodeInfoServlet;
   @Autowired
   private UpdateSettingServlet updateSettingServlet;
@@ -214,7 +215,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(
           new ServletHolder(getPaginatedAssetIssueListServlet), "/getpaginatedassetissuelist");
       context.addServlet(
-          new ServletHolder(getPaginatedProposalListServlet), "/getpaginatedproposalist");
+          new ServletHolder(getPaginatedProposalListServlet), "/getpaginatedproposallist");
       context.addServlet(
           new ServletHolder(getPaginatedExchangeListServlet), "/getpaginatedexchangelist");
       context.addServlet(new ServletHolder(totalTransactionServlet), "/totaltransaction");

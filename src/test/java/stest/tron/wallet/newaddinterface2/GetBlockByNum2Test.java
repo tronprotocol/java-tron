@@ -42,6 +42,10 @@ public class GetBlockByNum2Test {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -189,6 +193,9 @@ public class GetBlockByNum2Test {
     Assert.assertTrue(setIdOfBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
     logger.info("By ID test succesfully");
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {
@@ -199,6 +206,9 @@ public class GetBlockByNum2Test {
       channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+  /**
+   * constructor.
+   */
 
   public Account queryAccount(String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     byte[] address;
@@ -232,12 +242,18 @@ public class GetBlockByNum2Test {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+  /**
+   * constructor.
+   */
 
   public Account grpcQueryAccount(byte[] address, WalletGrpc.WalletBlockingStub blockingStubFull) {
     ByteString addressBs = ByteString.copyFrom(address);
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+  /**
+   * constructor.
+   */
 
   public GrpcAPI.BlockExtention getBlock2(long blockNum,
       WalletGrpc.WalletBlockingStub blockingStubFull) {

@@ -17,7 +17,7 @@ import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.db.fast.callback.FastSyncCallBack;
 import org.tron.core.db.fast.storetrie.AssetIssueStoreTrie;
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Component
 public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
 

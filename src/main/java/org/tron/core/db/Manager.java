@@ -10,9 +10,11 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -52,7 +54,6 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
-import org.tron.core.config.Parameter.AdaptiveResourceLimitConstants;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
@@ -88,9 +89,10 @@ import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Transaction.Contract;
 
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Component
 public class Manager {
 
@@ -184,6 +186,9 @@ public class Manager {
   private Thread repushThread;
 
   private boolean isRunRepushThread = true;
+
+  private ExecutorService executorService = Executors
+      .newFixedThreadPool(1, r -> new Thread(r, "ValidateTransactionSign"));
 
   @Getter
   private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
@@ -805,6 +810,15 @@ public class Manager {
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
+        try {
+          preValidateTransactionSign(block);
+        } catch (InterruptedException e) {
+          logger.error("", e);
+          Thread.interrupted();
+        }
+      }
+
+      if (!block.generatedByMyself) {
         if (!block.validateSignature()) {
           logger.warn("The signature is not validated.");
           throw new BadBlockException("The signature is not validated");
@@ -818,6 +832,10 @@ public class Manager {
                   + block.getMerkleRoot());
           throw new BadBlockException("The merkle hash is not validated");
         }
+      }
+
+      if (witnessService != null) {
+        witnessService.checkDupWitness(block);
       }
 
       BlockCapsule newBlock = this.khaosDb.push(block);
@@ -999,11 +1017,12 @@ public class Manager {
    */
   public BlockCapsule getBlockById(final Sha256Hash hash)
       throws BadItemException, ItemNotFoundException {
-    return this.khaosDb.containBlock(hash)
-        ? this.khaosDb.getBlock(hash)
-        : blockStore.get(hash.getBytes());
+    BlockCapsule block = this.khaosDb.getBlock(hash);
+    if (block == null) {
+      block = blockStore.get(hash.getBytes());
+    }
+    return block;
   }
-
 
   /**
    * judge has blocks.
@@ -1134,6 +1153,7 @@ public class Manager {
     //
     fastSyncCallBack.preExecute(blockCapsule);
 
+    Map<String, Boolean> accountMap = new HashMap<>();
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext() || repushTransactions.size() > 0) {
       boolean fromPending = false;
@@ -1157,6 +1177,27 @@ public class Manager {
           > ChainConstant.BLOCK_SIZE) {
         postponedTrxCount++;
         continue;
+      }
+      //
+      Contract contract = trx.getInstance().getRawData().getContract(0);
+      byte[] owner = TransactionCapsule.getOwner(contract);
+      String ownerAddress = ByteArray.toHexString(owner);
+      if (accountMap.containsKey(ownerAddress) && accountMap.get(ownerAddress)) {
+        continue;
+      } else {
+        switch (contract.getType()) {
+          case AccountPermissionUpdateContract:
+          case PermissionAddKeyContract:
+          case PermissionUpdateKeyContract:
+          case PermissionDeleteKeyContract: {
+            if (accountMap.containsKey(ownerAddress)) {
+              continue;
+            }
+            accountMap.put(ownerAddress, true);
+          }
+          default:
+            accountMap.put(ownerAddress, false);
+        }
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
@@ -1270,14 +1311,13 @@ public class Manager {
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, BadBlockException {
     // todo set revoking db max size.
 
-    if (witnessService != null) {
-      witnessService.processBlock(block);
-    }
-
     // checkWitness
     if (!witnessController.validateWitnessSchedule(block)) {
       throw new ValidateScheduleException("validateWitnessSchedule error");
     }
+    //reset BlockEnergyUsage
+    this.dynamicPropertiesStore.saveBlockEnergyUsage(0);
+
     if (!Args.getInstance().isFastSync()) {
       try {
         fastSyncCallBack.preExecute(block);
@@ -1303,7 +1343,9 @@ public class Manager {
       }
     }
     if (getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 1) {
-      updateAdaptiveTotalEnergyLimit();
+      EnergyProcessor energyProcessor = new EnergyProcessor(this);
+      energyProcessor.updateTotalEnergyAverageUsage();
+      energyProcessor.updateAdaptiveTotalEnergyLimit();
     }
     updateSignedWitness(block);
     updateLatestSolidifiedBlock();
@@ -1313,34 +1355,6 @@ public class Manager {
     updateDynamicProperties(block);
   }
 
-  public void updateAdaptiveTotalEnergyLimit() {
-    long totalEnergyAverageUsage = getDynamicPropertiesStore()
-        .getTotalEnergyAverageUsage();
-    long targetTotalEnergyLimit = getDynamicPropertiesStore().getTotalEnergyTargetLimit();
-    long totalEnergyCurrentLimit = getDynamicPropertiesStore()
-        .getTotalEnergyCurrentLimit();
-
-    long result;
-    if (totalEnergyAverageUsage > targetTotalEnergyLimit) {
-      result = totalEnergyCurrentLimit * AdaptiveResourceLimitConstants.CONTRACT_RATE_NUMERATOR
-          / AdaptiveResourceLimitConstants.CONTRACT_RATE_DENOMINATOR;
-      // logger.info(totalEnergyAverageUsage + ">" + targetTotalEnergyLimit + "\n" + result);
-    } else {
-      result = totalEnergyCurrentLimit * AdaptiveResourceLimitConstants.EXPAND_RATE_NUMERATOR
-          / AdaptiveResourceLimitConstants.EXPAND_RATE_DENOMINATOR;
-      // logger.info(totalEnergyAverageUsage + "<" + targetTotalEnergyLimit + "\n" + result);
-    }
-
-    result = Math.min(
-        Math.max(result, getDynamicPropertiesStore().getTotalEnergyLimit()),
-        getDynamicPropertiesStore().getTotalEnergyLimit()
-            * AdaptiveResourceLimitConstants.LIMIT_MULTIPLIER);
-
-    getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(result);
-    logger.debug(
-        "adjust totalEnergyCurrentLimit, old[" + totalEnergyCurrentLimit + "], new[" + result
-            + "]");
-  }
 
   private void updateTransHashCache(BlockCapsule block) {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
@@ -1598,11 +1612,14 @@ public class Manager {
     }
   }
 
-  public synchronized void preValidateTransactionSign(BlockCapsule block)
+  public void preValidateTransactionSign(BlockCapsule block)
       throws InterruptedException, ValidateSignatureException {
     logger.info("PreValidate Transaction Sign, size:" + block.getTransactions().size()
         + ",block num:" + block.getNum());
     int transSize = block.getTransactions().size();
+    if (transSize <= 0) {
+      return;
+    }
     CountDownLatch countDownLatch = new CountDownLatch(transSize);
     List<Future<Boolean>> futures = new ArrayList<>(transSize);
 

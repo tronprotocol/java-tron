@@ -76,6 +76,10 @@ public class WalletTestAssetIssue017 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
     logger.info(testKeyForAssetIssue017);
@@ -163,7 +167,7 @@ public class WalletTestAssetIssue017 {
     logger.info(Long.toString(assetIssueListPaginated.get().getAssetIssueCount()));
     Assert.assertTrue(assetIssueListPaginated.get().getAssetIssueCount() == 0);
 
-    //offset is 1, limit is 50.
+    //offset is 0, limit is 50.
     offset = 0;
     limit = 50;
     pageMessageBuilder = PaginatedMessage.newBuilder();
@@ -262,6 +266,9 @@ public class WalletTestAssetIssue017 {
     Assert.assertTrue(assetIssueListPaginated.get().getAssetIssueCount() == 0);
   }
 
+  /**
+   * constructor.
+   */
 
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
@@ -272,6 +279,9 @@ public class WalletTestAssetIssue017 {
       channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+  /**
+   * constructor.
+   */
 
   public static Boolean createAssetIssue(byte[] address, String name, Long totalSupply,
       Integer trxNum, Integer icoNum, Long startTime, Long endTime, Integer voteScore,
@@ -327,6 +337,9 @@ public class WalletTestAssetIssue017 {
       return false;
     }
   }
+  /**
+   * constructor.
+   */
 
   public static Protocol.Transaction signTransaction(ECKey ecKey,
       Protocol.Transaction transaction) {

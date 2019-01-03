@@ -16,7 +16,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.fast.callback.FastSyncCallBack;
 import org.tron.core.db.fast.storetrie.WitnessStoreTrie;
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Component
 public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
 

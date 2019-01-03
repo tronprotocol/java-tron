@@ -30,7 +30,7 @@ import org.tron.common.crypto.jce.TronCastleProvider;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.utils.RLP;
 
-@Slf4j
+@Slf4j(topic = "crypto")
 public class Hash {
 
   private static final Provider CRYPTO_PROVIDER;

@@ -45,7 +45,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.Transaction;
 
-@Slf4j
+@Slf4j(topic = "capsule")
 public class BlockCapsule implements ProtoCapsule<Block> {
 
   public static class BlockId extends Sha256Hash {

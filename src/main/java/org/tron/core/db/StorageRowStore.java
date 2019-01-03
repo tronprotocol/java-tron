@@ -11,7 +11,7 @@ import org.tron.core.capsule.StorageRowCapsule;
 import org.tron.core.db.fast.callback.FastSyncCallBack;
 import org.tron.core.db.fast.storetrie.StorageRowStoreTrie;
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Component
 public class StorageRowStore extends TronStoreWithRevoking<StorageRowCapsule> {
 

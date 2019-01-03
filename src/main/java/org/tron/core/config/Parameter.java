@@ -25,7 +25,7 @@ public interface Parameter {
     int BLOCK_FILLED_SLOTS_NUMBER = 128;
     int MAX_VOTE_NUMBER = 30;
     int MAX_FROZEN_NUMBER = 1;
-    int BLOCK_VERSION = 6;
+    int BLOCK_VERSION = 7;
   }
 
   interface NodeConstant {
@@ -92,7 +92,8 @@ public interface Parameter {
     TOTAL_ENERGY_LIMIT, // 50,000,000,000, 17
     ALLOW_TVM_TRANSFER_TRC10, // 1, 18
     TOTAL_CURRENT_ENERGY_LIMIT, // 50,000,000,000, 19
-//    ALLOW_ADAPTIVE_ENERGY,
+    ALLOW_MULTI_SIGN, // 1, 20
+    ALLOW_ADAPTIVE_ENERGY, // 1, 21
 //    ONE_DAY_NET_LIMIT,
 //    MAX_FROZEN_TIME,
 //    MIN_FROZEN_TIME,
@@ -111,12 +112,12 @@ public interface Parameter {
 
     int START_NEW_TRANSACTION = 4;
     int ENERGY_LIMIT = 5;
-    int MULTI_SIGN = 6;
   }
 
   enum ForkBlockVersionEnum {
-    VERSION_3_2_2(6);
-
+    ENERGY_LIMIT(5),
+    VERSION_3_2_2(6),
+    VERSION_3_5(7);
     @Getter
     private int value;
 

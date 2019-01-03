@@ -16,7 +16,7 @@ import org.tron.protos.Protocol.TransactionSign;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class TransactionSignServlet extends HttpServlet {
 
   @Autowired

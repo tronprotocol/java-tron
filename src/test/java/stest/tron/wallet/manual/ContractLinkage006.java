@@ -59,6 +59,10 @@ public class ContractLinkage006 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(linkage006Key);
@@ -297,6 +301,9 @@ public class ContractLinkage006 {
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 1);
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {

@@ -12,7 +12,7 @@ import org.tron.core.db.fast.callback.FastSyncCallBack;
 import org.tron.core.db.fast.storetrie.ContractStoreTrie;
 import org.tron.protos.Protocol.SmartContract;
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Component
 public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
 

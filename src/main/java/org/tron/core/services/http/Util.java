@@ -52,7 +52,7 @@ import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 
 
-@Slf4j
+@Slf4j(topic = "API")
 public class Util {
 
   public static String printErrorMsg(Exception e) {
@@ -308,6 +308,7 @@ public class Util {
                 .unpack(PermissionDeleteKeyContract.class);
             contractJson = JSONObject
                 .parseObject(JsonFormat.printToString(permissionDeleteKeyContract));
+            break;
           case UpdateSettingContract:
             UpdateSettingContract updateSettingContract = contractParameter
                 .unpack(UpdateSettingContract.class);
@@ -568,6 +569,7 @@ public class Util {
                 .merge(parameter.getJSONObject("value").toJSONString(),
                     PermissionDeleteKeyContractBuilder);
             any = Any.pack(PermissionDeleteKeyContractBuilder.build());
+            break;
           case "UpdateSettingContract":
             UpdateSettingContract.Builder UpdateSettingContractBuilder = UpdateSettingContract
                 .newBuilder();

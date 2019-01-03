@@ -45,7 +45,7 @@ import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
 import org.tron.program.Version;
 
-@Slf4j
+@Slf4j(topic = "app")
 @NoArgsConstructor
 @Component
 public class Args {
@@ -57,6 +57,10 @@ public class Args {
 
   @Parameter(names = {"-d", "--output-directory"}, description = "Directory")
   private String outputDirectory = "output-directory";
+
+  @Getter
+  @Parameter(names = {"--log-config"})
+  private String logbackPath = "";
 
   @Getter
   @Parameter(names = {"-h", "--help"}, help = true, description = "HELP message")

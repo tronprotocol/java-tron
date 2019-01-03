@@ -230,7 +230,7 @@ public class ProposalCreateActuatorTest {
   @Test
   public void invalidPara() {
     HashMap<Long, Long> paras = new HashMap<>();
-    paras.put(20L, 10000L);
+    paras.put(22L, 10000L);
     ProposalCreateActuator actuator =
         new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();

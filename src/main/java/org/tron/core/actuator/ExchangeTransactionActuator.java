@@ -19,7 +19,7 @@ import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Contract.ExchangeTransactionContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-@Slf4j
+@Slf4j(topic = "actuator")
 public class ExchangeTransactionActuator extends AbstractActuator {
 
   ExchangeTransactionActuator(final Any contract, final Manager dbManager) {

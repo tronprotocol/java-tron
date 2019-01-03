@@ -14,7 +14,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db.fast.callback.FastSyncCallBack;
 import org.tron.core.db.fast.storetrie.AccountStateStoreTrie;
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Component
 public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 

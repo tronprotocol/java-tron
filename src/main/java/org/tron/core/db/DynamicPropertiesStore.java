@@ -16,7 +16,7 @@ import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Component
 public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> {
 
@@ -80,6 +80,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     private static final byte[] TOTAL_ENERGY_AVERAGE_TIME = "TOTAL_ENERGY_AVERAGE_TIME".getBytes();
     private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
     private static final byte[] TOTAL_ENERGY_LIMIT = "TOTAL_ENERGY_LIMIT".getBytes();
+    private static final byte[] BLOCK_ENERGY_USAGE = "BLOCK_ENERGY_USAGE".getBytes();
   }
 
   private static final byte[] ENERGY_FEE = "ENERGY_FEE".getBytes();
@@ -521,6 +522,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveTotalEnergyAverageTime(0);
     }
+
+    try {
+      this.getBlockEnergyUsage();
+    } catch (IllegalArgumentException e) {
+      this.saveBlockEnergyUsage(0);
+    }
   }
 
   public String intArrayToString(int[] a) {
@@ -904,6 +911,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found TOTAL_NET_AVERAGE_TIME"));
   }
 
+  public void saveBlockEnergyUsage(long blockEnergyUsage) {
+    this.put(DynamicResourceProperties.BLOCK_ENERGY_USAGE,
+        new BytesCapsule(ByteArray.fromLong(blockEnergyUsage)));
+  }
+
+  public long getBlockEnergyUsage() {
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.BLOCK_ENERGY_USAGE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found BLOCK_ENERGY_USAGE"));
+  }
 
   public void saveEnergyFee(long totalEnergyFee) {
     this.put(ENERGY_FEE,
