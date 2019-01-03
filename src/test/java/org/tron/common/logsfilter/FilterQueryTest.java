@@ -1,7 +1,8 @@
 package org.tron.common.logsfilter;
 
 import static org.tron.common.logsfilter.FilterQuery.matchFilter;
-import static org.tron.common.logsfilter.FilterQuery.parseFilterQueryBlockNumber;
+import static org.tron.common.logsfilter.FilterQuery.parseFromBlockNumber;
+import static org.tron.common.logsfilter.FilterQuery.parseToBlockNumber;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,17 +19,17 @@ public class FilterQueryTest {
   public synchronized void testParseFilterQueryBlockNumber() {
     {
       String blockNum = "";
-      Assert.assertEquals(FilterQuery.LATEST_BLOCK_NUM, parseFilterQueryBlockNumber(blockNum));
+      Assert.assertEquals(FilterQuery.LATEST_BLOCK_NUM, parseToBlockNumber(blockNum));
     }
 
     {
       String blockNum = "earliest";
-      Assert.assertEquals(FilterQuery.EARLIEST_BLOCK_NUM, parseFilterQueryBlockNumber(blockNum));
+      Assert.assertEquals(FilterQuery.EARLIEST_BLOCK_NUM, parseFromBlockNumber(blockNum));
     }
 
     {
       String blockNum = "13245";
-      Assert.assertEquals(13245, parseFilterQueryBlockNumber(blockNum));
+      Assert.assertEquals(13245, parseToBlockNumber(blockNum));
     }
   }
 
