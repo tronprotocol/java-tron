@@ -182,13 +182,13 @@ check.dependsOn 'lint'
 //    config = resources.text.fromArchiveEntry(configurations.checkstyleConfig, 'google_checks.xml')
 //
 //}
-    checkstyle {
-        toolVersion = "${versions.checkstyle}"
-        configFile = file("config/checkstyle/checkStyleAll.xml")
-    }
+checkstyle {
+    toolVersion = "${versions.checkstyle}"
+    configFile = file("config/checkstyle/checkStyleAll.xml")
+}
 
 
-    checkstyleMain {
+checkstyleMain {
     source = 'src/main/java'
 }
 
