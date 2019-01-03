@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 @Component
 @Slf4j
-public class SetEventPluginServlet extends HttpServlet {
+public class SetEventPluginConfigServlet extends HttpServlet {
     @Autowired
     private Wallet wallet;
 
@@ -24,36 +24,43 @@ public class SetEventPluginServlet extends HttpServlet {
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) {
 
-        System.out.println("SetEventPluginServlet doPost");
-
-
         GrpcAPI.EventPluginInfo.Builder pluginConfigBuilder = GrpcAPI.EventPluginInfo.newBuilder();
-        GrpcAPI.Return.Builder retBuilder = GrpcAPI.Return.newBuilder();
-
         String jsonValue = "";
 
         try {
             jsonValue = request.getReader().lines()
                     .collect(Collectors.joining(System.lineSeparator()));
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("{}", e);
         }
-
-        System.out.println(jsonValue);
 
         try {
             JsonFormat.merge(jsonValue, pluginConfigBuilder);
         } catch (JsonFormat.ParseException e) {
-            e.printStackTrace();
+            logger.error("{}", e);
         }
 
-        if (Objects.isNull(pluginConfigBuilder)){
+        if (Objects.isNull(pluginConfigBuilder) || pluginConfigBuilder.getTriggerInfoList().size() == 0){
+            try {
+                response.getWriter().println("failed");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             return;
         }
 
-        wallet.setEventPluginInfo(pluginConfigBuilder);
+        GrpcAPI.Return ret = wallet.setEventPluginInfo(pluginConfigBuilder);
 
-        // todo
+        try {
+            if (ret.getResult()){
+                response.getWriter().println("ok");
+            }
+            else {
+                response.getWriter().println("failed");
+            }
 
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

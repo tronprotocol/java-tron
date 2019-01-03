@@ -940,7 +940,7 @@ public class Args {
 
     String fromBlock = config.getString("event.subscribe.filter.fromblock").trim();
     try {
-       fromBlockLong = FilterQuery.parseFilterQueryBlockNumber(fromBlock);
+       fromBlockLong = FilterQuery.parseFromBlockNumber(fromBlock);
     } catch (Exception e){
       logger.error("{}", e);
       return null;
@@ -949,7 +949,7 @@ public class Args {
 
     String toBlock = config.getString("event.subscribe.filter.toblock").trim();
     try {
-      toBlockLong = FilterQuery.parseFilterQueryBlockNumber(toBlock);
+      toBlockLong = FilterQuery.parseToBlockNumber(toBlock);
     } catch (Exception e){
       logger.error("{}", e);
       return null;

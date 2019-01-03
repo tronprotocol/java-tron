@@ -4,6 +4,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
@@ -12,6 +13,7 @@ import org.tron.common.logsfilter.trigger.ContractTrigger;
 import java.util.List;
 import java.util.Objects;
 
+@Slf4j
 public class FilterQuery {
     @Getter
     @Setter
@@ -36,23 +38,37 @@ public class FilterQuery {
     public static final String LATEST = "latest";
 
 
-  public static long parseFilterQueryBlockNumber(String blockNum) {
+  public static long parseFromBlockNumber(String blockNum) {
     long number = 0;
-    if (StringUtils.isEmpty(blockNum) || FilterQuery.LATEST.equalsIgnoreCase(blockNum)){
-      number =  FilterQuery.LATEST_BLOCK_NUM;
-    }
-    else if (FilterQuery.EARLIEST.equalsIgnoreCase(blockNum)){
-      number = FilterQuery.EARLIEST_BLOCK_NUM;
+    if (StringUtils.isEmpty(blockNum) || FilterQuery.EARLIEST.equalsIgnoreCase(blockNum)){
+      number =  FilterQuery.EARLIEST_BLOCK_NUM;
     }
     else {
       try {
         number =  Long.parseLong(blockNum);
       } catch (Exception e) {
-        throw e;
+          logger.error("invalid filter: fromBlockNumber: {}", blockNum);
+          throw e;
       }
     }
     return number;
   }
+
+    public static long parseToBlockNumber(String blockNum) {
+        long number = 0;
+        if (StringUtils.isEmpty(blockNum) || FilterQuery.LATEST.equalsIgnoreCase(blockNum)){
+            number =  FilterQuery.LATEST_BLOCK_NUM;
+        }
+        else {
+            try {
+                number =  Long.parseLong(blockNum);
+            } catch (Exception e) {
+                logger.error("invalid filter: toBlockNumber: {}", blockNum);
+                throw e;
+            }
+        }
+        return number;
+    }
 
     public static boolean matchFilter(ContractTrigger trigger){
         long blockNumber = trigger.getBlockNum();
@@ -65,11 +81,36 @@ public class FilterQuery {
         long fromBlockNumber = filterQuery.getFromBlock();
         long toBlockNumber = filterQuery.getToBlock();
 
-        if (blockNumber < fromBlockNumber){
+        boolean matched = false;
+        if (fromBlockNumber == FilterQuery.LATEST_BLOCK_NUM || toBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM){
+            logger.error("invalid filter: fromBlockNumber: {}, toBlockNumber: {}", fromBlockNumber, toBlockNumber);
             return false;
         }
 
-        if (toBlockNumber != FilterQuery.LATEST_BLOCK_NUM && blockNumber > toBlockNumber){
+        if (toBlockNumber == FilterQuery.LATEST_BLOCK_NUM){
+            if (fromBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM){
+                matched = true;
+            }
+            else {
+                if (blockNumber >= fromBlockNumber){
+                    matched = true;
+                }
+            }
+        }
+        else {
+            if (fromBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM){
+                if (blockNumber <= toBlockNumber){
+                    matched = true;
+                }
+            }
+            else {
+                if (blockNumber >= fromBlockNumber && blockNumber <= toBlockNumber){
+                    matched = true;
+                }
+            }
+        }
+
+        if (!matched){
             return false;
         }
 
@@ -79,6 +120,10 @@ public class FilterQuery {
 
     private static boolean filterContractAddress(ContractTrigger trigger, List<String> addressList) {
         if (Objects.isNull(addressList)|| addressList.isEmpty()) return true;
+
+        if (addressList.size() == 1 && StringUtils.isEmpty(addressList.get(0))){
+            return true;
+        }
 
         String contractAddress = trigger.getContractAddress();
         if (Objects.isNull(contractAddress)) return false;
@@ -93,6 +138,11 @@ public class FilterQuery {
 
     private static boolean filterContractTopicList(ContractTrigger trigger, List<String> topList) {
         if (Objects.isNull(topList)|| topList.isEmpty()) return true;
+
+        if (topList.size() == 1 && StringUtils.isEmpty(topList.get(0))){
+            return true;
+        }
+
         Set<String> hset = null;
         if (trigger instanceof ContractLogTrigger) {
             hset = ((ContractLogTrigger) trigger).getTopicList().stream().collect(Collectors.toSet());
