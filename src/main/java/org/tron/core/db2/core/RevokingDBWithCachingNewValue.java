@@ -13,6 +13,7 @@ import lombok.Getter;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.common.WrappedByteArray;
+import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
 import org.tron.core.db2.common.Value;
@@ -25,10 +26,18 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
   private Snapshot head;
   @Getter
   private String dbName;
+  private Class<? extends DB> clz;
 
   public RevokingDBWithCachingNewValue(String dbName) {
     this.dbName = dbName;
     head = new SnapshotRoot(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName);
+    mode.set(true);
+  }
+
+  public RevokingDBWithCachingNewValue(String dbName, Class<? extends DB> clz) {
+    this.dbName = dbName;
+    this.clz = clz;
+    head = new SnapshotRoot(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName, clz);
     mode.set(true);
   }
 
@@ -65,7 +74,7 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
   public synchronized void reset() {
     head().reset();
     head().close();
-    head = new SnapshotRoot(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName);
+    head = new SnapshotRoot(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName, clz);
   }
 
   @Override

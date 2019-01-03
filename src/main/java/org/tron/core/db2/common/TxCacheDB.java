@@ -1,5 +1,8 @@
 package org.tron.core.db2.common;
 
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Maps;
+import com.google.common.primitives.Longs;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,9 +12,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
+import org.tron.core.db.common.WrappedByteArray;
 
-public class TxCacheDB implements DB<Key, Long> {
-  private final int BLOCK_COUNT = 65_536;
+public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
+  private final int BLOCK_COUNT = 70_000; // > 65_536(= 2^16) blocks
+
   private Map<Key, Long> db = new HashMap<>();
   private Map<Long, ArrayList<Key>> blockNumMap = new LinkedHashMap<Long, ArrayList<Key>>() {
     @Override
@@ -27,14 +32,16 @@ public class TxCacheDB implements DB<Key, Long> {
   };
 
   @Override
-  public Long get(Key key) {
-    return db.get(key);
+  public byte[] get(byte[] key) {
+    return Longs.toByteArray(db.get(key));
   }
 
   @Override
-  public void put(Key key, Long value) {
-    blockNumMap.computeIfAbsent(value, listBlk -> new ArrayList<>()).add(key);
-    db.put(key, value);
+  public void put(byte[] key, byte[] value) {
+    Key k = Key.copyOf(key);
+    Long v = Longs.fromByteArray(value);
+    blockNumMap.computeIfAbsent(Longs.fromByteArray(value), listBlk -> new ArrayList<>()).add(k);
+    db.put(k, v);
   }
 
   @Override
@@ -48,12 +55,31 @@ public class TxCacheDB implements DB<Key, Long> {
   }
 
   @Override
-  public void remove(Key key) {
+  public void remove(byte[] key) {
     db.remove(key);
   }
 
   @Override
-  public Iterator<Map.Entry<Key,Long>> iterator() {
-    return db.entrySet().iterator();
+  public Iterator<Map.Entry<byte[],byte[]>> iterator() {
+    return Iterators.transform(db.entrySet().iterator(),
+        e -> Maps.immutableEntry(e.getKey().getBytes(), Longs.toByteArray(e.getValue())));
+  }
+
+  @Override
+  public void flush(Map<WrappedByteArray, WrappedByteArray> batch) {
+    batch.forEach((k, v) -> this.put(k.getBytes(), v.getBytes()));
+  }
+
+  @Override
+  public void close() {
+    reset();
+    db = null;
+    blockNumMap = null;
+  }
+
+  @Override
+  public void reset() {
+    db.clear();
+    blockNumMap.clear();
   }
 }

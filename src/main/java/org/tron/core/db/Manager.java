@@ -6,6 +6,12 @@ import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDIN
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.primitives.Longs;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,10 +19,12 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -24,7 +32,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 import javafx.util.Pair;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
@@ -35,6 +45,7 @@ import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.utils.ByteArray;
@@ -58,6 +69,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.api.AssetUpdateHelper;
+import org.tron.core.db2.common.Key;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotManager;
@@ -97,6 +109,8 @@ public class Manager {
   private AccountStore accountStore;
   @Autowired
   private TransactionStore transactionStore;
+  @Autowired
+  private TransactionCache transactionCache;
   @Autowired
   private BlockStore blockStore;
   @Autowired
@@ -397,7 +411,7 @@ public class Manager {
     if (Args.getInstance().isNeedToUpdateAsset() && needToUpdateAsset()) {
       new AssetUpdateHelper(this).doWork();
     }
-
+    initCacheTxs();
     revokingStore.enable();
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
@@ -500,6 +514,41 @@ public class Manager {
               witnessCapsule.setIsJobs(true);
               this.witnessStore.put(keyAddress, witnessCapsule);
             });
+  }
+
+  public void initCacheTxs() {
+    long start = System.currentTimeMillis();
+    long headNum = dynamicPropertiesStore.getLatestBlockHeaderNumber();
+    long recentBlockCount = 65536L;
+    ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(50));
+    List<ListenableFuture<?>> futures = new ArrayList<>();
+    AtomicLong atomicLong = new AtomicLong(0);
+    LongStream.rangeClosed(headNum - recentBlockCount + 1, headNum).forEach(
+        blockNum -> futures.add(service.submit(() -> {
+          try {
+            atomicLong.incrementAndGet();
+            BlockCapsule blockCapsule = getBlockByNum(blockNum);
+            blockCapsule.getTransactions().stream()
+                .map(tc -> tc.getTransactionId().getBytes())
+                .map(bytes -> Maps.immutableEntry(bytes, Longs.toByteArray(blockNum)))
+                .forEach(e -> transactionCache.put(e.getKey(), new BytesCapsule(e.getValue())));
+          } catch (ItemNotFoundException | BadItemException e) {
+            logger.info("init txs cache error.");
+            throw new IllegalStateException("init txs cache error.");
+          }
+        })));
+    ListenableFuture<?> future = Futures.allAsList(futures);
+    try {
+      future.get();
+      service.shutdown();
+    } catch (InterruptedException | ExecutionException e) {
+      e.printStackTrace();
+    }
+    System.out.println("trxids:" + transactionCache.size()
+        + ", block count:" + atomicLong.get()
+        + ", cost:" + (System.currentTimeMillis() - start)
+    );
+    System.exit(0);
   }
 
   public AccountStore getAccountStore() {
@@ -1060,6 +1109,8 @@ public class Manager {
       }
     }
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
+    transactionCache.put(trxCap.getTransactionId().getBytes(),
+        new BytesCapsule(ByteArray.fromLong(trxCap.getBlockNum())));
 
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
         .buildInstance(trxCap, blockCap, trace);
@@ -1597,7 +1648,7 @@ public class Manager {
   }
 
   public void rePush(TransactionCapsule tx) {
-    if (transactionStore.has(tx.getTransactionId().getBytes())) {
+    if (transactionCache.has(tx.getTransactionId().getBytes())) {
       return;
     }
 

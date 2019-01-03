@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.api.IndexHelper;
+import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.RevokingDBWithCachingNewValue;
@@ -44,6 +45,16 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
       this.revokingDB = new RevokingDBWithCachingNewValue(dbName);
     } else {
       throw new RuntimeException("db version is error.");
+    }
+  }
+
+  protected TronStoreWithRevoking(String dbName, Class<? extends DB> clz) {
+    this.dbName = dbName;
+    int dbVersion = Args.getInstance().getStorage().getDbVersion();
+    if (dbVersion == 2) {
+      this.revokingDB = new RevokingDBWithCachingNewValue(dbName, clz);
+    } else {
+      throw new RuntimeException("db version is only 2.(" + dbVersion + ")");
     }
   }
 
