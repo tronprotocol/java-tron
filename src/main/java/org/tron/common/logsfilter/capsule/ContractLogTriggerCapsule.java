@@ -16,9 +16,9 @@ public class ContractLogTriggerCapsule extends TriggerCapsule {
   }
 
   @Override
-  public void processTrigger(){
-    if (FilterQuery.matchFilter(contractLogTrigger)){
-        EventPluginLoader.getInstance().postContractLogTrigger(contractLogTrigger);
+  public void processTrigger() {
+    if (FilterQuery.matchFilter(contractLogTrigger)) {
+      EventPluginLoader.getInstance().postContractLogTrigger(contractLogTrigger);
     }
   }
 }

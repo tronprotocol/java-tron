@@ -35,7 +35,7 @@ public class ContractEventParser {
    */
   public static Map<String, String> parseTopics(List<byte[]> topicList, ABI.Entry entry) {
     Map<String, String> map = new HashMap<>();
-    if (topicList == null || topicList.isEmpty()){
+    if (topicList == null || topicList.isEmpty()) {
       return map;
     }
 
@@ -44,7 +44,7 @@ public class ContractEventParser {
     List<ABI.Entry.Param> list = entry.getInputsList();
 
     // in case indexed topics doesn't match
-    if (topicsMatched(topicList, entry)){
+    if (topicsMatched(topicList, entry)) {
       for (int i = 0; i < list.size(); ++i) {
         ABI.Entry.Param param = list.get(i);
         if (!param.getIndexed()) {
@@ -71,13 +71,14 @@ public class ContractEventParser {
    * Hex.toHexString(data)} Only support basic solidity type, String, Bytes. Fixed Array or dynamic
    * Array are not support yet (then return {"0": Hex.toHexString(data)}).
    */
-  public static Map<String, String> parseEventData(byte[] data, List<byte[]> topicList, ABI.Entry entry) {
+  public static Map<String, String> parseEventData(byte[] data,
+      List<byte[]> topicList, ABI.Entry entry) {
     Map<String, String> map = new HashMap<>();
-    if (ArrayUtils.isEmpty(data)){
+    if (ArrayUtils.isEmpty(data)) {
       return map;
     }
     // in case indexed topics doesn't match
-    if (!topicsMatched(topicList, entry)){
+    if (!topicsMatched(topicList, entry)) {
       map.put("" + (topicList.size() - 1), Hex.toHexString(data));
       return map;
     }
@@ -102,7 +103,7 @@ public class ContractEventParser {
         // position 0 is the signature.
         map.put(i.toString(), str);
       }
-      if (list.size() == 0){
+      if (list.size() == 0) {
         map.put("0", Hex.toHexString(data));
       }
     } catch (UnsupportedOperationException e) {
@@ -113,8 +114,8 @@ public class ContractEventParser {
     return map;
   }
 
-  private static boolean topicsMatched(List<byte[]> topicList, ABI.Entry entry){
-    if (topicList == null || topicList.isEmpty()){
+  private static boolean topicsMatched(List<byte[]> topicList, ABI.Entry entry) {
+    if (topicList == null || topicList.isEmpty()) {
       return true;
     }
     int inputSize = 1;
@@ -134,7 +135,7 @@ public class ContractEventParser {
 
       if (type == Type.INT_NUMBER) {
         return new BigInteger(startBytes).toString();
-      }else if (type == Type.BOOL) {
+      } else if (type == Type.BOOL) {
         return String.valueOf(!DataWord.isZero(startBytes));
       }else if (type == Type.FIXED_BYTES || type == Type.ADDRESS){
         return Hex.toHexString(startBytes);
@@ -195,14 +196,14 @@ public class ContractEventParser {
    * This is only for decode Topic. Since Topic and Data use different encode methods when deal
    * dynamic length types, such as bytes and string.
    */
-  private static String parseTopic(byte[] bytes, String typeStr){
-    if (ArrayUtils.isEmpty(bytes) || StringUtils.isNullOrEmpty(typeStr)){
+  private static String parseTopic(byte[] bytes, String typeStr) {
+    if (ArrayUtils.isEmpty(bytes) || StringUtils.isNullOrEmpty(typeStr)) {
       return "";
     }
     Type type = basicType(typeStr);
     if (type == Type.INT_NUMBER) {
       return DataWord.bigIntValue(bytes);
-    }else if (type == Type.BOOL){
+    } else if (type == Type.BOOL) {
       return String.valueOf(!DataWord.isZero(bytes));
     }
     return DataWord.shortHex(bytes);

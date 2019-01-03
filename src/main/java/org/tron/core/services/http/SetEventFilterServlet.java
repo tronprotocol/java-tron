@@ -23,21 +23,15 @@ public class SetEventFilterServlet extends HttpServlet {
     }
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-        System.out.println("SetEventFilterServlet doPost");
-
         GrpcAPI.EventFilter.Builder filterBuilder = GrpcAPI.EventFilter.newBuilder();
-        GrpcAPI.Return.Builder retBuilder = GrpcAPI.Return.newBuilder();
-
         String jsonValue = "";
 
         try {
             jsonValue = request.getReader().lines()
                     .collect(Collectors.joining(System.lineSeparator()));
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("{}", e);
         }
-
-        System.out.println(jsonValue);
 
         try {
             JsonFormat.merge(jsonValue, filterBuilder);
@@ -46,11 +40,25 @@ public class SetEventFilterServlet extends HttpServlet {
         }
 
         if (Objects.isNull(filterBuilder)){
-            return;
+            try {
+                response.getWriter().println("failed");
+            } catch (IOException e) {
+                logger.error("{}", e);
+            }
         }
 
-        wallet.setEventFilter(filterBuilder);
+        GrpcAPI.Return ret = wallet.setEventFilter(filterBuilder);
+        try {
+            if (ret.getResult()){
+                response.getWriter().println("ok");
+            }
+            else {
+                response.getWriter().println("failed");
+            }
 
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }

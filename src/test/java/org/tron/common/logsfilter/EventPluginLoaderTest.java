@@ -1,10 +1,7 @@
 package org.tron.common.logsfilter;
 
-import static org.tron.common.logsfilter.FilterQuery.parseFilterQueryBlockNumber;
-
 import org.junit.Assert;
 import org.junit.Test;
-import org.tron.common.logsfilter.trigger.BlockLogTrigger;
 
 public class EventPluginLoaderTest {
   @Test
@@ -18,6 +15,5 @@ public class EventPluginLoaderTest {
     triggerConfig.setTriggerName("block");
     config.getTriggerConfigList().add(triggerConfig);
     Assert.assertEquals(false, EventPluginLoader.getInstance().start(config));
-
   }
 }

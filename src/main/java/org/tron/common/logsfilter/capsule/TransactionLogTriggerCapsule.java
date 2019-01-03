@@ -34,7 +34,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
   }
 
   @Override
-  public void processTrigger(){
+  public void processTrigger() {
     EventPluginLoader.getInstance().postTransactionTrigger(transactionLogTrigger);
   }
 }

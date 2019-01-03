@@ -655,10 +655,10 @@ service Wallet {
 
       rpc SetEventPluginConfig (EventPluginInfo) returns (Return) {
             option (google.api.http) = {
-              post: "/wallet/setpluginconfig"
+              post: "/wallet/seteventpluginconfig"
               body: "*"
               additional_bindings {
-                get: "/wallet/setpluginconfig"
+                get: "/wallet/seteventpluginconfig"
               }
             };
       }
