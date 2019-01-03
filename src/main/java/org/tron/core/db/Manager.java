@@ -10,11 +10,12 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -86,6 +87,7 @@ import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Transaction.Contract;
 
 
 @Slf4j(topic = "DB")
@@ -795,18 +797,14 @@ public class Manager {
     long start = System.currentTimeMillis();
     try (PendingManager pm = new PendingManager(this)) {
 
-      Future<Boolean> future = executorService.submit(() -> {
+      if (!block.generatedByMyself) {
         try {
-          if (!block.generatedByMyself) {
-            preValidateTransactionSign(block);
-          }
-        } catch (Exception e) {
-          logger.error("preValidateTransactionSign fail! block info: {}", block.toString(),
-              e.getMessage());
-          return false;
+          preValidateTransactionSign(block);
+        } catch (InterruptedException e) {
+          logger.error("", e);
+          Thread.interrupted();
         }
-        return true;
-      });
+      }
 
       if (!block.generatedByMyself) {
         if (!block.validateSignature()) {
@@ -892,13 +890,6 @@ public class Manager {
         }
         try (ISession tmpSession = revokingStore.buildSession()) {
           applyBlock(newBlock);
-          try {
-            if (future != null && !future.get()) {
-              throw new ValidateSignatureException("");
-            }
-          } catch (Exception e) {
-            throw new ValidateSignatureException(e.getMessage());
-          }
           tmpSession.commit();
         } catch (Throwable throwable) {
           logger.error(throwable.getMessage(), throwable);
@@ -1148,6 +1139,7 @@ public class Manager {
     session.reset();
     session.setValue(revokingStore.buildSession());
 
+    Map<String, Boolean> accountMap = new HashMap<>();
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext() || repushTransactions.size() > 0) {
       boolean fromPending = false;
@@ -1171,6 +1163,27 @@ public class Manager {
           > ChainConstant.BLOCK_SIZE) {
         postponedTrxCount++;
         continue;
+      }
+      //
+      Contract contract = trx.getInstance().getRawData().getContract(0);
+      byte[] owner = TransactionCapsule.getOwner(contract);
+      String ownerAddress = ByteArray.toHexString(owner);
+      if (accountMap.containsKey(ownerAddress) && accountMap.get(ownerAddress)) {
+        continue;
+      } else {
+        switch (contract.getType()) {
+          case AccountPermissionUpdateContract:
+          case PermissionAddKeyContract:
+          case PermissionUpdateKeyContract:
+          case PermissionDeleteKeyContract: {
+            if (accountMap.containsKey(ownerAddress)) {
+              continue;
+            }
+            accountMap.put(ownerAddress, true);
+          }
+          default:
+            accountMap.put(ownerAddress, false);
+        }
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
@@ -1318,7 +1331,6 @@ public class Manager {
     updateMaintenanceState(needMaint);
     updateRecentBlock(block);
   }
-
 
 
   private void updateTransHashCache(BlockCapsule block) {
@@ -1582,6 +1594,9 @@ public class Manager {
     logger.info("PreValidate Transaction Sign, size:" + block.getTransactions().size()
         + ",block num:" + block.getNum());
     int transSize = block.getTransactions().size();
+    if (transSize <= 0) {
+      return;
+    }
     CountDownLatch countDownLatch = new CountDownLatch(transSize);
     List<Future<Boolean>> futures = new ArrayList<>(transSize);
 
