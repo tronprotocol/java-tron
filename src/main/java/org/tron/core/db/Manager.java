@@ -183,6 +183,9 @@ public class Manager {
 
   private boolean isRunRepushThread = true;
 
+  private ExecutorService executorService = Executors
+      .newFixedThreadPool(1, r -> new Thread(r, "ValidateTransactionSign"));
+
   @Getter
   private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
       .newBuilder().maximumSize(100_000).recordStats().build();
@@ -792,6 +795,19 @@ public class Manager {
     long start = System.currentTimeMillis();
     try (PendingManager pm = new PendingManager(this)) {
 
+      Future<Boolean> future = executorService.submit(() -> {
+        try {
+          if (!block.generatedByMyself) {
+            preValidateTransactionSign(block);
+          }
+        } catch (Exception e) {
+          logger.error("preValidateTransactionSign fail! block info: {}", block.toString(),
+              e.getMessage());
+          return false;
+        }
+        return true;
+      });
+
       if (!block.generatedByMyself) {
         if (!block.validateSignature()) {
           logger.warn("The signature is not validated.");
@@ -876,6 +892,13 @@ public class Manager {
         }
         try (ISession tmpSession = revokingStore.buildSession()) {
           applyBlock(newBlock);
+          try {
+            if (future != null && !future.get()) {
+              throw new ValidateSignatureException("");
+            }
+          } catch (Exception e) {
+            throw new ValidateSignatureException(e.getMessage());
+          }
           tmpSession.commit();
         } catch (Throwable throwable) {
           logger.error(throwable.getMessage(), throwable);
@@ -1554,7 +1577,7 @@ public class Manager {
     }
   }
 
-  public synchronized void preValidateTransactionSign(BlockCapsule block)
+  public void preValidateTransactionSign(BlockCapsule block)
       throws InterruptedException, ValidateSignatureException {
     logger.info("PreValidate Transaction Sign, size:" + block.getTransactions().size()
         + ",block num:" + block.getNum());
