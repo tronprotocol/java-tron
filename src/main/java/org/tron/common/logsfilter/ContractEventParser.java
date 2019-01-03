@@ -55,7 +55,9 @@ public class ContractEventParser {
           break;
         }
         String str = parseTopic(topicList.get(index++), param.getType());
-        map.put(param.getName(), str);
+        if (StringUtils.isNotNullOrEmpty(param.getName())) {
+          map.put(param.getName(), str);
+        }
         map.put("" + i, str);
       }
     } else {
@@ -99,9 +101,11 @@ public class ContractEventParser {
         }
 
         String str = parseDataBytes(data, param.getType(), index++);
-        map.put(param.getName(), str);
-        // position 0 is the signature.
-        map.put(i.toString(), str);
+        if (StringUtils.isNotNullOrEmpty(param.getName())) {
+          map.put(param.getName(), str);
+        }
+        map.put("" + i, str);
+
       }
       if (list.size() == 0) {
         map.put("0", Hex.toHexString(data));
