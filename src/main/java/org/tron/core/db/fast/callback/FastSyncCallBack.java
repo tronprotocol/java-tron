@@ -1,5 +1,6 @@
 package org.tron.core.db.fast.callback;
 
+import static org.tron.common.crypto.Hash.EMPTY_TRIE_HASH;
 import static org.tron.core.db.fast.FastSyncStoreConstant.ACCOUNT_ID_INDEX_STORE_KEY;
 import static org.tron.core.db.fast.FastSyncStoreConstant.ACCOUNT_INDEX_STORE_KEY;
 import static org.tron.core.db.fast.FastSyncStoreConstant.ASSET_ISSUE_STORE_KEY;
@@ -29,6 +30,7 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.utils.FastByteComparisons;
 import org.tron.core.capsule.utils.RLP;
 import org.tron.core.db.Manager;
 import org.tron.core.db.fast.FastSyncStoreConstant.TrieEnum;
@@ -114,6 +116,9 @@ public class FastSyncCallBack {
     if (!exe()) {
       return;
     }
+    if (item == null || ArrayUtils.isEmpty(item.getData())) {
+      return;
+    }
     trie.put(RLP.encodeElement(key), item.getData());
   }
 
@@ -130,6 +135,9 @@ public class FastSyncCallBack {
     }
     TrieImpl trieImpl = selectTrie(trieEnum);
     if (trieImpl != null) {
+      if (ArrayUtils.isEmpty(value)) {
+        return;
+      }
       trieImpl.put(RLP.encodeElement(key), value);
     }
   }
@@ -254,7 +262,8 @@ public class FastSyncCallBack {
   private void setStoreKeyAndHash() {
     for (TrieEnum trieEnum : TrieEnum.values()) {
       TrieImpl childTrie = selectTrie(trieEnum);
-      if (childTrie == null || ArrayUtils.isEmpty(childTrie.getRootHash())) {
+      if (childTrie == null || ArrayUtils.isEmpty(childTrie.getRootHash())
+          || FastByteComparisons.equal(childTrie.getRootHash(), EMPTY_TRIE_HASH)) {
         continue;
       }
       trie.put(RLP.encodeString(trieEnum.getKey()), childTrie.getRootHash());
