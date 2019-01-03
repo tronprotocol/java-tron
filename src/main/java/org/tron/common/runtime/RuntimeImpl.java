@@ -413,6 +413,8 @@ public class RuntimeImpl implements Runtime {
         energyLimit = getAccountEnergyLimitWithFloatRatio(creator, feeLimit, callValue);
       }
 
+      checkTokenValueAndId(tokenValue, tokenId);
+
       byte[] ops = newSmartContract.getBytecode().toByteArray();
       rootInternalTransaction = new InternalTransaction(trx, trxType);
 
@@ -503,6 +505,8 @@ public class RuntimeImpl implements Runtime {
         throw new ContractValidateException("tokenValue must >= 0");
       }
     }
+
+    checkTokenValueAndId(tokenValue, tokenId);
 
     byte[] code = this.deposit.getCode(contractAddress);
     if (isNotEmpty(code)) {
@@ -719,6 +723,23 @@ public class RuntimeImpl implements Runtime {
       VMUtils.saveProgramTraceFile(config, txHash, traceContent);
     }
 
+  }
+  public void checkTokenValueAndId(long tokenValue, long tokenId) throws ContractValidateException {
+    if (VMConfig.allowTvmTransferTrc10()) {
+      if (VMConfig.isVERSION_3_5_HARD_FORK()) { //3.5 hard fork
+        // tokenid can only be 0
+        // or (MIN_TOKEN_ID, Long.Max]
+        if (tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0){
+          throw new ContractValidateException("tokenId must > " + VMConstant.MIN_TOKEN_ID);
+        }
+        // tokenid can only be 0 when tokenvalue = 0,
+        // or (MIN_TOKEN_ID, Long.Max]
+        if (tokenValue > 0 && tokenId == 0) {
+          throw new ContractValidateException("invalid arguments with tokenValue = " + tokenValue +
+              ", tokenId = " + tokenId);
+        }
+      }
+    }
   }
 
   public ProgramResult getResult() {
