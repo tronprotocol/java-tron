@@ -8,6 +8,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
+import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
@@ -134,6 +135,17 @@ public class Util {
     jsonObjectExt
         .put("transaction",
             printTransactionToJSON(transactionSignWeight.getTransaction().getTransaction()));
+    jsonObject.put("transaction", jsonObjectExt);
+    return jsonObject.toJSONString();
+  }
+
+  public static String printTransactionApprovedList(TransactionApprovedList transactionApprovedList) {
+    String string = JsonFormat.printToString(transactionApprovedList);
+    JSONObject jsonObject = JSONObject.parseObject(string);
+    JSONObject jsonObjectExt = jsonObject.getJSONObject("transaction");
+    jsonObjectExt
+        .put("transaction",
+            printTransactionToJSON(transactionApprovedList.getTransaction().getTransaction()));
     jsonObject.put("transaction", jsonObjectExt);
     return jsonObject.toJSONString();
   }
