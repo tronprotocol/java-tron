@@ -548,7 +548,6 @@ public class Manager {
         + ", block count:" + atomicLong.get()
         + ", cost:" + (System.currentTimeMillis() - start)
     );
-    System.exit(0);
   }
 
   public AccountStore getAccountStore() {

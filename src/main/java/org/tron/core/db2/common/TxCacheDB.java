@@ -5,11 +5,13 @@ import com.google.common.collect.Maps;
 import com.google.common.primitives.Longs;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.common.WrappedByteArray;
@@ -21,11 +23,13 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   private Map<Long, ArrayList<Key>> blockNumMap = new LinkedHashMap<Long, ArrayList<Key>>() {
     @Override
     protected boolean removeEldestEntry(Map.Entry<Long, ArrayList<Key>> entry) {
-      long blockNum = entry.getKey();
-      List<Key> txs = entry.getValue();
-      txs.forEach(db::remove);
       if (blockNumMap.size() > BLOCK_COUNT) {
-        blockNumMap.remove(blockNum);
+        blockNumMap.entrySet().stream()
+            .min(Comparator.comparing(Entry::getKey))
+            .ifPresent(e -> {
+              e.getValue().forEach(db::remove);
+              blockNumMap.remove(e.getKey());
+            });
       }
       return false;
     }
@@ -33,7 +37,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
 
   @Override
   public byte[] get(byte[] key) {
-    return Longs.toByteArray(db.get(key));
+    return Longs.toByteArray(db.get(Key.of(key)));
   }
 
   @Override
@@ -56,7 +60,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
 
   @Override
   public void remove(byte[] key) {
-    db.remove(key);
+    db.remove(Key.of(key));
   }
 
   @Override
