@@ -129,6 +129,9 @@ public class EventPluginLoader {
     } else if (EventPluginConfig.TRANSACTION_TRIGGER_NAME.equalsIgnoreCase(tiggerName)) {
       transactionLogTriggerEnable = enable;
     }
+    else {
+      logger.error("unknown trigger name");
+    }
   }
 
   public synchronized boolean isBlockLogTriggerEnable() {

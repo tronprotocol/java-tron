@@ -1720,6 +1720,7 @@ public class Manager {
     if (eventPluginLoaded &&
       (EventPluginLoader.getInstance().isContractEventTriggerEnable()
         || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
+      logger.info("switchfork occured, post reorgContractTrigger");
       try {
         BlockCapsule oldHeadBlock = getBlockById(
           getDynamicPropertiesStore().getLatestBlockHeaderHash());
