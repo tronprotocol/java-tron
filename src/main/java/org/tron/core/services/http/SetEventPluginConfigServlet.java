@@ -44,7 +44,7 @@ public class SetEventPluginConfigServlet extends HttpServlet {
             try {
                 response.getWriter().println("failed");
             } catch (IOException e) {
-                e.printStackTrace();
+                logger.error("{}", e);
             }
             return;
         }
@@ -60,7 +60,7 @@ public class SetEventPluginConfigServlet extends HttpServlet {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("{}", e);
         }
     }
 }
