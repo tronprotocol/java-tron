@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.stream.Collectors;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
@@ -40,8 +41,9 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   }
 
   private void removeEldest() {
-    if (blockNumMap.keySet().size() > BLOCK_COUNT) {
-      blockNumMap.keySet().stream()
+    Set<Long> keys = blockNumMap.keySet();
+    if (keys.size() > BLOCK_COUNT) {
+      keys.stream()
           .min(Long::compareTo)
           .ifPresent(blockNumMap::removeAll);
     }
