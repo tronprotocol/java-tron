@@ -110,13 +110,21 @@ public class PermissionUpdateKeyActuator extends AbstractActuator {
     if (permissionUpdateKeyContract.getKey().getWeight() <= 0) {
       throw new ContractValidateException("key weight should be greater than 0");
     }
-    int weightSum = 0;
+    long weightSum = 0;
     for (Key key : permission.getKeysList()) {
       if (!key.getAddress().equals(permissionUpdateKeyContract.getKey().getAddress())) {
-        weightSum += key.getWeight();
+        try {
+          weightSum = Math.addExact(weightSum, key.getWeight());
+        } catch (ArithmeticException e) {
+          throw new ContractValidateException(e.getMessage());
+        }
       }
     }
-    weightSum += permissionUpdateKeyContract.getKey().getWeight();
+    try {
+      weightSum = Math.addExact(weightSum, permissionUpdateKeyContract.getKey().getWeight());
+    } catch (ArithmeticException e) {
+      throw new ContractValidateException(e.getMessage());
+    }
     if (weightSum < permission.getThreshold()) {
       throw new ContractValidateException(
           "sum of all keys weight should not be less that threshold");
