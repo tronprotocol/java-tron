@@ -1048,11 +1048,12 @@ public class Manager {
    * Get a BlockCapsule by id.
    */
   public BlockCapsule getBlockById(final Sha256Hash hash)
-
     throws BadItemException, ItemNotFoundException {
-    return this.khaosDb.containBlock(hash)
-      ? this.khaosDb.getBlock(hash)
-      : blockStore.get(hash.getBytes());
+    BlockCapsule block = this.khaosDb.getBlock(hash);
+    if (block == null) {
+      block = blockStore.get(hash.getBytes());
+    }
+    return block;
   }
 
   /**
