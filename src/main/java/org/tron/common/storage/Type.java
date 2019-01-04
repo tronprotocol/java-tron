@@ -7,7 +7,6 @@ public class Type {
     public static int VALUE_TYPE_NORMAL    = 0;
     public static int VALUE_TYPE_DIRTY      = 1 << 0;
     public static int VALUE_TYPE_CREATE     = 1 << 1;
-    public static int VALUE_TYPE_EMPTY = 1 << 2;
     public static int VALUE_TYPE_UNKNOWN    = 0xFFFFFFFC;
 
     protected int type = VALUE_TYPE_NORMAL;

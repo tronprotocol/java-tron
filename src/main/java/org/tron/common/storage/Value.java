@@ -28,10 +28,6 @@ public class Value {
             this.any = new byte[any.length];
             System.arraycopy(any, 0, this.any, 0, any.length);
             this.type = type.clone();
-        } else {
-            if (true) {
-                this.type = new Type(Type.VALUE_TYPE_EMPTY);
-            }
         }
     }
 
@@ -44,10 +40,6 @@ public class Value {
             this.any = new byte[any.length];
             System.arraycopy(any, 0, this.any, 0, any.length);
             this.type = new Type(type);
-        } else {
-            if (true) {
-                this.type = new Type(Type.VALUE_TYPE_EMPTY);
-            }
         }
     }
 
