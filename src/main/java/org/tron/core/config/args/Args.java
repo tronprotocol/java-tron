@@ -753,7 +753,7 @@ public class Args {
     }
 
     INSTANCE.validateSignThreadNum = config.hasPath("node.validateSignThreadNum") ? config
-        .getInt("node.validateSignThreadNum") : Runtime.getRuntime().availableProcessors() / 2;
+        .getInt("node.validateSignThreadNum") : Runtime.getRuntime().availableProcessors() * 2;
 
     INSTANCE.walletExtensionApi =
         config.hasPath("node.walletExtensionApi") && config.getBoolean("node.walletExtensionApi");
