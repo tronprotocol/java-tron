@@ -337,8 +337,8 @@ public class WalletExchange001 {
     ExchangeList exchangeList = blockingStubFull
         .getPaginatedExchangeList(pageMessageBuilder.build());
     Assert.assertTrue(exchangeList.getExchangesCount() >= 1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
-
     //Solidity support getExchangeId
     exchangeIdInfo = PublicMethed.getExchange(exchangeId.toString(),blockingStubSolidity);
     logger.info("createtime is" + exchangeIdInfo.get().getCreateTime());
