@@ -1720,6 +1720,7 @@ public class Manager {
         + ",block num:" + block.getNum());
     int transSize = block.getTransactions().size();
     if (transSize <= 0) {
+      done = true;
       return;
     }
     CountDownLatch countDownLatch = new CountDownLatch(transSize);
