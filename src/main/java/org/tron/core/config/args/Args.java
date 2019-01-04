@@ -400,6 +400,8 @@ public class Args {
   @Setter
   private long blockNumForEneryLimit;
 
+  @Getter
+  @Setter
   @Parameter(names = {"--es"})
   private boolean eventSubscribe = false;
 
