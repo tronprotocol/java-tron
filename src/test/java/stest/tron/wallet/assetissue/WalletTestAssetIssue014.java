@@ -95,6 +95,9 @@ public class WalletTestAssetIssue014 {
     
     Assert.assertTrue(PublicMethed
         .sendcoin(asset014Address, sendAmount, fromAddress, testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long start = System.currentTimeMillis() + 2000;
     Long end = System.currentTimeMillis() + 1000000000;
     Assert.assertTrue(PublicMethed
@@ -107,6 +110,9 @@ public class WalletTestAssetIssue014 {
     ByteString assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
     
     //Transfer asset to an account.
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .transferAsset(transferAssetAddress, assetAccountId.toByteArray(), 10000000L,
             asset014Address, testKeyForAssetIssue014, blockingStubFull));
