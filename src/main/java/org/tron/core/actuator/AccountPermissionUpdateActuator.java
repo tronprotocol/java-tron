@@ -139,7 +139,11 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
         if (key.getWeight() <= 0) {
           throw new ContractValidateException("key's weight should be greater than 0");
         }
-        weightSum += key.getWeight();
+        try {
+          weightSum = Math.addExact(weightSum, key.getWeight());
+        } catch (ArithmeticException e) {
+          throw new ContractValidateException(e.getMessage());
+        }
       }
       if (weightSum < permission.getThreshold()) {
         throw new ContractValidateException(
