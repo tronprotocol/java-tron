@@ -50,6 +50,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.db.AccountStore;
+import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
@@ -608,6 +609,26 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return false;
   }
 
+  public static boolean validateSignature(Transaction transaction, byte[] hash,
+      ByteArrayWrapper ownerByte)
+      throws PermissionException, SignatureException, SignatureFormatException {
+    Transaction.Contract contract = transaction.getRawData().getContractList().get(0);
+    String permissionName = getPermissionName(contract);
+    byte[] owner = ownerByte.getData();
+    AccountCapsule account = Manager.accountCache.get(ownerByte);
+    Permission permission;
+    if (account == null) {
+      permission = getDefaultPermission(ByteString.copyFrom(owner), permissionName);
+    } else {
+      permission = getPermission(account.getInstance(), permissionName);
+    }
+    long weight = checkWeight(permission, transaction.getSignatureList(), hash, null);
+    if (weight >= permission.getThreshold()) {
+      return true;
+    }
+    return false;
+  }
+
   /**
    * validate signature
    */
@@ -627,6 +648,40 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     byte[] hash = this.getRawHash().getBytes();
     try {
       if (!validateSignature(this.transaction, hash, manager.getAccountStore())) {
+        isVerified = false;
+        throw new ValidateSignatureException("sig error");
+      }
+    } catch (SignatureException e) {
+      isVerified = false;
+      throw new ValidateSignatureException(e.getMessage());
+    } catch (PermissionException e) {
+      isVerified = false;
+      throw new ValidateSignatureException(e.getMessage());
+    } catch (SignatureFormatException e) {
+      isVerified = false;
+      throw new ValidateSignatureException(e.getMessage());
+    }
+
+    isVerified = true;
+    return true;
+  }
+
+  public boolean validateSignature(Manager manager, ByteArrayWrapper owner)
+      throws ValidateSignatureException {
+    if (isVerified == true) {
+      return true;
+    }
+    if (this.transaction.getSignatureCount() <= 0
+        || this.transaction.getRawData().getContractCount() <= 0) {
+      throw new ValidateSignatureException("miss sig or contract");
+    }
+    if (this.transaction.getSignatureCount() >
+        manager.getDynamicPropertiesStore().getTotalSignNum()) {
+      throw new ValidateSignatureException("too many signatures");
+    }
+    byte[] hash = this.getRawHash().getBytes();
+    try {
+      if (!validateSignature(this.transaction, hash, owner)) {
         isVerified = false;
         throw new ValidateSignatureException("sig error");
       }

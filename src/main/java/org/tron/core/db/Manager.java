@@ -7,14 +7,17 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -32,6 +35,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,7 +89,13 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
+import org.tron.protos.Contract.AccountPermissionUpdateContract;
+import org.tron.protos.Contract.PermissionAddKeyContract;
+import org.tron.protos.Contract.PermissionDeleteKeyContract;
+import org.tron.protos.Contract.PermissionUpdateKeyContract;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract;
 
 
 @Slf4j(topic = "DB")
@@ -189,6 +199,13 @@ public class Manager {
 
   @Getter
   private ForkController forkController = ForkController.instance();
+
+  private ExecutorService executorService = Executors
+      .newFixedThreadPool(1, r -> new Thread(r, "PreValidateTransactionSign"));
+
+  public static Map<ByteArrayWrapper, AccountCapsule> accountCache = new HashMap<>();
+
+  public volatile boolean done = false;
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -792,6 +809,26 @@ public class Manager {
     long start = System.currentTimeMillis();
     try (PendingManager pm = new PendingManager(this)) {
 
+      Future<Boolean> future = executorService.submit(() -> {
+        try {
+          if (!block.generatedByMyself) {
+            preValidateTransactionSign(block);
+          }
+        } catch (Exception e) {
+          logger.error("preValidateTransactionSign fail! block info: {}", block.toString(),
+              e.getMessage());
+          return false;
+        }
+        return true;
+      });
+      while (!done) {
+        try {
+          Thread.sleep(1);
+        } catch (InterruptedException e) {
+        }
+      }
+      done = false;
+
       if (!block.generatedByMyself) {
         if (!block.validateSignature()) {
           logger.warn("The signature is not validated.");
@@ -876,6 +913,13 @@ public class Manager {
         }
         try (ISession tmpSession = revokingStore.buildSession()) {
           applyBlock(newBlock);
+          try {
+            if (future != null && !future.get()) {
+              throw new ValidateSignatureException("");
+            }
+          } catch (Exception e) {
+            throw new ValidateSignatureException(e.getMessage());
+          }
           tmpSession.commit();
         } catch (Throwable throwable) {
           logger.error(throwable.getMessage(), throwable);
@@ -1297,7 +1341,6 @@ public class Manager {
   }
 
 
-
   private void updateTransHashCache(BlockCapsule block) {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       this.transactionIdCache.put(transactionCapsule.getTransactionId(), true);
@@ -1531,8 +1574,18 @@ public class Manager {
   private static class ValidateSignTask implements Callable<Boolean> {
 
     private TransactionCapsule trx;
+    private List<TransactionCapsule> trxList;
     private CountDownLatch countDownLatch;
     private Manager manager;
+    private ByteArrayWrapper owner;
+
+    ValidateSignTask(List<TransactionCapsule> trxList, CountDownLatch countDownLatch,
+        Manager manager, ByteArrayWrapper owner) {
+      this.trxList = trxList;
+      this.countDownLatch = countDownLatch;
+      this.manager = manager;
+      this.owner = owner;
+    }
 
     ValidateSignTask(TransactionCapsule trx, CountDownLatch countDownLatch,
         Manager manager) {
@@ -1544,29 +1597,150 @@ public class Manager {
     @Override
     public Boolean call() throws ValidateSignatureException {
       try {
-        trx.validateSignature(manager);
+        if (trx != null) {
+          trx.validateSignature(manager);
+        } else {
+          for (TransactionCapsule trx : trxList) {
+            trx.validateSignature(manager, owner);
+            updateAccount(trx.getInstance(), owner);
+          }
+
+        }
       } catch (ValidateSignatureException e) {
         throw e;
       } finally {
         countDownLatch.countDown();
+        if (owner != null && ArrayUtils.isNotEmpty(owner.getData())) {
+          accountCache.remove(owner);
+        }
       }
       return true;
     }
+
+    private static AccountCapsule updateAccount(Transaction transaction, ByteArrayWrapper owner)
+        throws ValidateSignatureException {
+      Transaction.Contract contract = transaction.getRawData().getContract(0);
+      AccountCapsule account = Manager.accountCache.get(owner);
+      switch (contract.getType()) {
+        case AccountPermissionUpdateContract: {
+          AccountPermissionUpdateContract accountPermissionUpdateContract;
+          try {
+            accountPermissionUpdateContract = contract.getParameter()
+                .unpack(AccountPermissionUpdateContract.class);
+          } catch (InvalidProtocolBufferException e) {
+            throw new ValidateSignatureException(e.getMessage());
+          }
+          account.updatePermissions(accountPermissionUpdateContract.getPermissionsList());
+        }
+        break;
+        case PermissionAddKeyContract: {
+          PermissionAddKeyContract permissionAddKeyContract;
+          try {
+            permissionAddKeyContract = contract.getParameter()
+                .unpack(PermissionAddKeyContract.class);
+          } catch (InvalidProtocolBufferException e) {
+            throw new ValidateSignatureException(e.getMessage());
+          }
+          account.permissionAddKey(permissionAddKeyContract.getKey(),
+              permissionAddKeyContract.getPermissionName());
+        }
+        break;
+        case PermissionUpdateKeyContract: {
+          PermissionUpdateKeyContract permissionUpdateKeyContract;
+          try {
+            permissionUpdateKeyContract = contract.getParameter()
+                .unpack(PermissionUpdateKeyContract.class);
+          } catch (InvalidProtocolBufferException e) {
+            throw new ValidateSignatureException(e.getMessage());
+          }
+          account.permissionUpdateKey(permissionUpdateKeyContract.getKey(),
+              permissionUpdateKeyContract.getPermissionName());
+        }
+        break;
+        case PermissionDeleteKeyContract: {
+          PermissionDeleteKeyContract permissionDeleteKeyContract;
+          try {
+            permissionDeleteKeyContract = contract.getParameter()
+                .unpack(PermissionDeleteKeyContract.class);
+          } catch (InvalidProtocolBufferException e) {
+            throw new ValidateSignatureException(e.getMessage());
+          }
+          account.permissionDeleteKey(permissionDeleteKeyContract.getKeyAddress(),
+              permissionDeleteKeyContract.getPermissionName());
+        }
+        break;
+        default:
+      }
+      Manager.accountCache.put(owner, account);
+      return account;
+    }
   }
 
-  public synchronized void preValidateTransactionSign(BlockCapsule block)
+  private Map<ByteArrayWrapper, List<TransactionCapsule>> splitTransaction(BlockCapsule block) {
+    Map<ByteArrayWrapper, List<TransactionCapsule>> listMap = new HashMap<>();
+    Map<ByteArrayWrapper, Boolean> remarkMap = new HashMap<>();
+    for (TransactionCapsule transaction : block.getTransactions()) {
+      Contract contract = transaction.getInstance().getRawData().getContract(0);
+      byte[] owner = TransactionCapsule.getOwner(contract);
+      ByteArrayWrapper byteArrayWrapper = new ByteArrayWrapper(owner);
+      if (!listMap.containsKey(byteArrayWrapper)) {
+        listMap.put(byteArrayWrapper, new ArrayList<>());
+      }
+      listMap.get(byteArrayWrapper).add(transaction);
+      switch (contract.getType()) {
+        case AccountPermissionUpdateContract:
+        case PermissionAddKeyContract:
+        case PermissionUpdateKeyContract:
+        case PermissionDeleteKeyContract:
+          remarkMap.put(byteArrayWrapper, true);
+        default:
+      }
+    }
+    List<TransactionCapsule> list = new ArrayList<>();
+    for (Iterator<Entry<ByteArrayWrapper, List<TransactionCapsule>>> iterator = listMap.entrySet()
+        .iterator(); iterator.hasNext(); ) {
+      Entry<ByteArrayWrapper, List<TransactionCapsule>> entry = iterator.next();
+      if (remarkMap.containsKey(entry.getKey())) {
+        continue;
+      } else {
+        for (TransactionCapsule trx : entry.getValue()) {
+          list.add(trx);
+        }
+        iterator.remove();
+      }
+    }
+    ByteArrayWrapper byteArrayWrapper = new ByteArrayWrapper(new byte[0]);
+    listMap.put(byteArrayWrapper, list);
+    return listMap;
+  }
+
+  public void preValidateTransactionSign(BlockCapsule block)
       throws InterruptedException, ValidateSignatureException {
     logger.info("PreValidate Transaction Sign, size:" + block.getTransactions().size()
         + ",block num:" + block.getNum());
     int transSize = block.getTransactions().size();
+    if (transSize <= 0) {
+      return;
+    }
     CountDownLatch countDownLatch = new CountDownLatch(transSize);
     List<Future<Boolean>> futures = new ArrayList<>(transSize);
-
-    for (TransactionCapsule transaction : block.getTransactions()) {
-      Future<Boolean> future = validateSignService
-          .submit(new ValidateSignTask(transaction, countDownLatch, this));
-      futures.add(future);
+    ByteArrayWrapper byteArrayWrapper = new ByteArrayWrapper(new byte[0]);
+    for (Entry<ByteArrayWrapper, List<TransactionCapsule>> entry : splitTransaction(block)
+        .entrySet()) {
+      if (entry.getKey().equals(byteArrayWrapper)) {
+        for (TransactionCapsule trx : entry.getValue()) {
+          Future<Boolean> future = validateSignService
+              .submit(new ValidateSignTask(trx, countDownLatch, this));
+          futures.add(future);
+        }
+      } else {
+        accountCache.put(entry.getKey(), accountStore.get(entry.getKey().getData()));
+        Future<Boolean> future = validateSignService
+            .submit(new ValidateSignTask(entry.getValue(), countDownLatch, this, entry.getKey()));
+        futures.add(future);
+      }
     }
+    done = true;
     countDownLatch.await();
 
     for (Future<Boolean> future : futures) {
