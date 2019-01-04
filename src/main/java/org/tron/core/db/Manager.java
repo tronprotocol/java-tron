@@ -550,8 +550,10 @@ public class Manager {
     try {
       future.get();
       service.shutdown();
-    } catch (InterruptedException | ExecutionException e) {
-      e.printStackTrace();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    } catch (ExecutionException e) {
+      logger.info(e.getMessage());
     }
     logger.info("trxids:{}, block count:{}, empty block count:{}, cost:{}",
         transactionCache.size(),
