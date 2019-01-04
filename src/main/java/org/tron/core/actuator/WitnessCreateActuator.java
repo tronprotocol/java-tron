@@ -17,7 +17,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-@Slf4j
+@Slf4j(topic = "actuator")
 public class WitnessCreateActuator extends AbstractActuator {
 
   WitnessCreateActuator(final Any contract, final Manager dbManager) {

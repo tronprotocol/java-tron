@@ -59,6 +59,10 @@ public class ContractLinkage006 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(linkage006Key);
@@ -77,10 +81,16 @@ public class ContractLinkage006 {
 
     Assert.assertTrue(PublicMethed.sendcoin(linkage006Address, 20000000000L, fromAddress,
         testKey003, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalance(linkage006Address, 1000000L,
         3, linkage006Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage006Address, 1000000L,
         3, 1, linkage006Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     contractName = "stackOutByContract";
     code = "60806040526000805561026c806100176000396000f3006080604052600436106100565763ffffffff7c01"
         + "0000000000000000000000000000000000000000000000000000000060003504166306661abd811461005b5"
@@ -128,6 +138,8 @@ public class ContractLinkage006 {
     String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code,
         "", maxFeeLimit, 1000L, 100, null, linkage006Key,
         linkage006Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
@@ -196,6 +208,8 @@ public class ContractLinkage006 {
         "init(address,uint256)", initParmes, false,
         0, 100000000L, linkage006Address2, linkage006Key2, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById1 = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
     Long energyUsageTotal1 = infoById1.get().getReceipt().getEnergyUsageTotal();
@@ -258,6 +272,8 @@ public class ContractLinkage006 {
         "init(address,uint256)", initParmes, false,
         1000, 100000000L, linkage006Address2, linkage006Key2, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById2 = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
     Long energyUsageTotal2 = infoById2.get().getReceipt().getEnergyUsageTotal();
@@ -297,6 +313,9 @@ public class ContractLinkage006 {
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 1);
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {

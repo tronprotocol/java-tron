@@ -21,6 +21,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -63,7 +64,6 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
-import org.tron.core.config.Parameter.AdaptiveResourceLimitConstants;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
@@ -100,7 +100,7 @@ import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
 
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Component
 public class Manager {
 
@@ -662,7 +662,7 @@ public class Manager {
       TooBigTransactionException, TransactionExpirationException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
 
-    if (!trx.validateSignature()) {
+    if (!trx.validateSignature(this)) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
@@ -861,6 +861,10 @@ public class Manager {
         }
       }
 
+      if (witnessService != null) {
+        witnessService.checkDupWitness(block);
+      }
+
       BlockCapsule newBlock = this.khaosDb.push(block);
 
       // DB don't need lower block
@@ -1040,11 +1044,12 @@ public class Manager {
    */
   public BlockCapsule getBlockById(final Sha256Hash hash)
       throws BadItemException, ItemNotFoundException {
-    return this.khaosDb.containBlock(hash)
-        ? this.khaosDb.getBlock(hash)
-        : blockStore.get(hash.getBytes());
+    BlockCapsule block = this.khaosDb.getBlock(hash);
+    if (block == null) {
+      block = blockStore.get(hash.getBytes());
+    }
+    return block;
   }
-
 
   /**
    * judge has blocks.
@@ -1074,7 +1079,7 @@ public class Manager {
 
     validateDup(trxCap);
 
-    if (!trxCap.validateSignature()) {
+    if (!trxCap.validateSignature(this)) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
@@ -1149,7 +1154,7 @@ public class Manager {
     // if (lastHeadBlockIsMaintenanceBefore != lastHeadBlockIsMaintenance()) {
     if (!witnessController.validateWitnessSchedule(witnessCapsule.getAddress(), when)) {
       logger.info("It's not my turn, "
-          + "and the first block after the maintenance period has just been processed");
+          + "and the first block after the maintenance period has just been processed.");
 
       logger.info("when:{},lastHeadBlockIsMaintenanceBefore:{},lastHeadBlockIsMaintenanceAfter:{}",
           when, lastHeadBlockIsMaintenanceBefore, lastHeadBlockIsMaintenance());
@@ -1309,14 +1314,13 @@ public class Manager {
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
     // todo set revoking db max size.
 
-    if (witnessService != null) {
-      witnessService.processBlock(block);
-    }
-
     // checkWitness
     if (!witnessController.validateWitnessSchedule(block)) {
       throw new ValidateScheduleException("validateWitnessSchedule error");
     }
+
+    //reset BlockEnergyUsage
+    this.dynamicPropertiesStore.saveBlockEnergyUsage(0);
 
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       transactionCapsule.setBlockNum(block.getNum());
@@ -1335,7 +1339,9 @@ public class Manager {
       }
     }
     if (getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 1) {
-      updateAdaptiveTotalEnergyLimit();
+      EnergyProcessor energyProcessor = new EnergyProcessor(this);
+      energyProcessor.updateTotalEnergyAverageUsage();
+      energyProcessor.updateAdaptiveTotalEnergyLimit();
     }
     this.updateDynamicProperties(block);
     this.updateSignedWitness(block);
@@ -1345,34 +1351,7 @@ public class Manager {
     updateRecentBlock(block);
   }
 
-  public void updateAdaptiveTotalEnergyLimit() {
-    long totalEnergyAverageUsage = getDynamicPropertiesStore()
-        .getTotalEnergyAverageUsage();
-    long targetTotalEnergyLimit = getDynamicPropertiesStore().getTotalEnergyTargetLimit();
-    long totalEnergyCurrentLimit = getDynamicPropertiesStore()
-        .getTotalEnergyCurrentLimit();
 
-    long result;
-    if (totalEnergyAverageUsage > targetTotalEnergyLimit) {
-      result = totalEnergyCurrentLimit * AdaptiveResourceLimitConstants.CONTRACT_RATE_NUMERATOR
-          / AdaptiveResourceLimitConstants.CONTRACT_RATE_DENOMINATOR;
-      // logger.info(totalEnergyAverageUsage + ">" + targetTotalEnergyLimit + "\n" + result);
-    } else {
-      result = totalEnergyCurrentLimit * AdaptiveResourceLimitConstants.EXPAND_RATE_NUMERATOR
-          / AdaptiveResourceLimitConstants.EXPAND_RATE_DENOMINATOR;
-      // logger.info(totalEnergyAverageUsage + "<" + targetTotalEnergyLimit + "\n" + result);
-    }
-
-    result = Math.min(
-        Math.max(result, getDynamicPropertiesStore().getTotalEnergyLimit()),
-        getDynamicPropertiesStore().getTotalEnergyLimit()
-            * AdaptiveResourceLimitConstants.LIMIT_MULTIPLIER);
-
-    getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(result);
-    logger.debug(
-        "adjust totalEnergyCurrentLimit, old[" + totalEnergyCurrentLimit + "], new[" + result
-            + "]");
-  }
 
   private void updateTransHashCache(BlockCapsule block) {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
@@ -1608,16 +1587,19 @@ public class Manager {
 
     private TransactionCapsule trx;
     private CountDownLatch countDownLatch;
+    private Manager manager;
 
-    ValidateSignTask(TransactionCapsule trx, CountDownLatch countDownLatch) {
+    ValidateSignTask(TransactionCapsule trx, CountDownLatch countDownLatch,
+        Manager manager) {
       this.trx = trx;
       this.countDownLatch = countDownLatch;
+      this.manager = manager;
     }
 
     @Override
     public Boolean call() throws ValidateSignatureException {
       try {
-        trx.validateSignature();
+        trx.validateSignature(manager);
       } catch (ValidateSignatureException e) {
         throw e;
       } finally {
@@ -1637,7 +1619,7 @@ public class Manager {
 
     for (TransactionCapsule transaction : block.getTransactions()) {
       Future<Boolean> future = validateSignService
-          .submit(new ValidateSignTask(transaction, countDownLatch));
+          .submit(new ValidateSignTask(transaction, countDownLatch, this));
       futures.add(future);
     }
     countDownLatch.await();

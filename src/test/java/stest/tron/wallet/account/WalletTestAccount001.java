@@ -55,6 +55,9 @@ public class WalletTestAccount001 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
   @BeforeClass
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -110,6 +113,9 @@ public class WalletTestAccount001 {
 
 
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {
@@ -120,6 +126,9 @@ public class WalletTestAccount001 {
       channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+  /**
+   * constructor.
+   */
 
   public Account queryAccount(String priKey,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
@@ -150,6 +159,9 @@ public class WalletTestAccount001 {
     //return grpcQueryAccount(address,blockingStubFull);
   }
 
+  /**
+   * constructor.
+   */
 
   public Account solidityqueryAccount(String priKey,
       WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
@@ -176,6 +188,9 @@ public class WalletTestAccount001 {
     return grpcQueryAccountSolidity(ecKey.getAddress(), blockingStubSolidity);
     //return grpcQueryAccountSolidity(address,blockingStubSolidity);
   }
+  /**
+   * constructor.
+   */
 
   public String loadPubKey() {
     char[] buf = new char[0x100];
@@ -185,6 +200,9 @@ public class WalletTestAccount001 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+  /**
+   * constructor.
+   */
 
   public Account grpcQueryAccount(byte[] address,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
@@ -193,6 +211,9 @@ public class WalletTestAccount001 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+  /**
+   * constructor.
+   */
 
   public Account grpcQueryAccountSolidity(byte[] address,
       WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
@@ -202,6 +223,9 @@ public class WalletTestAccount001 {
     return blockingStubSolidity.getAccount(request);
   }
 
+  /**
+   * constructor.
+   */
 
   public Block getBlock(long blockNum, WalletGrpc.WalletBlockingStub blockingStubFull) {
     NumberMessage.Builder builder = NumberMessage.newBuilder();

@@ -10,24 +10,21 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.PingMessage;
 import org.tron.common.overlay.message.PongMessage;
-import org.tron.core.net.message.FetchInvDataMessage;
 import org.tron.core.net.message.InventoryMessage;
 import org.tron.core.net.message.TransactionsMessage;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
 
+@Slf4j(topic = "net")
 @Component
 @Scope("prototype")
 public class MessageQueue {
-
-  private static final Logger logger = LoggerFactory.getLogger("MessageQueue");
 
   private volatile boolean sendMsgFlag = false;
 

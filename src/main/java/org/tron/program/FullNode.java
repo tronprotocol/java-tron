@@ -1,22 +1,9 @@
 package org.tron.program;
 
 import ch.qos.logback.classic.Level;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Streams;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.LongStream;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.joran.JoranConfigurator;
+import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,23 +12,32 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.core.Constant;
-import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.DynamicPropertiesStore;
-import org.tron.core.db.Manager;
-import org.tron.core.db.RecentBlockStore;
-import org.tron.core.db2.common.Key;
-import org.tron.core.exception.BadItemException;
-import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
 
-@Slf4j
+@Slf4j(topic = "app")
 public class FullNode {
+
+  public static void load (String path){
+    try{
+      File file = new File(path);
+      if (!file.exists() || !file.isFile() || !file.canRead()){
+        return;
+      }
+      LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
+      JoranConfigurator configurator = new JoranConfigurator();
+      configurator.setContext(lc);
+      lc.reset();
+      configurator.doConfigure(file);
+    }catch (Exception e) {
+      logger.error(e.getMessage());
+    }
+  }
 
   /**
    * Start the FullNode.
@@ -50,8 +46,9 @@ public class FullNode {
     logger.info("Full node running.");
     Args.setParam(args, Constant.TESTNET_CONF);
     Args cfgArgs = Args.getInstance();
-
-    ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+    load (cfgArgs.getLogbackPath());
+    ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory
+        .getLogger(Logger.ROOT_LOGGER_NAME);
     root.setLevel(Level.toLevel(cfgArgs.getLogLevel()));
 
     if (cfgArgs.isHelp()) {

@@ -94,6 +94,9 @@ public class WalletTestBlock001 {
     logger.info("test getcurrentblock in soliditynode is " + Long.toString(currentBlock
         .getBlockHeader().getRawData().getNumber()));
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {
@@ -105,6 +108,9 @@ public class WalletTestBlock001 {
     }
   }
 
+  /**
+   * constructor.
+   */
 
   public Account queryAccount(String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     byte[] address;
@@ -138,12 +144,18 @@ public class WalletTestBlock001 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+  /**
+   * constructor.
+   */
 
   public Account grpcQueryAccount(byte[] address, WalletGrpc.WalletBlockingStub blockingStubFull) {
     ByteString addressBs = ByteString.copyFrom(address);
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+  /**
+   * constructor.
+   */
 
   public Block getBlock(long blockNum, WalletGrpc.WalletBlockingStub blockingStubFull) {
     NumberMessage.Builder builder = NumberMessage.newBuilder();

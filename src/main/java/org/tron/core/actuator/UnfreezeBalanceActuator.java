@@ -25,7 +25,7 @@ import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-@Slf4j
+@Slf4j(topic = "actuator")
 public class UnfreezeBalanceActuator extends AbstractActuator {
 
   UnfreezeBalanceActuator(Any contract, Manager dbManager) {

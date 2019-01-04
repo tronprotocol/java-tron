@@ -79,6 +79,10 @@ public class WalletTestAssetIssue007 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(testKeyForAssetIssue007);
@@ -94,18 +98,17 @@ public class WalletTestAssetIssue007 {
   public void testParticipateAssetIssueUseParticipaterBandwidth() {
     Assert.assertTrue(PublicMethed
         .sendcoin(asset007Address, sendAmount, fromAddress, testKey002, blockingStubFull));
-    //Assert.assertTrue(PublicMethed
-    //    .freezeBalance(asset007Address, 100000000L, 3, testKeyForAssetIssue007,
-    //       blockingStubFull));
-    Long start = System.currentTimeMillis() + 2000;
+    Long start = System.currentTimeMillis() + 5000;
     Long end = System.currentTimeMillis() + 1000000000;
     Assert.assertTrue(PublicMethed
         .createAssetIssue(asset007Address, name, totalSupply, trxNum, icoNum, start, end, 1,
             description, url, freeAssetNetLimit, publicFreeAssetNetLimit, 1L, 1L,
             testKeyForAssetIssue007, blockingStubFull));
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info(name);
-    Assert.assertTrue(PublicMethed.waitProduceNextBlock(blockingStubFull));
     //Assert.assertTrue(PublicMethed.waitProduceNextBlock(blockingStubFull));
     //When no balance, participate an asset issue
     Assert.assertFalse(PublicMethed.participateAssetIssue(asset007Address, name.getBytes(),
@@ -119,6 +122,7 @@ public class WalletTestAssetIssue007 {
     //SendCoin to participate account.
     Assert.assertTrue(PublicMethed.sendcoin(participateAssetAddress,10000000L,
         fromAddress,testKey002,blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     addressBs = ByteString.copyFrom(participateAssetAddress);
     request = Account.newBuilder().setAddress(addressBs).build();
     AccountNetMessage participateAccountNetMessage = blockingStubFull.getAccountNet(request);
@@ -151,6 +155,7 @@ public class WalletTestAssetIssue007 {
     Assert.assertTrue(asset007AfterFreeNetUsed <= asset007BeforeFreeNetUsed);
     Assert.assertTrue(participateAccountAfterNetUsed - participateAccountBeforeNetUsed > 150);
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
 
     Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,assetAccountId.toByteArray(),
@@ -167,6 +172,9 @@ public class WalletTestAssetIssue007 {
 
     Assert.assertTrue(beforeBalance  - trxNum * 1 * icoNum  >= afterBalance);
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {

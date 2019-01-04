@@ -17,7 +17,7 @@ import org.tron.core.db.Manager;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetAccountResourceServlet extends HttpServlet {
 
   @Autowired

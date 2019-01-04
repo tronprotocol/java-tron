@@ -16,7 +16,7 @@ import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Component
 public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> {
 
@@ -80,6 +80,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     private static final byte[] TOTAL_ENERGY_AVERAGE_TIME = "TOTAL_ENERGY_AVERAGE_TIME".getBytes();
     private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
     private static final byte[] TOTAL_ENERGY_LIMIT = "TOTAL_ENERGY_LIMIT".getBytes();
+    private static final byte[] BLOCK_ENERGY_USAGE = "BLOCK_ENERGY_USAGE".getBytes();
   }
 
   private static final byte[] ENERGY_FEE = "ENERGY_FEE".getBytes();
@@ -139,6 +140,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_CREATION_OF_CONTRACTS = "ALLOW_CREATION_OF_CONTRACTS"
       .getBytes();
 
+  //Used only for multi sign
+  private static final byte[] TOTAL_SIGN_NUM = "TOTAL_SIGN_NUM".getBytes();
+
+  //Used only for multi sign, once，value is {0,1}
+  private static final byte[] ALLOW_MULTI_SIGN = "ALLOW_MULTI_SIGN".getBytes();
+
   //token id,Incremental，The initial value is 1000000
   private static final byte[] TOKEN_ID_NUM = "TOKEN_ID_NUM".getBytes();
 
@@ -152,6 +159,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
+
+    try {
+      this.getTotalSignNum();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalSignNum(5);
+    }
+
+    try {
+      this.getAllowMultiSign();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowMultiSign(Args.getInstance().getAllowMultiSign());
+    }
 
     try {
       this.getLatestBlockHeaderTimestamp();
@@ -502,6 +521,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getTotalEnergyAverageTime();
     } catch (IllegalArgumentException e) {
       this.saveTotalEnergyAverageTime(0);
+    }
+
+    try {
+      this.getBlockEnergyUsage();
+    } catch (IllegalArgumentException e) {
+      this.saveBlockEnergyUsage(0);
     }
   }
 
@@ -886,6 +911,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found TOTAL_NET_AVERAGE_TIME"));
   }
 
+  public void saveBlockEnergyUsage(long blockEnergyUsage) {
+    this.put(DynamicResourceProperties.BLOCK_ENERGY_USAGE,
+        new BytesCapsule(ByteArray.fromLong(blockEnergyUsage)));
+  }
+
+  public long getBlockEnergyUsage() {
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.BLOCK_ENERGY_USAGE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found BLOCK_ENERGY_USAGE"));
+  }
 
   public void saveEnergyFee(long totalEnergyFee) {
     this.put(ENERGY_FEE,
@@ -1180,8 +1217,34 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void saveAllowCreationOfContracts(long allowCreationOfContracts) {
-    this.put(DynamicPropertiesStore.ALLOW_CREATION_OF_CONTRACTS,
+    this.put(ALLOW_CREATION_OF_CONTRACTS,
         new BytesCapsule(ByteArray.fromLong(allowCreationOfContracts)));
+  }
+
+  public void saveTotalSignNum(int num) {
+    this.put(DynamicPropertiesStore.TOTAL_SIGN_NUM,
+        new BytesCapsule(ByteArray.fromInt(num)));
+  }
+
+  public int getTotalSignNum() {
+    return Optional.ofNullable(getUnchecked(TOTAL_SIGN_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toInt)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_SIGN_NUM"));
+  }
+
+  public void saveAllowMultiSign(long allowMultiSing) {
+    this.put(ALLOW_MULTI_SIGN,
+        new BytesCapsule(ByteArray.fromLong(allowMultiSing)));
+  }
+
+  public long getAllowMultiSign() {
+    return Optional.ofNullable(getUnchecked(ALLOW_MULTI_SIGN))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_MULTI_SIGN"));
   }
 
   public long getAllowCreationOfContracts() {

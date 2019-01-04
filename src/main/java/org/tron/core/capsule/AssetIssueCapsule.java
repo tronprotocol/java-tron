@@ -24,7 +24,7 @@ import org.tron.core.db.Manager;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.AssetIssueContract.FrozenSupply;
 
-@Slf4j
+@Slf4j(topic = "capsule")
 public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
 
   private AssetIssueContract assetIssueContract;

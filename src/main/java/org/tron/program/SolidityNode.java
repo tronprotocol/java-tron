@@ -27,7 +27,7 @@ import org.tron.core.services.RpcApiService;
 import org.tron.core.services.http.solidity.SolidityNodeHttpApiService;
 import org.tron.protos.Protocol.Block;
 
-@Slf4j
+@Slf4j(topic = "app")
 public class SolidityNode {
 
   private Manager dbManager;
