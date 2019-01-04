@@ -6,9 +6,12 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.utils.RLP;
@@ -53,7 +56,6 @@ public class StorageRowStoreTrie extends TronStoreWithRevoking<BytesCapsule> imp
 
   @Override
   public void put(byte[] key, BytesCapsule item) {
-    logger.info("put key: {}", ByteUtil.toHexString(key));
     super.put(key, item);
     cache.put(WrappedByteArray.of(key), item);
   }
@@ -66,7 +68,15 @@ public class StorageRowStoreTrie extends TronStoreWithRevoking<BytesCapsule> imp
 
   public byte[] getValue(byte[] key) {
     TrieImpl trie = trieService.getChildTrie(RLP.encodeString(STORAGE_STORE_KEY), this);
-    return trie.get(RLP.encodeElement(key));
+    byte[] result = trie.get(RLP.encodeElement(key));
+    if (ArrayUtils.isEmpty(result)) {
+      return null;
+    }
+    String[] split = StringUtils.split(new String(result), "|");
+    if (ArrayUtils.getLength(split) <= 1) {
+      return null;
+    }
+    return ByteArray.fromHexString(split[0]);
   }
 
 }

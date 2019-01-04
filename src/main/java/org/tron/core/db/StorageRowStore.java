@@ -38,7 +38,7 @@ public class StorageRowStore extends TronStoreWithRevoking<StorageRowCapsule> {
   @Override
   public void put(byte[] key, StorageRowCapsule item) {
     super.put(key, item);
-    fastSyncCallBack.callBack(key, item.getData(), STORAGE);
+    fastSyncCallBack.callBack(key, item.getAllData(), STORAGE);
   }
 
   @Override
