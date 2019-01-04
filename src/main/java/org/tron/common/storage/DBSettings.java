@@ -5,7 +5,7 @@ public class DBSettings {
 
   public static final DBSettings DEFAULT = new DBSettings()
       .withMaxThreads(1)
-      .withMaxOpenFiles(32);
+      .withMaxOpenFiles(-1);
 
   int maxOpenFiles;
   int maxThreads;
