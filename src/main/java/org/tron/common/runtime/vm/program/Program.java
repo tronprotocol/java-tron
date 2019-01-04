@@ -1420,7 +1420,7 @@ public class Program {
   public void checkTokenId(MessageCall msg) {
     if(VMConfig.isVERSION_3_5_HARD_FORK()){ //3.5 hard fork
       // tokenid not get Long type overflow
-      long tokenId = msg.getTokenId().value().longValueExact();
+      long tokenId = msg.getTokenId().sValue().longValueExact();
       // tokenId can only be 0 when isTokenTransferMsg == false
       // or tokenId can be (MIN_TOKEN_ID, Long.Max] when isTokenTransferMsg == true
       if ((tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0) ||
