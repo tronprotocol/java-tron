@@ -957,21 +957,13 @@ public class Args {
     filter.setToBlock(toBlockLong);
 
     List<String> addressList = config.getStringList("event.subscribe.filter.contractAddress");
-    for (int index = 0; index < addressList.size(); ++index){
-      if (StringUtils.isEmpty(addressList.get(index))){
-        addressList.remove(index);
-      }
-    }
-
+    addressList = addressList.stream().filter(address -> StringUtils.isNotEmpty(address)).collect(
+      Collectors.toList());
     filter.setContractAddressList(addressList);
 
     List<String> topicList = config.getStringList("event.subscribe.filter.contractTopic");
-    for (int index = 0; index < topicList.size(); ++index){
-      if (StringUtils.isEmpty(topicList.get(index))){
-        topicList.remove(index);
-      }
-    }
-
+    topicList = topicList.stream().filter(top -> StringUtils.isNotEmpty(top)).collect(
+      Collectors.toList());
     filter.setContractTopicList(topicList);
 
     return filter;
