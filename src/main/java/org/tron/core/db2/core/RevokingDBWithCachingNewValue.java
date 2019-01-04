@@ -74,7 +74,11 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
   public synchronized void reset() {
     head().reset();
     head().close();
-    head = new SnapshotRoot(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName, clz);
+    if (clz == null) {
+      head = new SnapshotRoot(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName);
+    } else {
+      head = new SnapshotRoot(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName, clz);
+    }
   }
 
   @Override
