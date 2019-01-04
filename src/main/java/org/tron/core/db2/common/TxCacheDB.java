@@ -31,11 +31,16 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
 
   @Override
   public byte[] get(byte[] key) {
-    return Longs.toByteArray(db.get(Key.of(key)));
+    Long v = db.get(Key.of(key));
+    return v == null ? null : Longs.toByteArray(v);
   }
 
   @Override
   public void put(byte[] key, byte[] value) {
+    if (key == null || value == null) {
+      return;
+    }
+
     Key k = Key.copyOf(key);
     Long v = Longs.fromByteArray(value);
     blockNumMap.put(v, k);
@@ -67,7 +72,9 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
 
   @Override
   public void remove(byte[] key) {
-    db.remove(Key.of(key));
+    if (key != null) {
+      db.remove(Key.of(key));
+    }
   }
 
   @Override
