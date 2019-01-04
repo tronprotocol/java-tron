@@ -102,7 +102,8 @@ dependencies {
     compile group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.25'
     compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
 
-    compile "org.projectlombok:lombok:1.16.18"
+//    compile "org.projectlombok:lombok:1.16.18"
+    compile group: 'org.projectlombok', name: 'lombok', version: '1.18.2'
 
     compile group: 'commons-codec', name: 'commons-codec', version: '1.11'
 
@@ -149,7 +150,7 @@ dependencies {
 
     compile group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.2'
 
-    checkstyleConfig "com.puppycrawl.tools:checkstyle:${versions.checkstyle}"
+//    checkstyleConfig "com.puppycrawl.tools:checkstyle:${versions.checkstyle}"
     // google grpc
     compile group: 'io.grpc', name: 'grpc-netty', version: '1.14.0'
     compile group: 'io.grpc', name: 'grpc-protobuf', version: '1.14.0'
@@ -175,11 +176,16 @@ dependencies {
 
 check.dependsOn 'lint'
 
+//checkstyle {
+//    toolVersion = "${versions.checkstyle}"
+//    config = resources.text.fromArchiveEntry(configurations.checkstyleConfig, 'google_checks.xml')
+//
+//}
 checkstyle {
     toolVersion = "${versions.checkstyle}"
-    config = resources.text.fromArchiveEntry(configurations.checkstyleConfig, 'google_checks.xml')
-
+    configFile = file("config/checkstyle/checkStyleAll.xml")
 }
+
 
 checkstyleMain {
     source = 'src/main/java'
