@@ -115,6 +115,7 @@ public interface Parameter {
   }
 
   enum ForkBlockVersionEnum {
+    ENERGY_LIMIT(5),
     VERSION_3_2_2(6),
     VERSION_3_5(7);
     @Getter

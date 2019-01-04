@@ -101,6 +101,9 @@ public class WalletTestAssetIssue013 {
     //    blockingStubFull));
     Assert.assertTrue(PublicMethed
         .sendcoin(asset013Address, sendAmount, fromAddress, testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .freezeBalance(asset013Address, 100000000L, 3, testKeyForAssetIssue013,
             blockingStubFull));
