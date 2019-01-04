@@ -295,7 +295,7 @@ public class Manager {
     return repushTransactions;
   }
 
-  public BlockingQueue<TriggerCapsule> getTriggerCapsuleQueue() {
+  public synchronized BlockingQueue<TriggerCapsule> getTriggerCapsuleQueue() {
     return triggerCapsuleQueue;
   }
 
