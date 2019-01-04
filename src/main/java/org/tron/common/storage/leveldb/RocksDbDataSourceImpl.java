@@ -24,6 +24,7 @@ import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
+import org.rocksdb.Statistics;
 import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
 import org.tron.common.storage.DBSettings;
@@ -152,12 +153,15 @@ public class RocksDbDataSourceImpl implements DbSourceInterRocks<byte[]>,
         // most of these options are suggested by https://github.com/facebook/rocksdb/wiki/Set-Up-Options
 
         // general options
+        options.setStatistics(new Statistics());
+        options.setStatsDumpPeriodSec(60);
         options.setCreateIfMissing(true);
         options.setCompressionType(CompressionType.LZ4_COMPRESSION);
         options.setBottommostCompressionType(CompressionType.ZSTD_COMPRESSION);
         options.setLevelCompactionDynamicLevelBytes(true);
         options.setMaxOpenFiles(settings.getMaxOpenFiles());
         options.setIncreaseParallelism(settings.getMaxThreads());
+        options.setMaxBackgroundCompactions(8);
 
         // table options
         final BlockBasedTableConfig tableCfg;
