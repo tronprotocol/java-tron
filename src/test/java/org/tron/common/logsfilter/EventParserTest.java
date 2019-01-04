@@ -9,6 +9,7 @@ import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TVMTestUtils;
 import org.tron.common.runtime.vm.LogInfoTriggerParser;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.services.http.JsonFormat;
 import org.tron.protos.Protocol;
@@ -23,6 +24,8 @@ import java.util.Map;
 public class EventParserTest {
   @Test
   public synchronized void testEventParser() {
+
+    Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_MAINNET);
 
     String eventSign = "eventBytesL(address,bytes,bytes32,uint256,string)";
 
@@ -51,8 +54,8 @@ public class EventParserTest {
     Map<String, String> dataMap = ContractEventParser.parseEventData(data, topicList, entry);
     Map<String, String> topicMap = ContractEventParser.parseTopics(topicList, entry);
 
-    Assert.assertEquals(dataMap.get("0"), "000000000000000000000000ca35b7d915458ef540ade6068dfe2f44e8fa733c");
-    Assert.assertEquals(dataMap.get("addr"), "000000000000000000000000ca35b7d915458ef540ade6068dfe2f44e8fa733c");
+    Assert.assertEquals(dataMap.get("0"), "TUQPrDEJkV4ttkrL7cVv1p3mikWYfM7LWt");
+    Assert.assertEquals(dataMap.get("addr"), "TUQPrDEJkV4ttkrL7cVv1p3mikWYfM7LWt");
 
     Assert.assertEquals(dataMap.get("1"), "0x109");
     Assert.assertEquals(dataMap.get("random"), "0x109");
