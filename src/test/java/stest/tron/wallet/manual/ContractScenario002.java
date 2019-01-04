@@ -26,7 +26,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 public class ContractScenario002 {
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key2");
+      .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
   private ManagedChannel channelFull = null;
@@ -60,8 +60,6 @@ public class ContractScenario002 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(contract002Address, 50000000L, fromAddress,
-        testKey002, blockingStubFull));
     channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
         .usePlaintext(true)
         .build();
@@ -71,9 +69,18 @@ public class ContractScenario002 {
 
   @Test(enabled = true)
   public void deployTronNative() {
+    ECKey ecKey1 = new ECKey(Utils.getRandom());
+    byte[] contract002Address = ecKey1.getAddress();
+    String contract002Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    logger.info("From balance is " + PublicMethed.queryAccount(fromAddress,blockingStubFull).getBalance());
+    Assert.assertTrue(PublicMethed.sendcoin(contract002Address, 50000000L, fromAddress,
+        testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract002Address, 1000000L,
         3, 1, contract002Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract002Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
@@ -158,6 +165,9 @@ public class ContractScenario002 {
 
     String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code, "",
         maxFeeLimit, 0L, 100, null, contract002Key, contract002Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     logger.info(txid);
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
@@ -165,7 +175,8 @@ public class ContractScenario002 {
     SmartContract smartContract = PublicMethed
         .getContract(contractAddress.toByteArray(), blockingStubFull);
     Assert.assertTrue(smartContract.getAbi() != null);
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
     accountResource = PublicMethed.getAccountResource(contract002Address, blockingStubFull1);
     energyLimit = accountResource.getEnergyLimit();
