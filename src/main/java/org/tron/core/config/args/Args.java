@@ -397,6 +397,10 @@ public class Args {
   @Setter
   private int minEffectiveConnection;
 
+  @Getter
+  @Setter
+  private long blockNumForEneryLimit;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -784,6 +788,9 @@ public class Args {
 
     INSTANCE.minEffectiveConnection = config.hasPath("node.rpc.minEffectiveConnection") ?
         config.getInt("node.rpc.minEffectiveConnection") : 1;
+
+    INSTANCE.blockNumForEneryLimit = config.hasPath("enery.limit.block.num") ?
+        config.getInt("enery.limit.block.num") : 4727890L;
 
     INSTANCE.vmTrace =
         config.hasPath("vm.vmTrace") ? config
