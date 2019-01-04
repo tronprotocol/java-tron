@@ -1,4 +1,4 @@
-package stest.tron.wallet.exchangeandtoken;
+package stest.tron.wallet.mutisign;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -11,7 +11,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
-import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.WalletGrpc;
@@ -25,9 +24,10 @@ import org.tron.protos.Protocol.Exchange;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
+import stest.tron.wallet.common.client.utils.PublicMethedForMutiSign;
 
 @Slf4j
-public class WalletExchange001 {
+public class WalletTestMutiSign002 {
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
@@ -57,6 +57,20 @@ public class WalletExchange001 {
   byte[] secondExchange001Address = ecKey2.getAddress();
   String secondExchange001Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
   Long secondTransferAssetToFirstAccountNum = 100000000L;
+
+  ECKey ecKey3 = new ECKey(Utils.getRandom());
+  byte[] manager1Address = ecKey3.getAddress();
+  String manager1Key = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
+
+  ECKey ecKey4 = new ECKey(Utils.getRandom());
+  byte[] manager2Address = ecKey4.getAddress();
+  String manager2Key = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
+
+  String[] permissionKeyString = new String[2];
+  String[] ownerKeyString = new String[1];
+  String accountPermissionJson = "";
+
+
   Account firstAccount;
   ByteString assetAccountId1;
   ByteString assetAccountId2;
@@ -121,6 +135,31 @@ public class WalletExchange001 {
 
   @Test(enabled = true)
   public void test2CreateExchange() {
+    ecKey3 = new ECKey(Utils.getRandom());
+    manager1Address = ecKey3.getAddress();
+    manager1Key = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
+
+    ecKey4 = new ECKey(Utils.getRandom());
+    manager2Address = ecKey4.getAddress();
+    manager2Key = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
+
+    permissionKeyString[0] = manager1Key;
+    permissionKeyString[1] = manager2Key;
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    ownerKeyString[0] = exchange001Key;
+    accountPermissionJson = "[{\"keys\":[{\"address\":\""
+        + PublicMethed.getAddressString(exchange001Key)
+        + "\",\"weight\":2}],\"name\":\"owner\",\"threshold\":2,\"parent\":\"owner\"},"
+        + "{\"parent\":\"owner\",\"keys\":[{\"address\":\""
+        + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},{\"address\":\""
+        + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}],\"name\":\"active\","
+        + "\"threshold\":2}]";
+    logger.info(accountPermissionJson);
+    PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,exchange001Address,exchange001Key,
+        blockingStubFull,ownerKeyString);
+
+
     listExchange = PublicMethed.getExchangeList(blockingStubFull);
     final Integer beforeCreateExchangeNum = listExchange.get().getExchangesCount();
     exchangeId = listExchange.get().getExchangesCount();
@@ -150,10 +189,9 @@ public class WalletExchange001 {
     //logger.info("second balance is " + token2BeforeBalance.toString());
     //CreateExchange
     Assert.assertTrue(
-        PublicMethed.exchangeCreate(assetAccountId1.toByteArray(), firstTokenInitialBalance,
+        PublicMethedForMutiSign.exchangeCreate(assetAccountId1.toByteArray(), firstTokenInitialBalance,
             assetAccountId2.toByteArray(), secondTokenInitialBalance, exchange001Address,
-            exchange001Key,
-            blockingStubFull));
+            exchange001Key, blockingStubFull,permissionKeyString));
     listExchange = PublicMethed.getExchangeList(blockingStubFull);
     Integer afterCreateExchangeNum = listExchange.get().getExchangesCount();
     Assert.assertTrue(afterCreateExchangeNum - beforeCreateExchangeNum == 1);
@@ -195,8 +233,8 @@ public class WalletExchange001 {
     logger.info("before token 2 balance is " + Long.toString(beforeToken2Balance));
     Integer injectBalance = 100;
     Assert.assertTrue(
-        PublicMethed.injectExchange(exchangeId, assetAccountId1.toByteArray(), injectBalance,
-            exchange001Address, exchange001Key, blockingStubFull));
+        PublicMethedForMutiSign.injectExchange(exchangeId, assetAccountId1.toByteArray(), injectBalance,
+            exchange001Address, exchange001Key, blockingStubFull,permissionKeyString));
     firstAccount = PublicMethed.queryAccount(exchange001Address, blockingStubFull);
     Long afterToken1Balance = 0L;
     Long afterToken2Balance = 0L;
@@ -246,8 +284,8 @@ public class WalletExchange001 {
     logger.info("before token 2 balance is " + Long.toString(beforeToken2Balance));
     Integer withdrawNum = 200;
     Assert.assertTrue(
-        PublicMethed.exchangeWithdraw(exchangeId, assetAccountId1.toByteArray(), withdrawNum,
-            exchange001Address, exchange001Key, blockingStubFull));
+        PublicMethedForMutiSign.exchangeWithdraw(exchangeId, assetAccountId1.toByteArray(), withdrawNum,
+            exchange001Address, exchange001Key, blockingStubFull,permissionKeyString));
     firstAccount = PublicMethed.queryAccount(exchange001Address, blockingStubFull);
     Long afterToken1Balance = 0L;
     Long afterToken2Balance = 0L;
@@ -301,9 +339,9 @@ public class WalletExchange001 {
     logger.info("before token 2 balance is " + Long.toString(beforeToken2Balance));
     Integer transactionNum = 50;
     Assert.assertTrue(
-        PublicMethed
+        PublicMethedForMutiSign
             .exchangeTransaction(exchangeId, assetAccountId1.toByteArray(), transactionNum, 1,
-                exchange001Address, exchange001Key, blockingStubFull));
+                exchange001Address, exchange001Key, blockingStubFull,permissionKeyString));
     firstAccount = PublicMethed.queryAccount(exchange001Address, blockingStubFull);
     Long afterToken1Balance = 0L;
     Long afterToken2Balance = 0L;
@@ -337,8 +375,8 @@ public class WalletExchange001 {
     ExchangeList exchangeList = blockingStubFull
         .getPaginatedExchangeList(pageMessageBuilder.build());
     Assert.assertTrue(exchangeList.getExchangesCount() >= 1);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+
     //Solidity support getExchangeId
     exchangeIdInfo = PublicMethed.getExchange(exchangeId.toString(),blockingStubSolidity);
     logger.info("createtime is" + exchangeIdInfo.get().getCreateTime());
