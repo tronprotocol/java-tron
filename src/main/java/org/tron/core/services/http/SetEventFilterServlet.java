@@ -57,7 +57,7 @@ public class SetEventFilterServlet extends HttpServlet {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("{}", e);
         }
     }
 
