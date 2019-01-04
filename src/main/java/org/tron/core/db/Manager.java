@@ -294,11 +294,7 @@ public class Manager {
   public BlockingQueue<TransactionCapsule> getRepushTransactions() {
     return repushTransactions;
   }
-
-  public synchronized BlockingQueue<TriggerCapsule> getTriggerCapsuleQueue() {
-    return triggerCapsuleQueue;
-  }
-
+  
   // transactions cache
   private List<TransactionCapsule> pendingTransactions;
 
@@ -386,7 +382,7 @@ public class Manager {
     () -> {
       while (isRunTriggerCapsuleProcessThread) {
         try {
-          TriggerCapsule tiggerCapsule = this.getTriggerCapsuleQueue().poll(1, TimeUnit.SECONDS);
+          TriggerCapsule tiggerCapsule = triggerCapsuleQueue.poll(1, TimeUnit.SECONDS);
           if (tiggerCapsule != null) {
             tiggerCapsule.processTrigger();
           }
@@ -1697,7 +1693,7 @@ public class Manager {
 
   private void postBlockTrigger(final BlockCapsule newBlock){
     if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
-      boolean result = this.getTriggerCapsuleQueue().offer(new BlockLogTriggerCapsule(newBlock));
+      boolean result = triggerCapsuleQueue.offer(new BlockLogTriggerCapsule(newBlock));
       if (result == false) {
         logger.info("too many trigger, lost block trigger: {}", newBlock.getBlockId());
       }
@@ -1710,7 +1706,7 @@ public class Manager {
 
   private void postTransactionTrigger(final TransactionCapsule trxCap, final BlockCapsule blockCap){
     if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
-      boolean result = this.getTriggerCapsuleQueue().offer(new TransactionLogTriggerCapsule(trxCap, blockCap));
+      boolean result = triggerCapsuleQueue.offer(new TransactionLogTriggerCapsule(trxCap, blockCap));
       if (result == false) {
         logger.info("too many trigger, lost transaction trigger: {}", trxCap.getTransactionId());
       }
@@ -1747,11 +1743,11 @@ public class Manager {
           if (trigger instanceof LogEventWrapper && EventPluginLoader.getInstance().isContractEventTriggerEnable()){
             ContractEventTriggerCapsule contractEventTriggerCapsule = new ContractEventTriggerCapsule((LogEventWrapper) trigger);
             contractEventTriggerCapsule.getContractEventTrigger().setRemoved(remove);
-            result = this.getTriggerCapsuleQueue().offer(contractEventTriggerCapsule);
+            result = triggerCapsuleQueue.offer(contractEventTriggerCapsule);
           }else if (trigger instanceof ContractLogTrigger && EventPluginLoader.getInstance().isContractLogTriggerEnable()){
             ContractLogTriggerCapsule contractLogTriggerCapsule = new ContractLogTriggerCapsule((ContractLogTrigger) trigger);
             contractLogTriggerCapsule.getContractLogTrigger().setRemoved(remove);
-            result = this.getTriggerCapsuleQueue().offer(contractLogTriggerCapsule);
+            result = triggerCapsuleQueue.offer(contractLogTriggerCapsule);
           }
           if (result == false) {
             logger.info("too many tigger, lost contract log trigger: {}", trigger.getTxId());
