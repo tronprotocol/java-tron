@@ -957,6 +957,16 @@ public class Wallet {
     return blockListBuilder.build();
   }
 
+  public BlockList getBlocksHeaderByLimitNext(long number, long limit) {
+    if (limit <= 0) {
+      return null;
+    }
+    BlockList.Builder blockListBuilder = BlockList.newBuilder();
+    dbManager.getBlockStore().getLimitNumber(number, limit).forEach(
+        blockCapsule -> blockListBuilder.addBlock(blockCapsule.getInstance()));
+    return blockListBuilder.build();
+  }
+
   public BlockList getBlockByLatestNum(long getNum) {
     BlockList.Builder blockListBuilder = BlockList.newBuilder();
     dbManager.getBlockStore().getBlockByLatestNum(getNum).forEach(

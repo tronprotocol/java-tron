@@ -73,6 +73,17 @@ public class Util {
     return jsonObject.toJSONString();
   }
 
+  public static String printBlockHeaderList(BlockList list) {
+    List<Block> blocks = list.getBlockList();
+    JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(list));
+    JSONArray jsonArray = new JSONArray();
+    blocks.stream().forEach(block -> {
+      jsonArray.add(printBlockWithNoTransToJSON(block));
+    });
+    jsonObject.put("block", jsonArray);
+    return jsonObject.toJSONString();
+  }
+
   public static String printBlock(Block block) {
     return printBlockToJSON(block).toJSONString();
   }
@@ -85,6 +96,14 @@ public class Util {
     if (!blockCapsule.getTransactions().isEmpty()) {
       jsonObject.put("transactions", printTransactionListToJSON(blockCapsule.getTransactions()));
     }
+    return jsonObject;
+  }
+
+  public static JSONObject printBlockWithNoTransToJSON(Block block) {
+    BlockCapsule blockCapsule = new BlockCapsule(block);
+    String blockID = ByteArray.toHexString(blockCapsule.getBlockId().getBytes());
+    JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(block));
+    jsonObject.put("blockID", blockID);
     return jsonObject;
   }
 
