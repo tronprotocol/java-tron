@@ -46,6 +46,7 @@ import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.TransactionListExtention;
@@ -719,6 +720,14 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getTransactionApprovedList(Transaction req,
+        StreamObserver<TransactionApprovedList> responseObserver) {
+      TransactionApprovedList tal = wallet.getTransactionApprovedList(req);
+      responseObserver.onNext(tal);
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void createAddress(BytesMessage req,
         StreamObserver<BytesMessage> responseObserver) {
       byte[] address = wallet.createAdresss(req.getValue().toByteArray());
@@ -1326,6 +1335,28 @@ public class RpcApiService implements Service {
       if (Objects.nonNull(blockId)) {
         responseObserver.onNext(wallet.getBlockById(blockId));
       } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void setEventFilter(GrpcAPI.EventFilter request, StreamObserver<Return> responseObserver) {
+      if (Objects.nonNull(request)){
+        responseObserver.onNext(wallet.setEventFilter(request.toBuilder()));
+      }
+      else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void setEventPluginConfig(GrpcAPI.EventPluginInfo request, StreamObserver<Return> responseObserver) {
+      if (Objects.nonNull(request)){
+        responseObserver.onNext(wallet.setEventPluginInfo(request.toBuilder()));
+      }
+      else {
         responseObserver.onNext(null);
       }
       responseObserver.onCompleted();

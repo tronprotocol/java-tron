@@ -16,7 +16,6 @@ script:
 - sh tron.sh
 - "./gradlew build"
 - "./gradlew jacocoTestReport"
-- bash deploy.sh
 
 
 after_success:
