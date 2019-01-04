@@ -18,11 +18,10 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.StoreException;
 
 @Slf4j
-@Component
 public class TransactionCache extends TronStoreWithRevoking<BytesCapsule> {
 
   @Autowired
-  private TransactionCache(@Value("trans-cache") String dbName) {
+  public TransactionCache(@Value("trans-cache") String dbName) {
     super(dbName, TxCacheDB.class);
   }
 }

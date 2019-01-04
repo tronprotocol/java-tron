@@ -21,6 +21,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -109,7 +110,7 @@ public class Manager {
   private AccountStore accountStore;
   @Autowired
   private TransactionStore transactionStore;
-  @Autowired
+  @Autowired(required = false)
   private TransactionCache transactionCache;
   @Autowired
   private BlockStore blockStore;
@@ -517,6 +518,10 @@ public class Manager {
   }
 
   public void initCacheTxs() {
+    int dbVersion = Args.getInstance().getStorage().getDbVersion();
+    if (dbVersion != 2) {
+      return;
+    }
     long start = System.currentTimeMillis();
     long headNum = dynamicPropertiesStore.getLatestBlockHeaderNumber();
     long recentBlockCount = 65536L;
@@ -548,10 +553,11 @@ public class Manager {
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();
     }
-    System.out.println("trxids:" + transactionCache.size()
-        + ", block count:" + blockCount.get()
-        + ", empty block count:" + emptyBlockCount.get()
-        + ", cost:" + (System.currentTimeMillis() - start)
+    logger.info("trxids:{}, block count:{}, empty block count:{}, cost:{}",
+        transactionCache.size(),
+        blockCount.get(),
+        emptyBlockCount.get(),
+        System.currentTimeMillis() - start
     );
   }
 
@@ -647,10 +653,18 @@ public class Manager {
   }
 
   void validateDup(TransactionCapsule transactionCapsule) throws DupTransactionException {
-    if (getTransactionStore().has(transactionCapsule.getTransactionId().getBytes())) {
+    if (containsTransaction(transactionCapsule)) {
       logger.debug(ByteArray.toHexString(transactionCapsule.getTransactionId().getBytes()));
       throw new DupTransactionException("dup trans");
     }
+  }
+
+  private boolean containsTransaction(TransactionCapsule transactionCapsule) {
+    if (transactionCache != null) {
+      return transactionCache.has(transactionCapsule.getTransactionId().getBytes());
+    }
+
+    return transactionStore.has(transactionCapsule.getTransactionId().getBytes());
   }
 
   /**
@@ -1118,8 +1132,10 @@ public class Manager {
       }
     }
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
-    transactionCache.put(trxCap.getTransactionId().getBytes(),
-        new BytesCapsule(ByteArray.fromLong(trxCap.getBlockNum())));
+
+    Optional.ofNullable(transactionCache)
+        .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
+            new BytesCapsule(ByteArray.fromLong(trxCap.getBlockNum()))));
 
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
         .buildInstance(trxCap, blockCap, trace);
@@ -1634,7 +1650,7 @@ public class Manager {
   }
 
   public void rePush(TransactionCapsule tx) {
-    if (transactionCache.has(tx.getTransactionId().getBytes())) {
+    if (containsTransaction(tx)) {
       return;
     }
 
