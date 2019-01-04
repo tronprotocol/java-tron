@@ -934,6 +934,7 @@ public class Program {
   }
 
   public DataWord getTokenBalance(DataWord address, DataWord tokenId) {
+    checkTokenIdInTokenBalance(tokenId);
     long ret = getContractState().getTokenBalance(convertToTronAddress(address.getLast20Bytes()),
         String.valueOf(tokenId.longValue()).getBytes());
     return ret == 0 ? new DataWord(0) : new DataWord(ret);
@@ -1419,7 +1420,7 @@ public class Program {
    */
   public void checkTokenId(MessageCall msg) {
     if(VMConfig.isVERSION_3_5_HARD_FORK()){ //3.5 hard fork
-      // tokenid not get Long type overflow
+      // tokenid should not get Long type overflow
       long tokenId = msg.getTokenId().sValue().longValueExact();
       // tokenId can only be 0 when isTokenTransferMsg == false
       // or tokenId can be (MIN_TOKEN_ID, Long.Max] when isTokenTransferMsg == true
@@ -1437,6 +1438,17 @@ public class Program {
     }
     else {
       return msg.getTokenId().longValue() != 0;
+    }
+  }
+
+  public void checkTokenIdInTokenBalance(DataWord tokenIdDataWord) {
+    if(VMConfig.isVERSION_3_5_HARD_FORK()){ //3.5 hard fork
+      // tokenid should not get Long type overflow
+      long tokenId = tokenIdDataWord.sValue().longValueExact();
+      // or tokenId can only be (MIN_TOKEN_ID, Long.Max]
+      if (tokenId <= VMConstant.MIN_TOKEN_ID ) {
+        throw new BytecodeExecutionException("validateForSmartContract failure, not valid token id");
+      }
     }
   }
 
