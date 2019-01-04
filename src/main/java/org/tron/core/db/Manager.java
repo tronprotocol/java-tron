@@ -522,12 +522,16 @@ public class Manager {
     long recentBlockCount = 65536L;
     ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(50));
     List<ListenableFuture<?>> futures = new ArrayList<>();
-    AtomicLong atomicLong = new AtomicLong(0);
+    AtomicLong blockCount = new AtomicLong(0);
+    AtomicLong emptyBlockCount = new AtomicLong(0);
     LongStream.rangeClosed(headNum - recentBlockCount + 1, headNum).forEach(
         blockNum -> futures.add(service.submit(() -> {
           try {
-            atomicLong.incrementAndGet();
+            blockCount.incrementAndGet();
             BlockCapsule blockCapsule = getBlockByNum(blockNum);
+            if (blockCapsule.getTransactions().isEmpty()) {
+              emptyBlockCount.incrementAndGet();
+            }
             blockCapsule.getTransactions().stream()
                 .map(tc -> tc.getTransactionId().getBytes())
                 .map(bytes -> Maps.immutableEntry(bytes, Longs.toByteArray(blockNum)))
@@ -545,7 +549,8 @@ public class Manager {
       e.printStackTrace();
     }
     System.out.println("trxids:" + transactionCache.size()
-        + ", block count:" + atomicLong.get()
+        + ", block count:" + blockCount.get()
+        + ", empty block count:" + emptyBlockCount.get()
         + ", cost:" + (System.currentTimeMillis() - start)
     );
   }

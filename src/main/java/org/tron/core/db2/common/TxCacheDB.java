@@ -17,11 +17,14 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.common.WrappedByteArray;
 
+@Slf4j
 public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
-  private final int BLOCK_COUNT = 70_000; // > 65_536(= 2^16) blocks
+  // > 65_536(= 2^16) blocks, that is the number of the reference block
+  private final int BLOCK_COUNT = 70_000;
 
   private Map<Key, Long> db = new WeakHashMap<>();
   private Multimap<Long, Key> blockNumMap = ArrayListMultimap.create();
@@ -45,7 +48,10 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
     if (keys.size() > BLOCK_COUNT) {
       keys.stream()
           .min(Long::compareTo)
-          .ifPresent(blockNumMap::removeAll);
+          .ifPresent(k -> {
+            blockNumMap.removeAll(k);
+            logger.info("******removeEldest block number:{}, block count:{}", k, keys.size());
+          });
     }
   }
 
