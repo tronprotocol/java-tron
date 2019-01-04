@@ -1359,6 +1359,7 @@ public class VM {
       throw e;
     } catch (RuntimeException e) {
       if (StringUtils.isEmpty(e.getMessage())) {
+        logger.warn("Unknown Exception occurred", e);
         program.setRuntimeFailure(new RuntimeException("Unknown Exception"));
       } else {
         program.setRuntimeFailure(e);
