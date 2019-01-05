@@ -574,7 +574,7 @@ public class Manager {
     }
     long start = System.currentTimeMillis();
     long headNum = dynamicPropertiesStore.getLatestBlockHeaderNumber();
-    long recentBlockCount = 65536L;
+    long recentBlockCount = recentBlockStore.size();
     ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(50));
     List<ListenableFuture<?>> futures = new ArrayList<>();
     AtomicLong blockCount = new AtomicLong(0);
