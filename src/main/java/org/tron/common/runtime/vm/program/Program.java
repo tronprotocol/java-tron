@@ -530,7 +530,7 @@ public class Program {
 
     if(VMConfig.isVERSION_3_5_HARD_FORK()) {
       if (ArrayUtils.isEmpty(code)) {
-        throw new BytecodeExecutionException("create contract failed : code is empty");
+        throw new BytecodeExecutionException("Create contract failed: code is empty");
       }
     }
 
