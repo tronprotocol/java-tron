@@ -32,41 +32,8 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.common.runtime.Runtime;
 
 @Slf4j
-public class StorageTest {
-  private Manager manager;
-  private TronApplicationContext context;
-  private String dbPath = "output_VMStorageTest";
-  private Deposit rootDeposit;
-  private String OWNER_ADDRESS;
-  private Runtime runtime;
+public class StorageTest extends VMTestBase {
 
-
-  @Before
-  public void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
-
-    context = new TronApplicationContext(DefaultConfig.class);
-    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
-    manager = context.getBean(Manager.class);
-    rootDeposit = DepositImpl.createRoot(manager);
-    rootDeposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
-    rootDeposit.addBalance(Hex.decode(OWNER_ADDRESS), 30000000000000L);
-
-    rootDeposit.commit();
-  }
-
-  @After
-  public void destroy() {
-    Args.clearParam();
-    ApplicationFactory.create(context).shutdown();
-    ApplicationFactory.create(context).shutdownServices();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.error("Release resources failure.");
-    }
-  }
 
   @Test
   public void writeAndCommit() {
