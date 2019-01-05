@@ -1341,28 +1341,6 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void setEventFilter(GrpcAPI.EventFilter request, StreamObserver<Return> responseObserver) {
-      if (Objects.nonNull(request)){
-        responseObserver.onNext(wallet.setEventFilter(request.toBuilder()));
-      }
-      else {
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void setEventPluginConfig(GrpcAPI.EventPluginInfo request, StreamObserver<Return> responseObserver) {
-      if (Objects.nonNull(request)){
-        responseObserver.onNext(wallet.setEventPluginInfo(request.toBuilder()));
-      }
-      else {
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
-    }
-
-    @Override
     public void getProposalById(BytesMessage request,
         StreamObserver<Proposal> responseObserver) {
       ByteString proposalId = request.getValue();
