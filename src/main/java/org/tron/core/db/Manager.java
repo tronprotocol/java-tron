@@ -1349,6 +1349,8 @@ public class Manager {
       try {
         if (!block.generatedByMyself) {
           preValidateTransactionSign(block);
+        } else {
+          done = true;
         }
       } catch (Exception e) {
         logger.error("preValidateTransactionSign fail! block info: {}", block.toString(),
