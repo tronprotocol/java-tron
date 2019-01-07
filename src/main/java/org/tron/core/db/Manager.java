@@ -10,11 +10,10 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -795,15 +794,6 @@ public class Manager {
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
-        try {
-          preValidateTransactionSign(block);
-        } catch (InterruptedException e) {
-          logger.error("", e);
-          Thread.interrupted();
-        }
-      }
-
-      if (!block.generatedByMyself) {
         if (!block.validateSignature()) {
           logger.warn("The signature is not validated.");
           throw new BadBlockException("The signature is not validated");
@@ -1136,7 +1126,7 @@ public class Manager {
     session.reset();
     session.setValue(revokingStore.buildSession());
 
-    Map<String, Boolean> accountMap = new HashMap<>();
+    Set<String> accountSet = new HashSet<>();
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext() || repushTransactions.size() > 0) {
       boolean fromPending = false;
@@ -1165,7 +1155,7 @@ public class Manager {
       Contract contract = trx.getInstance().getRawData().getContract(0);
       byte[] owner = TransactionCapsule.getOwner(contract);
       String ownerAddress = ByteArray.toHexString(owner);
-      if (accountMap.containsKey(ownerAddress) && accountMap.get(ownerAddress)) {
+      if (accountSet.contains(ownerAddress)) {
         continue;
       } else {
         switch (contract.getType()) {
@@ -1173,10 +1163,10 @@ public class Manager {
           case PermissionAddKeyContract:
           case PermissionUpdateKeyContract:
           case PermissionDeleteKeyContract: {
-            accountMap.put(ownerAddress, true);
+            accountSet.add(ownerAddress);
           }
+          break;
           default:
-            accountMap.put(ownerAddress, false);
         }
       }
       // apply transaction
@@ -1296,6 +1286,16 @@ public class Manager {
 
     //reset BlockEnergyUsage
     this.dynamicPropertiesStore.saveBlockEnergyUsage(0);
+
+    //parallel check sign
+    if (!block.generatedByMyself) {
+      try {
+        preValidateTransactionSign(block);
+      } catch (InterruptedException e) {
+        logger.error("", e);
+        Thread.interrupted();
+      }
+    }
 
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       transactionCapsule.setBlockNum(block.getNum());
