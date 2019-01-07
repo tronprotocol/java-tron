@@ -807,7 +807,7 @@ public class TransactionCapsuleTest {
     ByteString test = ByteString.copyFromUtf8("test");
     trxBuilder.clearSignature().addSignature(test);
     try {
-      TransactionCapsule.validateSignature(trxBuilder.build(), hash, accountStore);
+      TransactionCapsule.validateSignature(trxBuilder.build(), hash, accountStore.get(owner));
       Assert.assertFalse(true);
     } catch (SignatureException e) {
       Assert.assertFalse(true);
@@ -824,7 +824,7 @@ public class TransactionCapsuleTest {
     trxBuilder.clearSignature().addSignature(ByteString.copyFrom(rand));
     try {
       TransactionCapsule.validateSignature(trxBuilder.build(), hash,
-          accountStore);
+          accountStore.get(owner));
       Assert.assertFalse(true);
     } catch (SignatureException e) {
       Assert.assertEquals(e.getMessage(), "Header byte out of range: 35");
@@ -841,7 +841,7 @@ public class TransactionCapsuleTest {
     ArrayList<ByteString> sign21_11 = sign(prikeys, hash);
     trxBuilder.clearSignature().addAllSignature(sign21_11);
     try {
-      TransactionCapsule.validateSignature(trxBuilder.build(), hash, accountStore);
+      TransactionCapsule.validateSignature(trxBuilder.build(), hash, accountStore.get(owner));
       Assert.assertFalse(true);
     } catch (SignatureException e) {
       Assert.assertFalse(true);
@@ -861,7 +861,7 @@ public class TransactionCapsuleTest {
     trxBuilder.clearSignature().addAllSignature(sign21_11_22_23);
     try {
       TransactionCapsule
-          .validateSignature(trxBuilder.build(), hash, accountStore);
+          .validateSignature(trxBuilder.build(), hash, accountStore.get(owner));
       Assert.assertFalse(true);
     } catch (SignatureException e) {
       Assert.assertFalse(true);
@@ -882,7 +882,7 @@ public class TransactionCapsuleTest {
     trxBuilder.clearSignature().addAllSignature(sign21_22_21);
     try {
       TransactionCapsule
-          .validateSignature(trxBuilder.build(), hash, accountStore);
+          .validateSignature(trxBuilder.build(), hash, accountStore.get(owner));
       Assert.assertFalse(true);
     } catch (SignatureException e) {
       Assert.assertFalse(true);
@@ -900,7 +900,7 @@ public class TransactionCapsuleTest {
     trxBuilder.clearSignature().addAllSignature(sign21);
     try {
       boolean result = TransactionCapsule
-          .validateSignature(trxBuilder.build(), hash, accountStore);
+          .validateSignature(trxBuilder.build(), hash, accountStore.get(owner));
       Assert.assertFalse(result);
     } catch (SignatureException e) {
       Assert.assertFalse(true);
@@ -915,7 +915,7 @@ public class TransactionCapsuleTest {
     trxBuilder.clearSignature().addAllSignature(sign21_22);
     try {
       boolean result = TransactionCapsule
-          .validateSignature(trxBuilder.build(), hash, accountStore);
+          .validateSignature(trxBuilder.build(), hash, accountStore.get(owner));
       Assert.assertTrue(result);
     } catch (SignatureException e) {
       Assert.assertFalse(true);
@@ -930,7 +930,7 @@ public class TransactionCapsuleTest {
     trxBuilder.clearSignature().addAllSignature(sign21_22_23);
     try {
       boolean result = TransactionCapsule
-          .validateSignature(trxBuilder.build(), hash, accountStore);
+          .validateSignature(trxBuilder.build(), hash, accountStore.get(owner));
       Assert.assertTrue(result);
     } catch (SignatureException e) {
       Assert.assertFalse(true);
