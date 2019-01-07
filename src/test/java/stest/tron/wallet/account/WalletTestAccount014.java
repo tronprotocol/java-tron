@@ -164,7 +164,7 @@ public class WalletTestAccount014 {
         3,1,ByteString.copyFrom(
         account014Address),account014SecondKey,blockingStubFull));
 
-
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSoliInFull);
     Account account014 = PublicMethed.queryAccount(account014Address, blockingStubFull);
     final long lastCustomeTimeInFullnode = account014.getLatestConsumeTime();
     final long netUsageInFullnode = account014.getNetUsage();

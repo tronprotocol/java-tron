@@ -116,11 +116,9 @@ public class WalletTestAccount012 {
     byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,
         "",maxFeeLimit,
         0L, 100,null,testKeyForAssetIssue011,asset011Address,blockingStubFull);
-    try {
-      Thread.sleep(30000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
     String txid;
 
@@ -143,6 +141,9 @@ public class WalletTestAccount012 {
       /*      txid = PublicMethed.triggerContract(contractAddress,
           "storage8Char()", "", false,
           0, maxFeeLimit, asset011Address, testKeyForAssetIssue011, blockingStubFull);*/
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+      PublicMethed.waitProduceNextBlock(blockingStubFull1);
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
       txid = PublicMethed.triggerContract(contractAddress,
           "add2(uint256)", initParmes, false,
           0, maxFeeLimit, asset011Address, testKeyForAssetIssue011, blockingStubFull);

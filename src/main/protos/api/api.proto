@@ -640,6 +640,10 @@ service Wallet {
 
   }
 
+  rpc GetTransactionApprovedList(Transaction) returns (TransactionApprovedList) {
+
+  }
+
   rpc GetNodeInfo (EmptyMessage) returns (NodeInfo) {
   };
 };
@@ -1020,6 +1024,23 @@ message TransactionSignWeight {
   Permission permission = 1;
   repeated bytes approved_list = 2;
   int64 current_weight = 3;
+  Result result = 4;
+  TransactionExtention transaction = 5;
+}
+
+message TransactionApprovedList {
+  message Result {
+    enum response_code {
+      SUCCESS = 0;
+      SIGNATURE_FORMAT_ERROR = 1;
+      COMPUTE_ADDRESS_ERROR = 2;
+      OTHER_ERROR = 20;
+    }
+    response_code code = 1;
+    string message = 2;
+  }
+
+  repeated bytes approved_list = 2;
   Result result = 4;
   TransactionExtention transaction = 5;
 }

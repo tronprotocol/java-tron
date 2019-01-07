@@ -189,12 +189,12 @@ public class WalletTestAssetIssue017 {
     PaginatedMessage.Builder pageMessageBuilder = PaginatedMessage.newBuilder();
     pageMessageBuilder.setOffset(offset);
     pageMessageBuilder.setLimit(limit);
-
+    Assert.assertTrue(PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,
+        blockingStubSolidity));
     AssetIssueList assetIssueList = blockingStubSolidity
         .getPaginatedAssetIssueList(pageMessageBuilder.build());
     Optional<AssetIssueList> assetIssueListPaginated = Optional.ofNullable(assetIssueList);
-    Assert.assertTrue(PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,
-        blockingStubSolidity));
+
     logger.info(Long.toString(assetIssueListPaginated.get().getAssetIssueCount()));
     Assert.assertTrue(assetIssueListPaginated.get().getAssetIssueCount() >= 1);
     for (Integer i = 0; i < assetIssueListPaginated.get().getAssetIssueCount(); i++) {

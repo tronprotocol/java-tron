@@ -56,6 +56,7 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionExtention.Builder;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
@@ -63,6 +64,8 @@ import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
+import org.tron.common.logsfilter.EventPluginLoader;
+import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
@@ -92,13 +95,11 @@ import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
-import org.tron.core.config.Parameter.ChainParameters;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.AccountIdIndexStore;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.ContractStore;
-import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.AccountResourceInsufficientException;
@@ -413,7 +414,7 @@ public class Wallet {
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
     Message message = new TransactionMessage(signaturedTransaction);
 
-    try{
+    try {
       if (minEffectiveConnection != 0) {
         if (p2pNode.getActivePeer().isEmpty()) {
           logger.warn("Broadcast transaction {} failed, no connection.", trx.getTransactionId());
@@ -427,7 +428,8 @@ public class Wallet {
             .count();
 
         if (count < minEffectiveConnection) {
-          String info = "effective connection:" + count + " lt minEffectiveConnection:" + minEffectiveConnection;
+          String info = "effective connection:" + count + " lt minEffectiveConnection:"
+              + minEffectiveConnection;
           logger.warn("Broadcast transaction {} failed, {}.", trx.getTransactionId(), info);
           return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
               .setMessage(ByteString.copyFromUtf8(info))
@@ -435,13 +437,15 @@ public class Wallet {
         }
       }
 
+
       if (dbManager.isTooManyPending()) {
         logger.warn("Broadcast transaction {} failed, too many pending.", trx.getTransactionId());
         return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
       }
 
       if (dbManager.isGeneratingBlock()) {
-        logger.warn("Broadcast transaction {} failed, is generating block.", trx.getTransactionId());
+        logger
+            .warn("Broadcast transaction {} failed, is generating block.", trx.getTransactionId());
         return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
       }
 
@@ -565,6 +569,54 @@ public class Wallet {
       resultBuilder.setMessage(permEx.getMessage());
     } catch (Exception ex) {
       resultBuilder.setCode(Result.response_code.OTHER_ERROR);
+      resultBuilder.setMessage(ex.getClass() + " : " + ex.getMessage());
+    }
+    tswBuilder.setResult(resultBuilder);
+    return tswBuilder.build();
+  }
+
+  public TransactionApprovedList getTransactionApprovedList(Transaction trx) {
+    TransactionApprovedList.Builder tswBuilder = TransactionApprovedList.newBuilder();
+    TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
+    trxExBuilder.setTransaction(trx);
+    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(trx.getRawData().toByteArray())));
+    Return.Builder retBuilder = Return.newBuilder();
+    retBuilder.setResult(true).setCode(response_code.SUCCESS);
+    trxExBuilder.setResult(retBuilder);
+    tswBuilder.setTransaction(trxExBuilder);
+    TransactionApprovedList.Result.Builder resultBuilder = TransactionApprovedList.Result
+        .newBuilder();
+    try {
+      Contract contract = trx.getRawData().getContract(0);
+      byte[] owner = TransactionCapsule.getOwner(contract);
+      AccountCapsule account = dbManager.getAccountStore().get(owner);
+      if (account == null) {
+        throw new PermissionException("Account is not exist!");
+      }
+
+      if (trx.getSignatureCount() > 0) {
+        List<ByteString> approveList = new ArrayList<ByteString>();
+        byte[] hash = Sha256Hash.hash(trx.getRawData().toByteArray());
+        for (ByteString sig : trx.getSignatureList()) {
+          if (sig.size() < 65) {
+            throw new SignatureFormatException(
+                "Signature size is " + sig.size());
+          }
+          String base64 = TransactionCapsule.getBase64FromByteString(sig);
+          byte[] address = ECKey.signatureToAddress(hash, base64);
+          approveList.add(ByteString.copyFrom(address)); //out put approve list.
+        }
+        tswBuilder.addAllApprovedList(approveList);
+      }
+      resultBuilder.setCode(TransactionApprovedList.Result.response_code.SUCCESS);
+    } catch (SignatureFormatException signEx) {
+      resultBuilder.setCode(TransactionApprovedList.Result.response_code.SIGNATURE_FORMAT_ERROR);
+      resultBuilder.setMessage(signEx.getMessage());
+    } catch (SignatureException signEx) {
+      resultBuilder.setCode(TransactionApprovedList.Result.response_code.COMPUTE_ADDRESS_ERROR);
+      resultBuilder.setMessage(signEx.getMessage());
+    } catch (Exception ex) {
+      resultBuilder.setCode(TransactionApprovedList.Result.response_code.OTHER_ERROR);
       resultBuilder.setMessage(ex.getClass() + " : " + ex.getMessage());
     }
     tswBuilder.setResult(resultBuilder);
@@ -783,8 +835,18 @@ public class Wallet {
             .setKey("getTotalEnergyCurrentLimit")
             .setValue(dbManager.getDynamicPropertiesStore().getTotalEnergyCurrentLimit())
             .build());
-
-
+    //    ALLOW_MULTI_SIGN, // 1, 20
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowMultiSign")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowMultiSign())
+            .build());
+    //    ALLOW_ADAPTIVE_ENERGY, // 1, 21
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowAdaptiveEnergy")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowAdaptiveEnergy())
+            .build());
     //other chainParameters
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getTotalEnergyTargetLimit")
@@ -1364,6 +1426,4 @@ public class Wallet {
     return builder.build();
 
   }
-
-
 }
