@@ -528,12 +528,6 @@ public class Program {
     // 4. CREATE THE CONTRACT OUT OF RETURN
     byte[] code = createResult.getHReturn();
 
-    if(VMConfig.isVERSION_3_5_HARD_FORK()) {
-      if (ArrayUtils.isEmpty(code)) {
-        throw new BytecodeExecutionException("Create contract failed: code is empty");
-      }
-    }
-
     long saveCodeEnergy = (long) getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
 
     long afterSpend =

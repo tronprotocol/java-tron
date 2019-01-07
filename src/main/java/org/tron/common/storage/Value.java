@@ -1,8 +1,10 @@
 package org.tron.common.storage;
 
+import static org.tron.common.storage.Type.VALUE_TYPE_UNKNOWN;
+
 import java.util.Arrays;
 import org.apache.commons.lang3.ArrayUtils;
-import org.tron.common.utils.ByteArray;
+import org.tron.common.runtime.config.VMConfig;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -40,6 +42,10 @@ public class Value {
             this.any = new byte[any.length];
             System.arraycopy(any, 0, this.any, 0, any.length);
             this.type = new Type(type);
+        } else {
+                if (VMConfig.isVERSION_3_5_HARD_FORK()) {
+                    this.type = new Type(VALUE_TYPE_UNKNOWN);
+                }
         }
     }
 
@@ -51,6 +57,10 @@ public class Value {
             this.any = new byte[value.any.length];
             System.arraycopy(value.getAny(), 0, this.any, 0, value.getAny().length);
             this.type = value.getType().clone();
+        } else {
+            if (VMConfig.isVERSION_3_5_HARD_FORK()) {
+                this.type = new Type(VALUE_TYPE_UNKNOWN);
+            }
         }
     }
 
