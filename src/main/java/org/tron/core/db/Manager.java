@@ -218,8 +218,7 @@ public class Manager {
   @Getter
   private ForkController forkController = ForkController.instance();
 
-  private ExecutorService executorService = Executors
-      .newFixedThreadPool(1, r -> new Thread(r, "PreValidateTransactionSign"));
+  private ExecutorService executorService;
 
   public static Map<ByteArrayWrapper, AccountCapsule> accountCache = new HashMap<>();
 
@@ -471,6 +470,8 @@ public class Manager {
       triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
       triggerCapsuleProcessThread.start();
     }
+    executorService = Executors
+        .newFixedThreadPool(1, r -> new Thread(r, "PreValidateTransactionSign"));
   }
 
   public BlockId getGenesisBlockId() {
@@ -862,26 +863,6 @@ public class Manager {
     long start = System.currentTimeMillis();
     try (PendingManager pm = new PendingManager(this)) {
 
-      Future<Boolean> future = executorService.submit(() -> {
-        try {
-          if (!block.generatedByMyself) {
-            preValidateTransactionSign(block);
-          }
-        } catch (Exception e) {
-          logger.error("preValidateTransactionSign fail! block info: {}", block.toString(),
-              e.getMessage());
-          return false;
-        }
-        return true;
-      });
-      while (!done) {
-        try {
-          Thread.sleep(1);
-        } catch (InterruptedException e) {
-        }
-      }
-      done = false;
-
       if (!block.generatedByMyself) {
         if (!block.validateSignature()) {
           logger.warn("The signature is not validated.");
@@ -966,13 +947,6 @@ public class Manager {
         }
         try (ISession tmpSession = revokingStore.buildSession()) {
           applyBlock(newBlock);
-          try {
-            if (future != null && !future.get()) {
-              throw new ValidateSignatureException("");
-            }
-          } catch (Exception e) {
-            throw new ValidateSignatureException(e.getMessage());
-          }
           tmpSession.commit();
           // if event subscribe is enabled, post block trigger to queue
           postBlockTrigger(newBlock);
@@ -1369,6 +1343,27 @@ public class Manager {
     //reset BlockEnergyUsage
     this.dynamicPropertiesStore.saveBlockEnergyUsage(0);
 
+    //
+    Future<Boolean> future = executorService.submit(() -> {
+      try {
+        if (!block.generatedByMyself) {
+          preValidateTransactionSign(block);
+        }
+      } catch (Exception e) {
+        logger.error("preValidateTransactionSign fail! block info: {}", block.toString(),
+            e.getMessage());
+        return false;
+      }
+      return true;
+    });
+    while (!done) {
+      try {
+        Thread.sleep(1);
+      } catch (InterruptedException e) {
+      }
+    }
+    done = false;
+
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       transactionCapsule.setBlockNum(block.getNum());
       if (block.generatedByMyself) {
@@ -1396,6 +1391,13 @@ public class Manager {
     this.updateTransHashCache(block);
     updateMaintenanceState(needMaint);
     updateRecentBlock(block);
+    try {
+      if (future != null && !future.get()) {
+        throw new ValidateSignatureException("");
+      }
+    } catch (Exception e) {
+      throw new ValidateSignatureException(e.getMessage());
+    }
   }
 
 
