@@ -185,9 +185,6 @@ public class Manager {
 
   private boolean isRunRepushThread = true;
 
-  private ExecutorService executorService = Executors
-      .newFixedThreadPool(1, r -> new Thread(r, "ValidateTransactionSign"));
-
   @Getter
   private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
       .newBuilder().maximumSize(100_000).recordStats().build();
