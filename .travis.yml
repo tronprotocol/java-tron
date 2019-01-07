@@ -18,6 +18,9 @@ script:
 - "./gradlew jacocoTestReport"
 
 
+
+
+
 after_success:
 - "bash <(curl -s https://codecov.io/bash) -t 060bb400-c6fe-4d5f-a6c8-427105c746ac -s build/reports/jacoco/"
 
