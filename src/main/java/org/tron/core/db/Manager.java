@@ -1351,7 +1351,7 @@ public class Manager {
         preValidateTransactionSign(block);
       } catch (InterruptedException e) {
         logger.error("parallel check sign interrupted exception! block info: {}", block, e);
-        Thread.currentThread().interrupted();
+        Thread.currentThread().interrupt();
       }
     }
 
