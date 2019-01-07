@@ -220,9 +220,10 @@ public class Manager {
 
   private ExecutorService executorService;
 
-  public static Map<ByteArrayWrapper, AccountCapsule> accountCache = new HashMap<>();
+  @Getter
+  private Map<ByteArrayWrapper, AccountCapsule> accountCache = new HashMap<>();
 
-  public volatile boolean done = false;
+  private volatile boolean done = false;
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -1360,6 +1361,7 @@ public class Manager {
       try {
         Thread.sleep(1);
       } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       }
     }
     done = false;
@@ -1631,7 +1633,7 @@ public class Manager {
     return false;
   }
 
-  private static class ValidateSignTask implements Callable<Boolean> {
+  private class ValidateSignTask implements Callable<Boolean> {
 
     private TransactionCapsule trx;
     private List<TransactionCapsule> trxList;
@@ -1641,7 +1643,7 @@ public class Manager {
 
     ValidateSignTask(List<TransactionCapsule> trxList, CountDownLatch countDownLatch,
         Manager manager, ByteArrayWrapper owner) {
-      this.trxList = trxList;
+      this.trxList = Lists.newArrayList(trxList);
       this.countDownLatch = countDownLatch;
       this.manager = manager;
       this.owner = owner;
@@ -1677,10 +1679,10 @@ public class Manager {
       return true;
     }
 
-    private static AccountCapsule updateAccount(Transaction transaction, ByteArrayWrapper owner)
+    private AccountCapsule updateAccount(Transaction transaction, ByteArrayWrapper owner)
         throws ValidateSignatureException {
       Transaction.Contract contract = transaction.getRawData().getContract(0);
-      AccountCapsule account = Manager.accountCache.get(owner);
+      AccountCapsule account = accountCache.get(owner);
       switch (contract.getType()) {
         case AccountPermissionUpdateContract: {
           AccountPermissionUpdateContract accountPermissionUpdateContract;
@@ -1731,7 +1733,7 @@ public class Manager {
         break;
         default:
       }
-      Manager.accountCache.put(owner, account);
+      accountCache.put(owner, account);
       return account;
     }
   }

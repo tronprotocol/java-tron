@@ -638,9 +638,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     try {
       AccountCapsule account;
       if (owner == null) {
-        account = manager.getAccountStore().get(owner.getData());
+        Transaction.Contract contract = transaction.getRawData().getContractList().get(0);
+        account = manager.getAccountStore().get(getOwner(contract));
       } else {
-        account = Manager.accountCache.get(owner);
+        account = manager.getAccountCache().get(owner);
       }
       if (!validateSignature(this.transaction, hash, account)) {
         isVerified = false;
