@@ -55,7 +55,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
           .min(Long::compareTo)
           .ifPresent(k -> {
             blockNumMap.removeAll(k);
-            logger.info("******removeEldest block number:{}, block count:{}", k, keys.size());
+            logger.debug("******removeEldest block number:{}, block count:{}", k, keys.size());
           });
     }
   }
