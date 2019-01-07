@@ -1176,9 +1176,6 @@ public class Manager {
           case PermissionAddKeyContract:
           case PermissionUpdateKeyContract:
           case PermissionDeleteKeyContract: {
-            if (accountMap.containsKey(ownerAddress)) {
-              continue;
-            }
             accountMap.put(ownerAddress, true);
           }
           default:
