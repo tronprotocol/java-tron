@@ -590,32 +590,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public static boolean validateSignature(Transaction transaction,
-      byte[] hash, AccountStore accountStore)
+      byte[] hash, AccountCapsule account)
       throws PermissionException, SignatureException, SignatureFormatException {
     Transaction.Contract contract = transaction.getRawData().getContractList().get(0);
     String permissionName = getPermissionName(contract);
     byte[] owner = getOwner(contract);
-    AccountCapsule account = accountStore.get(owner);
-    Permission permission;
-    if (account == null) {
-      permission = getDefaultPermission(ByteString.copyFrom(owner), permissionName);
-    } else {
-      permission = getPermission(account.getInstance(), permissionName);
-    }
-    long weight = checkWeight(permission, transaction.getSignatureList(), hash, null);
-    if (weight >= permission.getThreshold()) {
-      return true;
-    }
-    return false;
-  }
-
-  public static boolean validateSignature(Transaction transaction, byte[] hash,
-      ByteArrayWrapper ownerByte)
-      throws PermissionException, SignatureException, SignatureFormatException {
-    Transaction.Contract contract = transaction.getRawData().getContractList().get(0);
-    String permissionName = getPermissionName(contract);
-    byte[] owner = ownerByte.getData();
-    AccountCapsule account = Manager.accountCache.get(ownerByte);
     Permission permission;
     if (account == null) {
       permission = getDefaultPermission(ByteString.copyFrom(owner), permissionName);
@@ -634,39 +613,15 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
    */
   public boolean validateSignature(Manager manager)
       throws ValidateSignatureException {
-    if (isVerified == true) {
-      return true;
-    }
-    if (this.transaction.getSignatureCount() <= 0
-        || this.transaction.getRawData().getContractCount() <= 0) {
-      throw new ValidateSignatureException("miss sig or contract");
-    }
-    if (this.transaction.getSignatureCount() >
-        manager.getDynamicPropertiesStore().getTotalSignNum()) {
-      throw new ValidateSignatureException("too many signatures");
-    }
-    byte[] hash = this.getRawHash().getBytes();
-    try {
-      if (!validateSignature(this.transaction, hash, manager.getAccountStore())) {
-        isVerified = false;
-        throw new ValidateSignatureException("sig error");
-      }
-    } catch (SignatureException e) {
-      isVerified = false;
-      throw new ValidateSignatureException(e.getMessage());
-    } catch (PermissionException e) {
-      isVerified = false;
-      throw new ValidateSignatureException(e.getMessage());
-    } catch (SignatureFormatException e) {
-      isVerified = false;
-      throw new ValidateSignatureException(e.getMessage());
-    }
-
-    isVerified = true;
-    return true;
+    return validateSignatureCommon(manager, null);
   }
 
   public boolean validateSignature(Manager manager, ByteArrayWrapper owner)
+      throws ValidateSignatureException {
+    return validateSignatureCommon(manager, owner);
+  }
+
+  private boolean validateSignatureCommon(Manager manager, ByteArrayWrapper owner)
       throws ValidateSignatureException {
     if (isVerified == true) {
       return true;
@@ -681,7 +636,13 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
     byte[] hash = this.getRawHash().getBytes();
     try {
-      if (!validateSignature(this.transaction, hash, owner)) {
+      AccountCapsule account;
+      if (owner == null) {
+        account = manager.getAccountStore().get(owner.getData());
+      } else {
+        account = Manager.accountCache.get(owner);
+      }
+      if (!validateSignature(this.transaction, hash, account)) {
         isVerified = false;
         throw new ValidateSignatureException("sig error");
       }
