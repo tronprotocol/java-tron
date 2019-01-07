@@ -13,7 +13,7 @@ import org.tron.api.GrpcAPI.BlockList;
 import org.tron.core.Wallet;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetBlockByLimitNextServlet extends HttpServlet {
 
   @Autowired

@@ -4,12 +4,10 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.size;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
+import lombok.Setter;
+import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.vm.CallCreate;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
@@ -32,6 +30,9 @@ public class ProgramResult {
   private List<LogInfo> logInfoList;
 
   private TransactionResultCapsule ret = new TransactionResultCapsule();
+
+  @Setter
+  private List<ContractTrigger> triggerList;
 
   /*
    * for testing runs ,
@@ -72,6 +73,8 @@ public class ProgramResult {
   public byte[] getHReturn() {
     return hReturn;
   }
+
+  public List<ContractTrigger> getTriggerList() { return triggerList != null ? triggerList : new LinkedList<>();}
 
   public TransactionResultCapsule getRet() {
     return ret;

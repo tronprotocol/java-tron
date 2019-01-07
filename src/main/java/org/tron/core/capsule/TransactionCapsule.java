@@ -92,12 +92,16 @@ import org.tron.protos.Protocol.Transaction.Result;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.Transaction.raw;
 
-@Slf4j
+@Slf4j(topic = "capsule")
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   private Transaction transaction;
   @Setter
   private boolean isVerified = false;
+
+  @Setter
+  @Getter
+  private long blockNum = -1;
 
   @Getter
   @Setter

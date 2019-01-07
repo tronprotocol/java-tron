@@ -10,8 +10,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -21,10 +20,9 @@ import org.tron.common.overlay.server.TronChannelInitializer;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol.ReasonCode;
 
+@Slf4j(topic = "net")
 @Component
 public class PeerClient {
-
-  private static final Logger logger = LoggerFactory.getLogger("PeerClient");
 
   @Autowired
   private ApplicationContext ctx;

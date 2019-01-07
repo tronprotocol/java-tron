@@ -70,6 +70,10 @@ public class CreateTransaction2Test {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -154,6 +158,9 @@ public class CreateTransaction2Test {
     logger.info(Long.toString(receiptAccountAfterBalance1));
     Assert.assertTrue(receiptAccountAfterBalance1 == 49880000000L + 40119900000L);
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {
@@ -164,6 +171,9 @@ public class CreateTransaction2Test {
       searchChannelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+  /**
+   * constructor.
+   */
 
   public Boolean freezeBalance(byte[] addRess, long freezeBalance, long freezeDuration,
       String priKey) {
@@ -245,6 +255,9 @@ public class CreateTransaction2Test {
 
 
   }
+  /**
+   * constructor.
+   */
 
   public Boolean sendcoin(byte[] to, long amount, byte[] owner, String priKey) {
 
@@ -279,6 +292,9 @@ public class CreateTransaction2Test {
       return true;
     }
   }
+  /**
+   * constructor.
+   */
 
   public Account queryAccount(ECKey ecKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     byte[] address;
@@ -303,12 +319,18 @@ public class CreateTransaction2Test {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+  /**
+   * constructor.
+   */
 
   public Account grpcQueryAccount(byte[] address, WalletGrpc.WalletBlockingStub blockingStubFull) {
     ByteString addressBs = ByteString.copyFrom(address);
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+  /**
+   * constructor.
+   */
 
   public Block getBlock(long blockNum, WalletGrpc.WalletBlockingStub blockingStubFull) {
     NumberMessage.Builder builder = NumberMessage.newBuilder();

@@ -34,15 +34,6 @@ public class BlockIndexStore extends TronStoreWithRevoking<BytesCapsule> {
     return new BlockId(Sha256Hash.wrap(value.getData()), num);
   }
 
-  public BlockId getOnSolidity(Long num)
-      throws ItemNotFoundException {
-    BytesCapsule value = getUncheckedOnSolidity(ByteArray.fromLong(num));
-    if (value == null || value.getData() == null) {
-      throw new ItemNotFoundException("number: " + num + " is not found!");
-    }
-    return new BlockId(Sha256Hash.wrap(value.getData()), num);
-  }
-
   @Override
   public BytesCapsule get(byte[] key)
       throws ItemNotFoundException {

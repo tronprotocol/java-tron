@@ -28,7 +28,7 @@ import org.tron.core.net.TronProxy;
 import org.tron.core.net.service.AdvService;
 import org.tron.core.net.service.SyncService;
 
-@Slf4j
+@Slf4j(topic = "net")
 @Component
 @Scope("prototype")
 public class PeerConnection extends Channel {

@@ -14,8 +14,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.client.PeerClient;
@@ -24,7 +23,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.protos.Protocol.ReasonCode;
 
-
+@Slf4j(topic = "net")
 @Component
 public class ChannelManager {
 
@@ -38,8 +37,6 @@ public class ChannelManager {
   private SyncPool syncPool;
 
   private Args args = Args.getInstance();
-
-  private static final Logger logger = LoggerFactory.getLogger("ChannelManager");
 
   private final Map<ByteArrayWrapper, Channel> activePeers = new ConcurrentHashMap<>();
 

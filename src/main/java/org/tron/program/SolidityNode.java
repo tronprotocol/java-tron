@@ -1,8 +1,8 @@
 package org.tron.program;
 
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+
 import ch.qos.logback.classic.Level;
-import com.google.common.collect.Maps;
-import java.util.Map;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
@@ -20,8 +20,6 @@ import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -29,165 +27,57 @@ import org.tron.core.services.RpcApiService;
 import org.tron.core.services.http.solidity.SolidityNodeHttpApiService;
 import org.tron.protos.Protocol.Block;
 
-@Slf4j
+@Slf4j(topic = "app")
 public class SolidityNode {
 
   private Manager dbManager;
-
-  private Args cfgArgs;
 
   private DatabaseGrpcClient databaseGrpcClient;
 
   private AtomicLong ID = new AtomicLong();
 
-  private Map<Long, Block> blockMap = Maps.newConcurrentMap();
+  private AtomicLong remoteBlockNum = new AtomicLong();
 
-  private LinkedBlockingDeque<Block> blockQueue = new LinkedBlockingDeque(10000);
+  private LinkedBlockingDeque<Block> blockQueue = new LinkedBlockingDeque(100);
 
-  private LinkedBlockingDeque<Block> blockBakQueue = new LinkedBlockingDeque(10000);
-
-  private volatile long remoteLastSolidityBlockNum = 0;
-
-  private volatile long lastSolidityBlockNum;
-
-  private long maxBlockCacheSize = 10_000;
-
-  private volatile boolean syncFlag = true;
+  private int exceptionSleepTime = 1000;
 
   private volatile boolean flag = true;
 
-  public SolidityNode(Manager dbManager, Args cfgArgs) {
+  public SolidityNode(Manager dbManager) {
     this.dbManager = dbManager;
-    this.cfgArgs = cfgArgs;
-    lastSolidityBlockNum = dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
-    ID.set(lastSolidityBlockNum);
-    databaseGrpcClient = new DatabaseGrpcClient(cfgArgs.getTrustNodeAddr());
-    remoteLastSolidityBlockNum = getLastSolidityBlockNum();
+    resolveCompatibilityIssueIfUsingFullNodeDatabase();
+    ID.set(dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+    databaseGrpcClient = new DatabaseGrpcClient(Args.getInstance().getTrustNodeAddr());
+    remoteBlockNum.set(getLastSolidityBlockNum());
   }
 
   private void start() {
     try {
-      for (int i = 0; i < 50; i++) {
-        new Thread(() -> getSyncBlock()).start();
-      }
-      new Thread(() -> getAdvBlock()).start();
-      new Thread(() -> pushBlock()).start();
+      new Thread(() -> getBlock()).start();
       new Thread(() -> processBlock()).start();
-      new Thread(() -> processTrx()).start();
-      logger.info(
-          "Success to start solid node, lastSolidityBlockNum: {}, ID: {}, remoteLastSolidityBlockNum: {}.",
-          lastSolidityBlockNum, ID.get(), remoteLastSolidityBlockNum);
+      logger.info( "Success to start solid node, ID: {}, remoteBlockNum: {}.", ID.get(), remoteBlockNum);
     } catch (Exception e) {
-      logger.error("Failed to start solid node, address: {}.", cfgArgs.getTrustNodeAddr());
+      logger.error("Failed to start solid node, address: {}.", Args.getInstance().getTrustNodeAddr());
       System.exit(0);
     }
   }
 
-  private void getSyncBlock() {
-    long blockNum = getNextSyncBlockId();
-    while (syncFlag) {
-      try {
-        if (blockNum == 0) {
-          break;
-        }
-        if (blockMap.size() > maxBlockCacheSize) {
-          sleep(1000);
-          continue;
-        }
-        Block block = getBlockByNum(blockNum);
-        blockMap.put(blockNum, block);
-        logger.info("Success to get sync block: {}.", blockNum);
-        blockNum = getNextSyncBlockId();
-      } catch (Exception e) {
-        logger.error("Failed to get sync block {}.", blockNum);
-        sleep(1000);
-      }
-    }
-    logger.warn("Get sync block thread {} exit.", Thread.currentThread().getName());
-  }
-
-  synchronized long getNextSyncBlockId() {
-
-    if (!syncFlag) {
-      return 0;
-    }
-
-    if (ID.get() < remoteLastSolidityBlockNum) {
-      return ID.incrementAndGet();
-    }
-
-    long lastNum = getLastSolidityBlockNum();
-    if (lastNum - remoteLastSolidityBlockNum > 50) {
-      remoteLastSolidityBlockNum = lastNum;
-      return ID.incrementAndGet();
-    }
-
-    logger.warn("Sync mode switch to adv, ID = {}, lastNum = {}, remoteLastSolidityBlockNum = {}",
-        ID.get(), lastNum, remoteLastSolidityBlockNum);
-
-    syncFlag = false;
-
-    return 0;
-  }
-
-  private void getAdvBlock() {
-    while (syncFlag) {
-      sleep(5000);
-    }
-    logger.warn("Get adv block thread start.");
+  private void getBlock() {
     long blockNum = ID.incrementAndGet();
     while (flag) {
       try {
-        if (blockNum > remoteLastSolidityBlockNum || blockMap.size() > maxBlockCacheSize) {
-          sleep(3000);
-          remoteLastSolidityBlockNum = getLastSolidityBlockNum();
+        if (blockNum > remoteBlockNum.get()) {
+          sleep(BLOCK_PRODUCED_INTERVAL);
+          remoteBlockNum.set(getLastSolidityBlockNum());
           continue;
         }
         Block block = getBlockByNum(blockNum);
-        blockMap.put(blockNum, block);
-        logger.info("Success to get adv block: {}.", blockNum);
+        blockQueue.put(block);
         blockNum = ID.incrementAndGet();
       } catch (Exception e) {
-        logger.error("Failed to get adv block {}.", blockNum);
-        sleep(1000);
-      }
-    }
-  }
-
-  private Block getBlockByNum(long blockNum) throws Exception {
-    Block block = databaseGrpcClient.getBlock(blockNum);
-    if (block.getBlockHeader().getRawData().getNumber() != blockNum) {
-      logger.warn("Get adv block id not the same , {}, {}.", blockNum,
-          block.getBlockHeader().getRawData().getNumber());
-      throw new Exception();
-    }
-    return block;
-  }
-
-  private long getLastSolidityBlockNum() {
-    while (true) {
-      try {
-        long blockNum = databaseGrpcClient.getDynamicProperties().getLastSolidityBlockNum();
-        logger.info("Get last remote solid blockNum: {}.", remoteLastSolidityBlockNum);
-        return blockNum;
-      } catch (Exception e) {
-        logger.error("Failed to get last solid blockNum: {}.", remoteLastSolidityBlockNum);
-        sleep(1000);
-      }
-    }
-  }
-
-  private void pushBlock() {
-    while (flag) {
-      try {
-        Block block = blockMap.remove(lastSolidityBlockNum + 1);
-        if (block == null) {
-          sleep(1000);
-          continue;
-        }
-        blockQueue.put(block);
-        ++lastSolidityBlockNum;
-      } catch (Exception e) {
+        logger.error("Failed to get block {}, reason: {}.", blockNum, e.getMessage());
+        sleep(exceptionSleepTime);
       }
     }
   }
@@ -197,71 +87,61 @@ public class SolidityNode {
       try {
         Block block = blockQueue.take();
         loopProcessBlock(block);
-        blockBakQueue.put(block);
-        logger.info(
-            "Success to process block: {}, blockMapSize: {}, blockQueueSize: {}, blockBakQueue: {}",
-            block.getBlockHeader().getRawData().getNumber(),
-            blockMap.size(),
-            blockQueue.size(),
-            blockBakQueue.size());
       } catch (Exception e) {
         logger.error(e.getMessage());
-        sleep(100);
+        sleep(exceptionSleepTime);
       }
-    }
-  }
-
-  private void resolveCompatibilityIssueIfUsingFullNodeDatabase() {
-    long lastSolidityBlockNum = dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
-    long headBlockNum = dbManager.getHeadBlockNum();
-    logger.info("headBlockNum:{}, solidityBlockNum:{}, diff:{}",
-        headBlockNum, lastSolidityBlockNum, headBlockNum - lastSolidityBlockNum);
-    if (lastSolidityBlockNum < headBlockNum) {
-      logger.info("use fullnode database, headBlockNum:{}, solidityBlockNum:{}, diff:{}",
-          headBlockNum, lastSolidityBlockNum, headBlockNum - lastSolidityBlockNum);
-      dbManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(headBlockNum);
     }
   }
 
   private void loopProcessBlock(Block block) {
-    while (true) {
+    while (flag) {
       long blockNum = block.getBlockHeader().getRawData().getNumber();
       try {
         dbManager.pushVerifiedBlock(new BlockCapsule(block));
         dbManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(blockNum);
+        logger.info("Success to process block: {}, blockQueueSize: {}.", blockNum, blockQueue.size());
         return;
       } catch (Exception e) {
-        logger.error("Failed to process block {}.", blockNum);
-        try {
-          sleep(100);
-          block = databaseGrpcClient.getBlock(blockNum);
-        } catch (Exception e1) {
-          logger.error(e1.getMessage());
-        }
+        logger.error("Failed to process block {}.", new BlockCapsule(block), e);
+        sleep(exceptionSleepTime);
+        block = getBlockByNum(blockNum);
       }
     }
   }
 
-  private void processTrx() {
-    while (flag) {
+  private Block getBlockByNum(long blockNum) {
+    while (true) {
       try {
-        Block block = blockBakQueue.take();
-        BlockCapsule blockCapsule = new BlockCapsule(block);
-        for (TransactionCapsule trx : blockCapsule.getTransactions()) {
-          TransactionInfoCapsule ret;
-          try {
-            ret = dbManager.getTransactionHistoryStore().get(trx.getTransactionId().getBytes());
-          } catch (Exception ex) {
-            logger.warn("Failed to get trx: {}", trx.getTransactionId(), ex);
-            continue;
-          }
-          ret.setBlockNumber(blockCapsule.getNum());
-          ret.setBlockTimeStamp(blockCapsule.getTimeStamp());
-          dbManager.getTransactionHistoryStore().put(trx.getTransactionId().getBytes(), ret);
+        long time = System.currentTimeMillis();
+        Block block = databaseGrpcClient.getBlock(blockNum);
+        long num = block.getBlockHeader().getRawData().getNumber();
+        if (num == blockNum) {
+          logger.info("Success to get block: {}, cost: {}ms.",
+              blockNum, System.currentTimeMillis() - time);
+          return block;
+        }else {
+          logger.warn("Get block id not the same , {}, {}.", num, blockNum);
+          sleep(exceptionSleepTime);
         }
+      }catch (Exception e){
+        logger.error("Failed to get block: {}, reason: {}.", blockNum, e.getMessage());
+        sleep(exceptionSleepTime);
+      }
+    }
+  }
+
+  private long getLastSolidityBlockNum() {
+    while (true) {
+      try {
+        long time = System.currentTimeMillis();
+        long blockNum = databaseGrpcClient.getDynamicProperties().getLastSolidityBlockNum();
+        logger.info("Get last remote solid blockNum: {}, remoteBlockNum: {}, cost: {}.",
+            blockNum, remoteBlockNum, System.currentTimeMillis() - time);
+        return blockNum;
       } catch (Exception e) {
-        logger.error(e.getMessage());
-        sleep(100);
+        logger.error("Failed to get last solid blockNum: {}, reason: {}.", remoteBlockNum.get(), e.getMessage());
+        sleep(exceptionSleepTime);
       }
     }
   }
@@ -273,10 +153,22 @@ public class SolidityNode {
     }
   }
 
+  private void resolveCompatibilityIssueIfUsingFullNodeDatabase() {
+    long lastSolidityBlockNum = dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+    long headBlockNum = dbManager.getHeadBlockNum();
+    logger.info("headBlockNum:{}, solidityBlockNum:{}, diff:{}",
+        headBlockNum, lastSolidityBlockNum, headBlockNum - lastSolidityBlockNum);
+    if (lastSolidityBlockNum < headBlockNum) {
+      logger.info("use fullNode database, headBlockNum:{}, solidityBlockNum:{}, diff:{}",
+          headBlockNum, lastSolidityBlockNum, headBlockNum - lastSolidityBlockNum);
+      dbManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(headBlockNum);
+    }
+  }
+
   /**
    * Start the SolidityNode.
    */
-  public static void main(String[] args) throws InterruptedException {
+  public static void main(String[] args) {
     logger.info("Solidity node running.");
     Args.setParam(args, Constant.TESTNET_CONF);
     Args cfgArgs = Args.getInstance();
@@ -321,8 +213,7 @@ public class SolidityNode {
     NodeManager nodeManager = context.getBean(NodeManager.class);
     nodeManager.close();
 
-    SolidityNode node = new SolidityNode(appT.getDbManager(), cfgArgs);
-    node.resolveCompatibilityIssueIfUsingFullNodeDatabase();
+    SolidityNode node = new SolidityNode(appT.getDbManager());
     node.start();
 
     rpcApiService.blockUntilShutdown();

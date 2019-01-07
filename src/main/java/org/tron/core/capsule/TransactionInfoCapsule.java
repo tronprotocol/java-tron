@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.ProgramResult;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
 import org.tron.protos.Protocol;
@@ -17,7 +18,7 @@ import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionInfo.Log;
 import org.tron.protos.Protocol.TransactionInfo.code;
 
-@Slf4j
+@Slf4j(topic = "capsule")
 public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
 
   private TransactionInfo transactionInfo;
@@ -187,7 +188,7 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
 
     builder.setReceipt(traceReceipt.getReceipt());
 
-    if (null != programResult.getInternalTransactions()) {
+    if (Args.getInstance().isSaveInternalTx() && null != programResult.getInternalTransactions()) {
       for (InternalTransaction internalTransaction : programResult
           .getInternalTransactions()) {
         Protocol.InternalTransaction.Builder internalTrxBuilder = Protocol.InternalTransaction

@@ -10,7 +10,7 @@ import org.tron.common.application.Service;
 import org.tron.core.config.args.Args;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class FullNodeHttpApiService implements Service {
 
   private int port = Args.getInstance().getFullNodeHttpPort();
@@ -18,7 +18,7 @@ public class FullNodeHttpApiService implements Service {
   private Server server;
 
   @Autowired
-  private GetAccountServlet accountServlet;
+  private GetAccountServlet getAccountServlet;
   @Autowired
   private TransferServlet transferServlet;
   @Autowired
@@ -78,7 +78,7 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetTransactionInfoByIdServlet getTransactionInfoByIdServlet;
   @Autowired
-  private GetTransactionCountByBlockNumServlet getTransactionCountByBlockNum;
+  private GetTransactionCountByBlockNumServlet getTransactionCountByBlockNumServlet;
   @Autowired
   private ListWitnessesServlet listWitnessesServlet;
   @Autowired
@@ -142,6 +142,8 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetTransactionSignWeightServlet getTransactionSignWeightServlet;
   @Autowired
+  private GetTransactionApprovedListServlet getTransactionApprovedListServlet;
+  @Autowired
   private AccountPermissionUpdateServlet accountPermissionUpdateServlet;
   @Autowired
   private PermissionAddKeyServlet permissionAddKeyServlet;
@@ -174,7 +176,8 @@ public class FullNodeHttpApiService implements Service {
       ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
       context.setContextPath("/wallet/");
       server.setHandler(context);
-      context.addServlet(new ServletHolder(accountServlet), "/getaccount");
+
+      context.addServlet(new ServletHolder(getAccountServlet), "/getaccount");
       context.addServlet(new ServletHolder(transferServlet), "/createtransaction");
       context.addServlet(new ServletHolder(broadcastServlet), "/broadcasttransaction");
       context.addServlet(new ServletHolder(transactionSignServlet), "/gettransactionsign");
@@ -208,13 +211,14 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(
           new ServletHolder(getTransactionInfoByIdServlet), "/gettransactioninfobyid");
       context.addServlet(
-          new ServletHolder(getTransactionCountByBlockNum), "/gettransactioncountbyblocknum");
+          new ServletHolder(getTransactionCountByBlockNumServlet),
+          "/gettransactioncountbyblocknum");
       context.addServlet(new ServletHolder(listWitnessesServlet), "/listwitnesses");
       context.addServlet(new ServletHolder(getAssetIssueListServlet), "/getassetissuelist");
       context.addServlet(
           new ServletHolder(getPaginatedAssetIssueListServlet), "/getpaginatedassetissuelist");
       context.addServlet(
-          new ServletHolder(getPaginatedProposalListServlet), "/getpaginatedproposalist");
+          new ServletHolder(getPaginatedProposalListServlet), "/getpaginatedproposallist");
       context.addServlet(
           new ServletHolder(getPaginatedExchangeListServlet), "/getpaginatedexchangelist");
       context.addServlet(new ServletHolder(totalTransactionServlet), "/totaltransaction");
@@ -244,6 +248,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getNodeInfoServlet), "/getnodeinfo");
       context.addServlet(new ServletHolder(addTransactionSignServlet), "/addtransactionsign");
       context.addServlet(new ServletHolder(getTransactionSignWeightServlet), "/getsignweight");
+      context.addServlet(new ServletHolder(getTransactionApprovedListServlet), "/getapprovedlist");
       context.addServlet(new ServletHolder(accountPermissionUpdateServlet),
           "/accountpermissionupdate");
       context.addServlet(new ServletHolder(permissionAddKeyServlet), "/permissionaddkey");
@@ -256,6 +261,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(
           new ServletHolder(getDelegatedResourceAccountIndexServlet),
           "/getdelegatedresourceaccountindex");
+
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());

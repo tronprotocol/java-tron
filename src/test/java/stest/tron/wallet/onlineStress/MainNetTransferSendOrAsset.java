@@ -65,6 +65,10 @@ public class MainNetTransferSendOrAsset {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = false)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -128,6 +132,9 @@ public class MainNetTransferSendOrAsset {
       }
     }
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {

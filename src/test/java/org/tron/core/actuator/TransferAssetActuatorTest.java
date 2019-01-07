@@ -225,6 +225,7 @@ public class TransferAssetActuatorTest {
                     .build();
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
     dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+    dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
 
     AccountCapsule ownerCapsule =
             new AccountCapsule(
@@ -232,6 +233,8 @@ public class TransferAssetActuatorTest {
                     ByteString.copyFromUtf8("owner"),
                     AccountType.AssetIssue);
     ownerCapsule.addAsset(ASSET_NAME.getBytes(), OWNER_ASSET_BALANCE);
+    ownerCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), OWNER_ASSET_BALANCE);
+
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
   }
 
@@ -286,7 +289,6 @@ public class TransferAssetActuatorTest {
       Assert.assertEquals(owner.getInstance().getAssetMap().get(ASSET_NAME).longValue(),
           OWNER_ASSET_BALANCE - 100);
       Assert.assertEquals(toAccount.getInstance().getAssetMap().get(ASSET_NAME).longValue(), 100L);
-
       // check V2
       long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
       Assert.assertEquals(owner.getInstance().getAssetV2Map().get(String.valueOf(tokenIdNum)).longValue(),
@@ -316,6 +318,9 @@ public class TransferAssetActuatorTest {
               dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       AccountCapsule toAccount =
               dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+      // V1, data is not exist
+      Assert.assertNull(owner.getAssetMap().get(ASSET_NAME));
+      Assert.assertNull(toAccount.getAssetMap().get(ASSET_NAME));
       // check V2
       long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
       Assert.assertEquals(owner.getInstance().getAssetV2Map().get(String.valueOf(tokenIdNum)).longValue(),
@@ -363,6 +368,41 @@ public class TransferAssetActuatorTest {
     }
   }
 
+
+  /**
+   * Init close SameTokenName,after init data,open SameTokenName
+   */
+  @Test
+  public void OldNotUpdateSuccessTransfer2() {
+    createAssertBeforSameTokenNameActive();
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    TransferAssetActuator actuator = new TransferAssetActuator(getContract(OWNER_ASSET_BALANCE),
+            dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      AccountCapsule owner =
+              dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount =
+              dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+      //check V1
+      Assert.assertEquals(owner.getInstance().getAssetMap().get(ASSET_NAME).longValue(), OWNER_ASSET_BALANCE);
+      Assert.assertNull(toAccount.getInstance().getAssetMap().get(ASSET_NAME));
+      //check V2
+      long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
+      Assert.assertEquals(owner.getInstance().getAssetV2Map().get(String.valueOf(tokenIdNum)).longValue(), 0L);
+      Assert.assertEquals(
+              toAccount.getInstance().getAssetV2Map().get(String.valueOf(tokenIdNum)).longValue(),
+              OWNER_ASSET_BALANCE);
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
   /**
    * SameTokenName open, transfer assert success.
    */
@@ -380,6 +420,9 @@ public class TransferAssetActuatorTest {
               dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       AccountCapsule toAccount =
               dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+      // V1, data is not exist
+      Assert.assertNull(owner.getAssetMap().get(ASSET_NAME));
+      Assert.assertNull(toAccount.getAssetMap().get(ASSET_NAME));
       //check V2
       long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
       Assert.assertEquals(owner.getInstance().getAssetV2Map().get(String.valueOf(tokenIdNum)).longValue(), 0L);
@@ -1076,8 +1119,8 @@ public class TransferAssetActuatorTest {
     dbManager.getAccountStore()
             .put(ownerAssetCapsule.getAddress().toByteArray(), ownerAssetCapsule);
     dbManager.getAssetIssueV2Store()
-            .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
-    TransferAssetActuator actuator = new TransferAssetActuator(getContract(1, ownerASSET_NAME),
+            .put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
+    TransferAssetActuator actuator = new TransferAssetActuator(getContract(1, String.valueOf(tokenIdNum)),
             dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {

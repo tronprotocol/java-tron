@@ -16,7 +16,7 @@ import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Component
 public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> {
 
@@ -80,6 +80,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     private static final byte[] TOTAL_ENERGY_AVERAGE_TIME = "TOTAL_ENERGY_AVERAGE_TIME".getBytes();
     private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
     private static final byte[] TOTAL_ENERGY_LIMIT = "TOTAL_ENERGY_LIMIT".getBytes();
+    private static final byte[] BLOCK_ENERGY_USAGE = "BLOCK_ENERGY_USAGE".getBytes();
   }
 
   private static final byte[] ENERGY_FEE = "ENERGY_FEE".getBytes();
@@ -340,6 +341,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getAllowAdaptiveEnergy();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowAdaptiveEnergy(Args.getInstance().getAllowAdaptiveEnergy());
+    }
+
+    try {
       this.getTotalEnergyLimit();
     } catch (IllegalArgumentException e) {
       this.saveTotalEnergyLimit(50_000_000_000L);
@@ -454,12 +461,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getAllowAdaptiveEnergy();
-    } catch (IllegalArgumentException e) {
-      this.saveAllowAdaptiveEnergy(Args.getInstance().getAllowAdaptiveEnergy());
-    }
-
-    try {
       this.getAllowTvmTransferTrc10();
     } catch (IllegalArgumentException e) {
       this.saveAllowTvmTransferTrc10(Args.getInstance().getAllowTvmTransferTrc10());
@@ -520,6 +521,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getTotalEnergyAverageTime();
     } catch (IllegalArgumentException e) {
       this.saveTotalEnergyAverageTime(0);
+    }
+
+    try {
+      this.getBlockEnergyUsage();
+    } catch (IllegalArgumentException e) {
+      this.saveBlockEnergyUsage(0);
     }
   }
 
@@ -832,7 +839,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         new BytesCapsule(ByteArray.fromLong(totalEnergyLimit)));
 
     saveTotalEnergyTargetLimit(totalEnergyLimit / 14400);
+  }
 
+  public void saveTotalEnergyLimit2(long totalEnergyLimit) {
+    this.put(DynamicResourceProperties.TOTAL_ENERGY_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(totalEnergyLimit)));
+
+    saveTotalEnergyTargetLimit(totalEnergyLimit / 14400);
+    if (getAllowAdaptiveEnergy() == 0) {
+      saveTotalEnergyCurrentLimit(totalEnergyLimit);
+    }
   }
 
   public long getTotalEnergyLimit() {
@@ -895,6 +911,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found TOTAL_NET_AVERAGE_TIME"));
   }
 
+  public void saveBlockEnergyUsage(long blockEnergyUsage) {
+    this.put(DynamicResourceProperties.BLOCK_ENERGY_USAGE,
+        new BytesCapsule(ByteArray.fromLong(blockEnergyUsage)));
+  }
+
+  public long getBlockEnergyUsage() {
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.BLOCK_ENERGY_USAGE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found BLOCK_ENERGY_USAGE"));
+  }
 
   public void saveEnergyFee(long totalEnergyFee) {
     this.put(ENERGY_FEE,
@@ -1320,15 +1348,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElseThrow(() -> new IllegalArgumentException("not found latest block header number"));
   }
 
-  /**
-   * get number of global latest solidity block.
-   */
-  public long getLatestBlockHeaderNumberOnSolidity() {
-    return Optional.ofNullable(revokingDB.getUncheckedOnSolidity(LATEST_BLOCK_HEADER_NUMBER))
-        .map(ByteArray::toLong)
-        .orElseThrow(() -> new IllegalArgumentException("not found latest block header number"));
-  }
-
   public int getStateFlag() {
     return Optional.ofNullable(getUnchecked(STATE_FLAG))
         .map(BytesCapsule::getData)
@@ -1343,17 +1362,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public Sha256Hash getLatestBlockHeaderHash() {
     byte[] blockHash = Optional.ofNullable(getUnchecked(LATEST_BLOCK_HEADER_HASH))
         .map(BytesCapsule::getData)
-        .orElseThrow(() -> new IllegalArgumentException("not found block hash"));
-    return Sha256Hash.wrap(blockHash);
-  }
-
-  /**
-   * get id of global latest solidity block.
-   */
-
-  public Sha256Hash getLatestBlockHeaderHashOnSolidity() {
-    byte[] blockHash = Optional
-        .ofNullable(revokingDB.getUncheckedOnSolidity(LATEST_BLOCK_HEADER_HASH))
         .orElseThrow(() -> new IllegalArgumentException("not found block hash"));
     return Sha256Hash.wrap(blockHash);
   }

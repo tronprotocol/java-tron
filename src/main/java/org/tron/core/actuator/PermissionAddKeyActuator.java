@@ -16,8 +16,7 @@ import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-
-@Slf4j
+@Slf4j(topic = "actuator")
 public class PermissionAddKeyActuator extends AbstractActuator {
 
   PermissionAddKeyActuator(Any contract, Manager dbManager) {
@@ -89,12 +88,18 @@ public class PermissionAddKeyActuator extends AbstractActuator {
       throw new ContractValidateException("address in key is invalidate");
     }
     Permission permission = account.getPermissionByName(name);
+    long weightSum = 0;
     if (permission != null) {
       for (Key key : permission.getKeysList()) {
         String address = Wallet.encode58Check(keyAddress.toByteArray());
         if (key.getAddress().equals(keyAddress)) {
           throw new ContractValidateException("address " + address + " is already in permission "
               + name);
+        }
+        try {
+          weightSum = Math.addExact(weightSum, key.getWeight());
+        } catch (ArithmeticException e) {
+          throw new ContractValidateException(e.getMessage());
         }
       }
       if (permission.getKeysCount() >= dbManager.getDynamicPropertiesStore().getTotalSignNum()) {
@@ -106,6 +111,11 @@ public class PermissionAddKeyActuator extends AbstractActuator {
 
     if (permissionAddKeyContract.getKey().getWeight() <= 0) {
       throw new ContractValidateException("key weight should be greater than 0");
+    }
+    try {
+      weightSum = Math.addExact(weightSum, permissionAddKeyContract.getKey().getWeight());
+    } catch (ArithmeticException e) {
+      throw new ContractValidateException(e.getMessage());
     }
     return true;
   }

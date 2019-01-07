@@ -24,8 +24,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -40,11 +39,10 @@ import org.tron.core.db.Manager;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.ReasonCode;
 
+@Slf4j(topic = "net")
 @Component
 @Scope("prototype")
 public class HandshakeHandler extends ByteToMessageDecoder {
-
-  protected static final Logger logger = LoggerFactory.getLogger("HandshakeHandler");
 
   private byte[] remoteId;
 

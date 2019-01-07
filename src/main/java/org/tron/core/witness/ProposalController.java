@@ -10,7 +10,7 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.Proposal.State;
 
-@Slf4j
+@Slf4j(topic = "witness")
 public class ProposalController {
 
   @Setter
@@ -179,11 +179,22 @@ public class ProposalController {
           break;
         }
         case (19): {
+          manager.getDynamicPropertiesStore().saveTotalEnergyLimit2(entry.getValue());
+          break;
+        }
+        case (20): {
           if (manager.getDynamicPropertiesStore().getAllowMultiSign() == 0) {
             manager.getDynamicPropertiesStore().saveAllowMultiSign(entry.getValue());
           }
           break;
         }
+        case (21): {
+          if (manager.getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 0) {
+            manager.getDynamicPropertiesStore().saveAllowAdaptiveEnergy(entry.getValue());
+          }
+          break;
+        }
+
         default:
           break;
       }

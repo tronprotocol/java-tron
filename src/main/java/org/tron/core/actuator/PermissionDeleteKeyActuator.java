@@ -20,8 +20,7 @@ import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-
-@Slf4j
+@Slf4j(topic = "actuator")
 public class PermissionDeleteKeyActuator extends AbstractActuator {
 
   PermissionDeleteKeyActuator(Any contract, Manager dbManager) {
@@ -106,10 +105,14 @@ public class PermissionDeleteKeyActuator extends AbstractActuator {
       throw new ContractValidateException(String.format("address is not in permission %s",
           name));
     }
-    int weightSum = 0;
+    long weightSum = 0;
     for (Key key : permission.getKeysList()) {
       if (!key.getAddress().equals(permissionDeleteKeyContract.getKeyAddress())) {
-        weightSum += key.getWeight();
+        try {
+          weightSum = Math.addExact(weightSum, key.getWeight());
+        } catch (ArithmeticException e) {
+          throw new ContractValidateException(e.getMessage());
+        }
       }
     }
     if (weightSum < permission.getThreshold()) {

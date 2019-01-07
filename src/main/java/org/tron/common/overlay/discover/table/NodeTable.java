@@ -23,16 +23,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.overlay.discover.node.Node;
 
-/**
- * Created by kest on 5/25/15.
- */
+@Slf4j(topic = "discover")
 public class NodeTable {
-
-  static final org.slf4j.Logger logger = LoggerFactory.getLogger("NodeTable");
-
 
   private final Node node;  // our node
   private transient NodeBucket[] buckets;

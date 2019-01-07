@@ -64,6 +64,9 @@ public class RequireException {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+  /**
+   * constructor.
+   */
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
@@ -81,16 +84,19 @@ public class RequireException {
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+  }
+
+  @Test(enabled = true)
+  public void test1TestRequireContract() {
+    ecKey1 = new ECKey(Utils.getRandom());
+    asset016Address = ecKey1.getAddress();
+    testKeyForAssetIssue016 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     logger.info(Long.toString(PublicMethed.queryAccount(testNetAccountKey, blockingStubFull)
         .getBalance()));
     PublicMethed
         .sendcoin(asset016Address, 1000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
 
-  }
-
-  @Test(enabled = true)
-  public void testTestRequireContract() {
     String contractName = "TestRequireContract";
     String code = "608060405234801561001057600080fd5b5060b58061001f6000396000f30060806040526004361"
         + "0605c5763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416"
@@ -108,6 +114,9 @@ public class RequireException {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
         blockingStubFull);
@@ -121,11 +130,13 @@ public class RequireException {
     logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-    String txid = "";
 
-    txid = PublicMethed.triggerContract(contractAddress,
+    String txid = PublicMethed.triggerContract(contractAddress,
         "testRequire()", "#", false,
         0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
 
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -158,7 +169,7 @@ public class RequireException {
   }
 
   @Test(enabled = true)
-  public void testTestThrowsContract() {
+  public void test2TestThrowsContract() {
     String contractName = "TestThrowsContract";
     String code = "608060405234801561001057600080fd5b5060b58061001f6000396000f30060806040526004361"
         + "0605c5763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416"
@@ -176,6 +187,9 @@ public class RequireException {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
         blockingStubFull);
@@ -190,10 +204,12 @@ public class RequireException {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
-    String txid = "";
-    txid = PublicMethed.triggerContract(contractAddress,
+    String txid = PublicMethed.triggerContract(contractAddress,
         "testThrow()", "#", false,
         0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Long fee = infoById.get().getFee();
@@ -216,7 +232,7 @@ public class RequireException {
     logger.info("afterEnergyUsed:" + afterEnergyUsed);
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
-
+    logger.info("testTestThrowsContract");
     Assert.assertTrue(afterBalance + fee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
@@ -225,7 +241,7 @@ public class RequireException {
 
 
   @Test(enabled = true)
-  public void testTestRevertContract() {
+  public void test3TestRevertContract() {
     String contractName = "TestThrowsContract";
     String code = "608060405234801561001057600080fd5b5060b58061001f6000396000f3006080604052600436"
         + "10605c5763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504"
@@ -244,6 +260,9 @@ public class RequireException {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
         blockingStubFull);
@@ -258,10 +277,12 @@ public class RequireException {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
-    String txid = "";
-    txid = PublicMethed.triggerContract(contractAddress,
+    String txid = PublicMethed.triggerContract(contractAddress,
         "testRevert()", "#", false,
         0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
 
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -294,7 +315,7 @@ public class RequireException {
   }
 
   @Test(enabled = true)
-  public void testnoPayableContract() {
+  public void test4noPayableContract() {
     String contractName = "noPayableContract";
     String code = "6080604052348015600f57600080fd5b5060978061001e6000396000f3006080604052600436106"
         + "03e5763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663"
@@ -307,6 +328,9 @@ public class RequireException {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
@@ -322,10 +346,12 @@ public class RequireException {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
-    String txid = "";
-    txid = PublicMethed.triggerContract(contractAddress,
+    String txid = PublicMethed.triggerContract(contractAddress,
         "noPayable()", "#", false,
         22, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
 
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -356,7 +382,7 @@ public class RequireException {
   }
 
   @Test(enabled = true)
-  public void testnoPayableConstructor() {
+  public void test5noPayableConstructor() {
 
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
@@ -371,17 +397,19 @@ public class RequireException {
     logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-    String txid = "";
     String contractName = "noPayableConstructor";
     String code = "6080604052348015600f57600080fd5b506040516020806071833981016040525134811115602c5"
         + "7600080fd5b600055603580603c6000396000f3006080604052600080fd00a165627a7a72305820cb20f649"
         + "31c41844749c1571bfc4dfdd268a58ed29b7446dd817ce3c54b014150029";
     String abi = "[{\"inputs\":[{\"name\":\"_money\",\"type\":\"uint256\"}],\"payable\":false,\""
         + "stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]";
-    txid = PublicMethed
+    String txid = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
             22L, 100, null,
             testKeyForAssetIssue016, asset016Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Long fee = infoById.get().getFee();
@@ -414,7 +442,7 @@ public class RequireException {
   }
 
   @Test(enabled = true)
-  public void transferTestContract() {
+  public void test6transferTestContract() {
     String contractName = "transferTestContract";
     String code = "608060405234801561001057600080fd5b5060d28061001f6000396000f30060806040526004361"
         + "0603e5763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416"
@@ -429,6 +457,9 @@ public class RequireException {
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
     Account info;
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
         blockingStubFull);
     info = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull);
@@ -444,10 +475,11 @@ public class RequireException {
 
     String newCxoAddress = "\"" + Base58.encode58Check(testNetAccountAddress)
         + "\"";
-    String txid = "";
-    txid = PublicMethed.triggerContract(contractAddress,
+    String txid = PublicMethed.triggerContract(contractAddress,
         "tranferTest(address) ", newCxoAddress, false,
         5, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
 
@@ -473,6 +505,7 @@ public class RequireException {
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
 
+    logger.info("transferTestContract");
     Assert.assertTrue(afterBalance + fee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
@@ -481,7 +514,7 @@ public class RequireException {
   }
 
   @Test(enabled = true)
-  public void testpayableFallbakContract() {
+  public void test7payableFallbakContract() {
     String contractName = "payableFallbak";
     String code = "6080604052348015600f57600080fd5b5060fb8061001e6000396000f3006080604052600436106"
         + "03e5763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663"
@@ -496,6 +529,9 @@ public class RequireException {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Integer times = 0;
     String contractName1 = "TestContract";
     String code1 = "6080604052348015600f57600080fd5b50604380601d6000396000f3006080604052348015600f"
@@ -507,6 +543,9 @@ public class RequireException {
         .deployContract(contractName1, abi1, code1, "", maxFeeLimit, 0L,
             100, null, testKeyForAssetIssue016,
             asset016Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
         blockingStubFull);
     Account info;
@@ -522,10 +561,12 @@ public class RequireException {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
     String saleContractString = "\"" + Base58.encode58Check(contractAddress) + "\"";
-    String txid = "";
-    txid = PublicMethed.triggerContract(contractAddress1,
+    String txid = PublicMethed.triggerContract(contractAddress1,
         "callTest(address)", saleContractString, false,
         5, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Long fee = infoById.get().getFee();
@@ -557,7 +598,7 @@ public class RequireException {
   }
 
   @Test(enabled = true)
-  public void testnewContractGasNoenough() {
+  public void test8newContractGasNoenough() {
     String contractName = "ContractGasNoenough";
     String code = "60806040526040516020806100bf83398101604052516000556099806100266000396000f300608"
         + "060405260043610603e5763ffffffff7c010000000000000000000000000000000000000000000000000000"
@@ -571,8 +612,10 @@ public class RequireException {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String txid = "";
     String contractName1 = "ContractGasNoenough";
     String code1 = "608060405234801561001057600080fd5b50610182806100206000396000f30060806040526004"
         + "3610603e5763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350"
@@ -587,10 +630,13 @@ public class RequireException {
     String abi1 = "[{\"constant\":false,\"inputs\":[],\"name\":\"newAccount\",\"outputs\":[],\""
         + "payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
 
-    byte[] contractAddress1 = PublicMethed
+    final byte[] contractAddress1 = PublicMethed
         .deployContract(contractName1, abi1, code1, "", maxFeeLimit,
             0L, 100, null,
             testKeyForAssetIssue016, asset016Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
         blockingStubFull);
@@ -604,9 +650,12 @@ public class RequireException {
     logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-    txid = PublicMethed.triggerContract(contractAddress1,
+    String txid = PublicMethed.triggerContract(contractAddress1,
         "newAccount()", "#", false,
         0, 5226000, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Long fee = infoById.get().getFee();
@@ -639,7 +688,7 @@ public class RequireException {
   }
 
   @Test(enabled = true)
-  public void testMessageUsedErrorFeed() {
+  public void test9MessageUsedErrorFeed() {
     String contractName = "MessageFeed";
     String code = "6080604052348015600f57600080fd5b50609c8061001e6000396000f300608060405260043610"
         + "603e5763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416"
@@ -652,9 +701,11 @@ public class RequireException {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String saleContractString = "\"" + Base58.encode58Check(contractAddress) + "\"";
-    String txid = "";
+    final String saleContractString = "\"" + Base58.encode58Check(contractAddress) + "\"";
     String contractName1 = "MessageUseContract";
     String code1 = "608060405234801561001057600080fd5b50610149806100206000396000f30060806040526004"
         + "36106100405763ffffffff7c010000000000000000000000000000000000000000000000000000000060003"
@@ -669,10 +720,13 @@ public class RequireException {
         + ",\"name\":\"MathedUse\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable"
         + "\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
 
-    byte[] contractAddress1 = PublicMethed
+    final byte[] contractAddress1 = PublicMethed
         .deployContract(contractName1, abi1, code1, "", maxFeeLimit,
             0L, 100, null,
             testKeyForAssetIssue016, asset016Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
         blockingStubFull);
@@ -686,9 +740,11 @@ public class RequireException {
     logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-    txid = PublicMethed.triggerContract(contractAddress1,
+    String txid = PublicMethed.triggerContract(contractAddress1,
         "messageUse(address)", saleContractString, false,
         0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -733,9 +789,11 @@ public class RequireException {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String txid = "";
-    String saleContractString = "\"" + Base58.encode58Check(contractAddress) + "\"";
+    final String saleContractString = "\"" + Base58.encode58Check(contractAddress) + "\"";
 
     String contractName1 = "FunctionUseContract";
     String code1 = "608060405234801561001057600080fd5b5061013f806100206000396000f3006080604052600"
@@ -750,10 +808,13 @@ public class RequireException {
     String abi1 = "[{\"constant\":false,\"inputs\":[{\"name\":\"addr\",\"type\":\"address\"}],"
         + "\"name\":\"messageUse\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable"
         + "\":true,\"stateMutability\":\"payable\",\"type\":\"function\"}]";
-    byte[] contractAddress1 = PublicMethed
+    final byte[] contractAddress1 = PublicMethed
         .deployContract(contractName1, abi1, code1, "", maxFeeLimit, 0L,
             100, null, testKeyForAssetIssue016,
             asset016Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
         blockingStubFull);
@@ -767,9 +828,11 @@ public class RequireException {
     logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-    txid = PublicMethed.triggerContract(contractAddress1,
+    String txid = PublicMethed.triggerContract(contractAddress1,
         "messageUse(address)", saleContractString, false,
         0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
 

@@ -66,6 +66,9 @@ public class ContractLinkage005 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+  /**
+   * constructor.
+   */
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
@@ -355,6 +358,9 @@ public class ContractLinkage005 {
         == forthForCycleCost - thirdForCycleCost);
 
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {

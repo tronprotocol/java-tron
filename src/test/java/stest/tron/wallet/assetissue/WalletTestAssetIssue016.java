@@ -70,6 +70,10 @@ public class WalletTestAssetIssue016 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -95,6 +99,8 @@ public class WalletTestAssetIssue016 {
 
     Assert.assertTrue(PublicMethed
         .sendcoin(asset016Address, sendAmount, fromAddress, testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     Long start = System.currentTimeMillis() + 2000;
     Long end = System.currentTimeMillis() + 1000000000;
     Assert.assertTrue(PublicMethed
@@ -128,6 +134,9 @@ public class WalletTestAssetIssue016 {
     PublicMethed.transferAsset(toAddress,assetAccountId.toByteArray(),100L,
         transferAssetAddress,transferAssetCreateKey,blockingStubFull);
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     assetIssueByName = blockingStubFull.getAssetIssueByName(request);
     Assert.assertTrue(assetIssueByName.getPublicLatestFreeNetTime() == 0);
     Assert.assertTrue(assetIssueByName.getPublicFreeAssetNetUsage() == 0);
@@ -136,6 +145,8 @@ public class WalletTestAssetIssue016 {
         3,testKeyForAssetIssue016,blockingStubFull));
     PublicMethed.transferAsset(toAddress,assetAccountId.toByteArray(),100L,
         transferAssetAddress,transferAssetCreateKey,blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     assetIssueByName = blockingStubFull.getAssetIssueByName(request);
     Assert.assertTrue(assetIssueByName.getPublicLatestFreeNetTime() > 0);
@@ -143,6 +154,9 @@ public class WalletTestAssetIssue016 {
 
 
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {

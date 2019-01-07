@@ -32,8 +32,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -45,10 +44,9 @@ import org.tron.common.overlay.discover.node.statistics.NodeStatistics;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.peer.PeerConnection;
 
+@Slf4j(topic = "net")
 @Component
 public class SyncPool {
-
-  public static final Logger logger = LoggerFactory.getLogger("SyncPool");
 
   private double factor = Args.getInstance().getConnectFactor();
   private double activeFactor = Args.getInstance().getActiveConnectFactor();

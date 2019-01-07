@@ -14,7 +14,7 @@ import org.tron.protos.Protocol.Transaction;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetTransactionSignWeightServlet extends HttpServlet {
 
   @Autowired

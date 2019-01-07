@@ -25,17 +25,15 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LoggingHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.tron.core.config.args.Args;
 
+@Slf4j(topic = "net")
 @Component
 public class PeerServer {
-
-  private static final Logger logger = LoggerFactory.getLogger("PeerServer");
 
   private Args args = Args.getInstance();
 

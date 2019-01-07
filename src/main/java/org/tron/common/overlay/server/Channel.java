@@ -26,8 +26,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.concurrent.TimeUnit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -43,11 +42,10 @@ import org.tron.core.exception.P2pException;
 import org.tron.core.net.TronHandler;
 import org.tron.protos.Protocol.ReasonCode;
 
+@Slf4j(topic = "net")
 @Component
 @Scope("prototype")
 public class Channel {
-
-  private final static Logger logger = LoggerFactory.getLogger("Channel");
 
   @Autowired
   protected MessageQueue msgQueue;

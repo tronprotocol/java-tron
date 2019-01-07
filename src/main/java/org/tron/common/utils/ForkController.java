@@ -4,9 +4,8 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.AccessLevel;
@@ -18,39 +17,49 @@ import org.apache.commons.lang3.StringUtils;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
+import org.tron.core.config.Parameter.ForkBlockVersionEnum;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 
-@Slf4j
+@Slf4j(topic = "utils")
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ForkController {
 
+  private static final byte VERSION_DOWNGRADE = (byte) 0;
+  private static final byte VERSION_UPGRADE = (byte) 1;
   private static final byte[] check;
+
   static {
     check = new byte[1024];
-    Arrays.fill(check, (byte) 1);
+    Arrays.fill(check, VERSION_UPGRADE);
   }
 
   @Getter
   private Manager manager;
 
-  private Set<Integer> passSet = new HashSet<>();
-
   public void init(Manager manager) {
     this.manager = manager;
-    passSet.clear();
+  }
+
+  public boolean pass(ForkBlockVersionEnum forkBlockVersionEnum) {
+    return pass(forkBlockVersionEnum.getValue());
   }
 
   public synchronized boolean pass(int version) {
-    if (passSet.contains(version)) {
-      return true;
+    if (version == ForkBlockVersionConsts.ENERGY_LIMIT) {
+      return checkForEnergyLimit();
     }
 
     byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(version);
-    boolean pass = check(stats);
-    if (pass) {
-      passSet.add(version);
-    }
-    return pass;
+    return check(stats);
+  }
+
+  // when block.version = 5,
+  // it make block use new energy to handle transaction when block number >= 4727890L.
+  // version !=5, skip this.
+  private boolean checkForEnergyLimit() {
+    long blockNum = manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    return blockNum >= Args.getInstance().getBlockNumForEneryLimit();
   }
 
   private boolean check(byte[] stats) {
@@ -67,6 +76,35 @@ public class ForkController {
     return true;
   }
 
+  private void downgrade(int version, int slot) {
+    for (ForkBlockVersionEnum versionEnum : ForkBlockVersionEnum.values()) {
+      int versionValue = versionEnum.getValue();
+      if (versionValue > version) {
+        byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(versionValue);
+        if (!check(stats) && Objects.nonNull(stats)) {
+          stats[slot] = VERSION_DOWNGRADE;
+          manager.getDynamicPropertiesStore().statsByVersion(versionValue, stats);
+        }
+      }
+    }
+  }
+
+  private void upgrade(int version, int slotSize) {
+    for (ForkBlockVersionEnum versionEnum : ForkBlockVersionEnum.values()) {
+      int versionValue = versionEnum.getValue();
+      if (versionValue < version) {
+        byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(versionValue);
+        if (!check(stats)) {
+          if (stats == null || stats.length == 0) {
+            stats = new byte[slotSize];
+          }
+          Arrays.fill(stats, VERSION_UPGRADE);
+          manager.getDynamicPropertiesStore().statsByVersion(versionValue, stats);
+        }
+      }
+    }
+  }
+
   public synchronized void update(BlockCapsule blockCapsule) {
     List<ByteString> witnesses = manager.getWitnessController().getActiveWitnesses();
     ByteString witness = blockCapsule.getWitnessAddress();
@@ -76,21 +114,23 @@ public class ForkController {
     }
 
     int version = blockCapsule.getInstance().getBlockHeader().getRawData().getVersion();
-    if (version < ForkBlockVersionConsts.ENERGY_LIMIT || passSet.contains(version)) {
+    if (version < ForkBlockVersionConsts.ENERGY_LIMIT) {
       return;
     }
+
+    downgrade(version, slot);
 
     byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(version);
     if (check(stats)) {
-      passSet.add(version);
+      upgrade(version, stats.length);
       return;
     }
 
-    if (stats == null) {
+    if (Objects.isNull(stats) || stats.length != witnesses.size()) {
       stats = new byte[witnesses.size()];
     }
 
-    stats[slot] = (byte) 1;
+    stats[slot] = VERSION_UPGRADE;
     manager.getDynamicPropertiesStore().statsByVersion(version, stats);
     logger.info(
         "*******update hard fork:{}, witness size:{}, solt:{}, witness:{}, version:{}",
@@ -104,21 +144,14 @@ public class ForkController {
         version);
   }
 
-  public synchronized void reset(BlockCapsule blockCapsule) {
-    int version = blockCapsule.getInstance().getBlockHeader().getRawData().getVersion();
-    if (version < ForkBlockVersionConsts.ENERGY_LIMIT || passSet.contains(version)) {
-      return;
-    }
-
-    byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(version);
-    if (check(stats)) {
-      passSet.add(version);
-      return;
-    }
-
-    if (stats != null) {
-      Arrays.fill(stats, (byte) 0);
-      manager.getDynamicPropertiesStore().statsByVersion(version, stats);
+  public synchronized void reset() {
+    for (ForkBlockVersionEnum versionEnum : ForkBlockVersionEnum.values()) {
+      int versionValue = versionEnum.getValue();
+      byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(versionValue);
+      if (!check(stats) && Objects.nonNull(stats)) {
+        Arrays.fill(stats, VERSION_DOWNGRADE);
+        manager.getDynamicPropertiesStore().statsByVersion(versionValue, stats);
+      }
     }
   }
 

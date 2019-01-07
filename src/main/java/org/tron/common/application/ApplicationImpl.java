@@ -3,12 +3,13 @@ package org.tron.common.application;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.net.TronNetService;
 
-@Slf4j
+@Slf4j(topic = "app")
 @Component
 public class ApplicationImpl implements Application {
 
@@ -61,6 +62,8 @@ public class ApplicationImpl implements Application {
       closeAllStore();
     }
     dbManager.stopRepushThread();
+    dbManager.stopRepushTriggerThread();
+    EventPluginLoader.getInstance().stopPlugin();
     logger.info("******** end to shutdown ********");
   }
 

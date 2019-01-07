@@ -74,6 +74,10 @@ public class WalletExchange001 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -333,8 +337,8 @@ public class WalletExchange001 {
     ExchangeList exchangeList = blockingStubFull
         .getPaginatedExchangeList(pageMessageBuilder.build());
     Assert.assertTrue(exchangeList.getExchangesCount() >= 1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
-
     //Solidity support getExchangeId
     exchangeIdInfo = PublicMethed.getExchange(exchangeId.toString(),blockingStubSolidity);
     logger.info("createtime is" + exchangeIdInfo.get().getCreateTime());
@@ -344,6 +348,9 @@ public class WalletExchange001 {
     listExchange = PublicMethed.getExchangeList(blockingStubSolidity);
     Assert.assertTrue(listExchange.get().getExchangesCount() > 0);
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {

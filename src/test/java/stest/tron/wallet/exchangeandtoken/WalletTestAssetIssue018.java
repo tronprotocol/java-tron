@@ -77,6 +77,10 @@ public class WalletTestAssetIssue018 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -180,17 +184,17 @@ public class WalletTestAssetIssue018 {
     ByteString assetAccount3Id = getAssetIdFromThisAccount.getAssetIssuedID();
 
     //Transfer asset issue.
-    Assert.assertTrue(PublicMethed.transferAsset(assetAccount2Address,assetAccount1Id.toByteArray(),
-        1L,assetAccount1Address,assetAccount1Key,blockingStubFull));
+    Assert.assertTrue(PublicMethed.transferAsset(assetAccount2Address,assetAccount1Id
+                    .toByteArray(), 1L,assetAccount1Address,assetAccount1Key,blockingStubFull));
 
-    Assert.assertTrue(PublicMethed.transferAsset(assetAccount3Address,assetAccount2Id.toByteArray(),
-        2L,assetAccount2Address,assetAccount2Key,blockingStubFull));
+    Assert.assertTrue(PublicMethed.transferAsset(assetAccount3Address,assetAccount2Id
+                    .toByteArray(), 2L,assetAccount2Address,assetAccount2Key,blockingStubFull));
 
-    Assert.assertTrue(PublicMethed.transferAsset(assetAccount1Address,assetAccount3Id.toByteArray(),
-        3L,assetAccount3Address,assetAccount3Key,blockingStubFull));
+    Assert.assertTrue(PublicMethed.transferAsset(assetAccount1Address,assetAccount3Id
+                    .toByteArray(), 3L,assetAccount3Address,assetAccount3Key,blockingStubFull));
 
-    Assert.assertFalse(PublicMethed.transferAsset(assetAccount1Address,assetAccount2Id.toByteArray(),
-        3L,assetAccount3Address,assetAccount3Key,blockingStubFull));
+    Assert.assertFalse(PublicMethed.transferAsset(assetAccount1Address,assetAccount2Id
+                    .toByteArray(), 3L,assetAccount3Address,assetAccount3Key,blockingStubFull));
 
     try {
       Thread.sleep(5000);
@@ -213,6 +217,9 @@ public class WalletTestAssetIssue018 {
 
 
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {

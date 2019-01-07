@@ -16,7 +16,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Witness;
 
-@Slf4j
+@Slf4j(topic = "DB")
 public class IndexHelper {
 
   @Getter

@@ -10,6 +10,8 @@ public interface RevokingDatabase {
 
   ISession buildSession(boolean forceEnable);
 
+  void setMode(boolean mode);
+
   void add(IRevokingDB revokingDB);
 
   void merge() throws RevokingStoreIllegalStateException;

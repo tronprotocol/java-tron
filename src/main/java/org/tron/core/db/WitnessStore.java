@@ -1,10 +1,9 @@
 package org.tron.core.db;
 
+import com.google.common.collect.Streams;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-
-import com.google.common.collect.Streams;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.WitnessCapsule;
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Component
 public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
 
@@ -26,12 +25,6 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
    */
   public List<WitnessCapsule> getAllWitnesses() {
     return Streams.stream(iterator())
-        .map(Entry::getValue)
-        .collect(Collectors.toList());
-  }
-
-  public List<WitnessCapsule> getAllWitnessesOnSolidity() {
-    return Streams.stream(iteratorOnSolidity())
         .map(Entry::getValue)
         .collect(Collectors.toList());
   }

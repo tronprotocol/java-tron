@@ -51,6 +51,10 @@ public class ContractScenario013 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(contract013Key);
@@ -72,8 +76,10 @@ public class ContractScenario013 {
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
     String contractName = "TronTrxAndSunContract";
-    String code = "6080604052348015600f57600080fd5b50600180141515601e57600080fd5b603c80141515602c57600080fd5b610e1080141515603b57600080fd5b6201518080141515604b57600080fd5b62093a8080141515605b57600080fd5b6301e1338080141515606c57600080fd5b620f424080141515607c57600080fd5b60358060896000396000f3006080604052600080fd00a165627a7a723058206a36395ee2292959a89e7956d6826a7107c490331e4505fc319010873c26392b0029";
-    String abi = "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]";
+    String code = Configuration.getByPath("testng.conf")
+            .getString("code.code_ContractScenario013_deployTronTrxAndSunContract");
+    String abi = Configuration.getByPath("long-testng.conf")
+            .getString("abi.abi_ContractScenario013_deployTronTrxAndSunContract");
     txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName,abi,code,"",
         maxFeeLimit, 0L, 100,null,contract013Key,contract013Address,blockingStubFull);
     logger.info(txid);
@@ -93,8 +99,10 @@ public class ContractScenario013 {
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
     String contractName = "TronTrxAndSunContract";
-    String code = "608060405234801561001057600080fd5b5061011a806100206000396000f300608060405260043610603f576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff16806316ada547146044575b600080fd5b348015604f57600080fd5b506056606c565b6040518082815260200191505060405180910390f35b6000600180141515607c57600080fd5b603c80141515608a57600080fd5b610e1080141515609957600080fd5b620151808014151560a957600080fd5b62093a808014151560b957600080fd5b6301e133808014151560ca57600080fd5b620f42408014151560da57600080fd5b60018014151560e857600080fd5b429050905600a165627a7a72305820eacfee595582d9244a2fb5f052905bd240f87864fb8f602f85fd31fe3b89cda80029";
-    String abi = "[{\"constant\":false,\"inputs\":[],\"name\":\"time\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
+    String code = Configuration.getByPath("testng.conf")
+            .getString("code.code_ContractScenario013_triggerTronTrxAndSunContract");
+    String abi = Configuration.getByPath("long-testng.conf")
+            .getString("abi.abi_ContractScenario013_triggerTronTrxAndSunContract");
     contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
         0L, 100,null,contract013Key,contract013Address,blockingStubFull);
     txid = PublicMethed.triggerContract(contractAddress,
@@ -108,6 +116,9 @@ public class ContractScenario013 {
     Assert.assertTrue(infoById.get().getFee() == infoById.get().getReceipt().getEnergyFee());
     Assert.assertFalse(infoById.get().getContractAddress().isEmpty());
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {

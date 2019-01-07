@@ -17,11 +17,7 @@ import java.io.Writer;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,6 +28,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.logsfilter.EventPluginConfig;
+import org.tron.common.logsfilter.FilterQuery;
+import org.tron.common.logsfilter.TriggerConfig;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
@@ -45,7 +44,7 @@ import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
 import org.tron.program.Version;
 
-@Slf4j
+@Slf4j(topic = "app")
 @NoArgsConstructor
 @Component
 public class Args {
@@ -57,6 +56,10 @@ public class Args {
 
   @Parameter(names = {"-d", "--output-directory"}, description = "Directory")
   private String outputDirectory = "output-directory";
+
+  @Getter
+  @Parameter(names = {"--log-config"})
+  private String logbackPath = "";
 
   @Getter
   @Parameter(names = {"-h", "--help"}, help = true, description = "HELP message")
@@ -108,11 +111,17 @@ public class Args {
   @Parameter(names = {"--storage-db-version"}, description = "Storage db version.(1 or 2)")
   private String storageDbVersion = "";
 
+  @Parameter(names = {"--storage-db-synchronous"}, description = "Storage db is synchronous or not.(true or flase)")
+  private String storageDbSynchronous = "";
+
   @Parameter(names = {"--storage-index-directory"}, description = "Storage index directory")
   private String storageIndexDirectory = "";
 
   @Parameter(names = {"--storage-index-switch"}, description = "Storage index switch.(on or off)")
   private String storageIndexSwitch = "";
+
+  @Parameter(names = {"--storage-transactionHistory-switch"}, description = "Storage transaction history switch.(on or off)")
+  private String storageTransactionHistoreSwitch = "";
 
   @Getter
   private Storage storage;
@@ -197,6 +206,10 @@ public class Args {
 //  @Getter
 //  @Setter
 //  private long syncNodeCount;
+  @Getter
+  @Setter
+  @Parameter(names = {"--save-internaltx"})
+  private boolean saveInternalTx;
 
   @Getter
   @Setter
@@ -231,6 +244,11 @@ public class Args {
   @Setter
   @Parameter(names = {"--rpc-thread"}, description = "Num of gRPC thread")
   private int rpcThreadNum;
+
+  @Getter
+  @Setter
+  @Parameter(names = {"--solidity-thread"}, description = "Num of solidity thread")
+  private int solidityThreads;
 
   @Getter
   @Setter
@@ -373,6 +391,25 @@ public class Args {
   @Getter
   @Setter
   private String trxReferenceBlock;
+
+  @Getter
+  @Setter
+  private int minEffectiveConnection;
+
+  @Getter
+  @Setter
+  private long blockNumForEneryLimit;
+
+  @Getter
+  @Setter
+  @Parameter(names = {"--es"})
+  private boolean eventSubscribe = false;
+
+  @Getter
+  private EventPluginConfig eventPluginConfig;
+
+  @Getter
+  private FilterQuery eventFilter;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -526,6 +563,11 @@ public class Args {
         .map(Integer::valueOf)
         .orElse(Storage.getDbVersionFromConfig(config)));
 
+    INSTANCE.storage.setDbSync(Optional.ofNullable(INSTANCE.storageDbSynchronous)
+      .filter(StringUtils::isNotEmpty)
+      .map(Boolean::valueOf)
+      .orElse(Storage.getDbVersionSyncFromConfig(config)));
+
     INSTANCE.storage.setDbDirectory(Optional.ofNullable(INSTANCE.storageDbDirectory)
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getDbDirectoryFromConfig(config)));
@@ -537,6 +579,11 @@ public class Args {
     INSTANCE.storage.setIndexSwitch(Optional.ofNullable(INSTANCE.storageIndexSwitch)
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getIndexSwitchFromConfig(config)));
+
+    INSTANCE.storage.setTransactionHistoreSwitch(Optional.ofNullable(INSTANCE.storageTransactionHistoreSwitch)
+      .filter(StringUtils::isNotEmpty)
+      .orElse(Storage.getTransactionHistoreSwitchFromConfig(config)));
+
 
     INSTANCE.storage.setPropertyMapFromConfig(config);
 
@@ -637,6 +684,10 @@ public class Args {
         config.hasPath("node.rpc.thread") ? config.getInt("node.rpc.thread")
             : Runtime.getRuntime().availableProcessors() / 2;
 
+    INSTANCE.solidityThreads =
+        config.hasPath("node.solidity.threads") ? config.getInt("node.solidity.threads")
+            : Runtime.getRuntime().availableProcessors();
+
     INSTANCE.maxConcurrentCallsPerConnection =
         config.hasPath("node.rpc.maxConcurrentCallsPerConnection") ?
             config.getInt("node.rpc.maxConcurrentCallsPerConnection") : Integer.MAX_VALUE;
@@ -650,6 +701,12 @@ public class Args {
 
     INSTANCE.blockProducedTimeOut = config.hasPath("node.blockProducedTimeOut") ?
         config.getInt("node.blockProducedTimeOut") : ChainConstant.BLOCK_PRODUCED_TIME_OUT;
+    if (INSTANCE.blockProducedTimeOut < 30) {
+      INSTANCE.blockProducedTimeOut = 30;
+    }
+    if (INSTANCE.blockProducedTimeOut > 100) {
+      INSTANCE.blockProducedTimeOut = 100;
+    }
 
     INSTANCE.netMaxTrxPerSecond = config.hasPath("node.netMaxTrxPerSecond") ?
         config.getInt("node.netMaxTrxPerSecond") : NetConstants.NET_MAX_TRX_PER_SECOND;
@@ -739,14 +796,30 @@ public class Args {
     INSTANCE.trxReferenceBlock = config.hasPath("trx.reference.block") ?
         config.getString("trx.reference.block") : "head";
 
+    INSTANCE.minEffectiveConnection = config.hasPath("node.rpc.minEffectiveConnection") ?
+        config.getInt("node.rpc.minEffectiveConnection") : 1;
+
+    INSTANCE.blockNumForEneryLimit = config.hasPath("enery.limit.block.num") ?
+        config.getInt("enery.limit.block.num") : 4727890L;
+
     INSTANCE.vmTrace =
         config.hasPath("vm.vmTrace") ? config
             .getBoolean("vm.vmTrace") : false;
+
+    INSTANCE.saveInternalTx =
+        config.hasPath("vm.saveInternalTx") && config.getBoolean("vm.saveInternalTx");
+
+    INSTANCE.eventPluginConfig =
+            config.hasPath("event.subscribe")?
+                    getEventPluginConfig(config) : null;
+
+    INSTANCE.eventFilter =
+            config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
+
     initBackupProperty(config);
 
     logConfig();
   }
-
 
   private static List<Witness> getWitnessesFromConfig(final com.typesafe.config.Config config) {
     return config.getObjectList("genesis.block.witnesses").stream()
@@ -830,6 +903,79 @@ public class Args {
       INSTANCE.privateKey = getGeneratedNodePrivateKey();
     }
   }
+
+  private static EventPluginConfig getEventPluginConfig(final com.typesafe.config.Config config){
+    EventPluginConfig eventPluginConfig = new EventPluginConfig();
+
+    String pluginPath = config.getString("event.subscribe.path").trim();
+    eventPluginConfig.setPluginPath(pluginPath);
+
+    String serverAddress = config.getString("event.subscribe.server").trim();
+    eventPluginConfig.setServerAddress(serverAddress);
+
+    List<TriggerConfig> triggerConfigList = config.getObjectList("event.subscribe.topics").stream()
+            .map(Args::createTriggerConfig)
+            .collect(Collectors.toCollection(ArrayList::new));
+
+    eventPluginConfig.setTriggerConfigList(triggerConfigList);
+
+    return eventPluginConfig;
+  }
+
+  private static TriggerConfig createTriggerConfig(ConfigObject triggerObject){
+    if (Objects.isNull(triggerObject)){
+      return null;
+    }
+
+    TriggerConfig triggerConfig = new TriggerConfig();
+
+    String triggerName = triggerObject.get("triggerName").unwrapped().toString();
+    triggerConfig.setTriggerName(triggerName);
+
+    String enabled = triggerObject.get("enable").unwrapped().toString();
+    triggerConfig.setEnabled("true".equalsIgnoreCase(enabled) ? true: false);
+
+    String topic = triggerObject.get("topic").unwrapped().toString();
+    triggerConfig.setTopic(topic);
+
+    return triggerConfig;
+  }
+
+  private static FilterQuery getEventFilter(final com.typesafe.config.Config config){
+    FilterQuery filter = new FilterQuery();
+    long fromBlockLong = 0,  toBlockLong = 0;
+
+    String fromBlock = config.getString("event.subscribe.filter.fromblock").trim();
+    try {
+       fromBlockLong = FilterQuery.parseFromBlockNumber(fromBlock);
+    } catch (Exception e){
+      logger.error("{}", e);
+      return null;
+    }
+    filter.setFromBlock(fromBlockLong);
+
+    String toBlock = config.getString("event.subscribe.filter.toblock").trim();
+    try {
+      toBlockLong = FilterQuery.parseToBlockNumber(toBlock);
+    } catch (Exception e){
+      logger.error("{}", e);
+      return null;
+    }
+    filter.setToBlock(toBlockLong);
+
+    List<String> addressList = config.getStringList("event.subscribe.filter.contractAddress");
+    addressList = addressList.stream().filter(address -> StringUtils.isNotEmpty(address)).collect(
+      Collectors.toList());
+    filter.setContractAddressList(addressList);
+
+    List<String> topicList = config.getStringList("event.subscribe.filter.contractTopic");
+    topicList = topicList.stream().filter(top -> StringUtils.isNotEmpty(top)).collect(
+      Collectors.toList());
+    filter.setContractTopicList(topicList);
+
+    return filter;
+  }
+
 
   private static String getGeneratedNodePrivateKey() {
     String nodeId;
@@ -955,6 +1101,7 @@ public class Args {
     logger.info("Seed node size: {}", args.getSeedNode().getIpList().size());
     logger.info("Max connection: {}", args.getNodeMaxActiveNodes());
     logger.info("Max connection with same IP: {}", args.getNodeMaxActiveNodesWithSameIp());
+    logger.info("Solidity threads: {}", args.getSolidityThreads());
     logger.info("************************ Backup config ************************");
     logger.info("Backup listen port: {}", args.getBackupPort());
     logger.info("Backup member size: {}", args.getBackupMembers().size());

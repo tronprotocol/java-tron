@@ -16,6 +16,7 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.Parameter.ChainParameters;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
+import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
@@ -23,7 +24,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-@Slf4j
+@Slf4j(topic = "actuator")
 public class ProposalCreateActuator extends AbstractActuator {
 
   ProposalCreateActuator(final Any contract, final Manager dbManager) {
@@ -206,17 +207,17 @@ public class ProposalCreateActuator extends AbstractActuator {
         break;
       }
       case (16): {
-        if (!dbManager.getForkController().pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
-          throw new ContractValidateException("Bad chain parameter id");
-        }
         if (entry.getValue() != 1) {
           throw new ContractValidateException(
               "This value[ALLOW_DELEGATE_RESOURCE] is only allowed to be 1");
         }
         break;
       }
-      case (17): {
+      case (17): { // deprecated
         if (!dbManager.getForkController().pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
+          throw new ContractValidateException("Bad chain parameter id");
+        }
+        if (dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_2_2)) {
           throw new ContractValidateException("Bad chain parameter id");
         }
         if (entry.getValue() < 0 || entry.getValue() > 100_000_000_000_000_000L) {
@@ -226,9 +227,6 @@ public class ProposalCreateActuator extends AbstractActuator {
         break;
       }
       case (18): {
-        if (!dbManager.getForkController().pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
-          throw new ContractValidateException("Bad chain parameter id");
-        }
         if (entry.getValue() != 1) {
           throw new ContractValidateException(
               "This value[ALLOW_TVM_TRANSFER_TRC10] is only allowed to be 1");
@@ -240,12 +238,32 @@ public class ProposalCreateActuator extends AbstractActuator {
         break;
       }
       case (19): {
-        if (!dbManager.getForkController().pass(ForkBlockVersionConsts.MULTI_SIGN)) {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_2_2)) {
           throw new ContractValidateException("Bad chain parameter id");
+        }
+        if (entry.getValue() < 0 || entry.getValue() > 100_000_000_000_000_000L) {
+          throw new ContractValidateException(
+              "Bad chain parameter value,valid range is [0,100_000_000_000_000_000L]");
+        }
+        break;
+      }
+      case (20): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_5)) {
+          throw new ContractValidateException("Bad chain parameter id: ALLOW_MULTI_SIGN");
         }
         if (entry.getValue() != 1) {
           throw new ContractValidateException(
               "This value[ALLOW_MULTI_SIGN] is only allowed to be 1");
+        }
+        break;
+      }
+      case (21): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_5)) {
+          throw new ContractValidateException("Bad chain parameter id: ALLOW_ADAPTIVE_ENERGY");
+        }
+        if (entry.getValue() != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_ADAPTIVE_ENERGY] is only allowed to be 1");
         }
         break;
       }

@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,7 @@ import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.TransactionListExtention;
@@ -68,7 +70,6 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.NonUniqueObjectException;
@@ -102,7 +103,7 @@ import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionSign;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class RpcApiService implements Service {
 
   private int port = Args.getInstance().getRpcPort();
@@ -120,6 +121,12 @@ public class RpcApiService implements Service {
   @Autowired
   private NodeInfoService nodeInfoService;
 
+  @Getter
+  private DatabaseApi databaseApi = new DatabaseApi();
+  private WalletApi walletApi = new WalletApi();
+  @Getter
+  private WalletSolidityApi walletSolidityApi = new WalletSolidityApi();
+
   private static final long BLOCK_LIMIT_NUM = 100;
   private static final long TRANSACTION_LIMIT_NUM = 1000;
 
@@ -135,7 +142,7 @@ public class RpcApiService implements Service {
   public void start() {
     try {
       NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
-          .addService(new DatabaseApi());
+          .addService(databaseApi);
 
       Args args = Args.getInstance();
 
@@ -145,12 +152,12 @@ public class RpcApiService implements Service {
       }
 
       if (args.isSolidityNode()) {
-        serverBuilder = serverBuilder.addService(new WalletSolidityApi());
+        serverBuilder = serverBuilder.addService(walletSolidityApi);
         if (args.isWalletExtensionApi()) {
           serverBuilder = serverBuilder.addService(new WalletExtensionApi());
         }
       } else {
-        serverBuilder = serverBuilder.addService(new WalletApi());
+        serverBuilder = serverBuilder.addService(walletApi);
       }
 
       // Set configs from config.conf or default value
@@ -207,7 +214,7 @@ public class RpcApiService implements Service {
   /**
    * DatabaseApi.
    */
-  private class DatabaseApi extends DatabaseImplBase {
+  public class DatabaseApi extends DatabaseImplBase {
 
     @Override
     public void getBlockReference(org.tron.api.GrpcAPI.EmptyMessage request,
@@ -263,21 +270,14 @@ public class RpcApiService implements Service {
   /**
    * WalletSolidityApi.
    */
-  private class WalletSolidityApi extends WalletSolidityImplBase {
+  public class WalletSolidityApi extends WalletSolidityImplBase {
 
     @Override
     public void getAccount(Account request, StreamObserver<Account> responseObserver) {
       ByteString addressBs = request.getAddress();
       if (addressBs != null) {
         Account reply = wallet.getAccount(request);
-        if (reply == null) {
-          responseObserver.onNext(null);
-        } else {
-          AccountCapsule accountCapsule = new AccountCapsule(reply);
-          BandwidthProcessor processor = new BandwidthProcessor(dbManager);
-          processor.updateUsage(accountCapsule);
-          responseObserver.onNext(accountCapsule.getInstance());
-        }
+        responseObserver.onNext(reply);
       } else {
         responseObserver.onNext(null);
       }
@@ -289,14 +289,7 @@ public class RpcApiService implements Service {
       ByteString id = request.getAccountId();
       if (id != null) {
         Account reply = wallet.getAccountById(request);
-        if (reply == null) {
-          responseObserver.onNext(null);
-        } else {
-          AccountCapsule accountCapsule = new AccountCapsule(reply);
-          BandwidthProcessor processor = new BandwidthProcessor(dbManager);
-          processor.updateUsage(accountCapsule);
-          responseObserver.onNext(accountCapsule.getInstance());
-        }
+        responseObserver.onNext(reply);
       } else {
         responseObserver.onNext(null);
       }
@@ -503,7 +496,7 @@ public class RpcApiService implements Service {
   /**
    * WalletExtensionApi.
    */
-  private class WalletExtensionApi extends WalletExtensionGrpc.WalletExtensionImplBase {
+  public class WalletExtensionApi extends WalletExtensionGrpc.WalletExtensionImplBase {
 
     private TransactionListExtention transactionList2Extention(TransactionList transactionList) {
       if (transactionList == null) {
@@ -584,7 +577,7 @@ public class RpcApiService implements Service {
   /**
    * WalletApi.
    */
-  private class WalletApi extends WalletImplBase {
+  public class WalletApi extends WalletImplBase {
 
     private BlockListExtention blocklist2Extention(BlockList blockList) {
       if (blockList == null) {
@@ -723,6 +716,14 @@ public class RpcApiService implements Service {
         StreamObserver<TransactionSignWeight> responseObserver) {
       TransactionSignWeight tsw = wallet.getTransactionSignWeight(req);
       responseObserver.onNext(tsw);
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getTransactionApprovedList(Transaction req,
+        StreamObserver<TransactionApprovedList> responseObserver) {
+      TransactionApprovedList tal = wallet.getTransactionApprovedList(req);
+      responseObserver.onNext(tal);
       responseObserver.onCompleted();
     }
 
