@@ -52,6 +52,7 @@ import org.tron.common.runtime.vm.MessageCall;
 import org.tron.common.runtime.vm.OpCode;
 import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.runtime.vm.VM;
+import org.tron.common.runtime.vm.VMConstant;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
@@ -622,7 +623,12 @@ public class Program {
     long endowment = msg.getEndowment().value().longValueExact();
     // transfer trx validation
     byte[] tokenId = null;
-    if (msg.getTokenId().longValue() == 0) {
+
+    checkTokenId(msg);
+
+    boolean isTokenTransfer = isTokenTransfer(msg);
+
+    if (!isTokenTransfer) {
       long senderBalance = deposit.getBalance(senderAddress);
       if (senderBalance < endowment) {
         stackPushZero();
@@ -656,7 +662,7 @@ public class Program {
           msg.getEndowment().getNoLeadZeroesData());
     } else if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
         && senderAddress != contextAddress && endowment > 0) {
-      if (msg.getTokenId().longValue() == 0) {
+      if (!isTokenTransfer) {
         try {
           TransferActuator
               .validateForSmartContract(deposit, senderAddress, contextAddress, endowment);
@@ -680,12 +686,12 @@ public class Program {
     // CREATE CALL INTERNAL TRANSACTION
     increaseNonce();
     HashMap<String, Long> tokenInfo = new HashMap<>();
-    if (msg.getTokenId().longValue() != 0) {
+    if (isTokenTransfer) {
       tokenInfo.put(new String(stripLeadingZeroes(tokenId)), endowment);
     }
     InternalTransaction internalTx = addInternalTx(null, senderAddress, contextAddress,
-        msg.getTokenId().longValue() == 0 ? endowment : 0, data, "call", nonce,
-        msg.getTokenId().longValue() == 0 ? null : tokenInfo);
+        !isTokenTransfer ? endowment : 0, data, "call", nonce,
+        !isTokenTransfer ? null : tokenInfo);
     ProgramResult callResult = null;
     if (isNotEmpty(programCode)) {
       long vmStartInUs = System.nanoTime() / 1000;
@@ -693,9 +699,9 @@ public class Program {
       ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
           this, new DataWord(contextAddress),
           msg.getType().callIsDelegate() ? getCallerAddress() : getContractAddress(),
-          msg.getTokenId().longValue() == 0 ? callValue : new DataWord(0),
-          msg.getTokenId().longValue() == 0 ? new DataWord(0) : callValue,
-          msg.getTokenId().longValue() == 0 ? new DataWord(0) : msg.getTokenId(),
+          !isTokenTransfer ? callValue : new DataWord(0),
+          !isTokenTransfer ? new DataWord(0) : callValue,
+          !isTokenTransfer ? new DataWord(0) : msg.getTokenId(),
           contextBalance, data, deposit, msg.getType().callIsStatic() || isStaticCall(),
           byTestingSuite(), vmStartInUs, getVmShouldEndInUs(), msg.getEnergy().longValueSafe());
       VM vm = new VM(config);
@@ -928,6 +934,7 @@ public class Program {
   }
 
   public DataWord getTokenBalance(DataWord address, DataWord tokenId) {
+    checkTokenIdInTokenBalance(tokenId);
     long ret = getContractState().getTokenBalance(convertToTronAddress(address.getLast20Bytes()),
         String.valueOf(tokenId.longValue()).getBytes());
     return ret == 0 ? new DataWord(0) : new DataWord(ret);
@@ -1304,8 +1311,11 @@ public class Program {
     long endowment = msg.getEndowment().value().longValueExact();
     long senderBalance = 0;
     byte[] tokenId = null;
+
+    checkTokenId(msg);
+    boolean isTokenTransfer = isTokenTransfer(msg);
     // transfer trx validation
-    if (msg.getTokenId().longValue() == 0) {
+    if (!isTokenTransfer) {
       senderBalance = deposit.getBalance(senderAddress);
     }
     // transfer trc10 token validation
@@ -1324,7 +1334,7 @@ public class Program {
     // Charge for endowment - is not reversible by rollback
     if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
         && senderAddress != contextAddress && msg.getEndowment().value().longValueExact() > 0) {
-      if (msg.getTokenId().longValue() == 0) {
+      if (!isTokenTransfer) {
         try {
           transfer(deposit, senderAddress, contextAddress,
               msg.getEndowment().value().longValueExact());
@@ -1384,6 +1394,62 @@ public class Program {
   public interface ProgramOutListener {
 
     void output(String out);
+  }
+
+  /**
+   * check TokenId
+   *
+   * TokenId  \ isTransferToken
+   * ---------------------------------------------------------------------------------------------
+   *                       false                                     true
+   * ---------------------------------------------------------------------------------------------
+   * (-∞,Long.Min)        Not possible            error: msg.getTokenId().value().longValueExact()
+   * ---------------------------------------------------------------------------------------------
+   * [Long.Min, 0)        Not possible                               error
+   * ---------------------------------------------------------------------------------------------
+   * 0                   allowed and only allowed                    error
+   *                    (guaranteed in CALLTOKEN)   transfertoken id=0 should not transfer trx）
+   * ---------------------------------------------------------------------------------------------
+   * (0-100_0000]          Not possible                              error
+   * ---------------------------------------------------------------------------------------------
+   * (100_0000, Long.Max]  Not possible                             allowed
+   * ---------------------------------------------------------------------------------------------
+   * (Long.Max,+∞)         Not possible          error: msg.getTokenId().value().longValueExact()
+   * ---------------------------------------------------------------------------------------------
+   * @param msg
+   */
+  public void checkTokenId(MessageCall msg) {
+    if(VMConfig.isVERSION_3_5_HARD_FORK()){ //3.5 hard fork
+      // tokenid should not get Long type overflow
+      long tokenId = msg.getTokenId().sValue().longValueExact();
+      // tokenId can only be 0 when isTokenTransferMsg == false
+      // or tokenId can be (MIN_TOKEN_ID, Long.Max] when isTokenTransferMsg == true
+      if ((tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0) ||
+          (tokenId == 0 && msg.isTokenTransferMsg())) {
+        // tokenId == 0 is a default value for token id DataWord.
+        throw new BytecodeExecutionException("validateForSmartContract failure, not valid token id");
+      }
+    }
+  }
+
+  public boolean isTokenTransfer(MessageCall msg) {
+    if(VMConfig.isVERSION_3_5_HARD_FORK()) { //3.5 hard fork
+      return msg.isTokenTransferMsg();
+    }
+    else {
+      return msg.getTokenId().longValue() != 0;
+    }
+  }
+
+  public void checkTokenIdInTokenBalance(DataWord tokenIdDataWord) {
+    if(VMConfig.isVERSION_3_5_HARD_FORK()){ //3.5 hard fork
+      // tokenid should not get Long type overflow
+      long tokenId = tokenIdDataWord.sValue().longValueExact();
+      // or tokenId can only be (MIN_TOKEN_ID, Long.Max]
+      if (tokenId <= VMConstant.MIN_TOKEN_ID ) {
+        throw new BytecodeExecutionException("validateForSmartContract failure, not valid token id");
+      }
+    }
   }
 
   /**

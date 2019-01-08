@@ -18,6 +18,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.Parameter.ForkBlockVersionEnum;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 
 @Slf4j(topic = "utils")
@@ -58,7 +59,7 @@ public class ForkController {
   // version !=5, skip this.
   private boolean checkForEnergyLimit() {
     long blockNum = manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
-    return blockNum >= 4727890L;
+    return blockNum >= Args.getInstance().getBlockNumForEneryLimit();
   }
 
   private boolean check(byte[] stats) {

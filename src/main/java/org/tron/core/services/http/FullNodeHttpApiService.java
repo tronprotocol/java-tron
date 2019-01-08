@@ -140,6 +140,8 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetTransactionSignWeightServlet getTransactionSignWeightServlet;
   @Autowired
+  private GetTransactionApprovedListServlet getTransactionApprovedListServlet;
+  @Autowired
   private AccountPermissionUpdateServlet accountPermissionUpdateServlet;
   @Autowired
   private PermissionAddKeyServlet permissionAddKeyServlet;
@@ -174,6 +176,7 @@ public class FullNodeHttpApiService implements Service {
       ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
       context.setContextPath("/wallet/");
       server.setHandler(context);
+
       context.addServlet(new ServletHolder(getAccountServlet), "/getaccount");
       context.addServlet(new ServletHolder(transferServlet), "/createtransaction");
       context.addServlet(new ServletHolder(broadcastServlet), "/broadcasttransaction");
@@ -244,6 +247,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getAccountResourceServlet), "/getaccountresource");
       context.addServlet(new ServletHolder(addTransactionSignServlet), "/addtransactionsign");
       context.addServlet(new ServletHolder(getTransactionSignWeightServlet), "/getsignweight");
+      context.addServlet(new ServletHolder(getTransactionApprovedListServlet), "/getapprovedlist");
       context.addServlet(new ServletHolder(accountPermissionUpdateServlet),
           "/accountpermissionupdate");
       context.addServlet(new ServletHolder(permissionAddKeyServlet), "/permissionaddkey");
@@ -256,6 +260,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(
           new ServletHolder(getDelegatedResourceAccountIndexServlet),
           "/getdelegatedresourceaccountindex");
+
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());

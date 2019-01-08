@@ -10,11 +10,10 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -37,8 +36,18 @@ import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.logsfilter.EventPluginLoader;
+import org.tron.common.logsfilter.FilterQuery;
+import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
+import org.tron.common.logsfilter.capsule.ContractEventTriggerCapsule;
+import org.tron.common.logsfilter.capsule.ContractLogTriggerCapsule;
+import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
+import org.tron.common.logsfilter.capsule.TriggerCapsule;
+import org.tron.common.logsfilter.trigger.ContractLogTrigger;
+import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.config.VMConfig;
+import org.tron.common.runtime.vm.LogEventWrapper;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.SessionOptional;
@@ -185,10 +194,15 @@ public class Manager {
 
   private Thread repushThread;
 
+  private Thread triggerCapsuleProcessThread;
+
   private boolean isRunRepushThread = true;
 
-  private ExecutorService executorService = Executors
-      .newFixedThreadPool(1, r -> new Thread(r, "ValidateTransactionSign"));
+  private boolean isRunTriggerCapsuleProcessThread = true;
+
+  @Getter
+  @Setter
+  public boolean eventPluginLoaded = false;
 
   @Getter
   private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
@@ -301,6 +315,8 @@ public class Manager {
   // the capacity is equal to Integer.MAX_VALUE default
   private BlockingQueue<TransactionCapsule> repushTransactions;
 
+  private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
+
   // for test only
   public List<ByteString> getWitnesses() {
     return witnessController.getActiveWitnesses();
@@ -372,8 +388,31 @@ public class Manager {
         }
       };
 
+  private Runnable triggerCapsuleProcessLoop =
+      () -> {
+        while (isRunTriggerCapsuleProcessThread) {
+          try {
+            TriggerCapsule tiggerCapsule = triggerCapsuleQueue.poll(1, TimeUnit.SECONDS);
+            if (tiggerCapsule != null) {
+              tiggerCapsule.processTrigger();
+            }
+          } catch (InterruptedException ex) {
+            logger.info(ex.getMessage());
+            Thread.currentThread().interrupt();
+          } catch (Exception ex) {
+            logger.error("unknown exception happened in process capsule loop", ex);
+          } catch (Throwable throwable) {
+            logger.error("unknown throwable happened in process capsule loop", throwable);
+          }
+        }
+      };
+
   public void stopRepushThread() {
     isRunRepushThread = false;
+  }
+
+  public void stopRepushTriggerThread() {
+    isRunTriggerCapsuleProcessThread = false;
   }
 
   @PostConstruct
@@ -386,6 +425,7 @@ public class Manager {
     this.setProposalController(ProposalController.createInstance(this));
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
     this.repushTransactions = new LinkedBlockingQueue<>();
+    this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
 
     this.initGenesis();
     try {
@@ -418,6 +458,13 @@ public class Manager {
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
     repushThread = new Thread(repushLoop);
     repushThread.start();
+
+    // add contract event listener for subscribing
+    if (Args.getInstance().isEventSubscribe()) {
+      startEventSubscribing();
+      triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
+      triggerCapsuleProcessThread.start();
+    }
   }
 
   public BlockId getGenesisBlockId() {
@@ -723,10 +770,12 @@ public class Manager {
 
       throw e;
     }
+
     if (CollectionUtils.isNotEmpty(binaryTree.getValue())) {
       while (!getDynamicPropertiesStore()
           .getLatestBlockHeaderHash()
           .equals(binaryTree.getValue().peekLast().getParentHash())) {
+        reorgContractTrigger();
         eraseBlock();
       }
     }
@@ -785,8 +834,7 @@ public class Manager {
                   | DupTransactionException
                   | TransactionExpirationException
                   | TooBigTransactionException
-                  | ValidateScheduleException
-                  | BadBlockException e) {
+                  | ValidateScheduleException e) {
                 logger.warn(e.getMessage(), e);
               }
             }
@@ -808,15 +856,6 @@ public class Manager {
       ReceiptCheckErrException, VMIllegalException {
     long start = System.currentTimeMillis();
     try (PendingManager pm = new PendingManager(this)) {
-
-      if (!block.generatedByMyself) {
-        try {
-          preValidateTransactionSign(block);
-        } catch (InterruptedException e) {
-          logger.error("", e);
-          Thread.interrupted();
-        }
-      }
 
       if (!block.generatedByMyself) {
         if (!block.validateSignature()) {
@@ -903,6 +942,8 @@ public class Manager {
         try (ISession tmpSession = revokingStore.buildSession()) {
           applyBlock(newBlock);
           tmpSession.commit();
+          // if event subscribe is enabled, post block trigger to queue
+          postBlockTrigger(newBlock);
         } catch (Throwable throwable) {
           logger.error(throwable.getMessage(), throwable);
           khaosDb.removeBlk(block.getBlockId());
@@ -1063,7 +1104,7 @@ public class Manager {
 
     VMConfig.initVmHardFork();
     VMConfig.initAllowTvmTransferTrc10(dynamicPropertiesStore.getAllowTvmTransferTrc10());
-    trace.init(blockCap);
+    trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
     trace.exec();
 
@@ -1073,7 +1114,7 @@ public class Manager {
         if (trace.checkNeedRetry()) {
           String txId = Hex.toHexString(trxCap.getTransactionId().getBytes());
           logger.info("Retry for tx id: {}", txId);
-          trace.init(blockCap);
+          trace.init(blockCap, eventPluginLoaded);
           trace.checkIsConstant();
           trace.exec();
           trace.setResult();
@@ -1094,8 +1135,11 @@ public class Manager {
 
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
         .buildInstance(trxCap, blockCap, trace);
-    blockCap.putTransactionInfo(trxCap.getTransactionId(), transactionInfo);
+
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
+
+    // if event subscribe is enabled, post contract triggers to queue
+    postContractTrigger(trace, false);
 
     return true;
   }
@@ -1153,7 +1197,7 @@ public class Manager {
     //
     fastSyncCallBack.preExecute(blockCapsule);
 
-    Map<String, Boolean> accountMap = new HashMap<>();
+    Set<String> accountSet = new HashSet<>();
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext() || repushTransactions.size() > 0) {
       boolean fromPending = false;
@@ -1182,7 +1226,7 @@ public class Manager {
       Contract contract = trx.getInstance().getRawData().getContract(0);
       byte[] owner = TransactionCapsule.getOwner(contract);
       String ownerAddress = ByteArray.toHexString(owner);
-      if (accountMap.containsKey(ownerAddress) && accountMap.get(ownerAddress)) {
+      if (accountSet.contains(ownerAddress)) {
         continue;
       } else {
         switch (contract.getType()) {
@@ -1190,13 +1234,10 @@ public class Manager {
           case PermissionAddKeyContract:
           case PermissionUpdateKeyContract:
           case PermissionDeleteKeyContract: {
-            if (accountMap.containsKey(ownerAddress)) {
-              continue;
-            }
-            accountMap.put(ownerAddress, true);
+            accountSet.add(ownerAddress);
           }
+          break;
           default:
-            accountMap.put(ownerAddress, false);
         }
       }
       // apply transaction
@@ -1317,7 +1358,15 @@ public class Manager {
     }
     //reset BlockEnergyUsage
     this.dynamicPropertiesStore.saveBlockEnergyUsage(0);
-
+    //parallel check sign
+    if (!block.generatedByMyself) {
+      try {
+        preValidateTransactionSign(block);
+      } catch (InterruptedException e) {
+        logger.error("parallel check sign interrupted exception! block info: {}", block, e);
+        Thread.currentThread().interrupt();
+      }
+    }
     if (!Args.getInstance().isFastSync()) {
       try {
         fastSyncCallBack.preExecute(block);
@@ -1675,4 +1724,94 @@ public class Manager {
     revokingStore.setMode(mode);
   }
 
+  private void startEventSubscribing() {
+
+    try {
+      eventPluginLoaded = EventPluginLoader.getInstance()
+          .start(Args.getInstance().getEventPluginConfig());
+
+      if (!eventPluginLoaded) {
+        logger.error("failed to load eventPlugin");
+      }
+
+      FilterQuery eventFilter = Args.getInstance().getEventFilter();
+      if (!Objects.isNull(eventFilter)) {
+        EventPluginLoader.getInstance().setFilterQuery(eventFilter);
+      }
+
+    } catch (Exception e) {
+      logger.error("{}", e);
+    }
+  }
+
+  private void postBlockTrigger(final BlockCapsule newBlock) {
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
+      boolean result = triggerCapsuleQueue.offer(new BlockLogTriggerCapsule(newBlock));
+      if (result == false) {
+        logger.info("too many trigger, lost block trigger: {}", newBlock.getBlockId());
+      }
+    }
+
+    for (TransactionCapsule e : newBlock.getTransactions()) {
+      postTransactionTrigger(e, newBlock);
+    }
+  }
+
+  private void postTransactionTrigger(final TransactionCapsule trxCap,
+      final BlockCapsule blockCap) {
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
+      boolean result = triggerCapsuleQueue
+          .offer(new TransactionLogTriggerCapsule(trxCap, blockCap));
+      if (result == false) {
+        logger.info("too many trigger, lost transaction trigger: {}", trxCap.getTransactionId());
+      }
+    }
+  }
+
+  private void reorgContractTrigger() {
+    if (eventPluginLoaded &&
+        (EventPluginLoader.getInstance().isContractEventTriggerEnable()
+            || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
+      logger.info("switchfork occured, post reorgContractTrigger");
+      try {
+        BlockCapsule oldHeadBlock = getBlockById(
+            getDynamicPropertiesStore().getLatestBlockHeaderHash());
+        for (TransactionCapsule trx : oldHeadBlock.getTransactions()) {
+          postContractTrigger(trx.getTrxTrace(), true);
+        }
+      } catch (BadItemException e) {
+        e.printStackTrace();
+      } catch (ItemNotFoundException e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
+  private void postContractTrigger(final TransactionTrace trace, boolean remove) {
+    if (eventPluginLoaded &&
+        (EventPluginLoader.getInstance().isContractEventTriggerEnable()
+            || EventPluginLoader.getInstance().isContractLogTriggerEnable()
+            && trace.getRuntimeResult().getTriggerList().size() > 0)) {
+      boolean result = false;
+      // be careful, trace.getRuntimeResult().getTriggerList() should never return null
+      for (ContractTrigger trigger : trace.getRuntimeResult().getTriggerList()) {
+        if (trigger instanceof LogEventWrapper && EventPluginLoader.getInstance()
+            .isContractEventTriggerEnable()) {
+          ContractEventTriggerCapsule contractEventTriggerCapsule = new ContractEventTriggerCapsule(
+              (LogEventWrapper) trigger);
+          contractEventTriggerCapsule.getContractEventTrigger().setRemoved(remove);
+          result = triggerCapsuleQueue.offer(contractEventTriggerCapsule);
+        } else if (trigger instanceof ContractLogTrigger && EventPluginLoader.getInstance()
+            .isContractLogTriggerEnable()) {
+          ContractLogTriggerCapsule contractLogTriggerCapsule = new ContractLogTriggerCapsule(
+              (ContractLogTrigger) trigger);
+          contractLogTriggerCapsule.getContractLogTrigger().setRemoved(remove);
+          result = triggerCapsuleQueue.offer(contractLogTriggerCapsule);
+        }
+        if (result == false) {
+          logger.info("too many tigger, lost contract log trigger: {}", trigger.getTxId());
+        }
+      }
+    }
+  }
 }
