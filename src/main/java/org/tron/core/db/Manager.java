@@ -568,6 +568,7 @@ public class Manager {
   }
 
   public void initCacheTxs() {
+    logger.info("begin to init txs cache.");
     int dbVersion = Args.getInstance().getStorage().getDbVersion();
     if (dbVersion != 2) {
       return;
@@ -605,7 +606,7 @@ public class Manager {
     } catch (ExecutionException e) {
       logger.info(e.getMessage());
     }
-    logger.info("trxids:{}, block count:{}, empty block count:{}, cost:{}",
+    logger.info("end to init txs cache. trxids:{}, block count:{}, empty block count:{}, cost:{}",
         transactionCache.size(),
         blockCount.get(),
         emptyBlockCount.get(),
