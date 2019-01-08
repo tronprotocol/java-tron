@@ -141,7 +141,7 @@ public class WalletTestAssetIssue018 {
         testKey002,blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(assetAccount3Address,2048000000,fromAddress,
         testKey002,blockingStubFull));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Create 3 the same name token.
     Long start = System.currentTimeMillis() + 2000;
     Long end = System.currentTimeMillis() + 1000000000;
