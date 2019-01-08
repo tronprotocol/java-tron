@@ -94,7 +94,7 @@ public class WalletTestCommittee004 {
   }
 
   @Test(enabled = true)
-  public void testDeleteProposal() {
+  public void test1DeleteProposal() {
     Assert.assertTrue(PublicMethed.sendcoin(witness001Address,1000000L,
         toAddress,testKey003,blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(witness002Address,1000000L,
@@ -138,7 +138,7 @@ public class WalletTestCommittee004 {
     //You can't delete an invalid proposal
     Assert.assertFalse(PublicMethed.deleteProposal(witness001Address,witnessKey001,
         proposalId + 100,blockingStubFull));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
     listProposals =  Optional.ofNullable(proposalList);
     logger.info(Integer.toString(listProposals.get().getProposals(0).getStateValue()));
@@ -153,7 +153,7 @@ public class WalletTestCommittee004 {
   }
 
   @Test(enabled = true)
-  public void testGetProposal() {
+  public void test2GetProposal() {
     //Create a proposal and approval it
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
     proposalMap.put(1L, 99999L);
@@ -184,7 +184,7 @@ public class WalletTestCommittee004 {
     Assert.assertTrue(getProposal.get().getCreateTime() == 0);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testGetChainParameters() {
     //Set the default map
     HashMap<String, Long> defaultCommitteeMap = new HashMap<String, Long>();
