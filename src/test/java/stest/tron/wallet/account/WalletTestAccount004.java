@@ -137,6 +137,7 @@ public class WalletTestAccount004 {
 
     Assert.assertTrue(PublicMethed.sendcoin(account004Address,freezeAmount,fromAddress,testKey002,
         blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalance(account004Address,freezeAmount,0,
         account004Key,blockingStubFull));
     account004 = PublicMethed.queryAccount(account004Address, blockingStubFull);
@@ -145,7 +146,7 @@ public class WalletTestAccount004 {
         null,blockingStubFull));
     account004 = PublicMethed.queryAccount(account004Address, blockingStubFull);
     Assert.assertTrue(account004.getBalance() == freezeAmount);
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(account004Address,freezeAmount,0,
         1,account004Key,blockingStubFull));
     account004 = PublicMethed.queryAccount(account004Address, blockingStubFull);
