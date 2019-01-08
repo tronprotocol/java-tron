@@ -124,6 +124,7 @@ public class ContractScenario014 {
     txid = PublicMethed.deployContractWithConstantParame(contractName,abi2,code2,
         "constructor(address)",parame,"", maxFeeLimit,0L,100,null,
         contract014Key,contract014Address,blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     contractAddress3 = infoById.get().getContractAddress().toByteArray();
@@ -150,6 +151,7 @@ public class ContractScenario014 {
     txid = PublicMethed.triggerContract(contractAddress2,
         "triggerContract1(address)", receiveAddress, false,
         0, 10000000L, contract014Address, contract014Key, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     contract2AccountInfo = PublicMethed.queryAccount(contractAddress2,blockingStubFull);
