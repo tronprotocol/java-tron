@@ -255,6 +255,7 @@ public class AssertException {
     Account infoafter = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull1);
     AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(asset016Address,
         blockingStubFull1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long afterBalance = infoafter.getBalance();
     Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
     Long afterNetUsed = resourceInfoafter.getNetUsed();
@@ -494,11 +495,11 @@ public class AssertException {
     Account infoafter = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull);
     AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(asset016Address,
         blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long afterBalance = infoafter.getBalance();
     Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
     Long afterNetUsed = resourceInfoafter.getNetUsed();
     Long afterFreeNetUsed = resourceInfoafter.getFreeNetUsed();
-
     logger.info("afterBalance:" + afterBalance);
     logger.info("afterEnergyUsed:" + afterEnergyUsed);
     logger.info("afterNetUsed:" + afterNetUsed);
