@@ -94,7 +94,7 @@ public class TestStorageAndCpu {
     String contractName = "StorageAndCpu" + Integer.toString(randNum);
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_TestStorageAndCpu_storageAndCpu");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_TestStorageAndCpu_storageAndCpu");
     byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,
         "",maxFeeLimit,

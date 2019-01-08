@@ -96,7 +96,7 @@ public class AssertException {
     String contractName = "divideInt";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_AssertException_testdivideInt");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_AssertException_testdivideInt");
 
 
@@ -158,7 +158,7 @@ public class AssertException {
     String contractName = "findArgsContractTest";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_AssertException_testfindArgsContractMinTest");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_AssertException_testfindArgsContractMinTest");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
@@ -217,7 +217,7 @@ public class AssertException {
     String contractName = "byteContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_AssertException_testbyteMinContract");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_AssertException_testbyteMinContract");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
@@ -275,7 +275,7 @@ public class AssertException {
     String contractName = "enum";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_AssertException_testenum");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_AssertException_testenum");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
@@ -335,7 +335,7 @@ public class AssertException {
     String contractName = "moveRight";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_AssertException_testmoveRight");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_AssertException_testmoveRight");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
@@ -396,7 +396,7 @@ public class AssertException {
     String contractName = "uninitializedContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_AssertException_testuninitializedContract");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_AssertException_testuninitializedContract");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
@@ -456,7 +456,7 @@ public class AssertException {
     String contractName = "TestThrowsContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_AssertException_testTestAssertContract");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_AssertException_testTestAssertContract");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,

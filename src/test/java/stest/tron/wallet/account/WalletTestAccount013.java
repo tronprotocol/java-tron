@@ -304,7 +304,7 @@ public class WalletTestAccount013 {
   public void test3DelegateResourceAboutTransferAsset() {
     //account013 DelegateResource of bandwidth to accountForAssetIssue
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(
-        account013Address, freezeAmount, freezeDuration, 0,
+        account013Address, 1000000000L, freezeDuration, 0,
         ByteString.copyFrom(accountForAssetIssueAddress),
         testKeyForAccount013, blockingStubFull));
     //accountForAssetIssue AssetIssue
@@ -357,14 +357,19 @@ public class WalletTestAccount013 {
         account5DelegatedResourceAddress, blockingStubFull).getNetUsed();
     AccountResourceMessage account5ResourceAfterTrans = PublicMethed.getAccountResource(
         account5DelegatedResourceAddress, blockingStubFull);
+
     String result = "";
     if (account5ResourceAfterTrans.getAssetNetLimitCount() > 0) {
+      logger.info("getAssetNetLimitCount > 0 ");
       for (String name1 : account5ResourceAfterTrans.getAssetNetLimitMap().keySet()) {
+        logger.info(name1);
         result += account5ResourceAfterTrans.getAssetNetUsedMap().get(name1);
+
       }
     }
     logger.info(result);
-
+    PublicMethed.printAddress(receiverDelegateKey);
+    PublicMethed.printAddress(account5DelegatedResourceKey);
     long account5FreeAssetNetUsed = accountForAssetIssueCurrentBandwidthAfterTrans;
 
     //check resource diff

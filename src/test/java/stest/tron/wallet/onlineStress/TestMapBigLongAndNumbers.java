@@ -95,7 +95,7 @@ public class TestMapBigLongAndNumbers {
     String contractName = "MappingExample";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_TestMapBigLongAndNumbers_deployErc721KittyCore");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_TestMapBigLongAndNumbers_deployErc721KittyCore");
     kittyCoreContractAddress = PublicMethed.deployContract(contractName,abi,code,"",
             maxFeeLimit, 0L, consumeUserResourcePercent,null,testKey002,

@@ -72,7 +72,7 @@ public class ContractScenario005 {
     String contractName = "ICO";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractScenario005_deployIcoContract");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractScenario005_deployIcoContract");
     byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
         0L, 100,null,contract005Key,contract005Address,blockingStubFull);

@@ -78,7 +78,7 @@ public class ContractScenario013 {
     String contractName = "TronTrxAndSunContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractScenario013_deployTronTrxAndSunContract");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractScenario013_deployTronTrxAndSunContract");
     txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName,abi,code,"",
         maxFeeLimit, 0L, 100,null,contract013Key,contract013Address,blockingStubFull);
@@ -101,7 +101,7 @@ public class ContractScenario013 {
     String contractName = "TronTrxAndSunContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractScenario013_triggerTronTrxAndSunContract");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractScenario013_triggerTronTrxAndSunContract");
     contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
         0L, 100,null,contract013Key,contract013Address,blockingStubFull);

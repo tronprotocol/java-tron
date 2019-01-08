@@ -86,7 +86,7 @@ public class ContractGrammar001 {
     String contractName = "FunctionSelector";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractGrammar001_testGrammar001");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractGrammar001_testGrammar001");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress,
@@ -119,7 +119,7 @@ public class ContractGrammar001 {
     String contractName = "SetContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractGrammar001_testGrammar002");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractGrammar001_testGrammar002");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress,
@@ -130,7 +130,7 @@ public class ContractGrammar001 {
     String contractName1 = "CContract";
     String code1 = Configuration.getByPath("testng.conf")
             .getString("code.code1_ContractGrammar001_testGrammar002");
-    String abi1 = Configuration.getByPath("long-testng.conf")
+    String abi1 = Configuration.getByPath("testng.conf")
             .getString("abi.abi1_ContractGrammar001_testGrammar002");
     String libraryAddress =
         "browser/TvmTest_p1_Grammar_002.sol:S:" + Base58.encode58Check(contractAddress);
@@ -151,7 +151,7 @@ public class ContractGrammar001 {
     String contractName = "SetContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractGrammar001_testGrammar003");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractGrammar001_testGrammar003");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress,
@@ -162,7 +162,7 @@ public class ContractGrammar001 {
     String contractName1 = "CContract";
     String code1 = Configuration.getByPath("testng.conf")
             .getString("code.code1_ContractGrammar001_testGrammar003");
-    String abi1 = Configuration.getByPath("long-testng.conf")
+    String abi1 = Configuration.getByPath("testng.conf")
             .getString("abi.abi1_ContractGrammar001_testGrammar003");
     String libraryAddress =
         "browser/TvmTest_p1_Grammar_003.sol:S:" + Base58.encode58Check(contractAddress);
@@ -184,7 +184,7 @@ public class ContractGrammar001 {
     String contractName = "searchContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractGrammar001_testGrammar004");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractGrammar001_testGrammar004");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress,
@@ -195,7 +195,7 @@ public class ContractGrammar001 {
     String contractName1 = "cContract";
     String code1 = Configuration.getByPath("testng.conf")
             .getString("code.code1_ContractGrammar001_testGrammar004");
-    String abi1 = Configuration.getByPath("long-testng.conf")
+    String abi1 = Configuration.getByPath("testng.conf")
             .getString("abi.abi1_ContractGrammar001_testGrammar004");
     String libraryAddress = null;
     libraryAddress =
@@ -241,7 +241,7 @@ public class ContractGrammar001 {
     String contractName = "infofeedContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractGrammar001_testGrammar006");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractGrammar001_testGrammar006");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress,

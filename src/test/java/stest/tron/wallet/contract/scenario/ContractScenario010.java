@@ -73,7 +73,7 @@ public class ContractScenario010 {
     String contractName = "Tron_ERC721_Token";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractScenario010_deployContainLibraryContract");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractScenario010_deployContainLibraryContract");
     byte[] libraryAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
         0L, 100,null,contract009Key,contract009Address,blockingStubFull);

@@ -82,7 +82,7 @@ public class ContractScenario012 {
     String contractName = "TransactionCoin";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractScenario012_deployTransactionCoin");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractScenario012_deployTransactionCoin");
     contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
         0L, 100,null,contract012Key,contract012Address,blockingStubFull);

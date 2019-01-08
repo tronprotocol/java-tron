@@ -74,7 +74,7 @@ public class ContractScenario007 {
     String contractName = "ERC721";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractScenario007_deployErc721CardMigration");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractScenario007_deployErc721CardMigration");
     byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
         0L, 100,null,contract007Key,contract007Address,blockingStubFull);

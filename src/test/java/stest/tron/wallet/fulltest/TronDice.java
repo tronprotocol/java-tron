@@ -82,7 +82,7 @@ public class TronDice {
     String contractName = "TronDice";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_TronDice_tronDice");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_TronDice_tronDice");
     byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",
         maxFeeLimit,1000000000L, 100,null,tronDiceKey,tronDiceAddress,blockingStubFull);

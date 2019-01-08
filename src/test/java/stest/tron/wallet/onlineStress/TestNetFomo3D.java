@@ -88,14 +88,14 @@ public class TestNetFomo3D {
     String contractName = "Fomo3D";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_TestNetFomo3D_deployErc721CryptoKitties");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_TestNetFomo3D_deployErc721CryptoKitties");
     byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
         0L, 100,null,testNetAccountKey,testNetAccountAddress,blockingStubFull);
 
     String code1 = Configuration.getByPath("testng.conf")
             .getString("code.code1_TestNetFomo3D_deployErc721CryptoKitties");
-    String abi1 = Configuration.getByPath("long-testng.conf")
+    String abi1 = Configuration.getByPath("testng.conf")
             .getString("abi.abi1_TestNetFomo3D_deployErc721CryptoKitties");
     String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName,abi1,
         code1,"",maxFeeLimit, 0L, 100,null,
@@ -143,7 +143,7 @@ public class TestNetFomo3D {
     String contractName = "tooLargeStorage";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_TestNetFomo3D_tooLargeStorage");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_TestNetFomo3D_tooLargeStorage");
     String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName,abi,
         code,"",maxFeeLimit, 0L, 100,null,

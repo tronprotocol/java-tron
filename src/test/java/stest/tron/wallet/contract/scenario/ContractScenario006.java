@@ -79,7 +79,7 @@ public class ContractScenario006 {
     String contractName = "Fomo3D";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractScenario006_deployFomo3D");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractScenario006_deployFomo3D");
     byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
         0L,100,null, contract006Key,contract006Address,blockingStubFull);

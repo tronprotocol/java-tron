@@ -78,7 +78,7 @@ public class ContractScenario008 {
     String contractName = "Cat";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractScenario008_deployErc721CryptoKitties");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractScenario008_deployErc721CryptoKitties");
     byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",shortFeeLimit,
         0L, 100,null,contract008Key,contract008Address,blockingStubFull);

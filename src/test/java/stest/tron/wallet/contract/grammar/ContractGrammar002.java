@@ -88,7 +88,7 @@ public class ContractGrammar002 {
     String contractName = "dougContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractGrammar002_testGrammar007");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractGrammar002_testGrammar007");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress2,
@@ -98,7 +98,7 @@ public class ContractGrammar002 {
     String code1 = "608060405260018054600160a060020a031990811673" + initParmes
             + Configuration.getByPath("testng.conf")
             .getString("code.code1_ContractGrammar002_testGrammar007");
-    String abi1 = Configuration.getByPath("long-testng.conf")
+    String abi1 = Configuration.getByPath("testng.conf")
             .getString("abi.abi1_ContractGrammar002_testGrammar007");
     byte[] contractAddress1 = PublicMethed
         .deployContract(contractName1, abi1, code1, "", maxFeeLimit,
@@ -129,7 +129,7 @@ public class ContractGrammar002 {
     String contractName = "catContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractGrammar002_testGrammar008");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractGrammar002_testGrammar008");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress2,
@@ -160,7 +160,7 @@ public class ContractGrammar002 {
     String contractName = "catContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractGrammar002_testGrammar010");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractGrammar002_testGrammar010");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress2,
@@ -185,7 +185,7 @@ public class ContractGrammar002 {
     String contractName = "cContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractGrammar002_testGrammar011");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractGrammar002_testGrammar011");
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress2,
@@ -217,7 +217,7 @@ public class ContractGrammar002 {
     String contractName = "rtestContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractGrammar002_testGrammar012");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractGrammar002_testGrammar012");
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress2,
@@ -238,7 +238,7 @@ public class ContractGrammar002 {
     String contractName = "executefallbackContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractGrammar002_testGrammar013");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractGrammar002_testGrammar013");
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress2,

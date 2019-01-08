@@ -111,7 +111,7 @@ public class WalletTestAccount012 {
     String contractName = "StorageAndCpu" + Integer.toString(randNum);
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_WalletTestAccount012_storageAndCpu");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_WalletTestAccount012_storageAndCpu");
     byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,
         "",maxFeeLimit,

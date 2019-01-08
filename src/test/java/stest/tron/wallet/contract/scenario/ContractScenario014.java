@@ -89,7 +89,7 @@ public class ContractScenario014 {
     String contractName = "Contract1";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractScenario014_testTripleTrigger");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractScenario014_testTripleTrigger");
     txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName,abi,code,"",
         maxFeeLimit, 0L, 100,null,contract014Key,contract014Address,blockingStubFull);
@@ -101,7 +101,7 @@ public class ContractScenario014 {
     // and has a revert function.
     String code1 = Configuration.getByPath("testng.conf")
             .getString("code.code1_ContractScenario014_testTripleTrigger");
-    String abi1 = Configuration.getByPath("long-testng.conf")
+    String abi1 = Configuration.getByPath("testng.conf")
             .getString("abi.abi1_ContractScenario014_testTripleTrigger");
     String parame = "\"" +  Base58.encode58Check(contractAddress1) + "\"";
     contractName = "Contract2";
@@ -116,7 +116,7 @@ public class ContractScenario014 {
     //Deploy contract3, trigger contrct2 function.
     String code2 = Configuration.getByPath("testng.conf")
             .getString("code.code2_ContractScenario014_testTripleTrigger");
-    String abi2 = Configuration.getByPath("long-testng.conf")
+    String abi2 = Configuration.getByPath("testng.conf")
             .getString("abi.abi2_ContractScenario014_testTripleTrigger");
     parame = "\"" +  Base58.encode58Check(contractAddress2) + "\"";
     contractName = "Contract3";
