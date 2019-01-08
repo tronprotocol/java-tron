@@ -10,6 +10,7 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -95,6 +96,7 @@ import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Transaction.Contract;
 
 
 @Slf4j(topic = "DB")
@@ -1182,6 +1184,7 @@ public class Manager {
     session.reset();
     session.setValue(revokingStore.buildSession());
 
+    Set<String> accountSet = new HashSet<>();
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext() || repushTransactions.size() > 0) {
       boolean fromPending = false;
@@ -1205,6 +1208,24 @@ public class Manager {
         > ChainConstant.BLOCK_SIZE) {
         postponedTrxCount++;
         continue;
+      }
+      //
+      Contract contract = trx.getInstance().getRawData().getContract(0);
+      byte[] owner = TransactionCapsule.getOwner(contract);
+      String ownerAddress = ByteArray.toHexString(owner);
+      if (accountSet.contains(ownerAddress)) {
+        continue;
+      } else {
+        switch (contract.getType()) {
+          case AccountPermissionUpdateContract:
+          case PermissionAddKeyContract:
+          case PermissionUpdateKeyContract:
+          case PermissionDeleteKeyContract: {
+            accountSet.add(ownerAddress);
+          }
+          break;
+          default:
+        }
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
@@ -1324,6 +1345,16 @@ public class Manager {
     //reset BlockEnergyUsage
     this.dynamicPropertiesStore.saveBlockEnergyUsage(0);
 
+    //parallel check sign
+    if (!block.generatedByMyself) {
+      try {
+        preValidateTransactionSign(block);
+      } catch (InterruptedException e) {
+        logger.error("parallel check sign interrupted exception! block info: {}", block, e);
+        Thread.currentThread().interrupt();
+      }
+    }
+
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       transactionCapsule.setBlockNum(block.getNum());
       if (block.generatedByMyself) {
@@ -1352,7 +1383,6 @@ public class Manager {
     updateMaintenanceState(needMaint);
     updateRecentBlock(block);
   }
-
 
 
   private void updateTransHashCache(BlockCapsule block) {
@@ -1611,11 +1641,14 @@ public class Manager {
     }
   }
 
-  public synchronized void preValidateTransactionSign(BlockCapsule block)
-    throws InterruptedException, ValidateSignatureException {
+  public void preValidateTransactionSign(BlockCapsule block)
+      throws InterruptedException, ValidateSignatureException {
     logger.info("PreValidate Transaction Sign, size:" + block.getTransactions().size()
       + ",block num:" + block.getNum());
     int transSize = block.getTransactions().size();
+    if (transSize <= 0) {
+      return;
+    }
     CountDownLatch countDownLatch = new CountDownLatch(transSize);
     List<Future<Boolean>> futures = new ArrayList<>(transSize);
 
