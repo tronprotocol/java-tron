@@ -169,7 +169,7 @@ public class WalletTestMutiSign001 {
     PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,participateAddress,
         participateKey, blockingStubFull,ownerKeyString);
 
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethedForMutiSign.participateAssetIssue(ownerAddress,assetAccountId1
             .toByteArray(), 10,participateAddress,participateKey,
         blockingStubFull,permissionKeyString));
