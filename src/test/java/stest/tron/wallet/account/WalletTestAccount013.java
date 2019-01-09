@@ -319,11 +319,7 @@ public class WalletTestAccount013 {
         2000L, 2000L, 500L, 1L,
         accountForAssetIssueKey, blockingStubFull));
     //Wait for 3s
-    try {
-      Thread.sleep(3000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     //get AssetIssue Id
     Protocol.Account getAssetIdFromThisAccount;
     getAssetIdFromThisAccount = PublicMethed.queryAccount(
@@ -394,7 +390,7 @@ public class WalletTestAccount013 {
     final byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",
         maxFeeLimit, 0L, consumeUserResourcePercent,null,accountForDeployKey,
         accountForDeployAddress,blockingStubFull);
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Account4 DelegatedResource of Energy to Contract
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(
         account4DelegatedResourceAddress,freezeAmount,freezeDuration,1,

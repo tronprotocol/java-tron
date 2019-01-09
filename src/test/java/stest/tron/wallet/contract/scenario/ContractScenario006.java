@@ -63,8 +63,9 @@ public class ContractScenario006 {
     contract006Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     PublicMethed.printAddress(contract006Key);
 
-    Assert.assertTrue(PublicMethed.sendcoin(contract006Address,200000000L,fromAddress,
-        testKey002,blockingStubFull));
+    PublicMethed.sendcoin(contract006Address,200000000L,fromAddress,
+        testKey002,blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info(Long.toString(PublicMethed.queryAccount(contract006Key,blockingStubFull)
         .getBalance()));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract006Address, 10000000L,

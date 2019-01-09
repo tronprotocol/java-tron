@@ -91,26 +91,16 @@ public class WalletTestCommittee003 {
 
   @Test(enabled = true)
   public void testApproveProposal() {
-    Assert.assertTrue(PublicMethed.sendcoin(witness001Address,1000000L,
-        toAddress,testKey003,blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(witness002Address,1000000L,
-        toAddress,testKey003,blockingStubFull));
+    PublicMethed.sendcoin(witness001Address,1000000L,
+        toAddress,testKey003,blockingStubFull);
+    PublicMethed.sendcoin(witness002Address,1000000L,
+        toAddress,testKey003,blockingStubFull);
 
-    //Create a proposal
-    try {
-      Thread.sleep(2000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
     proposalMap.put(0L, 81000L);
     Assert.assertTrue(PublicMethed.createProposal(witness001Address,witnessKey001,
         proposalMap,blockingStubFull));
-    try {
-      Thread.sleep(2000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Get proposal list
     ProposalList proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
     Optional<ProposalList> listProposals =  Optional.ofNullable(proposalList);
@@ -119,11 +109,7 @@ public class WalletTestCommittee003 {
 
     Assert.assertTrue(PublicMethed.approveProposal(witness002Address,witnessKey002,proposalId,
         true,blockingStubFull));
-    try {
-      Thread.sleep(2000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Get proposal list after approve
     proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
     listProposals =  Optional.ofNullable(proposalList);
