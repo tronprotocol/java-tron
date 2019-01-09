@@ -9,6 +9,8 @@
           <packages>
        <package name="stest.tron.wallet.transfer">
        </package>
+        <package name="stest.tron.wallet.mutisign">
+        </package>
      </packages>
    </test>
    <test name="Stest account">

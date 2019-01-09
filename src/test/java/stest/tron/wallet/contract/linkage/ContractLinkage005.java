@@ -88,27 +88,27 @@ public class ContractLinkage005 {
     Assert.assertTrue(PublicMethed.sendcoin(linkage005Address, 5000000000000L, fromAddress,
         testKey003, blockingStubFull));
     Integer times = 0;
-    while (!PublicMethed.freezeBalance(linkage005Address, 200000000000L,
+    while (!PublicMethed.freezeBalance(linkage005Address, 250000000000L,
         3, linkage005Key, blockingStubFull)) {
       times++;
       if (times == 3) {
         break;
       }
       try {
-        Thread.sleep(500);
+        Thread.sleep(1500);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
     }
     times = 0;
-    while (!PublicMethed.freezeBalanceGetEnergy(linkage005Address, 200000000000L,
+    while (!PublicMethed.freezeBalanceGetEnergy(linkage005Address, 250000000000L,
         3, 1, linkage005Key, blockingStubFull)) {
       times++;
       if (times == 3) {
         break;
       }
       try {
-        Thread.sleep(500);
+        Thread.sleep(1500);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }

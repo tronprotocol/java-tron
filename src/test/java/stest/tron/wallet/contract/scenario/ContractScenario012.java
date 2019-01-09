@@ -98,6 +98,7 @@ public class ContractScenario012 {
     txid = PublicMethed.triggerContract(contractAddress,
         "sendToAddress2(address)", receiveAddress, false,
         0, 100000000L, contract012Address, contract012Key, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 1);
@@ -115,6 +116,7 @@ public class ContractScenario012 {
     txid = PublicMethed.triggerContract(contractAddress,
         "sendToAddress2(address)", receiveAddress, false,
         0, 100000000L, contract012Address, contract012Key, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info("result is " + infoById.get().getResultValue());
@@ -126,9 +128,11 @@ public class ContractScenario012 {
     //This time, trigger the methed sendToAddress2 is OK.
     Assert.assertTrue(PublicMethed.sendcoin(receiverAddress,10000000L,fromAddress,
         testKey002,blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     txid = PublicMethed.triggerContract(contractAddress,
         "sendToAddress2(address)", receiveAddress, false,
         0, 100000000L, contract012Address, contract012Key, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info("result is " + infoById.get().getResultValue());
