@@ -11,14 +11,11 @@
        </package>
               <package name="stest.tron.wallet.account">
               </package>
-              <package name="stest.tron.wallet.block">
-              </package>
+
      </packages>
    </test>
    <test name="Stest account">
      <packages>
-         <package name="stest.tron.wallet.node">
-         </package>
        <package name="stest.tron.wallet.exchangeandtoken">
        </package>
          <package name="stest.tron.wallet.mutisign">
@@ -29,6 +26,10 @@
      <packages>
        <package name="stest.tron.wallet.contract.linkage">
        </package>
+         <package name="stest.tron.wallet.block">
+         </package>
+         <package name="stest.tron.wallet.node">
+         </package>
      </packages>
    </test>
     <test name="Stest contract scenario">

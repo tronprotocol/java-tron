@@ -108,11 +108,9 @@ public class WalletTestMutiSign004 {
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress,100000000L,fromAddress,testKey002,
         blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     permissionKeyString[0] = manager1Key;
     permissionKeyString[1] = manager2Key;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     ownerKeyString[0] = ownerKey;
     accountPermissionJson = "[{\"keys\":[{\"address\":\""
@@ -142,7 +140,6 @@ public class WalletTestMutiSign004 {
         0L, 100,null,ownerKey,ownerAddress,blockingStubFull,permissionKeyString);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
     Assert.assertTrue(smartContract.getAbi().toString() != null);
     String txid;
@@ -151,11 +148,9 @@ public class WalletTestMutiSign004 {
           "testUseCpu(uint256)", initParmes, false,
           0, maxFeeLimit,ownerAddress, ownerKey, blockingStubFull,permissionKeyString);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.getTransactionById(txid,blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getBlockNumber() > 0);
-
     PublicMethedForMutiSign.updateSetting(contractAddress,50,ownerKey,ownerAddress,blockingStubFull,permissionKeyString);
 
   }

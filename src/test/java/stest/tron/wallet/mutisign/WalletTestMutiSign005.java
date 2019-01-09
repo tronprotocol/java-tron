@@ -101,11 +101,9 @@ public class WalletTestMutiSign005 {
     manager2Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     permissionKeyString[0] = manager1Key;
     permissionKeyString[1] = manager2Key;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     ownerKeyString[0] = witnessKey001;
     accountPermissionJson = "[{\"keys\":[{\"address\":\""
@@ -123,12 +121,10 @@ public class WalletTestMutiSign005 {
     //Create a proposal
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
     proposalMap.put(0L, 81000L);
     Assert.assertTrue(PublicMethedForMutiSign.createProposal(witness001Address,witnessKey001,
         proposalMap,blockingStubFull,permissionKeyString));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Get proposal list
     ProposalList proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
@@ -138,7 +134,6 @@ public class WalletTestMutiSign005 {
 
     Assert.assertTrue(PublicMethedForMutiSign.approveProposal(witness001Address,witnessKey001,proposalId,
         true,blockingStubFull,permissionKeyString));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Delete proposal list after approve
     Assert.assertTrue(PublicMethedForMutiSign.deleteProposal(witness001Address,witnessKey001,proposalId,blockingStubFull,permissionKeyString));

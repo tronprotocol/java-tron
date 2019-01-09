@@ -70,6 +70,15 @@ public class ContractScenario012 {
 
   @Test(enabled = true)
   public void deployTransactionCoin() {
+    ecKey1 = new ECKey(Utils.getRandom());
+    contract012Address = ecKey1.getAddress();
+    contract012Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
+    ecKey2 = new ECKey(Utils.getRandom());
+    receiverAddress = ecKey2.getAddress();
+    receiverKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+
+
     Assert.assertTrue(PublicMethed.sendcoin(contract012Address,2000000000L,fromAddress,
         testKey002,blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract012Address,

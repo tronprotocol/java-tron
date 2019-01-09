@@ -97,11 +97,9 @@ public class WalletTestMutiSign001 {
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress,2048000000L,fromAddress,testKey002,
         blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     permissionKeyString[0] = manager1Key;
     permissionKeyString[1] = manager2Key;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     ownerKeyString[0] = ownerKey;
     accountPermissionJson = "[{\"keys\":[{\"address\":\""
@@ -154,7 +152,6 @@ public class WalletTestMutiSign001 {
     Assert.assertTrue(PublicMethed.sendcoin(participateAddress,2048000000L,fromAddress,testKey002,
         blockingStubFull));
     PublicMethed.printAddress(participateKey);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     ownerKeyString[0] = participateKey;
