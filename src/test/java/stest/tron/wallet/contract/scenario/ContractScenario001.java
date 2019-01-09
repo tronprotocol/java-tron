@@ -99,6 +99,7 @@ public class ContractScenario001 {
         + "payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, contract001Key, contract001Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertTrue(smartContract.getAbi() != null);
 
@@ -124,6 +125,9 @@ public class ContractScenario001 {
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelFull1 != null) {
+      channelFull1.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
 }

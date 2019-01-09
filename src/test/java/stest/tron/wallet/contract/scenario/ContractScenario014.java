@@ -137,7 +137,7 @@ public class ContractScenario014 {
         blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(contractAddress3,1000000L,fromAddress,testKey002,
         blockingStubFull));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Test contract2 trigger contract1 to test call function
     Account contract2AccountInfo = PublicMethed.queryAccount(contractAddress2,blockingStubFull);
     final Long contract2BeforeBalance = contract2AccountInfo.getBalance();
@@ -174,6 +174,7 @@ public class ContractScenario014 {
     txid = PublicMethed.triggerContract(contractAddress2,
         "triggerContract1ButRevert(address)", receiveAddress, false,
         0, 10000000L, contract014Address, contract014Key, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 1);
     contract1AccountInfo = PublicMethed.queryAccount(contractAddress1,blockingStubFull);
