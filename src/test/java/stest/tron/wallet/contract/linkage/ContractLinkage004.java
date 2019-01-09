@@ -328,7 +328,6 @@ public class ContractLinkage004 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById2 = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long energyUsageTotal2 = infoById2.get().getReceipt().getEnergyUsageTotal();
     Long fee2 = infoById2.get().getFee();
     Long energyFee2 = infoById2.get().getReceipt().getEnergyFee();
