@@ -9,9 +9,7 @@
           <packages>
        <package name="stest.tron.wallet.transfer">
        </package>
-              <package name="stest.tron.wallet.node">
-              </package>
-              <package name="stest.tron.wallet.witness">
+              <package name="stest.tron.wallet.account">
               </package>
               <package name="stest.tron.wallet.block">
               </package>
@@ -19,11 +17,10 @@
    </test>
    <test name="Stest account">
      <packages>
-       <package name="stest.tron.wallet.account">
-       </package>
+         <package name="stest.tron.wallet.node">
+         </package>
        <package name="stest.tron.wallet.exchangeandtoken">
        </package>
-
          <package name="stest.tron.wallet.mutisign">
          </package>
      </packages>
@@ -39,6 +36,8 @@
             <package name="stest.tron.wallet.contract.scenario">
             </package>
             <package name="stest.tron.wallet.committee">
+            </package>
+            <package name="stest.tron.wallet.witness">
             </package>
         </packages>
     </test>
