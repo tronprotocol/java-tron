@@ -211,6 +211,7 @@ public class ContractGrammar001 {
     contractAddress1 = PublicMethed.deployContract(contractName1, abi1, code1, "", maxFeeLimit,
         0L, 100, libraryAddress, testKeyForGrammarAddress,
         grammarAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     txid = PublicMethed.triggerContract(contractAddress1,
         "append(uint256)", num, false,
         0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
