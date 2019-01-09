@@ -99,10 +99,10 @@ public class ContractScenario001 {
         + "payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, contract001Key, contract001Address, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertTrue(smartContract.getAbi() != null);
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
     accountResource = PublicMethed.getAccountResource(contract001Address, blockingStubFull1);
     energyLimit = accountResource.getEnergyLimit();

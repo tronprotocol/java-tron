@@ -24,6 +24,7 @@ import org.tron.protos.Protocol.Block;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
+import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class WalletTestNode001 {
@@ -55,10 +56,20 @@ public class WalletTestNode001 {
   public void testGetAllNode() {
     GrpcAPI.NodeList nodeList = blockingStubFull
         .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
-    if (nodeList.getNodesCount() <= 0) {
-      logger.info("There is no node in currently environment");
+    if (nodeList.getNodesCount() == 0) {
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+      nodeList = blockingStubFull
+              .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
+    }
+    if (nodeList.getNodesCount() == 0) {
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+      nodeList = blockingStubFull
+              .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
+    }
+    if (nodeList.getNodesCount() == 0) {
       Assert.assertFalse(nodeList.getNodesCount() == 0);
     }
+
     for (Integer j = 0; j < nodeList.getNodesCount(); j++) {
       Assert.assertTrue(nodeList.getNodes(j).hasAddress());
       Assert.assertFalse(nodeList.getNodes(j).getAddress().getHost().isEmpty());

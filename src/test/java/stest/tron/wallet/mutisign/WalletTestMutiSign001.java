@@ -100,7 +100,6 @@ public class WalletTestMutiSign001 {
 
     permissionKeyString[0] = manager1Key;
     permissionKeyString[1] = manager2Key;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     ownerKeyString[0] = ownerKey;
     accountPermissionJson = "[{\"keys\":[{\"address\":\""
         + PublicMethed.getAddressString(ownerKey)
@@ -112,6 +111,7 @@ public class WalletTestMutiSign001 {
     logger.info(accountPermissionJson);
     PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,ownerAddress,ownerKey,
         blockingStubFull,ownerKeyString);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Long start = System.currentTimeMillis() + 5000;
     Long end = System.currentTimeMillis() + 1000000000;
@@ -128,7 +128,6 @@ public class WalletTestMutiSign001 {
 
   @Test(enabled = true)
   public void testMutiSign2TransferAssetissue() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.printAddress(manager1Key);
     Account getAssetIdFromOwnerAccount;
