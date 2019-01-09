@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 
-<suite name="Stest suite" parallel="tests" thread-count="5">
+<suite name="Stest suite" parallel="tests" thread-count="4">
   <listeners>
     <listener class-name="stest.tron.wallet.common.client.utils.RetryListener"/>
   </listeners>
@@ -11,12 +11,6 @@
        </package>
      </packages>
    </test>
-  <test name="Stest mutisign">
-    <packages>
-        <package name="stest.tron.wallet.mutisign">
-        </package>
-    </packages>
-  </test>
    <test name="Stest account">
      <packages>
        <package name="stest.tron.wallet.account">
@@ -31,6 +25,8 @@
        </package>
        <package name="stest.tron.wallet.committee">
        </package>
+         <package name="stest.tron.wallet.mutisign">
+         </package>
      </packages>
    </test>
    <test name="Stest block,node,witness">
