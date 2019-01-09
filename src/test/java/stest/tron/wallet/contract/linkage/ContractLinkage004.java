@@ -103,8 +103,9 @@ public class ContractLinkage004 {
 
     Assert.assertTrue(PublicMethed.sendcoin(linkage004Address, 2000000000000L, fromAddress,
         testKey003, blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalance(linkage004Address, 1000000L,
+    Assert.assertTrue(PublicMethed.freezeBalance(linkage004Address, 10000000L,
         3, linkage004Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(linkage004Address,
         blockingStubFull);
     info = PublicMethed.queryAccount(linkage004Address, blockingStubFull);
