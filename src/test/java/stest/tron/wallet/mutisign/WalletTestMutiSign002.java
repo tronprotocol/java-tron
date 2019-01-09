@@ -194,15 +194,13 @@ public class WalletTestMutiSign002 {
         PublicMethedForMutiSign.exchangeCreate(assetAccountId1.toByteArray(), firstTokenInitialBalance,
             assetAccountId2.toByteArray(), secondTokenInitialBalance, exchange001Address,
             exchange001Key, blockingStubFull,permissionKeyString));
-    listExchange = PublicMethed.getExchangeList(blockingStubFull);
-    Integer afterCreateExchangeNum = listExchange.get().getExchangesCount();
-    Assert.assertTrue(afterCreateExchangeNum - beforeCreateExchangeNum == 1);
     exchangeId = listExchange.get().getExchangesCount();
 
   }
 
   @Test(enabled = true)
   public void test3ListExchange() {
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     listExchange = PublicMethed.getExchangeList(blockingStubFull);
     for (Integer i = 0; i < listExchange.get().getExchangesCount(); i++) {
       Assert.assertFalse(ByteArray.toHexString(listExchange.get().getExchanges(i)

@@ -73,6 +73,7 @@ public class ContractScenario003 {
   public void deployErc223() {
     Assert.assertTrue(PublicMethed.sendcoin(contract003Address, 500000000L, fromAddress,
         testKey002,blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract003Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
@@ -188,6 +189,7 @@ public class ContractScenario003 {
 
     String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code, "",
         maxFeeLimit, 0L, 100, null, contract003Key, contract003Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     logger.info(txid);
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);

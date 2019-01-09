@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 
-<suite name="Stest suite" parallel="tests" thread-count="6">
+<suite name="Stest suite" parallel="tests" thread-count="5">
   <listeners>
     <listener class-name="stest.tron.wallet.common.client.utils.RetryListener"/>
   </listeners>
@@ -39,19 +39,6 @@
        </package>
      </packages>
    </test>
-   <test name="Stest contract exceptionfee">
-     <packages>
-       <package name="stest.tron.wallet.contract.exceptionfee">
-       </package>
-     </packages>
-<!--      <classes>
-            <class name="stest.tron.wallet.exchange.WalletExchange001"/>
-          </classes>-->
-<!--               <packages>
-            <package name="stest.tron.wallet.account">
-            </package>
-          </packages>-->
-  </test>
     <test name="Stest contract scenario">
         <packages>
             <package name="stest.tron.wallet.contract.scenario">

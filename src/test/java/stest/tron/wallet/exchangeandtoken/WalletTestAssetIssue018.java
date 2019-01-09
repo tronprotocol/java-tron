@@ -183,6 +183,7 @@ public class WalletTestAssetIssue018 {
     getAssetIdFromThisAccount = PublicMethed.queryAccount(assetAccount3Key,blockingStubFull);
     ByteString assetAccount3Id = getAssetIdFromThisAccount.getAssetIssuedID();
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Transfer asset issue.
     Assert.assertTrue(PublicMethed.transferAsset(assetAccount2Address,assetAccount1Id
                     .toByteArray(), 1L,assetAccount1Address,assetAccount1Key,blockingStubFull));
@@ -196,11 +197,9 @@ public class WalletTestAssetIssue018 {
     Assert.assertFalse(PublicMethed.transferAsset(assetAccount1Address,assetAccount2Id
                     .toByteArray(), 3L,assetAccount3Address,assetAccount3Key,blockingStubFull));
 
-    try {
-      Thread.sleep(5000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
+
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //Participate asset issue.
     Assert.assertTrue(PublicMethed.participateAssetIssue(assetAccount3Address,assetAccount3Id
