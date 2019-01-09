@@ -43,8 +43,6 @@
      <packages>
        <package name="stest.tron.wallet.contract.exceptionfee">
        </package>
-       <package name="stest.tron.wallet.contract.scenario">
-       </package>
      </packages>
 <!--      <classes>
             <class name="stest.tron.wallet.exchange.WalletExchange001"/>
@@ -54,9 +52,9 @@
             </package>
           </packages>-->
   </test>
-    <test name="Stest contract grammar">
+    <test name="Stest contract scenario">
         <packages>
-            <package name="stest.tron.wallet.contract.grammar">
+            <package name="stest.tron.wallet.contract.scenario">
             </package>
         </packages>
     </test>
