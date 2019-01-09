@@ -131,6 +131,7 @@ public class WalletTestMutiSign002 {
     Assert.assertTrue(PublicMethed.createAssetIssue(secondExchange001Address, name2, totalSupply, 1,
         1, start, end, 1, description, url, 10000L, 10000L,
         1L, 1L, secondExchange001Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
   @Test(enabled = true)
@@ -182,6 +183,7 @@ public class WalletTestMutiSign002 {
         secondTransferAssetToFirstAccountNum, secondExchange001Address,
         secondExchange001Key, blockingStubFull));
     Long token2BeforeBalance = secondTransferAssetToFirstAccountNum;
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //logger.info("name1 is " + name1);
     //logger.info("name2 is " + name2);
