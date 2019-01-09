@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 
-<suite name="Stest suite" parallel="tests" thread-count="4">
+<suite name="Stest suite" parallel="tests" thread-count="6">
   <listeners>
     <listener class-name="stest.tron.wallet.common.client.utils.RetryListener"/>
   </listeners>
@@ -11,6 +11,12 @@
        </package>
      </packages>
    </test>
+  <test name="Stest mutisign">
+    <packages>
+        <package name="stest.tron.wallet.mutisign">
+        </package>
+    </packages>
+  </test>
    <test name="Stest account">
      <packages>
        <package name="stest.tron.wallet.account">
@@ -25,8 +31,6 @@
        </package>
        <package name="stest.tron.wallet.committee">
        </package>
-       <package name="stest.tron.wallet.mutisign">
-       </package>
      </packages>
    </test>
    <test name="Stest block,node,witness">
@@ -35,15 +39,12 @@
        </package>
      </packages>
    </test>
-   <test name="Stest contract">
+   <test name="Stest contract exceptionfee">
      <packages>
        <package name="stest.tron.wallet.contract.exceptionfee">
        </package>
-       <package name="stest.tron.wallet.contract.grammar">
-       </package>
        <package name="stest.tron.wallet.contract.scenario">
        </package>
-
      </packages>
 <!--      <classes>
             <class name="stest.tron.wallet.exchange.WalletExchange001"/>
@@ -53,4 +54,10 @@
             </package>
           </packages>-->
   </test>
+    <test name="Stest contract grammar">
+        <packages>
+            <package name="stest.tron.wallet.contract.grammar">
+            </package>
+        </packages>
+    </test>
 </suite>
