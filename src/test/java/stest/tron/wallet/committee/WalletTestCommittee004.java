@@ -95,17 +95,14 @@ public class WalletTestCommittee004 {
 
   @Test(enabled = true)
   public void test1DeleteProposal() {
-    Assert.assertTrue(PublicMethed.sendcoin(witness001Address,1000000L,
-        toAddress,testKey003,blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(witness002Address,1000000L,
-        toAddress,testKey003,blockingStubFull));
+    PublicMethed.sendcoin(witness001Address,1000000L,
+        toAddress,testKey003,blockingStubFull);
+    PublicMethed.sendcoin(witness002Address,1000000L,
+        toAddress,testKey003,blockingStubFull);
 
 
-    try {
-      Thread.sleep(1000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Create a proposal and approval it
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
     proposalMap.put(1L, 99999L);
@@ -156,7 +153,7 @@ public class WalletTestCommittee004 {
   public void test2GetProposal() {
     //Create a proposal and approval it
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
-    proposalMap.put(1L, 99999L);
+    proposalMap.put(1L, 999999999L);
     Assert.assertTrue(PublicMethed.createProposal(witness001Address,witnessKey001,
         proposalMap,blockingStubFull));
     //Get proposal list
