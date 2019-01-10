@@ -15,6 +15,7 @@ import org.tron.common.logsfilter.trigger.ContractTrigger;
 
 @Slf4j
 public class FilterQuery {
+
   @Getter
   @Setter
   private long fromBlock;
@@ -41,10 +42,10 @@ public class FilterQuery {
   public static long parseFromBlockNumber(String blockNum) {
     long number = 0;
     if (StringUtils.isEmpty(blockNum) || FilterQuery.EARLIEST.equalsIgnoreCase(blockNum)) {
-      number =  FilterQuery.EARLIEST_BLOCK_NUM;
+      number = FilterQuery.EARLIEST_BLOCK_NUM;
     } else {
       try {
-        number =  Long.parseLong(blockNum);
+        number = Long.parseLong(blockNum);
       } catch (Exception e) {
         logger.error("invalid filter: fromBlockNumber: {}", blockNum);
         throw e;
@@ -56,10 +57,10 @@ public class FilterQuery {
   public static long parseToBlockNumber(String blockNum) {
     long number = 0;
     if (StringUtils.isEmpty(blockNum) || FilterQuery.LATEST.equalsIgnoreCase(blockNum)) {
-      number =  FilterQuery.LATEST_BLOCK_NUM;
+      number = FilterQuery.LATEST_BLOCK_NUM;
     } else {
       try {
-        number =  Long.parseLong(blockNum);
+        number = Long.parseLong(blockNum);
       } catch (Exception e) {
         logger.error("invalid filter: toBlockNumber: {}", blockNum);
         throw e;
@@ -69,7 +70,7 @@ public class FilterQuery {
   }
 
   public static boolean matchFilter(ContractTrigger trigger) {
-    long blockNumber = trigger.getBlockNum();
+    long blockNumber = trigger.getBlockNumber();
 
     FilterQuery filterQuery = EventPluginLoader.getInstance().getFilterQuery();
     if (Objects.isNull(filterQuery)) {
@@ -112,7 +113,7 @@ public class FilterQuery {
     }
 
     return filterContractAddress(trigger, filterQuery.getContractAddressList())
-      && filterContractTopicList(trigger, filterQuery.getContractTopicList());
+        && filterContractTopicList(trigger, filterQuery.getContractTopicList());
   }
 
   private static boolean filterContractAddress(ContractTrigger trigger, List<String> addressList) {
@@ -127,7 +128,7 @@ public class FilterQuery {
       return false;
     }
 
-    for (String address: addressList) {
+    for (String address : addressList) {
       if (contractAddress.equalsIgnoreCase(address)) {
         return true;
       }
@@ -146,7 +147,7 @@ public class FilterQuery {
     if (trigger instanceof ContractLogTrigger) {
       hset = ((ContractLogTrigger) trigger).getTopicList().stream().collect(Collectors.toSet());
     } else {
-      hset = new HashSet<>(((ContractEventTrigger)trigger).getTopicMap().values());
+      hset = new HashSet<>(((ContractEventTrigger) trigger).getTopicMap().values());
     }
 
     for (String top : topList) {
@@ -160,12 +161,12 @@ public class FilterQuery {
   @Override
   public String toString() {
     return new StringBuilder().append("fromBlock: ")
-      .append(fromBlock)
-      .append(", toBlock: ")
-      .append(toBlock)
-      .append(", contractAddress: ")
-      .append(contractAddressList)
-      .append(", contractTopics: ")
-      .append(contractTopicList).toString();
+        .append(fromBlock)
+        .append(", toBlock: ")
+        .append(toBlock)
+        .append(", contractAddress: ")
+        .append(contractAddressList)
+        .append(", contractTopics: ")
+        .append(contractTopicList).toString();
   }
 }
