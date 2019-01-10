@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.common.WrappedByteArray;
 
-@Slf4j
+@Slf4j(topic = "DB")
 public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   // > 65_536(= 2^16) blocks, that is the number of the reference block
   private final int BLOCK_COUNT = 70_000;
