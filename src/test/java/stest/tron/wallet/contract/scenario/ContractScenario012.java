@@ -40,7 +40,7 @@ public class ContractScenario012 {
   byte[] contractAddress = null;
   String txid = "";
   Optional<TransactionInfo> infoById = null;
-  String receiveAddress;
+  String receiveAddressParam;
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] contract012Address = ecKey1.getAddress();
@@ -75,11 +75,6 @@ public class ContractScenario012 {
     contract012Address = ecKey1.getAddress();
     contract012Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
-    ecKey2 = new ECKey(Utils.getRandom());
-    receiverAddress = ecKey2.getAddress();
-    receiverKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
-
     Assert.assertTrue(PublicMethed.sendcoin(contract012Address,2000000000L,fromAddress,
         testKey002,blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract012Address,
@@ -100,13 +95,14 @@ public class ContractScenario012 {
     Assert.assertTrue(smartContract.getAbi() != null);
   }
 
+
   @Test(enabled = true)
   public void test2TriggerTransactionCoin() {
-    //When the contract has no money,transaction coin failed.
-    receiveAddress = "\"" + Base58.encode58Check(receiverAddress)
+    receiveAddressParam = "\"" + Base58.encode58Check(fromAddress)
         + "\"";
+    //When the contract has no money,transaction coin failed.
     txid = PublicMethed.triggerContract(contractAddress,
-        "sendToAddress2(address)", receiveAddress, false,
+        "sendToAddress2(address)", receiveAddressParam, false,
         0, 100000000L, contract012Address, contract012Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info(txid);
@@ -116,12 +112,12 @@ public class ContractScenario012 {
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() > 0);
     Assert.assertTrue(infoById.get().getFee() == infoById.get().getReceipt().getEnergyFee());
     Assert.assertFalse(infoById.get().getContractAddress().isEmpty());
-
-
   }
 
+
+
   @Test(enabled = true)
-  public void test3TriggerTransactionCanNotCreateAccount() {
+  public void test2TriggerTransactionCanNotCreateAccount() {
     ecKey2 = new ECKey(Utils.getRandom());
     receiverAddress = ecKey2.getAddress();
     receiverKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
@@ -130,9 +126,11 @@ public class ContractScenario012 {
     Assert.assertTrue(PublicMethed.sendcoin(contractAddress,100000L,contract012Address,
             contract012Key,blockingStubFull));
 
+    receiveAddressParam = "\"" + Base58.encode58Check(receiverAddress)
+        + "\"";
     //In smart contract, you can't create account
     txid = PublicMethed.triggerContract(contractAddress,
-            "sendToAddress2(address)", receiveAddress, false,
+            "sendToAddress2(address)", receiveAddressParam, false,
             0, 100000000L, contract012Address, contract012Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info(txid);
@@ -145,13 +143,15 @@ public class ContractScenario012 {
 
   }
 
+
+
   @Test(enabled = true)
   public void test4TriggerTransactionCoin() {
     //This time, trigger the methed sendToAddress2 is OK.
     PublicMethed.sendcoin(contract012Address,10000000L,fromAddress,
             testKey002,blockingStubFull);
     txid = PublicMethed.triggerContract(contractAddress,
-            "sendToAddress2(address)", receiveAddress, false,
+            "sendToAddress2(address)", receiveAddressParam, false,
             0, 100000000L, contract012Address, contract012Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info(txid);

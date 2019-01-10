@@ -111,6 +111,7 @@ public class WalletTestTransfer001 {
     Assert.assertTrue(receiptAccountBeforeBalance == 0);
 
     //Test send coin
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.sendcoin(receiptAccountAddress,49880000000L,
         sendAccountAddress,sendAccountKey,blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -124,11 +125,6 @@ public class WalletTestTransfer001 {
     Long receiptAccountAfterBalance = receiptAccount.getBalance();
     logger.info(Long.toString(receiptAccountAfterBalance));
     Assert.assertTrue(receiptAccountAfterBalance == 49880000000L);
-
-
-    //Freeze balance to get bandwidth.
-    Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 10000000L, 3L,
-        testKey002,blockingStubFull));
 
     //Send coin failed due to no enough balance.
     Assert.assertFalse(sendcoin(toAddress, 9199999999999999999L, fromAddress, testKey002));
