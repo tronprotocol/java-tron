@@ -6,6 +6,12 @@ import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDIN
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.primitives.Longs;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,10 +20,14 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -25,7 +35,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 import javafx.util.Pair;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
@@ -68,6 +80,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.api.AssetUpdateHelper;
+import org.tron.core.db2.common.Key;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotManager;
@@ -108,6 +121,8 @@ public class Manager {
   private AccountStore accountStore;
   @Autowired
   private TransactionStore transactionStore;
+  @Autowired(required = false)
+  private TransactionCache transactionCache;
   @Autowired
   private BlockStore blockStore;
   @Autowired
@@ -442,7 +457,7 @@ public class Manager {
     if (Args.getInstance().isNeedToUpdateAsset() && needToUpdateAsset()) {
       new AssetUpdateHelper(this).doWork();
     }
-
+    initCacheTxs();
     revokingStore.enable();
     validateSignService = Executors
       .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
@@ -554,6 +569,53 @@ public class Manager {
         });
   }
 
+  public void initCacheTxs() {
+    logger.info("begin to init txs cache.");
+    int dbVersion = Args.getInstance().getStorage().getDbVersion();
+    if (dbVersion != 2) {
+      return;
+    }
+    long start = System.currentTimeMillis();
+    long headNum = dynamicPropertiesStore.getLatestBlockHeaderNumber();
+    long recentBlockCount = recentBlockStore.size();
+    ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(50));
+    List<ListenableFuture<?>> futures = new ArrayList<>();
+    AtomicLong blockCount = new AtomicLong(0);
+    AtomicLong emptyBlockCount = new AtomicLong(0);
+    LongStream.rangeClosed(headNum - recentBlockCount + 1, headNum).forEach(
+        blockNum -> futures.add(service.submit(() -> {
+          try {
+            blockCount.incrementAndGet();
+            BlockCapsule blockCapsule = getBlockByNum(blockNum);
+            if (blockCapsule.getTransactions().isEmpty()) {
+              emptyBlockCount.incrementAndGet();
+            }
+            blockCapsule.getTransactions().stream()
+                .map(tc -> tc.getTransactionId().getBytes())
+                .map(bytes -> Maps.immutableEntry(bytes, Longs.toByteArray(blockNum)))
+                .forEach(e -> transactionCache.put(e.getKey(), new BytesCapsule(e.getValue())));
+          } catch (ItemNotFoundException | BadItemException e) {
+            logger.info("init txs cache error.");
+            throw new IllegalStateException("init txs cache error.");
+          }
+        })));
+    ListenableFuture<?> future = Futures.allAsList(futures);
+    try {
+      future.get();
+      service.shutdown();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    } catch (ExecutionException e) {
+      logger.info(e.getMessage());
+    }
+    logger.info("end to init txs cache. trxids:{}, block count:{}, empty block count:{}, cost:{}",
+        transactionCache.size(),
+        blockCount.get(),
+        emptyBlockCount.get(),
+        System.currentTimeMillis() - start
+    );
+  }
+
   public AccountStore getAccountStore() {
     return this.accountStore;
   }
@@ -646,10 +708,18 @@ public class Manager {
   }
 
   void validateDup(TransactionCapsule transactionCapsule) throws DupTransactionException {
-    if (getTransactionStore().has(transactionCapsule.getTransactionId().getBytes())) {
+    if (containsTransaction(transactionCapsule)) {
       logger.debug(ByteArray.toHexString(transactionCapsule.getTransactionId().getBytes()));
       throw new DupTransactionException("dup trans");
     }
+  }
+
+  private boolean containsTransaction(TransactionCapsule transactionCapsule) {
+    if (transactionCache != null) {
+      return transactionCache.has(transactionCapsule.getTransactionId().getBytes());
+    }
+
+    return transactionStore.has(transactionCapsule.getTransactionId().getBytes());
   }
 
   /**
@@ -1121,6 +1191,10 @@ public class Manager {
       }
     }
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
+
+    Optional.ofNullable(transactionCache)
+        .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
+            new BytesCapsule(ByteArray.fromLong(trxCap.getBlockNum()))));
 
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
       .buildInstance(trxCap, blockCap, trace);
@@ -1669,7 +1743,7 @@ public class Manager {
   }
 
   public void rePush(TransactionCapsule tx) {
-    if (transactionStore.has(tx.getTransactionId().getBytes())) {
+    if (containsTransaction(tx)) {
       return;
     }
 
