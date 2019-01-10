@@ -224,6 +224,8 @@ public class Manager {
   @Getter
   private ForkController forkController = ForkController.instance();
 
+  private Set<String> ownerAddressSet = new HashSet<>();
+
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
   }
@@ -311,7 +313,7 @@ public class Manager {
   public BlockingQueue<TransactionCapsule> getRepushTransactions() {
     return repushTransactions;
   }
-  
+
   // transactions cache
   private List<TransactionCapsule> pendingTransactions;
 
@@ -1203,7 +1205,18 @@ public class Manager {
 
     // if event subscribe is enabled, post contract triggers to queue
     postContractTrigger(trace, false);
-
+    //
+    Contract contract = trxCap.getInstance().getRawData().getContract(0);
+    switch (contract.getType()) {
+      case AccountPermissionUpdateContract:
+      case PermissionAddKeyContract:
+      case PermissionUpdateKeyContract:
+      case PermissionDeleteKeyContract: {
+        ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
+      }
+      break;
+      default:
+    }
     return true;
   }
 
@@ -1259,7 +1272,7 @@ public class Manager {
     session.setValue(revokingStore.buildSession());
 
     Set<String> accountSet = new HashSet<>();
-    Iterator iterator = pendingTransactions.iterator();
+    Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
     while (iterator.hasNext() || repushTransactions.size() > 0) {
       boolean fromPending = false;
       TransactionCapsule trx;
@@ -1300,6 +1313,9 @@ public class Manager {
           break;
           default:
         }
+      }
+      if (ownerAddressSet.contains(ownerAddress)) {
+        trx.setVerified(false);
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
@@ -1359,6 +1375,16 @@ public class Manager {
 
     try {
       this.pushBlock(blockCapsule);
+      Set<String> result = new HashSet<>();
+      iterator = pendingTransactions.iterator();
+      while (iterator.hasNext()) {
+        filterOwnerAddress(iterator.next(), result);
+      }
+      for (TransactionCapsule transactionCapsule : repushTransactions) {
+        filterOwnerAddress(transactionCapsule, result);
+      }
+      ownerAddressSet.clear();
+      ownerAddressSet.addAll(result);
       return blockCapsule;
     } catch (TaposException e) {
       logger.info("contract not processed during TaposException");
@@ -1386,6 +1412,14 @@ public class Manager {
     return null;
   }
 
+  private void filterOwnerAddress(TransactionCapsule transactionCapsule,Set<String> result) {
+    Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
+    byte[] owner = TransactionCapsule.getOwner(contract);
+    String ownerAddress = ByteArray.toHexString(owner);
+    if (ownerAddressSet.contains(ownerAddress)) {
+      result.add(ownerAddress);
+    }
+  }
 
   public TransactionStore getTransactionStore() {
     return this.transactionStore;
