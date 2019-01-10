@@ -148,8 +148,8 @@ public class ContractScenario012 {
   @Test(enabled = true)
   public void test4TriggerTransactionCoin() {
     //This time, trigger the methed sendToAddress2 is OK.
-    Assert.assertTrue(PublicMethed.sendcoin(receiverAddress,10000000L,fromAddress,
-            testKey002,blockingStubFull));
+    PublicMethed.sendcoin(contract012Address,10000000L,fromAddress,
+            testKey002,blockingStubFull);
     txid = PublicMethed.triggerContract(contractAddress,
             "sendToAddress2(address)", receiveAddress, false,
             0, 100000000L, contract012Address, contract012Key, blockingStubFull);

@@ -67,18 +67,17 @@ public class WalletTestNode001 {
   public void testGetAllNode() {
     GrpcAPI.NodeList nodeList = blockingStubFull
         .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
-    if (nodeList.getNodesCount() == 0) {
+    Integer times = 0;
+    while (nodeList.getNodesCount() == 0 && times++ < 30) {
+      nodeList = blockingStubFull
+              .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
+      if (nodeList.getNodesCount() != 0) {
+        break;
+      }
       nodeList = blockingStubFull1
               .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
     }
-    if (nodeList.getNodesCount() == 0) {
-      PublicMethed.waitProduceNextBlock(blockingStubFull);
-      nodeList = blockingStubFull
-              .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
-    }
-    if (nodeList.getNodesCount() == 0) {
-      Assert.assertFalse(nodeList.getNodesCount() == 0);
-    }
+    Assert.assertFalse(nodeList.getNodesCount() == 0);
 
     for (Integer j = 0; j < nodeList.getNodesCount(); j++) {
       Assert.assertTrue(nodeList.getNodes(j).hasAddress());
