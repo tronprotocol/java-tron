@@ -40,6 +40,7 @@ public class ContractScenario012 {
   byte[] contractAddress = null;
   String txid = "";
   Optional<TransactionInfo> infoById = null;
+  String receiveAddress;
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] contract012Address = ecKey1.getAddress();
@@ -102,7 +103,7 @@ public class ContractScenario012 {
   @Test(enabled = true)
   public void test2TriggerTransactionCoin() {
     //When the contract has no money,transaction coin failed.
-    String receiveAddress = "\"" + Base58.encode58Check(receiverAddress)
+    receiveAddress = "\"" + Base58.encode58Check(receiverAddress)
         + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
         "sendToAddress2(address)", receiveAddress, false,
@@ -116,15 +117,23 @@ public class ContractScenario012 {
     Assert.assertTrue(infoById.get().getFee() == infoById.get().getReceipt().getEnergyFee());
     Assert.assertFalse(infoById.get().getContractAddress().isEmpty());
 
+
+  }
+
+  @Test(enabled = true)
+  public void test3TriggerTransactionCanNotCreateAccount() {
+    ecKey2 = new ECKey(Utils.getRandom());
+    receiverAddress = ecKey2.getAddress();
+    receiverKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+
     //Send some trx to the contract account.
     Assert.assertTrue(PublicMethed.sendcoin(contractAddress,100000L,contract012Address,
-        contract012Key,blockingStubFull));
-
+            contract012Key,blockingStubFull));
 
     //In smart contract, you can't create account
     txid = PublicMethed.triggerContract(contractAddress,
-        "sendToAddress2(address)", receiveAddress, false,
-        0, 100000000L, contract012Address, contract012Key, blockingStubFull);
+            "sendToAddress2(address)", receiveAddress, false,
+            0, 100000000L, contract012Address, contract012Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -134,13 +143,17 @@ public class ContractScenario012 {
     Assert.assertTrue(infoById.get().getFee() == infoById.get().getReceipt().getEnergyFee());
     Assert.assertFalse(infoById.get().getContractAddress().isEmpty());
 
+  }
+
+  @Test(enabled = true)
+  public void test4TriggerTransactionCoin() {
     //This time, trigger the methed sendToAddress2 is OK.
     Assert.assertTrue(PublicMethed.sendcoin(receiverAddress,10000000L,fromAddress,
-        testKey002,blockingStubFull));
+            testKey002,blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     txid = PublicMethed.triggerContract(contractAddress,
-        "sendToAddress2(address)", receiveAddress, false,
-        0, 100000000L, contract012Address, contract012Key, blockingStubFull);
+            "sendToAddress2(address)", receiveAddress, false,
+            0, 100000000L, contract012Address, contract012Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
