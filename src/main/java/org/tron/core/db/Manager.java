@@ -1412,11 +1412,7 @@ public class Manager {
     byte[] owner = TransactionCapsule.getOwner(contract);
     String ownerAddress = ByteArray.toHexString(owner);
     if (ownerAddressSet.contains(ownerAddress)) {
-      if (isMultSignTransaction(transactionCapsule.getInstance())) {
-        result.add(ownerAddress);
-      } else {
-        transactionCapsule.setVerified(false);
-      }
+      result.add(ownerAddress);
     }
   }
 
