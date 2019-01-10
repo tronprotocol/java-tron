@@ -16,11 +16,11 @@ public class TransactionLogTrigger extends Trigger {
 
   @Getter
   @Setter
-  private String blockId;
+  private String blockHash;
 
   @Getter
   @Setter
-  private long blockNum = -1;
+  private long blockNumber = -1;
 
   @Getter
   @Setter
@@ -58,10 +58,10 @@ public class TransactionLogTrigger extends Trigger {
       .append(timeStamp)
       .append(", transactionId: ")
       .append(transactionId)
-      .append(", blockId: ")
-      .append(blockId)
-      .append(", blockNum: ")
-      .append(blockNum)
+      .append(", blockHash: ")
+      .append(blockHash)
+      .append(", blockNumber: ")
+      .append(blockNumber)
       .append(", energyUsage: ")
       .append(energyUsage)
       .append(", energyFee: ")
