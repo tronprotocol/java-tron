@@ -290,7 +290,7 @@ public class WalletTestAccount013 {
   }
 
   @Test(enabled = true)
-  public void test3DelegateResourceAboutTransferAsset() {
+  public void test3PrepareToken() {
     //Create Account7
     ECKey ecKey7 = new ECKey(Utils.getRandom());
     accountForAssetIssueAddress = ecKey7.getAddress();
@@ -300,9 +300,9 @@ public class WalletTestAccount013 {
             10000000000L, fromAddress, testKey002, blockingStubFull));
     //account013 DelegateResource of bandwidth to accountForAssetIssue
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(
-        account013Address, 1000000000L, freezeDuration, 0,
-        ByteString.copyFrom(accountForAssetIssueAddress),
-        testKeyForAccount013, blockingStubFull));
+            account013Address, 1000000000L, freezeDuration, 0,
+            ByteString.copyFrom(accountForAssetIssueAddress),
+            testKeyForAccount013, blockingStubFull));
     //accountForAssetIssue AssetIssue
     long now = System.currentTimeMillis();
     String name = "testAccount013_" + Long.toString(now);
@@ -310,10 +310,15 @@ public class WalletTestAccount013 {
     String description = "zfbnb";
     String url = "aaa.com";
     Assert.assertTrue(PublicMethed.createAssetIssue(accountForAssetIssueAddress,
-        name, totalSupply, 1, 1, System.currentTimeMillis() + 2000,
-        System.currentTimeMillis() + 1000000000, 1, description, url,
-        2000L, 2000L, 500L, 1L,
-        accountForAssetIssueKey, blockingStubFull));
+            name, totalSupply, 1, 1, System.currentTimeMillis() + 2000,
+            System.currentTimeMillis() + 1000000000, 1, description, url,
+            2000L, 2000L, 500L, 1L,
+            accountForAssetIssueKey, blockingStubFull));
+
+  }
+
+  @Test(enabled = true)
+  public void test4DelegateResourceAboutTransferAsset() {
     //Wait for 3s
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //get AssetIssue Id
@@ -371,7 +376,7 @@ public class WalletTestAccount013 {
   }
 
   @Test(enabled = true)
-  public void test4DelegateResourceAboutTriggerContract() {
+  public void test5DelegateResourceAboutTriggerContract() {
     //Create Account6
     ECKey ecKey6 = new ECKey(Utils.getRandom());
     accountForDeployAddress = ecKey6.getAddress();

@@ -71,6 +71,10 @@ public class ContractScenario003 {
 
   @Test(enabled = true)
   public void deployErc223() {
+    ecKey1 = new ECKey(Utils.getRandom());
+    contract003Address = ecKey1.getAddress();
+    contract003Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
     Assert.assertTrue(PublicMethed.sendcoin(contract003Address, 500000000L, fromAddress,
         testKey002,blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -197,7 +201,6 @@ public class ContractScenario003 {
     SmartContract smartContract = PublicMethed
         .getContract(contractAddress.toByteArray(), blockingStubFull);
     Assert.assertTrue(smartContract.getAbi() != null);
-    Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
     Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
     Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
 

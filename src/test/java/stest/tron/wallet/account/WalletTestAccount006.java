@@ -125,8 +125,8 @@ public class WalletTestAccount006 {
 
   @Test(enabled = true)
   public void test3UseMoneyToDoTransaction() {
-    Assert.assertTrue(PublicMethed.sendcoin(fromAddress,1L,account006Address,
-        account006Key,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(account006Address,1000000L,fromAddress,
+        testKey002,blockingStubFull));
     ByteString addressBs = ByteString.copyFrom(account006Address);
     Account request = Account.newBuilder().setAddress(addressBs).build();
     AccountNetMessage accountNetMessage = blockingStubFull.getAccountNet(request);

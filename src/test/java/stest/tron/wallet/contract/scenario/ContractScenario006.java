@@ -65,11 +65,11 @@ public class ContractScenario006 {
 
     PublicMethed.sendcoin(contract006Address,200000000L,fromAddress,
         testKey002,blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info(Long.toString(PublicMethed.queryAccount(contract006Key,blockingStubFull)
         .getBalance()));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract006Address, 10000000L,
         3,1,contract006Key,blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract006Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();

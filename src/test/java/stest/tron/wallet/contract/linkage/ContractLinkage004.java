@@ -96,7 +96,7 @@ public class ContractLinkage004 {
   }
 
   @Test(enabled = true)
-  public void getTransactionInfoById() {
+  public void test1GetTransactionInfoById() {
     ecKey1 = new ECKey(Utils.getRandom());
     linkage004Address = ecKey1.getAddress();
     linkage004Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
@@ -241,7 +241,7 @@ public class ContractLinkage004 {
   }
 
   @Test(enabled = true)
-  public void testFeeLimitIsTooSmall() {
+  public void test2FeeLimitIsTooSmall() {
     //When the fee limit is only short with 1 sun,failed.use freezeBalanceGetNet.
     maxFeeLimit = currentFee - 1L;
     AccountResourceMessage resourceInfo1 = PublicMethed.getAccountResource(linkage004Address,
@@ -364,6 +364,8 @@ public class ContractLinkage004 {
     Assert.assertTrue(infoById2.get().getReceipt().getEnergyUsageTotal() > 0);
     Assert.assertTrue((beforeBalance2 - fee2) == afterBalance2);
     Assert.assertTrue((beforeNetUsed2 + netUsed2) >= afterNetUsed2);
+
+    currentFee = fee2;
   }
 
   /**
