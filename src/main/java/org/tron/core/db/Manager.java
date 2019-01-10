@@ -214,6 +214,8 @@ public class Manager {
   @Setter
   public boolean eventPluginLoaded = false;
 
+  private BlockingQueue<TransactionCapsule> pushTransactionQueue = new LinkedBlockingQueue<>();
+
   @Getter
   private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
     .newBuilder().maximumSize(100_000).recordStats().build();
@@ -730,20 +732,28 @@ public class Manager {
     TooBigTransactionException, TransactionExpirationException,
     ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
 
-    if (!trx.validateSignature(this)) {
-      throw new ValidateSignatureException("trans sig validate failed");
+    synchronized (pushTransactionQueue) {
+      pushTransactionQueue.add(trx);
     }
 
-    synchronized (this) {
-      if (!session.valid()) {
-        session.setValue(revokingStore.buildSession());
+    try{
+      if (!trx.validateSignature(this)) {
+        throw new ValidateSignatureException("trans sig validate failed");
       }
 
-      try (ISession tmpSession = revokingStore.buildSession()) {
-        processTransaction(trx, null);
-        pendingTransactions.add(trx);
-        tmpSession.merge();
+      synchronized (this) {
+        if (!session.valid()) {
+          session.setValue(revokingStore.buildSession());
+        }
+
+        try (ISession tmpSession = revokingStore.buildSession()) {
+          processTransaction(trx, null);
+          pendingTransactions.add(trx);
+          tmpSession.merge();
+        }
       }
+    } finally {
+      pushTransactionQueue.remove(trx);
     }
     return true;
   }
@@ -1011,12 +1021,17 @@ public class Manager {
       logger.info("save block: " + newBlock);
     }
     //clear ownerAddressSet
-    Set<String> result = new HashSet<>();
-    for (TransactionCapsule transactionCapsule : repushTransactions) {
-      filterOwnerAddress(transactionCapsule, result);
+    synchronized (pushTransactionQueue) {
+      Set<String> result = new HashSet<>();
+      for (TransactionCapsule transactionCapsule : repushTransactions) {
+        filterOwnerAddress(transactionCapsule, result);
+      }
+      for (TransactionCapsule transactionCapsule : pushTransactionQueue) {
+        filterOwnerAddress(transactionCapsule, result);
+      }
+      ownerAddressSet.clear();
+      ownerAddressSet.addAll(result);
     }
-    ownerAddressSet.clear();
-    ownerAddressSet.addAll(result);
     logger.info("pushBlock block number:{}, cost/txs:{}/{}",
       block.getNum(),
       System.currentTimeMillis() - start,
