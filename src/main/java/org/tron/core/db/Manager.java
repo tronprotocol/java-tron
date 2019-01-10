@@ -20,14 +20,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -80,7 +77,6 @@ import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.api.AssetUpdateHelper;
-import org.tron.core.db2.common.Key;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotManager;
@@ -109,6 +105,7 @@ import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 
 
@@ -1013,6 +1010,13 @@ public class Manager {
       }
       logger.info("save block: " + newBlock);
     }
+    //clear ownerAddressSet
+    Set<String> result = new HashSet<>();
+    for (TransactionCapsule transactionCapsule : repushTransactions) {
+      filterOwnerAddress(transactionCapsule, result);
+    }
+    ownerAddressSet.clear();
+    ownerAddressSet.addAll(result);
     logger.info("pushBlock block number:{}, cost/txs:{}/{}",
       block.getNum(),
       System.currentTimeMillis() - start,
@@ -1207,15 +1211,8 @@ public class Manager {
     postContractTrigger(trace, false);
     //
     Contract contract = trxCap.getInstance().getRawData().getContract(0);
-    switch (contract.getType()) {
-      case AccountPermissionUpdateContract:
-      case PermissionAddKeyContract:
-      case PermissionUpdateKeyContract:
-      case PermissionDeleteKeyContract: {
-        ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
-      }
-      break;
-      default:
+    if (isMultSignTransaction(trxCap.getInstance())) {
+      ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
     }
     return true;
   }
@@ -1303,15 +1300,8 @@ public class Manager {
       if (accountSet.contains(ownerAddress)) {
         continue;
       } else {
-        switch (contract.getType()) {
-          case AccountPermissionUpdateContract:
-          case PermissionAddKeyContract:
-          case PermissionUpdateKeyContract:
-          case PermissionDeleteKeyContract: {
-            accountSet.add(ownerAddress);
-          }
-          break;
-          default:
+        if (isMultSignTransaction(trx.getInstance())) {
+          accountSet.add(ownerAddress);
         }
       }
       if (ownerAddressSet.contains(ownerAddress)) {
@@ -1375,16 +1365,6 @@ public class Manager {
 
     try {
       this.pushBlock(blockCapsule);
-      Set<String> result = new HashSet<>();
-      iterator = pendingTransactions.iterator();
-      while (iterator.hasNext()) {
-        filterOwnerAddress(iterator.next(), result);
-      }
-      for (TransactionCapsule transactionCapsule : repushTransactions) {
-        filterOwnerAddress(transactionCapsule, result);
-      }
-      ownerAddressSet.clear();
-      ownerAddressSet.addAll(result);
       return blockCapsule;
     } catch (TaposException e) {
       logger.info("contract not processed during TaposException");
@@ -1412,13 +1392,31 @@ public class Manager {
     return null;
   }
 
-  private void filterOwnerAddress(TransactionCapsule transactionCapsule,Set<String> result) {
+  private void filterOwnerAddress(TransactionCapsule transactionCapsule, Set<String> result) {
     Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
     byte[] owner = TransactionCapsule.getOwner(contract);
     String ownerAddress = ByteArray.toHexString(owner);
     if (ownerAddressSet.contains(ownerAddress)) {
-      result.add(ownerAddress);
+      if (isMultSignTransaction(transactionCapsule.getInstance())) {
+        result.add(ownerAddress);
+      } else {
+        transactionCapsule.setVerified(false);
+      }
     }
+  }
+
+  private boolean isMultSignTransaction(Transaction transaction) {
+    Contract contract = transaction.getRawData().getContract(0);
+    switch (contract.getType()) {
+      case AccountPermissionUpdateContract:
+      case PermissionAddKeyContract:
+      case PermissionUpdateKeyContract:
+      case PermissionDeleteKeyContract: {
+        return true;
+      }
+      default:
+    }
+    return false;
   }
 
   public TransactionStore getTransactionStore() {
