@@ -108,7 +108,7 @@ public class WalletExchange001 {
         testKey002, blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(secondExchange001Address, 10240000000L, fromAddress,
         testKey002, blockingStubFull));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long start = System.currentTimeMillis() + 5000L;
     Long end = System.currentTimeMillis() + 5000000L;
     Assert.assertTrue(PublicMethed.createAssetIssue(exchange001Address, name1, totalSupply, 1,

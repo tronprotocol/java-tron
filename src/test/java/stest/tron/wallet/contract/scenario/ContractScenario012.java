@@ -69,7 +69,7 @@ public class ContractScenario012 {
   }
 
   @Test(enabled = true)
-  public void deployTransactionCoin() {
+  public void test1DeployTransactionCoin() {
     ecKey1 = new ECKey(Utils.getRandom());
     contract012Address = ecKey1.getAddress();
     contract012Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
@@ -100,7 +100,7 @@ public class ContractScenario012 {
   }
 
   @Test(enabled = true)
-  public void triggerTransactionCoin() {
+  public void test2TriggerTransactionCoin() {
     //When the contract has no money,transaction coin failed.
     String receiveAddress = "\"" + Base58.encode58Check(receiverAddress)
         + "\"";

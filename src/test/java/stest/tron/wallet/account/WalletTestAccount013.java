@@ -123,6 +123,7 @@ public class WalletTestAccount013 {
     Assert.assertTrue(PublicMethed.sendcoin(accountForAssetIssueAddress,
         10000000000L, fromAddress, testKey002, blockingStubFull));
     //getAccountResource account013
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     AccountResourceMessage account013Resource = PublicMethed
         .getAccountResource(account013Address, blockingStubFull);
     logger.info("013 energy limit is " + account013Resource.getEnergyLimit());
