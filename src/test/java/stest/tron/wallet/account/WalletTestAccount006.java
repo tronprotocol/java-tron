@@ -37,7 +37,7 @@ public class WalletTestAccount006 {
   private static final long now = System.currentTimeMillis();
   private static String name = "AssetIssue012_" + Long.toString(now);
   private static final long totalSupply = now;
-  private static final long sendAmount = 10000000000L;
+  private static final long sendAmount = 20000000000L;
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -73,7 +73,10 @@ public class WalletTestAccount006 {
   }
 
   @Test(enabled = true)
-  public void testGetAccountNet() {
+  public void test1GetAccountNet() {
+    ecKey = new ECKey(Utils.getRandom());
+    account006Address = ecKey.getAddress();
+    account006Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
     //Sendcoin to this account
     ByteString addressBS1 = ByteString.copyFrom(account006Address);
     Account request1 = Account.newBuilder().setAddress(addressBS1).build();
@@ -106,7 +109,7 @@ public class WalletTestAccount006 {
   }
 
   @Test(enabled = true)
-  public void testUseFreeNet() {
+  public void test2UseFreeNet() {
 
     //Transfer some TRX to other to test free net cost.
     Assert.assertTrue(PublicMethed.sendcoin(fromAddress,1L,account006Address,
@@ -121,7 +124,7 @@ public class WalletTestAccount006 {
   }
 
   @Test(enabled = true)
-  public void testUseMoneyToDoTransaction() {
+  public void test3UseMoneyToDoTransaction() {
     Assert.assertTrue(PublicMethed.sendcoin(fromAddress,1L,account006Address,
         account006Key,blockingStubFull));
     ByteString addressBs = ByteString.copyFrom(account006Address);
@@ -147,11 +150,11 @@ public class WalletTestAccount006 {
   }
 
   @Test(enabled = true)
-  public void testUseNet() {
+  public void test4UseNet() {
     //Freeze balance to own net.
     Assert.assertTrue(PublicMethed.freezeBalance(account006Address,10000000L,
         3,account006Key,blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(fromAddress,1L,account006Address,
+    Assert.assertTrue(PublicMethed.sendcoin(toAddress,1L,account006Address,
         account006Key,blockingStubFull));
     ByteString addressBs = ByteString.copyFrom(account006Address);
     Account request = Account.newBuilder().setAddress(addressBs).build();
