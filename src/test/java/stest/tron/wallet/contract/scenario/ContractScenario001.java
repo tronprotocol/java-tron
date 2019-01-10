@@ -24,8 +24,11 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 public class ContractScenario001 {
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key2");
+      .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final String testKey003 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key2");
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
   private ManagedChannel channelFull = null;
   private ManagedChannel channelFull1 = null;
@@ -70,8 +73,8 @@ public class ContractScenario001 {
     contract001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     PublicMethed.printAddress(contract001Key);
 
-    Assert.assertTrue(PublicMethed.sendcoin(contract001Address, 20000000L, fromAddress,
-        testKey002, blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(contract001Address, 20000000L, toAddress,
+        testKey003, blockingStubFull));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract001Address, 10000000L,
         3, 1, contract001Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull1);

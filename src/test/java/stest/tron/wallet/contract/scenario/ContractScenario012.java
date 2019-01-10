@@ -117,7 +117,7 @@ public class ContractScenario012 {
 
 
   @Test(enabled = true)
-  public void test2TriggerTransactionCanNotCreateAccount() {
+  public void test3TriggerTransactionCanNotCreateAccount() {
     ecKey2 = new ECKey(Utils.getRandom());
     receiverAddress = ecKey2.getAddress();
     receiverKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());

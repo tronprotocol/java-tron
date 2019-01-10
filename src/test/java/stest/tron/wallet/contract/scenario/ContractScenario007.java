@@ -59,11 +59,14 @@ public class ContractScenario007 {
 
   @Test(enabled = true)
   public void deployErc721CardMigration() {
+    ecKey1 = new ECKey(Utils.getRandom());
+    contract007Address = ecKey1.getAddress();
+    contract007Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     Assert.assertTrue(PublicMethed.sendcoin(contract007Address,20000000000L,fromAddress,
         testKey002,blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract007Address, 100000000L,
         3,1,contract007Key,blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract007Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
@@ -79,6 +82,7 @@ public class ContractScenario007 {
             .getString("abi.abi_ContractScenario007_deployErc721CardMigration");
     byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
         0L, 100,null,contract007Key,contract007Address,blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
     Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
     Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));

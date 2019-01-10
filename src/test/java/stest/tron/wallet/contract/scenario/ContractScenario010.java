@@ -81,6 +81,7 @@ public class ContractScenario010 {
             .getString("abi.abi_ContractScenario010_deployContainLibraryContract");
     byte[] libraryAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
         0L, 100,null,contract009Key,contract009Address,blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(libraryAddress,blockingStubFull);
 
     Assert.assertFalse(smartContract.getAbi().toString().isEmpty());

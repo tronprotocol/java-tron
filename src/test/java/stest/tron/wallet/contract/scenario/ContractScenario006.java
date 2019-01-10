@@ -26,6 +26,9 @@ public class ContractScenario006 {
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final String testKey003 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key2");
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -63,8 +66,8 @@ public class ContractScenario006 {
     contract006Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     PublicMethed.printAddress(contract006Key);
 
-    PublicMethed.sendcoin(contract006Address,200000000L,fromAddress,
-        testKey002,blockingStubFull);
+    PublicMethed.sendcoin(contract006Address,200000000L,toAddress,
+        testKey003,blockingStubFull);
     logger.info(Long.toString(PublicMethed.queryAccount(contract006Key,blockingStubFull)
         .getBalance()));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract006Address, 10000000L,
