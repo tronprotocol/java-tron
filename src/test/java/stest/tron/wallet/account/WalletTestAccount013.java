@@ -27,8 +27,12 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class WalletTestAccount013 {
   private final String testKey002 = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key2");
+      .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final String testKey003 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key2");
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
+
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -86,14 +90,6 @@ public class WalletTestAccount013 {
     ECKey ecKey3 = new ECKey(Utils.getRandom());
     emptyAddress = ecKey3.getAddress();
     emptyKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
-    //Create Account4
-    ECKey ecKey4 = new ECKey(Utils.getRandom());
-    account4DelegatedResourceAddress = ecKey4.getAddress();
-    account4DelegatedResourceKey = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
-    //Create Account5
-    ECKey ecKey5 = new ECKey(Utils.getRandom());
-    account5DelegatedResourceAddress = ecKey5.getAddress();
-    account5DelegatedResourceKey = ByteArray.toHexString(ecKey5.getPrivKeyBytes());
 
 
     //sendcoin to Account013
@@ -101,14 +97,8 @@ public class WalletTestAccount013 {
         10000000000L, fromAddress, testKey002, blockingStubFull));
     //sendcoin to receiver
     Assert.assertTrue(PublicMethed.sendcoin(receiverDelegateAddress,
-        10000000000L, fromAddress, testKey002, blockingStubFull));
-    //sendcoin to Account4
-    Assert.assertTrue(PublicMethed.sendcoin(account4DelegatedResourceAddress,
-        10000000000L, fromAddress, testKey002, blockingStubFull));
+        10000000000L, toAddress, testKey003, blockingStubFull));
 
-    //sendcoin to Account5
-    Assert.assertTrue(PublicMethed.sendcoin(account5DelegatedResourceAddress,
-        10000000000L, fromAddress, testKey002, blockingStubFull));
 
     //getAccountResource account013
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -206,6 +196,23 @@ public class WalletTestAccount013 {
 
   @Test(enabled = true)
   public void test2getDelegatedResourceAndDelegateResourceAccountIndex() {
+    //Create Account4
+    ECKey ecKey4 = new ECKey(Utils.getRandom());
+    account4DelegatedResourceAddress = ecKey4.getAddress();
+    account4DelegatedResourceKey = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
+    //Create Account5
+    ECKey ecKey5 = new ECKey(Utils.getRandom());
+    account5DelegatedResourceAddress = ecKey5.getAddress();
+    account5DelegatedResourceKey = ByteArray.toHexString(ecKey5.getPrivKeyBytes());
+
+    //sendcoin to Account4
+    Assert.assertTrue(PublicMethed.sendcoin(account4DelegatedResourceAddress,
+        10000000000L, fromAddress, testKey002, blockingStubFull));
+
+    //sendcoin to Account5
+    Assert.assertTrue(PublicMethed.sendcoin(account5DelegatedResourceAddress,
+        10000000000L, toAddress, testKey003, blockingStubFull));
+
     Protocol.Account account4infoBefore =
         PublicMethed.queryAccount(account4DelegatedResourceAddress, blockingStubFull);
     //Balance of Account4 before DelegateResource
@@ -297,7 +304,7 @@ public class WalletTestAccount013 {
     accountForAssetIssueKey = ByteArray.toHexString(ecKey7.getPrivKeyBytes());
     //sendcoin to Account7
     Assert.assertTrue(PublicMethed.sendcoin(accountForAssetIssueAddress,
-            10000000000L, fromAddress, testKey002, blockingStubFull));
+            10000000000L, toAddress, testKey003, blockingStubFull));
     //account013 DelegateResource of bandwidth to accountForAssetIssue
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(
             account013Address, 1000000000L, freezeDuration, 0,

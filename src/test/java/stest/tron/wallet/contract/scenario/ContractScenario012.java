@@ -29,6 +29,9 @@ public class ContractScenario012 {
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final String testKey003 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key2");
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -147,9 +150,11 @@ public class ContractScenario012 {
 
   @Test(enabled = true)
   public void test4TriggerTransactionCoin() {
+    receiveAddressParam = "\"" + Base58.encode58Check(receiverAddress)
+        + "\"";
     //This time, trigger the methed sendToAddress2 is OK.
-    PublicMethed.sendcoin(contract012Address,10000000L,fromAddress,
-            testKey002,blockingStubFull);
+    Assert.assertTrue(PublicMethed.sendcoin(receiverAddress,10000000L,toAddress,
+        testKey003,blockingStubFull));
     txid = PublicMethed.triggerContract(contractAddress,
             "sendToAddress2(address)", receiveAddressParam, false,
             0, 100000000L, contract012Address, contract012Key, blockingStubFull);
