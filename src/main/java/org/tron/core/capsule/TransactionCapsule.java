@@ -595,6 +595,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     String permissionName = getPermissionName(contract);
     byte[] owner = getOwner(contract);
     AccountCapsule account = accountStore.get(owner);
+    logger.info("AccountCapsule Info: {}", account);
     Permission permission;
     if (account == null) {
       permission = getDefaultPermission(ByteString.copyFrom(owner), permissionName);
