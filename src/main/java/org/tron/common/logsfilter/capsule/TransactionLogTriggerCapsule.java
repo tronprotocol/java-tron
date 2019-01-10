@@ -17,11 +17,11 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
   public TransactionLogTriggerCapsule(TransactionCapsule trxCasule, BlockCapsule blockCapsule) {
     transactionLogTrigger = new TransactionLogTrigger();
     if (Objects.nonNull(blockCapsule)) {
-      transactionLogTrigger.setBlockId(blockCapsule.getBlockId().toString());
+      transactionLogTrigger.setBlockHash(blockCapsule.getBlockId().toString());
     }
     transactionLogTrigger.setTransactionId(trxCasule.getTransactionId().toString());
     transactionLogTrigger.setTimeStamp(trxCasule.getTimestamp());
-    transactionLogTrigger.setBlockNum(trxCasule.getBlockNum());
+    transactionLogTrigger.setBlockNumber(trxCasule.getBlockNum());
     TransactionTrace trxTrace = trxCasule.getTrxTrace();
     if (Objects.nonNull(trxTrace) && Objects.nonNull(trxTrace.getReceipt())) {
       transactionLogTrigger.setEnergyFee(trxTrace.getReceipt().getEnergyFee());
