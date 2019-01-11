@@ -185,15 +185,27 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
     Permission witness = accountPermissionUpdateContract.getWitness();
     List<Permission> actives = accountPermissionUpdateContract.getActivesList();
 
+    if (owner.getType() != PermissionType.Owner) {
+      throw new ContractValidateException("owner permission type is error");
+    }
     if (!checkPermission(owner)) {
       return false;
     }
     if (accountCapsule.getIsWitness()) {
+      if (witness.getType() != PermissionType.Witness) {
+        throw new ContractValidateException("witness permission type is error");
+      }
+      if (witness.getKeysCount() > 1) {
+        throw new ContractValidateException("witness permission key count can't more than 1");
+      }
       if (!checkPermission(witness)) {
         return false;
       }
     }
     for (Permission permission : actives) {
+      if (permission.getType() != PermissionType.Active) {
+        throw new ContractValidateException("active permission type is error");
+      }
       if (!checkPermission(permission)) {
         return false;
       }

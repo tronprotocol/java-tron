@@ -81,48 +81,48 @@ public class WalletTestMutiSign001 {
 
   @Test(enabled = true)
   public void testMutiSign1CreateAssetissue() {
-    ecKey1 = new ECKey(Utils.getRandom());
-    manager1Address = ecKey1.getAddress();
-    manager1Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-    ecKey2 = new ECKey(Utils.getRandom());
-    manager2Address = ecKey2.getAddress();
-    manager2Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
-    ecKey3 = new ECKey(Utils.getRandom());
-    ownerAddress = ecKey3.getAddress();
-    ownerKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
-    PublicMethed.printAddress(ownerKey);
-
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress,2048000000L,fromAddress,testKey002,
-        blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    permissionKeyString[0] = manager1Key;
-    permissionKeyString[1] = manager2Key;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    ownerKeyString[0] = ownerKey;
-    accountPermissionJson = "[{\"keys\":[{\"address\":\""
-        + PublicMethed.getAddressString(ownerKey)
-        + "\",\"weight\":2}],\"name\":\"owner\",\"threshold\":2,\"parent\":\"owner\"},"
-        + "{\"parent\":\"owner\",\"keys\":[{\"address\":\""
-        + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},{\"address\":\""
-        + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}],\"name\":\"active\","
-        + "\"threshold\":2}]";
-    logger.info(accountPermissionJson);
-    PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,ownerAddress,ownerKey,
-        blockingStubFull,ownerKeyString);
-
-    Long start = System.currentTimeMillis() + 5000;
-    Long end = System.currentTimeMillis() + 1000000000;
-    logger.info("try create asset issue");
-
-    Assert.assertTrue(PublicMethedForMutiSign.createAssetIssue(ownerAddress,name,totalSupply,1,
-        1,start,end,1,description,url,2000L,2000L,
-        1L,1L,ownerKey,blockingStubFull,permissionKeyString));
-    logger.info(" create asset end");
+//    ecKey1 = new ECKey(Utils.getRandom());
+//    manager1Address = ecKey1.getAddress();
+//    manager1Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+//
+//    ecKey2 = new ECKey(Utils.getRandom());
+//    manager2Address = ecKey2.getAddress();
+//    manager2Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+//
+//    ecKey3 = new ECKey(Utils.getRandom());
+//    ownerAddress = ecKey3.getAddress();
+//    ownerKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
+//    PublicMethed.printAddress(ownerKey);
+//
+//    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress,2048000000L,fromAddress,testKey002,
+//        blockingStubFull));
+//    PublicMethed.waitProduceNextBlock(blockingStubFull);
+//    PublicMethed.waitProduceNextBlock(blockingStubFull);
+//
+//    permissionKeyString[0] = manager1Key;
+//    permissionKeyString[1] = manager2Key;
+//    PublicMethed.waitProduceNextBlock(blockingStubFull);
+//    PublicMethed.waitProduceNextBlock(blockingStubFull);
+//    ownerKeyString[0] = ownerKey;
+//    accountPermissionJson = "[{\"keys\":[{\"address\":\""
+//        + PublicMethed.getAddressString(ownerKey)
+//        + "\",\"weight\":2}],\"name\":\"owner\",\"threshold\":2,\"parent\":\"owner\"},"
+//        + "{\"parent\":\"owner\",\"keys\":[{\"address\":\""
+//        + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},{\"address\":\""
+//        + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}],\"name\":\"active\","
+//        + "\"threshold\":2}]";
+//    logger.info(accountPermissionJson);
+//    PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,ownerAddress,ownerKey,
+//        blockingStubFull,ownerKeyString);
+//
+//    Long start = System.currentTimeMillis() + 5000;
+//    Long end = System.currentTimeMillis() + 1000000000;
+//    logger.info("try create asset issue");
+//
+//    Assert.assertTrue(PublicMethedForMutiSign.createAssetIssue(ownerAddress,name,totalSupply,1,
+//        1,start,end,1,description,url,2000L,2000L,
+//        1L,1L,ownerKey,blockingStubFull,permissionKeyString));
+//    logger.info(" create asset end");
   }
   /**
    * constructor.
@@ -147,32 +147,32 @@ public class WalletTestMutiSign001 {
 
   @Test(enabled = true)
   public void testMutiSign3ParticipateAssetissue() {
-    ecKey4 = new ECKey(Utils.getRandom());
-    participateAddress = ecKey4.getAddress();
-    participateKey = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
-
-    Assert.assertTrue(PublicMethed.sendcoin(participateAddress,2048000000L,fromAddress,testKey002,
-        blockingStubFull));
-    PublicMethed.printAddress(participateKey);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    ownerKeyString[0] = participateKey;
-    accountPermissionJson = "[{\"keys\":[{\"address\":\""
-        + PublicMethed.getAddressString(participateKey)
-        + "\",\"weight\":2}],\"name\":\"owner\",\"threshold\":2,\"parent\":\"owner\"},"
-        + "{\"parent\":\"owner\",\"keys\":[{\"address\":\""
-        + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},{\"address\":\""
-        + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}],\"name\":\"active\","
-        + "\"threshold\":2}]";
-    logger.info(accountPermissionJson);
-    PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,participateAddress,
-        participateKey, blockingStubFull,ownerKeyString);
-
-
-    Assert.assertTrue(PublicMethedForMutiSign.participateAssetIssue(ownerAddress,assetAccountId1
-            .toByteArray(), 10,participateAddress,participateKey,
-        blockingStubFull,permissionKeyString));
+//    ecKey4 = new ECKey(Utils.getRandom());
+//    participateAddress = ecKey4.getAddress();
+//    participateKey = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
+//
+//    Assert.assertTrue(PublicMethed.sendcoin(participateAddress,2048000000L,fromAddress,testKey002,
+//        blockingStubFull));
+//    PublicMethed.printAddress(participateKey);
+//    PublicMethed.waitProduceNextBlock(blockingStubFull);
+//    PublicMethed.waitProduceNextBlock(blockingStubFull);
+//
+//    ownerKeyString[0] = participateKey;
+//    accountPermissionJson = "[{\"keys\":[{\"address\":\""
+//        + PublicMethed.getAddressString(participateKey)
+//        + "\",\"weight\":2}],\"name\":\"owner\",\"threshold\":2,\"parent\":\"owner\"},"
+//        + "{\"parent\":\"owner\",\"keys\":[{\"address\":\""
+//        + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},{\"address\":\""
+//        + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}],\"name\":\"active\","
+//        + "\"threshold\":2}]";
+//    logger.info(accountPermissionJson);
+//    PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,participateAddress,
+//        participateKey, blockingStubFull,ownerKeyString);
+//
+//
+//    Assert.assertTrue(PublicMethedForMutiSign.participateAssetIssue(ownerAddress,assetAccountId1
+//            .toByteArray(), 10,participateAddress,participateKey,
+//        blockingStubFull,permissionKeyString));
   }
 
   /**

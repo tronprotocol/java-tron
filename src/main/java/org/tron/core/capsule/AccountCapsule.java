@@ -19,7 +19,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -838,17 +837,16 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
-  public List<Permission> getPermissions() {
-    return this.account.getPermissionsList();
-  }
-
-  public Permission getPermissionByName(String permissionName) {
-    if (permissionName.equalsIgnoreCase("owner") ||
-        permissionName.equalsIgnoreCase("active")) {
-      for (Permission permission : this.account.getPermissionsList()) {
-        if (permission.getName().equalsIgnoreCase(permissionName)) {
-          return permission;
-        }
+  public Permission getPermissionById(int id) {
+    if (id == 0) {
+      return this.account.getOwnerPermission();
+    }
+    if (id == 1) {
+      return this.account.getWitnessPermission();
+    }
+    for (Permission permission : this.account.getActivePermissionList()) {
+      if (id == permission.getId()) {
+        return permission;
       }
     }
     return null;
@@ -856,103 +854,110 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   public void updatePermissions(Permission owner, Permission witness, List<Permission> actives) {
     Account.Builder builder = this.account.toBuilder();
-    builder.clearActives();
-    this.account = this.account.toBuilder()
-        .clearPermissions()
-        .addAllPermissions(permissions)
-        .build();
+    owner = owner.toBuilder().setId(0).build();
+    builder.setOwnerPermission(owner);
+    if (builder.getIsWitness()) {
+      witness = witness.toBuilder().setId(1).build();
+      builder.setWitnessPermission(witness);
+    }
+    builder.clearActivePermission();
+    for (int i = 0; i < actives.size(); i++) {
+      Permission permission = actives.get(i).toBuilder().setId(i + 2).build();
+      builder.addActivePermission(permission);
+    }
+    this.account = builder.build();
   }
 
-  public void permissionAddKey(Key addKey, String permissionName) {
-    if (permissionName.equalsIgnoreCase("active") ||
-        permissionName.equalsIgnoreCase("owner")) {
-      if (this.account.getPermissionsCount() == 0) {
-        List<Permission> list = new ArrayList<>();
-        Permission ownerPermission = TransactionCapsule
-            .getDefaultPermission(this.getAddress(), "owner");
-        Permission activePermission = TransactionCapsule
-            .getDefaultPermission(this.getAddress(), "active");
-        if (addKey.getAddress().equals(this.account.getAddress())) {
-          if (permissionName.equalsIgnoreCase("owner")) {
-            ownerPermission = ownerPermission
-                .toBuilder()
-                .clearKeys()
-                .addKeys(addKey)
-                .build();
-          }
-          if (permissionName.equalsIgnoreCase("active")) {
-            activePermission = activePermission
-                .toBuilder()
-                .clearKeys()
-                .addKeys(addKey)
-                .build();
-          }
-        } else {
-          if (permissionName.equalsIgnoreCase("owner")) {
-            ownerPermission = ownerPermission
-                .toBuilder()
-                .addKeys(addKey)
-                .build();
-          }
-          if (permissionName.equalsIgnoreCase("active")) {
-            activePermission = activePermission
-                .toBuilder()
-                .addKeys(addKey)
-                .build();
-          }
-        }
-        list.add(ownerPermission);
-        list.add(activePermission);
-        updatePermissions(list);
-      } else {
-        List<Permission> permissions = new ArrayList<>();
-        for (Permission permission : this.account.getPermissionsList()) {
-          if (permission.getName().equalsIgnoreCase(permissionName)) {
-            permissions.add(permission.toBuilder().addKeys(addKey).build());
-          } else {
-            permissions.add(permission);
-          }
-        }
-        updatePermissions(permissions);
-      }
-    }
+  public void permissionAddKey(Key addKey, int id) {
+//    if (permissionName.equalsIgnoreCase("active") ||
+//        permissionName.equalsIgnoreCase("owner")) {
+//      if (this.account.getPermissionsCount() == 0) {
+//        List<Permission> list = new ArrayList<>();
+//        Permission ownerPermission = TransactionCapsule
+//            .getDefaultPermission(this.getAddress(), "owner");
+//        Permission activePermission = TransactionCapsule
+//            .getDefaultPermission(this.getAddress(), "active");
+//        if (addKey.getAddress().equals(this.account.getAddress())) {
+//          if (permissionName.equalsIgnoreCase("owner")) {
+//            ownerPermission = ownerPermission
+//                .toBuilder()
+//                .clearKeys()
+//                .addKeys(addKey)
+//                .build();
+//          }
+//          if (permissionName.equalsIgnoreCase("active")) {
+//            activePermission = activePermission
+//                .toBuilder()
+//                .clearKeys()
+//                .addKeys(addKey)
+//                .build();
+//          }
+//        } else {
+//          if (permissionName.equalsIgnoreCase("owner")) {
+//            ownerPermission = ownerPermission
+//                .toBuilder()
+//                .addKeys(addKey)
+//                .build();
+//          }
+//          if (permissionName.equalsIgnoreCase("active")) {
+//            activePermission = activePermission
+//                .toBuilder()
+//                .addKeys(addKey)
+//                .build();
+//          }
+//        }
+//        list.add(ownerPermission);
+//        list.add(activePermission);
+//        updatePermissions(list);
+//      } else {
+//        List<Permission> permissions = new ArrayList<>();
+//        for (Permission permission : this.account.getPermissionsList()) {
+//          if (permission.getName().equalsIgnoreCase(permissionName)) {
+//            permissions.add(permission.toBuilder().addKeys(addKey).build());
+//          } else {
+//            permissions.add(permission);
+//          }
+//        }
+//        updatePermissions(permissions);
+//      }
+//    }
   }
 
-  public void permissionUpdateKey(Key updateKey, String permissionName) {
-    List<Permission> permissions = new ArrayList<>();
-    for (Permission permission : this.account.getPermissionsList()) {
-      if (permission.getName().equalsIgnoreCase(permissionName)) {
-        List<Key> keys = new ArrayList<>();
-        for (Key key : permission.getKeysList()) {
-          if (key.getAddress().equals(updateKey.getAddress())) {
-            keys.add(updateKey);
-          } else {
-            keys.add(key);
-          }
-        }
-        permissions.add(permission.toBuilder().clearKeys().addAllKeys(keys).build());
-      } else {
-        permissions.add(permission);
-      }
-    }
-    updatePermissions(permissions);
+  public void permissionUpdateKey(Key updateKey, int id) {
+//    List<Permission> permissions = new ArrayList<>();
+//    for (Permission permission : this.account.getPermissionsList()) {
+//      if (permission.getName().equalsIgnoreCase(permissionName)) {
+//        List<Key> keys = new ArrayList<>();
+//        for (Key key : permission.getKeysList()) {
+//          if (key.getAddress().equals(updateKey.getAddress())) {
+//            keys.add(updateKey);
+//          } else {
+//            keys.add(key);
+//          }
+//        }
+//        permissions.add(permission.toBuilder().clearKeys().addAllKeys(keys).build());
+//      } else {
+//        permissions.add(permission);
+//      }
+//    }
+//    updatePermissions(permissions);
   }
 
-  public void permissionDeleteKey(ByteString deleteAddress, String permissionName) {
-    List<Permission> permissions = new ArrayList<>();
-    for (Permission permission : this.account.getPermissionsList()) {
-      if (permission.getName().equalsIgnoreCase(permissionName)) {
-        List<Key> keys = new ArrayList<>();
-        for (Key key : permission.getKeysList()) {
-          if (!key.getAddress().equals(deleteAddress)) {
-            keys.add(key);
-          }
-        }
-        permissions.add(permission.toBuilder().clearKeys().addAllKeys(keys).build());
-      } else {
-        permissions.add(permission);
-      }
-    }
-    updatePermissions(permissions);
+  public void permissionDeleteKey(ByteString deleteAddress, int id) {
+//    List<Permission> permissions = new ArrayList<>();
+//    for (Permission permission : this.account.getPermissionsList()) {
+//      if (permission.getName().equalsIgnoreCase(permissionName)) {
+//        List<Key> keys = new ArrayList<>();
+//        for (Key key : permission.getKeysList()) {
+//          if (!key.getAddress().equals(deleteAddress)) {
+//            keys.add(key);
+//          }
+//        }
+//        permissions.add(permission.toBuilder().clearKeys().addAllKeys(keys).build());
+//      } else {
+//        permissions.add(permission);
+//      }
+//    }
+//    updatePermissions(permissions);
   }
 }

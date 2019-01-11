@@ -83,7 +83,6 @@ import org.tron.protos.Contract.UpdateAssetContract;
 import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
-import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction;
@@ -279,31 +278,14 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
   }
 
-  public static Permission getDefaultPermission(ByteString owner, String name) {
+  public static Permission getDefaultPermission(ByteString owner) {
     Permission.Builder builder = Permission.newBuilder();
     Key.Builder key = Key.newBuilder();
     key.setAddress(owner).setWeight(1);
     builder.addKeys(key);
     builder.setThreshold(1);
-    builder.setName(name);
-    if (!"owner".equalsIgnoreCase(name)) {
-      builder.setParent("owner");
-    }
+    builder.setId(0);
     return builder.build();
-  }
-
-  public static Permission getPermission(Account account, String name)
-      throws PermissionException {
-    List<Permission> list = account.getPermissionsList();
-    if (list.isEmpty()) {
-      return getDefaultPermission(account.getAddress(), name);
-    }
-    for (Permission permission : list) {
-      if (name.equalsIgnoreCase(permission.getName())) {
-        return permission;
-      }
-    }
-    throw new PermissionException("Permission of " + name + " is null.");
   }
 
   public static long getWeight(Permission permission, byte[] address) {
@@ -357,13 +339,13 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   public void addSign(byte[] privateKey, AccountStore accountStore)
       throws PermissionException, SignatureException, SignatureFormatException {
     Transaction.Contract contract = this.transaction.getRawData().getContract(0);
-    String permissionName = getPermissionName(contract);
+    int permissionId = contract.getPermissionId();
     byte[] owner = getOwner(contract);
     AccountCapsule account = accountStore.get(owner);
     if (account == null) {
       throw new PermissionException("Account is not exist!");
     }
-    Permission permission = getPermission(account.getInstance(), permissionName);
+    Permission permission = account.getPermissionById(permissionId);
     List<ByteString> approveList = new ArrayList<>();
     ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
@@ -592,14 +574,14 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       byte[] hash, AccountStore accountStore)
       throws PermissionException, SignatureException, SignatureFormatException {
     Transaction.Contract contract = transaction.getRawData().getContractList().get(0);
-    String permissionName = getPermissionName(contract);
+    int permissionId = contract.getPermissionId();
     byte[] owner = getOwner(contract);
     AccountCapsule account = accountStore.get(owner);
     Permission permission;
     if (account == null) {
-      permission = getDefaultPermission(ByteString.copyFrom(owner), permissionName);
+      permission = getDefaultPermission(ByteString.copyFrom(owner));
     } else {
-      permission = getPermission(account.getInstance(), permissionName);
+      permission = account.getPermissionById(permissionId);
     }
     long weight = checkWeight(permission, transaction.getSignatureList(), hash, null);
     if (weight >= permission.getThreshold()) {

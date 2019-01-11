@@ -64,8 +64,6 @@ import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
-import org.tron.common.logsfilter.EventPluginLoader;
-import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
@@ -542,9 +540,8 @@ public class Wallet {
       if (account == null) {
         throw new PermissionException("Account is not exist!");
       }
-      String permissionName = TransactionCapsule.getPermissionName(contract);
-      Permission permission = TransactionCapsule
-          .getPermission(account.getInstance(), permissionName);
+      int permissionId = contract.getPermissionId();
+      Permission permission = account.getPermissionById(permissionId);
       tswBuilder.setPermission(permission);
       if (trx.getSignatureCount() > 0) {
         List<ByteString> approveList = new ArrayList<ByteString>();

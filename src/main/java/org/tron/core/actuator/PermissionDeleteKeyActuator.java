@@ -7,7 +7,6 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -42,7 +41,7 @@ public class PermissionDeleteKeyActuator extends AbstractActuator {
     AccountStore accountStore = dbManager.getAccountStore();
     AccountCapsule account = accountStore.get(ownerAddress);
     account.permissionDeleteKey(permissionDeleteKeyContract.getKeyAddress(),
-        permissionDeleteKeyContract.getPermissionName());
+        permissionDeleteKeyContract.getPermissionId());
     accountStore.put(ownerAddress, account);
     result.setStatus(fee, code.SUCESS);
     return true;
@@ -80,18 +79,11 @@ public class PermissionDeleteKeyActuator extends AbstractActuator {
     if (account == null) {
       throw new ContractValidateException("ownerAddress account does not exist");
     }
-    String name = permissionDeleteKeyContract.getPermissionName();
-    if (StringUtils.isEmpty(name)) {
-      throw new ContractValidateException("permission name should be not empty");
-    }
+    int id = permissionDeleteKeyContract.getPermissionId();
 
-    if (!name.equalsIgnoreCase("owner") &&
-        !name.equalsIgnoreCase("active")) {
-      throw new ContractValidateException("permission name should be owner or active");
-    }
-    Permission permission = account.getPermissionByName(name);
+    Permission permission = account.getPermissionById(id);
     if (permission == null) {
-      throw new ContractValidateException("you have not set permission with the name " + name);
+      throw new ContractValidateException("you have not set permission with the id " + id);
     }
 
     if (!Wallet.addressValid(permissionDeleteKeyContract.getKeyAddress().toByteArray())) {
@@ -102,8 +94,7 @@ public class PermissionDeleteKeyActuator extends AbstractActuator {
         .map(x -> x.getAddress())
         .collect(toSet());
     if (!addressSet.contains(permissionDeleteKeyContract.getKeyAddress())) {
-      throw new ContractValidateException(String.format("address is not in permission %s",
-          name));
+      throw new ContractValidateException(String.format("address is not in permission %d", id));
     }
     long weightSum = 0;
     for (Key key : permission.getKeysList()) {

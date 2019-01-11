@@ -41,7 +41,7 @@ public class PermissionUpdateKeyActuator extends AbstractActuator {
     AccountStore accountStore = dbManager.getAccountStore();
     AccountCapsule account = accountStore.get(ownerAddress);
     account.permissionUpdateKey(permissionUpdateKeyContract.getKey(),
-        permissionUpdateKeyContract.getPermissionName());
+        permissionUpdateKeyContract.getPermissionId());
     accountStore.put(ownerAddress, account);
     result.setStatus(fee, code.SUCESS);
     return true;
@@ -80,18 +80,14 @@ public class PermissionUpdateKeyActuator extends AbstractActuator {
     if (account == null) {
       throw new ContractValidateException("ownerAddress account does not exist");
     }
-    String name = permissionUpdateKeyContract.getPermissionName();
-    if (!name.equalsIgnoreCase("owner") &&
-        !name.equalsIgnoreCase("active")) {
-      throw new ContractValidateException("permission name should be owner or active");
-    }
-    Permission ownerPermission = account.getPermissionByName("owner");
+    int id = permissionUpdateKeyContract.getPermissionId();
+    Permission ownerPermission = account.getInstance().getOwnerPermission();
     if (ownerPermission == null) {
       throw new ContractValidateException("you have not set owner permission");
     }
-    Permission permission = account.getPermissionByName(name);
+    Permission permission = account.getPermissionById(id);
     if (permission == null) {
-      throw new ContractValidateException("you have not set permission with the name " + name);
+      throw new ContractValidateException("you have not set permission with the id " + id);
     }
     if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("invalidate ownerAddress");
@@ -104,8 +100,7 @@ public class PermissionUpdateKeyActuator extends AbstractActuator {
         .map(x -> x.getAddress())
         .collect(toSet());
     if (!addressSet.contains(permissionUpdateKeyContract.getKey().getAddress())) {
-      throw new ContractValidateException(String.format("address is not in permission %s",
-          name));
+      throw new ContractValidateException(String.format("address is not in permission %d", id));
     }
     if (permissionUpdateKeyContract.getKey().getWeight() <= 0) {
       throw new ContractValidateException("key weight should be greater than 0");

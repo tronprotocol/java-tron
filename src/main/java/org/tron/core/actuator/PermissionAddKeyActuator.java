@@ -38,7 +38,7 @@ public class PermissionAddKeyActuator extends AbstractActuator {
     AccountStore accountStore = dbManager.getAccountStore();
     AccountCapsule account = accountStore.get(ownerAddress);
     account.permissionAddKey(permissionAddKeyContract.getKey(),
-        permissionAddKeyContract.getPermissionName());
+        permissionAddKeyContract.getPermissionId());
     accountStore.put(ownerAddress, account);
     result.setStatus(fee, code.SUCESS);
     return true;
@@ -78,23 +78,19 @@ public class PermissionAddKeyActuator extends AbstractActuator {
       throw new ContractValidateException("ownerAddress account does not exist");
     }
 
-    String name = permissionAddKeyContract.getPermissionName();
-    if (!name.equalsIgnoreCase("owner") &&
-        !name.equalsIgnoreCase("active")) {
-      throw new ContractValidateException("permission name should be owner or active");
-    }
+    int id = permissionAddKeyContract.getPermissionId();
 
     if (!Wallet.addressValid(keyAddress.toByteArray())) {
       throw new ContractValidateException("address in key is invalidate");
     }
-    Permission permission = account.getPermissionByName(name);
+    Permission permission = account.getPermissionById(id);
     long weightSum = 0;
     if (permission != null) {
       for (Key key : permission.getKeysList()) {
         String address = Wallet.encode58Check(keyAddress.toByteArray());
         if (key.getAddress().equals(keyAddress)) {
-          throw new ContractValidateException("address " + address + " is already in permission "
-              + name);
+          throw new ContractValidateException(
+              "address " + address + " is already in permission " + id);
         }
         try {
           weightSum = Math.addExact(weightSum, key.getWeight());
