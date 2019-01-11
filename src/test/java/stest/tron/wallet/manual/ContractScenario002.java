@@ -76,10 +76,8 @@ public class ContractScenario002 {
     Assert.assertTrue(PublicMethed.sendcoin(contract002Address, 50000000L, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract002Address, 1000000L,
         3, 1, contract002Key, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract002Address,
         blockingStubFull);
@@ -166,8 +164,7 @@ public class ContractScenario002 {
     String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code, "",
         maxFeeLimit, 0L, 100, null, contract002Key, contract002Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+
     logger.info(txid);
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
@@ -177,7 +174,6 @@ public class ContractScenario002 {
     Assert.assertTrue(smartContract.getAbi() != null);
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     accountResource = PublicMethed.getAccountResource(contract002Address, blockingStubFull1);
     energyLimit = accountResource.getEnergyLimit();
     energyUsage = accountResource.getEnergyUsed();

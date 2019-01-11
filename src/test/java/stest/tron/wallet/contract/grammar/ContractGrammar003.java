@@ -103,6 +103,7 @@ public class ContractGrammar003 {
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress3,
         grammarAddress3, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String contractName1 = "bContract";
     String code1 = Configuration.getByPath("testng.conf")
             .getString("code.code1_ContractGrammar003_testGrammar014");
@@ -112,6 +113,7 @@ public class ContractGrammar003 {
         .deployContract(contractName1, abi1, code1, "", maxFeeLimit,
             0L, 100, null, testKeyForGrammarAddress3,
             grammarAddress3, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = PublicMethed.triggerContract(contractAddress,
         "getnumberForB()", "#", false,
         0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
@@ -193,7 +195,7 @@ public class ContractGrammar003 {
         0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById9 = null;
-    infoById9 = PublicMethed.getTransactionInfoById(txid6, blockingStubFull);
+    infoById9 = PublicMethed.getTransactionInfoById(txid9, blockingStubFull);
     Long returnnumber9 = ByteArray.toLong(ByteArray
         .fromHexString(ByteArray.toHexString(infoById9.get().getContractResult(0).toByteArray())));
 
@@ -493,8 +495,6 @@ public class ContractGrammar003 {
         "timetest()", "#", false,
         0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
 

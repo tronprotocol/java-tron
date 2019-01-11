@@ -46,7 +46,7 @@ public class ContractGrammar001 {
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
   private String fullnode1 = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(2);
+      .getStringList("fullnode.ip.list").get(0);
 
 
   byte[] contractAddress = null;
@@ -97,6 +97,7 @@ public class ContractGrammar001 {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress,
         grammarAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = "";
     String num = "true" + "," + "10";
     txid = PublicMethed.triggerContract(contractAddress,
@@ -132,6 +133,7 @@ public class ContractGrammar001 {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress,
         grammarAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = "";
     String num = "1";
     byte[] contractAddress1 = null;
@@ -165,6 +167,7 @@ public class ContractGrammar001 {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress,
         grammarAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = "";
     String num = "1";
     byte[] contractAddress1 = null;
@@ -200,6 +203,7 @@ public class ContractGrammar001 {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress,
         grammarAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = "";
     String num = "1";
     byte[] contractAddress1 = null;
@@ -289,8 +293,6 @@ public class ContractGrammar001 {
             "d6(bytes32)", number, false,
             0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
 

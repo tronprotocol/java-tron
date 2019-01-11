@@ -3,8 +3,10 @@ package stest.tron.wallet.contract.exceptionfee;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -26,7 +28,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 public class AssertException {
 
   private final String testNetAccountKey = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key1");
+      .getString("foundationAccount.key0");
   private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
@@ -84,14 +86,16 @@ public class AssertException {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     logger.info(Long.toString(PublicMethed.queryAccount(testNetAccountKey, blockingStubFull)
         .getBalance()));
-    PublicMethed
-        .sendcoin(asset016Address, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull);
+
 
   }
 
   @Test(enabled = true)
-  public void testdivideInt() {
+  public void test1DivideInt() {
+    PublicMethed
+        .sendcoin(asset016Address, 100000000000L, testNetAccountAddress, testNetAccountKey,
+            blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String contractName = "divideInt";
     String code = Configuration.getByPath("testng.conf")
@@ -105,6 +109,7 @@ public class AssertException {
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
     Account info;
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
         blockingStubFull);
@@ -154,7 +159,7 @@ public class AssertException {
   }
 
   @Test(enabled = true)
-  public void testfindArgsContractMinTest() {
+  public void test2FindArgsContractMinTest() {
     String contractName = "findArgsContractTest";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_AssertException_testfindArgsContractMinTest");
@@ -214,7 +219,7 @@ public class AssertException {
   }
 
   @Test(enabled = true)
-  public void testbyteMinContract() {
+  public void test3ByteMinContract() {
     String contractName = "byteContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_AssertException_testbyteMinContract");
@@ -223,6 +228,7 @@ public class AssertException {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
         blockingStubFull);
@@ -273,7 +279,7 @@ public class AssertException {
   }
 
   @Test(enabled = true)
-  public void testenum() {
+  public void test4Enum() {
     String contractName = "enum";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_AssertException_testenum");
@@ -282,6 +288,7 @@ public class AssertException {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
         blockingStubFull);
@@ -333,7 +340,7 @@ public class AssertException {
   }
 
   @Test(enabled = true)
-  public void testmoveRight() {
+  public void test5MoveRight() {
     String contractName = "moveRight";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_AssertException_testmoveRight");
@@ -342,6 +349,7 @@ public class AssertException {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account info;
 
@@ -394,7 +402,7 @@ public class AssertException {
   }
 
   @Test(enabled = true)
-  public void testuninitializedContract() {
+  public void test6UninitializedContract() {
     String contractName = "uninitializedContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_AssertException_testuninitializedContract");
@@ -403,6 +411,7 @@ public class AssertException {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
@@ -454,7 +463,7 @@ public class AssertException {
   }
 
   @Test(enabled = true)
-  public void testTestAssertContract() {
+  public void test7TestAssertContract() {
     String contractName = "TestThrowsContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_AssertException_testTestAssertContract");
@@ -513,5 +522,22 @@ public class AssertException {
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
+
+  /**
+   * constructor.
+   */
+  @AfterClass
+  public void shutdown() throws InterruptedException {
+    if (channelFull != null) {
+      channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelFull1 != null) {
+      channelFull1.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelSolidity != null) {
+      channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+  }
+
 
 }
