@@ -17,7 +17,6 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.backup.BackupManager;
 import org.tron.common.backup.BackupManager.BackupStatusEnum;
 import org.tron.common.backup.BackupServer;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.BlockCapsule;
@@ -347,21 +346,26 @@ public class WitnessService implements Service {
    */
   @Override
   public void init() {
-    Args.getInstance().getLocalWitnesses().getPrivateKeys().forEach(key -> {
-      byte[] privateKey = ByteArray.fromHexString(key);
-      final ECKey ecKey = ECKey.fromPrivate(privateKey);
-      byte[] address = ecKey.getAddress();
-      WitnessCapsule witnessCapsule = this.tronApp.getDbManager().getWitnessStore()
+
+    if (Args.getInstance().getLocalWitnesses().getPrivateKeys().size() == 0) {
+      return;
+    }
+
+    byte[] privateKey = ByteArray
+        .fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey());
+    byte[] address = ByteArray
+        .fromHexString(Args.getInstance().getLocalWitnesses().getWitnessAccountAddress());
+
+    WitnessCapsule witnessCapsule = this.tronApp.getDbManager().getWitnessStore()
           .get(address);
       // need handle init witness
-      if (null == witnessCapsule) {
-        logger.warn("WitnessCapsule[" + address + "] is not in witnessStore");
-        witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
-      }
+    if (null == witnessCapsule) {
+      logger.warn("WitnessCapsule[" + address + "] is not in witnessStore");
+      witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
+    }
 
-      this.privateKeyMap.put(witnessCapsule.getAddress(), privateKey);
-      this.localWitnessStateMap.put(witnessCapsule.getAddress(), witnessCapsule);
-    });
+    this.privateKeyMap.put(witnessCapsule.getAddress(), privateKey);
+    this.localWitnessStateMap.put(witnessCapsule.getAddress(), witnessCapsule);
 
   }
 

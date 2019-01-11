@@ -76,5 +76,11 @@ public class ArgsTest {
     Assert.assertEquals(GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE, args.getMaxMessageSize());
     Assert.assertEquals(GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE, args.getMaxHeaderListSize());
     Assert.assertEquals(1L, args.getAllowCreationOfContracts());
+
+    Assert.assertEquals("f4df789d3210ac881cb900464dd30409453044d2777060a0c391cbdf4c6a4f57",
+        args.getLocalWitnesses().getPrivateKey());
+    Assert.assertEquals("",
+        args.getLocalWitnesses().getWitnessAccountAddress());
+
   }
 }
