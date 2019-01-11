@@ -17,7 +17,12 @@ import java.io.Writer;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -499,6 +504,18 @@ public class Args {
         localwitness = localwitness.subList(0, 1);
       }
       INSTANCE.localWitnesses.setPrivateKeys(localwitness);
+
+      if (config.hasPath("localWitnessAccountAddress")) {
+        String localWitnessAccountAddress = config.getString("localWitnessAccountAddress");
+
+        if (Wallet.addressValid(ByteArray.fromHexString(localWitnessAccountAddress))) {
+          INSTANCE.localWitnesses.setWitnessAccountAddress(localWitnessAccountAddress);
+        } else {
+          logger.warn("The localWitnessAccountAddress format is incorrect, ignored");
+        }
+      }
+      INSTANCE.localWitnesses.initWitnessAccountAddress();
+
       logger.debug("Got privateKey from config.conf");
     } else if (config.hasPath("localwitnesskeystore")) {
       INSTANCE.localWitnesses = new LocalWitnesses();
