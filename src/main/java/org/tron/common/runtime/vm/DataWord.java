@@ -90,6 +90,20 @@ public class DataWord implements Comparable<DataWord> {
         return data;
     }
 
+    /**
+     * be careful, this one will not throw Exception when data.length > DATAWORD_UNIT_SIZE
+     * @return
+     */
+    public byte[] getClonedData() {
+        byte[] ret = ByteUtil.EMPTY_BYTE_ARRAY;
+        if (data != null){
+            ret = new byte[DATAWORD_UNIT_SIZE];
+            int dataSize = Math.min(data.length, DATAWORD_UNIT_SIZE);
+            System.arraycopy(data, 0, ret, DATAWORD_UNIT_SIZE - dataSize, dataSize);
+        }
+        return ret;
+    }
+
     public byte[] getNoLeadZeroesData() {
         return ByteUtil.stripLeadingZeroes(data);
     }
@@ -164,8 +178,21 @@ public class DataWord implements Comparable<DataWord> {
         return new BigInteger(data);
     }
 
+    public static String  bigIntValue(byte[] data) {
+        return new BigInteger(data).toString();
+    }
+
     public String  bigIntValue() {
         return new BigInteger(data).toString();
+    }
+
+    public static boolean isZero(byte[] data) {
+        for (byte tmp : data) {
+            if (tmp != 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public boolean isZero() {
@@ -354,11 +381,16 @@ public class DataWord implements Comparable<DataWord> {
         return Hex.toHexString(pref).substring(0, 6);
     }
 
+    public static String shortHex(byte[] data) {
+        byte[] bytes = ByteUtil.stripLeadingZeroes(data);
+        String hexValue = Hex.toHexString(bytes).toUpperCase();
+        return "0x" + hexValue.replaceFirst("^0+(?!$)", "");
+    }
+
     public String shortHex() {
         String hexValue = Hex.toHexString(getNoLeadZeroesData()).toUpperCase();
         return "0x" + hexValue.replaceFirst("^0+(?!$)", "");
     }
-
 
     public DataWord clone() {
         return new DataWord(Arrays.clone(data));

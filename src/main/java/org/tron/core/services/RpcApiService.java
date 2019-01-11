@@ -46,6 +46,7 @@ import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.TransactionListExtention;
@@ -715,6 +716,14 @@ public class RpcApiService implements Service {
         StreamObserver<TransactionSignWeight> responseObserver) {
       TransactionSignWeight tsw = wallet.getTransactionSignWeight(req);
       responseObserver.onNext(tsw);
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getTransactionApprovedList(Transaction req,
+        StreamObserver<TransactionApprovedList> responseObserver) {
+      TransactionApprovedList tal = wallet.getTransactionApprovedList(req);
+      responseObserver.onNext(tal);
       responseObserver.onCompleted();
     }
 
