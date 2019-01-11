@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="Stest suite" parallel="tests" thread-count="4">
+<suite name="Stest" parallel="tests" thread-count="4">
 
   <listeners>
     <listener class-name="stest.tron.wallet.common.client.utils.RetryListener"/>
   </listeners>
 
- <test name="Stest account and transfer">
+ <test name="account,transfer">
    <packages>
      <package name="stest.tron.wallet.transfer">
      </package>
@@ -15,7 +15,7 @@
      </packages>
    </test>
 
-   <test name="Stest exchangeandtoken and mutisign">
+   <test name="exchangeandtoken,mutisign">
      <packages>
        <package name="stest.tron.wallet.exchangeandtoken">
        </package>
@@ -24,7 +24,7 @@
      </packages>
    </test>
 
-   <test name="Stest linkage,block,node">
+   <test name="Contract linkage,block,node">
      <packages>
        <package name="stest.tron.wallet.contract.linkage">
        </package>
@@ -35,7 +35,7 @@
      </packages>
    </test>
 
-    <test name="Stest contract scenario,committee,witness">
+    <test name="contract scenario,committee,witness">
       <packages>
           <package name="stest.tron.wallet.contract.scenario">
           </package>
