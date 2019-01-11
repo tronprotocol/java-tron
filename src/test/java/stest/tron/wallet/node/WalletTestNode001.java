@@ -68,7 +68,7 @@ public class WalletTestNode001 {
     GrpcAPI.NodeList nodeList = blockingStubFull
         .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
     Integer times = 0;
-    while (nodeList.getNodesCount() == 0 && times++ < 30) {
+    while (nodeList.getNodesCount() == 0 && times++ < 60) {
       nodeList = blockingStubFull
               .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
       if (nodeList.getNodesCount() != 0) {

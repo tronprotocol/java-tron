@@ -62,7 +62,7 @@ public class WalletTestCommittee003 {
   private static final long now = System.currentTimeMillis();
 
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-      .get(0);
+      .get(1);
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
 
