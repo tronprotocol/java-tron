@@ -145,9 +145,9 @@ message Account {
   }
   AccountResource account_resource = 26;
   bytes codeHash = 30;
-  Permission owner = 31;
-  Permission witness = 32;
-  repeated Permission actives = 33;
+  Permission owner_permission = 31;
+  Permission witness_permission = 32;
+  repeated Permission active_permission = 33;
 }
 
 
