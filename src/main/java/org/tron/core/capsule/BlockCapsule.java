@@ -33,6 +33,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.utils.MerkleTree;
 import org.tron.core.config.Parameter.ChainConstant;
+import org.tron.core.db.Manager;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Protocol.Block;
@@ -209,13 +210,22 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     return Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray());
   }
 
-  public boolean validateSignature() throws ValidateSignatureException {
+  public boolean validateSignature(Manager dbManager) throws ValidateSignatureException {
     try {
-      return Arrays
-          .equals(ECKey.signatureToAddress(getRawHash().getBytes(),
-              TransactionCapsule
-                  .getBase64FromByteString(block.getBlockHeader().getWitnessSignature())),
-              block.getBlockHeader().getRawData().getWitnessAddress().toByteArray());
+      byte[] toAddress = ECKey.signatureToAddress(getRawHash().getBytes(),
+          TransactionCapsule.getBase64FromByteString(block.getBlockHeader().getWitnessSignature()));
+
+      byte[] witnessAddress = block.getBlockHeader().getRawData().getWitnessAddress().toByteArray();
+
+      if (dbManager.getDynamicPropertiesStore().getAllowMultiSign() != 1) {
+        return Arrays
+            .equals(toAddress, witnessAddress);
+      } else {
+        return Arrays
+            .equals(toAddress,
+                dbManager.getAccountStore().get(witnessAddress).getWitnessPermissionAddress());
+      }
+
     } catch (SignatureException e) {
       throw new ValidateSignatureException(e.getMessage());
     }
