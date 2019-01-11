@@ -57,11 +57,11 @@ public class EventParserTest {
     Assert.assertEquals(dataMap.get("0"), "TUQPrDEJkV4ttkrL7cVv1p3mikWYfM7LWt");
     Assert.assertEquals(dataMap.get("addr"), "TUQPrDEJkV4ttkrL7cVv1p3mikWYfM7LWt");
 
-    Assert.assertEquals(dataMap.get("1"), "0x109");
-    Assert.assertEquals(dataMap.get("random"), "0x109");
+    Assert.assertEquals(dataMap.get("1"), "0109");
+    Assert.assertEquals(dataMap.get("random"), "0109");
 
-    Assert.assertEquals(topicMap.get("2"), "0xB7685F178B1C93DF3422F7BFCB61AE2C6F66D0947BB9EB293259C231B986B81B");
-    Assert.assertEquals(topicMap.get("last1"), "0xB7685F178B1C93DF3422F7BFCB61AE2C6F66D0947BB9EB293259C231B986B81B");
+    Assert.assertEquals(topicMap.get("2"), "b7685f178b1c93df3422f7bfcb61ae2c6f66d0947bb9eb293259c231b986b81b");
+    Assert.assertEquals(topicMap.get("last1"), "b7685f178b1c93df3422f7bfcb61ae2c6f66d0947bb9eb293259c231b986b81b");
 
     Assert.assertEquals(dataMap.get("3"), "1");
     Assert.assertEquals(dataMap.get("t2"), "1");

@@ -452,7 +452,7 @@ public class RuntimeImpl implements Runtime {
           && isCheckTransaction()){
 
         logInfoTriggerParser = new LogInfoTriggerParser(newSmartContract.getAbi(),
-            blockCap.getNum(), blockCap.getTimeStamp(), txId,
+            blockCap.getNum(), trx.getRawData().getTimestamp(), txId,
             callerAddress, callerAddress, callerAddress, contractAddress);
 
       }
@@ -580,7 +580,7 @@ public class RuntimeImpl implements Runtime {
           && isCheckTransaction()){
 
         logInfoTriggerParser = new LogInfoTriggerParser(deployedContract.getInstance().getAbi(),
-            blockCap.getNum(), blockCap.getTimeStamp(), txId,
+            blockCap.getNum(), trx.getRawData().getTimestamp(), txId,
             callerAddress, creatorAddress, originAddress, contractAddress);
       }
     }
