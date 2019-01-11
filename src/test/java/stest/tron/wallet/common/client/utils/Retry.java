@@ -19,7 +19,7 @@ public class Retry implements IRetryAnalyzer {
           + getResultStatusName(result.getStatus()) + " for the " + (retryCount + 1) + " time(s).");
       retryCount++;
       try {
-        Thread.sleep(1000);
+        Thread.sleep(3000);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }

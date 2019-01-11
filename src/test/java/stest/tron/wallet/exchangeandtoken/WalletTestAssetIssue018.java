@@ -43,7 +43,7 @@ public class WalletTestAssetIssue018 {
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-      .get(0);
+      .get(1);
 
   //get account
   ECKey ecKey1 = new ECKey(Utils.getRandom());
@@ -185,7 +185,7 @@ public class WalletTestAssetIssue018 {
         name, totalSupply, 3, 3, start, end, 3, description, url,
         4000L,4000L, 3L,3L,assetAccount3Key,blockingStubFull));
 
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Get asset issue by name
     String asset1Name = name;
     ByteString assetNameBs = ByteString.copyFrom(asset1Name.getBytes());
