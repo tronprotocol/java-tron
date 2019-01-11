@@ -24,7 +24,7 @@ import org.tron.core.db.common.WrappedByteArray;
 @Slf4j(topic = "DB")
 public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   // > 65_536(= 2^16) blocks, that is the number of the reference block
-  private final int BLOCK_COUNT = 70_000;
+  private final int BLOCK_COUNT = 65_536 + 64;
 
   private Map<Key, Long> db = new WeakHashMap<>();
   private Multimap<Long, Key> blockNumMap = ArrayListMultimap.create();
