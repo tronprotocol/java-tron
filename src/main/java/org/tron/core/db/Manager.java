@@ -105,6 +105,7 @@ import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 
 
@@ -213,12 +214,16 @@ public class Manager {
   @Setter
   public boolean eventPluginLoaded = false;
 
+  private BlockingQueue<TransactionCapsule> pushTransactionQueue = new LinkedBlockingQueue<>();
+
   @Getter
   private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
       .newBuilder().maximumSize(100_000).recordStats().build();
 
   @Getter
   private ForkController forkController = ForkController.instance();
+
+  private Set<String> ownerAddressSet = new HashSet<>();
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -728,20 +733,28 @@ public class Manager {
       TooBigTransactionException, TransactionExpirationException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
 
-    if (!trx.validateSignature(this)) {
-      throw new ValidateSignatureException("trans sig validate failed");
+    synchronized (pushTransactionQueue) {
+      pushTransactionQueue.add(trx);
     }
 
-    synchronized (this) {
-      if (!session.valid()) {
-        session.setValue(revokingStore.buildSession());
+    try{
+      if (!trx.validateSignature(this)) {
+        throw new ValidateSignatureException("trans sig validate failed");
       }
 
-      try (ISession tmpSession = revokingStore.buildSession()) {
-        processTransaction(trx, null);
-        pendingTransactions.add(trx);
-        tmpSession.merge();
+      synchronized (this) {
+        if (!session.valid()) {
+          session.setValue(revokingStore.buildSession());
+        }
+
+        try (ISession tmpSession = revokingStore.buildSession()) {
+          processTransaction(trx, null);
+          pendingTransactions.add(trx);
+          tmpSession.merge();
+        }
       }
+    } finally {
+      pushTransactionQueue.remove(trx);
     }
     return true;
   }
@@ -1008,6 +1021,18 @@ public class Manager {
       }
       logger.info("save block: " + newBlock);
     }
+    //clear ownerAddressSet
+    synchronized (pushTransactionQueue) {
+      Set<String> result = new HashSet<>();
+      for (TransactionCapsule transactionCapsule : repushTransactions) {
+        filterOwnerAddress(transactionCapsule, result);
+      }
+      for (TransactionCapsule transactionCapsule : pushTransactionQueue) {
+        filterOwnerAddress(transactionCapsule, result);
+      }
+      ownerAddressSet.clear();
+      ownerAddressSet.addAll(result);
+    }
     logger.info("pushBlock block number:{}, cost/txs:{}/{}",
         block.getNum(),
         System.currentTimeMillis() - start,
@@ -1200,7 +1225,11 @@ public class Manager {
 
     // if event subscribe is enabled, post contract triggers to queue
     postContractTrigger(trace, false);
-
+    //
+    Contract contract = trxCap.getInstance().getRawData().getContract(0);
+    if (isMultSignTransaction(trxCap.getInstance())) {
+      ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
+    }
     return true;
   }
 
@@ -1256,7 +1285,7 @@ public class Manager {
     session.setValue(revokingStore.buildSession());
 
     Set<String> accountSet = new HashSet<>();
-    Iterator iterator = pendingTransactions.iterator();
+    Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
     while (iterator.hasNext() || repushTransactions.size() > 0) {
       boolean fromPending = false;
       TransactionCapsule trx;
@@ -1287,16 +1316,12 @@ public class Manager {
       if (accountSet.contains(ownerAddress)) {
         continue;
       } else {
-        switch (contract.getType()) {
-          case AccountPermissionUpdateContract:
-          case PermissionAddKeyContract:
-          case PermissionUpdateKeyContract:
-          case PermissionDeleteKeyContract: {
-            accountSet.add(ownerAddress);
-          }
-          break;
-          default:
+        if (isMultSignTransaction(trx.getInstance())) {
+          accountSet.add(ownerAddress);
         }
+      }
+      if (ownerAddressSet.contains(ownerAddress)) {
+        trx.setVerified(false);
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
@@ -1383,6 +1408,28 @@ public class Manager {
     return null;
   }
 
+  private void filterOwnerAddress(TransactionCapsule transactionCapsule, Set<String> result) {
+    Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
+    byte[] owner = TransactionCapsule.getOwner(contract);
+    String ownerAddress = ByteArray.toHexString(owner);
+    if (ownerAddressSet.contains(ownerAddress)) {
+      result.add(ownerAddress);
+    }
+  }
+
+  private boolean isMultSignTransaction(Transaction transaction) {
+    Contract contract = transaction.getRawData().getContract(0);
+    switch (contract.getType()) {
+      case AccountPermissionUpdateContract:
+      case PermissionAddKeyContract:
+      case PermissionUpdateKeyContract:
+      case PermissionDeleteKeyContract: {
+        return true;
+      }
+      default:
+    }
+    return false;
+  }
 
   public TransactionStore getTransactionStore() {
     return this.transactionStore;
