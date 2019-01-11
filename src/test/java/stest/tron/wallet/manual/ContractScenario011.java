@@ -108,7 +108,7 @@ public class ContractScenario011 {
     String contractName = "KittyCore";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractScenario011_deployErc721KittyCore");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractScenario011_deployErc721KittyCore");
     logger.info("Kitty Core");
     kittyCoreContractAddress = PublicMethed.deployContract(contractName, abi, code, "",
@@ -152,7 +152,7 @@ public class ContractScenario011 {
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractScenario011_deploySaleClockAuction")
             + kittyCoreAddressAndCut;
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractScenario011_deploySaleClockAuction");
     logger.info("Sale Clock Auction");
     saleClockAuctionContractAddress = PublicMethed.deployContract(contractName, abi, code,
@@ -188,7 +188,7 @@ public class ContractScenario011 {
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractScenario011_deploySiringClockAuction")
             + kittyCoreAddressAndCut;
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractScenario011_deploySiringClockAuction");
     logger.info("Siring Clock Auction");
     siringClockAuctionContractAddress = PublicMethed.deployContract(contractName, abi, code,
@@ -224,7 +224,7 @@ public class ContractScenario011 {
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractScenario011_deployGeneScienceInterface")
             + kittyCoreAddressAndCut;
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractScenario011_deployGeneScienceInterface");
     logger.info("gene Science Interface");
     geneScienceInterfaceContractAddress = PublicMethed.deployContract(contractName, abi, code,

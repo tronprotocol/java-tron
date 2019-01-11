@@ -118,7 +118,7 @@ public class TestNetErc721Cat {
     String contractName = "KittyCore";
     String code = Configuration.getByPath("testng.conf")
           .getString("code.code_TestNetErc721Cat_deployErc721KittyCore");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
           .getString("abi.abi_TestNetErc721Cat_deployErc721KittyCore");
     logger.info("Kitty Core");
     kittyCoreContractAddress = PublicMethed.deployContract(contractName,abi,code,"",
@@ -167,7 +167,7 @@ public class TestNetErc721Cat {
     logger.info("Sale Clock Auction");
     String code = Configuration.getByPath("testng.conf")
           .getString("code.code_TestNetErc721Cat_deploySaleClockAuction");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
           .getString("abi.abi_TestNetErc721Cat_deploySaleClockAuction");
     saleClockAuctionContractAddress = PublicMethed.deployContract(contractName,abi,code,
         "",maxFeeLimit, 0L, consumeUserResourcePercent,null,deployKey,
@@ -206,7 +206,7 @@ public class TestNetErc721Cat {
     String contractName = "SiringClockAuction";
     String code = Configuration.getByPath("testng.conf")
           .getString("code.code_TestNetErc721Cat_deploySiringClockAuction");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
           .getString("abi.abi_TestNetErc721Cat_deploySiringClockAuction");
     logger.info("Siring Clock Auction");
     siringClockAuctionContractAddress = PublicMethed.deployContract(contractName,abi,code,
@@ -246,7 +246,7 @@ public class TestNetErc721Cat {
     String contractName = "GeneScienceInterface";
      String code = Configuration.getByPath("testng.conf")
           .getString("code.code_TestNetErc721Cat_deployGeneScienceInterface");
-     String abi = Configuration.getByPath("long-testng.conf")
+     String abi = Configuration.getByPath("testng.conf")
           .getString("abi.abi_TestNetErc721Cat_deployGeneScienceInterface");
     logger.info("gene Science Interface");
     geneScienceInterfaceContractAddress = PublicMethed.deployContract(contractName,abi,code,

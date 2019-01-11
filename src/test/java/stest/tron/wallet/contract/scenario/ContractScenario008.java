@@ -25,13 +25,13 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 public class ContractScenario008 {
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key1");
+      .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(0);
+      .getStringList("fullnode.ip.list").get(1);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
 
@@ -78,7 +78,7 @@ public class ContractScenario008 {
     String contractName = "Cat";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractScenario008_deployErc721CryptoKitties");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractScenario008_deployErc721CryptoKitties");
     byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",shortFeeLimit,
         0L, 100,null,contract008Key,contract008Address,blockingStubFull);

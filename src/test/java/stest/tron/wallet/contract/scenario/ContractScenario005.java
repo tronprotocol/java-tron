@@ -24,8 +24,11 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 public class ContractScenario005 {
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key1");
+      .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final String testKey003 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key1");
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -72,7 +75,7 @@ public class ContractScenario005 {
     String contractName = "ICO";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractScenario005_deployIcoContract");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractScenario005_deployIcoContract");
     byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
         0L, 100,null,contract005Key,contract005Address,blockingStubFull);

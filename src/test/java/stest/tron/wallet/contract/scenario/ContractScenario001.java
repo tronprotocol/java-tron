@@ -24,17 +24,20 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 public class ContractScenario001 {
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key2");
+      .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final String testKey003 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key2");
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
   private ManagedChannel channelFull = null;
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
   private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(0);
-  private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
+  private String fullnode1 = Configuration.getByPath("testng.conf")
+      .getStringList("fullnode.ip.list").get(0);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
 
@@ -70,11 +73,11 @@ public class ContractScenario001 {
     contract001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     PublicMethed.printAddress(contract001Key);
 
-    Assert.assertTrue(PublicMethed.sendcoin(contract001Address, 20000000L, fromAddress,
-        testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    Assert.assertTrue(PublicMethed.sendcoin(contract001Address, 20000000L, toAddress,
+        testKey003, blockingStubFull));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract001Address, 10000000L,
         3, 1, contract001Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract001Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
@@ -102,6 +105,7 @@ public class ContractScenario001 {
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertTrue(smartContract.getAbi() != null);
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
     accountResource = PublicMethed.getAccountResource(contract001Address, blockingStubFull1);
     energyLimit = accountResource.getEnergyLimit();
@@ -124,6 +128,9 @@ public class ContractScenario001 {
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelFull1 != null) {
+      channelFull1.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
 }
