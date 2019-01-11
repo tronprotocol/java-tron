@@ -175,9 +175,6 @@ public class SolidityNode {
 
     logger.info("index switch is {}",
         BooleanUtils.toStringOnOff(BooleanUtils.toBoolean(cfgArgs.getStorage().getIndexSwitch())));
-    ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger)LoggerFactory
-        .getLogger(Logger.ROOT_LOGGER_NAME);
-    root.setLevel(Level.toLevel(cfgArgs.getLogLevel()));
 
     if (StringUtils.isEmpty(cfgArgs.getTrustNodeAddr())) {
       logger.error("Trust node not set.");
