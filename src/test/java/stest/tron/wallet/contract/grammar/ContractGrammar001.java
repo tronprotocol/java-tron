@@ -28,7 +28,7 @@ public class ContractGrammar001 {
 
 
   private final String testNetAccountKey = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key1");
+      .getString("foundationAccount.key2");
   private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
@@ -44,9 +44,9 @@ public class ContractGrammar001 {
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
 
   private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(0);
-  private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
+  private String fullnode1 = Configuration.getByPath("testng.conf")
+      .getStringList("fullnode.ip.list").get(2);
 
 
   byte[] contractAddress = null;
@@ -83,6 +83,9 @@ public class ContractGrammar001 {
 
   @Test(enabled = true)
   public void testGrammar001() {
+    ecKey1 = new ECKey(Utils.getRandom());
+    grammarAddress = ecKey1.getAddress();
+    testKeyForGrammarAddress = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     PublicMethed
         .sendcoin(grammarAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
