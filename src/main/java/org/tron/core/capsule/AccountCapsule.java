@@ -854,7 +854,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return null;
   }
 
-  public void updatePermissions(List<Permission> permissions) {
+  public void updatePermissions(Permission owner, Permission witness, List<Permission> actives) {
+    Account.Builder builder = this.account.toBuilder();
+    builder.clearActives();
     this.account = this.account.toBuilder()
         .clearPermissions()
         .addAllPermissions(permissions)
