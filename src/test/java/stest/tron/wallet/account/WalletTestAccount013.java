@@ -211,7 +211,7 @@ public class WalletTestAccount013 {
 
     //sendcoin to Account5
     Assert.assertTrue(PublicMethed.sendcoin(account5DelegatedResourceAddress,
-        10000000000L, toAddress, testKey003, blockingStubFull));
+        20000000000L, toAddress, testKey003, blockingStubFull));
 
     Protocol.Account account4infoBefore =
         PublicMethed.queryAccount(account4DelegatedResourceAddress, blockingStubFull);
