@@ -10,7 +10,7 @@ public class ContractTrigger extends Trigger {
    */
   @Getter
   @Setter
-  private String txId;
+  private String transactionId;
 
   /**
    * address of the contract triggered by the callerAddress.
@@ -45,7 +45,7 @@ public class ContractTrigger extends Trigger {
    */
   @Getter
   @Setter
-  private Long blockNum;
+  private Long blockNumber;
 
   /**
    * true if the transaction has been revoked

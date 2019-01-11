@@ -69,7 +69,7 @@ public class ContractEventParser {
       }
     } else {
       for (int i = 1; i < topicList.size(); ++i) {
-        map.put("" + (i - 1), DataWord.shortHex(topicList.get(i)));
+        map.put("" + (i - 1), Hex.toHexString(topicList.get(i)));
       }
     }
     return map;
@@ -159,7 +159,7 @@ public class ContractEventParser {
         // this length is byte count. no need X 32
         int length = intValueExact(lengthBytes);
         byte[] realBytes = subBytes(data, start + DATAWORD_UNIT_SIZE, length);
-        return type == Type.STRING ? new String(realBytes) : DataWord.shortHex(realBytes);
+        return type == Type.STRING ? new String(realBytes) : Hex.toHexString(realBytes);
       }
     } catch (OutputLengthException | ArithmeticException e) {
       logger.debug("parseDataBytes ", e);
@@ -223,6 +223,6 @@ public class ContractEventParser {
       byte[] last20Bytes = Arrays.copyOfRange(bytes, 12, bytes.length);
       return Wallet.encode58Check(MUtil.convertToTronAddress(last20Bytes));
     }
-    return DataWord.shortHex(bytes);
+    return Hex.toHexString(bytes);
   }
 }

@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Import;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.RevokingStore;
+import org.tron.core.db.TransactionCache;
 import org.tron.core.db.api.IndexHelper;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
@@ -68,6 +69,16 @@ public class DefaultConfig {
     int dbVersion = Args.getInstance().getStorage().getDbVersion();
     if (!isSolidityNode && dbVersion == 2) {
       return new HttpApiOnSolidityService();
+    }
+
+    return null;
+  }
+
+  @Bean
+  public TransactionCache transactionCache() {
+    int dbVersion = Args.getInstance().getStorage().getDbVersion();
+    if (dbVersion == 2) {
+      return new TransactionCache("trans-cache");
     }
 
     return null;
