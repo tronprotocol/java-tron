@@ -36,7 +36,7 @@ public class ContractScenario012 {
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(0);
+      .getStringList("fullnode.ip.list").get(1);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
 
@@ -126,8 +126,8 @@ public class ContractScenario012 {
     receiverKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
     //Send some trx to the contract account.
-    Assert.assertTrue(PublicMethed.sendcoin(contractAddress,1000000000L,contract012Address,
-            contract012Key,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(contractAddress,1000000000L,toAddress,
+            testKey003,blockingStubFull));
 
     receiveAddressParam = "\"" + Base58.encode58Check(receiverAddress)
         + "\"";
