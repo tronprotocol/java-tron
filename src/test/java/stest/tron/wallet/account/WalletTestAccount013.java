@@ -313,7 +313,7 @@ public class WalletTestAccount013 {
     //accountForAssetIssue AssetIssue
     long now = System.currentTimeMillis();
     String name = "testAccount013_" + Long.toString(now);
-    long totalSupply = 10000000L;
+    long totalSupply = 100000000000L;
     String description = "zfbnb";
     String url = "aaa.com";
     Assert.assertTrue(PublicMethed.createAssetIssue(accountForAssetIssueAddress,
