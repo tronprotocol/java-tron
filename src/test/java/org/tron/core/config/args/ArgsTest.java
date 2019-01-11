@@ -77,10 +77,11 @@ public class ArgsTest {
     Assert.assertEquals(GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE, args.getMaxHeaderListSize());
     Assert.assertEquals(1L, args.getAllowCreationOfContracts());
 
-    Assert.assertEquals("f4df789d3210ac881cb900464dd30409453044d2777060a0c391cbdf4c6a4f57",
+    Assert.assertEquals("f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62",
         args.getLocalWitnesses().getPrivateKey());
-    Assert.assertEquals("",
+    Assert.assertEquals("a0299f3db80a24b20a254b89ce639d59132f157f13",
         args.getLocalWitnesses().getWitnessAccountAddress());
+
 
   }
 }
