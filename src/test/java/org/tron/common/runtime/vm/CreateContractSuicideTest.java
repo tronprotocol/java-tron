@@ -145,7 +145,7 @@ contract D {
   }
 
   @Test
-  public void testABefterVersion3_5()
+  public void testABeforeVersion3_5()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
     byte[] address = Hex.decode(OWNER_ADDRESS);
     Transaction aTrx = TVMTestUtils.generateDeploySmartContractAndGetTransaction(
