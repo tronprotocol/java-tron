@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
 
-public class InternalTransactionPogo {
+public class InternalTransactionPojo {
   private String transactionId;
   private byte[] hash;
   private byte[] parentHash;
