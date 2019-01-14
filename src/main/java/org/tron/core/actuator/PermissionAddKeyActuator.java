@@ -14,6 +14,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.PermissionAddKeyContract;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
+import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j(topic = "actuator")
@@ -83,9 +84,21 @@ public class PermissionAddKeyActuator extends AbstractActuator {
     if (!Wallet.addressValid(keyAddress.toByteArray())) {
       throw new ContractValidateException("address in key is invalidate");
     }
+
     Permission permission = account.getPermissionById(id);
+    if (permission == null) {
+      throw new ContractValidateException("Permission isn't exist");
+    }
+
+    if (permission.getType() == PermissionType.Witness) {
+      throw new ContractValidateException("Witness permission can't add key");
+    }
     long weightSum = 0;
-    if (permission != null) {
+
+    if (permission.getType() == PermissionType.Owner && !account.getInstance()
+        .hasOwnerPermission()) {
+      //Default owner permision, needn't check key list.
+    } else {
       for (Key key : permission.getKeysList()) {
         String address = Wallet.encode58Check(keyAddress.toByteArray());
         if (key.getAddress().equals(keyAddress)) {
@@ -98,11 +111,11 @@ public class PermissionAddKeyActuator extends AbstractActuator {
           throw new ContractValidateException(e.getMessage());
         }
       }
-      if (permission.getKeysCount() >= dbManager.getDynamicPropertiesStore().getTotalSignNum()) {
-        throw new ContractValidateException(
-            "number of keys in permission should not be greater than "
-                + dbManager.getDynamicPropertiesStore().getTotalSignNum());
-      }
+    }
+    if (permission.getKeysCount() >= dbManager.getDynamicPropertiesStore().getTotalSignNum()) {
+      throw new ContractValidateException(
+          "number of keys in permission should not be greater than "
+              + dbManager.getDynamicPropertiesStore().getTotalSignNum());
     }
 
     if (permissionAddKeyContract.getKey().getWeight() <= 0) {
