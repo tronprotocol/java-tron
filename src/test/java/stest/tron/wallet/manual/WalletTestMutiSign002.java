@@ -194,6 +194,8 @@ public class WalletTestMutiSign002 {
         PublicMethedForMutiSign.exchangeCreate(assetAccountId1.toByteArray(), firstTokenInitialBalance,
             assetAccountId2.toByteArray(), secondTokenInitialBalance, exchange001Address,
             exchange001Key, blockingStubFull,permissionKeyString));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    listExchange = PublicMethed.getExchangeList(blockingStubFull);
     exchangeId = listExchange.get().getExchangesCount();
 
   }

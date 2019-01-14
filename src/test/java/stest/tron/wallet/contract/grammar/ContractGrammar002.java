@@ -88,6 +88,7 @@ public class ContractGrammar002 {
     PublicMethed
         .sendcoin(grammarAddress2, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String contractName = "dougContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractGrammar002_testGrammar007");

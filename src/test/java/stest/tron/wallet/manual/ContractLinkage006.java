@@ -27,7 +27,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 public class ContractLinkage006 {
 
   private final String testKey003 = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key1");
+      .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey003);
 
   private ManagedChannel channelFull = null;

@@ -76,9 +76,6 @@ public class ContractGrammar001 {
         .usePlaintext(true)
         .build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
-
-    logger.info(Long.toString(PublicMethed.queryAccount(testNetAccountKey, blockingStubFull)
-        .getBalance()));
   }
 
   @Test(enabled = true)
@@ -89,6 +86,7 @@ public class ContractGrammar001 {
     PublicMethed
         .sendcoin(grammarAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String contractName = "FunctionSelector";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractGrammar001_testGrammar001");
@@ -147,10 +145,12 @@ public class ContractGrammar001 {
     contractAddress1 = PublicMethed.deployContract(contractName1, abi1, code1, "", maxFeeLimit,
         0L, 100, libraryAddress, testKeyForGrammarAddress,
         grammarAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     txid = PublicMethed.triggerContract(contractAddress1,
         "register(uint256)", num, false,
         0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull1);
 
@@ -186,6 +186,7 @@ public class ContractGrammar001 {
         "register(uint256)", num, false,
         0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull1);
 
@@ -222,6 +223,7 @@ public class ContractGrammar001 {
     txid = PublicMethed.triggerContract(contractAddress1,
         "append(uint256)", num, false,
         0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String num1 = "0";
     String txid1 = PublicMethed.triggerContract(contractAddress1,
         "getData(uint256)", num1, false,
