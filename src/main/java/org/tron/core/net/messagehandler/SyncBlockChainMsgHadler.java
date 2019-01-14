@@ -37,7 +37,7 @@ public class SyncBlockChainMsgHadler implements TronMsgHandler {
   private TronProxy tronProxy;
 
   @Override
-  public void processMessage(PeerConnection peer, TronMessage msg) throws Exception {
+  public void processMessage(PeerConnection peer, TronMessage msg) throws P2pException {
 
     SyncBlockChainMessage syncBlockChainMessage = (SyncBlockChainMessage) msg;
 
@@ -67,7 +67,7 @@ public class SyncBlockChainMsgHadler implements TronMsgHandler {
     peer.sendMessage(new ChainInventoryMessage(blockIds, remainNum));
   }
 
-  private void check(PeerConnection peer, SyncBlockChainMessage msg) throws Exception{
+  private void check(PeerConnection peer, SyncBlockChainMessage msg) throws P2pException {
     List<BlockId> blockIds = msg.getBlockIds();
     if (CollectionUtils.isEmpty(blockIds)){
       throw new P2pException(TypeEnum.BAD_MESSAGE, "SyncBlockChain blockIds is empty");
@@ -90,7 +90,7 @@ public class SyncBlockChainMsgHadler implements TronMsgHandler {
     }
   }
 
-  private LinkedList<BlockId> getLostBlockIds(List<BlockId> blockIds) throws Exception{
+  private LinkedList<BlockId> getLostBlockIds(List<BlockId> blockIds) throws P2pException {
 
     BlockId unForkId = null;
     for (int i = blockIds.size() - 1; i >= 0; i--){

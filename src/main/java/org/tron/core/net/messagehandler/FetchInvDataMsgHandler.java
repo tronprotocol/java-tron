@@ -44,7 +44,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
   private int MAX_SIZE = 1_000_000;
 
   @Override
-  public void processMessage (PeerConnection peer, TronMessage msg) throws Exception {
+  public void processMessage (PeerConnection peer, TronMessage msg) throws P2pException {
 
     FetchInvDataMessage fetchInvDataMsg = (FetchInvDataMessage) msg;
 
@@ -89,7 +89,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
     }
   }
 
-  private void check(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) throws Exception{
+  private void check(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) throws P2pException{
     MessageTypes type = fetchInvDataMsg.getInvMessageType();
 
     //todo check inv size not gt MAX_INV_FETCH_PER_PEER

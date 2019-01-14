@@ -36,7 +36,7 @@ public class ChainInventoryMsgHandler implements TronMsgHandler  {
   private TronNetClient tronManager;
 
   @Override
-  public void processMessage (PeerConnection peer, TronMessage msg) throws Exception {
+  public void processMessage (PeerConnection peer, TronMessage msg) throws P2pException {
 
     ChainInventoryMessage chainInventoryMessage = (ChainInventoryMessage) msg;
 
@@ -84,7 +84,7 @@ public class ChainInventoryMsgHandler implements TronMsgHandler  {
     }
   }
 
-  private void check(PeerConnection peer, ChainInventoryMessage msg) throws Exception {
+  private void check(PeerConnection peer, ChainInventoryMessage msg) throws P2pException {
     if (peer.getSyncChainRequested() == null) {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "not send syncBlockChainMsg");
     }

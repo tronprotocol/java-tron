@@ -8,8 +8,8 @@ import org.tron.core.net.TronProxy;
 import org.tron.core.net.message.InventoryMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.Item;
-import org.tron.core.net.service.AdvService;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.core.net.service.AdvService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
 @Slf4j
@@ -28,7 +28,7 @@ public class InventoryMsgHandler implements TronMsgHandler{
   private int maxCountIn10s = 10_000;
 
   @Override
-  public void processMessage (PeerConnection peer, TronMessage msg) throws Exception {
+  public void processMessage (PeerConnection peer, TronMessage msg) {
     InventoryMessage inventoryMessage = (InventoryMessage) msg;
     InventoryType type = inventoryMessage.getInventoryType();
 
@@ -45,7 +45,7 @@ public class InventoryMsgHandler implements TronMsgHandler{
     }
   }
 
-  private boolean check (PeerConnection peer, InventoryMessage inventoryMessage) throws Exception {
+  private boolean check (PeerConnection peer, InventoryMessage inventoryMessage) {
     InventoryType type = inventoryMessage.getInventoryType();
     int size = inventoryMessage.getHashList().size();
 

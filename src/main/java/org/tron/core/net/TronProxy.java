@@ -76,13 +76,11 @@ public class TronProxy {
     return dbManager.getSyncBeginNumber();
   }
 
-  public long getBlockTime(BlockId id) {
+  public long getBlockTime(BlockId id) throws P2pException {
     try {
       return dbManager.getBlockById(id).getTimeStamp();
-    } catch (BadItemException e) {
-      return dbManager.getGenesisBlock().getTimeStamp();
-    } catch (ItemNotFoundException e) {
-      return dbManager.getGenesisBlock().getTimeStamp();
+    } catch (BadItemException | ItemNotFoundException e) {
+      throw new P2pException(TypeEnum.DB_ITEM_NOT_FOUND, id.getString());
     }
   }
 
@@ -98,7 +96,13 @@ public class TronProxy {
     return dbManager.getGenesisBlockId();
   }
 
-  public BlockId getBlockIdByNum(long num) throws Exception {return dbManager.getBlockIdByNum(num);}
+  public BlockId getBlockIdByNum(long num) throws P2pException {
+    try {
+      return dbManager.getBlockIdByNum(num);
+    }catch (ItemNotFoundException e) {
+      throw new P2pException(TypeEnum.DB_ITEM_NOT_FOUND, "num: " + num);
+    }
+  }
 
   public BlockCapsule getGenesisBlock() {
     return dbManager.getGenesisBlock();
@@ -116,8 +120,12 @@ public class TronProxy {
     return dbManager.containBlockInMainChain(id);
   }
 
-  public LinkedList<BlockId> getBlockChainHashesOnFork(BlockId forkBlockHash) throws Exception {
-    return dbManager.getBlockChainHashesOnFork(forkBlockHash);
+  public LinkedList<BlockId> getBlockChainHashesOnFork(BlockId forkBlockHash) throws P2pException {
+    try {
+      return dbManager.getBlockChainHashesOnFork(forkBlockHash);
+    }catch (NonCommonBlockException e){
+      throw new P2pException(TypeEnum.HARD_FORKED, forkBlockHash.getString());
+    }
   }
 
   public boolean canChainRevoke(long num) {
@@ -133,22 +141,27 @@ public class TronProxy {
     return false;
   }
 
-  public Message getData(Sha256Hash hash, InventoryType type) throws StoreException {
-    switch (type) {
-      case BLOCK:
-        return new BlockMessage(dbManager.getBlockById(hash));
-      case TRX:
-        TransactionCapsule tx = dbManager.getTransactionStore().get(hash.getBytes());
-        if (tx != null) {
-          return new TransactionMessage(tx.getData());
-        }
-        throw new ItemNotFoundException("transaction is not found");
-      default:
-        throw new BadItemException("message type not block or trx.");
+  public Message getData(Sha256Hash hash, InventoryType type) throws P2pException {
+    try {
+      switch (type) {
+        case BLOCK:
+          return new BlockMessage(dbManager.getBlockById(hash));
+        case TRX:
+          TransactionCapsule tx = dbManager.getTransactionStore().get(hash.getBytes());
+          if (tx != null) {
+            return new TransactionMessage(tx.getData());
+          }
+          throw new StoreException();
+        default:
+          throw new StoreException();
+      }
+    }catch (StoreException e) {
+      throw new P2pException(TypeEnum.DB_ITEM_NOT_FOUND,
+          "type: " + type + ", hash: " + hash.getByteString());
     }
   }
 
-  public void processBlock(BlockCapsule block) throws Exception {
+  public void processBlock(BlockCapsule block) throws P2pException {
     synchronized (blockLock) {
       try {
         if (!freshBlockId.contains(block.getBlockId())) {
@@ -157,7 +170,8 @@ public class TronProxy {
           freshBlockId.add(block.getBlockId());
           logger.info("Success process block {}.", block.getBlockId().getString());
         }
-      } catch (ValidateSignatureException
+      } catch (InterruptedException
+          | ValidateSignatureException
           | ContractValidateException
           | ContractExeException
           | UnLinkedBlockException
@@ -178,7 +192,7 @@ public class TronProxy {
     }
   }
 
-  public void pushTransaction (TransactionCapsule trx) throws Exception {
+  public void pushTransaction (TransactionCapsule trx) throws P2pException {
     try {
       dbManager.pushTransaction(trx);
     } catch (ContractSizeNotEqualToOneException
