@@ -97,7 +97,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return ByteString.copyFrom(operations);
   }
 
-  private Permission createOwnerPermission(ByteString address) {
+  private Permission createDefaultOwnerPermission(ByteString address) {
     Key.Builder key = Key.newBuilder();
     key.setAddress(address);
     key.setWeight(1);
@@ -113,7 +113,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return owner.build();
   }
 
-  private Permission createActivePermission(ByteString address) {
+  private Permission createDefaultActivePermission(ByteString address) {
     Key.Builder key = Key.newBuilder();
     key.setAddress(address);
     key.setWeight(1);
@@ -130,12 +130,33 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return active.build();
   }
 
+  private Permission createDefaultWitnessPermission(ByteString address) {
+    Key.Builder key = Key.newBuilder();
+    key.setAddress(address);
+    key.setWeight(1);
+
+    Permission.Builder active = Permission.newBuilder();
+    active.setType(PermissionType.Witness);
+    active.setId(1);
+    active.setPermissionName("witness");
+    active.setThreshold(1);
+    active.setParentId(0);
+    active.addKeys(key);
+
+    return active.build();
+  }
+
+  public void setDefaultWitnessPermision() {
+    Permission witness = createDefaultWitnessPermission(this.getAddress());
+    this.account = this.account.toBuilder().setWitnessPermission(witness).build();
+  }
+
   /**
    * construct account from AccountCreateContract and createTime.
    */
   public AccountCapsule(final AccountCreateContract contract, long createTime) {
-    Permission owner = createOwnerPermission(contract.getAccountAddress());
-    Permission active = createActivePermission(contract.getAccountAddress());
+    Permission owner = createDefaultOwnerPermission(contract.getAccountAddress());
+    Permission active = createDefaultActivePermission(contract.getAccountAddress());
 
     this.account = Account.newBuilder()
         .setType(contract.getType())
@@ -182,8 +203,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    */
   public AccountCapsule(ByteString address,
       AccountType accountType, long createTime) {
-    Permission owner = createOwnerPermission(address);
-    Permission active = createActivePermission(address);
+    Permission owner = createDefaultOwnerPermission(address);
+    Permission active = createDefaultActivePermission(address);
 
     this.account = Account.newBuilder()
         .setType(accountType)
