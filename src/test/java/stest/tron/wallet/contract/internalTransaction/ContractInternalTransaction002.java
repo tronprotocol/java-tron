@@ -87,7 +87,7 @@ public class ContractInternalTransaction002 {
 
 
   @Test(enabled = true)
-  public void testInternalTransaction007() {
+  public void test1InternalTransaction007() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
@@ -205,7 +205,7 @@ public class ContractInternalTransaction002 {
   }
 
   @Test(enabled = true)
-  public void testInternalTransaction008() {
+  public void test2InternalTransaction008() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
@@ -415,7 +415,7 @@ public class ContractInternalTransaction002 {
   }
 
   @Test(enabled = true)
-  public void testInternalTransaction009() {
+  public void test3InternalTransaction009() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
@@ -591,7 +591,7 @@ public class ContractInternalTransaction002 {
   }
 
   @Test(enabled = true)
-  public void testInternalTransaction010() {
+  public void test4InternalTransaction010() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
@@ -737,6 +737,7 @@ public class ContractInternalTransaction002 {
       Assert.assertEquals(1,
           infoById.get().getInternalTransactions(i).getCallValueInfo(0).getCallValue());
     }
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid1 = PublicMethed.triggerContract(contractAddress,
         "transfer2()", "#", false,
         0, maxFeeLimit, internalTxsAddress, testKeyForinternalTxsAddress, blockingStubFull);
@@ -763,7 +764,7 @@ public class ContractInternalTransaction002 {
 
 
   @Test(enabled = true)
-  public void testInternalTransaction012() {
+  public void test5InternalTransaction012() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
