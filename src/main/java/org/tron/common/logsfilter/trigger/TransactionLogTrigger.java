@@ -78,6 +78,8 @@ public class TransactionLogTrigger extends Trigger {
       .append(", netUsage: ")
       .append(netUsage)
       .append(", netFee: ")
-      .append(netFee).toString();
+      .append(netFee)
+      .append(", internalTransactionPojos: ")
+      .append(internalTransactionPojos).toString();
   }
 }
