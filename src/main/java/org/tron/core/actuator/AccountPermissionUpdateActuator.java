@@ -113,12 +113,14 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
     }
 
     ContractType[] types = ContractType.values();
-    Boolean[] types1 = new Boolean[256];
+    boolean[] types1 = new boolean[256];
     for (ContractType type : types) {
-      types1[type.getNumber()] = true;
+      if (type != ContractType.UNRECOGNIZED) {
+        types1[type.getNumber()] = true;
+      }
     }
     for (int i = 0; i < 256; i++) {
-      Boolean b = (operations.byteAt(i / 8) & (1 << (i % 8))) == 0;
+      boolean b = (operations.byteAt(i / 8) & (1 << (i % 8))) != 0;
       if (b && !types1[i]) {
         throw new ContractValidateException(i + " isn't a validate ContractType");
       }
