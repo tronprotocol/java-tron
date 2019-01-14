@@ -57,7 +57,7 @@ public class PortMapperStarter {
   }
 
   public void discoverPortMappers() {
-    while (port < PORT_LIMIT) {
+    while (externalPort < PORT_LIMIT) {
       try {
         if (portMapperService.start()) {
           portMapperService.addPortForwarding(tcp, port, externalPort, null, null);
