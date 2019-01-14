@@ -71,6 +71,7 @@ public class PortMapperStarter {
           logger.info("can not find the mapper device");
           destroy();
         }
+        break;
       } catch (Exception e) {
         ++externalPort;
         logger.error("port mapper fail!", e);
