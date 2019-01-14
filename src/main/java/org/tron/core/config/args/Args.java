@@ -184,6 +184,10 @@ public class Args {
   @Setter
   private int nodeListenPort;
 
+  @Setter
+  @Getter
+  private int externalPort;
+
   @Getter
   @Setter
   private String nodeDiscoveryBindIp;
@@ -426,6 +430,7 @@ public class Args {
     INSTANCE.nodeMaxActiveNodesWithSameIp = 2;
     INSTANCE.minParticipationRate = 0;
     INSTANCE.nodeListenPort = 0;
+    INSTANCE.externalPort = 0;
     INSTANCE.nodeDiscoveryBindIp = "";
     INSTANCE.nodeExternalIp = "";
     INSTANCE.nodeDiscoveryPublicHomeNode = false;
@@ -634,6 +639,7 @@ public class Args {
 
     INSTANCE.nodeListenPort =
         config.hasPath("node.listen.port") ? config.getInt("node.listen.port") : 0;
+    INSTANCE.externalPort = INSTANCE.nodeListenPort;
 
     bindIp(config);
     externalIp(config);

@@ -3,6 +3,7 @@ package org.tron.common.application;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.portmap.PortMapperStarter;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
@@ -27,6 +28,7 @@ public class ApplicationImpl implements Application {
 
   private boolean isProducer;
 
+  private PortMapperStarter portMapperStarter;
 
   private void resetP2PNode() {
     p2pNode.listen();
@@ -67,6 +69,9 @@ public class ApplicationImpl implements Application {
   @Override
   public void shutdown() {
     logger.info("******** begin to shutdown ********");
+    if (portMapperStarter != null) {
+      portMapperStarter.destroy();
+    }
     synchronized (dbManager.getRevokingStore()) {
       closeRevokingStore();
       closeAllStore();
@@ -133,4 +138,8 @@ public class ApplicationImpl implements Application {
     dbManager.closeAllStore();
   }
 
+  @Override
+  public void setPortMapperStarter(PortMapperStarter portMapperStarter) {
+    this.portMapperStarter = portMapperStarter;
+  }
 }

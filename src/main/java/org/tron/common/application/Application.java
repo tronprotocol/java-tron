@@ -15,6 +15,7 @@
 
 package org.tron.common.application;
 
+import org.tron.common.overlay.portmap.PortMapperStarter;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
@@ -43,5 +44,7 @@ public interface Application {
   void addService(Service service);
 
   Manager getDbManager();
+
+  void setPortMapperStarter(PortMapperStarter portMapperStarter);
 
 }

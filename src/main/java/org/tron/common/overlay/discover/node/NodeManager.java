@@ -91,7 +91,7 @@ public class NodeManager implements EventHandler {
     discoveryEnabled = args.isNodeDiscoveryEnable();
 
     homeNode = new Node(RefreshTask.getNodeId(), args.getNodeExternalIp(),
-        args.getNodeListenPort());
+        args.getExternalPort());
 
     for (String boot : args.getSeedNode().getIpList()) {
       bootNodes.add(Node.instanceOf(boot));

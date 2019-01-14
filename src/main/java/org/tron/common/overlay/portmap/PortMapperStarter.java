@@ -16,41 +16,37 @@
 package org.tron.common.overlay.portmap;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import org.tron.common.overlay.portmap.model.Protocol;
 import org.tron.core.config.args.Args;
 
 @Slf4j
-@Component
 public class PortMapperStarter {
 
+  public static final int PORT_LIMIT = 65535;
   private Protocol tcp = Protocol.TCP;
   private Protocol udp = Protocol.UDP;
   private int port = Args.getInstance().getNodeListenPort();
+  private int externalPort = Args.getInstance().getExternalPort();
   private volatile boolean mapper = false;
 
   private ExecutorService executorService;
   private PortMapperService portMapperService;
 
-  @PostConstruct
   public void init() {
     if (Args.getInstance().isOpenPortMapper()) {
       portMapperService = new PortMapperService();
-      executorService = Executors.newFixedThreadPool(1, r -> new Thread(r, "port-mapper-service"));
-      executorService.submit(() -> discoverPortMappers());
+//      executorService = Executors.newFixedThreadPool(1, r -> new Thread(r, "port-mapper-service"));
+//      executorService.submit(() -> discoverPortMappers());
+      discoverPortMappers();
     }
   }
 
-  @PreDestroy
   public void destroy() {
     try {
       if (Args.getInstance().isOpenPortMapper() && mapper) {
-        portMapperService.deletePortForwardings(tcp, port);
-        portMapperService.deletePortForwardings(udp, port);
+        portMapperService.deletePortForwardings(tcp, externalPort);
+        portMapperService.deletePortForwardings(udp, externalPort);
 //        portMapperService.destroy();
         executorService.shutdown();
       }
@@ -61,18 +57,24 @@ public class PortMapperStarter {
   }
 
   public void discoverPortMappers() {
-    try {
-      if (portMapperService.start()) {
-        portMapperService.addPortForwarding(tcp, port, port, null, null);
-        portMapperService.addPortForwarding(udp, port, port, null, null);
-        mapper = true;
-        logger.info("port mapper success,port is {}", port);
-      } else {
-        logger.info("can not find the mapper device");
-        destroy();
+    while (port < PORT_LIMIT) {
+      try {
+        if (portMapperService.start()) {
+          portMapperService.addPortForwarding(tcp, port, externalPort, null, null);
+          portMapperService.addPortForwarding(udp, port, externalPort, null, null);
+          mapper = true;
+          //modify the home node port
+          Args.getInstance().setExternalPort(externalPort);
+          logger.info("port mapper success,internalPort is {},externalPort is {}", port,
+              externalPort);
+        } else {
+          logger.info("can not find the mapper device");
+          destroy();
+        }
+      } catch (Exception e) {
+        ++externalPort;
+        logger.error("port mapper fail!", e);
       }
-    } catch (Exception e) {
-      logger.error("port mapper fail!", e);
     }
   }
 }
