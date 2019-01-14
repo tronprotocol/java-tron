@@ -136,6 +136,7 @@ public class ContractLinkage006 {
         "", maxFeeLimit, 1000L, 100, null, linkage006Key,
         linkage006Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
     Long energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
@@ -174,10 +175,13 @@ public class ContractLinkage006 {
     Assert.assertTrue((beforeEnergyUsed + energyUsed) >= afterEnergyUsed);
     Assert.assertTrue(PublicMethed.sendcoin(linkage006Address2, 20000000000L, fromAddress,
         testKey003, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalance(linkage006Address2, 1000000L,
         3, linkage006Key2, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage006Address2, 1000000L,
         3, 1, linkage006Key2, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     contractAddress = infoById.get().getContractAddress().toByteArray();
     AccountResourceMessage resourceInfo1 = PublicMethed.getAccountResource(linkage006Address2,
         blockingStubFull);
@@ -203,6 +207,7 @@ public class ContractLinkage006 {
         "init(address,uint256)", initParmes, false,
         0, 100000000L, linkage006Address2, linkage006Key2, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     Optional<TransactionInfo> infoById1 = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
     Long energyUsageTotal1 = infoById1.get().getReceipt().getEnergyUsageTotal();
@@ -265,6 +270,7 @@ public class ContractLinkage006 {
         "init(address,uint256)", initParmes, false,
         1000, 100000000L, linkage006Address2, linkage006Key2, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     Optional<TransactionInfo> infoById2 = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
     Long energyUsageTotal2 = infoById2.get().getReceipt().getEnergyUsageTotal();

@@ -79,10 +79,6 @@ public class ContractGrammar003 {
         .usePlaintext(true)
         .build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
-
-    logger.info(Long.toString(PublicMethed.queryAccount(testNetAccountKey, blockingStubFull)
-        .getBalance()));
-
   }
 
 
@@ -95,6 +91,7 @@ public class ContractGrammar003 {
     PublicMethed
         .sendcoin(grammarAddress3, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String contractName = "aContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractGrammar003_testGrammar014");
@@ -117,6 +114,7 @@ public class ContractGrammar003 {
     String txid = PublicMethed.triggerContract(contractAddress,
         "getnumberForB()", "#", false,
         0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid1 = PublicMethed.triggerContract(contractAddress1,
         "getnumberForB()", "#", false,
         0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
@@ -277,6 +275,7 @@ public class ContractGrammar003 {
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress3,
         grammarAddress3, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     String txid = PublicMethed.triggerContract(contractAddress,
         "callExistFunc()", "#", false,
@@ -400,7 +399,7 @@ public class ContractGrammar003 {
     Optional<TransactionInfo> infoById1 = PublicMethed
         .getTransactionInfoById(txid1, blockingStubFull1);
     Long returnnumber2 = ByteArray.toLong(ByteArray
-        .fromHexString(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray())));
+        .fromHexString(ByteArray.toHexString(infoById1.get().getContractResult(0).toByteArray())));
 
     Assert.assertTrue(returnnumber2 == 1);
 

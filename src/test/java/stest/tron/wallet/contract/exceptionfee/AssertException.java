@@ -54,8 +54,8 @@ public class AssertException {
   byte[] contractAddress = null;
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] asset016Address = ecKey1.getAddress();
-  String testKeyForAssetIssue016 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  byte[] contractExcAddress = ecKey1.getAddress();
+  String contractExcKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
 
   @BeforeSuite
@@ -70,7 +70,7 @@ public class AssertException {
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
-    PublicMethed.printAddress(testKeyForAssetIssue016);
+    PublicMethed.printAddress(contractExcKey);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
@@ -84,16 +84,12 @@ public class AssertException {
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
-    logger.info(Long.toString(PublicMethed.queryAccount(testNetAccountKey, blockingStubFull)
-        .getBalance()));
-
-
   }
 
   @Test(enabled = true)
   public void test1DivideInt() {
     PublicMethed
-        .sendcoin(asset016Address, 100000000000L, testNetAccountAddress, testNetAccountKey,
+        .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -103,17 +99,15 @@ public class AssertException {
     String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_AssertException_testdivideInt");
 
-
-
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, testKeyForAssetIssue016,
-        asset016Address, blockingStubFull);
+        0L, 100, null, contractExcKey,
+        contractExcAddress, blockingStubFull);
     Account info;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
+    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull);
-    info = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull);
+    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
     Long beforeBalance = info.getBalance();
     Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
     Long beforeNetUsed = resourceInfo.getNetUsed();
@@ -127,8 +121,9 @@ public class AssertException {
 
     txid = PublicMethed.triggerContract(contractAddress,
         "divideIHaveArgsReturn(int256,int256)", num, false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Long fee = infoById.get().getFee();
@@ -141,8 +136,8 @@ public class AssertException {
     logger.info("energyUsed:" + energyUsed);
     logger.info("netFee:" + netFee);
 
-    Account infoafter = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull1);
-    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(asset016Address,
+    Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull1);
+    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull1);
     Long afterBalance = infoafter.getBalance();
     Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
@@ -166,14 +161,14 @@ public class AssertException {
     String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_AssertException_testfindArgsContractMinTest");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, testKeyForAssetIssue016,
-        asset016Address, blockingStubFull);
+        0L, 100, null, contractExcKey,
+        contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info("11：" + Base58.encode58Check(contractAddress));
     Account info;
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
+    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull);
-    info = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull);
+    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
     Long beforeBalance = info.getBalance();
     Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
     Long beforeNetUsed = resourceInfo.getNetUsed();
@@ -186,8 +181,9 @@ public class AssertException {
     Integer triggerNum = -1;
     txid = PublicMethed.triggerContract(contractAddress,
         "findArgsByIndexTest(uint256)", triggerNum.toString(), false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Long fee = infoById.get().getFee();
@@ -200,8 +196,8 @@ public class AssertException {
     logger.info("energyUsed:" + energyUsed);
     logger.info("netFee:" + netFee);
 
-    Account infoafter = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull1);
-    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(asset016Address,
+    Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull1);
+    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull1);
     Long afterBalance = infoafter.getBalance();
     Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
@@ -226,13 +222,13 @@ public class AssertException {
     String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_AssertException_testbyteMinContract");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, testKeyForAssetIssue016,
-        asset016Address, blockingStubFull);
+        0L, 100, null, contractExcKey,
+        contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
+    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull);
-    info = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull);
+    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
     Long beforeBalance = info.getBalance();
     Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
     Long beforeNetUsed = resourceInfo.getNetUsed();
@@ -245,8 +241,9 @@ public class AssertException {
     Integer triggerNum = -1;
     txid = PublicMethed.triggerContract(contractAddress,
         "testBytesGet(uint256)", triggerNum.toString(), false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Long fee = infoById.get().getFee();
@@ -259,8 +256,8 @@ public class AssertException {
     logger.info("energyUsed:" + energyUsed);
     logger.info("netFee:" + netFee);
 
-    Account infoafter = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull1);
-    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(asset016Address,
+    Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull1);
+    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull1);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long afterBalance = infoafter.getBalance();
@@ -286,13 +283,13 @@ public class AssertException {
     String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_AssertException_testenum");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, testKeyForAssetIssue016,
-        asset016Address, blockingStubFull);
+        0L, 100, null, contractExcKey,
+        contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
+    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull);
-    info = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull);
+    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
     Long beforeBalance = info.getBalance();
     Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
     Long beforeNetUsed = resourceInfo.getNetUsed();
@@ -306,8 +303,9 @@ public class AssertException {
 
     txid = PublicMethed.triggerContract(contractAddress,
         "setGoStraight(uint8)", triggerNum.toString(), false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     Optional<TransactionInfo> infoById = null;
 
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -321,8 +319,8 @@ public class AssertException {
     logger.info("energyUsed:" + energyUsed);
     logger.info("netFee:" + netFee);
 
-    Account infoafter = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull1);
-    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(asset016Address,
+    Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull1);
+    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull1);
     Long afterBalance = infoafter.getBalance();
     Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
@@ -347,15 +345,16 @@ public class AssertException {
     String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_AssertException_testmoveRight");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, testKeyForAssetIssue016,
-        asset016Address, blockingStubFull);
+        0L, 100, null, contractExcKey,
+        contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
 
     Account info;
 
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
+    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull);
-    info = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull);
+    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
     Long beforeBalance = info.getBalance();
     Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
     Long beforeNetUsed = resourceInfo.getNetUsed();
@@ -369,9 +368,9 @@ public class AssertException {
     Integer triggerNum = -1;
     txid = PublicMethed.triggerContract(contractAddress,
         "binaryMoveR(int256)", triggerNum.toString(), false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
@@ -383,8 +382,8 @@ public class AssertException {
     logger.info("energyUsed:" + energyUsed);
     logger.info("netFee:" + netFee);
 
-    Account infoafter = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull1);
-    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(asset016Address,
+    Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull1);
+    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull1);
     Long afterBalance = infoafter.getBalance();
     Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
@@ -409,14 +408,14 @@ public class AssertException {
     String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_AssertException_testuninitializedContract");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, testKeyForAssetIssue016,
-        asset016Address, blockingStubFull);
+        0L, 100, null, contractExcKey,
+        contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
 
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
+    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull);
-    info = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull);
+    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
     Long beforeBalance = info.getBalance();
     Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
     Long beforeNetUsed = resourceInfo.getNetUsed();
@@ -429,7 +428,7 @@ public class AssertException {
 
     txid = PublicMethed.triggerContract(contractAddress,
         "test2()", "#", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -443,8 +442,8 @@ public class AssertException {
     logger.info("energyUsed:" + energyUsed);
     logger.info("netFee:" + netFee);
 
-    Account infoafter = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull);
-    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(asset016Address,
+    Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
+    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull);
     Long afterBalance = infoafter.getBalance();
     Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
@@ -470,13 +469,13 @@ public class AssertException {
     String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_AssertException_testTestAssertContract");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, testKeyForAssetIssue016,
-        asset016Address, blockingStubFull);
+        0L, 100, null, contractExcKey,
+        contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
+    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull);
-    info = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull);
+    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
     Long beforeBalance = info.getBalance();
     Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
     Long beforeNetUsed = resourceInfo.getNetUsed();
@@ -490,7 +489,7 @@ public class AssertException {
     String txid = "";
     txid = PublicMethed.triggerContract(contractAddress,
         "testAssert()", "#", false,
-        0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
+        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -504,8 +503,8 @@ public class AssertException {
     logger.info("energyUsed:" + energyUsed);
     logger.info("netFee:" + netFee);
 
-    Account infoafter = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull);
-    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(asset016Address,
+    Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
+    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long afterBalance = infoafter.getBalance();

@@ -1139,29 +1139,23 @@ public class PublicMethed {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     final Long currentNum = currentBlock.getBlockHeader().getRawData().getNumber();
-
     Block nextBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Long nextNum = nextBlock.getBlockHeader().getRawData().getNumber();
 
     Integer wait = 0;
-    logger.info("Block num is " + Long.toString(currentBlock
-        .getBlockHeader().getRawData().getNumber()));
     while (nextNum <= currentNum + 1 && wait <= 15) {
       try {
         Thread.sleep(3000);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
-      logger.info("Wait to produce next block");
       nextBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
       nextNum = nextBlock.getBlockHeader().getRawData().getNumber();
       if (wait == 15) {
-        logger.info("These 45 second didn't produce a block,please check.");
         return false;
       }
       wait++;
     }
-    logger.info("quit normally");
     return true;
   }
   /**
