@@ -60,6 +60,9 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
     if (permission.getKeysCount() == 0) {
       throw new ContractValidateException("key's count should be greater than 0");
     }
+    if (permission.getType() == PermissionType.Witness && permission.getKeysCount() != 1) {
+      throw new ContractValidateException("Witness permission's key count should be 1");
+    }
     if (permission.getThreshold() <= 0) {
       throw new ContractValidateException("permission's threshold should be greater than 0");
     }
