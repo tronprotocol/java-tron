@@ -35,6 +35,8 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.UpdateAssetContract;
+import org.tron.protos.Contract.UpdateSettingContract;
+import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Contract.VoteAssetContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
@@ -267,6 +269,16 @@ public class Util {
             contractJson = JSONObject
                 .parseObject(JsonFormat.printToString(exchangeTransactionContract));
             break;
+          case UpdateSettingContract:
+            UpdateSettingContract updateSettingContract = contractParameter
+                .unpack(UpdateSettingContract.class);
+            contractJson = JSONObject.parseObject(JsonFormat.printToString(updateSettingContract));
+            break;
+          case UpdateEnergyLimitContract:
+            UpdateEnergyLimitContract updateEnergyLimitContract = contractParameter
+                .unpack(UpdateEnergyLimitContract.class);
+            contractJson = JSONObject.parseObject(JsonFormat.printToString(updateEnergyLimitContract));
+            break;
           // todo add other contract
           default:
         }
@@ -482,6 +494,22 @@ public class Util {
                 .merge(parameter.getJSONObject("value").toJSONString(),
                     ProposalDeleteContractBuilder);
             any = Any.pack(ProposalDeleteContractBuilder.build());
+            break;
+          case "UpdateSettingContract":
+            UpdateSettingContract.Builder UpdateSettingContractBuilder = UpdateSettingContract
+                .newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    UpdateSettingContractBuilder);
+            any = Any.pack(UpdateSettingContractBuilder.build());
+            break;
+          case "UpdateEnergyLimitContract":
+            UpdateEnergyLimitContract.Builder UpdateEnergyLimitContractBuilder = UpdateEnergyLimitContract
+                .newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    UpdateEnergyLimitContractBuilder);
+            any = Any.pack(UpdateEnergyLimitContractBuilder.build());
             break;
           // todo add other contract
           default:

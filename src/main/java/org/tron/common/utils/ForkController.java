@@ -1,86 +1,95 @@
 package org.tron.common.utils;
 
+import com.google.common.collect.Maps;
+import com.google.common.collect.Streams;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.Parameter.ChainConstant;
+import org.tron.core.config.Parameter.ForkBlockVersionConsts;
+import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.ContractExeException;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Slf4j
-@Component
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ForkController {
 
-  public static final int DISCARD_SCOPE = ContractType.UpdateAssetContract.getNumber();
+  private static final byte VERSION_DOWNGRADE = (byte) 0;
+  private static final byte VERSION_UPGRADE = (byte) 1;
+  private static final byte[] check;
+
+  static {
+    check = new byte[1024];
+    Arrays.fill(check, VERSION_UPGRADE);
+  }
 
   @Getter
   private Manager manager;
-  private volatile int[] slots = new int[0];
-  private boolean forked;
 
   public void init(Manager manager) {
     this.manager = manager;
-    forked = manager.getDynamicPropertiesStore().getForked();
   }
 
-  public synchronized boolean shouldBeForked() {
-    if (forked) {
-      if (logger.isDebugEnabled()) {
-        logger.debug("*****shouldBeForked:" + true);
-      }
-      return true;
+  public boolean pass(ForkBlockVersionEnum forkBlockVersionEnum) {
+    return pass(forkBlockVersionEnum.getValue());
+  }
+
+  public synchronized boolean pass(int version) {
+    if (version == ForkBlockVersionConsts.ENERGY_LIMIT) {
+      return checkForEnergyLimit();
     }
 
-    if (slots.length == 0) {
+    byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(version);
+    return check(stats);
+  }
+
+  // when block.version = 5,
+  // it make block use new energy to handle transaction when block number >= 4727890L.
+  // version !=5, skip this.
+  private boolean checkForEnergyLimit() {
+    long blockNum = manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    return blockNum >= 4727890L;
+  }
+
+  private boolean check(byte[] stats) {
+    if (stats == null || stats.length == 0) {
       return false;
     }
 
-    for (int version : slots) {
-      if (version != ChainConstant.version) {
-        if (logger.isDebugEnabled()) {
-          logger.debug("*****shouldBeForked:" + false);
-        }
+    for (int i = 0; i < stats.length; i++) {
+      if (check[i] != stats[i]) {
         return false;
       }
     }
 
-    // todo add Maintenance or block number
-    forked = true;
-    manager.getDynamicPropertiesStore().forked();
-    if (logger.isDebugEnabled()) {
-      logger.debug("*****shouldBeForked:" + true);
-    }
     return true;
   }
 
-  public synchronized void hardFork(TransactionCapsule capsule) throws ContractExeException {
-    boolean hardFork = shouldBeForked()
-        || capsule.getInstance().getRawData().getContractList().get(0).getType().getNumber()
-        <= DISCARD_SCOPE;
-    if (logger.isDebugEnabled()) {
-      logger.debug("*****hardFork:" + hardFork);
-    }
-    if (!hardFork) {
-      throw new ContractExeException("not yet hard forked");
+  private void downgrade(int version, int slot) {
+    for (ForkBlockVersionEnum versionEnum : ForkBlockVersionEnum.values()) {
+      int versionValue = versionEnum.getValue();
+      if (versionValue > version) {
+        byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(versionValue);
+        if (!check(stats) && Objects.nonNull(stats)) {
+          stats[slot] = VERSION_DOWNGRADE;
+          manager.getDynamicPropertiesStore().statsByVersion(versionValue, stats);
+        }
+      }
     }
   }
 
   public synchronized void update(BlockCapsule blockCapsule) {
-    if (forked) {
-      return;
-    }
-
     List<ByteString> witnesses = manager.getWitnessController().getActiveWitnesses();
-    if (witnesses.size() != slots.length) {
-      slots = new int[witnesses.size()];
-    }
-
     ByteString witness = blockCapsule.getWitnessAddress();
     int slot = witnesses.indexOf(witness);
     if (slot < 0) {
@@ -88,19 +97,61 @@ public class ForkController {
     }
 
     int version = blockCapsule.getInstance().getBlockHeader().getRawData().getVersion();
-    slots[slot] = version;
+    if (version < ForkBlockVersionConsts.ENERGY_LIMIT) {
+      return;
+    }
 
+    downgrade(version, slot);
+
+    byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(version);
+    if (check(stats)) {
+      return;
+    }
+
+    if (Objects.isNull(stats) || stats.length != witnesses.size()) {
+      stats = new byte[witnesses.size()];
+    }
+
+    stats[slot] = VERSION_UPGRADE;
+    manager.getDynamicPropertiesStore().statsByVersion(version, stats);
     logger.info(
-        "*******update hard fork:" + Arrays.toString(slots)
-            + ",witness size:" + witnesses.size()
-            + ",slot:" + slot
-            + ",witness:" + ByteUtil.toHexString(witness.toByteArray())
-            + ",version:" + version
-    );
+        "*******update hard fork:{}, witness size:{}, solt:{}, witness:{}, version:{}",
+        Streams.zip(witnesses.stream(), Stream.of(ArrayUtils.toObject(stats)), Maps::immutableEntry)
+            .map(e -> Maps.immutableEntry(Wallet.encode58Check(e.getKey().toByteArray()), e.getValue()))
+            .map(e -> Maps.immutableEntry(StringUtils.substring(e.getKey(), e.getKey().length() - 4), e.getValue()))
+            .collect(Collectors.toList()),
+        witnesses.size(),
+        slot,
+        Wallet.encode58Check(witness.toByteArray()),
+        version);
   }
 
   public synchronized void reset() {
-    Arrays.fill(slots, 0);
+    for (ForkBlockVersionEnum versionEnum : ForkBlockVersionEnum.values()) {
+      int versionValue = versionEnum.getValue();
+      byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(versionValue);
+      if (!check(stats) && Objects.nonNull(stats)) {
+        Arrays.fill(stats, VERSION_DOWNGRADE);
+        manager.getDynamicPropertiesStore().statsByVersion(versionValue, stats);
+      }
+    }
   }
 
+  public static ForkController instance() {
+    return ForkControllerEnum.INSTANCE.getInstance();
+  }
+
+  private enum ForkControllerEnum {
+    INSTANCE;
+
+    private ForkController instance;
+
+    ForkControllerEnum() {
+      instance = new ForkController();
+    }
+
+    private ForkController getInstance() {
+      return instance;
+    }
+  }
 }

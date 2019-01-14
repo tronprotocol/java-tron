@@ -21,12 +21,13 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
-import org.tron.core.db.BlockStore;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.exception.StoreException;
 import org.tron.protos.Protocol;
 
-// import org.tron.core.db.BlockStoreDummy;
 
 /**
  * @author Roman Mandeleil
@@ -40,6 +41,8 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   private byte[] ownerAddress = Hex.decode("cd2a3d9f938e13cd947ec05abc7fe734df8dd826");
   private final byte[] contractAddress = Hex.decode("471fd3ad3e9eeadeec4608b92d16ce6b500704cc");
 
+  private boolean isStaticCall;
+
   public ProgramInvokeMockImpl(byte[] msgDataRaw) {
     this();
     this.msgData = msgDataRaw;
@@ -49,7 +52,6 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
 
   public ProgramInvokeMockImpl() {
 
-    // this.repository = new RepositoryRoot(new HashMapDB<byte[]>());
     this.deposit = DepositImpl.createRoot(null);
     this.deposit.createAccount(ownerAddress, Protocol.AccountType.Normal);
 
@@ -67,7 +69,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   }
 
   /*           ADDRESS op         */
-  public DataWord getOwnerAddress() {
+  public DataWord getContractAddress() {
     return new DataWord(ownerAddress);
   }
 
@@ -97,7 +99,6 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
 
   /*           ENERGYPRICE op       */
   public DataWord getMinEnergyPrice() {
-
     byte[] minEnergyPrice = Hex.decode("09184e72a000");
     return new DataWord(minEnergyPrice);
   }
@@ -106,6 +107,16 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   public DataWord getCallValue() {
     byte[] balance = Hex.decode("0DE0B6B3A7640000");
     return new DataWord(balance);
+  }
+
+  @Override
+  public DataWord getTokenValue() {
+    return null;
+  }
+
+  @Override
+  public DataWord getTokenId() {
+    return null;
   }
 
   /*****************/
@@ -206,13 +217,8 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   }
 
   @Override
-  public boolean byTransaction() {
-    return true;
-  }
-
-  @Override
   public boolean isStaticCall() {
-    return false;
+    return isStaticCall;
   }
 
   @Override
@@ -231,26 +237,26 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
 
   @Override
   public void setStaticCall() {
+    isStaticCall = true;
+  }
 
+  @Override
+  public BlockCapsule getBlockByNum(int index) {
+    try {
+      return deposit.getDbManager().getBlockByNum(index);
+    } catch (StoreException e) {
+      throw new IllegalOperationException("cannot find block num");
+    }
   }
 
   @Override
   public boolean byTestingSuite() {
-    return false;
+    return true;
   }
 
   @Override
   public Deposit getDeposit() {
     return this.deposit;
-  }
-
-  @Override
-  public BlockStore getBlockStore() {
-    return null; // new BlockStoreDummy();
-  }
-
-  public void setRepository(DepositImpl deposit) {
-    this.deposit = deposit;
   }
 
   @Override

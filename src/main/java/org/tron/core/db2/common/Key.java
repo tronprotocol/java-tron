@@ -13,12 +13,12 @@ public final class Key {
     this.data = data;
   }
 
+  public static Key copyOf(byte[] bytes) {
+    return new Key(WrappedByteArray.copyOf(bytes));
+  }
+
   public static Key of(byte[] bytes) {
-    byte[] key = null;
-    if (bytes != null) {
-      key = Arrays.copyOf(bytes, bytes.length);
-    }
-    return new Key(WrappedByteArray.of(key));
+    return new Key(WrappedByteArray.of(bytes));
   }
 
   public byte[] getBytes() {

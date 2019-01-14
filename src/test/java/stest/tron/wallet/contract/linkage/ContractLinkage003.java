@@ -2,6 +2,7 @@ package stest.tron.wallet.contract.linkage;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -17,6 +18,7 @@ import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -32,6 +34,10 @@ public class ContractLinkage003 {
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
+  private ManagedChannel channelFull1 = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
+  private String fullnode1 = Configuration.getByPath("testng.conf")
+      .getStringList("fullnode.ip.list").get(1);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
 
@@ -52,18 +58,34 @@ public class ContractLinkage003 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(linkage003Address,200000000L,fromAddress,
-        testKey003,blockingStubFull));
+    channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
+        .usePlaintext(true)
+        .build();
+    blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
   }
 
   @Test(enabled = true)
   public void deployWhenNoEnergy() {
-    AccountResourceMessage accountResource = PublicMethed.getAccountResource(linkage003Address,
+    Assert.assertTrue(PublicMethed.sendcoin(linkage003Address, 200000000L, fromAddress,
+        testKey003, blockingStubFull));
+    Account info;
+    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(linkage003Address,
         blockingStubFull);
-    Long energyLimit = accountResource.getEnergyLimit();
-    Long energyUsage = accountResource.getEnergyUsed();
-    logger.info("before energy limit is " + Long.toString(energyLimit));
-    logger.info("before energy usage is " + Long.toString(energyUsage));
+    info = PublicMethed.queryAccount(linkage003Address, blockingStubFull);
+    Long beforeBalance = info.getBalance();
+    Long beforeEnergyLimit = resourceInfo.getEnergyLimit();
+    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
+    Long beforeFreeNetLimit = resourceInfo.getFreeNetLimit();
+    Long beforeNetLimit = resourceInfo.getNetLimit();
+    Long beforeNetUsed = resourceInfo.getNetUsed();
+    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
+    logger.info("beforeBalance:" + beforeBalance);
+    logger.info("beforeEnergyLimit:" + beforeEnergyLimit);
+    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
+    logger.info("beforeFreeNetLimit:" + beforeFreeNetLimit);
+    logger.info("beforeNetLimit:" + beforeNetLimit);
+    logger.info("beforeNetUsed:" + beforeNetUsed);
+    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     String contractName = "tronNative";
     String code = "608060405260008054600160a060020a03199081166201000117909155600180548216620100021"
         + "790556002805482166201000317905560038054821662010004179055600480548216620100051790556005"
@@ -135,20 +157,54 @@ public class ContractLinkage003 {
         + "s\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\""
         + "constant\":false,\"inputs\":[],\"name\":\"unFreezeBalance\",\"outputs\":[],\"payable\""
         + ":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
+    //use FreeNet and balance,EnergyUsed==0.
+    String txid = PublicMethed
+        .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
+            0L, 0, null, linkage002Key, linkage003Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<TransactionInfo> infoById = null;
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    byte[] contractAddress = infoById.get().getContractAddress().toByteArray();
+    Long energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
+    Long fee = infoById.get().getFee();
+    Long energyFee = infoById.get().getReceipt().getEnergyFee();
+    Long netUsed = infoById.get().getReceipt().getNetUsage();
+    Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
+    Long netFee = infoById.get().getReceipt().getNetFee();
+    logger.info("energyUsageTotal:" + energyUsageTotal);
+    logger.info("fee:" + fee);
+    logger.info("energyFee:" + energyFee);
+    logger.info("netUsed:" + netUsed);
+    logger.info("energyUsed:" + energyUsed);
+    logger.info("netFee:" + netFee);
 
-    Account account = PublicMethed.queryAccount(linkage003Address,blockingStubFull);
-    Long beforeBalance = account.getBalance();
-    byte []  contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
-        0L, 0,null,linkage002Key,linkage003Address,blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
+    Account infoafter = PublicMethed.queryAccount(linkage003Address, blockingStubFull1);
+    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(linkage003Address,
+        blockingStubFull1);
+    Long afterBalance = infoafter.getBalance();
+    Long afterEnergyLimit = resourceInfoafter.getEnergyLimit();
+    Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
+    Long afterFreeNetLimit = resourceInfoafter.getFreeNetLimit();
+    Long afterNetLimit = resourceInfoafter.getNetLimit();
+    Long afterNetUsed = resourceInfoafter.getNetUsed();
+    Long afterFreeNetUsed = resourceInfoafter.getFreeNetUsed();
+    logger.info("afterBalance:" + afterBalance);
+    logger.info("afterEnergyLimit:" + afterEnergyLimit);
+    logger.info("afterEnergyUsed:" + afterEnergyUsed);
+    logger.info("afterFreeNetLimit:" + afterFreeNetLimit);
+    logger.info("afterNetLimit:" + afterNetLimit);
+    logger.info("afterNetUsed:" + afterNetUsed);
+    logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
+
+    SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertFalse(smartContract.getName().isEmpty());
-    account = PublicMethed.queryAccount(linkage003Address,blockingStubFull);
-    Long afterBalance = account.getBalance();
-    Assert.assertTrue(beforeBalance - afterBalance > 0);
-    accountResource = PublicMethed.getAccountResource(linkage003Address, blockingStubFull);
-    Assert.assertTrue(accountResource.getEnergyUsed() == 0L);
-  }
+    Assert.assertTrue((beforeBalance - fee) == afterBalance);
+    Assert.assertTrue(afterEnergyUsed == 0L);
+    Assert.assertTrue(afterFreeNetUsed > 0L);
+    Assert.assertTrue(afterNetUsed == 0L);
 
+
+  }
 
 
   @AfterClass

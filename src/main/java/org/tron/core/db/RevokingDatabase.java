@@ -10,6 +10,8 @@ public interface RevokingDatabase {
 
   ISession buildSession(boolean forceEnable);
 
+  void setMode(boolean mode);
+
   void add(IRevokingDB revokingDB);
 
   void merge() throws RevokingStoreIllegalStateException;
@@ -31,6 +33,8 @@ public interface RevokingDatabase {
   void setMaxSize(int maxSize);
 
   void disable();
+
+  void setMaxFlushCount(int maxFlushCount);
 
   void shutdown();
 }

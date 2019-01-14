@@ -1,6 +1,5 @@
 package org.tron.core.db;
 
-
 import static java.lang.Long.max;
 
 import java.util.List;
@@ -32,8 +31,19 @@ public class EnergyProcessor extends ResourceProcessor {
     long latestConsumeTime = accountResource.getLatestConsumeTimeForEnergy();
 
     accountCapsule.setEnergyUsage(increase(oldEnergyUsage, 0, latestConsumeTime, now));
-
   }
+
+  public void updateTotalEnergyAverageUsage(long now, long energy) {
+    long totalNetAverageUsage = dbManager.getDynamicPropertiesStore().getTotalEnergyAverageUsage();
+    long totalNetAverageTime = dbManager.getDynamicPropertiesStore().getTotalEnergyAverageTime();
+
+    long newPublicNetAverageUsage = increase(totalNetAverageUsage, energy, totalNetAverageTime,
+        now, averageWindowSize);
+
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageUsage(newPublicNetAverageUsage);
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageTime(now);
+  }
+
 
   @Override
   public void consume(TransactionCapsule trx,
@@ -117,8 +127,7 @@ public class EnergyProcessor extends ResourceProcessor {
 
     long energyUsage = accountCapsule.getEnergyUsage();
     long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();
-    long energyLimit = calculateGlobalEnergyLimit(
-        accountCapsule.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance());
+    long energyLimit = calculateGlobalEnergyLimit(accountCapsule);
 
     long newEnergyUsage = increase(energyUsage, 0, latestConsumeTime, now);
 
@@ -134,18 +143,27 @@ public class EnergyProcessor extends ResourceProcessor {
     accountCapsule.setLatestConsumeTimeForEnergy(latestConsumeTime);
 
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+
+    if (dbManager.getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 1) {
+      updateTotalEnergyAverageUsage(now, energy);
+    }
+
     return true;
   }
 
 
-  public long calculateGlobalEnergyLimit(long frozeBalance) {
+  public long calculateGlobalEnergyLimit(AccountCapsule accountCapsule) {
+    long frozeBalance = accountCapsule.getAllFrozenBalanceForEnergy();
     if (frozeBalance < 1000_000L) {
       return 0;
     }
+
     long energyWeight = frozeBalance / 1000_000L;
-    long totalEnergyLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyLimit();
+    long totalEnergyLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
     long totalEnergyWeight = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
+
     assert totalEnergyWeight > 0;
+
     return (long) (energyWeight * ((double) totalEnergyLimit / totalEnergyWeight));
   }
 
@@ -155,8 +173,7 @@ public class EnergyProcessor extends ResourceProcessor {
 
     long energyUsage = accountCapsule.getEnergyUsage();
     long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();
-    long energyLimit = calculateGlobalEnergyLimit(
-        accountCapsule.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance());
+    long energyLimit = calculateGlobalEnergyLimit(accountCapsule);
 
     long newEnergyUsage = increase(energyUsage, 0, latestConsumeTime, now);
 

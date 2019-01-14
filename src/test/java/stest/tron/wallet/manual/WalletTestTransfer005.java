@@ -85,11 +85,11 @@ public class WalletTestTransfer005 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testgetTransactionsFromThis() {
     //Create a transfer.
-    Assert.assertTrue(PublicMethed.sendcoin(toAddress,1000000,fromAddress,
-        testKey002,blockingStubFull));
+    //Assert.assertTrue(PublicMethed.sendcoin(toAddress,1000000,fromAddress,
+    //    testKey002,blockingStubFull));
 
     ByteString addressBs = ByteString.copyFrom(fromAddress);
     Account account = Account.newBuilder().setAddress(addressBs).build();
@@ -117,7 +117,7 @@ public class WalletTestTransfer005 {
     }
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testgetTransactionsFromThisByInvaildAddress() {
     //Invaild address.
     ByteString addressBs = ByteString.copyFrom(INVAILD_ADDRESS);

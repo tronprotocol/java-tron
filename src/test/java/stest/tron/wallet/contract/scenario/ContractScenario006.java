@@ -46,7 +46,6 @@ public class ContractScenario006 {
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
-    PublicMethed.printAddress(contract006Key);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
@@ -55,6 +54,11 @@ public class ContractScenario006 {
 
   @Test(enabled = true)
   public void deployFomo3D() {
+    ecKey1 = new ECKey(Utils.getRandom());
+    contract006Address = ecKey1.getAddress();
+    contract006Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    PublicMethed.printAddress(contract006Key);
+
     Assert.assertTrue(PublicMethed.sendcoin(contract006Address,200000000L,fromAddress,
         testKey002,blockingStubFull));
     logger.info(Long.toString(PublicMethed.queryAccount(contract006Key,blockingStubFull)

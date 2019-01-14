@@ -303,13 +303,11 @@ public class InternalTransactionCallTest {
   public  void destroy() {
     Args.clearParam();
     AppT.shutdown();
-    ApplicationFactory.create(context).shutdown();
-    context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {
       logger.warn("Release resources failure.");
     }
-
+    context.destroy();
   }
 }

@@ -19,6 +19,8 @@ public interface IRevokingDB extends Iterable<Map.Entry<byte[], byte[]>> {
 
   void reset();
 
+  void setMode(boolean mode);
+
   // for blockstore
   Set<byte[]> getlatestValues(long limit);
 

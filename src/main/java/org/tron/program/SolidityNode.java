@@ -1,10 +1,12 @@
 package org.tron.program;
 
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+
 import ch.qos.logback.classic.Level;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -18,172 +20,161 @@ import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.AccountResourceInsufficientException;
-import org.tron.core.exception.BadBlockException;
-import org.tron.core.exception.BadItemException;
-import org.tron.core.exception.BadNumberBlockException;
-import org.tron.core.exception.ContractExeException;
-import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.DupTransactionException;
-import org.tron.core.exception.NonCommonBlockException;
-import org.tron.core.exception.ReceiptCheckErrException;
-import org.tron.core.exception.TaposException;
-import org.tron.core.exception.TooBigTransactionException;
-import org.tron.core.exception.TooBigTransactionResultException;
-import org.tron.core.exception.TransactionExpirationException;
-import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.exception.VMIllegalException;
-import org.tron.core.exception.ValidateScheduleException;
-import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.http.solidity.SolidityNodeHttpApiService;
 import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.DynamicProperties;
 
 @Slf4j
 public class SolidityNode {
 
-  private DatabaseGrpcClient databaseGrpcClient;
   private Manager dbManager;
 
-  private ScheduledExecutorService syncExecutor = Executors.newSingleThreadScheduledExecutor();
+  private DatabaseGrpcClient databaseGrpcClient;
 
-  public void setDbManager(Manager dbManager) {
+  private AtomicLong ID = new AtomicLong();
+
+  private AtomicLong remoteBlockNum = new AtomicLong();
+
+  private LinkedBlockingDeque<Block> blockQueue = new LinkedBlockingDeque(100);
+
+  private int exceptionSleepTime = 1000;
+
+  private volatile boolean flag = true;
+
+  public SolidityNode(Manager dbManager) {
     this.dbManager = dbManager;
+    resolveCompatibilityIssueIfUsingFullNodeDatabase();
+    ID.set(dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+    databaseGrpcClient = new DatabaseGrpcClient(Args.getInstance().getTrustNodeAddr());
+    remoteBlockNum.set(getLastSolidityBlockNum());
   }
 
-  private void initGrpcClient(String addr) {
+  private void start() {
     try {
-      databaseGrpcClient = new DatabaseGrpcClient(addr);
+      new Thread(() -> getBlock()).start();
+      new Thread(() -> processBlock()).start();
+      logger.info( "Success to start solid node, ID: {}, remoteBlockNum: {}.", ID.get(), remoteBlockNum);
     } catch (Exception e) {
-      logger.error("Failed to create database grpc client {}", addr);
+      logger.error("Failed to start solid node, address: {}.", Args.getInstance().getTrustNodeAddr());
       System.exit(0);
     }
   }
 
-  private void shutdownGrpcClient() {
-    if (databaseGrpcClient != null) {
-      databaseGrpcClient.shutdown();
-    }
-  }
-
-  private void syncLoop(Args args) {
-//    while (true) {
-//      try {
-//        initGrpcClient(args.getTrustNodeAddr());
-//        syncSolidityBlock();
-//        shutdownGrpcClient();
-//      } catch (Exception e) {
-//        logger.error("Error in sync solidity block " + e.getMessage(), e);
-//      }
-//      try {
-//        Thread.sleep(5000);
-//      } catch (InterruptedException e) {
-//        Thread.currentThread().interrupt();
-//        e.printStackTrace();
-//      }
-//    }
-  }
-
-  private void syncSolidityBlock() throws BadBlockException {
-    DynamicProperties remoteDynamicProperties = databaseGrpcClient.getDynamicProperties();
-    long remoteLastSolidityBlockNum = remoteDynamicProperties.getLastSolidityBlockNum();
-    while (true) {
-
-//      try {
-//        Thread.sleep(10000);
-//      } catch (Exception e) {
-//
-//      }
-      long lastSolidityBlockNum = dbManager.getDynamicPropertiesStore()
-          .getLatestSolidifiedBlockNum();
-      logger.info("sync solidity block, lastSolidityBlockNum:{}, remoteLastSolidityBlockNum:{}",
-          lastSolidityBlockNum, remoteLastSolidityBlockNum);
-      if (lastSolidityBlockNum < remoteLastSolidityBlockNum) {
-        Block block = databaseGrpcClient.getBlock(lastSolidityBlockNum + 1);
-        try {
-          BlockCapsule blockCapsule = new BlockCapsule(block);
-          dbManager.pushVerifiedBlock(blockCapsule);
-          //dbManager.pushBlock(blockCapsule);
-          for (TransactionCapsule trx : blockCapsule.getTransactions()) {
-            TransactionInfoCapsule ret;
-            try {
-              ret = dbManager.getTransactionHistoryStore().get(trx.getTransactionId().getBytes());
-            } catch (BadItemException ex) {
-              logger.warn("", ex);
-              continue;
-            }
-            ret.setBlockNumber(blockCapsule.getNum());
-            ret.setBlockTimeStamp(blockCapsule.getTimeStamp());
-            dbManager.getTransactionHistoryStore().put(trx.getTransactionId().getBytes(), ret);
-          }
-          dbManager.getDynamicPropertiesStore()
-              .saveLatestSolidifiedBlockNum(lastSolidityBlockNum + 1);
-        } catch (AccountResourceInsufficientException e) {
-          throw new BadBlockException("validate AccountResource exception");
-        } catch (ValidateScheduleException e) {
-          throw new BadBlockException("validate schedule exception");
-        } catch (ValidateSignatureException e) {
-          throw new BadBlockException("validate signature exception");
-        } catch (ContractValidateException e) {
-          throw new BadBlockException("ContractValidate exception");
-        } catch (ContractExeException e) {
-          throw new BadBlockException("Contract Execute exception");
-        } catch (TaposException e) {
-          throw new BadBlockException("tapos exception");
-        } catch (DupTransactionException e) {
-          throw new BadBlockException("dup exception");
-        } catch (TooBigTransactionException e) {
-          throw new BadBlockException("too big exception");
-        } catch (TooBigTransactionResultException e) {
-          throw new BadBlockException("too big exception result");
-        } catch (TransactionExpirationException e) {
-          throw new BadBlockException("expiration exception");
-        } catch (BadNumberBlockException e) {
-          throw new BadBlockException("bad number exception");
-        } catch (NonCommonBlockException e) {
-          throw new BadBlockException("non common exception");
-        } catch (ReceiptCheckErrException e) {
-          throw new BadBlockException("OutOfSlotTime Exception");
-        } catch (VMIllegalException e) {
-          throw new BadBlockException(e.getMessage());
-        } catch (UnLinkedBlockException e) {
-          throw new BadBlockException("unLink exception");
-        }
-
-      } else {
-        break;
-      }
-    }
-    logger.info("Sync with trust node completed!!!");
-  }
-
-  private void start(Args cfgArgs) {
-    syncExecutor.scheduleWithFixedDelay(() -> {
+  private void getBlock() {
+    long blockNum = ID.incrementAndGet();
+    while (flag) {
       try {
-        initGrpcClient(cfgArgs.getTrustNodeAddr());
-        syncSolidityBlock();
-        shutdownGrpcClient();
-      } catch (Throwable t) {
-        logger.error("Error in sync solidity block " + t.getMessage());
+        if (blockNum > remoteBlockNum.get()) {
+          sleep(BLOCK_PRODUCED_INTERVAL);
+          remoteBlockNum.set(getLastSolidityBlockNum());
+          continue;
+        }
+        Block block = getBlockByNum(blockNum);
+        blockQueue.put(block);
+        blockNum = ID.incrementAndGet();
+      } catch (Exception e) {
+        logger.error("Failed to get block {}, reason: {}.", blockNum, e.getMessage());
+        sleep(exceptionSleepTime);
       }
-    }, 5000, 5000, TimeUnit.MILLISECONDS);
-    //new Thread(() -> syncLoop(cfgArgs), logger.getName()).start();
+    }
+  }
+
+  private void processBlock() {
+    while (flag) {
+      try {
+        Block block = blockQueue.take();
+        loopProcessBlock(block);
+      } catch (Exception e) {
+        logger.error(e.getMessage());
+        sleep(exceptionSleepTime);
+      }
+    }
+  }
+
+  private void loopProcessBlock(Block block) {
+    while (flag) {
+      long blockNum = block.getBlockHeader().getRawData().getNumber();
+      try {
+        dbManager.pushVerifiedBlock(new BlockCapsule(block));
+        dbManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(blockNum);
+        logger.info("Success to process block: {}, blockQueueSize: {}.", blockNum, blockQueue.size());
+        return;
+      } catch (Exception e) {
+        logger.error("Failed to process block {}.", new BlockCapsule(block), e);
+        sleep(exceptionSleepTime);
+        block = getBlockByNum(blockNum);
+      }
+    }
+  }
+
+  private Block getBlockByNum(long blockNum) {
+    while (true) {
+      try {
+        long time = System.currentTimeMillis();
+        Block block = databaseGrpcClient.getBlock(blockNum);
+        long num = block.getBlockHeader().getRawData().getNumber();
+        if (num == blockNum) {
+          logger.info("Success to get block: {}, cost: {}ms.",
+              blockNum, System.currentTimeMillis() - time);
+          return block;
+        }else {
+          logger.warn("Get block id not the same , {}, {}.", num, blockNum);
+          sleep(exceptionSleepTime);
+        }
+      }catch (Exception e){
+        logger.error("Failed to get block: {}, reason: {}.", blockNum, e.getMessage());
+        sleep(exceptionSleepTime);
+      }
+    }
+  }
+
+  private long getLastSolidityBlockNum() {
+    while (true) {
+      try {
+        long time = System.currentTimeMillis();
+        long blockNum = databaseGrpcClient.getDynamicProperties().getLastSolidityBlockNum();
+        logger.info("Get last remote solid blockNum: {}, remoteBlockNum: {}, cost: {}.",
+            blockNum, remoteBlockNum, System.currentTimeMillis() - time);
+        return blockNum;
+      } catch (Exception e) {
+        logger.error("Failed to get last solid blockNum: {}, reason: {}.", remoteBlockNum.get(), e.getMessage());
+        sleep(exceptionSleepTime);
+      }
+    }
+  }
+
+  public void sleep(long time) {
+    try {
+      Thread.sleep(time);
+    } catch (Exception e1) {
+    }
+  }
+
+  private void resolveCompatibilityIssueIfUsingFullNodeDatabase() {
+    long lastSolidityBlockNum = dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+    long headBlockNum = dbManager.getHeadBlockNum();
+    logger.info("headBlockNum:{}, solidityBlockNum:{}, diff:{}",
+        headBlockNum, lastSolidityBlockNum, headBlockNum - lastSolidityBlockNum);
+    if (lastSolidityBlockNum < headBlockNum) {
+      logger.info("use fullNode database, headBlockNum:{}, solidityBlockNum:{}, diff:{}",
+          headBlockNum, lastSolidityBlockNum, headBlockNum - lastSolidityBlockNum);
+      dbManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(headBlockNum);
+    }
   }
 
   /**
    * Start the SolidityNode.
    */
-  public static void main(String[] args) throws InterruptedException {
+  public static void main(String[] args) {
     logger.info("Solidity node running.");
     Args.setParam(args, Constant.TESTNET_CONF);
     Args cfgArgs = Args.getInstance();
 
+    logger.info("index switch is {}",
+        BooleanUtils.toStringOnOff(BooleanUtils.toBoolean(cfgArgs.getStorage().getIndexSwitch())));
     ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger)LoggerFactory
         .getLogger(Logger.ROOT_LOGGER_NAME);
     root.setLevel(Level.toLevel(cfgArgs.getLogLevel()));
@@ -222,9 +213,8 @@ public class SolidityNode {
     NodeManager nodeManager = context.getBean(NodeManager.class);
     nodeManager.close();
 
-    SolidityNode node = new SolidityNode();
-    node.setDbManager(appT.getDbManager());
-    node.start(cfgArgs);
+    SolidityNode node = new SolidityNode(appT.getDbManager());
+    node.start();
 
     rpcApiService.blockUntilShutdown();
   }

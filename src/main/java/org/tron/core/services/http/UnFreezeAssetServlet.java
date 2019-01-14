@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
-import org.tron.protos.Contract.UnfreezeBalanceContract;
+import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
@@ -29,7 +29,7 @@ public class UnFreezeAssetServlet extends HttpServlet {
     try {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
-      UnfreezeBalanceContract.Builder build = UnfreezeBalanceContract.newBuilder();
+      UnfreezeAssetContract.Builder build = UnfreezeAssetContract.newBuilder();
       JsonFormat.merge(contract, build);
       Transaction tx = wallet
           .createTransactionCapsule(build.build(), ContractType.UnfreezeAssetContract)

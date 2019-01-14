@@ -17,18 +17,15 @@ package org.tron.core.config.args;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
-
-import org.iq80.leveldb.CompressionType;
-import org.iq80.leveldb.Options;
-
 import java.io.File;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import org.tron.common.utils.FileUtil;
-
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.StringUtils;
+import org.iq80.leveldb.CompressionType;
+import org.iq80.leveldb.Options;
+import org.tron.common.utils.FileUtil;
 
 /**
  * Custom storage configurations
@@ -45,8 +42,12 @@ public class Storage {
    */
   private static final String DB_DIRECTORY_CONFIG_KEY = "storage.db.directory";
   private static final String DB_VERSION_CONFIG_KEY = "storage.db.version";
+  private static final String DB_SYNC_CONFIG_KEY = "storage.db.sync";
   private static final String INDEX_DIRECTORY_CONFIG_KEY = "storage.index.directory";
+  private static final String INDEX_SWITCH_CONFIG_KEY = "storage.index.switch";
+  private static final String TRANSACTIONHISTORY_SWITCH_CONFIG_KEY = "storage.transHistory.switch";
   private static final String PROPERTIES_CONFIG_KEY = "storage.properties";
+  private static final String DEFAULT_TRANSACTIONHISTORY_SWITCH = "on";
 
   private static final String NAME_CONFIG_KEY = "name";
   private static final String PATH_CONFIG_KEY = "path";
@@ -62,9 +63,11 @@ public class Storage {
   /**
    * Default values of directory
    */
-  private static final int DEFAULT_DB_VERSION = 1;
+  private static final int DEFAULT_DB_VERSION = 2;
+  private static final boolean DEFAULT_DB_SYNC = false;
   private static final String DEFAULT_DB_DIRECTORY = "database";
   private static final String DEFAULT_INDEX_DIRECTORY = "index";
+  private static final String DEFAULT_INDEX_SWTICH = "on";
 
   /**
    * Default values of db options:
@@ -92,12 +95,24 @@ public class Storage {
   @Setter
   private int dbVersion;
 
+  @Getter
+  @Setter
+  private boolean dbSync;
+
   /**
    * Index storage directory: /path/to/{indexDirectory}
    */
   @Getter
   @Setter
   private String indexDirectory;
+
+  @Getter
+  @Setter
+  private String indexSwitch;
+
+  @Getter
+  @Setter
+  private String transactionHistoreSwitch;
 
   /**
    * Other custom database configurations
@@ -120,6 +135,11 @@ public class Storage {
         config.getInt(DB_VERSION_CONFIG_KEY) : DEFAULT_DB_VERSION;
   }
 
+  public static Boolean getDbVersionSyncFromConfig(final Config config) {
+    return config.hasPath(DB_SYNC_CONFIG_KEY) ?
+      config.getBoolean(DB_SYNC_CONFIG_KEY) : DEFAULT_DB_SYNC;
+  }
+
   public static String getDbDirectoryFromConfig(final Config config) {
     return config.hasPath(DB_DIRECTORY_CONFIG_KEY) ?
         config.getString(DB_DIRECTORY_CONFIG_KEY) : DEFAULT_DB_DIRECTORY;
@@ -128,6 +148,17 @@ public class Storage {
   public static String getIndexDirectoryFromConfig(final Config config) {
     return config.hasPath(INDEX_DIRECTORY_CONFIG_KEY) ?
         config.getString(INDEX_DIRECTORY_CONFIG_KEY) : DEFAULT_INDEX_DIRECTORY;
+  }
+
+  public static String getIndexSwitchFromConfig(final Config config) {
+    return config.hasPath(INDEX_SWITCH_CONFIG_KEY)
+        && StringUtils.isNotEmpty(config.getString(INDEX_SWITCH_CONFIG_KEY)) ?
+        config.getString(INDEX_SWITCH_CONFIG_KEY) : DEFAULT_INDEX_SWTICH;
+  }
+
+  public static String getTransactionHistoreSwitchFromConfig(final Config config) {
+    return config.hasPath(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY)?
+      config.getString(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY) : DEFAULT_TRANSACTIONHISTORY_SWITCH;
   }
 
   /**

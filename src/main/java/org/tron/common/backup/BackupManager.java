@@ -6,6 +6,7 @@ import static org.tron.common.backup.BackupManager.BackupStatusEnum.SLAVER;
 import static org.tron.common.net.udp.message.UdpMessageTypeEnum.BACKUP_KEEP_ALIVE;
 
 import io.netty.util.internal.ConcurrentSet;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -31,6 +32,8 @@ public class BackupManager implements EventHandler{
 
   private int port = args.getBackupPort();
 
+  private String localIp = "";
+
   private Set<String> members = new ConcurrentSet<>();
 
   private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
@@ -41,7 +44,7 @@ public class BackupManager implements EventHandler{
 
   private volatile long lastKeepAliveTime;
 
-  private volatile long keepAliveTimeout = 3000;
+  private volatile long keepAliveTimeout = 10_000;
 
   private volatile boolean isInit = false;
 
@@ -71,11 +74,19 @@ public class BackupManager implements EventHandler{
     }
     isInit = true;
 
-    for (String member : args.getBackupMembers()) {
-      members.add(member);
+    try{
+      localIp = InetAddress.getLocalHost().getHostAddress();
+    }catch (Exception e){
+      logger.warn("Get local ip failed.");
     }
 
-    logger.info("Backup members: size= {}, {}", members.size(), members);
+    for (String member : args.getBackupMembers()) {
+      if (!localIp.equals(member)){
+        members.add(member);
+      }
+    }
+
+    logger.info("Backup localIp:{}, members: size= {}, {}", localIp, members.size(), members);
 
     setStatus(INIT);
 
@@ -118,16 +129,20 @@ public class BackupManager implements EventHandler{
     lastKeepAliveTime = System.currentTimeMillis();
 
     KeepAliveMessage keepAliveMessage = (KeepAliveMessage) msg;
+    int peerPriority = keepAliveMessage.getPriority();
+    String peerIp = sender.getAddress().getHostAddress();
 
-    if (status.equals(MASTER) && (keepAliveMessage.getFlag() &&
-        keepAliveMessage.getPriority() > priority)){
+    if (status.equals(INIT) && (keepAliveMessage.getFlag() || peerPriority > priority)){
       setStatus(SLAVER);
       return;
     }
 
-    if (status.equals(INIT) &&
-        (keepAliveMessage.getFlag() || keepAliveMessage.getPriority() > priority)){
+    if (status.equals(MASTER) && keepAliveMessage.getFlag()){
+      if (peerPriority > priority){
         setStatus(SLAVER);
+      }else if (peerPriority == priority && localIp.compareTo(peerIp) < 0){
+        setStatus(SLAVER);
+      }
     }
   }
 

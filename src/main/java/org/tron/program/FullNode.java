@@ -14,6 +14,8 @@ import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
 import org.tron.core.services.http.FullNodeHttpApiService;
+import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
+import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
 
 @Slf4j
 public class FullNode {
@@ -21,7 +23,7 @@ public class FullNode {
   /**
    * Start the FullNode.
    */
-  public static void main(String[] args) throws InterruptedException {
+  public static void main(String[] args) {
     logger.info("Full node running.");
     Args.setParam(args, Constant.TESTNET_CONF);
     Args cfgArgs = Args.getInstance();
@@ -60,6 +62,16 @@ public class FullNode {
     // http api server
     FullNodeHttpApiService httpApiService = context.getBean(FullNodeHttpApiService.class);
     appT.addService(httpApiService);
+
+    // fullnode and soliditynode fuse together, provide solidity rpc and http server on the fullnode.
+    if (Args.getInstance().getStorage().getDbVersion() == 2) {
+      RpcApiServiceOnSolidity rpcApiServiceOnSolidity = context
+          .getBean(RpcApiServiceOnSolidity.class);
+      appT.addService(rpcApiServiceOnSolidity);
+      HttpApiOnSolidityService httpApiOnSolidityService = context
+          .getBean(HttpApiOnSolidityService.class);
+      appT.addService(httpApiOnSolidityService);
+    }
 
     appT.initServices(cfgArgs);
     appT.startServices();

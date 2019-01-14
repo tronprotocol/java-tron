@@ -1,8 +1,5 @@
 package org.tron.core.config.args;
 
-import static java.lang.Math.max;
-import static java.lang.Math.min;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.typesafe.config.Config;
@@ -46,6 +43,7 @@ import org.tron.core.db.AccountStore;
 import org.tron.keystore.CipherException;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
+import org.tron.program.Version;
 
 @Slf4j
 @NoArgsConstructor
@@ -82,7 +80,7 @@ public class Args {
   @Getter
   @Setter
   @Parameter(names = {"--min-time-ratio"})
-  private double minTimeRatio = 0.6;
+  private double minTimeRatio = 0.0;
 
   @Getter
   @Setter
@@ -110,8 +108,17 @@ public class Args {
   @Parameter(names = {"--storage-db-version"}, description = "Storage db version.(1 or 2)")
   private String storageDbVersion = "";
 
+  @Parameter(names = {"--storage-db-synchronous"}, description = "Storage db is synchronous or not.(true or flase)")
+  private String storageDbSynchronous = "";
+
   @Parameter(names = {"--storage-index-directory"}, description = "Storage index directory")
   private String storageIndexDirectory = "";
+
+  @Parameter(names = {"--storage-index-switch"}, description = "Storage index switch.(on or off)")
+  private String storageIndexSwitch = "";
+
+  @Parameter(names = {"--storage-transactionHistory-switch"}, description = "Storage transaction history switch.(on or off)")
+  private String storageTransactionHistoreSwitch = "";
 
   @Getter
   private Storage storage;
@@ -196,6 +203,10 @@ public class Args {
 //  @Getter
 //  @Setter
 //  private long syncNodeCount;
+  @Getter
+  @Setter
+  @Parameter(names = {"--save-internaltx"})
+  private boolean saveInternalTx;
 
   @Getter
   @Setter
@@ -216,6 +227,10 @@ public class Args {
 
   @Getter
   @Setter
+  private int rpcOnSolidityPort;
+
+  @Getter
+  @Setter
   private int fullNodeHttpPort;
 
   @Getter
@@ -226,6 +241,11 @@ public class Args {
   @Setter
   @Parameter(names = {"--rpc-thread"}, description = "Num of gRPC thread")
   private int rpcThreadNum;
+
+  @Getter
+  @Setter
+  @Parameter(names = {"--solidity-thread"}, description = "Num of solidity thread")
+  private int solidityThreads;
 
   @Getter
   @Setter
@@ -274,7 +294,27 @@ public class Args {
 
   @Getter
   @Setter
+  private int checkFrozenTime; // for test only
+
+  @Getter
+  @Setter
   private long allowCreationOfContracts; //committee parameter
+
+  @Getter
+  @Setter
+  private long allowAdaptiveEnergy; //committee parameter
+
+  @Getter
+  @Setter
+  private long allowDelegateResource; //committee parameter
+
+  @Getter
+  @Setter
+  private long allowSameTokenName; //committee parameter
+
+  @Getter
+  @Setter
+  private long allowTvmTransferTrc10; //committee parameter
 
   @Getter
   @Setter
@@ -337,6 +377,22 @@ public class Args {
   @Setter
   private String logLevel;
 
+  @Getter
+  @Setter
+  private boolean vmTrace;
+
+  @Getter
+  @Setter
+  private boolean needToUpdateAsset;
+
+  @Getter
+  @Setter
+  private String trxReferenceBlock;
+
+  @Getter
+  @Setter
+  private int minEffectiveConnection;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -345,6 +401,7 @@ public class Args {
     INSTANCE.privateKey = "";
     INSTANCE.storageDbDirectory = "";
     INSTANCE.storageIndexDirectory = "";
+    INSTANCE.storageIndexSwitch = "";
 
     // FIXME: INSTANCE.storage maybe null ?
     if (INSTANCE.storage != null) {
@@ -376,11 +433,17 @@ public class Args {
     //INSTANCE.syncNodeCount = 0;
     INSTANCE.nodeP2pVersion = 0;
     INSTANCE.rpcPort = 0;
+    INSTANCE.rpcOnSolidityPort = 0;
     INSTANCE.fullNodeHttpPort = 0;
     INSTANCE.solidityHttpPort = 0;
     INSTANCE.maintenanceTimeInterval = 0;
     INSTANCE.proposalExpireTime = 0;
+    INSTANCE.checkFrozenTime = 1;
     INSTANCE.allowCreationOfContracts = 0;
+    INSTANCE.allowAdaptiveEnergy = 0;
+    INSTANCE.allowTvmTransferTrc10 = 0;
+    INSTANCE.allowDelegateResource = 0;
+    INSTANCE.allowSameTokenName = 0;
     INSTANCE.tcpNettyWorkThreadNum = 0;
     INSTANCE.udpNettyWorkThreadNum = 0;
     INSTANCE.p2pNodeId = "";
@@ -395,7 +458,7 @@ public class Args {
     INSTANCE.isOpenFullTcpDisconnect = false;
     INSTANCE.supportConstant = false;
     INSTANCE.debug = false;
-    INSTANCE.minTimeRatio = 0.6;
+    INSTANCE.minTimeRatio = 0.0;
     INSTANCE.maxTimeRatio = 5.0;
     INSTANCE.isOpenFullTcpDisconnect = true;
     INSTANCE.longRunningTime = 10;
@@ -483,6 +546,11 @@ public class Args {
         .map(Integer::valueOf)
         .orElse(Storage.getDbVersionFromConfig(config)));
 
+    INSTANCE.storage.setDbSync(Optional.ofNullable(INSTANCE.storageDbSynchronous)
+      .filter(StringUtils::isNotEmpty)
+      .map(Boolean::valueOf)
+      .orElse(Storage.getDbVersionSyncFromConfig(config)));
+
     INSTANCE.storage.setDbDirectory(Optional.ofNullable(INSTANCE.storageDbDirectory)
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getDbDirectoryFromConfig(config)));
@@ -490,6 +558,15 @@ public class Args {
     INSTANCE.storage.setIndexDirectory(Optional.ofNullable(INSTANCE.storageIndexDirectory)
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getIndexDirectoryFromConfig(config)));
+
+    INSTANCE.storage.setIndexSwitch(Optional.ofNullable(INSTANCE.storageIndexSwitch)
+        .filter(StringUtils::isNotEmpty)
+        .orElse(Storage.getIndexSwitchFromConfig(config)));
+
+    INSTANCE.storage.setTransactionHistoreSwitch(Optional.ofNullable(INSTANCE.storageTransactionHistoreSwitch)
+      .filter(StringUtils::isNotEmpty)
+      .orElse(Storage.getTransactionHistoreSwitchFromConfig(config)));
+
 
     INSTANCE.storage.setPropertyMapFromConfig(config);
 
@@ -548,7 +625,8 @@ public class Args {
         config.hasPath("node.maxActiveNodes") ? config.getInt("node.maxActiveNodes") : 30;
 
     INSTANCE.nodeMaxActiveNodesWithSameIp =
-        config.hasPath("node.maxActiveNodesWithSameIp") ? config.getInt("node.maxActiveNodesWithSameIp") : 2;
+        config.hasPath("node.maxActiveNodesWithSameIp") ? config
+            .getInt("node.maxActiveNodesWithSameIp") : 2;
 
     INSTANCE.minParticipationRate =
         config.hasPath("node.minParticipationRate") ? config.getInt("node.minParticipationRate")
@@ -576,6 +654,9 @@ public class Args {
     INSTANCE.rpcPort =
         config.hasPath("node.rpc.port") ? config.getInt("node.rpc.port") : 50051;
 
+    INSTANCE.rpcOnSolidityPort =
+        config.hasPath("node.rpc.solidityPort") ? config.getInt("node.rpc.solidityPort") : 50061;
+
     INSTANCE.fullNodeHttpPort =
         config.hasPath("node.http.fullNodePort") ? config.getInt("node.http.fullNodePort") : 8090;
 
@@ -585,6 +666,10 @@ public class Args {
     INSTANCE.rpcThreadNum =
         config.hasPath("node.rpc.thread") ? config.getInt("node.rpc.thread")
             : Runtime.getRuntime().availableProcessors() / 2;
+
+    INSTANCE.solidityThreads =
+        config.hasPath("node.solidity.threads") ? config.getInt("node.solidity.threads")
+            : Runtime.getRuntime().availableProcessors();
 
     INSTANCE.maxConcurrentCallsPerConnection =
         config.hasPath("node.rpc.maxConcurrentCallsPerConnection") ?
@@ -599,6 +684,12 @@ public class Args {
 
     INSTANCE.blockProducedTimeOut = config.hasPath("node.blockProducedTimeOut") ?
         config.getInt("node.blockProducedTimeOut") : ChainConstant.BLOCK_PRODUCED_TIME_OUT;
+    if (INSTANCE.blockProducedTimeOut < 30) {
+      INSTANCE.blockProducedTimeOut = 30;
+    }
+    if (INSTANCE.blockProducedTimeOut > 100) {
+      INSTANCE.blockProducedTimeOut = 100;
+    }
 
     INSTANCE.netMaxTrxPerSecond = config.hasPath("node.netMaxTrxPerSecond") ?
         config.getInt("node.netMaxTrxPerSecond") : NetConstants.NET_MAX_TRX_PER_SECOND;
@@ -620,9 +711,29 @@ public class Args {
         config.hasPath("block.proposalExpireTime") ? config
             .getInt("block.proposalExpireTime") : 259200000L;
 
+    INSTANCE.checkFrozenTime =
+        config.hasPath("block.checkFrozenTime") ? config
+            .getInt("block.checkFrozenTime") : 1;
+
     INSTANCE.allowCreationOfContracts =
         config.hasPath("committee.allowCreationOfContracts") ? config
             .getInt("committee.allowCreationOfContracts") : 0;
+
+    INSTANCE.allowAdaptiveEnergy =
+        config.hasPath("committee.allowAdaptiveEnergy") ? config
+            .getInt("committee.allowAdaptiveEnergy") : 0;
+
+    INSTANCE.allowDelegateResource =
+        config.hasPath("committee.allowDelegateResource") ? config
+            .getInt("committee.allowDelegateResource") : 0;
+
+    INSTANCE.allowSameTokenName =
+        config.hasPath("committee.allowSameTokenName") ? config
+            .getInt("committee.allowSameTokenName") : 0;
+
+    INSTANCE.allowTvmTransferTrc10 =
+        config.hasPath("committee.allowTvmTransferTrc10") ? config
+            .getInt("committee.allowTvmTransferTrc10") : 0;
 
     INSTANCE.tcpNettyWorkThreadNum = config.hasPath("node.tcpNettyWorkThreadNum") ? config
         .getInt("node.tcpNettyWorkThreadNum") : 0;
@@ -659,6 +770,23 @@ public class Args {
         .getBoolean("node.discovery.isOpenPortMapper");
     INSTANCE.logLevel =
         config.hasPath("log.level.root") ? config.getString("log.level.root") : "INFO";
+    INSTANCE.needToUpdateAsset =
+        config.hasPath("storage.needToUpdateAsset") ? config
+            .getBoolean("storage.needToUpdateAsset")
+            : true;
+
+    INSTANCE.trxReferenceBlock = config.hasPath("trx.reference.block") ?
+        config.getString("trx.reference.block") : "head";
+
+    INSTANCE.minEffectiveConnection = config.hasPath("node.rpc.minEffectiveConnection") ?
+        config.getInt("node.rpc.minEffectiveConnection") : 1;
+
+    INSTANCE.vmTrace =
+        config.hasPath("vm.vmTrace") ? config
+            .getBoolean("vm.vmTrace") : false;
+
+    INSTANCE.saveInternalTx =
+        config.hasPath("vm.saveInternalTx") && config.getBoolean("vm.saveInternalTx");
 
     initBackupProperty(config);
 
@@ -846,7 +974,8 @@ public class Args {
   }
 
   private static double calcMaxTimeRatio() {
-    return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
+    //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
+    return 5.0;
   }
 
   private static void initBackupProperty(Config config) {
@@ -858,7 +987,7 @@ public class Args {
         ? config.getStringList("node.backup.members") : new ArrayList<>();
   }
 
-  private static void logConfig(){
+  private static void logConfig() {
     Args args = getInstance();
     logger.info("\n");
     logger.info("************************ Net config ************************");
@@ -872,10 +1001,16 @@ public class Args {
     logger.info("Seed node size: {}", args.getSeedNode().getIpList().size());
     logger.info("Max connection: {}", args.getNodeMaxActiveNodes());
     logger.info("Max connection with same IP: {}", args.getNodeMaxActiveNodesWithSameIp());
+    logger.info("Solidity threads: {}", args.getSolidityThreads());
     logger.info("************************ Backup config ************************");
     logger.info("Backup listen port: {}", args.getBackupPort());
     logger.info("Backup member size: {}", args.getBackupMembers().size());
     logger.info("Backup priority: {}", args.getBackupPriority());
+    logger.info("************************ Code version *************************");
+    logger.info("Code version : {}", Version.getVersion());
+    logger.info("************************ DB config *************************");
+    logger.info("DB version : {}", args.getStorage().getDbVersion());
+    logger.info("***************************************************************");
     logger.info("\n");
   }
 }

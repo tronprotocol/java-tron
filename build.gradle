@@ -24,6 +24,9 @@ apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: "jacoco"
 apply plugin: 'maven-publish'
 
+jar.enabled = false
+shadowJar.enabled = false
+
 sourceCompatibility = 1.8
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 mainClassName = 'org.tron.program.FullNode'
@@ -172,6 +175,8 @@ dependencies {
 //    compile 'com.offbynull.portmapper:portmapper:2.0.5'
     compile 'org.fourthline.cling:cling-support:2.1.1'
     compile 'org.bitlet:weupnp:0.1.4'
+
+    compile "io.vavr:vavr:0.9.2"
 }
 
 check.dependsOn 'lint'

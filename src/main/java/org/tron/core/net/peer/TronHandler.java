@@ -23,7 +23,7 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
   }
 
   @Override
-  public void channelRead0(final ChannelHandlerContext ctx, TronMessage msg) {
+  public void channelRead0(final ChannelHandlerContext ctx, TronMessage msg) throws Exception {
     msgQueue.receivedMessage(msg);
     peerDel.onMessage(peer, msg);
   }

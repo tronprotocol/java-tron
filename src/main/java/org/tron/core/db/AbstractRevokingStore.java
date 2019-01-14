@@ -41,7 +41,8 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   private boolean disabled = true;
   private int activeDialog = 0;
   private AtomicInteger maxSize = new AtomicInteger(DEFAULT_STACK_MAX_SIZE);
-  private WriteOptions writeOptions = new WriteOptions().sync(true);
+  private WriteOptions writeOptions = new WriteOptions()
+      .sync(Args.getInstance().getStorage().isDbSync());
   private List<LevelDbDataSourceImpl> dbs = new ArrayList<>();
 
   @Override
@@ -70,6 +71,11 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
+  public void setMode(boolean mode) {
+
+  }
+
+  @Override
   public synchronized void check() {
     LevelDbDataSourceImpl check =
         new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
@@ -84,13 +90,18 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
         byte[] key = e.getKey();
         byte[] value = e.getValue();
         String db = simpleDecode(key);
+        if (dbMap.get(db) == null) {
+          continue;
+        }
         byte[] realKey = Arrays.copyOfRange(key, db.getBytes().length + 4, key.length);
 
         byte[] realValue = value.length == 1 ? null : Arrays.copyOfRange(value, 1, value.length);
         if (realValue != null) {
-          dbMap.get(db).putData(realKey, realValue, new WriteOptions().sync(true));
+          dbMap.get(db).putData(realKey, realValue, new WriteOptions()
+              .sync(Args.getInstance().getStorage().isDbSync()));
         } else {
-          dbMap.get(db).deleteData(realKey, new WriteOptions().sync(true));
+          dbMap.get(db).deleteData(realKey, new WriteOptions()
+              .sync(Args.getInstance().getStorage().isDbSync()));
         }
       }
     }
@@ -304,17 +315,23 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
     return maxSize.get();
   }
 
+  @Override
+  public void setMaxFlushCount(int maxFlushCount) {
+  }
+
   public synchronized void shutdown() {
     System.err.println("******** begin to pop revokingDb ********");
     System.err.println("******** before revokingDb size:" + size());
     try {
       disable();
-      boolean exit = false;
-      while (!exit) {
+      while (true) {
         try {
           commit();
         } catch (RevokingStoreIllegalStateException e) {
-          exit = true;
+          break;
+        }
+        if (activeDialog <= 0) {
+          break;
         }
       }
 
@@ -322,6 +339,12 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
         try {
           pop();
         } catch (RevokingStoreIllegalStateException e) {
+          break;
+        }
+        if (activeDialog != 0) {
+          break;
+        }
+        if (stack.isEmpty()) {
           break;
         }
       }

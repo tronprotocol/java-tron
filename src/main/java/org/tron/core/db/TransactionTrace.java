@@ -10,18 +10,24 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
 import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
 import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
 import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
 import org.tron.common.runtime.vm.program.Program.OutOfMemoryException;
-import org.tron.common.runtime.vm.program.Program.OutOfResourceException;
+import org.tron.common.runtime.vm.program.Program.OutOfTimeException;
 import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
 import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
 import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
+import org.tron.common.runtime.vm.program.ProgramResult;
+import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
+import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -44,6 +50,8 @@ public class TransactionTrace {
   private ReceiptCapsule receipt;
 
   private Manager dbManager;
+
+  private Runtime runtime;
 
   private EnergyProcessor energyProcessor;
 
@@ -86,24 +94,21 @@ public class TransactionTrace {
     this.energyProcessor = new EnergyProcessor(this.dbManager);
   }
 
-  public boolean needVM() {
+  private boolean needVM() {
     return this.trxType == TRX_CONTRACT_CALL_TYPE || this.trxType == TRX_CONTRACT_CREATION_TYPE;
   }
 
   //pre transaction check
-  public void init() {
+  public void init(BlockCapsule blockCap) {
     txStartTimeInMs = System.currentTimeMillis();
-    // switch (trxType) {
-    //   case TRX_PRECOMPILED_TYPE:
-    //     break;
-    //   case TRX_CONTRACT_CREATION_TYPE:
-    //   case TRX_CONTRACT_CALL_TYPE:
-    //     // checkForSmartContract();
-    //     break;
-    //   default:
-    //     break;
-    // }
+    DepositImpl deposit = DepositImpl.createRoot(dbManager);
+    runtime = new RuntimeImpl(this, blockCap, deposit, new ProgramInvokeFactoryImpl());
+  }
 
+  public void checkIsConstant() throws ContractValidateException, VMIllegalException {
+    if (runtime.isCallConstant()) {
+      throw new VMIllegalException("cannot call constant method ");
+    }
   }
 
   //set bill
@@ -120,9 +125,9 @@ public class TransactionTrace {
     receipt.setNetFee(netFee);
   }
 
-  public void exec(Runtime runtime)
+  public void exec()
       throws ContractExeException, ContractValidateException, VMIllegalException {
-    /**  VM execute  **/
+    /*  VM execute  */
     runtime.execute();
     runtime.go();
 
@@ -137,7 +142,7 @@ public class TransactionTrace {
     }
   }
 
-  public void finalization(Runtime runtime) throws ContractExeException {
+  public void finalization() throws ContractExeException {
     try {
       pay();
     } catch (BalanceInsufficientException e) {
@@ -153,6 +158,7 @@ public class TransactionTrace {
     byte[] originAccount;
     byte[] callerAccount;
     long percent = 0;
+    long originEnergyLimit = 0;
     switch (trxType) {
       case TRX_CONTRACT_CREATION_TYPE:
         callerAccount = TransactionCapsule.getOwner(trx.getInstance().getRawData().getContract(0));
@@ -161,13 +167,15 @@ public class TransactionTrace {
       case TRX_CONTRACT_CALL_TYPE:
         TriggerSmartContract callContract = ContractCapsule
             .getTriggerContractFromTransaction(trx.getInstance());
-        callerAccount = callContract.getOwnerAddress().toByteArray();
-
-        ContractCapsule contract =
+        ContractCapsule contractCapsule =
             dbManager.getContractStore().get(callContract.getContractAddress().toByteArray());
-        originAccount = contract.getInstance().getOriginAddress().toByteArray();
-        percent = Math.max(100 - contract.getConsumeUserResourcePercent(), 0);
-        percent = Math.min(percent, 100);
+
+        callerAccount = callContract.getOwnerAddress().toByteArray();
+        originAccount = contractCapsule.getOriginAddress();
+        percent = Math
+            .max(Constant.ONE_HUNDRED - contractCapsule.getConsumeUserResourcePercent(), 0);
+        percent = Math.min(percent, Constant.ONE_HUNDRED);
+        originEnergyLimit = contractCapsule.getOriginEnergyLimit();
         break;
       default:
         return;
@@ -180,7 +188,7 @@ public class TransactionTrace {
         dbManager,
         origin,
         caller,
-        percent,
+        percent, originEnergyLimit,
         energyProcessor,
         dbManager.getWitnessController().getHeadSlot());
   }
@@ -215,7 +223,7 @@ public class TransactionTrace {
     return receipt;
   }
 
-  public void setResult(Runtime runtime) {
+  public void setResult() {
     if (!needVM()) {
       return;
     }
@@ -241,7 +249,7 @@ public class TransactionTrace {
       receipt.setResult(contractResult.BAD_JUMP_DESTINATION);
       return;
     }
-    if (exception instanceof OutOfResourceException) {
+    if (exception instanceof OutOfTimeException) {
       receipt.setResult(contractResult.OUT_OF_TIME);
       return;
     }
@@ -266,6 +274,17 @@ public class TransactionTrace {
       return;
     }
     receipt.setResult(contractResult.UNKNOWN);
-    return;
+  }
+
+  public String getRuntimeError() {
+    return runtime.getRuntimeError();
+  }
+
+  public ProgramResult getRuntimeResult() {
+    return runtime.getResult();
+  }
+
+  public Runtime getRuntime() {
+    return runtime;
   }
 }

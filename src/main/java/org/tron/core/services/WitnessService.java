@@ -5,6 +5,9 @@ import static org.tron.core.witness.BlockProductionCondition.NOT_MY_TURN;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
@@ -21,6 +24,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -48,6 +52,8 @@ public class WitnessService implements Service {
   private Map<ByteString, byte[]> privateKeyMap = Maps.newHashMap();
   private volatile boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
 
+  private Manager manager;
+
   private WitnessController controller;
 
   private TronApplicationContext context;
@@ -55,6 +61,11 @@ public class WitnessService implements Service {
   private BackupManager backupManager;
 
   private BackupServer backupServer;
+
+  private AtomicInteger dupBlockCount = new AtomicInteger(0);
+  private AtomicLong dupBlockTime = new AtomicLong(0);
+  private long blockCycle =
+      ChainConstant.BLOCK_PRODUCED_INTERVAL * ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
   /**
    * Construction method.
@@ -65,7 +76,9 @@ public class WitnessService implements Service {
     backupManager = context.getBean(BackupManager.class);
     backupServer = context.getBean(BackupServer.class);
     generateThread = new Thread(scheduleProductionLoop);
-    controller = tronApp.getDbManager().getWitnessController();
+    manager = tronApp.getDbManager();
+    manager.setWitnessService(this);
+    controller = manager.getWitnessController();
     new Thread(() -> {
       while (needSyncCheck) {
         try {
@@ -141,6 +154,9 @@ public class WitnessService implements Service {
     if (!backupManager.getStatus().equals(BackupStatusEnum.MASTER)) {
       return BlockProductionCondition.BACKUP_STATUS_IS_NOT_MASTER;
     }
+    if (dupWitnessCheck()) {
+      return BlockProductionCondition.DUP_WITNESS;
+    }
     long now = DateTime.now().getMillis() + 50L;
     if (this.needSyncCheck) {
       long nexSlotTime = controller.getSlotTime(1);
@@ -172,78 +188,81 @@ public class WitnessService implements Service {
       return BlockProductionCondition.LOW_PARTICIPATION;
     }
 
-    long slot = controller.getSlotAtTime(now);
-    logger.debug("Slot:" + slot);
-
-    if (slot == 0) {
-      logger.info("Not time yet,now:{},headBlockTime:{},headBlockNumber:{},headBlockId:{}",
-          new DateTime(now),
-          new DateTime(
-              this.tronApp.getDbManager().getDynamicPropertiesStore()
-                  .getLatestBlockHeaderTimestamp()),
-          this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
-          this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderHash());
-      return BlockProductionCondition.NOT_TIME_YET;
-    }
-
-    if (now < controller.getManager().getDynamicPropertiesStore().getLatestBlockHeaderTimestamp()) {
-      logger.warn("have a timestamp:{} less than or equal to the previous block:{}",
-          new DateTime(now), new DateTime(
-              this.tronApp.getDbManager().getDynamicPropertiesStore()
-                  .getLatestBlockHeaderTimestamp()));
-      return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
-    }
-
     if (!controller.activeWitnessesContain(this.getLocalWitnessStateMap().keySet())) {
       logger.info("Unelected. Elected Witnesses: {}",
           StringUtil.getAddressStringList(controller.getActiveWitnesses()));
       return BlockProductionCondition.UNELECTED;
     }
 
-    final ByteString scheduledWitness = controller.getScheduledWitness(slot);
-
-    if (!this.getLocalWitnessStateMap().containsKey(scheduledWitness)) {
-      logger.info("It's not my turn, ScheduledWitness[{}],slot[{}],abSlot[{}],",
-          ByteArray.toHexString(scheduledWitness.toByteArray()), slot,
-          controller.getAbSlotAtTime(now));
-      return NOT_MY_TURN;
-    }
-
-    long scheduledTime = controller.getSlotTime(slot);
-
-    if (scheduledTime - now > PRODUCE_TIME_OUT) {
-      return BlockProductionCondition.LAG;
-    }
-
-    if (!privateKeyMap.containsKey(scheduledWitness)) {
-      return BlockProductionCondition.NO_PRIVATE_KEY;
-    }
-
     try {
 
-      controller.getManager().lastHeadBlockIsMaintenance();
-
-      controller.setGeneratingBlock(true);
       BlockCapsule block;
-      synchronized (tronApp.getDbManager()) {
-        block = generateBlock(scheduledTime, scheduledWitness,
-            controller.lastHeadBlockIsMaintenance());
 
-        if (block == null) {
-          logger.warn("exception when generate block");
+      synchronized (tronApp.getDbManager()) {
+        long slot = controller.getSlotAtTime(now);
+        logger.debug("Slot:" + slot);
+        if (slot == 0) {
+          logger.info("Not time yet,now:{},headBlockTime:{},headBlockNumber:{},headBlockId:{}",
+              new DateTime(now),
+              new DateTime(
+                  this.tronApp.getDbManager().getDynamicPropertiesStore()
+                      .getLatestBlockHeaderTimestamp()),
+              this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
+              this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderHash());
+          return BlockProductionCondition.NOT_TIME_YET;
+        }
+
+        if (now < controller.getManager().getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp()) {
+          logger.warn("have a timestamp:{} less than or equal to the previous block:{}",
+              new DateTime(now), new DateTime(
+                  this.tronApp.getDbManager().getDynamicPropertiesStore()
+                      .getLatestBlockHeaderTimestamp()));
           return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
         }
 
-        int blockProducedTimeOut = Args.getInstance().getBlockProducedTimeOut();
+        final ByteString scheduledWitness = controller.getScheduledWitness(slot);
 
-        if (DateTime.now().getMillis() - now
-            > ChainConstant.BLOCK_PRODUCED_INTERVAL * blockProducedTimeOut / 100) {
-          logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}",
-              ChainConstant.BLOCK_PRODUCED_INTERVAL * blockProducedTimeOut / 100,
-              new DateTime(now), DateTime.now());
-          tronApp.getDbManager().eraseBlock();
-          return BlockProductionCondition.TIME_OUT;
+        if (!this.getLocalWitnessStateMap().containsKey(scheduledWitness)) {
+          logger.info("It's not my turn, ScheduledWitness[{}],slot[{}],abSlot[{}],",
+              ByteArray.toHexString(scheduledWitness.toByteArray()), slot,
+              controller.getAbSlotAtTime(now));
+          return NOT_MY_TURN;
         }
+
+        long scheduledTime = controller.getSlotTime(slot);
+
+        if (scheduledTime - now > PRODUCE_TIME_OUT) {
+          return BlockProductionCondition.LAG;
+        }
+
+        if (!privateKeyMap.containsKey(scheduledWitness)) {
+          return BlockProductionCondition.NO_PRIVATE_KEY;
+        }
+
+        controller.getManager().lastHeadBlockIsMaintenance();
+
+        controller.setGeneratingBlock(true);
+
+        block = generateBlock(scheduledTime, scheduledWitness,
+            controller.lastHeadBlockIsMaintenance());
+      }
+
+      if (block == null) {
+        logger.warn("exception when generate block");
+        return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
+      }
+
+      int blockProducedTimeOut = Args.getInstance().getBlockProducedTimeOut();
+
+      long timeout = Math
+          .min(ChainConstant.BLOCK_PRODUCED_INTERVAL * blockProducedTimeOut / 100 + 500,
+              ChainConstant.BLOCK_PRODUCED_INTERVAL);
+      if (DateTime.now().getMillis() - now > timeout) {
+        logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}", timeout, new DateTime(now),
+            DateTime.now());
+        tronApp.getDbManager().eraseBlock();
+        return BlockProductionCondition.TIME_OUT;
       }
 
       logger.info(
@@ -252,6 +271,7 @@ public class WitnessService implements Service {
           block.getTransactions().size(),
           new DateTime(block.getTimeStamp()),
           block.getParentHash());
+
       broadcastBlock(block);
 
       return BlockProductionCondition.PRODUCED;
@@ -277,6 +297,41 @@ public class WitnessService implements Service {
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException {
     return tronApp.getDbManager().generateBlock(this.localWitnessStateMap.get(witnessAddress), when,
         this.privateKeyMap.get(witnessAddress), lastHeadBlockIsMaintenance);
+  }
+
+  private boolean dupWitnessCheck() {
+    if (dupBlockCount.get() == 0) {
+      return false;
+    }
+
+    if (System.currentTimeMillis() - dupBlockTime.get() > dupBlockCount.get() * blockCycle) {
+      dupBlockCount.set(0);
+      return false;
+    }
+
+    return true;
+  }
+
+  public void processBlock(BlockCapsule block) {
+    if (block.generatedByMyself) {
+      return;
+    }
+
+    if (System.currentTimeMillis() - block.getTimeStamp() > ChainConstant.BLOCK_PRODUCED_INTERVAL) {
+      return;
+    }
+
+    if (!privateKeyMap.containsKey(block.getWitnessAddress())) {
+      return;
+    }
+
+    if (dupBlockCount.get() == 0) {
+      dupBlockCount.set(new Random().nextInt(10));
+    } else {
+      dupBlockCount.set(10);
+    }
+
+    dupBlockTime.set(System.currentTimeMillis());
   }
 
   /**

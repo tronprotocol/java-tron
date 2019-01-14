@@ -51,14 +51,12 @@ public class ContractScenario005 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(contract005Address,200000000L,fromAddress,
-        testKey002,blockingStubFull));
-    logger.info(Long.toString(PublicMethed.queryAccount(contract005Key,blockingStubFull)
-        .getBalance()));
   }
 
   @Test(enabled = true)
   public void deployIcoContract() {
+    Assert.assertTrue(PublicMethed.sendcoin(contract005Address,200000000L,fromAddress,
+        testKey002,blockingStubFull));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract005Address, 10000000L,
         3,1,contract005Key,blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract005Address,

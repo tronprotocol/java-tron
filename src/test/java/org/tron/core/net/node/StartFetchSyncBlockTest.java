@@ -8,11 +8,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
-import org.junit.*;
-import org.tron.common.application.TronApplicationContext;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
-import org.tron.common.overlay.client.PeerClient;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.ChannelManager;
@@ -26,6 +28,9 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.db.Manager;
 import org.tron.core.net.message.BlockMessage;
+import org.tron.core.net.node.override.HandshakeHandlerTest;
+import org.tron.core.net.node.override.PeerClientTest;
+import org.tron.core.net.node.override.TronChannelInitializerTest;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
@@ -36,11 +41,13 @@ public class StartFetchSyncBlockTest {
 
   private static TronApplicationContext context;
   private NodeImpl node;
-  RpcApiService rpcApiService;
-  PeerClient peerClient;
-  ChannelManager channelManager;
-  SyncPool pool;
+  private RpcApiService rpcApiService;
+  private static PeerClientTest peerClient;
+  private ChannelManager channelManager;
+  private SyncPool pool;
   private static Application appT;
+  private Node nodeEntity;
+  private static HandshakeHandlerTest handshakeHandlerTest;
   private static final String dbPath = "output-nodeImplTest-startFetchSyncBlockTest";
   private static final String dbDirectory = "db_StartFetchSyncBlock_test";
   private static final String indexDirectory = "index_StartFetchSyncBlock_test";
@@ -108,7 +115,10 @@ public class StartFetchSyncBlockTest {
   public void testStartFetchSyncBlock() throws InterruptedException {
     testConsumerAdvObjToSpread();
     Collection<PeerConnection> activePeers = ReflectUtils.invokeMethod(node, "getActivePeer");
-    Thread.sleep(1000);
+    Thread.sleep(5000);
+    if (activePeers.size() < 1) {
+      return;
+    }
     ReflectUtils.setFieldValue(activePeers.iterator().next(), "needSyncFromPeer", true);
     // construct a block
     Protocol.Block block = Protocol.Block.getDefaultInstance();
@@ -128,6 +138,9 @@ public class StartFetchSyncBlockTest {
 
   @Before
   public void init() {
+    nodeEntity = new Node(
+        "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:17890");
+
     Thread thread = new Thread(new Runnable() {
       @Override
       public void run() {
@@ -163,10 +176,12 @@ public class StartFetchSyncBlockTest {
 //        appT.startServices();
 //        appT.startup();
         node = context.getBean(NodeImpl.class);
-        peerClient = context.getBean(PeerClient.class);
+        peerClient = context.getBean(PeerClientTest.class);
         channelManager = context.getBean(ChannelManager.class);
         pool = context.getBean(SyncPool.class);
         Manager dbManager = context.getBean(Manager.class);
+        handshakeHandlerTest = context.getBean(HandshakeHandlerTest.class);
+        handshakeHandlerTest.setNode(nodeEntity);
         NodeDelegate nodeDelegate = new NodeDelegateImpl(dbManager);
         node.setNodeDelegate(nodeDelegate);
         pool.init(node);
@@ -200,15 +215,21 @@ public class StartFetchSyncBlockTest {
       ExecutorService advertiseLoopThread = ReflectUtils.getFieldValue(node, "broadPool");
       advertiseLoopThread.shutdownNow();
 
+      peerClient.prepare(nodeEntity.getHexId());
+
       ReflectUtils.setFieldValue(node, "isAdvertiseActive", false);
       ReflectUtils.setFieldValue(node, "isFetchActive", false);
 
-      Node node = new Node(
-          "enode://e437a4836b77ad9d9ffe73ee782ef2614e6d8370fcf62191a6e488276e23717147073a7ce0b444d485fff5a0c34c4577251a7a990cf80d8542e21b95aa8c5e6c@127.0.0.1:17890");
+      TronChannelInitializerTest tronChannelInitializer = ReflectUtils
+          .getFieldValue(peerClient, "tronChannelInitializer");
+      tronChannelInitializer.prepare();
+      Channel channel = ReflectUtils.getFieldValue(tronChannelInitializer, "channel");
+      ReflectUtils.setFieldValue(channel, "handshakeHandler", handshakeHandlerTest);
+
       new Thread(new Runnable() {
         @Override
         public void run() {
-          peerClient.connect(node.getHost(), node.getPort(), node.getHexId());
+          peerClient.connect(nodeEntity.getHost(), nodeEntity.getPort(), nodeEntity.getHexId());
         }
       }).start();
       Thread.sleep(1000);
@@ -227,6 +248,7 @@ public class StartFetchSyncBlockTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
+    handshakeHandlerTest.close();
     context.destroy();
     appT.shutdownServices();
     appT.shutdown();

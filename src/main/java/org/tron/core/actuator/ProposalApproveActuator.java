@@ -36,9 +36,11 @@ public class ProposalApproveActuator extends AbstractActuator {
     try {
       final ProposalApproveContract proposalApproveContract =
           this.contract.unpack(ProposalApproveContract.class);
-      ProposalCapsule proposalCapsule = (Objects.isNull(getDeposit()))? dbManager.getProposalStore().
-          get(ByteArray.fromLong(proposalApproveContract.getProposalId())) :
-          getDeposit().getProposalCapsule(ByteArray.fromLong(proposalApproveContract.getProposalId()));
+      ProposalCapsule proposalCapsule =
+          (Objects.isNull(getDeposit())) ? dbManager.getProposalStore()
+              .get(ByteArray.fromLong(proposalApproveContract.getProposalId())) :
+              getDeposit().getProposalCapsule(ByteArray.fromLong(proposalApproveContract
+                  .getProposalId()));
 
       ByteString committeeAddress = proposalApproveContract.getOwnerAddress();
       if (proposalApproveContract.getIsAddApproval()) {
@@ -98,7 +100,8 @@ public class ProposalApproveActuator extends AbstractActuator {
             ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
       }
     } else if (!dbManager.getAccountStore().has(ownerAddress)) {
-      throw new ContractValidateException(ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
+      throw new ContractValidateException(ACCOUNT_EXCEPTION_STR + readableOwnerAddress
+          + NOT_EXIST_STR);
     }
 
     if( !Objects.isNull(getDeposit())) {
@@ -107,13 +110,16 @@ public class ProposalApproveActuator extends AbstractActuator {
             WITNESS_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
       }
     }else if (!dbManager.getWitnessStore().has(ownerAddress)) {
-      throw new ContractValidateException(WITNESS_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
+      throw new ContractValidateException(WITNESS_EXCEPTION_STR + readableOwnerAddress
+          + NOT_EXIST_STR);
     }
 
-    long latestProposalNum = Objects.isNull(getDeposit()) ? dbManager.getDynamicPropertiesStore().getLatestProposalNum() :
+    long latestProposalNum = Objects.isNull(getDeposit()) ? dbManager.getDynamicPropertiesStore()
+        .getLatestProposalNum() :
         getDeposit().getLatestProposalNum();
     if (contract.getProposalId() > latestProposalNum) {
-      throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId() + NOT_EXIST_STR);
+      throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId()
+          + NOT_EXIST_STR);
     }
 
     long now = dbManager.getHeadBlockTimeStamp();
@@ -123,14 +129,17 @@ public class ProposalApproveActuator extends AbstractActuator {
           get(ByteArray.fromLong(contract.getProposalId())) :
           getDeposit().getProposalCapsule(ByteArray.fromLong(contract.getProposalId()));
     } catch (ItemNotFoundException ex) {
-      throw new ContractValidateException(PROPOSAL_EXCEPTION_STR+ contract.getProposalId() + NOT_EXIST_STR);
+      throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId()
+          + NOT_EXIST_STR);
     }
 
     if (now >= proposalCapsule.getExpirationTime()) {
-      throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId() + "] expired");
+      throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId()
+          + "] expired");
     }
     if (proposalCapsule.getState() == State.CANCELED) {
-      throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId() + "] canceled");
+      throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId()
+          + "] canceled");
     }
     if (!contract.getIsAddApproval()) {
       if (!proposalCapsule.getApprovals().contains(contract.getOwnerAddress())) {

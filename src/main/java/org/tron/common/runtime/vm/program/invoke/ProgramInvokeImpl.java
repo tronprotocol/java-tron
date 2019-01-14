@@ -21,17 +21,26 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
 import org.tron.common.storage.Deposit;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.BlockStore;
+import org.tron.core.exception.StoreException;
 
 @Slf4j
 public class ProgramInvokeImpl implements ProgramInvoke {
 
-  // private BlockStore blockStore;
   /* TRANSACTION  env*/
   private final DataWord address;
-  private final DataWord origin, caller, balance, callValue;
+  private final DataWord origin;
+  private final DataWord caller;
+  private final DataWord balance;
+  private final DataWord callValue;
+  private final DataWord tokenValue;
+  private final DataWord tokenId;
+
   private byte[] msgData;
 
   private long vmStartInUs;
@@ -39,16 +48,19 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   private long energyLimit;
 
   /* BLOCK  env **/
-  private final DataWord prevHash, coinbase, timestamp, number;
+  private final DataWord prevHash;
+  private final DataWord coinbase;
+  private final DataWord timestamp;
+  private final DataWord number;
 
-  private Deposit deposit = null;
+  private Deposit deposit;
   private boolean byTransaction = true;
   private boolean byTestingSuite = false;
   private int callDeep = 0;
   private boolean isStaticCall = false;
 
   public ProgramInvokeImpl(DataWord address, DataWord origin, DataWord caller, DataWord balance,
-      DataWord callValue, byte[] msgData,
+      DataWord callValue, DataWord tokenValue, DataWord tokenId, byte[] msgData,
       DataWord lastHash, DataWord coinbase, DataWord timestamp, DataWord number,
       DataWord difficulty,
       Deposit deposit, int callDeep, boolean isStaticCall, boolean byTestingSuite,
@@ -58,6 +70,8 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     this.caller = caller;
     this.balance = balance;
     this.callValue = callValue;
+    this.tokenValue = tokenValue;
+    this.tokenId = tokenId;
     if (Objects.nonNull(msgData)) {
       this.msgData = Arrays.copyOf(msgData, msgData.length);
     }
@@ -80,16 +94,16 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   }
 
   public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
-      long callValue, byte[] msgData,
+      long callValue, long tokenValue, long tokenId, byte[] msgData,
       byte[] lastHash, byte[] coinbase, long timestamp, long number, Deposit deposit,
       long vmStartInUs, long vmShouldEndInUs, boolean byTestingSuite, long energyLimit) {
-    this(address, origin, caller, balance, callValue, msgData, lastHash, coinbase,
+    this(address, origin, caller, balance, callValue, tokenValue, tokenId, msgData, lastHash, coinbase,
         timestamp, number, deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
     this.byTestingSuite = byTestingSuite;
   }
 
   public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
-      long callValue, byte[] msgData, byte[] lastHash, byte[] coinbase, long timestamp,
+      long callValue, long tokenValue, long tokenId, byte[] msgData, byte[] lastHash, byte[] coinbase, long timestamp,
       long number, Deposit deposit, long vmStartInUs, long vmShouldEndInUs, long energyLimit) {
 
     // Transaction env
@@ -98,6 +112,8 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     this.caller = new DataWord(caller);
     this.balance = new DataWord(balance);
     this.callValue = new DataWord(callValue);
+    this.tokenValue = new DataWord(tokenValue);
+    this.tokenId = new DataWord(tokenId);
     this.msgData = Arrays.copyOf(msgData, msgData.length);
 
     // last Block env
@@ -111,13 +127,10 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     this.vmStartInUs = vmStartInUs;
     this.vmShouldEndInUs = vmShouldEndInUs;
     this.energyLimit = energyLimit;
-    // logger.info("vmStartInUs: {}", vmStartInUs);
-    // logger.info("vmShouldEndInUs: {}", vmShouldEndInUs);
-
   }
 
   /*           ADDRESS op         */
-  public DataWord getOwnerAddress() {
+  public DataWord getContractAddress() {
     return address;
   }
 
@@ -141,13 +154,19 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     return callValue;
   }
 
+  /*          TOKENVALUE op     */
+  public DataWord getTokenValue() { return tokenValue; }
+
+  /*          TOKENID op     */
+  public DataWord getTokenId() { return tokenId; }
+
   /*****************/
   /***  msg data ***/
   /*****************/
   /* NOTE: In the protocol there is no restriction on the maximum message data,
    * However msgData here is a byte[] and this can't hold more than 2^32-1
    */
-  private static BigInteger MAX_MSG_DATA = BigInteger.valueOf(Integer.MAX_VALUE);
+  private static final BigInteger MAX_MSG_DATA = BigInteger.valueOf(Integer.MAX_VALUE);
 
   /*     CALLDATALOAD  op   */
   public DataWord getDataValue(DataWord indexData) {
@@ -225,7 +244,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
 
   /*     DIFFICULTY op    */
   public DataWord getDifficulty() {
-    return new DataWord(0); //difficulty;
+    return new DataWord(0);
   }
 
   public long getVmShouldEndInUs() {
@@ -234,16 +253,6 @@ public class ProgramInvokeImpl implements ProgramInvoke {
 
   public Deposit getDeposit() {
     return deposit;
-  }
-
-  @Override
-  public BlockStore getBlockStore() {
-    return deposit.getDbManager().getBlockStore();
-  }
-
-  @Override
-  public boolean byTransaction() {
-    return byTransaction;
   }
 
   @Override
@@ -299,12 +308,6 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     if (coinbase != null ? !coinbase.equals(that.coinbase) : that.coinbase != null) {
       return false;
     }
-    //if (difficulty != null ? !difficulty.equals(that.difficulty) : that.difficulty != null) return false;
-    //if (energy != null ? !energy.equals(that.energy) : that.energy != null) return false;
-    //if (energyPrice != null ? !energyPrice.equals(that.energyPrice) : that.energyPrice != null) return false;
-    //if (dropLimit != null ? !dropLimit.equals(that.dropLimit) : that.dropLimit != null) {
-    //    return false;
-    // }
     if (!Arrays.equals(msgData, that.msgData)) {
       return false;
     }
@@ -320,18 +323,13 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     if (deposit != null ? !deposit.equals(that.deposit) : that.deposit != null) {
       return false;
     }
-    //if (storage != null ? !storage.equals(that.storage) : that.storage != null) return false;
-    if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) {
-      return false;
-    }
-
-    return true;
+    return timestamp != null ? timestamp.equals(that.timestamp) : that.timestamp == null;
   }
 
   @Override
   public int hashCode() {
-    return new Integer(new Boolean(byTestingSuite).hashCode()
-        + new Boolean(byTransaction).hashCode()
+    return new Integer(Boolean.valueOf(byTestingSuite).hashCode()
+        + Boolean.valueOf(byTransaction).hashCode()
         + address.hashCode()
         + balance.hashCode()
         + callValue.hashCode()
@@ -372,6 +370,15 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   @Override
   public void setStaticCall() {
     isStaticCall = true;
+  }
+
+  @Override
+  public BlockCapsule getBlockByNum(int index) {
+    try {
+      return deposit.getDbManager().getBlockByNum(index);
+    } catch (StoreException e) {
+      throw new IllegalOperationException("cannot find block num");
+    }
   }
 
 }

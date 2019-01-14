@@ -13,6 +13,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -36,8 +37,8 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(exchangeWithdrawContract.getOwnerAddress().toByteArray());
 
-      ExchangeCapsule exchangeCapsule = dbManager.getExchangeStore().
-          get(ByteArray.fromLong(exchangeWithdrawContract.getExchangeId()));
+      ExchangeCapsule exchangeCapsule = dbManager.getExchangeStoreFinal().
+            get(ByteArray.fromLong(exchangeWithdrawContract.getExchangeId()));
 
       byte[] firstTokenID = exchangeCapsule.getFirstTokenId();
       byte[] secondTokenID = exchangeCapsule.getSecondTokenId();
@@ -76,18 +77,20 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
       if (Arrays.equals(tokenID, "_".getBytes())) {
         accountCapsule.setBalance(newBalance + tokenQuant);
       } else {
-        accountCapsule.addAssetAmount(tokenID, tokenQuant);
+        accountCapsule.addAssetAmountV2(tokenID, tokenQuant, dbManager);
       }
 
       if (Arrays.equals(anotherTokenID, "_".getBytes())) {
         accountCapsule.setBalance(newBalance + anotherTokenQuant);
       } else {
-        accountCapsule.addAssetAmount(anotherTokenID, anotherTokenQuant);
+        accountCapsule.addAssetAmountV2(anotherTokenID, anotherTokenQuant, dbManager);
       }
 
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-      dbManager.getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
 
+      dbManager.putExchangeCapsule(exchangeCapsule);
+
+      ret.setExchangeWithdrawAnotherAmount(anotherTokenQuant);
       ret.setStatus(fee, code.SUCESS);
     } catch (ItemNotFoundException e) {
       logger.debug(e.getMessage(), e);
@@ -141,8 +144,8 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
 
     ExchangeCapsule exchangeCapsule;
     try {
-      exchangeCapsule = dbManager.getExchangeStore().
-          get(ByteArray.fromLong(contract.getExchangeId()));
+      exchangeCapsule = dbManager.getExchangeStoreFinal().
+            get(ByteArray.fromLong(contract.getExchangeId()));
     } catch (ItemNotFoundException ex) {
       throw new ContractValidateException("Exchange[" + contract.getExchangeId() + "] not exists");
     }
@@ -160,6 +163,12 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
     long tokenQuant = contract.getQuant();
 
     long anotherTokenQuant;
+
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 1) {
+      if (!Arrays.equals(tokenID, "_".getBytes()) && !TransactionUtil.isNumber(tokenID)) {
+        throw new ContractValidateException("token id is not a valid number");
+      }
+    }
 
     if (!Arrays.equals(tokenID, firstTokenID) && !Arrays.equals(tokenID, secondTokenID)) {
       throw new ContractValidateException("token is not in exchange");

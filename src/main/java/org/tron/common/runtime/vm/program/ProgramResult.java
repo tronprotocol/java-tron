@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.tron.common.runtime.vm.CallCreate;
 import org.tron.common.runtime.vm.DataWord;
@@ -159,11 +160,15 @@ public class ProgramResult {
   }
 
   public InternalTransaction addInternalTransaction(byte[] parentHash, int deep,
-      byte[] senderAddress, byte[] receiveAddress, long value, byte[] data, String note, long nonce) {
+      byte[] senderAddress, byte[] transferAddress, long value, byte[] data, String note, long nonce, Map<String, Long> token) {
     InternalTransaction transaction = new InternalTransaction(parentHash, deep,
-        size(internalTransactions), senderAddress, receiveAddress, value, data, note, nonce);
+        size(internalTransactions), senderAddress, transferAddress, value, data, note, nonce, token);
     getInternalTransactions().add(transaction);
     return transaction;
+  }
+
+  public void addInternalTransaction(InternalTransaction internalTransaction) {
+    getInternalTransactions().add(internalTransaction);
   }
 
   public void addInternalTransactions(List<InternalTransaction> internalTransactions) {

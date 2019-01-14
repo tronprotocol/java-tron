@@ -703,6 +703,8 @@ Input, transaction and block header all require signature.
     `TotalTransaction` takes a parameter of `EmptyMessage`, and returns `NumberMessage` object.  
     __`getTransactionById`__:  
     `getTransactionById` takes a parameter of `BytesMessage`, and returns `Transaction` object.  
+    __`getTransactionInfoById`__:  
+        `getTransactionInfoById` takes a parameter of `BytesMessage`, and returns `TransactionInfo` object.
     __`getTransactionsByTimeStamp`__:  
     `getTransactionsByTimeStamp` takes a parameter of `TimeMessage`, and returns `TransactionList` object.  
     __`getTransactionsFromThis`__:  
