@@ -914,7 +914,7 @@ public class Manager {
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
-        if (!block.validateSignature()) {
+        if (!block.validateSignature(this)) {
           logger.warn("The signature is not validated.");
           throw new BadBlockException("The signature is not validated");
         }
@@ -996,6 +996,7 @@ public class Manager {
           return;
         }
         try (ISession tmpSession = revokingStore.buildSession()) {
+
           applyBlock(newBlock);
           tmpSession.commit();
           // if event subscribe is enabled, post block trigger to queue

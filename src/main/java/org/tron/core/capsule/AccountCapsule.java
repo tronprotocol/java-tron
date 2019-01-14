@@ -176,6 +176,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account.getAccountId();
   }
 
+  public byte[] getWitnessPermissionAddress() {
+    if (this.account.getWitnessPermission().getKeysCount() == 0) {
+      return getAddress().toByteArray();
+    } else {
+      return this.account.getWitnessPermission().getKeys(0).getAddress().toByteArray();
+    }
+  }
+
   public long getBalance() {
     return this.account.getBalance();
   }
