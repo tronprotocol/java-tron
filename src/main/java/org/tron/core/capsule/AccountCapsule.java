@@ -33,6 +33,7 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Vote;
 
 @Slf4j(topic = "capsule")
@@ -81,15 +82,68 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
+  private ByteString getActiveDefaultOperations() {
+    ContractType[] types = ContractType.values();
+    byte[] operations = new byte[32];
+    for (ContractType type : types) {
+      if (type != ContractType.AccountPermissionUpdateContract
+          && type != ContractType.PermissionDeleteKeyContract
+          && type != ContractType.PermissionAddKeyContract
+          && type != ContractType.PermissionUpdateKeyContract
+          && type != ContractType.UNRECOGNIZED) {
+        operations[type.getNumber() / 8] |= (1 << type.getNumber() / 8);
+      }
+    }
+    return ByteString.copyFrom(operations);
+  }
+
+  private Permission createOwnerPermission(ByteString address) {
+    Key.Builder key = Key.newBuilder();
+    key.setAddress(address);
+    key.setWeight(1);
+
+    Permission.Builder owner = Permission.newBuilder();
+    owner.setType(PermissionType.Owner);
+    owner.setId(0);
+    owner.setPermissionName("owner");
+    owner.setThreshold(1);
+    owner.setParentId(0);
+    owner.addKeys(key);
+
+    return owner.build();
+  }
+
+  private Permission createActivePermission(ByteString address) {
+    Key.Builder key = Key.newBuilder();
+    key.setAddress(address);
+    key.setWeight(1);
+
+    Permission.Builder active = Permission.newBuilder();
+    active.setType(PermissionType.Active);
+    active.setId(2);
+    active.setPermissionName("active");
+    active.setThreshold(1);
+    active.setParentId(0);
+    active.setOperations(getActiveDefaultOperations());
+    active.addKeys(key);
+
+    return active.build();
+  }
+
   /**
    * construct account from AccountCreateContract and createTime.
    */
   public AccountCapsule(final AccountCreateContract contract, long createTime) {
+    Permission owner = createOwnerPermission(contract.getAccountAddress());
+    Permission active = createActivePermission(contract.getAccountAddress());
+
     this.account = Account.newBuilder()
         .setType(contract.getType())
         .setAddress(contract.getAccountAddress())
         .setTypeValue(contract.getTypeValue())
         .setCreateTime(createTime)
+        .setOwnerPermission(owner)
+        .addActivePermission(active)
         .build();
   }
 
@@ -128,10 +182,15 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    */
   public AccountCapsule(ByteString address,
       AccountType accountType, long createTime) {
+    Permission owner = createOwnerPermission(address);
+    Permission active = createActivePermission(address);
+
     this.account = Account.newBuilder()
         .setType(accountType)
         .setAddress(address)
         .setCreateTime(createTime)
+        .setOwnerPermission(owner)
+        .addActivePermission(active)
         .build();
   }
 
