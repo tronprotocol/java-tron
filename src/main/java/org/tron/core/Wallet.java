@@ -126,6 +126,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Permission;
+import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.SmartContract.ABI;
@@ -435,7 +436,6 @@ public class Wallet {
         }
       }
 
-
       if (dbManager.isTooManyPending()) {
         logger.warn("Broadcast transaction {} failed, too many pending.", trx.getTransactionId());
         return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
@@ -523,6 +523,17 @@ public class Wallet {
     return trx;
   }
 
+  public static boolean checkPermissionOprations(Permission permission, Contract contract)
+      throws PermissionException {
+    ByteString operations = permission.getOperations();
+    if (operations.size() != 32) {
+      throw new PermissionException("operations size must 32");
+    }
+    int contractType = contract.getTypeValue();
+    Boolean b = (operations.byteAt(contractType / 8) & (1 << (contractType % 8))) == 0;
+    return b;
+  }
+
   public TransactionSignWeight getTransactionSignWeight(Transaction trx) {
     TransactionSignWeight.Builder tswBuilder = TransactionSignWeight.newBuilder();
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
@@ -542,6 +553,18 @@ public class Wallet {
       }
       int permissionId = contract.getPermissionId();
       Permission permission = account.getPermissionById(permissionId);
+      if (permission == null) {
+        throw new PermissionException("permission isn't exit");
+      }
+      if (permissionId != 0) {
+        if (permission.getType() != PermissionType.Active) {
+          throw new PermissionException("Permission type is error");
+        }
+        //check oprations
+        if (!checkPermissionOprations(permission, contract)){
+          throw new PermissionException("Permission denied");
+        }
+      }
       tswBuilder.setPermission(permission);
       if (trx.getSignatureCount() > 0) {
         List<ByteString> approveList = new ArrayList<ByteString>();

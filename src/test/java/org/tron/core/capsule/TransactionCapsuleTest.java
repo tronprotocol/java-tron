@@ -4,10 +4,8 @@ import com.google.protobuf.ByteString;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Test;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -19,9 +17,6 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.AccountType;
-import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.Transaction.Contract;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Slf4j
 public class TransactionCapsuleTest {
@@ -100,28 +95,6 @@ public class TransactionCapsuleTest {
     AppT.shutdown();
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
-  }
-
-  @Test
-  public void getPermissionName() {
-    for (ContractType type : ContractType.values()) {
-      if (type == ContractType.UNRECOGNIZED) {
-        continue;
-      }
-      Transaction.Contract contract = Contract.newBuilder().setType(type).build();
-      String name = TransactionCapsule.getPermissionName(contract);
-      Assert.assertTrue(name.equals("active") || name.equals("owner"));
-      String name1;
-      if (type == ContractType.PermissionAddKeyContract
-          || type == ContractType.PermissionUpdateKeyContract
-          || type == ContractType.PermissionDeleteKeyContract
-          || type == ContractType.AccountPermissionUpdateContract) {
-        name1 = "owner";
-      } else {
-        name1 = "active";
-      }
-      Assert.assertEquals(name, name1);
-    }
   }
 
 //  @Test

@@ -32,6 +32,7 @@ import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
+import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Vote;
 
 @Slf4j(topic = "capsule")
@@ -837,12 +838,29 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
+  public static Permission getDefaultPermission(ByteString owner) {
+    Permission.Builder builder = Permission.newBuilder();
+    Key.Builder key = Key.newBuilder();
+    key.setAddress(owner).setWeight(1);
+    builder.addKeys(key);
+    builder.setThreshold(1);
+    builder.setType(PermissionType.Owner);
+    builder.setId(0);
+    return builder.build();
+  }
+
   public Permission getPermissionById(int id) {
     if (id == 0) {
-      return this.account.getOwnerPermission();
+      if (this.account.hasOwnerPermission()) {
+        return this.account.getOwnerPermission();
+      }
+      return getDefaultPermission(this.account.getAddress());
     }
     if (id == 1) {
-      return this.account.getWitnessPermission();
+      if (this.account.hasWitnessPermission()) {
+        return this.account.getWitnessPermission();
+      }
+      return null;
     }
     for (Permission permission : this.account.getActivePermissionList()) {
       if (id == permission.getId()) {
