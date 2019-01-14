@@ -173,7 +173,7 @@ public class ContractLinkage006 {
     Assert.assertTrue((beforeBalance - fee - 1000L) == afterBalance);
     Assert.assertTrue((beforeNetUsed + netUsed) >= afterNetUsed);
     Assert.assertTrue((beforeEnergyUsed + energyUsed) >= afterEnergyUsed);
-    Assert.assertTrue(PublicMethed.sendcoin(linkage006Address2, 20000000000L, fromAddress,
+    Assert.assertTrue(PublicMethed.sendcoin(linkage006Address2, 30000000000L, fromAddress,
         testKey003, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalance(linkage006Address2, 100000000L,
