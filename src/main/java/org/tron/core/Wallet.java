@@ -530,7 +530,7 @@ public class Wallet {
       throw new PermissionException("operations size must 32");
     }
     int contractType = contract.getTypeValue();
-    Boolean b = (operations.byteAt(contractType / 8) & (1 << (contractType % 8))) == 0;
+    Boolean b = (operations.byteAt(contractType / 8) & (1 << (contractType % 8))) != 0;
     return b;
   }
 
