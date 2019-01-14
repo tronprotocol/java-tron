@@ -65,11 +65,11 @@ public class ContractInternalTransaction002 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-    /**
-     * constructor.
-     */
+  /**
+   * constructor.
+   */
 
-    @BeforeClass(enabled = true)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(testKeyForinternalTxsAddress);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -141,7 +141,6 @@ public class ContractInternalTransaction002 {
             1000000L, 100, null, testKeyForinternalTxsAddress,
             internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
 
     String initParmes = "\"" + Base58.encode58Check(contractAddress1) + "\"";
 
@@ -593,7 +592,7 @@ public class ContractInternalTransaction002 {
   @Test(enabled = true)
   public void test4InternalTransaction010() {
     PublicMethed
-        .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
+        .sendcoin(internalTxsAddress, 200000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -822,7 +821,6 @@ public class ContractInternalTransaction002 {
             internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-
     String contractName2 = "EContract";
     String code2 = "6080604052609f806100126000396000f30060806040526004361060485763ffffffff7"
         + "c01000000000000000000000000000000000000000000000000000000006000350416639"
@@ -841,7 +839,6 @@ public class ContractInternalTransaction002 {
             1000000L, 100, null, testKeyForinternalTxsAddress,
             internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
 
     String initParmes = "\"" + Base58.encode58Check(contractAddress1)
         + "\",\"" + Base58.encode58Check(contractAddress2) + "\"";
@@ -903,12 +900,11 @@ public class ContractInternalTransaction002 {
   }
 
 
+  /**
+   * constructor.
+   */
 
-    /**
-     * constructor.
-     */
-
-    public void dupInternalTrsansactionHash(
+  public void dupInternalTrsansactionHash(
       List<org.tron.protos.Protocol.InternalTransaction> internalTransactionList) {
     List<String> hashList = new ArrayList<>();
     internalTransactionList.forEach(

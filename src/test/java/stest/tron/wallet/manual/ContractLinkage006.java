@@ -176,10 +176,10 @@ public class ContractLinkage006 {
     Assert.assertTrue(PublicMethed.sendcoin(linkage006Address2, 20000000000L, fromAddress,
         testKey003, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed.freezeBalance(linkage006Address2, 1000000L,
+    Assert.assertTrue(PublicMethed.freezeBalance(linkage006Address2, 100000000L,
         3, linkage006Key2, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage006Address2, 1000000L,
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage006Address2, 100000000L,
         3, 1, linkage006Key2, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     contractAddress = infoById.get().getContractAddress().toByteArray();
@@ -310,6 +310,7 @@ public class ContractLinkage006 {
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 1);
   }
+
   /**
    * constructor.
    */
