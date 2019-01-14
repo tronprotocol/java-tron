@@ -110,6 +110,7 @@ public class ContractGrammar002 {
             0L, 100, null, testKeyForGrammarAddress2,
             grammarAddress2, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     String txid = "";
     String number = "1";
     String txid1 = PublicMethed.triggerContract(contractAddress1,

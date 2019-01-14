@@ -276,18 +276,21 @@ public class ContractGrammar001 {
     String txid2 = PublicMethed.triggerContract(contractAddress,
             "d(bytes32)", number, false,
             0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid3 = PublicMethed.triggerContract(contractAddress,
             "d1(bytes32)", number, false,
             0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
     String txid4 = PublicMethed.triggerContract(contractAddress,
             "d2(bytes32)", number, false,
             0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid5 = PublicMethed.triggerContract(contractAddress,
             "d3(bytes32)", number, false,
             0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
     String txid6 = PublicMethed.triggerContract(contractAddress,
             "d4(bytes32)", number, false,
             0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid7 = PublicMethed.triggerContract(contractAddress,
             "d7(bytes32)", number, false,
             0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);

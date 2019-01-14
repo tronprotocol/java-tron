@@ -480,6 +480,10 @@ public class ContractGrammar003 {
 
   @Test(enabled = true)
   public void testGrammar019() {
+    PublicMethed
+        .sendcoin(grammarAddress3, 10000000000L, testNetAccountAddress, testNetAccountKey,
+            blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String contractName = "timetestContract";
     String code = Configuration.getByPath("testng.conf")
