@@ -179,7 +179,7 @@ public class ContractLinkage006 {
     Assert.assertTrue(PublicMethed.freezeBalance(linkage006Address2, 100000000L,
         3, linkage006Key2, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage006Address2, 100000000L,
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage006Address2, 1000000000L,
         3, 1, linkage006Key2, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     contractAddress = infoById.get().getContractAddress().toByteArray();
