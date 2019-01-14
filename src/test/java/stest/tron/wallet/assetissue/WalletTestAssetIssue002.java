@@ -86,10 +86,11 @@ public class WalletTestAssetIssue002 {
     //send coin to the new account
     Assert.assertTrue(PublicMethed.sendcoin(participateAccountAddress,2048000000,fromAddress,
         testKey002,blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.sendcoin(toAddress,2048000000,fromAddress,
         testKey002,blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     //Create a new Asset Issue
     Assert.assertTrue(PublicMethed.createAssetIssue(participateAccountAddress,
         name, totalSupply, 1, 1, System.currentTimeMillis() + 5000,
@@ -97,8 +98,6 @@ public class WalletTestAssetIssue002 {
         2000L,2000L, 1L, 1L,
         participateAccountKey,blockingStubFull));
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account getAssetIdFromThisAccount;
     getAssetIdFromThisAccount = PublicMethed.queryAccount(participateAccountKey,blockingStubFull);
@@ -111,12 +110,10 @@ public class WalletTestAssetIssue002 {
     Assert.assertTrue(PublicMethed.freezeBalance(toAddress, 10000000, 3, testKey003,
         blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.participateAssetIssue(participateAccountAddress,
         assetAccountId.toByteArray(),
         100L, toAddress, testKey003,blockingStubFull));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     //The amount is large than the total supply, participate failed.
     Assert.assertFalse(PublicMethed.participateAssetIssue(participateAccountAddress,
         assetAccountId.toByteArray(), 9100000000000000000L, toAddress, testKey003,

@@ -84,7 +84,7 @@ public class ContractGrammar002 {
 
 
   @Test(enabled = true)
-  public void testGrammar007() {
+  public void test1Grammar007() {
     PublicMethed
         .sendcoin(grammarAddress2, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
@@ -136,7 +136,7 @@ public class ContractGrammar002 {
   }
 
   @Test(enabled = true)
-  public void testGrammar008() {
+  public void test2Grammar008() {
     String contractName = "catContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractGrammar002_testGrammar008");
@@ -169,7 +169,7 @@ public class ContractGrammar002 {
   }
 
   @Test(enabled = true)
-  public void testGrammar010() {
+  public void test3Grammar010() {
 
     String contractName = "catContract";
     String code = Configuration.getByPath("testng.conf")
@@ -199,7 +199,7 @@ public class ContractGrammar002 {
 
 
   @Test(enabled = true)
-  public void testGrammar011() {
+  public void test4Grammar011() {
     String contractName = "cContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractGrammar002_testGrammar011");
@@ -233,7 +233,7 @@ public class ContractGrammar002 {
 
 
   @Test(enabled = true)
-  public void testGrammar012() {
+  public void test5Grammar012() {
     String contractName = "rtestContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractGrammar002_testGrammar012");
@@ -255,7 +255,7 @@ public class ContractGrammar002 {
   }
 
   @Test(enabled = true)
-  public void testGrammar013() {
+  public void test6Grammar013() {
     String contractName = "executefallbackContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractGrammar002_testGrammar013");

@@ -79,7 +79,7 @@ public class ContractGrammar001 {
   }
 
   @Test(enabled = true)
-  public void testGrammar001() {
+  public void test1Grammar001() {
     ecKey1 = new ECKey(Utils.getRandom());
     grammarAddress = ecKey1.getAddress();
     testKeyForGrammarAddress = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
@@ -122,7 +122,7 @@ public class ContractGrammar001 {
   }
 
   @Test(enabled = true)
-  public void testGrammar002() {
+  public void test2Grammar002() {
     String contractName = "SetContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractGrammar001_testGrammar002");
@@ -158,7 +158,7 @@ public class ContractGrammar001 {
   }
 
   @Test(enabled = true)
-  public void testGrammar003() {
+  public void test3Grammar003() {
     String contractName = "SetContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractGrammar001_testGrammar003");
@@ -195,7 +195,7 @@ public class ContractGrammar001 {
 
 
   @Test(enabled = true)
-  public void testGrammar004() {
+  public void test4Grammar004() {
     String contractName = "searchContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractGrammar001_testGrammar004");
@@ -258,7 +258,7 @@ public class ContractGrammar001 {
   }
 
   @Test(enabled = true)
-  public void testGrammar006() {
+  public void test5Grammar006() {
     String contractName = "infofeedContract";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractGrammar001_testGrammar006");

@@ -99,15 +99,18 @@ public class WalletTestAssetIssue012 {
 
     Assert.assertTrue(PublicMethed
         .sendcoin(asset012Address, sendAmount, fromAddress, testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .freezeBalance(asset012Address, 100000000L, 3, testKeyForAssetIssue012,
             blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long start = System.currentTimeMillis() + 2000;
     Long end = System.currentTimeMillis() + 1000000000;
     Assert.assertTrue(PublicMethed
         .createAssetIssue(asset012Address, name, totalSupply, 1, 1, start, end, 1, description,
             url, freeAssetNetLimit, publicFreeAssetNetLimit, 1L, 1L, testKeyForAssetIssue012,
             blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account getAssetIdFromThisAccount;
     getAssetIdFromThisAccount = PublicMethed.queryAccount(asset012Address,blockingStubFull);
@@ -117,6 +120,7 @@ public class WalletTestAssetIssue012 {
     Assert.assertTrue(PublicMethed
         .transferAsset(transferAssetAddress, assetAccountId.toByteArray(), 10000000L, asset012Address,
             testKeyForAssetIssue012, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //Before transfer asset issue, query the net used from creator and transfer.
     AccountNetMessage assetCreatorNet = PublicMethed
@@ -132,6 +136,7 @@ public class WalletTestAssetIssue012 {
     // transaction use the creator net.
     Assert.assertTrue(PublicMethed.transferAsset(toAddress,assetAccountId.toByteArray(),1L,
         transferAssetAddress,transferAssetCreateKey,blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     assetCreatorNet = PublicMethed
         .getAccountNet(asset012Address,blockingStubFull);
     assetTransferNet = PublicMethed

@@ -83,7 +83,7 @@ public class ContractGrammar003 {
 
 
   @Test(enabled = true)
-  public void testGrammar014() {
+  public void test1Grammar014() {
     ecKey1 = new ECKey(Utils.getRandom());
     grammarAddress3 = ecKey1.getAddress();
     testKeyForGrammarAddress3 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
@@ -265,7 +265,7 @@ public class ContractGrammar003 {
 
 
   @Test(enabled = true)
-  public void testGrammar015() {
+  public void test2Grammar015() {
 
     String contractName = "executefallbackContract";
     String code = Configuration.getByPath("testng.conf")
@@ -305,7 +305,7 @@ public class ContractGrammar003 {
   }
 
   @Test(enabled = true)
-  public void testGrammar016() {
+  public void test3Grammar016() {
 
     String contractName = "dContract";
     String code = Configuration.getByPath("testng.conf")
@@ -369,7 +369,7 @@ public class ContractGrammar003 {
   }
 
   @Test(enabled = true)
-  public void testGrammar017() {
+  public void test4Grammar017() {
 
     String contractName = "crowdfundingContract";
     String code = Configuration.getByPath("testng.conf")
@@ -415,7 +415,7 @@ public class ContractGrammar003 {
   }
 
   @Test(enabled = true)
-  public void testGrammar018() {
+  public void test5Grammar018() {
 
     String contractName = "grammar18Contract";
     String code = Configuration.getByPath("testng.conf")
@@ -479,7 +479,7 @@ public class ContractGrammar003 {
 
 
   @Test(enabled = true)
-  public void testGrammar019() {
+  public void test6Grammar019() {
     PublicMethed
         .sendcoin(grammarAddress3, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
@@ -509,7 +509,7 @@ public class ContractGrammar003 {
 
 
   @Test(enabled = true)
-  public void testGrammar020() {
+  public void test7Grammar020() {
 
     String contractName = "TrxContract";
     String code = Configuration.getByPath("testng.conf")

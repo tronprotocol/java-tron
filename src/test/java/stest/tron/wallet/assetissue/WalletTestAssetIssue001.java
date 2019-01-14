@@ -90,6 +90,7 @@ public class WalletTestAssetIssue001 {
 
     Assert.assertTrue(PublicMethed.sendcoin(noBandwitchAddress, 2048000000, fromAddress,
         testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long start = System.currentTimeMillis() + 5000;
     Long end = System.currentTimeMillis() + 1000000000;
 
@@ -97,8 +98,6 @@ public class WalletTestAssetIssue001 {
     Assert.assertTrue(PublicMethed.createAssetIssue(noBandwitchAddress, name, totalSupply, 1,
         100, start, end, 1, description, url, 10000L,10000L,
         1L,1L,noBandwitch,blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account getAssetIdFromThisAccount;
@@ -108,6 +107,7 @@ public class WalletTestAssetIssue001 {
 
     Assert.assertTrue(transferAsset(toAddress, assetAccountId.toByteArray(), 100L,
         noBandwitchAddress, noBandwitch));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //Transfer Asset failed when transfer to yourself
     Assert.assertFalse(transferAsset(toAddress, assetAccountId.toByteArray(), 100L,

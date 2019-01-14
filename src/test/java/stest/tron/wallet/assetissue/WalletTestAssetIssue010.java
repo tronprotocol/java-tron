@@ -116,8 +116,6 @@ public class WalletTestAssetIssue010 {
 
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account getAssetIdFromThisAccount;
     getAssetIdFromThisAccount = PublicMethed.queryAccount(testKeyForAssetIssue010,blockingStubFull);
     ByteString assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
@@ -137,8 +135,6 @@ public class WalletTestAssetIssue010 {
         .updateAsset(asset010Address, updateDescription.getBytes(), updateUrl.getBytes(),
             updateFreeAssetNetLimit,
             updatePublicFreeAssetNetLimit, testKeyForAssetIssue010, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //After update asset issue ,query the description and url,
@@ -166,6 +162,7 @@ public class WalletTestAssetIssue010 {
         .updateAsset(asset010Address, updateDescription.getBytes(), updateUrl.getBytes(),
             updateFreeAssetNetLimit,
             0, testKeyForAssetIssue010, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     //FreeAssetNetLimit is -1
     Assert.assertFalse(PublicMethed
         .updateAsset(asset010Address, updateDescription.getBytes(), updateUrl.getBytes(), -1,
@@ -174,6 +171,7 @@ public class WalletTestAssetIssue010 {
     Assert.assertTrue(PublicMethed
         .updateAsset(asset010Address, updateDescription.getBytes(), updateUrl.getBytes(), 0,
             publicFreeAssetNetLimit, testKeyForAssetIssue010, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Description is null
     Assert.assertTrue(PublicMethed
         .updateAsset(asset010Address, "".getBytes(), updateUrl.getBytes(), freeAssetNetLimit,
