@@ -592,7 +592,7 @@ public class ContractInternalTransaction002 {
   @Test(enabled = true)
   public void test4InternalTransaction010() {
     PublicMethed
-        .sendcoin(internalTxsAddress, 200000000000L, testNetAccountAddress, testNetAccountKey,
+        .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
