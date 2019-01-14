@@ -177,7 +177,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
     if (accountPermissionUpdateContract.getActivesCount() == 0) {
       throw new ContractValidateException("active permission is missed");
     }
-    if (accountPermissionUpdateContract.getActivesCount() > 32) {
+    if (accountPermissionUpdateContract.getActivesCount() > 8) {
       throw new ContractValidateException("active permission is too many");
     }
 
