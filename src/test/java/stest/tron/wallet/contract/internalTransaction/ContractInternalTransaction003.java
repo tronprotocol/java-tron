@@ -5,10 +5,12 @@ import io.grpc.ManagedChannelBuilder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.spongycastle.util.encoders.Hex;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -124,8 +126,6 @@ public class ContractInternalTransaction003 {
         1000000L, 100, null, testKeyForinternalTxsAddress,
         internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String contractName1 = "DContract";
     String code1 = "6080604052610172806100136000396000f300608060405260043610603e5763ffffffff7c0"
         + "100000000000000000000000000000000000000000000000000000000600035041663ab5ed150811460"
@@ -149,16 +149,12 @@ public class ContractInternalTransaction003 {
             1000000L, 100, null, testKeyForinternalTxsAddress,
             internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String initParmes = "\"" + Base58.encode58Check(contractAddress1) + "\"";
     String txid = "";
     txid = PublicMethed.triggerContract(contractAddress,
         "test1(address)", initParmes, false,
         0, maxFeeLimit, internalTxsAddress, testKeyForinternalTxsAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -199,7 +195,7 @@ public class ContractInternalTransaction003 {
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     String contractName = "AAContract";
     String code = "6080604052610264806100136000396000f30060806040526004361061003d5763fffffff"
         + "f60e060020a600035041663648efe8b811461003f578063b45f578b14610059578063d81845211461"
@@ -233,8 +229,7 @@ public class ContractInternalTransaction003 {
         1000000L, 100, null, testKeyForinternalTxsAddress,
         internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     String contractName1 = "BContract";
     String code1 = "6080604052610166806100136000396000f3006080604052600436106100325763ffffffff"
         + "60e060020a6000350416630223024e8114610034578063a03fa7e314610055575b005b61003273fff"
@@ -258,8 +253,7 @@ public class ContractInternalTransaction003 {
             1000000L, 100, null, testKeyForinternalTxsAddress,
             internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     String contractName2 = "CContract";
     String code2 = "6080604052610166806100136000396000f3006080604052600436106100325763fffffff"
         + "f60e060020a6000350416630223024e8114610034578063a03fa7e314610055575b005b61003273fff"
@@ -284,8 +278,7 @@ public class ContractInternalTransaction003 {
             1000000L, 100, null, testKeyForinternalTxsAddress,
             internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     String initParmes = "\"" + Base58.encode58Check(contractAddress1)
         + "\",\"" + Base58.encode58Check(contractAddress2) + "\"";
     String txid = "";
@@ -293,8 +286,7 @@ public class ContractInternalTransaction003 {
         "sendToB(address,address)", initParmes, false,
         0, maxFeeLimit, internalTxsAddress, testKeyForinternalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
@@ -320,8 +312,7 @@ public class ContractInternalTransaction003 {
         "sendToB2(address,address)", initParmes, false,
         0, maxFeeLimit, internalTxsAddress, testKeyForinternalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     Optional<TransactionInfo> infoById2 = null;
     infoById2 = PublicMethed.getTransactionInfoById(txid2, blockingStubFull);
     Assert.assertTrue(infoById2.get().getResultValue() == 0);
@@ -354,8 +345,7 @@ public class ContractInternalTransaction003 {
         "sendToB3(address,address)", initParmes, false,
         0, maxFeeLimit, internalTxsAddress, testKeyForinternalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     Optional<TransactionInfo> infoById3 = null;
     infoById3 = PublicMethed.getTransactionInfoById(txid3, blockingStubFull);
     Assert.assertTrue(infoById3.get().getResultValue() == 0);
@@ -387,7 +377,7 @@ public class ContractInternalTransaction003 {
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     String contractName = "AAContract";
     String code = "608060405261037c806100136000396000f3006080604052600436106100325763fff"
         + "fffff60e060020a60003504166363f76a6a8114610034578063bc07c4431461005b575"
@@ -424,8 +414,7 @@ public class ContractInternalTransaction003 {
         1000000L, 100, null, testKeyForinternalTxsAddress,
         internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     String contractName1 = "DContract";
     String code1 = "608060405261026f806100136000396000f3006080604052600436106100405763ffffffff7c"
         + "0100000000000000000000000000000000000000000000000000000000600035041663088a91f5"
@@ -454,8 +443,7 @@ public class ContractInternalTransaction003 {
             1000000L, 100, null, testKeyForinternalTxsAddress,
             internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     String contractName2 = "EContract";
     String code2 = "608060405260e1806100126000396000f30060806040526004361060525763ffffffff7c0"
         + "1000000000000000000000000000000000000000000000000000000006000350416639f3f89dc811460"
@@ -477,8 +465,7 @@ public class ContractInternalTransaction003 {
             1000000L, 100, null, testKeyForinternalTxsAddress,
             internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     String initParmes = "\"" + Base58.encode58Check(contractAddress1)
         + "\",\"" + Base58.encode58Check(contractAddress2) + "\"";
     String txid = "";
@@ -486,8 +473,7 @@ public class ContractInternalTransaction003 {
         "test1(address,address)", initParmes, false,
         0, maxFeeLimit, internalTxsAddress, testKeyForinternalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
@@ -504,7 +490,6 @@ public class ContractInternalTransaction003 {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String contractName = "AAContract";
     String code = "608060405260008055611033806100176000396000f300608060405260043610610061576"
@@ -622,14 +607,11 @@ public class ContractInternalTransaction003 {
         1000000L, 100, null, testKeyForinternalTxsAddress,
         internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     String txid = "";
     txid = PublicMethed.triggerContract(contractAddress,
         "transfer()", "#", false,
         0, maxFeeLimit, internalTxsAddress, testKeyForinternalTxsAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -658,8 +640,7 @@ public class ContractInternalTransaction003 {
         "transfer2()", "#", false,
         0, maxFeeLimit, internalTxsAddress, testKeyForinternalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     Optional<TransactionInfo> infoById1 = null;
     infoById1 = PublicMethed.getTransactionInfoById(txid1, blockingStubFull);
     int transactionsCount1 = infoById1.get().getInternalTransactionsCount();
@@ -681,7 +662,6 @@ public class ContractInternalTransaction003 {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String contractName = "AAContract";
     String code = "608060405260008055611f19806100176000396000f30060806040526004361061006157"
@@ -889,8 +869,6 @@ public class ContractInternalTransaction003 {
         1000000L, 100, null, testKeyForinternalTxsAddress,
         internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String initParmes = "\"" + Base58.encode58Check(contractAddress) + "\"";
 
@@ -899,8 +877,7 @@ public class ContractInternalTransaction003 {
         "transfer(address)", initParmes, false,
         0, maxFeeLimit, internalTxsAddress, testKeyForinternalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
@@ -927,7 +904,6 @@ public class ContractInternalTransaction003 {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String contractName = "AAContract";
     String code = "6080604052612fea806100136000396000f3006080604052600436106100275763ffffffff60e0"
@@ -1242,8 +1218,6 @@ public class ContractInternalTransaction003 {
         1000000L, 100, null, testKeyForinternalTxsAddress,
         internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String contractName1 = "BContract";
     String code1 = "60806040526102de806100136000396000f30060806040526004361061004b5763ffff"
         + "ffff7c0100000000000000000000000000000000000000000000000000000000600035041663"
@@ -1276,8 +1250,6 @@ public class ContractInternalTransaction003 {
             1000000L, 100, null, testKeyForinternalTxsAddress,
             internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String contractName2 = "EContract";
     String code2 = "6080604052609f806100126000396000f30060806040526004361060485763ffffffff"
@@ -1297,8 +1269,6 @@ public class ContractInternalTransaction003 {
             1000000L, 100, null, testKeyForinternalTxsAddress,
             internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String initParmes = "\"" + Base58.encode58Check(contractAddress1)
         + "\",\"" + Base58.encode58Check(contractAddress2) + "\"";
@@ -1307,8 +1277,6 @@ public class ContractInternalTransaction003 {
         "test1(address,address)", initParmes, false,
         0, maxFeeLimit, internalTxsAddress, testKeyForinternalTxsAddress, blockingStubFull);
     Optional<TransactionInfo> infoById = null;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
@@ -1342,6 +1310,24 @@ public class ContractInternalTransaction003 {
 
 
   }
+
+  /**
+   * constructor.
+   */
+  @AfterClass
+  public void shutdown() throws InterruptedException {
+    if (channelFull != null) {
+      channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelFull1 != null) {
+      channelFull1.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelSolidity != null) {
+      channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+  }
+
+
   /**
    * constructor.
    */

@@ -151,7 +151,8 @@ public class WalletTestMutiSign004 {
     PublicMethed.getTransactionById(txid,blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getBlockNumber() > 0);
-    PublicMethedForMutiSign.updateSetting(contractAddress,50,ownerKey,ownerAddress,blockingStubFull,permissionKeyString);
+    PublicMethedForMutiSign.updateSetting(contractAddress,50,ownerKey,
+            ownerAddress,blockingStubFull,permissionKeyString);
 
   }
 

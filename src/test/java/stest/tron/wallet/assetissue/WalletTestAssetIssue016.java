@@ -107,6 +107,7 @@ public class WalletTestAssetIssue016 {
         .createAssetIssue(asset016Address, name, totalSupply, 1, 1, start, end, 1, description,
             url, freeAssetNetLimit, publicFreeAssetNetLimit, 1L, 1L, testKeyForAssetIssue016,
             blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account getAssetIdFromThisAccount;
     getAssetIdFromThisAccount = PublicMethed.queryAccount(asset016Address,blockingStubFull);
@@ -119,7 +120,8 @@ public class WalletTestAssetIssue016 {
     Assert.assertFalse(assetIssueInfo.getAssetNetLimitMap().isEmpty());
     Assert.assertFalse(assetIssueInfo.getAssetNetUsedMap().isEmpty());
 
-    GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder().setValue(assetAccountId).build();
+    GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder()
+            .setValue(assetAccountId).build();
     Contract.AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request);
     Assert.assertTrue(assetIssueByName.getFreeAssetNetLimit() == freeAssetNetLimit);
     Assert.assertTrue(assetIssueByName.getPublicFreeAssetNetLimit() == publicFreeAssetNetLimit);
@@ -135,7 +137,6 @@ public class WalletTestAssetIssue016 {
         transferAssetAddress,transferAssetCreateKey,blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     assetIssueByName = blockingStubFull.getAssetIssueByName(request);
     Assert.assertTrue(assetIssueByName.getPublicLatestFreeNetTime() == 0);
@@ -145,7 +146,6 @@ public class WalletTestAssetIssue016 {
         3,testKeyForAssetIssue016,blockingStubFull));
     PublicMethed.transferAsset(toAddress,assetAccountId.toByteArray(),100L,
         transferAssetAddress,transferAssetCreateKey,blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     assetIssueByName = blockingStubFull.getAssetIssueByName(request);

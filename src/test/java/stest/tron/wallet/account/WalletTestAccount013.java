@@ -59,7 +59,9 @@ public class WalletTestAccount013 {
   byte[] accountForAssetIssueAddress;
   String accountForAssetIssueKey;
 
-
+  /**
+   * constructor.
+   */
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
@@ -67,6 +69,9 @@ public class WalletTestAccount013 {
 
   }
 
+  /**
+   * constructor.
+   */
   @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(testKey002);
@@ -465,6 +470,9 @@ public class WalletTestAccount013 {
         == account013CurrentBandwidthUsedAfterTrig - contractTriggerBandwidthUsed);
   }
 
+  /**
+   * constructor.
+   */
   @AfterClass
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
