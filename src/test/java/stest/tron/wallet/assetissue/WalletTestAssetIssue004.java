@@ -88,6 +88,7 @@ public class WalletTestAssetIssue004 {
       Assert.assertTrue(PublicMethed.createAssetIssue(fromAddress, name, totalSupply, 6, 1000,
           start, end, 2, description, url,10000L,10000L,
           1L, 1L, testKey002,blockingStubFull));
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
     } else {
       logger.info("This account already create an assetisue");
     }

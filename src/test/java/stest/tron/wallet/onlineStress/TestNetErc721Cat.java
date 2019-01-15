@@ -244,10 +244,10 @@ public class TestNetErc721Cat {
     //logger.info("before storage usaged is " + Long.toString(storageUsage));
     Long maxFeeLimit = 3900000000L;
     String contractName = "GeneScienceInterface";
-     String code = Configuration.getByPath("testng.conf")
-          .getString("code.code_TestNetErc721Cat_deployGeneScienceInterface");
-     String abi = Configuration.getByPath("testng.conf")
-          .getString("abi.abi_TestNetErc721Cat_deployGeneScienceInterface");
+    String code = Configuration.getByPath("testng.conf")
+            .getString("code.code_TestNetErc721Cat_deployGeneScienceInterface");
+    String abi = Configuration.getByPath("testng.conf")
+            .getString("abi.abi_TestNetErc721Cat_deployGeneScienceInterface");
     logger.info("gene Science Interface");
     geneScienceInterfaceContractAddress = PublicMethed.deployContract(contractName,abi,code,
         "",maxFeeLimit,
@@ -272,7 +272,8 @@ public class TestNetErc721Cat {
   public void triggerToSetThreeContractAddressToKittyCore() {
     //Set SaleAuctionAddress to kitty core.
     String saleContractString = "\"" + Base58.encode58Check(saleClockAuctionContractAddress) + "\"";
-    txid = PublicMethed.triggerContract(kittyCoreContractAddress,"setSaleAuctionAddress(address)",saleContractString,false, 0,10000000L,deployAddress,deployKey,blockingStubFull);
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,"setSaleAuctionAddress(address)",
+            saleContractString,false, 0,10000000L,deployAddress,deployKey,blockingStubFull);
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
     //Assert.assertTrue(infoById.get().getReceipt().getStorageDelta() > 50);
@@ -280,7 +281,9 @@ public class TestNetErc721Cat {
     //Set SiringAuctionAddress to kitty core.
     String siringContractString  = "\"" + Base58.encode58Check(siringClockAuctionContractAddress)
         + "\"";
-    txid = PublicMethed.triggerContract(kittyCoreContractAddress,"setSiringAuctionAddress(address)",siringContractString,false, 0,10000000L,deployAddress,deployKey,blockingStubFull);
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,"setSiringAuctionAddress(address)",
+            siringContractString,false, 0,10000000L,
+            deployAddress,deployKey,blockingStubFull);
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
     //Assert.assertTrue(infoById.get().getReceipt().getStorageDelta() > 50);
