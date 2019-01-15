@@ -31,7 +31,7 @@ public class LocalWitnesses {
   @Getter
   private List<String> privateKeys = Lists.newArrayList();
 
-  private String witnessAccountAddress;
+  private byte[] witnessAccountAddress;
 
   public LocalWitnesses() {
   }
@@ -44,15 +44,15 @@ public class LocalWitnesses {
     setPrivateKeys(privateKeys);
   }
 
-  public void setWitnessAccountAddress(final String localWitnessAccountAddress) {
+  public void setWitnessAccountAddress(final byte[] localWitnessAccountAddress) {
     this.witnessAccountAddress = localWitnessAccountAddress;
   }
 
-  public String getWitnessAccountAddress() {
+  public byte[] getWitnessAccountAddress() {
     if (witnessAccountAddress == null) {
       byte[] privateKey = ByteArray.fromHexString(getPrivateKey());
       final ECKey ecKey = ECKey.fromPrivate(privateKey);
-      this.witnessAccountAddress = ByteArray.toHexString(ecKey.getAddress());
+      this.witnessAccountAddress = ecKey.getAddress();
     }
     return witnessAccountAddress;
   }
@@ -61,7 +61,7 @@ public class LocalWitnesses {
     if (witnessAccountAddress == null) {
       byte[] privateKey = ByteArray.fromHexString(getPrivateKey());
       final ECKey ecKey = ECKey.fromPrivate(privateKey);
-      this.witnessAccountAddress = ByteArray.toHexString(ecKey.getAddress());
+      this.witnessAccountAddress = ecKey.getAddress();
     }
   }
 

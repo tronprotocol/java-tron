@@ -353,8 +353,7 @@ public class WitnessService implements Service {
 
     byte[] privateKey = ByteArray
         .fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey());
-    byte[] address = ByteArray
-        .fromHexString(Args.getInstance().getLocalWitnesses().getWitnessAccountAddress());
+    byte[] address = Args.getInstance().getLocalWitnesses().getWitnessAccountAddress();
 
     WitnessCapsule witnessCapsule = this.tronApp.getDbManager().getWitnessStore()
           .get(address);

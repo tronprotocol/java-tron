@@ -506,10 +506,10 @@ public class Args {
       INSTANCE.localWitnesses.setPrivateKeys(localwitness);
 
       if (config.hasPath("localWitnessAccountAddress")) {
-        String localWitnessAccountAddress = config.getString("localWitnessAccountAddress");
+        byte[] bytes = Wallet.decodeFromBase58Check(config.getString("localWitnessAccountAddress"));
 
-        if (Wallet.addressValid(ByteArray.fromHexString(localWitnessAccountAddress))) {
-          INSTANCE.localWitnesses.setWitnessAccountAddress(localWitnessAccountAddress);
+        if (bytes != null) {
+          INSTANCE.localWitnesses.setWitnessAccountAddress(bytes);
         } else {
           logger.warn("The localWitnessAccountAddress format is incorrect, ignored");
         }
