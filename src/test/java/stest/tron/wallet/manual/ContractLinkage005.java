@@ -66,6 +66,7 @@ public class ContractLinkage005 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -87,32 +88,10 @@ public class ContractLinkage005 {
   public void testEnergyCostDetail() {
     Assert.assertTrue(PublicMethed.sendcoin(linkage005Address, 5000000000000L, fromAddress,
         testKey003, blockingStubFull));
-    Integer times = 0;
-    while (!PublicMethed.freezeBalance(linkage005Address, 250000000000L,
-        3, linkage005Key, blockingStubFull)) {
-      times++;
-      if (times == 3) {
-        break;
-      }
-      try {
-        Thread.sleep(1500);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
-    times = 0;
-    while (!PublicMethed.freezeBalanceGetEnergy(linkage005Address, 250000000000L,
-        3, 1, linkage005Key, blockingStubFull)) {
-      times++;
-      if (times == 3) {
-        break;
-      }
-      try {
-        Thread.sleep(1500);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
+    Assert.assertTrue(PublicMethed.freezeBalance(linkage005Address, 250000000000L,
+        0, linkage005Key, blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage005Address, 250000000000L,
+        0, 1, linkage005Key, blockingStubFull));
 
     contractName = "EnergyCost";
     code = "6080604052600060035534801561001557600080fd5b5061027b806100256000396000f300608060405260"
@@ -253,8 +232,8 @@ public class ContractLinkage005 {
         "testUseCpu(uint256)", secondForCycleTimes.toString(), false,
         0, 100000000L, linkage005Address, linkage005Key, blockingStubFull);
     String txid7 = PublicMethed.triggerContract(contractAddress,
-            "testUseCpu(uint256)", thirdForCycleTimes.toString(), false,
-            0, 100000000L, linkage005Address, linkage005Key, blockingStubFull);
+        "testUseCpu(uint256)", thirdForCycleTimes.toString(), false,
+        0, 100000000L, linkage005Address, linkage005Key, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -317,7 +296,6 @@ public class ContractLinkage005 {
     Assert.assertTrue(afterEnergyUsed4 > beforeEnergyUsed4);
     Assert.assertTrue(afterNetUsed4 > beforeNetUsed4);
 
-
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     zeroForCycleCost = infoById.get().getReceipt().getEnergyUsageTotal();
 
@@ -326,20 +304,20 @@ public class ContractLinkage005 {
         0, 100000000L, linkage005Address, linkage005Key, blockingStubFull);
 
     String txid2 = PublicMethed.triggerContract(contractAddress,
-            "testUseStorage(uint256)", secondForCycleTimes.toString(), false,
-            0, 100000000L, linkage005Address, linkage005Key, blockingStubFull);
+        "testUseStorage(uint256)", secondForCycleTimes.toString(), false,
+        0, 100000000L, linkage005Address, linkage005Key, blockingStubFull);
 
     String txid3 = PublicMethed.triggerContract(contractAddress,
-            "testUseStorage(uint256)", thirdForCycleTimes.toString(), false,
-            0, 100000000L, linkage005Address, linkage005Key, blockingStubFull);
+        "testUseStorage(uint256)", thirdForCycleTimes.toString(), false,
+        0, 100000000L, linkage005Address, linkage005Key, blockingStubFull);
 
     String txid4 = PublicMethed.triggerContract(contractAddress,
-            "testUseStorage(uint256)", forthForCycleTimes.toString(), false,
-            0, 100000000L, linkage005Address, linkage005Key, blockingStubFull);
+        "testUseStorage(uint256)", forthForCycleTimes.toString(), false,
+        0, 100000000L, linkage005Address, linkage005Key, blockingStubFull);
 
     String txid5 = PublicMethed.triggerContract(contractAddress,
-            "testUseStorage(uint256)", fifthForCycleTimes.toString(), false,
-            0, 100000000L, linkage005Address, linkage005Key, blockingStubFull);
+        "testUseStorage(uint256)", fifthForCycleTimes.toString(), false,
+        0, 100000000L, linkage005Address, linkage005Key, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -363,7 +341,11 @@ public class ContractLinkage005 {
     Assert.assertTrue(fifthForCycleCost - forthForCycleCost
         == forthForCycleCost - thirdForCycleCost);
 
+    PublicMethed.unFreezeBalance(linkage005Address, linkage005Key, 1,
+        linkage005Address, blockingStubFull);
+
   }
+
   /**
    * constructor.
    */
