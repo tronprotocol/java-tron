@@ -157,7 +157,8 @@ public class WalletTestMutiSign002 {
         + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}],\"name\":\"active\","
         + "\"threshold\":2}]";
     logger.info(accountPermissionJson);
-    PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,exchange001Address,exchange001Key,
+    PublicMethedForMutiSign.accountPermissionUpdate(
+        accountPermissionJson,exchange001Address,exchange001Key,
         blockingStubFull,ownerKeyString);
 
 
@@ -191,7 +192,8 @@ public class WalletTestMutiSign002 {
     //logger.info("second balance is " + token2BeforeBalance.toString());
     //CreateExchange
     Assert.assertTrue(
-        PublicMethedForMutiSign.exchangeCreate(assetAccountId1.toByteArray(), firstTokenInitialBalance,
+        PublicMethedForMutiSign.exchangeCreate(
+            assetAccountId1.toByteArray(), firstTokenInitialBalance,
             assetAccountId2.toByteArray(), secondTokenInitialBalance, exchange001Address,
             exchange001Key, blockingStubFull,permissionKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -235,7 +237,8 @@ public class WalletTestMutiSign002 {
     logger.info("before token 2 balance is " + Long.toString(beforeToken2Balance));
     Integer injectBalance = 100;
     Assert.assertTrue(
-        PublicMethedForMutiSign.injectExchange(exchangeId, assetAccountId1.toByteArray(), injectBalance,
+        PublicMethedForMutiSign.injectExchange(
+            exchangeId, assetAccountId1.toByteArray(), injectBalance,
             exchange001Address, exchange001Key, blockingStubFull,permissionKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     firstAccount = PublicMethed.queryAccount(exchange001Address, blockingStubFull);
@@ -287,7 +290,8 @@ public class WalletTestMutiSign002 {
     logger.info("before token 2 balance is " + Long.toString(beforeToken2Balance));
     Integer withdrawNum = 200;
     Assert.assertTrue(
-        PublicMethedForMutiSign.exchangeWithdraw(exchangeId, assetAccountId1.toByteArray(), withdrawNum,
+        PublicMethedForMutiSign.exchangeWithdraw(
+            exchangeId, assetAccountId1.toByteArray(), withdrawNum,
             exchange001Address, exchange001Key, blockingStubFull,permissionKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     firstAccount = PublicMethed.queryAccount(exchange001Address, blockingStubFull);
