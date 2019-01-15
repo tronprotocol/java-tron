@@ -49,15 +49,10 @@ public class TransactionLogTrigger extends Trigger {
   @Setter
   private long netFee;
 
-  // contract
-
+  //contract
   @Getter
   @Setter
-  private String contractName;
-
-  @Getter
-  @Setter
-  private String contractResult;
+  private String result;
 
   @Getter
   @Setter
@@ -75,7 +70,11 @@ public class TransactionLogTrigger extends Trigger {
   @Setter
   private long callValue;
 
-  // internal transaction
+  @Getter
+  @Setter
+  private String contractResult;
+
+  //internal transaction
   @Getter
   @Setter
   private List<InternalTransactionPojo> internalTrananctionList;

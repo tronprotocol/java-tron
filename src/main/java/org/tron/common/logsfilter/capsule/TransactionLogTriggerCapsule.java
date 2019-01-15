@@ -9,7 +9,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
 import org.tron.common.runtime.vm.program.ProgramResult;
-import org.tron.common.utils.TypeConversion;
+import org.tron.common.utils.Base58;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TransactionTrace;
@@ -32,9 +32,9 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
 
     TransactionTrace trxTrace = trxCasule.getTrxTrace();
 
-    // contract result
+    //result
     if (Objects.nonNull(trxCasule.getContractRet())){
-      transactionLogTrigger.setContractResult(trxCasule.getContractRet().toString());
+      transactionLogTrigger.setResult(trxCasule.getContractRet().toString());
     }
 
     if (Objects.nonNull(trxCasule.getInstance().getRawData())){
@@ -47,10 +47,6 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
         Protocol.Transaction.Contract.ContractType contractType = contract.getType();
         if (Objects.nonNull(contractType)){
           transactionLogTrigger.setContractType(contractType.toString());
-        }
-
-        if (Objects.nonNull(contract.getContractName())){
-          transactionLogTrigger.setContractName(Hex.toHexString(contract.getContractName().toByteArray()));
         }
 
         transactionLogTrigger.setCallValue(TransactionCapsule.getCallValue(contract));
@@ -74,11 +70,11 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
       ByteString contractAddress = ByteString.copyFrom(programResult.getContractAddress());
 
       if (Objects.nonNull(contractResult) && contractResult.size() > 0){
-        transactionLogTrigger.setContractResult(TypeConversion.bytesToHexString(contractResult.toByteArray()));
+        transactionLogTrigger.setContractResult(Hex.toHexString(contractResult.toByteArray()));
       }
 
       if (Objects.nonNull(contractAddress) && contractAddress.size() > 0){
-        transactionLogTrigger.setContractAddress(TypeConversion.bytesToHexString(contractAddress.toByteArray()));
+        transactionLogTrigger.setContractAddress(Base58.encode((contractAddress.toByteArray())));
       }
 
       // internal transaction
