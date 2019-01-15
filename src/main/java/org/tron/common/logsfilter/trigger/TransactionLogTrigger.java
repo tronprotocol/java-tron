@@ -1,5 +1,6 @@
 package org.tron.common.logsfilter.trigger;
 
+import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
@@ -48,45 +49,60 @@ public class TransactionLogTrigger extends Trigger {
   @Setter
   private long netFee;
 
+  // program result
   @Getter
   @Setter
-  private List<InternalTransactionPojo> internalTransactionPojos;
+  private String contractResult;
+
+  @Getter
+  @Setter
+  private String contractAddress;
+
+  @Getter
+  @Setter
+  private long contractFee;
+
+  @Getter
+  @Setter
+  private long unfreezeAmount;
+
+  @Getter
+  @Setter
+  private String assetIssueID;
+
+  @Getter
+  @Setter
+  private long exchangeId;
+
+  @Getter
+  @Setter
+  private long withdrawAmount;
+
+  @Getter
+  @Setter
+  private long exchangeReceivedAmount;
+
+  @Getter
+  @Setter
+  private long exchangeInjectAnotherAmount;
+
+  @Getter
+  @Setter
+  private long exchangeWithdrawAnotherAmount;
+
+  // internal transaction
+  @Getter
+  @Setter
+  private List<InternalTransactionPojo> internalTrananctionList;
 
   public TransactionLogTrigger() {
     setTriggerName(Trigger.TRANSACTION_TRIGGER_NAME);
+    internalTrananctionList = new ArrayList<>();
   }
 
-  @Override
-  public String toString() {
-    return new StringBuilder().append("triggerName: ")
-        .append(getTriggerName())
-        .append("timestamp: ")
-        .append(timeStamp)
-        .append(", transactionId: ")
-        .append(transactionId)
-        .append(", blockHash: ")
-        .append(blockHash)
-        .append(", blockNumber: ")
-        .append(blockNumber)
-        .append(", energyUsage: ")
-        .append(energyUsage)
-        .append(", energyFee: ")
-        .append(energyFee)
-        .append(", originEnergyUsage: ")
-        .append(originEnergyUsage)
-        .append(", energyUsageTotal: ")
-        .append(energyUsageTotal)
-        .append(", netUsage: ")
-        .append(netUsage)
-        .append(", netFee: ")
-        .append(netFee)
-        .append(", internalTransactionPojos: ")
-        .append(internalTransactionPojos).toString();
-  }
-
-  public void setInternalTransactionPojos(List<InternalTransaction> internalTransactions) {
-    internalTransactions.forEach(internalTransaction -> {
-      this.internalTransactionPojos.add(new InternalTransactionPojo(internalTransaction));
+  public void setInternalTransactionPojoList(List<InternalTransaction> internalTransactionList) {
+    internalTransactionList.forEach(internalTransaction -> {
+      this.internalTrananctionList.add(new InternalTransactionPojo(internalTransaction));
     });
 
   }
