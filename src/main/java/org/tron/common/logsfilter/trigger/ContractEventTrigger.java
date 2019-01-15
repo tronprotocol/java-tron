@@ -12,6 +12,10 @@ public class ContractEventTrigger extends ContractTrigger {
   @Setter
   private String eventSignature;
 
+  @Getter
+  @Setter
+  private String eventName;
+
   /**
    * decode from topicList with the ABI of this contract.
    * this item is null if not called ContractEventParser::parseTopics(ContractEventTrigger trigger)
