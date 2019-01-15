@@ -52,7 +52,15 @@ public class WalletTestTransfer001 {
   private String searchFullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
 
+  //send account
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  final byte[] sendAccountAddress = ecKey1.getAddress();
+  String sendAccountKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
+  //receipt account
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  final byte[] receiptAccountAddress = ecKey2.getAddress();
+  String receiptAccountKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
 
   @BeforeSuite
@@ -81,14 +89,14 @@ public class WalletTestTransfer001 {
   @Test
   public void testSendCoin() {
     //send account
-    ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] sendAccountAddress = ecKey1.getAddress();
-    String sendAccountKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ecKey1 = new ECKey(Utils.getRandom());
+    byte[] sendAccountAddress = ecKey1.getAddress();
+    sendAccountKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
     //receipt account
-    ECKey ecKey2 = new ECKey(Utils.getRandom());
-    final byte[] receiptAccountAddress = ecKey2.getAddress();
-    String receiptAccountKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+    ecKey2 = new ECKey(Utils.getRandom());
+    byte[] receiptAccountAddress = ecKey2.getAddress();
+    receiptAccountKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
     Assert.assertTrue(PublicMethed.sendcoin(sendAccountAddress,90000000000L,
         fromAddress,testKey002,blockingStubFull));
@@ -103,8 +111,10 @@ public class WalletTestTransfer001 {
     Assert.assertTrue(receiptAccountBeforeBalance == 0);
 
     //Test send coin
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.sendcoin(receiptAccountAddress,49880000000L,
         sendAccountAddress,sendAccountKey,blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     sendAccount = PublicMethed.queryAccount(sendAccountKey,blockingStubFull);
     Long sendAccountAfterBalance = sendAccount.getBalance();
@@ -115,11 +125,6 @@ public class WalletTestTransfer001 {
     Long receiptAccountAfterBalance = receiptAccount.getBalance();
     logger.info(Long.toString(receiptAccountAfterBalance));
     Assert.assertTrue(receiptAccountAfterBalance == 49880000000L);
-
-
-    //Freeze balance to get bandwidth.
-    Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 10000000L, 3L,
-        testKey002,blockingStubFull));
 
     //Send coin failed due to no enough balance.
     Assert.assertFalse(sendcoin(toAddress, 9199999999999999999L, fromAddress, testKey002));

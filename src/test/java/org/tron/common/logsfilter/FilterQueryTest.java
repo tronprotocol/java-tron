@@ -15,6 +15,7 @@ import org.tron.common.logsfilter.capsule.ContractEventTriggerCapsule;
 import org.tron.common.runtime.vm.LogEventWrapper;
 
 public class FilterQueryTest {
+
   @Test
   public synchronized void testParseFilterQueryBlockNumber() {
     {
@@ -48,8 +49,8 @@ public class FilterQueryTest {
     ((LogEventWrapper) event).setData(new byte[]{});
     ((LogEventWrapper) event).setEventSignature("");
     ((LogEventWrapper) event).setAbiEntry(null);
-    event.setBlockNum(new Long(123));
-    ContractEventTriggerCapsule capsule =  new ContractEventTriggerCapsule(event);
+    event.setBlockNumber(new Long(123));
+    ContractEventTriggerCapsule capsule = new ContractEventTriggerCapsule(event);
     capsule.getContractEventTrigger().setContractAddress("address1");
     capsule.getContractEventTrigger().setTopicMap(topMap);
 

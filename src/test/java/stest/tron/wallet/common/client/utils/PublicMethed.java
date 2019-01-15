@@ -1953,21 +1953,21 @@ public class PublicMethed {
     for (int index = 0; index < jsonRoot.size(); index++) {
       JsonElement abiItem = jsonRoot.get(index);
       boolean anonymous = abiItem.getAsJsonObject().get("anonymous") != null
-          ? abiItem.getAsJsonObject().get("anonymous").getAsBoolean() : false;
+              ? abiItem.getAsJsonObject().get("anonymous").getAsBoolean() : false;
       final boolean constant = abiItem.getAsJsonObject().get("constant") != null
-          ? abiItem.getAsJsonObject().get("constant").getAsBoolean() : false;
+              ? abiItem.getAsJsonObject().get("constant").getAsBoolean() : false;
       final String name = abiItem.getAsJsonObject().get("name") != null
-          ? abiItem.getAsJsonObject().get("name").getAsString() : null;
+              ? abiItem.getAsJsonObject().get("name").getAsString() : null;
       JsonArray inputs = abiItem.getAsJsonObject().get("inputs") != null
-          ? abiItem.getAsJsonObject().get("inputs").getAsJsonArray() : null;
+              ? abiItem.getAsJsonObject().get("inputs").getAsJsonArray() : null;
       final JsonArray outputs = abiItem.getAsJsonObject().get("outputs") != null
-          ? abiItem.getAsJsonObject().get("outputs").getAsJsonArray() : null;
+              ? abiItem.getAsJsonObject().get("outputs").getAsJsonArray() : null;
       String type = abiItem.getAsJsonObject().get("type") != null
-          ? abiItem.getAsJsonObject().get("type").getAsString() : null;
+              ? abiItem.getAsJsonObject().get("type").getAsString() : null;
       final boolean payable = abiItem.getAsJsonObject().get("payable") != null
-          ? abiItem.getAsJsonObject().get("payable").getAsBoolean() : false;
+              ? abiItem.getAsJsonObject().get("payable").getAsBoolean() : false;
       final String stateMutability = abiItem.getAsJsonObject().get("stateMutability") != null
-          ? abiItem.getAsJsonObject().get("stateMutability").getAsString() : null;
+              ? abiItem.getAsJsonObject().get("stateMutability").getAsString() : null;
       if (type == null) {
         logger.error("No type!");
         return null;
@@ -1989,15 +1989,17 @@ public class PublicMethed {
         for (int j = 0; j < inputs.size(); j++) {
           JsonElement inputItem = inputs.get(j);
           if (inputItem.getAsJsonObject().get("name") == null
-              || inputItem.getAsJsonObject().get("type") == null) {
+                  || inputItem.getAsJsonObject().get("type") == null) {
             logger.error("Input argument invalid due to no name or no type!");
             return null;
           }
           String inputName = inputItem.getAsJsonObject().get("name").getAsString();
           String inputType = inputItem.getAsJsonObject().get("type").getAsString();
           SmartContract.ABI.Entry.Param.Builder paramBuilder = SmartContract.ABI.Entry.Param
-              .newBuilder();
-          paramBuilder.setIndexed(false);
+                  .newBuilder();
+          JsonElement indexed = inputItem.getAsJsonObject().get("indexed");
+
+          paramBuilder.setIndexed((indexed == null)?false: indexed.getAsBoolean());
           paramBuilder.setName(inputName);
           paramBuilder.setType(inputType);
           entryBuilder.addInputs(paramBuilder.build());
@@ -2009,15 +2011,17 @@ public class PublicMethed {
         for (int k = 0; k < outputs.size(); k++) {
           JsonElement outputItem = outputs.get(k);
           if (outputItem.getAsJsonObject().get("name") == null
-              || outputItem.getAsJsonObject().get("type") == null) {
+                  || outputItem.getAsJsonObject().get("type") == null) {
             logger.error("Output argument invalid due to no name or no type!");
             return null;
           }
           String outputName = outputItem.getAsJsonObject().get("name").getAsString();
           String outputType = outputItem.getAsJsonObject().get("type").getAsString();
           SmartContract.ABI.Entry.Param.Builder paramBuilder = SmartContract.ABI.Entry.Param
-              .newBuilder();
-          paramBuilder.setIndexed(false);
+                  .newBuilder();
+          JsonElement indexed = outputItem.getAsJsonObject().get("indexed");
+
+          paramBuilder.setIndexed((indexed == null)?false: indexed.getAsBoolean());
           paramBuilder.setName(outputName);
           paramBuilder.setType(outputType);
           entryBuilder.addOutputs(paramBuilder.build());

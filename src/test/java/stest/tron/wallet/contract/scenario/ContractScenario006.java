@@ -26,11 +26,14 @@ public class ContractScenario006 {
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final String testKey003 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key2");
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(0);
+      .getStringList("fullnode.ip.list").get(1);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
 
@@ -63,12 +66,13 @@ public class ContractScenario006 {
     contract006Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     PublicMethed.printAddress(contract006Key);
 
-    Assert.assertTrue(PublicMethed.sendcoin(contract006Address,200000000L,fromAddress,
-        testKey002,blockingStubFull));
+    PublicMethed.sendcoin(contract006Address,200000000L,toAddress,
+        testKey003,blockingStubFull);
     logger.info(Long.toString(PublicMethed.queryAccount(contract006Key,blockingStubFull)
         .getBalance()));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract006Address, 10000000L,
         3,1,contract006Key,blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract006Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
@@ -79,7 +83,7 @@ public class ContractScenario006 {
     String contractName = "Fomo3D";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractScenario006_deployFomo3D");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractScenario006_deployFomo3D");
     byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
         0L,100,null, contract006Key,contract006Address,blockingStubFull);

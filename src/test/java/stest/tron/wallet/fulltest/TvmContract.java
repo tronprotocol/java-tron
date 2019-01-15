@@ -84,7 +84,7 @@ public class TvmContract {
     String contractName = "ERC721";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_TvmContract_deployErc721CryptoKitties");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_TvmContract_deployErc721CryptoKitties");
     Long m = 0L;
     Long freeNet;

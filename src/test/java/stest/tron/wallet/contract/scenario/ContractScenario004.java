@@ -72,7 +72,7 @@ public class ContractScenario004 {
     String contractName = "TRONTOKEN";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractScenario004_deployErc20TronToken");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractScenario004_deployErc20TronToken");
     byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
         0L,100,null,contract004Key,contract004Address,blockingStubFull);

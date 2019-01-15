@@ -165,13 +165,11 @@ public class TronProxy {
     synchronized (blockLock) {
       try {
         if (!freshBlockId.contains(block.getBlockId())) {
-          dbManager.preValidateTransactionSign(block);
           dbManager.pushBlock(block);
           freshBlockId.add(block.getBlockId());
           logger.info("Success process block {}.", block.getBlockId().getString());
         }
-      } catch (InterruptedException
-          | ValidateSignatureException
+      } catch (ValidateSignatureException
           | ContractValidateException
           | ContractExeException
           | UnLinkedBlockException

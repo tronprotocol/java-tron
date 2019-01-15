@@ -378,10 +378,6 @@ public class Args {
 
   @Getter
   @Setter
-  private String logLevel;
-
-  @Getter
-  @Setter
   private boolean vmTrace;
 
   @Getter
@@ -786,8 +782,6 @@ public class Args {
         config.getLong("node.receiveTcpMinDataLength") : 2048;
     INSTANCE.isOpenFullTcpDisconnect = config.hasPath("node.isOpenFullTcpDisconnect") && config
         .getBoolean("node.isOpenFullTcpDisconnect");
-    INSTANCE.logLevel =
-        config.hasPath("log.level.root") ? config.getString("log.level.root") : "INFO";
     INSTANCE.needToUpdateAsset =
         config.hasPath("storage.needToUpdateAsset") ? config
             .getBoolean("storage.needToUpdateAsset")
