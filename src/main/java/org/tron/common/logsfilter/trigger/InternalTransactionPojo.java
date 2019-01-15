@@ -10,8 +10,6 @@ import org.tron.common.utils.Base58;
 public class InternalTransactionPojo {
 
   @Getter
-  private String transactionId;
-  @Getter
   private String hash;
   @Getter
   private String parentHash;
@@ -47,11 +45,8 @@ public class InternalTransactionPojo {
   private boolean rejected;
   @Getter
   private String note;
-  @Getter
-  private String protoEncoded;
 
   public InternalTransactionPojo(InternalTransaction internalTransaction) {
-    this.transactionId = Hex.toHexString(internalTransaction.getHash());
     this.hash = Hex.toHexString(internalTransaction.getHash());
     this.value = internalTransaction.getValue();
     this.tokenInfo = internalTransaction.getTokenInfo();
@@ -64,7 +59,6 @@ public class InternalTransactionPojo {
     this.index = internalTransaction.getIndex();
     this.rejected = internalTransaction.isRejected();
     this.note = internalTransaction.getNote();
-    this.protoEncoded = Hex.toHexString(internalTransaction.getEncoded());
   }
 
   @Override
