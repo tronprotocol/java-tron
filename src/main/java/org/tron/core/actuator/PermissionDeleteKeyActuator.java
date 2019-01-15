@@ -17,6 +17,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.PermissionDeleteKeyContract;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
+import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j(topic = "actuator")
@@ -85,7 +86,9 @@ public class PermissionDeleteKeyActuator extends AbstractActuator {
     if (permission == null) {
       throw new ContractValidateException("you have not set permission with the id " + id);
     }
-
+    if (permission.getType() == PermissionType.Witness) {
+      throw new ContractValidateException("Witness permission can't delete key");
+    }
     if (!Wallet.addressValid(permissionDeleteKeyContract.getKeyAddress().toByteArray())) {
       throw new ContractValidateException("address in key is invalidate");
     }

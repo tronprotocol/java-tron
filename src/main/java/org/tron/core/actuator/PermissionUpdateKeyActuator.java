@@ -17,6 +17,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.PermissionUpdateKeyContract;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
+import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j(topic = "actuator")
@@ -88,6 +89,9 @@ public class PermissionUpdateKeyActuator extends AbstractActuator {
     Permission permission = account.getPermissionById(id);
     if (permission == null) {
       throw new ContractValidateException("you have not set permission with the id " + id);
+    }
+    if (permission.getType() == PermissionType.Witness) {
+      throw new ContractValidateException("Witness permission can't update key");
     }
     if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("invalidate ownerAddress");
