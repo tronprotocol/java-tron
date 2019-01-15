@@ -97,8 +97,6 @@ public class WalletTestAssetIssue013 {
     logger.info(testKeyForAssetIssue013);
     logger.info(transferAssetCreateKey);
 
-    //Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 10000000, 3, testKey002,
-    //    blockingStubFull));
     Assert.assertTrue(PublicMethed
         .sendcoin(asset013Address, sendAmount, fromAddress, testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
