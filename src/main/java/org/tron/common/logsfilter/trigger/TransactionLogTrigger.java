@@ -79,6 +79,22 @@ public class TransactionLogTrigger extends Trigger {
   @Setter
   private List<InternalTransactionPojo> internalTrananctionList;
 
+  @Getter
+  @Setter
+  private String fromAddress;
+
+  @Getter
+  @Setter
+  private String toAddress;
+
+  @Getter
+  @Setter
+  private String AssetName;
+
+  @Getter
+  @Setter
+  private long AssetAmount;
+
   public TransactionLogTrigger() {
     setTriggerName(Trigger.TRANSACTION_TRIGGER_NAME);
     internalTrananctionList = new ArrayList<>();
