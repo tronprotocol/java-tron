@@ -49,7 +49,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
           transactionLogTrigger.setContractType(contractType.toString());
         }
 
-        transactionLogTrigger.setCallValue(TransactionCapsule.getCallValue(contract));
+        transactionLogTrigger.setContractCallValue(TransactionCapsule.getCallValue(contract));
       }
     }
 

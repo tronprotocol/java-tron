@@ -68,7 +68,7 @@ public class TransactionLogTrigger extends Trigger {
 
   @Getter
   @Setter
-  private long callValue;
+  private long contractCallValue;
 
   @Getter
   @Setter
