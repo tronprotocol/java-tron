@@ -9,7 +9,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
 import org.tron.common.runtime.vm.program.ProgramResult;
-import org.tron.common.utils.Base58;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TransactionTrace;
@@ -74,7 +74,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
       }
 
       if (Objects.nonNull(contractAddress) && contractAddress.size() > 0){
-        transactionLogTrigger.setContractAddress(Base58.encode((contractAddress.toByteArray())));
+        transactionLogTrigger.setContractAddress(Wallet.encode58Check((contractAddress.toByteArray())));
       }
 
       // internal transaction

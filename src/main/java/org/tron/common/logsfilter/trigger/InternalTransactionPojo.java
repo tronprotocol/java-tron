@@ -5,7 +5,7 @@ import java.util.Map;
 import lombok.Getter;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.vm.program.InternalTransaction;
-import org.tron.common.utils.Base58;
+import org.tron.core.Wallet;
 
 public class InternalTransactionPojo {
 
@@ -50,8 +50,8 @@ public class InternalTransactionPojo {
     this.hash = Hex.toHexString(internalTransaction.getHash());
     this.value = internalTransaction.getValue();
     this.tokenInfo = internalTransaction.getTokenInfo();
-    this.sendAddress = Base58.encode(internalTransaction.getSender());
-    this.receiveAddress = Base58.encode(internalTransaction.getReceiveAddress());
+    this.sendAddress = Wallet.encode58Check(internalTransaction.getSender());
+    this.receiveAddress = Wallet.encode58Check(internalTransaction.getReceiveAddress());
     this.parentHash = Hex.toHexString(internalTransaction.getParentHash());
     this.data = Hex.toHexString(internalTransaction.getData());
     this.nonce = internalTransaction.getNonce();
