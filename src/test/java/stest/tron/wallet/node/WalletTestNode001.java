@@ -40,6 +40,7 @@ public class WalletTestNode001 {
       .get(0);
   private String fullnode1 = Configuration.getByPath("testng.conf")
           .getStringList("fullnode.ip.list").get(1);
+
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();

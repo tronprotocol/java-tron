@@ -232,7 +232,7 @@ public class WalletClient {
   }
 
   /**
-   * Get a Wallet from storage
+   * Get a Wallet from storage.
    */
 
   public static WalletClient GetWalletByStorage(String password) {
@@ -670,7 +670,7 @@ public class WalletClient {
   }
 
   /**
-   * Get a Wallet from storage
+   * Get a Wallet from storage.
    */
 
   public static WalletClient GetWalletByStorageIgnorPrivKey() {

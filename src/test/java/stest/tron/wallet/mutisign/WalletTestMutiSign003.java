@@ -114,22 +114,32 @@ public class WalletTestMutiSign003 {
     PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,ownerAddress,ownerKey,
         blockingStubFull,ownerKeyString);
 
-    String updateName = Long.toString(System.currentTimeMillis());
+    final String updateName = Long.toString(System.currentTimeMillis());
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    Assert.assertTrue(PublicMethedForMutiSign.createAccount(ownerAddress,newAddress,ownerKey,blockingStubFull,permissionKeyString));
-    Assert.assertTrue(PublicMethedForMutiSign.sendcoin(newAddress,100L,ownerAddress,ownerKey,blockingStubFull,permissionKeyString));
-    Assert.assertTrue(PublicMethedForMutiSign.freezeBalance(ownerAddress,1000000L,0,ownerKey,blockingStubFull,permissionKeyString));
-    Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceGetEnergy(ownerAddress,1000000L,0,1,ownerKey,blockingStubFull,permissionKeyString));
-    Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceForReceiver(ownerAddress,1000000L,0,0,ByteString.copyFrom(newAddress),ownerKey,blockingStubFull,permissionKeyString));
-    Assert.assertTrue(PublicMethedForMutiSign.unFreezeBalance(ownerAddress,ownerKey,0,null,blockingStubFull,permissionKeyString));
-    Assert.assertTrue(PublicMethedForMutiSign.unFreezeBalance(ownerAddress,ownerKey,0,newAddress,blockingStubFull,permissionKeyString));
-    Assert.assertTrue(PublicMethedForMutiSign.updateAccount(ownerAddress,updateName.getBytes(),ownerKey,blockingStubFull,permissionKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.createAccount(
+            ownerAddress,newAddress,ownerKey,blockingStubFull,permissionKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.sendcoin(
+            newAddress,100L,ownerAddress,ownerKey,blockingStubFull,permissionKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.freezeBalance(
+            ownerAddress,1000000L,0,ownerKey,blockingStubFull,permissionKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceGetEnergy(
+            ownerAddress,1000000L,0,1,ownerKey,blockingStubFull,permissionKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceForReceiver(
+            ownerAddress,1000000L,0,0,ByteString.copyFrom(newAddress),
+            ownerKey,blockingStubFull,permissionKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.unFreezeBalance(
+            ownerAddress,ownerKey,0,null,blockingStubFull,permissionKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.unFreezeBalance(
+            ownerAddress,ownerKey,0,newAddress,blockingStubFull,permissionKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.updateAccount(
+            ownerAddress,updateName.getBytes(),ownerKey,blockingStubFull,permissionKeyString));
 
     String voteStr = Base58.encode58Check(witnessAddress);
     HashMap<String, String> smallVoteMap = new HashMap<String, String>();
     smallVoteMap.put(voteStr, "1");
-    Assert.assertTrue(PublicMethedForMutiSign.voteWitness(smallVoteMap, ownerAddress, ownerKey,blockingStubFull,permissionKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.voteWitness(
+            smallVoteMap, ownerAddress, ownerKey,blockingStubFull,permissionKeyString));
 
 
   }

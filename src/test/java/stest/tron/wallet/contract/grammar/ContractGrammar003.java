@@ -4,7 +4,6 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.testng.annotations.AfterClass;
@@ -30,7 +29,7 @@ public class ContractGrammar003 {
 
 
   private final String testNetAccountKey = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key1");
+      .getString("foundationAccount.key2");
   private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
@@ -46,9 +45,9 @@ public class ContractGrammar003 {
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
 
   private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(0);
-  private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
+  private String fullnode1 = Configuration.getByPath("testng.conf")
+      .getStringList("fullnode.ip.list").get(0);
 
 
   byte[] contractAddress = null;
@@ -79,38 +78,42 @@ public class ContractGrammar003 {
         .usePlaintext(true)
         .build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
-
-    logger.info(Long.toString(PublicMethed.queryAccount(testNetAccountKey, blockingStubFull)
-        .getBalance()));
-
   }
 
 
   @Test(enabled = true)
-  public void testGrammar014() {
+  public void test1Grammar014() {
+    ecKey1 = new ECKey(Utils.getRandom());
+    grammarAddress3 = ecKey1.getAddress();
+    testKeyForGrammarAddress3 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
     PublicMethed
         .sendcoin(grammarAddress3, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String contractName = "aContract";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_ContractGrammar003_testGrammar014");
+        .getString("code.code_ContractGrammar003_testGrammar014");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_ContractGrammar003_testGrammar014");
+        .getString("abi.abi_ContractGrammar003_testGrammar014");
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress3,
         grammarAddress3, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String contractName1 = "bContract";
     String code1 = Configuration.getByPath("testng.conf")
-            .getString("code.code1_ContractGrammar003_testGrammar014");
+        .getString("code.code1_ContractGrammar003_testGrammar014");
     String abi1 = Configuration.getByPath("testng.conf")
-            .getString("abi.abi1_ContractGrammar003_testGrammar014");
+        .getString("abi.abi1_ContractGrammar003_testGrammar014");
     byte[] contractAddress1 = PublicMethed
         .deployContract(contractName1, abi1, code1, "", maxFeeLimit,
             0L, 100, null, testKeyForGrammarAddress3,
             grammarAddress3, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = PublicMethed.triggerContract(contractAddress,
         "getnumberForB()", "#", false,
         0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid1 = PublicMethed.triggerContract(contractAddress1,
         "getnumberForB()", "#", false,
         0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
@@ -189,7 +192,7 @@ public class ContractGrammar003 {
         0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById9 = null;
-    infoById9 = PublicMethed.getTransactionInfoById(txid6, blockingStubFull);
+    infoById9 = PublicMethed.getTransactionInfoById(txid9, blockingStubFull);
     Long returnnumber9 = ByteArray.toLong(ByteArray
         .fromHexString(ByteArray.toHexString(infoById9.get().getContractResult(0).toByteArray())));
 
@@ -261,16 +264,17 @@ public class ContractGrammar003 {
 
 
   @Test(enabled = true)
-  public void testGrammar015() {
+  public void test2Grammar015() {
 
     String contractName = "executefallbackContract";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_ContractGrammar003_testGrammar015");
+        .getString("code.code_ContractGrammar003_testGrammar015");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_ContractGrammar003_testGrammar015");
+        .getString("abi.abi_ContractGrammar003_testGrammar015");
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress3,
         grammarAddress3, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     String txid = PublicMethed.triggerContract(contractAddress,
         "callExistFunc()", "#", false,
@@ -300,13 +304,13 @@ public class ContractGrammar003 {
   }
 
   @Test(enabled = true)
-  public void testGrammar016() {
+  public void test3Grammar016() {
 
     String contractName = "dContract";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_ContractGrammar003_testGrammar016");
+        .getString("code.code_ContractGrammar003_testGrammar016");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_ContractGrammar003_testGrammar016");
+        .getString("abi.abi_ContractGrammar003_testGrammar016");
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress3,
         grammarAddress3, blockingStubFull);
@@ -322,9 +326,9 @@ public class ContractGrammar003 {
 
     String contractName1 = "eContract";
     String code1 = Configuration.getByPath("testng.conf")
-            .getString("code.code1_ContractGrammar003_testGrammar016");
+        .getString("code.code1_ContractGrammar003_testGrammar016");
     String abi1 = Configuration.getByPath("testng.conf")
-            .getString("abi.abi1_ContractGrammar003_testGrammar016");
+        .getString("abi.abi1_ContractGrammar003_testGrammar016");
     byte[] contractAddress1 = PublicMethed
         .deployContract(contractName1, abi1, code1, "", maxFeeLimit,
             0L, 100, null, testKeyForGrammarAddress3,
@@ -364,13 +368,13 @@ public class ContractGrammar003 {
   }
 
   @Test(enabled = true)
-  public void testGrammar017() {
+  public void test4Grammar017() {
 
     String contractName = "crowdfundingContract";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_ContractGrammar003_testGrammar017");
+        .getString("code.code_ContractGrammar003_testGrammar017");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_ContractGrammar003_testGrammar017");
+        .getString("abi.abi_ContractGrammar003_testGrammar017");
     byte[] contractAddress1 = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress3,
         grammarAddress3, blockingStubFull);
@@ -394,7 +398,7 @@ public class ContractGrammar003 {
     Optional<TransactionInfo> infoById1 = PublicMethed
         .getTransactionInfoById(txid1, blockingStubFull1);
     Long returnnumber2 = ByteArray.toLong(ByteArray
-        .fromHexString(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray())));
+        .fromHexString(ByteArray.toHexString(infoById1.get().getContractResult(0).toByteArray())));
 
     Assert.assertTrue(returnnumber2 == 1);
 
@@ -410,13 +414,13 @@ public class ContractGrammar003 {
   }
 
   @Test(enabled = true)
-  public void testGrammar018() {
+  public void test5Grammar018() {
 
     String contractName = "grammar18Contract";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_ContractGrammar003_testGrammar018");
+        .getString("code.code_ContractGrammar003_testGrammar018");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_ContractGrammar003_testGrammar018");
+        .getString("abi.abi_ContractGrammar003_testGrammar018");
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress3,
         grammarAddress3, blockingStubFull);
@@ -474,26 +478,19 @@ public class ContractGrammar003 {
 
 
   @Test(enabled = true)
-  public void testGrammar019() {
+  public void test6Grammar019() {
 
     String contractName = "timetestContract";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_ContractGrammar003_testGrammar019");
+        .getString("code.code_ContractGrammar003_testGrammar019");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_ContractGrammar003_testGrammar019");
+        .getString("abi.abi_ContractGrammar003_testGrammar019");
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress3,
         grammarAddress3, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = PublicMethed.triggerContract(contractAddress,
         "timetest()", "#", false,
         0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
-
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
-
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull1);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
@@ -502,13 +499,13 @@ public class ContractGrammar003 {
 
 
   @Test(enabled = true)
-  public void testGrammar020() {
+  public void test7Grammar020() {
 
     String contractName = "TrxContract";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_ContractGrammar003_testGrammar020");
+        .getString("code.code_ContractGrammar003_testGrammar020");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_ContractGrammar003_testGrammar020");
+        .getString("abi.abi_ContractGrammar003_testGrammar020");
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress3,
         grammarAddress3, blockingStubFull);

@@ -3,15 +3,15 @@
 <suite name="Daily Build">
   <test name="stest">
     <packages>
-      <package name="stest.tron.wallet.manual">
-      </package>
       <package name="stest.tron.wallet.assetissue">
+      </package>
+      <package name="stest.tron.wallet.manual">
       </package>
       <package name="stest.tron.wallet.contract.internalTransaction">
       </package>
-      <package name="stest.tron.wallet.contract.exceptionfee">
-      </package>
       <package name="stest.tron.wallet.contract.grammar">
+      </package>
+      <package name="stest.tron.wallet.contract.exceptionfee">
       </package>
     </packages>
   </test>
