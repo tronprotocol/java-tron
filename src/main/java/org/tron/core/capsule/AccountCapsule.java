@@ -83,7 +83,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
-  private ByteString getActiveDefaultOperations() {
+  private static ByteString getActiveDefaultOperations() {
     ContractType[] types = ContractType.values();
     byte[] operations = new byte[32];
     for (ContractType type : types) {
@@ -98,7 +98,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return ByteString.copyFrom(operations);
   }
 
-  private static Permission createDefaultOwnerPermission(ByteString address) {
+  public static Permission createDefaultOwnerPermission(ByteString address) {
     Key.Builder key = Key.newBuilder();
     key.setAddress(address);
     key.setWeight(1);
@@ -114,7 +114,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return owner.build();
   }
 
-  private Permission createDefaultActivePermission(ByteString address) {
+  public static Permission createDefaultActivePermission(ByteString address) {
     Key.Builder key = Key.newBuilder();
     key.setAddress(address);
     key.setWeight(1);
@@ -131,7 +131,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return active.build();
   }
 
-  private Permission createDefaultWitnessPermission(ByteString address) {
+  public static Permission createDefaultWitnessPermission(ByteString address) {
     Key.Builder key = Key.newBuilder();
     key.setAddress(address);
     key.setWeight(1);
