@@ -64,7 +64,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
         transactionLogTrigger.setContractCallValue(TransactionCapsule.getCallValue(contract));
       }
 
-      if (Objects.nonNull(contractParameter) && Objects.isNull(contract)) {
+      if (Objects.nonNull(contractParameter)) {
         try{
           if (contract.getType() == TransferContract) {
               TransferContract contractTransfer = contractParameter.unpack(TransferContract.class);
