@@ -107,6 +107,9 @@ public class Args {
   @Parameter(names = {"-p", "--private-key"}, description = "private-key")
   private String privateKey = "";
 
+  @Parameter(names = {"--witness-address"}, description = "witness-address")
+  private String witnessAddress = "";
+
   @Parameter(names = {"--password"}, description = "password")
   private String password;
 
@@ -422,6 +425,7 @@ public class Args {
     INSTANCE.witness = false;
     INSTANCE.seedNodes = new ArrayList<>();
     INSTANCE.privateKey = "";
+    INSTANCE.witnessAddress = "";
     INSTANCE.storageDbDirectory = "";
     INSTANCE.storageIndexDirectory = "";
     INSTANCE.storageIndexSwitch = "";
@@ -495,6 +499,17 @@ public class Args {
     Config config = Configuration.getByFileName(INSTANCE.shellConfFileName, confFileName);
     if (StringUtils.isNoneBlank(INSTANCE.privateKey)) {
       INSTANCE.setLocalWitnesses(new LocalWitnesses(INSTANCE.privateKey));
+      if (StringUtils.isNoneBlank(INSTANCE.witnessAddress)) {
+        byte[] bytes = Wallet.decodeFromBase58Check(INSTANCE.witnessAddress);
+        if (bytes != null) {
+          INSTANCE.localWitnesses.setWitnessAccountAddress(bytes);
+          logger.debug("Got localWitnessAccountAddress from cmd");
+        } else {
+          INSTANCE.witnessAddress = "";
+          logger.warn("The localWitnessAccountAddress format is incorrect, ignored");
+        }
+      }
+      INSTANCE.localWitnesses.initWitnessAccountAddress();
       logger.debug("Got privateKey from cmd");
     } else if (config.hasPath("localwitness")) {
       INSTANCE.localWitnesses = new LocalWitnesses();
@@ -507,9 +522,9 @@ public class Args {
 
       if (config.hasPath("localWitnessAccountAddress")) {
         byte[] bytes = Wallet.decodeFromBase58Check(config.getString("localWitnessAccountAddress"));
-
         if (bytes != null) {
           INSTANCE.localWitnesses.setWitnessAccountAddress(bytes);
+          logger.debug("Got localWitnessAccountAddress from config.conf");
         } else {
           logger.warn("The localWitnessAccountAddress format is incorrect, ignored");
         }
