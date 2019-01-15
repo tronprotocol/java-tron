@@ -117,8 +117,8 @@ public class WalletTestAssetIssue012 {
     ByteString assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
 
     //Transfer asset to an account.
-    Assert.assertTrue(PublicMethed
-        .transferAsset(transferAssetAddress, assetAccountId.toByteArray(), 10000000L, asset012Address,
+    Assert.assertTrue(PublicMethed.transferAsset(
+            transferAssetAddress, assetAccountId.toByteArray(), 10000000L, asset012Address,
             testKeyForAssetIssue012, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 

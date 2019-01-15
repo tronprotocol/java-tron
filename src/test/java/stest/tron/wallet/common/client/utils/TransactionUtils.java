@@ -30,7 +30,7 @@ import org.tron.protos.Protocol.Transaction.Contract;
 public class TransactionUtils {
 
   private static final Logger logger = LoggerFactory.getLogger("Transaction");
-  private final static int RESERVE_BALANCE = 10;
+  private static final  int RESERVE_BALANCE = 10;
   /**
    * constructor.
    */

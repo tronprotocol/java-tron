@@ -87,12 +87,12 @@ public class WalletTestAssetIssue013 {
     //get account
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     byte[] asset013Address = ecKey1.getAddress();
-    String testKeyForAssetIssue013 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    final String testKeyForAssetIssue013 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
 
     ECKey ecKey2 = new ECKey(Utils.getRandom());
-    byte[] transferAssetAddress = ecKey2.getAddress();
-    String transferAssetCreateKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+    final byte[] transferAssetAddress = ecKey2.getAddress();
+    final String transferAssetCreateKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
     logger.info(testKeyForAssetIssue013);
     logger.info(transferAssetCreateKey);
@@ -123,9 +123,9 @@ public class WalletTestAssetIssue013 {
 
 
     //Transfer asset to an account.
-    Assert.assertTrue(PublicMethed
-        .transferAsset(transferAssetAddress, assetAccountId.toByteArray(), 10000000L, asset013Address,
-            testKeyForAssetIssue013, blockingStubFull));
+    Assert.assertTrue(PublicMethed.transferAsset(
+            transferAssetAddress, assetAccountId.toByteArray(),
+            10000000L, asset013Address, testKeyForAssetIssue013, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //Transfer send some asset issue to default account, to test if this

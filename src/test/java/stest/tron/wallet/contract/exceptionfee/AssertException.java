@@ -364,11 +364,11 @@ public class AssertException {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     String txid = "";
-    Optional<TransactionInfo> infoById = null;
     Integer triggerNum = -1;
     txid = PublicMethed.triggerContract(contractAddress,
         "binaryMoveR(int256)", triggerNum.toString(), false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    Optional<TransactionInfo> infoById = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);

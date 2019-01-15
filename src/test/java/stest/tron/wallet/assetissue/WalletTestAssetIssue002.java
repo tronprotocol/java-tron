@@ -77,11 +77,11 @@ public class WalletTestAssetIssue002 {
     //get account
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     byte[] participateAccountAddress = ecKey1.getAddress();
-    String participateAccountKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    final String participateAccountKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
     ECKey ecKey2 = new ECKey(Utils.getRandom());
     byte[] toAddress = ecKey2.getAddress();
-    String testKey003 = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+    final String testKey003 = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
     //send coin to the new account
     Assert.assertTrue(PublicMethed.sendcoin(participateAccountAddress,2048000000,fromAddress,
@@ -101,12 +101,13 @@ public class WalletTestAssetIssue002 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account getAssetIdFromThisAccount;
     getAssetIdFromThisAccount = PublicMethed.queryAccount(participateAccountKey,blockingStubFull);
-    ByteString assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
+    final ByteString assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
 
     //Participate AssetIssue success
     logger.info(name);
     //Freeze amount to get bandwitch.
-    logger.info("toaddress balance is " + PublicMethed.queryAccount(toAddress,blockingStubFull).getBalance());
+    logger.info("toaddress balance is "
+            + PublicMethed.queryAccount(toAddress,blockingStubFull).getBalance());
     Assert.assertTrue(PublicMethed.freezeBalance(toAddress, 10000000, 3, testKey003,
         blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);

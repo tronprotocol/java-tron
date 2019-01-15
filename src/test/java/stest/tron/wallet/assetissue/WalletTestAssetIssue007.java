@@ -134,7 +134,8 @@ public class WalletTestAssetIssue007 {
     logger.info(assetAccountId.toString());
 
     //Participate an assetIssue, then query the net information.
-    Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,assetAccountId.toByteArray(),
+    Assert.assertTrue(PublicMethed.participateAssetIssue(
+            asset007Address,assetAccountId.toByteArray(),
         1L,participateAssetAddress,participateAssetCreateKey,blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     addressBs = ByteString.copyFrom(asset007Address);
@@ -157,25 +158,28 @@ public class WalletTestAssetIssue007 {
 
 
 
-    Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,assetAccountId.toByteArray(),
+    Assert.assertTrue(PublicMethed.participateAssetIssue(
+            asset007Address,assetAccountId.toByteArray(),
         1L,participateAssetAddress,participateAssetCreateKey,blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,assetAccountId.toByteArray(),
+    Assert.assertTrue(PublicMethed.participateAssetIssue(
+            asset007Address,assetAccountId.toByteArray(),
         1L,participateAssetAddress,participateAssetCreateKey,blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account participateInfo = PublicMethed.queryAccount(participateAssetCreateKey,blockingStubFull);
     final Long beforeBalance = participateInfo.getBalance();
-    Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,assetAccountId.toByteArray(),
+    Assert.assertTrue(PublicMethed.participateAssetIssue(
+            asset007Address,assetAccountId.toByteArray(),
         1L,participateAssetAddress,participateAssetCreateKey,blockingStubFull));
     participateInfo = PublicMethed.queryAccount(participateAssetCreateKey,blockingStubFull);
     final Long afterBalance = participateInfo.getBalance();
 
     Assert.assertTrue(beforeBalance  - trxNum * 1 * icoNum  >= afterBalance);
   }
+
   /**
    * constructor.
    */
-
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
