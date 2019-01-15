@@ -123,23 +123,20 @@ public class WalletTestAccount004 {
   public void testUnFreezeBalance() {
     //Unfreeze failed when there is no freeze balance.
     //Wait to be create account
-    ECKey ecKey1 = new ECKey(Utils.getRandom());
-    byte[] account004Address = ecKey1.getAddress();
-    final String account004Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
 
     Assert.assertFalse(PublicMethed.unFreezeBalance(noFrozenAddress, noFrozenBalanceTestKey,1,
         null, blockingStubFull));
     logger.info("Test unfreezebalance");
-
-
-    Account account004;
-
+    ECKey ecKey1 = new ECKey(Utils.getRandom());
+    byte[] account004Address = ecKey1.getAddress();
+    String account004Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     Assert.assertTrue(PublicMethed.sendcoin(account004Address,freezeAmount,fromAddress,testKey002,
         blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalance(account004Address,freezeAmount,0,
         account004Key,blockingStubFull));
+    Account account004;
     account004 = PublicMethed.queryAccount(account004Address, blockingStubFull);
     Assert.assertTrue(account004.getBalance() == 0);
     Assert.assertTrue(PublicMethed.unFreezeBalance(account004Address,account004Key,0,
