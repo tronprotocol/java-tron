@@ -49,7 +49,12 @@ public class TransactionLogTrigger extends Trigger {
   @Setter
   private long netFee;
 
-  // program result
+  // contract
+
+  @Getter
+  @Setter
+  private String contractName;
+
   @Getter
   @Setter
   private String contractResult;
@@ -60,35 +65,15 @@ public class TransactionLogTrigger extends Trigger {
 
   @Getter
   @Setter
-  private long contractFee;
+  private String contractType;
 
   @Getter
   @Setter
-  private long unfreezeAmount;
+  private long feeLimit;
 
   @Getter
   @Setter
-  private String assetIssueID;
-
-  @Getter
-  @Setter
-  private long exchangeId;
-
-  @Getter
-  @Setter
-  private long withdrawAmount;
-
-  @Getter
-  @Setter
-  private long exchangeReceivedAmount;
-
-  @Getter
-  @Setter
-  private long exchangeInjectAnotherAmount;
-
-  @Getter
-  @Setter
-  private long exchangeWithdrawAnotherAmount;
+  private long callValue;
 
   // internal transaction
   @Getter

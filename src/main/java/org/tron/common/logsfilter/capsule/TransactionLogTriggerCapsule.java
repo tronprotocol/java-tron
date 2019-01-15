@@ -5,6 +5,7 @@ import java.util.Objects;
 import com.google.protobuf.ByteString;
 import lombok.Getter;
 import lombok.Setter;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
 import org.tron.common.runtime.vm.program.ProgramResult;
@@ -12,6 +13,7 @@ import org.tron.common.utils.TypeConversion;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TransactionTrace;
+import org.tron.protos.Protocol;
 
 public class TransactionLogTriggerCapsule extends TriggerCapsule {
 
@@ -29,6 +31,31 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
     transactionLogTrigger.setBlockNumber(trxCasule.getBlockNum());
 
     TransactionTrace trxTrace = trxCasule.getTrxTrace();
+
+    // contract result
+    if (Objects.nonNull(trxCasule.getContractRet())){
+      transactionLogTrigger.setContractResult(trxCasule.getContractRet().toString());
+    }
+
+    if (Objects.nonNull(trxCasule.getInstance().getRawData())){
+      // feelimit
+      transactionLogTrigger.setFeeLimit(trxCasule.getInstance().getRawData().getFeeLimit());
+
+      Protocol.Transaction.Contract contract = trxCasule.getInstance().getRawData().getContract(0);
+      // contract type
+      if (Objects.nonNull(contract)){
+        Protocol.Transaction.Contract.ContractType contractType = contract.getType();
+        if (Objects.nonNull(contractType)){
+          transactionLogTrigger.setContractType(contractType.toString());
+        }
+
+        if (Objects.nonNull(contract.getContractName())){
+          transactionLogTrigger.setContractName(Hex.toHexString(contract.getContractName().toByteArray()));
+        }
+
+        transactionLogTrigger.setCallValue(TransactionCapsule.getCallValue(contract));
+      }
+    }
 
     // receipt
     if (Objects.nonNull(trxTrace) && Objects.nonNull(trxTrace.getReceipt())) {
@@ -52,17 +79,6 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
 
       if (Objects.nonNull(contractAddress) && contractAddress.size() > 0){
         transactionLogTrigger.setContractAddress(TypeConversion.bytesToHexString(contractAddress.toByteArray()));
-      }
-
-      if (Objects.nonNull(programResult.getRet())){
-        transactionLogTrigger.setContractFee(programResult.getRet().getFee());
-        transactionLogTrigger.setUnfreezeAmount(programResult.getRet().getUnfreezeAmount());
-        transactionLogTrigger.setAssetIssueID(programResult.getRet().getAssetIssueID());
-        transactionLogTrigger.setExchangeId(programResult.getRet().getExchangeId());
-        transactionLogTrigger.setWithdrawAmount(programResult.getRet().getWithdrawAmount());
-        transactionLogTrigger.setExchangeReceivedAmount(programResult.getRet().getExchangeReceivedAmount());
-        transactionLogTrigger.setExchangeInjectAnotherAmount(programResult.getRet().getExchangeInjectAnotherAmount());
-        transactionLogTrigger.setExchangeWithdrawAnotherAmount(programResult.getRet().getExchangeWithdrawAnotherAmount());
       }
 
       // internal transaction
