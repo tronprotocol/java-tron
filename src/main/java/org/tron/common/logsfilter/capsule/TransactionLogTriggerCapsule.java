@@ -10,6 +10,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TransactionTrace;
 
 public class TransactionLogTriggerCapsule extends TriggerCapsule {
+
   @Getter
   @Setter
   TransactionLogTrigger transactionLogTrigger;
@@ -30,6 +31,8 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
       transactionLogTrigger.setNetUsage(trxTrace.getReceipt().getNetUsage());
       transactionLogTrigger.setNetFee(trxTrace.getReceipt().getNetFee());
       transactionLogTrigger.setEnergyUsage(trxTrace.getReceipt().getEnergyUsage());
+      transactionLogTrigger
+          .setInternalTransactionPojos(trxTrace.getRuntime().getResult().getInternalTransactions());
     }
   }
 

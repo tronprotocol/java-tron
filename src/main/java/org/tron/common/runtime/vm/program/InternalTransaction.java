@@ -25,7 +25,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.crypto.Hash;
 import org.tron.core.Wallet;
@@ -44,7 +43,7 @@ public class InternalTransaction {
   /* the amount of trx to transfer (calculated as sun) */
   private long value;
   private long tokenValue;
-  private Map<String, Long> tokenInfo =new HashMap<>();
+  private Map<String, Long> tokenInfo = new HashMap<>();
 
   /* the address of the destination account (for message)
    * In creation transaction the receive address is - 0 */
@@ -86,7 +85,7 @@ public class InternalTransaction {
   /**
    * Construct a root InternalTransaction
    */
-  public InternalTransaction(Transaction trx,  InternalTransaction.TrxType trxType)
+  public InternalTransaction(Transaction trx, InternalTransaction.TrxType trxType)
       throws ContractValidateException {
     this.transaction = trx;
     TransactionCapsule trxCap = new TransactionCapsule(trx);
@@ -130,14 +129,15 @@ public class InternalTransaction {
    */
 
   public InternalTransaction(byte[] parentHash, int deep, int index,
-      byte[] sendAddress, byte[] transferToAddress,  long value, byte[] data, String note, long nonce, Map<String, Long> tokenInfo) {
+      byte[] sendAddress, byte[] transferToAddress, long value, byte[] data, String note,
+      long nonce, Map<String, Long> tokenInfo) {
     this.parentHash = parentHash.clone();
     this.deep = deep;
     this.index = index;
     this.note = note;
     this.sendAddress = ArrayUtils.nullToEmpty(sendAddress);
     this.transferToAddress = ArrayUtils.nullToEmpty(transferToAddress);
-    if("create".equalsIgnoreCase(note)){
+    if ("create".equalsIgnoreCase(note)) {
       this.receiveAddress = EMPTY_BYTE_ARRAY;
     } else {
       this.receiveAddress = ArrayUtils.nullToEmpty(transferToAddress);
@@ -192,6 +192,13 @@ public class InternalTransaction {
     return sendAddress.clone();
   }
 
+  public byte[] getReceiveAddress() {
+    if (sendAddress == null) {
+      return EMPTY_BYTE_ARRAY;
+    }
+    return receiveAddress.clone();
+  }
+
   public byte[] getParentHash() {
     if (parentHash == null) {
       return EMPTY_BYTE_ARRAY;
@@ -240,11 +247,15 @@ public class InternalTransaction {
       parentHashArray = EMPTY_BYTE_ARRAY;
     }
     byte[] valueByte = Longs.toByteArray(this.value);
-    byte[] raw = new byte[parentHashArray.length + this.receiveAddress.length + this.data.length + valueByte.length];
+    byte[] raw = new byte[parentHashArray.length + this.receiveAddress.length + this.data.length
+        + valueByte.length];
     System.arraycopy(parentHashArray, 0, raw, 0, parentHashArray.length);
-    System.arraycopy(this.receiveAddress, 0, raw, parentHashArray.length, this.receiveAddress.length);
-    System.arraycopy(this.data, 0, raw, parentHashArray.length + this.receiveAddress.length, this.data.length);
-    System.arraycopy(valueByte, 0, raw, parentHashArray.length + this.receiveAddress.length + this.data.length,
+    System
+        .arraycopy(this.receiveAddress, 0, raw, parentHashArray.length, this.receiveAddress.length);
+    System.arraycopy(this.data, 0, raw, parentHashArray.length + this.receiveAddress.length,
+        this.data.length);
+    System.arraycopy(valueByte, 0, raw,
+        parentHashArray.length + this.receiveAddress.length + this.data.length,
         valueByte.length);
     this.protoEncoded = raw;
     return protoEncoded.clone();
