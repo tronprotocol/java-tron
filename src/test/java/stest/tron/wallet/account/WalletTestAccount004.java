@@ -133,7 +133,7 @@ public class WalletTestAccount004 {
     logger.info("Test unfreezebalance");
 
 
-    final Account account004;
+    Account account004;
 
     Assert.assertTrue(PublicMethed.sendcoin(account004Address,freezeAmount,fromAddress,testKey002,
         blockingStubFull));

@@ -109,7 +109,7 @@ public class WalletTestAssetIssue005 {
 
 
     //Get asset issue by name success.
-    final ByteString assetNameBs = ByteString.copyFrom(name.getBytes());
+    ByteString assetNameBs = ByteString.copyFrom(name.getBytes());
     GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder().setValue(assetAccountId)
         .build();
     Contract.AssetIssueContract assetIssueByName =
