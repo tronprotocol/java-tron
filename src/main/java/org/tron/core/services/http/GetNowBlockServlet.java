@@ -12,7 +12,7 @@ import org.tron.protos.Protocol.Block;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetNowBlockServlet extends HttpServlet {
 
   @Autowired

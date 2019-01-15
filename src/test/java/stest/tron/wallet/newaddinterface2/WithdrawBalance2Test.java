@@ -58,6 +58,10 @@ public class WithdrawBalance2Test {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -86,6 +90,9 @@ public class WithdrawBalance2Test {
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
         "contract validate error : witnessAccount does not have any allowance");
   }
+  /**
+   * constructor.
+   */
 
 
   @AfterClass
@@ -97,6 +104,9 @@ public class WithdrawBalance2Test {
       searchChannelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+  /**
+   * constructor.
+   */
 
   public boolean withdrawBalance(byte[] address, String priKey) {
     ECKey temKey = null;
@@ -128,6 +138,9 @@ public class WithdrawBalance2Test {
     return true;
 
   }
+  /**
+   * constructor.
+   */
 
   public Return withdrawBalance2(byte[] address, String priKey) {
     ECKey temKey = null;
@@ -172,6 +185,9 @@ public class WithdrawBalance2Test {
     return ret;
 
   }
+  /**
+   * constructor.
+   */
 
   public Boolean voteWitness(HashMap<String, String> witness, byte[] address, String priKey) {
 
@@ -230,6 +246,9 @@ public class WithdrawBalance2Test {
     }
     return true;
   }
+  /**
+   * constructor.
+   */
 
   public Account queryAccount(ECKey ecKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     byte[] address;
@@ -254,12 +273,18 @@ public class WithdrawBalance2Test {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+  /**
+   * constructor.
+   */
 
   public Account grpcQueryAccount(byte[] address, WalletGrpc.WalletBlockingStub blockingStubFull) {
     ByteString addressBs = ByteString.copyFrom(address);
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+  /**
+   * constructor.
+   */
 
   public Block getBlock(long blockNum, WalletGrpc.WalletBlockingStub blockingStubFull) {
     NumberMessage.Builder builder = NumberMessage.newBuilder();

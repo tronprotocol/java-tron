@@ -63,6 +63,9 @@ public class DataWord implements Comparable<DataWord> {
   public DataWord(ByteArrayWrapper wrappedData) {
     this(wrappedData.getData());
   }
+  /**
+   * constructor.
+   */
 
   public DataWord(byte[] data) {
     if (data == null) {
@@ -80,6 +83,9 @@ public class DataWord implements Comparable<DataWord> {
   public byte[] getData() {
     return data;
   }
+  /**
+   * constructor.
+   */
 
   public byte[] getNoLeadZeroesData() {
     return ByteUtil.stripLeadingZeroes(data);
@@ -101,6 +107,10 @@ public class DataWord implements Comparable<DataWord> {
    * @return this DataWord converted to an int.
    * @throws ArithmeticException - if this will not fit in an int.
    */
+  /**
+   * constructor.
+   */
+
   public int intValue() {
     int intVal = 0;
 
@@ -154,6 +164,9 @@ public class DataWord implements Comparable<DataWord> {
     }
     return longValue;
   }
+  /**
+   * constructor.
+   */
 
   public BigInteger sValue() {
     return new BigInteger(data);
@@ -162,6 +175,9 @@ public class DataWord implements Comparable<DataWord> {
   public String  bigIntValue() {
     return new BigInteger(data).toString();
   }
+  /**
+   * constructor.
+   */
 
   public boolean isZero() {
     for (byte tmp : data) {
@@ -179,6 +195,9 @@ public class DataWord implements Comparable<DataWord> {
     int result = data[0] & 0x80;
     return result == 0x80;
   }
+  /**
+   * constructor.
+   */
 
   public DataWord and(DataWord w2) {
 
@@ -187,6 +206,9 @@ public class DataWord implements Comparable<DataWord> {
     }
     return this;
   }
+  /**
+   * constructor.
+   */
 
   public DataWord or(DataWord w2) {
 
@@ -195,6 +217,9 @@ public class DataWord implements Comparable<DataWord> {
     }
     return this;
   }
+  /**
+   * constructor.
+   */
 
   public DataWord xor(DataWord w2) {
 
@@ -203,6 +228,9 @@ public class DataWord implements Comparable<DataWord> {
     }
     return this;
   }
+  /**
+   * constructor.
+   */
 
   public void negate() {
 
@@ -221,6 +249,9 @@ public class DataWord implements Comparable<DataWord> {
       }
     }
   }
+  /**
+   * constructor.
+   */
 
   public void bnot() {
     if (this.isZero()) {
@@ -229,6 +260,9 @@ public class DataWord implements Comparable<DataWord> {
     }
     this.data = ByteUtil.copyToArray(MAX_VALUE.subtract(this.value()));
   }
+  /**
+   * constructor.
+   */
 
   // By   : Holger
   // From : http://stackoverflow.com/a/24023466/459349
@@ -255,6 +289,9 @@ public class DataWord implements Comparable<DataWord> {
     BigInteger result = value().multiply(word.value());
     this.data = ByteUtil.copyToArray(result.and(MAX_VALUE));
   }
+  /**
+   * constructor.
+   */
 
   // TODO: improve with no BigInteger
   public void div(DataWord word) {
@@ -267,6 +304,9 @@ public class DataWord implements Comparable<DataWord> {
     BigInteger result = value().divide(word.value());
     this.data = ByteUtil.copyToArray(result.and(MAX_VALUE));
   }
+  /**
+   * constructor.
+   */
 
   // TODO: improve with no BigInteger
   public void sDiv(DataWord word) {
@@ -291,6 +331,9 @@ public class DataWord implements Comparable<DataWord> {
     BigInteger result = value().modPow(word.value(), _2_256);
     this.data = ByteUtil.copyToArray(result);
   }
+  /**
+   * constructor.
+   */
 
   // TODO: improve with no BigInteger
   public void mod(DataWord word) {
@@ -303,6 +346,9 @@ public class DataWord implements Comparable<DataWord> {
     BigInteger result = value().mod(word.value());
     this.data = ByteUtil.copyToArray(result.and(MAX_VALUE));
   }
+  /**
+   * constructor.
+   */
 
   public void sMod(DataWord word) {
 
@@ -316,6 +362,9 @@ public class DataWord implements Comparable<DataWord> {
 
     this.data = ByteUtil.copyToArray(result.and(MAX_VALUE));
   }
+  /**
+   * constructor.
+   */
 
   public void addmod(DataWord word1, DataWord word2) {
     if (word2.isZero()) {
@@ -326,6 +375,9 @@ public class DataWord implements Comparable<DataWord> {
     BigInteger result = value().add(word1.value()).mod(word2.value());
     this.data = ByteUtil.copyToArray(result.and(MAX_VALUE));
   }
+  /**
+   * constructor.
+   */
 
   public void mulmod(DataWord word1, DataWord word2) {
 
@@ -343,6 +395,9 @@ public class DataWord implements Comparable<DataWord> {
   public String toString() {
     return Hex.toHexString(data);
   }
+  /**
+   * constructor.
+   */
 
   public String toPrefixString() {
 
@@ -399,6 +454,9 @@ public class DataWord implements Comparable<DataWord> {
     // Convert result into -1, 0 or 1 as is the convention
     return (int) Math.signum(result);
   }
+  /**
+   * constructor.
+   */
 
   public void signExtend(byte k) {
     if (0 > k || k > 31) {
@@ -409,6 +467,9 @@ public class DataWord implements Comparable<DataWord> {
       this.data[31 - i] = mask;
     }
   }
+  /**
+   * constructor.
+   */
 
   public int bytesOccupied() {
     int firstNonZero = ByteUtil.firstNonZeroByte(data);

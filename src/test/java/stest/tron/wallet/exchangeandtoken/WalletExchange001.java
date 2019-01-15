@@ -32,6 +32,9 @@ public class WalletExchange001 {
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final String testKey003 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key2");
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
@@ -40,7 +43,7 @@ public class WalletExchange001 {
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")
-      .getStringList("solidityNode.ip.list").get(0);
+      .getStringList("solidityNode.ip.list").get(1);
 
   private static final long now = System.currentTimeMillis();
   private static String name1 = "exchange001_1_" + Long.toString(now);
@@ -74,6 +77,10 @@ public class WalletExchange001 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -102,9 +109,9 @@ public class WalletExchange001 {
 
     Assert.assertTrue(PublicMethed.sendcoin(exchange001Address, 10240000000L, fromAddress,
         testKey002, blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(secondExchange001Address, 10240000000L, fromAddress,
-        testKey002, blockingStubFull));
-
+    Assert.assertTrue(PublicMethed.sendcoin(secondExchange001Address, 10240000000L, toAddress,
+        testKey003, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long start = System.currentTimeMillis() + 5000L;
     Long end = System.currentTimeMillis() + 5000000L;
     Assert.assertTrue(PublicMethed.createAssetIssue(exchange001Address, name1, totalSupply, 1,
@@ -333,8 +340,8 @@ public class WalletExchange001 {
     ExchangeList exchangeList = blockingStubFull
         .getPaginatedExchangeList(pageMessageBuilder.build());
     Assert.assertTrue(exchangeList.getExchangesCount() >= 1);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
-
     //Solidity support getExchangeId
     exchangeIdInfo = PublicMethed.getExchange(exchangeId.toString(),blockingStubSolidity);
     logger.info("createtime is" + exchangeIdInfo.get().getCreateTime());
@@ -344,6 +351,9 @@ public class WalletExchange001 {
     listExchange = PublicMethed.getExchangeList(blockingStubSolidity);
     Assert.assertTrue(listExchange.get().getExchangesCount() > 0);
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {

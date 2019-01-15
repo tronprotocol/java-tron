@@ -66,6 +66,10 @@ public class WalletTestAssetIssue011 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(testKeyForAssetIssue011);
@@ -91,6 +95,9 @@ public class WalletTestAssetIssue011 {
 
     Assert.assertTrue(PublicMethed
         .sendcoin(asset011Address, sendAmount, fromAddress, testKey002, blockingStubFull));
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .freezeBalance(asset011Address, 100000000L, 3, testKeyForAssetIssue011,
             blockingStubFull));
@@ -123,6 +130,9 @@ public class WalletTestAssetIssue011 {
 
   }
 
+  /**
+   * constructor.
+   */
 
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {

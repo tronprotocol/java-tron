@@ -2,16 +2,15 @@ package org.tron.core.db;
 
 import static java.lang.Long.max;
 
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.Parameter.AdaptiveResourceLimitConstants;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.Account.AccountResource;
-import org.tron.protos.Protocol.Transaction.Contract;
 
-@Slf4j
+@Slf4j(topic = "DB")
 public class EnergyProcessor extends ResourceProcessor {
 
   public EnergyProcessor(Manager manager) {
@@ -33,95 +32,58 @@ public class EnergyProcessor extends ResourceProcessor {
     accountCapsule.setEnergyUsage(increase(oldEnergyUsage, 0, latestConsumeTime, now));
   }
 
-  public void updateTotalEnergyAverageUsage(long now, long energy) {
-    long totalNetAverageUsage = dbManager.getDynamicPropertiesStore().getTotalEnergyAverageUsage();
-    long totalNetAverageTime = dbManager.getDynamicPropertiesStore().getTotalEnergyAverageTime();
+  public void updateTotalEnergyAverageUsage() {
+    long now = dbManager.getWitnessController().getHeadSlot();
+    long blockEnergyUsage = dbManager.getDynamicPropertiesStore().getBlockEnergyUsage();
+    long totalEnergyAverageUsage = dbManager.getDynamicPropertiesStore()
+        .getTotalEnergyAverageUsage();
+    long totalEnergyAverageTime = dbManager.getDynamicPropertiesStore().getTotalEnergyAverageTime();
 
-    long newPublicNetAverageUsage = increase(totalNetAverageUsage, energy, totalNetAverageTime,
-        now, averageWindowSize);
+    long newPublicEnergyAverageUsage = increase(totalEnergyAverageUsage, blockEnergyUsage,
+        totalEnergyAverageTime, now, averageWindowSize);
 
-    dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageUsage(newPublicNetAverageUsage);
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageUsage(newPublicEnergyAverageUsage);
     dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageTime(now);
   }
 
+  public void updateAdaptiveTotalEnergyLimit() {
+    long totalEnergyAverageUsage = dbManager.getDynamicPropertiesStore()
+        .getTotalEnergyAverageUsage();
+    long targetTotalEnergyLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyTargetLimit();
+    long totalEnergyCurrentLimit = dbManager.getDynamicPropertiesStore()
+        .getTotalEnergyCurrentLimit();
+    long totalEnergyLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyLimit();
+
+    long result;
+    if (totalEnergyAverageUsage > targetTotalEnergyLimit) {
+      result = totalEnergyCurrentLimit * AdaptiveResourceLimitConstants.CONTRACT_RATE_NUMERATOR
+          / AdaptiveResourceLimitConstants.CONTRACT_RATE_DENOMINATOR;
+      // logger.info(totalEnergyAverageUsage + ">" + targetTotalEnergyLimit + "\n" + result);
+    } else {
+      result = totalEnergyCurrentLimit * AdaptiveResourceLimitConstants.EXPAND_RATE_NUMERATOR
+          / AdaptiveResourceLimitConstants.EXPAND_RATE_DENOMINATOR;
+      // logger.info(totalEnergyAverageUsage + "<" + targetTotalEnergyLimit + "\n" + result);
+    }
+
+    result = Math.min(
+        Math.max(result, totalEnergyLimit),
+        totalEnergyLimit * AdaptiveResourceLimitConstants.LIMIT_MULTIPLIER
+    );
+
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(result);
+    logger.debug(
+        "adjust totalEnergyCurrentLimit, old[" + totalEnergyCurrentLimit + "], new[" + result
+            + "]");
+  }
 
   @Override
   public void consume(TransactionCapsule trx,
       TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException {
-    List<Contract> contracts =
-        trx.getInstance().getRawData().getContractList();
-
-    for (Contract contract : contracts) {
-
-      //todo
-//      if (contract.isPrecompiled()) {
-//        continue;
-//      }
-      //todo
-//      long energy = trx.getReceipt().getEnergy();
-      long energy = 100L;
-      logger.debug("trxId {},energy cost :{}", trx.getTransactionId(), energy);
-      byte[] address = TransactionCapsule.getOwner(contract);
-      AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
-      if (accountCapsule == null) {
-        throw new ContractValidateException("account not exists");
-      }
-      long now = dbManager.getWitnessController().getHeadSlot();
-
-      //todo
-//      int creatorRatio = contract.getUserEnergyConsumeRatio();
-      int creatorRatio = 50;
-
-      long creatorEnergy = energy * creatorRatio / 100;
-      AccountCapsule contractProvider = dbManager.getAccountStore()
-          .get(contract.getProvider().toByteArray());
-
-      if (!useEnergy(contractProvider, creatorEnergy, now)) {
-        throw new ContractValidateException(
-            "creator has not enough energy[" + creatorEnergy + "]");
-      }
-
-      long userEnergy = energy * (100 - creatorRatio) / 100;
-      //1.The creator and the use of this have sufficient resources
-      if (useEnergy(accountCapsule, userEnergy, now)) {
-        continue;
-      }
-
-//     todo  long feeLimit = getUserFeeLimit();
-      long feeLimit = 1000000;//sun
-      long fee = calculateFee(userEnergy);
-      if (fee > feeLimit) {
-        throw new AccountResourceInsufficientException(
-            "Account has Insufficient Energy[" + userEnergy + "] and feeLimit[" + feeLimit
-                + "] is not enough to trigger this contract");
-      }
-
-      //2.The creator of this have sufficient resources
-      if (useFee(accountCapsule, fee, trace)) {
-        continue;
-      }
-
-      throw new AccountResourceInsufficientException(
-          "Account has insufficient Energy[" + userEnergy + "] and balance[" + fee
-              + "] to trigger this contract");
-    }
-  }
-
-  private long calculateFee(long userEnergy) {
-    return userEnergy * 30;// 30 drop / macroSecond, move to dynamicStore later
+    throw new RuntimeException("Not support");
   }
 
 
-  private boolean useFee(AccountCapsule accountCapsule, long fee,
-      TransactionTrace trace) {
-    if (consumeFee(accountCapsule, fee)) {
-      trace.setNetBill(0, fee);
-      return true;
-    } else {
-      return false;
-    }
-  }
 
   public boolean useEnergy(AccountCapsule accountCapsule, long energy, long now) {
 
@@ -145,7 +107,8 @@ public class EnergyProcessor extends ResourceProcessor {
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
     if (dbManager.getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 1) {
-      updateTotalEnergyAverageUsage(now, energy);
+      long blockEnergyUsage = dbManager.getDynamicPropertiesStore().getBlockEnergyUsage() + energy;
+      dbManager.getDynamicPropertiesStore().saveBlockEnergyUsage(blockEnergyUsage);
     }
 
     return true;

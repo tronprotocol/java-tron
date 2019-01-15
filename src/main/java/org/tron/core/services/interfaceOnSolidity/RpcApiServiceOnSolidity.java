@@ -43,7 +43,7 @@ import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
 
-@Slf4j
+@Slf4j(topic = "API")
 public class RpcApiServiceOnSolidity implements Service {
 
   private int port = Args.getInstance().getRpcOnSolidityPort();

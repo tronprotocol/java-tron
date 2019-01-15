@@ -5,7 +5,6 @@ import static org.tron.common.net.udp.message.UdpMessageTypeEnum.DISCOVER_NEIGHB
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
 import org.tron.common.net.udp.message.Message;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.utils.ByteArray;
@@ -14,7 +13,6 @@ import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Discover.Neighbours;
 import org.tron.protos.Discover.Neighbours.Builder;
 
-@Slf4j
 public class NeighborsMessage extends Message {
 
   private Discover.Neighbours neighbours;

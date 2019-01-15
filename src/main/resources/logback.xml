@@ -50,48 +50,18 @@
     <appender-ref ref="ASYNC"/>
   </root>
 
-  <logger name="Config" level="INFO"/>
-  <logger name="Transaction" level="INFO"/>
-  <logger name="Wallet" level="INFO"/>
+  <logger name="app" level="INFO"/>
+  <logger name="net" level="INFO"/>
+  <logger name="backup" level="INFO"/>
+  <logger name="discover" level="INFO"/>
+  <logger name="crypto" level="INFO"/>
+  <logger name="utils" level="INFO"/>
+  <logger name="actuator" level="INFO"/>
+  <logger name="API" level="INFO"/>
+  <logger name="witness" level="INFO"/>
   <logger name="DB" level="INFO"/>
-  <logger name="Command" level="INFO"/>
-  <logger name="UTXOSet" level="INFO"/>
-  <logger name="UTXOStore" level="INFO"/>
-  <logger name="TransactionMessageHandler" level="INFO"/>
-  <logger name="BlockMessageHandler" level="INFO"/>
-  <logger name="BlockStores" level="INFO"/>
-  <logger name="Blockchain" level="INFO"/>
-  <logger name="BlockLoader" level="INFO"/>
-  <logger name="ConsensusCommand" level="INFO"/>
-  <logger name="Application" level="INFO"/>
-  <logger name="Services" level="INFO"/>
-  <logger name="GossipManager" level="INFO"/>
-  <logger name="GossipCore" level="INFO"/>
-  <logger name="UdpTransportManager" level="INFO"/>
-  <logger name="AbstractActiveGossiper" level="INFO"/>
-  <logger name="UserDataPersister" level="INFO"/>
-  <logger name="GossipLocalNode" level="INFO"/>
-  <logger name="ApplicationImpl" level="INFO"/>
-  <logger name="DynamicPropertiesStore" level="INFO"/>
-  <logger name="FullNode" level="INFO"/>
-  <logger name="PeerConnection" level="INFO"/>
-  <logger name="TransactionUtil" level="INFO"/>
-  <logger name="TransactionVoteActuator" level="INFO"/>
-  <logger name="WitnessStore" level="INFO"/>
-  <logger name="AssetIssueStore" level="INFO"/>
-  <logger name="ActuatorFactory" level="INFO"/>
-  <logger name="ByteArray" level="INFO"/>
-  <logger name="Args" level="INFO"/>
-  <logger name="WitnessCteateActuator" level="INFO"/>
-  <logger name="AssetIssueActuator" level="INFO"/>
-  <logger name="AccountCapsule" level="INFO"/>
-  <logger name="AssetIssueCapsule" level="INFO"/>
-  <logger name="Manager" level="INFO"/>
-  <logger name="Net" level="INFO"/>
-  <logger name="Runtime" level="INFO"/>
+  <logger name="capsule" level="INFO"/>
   <logger name="VM" level="INFO"/>
-  <logger name="Program" level="INFO"/>
-  <logger name="ProgramPrecompile" level="INFO"/>
 
 </configuration>
 

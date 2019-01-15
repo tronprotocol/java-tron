@@ -103,6 +103,10 @@ public class AttackSendcoin {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -184,6 +188,9 @@ public class AttackSendcoin {
       }
     }
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
@@ -296,6 +303,9 @@ public class AttackSendcoin {
 
 
   }
+  /**
+   * constructor.
+   */
 
   public static Boolean freezeBalance(byte[] addRess, long freezeBalance, long freezeDuration,
       String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
@@ -350,6 +360,9 @@ public class AttackSendcoin {
     }
     return true;
   }
+  /**
+   * constructor.
+   */
 
   public boolean unFreezeBalance(byte[] addRess, String priKey) {
     byte[] address = addRess;
@@ -387,6 +400,9 @@ public class AttackSendcoin {
       return true;
     }
   }
+  /**
+   * constructor.
+   */
 
   public boolean withdrawBalance(byte[] address, String priKey) {
     ECKey temKey = null;

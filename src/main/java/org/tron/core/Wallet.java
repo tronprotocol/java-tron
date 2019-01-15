@@ -28,6 +28,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Range;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
+import java.security.SignatureException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -54,10 +56,16 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.TransactionApprovedList;
+import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionExtention.Builder;
+import org.tron.api.GrpcAPI.TransactionSignWeight;
+import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
+import org.tron.common.logsfilter.EventPluginLoader;
+import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
@@ -87,22 +95,21 @@ import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
-import org.tron.core.config.Parameter.ChainParameters;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.AccountIdIndexStore;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.ContractStore;
-import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
-import org.tron.core.db.PendingManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.NonUniqueObjectException;
+import org.tron.core.exception.PermissionException;
+import org.tron.core.exception.SignatureFormatException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
@@ -111,7 +118,6 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
-import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TransferContract;
@@ -121,11 +127,13 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
+import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.SmartContract.ABI.Entry.StateMutabilityType;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.Protocol.TransactionInfo;
@@ -384,11 +392,12 @@ public class Wallet {
 
     try {
       BlockId blockId = dbManager.getHeadBlockId();
-      if (Args.getInstance().getTrxReferenceBlock().equals("solid")){
+      if (Args.getInstance().getTrxReferenceBlock().equals("solid")) {
         blockId = dbManager.getSolidBlockId();
       }
       trx.setReference(blockId.getNum(), blockId.getBytes());
-      long expiration = dbManager.getHeadBlockTimeStamp() + Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME;
+      long expiration =
+          dbManager.getHeadBlockTimeStamp() + Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME;
       trx.setExpiration(expiration);
       trx.setTimestamp();
     } catch (Exception e) {
@@ -405,7 +414,7 @@ public class Wallet {
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
     Message message = new TransactionMessage(signaturedTransaction);
 
-    try{
+    try {
       if (minEffectiveConnection != 0) {
         if (p2pNode.getActivePeer().isEmpty()) {
           logger.warn("Broadcast transaction {} failed, no connection.", trx.getTransactionId());
@@ -419,7 +428,8 @@ public class Wallet {
             .count();
 
         if (count < minEffectiveConnection) {
-          String info = "effective connection:" + count + " lt minEffectiveConnection:" + minEffectiveConnection;
+          String info = "effective connection:" + count + " lt minEffectiveConnection:"
+              + minEffectiveConnection;
           logger.warn("Broadcast transaction {} failed, {}.", trx.getTransactionId(), info);
           return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
               .setMessage(ByteString.copyFromUtf8(info))
@@ -427,13 +437,15 @@ public class Wallet {
         }
       }
 
+
       if (dbManager.isTooManyPending()) {
         logger.warn("Broadcast transaction {} failed, too many pending.", trx.getTransactionId());
         return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
       }
 
       if (dbManager.isGeneratingBlock()) {
-        logger.warn("Broadcast transaction {} failed, is generating block.", trx.getTransactionId());
+        logger
+            .warn("Broadcast transaction {} failed, is generating block.", trx.getTransactionId());
         return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
       }
 
@@ -453,7 +465,7 @@ public class Wallet {
     } catch (ValidateSignatureException e) {
       logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.SIGERROR)
-          .setMessage(ByteString.copyFromUtf8("validate signature error"))
+          .setMessage(ByteString.copyFromUtf8("validate signature error " + e.getMessage()))
           .build();
     } catch (ContractValidateException e) {
       logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
@@ -503,6 +515,112 @@ public class Wallet {
     TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
     trx.sign(privateKey);
     return trx;
+  }
+
+  public TransactionCapsule addSign(TransactionSign transactionSign)
+      throws PermissionException, SignatureException, SignatureFormatException {
+    byte[] privateKey = transactionSign.getPrivateKey().toByteArray();
+    TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
+    trx.addSign(privateKey, dbManager.getAccountStore());
+    return trx;
+  }
+
+  public TransactionSignWeight getTransactionSignWeight(Transaction trx) {
+    TransactionSignWeight.Builder tswBuilder = TransactionSignWeight.newBuilder();
+    TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
+    trxExBuilder.setTransaction(trx);
+    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(trx.getRawData().toByteArray())));
+    Return.Builder retBuilder = Return.newBuilder();
+    retBuilder.setResult(true).setCode(response_code.SUCCESS);
+    trxExBuilder.setResult(retBuilder);
+    tswBuilder.setTransaction(trxExBuilder);
+    Result.Builder resultBuilder = Result.newBuilder();
+    try {
+      Contract contract = trx.getRawData().getContract(0);
+      byte[] owner = TransactionCapsule.getOwner(contract);
+      AccountCapsule account = dbManager.getAccountStore().get(owner);
+      if (account == null) {
+        throw new PermissionException("Account is not exist!");
+      }
+      String permissionName = TransactionCapsule.getPermissionName(contract);
+      Permission permission = TransactionCapsule
+          .getPermission(account.getInstance(), permissionName);
+      tswBuilder.setPermission(permission);
+      if (trx.getSignatureCount() > 0) {
+        List<ByteString> approveList = new ArrayList<ByteString>();
+        long currentWeight = TransactionCapsule.checkWeight(permission, trx.getSignatureList(),
+            Sha256Hash.hash(trx.getRawData().toByteArray()), approveList);
+        tswBuilder.addAllApprovedList(approveList);
+        tswBuilder.setCurrentWeight(currentWeight);
+      }
+      if (tswBuilder.getCurrentWeight() >= permission.getThreshold()) {
+        resultBuilder.setCode(Result.response_code.ENOUGH_PERMISSION);
+      } else {
+        resultBuilder.setCode(Result.response_code.NOT_ENOUGH_PERMISSION);
+      }
+    } catch (SignatureFormatException signEx) {
+      resultBuilder.setCode(Result.response_code.SIGNATURE_FORMAT_ERROR);
+      resultBuilder.setMessage(signEx.getMessage());
+    } catch (SignatureException signEx) {
+      resultBuilder.setCode(Result.response_code.COMPUTE_ADDRESS_ERROR);
+      resultBuilder.setMessage(signEx.getMessage());
+    } catch (PermissionException permEx) {
+      resultBuilder.setCode(Result.response_code.PERMISSION_ERROR);
+      resultBuilder.setMessage(permEx.getMessage());
+    } catch (Exception ex) {
+      resultBuilder.setCode(Result.response_code.OTHER_ERROR);
+      resultBuilder.setMessage(ex.getClass() + " : " + ex.getMessage());
+    }
+    tswBuilder.setResult(resultBuilder);
+    return tswBuilder.build();
+  }
+
+  public TransactionApprovedList getTransactionApprovedList(Transaction trx) {
+    TransactionApprovedList.Builder tswBuilder = TransactionApprovedList.newBuilder();
+    TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
+    trxExBuilder.setTransaction(trx);
+    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(trx.getRawData().toByteArray())));
+    Return.Builder retBuilder = Return.newBuilder();
+    retBuilder.setResult(true).setCode(response_code.SUCCESS);
+    trxExBuilder.setResult(retBuilder);
+    tswBuilder.setTransaction(trxExBuilder);
+    TransactionApprovedList.Result.Builder resultBuilder = TransactionApprovedList.Result
+        .newBuilder();
+    try {
+      Contract contract = trx.getRawData().getContract(0);
+      byte[] owner = TransactionCapsule.getOwner(contract);
+      AccountCapsule account = dbManager.getAccountStore().get(owner);
+      if (account == null) {
+        throw new PermissionException("Account is not exist!");
+      }
+
+      if (trx.getSignatureCount() > 0) {
+        List<ByteString> approveList = new ArrayList<ByteString>();
+        byte[] hash = Sha256Hash.hash(trx.getRawData().toByteArray());
+        for (ByteString sig : trx.getSignatureList()) {
+          if (sig.size() < 65) {
+            throw new SignatureFormatException(
+                "Signature size is " + sig.size());
+          }
+          String base64 = TransactionCapsule.getBase64FromByteString(sig);
+          byte[] address = ECKey.signatureToAddress(hash, base64);
+          approveList.add(ByteString.copyFrom(address)); //out put approve list.
+        }
+        tswBuilder.addAllApprovedList(approveList);
+      }
+      resultBuilder.setCode(TransactionApprovedList.Result.response_code.SUCCESS);
+    } catch (SignatureFormatException signEx) {
+      resultBuilder.setCode(TransactionApprovedList.Result.response_code.SIGNATURE_FORMAT_ERROR);
+      resultBuilder.setMessage(signEx.getMessage());
+    } catch (SignatureException signEx) {
+      resultBuilder.setCode(TransactionApprovedList.Result.response_code.COMPUTE_ADDRESS_ERROR);
+      resultBuilder.setMessage(signEx.getMessage());
+    } catch (Exception ex) {
+      resultBuilder.setCode(TransactionApprovedList.Result.response_code.OTHER_ERROR);
+      resultBuilder.setMessage(ex.getClass() + " : " + ex.getMessage());
+    }
+    tswBuilder.setResult(resultBuilder);
+    return tswBuilder.build();
   }
 
   public byte[] pass2Key(byte[] passPhrase) {
@@ -596,19 +714,149 @@ public class Wallet {
   public Protocol.ChainParameters getChainParameters() {
     Protocol.ChainParameters.Builder builder = Protocol.ChainParameters.newBuilder();
 
-    Arrays.stream(ChainParameters.values()).forEach(parameters -> {
-      try {
-        String methodName = Wallet.makeUpperCamelMethod(parameters.name());
-        builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey(methodName)
-            .setValue((Long) DynamicPropertiesStore.class.getDeclaredMethod(methodName)
-                .invoke(dbManager.getDynamicPropertiesStore()))
+    // MAINTENANCE_TIME_INTERVAL, //ms  ,0
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getMaintenanceTimeInterval")
+            .setValue(dbManager.getDynamicPropertiesStore().getMaintenanceTimeInterval())
             .build());
-      } catch (Exception ex) {
-        logger.error("get chainParameter error,", ex);
-      }
+    //    ACCOUNT_UPGRADE_COST, //drop ,1
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAccountUpgradeCost")
+            .setValue(dbManager.getDynamicPropertiesStore().getAccountUpgradeCost())
+            .build());
+    //    CREATE_ACCOUNT_FEE, //drop ,2
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getCreateAccountFee")
+            .setValue(dbManager.getDynamicPropertiesStore().getCreateAccountFee())
+            .build());
+    //    TRANSACTION_FEE, //drop ,3
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getTransactionFee")
+            .setValue(dbManager.getDynamicPropertiesStore().getTransactionFee())
+            .build());
+    //    ASSET_ISSUE_FEE, //drop ,4
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAssetIssueFee")
+            .setValue(dbManager.getDynamicPropertiesStore().getAssetIssueFee())
+            .build());
+    //    WITNESS_PAY_PER_BLOCK, //drop ,5
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getWitnessPayPerBlock")
+            .setValue(dbManager.getDynamicPropertiesStore().getWitnessPayPerBlock())
+            .build());
+    //    WITNESS_STANDBY_ALLOWANCE, //drop ,6
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getWitnessStandbyAllowance")
+            .setValue(dbManager.getDynamicPropertiesStore().getWitnessStandbyAllowance())
+            .build());
+    //    CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT, //drop ,7
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getCreateNewAccountFeeInSystemContract")
+            .setValue(
+                dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract())
+            .build());
+    //    CREATE_NEW_ACCOUNT_BANDWIDTH_RATE, // 1 ~ ,8
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getCreateNewAccountBandwidthRate")
+            .setValue(dbManager.getDynamicPropertiesStore().getCreateNewAccountBandwidthRate())
+            .build());
+    //    ALLOW_CREATION_OF_CONTRACTS, // 0 / >0 ,9
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowCreationOfContracts")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowCreationOfContracts())
+            .build());
+    //    REMOVE_THE_POWER_OF_THE_GR,  // 1 ,10
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getRemoveThePowerOfTheGr")
+            .setValue(dbManager.getDynamicPropertiesStore().getRemoveThePowerOfTheGr())
+            .build());
+    //    ENERGY_FEE, // drop, 11
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getEnergyFee")
+            .setValue(dbManager.getDynamicPropertiesStore().getEnergyFee())
+            .build());
+    //    EXCHANGE_CREATE_FEE, // drop, 12
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getExchangeCreateFee")
+            .setValue(dbManager.getDynamicPropertiesStore().getExchangeCreateFee())
+            .build());
+    //    MAX_CPU_TIME_OF_ONE_TX, // ms, 13
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getMaxCpuTimeOfOneTx")
+            .setValue(dbManager.getDynamicPropertiesStore().getMaxCpuTimeOfOneTx())
+            .build());
+    //    ALLOW_UPDATE_ACCOUNT_NAME, // 1, 14
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowUpdateAccountName")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowUpdateAccountName())
+            .build());
+    //    ALLOW_SAME_TOKEN_NAME, // 1, 15
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowSameTokenName")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowSameTokenName())
+            .build());
+    //    ALLOW_DELEGATE_RESOURCE, // 0, 16
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowDelegateResource")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowDelegateResource())
+            .build());
+    //    TOTAL_ENERGY_LIMIT, // 50,000,000,000, 17
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getTotalEnergyLimit")
+            .setValue(dbManager.getDynamicPropertiesStore().getTotalEnergyLimit())
+            .build());
+    //    ALLOW_TVM_TRANSFER_TRC10, // 1, 18
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowTvmTransferTrc10")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10())
+            .build());
+    //    TOTAL_CURRENT_ENERGY_LIMIT, // 50,000,000,000, 19
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getTotalEnergyCurrentLimit")
+            .setValue(dbManager.getDynamicPropertiesStore().getTotalEnergyCurrentLimit())
+            .build());
+    //    ALLOW_MULTI_SIGN, // 1, 20
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowMultiSign")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowMultiSign())
+            .build());
+    //    ALLOW_ADAPTIVE_ENERGY, // 1, 21
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowAdaptiveEnergy")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowAdaptiveEnergy())
+            .build());
+    //other chainParameters
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getTotalEnergyTargetLimit")
+        .setValue(dbManager.getDynamicPropertiesStore().getTotalEnergyTargetLimit())
+        .build());
 
-    });
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getTotalEnergyAverageUsage")
+        .setValue(dbManager.getDynamicPropertiesStore().getTotalEnergyAverageUsage())
+        .build());
 
     return builder.build();
   }
@@ -1064,6 +1312,7 @@ public class Wallet {
     return null;
   }
 
+
   private static byte[] getSelector(byte[] data) {
     if (data == null ||
         data.length < 4) {
@@ -1177,6 +1426,4 @@ public class Wallet {
     return builder.build();
 
   }
-
-
 }

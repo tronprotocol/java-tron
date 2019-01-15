@@ -14,9 +14,9 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
@@ -25,20 +25,29 @@ import org.tron.protos.Protocol.Block;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
+import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class WalletTestNode001 {
 
   private ManagedChannel channelFull = null;
+  private ManagedChannel channelFull1 = null;
+  private ManagedChannel channelSolidity = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
-
+  private String fullnode1 = Configuration.getByPath("testng.conf")
+          .getStringList("fullnode.ip.list").get(1);
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+  /**
+   * constructor.
+   */
 
   @BeforeClass
   public void beforeClass() {
@@ -46,6 +55,11 @@ public class WalletTestNode001 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+    channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
+            .usePlaintext(true)
+            .build();
+    blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
+
   }
 
 
@@ -53,10 +67,18 @@ public class WalletTestNode001 {
   public void testGetAllNode() {
     GrpcAPI.NodeList nodeList = blockingStubFull
         .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
-    if (nodeList.getNodesCount() <= 0) {
-      logger.info("There is no node in currently environment");
-      Assert.assertFalse(nodeList.getNodesCount() == 0);
+    Integer times = 0;
+    while (nodeList.getNodesCount() == 0 && times++ < 60) {
+      nodeList = blockingStubFull
+              .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
+      if (nodeList.getNodesCount() != 0) {
+        break;
+      }
+      nodeList = blockingStubFull1
+              .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
     }
+    Assert.assertFalse(nodeList.getNodesCount() == 0);
+
     for (Integer j = 0; j < nodeList.getNodesCount(); j++) {
       Assert.assertTrue(nodeList.getNodes(j).hasAddress());
       Assert.assertFalse(nodeList.getNodes(j).getAddress().getHost().isEmpty());
@@ -75,65 +97,18 @@ public class WalletTestNode001 {
     nodeList.isInitialized();
 
   }
-
-  @Test(enabled = true)
-  public void testgetNodewInfo() {
-    EmptyMessage.Builder builder = EmptyMessage.newBuilder();
-    blockingStubFull.getNodeInfo(builder.build());
-  }
-
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
-  }
-
-  public Account queryAccount(String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
-    byte[] address;
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
+    if (channelFull1 != null) {
+      channelFull1.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
-    ECKey ecKey = temKey;
-    if (ecKey == null) {
-      String pubKey = loadPubKey(); //04 PubKey[128]
-      if (StringUtils.isEmpty(pubKey)) {
-        logger.warn("Warning: QueryAccount failed, no wallet address !!");
-        return null;
-      }
-      byte[] pubKeyAsc = pubKey.getBytes();
-      byte[] pubKeyHex = Hex.decode(pubKeyAsc);
-      ecKey = ECKey.fromPublicOnly(pubKeyHex);
-    }
-    return grpcQueryAccount(ecKey.getAddress(), blockingStubFull);
-  }
-
-
-  public static String loadPubKey() {
-    char[] buf = new char[0x100];
-    return String.valueOf(buf, 32, 130);
-  }
-
-  public byte[] getAddress(ECKey ecKey) {
-    return ecKey.getAddress();
-  }
-
-  public Account grpcQueryAccount(byte[] address, WalletGrpc.WalletBlockingStub blockingStubFull) {
-    ByteString addressBs = ByteString.copyFrom(address);
-    Account request = Account.newBuilder().setAddress(addressBs).build();
-    return blockingStubFull.getAccount(request);
-  }
-
-  public Block getBlock(long blockNum, WalletGrpc.WalletBlockingStub blockingStubFull) {
-    NumberMessage.Builder builder = NumberMessage.newBuilder();
-    builder.setNum(blockNum);
-    return blockingStubFull.getBlockByNum(builder.build());
-
   }
 }
 

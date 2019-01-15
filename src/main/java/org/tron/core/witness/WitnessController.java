@@ -31,7 +31,7 @@ import org.tron.core.db.VotesStore;
 import org.tron.core.db.WitnessStore;
 import org.tron.core.exception.HeaderNotFound;
 
-@Slf4j
+@Slf4j(topic = "witness")
 public class WitnessController {
 
   @Setter

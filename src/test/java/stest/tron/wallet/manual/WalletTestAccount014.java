@@ -1,4 +1,4 @@
-package stest.tron.wallet.account;
+package stest.tron.wallet.manual;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -108,6 +108,7 @@ public class WalletTestAccount014 {
     Assert.assertTrue(PublicMethed.sendcoin(account014SecondAddress,5000000L,
         account014Address,account014Key,
         blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account account014 = PublicMethed.queryAccount(account014Address, blockingStubFull);
     final long freeNetUsageInFullnode = account014.getFreeNetUsage();
     final long createTimeInFullnode = account014.getCreateTime();
@@ -164,7 +165,7 @@ public class WalletTestAccount014 {
         3,1,ByteString.copyFrom(
         account014Address),account014SecondKey,blockingStubFull));
 
-
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSoliInFull);
     Account account014 = PublicMethed.queryAccount(account014Address, blockingStubFull);
     final long lastCustomeTimeInFullnode = account014.getLatestConsumeTime();
     final long netUsageInFullnode = account014.getNetUsage();
