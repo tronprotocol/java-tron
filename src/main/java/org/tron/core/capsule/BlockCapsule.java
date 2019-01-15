@@ -212,18 +212,17 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public boolean validateSignature(Manager dbManager) throws ValidateSignatureException {
     try {
-      byte[] toAddress = ECKey.signatureToAddress(getRawHash().getBytes(),
+      byte[] sigAddress = ECKey.signatureToAddress(getRawHash().getBytes(),
           TransactionCapsule.getBase64FromByteString(block.getBlockHeader().getWitnessSignature()));
-
-      byte[] witnessAddress = block.getBlockHeader().getRawData().getWitnessAddress().toByteArray();
+      byte[] witnessAccountAddress = block.getBlockHeader().getRawData().getWitnessAddress()
+          .toByteArray();
 
       if (dbManager.getDynamicPropertiesStore().getAllowMultiSign() != 1) {
-        return Arrays
-            .equals(toAddress, witnessAddress);
+        return Arrays.equals(sigAddress, witnessAccountAddress);
       } else {
-        return Arrays
-            .equals(toAddress,
-                dbManager.getAccountStore().get(witnessAddress).getWitnessPermissionAddress());
+        byte[] witnessPermissionAddress = dbManager.getAccountStore().get(witnessAccountAddress)
+            .getWitnessPermissionAddress();
+        return Arrays.equals(sigAddress, witnessPermissionAddress);
       }
 
     } catch (SignatureException e) {

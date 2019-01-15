@@ -4,6 +4,7 @@ import static org.tron.core.witness.BlockProductionCondition.NOT_MY_TURN;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,8 +18,10 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.backup.BackupManager;
 import org.tron.common.backup.BackupManager.BackupStatusEnum;
 import org.tron.common.backup.BackupServer;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
@@ -44,11 +47,12 @@ public class WitnessService implements Service {
   private Application tronApp;
   @Getter
   protected Map<ByteString, WitnessCapsule> localWitnessStateMap = Maps
-      .newHashMap(); //  <address,WitnessCapsule>
+      .newHashMap(); //  <witnessAccountAddress,WitnessCapsule>
   private Thread generateThread;
 
   private volatile boolean isRunning = false;
-  private Map<ByteString, byte[]> privateKeyMap = Maps.newHashMap();
+  private Map<ByteString, byte[]> privateKeyMap = Maps.newHashMap();//<witnessAccountAddress,privateKey>
+  private Map<byte[], byte[]> privateKeyToAddressMap = Maps.newHashMap();//<privateKey,witnessPermissionAccountAddress>
   private volatile boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
 
   private Manager manager;
@@ -241,6 +245,17 @@ public class WitnessService implements Service {
           return BlockProductionCondition.NO_PRIVATE_KEY;
         }
 
+        //Verify that the private key corresponds to the witness permission
+        if (manager.getDynamicPropertiesStore().getAllowMultiSign() == 1) {
+          byte[] privateKey = privateKeyMap.get(scheduledWitness);
+          byte[] address = privateKeyToAddressMap.get(privateKey);
+          AccountCapsule witnessAccount = manager.getAccountStore()
+              .get(scheduledWitness.toByteArray());
+          if (!Arrays.equals(address, witnessAccount.getWitnessPermissionAddress())) {
+            return BlockProductionCondition.WITNESS_PERMISSION_ERROR;
+          }
+        }
+
         controller.getManager().lastHeadBlockIsMaintenance();
 
         controller.setGeneratingBlock(true);
@@ -353,19 +368,22 @@ public class WitnessService implements Service {
 
     byte[] privateKey = ByteArray
         .fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey());
-    byte[] address = Args.getInstance().getLocalWitnesses().getWitnessAccountAddress();
+    byte[] witnessAccountAddress = Args.getInstance().getLocalWitnesses()
+        .getWitnessAccountAddress();
+    //This address does not need to have an account
+    byte[] privateKeyAccountAddress = ECKey.fromPrivate(privateKey).getAddress();
 
     WitnessCapsule witnessCapsule = this.tronApp.getDbManager().getWitnessStore()
-          .get(address);
+        .get(witnessAccountAddress);
       // need handle init witness
     if (null == witnessCapsule) {
-      logger.warn("WitnessCapsule[" + address + "] is not in witnessStore");
-      witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
+      logger.warn("WitnessCapsule[" + witnessAccountAddress + "] is not in witnessStore");
+      witnessCapsule = new WitnessCapsule(ByteString.copyFrom(witnessAccountAddress));
     }
 
     this.privateKeyMap.put(witnessCapsule.getAddress(), privateKey);
     this.localWitnessStateMap.put(witnessCapsule.getAddress(), witnessCapsule);
-
+    this.privateKeyToAddressMap.put(privateKey, privateKeyAccountAddress);
   }
 
   @Override
