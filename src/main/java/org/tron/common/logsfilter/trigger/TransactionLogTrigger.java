@@ -74,11 +74,7 @@ public class TransactionLogTrigger extends Trigger {
   @Setter
   private String contractResult;
 
-  //internal transaction
-  @Getter
-  @Setter
-  private List<InternalTransactionPojo> internalTrananctionList;
-
+  // transfer contract
   @Getter
   @Setter
   private String fromAddress;
@@ -94,6 +90,11 @@ public class TransactionLogTrigger extends Trigger {
   @Getter
   @Setter
   private long assetAmount;
+
+  //internal transaction
+  @Getter
+  @Setter
+  private List<InternalTransactionPojo> internalTrananctionList;
 
   public TransactionLogTrigger() {
     setTriggerName(Trigger.TRANSACTION_TRIGGER_NAME);
