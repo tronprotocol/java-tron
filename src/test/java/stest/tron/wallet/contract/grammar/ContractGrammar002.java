@@ -126,8 +126,8 @@ public class ContractGrammar002 {
     String txid2 = PublicMethed.triggerContract(contractAddress,
         "uintOfName(bytes32)", number1, false,
         0, maxFeeLimit, grammarAddress2, testKeyForGrammarAddress2, blockingStubFull);
-//    PublicMethed.waitProduceNextBlock(blockingStubFull);
-//    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    //    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    //    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     Optional<TransactionInfo> infoById2 = PublicMethed
         .getTransactionInfoById(txid2, blockingStubFull1);
 

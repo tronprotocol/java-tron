@@ -205,8 +205,6 @@ public class ContractGrammar001 {
         0L, 100, null, testKeyForGrammarAddress,
         grammarAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String txid = "";
-    String num = "1";
     byte[] contractAddress1 = null;
     String contractName1 = "cContract";
     String code1 = Configuration.getByPath("testng.conf")
@@ -219,6 +217,8 @@ public class ContractGrammar001 {
     contractAddress1 = PublicMethed.deployContract(contractName1, abi1, code1, "", maxFeeLimit,
         0L, 100, libraryAddress, testKeyForGrammarAddress,
         grammarAddress, blockingStubFull);
+    String txid = "";
+    String num = "1";
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     txid = PublicMethed.triggerContract(contractAddress1,
         "append(uint256)", num, false,
@@ -270,28 +270,28 @@ public class ContractGrammar001 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = "";
     String number = "1";
-    String txid1 = PublicMethed.triggerContract(contractAddress,
+    final String txid1 = PublicMethed.triggerContract(contractAddress,
         "f(uint256)", number, false,
         0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
-    String txid2 = PublicMethed.triggerContract(contractAddress,
+    final String txid2 = PublicMethed.triggerContract(contractAddress,
         "d(uint256)", number, false,
         0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String txid3 = PublicMethed.triggerContract(contractAddress,
+    final String txid3 = PublicMethed.triggerContract(contractAddress,
         "d1(uint256)", number, false,
         0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
-    String txid4 = PublicMethed.triggerContract(contractAddress,
+    final String txid4 = PublicMethed.triggerContract(contractAddress,
         "d2(uint256)", number, false,
         0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String txid5 = PublicMethed.triggerContract(contractAddress,
+    final String txid5 = PublicMethed.triggerContract(contractAddress,
         "d5(uint256)", number, false,
         0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
-    String txid6 = PublicMethed.triggerContract(contractAddress,
+    final String txid6 = PublicMethed.triggerContract(contractAddress,
         "d4(uint256)", number, false,
         0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String txid8 = PublicMethed.triggerContract(contractAddress,
+    final String txid8 = PublicMethed.triggerContract(contractAddress,
         "d6(uint256)", number, false,
         0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
 

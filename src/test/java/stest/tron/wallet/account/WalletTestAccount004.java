@@ -125,7 +125,7 @@ public class WalletTestAccount004 {
     //Wait to be create account
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     byte[] account004Address = ecKey1.getAddress();
-    String account004Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    final String account004Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
 
     Assert.assertFalse(PublicMethed.unFreezeBalance(noFrozenAddress, noFrozenBalanceTestKey,1,

@@ -121,7 +121,8 @@ public class WalletTestAssetIssue010 {
     ByteString assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
 
     //Query the description and url,freeAssetNetLimit and publicFreeAssetNetLimit
-    GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder().setValue(assetAccountId).build();
+    GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder()
+            .setValue(assetAccountId).build();
     Contract.AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request);
 
     Assert.assertTrue(

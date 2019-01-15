@@ -114,7 +114,8 @@ public class WalletTestMutiSign005 {
         + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}],\"name\":\"active\","
         + "\"threshold\":2}]";
     logger.info(accountPermissionJson);
-    PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,witness001Address,witnessKey001,
+    PublicMethedForMutiSign.accountPermissionUpdate(
+        accountPermissionJson,witness001Address,witnessKey001,
         blockingStubFull,ownerKeyString);
 
 
@@ -132,11 +133,13 @@ public class WalletTestMutiSign005 {
     final Integer proposalId = listProposals.get().getProposalsCount();
     logger.info(Integer.toString(proposalId));
 
-    Assert.assertTrue(PublicMethedForMutiSign.approveProposal(witness001Address,witnessKey001,proposalId,
+    Assert.assertTrue(PublicMethedForMutiSign.approveProposal(
+            witness001Address,witnessKey001,proposalId,
         true,blockingStubFull,permissionKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Delete proposal list after approve
-    Assert.assertTrue(PublicMethedForMutiSign.deleteProposal(witness001Address,witnessKey001,proposalId,blockingStubFull,permissionKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.deleteProposal(
+            witness001Address,witnessKey001,proposalId,blockingStubFull,permissionKeyString));
 
   }
   /**

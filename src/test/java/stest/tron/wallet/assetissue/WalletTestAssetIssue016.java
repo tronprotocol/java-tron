@@ -120,7 +120,8 @@ public class WalletTestAssetIssue016 {
     Assert.assertFalse(assetIssueInfo.getAssetNetLimitMap().isEmpty());
     Assert.assertFalse(assetIssueInfo.getAssetNetUsedMap().isEmpty());
 
-    GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder().setValue(assetAccountId).build();
+    GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder()
+            .setValue(assetAccountId).build();
     Contract.AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request);
     Assert.assertTrue(assetIssueByName.getFreeAssetNetLimit() == freeAssetNetLimit);
     Assert.assertTrue(assetIssueByName.getPublicFreeAssetNetLimit() == publicFreeAssetNetLimit);
