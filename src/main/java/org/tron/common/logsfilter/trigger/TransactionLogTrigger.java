@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
-import org.tron.common.runtime.vm.program.InternalTransaction;
 
 public class TransactionLogTrigger extends Trigger {
 
@@ -98,13 +97,5 @@ public class TransactionLogTrigger extends Trigger {
 
   public TransactionLogTrigger() {
     setTriggerName(Trigger.TRANSACTION_TRIGGER_NAME);
-    internalTrananctionList = new ArrayList<>();
-  }
-
-  public void setInternalTransactionPojoList(List<InternalTransaction> internalTransactionList) {
-    internalTransactionList.forEach(internalTransaction -> {
-      this.internalTrananctionList.add(new InternalTransactionPojo(internalTransaction));
-    });
-
   }
 }

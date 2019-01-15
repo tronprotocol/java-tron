@@ -5,6 +5,9 @@ import static org.tron.protos.Protocol.Transaction.Contract.ContractType.Transfe
 
 import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import com.google.protobuf.ByteString;
@@ -13,7 +16,9 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.logsfilter.EventPluginLoader;
+import org.tron.common.logsfilter.trigger.InternalTransactionPojo;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
+import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
@@ -134,8 +139,29 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
       }
 
       // internal transaction
-      transactionLogTrigger.setInternalTransactionPojoList(programResult.getInternalTransactions());
+      transactionLogTrigger.setInternalTrananctionList(getInternalTransactionList(programResult.getInternalTransactions()));
     }
+  }
+
+  private List<InternalTransactionPojo> getInternalTransactionList(List<InternalTransaction> internalTransactionList){
+    List<InternalTransactionPojo> pojoList = new ArrayList<>();
+
+    internalTransactionList.forEach(internalTransaction -> {
+      InternalTransactionPojo item = new InternalTransactionPojo();
+
+      item.setHash(Hex.toHexString(internalTransaction.getHash()));
+      item.setCallValue(internalTransaction.getValue());
+      item.setTokenInfo(internalTransaction.getTokenInfo());
+      item.setCaller_address(Hex.toHexString(internalTransaction.getSender()));
+      item.setTransferTo_address(Hex.toHexString(internalTransaction.getReceiveAddress()));
+      item.setData(Hex.toHexString(internalTransaction.getData()));
+      item.setRejected(internalTransaction.isRejected());
+      item.setNote(internalTransaction.getNote());
+
+      pojoList.add(item);
+    });
+
+    return pojoList;
   }
 
   @Override
