@@ -1,4 +1,4 @@
-package stest.tron.wallet.contract.trcToken;
+package stest.tron.wallet.contract.trctoken;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -153,7 +153,6 @@ public class ContractTrcToken011 {
     logger.info("after AssetId: " + assetAccountId.toStringUtf8()
         + ", devAssetCountAfter: " + devAssetCountAfter);
 
-
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(transferTokenTxid, blockingStubFull);
 
@@ -225,7 +224,6 @@ public class ContractTrcToken011 {
     logger.info("after balanceAfter is " + Long.toString(balanceAfter));
     logger.info("after AssetId: " + assetAccountId.toStringUtf8()
         + ", devAssetCountAfter: " + devAssetCountAfter);
-
 
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(recieveTokenTxid, blockingStubFull);
@@ -448,7 +446,7 @@ public class ContractTrcToken011 {
         .toLong(infoById.get().getContractResult(0).toByteArray()));
     Long assetIssueCount = PublicMethed
         .getAssetIssueValue(resultContractAddress, assetAccountId,
-        blockingStubFull);
+            blockingStubFull);
     logger.info("the receivercontract token(getaccount): " + assetIssueCount);
     Assert.assertTrue(assetIssueCount == ByteArray
         .toLong(ByteArray.fromHexString(

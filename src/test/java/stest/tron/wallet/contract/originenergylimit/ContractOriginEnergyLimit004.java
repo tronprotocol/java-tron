@@ -1,4 +1,4 @@
-package stest.tron.wallet.contract.originEnergyLimit;
+package stest.tron.wallet.contract.originenergylimit;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -34,7 +34,7 @@ public class ContractOriginEnergyLimit004 {
 
   private ManagedChannel channelFull = null;
   private ManagedChannel channelFull1 = null;
-  private WalletGrpc.WalletBlockingStub  blockingStubFull = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
@@ -284,7 +284,7 @@ public class ContractOriginEnergyLimit004 {
     String param = "\"" + 0 + "\"";
     final String triggerTxid = PublicMethed
         .triggerContract(contractAddress, "findArgsByIndexTest(uint256)",
-        param, false, 0, triggerFeeLimit,
+            param, false, 0, triggerFeeLimit,
             user001Address, user001Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 

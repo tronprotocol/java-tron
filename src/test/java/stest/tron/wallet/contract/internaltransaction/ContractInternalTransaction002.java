@@ -1,4 +1,4 @@
-package stest.tron.wallet.contract.internalTransaction;
+package stest.tron.wallet.contract.internaltransaction;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;

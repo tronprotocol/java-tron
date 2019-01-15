@@ -1,4 +1,4 @@
-package stest.tron.wallet.contract.trcToken;
+package stest.tron.wallet.contract.trctoken;
 
 import static org.tron.api.GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR;
 
@@ -207,13 +207,13 @@ public class ContractTrcToken005 {
 
     Long transferAssetBefore = PublicMethed
         .getAssetIssueValue(transferTokenContractAddress, assetAccountId,
-        blockingStubFull);
+            blockingStubFull);
     logger.info("before trigger, transferTokenContractAddress has AssetId "
         + assetAccountId.toStringUtf8() + ", Count is " + transferAssetBefore);
 
     Long userAssetId = PublicMethed
         .getAssetIssueValue(user001Address, ByteString.copyFromUtf8(tokenId),
-        blockingStubFull);
+            blockingStubFull);
     logger.info("before userAssetId has AssetId "
         + tokenId + ", Count is " + userAssetId);
 

@@ -7,15 +7,15 @@
       </package>
       <package name="stest.tron.wallet.manual">
       </package>
-      <package name="stest.tron.wallet.contract.internalTransaction">
+      <package name="stest.tron.wallet.contract.internaltransaction">
       </package>
       <package name="stest.tron.wallet.contract.grammar">
       </package>
       <package name="stest.tron.wallet.contract.exceptionfee">
       </package>
-      <package name="stest.tron.wallet.contract.trcToken">
+      <package name="stest.tron.wallet.contract.trctoken">
       </package>
-      <package name="stest.tron.wallet.contract.originEnergyLimit">
+      <package name="stest.tron.wallet.contract.originenergylimit">
       </package>
     </packages>
   </test>

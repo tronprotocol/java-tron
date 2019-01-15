@@ -1,4 +1,4 @@
-package stest.tron.wallet.contract.internalTransaction;
+package stest.tron.wallet.contract.internaltransaction;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -64,6 +64,7 @@ public class ContractInternalTransaction003 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */

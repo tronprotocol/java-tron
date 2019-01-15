@@ -1,4 +1,4 @@
-package stest.tron.wallet.contract.internalTransaction;
+package stest.tron.wallet.contract.internaltransaction;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -219,7 +219,6 @@ public class ContractInternalTransaction001 {
         internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-
     String contractName1 = "FunctionSelector";
     String code1 = "608060405260898060116000396000f300608060405260043610603e5763ffffffff7c01000000"
         + "000000000000000000000000000000000000000000000000006000350416639f3f89dc81146040575b005b6"
@@ -292,7 +291,6 @@ public class ContractInternalTransaction001 {
         1000000L, 100, null, testKeyForinternalTxsAddress,
         internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
 
     String txid1 = PublicMethed.triggerContract(contractAddress,
         "transfer()", "#", false,
@@ -483,7 +481,6 @@ public class ContractInternalTransaction001 {
         1000000L, 100, null, testKeyForinternalTxsAddress,
         internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
 
     String txid = "";
 
@@ -677,7 +674,6 @@ public class ContractInternalTransaction001 {
       channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
-
 
 
   /**
