@@ -49,6 +49,7 @@ public class ContractScenario002 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -73,12 +74,12 @@ public class ContractScenario002 {
     byte[] contract002Address = ecKey1.getAddress();
     String contract002Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     logger.info("From balance is "
-            + PublicMethed.queryAccount(fromAddress,blockingStubFull).getBalance());
+        + PublicMethed.queryAccount(fromAddress, blockingStubFull).getBalance());
     Assert.assertTrue(PublicMethed.sendcoin(contract002Address, 50000000L, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract002Address, 1000000L,
-        3, 1, contract002Key, blockingStubFull));
+        0, 1, contract002Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract002Address,
         blockingStubFull);
@@ -188,6 +189,9 @@ public class ContractScenario002 {
 
     Assert.assertTrue(energyUsage > 0);
     Assert.assertTrue(balanceBefore == balanceAfter + infoById.get().getFee());
+    PublicMethed.unFreezeBalance(contract002Address, contract002Key, 1,
+        contract002Address, blockingStubFull);
+
   }
 
   @Test(enabled = true)
@@ -197,6 +201,7 @@ public class ContractScenario002 {
     logger.info(smartContract.getAbi().toString());
     Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
   }
+
   /**
    * constructor.
    */

@@ -86,10 +86,10 @@ public class ContractLinkage006 {
         testKey003, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalance(linkage006Address, 1000000L,
-        3, linkage006Key, blockingStubFull));
+        0, linkage006Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage006Address, 1000000L,
-        3, 1, linkage006Key, blockingStubFull));
+        0, 1, linkage006Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     contractName = "stackOutByContract";
     code = "60806040526000805561026c806100176000396000f3006080604052600436106100565763ffffffff7c01"
@@ -320,6 +320,10 @@ public class ContractLinkage006 {
     Assert.assertTrue((beforeEnergyUsed2 + energyUsed2) >= afterEnergyUsed2);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 1);
+    PublicMethed.unFreezeBalance(linkage006Address2, linkage006Key2, 1,
+        linkage006Address2, blockingStubFull);
+    PublicMethed.unFreezeBalance(linkage006Address, linkage006Key, 1,
+        linkage006Address, blockingStubFull);
   }
 
   /**

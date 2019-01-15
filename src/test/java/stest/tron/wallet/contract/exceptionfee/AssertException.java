@@ -95,9 +95,9 @@ public class AssertException {
 
     String contractName = "divideInt";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_AssertException_testdivideInt");
+        .getString("code.code_AssertException_testdivideInt");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_AssertException_testdivideInt");
+        .getString("abi.abi_AssertException_testdivideInt");
 
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, contractExcKey,
@@ -147,6 +147,7 @@ public class AssertException {
     logger.info("afterEnergyUsed:" + afterEnergyUsed);
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
+    Assert.assertTrue(infoById.get().getResultValue() == 1);
     Assert.assertTrue(afterBalance + maxFeeLimit + netFee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
@@ -157,9 +158,9 @@ public class AssertException {
   public void test2FindArgsContractMinTest() {
     String contractName = "findArgsContractTest";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_AssertException_testfindArgsContractMinTest");
+        .getString("code.code_AssertException_testfindArgsContractMinTest");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_AssertException_testfindArgsContractMinTest");
+        .getString("abi.abi_AssertException_testfindArgsContractMinTest");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, contractExcKey,
         contractExcAddress, blockingStubFull);
@@ -207,6 +208,7 @@ public class AssertException {
     logger.info("afterEnergyUsed:" + afterEnergyUsed);
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
+    Assert.assertTrue(infoById.get().getResultValue() == 1);
     Assert.assertTrue(afterBalance + maxFeeLimit + netFee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
@@ -218,9 +220,9 @@ public class AssertException {
   public void test3ByteMinContract() {
     String contractName = "byteContract";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_AssertException_testbyteMinContract");
+        .getString("code.code_AssertException_testbyteMinContract");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_AssertException_testbyteMinContract");
+        .getString("abi.abi_AssertException_testbyteMinContract");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, contractExcKey,
         contractExcAddress, blockingStubFull);
@@ -268,6 +270,7 @@ public class AssertException {
     logger.info("afterEnergyUsed:" + afterEnergyUsed);
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
+    Assert.assertTrue(infoById.get().getResultValue() == 1);
     Assert.assertTrue(afterBalance + maxFeeLimit + netFee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
@@ -279,9 +282,9 @@ public class AssertException {
   public void test4Enum() {
     String contractName = "enum";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_AssertException_testenum");
+        .getString("code.code_AssertException_testenum");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_AssertException_testenum");
+        .getString("abi.abi_AssertException_testenum");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, contractExcKey,
         contractExcAddress, blockingStubFull);
@@ -331,6 +334,7 @@ public class AssertException {
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
 
+    Assert.assertTrue(infoById.get().getResultValue() == 1);
     Assert.assertTrue(afterBalance + maxFeeLimit + netFee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
@@ -341,9 +345,9 @@ public class AssertException {
   public void test5MoveRight() {
     String contractName = "moveRight";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_AssertException_testmoveRight");
+        .getString("code.code_AssertException_testmoveRight");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_AssertException_testmoveRight");
+        .getString("abi.abi_AssertException_testmoveRight");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, contractExcKey,
         contractExcAddress, blockingStubFull);
@@ -394,6 +398,7 @@ public class AssertException {
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
 
+    Assert.assertTrue(infoById.get().getResultValue() == 1);
     Assert.assertTrue(afterBalance + maxFeeLimit + netFee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
@@ -404,9 +409,9 @@ public class AssertException {
   public void test6UninitializedContract() {
     String contractName = "uninitializedContract";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_AssertException_testuninitializedContract");
+        .getString("code.code_AssertException_testuninitializedContract");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_AssertException_testuninitializedContract");
+        .getString("abi.abi_AssertException_testuninitializedContract");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, contractExcKey,
         contractExcAddress, blockingStubFull);
@@ -454,6 +459,7 @@ public class AssertException {
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
 
+    Assert.assertTrue(infoById.get().getResultValue() == 1);
     Assert.assertTrue(afterBalance + maxFeeLimit + netFee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
@@ -465,9 +471,9 @@ public class AssertException {
   public void test7TestAssertContract() {
     String contractName = "TestThrowsContract";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_AssertException_testTestAssertContract");
+        .getString("code.code_AssertException_testTestAssertContract");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_AssertException_testTestAssertContract");
+        .getString("abi.abi_AssertException_testTestAssertContract");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, contractExcKey,
         contractExcAddress, blockingStubFull);
@@ -515,7 +521,7 @@ public class AssertException {
     logger.info("afterEnergyUsed:" + afterEnergyUsed);
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
-
+    Assert.assertTrue(infoById.get().getResultValue() == 1);
     Assert.assertTrue((beforeBalance - maxFeeLimit - netFee) == afterBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);

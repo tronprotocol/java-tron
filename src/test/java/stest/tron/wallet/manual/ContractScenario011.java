@@ -92,10 +92,10 @@ public class ContractScenario011 {
   @Test(enabled = true)
   public void deployErc721KittyCore() {
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(deployAddress, 100000000L,
-        3, 1, deployKey, blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalance(deployAddress, 100000000L, 3,
+        0, 1, deployKey, blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalance(deployAddress, 100000000L, 0,
         deployKey, blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalance(triggerAddress, 100000000L, 3,
+    Assert.assertTrue(PublicMethed.freezeBalance(triggerAddress, 100000000L, 0,
         triggerKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(deployAddress,
@@ -108,9 +108,9 @@ public class ContractScenario011 {
     logger.info("before cpu usage is " + Long.toString(cpuUsage));
     String contractName = "KittyCore";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_ContractScenario011_deployErc721KittyCore");
+        .getString("code.code_ContractScenario011_deployErc721KittyCore");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_ContractScenario011_deployErc721KittyCore");
+        .getString("abi.abi_ContractScenario011_deployErc721KittyCore");
     logger.info("Kitty Core");
     kittyCoreContractAddress = PublicMethed.deployContract(contractName, abi, code, "",
         maxFeeLimit, 0L, consumeUserResourcePercent, null, deployKey,
@@ -149,10 +149,10 @@ public class ContractScenario011 {
     logger.info("before cpu usage is " + Long.toString(cpuUsage));
     String contractName = "SaleClockAuction";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_ContractScenario011_deploySaleClockAuction")
-            + kittyCoreAddressAndCut;
+        .getString("code.code_ContractScenario011_deploySaleClockAuction")
+        + kittyCoreAddressAndCut;
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_ContractScenario011_deploySaleClockAuction");
+        .getString("abi.abi_ContractScenario011_deploySaleClockAuction");
     logger.info("Sale Clock Auction");
     saleClockAuctionContractAddress = PublicMethed.deployContract(contractName, abi, code,
         "", maxFeeLimit, 0L, consumeUserResourcePercent, null, deployKey,
@@ -183,10 +183,10 @@ public class ContractScenario011 {
     logger.info("before cpu usage is " + Long.toString(cpuUsage));
     String contractName = "SiringClockAuction";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_ContractScenario011_deploySiringClockAuction")
-            + kittyCoreAddressAndCut;
+        .getString("code.code_ContractScenario011_deploySiringClockAuction")
+        + kittyCoreAddressAndCut;
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_ContractScenario011_deploySiringClockAuction");
+        .getString("abi.abi_ContractScenario011_deploySiringClockAuction");
     logger.info("Siring Clock Auction");
     siringClockAuctionContractAddress = PublicMethed.deployContract(contractName, abi, code,
         "", maxFeeLimit, 0L, consumeUserResourcePercent, null, deployKey,
@@ -217,10 +217,10 @@ public class ContractScenario011 {
     logger.info("before cpu usage is " + Long.toString(cpuUsage));
     String contractName = "GeneScienceInterface";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_ContractScenario011_deployGeneScienceInterface")
-            + kittyCoreAddressAndCut;
+        .getString("code.code_ContractScenario011_deployGeneScienceInterface")
+        + kittyCoreAddressAndCut;
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_ContractScenario011_deployGeneScienceInterface");
+        .getString("abi.abi_ContractScenario011_deployGeneScienceInterface");
     logger.info("gene Science Interface");
     geneScienceInterfaceContractAddress = PublicMethed.deployContract(contractName, abi, code,
         "", maxFeeLimit,
@@ -411,7 +411,7 @@ public class ContractScenario011 {
 
     Assert.assertTrue(
         PublicMethed.freezeBalanceGetEnergy(triggerUseTriggerEnergyUsageAddress, 100000000L,
-            3, 1, triggerUseTriggerEnergyUsageKey, blockingStubFull));
+            0, 1, triggerUseTriggerEnergyUsageKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     beforeBalance = PublicMethed.queryAccount(triggerUseTriggerEnergyUsageKey, blockingStubFull)
         .getBalance();
@@ -455,6 +455,14 @@ public class ContractScenario011 {
     //        .getReceipt().getOriginEnergyUsage());
 
     Assert.assertTrue(beforeBalance == afterBalance + fee);
+    PublicMethed.unFreezeBalance(deployAddress, deployKey, 1,
+        deployAddress, blockingStubFull);
+    PublicMethed.unFreezeBalance(triggerAddress, triggerKey, 1,
+        triggerAddress, blockingStubFull);
+
+    PublicMethed
+        .unFreezeBalance(triggerUseTriggerEnergyUsageAddress, triggerUseTriggerEnergyUsageKey, 1,
+            triggerUseTriggerEnergyUsageAddress, blockingStubFull);
   }
 
   /**
