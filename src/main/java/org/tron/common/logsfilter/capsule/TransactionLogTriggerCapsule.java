@@ -1,20 +1,31 @@
 package org.tron.common.logsfilter.capsule;
 
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
+
+import com.google.protobuf.Any;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Objects;
 
 import com.google.protobuf.ByteString;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
 import org.tron.common.runtime.vm.program.ProgramResult;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TransactionTrace;
+import org.tron.protos.Contract.TransferAssetContract;
+import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.Transaction.Contract;
 
+@Slf4j
 public class TransactionLogTriggerCapsule extends TriggerCapsule {
 
   @Getter
@@ -42,6 +53,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
       transactionLogTrigger.setFeeLimit(trxCasule.getInstance().getRawData().getFeeLimit());
 
       Protocol.Transaction.Contract contract = trxCasule.getInstance().getRawData().getContract(0);
+      Any contractParameter = contract.getParameter();
       // contract type
       if (Objects.nonNull(contract)){
         Protocol.Transaction.Contract.ContractType contractType = contract.getType();
@@ -50,6 +62,28 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
         }
 
         transactionLogTrigger.setContractCallValue(TransactionCapsule.getCallValue(contract));
+      }
+
+      if (contract.getType() == TransferContract) {
+        try {
+          TransferContract contractTransfer = contractParameter.unpack(TransferContract.class);
+          transactionLogTrigger.setFromAddress(Wallet.encode58Check(contractTransfer.getOwnerAddress().toByteArray()));
+          transactionLogTrigger.setToAddress(Wallet.encode58Check(contractTransfer.getToAddress().toByteArray()));
+          transactionLogTrigger.setAssetAmount(contractTransfer.getAmount());
+          transactionLogTrigger.setAssetName("TRX");
+        } catch (InvalidProtocolBufferException e) {
+          logger.error("failed to load transferContract, error '{}'", e);
+        }
+      } else if (contract.getType() == TransferAssetContract) {
+        try {
+          TransferAssetContract contractTransfer = contractParameter.unpack(TransferAssetContract.class);
+          transactionLogTrigger.setAssetName( ByteArray.toStr(contractTransfer.getAssetName().toByteArray()));
+          transactionLogTrigger.setFromAddress(Wallet.encode58Check(contractTransfer.getOwnerAddress().toByteArray()));
+          transactionLogTrigger.setToAddress(Wallet.encode58Check(contractTransfer.getToAddress().toByteArray()));
+          transactionLogTrigger.setAssetAmount(contractTransfer.getAmount());
+        } catch (InvalidProtocolBufferException e) {
+          logger.error("failed to load transferAssetContract, error'{}'", e);
+        }
       }
     }
 
