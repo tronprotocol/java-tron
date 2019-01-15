@@ -49,10 +49,10 @@ public class TransactionLogTrigger extends Trigger {
   @Setter
   private long netFee;
 
-  // program result
+  //contract
   @Getter
   @Setter
-  private String contractResult;
+  private String result;
 
   @Getter
   @Setter
@@ -60,40 +60,40 @@ public class TransactionLogTrigger extends Trigger {
 
   @Getter
   @Setter
-  private long contractFee;
+  private String contractType;
 
   @Getter
   @Setter
-  private long unfreezeAmount;
+  private long feeLimit;
 
   @Getter
   @Setter
-  private String assetIssueID;
+  private long contractCallValue;
 
   @Getter
   @Setter
-  private long exchangeId;
+  private String contractResult;
 
-  @Getter
-  @Setter
-  private long withdrawAmount;
-
-  @Getter
-  @Setter
-  private long exchangeReceivedAmount;
-
-  @Getter
-  @Setter
-  private long exchangeInjectAnotherAmount;
-
-  @Getter
-  @Setter
-  private long exchangeWithdrawAnotherAmount;
-
-  // internal transaction
+  //internal transaction
   @Getter
   @Setter
   private List<InternalTransactionPojo> internalTrananctionList;
+
+  @Getter
+  @Setter
+  private String fromAddress;
+
+  @Getter
+  @Setter
+  private String toAddress;
+
+  @Getter
+  @Setter
+  private String assetName;
+
+  @Getter
+  @Setter
+  private long assetAmount;
 
   public TransactionLogTrigger() {
     setTriggerName(Trigger.TRANSACTION_TRIGGER_NAME);
