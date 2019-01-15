@@ -64,25 +64,27 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
         transactionLogTrigger.setCallValue(TransactionCapsule.getCallValue(contract));
       }
 
-      if (contract.getType() == TransferContract) {
-        try {
-          TransferContract contractTransfer = contractParameter.unpack(TransferContract.class);
-          transactionLogTrigger.setFromAddress(Wallet.encode58Check(contractTransfer.getOwnerAddress().toByteArray()));
-          transactionLogTrigger.setToAddress(Wallet.encode58Check(contractTransfer.getToAddress().toByteArray()));
-          transactionLogTrigger.setAssetAmount(contractTransfer.getAmount());
-          transactionLogTrigger.setAssetName("TRX");
-        } catch (InvalidProtocolBufferException e) {
-          logger.error("failed to load transferContract, error '{}'", e);
-        }
-      } else if (contract.getType() == TransferAssetContract) {
-        try {
-          TransferAssetContract contractTransfer = contractParameter.unpack(TransferAssetContract.class);
-          transactionLogTrigger.setAssetName( ByteArray.toStr(contractTransfer.getAssetName().toByteArray()));
-          transactionLogTrigger.setFromAddress(Wallet.encode58Check(contractTransfer.getOwnerAddress().toByteArray()));
-          transactionLogTrigger.setToAddress(Wallet.encode58Check(contractTransfer.getToAddress().toByteArray()));
-          transactionLogTrigger.setAssetAmount(contractTransfer.getAmount());
-        } catch (InvalidProtocolBufferException e) {
-          logger.error("failed to load transferAssetContract, error'{}'", e);
+      if (Objects.nonNull(contractParameter)) {
+        if (contract.getType() == TransferContract) {
+          try {
+            TransferContract contractTransfer = contractParameter.unpack(TransferContract.class);
+            transactionLogTrigger.setAssetName("TRX");
+            transactionLogTrigger.setFromAddress(Wallet.encode58Check(contractTransfer.getOwnerAddress().toByteArray()));
+            transactionLogTrigger.setToAddress(Wallet.encode58Check(contractTransfer.getToAddress().toByteArray()));
+            transactionLogTrigger.setAssetAmount(contractTransfer.getAmount());
+          } catch (InvalidProtocolBufferException e) {
+            logger.error("failed to load transferContract, error '{}'", e);
+          }
+        } else if (contract.getType() == TransferAssetContract) {
+          try {
+            TransferAssetContract contractTransfer = contractParameter.unpack(TransferAssetContract.class);
+            transactionLogTrigger.setAssetName(ByteArray.toStr(contractTransfer.getAssetName().toByteArray()));
+            transactionLogTrigger.setFromAddress(Wallet.encode58Check(contractTransfer.getOwnerAddress().toByteArray()));
+            transactionLogTrigger.setToAddress(Wallet.encode58Check(contractTransfer.getToAddress().toByteArray()));
+            transactionLogTrigger.setAssetAmount(contractTransfer.getAmount());
+          } catch (InvalidProtocolBufferException e) {
+            logger.error("failed to load transferAssetContract, error'{}'", e);
+          }
         }
       }
     }
