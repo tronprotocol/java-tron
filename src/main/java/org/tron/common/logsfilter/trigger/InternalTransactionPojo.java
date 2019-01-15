@@ -5,15 +5,16 @@ import java.util.Map;
 import lombok.Getter;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.vm.program.InternalTransaction;
+import org.tron.common.utils.Base58;
 
 public class InternalTransactionPojo {
 
   @Getter
   private String transactionId;
   @Getter
-  private byte[] hash;
+  private String hash;
   @Getter
-  private byte[] parentHash;
+  private String parentHash;
   @Getter
   /* the amount of trx to transfer (calculated as sun) */
   private long value;
@@ -23,21 +24,21 @@ public class InternalTransactionPojo {
   /* the address of the destination account (for message)
    * In creation transaction the receive address is - 0 */
   @Getter
-  private byte[] receiveAddress;
+  private String receiveAddress;
 
   /* An unlimited size byte array specifying
    * input [data] of the message call or
    * Initialization code for a new contract */
   @Getter
-  private byte[] data;
+  private String data;
   @Getter
   private long nonce;
   @Getter
-  private byte[] transferToAddress;
+  private String transferToAddress;
 
   /*  Message sender address */
   @Getter
-  private byte[] sendAddress;
+  private String sendAddress;
   @Getter
   private int deep;
   @Getter
@@ -47,23 +48,23 @@ public class InternalTransactionPojo {
   @Getter
   private String note;
   @Getter
-  private byte[] protoEncoded;
+  private String protoEncoded;
 
   public InternalTransactionPojo(InternalTransaction internalTransaction) {
     this.transactionId = Hex.toHexString(internalTransaction.getHash());
-    this.hash = internalTransaction.getHash();
+    this.hash = Hex.toHexString(internalTransaction.getHash());
     this.value = internalTransaction.getValue();
     this.tokenInfo = internalTransaction.getTokenInfo();
-    this.sendAddress = internalTransaction.getSender();
-    this.receiveAddress = internalTransaction.getReceiveAddress();
-    this.parentHash = internalTransaction.getParentHash();
-    this.data = internalTransaction.getData();
+    this.sendAddress = Base58.encode(internalTransaction.getSender());
+    this.receiveAddress = Base58.encode(internalTransaction.getReceiveAddress());
+    this.parentHash = Hex.toHexString(internalTransaction.getParentHash());
+    this.data = Hex.toHexString(internalTransaction.getData());
     this.nonce = internalTransaction.getNonce();
     this.deep = internalTransaction.getDeep();
     this.index = internalTransaction.getIndex();
     this.rejected = internalTransaction.isRejected();
     this.note = internalTransaction.getNote();
-    this.protoEncoded = internalTransaction.getEncoded();
+    this.protoEncoded = Hex.toHexString(internalTransaction.getEncoded());
   }
 
   @Override
