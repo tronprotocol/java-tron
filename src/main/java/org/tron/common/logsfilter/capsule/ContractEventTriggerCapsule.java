@@ -42,7 +42,8 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
     this.topicList = log.getTopicList();
     this.data = log.getData();
     this.contractEventTrigger.setEventSignature(log.getEventSignature());
-    this.contractEventTrigger.setEventSignature(log.getAbiEntry().getName());
+    this.contractEventTrigger.setEventSignatureFull(log.getEventSignatureFull());
+    this.contractEventTrigger.setEventName(log.getAbiEntry().getName());
     this.abiEntry = log.getAbiEntry();
   }
 

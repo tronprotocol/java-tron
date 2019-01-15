@@ -1,11 +1,14 @@
 package org.tron.common.runtime.vm;
 
+import java.util.List;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
+import org.eclipse.jetty.util.StringUtil;
+import org.pf4j.util.StringUtils;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.protos.Protocol;
-
-import java.util.List;
+import org.tron.protos.Protocol.SmartContract.ABI.Entry.Param;
 
 public class LogEventWrapper extends ContractTrigger {
 
@@ -31,8 +34,27 @@ public class LogEventWrapper extends ContractTrigger {
   @Setter
   private Protocol.SmartContract.ABI.Entry abiEntry;
 
-  public LogEventWrapper(){
+  public LogEventWrapper() {
     super();
   }
 
+  public String getEventSignatureFull() {
+    if (Objects.isNull(abiEntry)) {
+      return "fallback()";
+    }
+    StringBuffer sb = new StringBuffer();
+    sb.append(abiEntry.getName()).append("(");
+    StringBuffer sbp = new StringBuffer();
+    for (Param param : abiEntry.getInputsList()) {
+      if (sbp.length() > 0) {
+        sbp.append(",");
+      }
+      sbp.append(param.getType());
+      if(StringUtils.isNotNullOrEmpty(param.getName())){
+        sbp.append(" ").append(param.getName());
+      }
+    }
+    sb.append(sbp.toString()).append(")");
+    return sb.toString();
+  }
 }
