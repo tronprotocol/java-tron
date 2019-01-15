@@ -51,8 +51,10 @@ public class WitnessService implements Service {
   private Thread generateThread;
 
   private volatile boolean isRunning = false;
-  private Map<ByteString, byte[]> privateKeyMap = Maps.newHashMap();//<witnessAccountAddress,privateKey>
-  private Map<byte[], byte[]> privateKeyToAddressMap = Maps.newHashMap();//<privateKey,witnessPermissionAccountAddress>
+  private Map<ByteString, byte[]> privateKeyMap = Maps
+      .newHashMap();//<witnessAccountAddress,privateKey>
+  private Map<byte[], byte[]> privateKeyToAddressMap = Maps
+      .newHashMap();//<privateKey,witnessPermissionAccountAddress>
   private volatile boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
 
   private Manager manager;
@@ -248,10 +250,10 @@ public class WitnessService implements Service {
         //Verify that the private key corresponds to the witness permission
         if (manager.getDynamicPropertiesStore().getAllowMultiSign() == 1) {
           byte[] privateKey = privateKeyMap.get(scheduledWitness);
-          byte[] address = privateKeyToAddressMap.get(privateKey);
+          byte[] witnessPermissionAddress = privateKeyToAddressMap.get(privateKey);
           AccountCapsule witnessAccount = manager.getAccountStore()
               .get(scheduledWitness.toByteArray());
-          if (!Arrays.equals(address, witnessAccount.getWitnessPermissionAddress())) {
+          if (!Arrays.equals(witnessPermissionAddress, witnessAccount.getWitnessPermissionAddress())) {
             return BlockProductionCondition.WITNESS_PERMISSION_ERROR;
           }
         }
