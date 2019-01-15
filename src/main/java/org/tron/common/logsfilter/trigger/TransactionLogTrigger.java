@@ -89,11 +89,11 @@ public class TransactionLogTrigger extends Trigger {
 
   @Getter
   @Setter
-  private String AssetName;
+  private String assetName;
 
   @Getter
   @Setter
-  private long AssetAmount;
+  private long assetAmount;
 
   public TransactionLogTrigger() {
     setTriggerName(Trigger.TRANSACTION_TRIGGER_NAME);

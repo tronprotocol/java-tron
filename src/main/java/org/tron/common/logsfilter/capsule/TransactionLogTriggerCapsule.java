@@ -23,7 +23,6 @@ import org.tron.core.db.TransactionTrace;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.Transaction.Contract;
 
 @Slf4j
 public class TransactionLogTriggerCapsule extends TriggerCapsule {
