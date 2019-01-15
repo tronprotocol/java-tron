@@ -200,9 +200,6 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
       if (witness.getType() != PermissionType.Witness) {
         throw new ContractValidateException("witness permission type is error");
       }
-      if (witness.getKeysCount() > 1) {
-        throw new ContractValidateException("witness permission key count can't more than 1");
-      }
       if (!checkPermission(witness)) {
         return false;
       }
