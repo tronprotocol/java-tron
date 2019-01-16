@@ -1125,9 +1125,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         return;
       }
       Permission.Builder ownerPermission = this.account.getOwnerPermission().toBuilder();
-
+      List<Key> keys = ownerPermission.getKeysList();
       ownerPermission.clearKeys();
-      for (Key key : ownerPermission.getKeysList()) {
+      for (Key key : keys) {
         if (!key.getAddress().equals(deleteAddress)) {
           ownerPermission.addKeys(key);
         }
