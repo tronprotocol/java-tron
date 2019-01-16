@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
-import org.eclipse.jetty.util.StringUtil;
 import org.pf4j.util.StringUtils;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.protos.Protocol;
@@ -50,7 +49,7 @@ public class LogEventWrapper extends ContractTrigger {
         sbp.append(",");
       }
       sbp.append(param.getType());
-      if(StringUtils.isNotNullOrEmpty(param.getName())){
+      if (StringUtils.isNotNullOrEmpty(param.getName())) {
         sbp.append(" ").append(param.getName());
       }
     }
