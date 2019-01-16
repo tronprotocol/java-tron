@@ -157,7 +157,7 @@ public class TestExceptionCodeAndAbi {
     while (times++ < 1) {
       String contractName = "Fomo3D";
       String code = "60806040" + getRandomCode(2734) + getRandomCode(1000) + "0029";
-      String abi = Configuration.getByPath("long-testng.conf")
+      String abi = Configuration.getByPath("testng.conf")
               .getString("abi.abi_TestExceptionCodeAndAbi_testExceptionCodeAndAbi");
       txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName,abi,code,"",
           maxFeeLimit, 0L, 100,null,testNetAccountKey,testNetAccountAddress,blockingStubFull);
@@ -198,7 +198,7 @@ public class TestExceptionCodeAndAbi {
     String contractName = "timeout";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_TestExceptionCodeAndAbi_testtimeout");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_TestExceptionCodeAndAbi_testtimeout");
     contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit, 0L,
         100,null,testKeyForAssetIssue016,asset016Address,blockingStubFull);

@@ -1,5 +1,6 @@
 package org.tron.common.logsfilter.capsule;
 
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.logsfilter.ContractEventParser;
@@ -9,9 +10,8 @@ import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.runtime.vm.LogEventWrapper;
 import org.tron.protos.Protocol.SmartContract.ABI.Entry;
 
-import java.util.List;
-
 public class ContractEventTriggerCapsule extends TriggerCapsule {
+
   @Getter
   @Setter
   private List<byte[]> topicList;
@@ -31,12 +31,12 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
   public ContractEventTriggerCapsule(LogEventWrapper log) {
     this.contractEventTrigger = new ContractEventTrigger();
 
-    this.contractEventTrigger.setTxId(log.getTxId());
+    this.contractEventTrigger.setTransactionId(log.getTransactionId());
     this.contractEventTrigger.setContractAddress(log.getContractAddress());
     this.contractEventTrigger.setCallerAddress(log.getCallerAddress());
     this.contractEventTrigger.setOriginAddress(log.getOriginAddress());
     this.contractEventTrigger.setCreatorAddress(log.getCreatorAddress());
-    this.contractEventTrigger.setBlockNum(log.getBlockNum());
+    this.contractEventTrigger.setBlockNumber(log.getBlockNumber());
     this.contractEventTrigger.setTimeStamp(log.getTimeStamp());
 
     this.topicList = log.getTopicList();

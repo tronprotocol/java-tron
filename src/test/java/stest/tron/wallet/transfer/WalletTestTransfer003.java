@@ -48,8 +48,6 @@ public class WalletTestTransfer003 {
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-  private static final byte[] INVAILD_ADDRESS =
-      Base58.decodeFromBase58Check("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48");
 
   private final Long createUseFee = 100000L;
 
@@ -114,7 +112,17 @@ public class WalletTestTransfer003 {
 
 
   @Test(enabled = true)
-  public void atestUseFeeOrNet() {
+  public void test1UseFeeOrNet() {
+    //get account
+    ecKey1 = new ECKey(Utils.getRandom());
+    sendCoinAddress = ecKey1.getAddress();
+    testKeyForSendCoin = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
+    ecKey2 = new ECKey(Utils.getRandom());
+    newAccountAddress = ecKey2.getAddress();
+    testKeyForNewAccount = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+
+
     Assert.assertTrue(PublicMethed.sendcoin(sendCoinAddress,200000L,
         fromAddress,testKey002,blockingStubFull));
     Long feeNum = 0L;
@@ -182,7 +190,7 @@ public class WalletTestTransfer003 {
   }
 
   @Test(enabled = true)
-  public void btestCreateAccountUseFee() {
+  public void test2CreateAccountUseFee() {
     Account sendAccountInfo = PublicMethed.queryAccount(testKeyForSendCoin,blockingStubFull);
     final Long beforeBalance = sendAccountInfo.getBalance();
     logger.info("before balance " + Long.toString(beforeBalance));
@@ -209,7 +217,7 @@ public class WalletTestTransfer003 {
   }
 
   @Test(enabled = true)
-  public void ctestInvalidGetTransactionById() {
+  public void test3InvalidGetTransactionById() {
     String txId = "";
     ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
     BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
@@ -227,7 +235,7 @@ public class WalletTestTransfer003 {
   }
 
   @Test(enabled = true)
-  public void dtestNoBalanceCanSend() {
+  public void test4NoBalanceCanSend() {
     Long feeNum = 0L;
     Account sendAccountInfo = PublicMethed.queryAccount(testKeyForSendCoin,blockingStubFull);
     Long beforeBalance = sendAccountInfo.getBalance();

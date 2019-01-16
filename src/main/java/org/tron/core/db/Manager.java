@@ -6,6 +6,12 @@ import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDIN
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.primitives.Longs;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,6 +21,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -25,7 +32,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 import javafx.util.Pair;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
@@ -98,6 +107,7 @@ import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 
 
@@ -110,6 +120,8 @@ public class Manager {
   private AccountStore accountStore;
   @Autowired
   private TransactionStore transactionStore;
+  @Autowired(required = false)
+  private TransactionCache transactionCache;
   @Autowired
   private BlockStore blockStore;
   @Autowired
@@ -204,6 +216,8 @@ public class Manager {
   @Setter
   public boolean eventPluginLoaded = false;
 
+  private BlockingQueue<TransactionCapsule> pushTransactionQueue = new LinkedBlockingQueue<>();
+
   @Getter
   private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
       .newBuilder().maximumSize(100_000).recordStats().build();
@@ -216,6 +230,7 @@ public class Manager {
 
   @Autowired
   private TrieService trieService;
+  private Set<String> ownerAddressSet = new HashSet<>();
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -452,7 +467,7 @@ public class Manager {
     if (Args.getInstance().isNeedToUpdateAsset() && needToUpdateAsset()) {
       new AssetUpdateHelper(this).doWork();
     }
-
+    initCacheTxs();
     revokingStore.enable();
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
@@ -564,6 +579,54 @@ public class Manager {
             });
   }
 
+  public void initCacheTxs() {
+    logger.info("begin to init txs cache.");
+    int dbVersion = Args.getInstance().getStorage().getDbVersion();
+    if (dbVersion != 2) {
+      return;
+    }
+    long start = System.currentTimeMillis();
+    long headNum = dynamicPropertiesStore.getLatestBlockHeaderNumber();
+    long recentBlockCount = recentBlockStore.size();
+    ListeningExecutorService service = MoreExecutors
+        .listeningDecorator(Executors.newFixedThreadPool(50));
+    List<ListenableFuture<?>> futures = new ArrayList<>();
+    AtomicLong blockCount = new AtomicLong(0);
+    AtomicLong emptyBlockCount = new AtomicLong(0);
+    LongStream.rangeClosed(headNum - recentBlockCount + 1, headNum).forEach(
+        blockNum -> futures.add(service.submit(() -> {
+          try {
+            blockCount.incrementAndGet();
+            BlockCapsule blockCapsule = getBlockByNum(blockNum);
+            if (blockCapsule.getTransactions().isEmpty()) {
+              emptyBlockCount.incrementAndGet();
+            }
+            blockCapsule.getTransactions().stream()
+                .map(tc -> tc.getTransactionId().getBytes())
+                .map(bytes -> Maps.immutableEntry(bytes, Longs.toByteArray(blockNum)))
+                .forEach(e -> transactionCache.put(e.getKey(), new BytesCapsule(e.getValue())));
+          } catch (ItemNotFoundException | BadItemException e) {
+            logger.info("init txs cache error.");
+            throw new IllegalStateException("init txs cache error.");
+          }
+        })));
+    ListenableFuture<?> future = Futures.allAsList(futures);
+    try {
+      future.get();
+      service.shutdown();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    } catch (ExecutionException e) {
+      logger.info(e.getMessage());
+    }
+    logger.info("end to init txs cache. trxids:{}, block count:{}, empty block count:{}, cost:{}",
+        transactionCache.size(),
+        blockCount.get(),
+        emptyBlockCount.get(),
+        System.currentTimeMillis() - start
+    );
+  }
+
   public AccountStore getAccountStore() {
     return this.accountStore;
   }
@@ -656,10 +719,18 @@ public class Manager {
   }
 
   void validateDup(TransactionCapsule transactionCapsule) throws DupTransactionException {
-    if (getTransactionStore().has(transactionCapsule.getTransactionId().getBytes())) {
+    if (containsTransaction(transactionCapsule)) {
       logger.debug(ByteArray.toHexString(transactionCapsule.getTransactionId().getBytes()));
       throw new DupTransactionException("dup trans");
     }
+  }
+
+  private boolean containsTransaction(TransactionCapsule transactionCapsule) {
+    if (transactionCache != null) {
+      return transactionCache.has(transactionCapsule.getTransactionId().getBytes());
+    }
+
+    return transactionStore.has(transactionCapsule.getTransactionId().getBytes());
   }
 
   /**
@@ -671,20 +742,28 @@ public class Manager {
       TooBigTransactionException, TransactionExpirationException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
 
-    if (!trx.validateSignature(this)) {
-      throw new ValidateSignatureException("trans sig validate failed");
+    synchronized (pushTransactionQueue) {
+      pushTransactionQueue.add(trx);
     }
 
-    synchronized (this) {
-      if (!session.valid()) {
-        session.setValue(revokingStore.buildSession());
+    try{
+      if (!trx.validateSignature(this)) {
+        throw new ValidateSignatureException("trans sig validate failed");
       }
 
-      try (ISession tmpSession = revokingStore.buildSession()) {
-        processTransaction(trx, null);
-        pendingTransactions.add(trx);
-        tmpSession.merge();
+      synchronized (this) {
+        if (!session.valid()) {
+          session.setValue(revokingStore.buildSession());
+        }
+
+        try (ISession tmpSession = revokingStore.buildSession()) {
+          processTransaction(trx, null);
+          pendingTransactions.add(trx);
+          tmpSession.merge();
+        }
       }
+    } finally {
+      pushTransactionQueue.remove(trx);
     }
     return true;
   }
@@ -952,6 +1031,18 @@ public class Manager {
       }
       logger.info("save block: " + newBlock);
     }
+    //clear ownerAddressSet
+    synchronized (pushTransactionQueue) {
+      Set<String> result = new HashSet<>();
+      for (TransactionCapsule transactionCapsule : repushTransactions) {
+        filterOwnerAddress(transactionCapsule, result);
+      }
+      for (TransactionCapsule transactionCapsule : pushTransactionQueue) {
+        filterOwnerAddress(transactionCapsule, result);
+      }
+      ownerAddressSet.clear();
+      ownerAddressSet.addAll(result);
+    }
     logger.info("pushBlock block number:{}, cost/txs:{}/{}",
         block.getNum(),
         System.currentTimeMillis() - start,
@@ -1133,6 +1224,10 @@ public class Manager {
     }
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
 
+    Optional.ofNullable(transactionCache)
+        .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
+            new BytesCapsule(ByteArray.fromLong(trxCap.getBlockNum()))));
+
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
         .buildInstance(trxCap, blockCap, trace);
 
@@ -1140,7 +1235,11 @@ public class Manager {
 
     // if event subscribe is enabled, post contract triggers to queue
     postContractTrigger(trace, false);
-
+    //
+    Contract contract = trxCap.getInstance().getRawData().getContract(0);
+    if (isMultSignTransaction(trxCap.getInstance())) {
+      ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
+    }
     return true;
   }
 
@@ -1198,7 +1297,7 @@ public class Manager {
     fastSyncCallBack.preExecute(blockCapsule);
 
     Set<String> accountSet = new HashSet<>();
-    Iterator iterator = pendingTransactions.iterator();
+    Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
     while (iterator.hasNext() || repushTransactions.size() > 0) {
       boolean fromPending = false;
       TransactionCapsule trx;
@@ -1229,16 +1328,12 @@ public class Manager {
       if (accountSet.contains(ownerAddress)) {
         continue;
       } else {
-        switch (contract.getType()) {
-          case AccountPermissionUpdateContract:
-          case PermissionAddKeyContract:
-          case PermissionUpdateKeyContract:
-          case PermissionDeleteKeyContract: {
-            accountSet.add(ownerAddress);
-          }
-          break;
-          default:
+        if (isMultSignTransaction(trx.getInstance())) {
+          accountSet.add(ownerAddress);
         }
+      }
+      if (ownerAddressSet.contains(ownerAddress)) {
+        trx.setVerified(false);
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
@@ -1327,6 +1422,28 @@ public class Manager {
     return null;
   }
 
+  private void filterOwnerAddress(TransactionCapsule transactionCapsule, Set<String> result) {
+    Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
+    byte[] owner = TransactionCapsule.getOwner(contract);
+    String ownerAddress = ByteArray.toHexString(owner);
+    if (ownerAddressSet.contains(ownerAddress)) {
+      result.add(ownerAddress);
+    }
+  }
+
+  private boolean isMultSignTransaction(Transaction transaction) {
+    Contract contract = transaction.getRawData().getContract(0);
+    switch (contract.getType()) {
+      case AccountPermissionUpdateContract:
+      case PermissionAddKeyContract:
+      case PermissionUpdateKeyContract:
+      case PermissionDeleteKeyContract: {
+        return true;
+      }
+      default:
+    }
+    return false;
+  }
 
   public TransactionStore getTransactionStore() {
     return this.transactionStore;
@@ -1689,7 +1806,7 @@ public class Manager {
   }
 
   public void rePush(TransactionCapsule tx) {
-    if (transactionStore.has(tx.getTransactionId().getBytes())) {
+    if (containsTransaction(tx)) {
       return;
     }
 
@@ -1809,7 +1926,7 @@ public class Manager {
           result = triggerCapsuleQueue.offer(contractLogTriggerCapsule);
         }
         if (result == false) {
-          logger.info("too many tigger, lost contract log trigger: {}", trigger.getTxId());
+          logger.info("too many tigger, lost contract log trigger: {}", trigger.getTransactionId());
         }
       }
     }

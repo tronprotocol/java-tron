@@ -127,6 +127,7 @@ public class WalletTestAssetIssue017 {
     for (Integer i = 0; i < assetIssueListPaginated.get().getAssetIssueCount(); i++) {
       Assert.assertTrue(assetIssueListPaginated.get().getAssetIssue(i).getTotalSupply() > 0);
     }
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
   }
 
   @Test(enabled = true)

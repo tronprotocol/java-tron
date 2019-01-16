@@ -94,6 +94,7 @@ public class WalletTestAssetIssue003 {
   @Test(enabled = true)
   public void testExceptionOfAssetIssuew() {
     PublicMethed.sendcoin(asset003Address,2048000000L,fromAddress,testKey002,blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long start = System.currentTimeMillis() + 100000;
     Long end = System.currentTimeMillis() + 1000000000;
     //Freeze amount is large than total supply, create asset issue failed.
@@ -176,6 +177,7 @@ public class WalletTestAssetIssue003 {
     Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, name, totalSupply, 1, 10,
             start, end, 2, tooLongDescription, url,10000L,
             10000L,1L, 3652L, asset003Key,blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
   @Test(enabled = true)

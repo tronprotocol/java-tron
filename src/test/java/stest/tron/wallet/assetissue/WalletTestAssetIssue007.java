@@ -98,6 +98,7 @@ public class WalletTestAssetIssue007 {
   public void testParticipateAssetIssueUseParticipaterBandwidth() {
     Assert.assertTrue(PublicMethed
         .sendcoin(asset007Address, sendAmount, fromAddress, testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long start = System.currentTimeMillis() + 5000;
     Long end = System.currentTimeMillis() + 1000000000;
     Assert.assertTrue(PublicMethed
@@ -105,8 +106,6 @@ public class WalletTestAssetIssue007 {
             description, url, freeAssetNetLimit, publicFreeAssetNetLimit, 1L, 1L,
             testKeyForAssetIssue007, blockingStubFull));
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info(name);
     //Assert.assertTrue(PublicMethed.waitProduceNextBlock(blockingStubFull));
@@ -135,9 +134,10 @@ public class WalletTestAssetIssue007 {
     logger.info(assetAccountId.toString());
 
     //Participate an assetIssue, then query the net information.
-    Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,assetAccountId.toByteArray(),
+    Assert.assertTrue(PublicMethed.participateAssetIssue(
+            asset007Address,assetAccountId.toByteArray(),
         1L,participateAssetAddress,participateAssetCreateKey,blockingStubFull));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     addressBs = ByteString.copyFrom(asset007Address);
     request = Account.newBuilder().setAddress(addressBs).build();
     asset007NetMessage = blockingStubFull.getAccountNet(request);
@@ -155,27 +155,31 @@ public class WalletTestAssetIssue007 {
     Assert.assertTrue(asset007AfterFreeNetUsed <= asset007BeforeFreeNetUsed);
     Assert.assertTrue(participateAccountAfterNetUsed - participateAccountBeforeNetUsed > 150);
 
+
+
+
+    Assert.assertTrue(PublicMethed.participateAssetIssue(
+            asset007Address,assetAccountId.toByteArray(),
+        1L,participateAssetAddress,participateAssetCreateKey,blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-
-    Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,assetAccountId.toByteArray(),
+    Assert.assertTrue(PublicMethed.participateAssetIssue(
+            asset007Address,assetAccountId.toByteArray(),
         1L,participateAssetAddress,participateAssetCreateKey,blockingStubFull));
-    Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,assetAccountId.toByteArray(),
-        1L,participateAssetAddress,participateAssetCreateKey,blockingStubFull));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account participateInfo = PublicMethed.queryAccount(participateAssetCreateKey,blockingStubFull);
     final Long beforeBalance = participateInfo.getBalance();
-    Assert.assertTrue(PublicMethed.participateAssetIssue(asset007Address,assetAccountId.toByteArray(),
+    Assert.assertTrue(PublicMethed.participateAssetIssue(
+            asset007Address,assetAccountId.toByteArray(),
         1L,participateAssetAddress,participateAssetCreateKey,blockingStubFull));
     participateInfo = PublicMethed.queryAccount(participateAssetCreateKey,blockingStubFull);
     final Long afterBalance = participateInfo.getBalance();
 
     Assert.assertTrue(beforeBalance  - trxNum * 1 * icoNum  >= afterBalance);
   }
+
   /**
    * constructor.
    */
-
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
