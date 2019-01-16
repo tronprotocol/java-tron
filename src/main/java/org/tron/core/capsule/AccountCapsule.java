@@ -83,6 +83,133 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
+
+  /**
+   * construct account from AccountCreateContract and createTime.
+   */
+  public AccountCapsule(final AccountCreateContract contract, long createTime,
+      boolean withDefaultPermission) {
+    if (withDefaultPermission) {
+      Permission owner = createDefaultOwnerPermission(contract.getAccountAddress());
+      Permission active = createDefaultActivePermission(contract.getAccountAddress());
+
+      this.account = Account.newBuilder()
+          .setType(contract.getType())
+          .setAddress(contract.getAccountAddress())
+          .setTypeValue(contract.getTypeValue())
+          .setCreateTime(createTime)
+          .setOwnerPermission(owner)
+          .addActivePermission(active)
+          .build();
+    } else {
+      this.account = Account.newBuilder()
+          .setType(contract.getType())
+          .setAddress(contract.getAccountAddress())
+          .setTypeValue(contract.getTypeValue())
+          .setCreateTime(createTime)
+          .build();
+    }
+  }
+
+  /**
+   * construct account from AccountUpdateContract
+   */
+  public AccountCapsule(final AccountUpdateContract contract) {
+
+  }
+
+  /**
+   * get account from address and account name.
+   */
+  public AccountCapsule(ByteString address, ByteString accountName,
+      AccountType accountType) {
+    this.account = Account.newBuilder()
+        .setType(accountType)
+        .setAccountName(accountName)
+        .setAddress(address)
+        .build();
+  }
+
+  /**
+   * get account from address.
+   */
+  public AccountCapsule(ByteString address,
+      AccountType accountType) {
+    this.account = Account.newBuilder()
+        .setType(accountType)
+        .setAddress(address)
+        .build();
+  }
+
+  /**
+   * get account from address.
+   */
+  public AccountCapsule(ByteString address,
+      AccountType accountType, long createTime,
+      boolean withDefaultPermission) {
+    if (withDefaultPermission) {
+      Permission owner = createDefaultOwnerPermission(address);
+      Permission active = createDefaultActivePermission(address);
+
+      this.account = Account.newBuilder()
+          .setType(accountType)
+          .setAddress(address)
+          .setCreateTime(createTime)
+          .setOwnerPermission(owner)
+          .addActivePermission(active)
+          .build();
+    }else {
+      this.account = Account.newBuilder()
+          .setType(accountType)
+          .setAddress(address)
+          .setCreateTime(createTime)
+          .build();
+    }
+
+  }
+
+  public AccountCapsule(Account account) {
+    this.account = account;
+  }
+
+  public byte[] getData() {
+    return this.account.toByteArray();
+  }
+
+  @Override
+  public Account getInstance() {
+    return this.account;
+  }
+
+  public void setInstance(Account account) {
+    this.account = account;
+  }
+
+  public ByteString getAddress() {
+    return this.account.getAddress();
+  }
+
+  public byte[] createDbKey() {
+    return getAddress().toByteArray();
+  }
+
+  public String createReadableString() {
+    return ByteArray.toHexString(getAddress().toByteArray());
+  }
+
+  public AccountType getType() {
+    return this.account.getType();
+  }
+
+  public ByteString getAccountName() {
+    return this.account.getAccountName();
+  }
+
+  public ByteString getAccountId() {
+    return this.account.getAccountId();
+  }
+
+
   private static ByteString getActiveDefaultOperations() {
     ContractType[] types = ContractType.values();
     byte[] operations = new byte[32];
@@ -147,7 +274,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return active.build();
   }
 
-  public void setDefaultWitnessPermision() {
+  public void setDefaultWitnessPermission() {
     Account.Builder builder = this.account.toBuilder();
     Permission witness = createDefaultWitnessPermission(this.getAddress());
     if (!this.account.hasOwnerPermission()) {
@@ -159,111 +286,6 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       builder.addActivePermission(active);
     }
     this.account = builder.setWitnessPermission(witness).build();
-  }
-
-  /**
-   * construct account from AccountCreateContract and createTime.
-   */
-  public AccountCapsule(final AccountCreateContract contract, long createTime) {
-    Permission owner = createDefaultOwnerPermission(contract.getAccountAddress());
-    Permission active = createDefaultActivePermission(contract.getAccountAddress());
-
-    this.account = Account.newBuilder()
-        .setType(contract.getType())
-        .setAddress(contract.getAccountAddress())
-        .setTypeValue(contract.getTypeValue())
-        .setCreateTime(createTime)
-        .setOwnerPermission(owner)
-        .addActivePermission(active)
-        .build();
-  }
-
-  /**
-   * construct account from AccountUpdateContract
-   */
-  public AccountCapsule(final AccountUpdateContract contract) {
-
-  }
-
-  /**
-   * get account from address and account name.
-   */
-  public AccountCapsule(ByteString address, ByteString accountName,
-      AccountType accountType) {
-    this.account = Account.newBuilder()
-        .setType(accountType)
-        .setAccountName(accountName)
-        .setAddress(address)
-        .build();
-  }
-
-  /**
-   * get account from address.
-   */
-  public AccountCapsule(ByteString address,
-      AccountType accountType) {
-    this.account = Account.newBuilder()
-        .setType(accountType)
-        .setAddress(address)
-        .build();
-  }
-
-  /**
-   * get account from address.
-   */
-  public AccountCapsule(ByteString address,
-      AccountType accountType, long createTime) {
-    Permission owner = createDefaultOwnerPermission(address);
-    Permission active = createDefaultActivePermission(address);
-
-    this.account = Account.newBuilder()
-        .setType(accountType)
-        .setAddress(address)
-        .setCreateTime(createTime)
-        .setOwnerPermission(owner)
-        .addActivePermission(active)
-        .build();
-  }
-
-  public AccountCapsule(Account account) {
-    this.account = account;
-  }
-
-  public byte[] getData() {
-    return this.account.toByteArray();
-  }
-
-  @Override
-  public Account getInstance() {
-    return this.account;
-  }
-
-  public void setInstance(Account account) {
-    this.account = account;
-  }
-
-  public ByteString getAddress() {
-    return this.account.getAddress();
-  }
-
-  public byte[] createDbKey() {
-    return getAddress().toByteArray();
-  }
-
-  public String createReadableString() {
-    return ByteArray.toHexString(getAddress().toByteArray());
-  }
-
-  public AccountType getType() {
-    return this.account.getType();
-  }
-
-  public ByteString getAccountName() {
-    return this.account.getAccountName();
-  }
-
-  public ByteString getAccountId() {
-    return this.account.getAccountId();
   }
 
   public byte[] getWitnessPermissionAddress() {
