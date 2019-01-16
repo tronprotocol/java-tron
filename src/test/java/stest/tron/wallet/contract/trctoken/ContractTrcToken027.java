@@ -31,14 +31,16 @@ public class ContractTrcToken027 {
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-
+  /**
+   * constructor.
+   */
   private ManagedChannel channelFull = null;
   byte[] btestAddress;
   byte[] ctestAddress;
   byte[] transferTokenContractAddress;
   private static ByteString assetAccountId = null;
-  int i = randomInt(6666666, 9999999);
-  ByteString tokenId1 = ByteString.copyFromUtf8(String.valueOf(i));
+  int i1 = randomInt(6666666, 9999999);
+  ByteString tokenId1 = ByteString.copyFromUtf8(String.valueOf(i1));
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
@@ -64,6 +66,9 @@ public class ContractTrcToken027 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+  /**
+   * constructor.
+   */
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
@@ -775,7 +780,9 @@ public class ContractTrcToken027 {
     Assert.assertTrue(afterAssetIssueDevAddress4 - 1 == afterAssetIssueDevAddress5);
 
   }
-
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {

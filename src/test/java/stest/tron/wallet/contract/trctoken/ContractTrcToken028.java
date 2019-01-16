@@ -31,8 +31,8 @@ public class ContractTrcToken028 {
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private static ByteString assetAccountId = null;
-  int i = randomInt(6666666, 9999999);
-  ByteString tokenId1 = ByteString.copyFromUtf8(String.valueOf(i));
+  int i1 = randomInt(6666666, 9999999);
+  ByteString tokenId1 = ByteString.copyFromUtf8(String.valueOf(i1));
   private byte[] transferTokenContractAddress;
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -63,6 +63,9 @@ public class ContractTrcToken028 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+  /**
+   * constructor.
+   */
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
@@ -246,7 +249,9 @@ public class ContractTrcToken028 {
         .fromHexString(ByteArray.toHexString(infoById1.get().getContractResult(0).toByteArray())));
     Assert.assertTrue(returnnumber1 == 9);
   }
-
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {
