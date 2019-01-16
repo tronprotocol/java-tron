@@ -3277,8 +3277,8 @@ public class PublicMethed {
     }
 
     // totalEnergyLimit / (totalEnergyWeight + needBalance) = needEnergy / needBalance
-    BigInteger totalEnergyWeightBI = BigInteger.valueOf(totalEnergyWeight);
-    long needBalance = totalEnergyWeightBI.multiply(BigInteger.valueOf(1_000_000))
+    final BigInteger totalEnergyWeightBi = BigInteger.valueOf(totalEnergyWeight);
+    long needBalance = totalEnergyWeightBi.multiply(BigInteger.valueOf(1_000_000))
         .multiply(BigInteger.valueOf(targetEnergy))
         .divide(BigInteger.valueOf(totalEnergyLimit - targetEnergy)).longValue();
 
@@ -3316,12 +3316,12 @@ public class PublicMethed {
   }
 
   public static String byte2HexStr(byte[] b, int offset, int length) {
-    StringBuilder sBuilder = new StringBuilder();
+    StringBuilder ssBuilder = new StringBuilder();
     for (int n = offset; n < offset + length && n < b.length; n++) {
       String stmp = Integer.toHexString(b[n] & 0xFF);
-      sBuilder.append((stmp.length() == 1) ? "0" + stmp : stmp);
+      ssBuilder.append((stmp.length() == 1) ? "0" + stmp : stmp);
     }
-    return sBuilder.toString().toUpperCase().trim();
+    return ssBuilder.toString().toUpperCase().trim();
   }
 
   public static GrpcAPI.Return deployContractAndGetResponse(String contractName,
