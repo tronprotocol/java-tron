@@ -69,7 +69,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
         transactionLogTrigger.setContractCallValue(TransactionCapsule.getCallValue(contract));
       }
 
-      if (Objects.nonNull(contractParameter)) {
+      if (Objects.nonNull(contractParameter) && Objects.nonNull(contract)) {
         try{
           if (contract.getType() == TransferContract) {
               TransferContract contractTransfer = contractParameter.unpack(TransferContract.class);
@@ -103,12 +103,11 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
               if (Objects.nonNull(contractTransfer.getToAddress())){
                 transactionLogTrigger.setToAddress(Wallet.encode58Check(contractTransfer.getToAddress().toByteArray()));
               }
-
               transactionLogTrigger.setAssetAmount(contractTransfer.getAmount());
             }
           }
         }
-        catch (InvalidProtocolBufferException e) {
+        catch (Exception e) {
           logger.error("failed to load transferAssetContract, error'{}'", e);
         }
       }
