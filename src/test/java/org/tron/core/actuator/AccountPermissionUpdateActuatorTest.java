@@ -156,7 +156,6 @@ public class AccountPermissionUpdateActuatorTest {
             AccountType.Normal);
     witnessCapsule.setIsWitness(true);
     dbManager.getAccountStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
-
   }
 
   /**
