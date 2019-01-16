@@ -907,6 +907,9 @@ public class Args {
     String serverAddress = config.getString("event.subscribe.server").trim();
     eventPluginConfig.setServerAddress(serverAddress);
 
+    String dbConfig = config.getString("event.subscribe.dbconfig").trim();
+    eventPluginConfig.setDbConfig(dbConfig);
+
     List<TriggerConfig> triggerConfigList = config.getObjectList("event.subscribe.topics").stream()
             .map(Args::createTriggerConfig)
             .collect(Collectors.toCollection(ArrayList::new));
