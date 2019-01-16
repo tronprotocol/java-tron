@@ -145,17 +145,27 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * get account from address.
    */
   public AccountCapsule(ByteString address,
-      AccountType accountType, long createTime) {
-    Permission owner = createDefaultOwnerPermission(address);
-    Permission active = createDefaultActivePermission(address);
+      AccountType accountType, long createTime,
+      boolean withDefaultPermission) {
+    if (withDefaultPermission) {
+      Permission owner = createDefaultOwnerPermission(address);
+      Permission active = createDefaultActivePermission(address);
 
-    this.account = Account.newBuilder()
-        .setType(accountType)
-        .setAddress(address)
-        .setCreateTime(createTime)
-        .setOwnerPermission(owner)
-        .addActivePermission(active)
-        .build();
+      this.account = Account.newBuilder()
+          .setType(accountType)
+          .setAddress(address)
+          .setCreateTime(createTime)
+          .setOwnerPermission(owner)
+          .addActivePermission(active)
+          .build();
+    }else {
+      this.account = Account.newBuilder()
+          .setType(accountType)
+          .setAddress(address)
+          .setCreateTime(createTime)
+          .build();
+    }
+
   }
 
   public AccountCapsule(Account account) {
