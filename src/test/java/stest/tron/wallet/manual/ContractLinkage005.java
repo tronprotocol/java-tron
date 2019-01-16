@@ -154,7 +154,7 @@ public class ContractLinkage005 {
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-
+    long fee = infoById.get().getFee();
     Account infoafter = PublicMethed.queryAccount(linkage005Address, blockingStubFull1);
     AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(linkage005Address,
         blockingStubFull1);
@@ -173,7 +173,7 @@ public class ContractLinkage005 {
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
     logger.info("---------------:");
-    Assert.assertEquals(beforeBalance, afterBalance);
+    Assert.assertTrue(beforeBalance - fee == afterBalance);
     Assert.assertTrue(afterEnergyUsed > 0);
     Assert.assertTrue(afterFreeNetUsed > 0);
     firstForCycleTimes = 1000L;
@@ -222,8 +222,9 @@ public class ContractLinkage005 {
     logger.info("afterFreeNetUsed1:" + afterFreeNetUsed1);
     logger.info("---------------:");
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    fee = infoById.get().getFee();
     firstForCycleCost = infoById.get().getReceipt().getEnergyUsageTotal();
-    Assert.assertEquals(beforeBalance1, afterBalance1);
+    Assert.assertTrue((beforeBalance1 - fee) == afterBalance1);
     Assert.assertTrue(afterEnergyUsed1 > beforeEnergyUsed1);
     Assert.assertTrue(afterNetUsed1 > beforeNetUsed1);
     //use EnergyUsed and NetUsed.balance not change
@@ -272,6 +273,8 @@ public class ContractLinkage005 {
     txid = PublicMethed.triggerContract(contractAddress,
         "testUseStorage(uint256)", zeroForCycleTimes.toString(), false,
         0, 100000000L, linkage005Address, linkage005Key, blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    fee = infoById.get().getFee();
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
     Account infoafter4 = PublicMethed.queryAccount(linkage005Address, blockingStubFull1);
@@ -292,7 +295,7 @@ public class ContractLinkage005 {
     logger.info("afterNetUsed4:" + afterNetUsed4);
     logger.info("afterFreeNetUsed4:" + afterFreeNetUsed4);
     logger.info("---------------:");
-    Assert.assertEquals(beforeBalance4, afterBalance4);
+    Assert.assertTrue(beforeBalance4 - fee == afterBalance4);
     Assert.assertTrue(afterEnergyUsed4 > beforeEnergyUsed4);
     Assert.assertTrue(afterNetUsed4 > beforeNetUsed4);
 
