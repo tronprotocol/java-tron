@@ -83,99 +83,32 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
-  private static ByteString getActiveDefaultOperations() {
-    ContractType[] types = ContractType.values();
-    byte[] operations = new byte[32];
-    for (ContractType type : types) {
-      if (type != ContractType.AccountPermissionUpdateContract
-          && type != ContractType.PermissionDeleteKeyContract
-          && type != ContractType.PermissionAddKeyContract
-          && type != ContractType.PermissionUpdateKeyContract
-          && type != ContractType.UNRECOGNIZED) {
-        operations[type.getNumber() / 8] |= (1 << type.getNumber() % 8);
-      }
-    }
-    return ByteString.copyFrom(operations);
-  }
-
-  public static Permission createDefaultOwnerPermission(ByteString address) {
-    Key.Builder key = Key.newBuilder();
-    key.setAddress(address);
-    key.setWeight(1);
-
-    Permission.Builder owner = Permission.newBuilder();
-    owner.setType(PermissionType.Owner);
-    owner.setId(0);
-    owner.setPermissionName("owner");
-    owner.setThreshold(1);
-    owner.setParentId(0);
-    owner.addKeys(key);
-
-    return owner.build();
-  }
-
-  public static Permission createDefaultActivePermission(ByteString address) {
-    Key.Builder key = Key.newBuilder();
-    key.setAddress(address);
-    key.setWeight(1);
-
-    Permission.Builder active = Permission.newBuilder();
-    active.setType(PermissionType.Active);
-    active.setId(2);
-    active.setPermissionName("active");
-    active.setThreshold(1);
-    active.setParentId(0);
-    active.setOperations(getActiveDefaultOperations());
-    active.addKeys(key);
-
-    return active.build();
-  }
-
-  public static Permission createDefaultWitnessPermission(ByteString address) {
-    Key.Builder key = Key.newBuilder();
-    key.setAddress(address);
-    key.setWeight(1);
-
-    Permission.Builder active = Permission.newBuilder();
-    active.setType(PermissionType.Witness);
-    active.setId(1);
-    active.setPermissionName("witness");
-    active.setThreshold(1);
-    active.setParentId(0);
-    active.addKeys(key);
-
-    return active.build();
-  }
-
-  public void setDefaultWitnessPermision() {
-    Account.Builder builder = this.account.toBuilder();
-    Permission witness = createDefaultWitnessPermission(this.getAddress());
-    if (!this.account.hasOwnerPermission()) {
-      Permission owner = createDefaultOwnerPermission(this.getAddress());
-      builder.setOwnerPermission(owner);
-    }
-    if (this.account.getActivePermissionCount() == 0) {
-      Permission active = createDefaultActivePermission(this.getAddress());
-      builder.addActivePermission(active);
-    }
-    this.account = builder.setWitnessPermission(witness).build();
-  }
 
   /**
    * construct account from AccountCreateContract and createTime.
    */
-  public AccountCapsule(final AccountCreateContract contract, long createTime) {
-    Permission owner = createDefaultOwnerPermission(contract.getAccountAddress());
-    Permission active = createDefaultActivePermission(contract.getAccountAddress());
+  public AccountCapsule(final AccountCreateContract contract, long createTime,
+      boolean withDefaultPermission) {
+    if (withDefaultPermission) {
+      Permission owner = createDefaultOwnerPermission(contract.getAccountAddress());
+      Permission active = createDefaultActivePermission(contract.getAccountAddress());
 
-    this.account = Account.newBuilder()
-        .setType(contract.getType())
-        .setAddress(contract.getAccountAddress())
-        .setTypeValue(contract.getTypeValue())
-        .setCreateTime(createTime)
-        .setOwnerPermission(owner)
-        .addActivePermission(active)
-        .build();
+      this.account = Account.newBuilder()
+          .setType(contract.getType())
+          .setAddress(contract.getAccountAddress())
+          .setTypeValue(contract.getTypeValue())
+          .setCreateTime(createTime)
+          .setOwnerPermission(owner)
+          .addActivePermission(active)
+          .build();
+    } else {
+      this.account = Account.newBuilder()
+          .setType(contract.getType())
+          .setAddress(contract.getAccountAddress())
+          .setTypeValue(contract.getTypeValue())
+          .setCreateTime(createTime)
+          .build();
+    }
   }
 
   /**
@@ -264,6 +197,85 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   public ByteString getAccountId() {
     return this.account.getAccountId();
+  }
+
+
+  private static ByteString getActiveDefaultOperations() {
+    ContractType[] types = ContractType.values();
+    byte[] operations = new byte[32];
+    for (ContractType type : types) {
+      if (type != ContractType.AccountPermissionUpdateContract
+          && type != ContractType.PermissionDeleteKeyContract
+          && type != ContractType.PermissionAddKeyContract
+          && type != ContractType.PermissionUpdateKeyContract
+          && type != ContractType.UNRECOGNIZED) {
+        operations[type.getNumber() / 8] |= (1 << type.getNumber() % 8);
+      }
+    }
+    return ByteString.copyFrom(operations);
+  }
+
+  public static Permission createDefaultOwnerPermission(ByteString address) {
+    Key.Builder key = Key.newBuilder();
+    key.setAddress(address);
+    key.setWeight(1);
+
+    Permission.Builder owner = Permission.newBuilder();
+    owner.setType(PermissionType.Owner);
+    owner.setId(0);
+    owner.setPermissionName("owner");
+    owner.setThreshold(1);
+    owner.setParentId(0);
+    owner.addKeys(key);
+
+    return owner.build();
+  }
+
+  public static Permission createDefaultActivePermission(ByteString address) {
+    Key.Builder key = Key.newBuilder();
+    key.setAddress(address);
+    key.setWeight(1);
+
+    Permission.Builder active = Permission.newBuilder();
+    active.setType(PermissionType.Active);
+    active.setId(2);
+    active.setPermissionName("active");
+    active.setThreshold(1);
+    active.setParentId(0);
+    active.setOperations(getActiveDefaultOperations());
+    active.addKeys(key);
+
+    return active.build();
+  }
+
+  public static Permission createDefaultWitnessPermission(ByteString address) {
+    Key.Builder key = Key.newBuilder();
+    key.setAddress(address);
+    key.setWeight(1);
+
+    Permission.Builder active = Permission.newBuilder();
+    active.setType(PermissionType.Witness);
+    active.setId(1);
+    active.setPermissionName("witness");
+    active.setThreshold(1);
+    active.setParentId(0);
+    active.addKeys(key);
+
+    return active.build();
+  }
+
+  public void setDefaultWitnessPermission() {
+    Account.Builder builder = this.account.toBuilder();
+    Permission witness = createDefaultWitnessPermission(this.getAddress());
+    if (!this.account.hasOwnerPermission()) {
+      Permission owner = createDefaultOwnerPermission(this.getAddress());
+      builder.setOwnerPermission(owner);
+    }
+    if (this.account.getActivePermissionCount() == 0) {
+      Permission active = createDefaultActivePermission(this.getAddress());
+      builder.addActivePermission(active);
+    }
+    this.account = builder.setWitnessPermission(witness).build();
   }
 
   public byte[] getWitnessPermissionAddress() {
