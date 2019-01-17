@@ -1,4 +1,4 @@
-package org.tron.core.net.node;
+package org.tron.core.net;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -32,39 +33,29 @@ import org.tron.common.utils.ReflectUtils;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.net.TronProxy;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
 
 @Slf4j
-public abstract class BaseNetTest {
+public abstract class BaseNet {
+
+  private static String dbPath = "output-net";
+  private static String dbDirectory = "net-database";
+  private static String indexDirectory = "net-index";
+  private static int port = 10000;
 
   protected TronApplicationContext context;
-  protected NodeImpl node;
-  protected RpcApiService rpcApiService;
-  protected PeerClient peerClient;
-  protected ChannelManager channelManager;
-  protected SyncPool pool;
-  protected Manager manager;
+
+  private RpcApiService rpcApiService;
   private Application appT;
-
-  private String dbPath;
-  private String dbDirectory;
-  private String indexDirectory;
-
-  private int port;
+  private TronProxy tronProxy;
 
   private ExecutorService executorService = Executors.newFixedThreadPool(1);
 
-  public BaseNetTest(String dbPath, String dbDirectory, String indexDirectory, int port) {
-    this.dbPath = dbPath;
-    this.dbDirectory = dbDirectory;
-    this.indexDirectory = indexDirectory;
-    this.port = port;
-  }
-
   @Before
-  public void init() {
+  public void init() throws Exception {
     executorService.execute(new Runnable() {
       @Override
       public void run() {
@@ -79,62 +70,32 @@ public abstract class BaseNetTest {
         );
         Args cfgArgs = Args.getInstance();
         cfgArgs.setNodeListenPort(port);
-        cfgArgs.setNodeDiscoveryEnable(false);
         cfgArgs.getSeedNode().getIpList().clear();
-        cfgArgs.setNeedSyncCheck(false);
         cfgArgs.setNodeExternalIp("127.0.0.1");
-
         context = new TronApplicationContext(DefaultConfig.class);
-
-        if (cfgArgs.isHelp()) {
-          logger.info("Here is the help message");
-          return;
-        }
         appT = ApplicationFactory.create(context);
         rpcApiService = context.getBean(RpcApiService.class);
         appT.addService(rpcApiService);
-        if (cfgArgs.isWitness()) {
-          appT.addService(new WitnessService(appT, context));
-        }
         appT.initServices(cfgArgs);
         appT.startServices();
-
-        node = context.getBean(NodeImpl.class);
-        peerClient = context.getBean(PeerClient.class);
-        channelManager = context.getBean(ChannelManager.class);
-        pool = context.getBean(SyncPool.class);
-        manager = context.getBean(Manager.class);
-        NodeDelegate nodeDelegate = new NodeDelegateImpl(manager);
-        node.setNodeDelegate(nodeDelegate);
-
         appT.startup();
+        tronProxy = context.getBean(TronProxy.class);
         rpcApiService.blockUntilShutdown();
       }
     });
-    int tryTimes = 1;
-    while (tryTimes <= 30 && (node == null || peerClient == null
-        || channelManager == null || pool == null)) {
-      try {
-        logger.info("node:{},peerClient:{},channelManager:{},pool:{}", node, peerClient,
-            channelManager, pool);
-        Thread.sleep(1000 * tryTimes);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      } finally {
-        ++tryTimes;
-      }
+    int tryTimes = 0;
+    while (++tryTimes < 100 && tronProxy == null) {
+      Thread.sleep(3000);
     }
   }
 
-  protected Channel createClient(ByteToMessageDecoder decoder)
-      throws InterruptedException {
+  public static Channel connect(ByteToMessageDecoder decoder) throws InterruptedException {
     NioEventLoopGroup group = new NioEventLoopGroup(1);
     Bootstrap b = new Bootstrap();
     b.group(group).channel(NioSocketChannel.class)
         .handler(new ChannelInitializer<Channel>() {
           @Override
           protected void initChannel(Channel ch) throws Exception {
-            // limit the size of receiving buffer to 1024
             ch.config().setRecvByteBufAllocator(new FixedRecvByteBufAllocator(256 * 1024));
             ch.config().setOption(ChannelOption.SO_RCVBUF, 256 * 1024);
             ch.config().setOption(ChannelOption.SO_BACKLOG, 1024);
@@ -144,8 +105,6 @@ public abstract class BaseNetTest {
             ch.pipeline().addLast("protoPender", new ProtobufVarint32LengthFieldPrepender());
             ch.pipeline().addLast("lengthDecode", new ProtobufVarint32FrameDecoder());
             ch.pipeline().addLast("handshakeHandler", decoder);
-
-            // be aware of channel closing
             ch.closeFuture();
           }
         }).option(ChannelOption.SO_KEEPALIVE, true)
@@ -156,16 +115,11 @@ public abstract class BaseNetTest {
 
   @After
   public void destroy() {
-    executorService.shutdownNow();
-    Args.clearParam();
-    Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(node, "getActivePeer");
+    Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(tronProxy, "getActivePeer");
     for (PeerConnection peer : peerConnections) {
       peer.close();
     }
     context.destroy();
-    node.shutDown();
-    appT.shutdownServices();
-    appT.shutdown();
     FileUtil.deleteDir(new File(dbPath));
   }
 }

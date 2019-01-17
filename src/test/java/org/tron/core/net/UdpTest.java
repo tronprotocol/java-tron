@@ -30,34 +30,14 @@ import java.util.List;
 @Slf4j
 public class UdpTest {
 
-  ApplicationContext context;
+  private NodeManager nodeManager;
+  private int port = Args.getInstance().getNodeListenPort();
 
-  NodeManager nodeManager;
-
-  //@Before
-  public void before(){
-    new Thread(() -> {
-      Args.setParam(
-          new String[]{ "--output-directory", "udp_test", "--storage-db-directory", "database",
-              "--storage-index-directory", "index"},"config.conf"
-      );
-      Args cfgArgs = Args.getInstance();
-      cfgArgs.getSeedNode().setIpList(Lists.newArrayList());
-      cfgArgs.setNodeP2pVersion(100);
-      cfgArgs.setNodeListenPort(10001);
-      context = new TronApplicationContext(DefaultConfig.class);
-    }).start();
+  public UdpTest(TronApplicationContext context) {
+    nodeManager = context.getBean(NodeManager.class);
   }
 
-  @Test
-  public void test() {}
-
-  //@Test
-  public void udpTest() throws Exception {
-
-    Thread.sleep(10000);
-
-    nodeManager = context.getBean(NodeManager.class);
+  public void test() throws Exception {
 
     InetAddress server = InetAddress.getByName("127.0.0.1");
 
@@ -81,16 +61,16 @@ public class UdpTest {
     DatagramSocket socket = new DatagramSocket();
 
     DatagramPacket pingPacket = new DatagramPacket(pingMessage.getSendData(),
-        pingMessage.getSendData().length, server, 10001);
+        pingMessage.getSendData().length, server, port);
 
     DatagramPacket pongPacket = new DatagramPacket(pongMessage.getSendData(),
-        pongMessage.getSendData().length, server, 10001);
+        pongMessage.getSendData().length, server, port);
 
     DatagramPacket findNodePacket = new DatagramPacket(findNodeMessage.getSendData(),
-        findNodeMessage.getSendData().length, server, 10001);
+        findNodeMessage.getSendData().length, server, port);
 
     DatagramPacket neighborsPacket = new DatagramPacket(neighborsMessage.getSendData(),
-        neighborsMessage.getSendData().length, server, 10001);
+        neighborsMessage.getSendData().length, server, port);
 
     // send ping msg
     socket.send(pingPacket);
@@ -102,7 +82,9 @@ public class UdpTest {
     boolean findNodeFlag = false;
     boolean neighborsFlag = false;
     while (true) {
+      System.out.println("pingFlag：" + pingFlag + "pongFlag：" + pongFlag + "findNodeFlag：" + findNodeFlag + "neighborsFlag：" + neighborsFlag  );
       socket.receive(packet);
+      System.out.println("wwww");
       byte[] bytes = Arrays.copyOfRange(data, 0, packet.getLength());
       Message msg = Message.parse(bytes);
       Assert.assertTrue(Arrays.equals(msg.getFrom().getId(), nodeManager.getPublicHomeNode().getId()));
@@ -130,11 +112,6 @@ public class UdpTest {
     Assert.assertTrue(nodeManager.getTable().getAllNodes().size() == 1);
 
     socket.close();
-  }
-
-  //@After
-  public void after() {
-    FileUtil.deleteDir(new File("udp_test"));
   }
 }
 
