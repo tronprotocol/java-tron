@@ -93,7 +93,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
 
             if (Objects.nonNull(contractTransfer)){
               if (Objects.nonNull(contractTransfer.getAssetName())){
-                transactionLogTrigger.setAssetName(Hex.toHexString(contractTransfer.getAssetName().toByteArray()));
+                transactionLogTrigger.setAssetName(contractTransfer.getAssetName().toStringUtf8());
               }
 
               if (Objects.nonNull(contractTransfer.getOwnerAddress())){
@@ -152,7 +152,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
       item.setCallValue(internalTransaction.getValue());
       item.setTokenInfo(internalTransaction.getTokenInfo());
       item.setCaller_address(Hex.toHexString(internalTransaction.getSender()));
-      item.setTransferTo_address(Hex.toHexString(internalTransaction.getReceiveAddress()));
+      item.setTransferTo_address(Hex.toHexString(internalTransaction.getTransferToAddress()));
       item.setData(Hex.toHexString(internalTransaction.getData()));
       item.setRejected(internalTransaction.isRejected());
       item.setNote(internalTransaction.getNote());
