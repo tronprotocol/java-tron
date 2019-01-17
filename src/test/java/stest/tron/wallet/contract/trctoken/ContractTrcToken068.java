@@ -346,8 +346,6 @@ public class ContractTrcToken068 {
     logger.info("after trigger, userEnergyUsageAfter is " + Long.toString(userEnergyUsageAfter));
     logger.info("after trigger, userBalanceAfter is " + Long.toString(userBalanceAfter));
 
-    long energyFee = infoById.get().getReceipt().getEnergyFee();
-
     Long transferAssetAfter = PublicMethed.getAssetIssueValue(transferTokenContractAddress,
         assetAccountId, blockingStubFull);
     logger.info("after trigger, transferTokenContractAddress has AssetId "
@@ -358,7 +356,6 @@ public class ContractTrcToken068 {
     logger.info("after trigger, resultContractAddress has AssetId "
         + assetAccountId.toStringUtf8() + ", receiveAssetAfter is " + receiveAssetAfter);
 
-    Assert.assertEquals(energyFee, userBalanceBefore - userBalanceAfter);
     Assert.assertEquals(receiveAssetAfter, receiveAssetBefore);
     Assert.assertEquals(transferAssetBefore, transferAssetAfter);
 
