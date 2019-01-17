@@ -1161,23 +1161,29 @@ public class PublicMethed {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     final Long currentNum = currentBlock.getBlockHeader().getRawData().getNumber();
+
     Block nextBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Long nextNum = nextBlock.getBlockHeader().getRawData().getNumber();
 
     Integer wait = 0;
+    logger.info("Block num is " + Long.toString(currentBlock
+        .getBlockHeader().getRawData().getNumber()));
     while (nextNum <= currentNum + 1 && wait <= 15) {
       try {
         Thread.sleep(3000);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
+      logger.info("Wait to produce next block");
       nextBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
       nextNum = nextBlock.getBlockHeader().getRawData().getNumber();
       if (wait == 15) {
+        logger.info("These 45 second didn't produce a block,please check.");
         return false;
       }
       wait++;
     }
+    logger.info("quit normally");
     return true;
   }
 
@@ -2941,6 +2947,7 @@ public class PublicMethed {
   /**
    * constructor.
    */
+
   public static Contract.AssetIssueContract getAssetIssueById(String assetId,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -2953,8 +2960,7 @@ public class PublicMethed {
    * constructor.
    */
   public static boolean permissionAddKey(String permission, byte[] addAddress, int weight,
-      byte[] owner, String priKey,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
+      byte[] owner, String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -2974,73 +2980,8 @@ public class PublicMethed {
     contractBuilder.setKey(keyBuilder.build());
 
     Contract.PermissionAddKeyContract permissionAddKeyContract = contractBuilder.build();
-    TransactionExtention transactionExtention =
-        blockingStubFull.permissionAddKey(permissionAddKeyContract);
-    if (transactionExtention == null) {
-      return false;
-    }
-    Return ret = transactionExtention.getResult();
-    if (!ret.getResult()) {
-      System.out.println("Code = " + ret.getCode());
-      System.out.println("Message = " + ret.getMessage().toStringUtf8());
-      return false;
-    }
-    Transaction transaction = transactionExtention.getTransaction();
-    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      System.out.println("Transaction is empty");
-      return false;
-    }
-    System.out.println("Receive txid = "
-        + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
-    transaction = signTransaction(ecKey, transaction);
-    int i = 10;
-    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeat times = " + (11 - i));
-      try {
-        Thread.sleep(300);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
-    if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
-    }
-    return response.getResult();
-  }
-
-
-  /**
-   * constructor.
-   */
-  public static boolean permissionUpdateKey(String permission, byte[] updateAddress, int weight,
-      byte[] owner, String priKey,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    final ECKey ecKey = temKey;
-    Contract.PermissionUpdateKeyContract.Builder contractBuilder =
-        Contract.PermissionUpdateKeyContract.newBuilder();
-    contractBuilder.setOwnerAddress(ByteString.copyFrom(owner));
-    contractBuilder.setPermissionName(permission);
-    Key.Builder keyBuilder = Key.newBuilder();
-    keyBuilder.setAddress(ByteString.copyFrom(updateAddress));
-    keyBuilder.setWeight(weight);
-    contractBuilder.setKey(keyBuilder.build());
-
-    Contract.PermissionUpdateKeyContract permissionUpdateKeyContract = contractBuilder.build();
-    TransactionExtention transactionExtention =
-        blockingStubFull.permissionUpdateKey(permissionUpdateKeyContract);
+    TransactionExtention transactionExtention = blockingStubFull
+        .permissionAddKey(permissionAddKeyContract);
     if (transactionExtention == null) {
       return false;
     }
@@ -3081,9 +3022,71 @@ public class PublicMethed {
   /**
    * constructor.
    */
-  public static boolean permissionDeleteKey(String permission, byte[] deleteAddress,
-      byte[] owner, String priKey,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
+  public static boolean permissionUpdateKey(String permission, byte[] updateAddress, int weight,
+      byte[] owner, String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+    Contract.PermissionUpdateKeyContract.Builder contractBuilder =
+        Contract.PermissionUpdateKeyContract.newBuilder();
+    contractBuilder.setOwnerAddress(ByteString.copyFrom(owner));
+    contractBuilder.setPermissionName(permission);
+    Key.Builder keyBuilder = Key.newBuilder();
+    keyBuilder.setAddress(ByteString.copyFrom(updateAddress));
+    keyBuilder.setWeight(weight);
+    contractBuilder.setKey(keyBuilder.build());
+
+    Contract.PermissionUpdateKeyContract permissionUpdateKeyContract = contractBuilder.build();
+    TransactionExtention transactionExtention = blockingStubFull
+        .permissionUpdateKey(permissionUpdateKeyContract);
+    if (transactionExtention == null) {
+      return false;
+    }
+    Return ret = transactionExtention.getResult();
+    if (!ret.getResult()) {
+      System.out.println("Code = " + ret.getCode());
+      System.out.println("Message = " + ret.getMessage().toStringUtf8());
+      return false;
+    }
+    Transaction transaction = transactionExtention.getTransaction();
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      System.out.println("Transaction is empty");
+      return false;
+    }
+    System.out.println(
+        "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
+    transaction = signTransaction(ecKey, transaction);
+    int i = 10;
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
+        && i > 0) {
+      i--;
+      response = blockingStubFull.broadcastTransaction(transaction);
+      logger.info("repeat times = " + (11 - i));
+      try {
+        Thread.sleep(300);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
+    if (response.getResult() == false) {
+      logger.info("Code = " + response.getCode());
+      logger.info("Message = " + response.getMessage().toStringUtf8());
+    }
+    return response.getResult();
+  }
+
+  /**
+   * constructor.
+   */
+  public static boolean permissionDeleteKey(String permission, byte[] deleteAddress, byte[] owner,
+      String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -3100,8 +3103,8 @@ public class PublicMethed {
     contractBuilder.setKeyAddress(ByteString.copyFrom(deleteAddress));
     Contract.PermissionDeleteKeyContract permissionDeleteKeyContract =
         contractBuilder.build();
-    TransactionExtention transactionExtention =
-        blockingStubFull.permissionDeleteKey(permissionDeleteKeyContract);
+    TransactionExtention transactionExtention = blockingStubFull
+        .permissionDeleteKey(permissionDeleteKeyContract);
     if (transactionExtention == null) {
       return false;
     }
@@ -3230,28 +3233,6 @@ public class PublicMethed {
   /**
    * constructor.
    */
-  public Transaction addTransactionSign(Transaction transaction, String priKey,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    ECKey ecKey = temKey;
-
-    Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
-    byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
-
-    ECDSASignature signature = ecKey.sign(hash);
-    ByteString bsSign = ByteString.copyFrom(signature.toByteArray());
-    transactionBuilderSigned.addSignature(bsSign);
-    transaction = transactionBuilderSigned.build();
-    return transaction;
-  }
-
   public static long getFreezeBalanceCount(byte[] accountAddress, String ecKey, Long targetEnergy,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     AccountResourceMessage resourceInfo = getAccountResource(accountAddress,
@@ -3277,8 +3258,8 @@ public class PublicMethed {
     }
 
     // totalEnergyLimit / (totalEnergyWeight + needBalance) = needEnergy / needBalance
-    BigInteger totalEnergyWeightBI = BigInteger.valueOf(totalEnergyWeight);
-    long needBalance = totalEnergyWeightBI.multiply(BigInteger.valueOf(1_000_000))
+    final BigInteger totalEnergyWeightBi = BigInteger.valueOf(totalEnergyWeight);
+    long needBalance = totalEnergyWeightBi.multiply(BigInteger.valueOf(1_000_000))
         .multiply(BigInteger.valueOf(targetEnergy))
         .divide(BigInteger.valueOf(totalEnergyLimit - targetEnergy)).longValue();
 
@@ -3292,6 +3273,9 @@ public class PublicMethed {
     return needBalance;
   }
 
+  /**
+   * constructor.
+   */
   public static Long getAssetIssueValue(byte[] accountAddress, ByteString assetIssueId,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Long assetIssueCount = 0L;
@@ -3305,6 +3289,9 @@ public class PublicMethed {
     return assetIssueCount;
   }
 
+  /**
+   * constructor.
+   */
   public static List<String> getStrings(byte[] data) {
     int index = 0;
     List<String> ret = new ArrayList<>();
@@ -3315,15 +3302,47 @@ public class PublicMethed {
     return ret;
   }
 
+  /**
+   * constructor.
+   */
   public static String byte2HexStr(byte[] b, int offset, int length) {
-    StringBuilder sBuilder = new StringBuilder();
+    StringBuilder ssBuilder = new StringBuilder();
     for (int n = offset; n < offset + length && n < b.length; n++) {
       String stmp = Integer.toHexString(b[n] & 0xFF);
-      sBuilder.append((stmp.length() == 1) ? "0" + stmp : stmp);
+      ssBuilder.append((stmp.length() == 1) ? "0" + stmp : stmp);
     }
-    return sBuilder.toString().toUpperCase().trim();
+    return ssBuilder.toString().toUpperCase().trim();
   }
 
+
+  /**
+   * constructor.
+   */
+  public Transaction addTransactionSign(Transaction transaction, String priKey,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    ECKey ecKey = temKey;
+
+    Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
+    byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
+
+    ECDSASignature signature = ecKey.sign(hash);
+    ByteString bsSign = ByteString.copyFrom(signature.toByteArray());
+    transactionBuilderSigned.addSignature(bsSign);
+    transaction = transactionBuilderSigned.build();
+    return transaction;
+  }
+
+  /**
+   * constructor.
+   */
   public static GrpcAPI.Return deployContractAndGetResponse(String contractName,
       String abiString, String code, String data, Long feeLimit, long value,
       long consumeUserResourcePercent, long originEnergyLimit, String tokenId, long tokenValue,
@@ -3440,6 +3459,9 @@ public class PublicMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static GrpcAPI.Return triggerContractAndGetResponse(byte[] contractAddress, String method,
       String argsStr,
       Boolean isHex, long callValue, long feeLimit, String tokenId, long tokenValue,
@@ -3543,6 +3565,9 @@ public class PublicMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static boolean updateEnergyLimit(byte[] contractAddress, long originEnergyLimit,
       String priKey, byte[] ownerAddress, WalletGrpc
       .WalletBlockingStub blockingStubFull) {
@@ -3600,4 +3625,5 @@ public class PublicMethed {
       return true;
     }
   }
+
 }
