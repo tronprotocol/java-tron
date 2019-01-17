@@ -573,6 +573,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       if (permissionId == 0) {
         permission = AccountCapsule.getDefaultPermission(ByteString.copyFrom(owner));
       }
+      if (permissionId == 2) {
+        permission = AccountCapsule.createDefaultActivePermission(ByteString.copyFrom(owner));
+      }
     } else {
       permission = account.getPermissionById(permissionId);
     }
