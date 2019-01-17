@@ -80,7 +80,7 @@ public class ArgsTest {
 
     Assert.assertEquals("f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62",
         args.getLocalWitnesses().getPrivateKey());
-    Assert.assertEquals("41299f3db80a24b20a254b89ce639d59132f157f13",
+    Assert.assertEquals("a0299f3db80a24b20a254b89ce639d59132f157f13",
         ByteArray.toHexString(args.getLocalWitnesses().getWitnessAccountAddress()));
 
 

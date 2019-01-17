@@ -497,6 +497,15 @@ public class Args {
   public static void setParam(final String[] args, final String confFileName) {
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
     Config config = Configuration.getByFileName(INSTANCE.shellConfFileName, confFileName);
+
+    if (config.hasPath("net.type") && "testnet".equalsIgnoreCase(config.getString("net.type"))) {
+      Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_TESTNET);
+      Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_TESTNET);
+    } else {
+      Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_MAINNET);
+      Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);
+    }
+
     if (StringUtils.isNoneBlank(INSTANCE.privateKey)) {
       INSTANCE.setLocalWitnesses(new LocalWitnesses(INSTANCE.privateKey));
       if (StringUtils.isNoneBlank(INSTANCE.witnessAddress)) {
@@ -623,14 +632,6 @@ public class Args {
     INSTANCE.seedNode.setIpList(Optional.ofNullable(INSTANCE.seedNodes)
         .filter(seedNode -> 0 != seedNode.size())
         .orElse(config.getStringList("seed.node.ip.list")));
-
-    if (config.hasPath("net.type") && "mainnet".equalsIgnoreCase(config.getString("net.type"))) {
-      Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_MAINNET);
-      Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);
-    } else {
-      Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_TESTNET);
-      Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_TESTNET);
-    }
 
     if (config.hasPath("genesis.block")) {
       INSTANCE.genesisBlock = new GenesisBlock();
