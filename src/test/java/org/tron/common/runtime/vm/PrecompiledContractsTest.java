@@ -234,71 +234,75 @@ public class PrecompiledContractsTest {
   //@Test
   public void proposalTest() {
 
-    /*
-     *  create proposal Test
-     */
-    DataWord key = new DataWord(
-        "0000000000000000000000000000000000000000000000000000000000000000");
-    // 1000000 == 0xF4240
-    DataWord value = new DataWord(
-        "00000000000000000000000000000000000000000000000000000000000F4240");
-    byte[] data4Create = new byte[64];
-    System.arraycopy(key.getData(), 0, data4Create, 0, key.getData().length);
-    System
-        .arraycopy(value.getData(), 0, data4Create, key.getData().length, value.getData().length);
-    PrecompiledContract createContract = createPrecompiledContract(proposalCreateAddr,
-        WITNESS_ADDRESS);
+    try {
+      /*
+       *  create proposal Test
+       */
+      DataWord key = new DataWord(
+          "0000000000000000000000000000000000000000000000000000000000000000");
+      // 1000000 == 0xF4240
+      DataWord value = new DataWord(
+          "00000000000000000000000000000000000000000000000000000000000F4240");
+      byte[] data4Create = new byte[64];
+      System.arraycopy(key.getData(), 0, data4Create, 0, key.getData().length);
+      System
+          .arraycopy(value.getData(), 0, data4Create, key.getData().length, value.getData().length);
+      PrecompiledContract createContract = createPrecompiledContract(proposalCreateAddr,
+          WITNESS_ADDRESS);
 
-    Assert.assertEquals(0, dbManager.getDynamicPropertiesStore().getLatestProposalNum());
-    ProposalCapsule proposalCapsule;
-    Deposit deposit1 = DepositImpl.createRoot(dbManager);
-    createContract.setDeposit(deposit1);
-    byte[] idBytes = createContract.execute(data4Create).getRight();
-    long id = ByteUtil.byteArrayToLong(idBytes);
-    deposit1.commit();
-    proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
-    Assert.assertNotNull(proposalCapsule);
-    Assert.assertEquals(1, dbManager.getDynamicPropertiesStore().getLatestProposalNum());
-    Assert.assertEquals(0, proposalCapsule.getApprovals().size());
-    Assert.assertEquals(1000000, proposalCapsule.getCreateTime());
-    Assert.assertEquals(261200000, proposalCapsule.getExpirationTime()
-    ); // 2000000 + 3 * 4 * 21600000
+      Assert.assertEquals(0, dbManager.getDynamicPropertiesStore().getLatestProposalNum());
+      ProposalCapsule proposalCapsule;
+      Deposit deposit1 = DepositImpl.createRoot(dbManager);
+      createContract.setDeposit(deposit1);
+      byte[] idBytes = createContract.execute(data4Create).getRight();
+      long id = ByteUtil.byteArrayToLong(idBytes);
+      deposit1.commit();
+      proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
+      Assert.assertNotNull(proposalCapsule);
+      Assert.assertEquals(1, dbManager.getDynamicPropertiesStore().getLatestProposalNum());
+      Assert.assertEquals(0, proposalCapsule.getApprovals().size());
+      Assert.assertEquals(1000000, proposalCapsule.getCreateTime());
+      Assert.assertEquals(261200000, proposalCapsule.getExpirationTime()
+      ); // 2000000 + 3 * 4 * 21600000
 
 
 
-    /*
-     *  approve proposal Test
-     */
+      /*
+       *  approve proposal Test
+       */
 
-    byte[] data4Approve = new byte[64];
-    DataWord isApprove = new DataWord(
-        "0000000000000000000000000000000000000000000000000000000000000001");
-    System.arraycopy(idBytes, 0, data4Approve, 0, idBytes.length);
-    System.arraycopy(isApprove.getData(), 0, data4Approve, idBytes.length,
-        isApprove.getData().length);
-    PrecompiledContract approveContract = createPrecompiledContract(proposalApproveAddr,
-        WITNESS_ADDRESS);
-    Deposit deposit2 = DepositImpl.createRoot(dbManager);
-    approveContract.setDeposit(deposit2);
-    approveContract.execute(data4Approve);
-    deposit2.commit();
-    proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
-    Assert.assertEquals(1, proposalCapsule.getApprovals().size());
-    Assert.assertEquals(ByteString.copyFrom(ByteArray.fromHexString(WITNESS_ADDRESS)),
-        proposalCapsule.getApprovals().get(0));
+      byte[] data4Approve = new byte[64];
+      DataWord isApprove = new DataWord(
+          "0000000000000000000000000000000000000000000000000000000000000001");
+      System.arraycopy(idBytes, 0, data4Approve, 0, idBytes.length);
+      System.arraycopy(isApprove.getData(), 0, data4Approve, idBytes.length,
+          isApprove.getData().length);
+      PrecompiledContract approveContract = createPrecompiledContract(proposalApproveAddr,
+          WITNESS_ADDRESS);
+      Deposit deposit2 = DepositImpl.createRoot(dbManager);
+      approveContract.setDeposit(deposit2);
+      approveContract.execute(data4Approve);
+      deposit2.commit();
+      proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
+      Assert.assertEquals(1, proposalCapsule.getApprovals().size());
+      Assert.assertEquals(ByteString.copyFrom(ByteArray.fromHexString(WITNESS_ADDRESS)),
+          proposalCapsule.getApprovals().get(0));
 
-    /*
-     *  delete proposal Test
-     */
-    PrecompiledContract deleteContract = createPrecompiledContract(proposalDeleteAddr,
-        WITNESS_ADDRESS);
-    Deposit deposit3 = DepositImpl.createRoot(dbManager);
-    deleteContract.setDeposit(deposit3);
-    deleteContract.execute(idBytes);
-    deposit3.commit();
-    proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
-    Assert.assertEquals(State.CANCELED, proposalCapsule.getState());
+      /*
+       *  delete proposal Test
+       */
+      PrecompiledContract deleteContract = createPrecompiledContract(proposalDeleteAddr,
+          WITNESS_ADDRESS);
+      Deposit deposit3 = DepositImpl.createRoot(dbManager);
+      deleteContract.setDeposit(deposit3);
+      deleteContract.execute(idBytes);
+      deposit3.commit();
+      proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
+      Assert.assertEquals(State.CANCELED, proposalCapsule.getState());
 
+    } catch (ItemNotFoundException e) {
+      Assert.fail();
+    }
   }
 
 

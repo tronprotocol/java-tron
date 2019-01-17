@@ -1180,7 +1180,12 @@ public class Wallet {
     if (Objects.isNull(proposalId)) {
       return null;
     }
-    ProposalCapsule proposalCapsule = dbManager.getProposalStore().get(proposalId.toByteArray());
+    ProposalCapsule proposalCapsule = null;
+    try {
+      proposalCapsule = dbManager.getProposalStore()
+          .get(proposalId.toByteArray());
+    } catch (StoreException e) {
+    }
     if (proposalCapsule != null) {
       return proposalCapsule.getInstance();
     }
@@ -1191,7 +1196,11 @@ public class Wallet {
     if (Objects.isNull(exchangeId)) {
       return null;
     }
-    ExchangeCapsule exchangeCapsule = dbManager.getExchangeStoreFinal().get(exchangeId.toByteArray());
+    ExchangeCapsule exchangeCapsule = null;
+    try {
+      exchangeCapsule = dbManager.getExchangeStoreFinal().get(exchangeId.toByteArray());
+    } catch (StoreException e) {
+    }
     if (exchangeCapsule != null) {
       return exchangeCapsule.getInstance();
     }
