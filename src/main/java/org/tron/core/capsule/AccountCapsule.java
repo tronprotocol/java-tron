@@ -158,7 +158,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
           .setOwnerPermission(owner)
           .addActivePermission(active)
           .build();
-    }else {
+    } else {
       this.account = Account.newBuilder()
           .setType(accountType)
           .setAddress(address)
@@ -1063,8 +1063,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         ownerPermission = getDefaultPermission(this.getAddress()).toBuilder();
       }
 
+      List<Key> keys = ownerPermission.getKeysList();
       ownerPermission.clearKeys();
-      for (Key key : ownerPermission.getKeysList()) {
+      for (Key key : keys) {
         if (key.getAddress().equals(updateKey.getAddress())) {
           ownerPermission.addKeys(updateKey);
         } else {
