@@ -340,7 +340,8 @@ public class PermissionUpdateKeyActuatorTest {
           .setPermissionName("active")
           .setThreshold(1)
           .setParentId(OWNER_PERMISSION_ID)
-          .setOperations(AccountCapsule.createDefaultActivePermission(owner.getAddress()).getOperations())
+          .setOperations(
+              AccountCapsule.createDefaultActivePermission(owner.getAddress()).getOperations())
           .addKeys(
               Key.newBuilder()
                   .setAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
@@ -356,217 +357,226 @@ public class PermissionUpdateKeyActuatorTest {
     }
   }
 
-//  @Test
-//  public void nullContract() {
-//    PermissionUpdateKeyActuator actuator = new PermissionUpdateKeyActuator(null, dbManager);
-//    TransactionResultCapsule ret = new TransactionResultCapsule();
-//
-//    processAndCheckInvalid(actuator, ret, "No contract!", "No contract!");
-//  }
-//
-//  @Test
-//  public void nullDbManager() {
-//    PermissionUpdateKeyActuator actuator =
-//        new PermissionUpdateKeyActuator(getContract(OWNER_ADDRESS, VALID_KEY, "owner"), null);
-//    TransactionResultCapsule ret = new TransactionResultCapsule();
-//
-//    processAndCheckInvalid(actuator, ret, "No dbManager!", "No dbManager!");
-//  }
-//
-//  @Test
-//  public void invalidContract() {
-//    Any invalidContract = getInvalidContract();
-//    PermissionUpdateKeyActuator actuator =
-//        new PermissionUpdateKeyActuator(invalidContract, dbManager);
-//    TransactionResultCapsule ret = new TransactionResultCapsule();
-//
-//    processAndCheckInvalid(
-//        actuator,
-//        ret,
-//        "contract type error",
-//        "contract type error,expected type [PermissionUpdateKeyContract],real type["
-//            + invalidContract.getClass()
-//            + "]");
-//  }
-//
-//  @Test
-//  public void invalidOwnerAddress() {
-//    PermissionUpdateKeyActuator actuator =
-//        new PermissionUpdateKeyActuator(
-//            getContract(OWNER_ADDRESS_INVALID, VALID_KEY, "owner"), dbManager);
-//    TransactionResultCapsule ret = new TransactionResultCapsule();
-//
-//    processAndCheckInvalid(actuator, ret, "invalidate ownerAddress", "invalidate ownerAddress");
-//  }
-//
-//  @Test
-//  public void nullAccount() {
-//    PermissionUpdateKeyActuator actuator =
-//        new PermissionUpdateKeyActuator(
-//            getContract(OWNER_ADDRESS_NOACCOUNT, VALID_KEY, "owner"), dbManager);
-//    TransactionResultCapsule ret = new TransactionResultCapsule();
-//
-//    processAndCheckInvalid(
-//        actuator,
-//        ret,
-//        "ownerAddress account does not exist",
-//        "ownerAddress account does not exist");
-//  }
-//
-//  @Test
-//  public void invalidPermissionName() {
-//    PermissionUpdateKeyActuator actuator =
-//        new PermissionUpdateKeyActuator(
-//            getContract(OWNER_ADDRESS, VALID_KEY, PERMISSION_NAME_INVALID), dbManager);
-//    TransactionResultCapsule ret = new TransactionResultCapsule();
-//
-//    processAndCheckInvalid(
-//        actuator,
-//        ret,
-//        "permission name should be owner or active",
-//        "permission name should be owner or active");
-//  }
-//
-//  @Test
-//  public void noOwnerPermission() {
-//    String ownerAddress = OWNER_ADDRESS;
-//
-//    // this check can also be done without add default permission, because at first the account has
-//    // no permission
-//    byte[] owner_name_array = ByteArray.fromHexString(ownerAddress);
-//    AccountCapsule owner = dbManager.getAccountStore().get(owner_name_array);
-//    Permission activePermission =
-//        TransactionCapsule.getDefaultPermission(ByteString.copyFrom(owner_name_array), "active");
-//    List<Permission> initPermissions = new ArrayList<>();
-//    initPermissions.add(activePermission);
-//    owner.updatePermissions(initPermissions);
-//    dbManager.getAccountStore().put(owner_name_array, owner);
-//
-//    // check
-//    PermissionUpdateKeyActuator actuator =
-//        new PermissionUpdateKeyActuator(
-//            getContract(ownerAddress, VALID_KEY, PERMISSION_NAME), dbManager);
-//    TransactionResultCapsule ret = new TransactionResultCapsule();
-//
-//    processAndCheckInvalid(
-//        actuator, ret, "you have not set owner permission", "you have not set owner permission");
-//  }
-//
-//  @Test
-//  public void nullPermissionWithName() {
-//    String ownerAddress = OWNER_ADDRESS;
-//    String permissionName = "active";
-//
-//    byte[] owner_name_array = ByteArray.fromHexString(ownerAddress);
-//    AccountCapsule owner = dbManager.getAccountStore().get(owner_name_array);
-//    Permission ownerPermission =
-//        TransactionCapsule.getDefaultPermission(ByteString.copyFrom(owner_name_array), "owner");
-//    List<Permission> initPermissions = new ArrayList<>();
-//    initPermissions.add(ownerPermission);
-//    owner.updatePermissions(initPermissions);
-//    dbManager.getAccountStore().put(owner_name_array, owner);
-//
-//    // check
-//    PermissionUpdateKeyActuator actuator =
-//        new PermissionUpdateKeyActuator(
-//            getContract(ownerAddress, VALID_KEY, permissionName), dbManager);
-//    TransactionResultCapsule ret = new TransactionResultCapsule();
-//
-//    processAndCheckInvalid(
-//        actuator,
-//        ret,
-//        "no permission with given name",
-//        "you have not set permission with the name " + permissionName);
-//  }
-//
-//  @Test
-//  public void invalidKeyAddress() {
-//    // init account with permission
-//    addValidPermissionKey();
-//
-//    PermissionUpdateKeyActuator actuator =
-//        new PermissionUpdateKeyActuator(
-//            getContract(OWNER_ADDRESS, KEY_ADDRESS_INVALID, KEY_WEIGHT, PERMISSION_NAME),
-//            dbManager);
-//    TransactionResultCapsule ret = new TransactionResultCapsule();
-//
-//    processAndCheckInvalid(
-//        actuator, ret, "address in key is invalidate", "address in key is invalidate");
-//  }
-//
-//  @Test
-//  public void keyAddressNotInPermission() {
-//    addValidPermissionKey();
-//
-//    PermissionUpdateKeyActuator actuator =
-//        new PermissionUpdateKeyActuator(
-//            getContract(OWNER_ADDRESS, SECOND_KEY_ADDRESS, KEY_WEIGHT, PERMISSION_NAME), dbManager);
-//    TransactionResultCapsule ret = new TransactionResultCapsule();
-//
-//    processAndCheckInvalid(
-//        actuator,
-//        ret,
-//        "address is not in permission",
-//        "address is not in permission " + PERMISSION_NAME);
-//  }
-//
-//  @Test
-//  public void weighValueInvalid() {
-//    addValidPermissionKey();
-//
-//    PermissionUpdateKeyActuator actuator =
-//        new PermissionUpdateKeyActuator(
-//            getContract(OWNER_ADDRESS, KEY_ADDRESS, 0, "active"), dbManager);
-//    TransactionResultCapsule ret = new TransactionResultCapsule();
-//
-//    processAndCheckInvalid(
-//        actuator,
-//        ret,
-//        "key weight should be greater than 0",
-//        "key weight should be greater than 0");
-//  }
-//
-//  @Test
-//  public void sumWeightLessThanThreshold() {
-//    String ownerAddress = OWNER_ADDRESS;
-//    String keyAddress = KEY_ADDRESS;
-//
-//    byte[] owner_name_array = ByteArray.fromHexString(ownerAddress);
-//    AccountCapsule owner = dbManager.getAccountStore().get(owner_name_array);
-//    Permission ownerPermission =
-//        TransactionCapsule.getDefaultPermission(ByteString.copyFrom(owner_name_array), "owner");
-//    Permission activePermission =
-//        Permission.newBuilder()
-//            .setName("active")
-//            .setThreshold(3)
-//            .setParent("owner")
-//            .addKeys(
-//                Key.newBuilder()
-//                    .setAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
-//                    .setWeight(1)
-//                    .build())
-//            .addKeys(
-//                Key.newBuilder()
-//                    .setAddress(ByteString.copyFrom(ByteArray.fromHexString(keyAddress)))
-//                    .setWeight(3)
-//                    .build())
-//            .build();
-//
-//    List<Permission> initPermissions = new ArrayList<>();
-//    initPermissions.add(ownerPermission);
-//    initPermissions.add(activePermission);
-//    owner.updatePermissions(initPermissions);
-//    dbManager.getAccountStore().put(owner_name_array, owner);
-//
-//    PermissionUpdateKeyActuator actuator =
-//        new PermissionUpdateKeyActuator(
-//            getContract(ownerAddress, keyAddress, 1, "active"), dbManager);
-//    TransactionResultCapsule ret = new TransactionResultCapsule();
-//
-//    processAndCheckInvalid(
-//        actuator,
-//        ret,
-//        "sum of all keys weight should not be less that threshold",
-//        "sum of all keys weight should not be less that threshold");
-//  }
+  @Test
+  public void nullContract() {
+    PermissionUpdateKeyActuator actuator = new PermissionUpdateKeyActuator(null, dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    processAndCheckInvalid(actuator, ret, "No contract!", "No contract!");
+  }
+
+  @Test
+  public void nullDbManager() {
+    PermissionUpdateKeyActuator actuator =
+        new PermissionUpdateKeyActuator(getContract(OWNER_ADDRESS, VALID_KEY, OWNER_PERMISSION_ID),
+            null);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    processAndCheckInvalid(actuator, ret, "No dbManager!", "No dbManager!");
+  }
+
+  @Test
+  public void invalidContract() {
+    Any invalidContract = getInvalidContract();
+    PermissionUpdateKeyActuator actuator =
+        new PermissionUpdateKeyActuator(invalidContract, dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    processAndCheckInvalid(
+        actuator,
+        ret,
+        "contract type error",
+        "contract type error,expected type [PermissionUpdateKeyContract],real type["
+            + invalidContract.getClass()
+            + "]");
+  }
+
+  @Test
+  public void invalidOwnerAddress() {
+    PermissionUpdateKeyActuator actuator =
+        new PermissionUpdateKeyActuator(
+            getContract(OWNER_ADDRESS_INVALID, VALID_KEY, OWNER_PERMISSION_ID), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    processAndCheckInvalid(actuator, ret, "invalidate ownerAddress", "invalidate ownerAddress");
+  }
+
+  @Test
+  public void nullAccount() {
+    PermissionUpdateKeyActuator actuator =
+        new PermissionUpdateKeyActuator(
+            getContract(OWNER_ADDRESS_NOACCOUNT, VALID_KEY, OWNER_PERMISSION_ID), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    processAndCheckInvalid(
+        actuator,
+        ret,
+        "ownerAddress account does not exist",
+        "ownerAddress account does not exist");
+  }
+
+  @Test
+  public void invalidPermissionId() {
+    PermissionUpdateKeyActuator actuator =
+        new PermissionUpdateKeyActuator(
+            getContract(OWNER_ADDRESS, VALID_KEY, PERMISSION_ID_INVALID), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    processAndCheckInvalid(
+        actuator,
+        ret,
+        "you have not set permission with the id " + PERMISSION_ID_INVALID,
+        "you have not set permission with the id " + PERMISSION_ID_INVALID);
+  }
+
+  @Test
+  public void cannotUpdateWitnessPermission() {
+    byte[] witness_address_array = ByteArray.fromHexString(WITNESS_ADDRESS);
+    AccountCapsule witness = dbManager.getAccountStore().get(witness_address_array);
+
+    // step 1, init
+    Permission ownerPermission = AccountCapsule.createDefaultOwnerPermission(witness.getAddress());
+    Permission activePermission = AccountCapsule
+        .createDefaultActivePermission(witness.getAddress());
+    Permission witnessPermission = AccountCapsule
+        .createDefaultWitnessPermission(witness.getAddress());
+    List<Permission> activeList = new ArrayList<>();
+    activeList.add(activePermission);
+
+    witness.updatePermissions(ownerPermission, witnessPermission, activeList);
+    dbManager.getAccountStore().put(witness_address_array, witness);
+
+    PermissionUpdateKeyActuator actuator =
+        new PermissionUpdateKeyActuator(
+            getContract(WITNESS_ADDRESS, VALID_KEY, 1), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    processAndCheckInvalid(
+        actuator,
+        ret,
+        "Witness permission can't update key",
+        "Witness permission can't update key");
+  }
+
+  @Test
+  public void nullPermissionWithName() {
+    String ownerAddress = OWNER_ADDRESS;
+    String permissionName = "active";
+
+    byte[] owner_name_array = ByteArray.fromHexString(ownerAddress);
+    AccountCapsule owner = dbManager.getAccountStore().get(owner_name_array);
+    Permission ownerPermission = AccountCapsule
+        .createDefaultOwnerPermission(ByteString.copyFrom(owner_name_array));
+    Permission activePermission = AccountCapsule
+        .createDefaultActivePermission(ByteString.copyFrom(owner_name_array));
+    List<Permission> activeList = new ArrayList<>();
+    activeList.add(activePermission);
+    owner.updatePermissions(ownerPermission, null, activeList);
+    dbManager.getAccountStore().put(owner_name_array, owner);
+
+    // check
+    PermissionUpdateKeyActuator actuator =
+        new PermissionUpdateKeyActuator(
+            getContract(ownerAddress, VALID_KEY, PERMISSION_ID_INVALID), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    processAndCheckInvalid(
+        actuator,
+        ret,
+        "no permission with given id",
+        "you have not set permission with the id " + PERMISSION_ID_INVALID);
+  }
+
+  @Test
+  public void invalidKeyAddress() {
+    // init account with permission
+    addValidPermissionKey();
+
+    PermissionUpdateKeyActuator actuator =
+        new PermissionUpdateKeyActuator(
+            getContract(OWNER_ADDRESS, KEY_ADDRESS_INVALID, KEY_WEIGHT, OWNER_PERMISSION_ID),
+            dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    processAndCheckInvalid(
+        actuator, ret, "address in key is invalidate", "address in key is invalidate");
+  }
+
+  @Test
+  public void keyAddressNotInPermission() {
+    addValidPermissionKey();
+
+    PermissionUpdateKeyActuator actuator =
+        new PermissionUpdateKeyActuator(
+            getContract(OWNER_ADDRESS, SECOND_KEY_ADDRESS, KEY_WEIGHT, OWNER_PERMISSION_ID),
+            dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    processAndCheckInvalid(
+        actuator,
+        ret,
+        "address is not in permission",
+        "address is not in permission " + OWNER_PERMISSION_ID);
+  }
+
+  @Test
+  public void weighValueInvalid() {
+    addValidPermissionKey();
+
+    PermissionUpdateKeyActuator actuator =
+        new PermissionUpdateKeyActuator(
+            getContract(OWNER_ADDRESS, KEY_ADDRESS, 0, OWNER_PERMISSION_ID), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    processAndCheckInvalid(
+        actuator,
+        ret,
+        "key weight should be greater than 0",
+        "key weight should be greater than 0");
+  }
+
+  @Test
+  public void sumWeightLessThanThreshold() {
+    String ownerAddress = OWNER_ADDRESS;
+    String keyAddress = KEY_ADDRESS;
+
+    byte[] owner_name_array = ByteArray.fromHexString(ownerAddress);
+    AccountCapsule owner = dbManager.getAccountStore().get(owner_name_array);
+    Permission ownerPermission = AccountCapsule
+        .createDefaultOwnerPermission(ByteString.copyFrom(owner_name_array));
+    Permission activePermission =
+        Permission.newBuilder()
+            .setType(PermissionType.Active)
+            .setId(ACTIVE_PERMISSION_START_ID)
+            .setPermissionName("active")
+            .setThreshold(3)
+            .setParentId(OWNER_PERMISSION_ID)
+            .addKeys(
+                Key.newBuilder()
+                    .setAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
+                    .setWeight(1)
+                    .build())
+            .addKeys(
+                Key.newBuilder()
+                    .setAddress(ByteString.copyFrom(ByteArray.fromHexString(keyAddress)))
+                    .setWeight(3)
+                    .build())
+            .build();
+
+    List<Permission> activeList = new ArrayList<>();
+    activeList.add(activePermission);
+    owner.updatePermissions(ownerPermission, null, activeList);
+    dbManager.getAccountStore().put(owner_name_array, owner);
+
+    PermissionUpdateKeyActuator actuator =
+        new PermissionUpdateKeyActuator(
+            getContract(ownerAddress, keyAddress, 1, ACTIVE_PERMISSION_START_ID), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    processAndCheckInvalid(
+        actuator,
+        ret,
+        "sum of all keys weight should not be less that threshold",
+        "sum of all keys weight should not be less that threshold");
+  }
 }

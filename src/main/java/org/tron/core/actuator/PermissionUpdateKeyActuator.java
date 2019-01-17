@@ -82,10 +82,7 @@ public class PermissionUpdateKeyActuator extends AbstractActuator {
       throw new ContractValidateException("ownerAddress account does not exist");
     }
     int id = permissionUpdateKeyContract.getPermissionId();
-    Permission ownerPermission = account.getInstance().getOwnerPermission();
-    if (ownerPermission == null) {
-      throw new ContractValidateException("you have not set owner permission");
-    }
+
     Permission permission = account.getPermissionById(id);
     if (permission == null) {
       throw new ContractValidateException("you have not set permission with the id " + id);
