@@ -7,14 +7,9 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.Hash;
-import org.tron.common.utils.ByteArray;
-import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.db.fast.storetrie.AccountStateStoreTrie;
-import org.tron.core.db2.common.DB;
-import org.tron.core.trie.TrieImpl;
 
 @Slf4j
 @Component
@@ -51,23 +46,5 @@ public class TrieService {
       logger.error("Get the {} block error.", latestNumber, e);
     }
     return rootHash;
-  }
-
-  public TrieImpl getAccountStateTrie() {
-    return new TrieImpl(accountStateStoreTrie, getFullAccountStateRootHash());
-  }
-
-  public TrieImpl getSolidityAccountStateTrie() {
-    return new TrieImpl(accountStateStoreTrie, getSolidityAccountStateRootHash());
-  }
-
-  public TrieImpl getChildTrie(byte[] key, DB<byte[], BytesCapsule> db) {
-    TrieImpl accountStateTrie = getAccountStateTrie();
-    return new TrieImpl(db, accountStateTrie.get(key));
-  }
-
-  public TrieImpl getSolidityChildTrie(byte[] key, DB<byte[], BytesCapsule> db) {
-    TrieImpl accountStateTrie = getSolidityAccountStateTrie();
-    return new TrieImpl(db, accountStateTrie.get(key));
   }
 }

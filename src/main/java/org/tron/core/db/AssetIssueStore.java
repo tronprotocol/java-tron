@@ -1,31 +1,20 @@
 package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.DatabaseConstants.ASSET_ISSUE_COUNT_LIMIT_MAX;
-import static org.tron.core.db.fast.FastSyncStoreConstant.TrieEnum.ASSET;
 
 import com.google.common.collect.Streams;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.AssetIssueCapsule;
-import org.tron.core.db.fast.callback.FastSyncCallBack;
-import org.tron.core.db.fast.storetrie.AssetIssueStoreTrie;
 
 @Slf4j(topic = "DB")
 @Component
 public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
-
-  @Autowired
-  private FastSyncCallBack fastSyncCallBack;
-
-  @Autowired
-  private AssetIssueStoreTrie assetIssueStoreTrie;
 
   @Autowired
   protected AssetIssueStore(@Value("asset-issue") String dbName) {
@@ -35,10 +24,6 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
 
   @Override
   public AssetIssueCapsule get(byte[] key) {
-    AssetIssueCapsule assetIssueCapsule = getValue(key);
-    if (assetIssueCapsule != null) {
-      return assetIssueCapsule;
-    }
     return super.getUnchecked(key);
   }
 
@@ -46,10 +31,6 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
    * get all asset issues.
    */
   public List<AssetIssueCapsule> getAllAssetIssues() {
-    List<AssetIssueCapsule> assetIssueCapsuleList = assetIssueStoreTrie.getAllAssetIssues();
-    if (CollectionUtils.isNotEmpty(assetIssueCapsuleList)) {
-      return assetIssueCapsuleList;
-    }
     return Streams.stream(iterator())
         .map(Entry::getValue)
         .collect(Collectors.toList());
@@ -79,37 +60,11 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
     });
     limit = limit > ASSET_ISSUE_COUNT_LIMIT_MAX ? ASSET_ISSUE_COUNT_LIMIT_MAX : limit;
     long end = offset + limit;
-    end = end > assetIssueList.size() ? assetIssueList.size() : end;
-    return assetIssueList.subList((int) offset, (int) end);
+    end = end > assetIssueList.size() ? assetIssueList.size() : end ;
+    return assetIssueList.subList((int)offset,(int)end);
   }
 
   public List<AssetIssueCapsule> getAssetIssuesPaginated(long offset, long limit) {
     return getAssetIssuesPaginated(getAllAssetIssues(), offset, limit);
-  }
-
-  public AssetIssueCapsule getValue(byte[] key) {
-    byte[] value = assetIssueStoreTrie.getValue(key);
-    if (ArrayUtils.isNotEmpty(value)) {
-      return new AssetIssueCapsule(value);
-    }
-    return null;
-  }
-  
-  @Override
-  public void delete(byte[] key) {
-    super.delete(key);
-    fastSyncCallBack.delete(key, ASSET);
-  }
-
-  @Override
-  public void put(byte[] key, AssetIssueCapsule item) {
-    super.put(key, item);
-    fastSyncCallBack.callBack(key, item.getData(), ASSET);
-  }
-
-  @Override
-  public void close() {
-    super.close();
-    assetIssueStoreTrie.close();
   }
 }

@@ -8,7 +8,6 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.utils.TransactionUtil;
-import org.tron.core.db.AccountIndexStore;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
