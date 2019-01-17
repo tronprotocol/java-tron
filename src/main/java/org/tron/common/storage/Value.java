@@ -43,9 +43,9 @@ public class Value {
             System.arraycopy(any, 0, this.any, 0, any.length);
             this.type = new Type(type);
         } else {
-                if (VMConfig.isVERSION_3_5_HARD_FORK()) {
-                    this.type = new Type(VALUE_TYPE_UNKNOWN);
-                }
+            if (VMConfig.isVERSION_3_5_HARD_FORK()) {
+                this.type = new Type(VALUE_TYPE_UNKNOWN);
+            }
         }
     }
 
