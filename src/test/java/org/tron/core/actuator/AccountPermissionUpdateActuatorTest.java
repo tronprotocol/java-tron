@@ -196,10 +196,7 @@ public class AccountPermissionUpdateActuatorTest {
    */
   private Any getInvalidContract() {
     return Any.pack(
-        Contract.PermissionAddKeyContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setKey(VALID_KEY)
-            .setPermissionId(2)
+        Contract.AccountCreateContract.newBuilder()
             .build());
   }
 

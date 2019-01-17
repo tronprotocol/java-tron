@@ -67,9 +67,6 @@ import org.tron.protos.Contract.ExchangeTransactionContract;
 import org.tron.protos.Contract.ExchangeWithdrawContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
-import org.tron.protos.Contract.PermissionAddKeyContract;
-import org.tron.protos.Contract.PermissionDeleteKeyContract;
-import org.tron.protos.Contract.PermissionUpdateKeyContract;
 import org.tron.protos.Contract.ProposalApproveContract;
 import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Contract.ProposalDeleteContract;
@@ -459,15 +456,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           break;
         case AccountPermissionUpdateContract:
           owner = contractParameter.unpack(AccountPermissionUpdateContract.class).getOwnerAddress();
-          break;
-        case PermissionAddKeyContract:
-          owner = contractParameter.unpack(PermissionAddKeyContract.class).getOwnerAddress();
-          break;
-        case PermissionUpdateKeyContract:
-          owner = contractParameter.unpack(PermissionUpdateKeyContract.class).getOwnerAddress();
-          break;
-        case PermissionDeleteKeyContract:
-          owner = contractParameter.unpack(PermissionDeleteKeyContract.class).getOwnerAddress();
           break;
         // todo add other contract
         default:

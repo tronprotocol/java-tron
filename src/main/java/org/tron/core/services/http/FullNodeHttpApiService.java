@@ -144,12 +144,6 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private AccountPermissionUpdateServlet accountPermissionUpdateServlet;
   @Autowired
-  private PermissionAddKeyServlet permissionAddKeyServlet;
-  @Autowired
-  private PermissionDeleteKeyServlet permissionDeleteKeyServlet;
-  @Autowired
-  private PermissionUpdateKeyServlet permissionUpdateKeyServlet;
-  @Autowired
   private GetNodeInfoServlet getNodeInfoServlet;
   @Autowired
   private UpdateSettingServlet updateSettingServlet;
@@ -250,9 +244,6 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getTransactionApprovedListServlet), "/getapprovedlist");
       context.addServlet(new ServletHolder(accountPermissionUpdateServlet),
           "/accountpermissionupdate");
-      context.addServlet(new ServletHolder(permissionAddKeyServlet), "/permissionaddkey");
-      context.addServlet(new ServletHolder(permissionDeleteKeyServlet), "/permissiondeletekey");
-      context.addServlet(new ServletHolder(permissionUpdateKeyServlet), "/permissionupdatekey");
       context.addServlet(new ServletHolder(getNodeInfoServlet), "/getnodeinfo");
       context.addServlet(new ServletHolder(updateSettingServlet), "/updatesetting");
       context.addServlet(new ServletHolder(updateEnergyLimitServlet), "/updateenergylimit");
