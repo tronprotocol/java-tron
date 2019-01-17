@@ -249,21 +249,3 @@ message AccountPermissionUpdateContract {
   Permission witness = 3;//Can be empty
   repeated Permission actives = 4;//Empty is invalidate
 }
-
-message PermissionAddKeyContract {
-  bytes owner_address = 1;
-  Key key = 2;
-  int32 permission_id = 3;
-}
-
-message PermissionUpdateKeyContract {
-  bytes owner_address = 1;
-  Key key = 2;
-  int32 permission_id = 3;
-}
-
-message PermissionDeleteKeyContract {
-  bytes owner_address = 1;
-  bytes key_address = 2;
-  int32 permission_id = 3;
-}
