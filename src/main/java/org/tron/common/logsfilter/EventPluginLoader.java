@@ -16,6 +16,7 @@ import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
 import org.tron.common.logsfilter.trigger.Trigger;
+import org.tron.common.utils.StringUtil;
 
 @Slf4j
 public class EventPluginLoader {
@@ -29,6 +30,8 @@ public class EventPluginLoader {
   private ObjectMapper objectMapper = new ObjectMapper();
 
   private String serverAddress;
+
+  private String dbConfig;
 
   private List<TriggerConfig> triggerConfigList;
 
@@ -64,6 +67,7 @@ public class EventPluginLoader {
     String pluginPath = config.getPluginPath();
     this.serverAddress = config.getServerAddress();
     this.triggerConfigList = config.getTriggerConfigList();
+    this.dbConfig = config.getDbConfig();
 
     if (!startPlugin(pluginPath)) {
       logger.error("failed to load '{}'", pluginPath);
@@ -71,6 +75,10 @@ public class EventPluginLoader {
     }
 
     setPluginConfig();
+
+    if (Objects.nonNull(eventListeners)) {
+      eventListeners.forEach(listener -> listener.start());
+    }
 
     return true;
   }
@@ -81,7 +89,11 @@ public class EventPluginLoader {
       return;
     }
 
+    // set server address to plugin
     eventListeners.forEach(listener -> listener.setServerAddress(this.serverAddress));
+
+    // set dbconfig to plugin
+    eventListeners.forEach(listener -> listener.setDBConfig(this.dbConfig));
 
     triggerConfigList.forEach(triggerConfig -> {
       if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())) {
@@ -117,20 +129,6 @@ public class EventPluginLoader {
         setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, triggerConfig.getTopic());
       }
     });
-  }
-
-  public synchronized void updateTriggerConfig(String tiggerName, boolean enable) {
-    if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(tiggerName)) {
-      blockLogTriggerEnable = enable;
-    } else if (EventPluginConfig.CONTRACTEVENT_TRIGGER_NAME.equalsIgnoreCase(tiggerName)) {
-      contractEventTriggerEnable = enable;
-    } else if (EventPluginConfig.CONTRACTLOG_TRIGGER_NAME.equalsIgnoreCase(tiggerName)) {
-      contractLogTriggerEnable = enable;
-    } else if (EventPluginConfig.TRANSACTION_TRIGGER_NAME.equalsIgnoreCase(tiggerName)) {
-      transactionLogTriggerEnable = enable;
-    } else {
-      logger.error("unknown trigger name");
-    }
   }
 
   public synchronized boolean isBlockLogTriggerEnable() {

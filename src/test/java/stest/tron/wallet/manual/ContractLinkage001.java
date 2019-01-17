@@ -361,6 +361,7 @@ public class ContractLinkage001 {
             linkage001Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    fee = infoById.get().getFee();
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     contractAddress = infoById.get().getContractAddress().toByteArray();
     Account infoafter3 = PublicMethed.queryAccount(linkage001Address, blockingStubFull1);
@@ -384,7 +385,7 @@ public class ContractLinkage001 {
     Assert.assertTrue(afterNetUsed3 > 0);
     Assert.assertTrue(afterEnergyUsed3 > 0);
     Assert.assertTrue(afterFreeNetUsed3 > 0);
-    Assert.assertEquals(beforeBalance2, afterBalance2);
+    Assert.assertTrue(beforeBalance2 - fee == afterBalance2);
     Assert.assertTrue(afterBalance3 == 0);
     Assert.assertTrue(PublicMethed.queryAccount(contractAddress, blockingStubFull)
         .getBalance() == valueBalance);

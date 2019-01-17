@@ -13,6 +13,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.logsfilter.capsule.ContractEventTriggerCapsule;
 import org.tron.common.runtime.vm.LogEventWrapper;
+import org.tron.protos.Protocol.SmartContract.ABI.Entry;
 
 public class FilterQueryTest {
 
@@ -48,7 +49,7 @@ public class FilterQueryTest {
     ((LogEventWrapper) event).setTopicList(addressList);
     ((LogEventWrapper) event).setData(new byte[]{});
     ((LogEventWrapper) event).setEventSignature("");
-    ((LogEventWrapper) event).setAbiEntry(null);
+    ((LogEventWrapper) event).setAbiEntry(Entry.newBuilder().setName("testABI").build());
     event.setBlockNumber(new Long(123));
     ContractEventTriggerCapsule capsule = new ContractEventTriggerCapsule(event);
     capsule.getContractEventTrigger().setContractAddress("address1");
