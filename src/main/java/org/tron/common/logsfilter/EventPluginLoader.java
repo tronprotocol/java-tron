@@ -80,8 +80,6 @@ public class EventPluginLoader {
       eventListeners.forEach(listener -> listener.start());
     }
 
-    System.out.println("XXXXXX success");
-
     return true;
   }
 
