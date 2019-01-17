@@ -93,7 +93,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
 
             if (Objects.nonNull(contractTransfer)){
               if (Objects.nonNull(contractTransfer.getAssetName())){
-                transactionLogTrigger.setAssetName(Hex.toHexString(contractTransfer.getAssetName().toByteArray()));
+                transactionLogTrigger.setAssetName(contractTransfer.getAssetName().toStringUtf8());
               }
 
               if (Objects.nonNull(contractTransfer.getOwnerAddress())){
