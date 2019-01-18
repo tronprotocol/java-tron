@@ -24,7 +24,8 @@ apply plugin: "jacoco"
 apply plugin: 'maven-publish'
 
 jar.enabled = false
-shadowJar.enabled = false
+//allow shadowJar to enable jitpack dependency
+shadowJar.enabled = true
 
 sourceCompatibility = 1.8
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
@@ -264,7 +265,7 @@ run {
 shadowJar {
     baseName = 'java-tron'
     classifier = null
-    version = null
+    version = '1.0.0'
 }
 
 test {
