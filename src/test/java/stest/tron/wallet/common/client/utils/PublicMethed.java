@@ -1,5 +1,7 @@
 package stest.tron.wallet.common.client.utils;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -47,6 +49,8 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
+import org.tron.protos.Protocol.Key;
+import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Result;
@@ -2951,197 +2955,50 @@ public class PublicMethed {
     return blockingStubFull.getAssetIssueById(request);
   }
 
-  /**
-   * constructor.
-   */
-  public static boolean permissionAddKey(String permission, byte[] addAddress, int weight,
-      byte[] owner, String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
+  private static Permission json2Permission(JSONObject json) {
+    Permission.Builder permissionBuilder = Permission.newBuilder();
+    if (json.containsKey("type")) {
+      int type = json.getInteger("type");
+      permissionBuilder.setTypeValue(type);
     }
-    final ECKey ecKey = temKey;
-    Contract.PermissionAddKeyContract.Builder contractBuilder =
-        Contract.PermissionAddKeyContract.newBuilder();
-    contractBuilder.setOwnerAddress(ByteString.copyFrom(owner));
-    contractBuilder.setPermissionName(permission);
-    Key.Builder keyBuilder = Key.newBuilder();
-    keyBuilder.setAddress(ByteString.copyFrom(addAddress));
-    keyBuilder.setWeight(weight);
-    contractBuilder.setKey(keyBuilder.build());
-
-    Contract.PermissionAddKeyContract permissionAddKeyContract = contractBuilder.build();
-    TransactionExtention transactionExtention = blockingStubFull
-        .permissionAddKey(permissionAddKeyContract);
-    if (transactionExtention == null) {
-      return false;
+    if (json.containsKey("permission_name")) {
+      String permission_name = json.getString("permission_name");
+      permissionBuilder.setPermissionName(permission_name);
     }
-    Return ret = transactionExtention.getResult();
-    if (!ret.getResult()) {
-      System.out.println("Code = " + ret.getCode());
-      System.out.println("Message = " + ret.getMessage().toStringUtf8());
-      return false;
+    if (json.containsKey("threshold")) {
+      long threshold = json.getLong("threshold");
+      permissionBuilder.setThreshold(threshold);
     }
-    Transaction transaction = transactionExtention.getTransaction();
-    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      System.out.println("Transaction is empty");
-      return false;
+    if (json.containsKey("parent_id")) {
+      int parent_id = json.getInteger("parent_id");
+      permissionBuilder.setParentId(parent_id);
     }
-    System.out.println(
-        "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
-    transaction = signTransaction(ecKey, transaction);
-    int i = 10;
-    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeat times = " + (11 - i));
-      try {
-        Thread.sleep(300);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
+    if (json.containsKey("operations")) {
+      byte[] operations = ByteArray.fromHexString(json.getString("operations"));
+      permissionBuilder.setOperations(ByteString.copyFrom(operations));
+    }
+    if (json.containsKey("keys")) {
+      JSONArray keys = json.getJSONArray("keys");
+      List<Key> keyList = new ArrayList<>();
+      for (int i = 0; i < keys.size(); i++) {
+        Key.Builder keyBuilder = Key.newBuilder();
+        JSONObject key = keys.getJSONObject(i);
+        String address = key.getString("address");
+        long weight = key.getLong("weight");
+        keyBuilder.setAddress(ByteString.copyFrom(WalletClient.decodeFromBase58Check(address)));
+        keyBuilder.setWeight(weight);
+        keyList.add(keyBuilder.build());
       }
+      permissionBuilder.addAllKeys(keyList);
     }
-    if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
-    }
-    return response.getResult();
-  }
-
-  /**
-   * constructor.
-   */
-  public static boolean permissionUpdateKey(String permission, byte[] updateAddress, int weight,
-      byte[] owner, String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    final ECKey ecKey = temKey;
-    Contract.PermissionUpdateKeyContract.Builder contractBuilder =
-        Contract.PermissionUpdateKeyContract.newBuilder();
-    contractBuilder.setOwnerAddress(ByteString.copyFrom(owner));
-    contractBuilder.setPermissionName(permission);
-    Key.Builder keyBuilder = Key.newBuilder();
-    keyBuilder.setAddress(ByteString.copyFrom(updateAddress));
-    keyBuilder.setWeight(weight);
-    contractBuilder.setKey(keyBuilder.build());
-
-    Contract.PermissionUpdateKeyContract permissionUpdateKeyContract = contractBuilder.build();
-    TransactionExtention transactionExtention = blockingStubFull
-        .permissionUpdateKey(permissionUpdateKeyContract);
-    if (transactionExtention == null) {
-      return false;
-    }
-    Return ret = transactionExtention.getResult();
-    if (!ret.getResult()) {
-      System.out.println("Code = " + ret.getCode());
-      System.out.println("Message = " + ret.getMessage().toStringUtf8());
-      return false;
-    }
-    Transaction transaction = transactionExtention.getTransaction();
-    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      System.out.println("Transaction is empty");
-      return false;
-    }
-    System.out.println(
-        "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
-    transaction = signTransaction(ecKey, transaction);
-    int i = 10;
-    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeat times = " + (11 - i));
-      try {
-        Thread.sleep(300);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
-    if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
-    }
-    return response.getResult();
-  }
-
-  /**
-   * constructor.
-   */
-  public static boolean permissionDeleteKey(String permission, byte[] deleteAddress, byte[] owner,
-      String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    final ECKey ecKey = temKey;
-    Contract.PermissionDeleteKeyContract.Builder contractBuilder =
-        Contract.PermissionDeleteKeyContract.newBuilder();
-    contractBuilder.setOwnerAddress(ByteString.copyFrom(owner));
-    contractBuilder.setPermissionName(permission);
-    contractBuilder.setKeyAddress(ByteString.copyFrom(deleteAddress));
-    Contract.PermissionDeleteKeyContract permissionDeleteKeyContract =
-        contractBuilder.build();
-    TransactionExtention transactionExtention = blockingStubFull
-        .permissionDeleteKey(permissionDeleteKeyContract);
-    if (transactionExtention == null) {
-      return false;
-    }
-    Return ret = transactionExtention.getResult();
-    if (!ret.getResult()) {
-      System.out.println("Code = " + ret.getCode());
-      System.out.println("Message = " + ret.getMessage().toStringUtf8());
-      return false;
-    }
-    Transaction transaction = transactionExtention.getTransaction();
-    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      System.out.println("Transaction is empty");
-      return false;
-    }
-    System.out.println(
-        "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
-    transaction = signTransaction(ecKey, transaction);
-    int i = 10;
-    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeat times = " + (11 - i));
-      try {
-        Thread.sleep(300);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
-    if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
-    }
-    return response.getResult();
+    return permissionBuilder.build();
   }
 
   /**
    * constructor.
    */
   public static boolean accountPermissionUpdate(String permissionJson, byte[] owner, String priKey,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
+      WalletGrpc.WalletBlockingStub blockingStubFull, String[] priKeys) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -3150,41 +3007,34 @@ public class PublicMethed {
     } catch (Exception ex) {
       ex.printStackTrace();
     }
-    final ECKey ecKey = temKey;
+    ECKey ecKey = temKey;
 
     Contract.AccountPermissionUpdateContract.Builder builder =
         Contract.AccountPermissionUpdateContract.newBuilder();
 
-    JSONArray permissions = JSON.parseArray(permissionJson);
-    List<Permission> permissionList = new ArrayList<>();
-    for (int j = 0; j < permissions.size(); j++) {
-      Permission.Builder permissionBuilder = Permission.newBuilder();
-      JSONObject permission = permissions.getJSONObject(j);
-      String name = permission.getString("name");
-      String parent = permission.getString("parent");
-      final int threshold = Integer.parseInt(permission.getString("threshold"));
-      JSONArray keys = permission.getJSONArray("keys");
-      List<Key> keyList = new ArrayList<>();
-      for (int i = 0; i < keys.size(); i++) {
-        Key.Builder keyBuilder = Key.newBuilder();
-        JSONObject key = keys.getJSONObject(i);
-        String address = key.getString("address");
-        int weight = key.getInteger("weight");
-        keyBuilder.setAddress(ByteString.copyFrom(Wallet.decodeFromBase58Check(address)));
-        keyBuilder.setWeight(weight);
-        keyList.add(keyBuilder.build());
-      }
-      permissionBuilder.setName(name);
-      if (!(name.equals("owner") && parent == null)) {
-        permissionBuilder.setParent(parent);
-      }
-      permissionBuilder.setThreshold(threshold);
-      permissionBuilder.addAllKeys(keyList);
-      permissionList.add(permissionBuilder.build());
-    }
+    JSONObject permissions = JSONObject.parseObject(permissionJson);
+    JSONObject owner_permission = permissions.getJSONObject("owner_permission");
+    JSONObject witness_permission = permissions.getJSONObject("witness_permission");
+    JSONArray active_permissions = permissions.getJSONArray("active_permissions");
 
+    if (owner_permission != null) {
+      Permission ownerPermission = json2Permission(owner_permission);
+      builder.setOwner(ownerPermission);
+    }
+    if (witness_permission != null) {
+      Permission witnessPermission = json2Permission(witness_permission);
+      builder.setWitness(witnessPermission);
+    }
+    if (active_permissions != null) {
+      List<Permission> activePermissionList = new ArrayList<>();
+      for (int j = 0; j < active_permissions.size(); j++) {
+        JSONObject permission = active_permissions.getJSONObject(j);
+        activePermissionList.add(json2Permission(permission));
+      }
+      builder.addAllActives(activePermissionList);
+    }
     builder.setOwnerAddress(ByteString.copyFrom(owner));
-    builder.addAllPermissions(permissionList);
+
     Contract.AccountPermissionUpdateContract contract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull.accountPermissionUpdate(contract);
@@ -3224,6 +3074,7 @@ public class PublicMethed {
     }
     return response.getResult();
   }
+
 
   /**
    * constructor.

@@ -3,8 +3,10 @@ package stest.tron.wallet.mutisign;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
@@ -16,7 +18,9 @@ import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
+import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
+import stest.tron.wallet.common.client.utils.PublicMethedForMutiSign;
 
 @Slf4j
 public class WalletTestMutiSign003 {
@@ -98,16 +102,21 @@ public class WalletTestMutiSign003 {
     permissionKeyString[0] = manager1Key;
     permissionKeyString[1] = manager2Key;
     ownerKeyString[0] = ownerKey;
-    accountPermissionJson = "[{\"keys\":[{\"address\":\""
-        + PublicMethed.getAddressString(ownerKey)
-        + "\",\"weight\":2}],\"name\":\"owner\",\"threshold\":2,\"parent\":\"owner\"},"
-        + "{\"parent\":\"owner\",\"keys\":[{\"address\":\""
-        + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},{\"address\":\""
-        + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}],\"name\":\"active\","
-        + "\"threshold\":2}]";
+    accountPermissionJson =
+        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
+            + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey)
+            + "\",\"weight\":1}]},"
+            + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":2,"
+            + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
+            + "\"keys\":["
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}"
+            + "]}]}";
     logger.info(accountPermissionJson);
     PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,ownerAddress,ownerKey,
         blockingStubFull,ownerKeyString);
+
+    permissionKeyString[0] = ownerKey;
 
     final String updateName = Long.toString(System.currentTimeMillis());
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -135,7 +144,6 @@ public class WalletTestMutiSign003 {
     smallVoteMap.put(voteStr, "1");
     Assert.assertTrue(PublicMethedForMutiSign.voteWitness(
             smallVoteMap, ownerAddress, ownerKey,blockingStubFull,permissionKeyString));
-
 
   }
 
