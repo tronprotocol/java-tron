@@ -67,9 +67,10 @@ public class ContractLinkage002 {
 
   @Test(enabled = true)
   public void updateSetting() {
-    Account info;
     Assert.assertTrue(PublicMethed.sendcoin(linkage002Address, 200000000000L, fromAddress,
         testKey002, blockingStubFull));
+    Account info;
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage002Address, 50000000L,
         3, 1, linkage002Key, blockingStubFull));
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(linkage002Address,

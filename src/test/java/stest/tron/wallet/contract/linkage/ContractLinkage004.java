@@ -96,15 +96,16 @@ public class ContractLinkage004 {
   }
 
   @Test(enabled = true)
-  public void getTransactionInfoById() {
+  public void test1GetTransactionInfoById() {
     ecKey1 = new ECKey(Utils.getRandom());
     linkage004Address = ecKey1.getAddress();
     linkage004Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
     Assert.assertTrue(PublicMethed.sendcoin(linkage004Address, 2000000000000L, fromAddress,
         testKey003, blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalance(linkage004Address, 1000000L,
+    Assert.assertTrue(PublicMethed.freezeBalance(linkage004Address, 10000000L,
         3, linkage004Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(linkage004Address,
         blockingStubFull);
     info = PublicMethed.queryAccount(linkage004Address, blockingStubFull);
@@ -197,7 +198,7 @@ public class ContractLinkage004 {
     String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code,
         "", maxFeeLimit, 0L, 50, null, linkage004Key, linkage004Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
@@ -240,7 +241,7 @@ public class ContractLinkage004 {
   }
 
   @Test(enabled = true)
-  public void testFeeLimitIsTooSmall() {
+  public void test2FeeLimitIsTooSmall() {
     //When the fee limit is only short with 1 sun,failed.use freezeBalanceGetNet.
     maxFeeLimit = currentFee - 1L;
     AccountResourceMessage resourceInfo1 = PublicMethed.getAccountResource(linkage004Address,
@@ -263,6 +264,7 @@ public class ContractLinkage004 {
     String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code,
         "", maxFeeLimit, 0L, 50, null, linkage004Key, linkage004Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
 
     Optional<TransactionInfo> infoById1 = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
@@ -328,7 +330,6 @@ public class ContractLinkage004 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById2 = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long energyUsageTotal2 = infoById2.get().getReceipt().getEnergyUsageTotal();
     Long fee2 = infoById2.get().getFee();
     Long energyFee2 = infoById2.get().getReceipt().getEnergyFee();
@@ -363,6 +364,8 @@ public class ContractLinkage004 {
     Assert.assertTrue(infoById2.get().getReceipt().getEnergyUsageTotal() > 0);
     Assert.assertTrue((beforeBalance2 - fee2) == afterBalance2);
     Assert.assertTrue((beforeNetUsed2 + netUsed2) >= afterNetUsed2);
+
+    currentFee = fee2;
   }
 
   /**

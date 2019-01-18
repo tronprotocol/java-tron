@@ -386,10 +386,6 @@ public class Args {
 
   @Getter
   @Setter
-  private String logLevel;
-
-  @Getter
-  @Setter
   private boolean vmTrace;
 
   @Getter
@@ -819,8 +815,6 @@ public class Args {
         config.getLong("node.receiveTcpMinDataLength") : 2048;
     INSTANCE.isOpenFullTcpDisconnect = config.hasPath("node.isOpenFullTcpDisconnect") && config
         .getBoolean("node.isOpenFullTcpDisconnect");
-    INSTANCE.logLevel =
-        config.hasPath("log.level.root") ? config.getString("log.level.root") : "INFO";
     INSTANCE.needToUpdateAsset =
         config.hasPath("storage.needToUpdateAsset") ? config
             .getBoolean("storage.needToUpdateAsset")
@@ -940,17 +934,35 @@ public class Args {
   private static EventPluginConfig getEventPluginConfig(final com.typesafe.config.Config config){
     EventPluginConfig eventPluginConfig = new EventPluginConfig();
 
-    String pluginPath = config.getString("event.subscribe.path").trim();
-    eventPluginConfig.setPluginPath(pluginPath);
+    if (config.hasPath("event.subscribe.path")){
+      String pluginPath = config.getString("event.subscribe.path");
+      if (StringUtils.isNotEmpty(pluginPath)){
+        eventPluginConfig.setPluginPath(pluginPath.trim());
+      }
+    }
 
-    String serverAddress = config.getString("event.subscribe.server").trim();
-    eventPluginConfig.setServerAddress(serverAddress);
 
-    List<TriggerConfig> triggerConfigList = config.getObjectList("event.subscribe.topics").stream()
-            .map(Args::createTriggerConfig)
-            .collect(Collectors.toCollection(ArrayList::new));
+    if (config.hasPath("event.subscribe.server")){
+      String serverAddress = config.getString("event.subscribe.server");
+      if (StringUtils.isNotEmpty(serverAddress)){
+        eventPluginConfig.setServerAddress(serverAddress.trim());
+      }
+    }
 
-    eventPluginConfig.setTriggerConfigList(triggerConfigList);
+    if (config.hasPath("event.subscribe.dbconfig")){
+      String dbConfig = config.getString("event.subscribe.dbconfig");
+      if (StringUtils.isNotEmpty(dbConfig)){
+        eventPluginConfig.setDbConfig(dbConfig.trim());
+      }
+    }
+
+    if (config.hasPath("event.subscribe.topics")){
+      List<TriggerConfig> triggerConfigList = config.getObjectList("event.subscribe.topics").stream()
+              .map(Args::createTriggerConfig)
+              .collect(Collectors.toCollection(ArrayList::new));
+
+      eventPluginConfig.setTriggerConfigList(triggerConfigList);
+    }
 
     return eventPluginConfig;
   }

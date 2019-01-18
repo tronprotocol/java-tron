@@ -102,9 +102,9 @@ public class WalletTestWitness001 {
     //Assert.assertFalse(VoteWitness(smallVoteMap, NO_FROZEN_ADDRESS, no_frozen_balance_testKey));
 
     //Freeze balance to get vote ability.
-    Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 10000000L, 3L,
+    Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 1200000L, 3L,
             testKey002,blockingStubFull));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Vote failed when the vote is large than the freeze balance.
     Assert.assertFalse(voteWitness(veryLargeMap, fromAddress, testKey002));
     //Vote failed due to 0 vote.
@@ -114,10 +114,10 @@ public class WalletTestWitness001 {
     //Vote is so large, vote failed.
     Assert.assertFalse(voteWitness(wrongDropMap, fromAddress, testKey002));
 
-    //Vote success, the second latest vote is cover by the latest vote.
+    //Vote success
     Assert.assertTrue(voteWitness(smallVoteMap, fromAddress, testKey002));
-    Assert.assertTrue(voteWitness(smallVoteMap, fromAddress, testKey002));
-    Assert.assertTrue(voteWitness(smallVoteMap, fromAddress, testKey002));
+
+
   }
   /**
    * constructor.

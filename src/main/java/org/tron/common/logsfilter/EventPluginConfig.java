@@ -20,6 +20,10 @@ public class EventPluginConfig {
   @Setter
   private String serverAddress;
 
+  @Getter
+  @Setter
+  private String dbConfig;
+
 
   @Getter
   @Setter
@@ -28,6 +32,7 @@ public class EventPluginConfig {
   public EventPluginConfig() {
     pluginPath = "";
     serverAddress = "";
+    dbConfig = "";
     triggerConfigList = new ArrayList<>();
   }
 }

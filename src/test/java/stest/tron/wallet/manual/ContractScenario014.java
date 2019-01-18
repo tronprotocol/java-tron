@@ -1,4 +1,4 @@
-package stest.tron.wallet.contract.scenario;
+package stest.tron.wallet.manual;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -89,7 +89,7 @@ public class ContractScenario014 {
     String contractName = "Contract1";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractScenario014_testTripleTrigger");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractScenario014_testTripleTrigger");
     txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName,abi,code,"",
         maxFeeLimit, 0L, 100,null,contract014Key,contract014Address,blockingStubFull);
@@ -101,7 +101,7 @@ public class ContractScenario014 {
     // and has a revert function.
     String code1 = Configuration.getByPath("testng.conf")
             .getString("code.code1_ContractScenario014_testTripleTrigger");
-    String abi1 = Configuration.getByPath("long-testng.conf")
+    String abi1 = Configuration.getByPath("testng.conf")
             .getString("abi.abi1_ContractScenario014_testTripleTrigger");
     String parame = "\"" +  Base58.encode58Check(contractAddress1) + "\"";
     contractName = "Contract2";
@@ -116,7 +116,7 @@ public class ContractScenario014 {
     //Deploy contract3, trigger contrct2 function.
     String code2 = Configuration.getByPath("testng.conf")
             .getString("code.code2_ContractScenario014_testTripleTrigger");
-    String abi2 = Configuration.getByPath("long-testng.conf")
+    String abi2 = Configuration.getByPath("testng.conf")
             .getString("abi.abi2_ContractScenario014_testTripleTrigger");
     parame = "\"" +  Base58.encode58Check(contractAddress2) + "\"";
     contractName = "Contract3";
@@ -124,6 +124,7 @@ public class ContractScenario014 {
     txid = PublicMethed.deployContractWithConstantParame(contractName,abi2,code2,
         "constructor(address)",parame,"", maxFeeLimit,0L,100,null,
         contract014Key,contract014Address,blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     contractAddress3 = infoById.get().getContractAddress().toByteArray();
@@ -136,7 +137,7 @@ public class ContractScenario014 {
         blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(contractAddress3,1000000L,fromAddress,testKey002,
         blockingStubFull));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Test contract2 trigger contract1 to test call function
     Account contract2AccountInfo = PublicMethed.queryAccount(contractAddress2,blockingStubFull);
     final Long contract2BeforeBalance = contract2AccountInfo.getBalance();
@@ -150,6 +151,7 @@ public class ContractScenario014 {
     txid = PublicMethed.triggerContract(contractAddress2,
         "triggerContract1(address)", receiveAddress, false,
         0, 10000000L, contract014Address, contract014Key, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     contract2AccountInfo = PublicMethed.queryAccount(contractAddress2,blockingStubFull);
@@ -172,6 +174,7 @@ public class ContractScenario014 {
     txid = PublicMethed.triggerContract(contractAddress2,
         "triggerContract1ButRevert(address)", receiveAddress, false,
         0, 10000000L, contract014Address, contract014Key, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 1);
     contract1AccountInfo = PublicMethed.queryAccount(contractAddress1,blockingStubFull);

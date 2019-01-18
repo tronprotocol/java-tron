@@ -46,10 +46,8 @@ public class FullNode {
     logger.info("Full node running.");
     Args.setParam(args, Constant.TESTNET_CONF);
     Args cfgArgs = Args.getInstance();
+
     load (cfgArgs.getLogbackPath());
-    ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory
-        .getLogger(Logger.ROOT_LOGGER_NAME);
-    root.setLevel(Level.toLevel(cfgArgs.getLogLevel()));
 
     if (cfgArgs.isHelp()) {
       logger.info("Here is the help message.");

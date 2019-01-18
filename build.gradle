@@ -296,6 +296,15 @@ task stest(type: Test) {
     }
 }
 
+task dailyBuild(type: Test) {
+    useTestNG {
+        suites(file('src/test/resources/daily-build.xml'))
+        parallel 'tests'
+        threadCount 1
+    }
+}
+
+
 jacocoTestReport {
     reports {
         xml.enabled true

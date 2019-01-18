@@ -24,13 +24,13 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 public class ContractScenario010 {
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key1");
+      .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(0);
+      .getStringList("fullnode.ip.list").get(1);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
 
@@ -59,10 +59,14 @@ public class ContractScenario010 {
 
   @Test(enabled = true)
   public void deployContainLibraryContract() {
+    ecKey1 = new ECKey(Utils.getRandom());
+    contract009Address = ecKey1.getAddress();
+    contract009Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     Assert.assertTrue(PublicMethed.sendcoin(contract009Address,600000000L,fromAddress,
         testKey002,blockingStubFull));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract009Address, 10000000L,
         3,1,contract009Key,blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract009Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
@@ -73,10 +77,11 @@ public class ContractScenario010 {
     String contractName = "Tron_ERC721_Token";
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_ContractScenario010_deployContainLibraryContract");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_ContractScenario010_deployContainLibraryContract");
     byte[] libraryAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
         0L, 100,null,contract009Key,contract009Address,blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(libraryAddress,blockingStubFull);
 
     Assert.assertFalse(smartContract.getAbi().toString().isEmpty());

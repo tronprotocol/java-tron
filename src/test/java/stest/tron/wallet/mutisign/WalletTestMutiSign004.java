@@ -101,11 +101,9 @@ public class WalletTestMutiSign004 {
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress,100000000L,fromAddress,testKey002,
         blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     permissionKeyString[0] = manager1Key;
     permissionKeyString[1] = manager2Key;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     ownerKeyString[0] = ownerKey;
     accountPermissionJson = "[{\"keys\":[{\"address\":\""
@@ -128,13 +126,12 @@ public class WalletTestMutiSign004 {
     String contractName = "StorageAndCpu" + Integer.toString(randNum);
     String code = Configuration.getByPath("testng.conf")
             .getString("code.code_TestStorageAndCpu_storageAndCpu");
-    String abi = Configuration.getByPath("long-testng.conf")
+    String abi = Configuration.getByPath("testng.conf")
             .getString("abi.abi_TestStorageAndCpu_storageAndCpu");
     byte[] contractAddress = PublicMethedForMutiSign.deployContract(contractName,abi,code,
         "",maxFeeLimit,
         0L, 100,null,ownerKey,ownerAddress,blockingStubFull,permissionKeyString);
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
     Assert.assertTrue(smartContract.getAbi().toString() != null);
@@ -144,12 +141,11 @@ public class WalletTestMutiSign004 {
           "testUseCpu(uint256)", initParmes, false,
           0, maxFeeLimit,ownerAddress, ownerKey, blockingStubFull,permissionKeyString);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.getTransactionById(txid,blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getBlockNumber() > 0);
-
-    PublicMethedForMutiSign.updateSetting(contractAddress,50,ownerKey,ownerAddress,blockingStubFull,permissionKeyString);
+    PublicMethedForMutiSign.updateSetting(contractAddress,50,ownerKey,
+            ownerAddress,blockingStubFull,permissionKeyString);
 
   }
 
