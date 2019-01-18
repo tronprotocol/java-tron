@@ -135,67 +135,67 @@ public class WalletTestMutiSign002 {
 
   @Test(enabled = true)
   public void test2CreateExchange() {
-//    ecKey3 = new ECKey(Utils.getRandom());
-//    manager1Address = ecKey3.getAddress();
-//    manager1Key = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
-//
-//    ecKey4 = new ECKey(Utils.getRandom());
-//    manager2Address = ecKey4.getAddress();
-//    manager2Key = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
-//
-//    permissionKeyString[0] = manager1Key;
-//    permissionKeyString[1] = manager2Key;
-//    PublicMethed.waitProduceNextBlock(blockingStubFull);
-//    PublicMethed.waitProduceNextBlock(blockingStubFull);
-//    ownerKeyString[0] = exchange001Key;
-//    accountPermissionJson = "[{\"keys\":[{\"address\":\""
-//        + PublicMethed.getAddressString(exchange001Key)
-//        + "\",\"weight\":2}],\"name\":\"owner\",\"threshold\":2,\"parent\":\"owner\"},"
-//        + "{\"parent\":\"owner\",\"keys\":[{\"address\":\""
-//        + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},{\"address\":\""
-//        + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}],\"name\":\"active\","
-//        + "\"threshold\":2}]";
-//    logger.info(accountPermissionJson);
-//    PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,exchange001Address,exchange001Key,
-//        blockingStubFull,ownerKeyString);
-//
-//
-//    listExchange = PublicMethed.getExchangeList(blockingStubFull);
-//    final Integer beforeCreateExchangeNum = listExchange.get().getExchangesCount();
-//    exchangeId = listExchange.get().getExchangesCount();
-//
-//
-//    Account getAssetIdFromThisAccount;
-//    getAssetIdFromThisAccount = PublicMethed.queryAccount(exchange001Address, blockingStubFull);
-//    assetAccountId1 = getAssetIdFromThisAccount.getAssetIssuedID();
-//
-//    getAssetIdFromThisAccount = PublicMethed
-//        .queryAccount(secondExchange001Address, blockingStubFull);
-//    assetAccountId2 = getAssetIdFromThisAccount.getAssetIssuedID();
-//
-//    firstAccount = PublicMethed.queryAccount(exchange001Address, blockingStubFull);
-//    Long token1BeforeBalance = 0L;
-//    for (String name : firstAccount.getAssetMap().keySet()) {
-//      token1BeforeBalance = firstAccount.getAssetMap().get(name);
-//    }
-//    Assert.assertTrue(PublicMethed.transferAsset(exchange001Address, assetAccountId2.toByteArray(),
-//        secondTransferAssetToFirstAccountNum, secondExchange001Address,
-//        secondExchange001Key, blockingStubFull));
-//    Long token2BeforeBalance = secondTransferAssetToFirstAccountNum;
-//
-//    //logger.info("name1 is " + name1);
-//    //logger.info("name2 is " + name2);
-//    //logger.info("first balance is " + Long.toString(token1BeforeBalance));
-//    //logger.info("second balance is " + token2BeforeBalance.toString());
-//    //CreateExchange
-//    Assert.assertTrue(
-//        PublicMethedForMutiSign.exchangeCreate(assetAccountId1.toByteArray(), firstTokenInitialBalance,
-//            assetAccountId2.toByteArray(), secondTokenInitialBalance, exchange001Address,
-//            exchange001Key, blockingStubFull,permissionKeyString));
-//    listExchange = PublicMethed.getExchangeList(blockingStubFull);
-//    Integer afterCreateExchangeNum = listExchange.get().getExchangesCount();
-//    Assert.assertTrue(afterCreateExchangeNum - beforeCreateExchangeNum == 1);
-//    exchangeId = listExchange.get().getExchangesCount();
+    ecKey3 = new ECKey(Utils.getRandom());
+    manager1Address = ecKey3.getAddress();
+    manager1Key = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
+
+    ecKey4 = new ECKey(Utils.getRandom());
+    manager2Address = ecKey4.getAddress();
+    manager2Key = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
+
+    permissionKeyString[0] = manager1Key;
+    permissionKeyString[1] = manager2Key;
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    ownerKeyString[0] = exchange001Key;
+    accountPermissionJson = "[{\"keys\":[{\"address\":\""
+        + PublicMethed.getAddressString(exchange001Key)
+        + "\",\"weight\":2}],\"name\":\"owner\",\"threshold\":2,\"parent\":\"owner\"},"
+        + "{\"parent\":\"owner\",\"keys\":[{\"address\":\""
+        + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},{\"address\":\""
+        + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}],\"name\":\"active\","
+        + "\"threshold\":2}]";
+    logger.info(accountPermissionJson);
+    PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,exchange001Address,exchange001Key,
+        blockingStubFull,ownerKeyString);
+
+
+    listExchange = PublicMethed.getExchangeList(blockingStubFull);
+    final Integer beforeCreateExchangeNum = listExchange.get().getExchangesCount();
+    exchangeId = listExchange.get().getExchangesCount();
+
+
+    Account getAssetIdFromThisAccount;
+    getAssetIdFromThisAccount = PublicMethed.queryAccount(exchange001Address, blockingStubFull);
+    assetAccountId1 = getAssetIdFromThisAccount.getAssetIssuedID();
+
+    getAssetIdFromThisAccount = PublicMethed
+        .queryAccount(secondExchange001Address, blockingStubFull);
+    assetAccountId2 = getAssetIdFromThisAccount.getAssetIssuedID();
+
+    firstAccount = PublicMethed.queryAccount(exchange001Address, blockingStubFull);
+    Long token1BeforeBalance = 0L;
+    for (String name : firstAccount.getAssetMap().keySet()) {
+      token1BeforeBalance = firstAccount.getAssetMap().get(name);
+    }
+    Assert.assertTrue(PublicMethed.transferAsset(exchange001Address, assetAccountId2.toByteArray(),
+        secondTransferAssetToFirstAccountNum, secondExchange001Address,
+        secondExchange001Key, blockingStubFull));
+    Long token2BeforeBalance = secondTransferAssetToFirstAccountNum;
+
+    //logger.info("name1 is " + name1);
+    //logger.info("name2 is " + name2);
+    //logger.info("first balance is " + Long.toString(token1BeforeBalance));
+    //logger.info("second balance is " + token2BeforeBalance.toString());
+    //CreateExchange
+    Assert.assertTrue(
+        PublicMethedForMutiSign.exchangeCreate(assetAccountId1.toByteArray(), firstTokenInitialBalance,
+            assetAccountId2.toByteArray(), secondTokenInitialBalance, exchange001Address,
+            exchange001Key, blockingStubFull,permissionKeyString));
+    listExchange = PublicMethed.getExchangeList(blockingStubFull);
+    Integer afterCreateExchangeNum = listExchange.get().getExchangesCount();
+    Assert.assertTrue(afterCreateExchangeNum - beforeCreateExchangeNum == 1);
+    exchangeId = listExchange.get().getExchangesCount();
 
   }
 
