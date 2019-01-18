@@ -765,12 +765,13 @@ public class RuntimeImpl implements Runtime {
     }
 
   }
+
   public void checkTokenValueAndId(long tokenValue, long tokenId) throws ContractValidateException {
     if (VMConfig.allowTvmTransferTrc10()) {
       if (VMConfig.isVERSION_3_5_HARD_FORK()) { //3.5 hard fork
         // tokenid can only be 0
         // or (MIN_TOKEN_ID, Long.Max]
-        if (tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0){
+        if (tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0) {
           throw new ContractValidateException("tokenId must > " + VMConstant.MIN_TOKEN_ID);
         }
         // tokenid can only be 0 when tokenvalue = 0,
