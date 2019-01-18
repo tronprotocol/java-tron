@@ -1289,10 +1289,7 @@ public class Manager {
         continue;
       } else {
         switch (contract.getType()) {
-          case AccountPermissionUpdateContract:
-          case PermissionAddKeyContract:
-          case PermissionUpdateKeyContract:
-          case PermissionDeleteKeyContract: {
+          case AccountPermissionUpdateContract: {
             accountSet.add(ownerAddress);
           }
           break;

@@ -215,9 +215,6 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     byte[] operations = new byte[32];
     for (ContractType type : types) {
       if (type != ContractType.AccountPermissionUpdateContract
-          && type != ContractType.PermissionDeleteKeyContract
-          && type != ContractType.PermissionAddKeyContract
-          && type != ContractType.PermissionUpdateKeyContract
           && type != ContractType.UNRECOGNIZED) {
         operations[type.getNumber() / 8] |= (1 << type.getNumber() % 8);
       }
