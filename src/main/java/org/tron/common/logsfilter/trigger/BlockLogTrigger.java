@@ -45,6 +45,5 @@ public class BlockLogTrigger extends Trigger {
       .append(latestSolidifiedBlockNumber)
       .append(", transactionList: ")
       .append(transactionList).toString();
-
   }
 }
