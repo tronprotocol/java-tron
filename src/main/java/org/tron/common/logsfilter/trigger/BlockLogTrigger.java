@@ -20,6 +20,10 @@ public class BlockLogTrigger extends Trigger {
 
   @Getter
   @Setter
+  private long latestSolidifiedBlockNumber;
+
+  @Getter
+  @Setter
   private List<String> transactionList = new ArrayList<>();
 
   public BlockLogTrigger() {
@@ -37,7 +41,10 @@ public class BlockLogTrigger extends Trigger {
       .append(blockHash)
       .append(", transactionSize: ")
       .append(transactionSize)
+      .append(", latestSolidifiedBlockNumber: ")
+      .append(latestSolidifiedBlockNumber)
       .append(", transactionList: ")
       .append(transactionList).toString();
+
   }
 }
