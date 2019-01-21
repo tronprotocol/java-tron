@@ -1285,6 +1285,11 @@ public class Manager {
     session.reset();
     session.setValue(revokingStore.buildSession());
 
+    if (!witnessService.validateWitnessPermission(witnessCapsule.getAddress())) {
+      logger.warn("Witness permission is wrong");
+      return null;
+    }
+
     Set<String> accountSet = new HashSet<>();
     Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
     while (iterator.hasNext() || repushTransactions.size() > 0) {
