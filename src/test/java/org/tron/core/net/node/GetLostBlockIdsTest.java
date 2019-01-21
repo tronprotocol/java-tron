@@ -18,7 +18,6 @@ import org.apache.commons.collections4.MapUtils;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;

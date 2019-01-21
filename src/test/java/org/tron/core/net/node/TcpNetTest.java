@@ -26,7 +26,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.message.DisconnectMessage;
