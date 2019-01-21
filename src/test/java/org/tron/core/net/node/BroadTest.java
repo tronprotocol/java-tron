@@ -12,6 +12,7 @@ import org.apache.commons.collections4.MapUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
@@ -30,6 +31,7 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.db.Manager;
+import org.tron.core.db.RevokingStoreRocks;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
@@ -294,6 +296,7 @@ public class BroadTest {
     for (PeerConnection peer : peerConnections) {
       peer.close();
     }
+    RevokingStoreRocks.releaseInstance();
     context.destroy();
     handshakeHandlerTest.close();
     appT.shutdownServices();

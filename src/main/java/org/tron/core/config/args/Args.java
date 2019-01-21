@@ -44,6 +44,7 @@ import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.db.AccountStore;
+import org.tron.core.db.backup.DbBackupConfig;
 import org.tron.keystore.CipherException;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
@@ -396,7 +397,6 @@ public class Args {
   @Setter
   private String trxReferenceBlock;
 
-  @Getter
   @Setter
   private int minEffectiveConnection;
 
@@ -414,6 +414,9 @@ public class Args {
 
   @Getter
   private FilterQuery eventFilter;
+
+  @Getter
+  private DbBackupConfig dbBackupConfig;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -819,7 +822,6 @@ public class Args {
         config.hasPath("storage.needToUpdateAsset") ? config
             .getBoolean("storage.needToUpdateAsset")
             : true;
-
     INSTANCE.trxReferenceBlock = config.hasPath("trx.reference.block") ?
         config.getString("trx.reference.block") : "head";
 
@@ -843,6 +845,7 @@ public class Args {
     INSTANCE.eventFilter =
             config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
 
+    initRocksDbBackupProperty(config);
     initBackupProperty(config);
 
     logConfig();
@@ -1121,6 +1124,25 @@ public class Args {
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
     return 5.0;
+  }
+
+
+  private static void initRocksDbBackupProperty(Config config) {
+    boolean enable = false;
+    if (Args.getInstance().getStorage().getDbVersion() == 3) {
+      enable = config.hasPath("storage.backup.enable") ? config.getBoolean("storage.backup.enable")
+          : false;
+    }
+    String propPath = config.hasPath("storage.backup.propPath")
+        ? config.getString("storage.backup.propPath") : "prop.properties";
+    String bak1path = config.hasPath("storage.backup.bak1path")
+        ? config.getString("storage.backup.bak1path") : "bak1/database/";
+    String bak2path = config.hasPath("storage.backup.bak2path")
+        ? config.getString("storage.backup.bak2path") : "bak2/database/";
+    int frequency = config.hasPath("storage.backup.frequency")
+        ? config.getInt("storage.backup.frequency") : 10000;
+    INSTANCE.dbBackupConfig = DbBackupConfig.getInstance()
+        .initArgs(enable, propPath, bak1path, bak2path, frequency);
   }
 
   private static void initBackupProperty(Config config) {

@@ -116,6 +116,8 @@ dependencies {
 
     compile "org.iq80.leveldb:leveldb:0.7"
 
+    compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
+
     compile group: leveldbGroup, name: leveldbName, version: leveldbVersion
 
     compile "org.apache.commons:commons-collections4:4.0"
