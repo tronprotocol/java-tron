@@ -18,7 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.BloomFilter;
 import org.rocksdb.Checkpoint;
-import org.rocksdb.CompressionType;
 import org.rocksdb.Options;
 import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDB;
@@ -43,8 +42,6 @@ public class RocksDbDataSourceImpl implements DbSourceInterRocks<byte[]>,
   private boolean alive;
   private String parentName;
   ReadOptions readOpts;
-
-  DBSettings settings = DBSettings.DEFAULT;
 
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
 
@@ -134,11 +131,10 @@ public class RocksDbDataSourceImpl implements DbSourceInterRocks<byte[]>,
   }
 
   public void initDB() {
-    initDB(DBSettings.DEFAULT);
+    initDB(DBSettings.getSettings());
   }
 
   public void initDB(DBSettings settings) {
-    this.settings = settings;
     resetDbLock.writeLock().lock();
     try {
       if (isAlive()) {
@@ -153,19 +149,29 @@ public class RocksDbDataSourceImpl implements DbSourceInterRocks<byte[]>,
         // most of these options are suggested by https://github.com/facebook/rocksdb/wiki/Set-Up-Options
 
         // general options
-        options.setStatistics(new Statistics());
-        options.setStatsDumpPeriodSec(60);
+        if (settings.isEnableStatistics()) {
+          options.setStatistics(new Statistics());
+          options.setStatsDumpPeriodSec(60);
+        }
         options.setCreateIfMissing(true);
-        options.setCompressionType(CompressionType.LZ4_COMPRESSION);
-        options.setBottommostCompressionType(CompressionType.ZSTD_COMPRESSION);
+        options.setIncreaseParallelism(1);
         options.setLevelCompactionDynamicLevelBytes(true);
         options.setMaxOpenFiles(settings.getMaxOpenFiles());
-        options.setIncreaseParallelism(settings.getMaxThreads());
-        options.setMaxBackgroundCompactions(8);
+
+        // general options supported user config
+        options.setNumLevels(settings.getLevelNumber());
+        options.setMaxBytesForLevelMultiplier(settings.getMaxBytesForLevelMultiplier());
+        options.setMaxBytesForLevelBase(settings.getMaxBytesForLevelBase());
+        options.setMaxBackgroundCompactions(settings.getCompactThreads());
+        options.setCompressionPerLevel(settings.getCompressionTypeList());
+        options.setLevel0FileNumCompactionTrigger(settings.getLevel0FileNumCompactionTrigger());
+        options.setTargetFileSizeMultiplier(settings.getTargetFileSizeMultiplier());
+        options.setTargetFileSizeBase(settings.getTargetFileSizeBase());
+
         // table options
         final BlockBasedTableConfig tableCfg;
         options.setTableFormatConfig(tableCfg = new BlockBasedTableConfig());
-        tableCfg.setBlockSize(16 * 1024);
+        tableCfg.setBlockSize(settings.getBlockSize());
         tableCfg.setBlockCacheSize(32 * 1024 * 1024);
         tableCfg.setCacheIndexAndFilterBlocks(true);
         tableCfg.setPinL0FilterAndIndexBlocksInCache(true);

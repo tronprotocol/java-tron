@@ -37,6 +37,7 @@ import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.TriggerConfig;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.storage.DBSettings;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -120,7 +121,8 @@ public class Args {
   @Parameter(names = {"--storage-db-version"}, description = "Storage db version.(1 or 2)")
   private String storageDbVersion = "";
 
-  @Parameter(names = {"--storage-db-synchronous"}, description = "Storage db is synchronous or not.(true or flase)")
+  @Parameter(names = {
+      "--storage-db-synchronous"}, description = "Storage db is synchronous or not.(true or flase)")
   private String storageDbSynchronous = "";
 
   @Parameter(names = {"--storage-index-directory"}, description = "Storage index directory")
@@ -129,7 +131,8 @@ public class Args {
   @Parameter(names = {"--storage-index-switch"}, description = "Storage index switch.(on or off)")
   private String storageIndexSwitch = "";
 
-  @Parameter(names = {"--storage-transactionHistory-switch"}, description = "Storage transaction history switch.(on or off)")
+  @Parameter(names = {
+      "--storage-transactionHistory-switch"}, description = "Storage transaction history switch.(on or off)")
   private String storageTransactionHistoreSwitch = "";
 
   @Getter
@@ -212,7 +215,7 @@ public class Args {
   @Setter
   private long nodeP2pPingInterval;
 
-//  @Getter
+  //  @Getter
 //  @Setter
 //  private long syncNodeCount;
   @Getter
@@ -419,6 +422,9 @@ public class Args {
   @Getter
   private DbBackupConfig dbBackupConfig;
 
+  @Getter
+  private DBSettings rocksDBCustomSettings;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -605,9 +611,9 @@ public class Args {
         .orElse(Storage.getDbVersionFromConfig(config)));
 
     INSTANCE.storage.setDbSync(Optional.ofNullable(INSTANCE.storageDbSynchronous)
-      .filter(StringUtils::isNotEmpty)
-      .map(Boolean::valueOf)
-      .orElse(Storage.getDbVersionSyncFromConfig(config)));
+        .filter(StringUtils::isNotEmpty)
+        .map(Boolean::valueOf)
+        .orElse(Storage.getDbVersionSyncFromConfig(config)));
 
     INSTANCE.storage.setDbDirectory(Optional.ofNullable(INSTANCE.storageDbDirectory)
         .filter(StringUtils::isNotEmpty)
@@ -621,10 +627,10 @@ public class Args {
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getIndexSwitchFromConfig(config)));
 
-    INSTANCE.storage.setTransactionHistoreSwitch(Optional.ofNullable(INSTANCE.storageTransactionHistoreSwitch)
-      .filter(StringUtils::isNotEmpty)
-      .orElse(Storage.getTransactionHistoreSwitchFromConfig(config)));
-
+    INSTANCE.storage
+        .setTransactionHistoreSwitch(Optional.ofNullable(INSTANCE.storageTransactionHistoreSwitch)
+            .filter(StringUtils::isNotEmpty)
+            .orElse(Storage.getTransactionHistoreSwitchFromConfig(config)));
 
     INSTANCE.storage.setPropertyMapFromConfig(config);
 
@@ -846,8 +852,9 @@ public class Args {
     INSTANCE.eventFilter =
             config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
 
-    initRocksDbBackupProperty(config);
     initBackupProperty(config);
+    initRocksDbBackupProperty(config);
+    initRocksDbSettings(config);
 
     logConfig();
   }
@@ -1128,6 +1135,38 @@ public class Args {
   }
 
 
+  private static void initRocksDbSettings(Config config) {
+    String prefix = "storage.dbSettings.";
+
+    if (Args.getInstance().getStorage().getDbVersion() == 3) {
+      int levelNumber = config.hasPath(prefix + "levelNumber")
+          ? config.getInt(prefix + "levelNumber") : 6;
+      int compactThreads = config.hasPath(prefix + "compactThreads")
+          ? config.getInt(prefix + "compactThreads") : 8;
+      int blocksize = config.hasPath(prefix + "blocksize")
+          ? config.getInt(prefix + "blocksize") : 16;
+      long maxBytesForLevelBase = config.hasPath(prefix + "maxBytesForLevelBase")
+          ? config.getInt(prefix + "maxBytesForLevelBase") : 256;
+      double maxBytesForLevelMultiplier = config.hasPath(prefix + "maxBytesForLevelMultiplier")
+          ? config.getDouble(prefix + "maxBytesForLevelMultiplier") : 10;
+      String compressionStr = config.hasPath(prefix + "compressionTypeListStr")
+          ? config.getString(prefix + "compressionTypeListStr") : "no:no:lz4:lz4:zstd:zstd";
+      int level0FileNumCompactionTrigger =
+          config.hasPath(prefix + "level0FileNumCompactionTrigger") ? config
+              .getInt(prefix + "level0FileNumCompactionTrigger") : 2;
+      long targetFileSizeBase = config.hasPath(prefix + "targetFileSizeBase") ? config
+          .getLong(prefix + "targetFileSizeBase") : 64;
+      int targetFileSizeMultiplier = config.hasPath(prefix + "targetFileSizeMultiplier") ? config
+          .getInt(prefix + "targetFileSizeMultiplier") : 1;
+
+      INSTANCE.rocksDBCustomSettings = DBSettings
+          .initCustomSettings(levelNumber, compactThreads, blocksize, maxBytesForLevelBase,
+              maxBytesForLevelMultiplier, compressionStr, level0FileNumCompactionTrigger,
+              targetFileSizeBase, targetFileSizeMultiplier);
+      DBSettings.loggingSettings();
+    }
+  }
+
   private static void initRocksDbBackupProperty(Config config) {
     boolean enable = false;
     if (Args.getInstance().getStorage().getDbVersion() == 3) {
@@ -1145,6 +1184,7 @@ public class Args {
     INSTANCE.dbBackupConfig = DbBackupConfig.getInstance()
         .initArgs(enable, propPath, bak1path, bak2path, frequency);
   }
+
 
   private static void initBackupProperty(Config config) {
     INSTANCE.backupPriority = config.hasPath("node.backup.priority")
