@@ -41,7 +41,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
       transactionLogTrigger.setBlockHash(blockCapsule.getBlockId().toString());
     }
     transactionLogTrigger.setTransactionId(trxCasule.getTransactionId().toString());
-    transactionLogTrigger.setTimeStamp(trxCasule.getTimestamp());
+    transactionLogTrigger.setTimeStamp(blockCapsule.getTimeStamp());
     transactionLogTrigger.setBlockNumber(trxCasule.getBlockNum());
 
     TransactionTrace trxTrace = trxCasule.getTrxTrace();
