@@ -1862,7 +1862,7 @@ public class Manager {
       final BlockCapsule blockCap) {
     if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
       TransactionLogTriggerCapsule trx = new TransactionLogTriggerCapsule(trxCap, blockCap);
-      trx.setLastestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
+      trx.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
       boolean result = triggerCapsuleQueue.offer(trx);
       if (result == false) {
         logger.info("too many trigger, lost transaction trigger: {}", trxCap.getTransactionId());
@@ -1902,14 +1902,14 @@ public class Manager {
           ContractEventTriggerCapsule contractEventTriggerCapsule = new ContractEventTriggerCapsule(
               (LogEventWrapper) trigger);
           contractEventTriggerCapsule.getContractEventTrigger().setRemoved(remove);
-          contractEventTriggerCapsule.setLastestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
+          contractEventTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
           result = triggerCapsuleQueue.offer(contractEventTriggerCapsule);
         } else if (trigger instanceof ContractLogTrigger && EventPluginLoader.getInstance()
             .isContractLogTriggerEnable()) {
           ContractLogTriggerCapsule contractLogTriggerCapsule = new ContractLogTriggerCapsule(
               (ContractLogTrigger) trigger);
           contractLogTriggerCapsule.getContractLogTrigger().setRemoved(remove);
-          contractLogTriggerCapsule.setLastestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
+          contractLogTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
           result = triggerCapsuleQueue.offer(contractLogTriggerCapsule);
         }
         if (result == false) {
