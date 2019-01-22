@@ -22,6 +22,10 @@ public class BlockLogTriggerCapsule extends TriggerCapsule {
     );
   }
 
+  public void setLatestSolidifiedBlockNumber(long latestSolidifiedBlockNumber) {
+    blockLogTrigger.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
+  }
+
   @Override
   public void processTrigger() {
     EventPluginLoader.getInstance().postBlockTrigger(blockLogTrigger);

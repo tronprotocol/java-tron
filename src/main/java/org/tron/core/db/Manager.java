@@ -210,6 +210,8 @@ public class Manager {
 
   private boolean isRunTriggerCapsuleProcessThread = true;
 
+  private long latestSolidifiedBlockNumber;
+
   @Getter
   @Setter
   public boolean eventPluginLoaded = false;
@@ -1547,6 +1549,7 @@ public class Manager {
     }
 
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
+    this.latestSolidifiedBlockNumber = latestSolidifiedBlockNum;
     logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
   }
 
@@ -1847,7 +1850,9 @@ public class Manager {
 
   private void postBlockTrigger(final BlockCapsule newBlock) {
     if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
-      boolean result = triggerCapsuleQueue.offer(new BlockLogTriggerCapsule(newBlock));
+      BlockLogTriggerCapsule blockLogTriggerCapsule = new BlockLogTriggerCapsule(newBlock);
+      blockLogTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
+      boolean result = triggerCapsuleQueue.offer(blockLogTriggerCapsule);
       if (result == false) {
         logger.info("too many trigger, lost block trigger: {}", newBlock.getBlockId());
       }
