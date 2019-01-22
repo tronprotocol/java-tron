@@ -64,8 +64,6 @@ import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
-import org.tron.common.logsfilter.EventPluginLoader;
-import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
@@ -128,6 +126,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Permission;
+import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.SmartContract.ABI;
@@ -151,8 +150,8 @@ public class Wallet {
   private Manager dbManager;
   @Autowired
   private NodeManager nodeManager;
-  private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_TESTNET;  //default testnet
-  private static byte addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_TESTNET;
+  private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;  //default testnet
+  private static byte addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_MAINNET;
 
   private int minEffectiveConnection = Args.getInstance().getMinEffectiveConnection();
 
@@ -437,7 +436,6 @@ public class Wallet {
         }
       }
 
-
       if (dbManager.isTooManyPending()) {
         logger.warn("Broadcast transaction {} failed, too many pending.", trx.getTransactionId());
         return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
@@ -525,6 +523,17 @@ public class Wallet {
     return trx;
   }
 
+  public static boolean checkPermissionOprations(Permission permission, Contract contract)
+      throws PermissionException {
+    ByteString operations = permission.getOperations();
+    if (operations.size() != 32) {
+      throw new PermissionException("operations size must 32");
+    }
+    int contractType = contract.getTypeValue();
+    boolean b = (operations.byteAt(contractType / 8) & (1 << (contractType % 8))) != 0;
+    return b;
+  }
+
   public TransactionSignWeight getTransactionSignWeight(Transaction trx) {
     TransactionSignWeight.Builder tswBuilder = TransactionSignWeight.newBuilder();
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
@@ -542,9 +551,20 @@ public class Wallet {
       if (account == null) {
         throw new PermissionException("Account is not exist!");
       }
-      String permissionName = TransactionCapsule.getPermissionName(contract);
-      Permission permission = TransactionCapsule
-          .getPermission(account.getInstance(), permissionName);
+      int permissionId = contract.getPermissionId();
+      Permission permission = account.getPermissionById(permissionId);
+      if (permission == null) {
+        throw new PermissionException("permission isn't exit");
+      }
+      if (permissionId != 0) {
+        if (permission.getType() != PermissionType.Active) {
+          throw new PermissionException("Permission type is error");
+        }
+        //check oprations
+        if (!checkPermissionOprations(permission, contract)){
+          throw new PermissionException("Permission denied");
+        }
+      }
       tswBuilder.setPermission(permission);
       if (trx.getSignatureCount() > 0) {
         List<ByteString> approveList = new ArrayList<ByteString>();

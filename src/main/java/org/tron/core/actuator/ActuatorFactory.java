@@ -99,12 +99,6 @@ public class ActuatorFactory {
         return new ExchangeTransactionActuator(contract.getParameter(), manager);
       case AccountPermissionUpdateContract:
         return new AccountPermissionUpdateActuator(contract.getParameter(), manager);
-      case PermissionAddKeyContract:
-        return new PermissionAddKeyActuator(contract.getParameter(), manager);
-      case PermissionUpdateKeyContract:
-        return new PermissionUpdateKeyActuator(contract.getParameter(), manager);
-      case PermissionDeleteKeyContract:
-        return new PermissionDeleteKeyActuator(contract.getParameter(), manager);
       default:
         break;
 

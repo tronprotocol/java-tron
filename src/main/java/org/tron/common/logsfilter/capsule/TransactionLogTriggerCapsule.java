@@ -35,13 +35,17 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
   @Setter
   TransactionLogTrigger transactionLogTrigger;
 
+  public void setLatestSolidifiedBlockNumber(long latestSolidifiedBlockNumber) {
+    transactionLogTrigger.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
+  }
+
   public TransactionLogTriggerCapsule(TransactionCapsule trxCasule, BlockCapsule blockCapsule) {
     transactionLogTrigger = new TransactionLogTrigger();
     if (Objects.nonNull(blockCapsule)) {
       transactionLogTrigger.setBlockHash(blockCapsule.getBlockId().toString());
     }
     transactionLogTrigger.setTransactionId(trxCasule.getTransactionId().toString());
-    transactionLogTrigger.setTimeStamp(trxCasule.getTimestamp());
+    transactionLogTrigger.setTimeStamp(blockCapsule.getTimeStamp());
     transactionLogTrigger.setBlockNumber(trxCasule.getBlockNum());
 
     TransactionTrace trxTrace = trxCasule.getTrxTrace();
@@ -152,7 +156,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
       item.setCallValue(internalTransaction.getValue());
       item.setTokenInfo(internalTransaction.getTokenInfo());
       item.setCaller_address(Hex.toHexString(internalTransaction.getSender()));
-      item.setTransferTo_address(Hex.toHexString(internalTransaction.getReceiveAddress()));
+      item.setTransferTo_address(Hex.toHexString(internalTransaction.getTransferToAddress()));
       item.setData(Hex.toHexString(internalTransaction.getData()));
       item.setRejected(internalTransaction.isRejected());
       item.setNote(internalTransaction.getNote());

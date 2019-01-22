@@ -212,6 +212,8 @@ public class Manager {
 
   private boolean isRunTriggerCapsuleProcessThread = true;
 
+  private long latestSolidifiedBlockNumber;
+
   @Getter
   @Setter
   public boolean eventPluginLoaded = false;
@@ -937,7 +939,7 @@ public class Manager {
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
-        if (!block.validateSignature()) {
+        if (!block.validateSignature(this)) {
           logger.warn("The signature is not validated.");
           throw new BadBlockException("The signature is not validated");
         }
@@ -1019,6 +1021,7 @@ public class Manager {
           return;
         }
         try (ISession tmpSession = revokingStore.buildSession()) {
+
           applyBlock(newBlock);
           tmpSession.commit();
           // if event subscribe is enabled, post block trigger to queue
@@ -1260,7 +1263,7 @@ public class Manager {
    */
   public synchronized BlockCapsule generateBlock(
       final WitnessCapsule witnessCapsule, final long when, final byte[] privateKey,
-      Boolean lastHeadBlockIsMaintenanceBefore)
+      Boolean lastHeadBlockIsMaintenanceBefore, Boolean needCheckWitnessPermission)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException {
 
@@ -1295,6 +1298,12 @@ public class Manager {
     session.setValue(revokingStore.buildSession());
     //
     fastSyncCallBack.preExecute(blockCapsule);
+
+    if (needCheckWitnessPermission && !witnessService.
+        validateWitnessPermission(witnessCapsule.getAddress())) {
+      logger.warn("Witness permission is wrong");
+      return null;
+    }
 
     Set<String> accountSet = new HashSet<>();
     Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
@@ -1434,10 +1443,7 @@ public class Manager {
   private boolean isMultSignTransaction(Transaction transaction) {
     Contract contract = transaction.getRawData().getContract(0);
     switch (contract.getType()) {
-      case AccountPermissionUpdateContract:
-      case PermissionAddKeyContract:
-      case PermissionUpdateKeyContract:
-      case PermissionDeleteKeyContract: {
+      case AccountPermissionUpdateContract: {
         return true;
       }
       default:
@@ -1563,6 +1569,7 @@ public class Manager {
     }
 
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
+    this.latestSolidifiedBlockNumber = latestSolidifiedBlockNum;
     logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
   }
 
@@ -1861,7 +1868,9 @@ public class Manager {
 
   private void postBlockTrigger(final BlockCapsule newBlock) {
     if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
-      boolean result = triggerCapsuleQueue.offer(new BlockLogTriggerCapsule(newBlock));
+      BlockLogTriggerCapsule blockLogTriggerCapsule = new BlockLogTriggerCapsule(newBlock);
+      blockLogTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
+      boolean result = triggerCapsuleQueue.offer(blockLogTriggerCapsule);
       if (result == false) {
         logger.info("too many trigger, lost block trigger: {}", newBlock.getBlockId());
       }
@@ -1875,8 +1884,9 @@ public class Manager {
   private void postTransactionTrigger(final TransactionCapsule trxCap,
       final BlockCapsule blockCap) {
     if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
-      boolean result = triggerCapsuleQueue
-          .offer(new TransactionLogTriggerCapsule(trxCap, blockCap));
+      TransactionLogTriggerCapsule trx = new TransactionLogTriggerCapsule(trxCap, blockCap);
+      trx.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
+      boolean result = triggerCapsuleQueue.offer(trx);
       if (result == false) {
         logger.info("too many trigger, lost transaction trigger: {}", trxCap.getTransactionId());
       }
@@ -1915,12 +1925,14 @@ public class Manager {
           ContractEventTriggerCapsule contractEventTriggerCapsule = new ContractEventTriggerCapsule(
               (LogEventWrapper) trigger);
           contractEventTriggerCapsule.getContractEventTrigger().setRemoved(remove);
+          contractEventTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
           result = triggerCapsuleQueue.offer(contractEventTriggerCapsule);
         } else if (trigger instanceof ContractLogTrigger && EventPluginLoader.getInstance()
             .isContractLogTriggerEnable()) {
           ContractLogTriggerCapsule contractLogTriggerCapsule = new ContractLogTriggerCapsule(
               (ContractLogTrigger) trigger);
           contractLogTriggerCapsule.getContractLogTrigger().setRemoved(remove);
+          contractLogTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
           result = triggerCapsuleQueue.offer(contractLogTriggerCapsule);
         }
         if (result == false) {

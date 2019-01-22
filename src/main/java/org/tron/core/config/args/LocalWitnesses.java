@@ -21,7 +21,8 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.tron.core.config.Parameter;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.config.Parameter.ChainConstant;
 
 @Slf4j(topic = "app")
@@ -29,6 +30,8 @@ public class LocalWitnesses {
 
   @Getter
   private List<String> privateKeys = Lists.newArrayList();
+
+  private byte[] witnessAccountAddress;
 
   public LocalWitnesses() {
   }
@@ -39,6 +42,27 @@ public class LocalWitnesses {
 
   public LocalWitnesses(List<String> privateKeys) {
     setPrivateKeys(privateKeys);
+  }
+
+  public void setWitnessAccountAddress(final byte[] localWitnessAccountAddress) {
+    this.witnessAccountAddress = localWitnessAccountAddress;
+  }
+
+  public byte[] getWitnessAccountAddress() {
+    if (witnessAccountAddress == null) {
+      byte[] privateKey = ByteArray.fromHexString(getPrivateKey());
+      final ECKey ecKey = ECKey.fromPrivate(privateKey);
+      this.witnessAccountAddress = ecKey.getAddress();
+    }
+    return witnessAccountAddress;
+  }
+
+  public void initWitnessAccountAddress() {
+    if (witnessAccountAddress == null) {
+      byte[] privateKey = ByteArray.fromHexString(getPrivateKey());
+      final ECKey ecKey = ECKey.fromPrivate(privateKey);
+      this.witnessAccountAddress = ecKey.getAddress();
+    }
   }
 
   /**

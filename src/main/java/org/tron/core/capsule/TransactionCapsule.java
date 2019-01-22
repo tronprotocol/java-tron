@@ -67,9 +67,6 @@ import org.tron.protos.Contract.ExchangeTransactionContract;
 import org.tron.protos.Contract.ExchangeWithdrawContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
-import org.tron.protos.Contract.PermissionAddKeyContract;
-import org.tron.protos.Contract.PermissionDeleteKeyContract;
-import org.tron.protos.Contract.PermissionUpdateKeyContract;
 import org.tron.protos.Contract.ProposalApproveContract;
 import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Contract.ProposalDeleteContract;
@@ -83,9 +80,9 @@ import org.tron.protos.Contract.UpdateAssetContract;
 import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
-import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
+import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result;
@@ -267,45 +264,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
 
-  public static String getPermissionName(Transaction.Contract contract) {
-    switch (contract.getType()) {
-      case AccountPermissionUpdateContract:
-      case PermissionAddKeyContract:
-      case PermissionUpdateKeyContract:
-      case PermissionDeleteKeyContract:
-        return "owner";
-      default:
-        return "active";
-    }
-  }
-
-  public static Permission getDefaultPermission(ByteString owner, String name) {
-    Permission.Builder builder = Permission.newBuilder();
-    Key.Builder key = Key.newBuilder();
-    key.setAddress(owner).setWeight(1);
-    builder.addKeys(key);
-    builder.setThreshold(1);
-    builder.setName(name);
-    if (!"owner".equalsIgnoreCase(name)) {
-      builder.setParent("owner");
-    }
-    return builder.build();
-  }
-
-  public static Permission getPermission(Account account, String name)
-      throws PermissionException {
-    List<Permission> list = account.getPermissionsList();
-    if (list.isEmpty()) {
-      return getDefaultPermission(account.getAddress(), name);
-    }
-    for (Permission permission : list) {
-      if (name.equalsIgnoreCase(permission.getName())) {
-        return permission;
-      }
-    }
-    throw new PermissionException("Permission of " + name + " is null.");
-  }
-
   public static long getWeight(Permission permission, byte[] address) {
     List<Key> list = permission.getKeysList();
     for (Key key : list) {
@@ -357,13 +315,25 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   public void addSign(byte[] privateKey, AccountStore accountStore)
       throws PermissionException, SignatureException, SignatureFormatException {
     Transaction.Contract contract = this.transaction.getRawData().getContract(0);
-    String permissionName = getPermissionName(contract);
+    int permissionId = contract.getPermissionId();
     byte[] owner = getOwner(contract);
     AccountCapsule account = accountStore.get(owner);
     if (account == null) {
       throw new PermissionException("Account is not exist!");
     }
-    Permission permission = getPermission(account.getInstance(), permissionName);
+    Permission permission = account.getPermissionById(permissionId);
+    if (permission == null) {
+      throw new PermissionException("permission isn't exit");
+    }
+    if (permissionId != 0) {
+      if (permission.getType() != PermissionType.Active) {
+        throw new PermissionException("Permission type is error");
+      }
+      //check oprations
+      if (!Wallet.checkPermissionOprations(permission, contract)){
+        throw new PermissionException("Permission denied");
+      }
+    }
     List<ByteString> approveList = new ArrayList<>();
     ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
@@ -487,15 +457,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case AccountPermissionUpdateContract:
           owner = contractParameter.unpack(AccountPermissionUpdateContract.class).getOwnerAddress();
           break;
-        case PermissionAddKeyContract:
-          owner = contractParameter.unpack(PermissionAddKeyContract.class).getOwnerAddress();
-          break;
-        case PermissionUpdateKeyContract:
-          owner = contractParameter.unpack(PermissionUpdateKeyContract.class).getOwnerAddress();
-          break;
-        case PermissionDeleteKeyContract:
-          owner = contractParameter.unpack(PermissionDeleteKeyContract.class).getOwnerAddress();
-          break;
         // todo add other contract
         default:
           return null;
@@ -592,14 +553,31 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       byte[] hash, AccountStore accountStore)
       throws PermissionException, SignatureException, SignatureFormatException {
     Transaction.Contract contract = transaction.getRawData().getContractList().get(0);
-    String permissionName = getPermissionName(contract);
+    int permissionId = contract.getPermissionId();
     byte[] owner = getOwner(contract);
     AccountCapsule account = accountStore.get(owner);
-    Permission permission;
+    Permission permission = null;
     if (account == null) {
-      permission = getDefaultPermission(ByteString.copyFrom(owner), permissionName);
+      if (permissionId == 0) {
+        permission = AccountCapsule.getDefaultPermission(ByteString.copyFrom(owner));
+      }
+      if (permissionId == 2) {
+        permission = AccountCapsule.createDefaultActivePermission(ByteString.copyFrom(owner));
+      }
     } else {
-      permission = getPermission(account.getInstance(), permissionName);
+      permission = account.getPermissionById(permissionId);
+    }
+    if (permission == null) {
+      throw new PermissionException("permission isn't exit");
+    }
+    if (permissionId != 0) {
+      if (permission.getType() != PermissionType.Active) {
+        throw new PermissionException("Permission type is error");
+      }
+      //check oprations
+      if (!Wallet.checkPermissionOprations(permission, contract)){
+        throw new PermissionException("Permission denied");
+      }
     }
     long weight = checkWeight(permission, transaction.getSignatureList(), hash, null);
     if (weight >= permission.getThreshold()) {

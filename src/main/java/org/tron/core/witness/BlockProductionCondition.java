@@ -7,6 +7,7 @@ public enum  BlockProductionCondition {
   NOT_SYNCED,
   NOT_TIME_YET,       // Not yet arrived
   NO_PRIVATE_KEY,
+  WITNESS_PERMISSION_ERROR,
   LOW_PARTICIPATION,
   LAG,
   CONSECUTIVE,

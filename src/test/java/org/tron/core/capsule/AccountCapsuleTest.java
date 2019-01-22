@@ -2,6 +2,7 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -20,6 +21,8 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Key;
+import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Vote;
 
 @Ignore
@@ -307,4 +310,30 @@ public class AccountCapsuleTest {
     Assert.assertEquals(accountCapsule.getAssetMapV2().get(String.valueOf(id+1)).longValue(), 500L);
   }
 
+  @Test
+  public void witnessPermissionTest() {
+    AccountCapsule accountCapsule =
+        new AccountCapsule(
+            ByteString.copyFromUtf8("owner"),
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+            AccountType.Normal,
+            10000);
+
+    Assert.assertTrue(
+        Arrays.equals(ByteArray.fromHexString(OWNER_ADDRESS),
+            accountCapsule.getWitnessPermissionAddress()));
+
+    String witnessPermissionAddress =
+        Wallet.getAddressPreFixString() + "cc6a17a49648a8ad32055c06f60fa14ae46df912cc";
+    accountCapsule = new AccountCapsule(accountCapsule.getInstance().toBuilder().
+        setWitnessPermission(Permission.newBuilder().addKeys(
+            Key.newBuilder()
+                .setAddress(ByteString.copyFrom(ByteArray.fromHexString(witnessPermissionAddress)))
+                .build()).
+            build()).build());
+
+    Assert.assertTrue(
+        Arrays.equals(ByteArray.fromHexString(witnessPermissionAddress),
+            accountCapsule.getWitnessPermissionAddress()));
+  }
 }

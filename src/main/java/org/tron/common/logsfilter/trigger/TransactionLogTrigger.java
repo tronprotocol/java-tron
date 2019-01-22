@@ -90,6 +90,10 @@ public class TransactionLogTrigger extends Trigger {
   @Setter
   private long assetAmount;
 
+  @Getter
+  @Setter
+  private long latestSolidifiedBlockNumber;
+
   //internal transaction
   @Getter
   @Setter

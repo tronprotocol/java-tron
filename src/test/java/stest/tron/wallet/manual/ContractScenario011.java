@@ -93,8 +93,10 @@ public class ContractScenario011 {
   public void deployErc721KittyCore() {
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(deployAddress, 100000000L,
         0, 1, deployKey, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     Assert.assertTrue(PublicMethed.freezeBalance(deployAddress, 100000000L, 0,
         deployKey, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     Assert.assertTrue(PublicMethed.freezeBalance(triggerAddress, 100000000L, 0,
         triggerKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
