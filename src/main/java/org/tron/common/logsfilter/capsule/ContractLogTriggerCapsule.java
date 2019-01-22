@@ -15,6 +15,10 @@ public class ContractLogTriggerCapsule extends TriggerCapsule {
     this.contractLogTrigger = contractLogTrigger;
   }
 
+  public void setLastestSolidifiedBlockNumber(long lastestSolidifiedBlockNumber) {
+    contractLogTrigger.setLastestSolidifiedBlockNumber(lastestSolidifiedBlockNumber);
+  }
+
   @Override
   public void processTrigger() {
     if (FilterQuery.matchFilter(contractLogTrigger)) {
