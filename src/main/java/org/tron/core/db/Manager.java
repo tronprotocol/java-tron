@@ -1287,7 +1287,8 @@ public class Manager {
     session.reset();
     session.setValue(revokingStore.buildSession());
 
-    if (!witnessService.validateWitnessPermission(witnessCapsule.getAddress())) {
+    if (witnessService != null && !witnessService.
+        validateWitnessPermission(witnessCapsule.getAddress())) {
       logger.warn("Witness permission is wrong");
       return null;
     }
