@@ -82,7 +82,7 @@ public class WalletTestAssetIssue012 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Transfer asset use token owner net")
   public void testTransferAssetUseCreatorNet() {
     //get account
     ecKey1 = new ECKey(Utils.getRandom());

@@ -95,7 +95,7 @@ public class WalletTestAssetIssue004 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Get asset issue by account")
   public void testGetAssetIssueByAccount() {
     ByteString addressBs = ByteString.copyFrom(fromAddress);
     Account request = Account.newBuilder().setAddress(addressBs).build();

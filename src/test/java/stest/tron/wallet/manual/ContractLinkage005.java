@@ -84,7 +84,7 @@ public class ContractLinkage005 {
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Every same trigger use same energy and net")
   public void testEnergyCostDetail() {
     Assert.assertTrue(PublicMethed.sendcoin(linkage005Address, 5000000000000L, fromAddress,
         testKey003, blockingStubFull));
