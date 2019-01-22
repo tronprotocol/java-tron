@@ -1253,7 +1253,7 @@ public class Manager {
    */
   public synchronized BlockCapsule generateBlock(
       final WitnessCapsule witnessCapsule, final long when, final byte[] privateKey,
-      Boolean lastHeadBlockIsMaintenanceBefore)
+      Boolean lastHeadBlockIsMaintenanceBefore, Boolean needCheckWitnessPermission)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException {
 
@@ -1286,6 +1286,12 @@ public class Manager {
     blockCapsule.generatedByMyself = true;
     session.reset();
     session.setValue(revokingStore.buildSession());
+
+    if (needCheckWitnessPermission && !witnessService.
+        validateWitnessPermission(witnessCapsule.getAddress())) {
+      logger.warn("Witness permission is wrong");
+      return null;
+    }
 
     Set<String> accountSet = new HashSet<>();
     Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
