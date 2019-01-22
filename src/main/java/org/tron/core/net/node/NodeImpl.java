@@ -38,6 +38,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.Hash;
+import org.tron.common.crypto.SymmEncoder;
 import org.tron.common.overlay.discover.node.statistics.MessageCount;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.Channel.TronState;
@@ -78,6 +79,13 @@ import org.tron.core.services.WitnessProductBlockService;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
+
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import org.tron.api.GrpcAPI;
+import org.tron.api.WalletGrpc;
+import org.tron.protos.Protocol.Block;
+
 
 @Slf4j
 @Component
@@ -336,6 +344,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private AtomicLong count = new AtomicLong(0);
   private long time = System.currentTimeMillis();
   private long lastTime = System.currentTimeMillis();
+  private int  counter1 = 0;
+  private int  counter2 = 0;
 
   public void broadcast(Message msg) {
     InventoryType type;
@@ -522,6 +532,23 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       return;
     }
     logger.info("SPREAD advObjToSpread :{} , peer size: {}", advObjToSpread.size(), getActivePeer().size());
+    if (counter1 == 0) {
+      counter1 = 1;
+      ManagedChannel channelFull = null;
+      WalletGrpc.WalletBlockingStub blockingStubFull = null;
+      String fullnode = "47.94.239.172:50051";
+      channelFull = ManagedChannelBuilder.forTarget(fullnode)
+              .usePlaintext(true)
+              .build();
+      blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+      Block nowblock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+      long startblockNum = nowblock.getBlockHeader().getRawData().getNumber();
+      startblockNum = startblockNum + 1L;
+      logger.info("startblockNum is {}", startblockNum);
+      if (channelFull != null) {
+        channelFull.shutdown();
+      }
+    }
     ConcurrentHashMap<Sha256Hash, InventoryType> spread = new ConcurrentHashMap<>();
     AtomicInteger invCount = new AtomicInteger(0);
     synchronized (advObjToSpread) {
@@ -536,6 +563,31 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     int n = 0;
     while (spread.size() > 0 && getActivePeer().size() > 0) {
       logger.info("SPREAD {} advObjToSpread:{} spreadSize: {}", ++n, advObjToSpread.size(), spread.size());
+
+        if (advObjToSpread.size() == 0) {
+          ManagedChannel channelFull = null;
+          WalletGrpc.WalletBlockingStub blockingStubFull = null;
+          String fullnode = "47.94.239.172:50051";
+          channelFull = ManagedChannelBuilder.forTarget(fullnode)
+                  .usePlaintext(true)
+                  .build();
+          blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+          Block nowblock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+          long endblockNum = nowblock.getBlockHeader().getRawData().getNumber();
+          endblockNum = endblockNum + 1L;
+          logger.info("endblockNum is {}", endblockNum);
+          if (channelFull != null) {
+            channelFull.shutdown();
+          }
+          //15s后关闭
+          try {
+            Thread.sleep(15000);
+            System.exit(0);
+          } catch (InterruptedException e) {
+            e.printStackTrace();
+          }
+        }
+
       InvToSend sendPackage = new InvToSend();
       spread.entrySet().forEach(id -> getActivePeer().stream()
             .filter(peer -> sendPackage.getSize(peer) < 1000)
@@ -629,6 +681,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     ));
 
     logger.info(sb.toString());
+
   }
 
   public synchronized void disconnectInactive() {
@@ -1343,6 +1396,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 //    }
   }
 
+
   @Override
   public void onDisconnectPeer(PeerConnection peer) {
 
@@ -1387,5 +1441,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   public int getAdvObjToSpreadSize() {
     return advObjToSpread.size();
   }
+
+
+
 }
 
