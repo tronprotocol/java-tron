@@ -317,7 +317,7 @@ public class WitnessService implements Service {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException {
     return tronApp.getDbManager().generateBlock(this.localWitnessStateMap.get(witnessAddress), when,
-        this.privateKeyMap.get(witnessAddress), lastHeadBlockIsMaintenance);
+        this.privateKeyMap.get(witnessAddress), lastHeadBlockIsMaintenance, true);
   }
 
   private boolean dupWitnessCheck() {
