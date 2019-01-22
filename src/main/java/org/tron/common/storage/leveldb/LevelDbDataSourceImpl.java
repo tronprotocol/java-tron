@@ -43,6 +43,7 @@ import org.iq80.leveldb.Options;
 import org.iq80.leveldb.WriteBatch;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.DbSourceInter;
+import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.common.iterator.StoreIterator;
@@ -207,10 +208,10 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
   }
 
   @Override
-  public void putData(byte[] key, byte[] value, WriteOptions options) {
+  public void putData(byte[] key, byte[] value, WriteOptionsWrapper options) {
     resetDbLock.readLock().lock();
     try {
-      database.put(key, value, options);
+      database.put(key, value, options.level);
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -227,10 +228,10 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
   }
 
   @Override
-  public void deleteData(byte[] key, WriteOptions options) {
+  public void deleteData(byte[] key, WriteOptionsWrapper options) {
     resetDbLock.readLock().lock();
     try {
-      database.delete(key, options);
+      database.delete(key, options.level);
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -416,13 +417,13 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
   }
 
   @Override
-  public void updateByBatch(Map<byte[], byte[]> rows, WriteOptions options) {
+  public void updateByBatch(Map<byte[], byte[]> rows, WriteOptionsWrapper options) {
     resetDbLock.readLock().lock();
     try {
-      updateByBatchInner(rows, options);
+      updateByBatchInner(rows, options.level);
     } catch (Exception e) {
       try {
-        updateByBatchInner(rows, options);
+        updateByBatchInner(rows, options.level);
       } catch (Exception e1) {
         throw new RuntimeException(e);
       }

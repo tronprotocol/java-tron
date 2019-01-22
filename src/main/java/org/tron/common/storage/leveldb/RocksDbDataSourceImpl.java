@@ -27,14 +27,15 @@ import org.rocksdb.Statistics;
 import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
 import org.tron.common.storage.DBSettings;
-import org.tron.common.storage.DbSourceInterRocks;
+import org.tron.common.storage.DbSourceInter;
+import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.common.iterator.RockStoreIterator;
 
 @Slf4j
 @NoArgsConstructor
-public class RocksDbDataSourceImpl implements DbSourceInterRocks<byte[]>,
+public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     Iterable<Map.Entry<byte[], byte[]>> {
 
   private String dataBaseName;
@@ -226,13 +227,13 @@ public class RocksDbDataSourceImpl implements DbSourceInterRocks<byte[]>,
   }
 
   @Override
-  public void putData(byte[] key, byte[] value, WriteOptions writeOpt) {
+  public void putData(byte[] key, byte[] value, WriteOptionsWrapper optionsWrapper) {
     if (quitIfNotAlive()) {
       return;
     }
     resetDbLock.readLock().lock();
     try {
-      database.put(writeOpt, key, value);
+      database.put(optionsWrapper.rocks, key, value);
     } catch (RocksDBException e) {
       logger.error("RocksDBException:{}", e);
     } finally {
@@ -272,13 +273,13 @@ public class RocksDbDataSourceImpl implements DbSourceInterRocks<byte[]>,
   }
 
   @Override
-  public void deleteData(byte[] key, WriteOptions writeOpt) {
+  public void deleteData(byte[] key, WriteOptionsWrapper optionsWrapper) {
     if (quitIfNotAlive()) {
       return;
     }
     resetDbLock.readLock().lock();
     try {
-      database.delete(writeOpt, key);
+      database.delete(optionsWrapper.rocks, key);
     } catch (RocksDBException e) {
       logger.error("RocksDBException:{}", e);
     } finally {
@@ -349,13 +350,13 @@ public class RocksDbDataSourceImpl implements DbSourceInterRocks<byte[]>,
   }
 
   @Override
-  public void updateByBatch(Map<byte[], byte[]> rows, WriteOptions writeOptions) {
+  public void updateByBatch(Map<byte[], byte[]> rows, WriteOptionsWrapper optionsWrapper) {
     if (quitIfNotAlive()) {
       return;
     }
     resetDbLock.readLock().lock();
     try {
-      updateByBatchInner(rows, writeOptions);
+      updateByBatchInner(rows, optionsWrapper.rocks);
     } catch (Exception e) {
       try {
         updateByBatchInner(rows);

@@ -1,5 +1,7 @@
 package org.tron.core.config.args;
 
+import static java.lang.Math.max;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.typesafe.config.Config;
@@ -627,9 +629,10 @@ public class Args {
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getIndexSwitchFromConfig(config)));
 
-    INSTANCE.storage.setTransactionHistoreSwitch(Optional.ofNullable(INSTANCE.storageTransactionHistoreSwitch)
-        .filter(StringUtils::isNotEmpty)
-        .orElse(Storage.getTransactionHistoreSwitchFromConfig(config)));
+    INSTANCE.storage
+        .setTransactionHistoreSwitch(Optional.ofNullable(INSTANCE.storageTransactionHistoreSwitch)
+            .filter(StringUtils::isNotEmpty)
+            .orElse(Storage.getTransactionHistoreSwitchFromConfig(config)));
 
     INSTANCE.storage.setPropertyMapFromConfig(config);
 
@@ -1137,11 +1140,13 @@ public class Args {
   private static void initRocksDbSettings(Config config) {
     String prefix = "storage.dbSettings.";
 
-    if (Args.getInstance().getStorage().getDbVersion() == 3) {
+    if (Args.getInstance().getStorage().getDbVersion() == 3
+        || Args.getInstance().getStorage().getDbVersion() == 4) {
       int levelNumber = config.hasPath(prefix + "levelNumber")
-          ? config.getInt(prefix + "levelNumber") : 6;
+          ? config.getInt(prefix + "levelNumber") : 7;
       int compactThreads = config.hasPath(prefix + "compactThreads")
-          ? config.getInt(prefix + "compactThreads") : 8;
+          ? config.getInt(prefix + "compactThreads")
+          : max(Runtime.getRuntime().availableProcessors(), 1);
       int blocksize = config.hasPath(prefix + "blocksize")
           ? config.getInt(prefix + "blocksize") : 16;
       long maxBytesForLevelBase = config.hasPath(prefix + "maxBytesForLevelBase")
@@ -1149,7 +1154,7 @@ public class Args {
       double maxBytesForLevelMultiplier = config.hasPath(prefix + "maxBytesForLevelMultiplier")
           ? config.getDouble(prefix + "maxBytesForLevelMultiplier") : 10;
       String compressionStr = config.hasPath(prefix + "compressionTypeListStr")
-          ? config.getString(prefix + "compressionTypeListStr") : "no:no:lz4:lz4:zstd:zstd";
+          ? config.getString(prefix + "compressionTypeListStr") : "no:no:lz4:lz4:lz4:zstd:zstd";
       int level0FileNumCompactionTrigger =
           config.hasPath(prefix + "level0FileNumCompactionTrigger") ? config
               .getInt(prefix + "level0FileNumCompactionTrigger") : 2;
@@ -1168,9 +1173,10 @@ public class Args {
 
   private static void initRocksDbBackupProperty(Config config) {
     boolean enable = false;
-    if (Args.getInstance().getStorage().getDbVersion() == 3) {
-      enable = config.hasPath("storage.backup.enable") ? config.getBoolean("storage.backup.enable")
-          : false;
+    if (Args.getInstance().getStorage().getDbVersion() == 3
+        || Args.getInstance().getStorage().getDbVersion() == 4) {
+      enable =
+          config.hasPath("storage.backup.enable") && config.getBoolean("storage.backup.enable");
     }
     String propPath = config.hasPath("storage.backup.propPath")
         ? config.getString("storage.backup.propPath") : "prop.properties";

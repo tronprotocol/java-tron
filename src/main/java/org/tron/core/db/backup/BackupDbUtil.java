@@ -2,7 +2,6 @@ package org.tron.core.db.backup;
 
 import java.util.List;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.RocksDBException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +12,9 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.RevokingStoreRocks;
+import org.tron.core.db2.core.RevokingDBWithCachingNewValue;
+import org.tron.core.db2.core.SnapshotManager;
+import org.tron.core.db2.core.SnapshotRoot;
 
 @Slf4j
 @Component
@@ -136,16 +138,32 @@ public class BackupDbUtil {
   }
 
   private void backup(int i) throws RocksDBException {
-    List<RocksDbDataSourceImpl> stores = ((RevokingStoreRocks) db).getDbs();
-    for (RocksDbDataSourceImpl store : stores) {
-      store.backup(i);
+    if (Args.getInstance().getStorage().getDbVersion() == 3) {
+      List<RocksDbDataSourceImpl> stores = ((RevokingStoreRocks) db).getDbs();
+      for (RocksDbDataSourceImpl store : stores) {
+        store.backup(i);
+      }
+    } else if (Args.getInstance().getStorage().getDbVersion() == 4) {
+      List<RevokingDBWithCachingNewValue> stores = ((SnapshotManager) db).getDbs();
+      for (RevokingDBWithCachingNewValue store : stores) {
+        ((org.tron.core.db2.common.RocksDB) ((SnapshotRoot) (store.getHead().getRoot())).getDb())
+            .getDb().backup(i);
+      }
     }
   }
 
   private void deleteBackup(int i) {
-    List<RocksDbDataSourceImpl> stores = ((RevokingStoreRocks) db).getDbs();
-    for (RocksDbDataSourceImpl store : stores) {
-      store.deleteDbBakPath(i);
+    if (Args.getInstance().getStorage().getDbVersion() == 3) {
+      List<RocksDbDataSourceImpl> stores = ((RevokingStoreRocks) db).getDbs();
+      for (RocksDbDataSourceImpl store : stores) {
+        store.deleteDbBakPath(i);
+      }
+    } else if (Args.getInstance().getStorage().getDbVersion() == 4) {
+      List<RevokingDBWithCachingNewValue> stores = ((SnapshotManager) db).getDbs();
+      for (RevokingDBWithCachingNewValue store : stores) {
+        ((org.tron.core.db2.common.RocksDB) ((SnapshotRoot) (store.getHead().getRoot())).getDb())
+            .getDb().deleteDbBakPath(i);
+      }
     }
   }
 }

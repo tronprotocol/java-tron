@@ -20,9 +20,9 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import org.rocksdb.RocksDB;
 import org.rocksdb.WriteOptions;
-import org.tron.common.storage.SourceInterRocks;
+import org.tron.common.storage.SourceInter;
+import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.leveldb.RocksDbDataSourceImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Utils;
@@ -35,16 +35,12 @@ import org.tron.core.exception.RevokingStoreIllegalStateException;
 @Slf4j
 public class RevokingStoreRocks implements RevokingDatabase {
 
-  static {
-    RocksDB.loadLibrary();
-  }
-
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
   private Deque<RevokingState> stack = new LinkedList<>();
   private boolean disabled = true;
   private int activeDialog = 0;
   private AtomicInteger maxSize = new AtomicInteger(DEFAULT_STACK_MAX_SIZE);
-  private WriteOptions writeOptions = new WriteOptions().setSync(true);
+  private WriteOptionsWrapper optionsWrapper = WriteOptionsWrapper.getInstance().sync(true);
 
   @Getter
   private List<RocksDbDataSourceImpl> dbs = new ArrayList<>();
@@ -119,9 +115,9 @@ public class RevokingStoreRocks implements RevokingDatabase {
 
         byte[] realValue = value.length == 1 ? null : Arrays.copyOfRange(value, 1, value.length);
         if (realValue != null) {
-          dbMap.get(db).putData(realKey, realValue, new WriteOptions().setSync(true));
+          dbMap.get(db).putData(realKey, realValue, WriteOptionsWrapper.getInstance().sync(true));
         } else {
-          dbMap.get(db).deleteData(realKey, new WriteOptions().setSync(true));
+          dbMap.get(db).deleteData(realKey, WriteOptionsWrapper.getInstance().sync(true));
         }
       }
     }
@@ -276,15 +272,15 @@ public class RevokingStoreRocks implements RevokingDatabase {
 
   @Override
   public void pop() throws RevokingStoreIllegalStateException {
-    prune(writeOptions);
+    prune(optionsWrapper);
   }
 
   @Override
   public void fastPop() throws RevokingStoreIllegalStateException {
-    prune(new WriteOptions());
+    prune(WriteOptionsWrapper.getInstance());
   }
 
-  private synchronized void prune(WriteOptions options) {
+  private synchronized void prune(WriteOptionsWrapper optionsWrapper) {
     if (activeDialog != 0) {
       throw new RevokingStoreIllegalStateException("activeDialog has to be equal 0");
     }
@@ -297,9 +293,9 @@ public class RevokingStoreRocks implements RevokingDatabase {
 
     try {
       RevokingState state = stack.peekLast();
-      state.oldValues.forEach((k, v) -> k.database.putData(k.key, v, options));
-      state.newIds.forEach(e -> e.database.deleteData(e.key, options));
-      state.removed.forEach((k, v) -> k.database.putData(k.key, v, options));
+      state.oldValues.forEach((k, v) -> k.database.putData(k.key, v, optionsWrapper));
+      state.newIds.forEach(e -> e.database.deleteData(e.key, optionsWrapper));
+      state.removed.forEach((k, v) -> k.database.putData(k.key, v, optionsWrapper));
       stack.pollLast();
     } finally {
       disabled = false;
@@ -475,7 +471,7 @@ public class RevokingStoreRocks implements RevokingDatabase {
   @ToString
   public static class RevokingTuple {
 
-    private SourceInterRocks<byte[], byte[]> database;
+    private SourceInter<byte[], byte[]> database;
     private byte[] key;
   }
 

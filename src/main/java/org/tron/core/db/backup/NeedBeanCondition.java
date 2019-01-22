@@ -9,7 +9,7 @@ public class NeedBeanCondition implements Condition {
 
   @Override
   public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
-    return (Args.getInstance().getStorage().getDbVersion() == 3) && Args.getInstance()
+    return (Args.getInstance().getStorage().getDbVersion() == 3 || Args.getInstance().getStorage().getDbVersion() == 4) && Args.getInstance()
         .getDbBackupConfig().isEnable();
   }
 }
