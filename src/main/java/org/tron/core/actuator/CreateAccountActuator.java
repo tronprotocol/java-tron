@@ -31,7 +31,7 @@ public class CreateAccountActuator extends AbstractActuator {
       boolean withDefaultPermission =
           dbManager.getDynamicPropertiesStore().getAllowMultiSign() == 1;
       AccountCapsule accountCapsule = new AccountCapsule(accountCreateContract,
-          dbManager.getHeadBlockTimeStamp(), withDefaultPermission);
+          dbManager.getHeadBlockTimeStamp(), withDefaultPermission, dbManager);
 
       dbManager.getAccountStore().put(accountCreateContract.getAccountAddress().toByteArray(), accountCapsule);
 
