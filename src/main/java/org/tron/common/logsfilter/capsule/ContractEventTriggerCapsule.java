@@ -28,6 +28,10 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
   @Setter
   private Entry abiEntry;
 
+  public void setLastestSolidifiedBlockNumber(long lastestSolidifiedBlockNumber) {
+    contractEventTrigger.setLastestSolidifiedBlockNumber(lastestSolidifiedBlockNumber);
+  }
+
   public ContractEventTriggerCapsule(LogEventWrapper log) {
     this.contractEventTrigger = new ContractEventTrigger();
 
