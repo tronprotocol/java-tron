@@ -81,7 +81,7 @@ public class WalletTestAssetIssue014 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Use transfer net when no enough public free asset net")
   public void testWhenNoEnoughPublicFreeAssetNetLimitUseTransferNet() {
     //get account
     ecKey1 = new ECKey(Utils.getRandom());

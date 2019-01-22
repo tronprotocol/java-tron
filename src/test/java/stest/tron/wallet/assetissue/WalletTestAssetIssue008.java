@@ -87,7 +87,7 @@ public class WalletTestAssetIssue008 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Get asset issue list from Solidity")
   public void testGetAllAssetIssueFromSolidity() {
     Assert.assertTrue(PublicMethed.sendcoin(queryAssetIssueFromSoliAddress,2048000000,fromAddress,
         testKey002,blockingStubFull));

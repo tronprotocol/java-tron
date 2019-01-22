@@ -72,7 +72,7 @@ public class WalletTestAssetIssue002 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Participate token")
   public void testParticipateAssetissue() {
     //get account
     ECKey ecKey1 = new ECKey(Utils.getRandom());
