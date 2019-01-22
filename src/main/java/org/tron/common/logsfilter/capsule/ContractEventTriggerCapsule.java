@@ -35,6 +35,7 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
   public ContractEventTriggerCapsule(LogEventWrapper log) {
     this.contractEventTrigger = new ContractEventTrigger();
 
+    this.contractEventTrigger.setUniqueId(log.getUniqueId());
     this.contractEventTrigger.setTransactionId(log.getTransactionId());
     this.contractEventTrigger.setContractAddress(log.getContractAddress());
     this.contractEventTrigger.setCallerAddress(log.getCallerAddress());
