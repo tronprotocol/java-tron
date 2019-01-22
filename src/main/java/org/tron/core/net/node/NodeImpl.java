@@ -543,8 +543,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
       Block nowblock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
       long startblockNum = nowblock.getBlockHeader().getRawData().getNumber();
+      long starttime = nowblock.getBlockHeader().getRawData().getTimestamp();
       startblockNum = startblockNum + 1L;
       logger.info("startblockNum is {}", startblockNum);
+      logger.info("starttime is {}", starttime);
       if (channelFull != null) {
         channelFull.shutdown();
       }
@@ -574,8 +576,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
           Block nowblock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
           long endblockNum = nowblock.getBlockHeader().getRawData().getNumber();
+          long endtime = nowblock.getBlockHeader().getRawData().getTimestamp();
           endblockNum = endblockNum + 1L;
           logger.info("endblockNum is {}", endblockNum);
+          logger.info("endtime is {}", endtime);
           if (channelFull != null) {
             channelFull.shutdown();
           }
