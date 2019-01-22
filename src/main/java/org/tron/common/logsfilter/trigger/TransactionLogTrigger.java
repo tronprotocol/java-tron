@@ -92,7 +92,7 @@ public class TransactionLogTrigger extends Trigger {
 
   @Getter
   @Setter
-  private long lastestSolidifiedBlockNumber;
+  private long latestSolidifiedBlockNumber;
 
   //internal transaction
   @Getter

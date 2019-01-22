@@ -56,5 +56,5 @@ public class ContractTrigger extends Trigger {
 
   @Getter
   @Setter
-  private long lastestSolidifiedBlockNumber;
+  private long latestSolidifiedBlockNumber;
 }

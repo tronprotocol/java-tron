@@ -35,8 +35,8 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
   @Setter
   TransactionLogTrigger transactionLogTrigger;
 
-  public void setLastestSolidifiedBlockNumber(long lastestSolidifiedBlockNumber) {
-    transactionLogTrigger.setLastestSolidifiedBlockNumber(lastestSolidifiedBlockNumber);
+  public void setLatestSolidifiedBlockNumber(long latestSolidifiedBlockNumber) {
+    transactionLogTrigger.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
   }
 
   public TransactionLogTriggerCapsule(TransactionCapsule trxCasule, BlockCapsule blockCapsule) {

@@ -15,8 +15,8 @@ public class ContractLogTriggerCapsule extends TriggerCapsule {
     this.contractLogTrigger = contractLogTrigger;
   }
 
-  public void setLastestSolidifiedBlockNumber(long lastestSolidifiedBlockNumber) {
-    contractLogTrigger.setLastestSolidifiedBlockNumber(lastestSolidifiedBlockNumber);
+  public void setLatestSolidifiedBlockNumber(long latestSolidifiedBlockNumber) {
+    contractLogTrigger.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
   }
 
   @Override
