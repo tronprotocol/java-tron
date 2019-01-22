@@ -544,7 +544,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       Block nowblock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
       long startblockNum = nowblock.getBlockHeader().getRawData().getNumber();
       startblockNum = startblockNum + 1L;
-      logger.info("startblockNum is {}", startblockNum);
+      logger.info("startblockNum is :{}", startblockNum);
       if (channelFull != null) {
         channelFull.shutdown();
       }
@@ -575,7 +575,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           Block nowblock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
           long endblockNum = nowblock.getBlockHeader().getRawData().getNumber();
           endblockNum = endblockNum + 1L;
-          logger.info("endblockNum is {}", endblockNum);
+          logger.info("endblockNum is :{}", endblockNum);
           if (channelFull != null) {
             channelFull.shutdown();
           }
