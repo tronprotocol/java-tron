@@ -32,7 +32,6 @@ import org.tron.common.utils.ReflectUtils;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.db.RevokingStoreRocks;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.WitnessService;
@@ -163,7 +162,6 @@ public abstract class BaseNetTest {
     for (PeerConnection peer : peerConnections) {
       peer.close();
     }
-    RevokingStoreRocks.releaseInstance();
     context.destroy();
     node.shutDown();
     appT.shutdownServices();

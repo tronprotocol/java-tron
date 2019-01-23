@@ -9,7 +9,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.rocksdb.RocksDB;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.storage.leveldb.RocksDbDataSourceImpl;
 import org.tron.common.utils.FileUtil;
@@ -18,7 +17,8 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.db.ManagerForTest;
-import org.tron.core.db.RevokingStoreRocks;
+import org.tron.core.db2.core.RevokingDBWithCachingNewValue;
+import org.tron.core.db2.core.SnapshotManager;
 
 @Slf4j
 public class BackupDbUtilTest {
@@ -68,7 +68,7 @@ public class BackupDbUtilTest {
   @After
   public void after() {
     FileUtil.deleteDir(new File(dbPath));
-    RevokingStoreRocks.releaseInstance();
+    //SnapshotManager.releaseInstance();
   }
 
   @Test
@@ -76,13 +76,7 @@ public class BackupDbUtilTest {
     PropUtil.writeProperty(prop_path, BackupDbUtil.getDB_BACKUP_STATE(),
         String.valueOf("11"));
     mng_test.pushNTestBlock(50);
-    List<RocksDbDataSourceImpl> alist = ((RevokingStoreRocks)dbBackupUtil.getDb()).getDbs();
-    logger.info("alist.size():" + alist.size());
-    for(RocksDbDataSourceImpl rocks :alist) {
-      logger.info("sss:" + rocks.getDatabase().toString());
-      logger.info("aaa:" + rocks.getDBName());
-      logger.info("bbb:" + rocks.getDbPath());
-    }
+    List<RevokingDBWithCachingNewValue> alist = ((SnapshotManager)dbBackupUtil.getDb()).getDbs();
 
     Assert.assertTrue(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() == 50);
     Assert.assertTrue("22".equals(

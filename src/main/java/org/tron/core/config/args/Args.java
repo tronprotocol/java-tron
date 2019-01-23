@@ -124,6 +124,10 @@ public class Args {
   private String storageDbVersion = "";
 
   @Parameter(names = {
+      "--storage-db-engine"}, description = "Storage db engine.(leveldb or rocksdb)")
+  private String storageDbEngine = "";
+
+  @Parameter(names = {
       "--storage-db-synchronous"}, description = "Storage db is synchronous or not.(true or flase)")
   private String storageDbSynchronous = "";
 
@@ -611,6 +615,10 @@ public class Args {
         .filter(StringUtils::isNotEmpty)
         .map(Integer::valueOf)
         .orElse(Storage.getDbVersionFromConfig(config)));
+
+    INSTANCE.storage.setDbEngine(Optional.ofNullable(INSTANCE.storageDbEngine)
+        .filter(StringUtils::isNotEmpty)
+        .orElse(Storage.getDbEngineFromConfig(config)));
 
     INSTANCE.storage.setDbSync(Optional.ofNullable(INSTANCE.storageDbSynchronous)
         .filter(StringUtils::isNotEmpty)
@@ -1140,8 +1148,7 @@ public class Args {
   private static void initRocksDbSettings(Config config) {
     String prefix = "storage.dbSettings.";
 
-    if (Args.getInstance().getStorage().getDbVersion() == 3
-        || Args.getInstance().getStorage().getDbVersion() == 4) {
+    if (Args.getInstance().getStorage().getDbEngine().equals("ROCKSDB")) {
       int levelNumber = config.hasPath(prefix + "levelNumber")
           ? config.getInt(prefix + "levelNumber") : 7;
       int compactThreads = config.hasPath(prefix + "compactThreads")
@@ -1173,8 +1180,7 @@ public class Args {
 
   private static void initRocksDbBackupProperty(Config config) {
     boolean enable = false;
-    if (Args.getInstance().getStorage().getDbVersion() == 3
-        || Args.getInstance().getStorage().getDbVersion() == 4) {
+    if (Args.getInstance().getStorage().getDbEngine().toUpperCase().equals("ROCKSDB")) {
       enable =
           config.hasPath("storage.backup.enable") && config.getBoolean("storage.backup.enable");
     }
@@ -1223,6 +1229,7 @@ public class Args {
     logger.info("Code version : {}", Version.getVersion());
     logger.info("************************ DB config *************************");
     logger.info("DB version : {}", args.getStorage().getDbVersion());
+    logger.info("DB engine : {}", args.getStorage().getDbEngine());
     logger.info("***************************************************************");
     logger.info("\n");
   }

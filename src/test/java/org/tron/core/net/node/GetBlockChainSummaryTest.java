@@ -38,7 +38,6 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.db.Manager;
-import org.tron.core.db.RevokingStoreRocks;
 import org.tron.core.net.node.override.HandshakeHandlerTest;
 import org.tron.core.net.node.override.PeerClientTest;
 import org.tron.core.net.node.override.TronChannelInitializerTest;
@@ -345,7 +344,6 @@ public class GetBlockChainSummaryTest {
     handshakeHandlerTest.close();
     appT.shutdownServices();
     appT.shutdown();
-    RevokingStoreRocks.releaseInstance();
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }

@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Import;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.RevokingStore;
-import org.tron.core.db.RevokingStoreRocks;
 import org.tron.core.db.TransactionCache;
 import org.tron.core.db.api.IndexHelper;
 import org.tron.core.db.backup.BackupRocksDBAspect;
@@ -57,10 +56,6 @@ public class DefaultConfig {
       if (dbVersion == 1) {
         revokingDatabase = RevokingStore.getInstance();
       } else if (dbVersion == 2) {
-        revokingDatabase = new SnapshotManager();
-      } else if (dbVersion == 3) {
-        revokingDatabase = RevokingStoreRocks.getInstance();
-      } else if (dbVersion == 4) {
         revokingDatabase = new SnapshotManager();
       } else {
         throw new RuntimeException("db version is error.");

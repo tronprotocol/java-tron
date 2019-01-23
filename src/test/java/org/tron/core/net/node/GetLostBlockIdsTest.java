@@ -39,7 +39,6 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.db.Manager;
-import org.tron.core.db.RevokingStoreRocks;
 import org.tron.core.exception.StoreException;
 import org.tron.core.net.node.override.HandshakeHandlerTest;
 import org.tron.core.net.node.override.PeerClientTest;
@@ -325,7 +324,6 @@ public class GetLostBlockIdsTest {
       peer.close();
     }
     handshakeHandlerTest.close();
-    RevokingStoreRocks.releaseInstance();
     appT.shutdownServices();
     appT.shutdown();
     context.destroy();

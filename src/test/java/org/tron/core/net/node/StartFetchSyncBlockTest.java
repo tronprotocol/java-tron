@@ -27,7 +27,6 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.db.Manager;
-import org.tron.core.db.RevokingStoreRocks;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.node.override.HandshakeHandlerTest;
 import org.tron.core.net.node.override.PeerClientTest;
@@ -250,7 +249,6 @@ public class StartFetchSyncBlockTest {
   public static void destroy() {
     Args.clearParam();
     handshakeHandlerTest.close();
-    RevokingStoreRocks.releaseInstance();
     context.destroy();
     appT.shutdownServices();
     appT.shutdown();
