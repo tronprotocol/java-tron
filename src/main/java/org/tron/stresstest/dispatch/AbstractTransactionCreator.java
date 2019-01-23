@@ -2,6 +2,8 @@ package org.tron.stresstest.dispatch;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -18,18 +20,27 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.stresstest.dispatch.strategy.Level2Strategy;
+import org.tron.common.utils.TransactionUtils;
+
 
 @Getter
 public abstract class AbstractTransactionCreator extends Level2Strategy {
-  protected String commonOwnerAddress = "TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm";
-  protected String commonOwnerPrivateKey = "549c7797b351e48ab1c6bb5857138b418012d97526fc2acba022357d49c93ac0";
+  protected String commonOwnerAddress = "TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE";
+  protected String commonOwnerPrivateKey = "0528dc17428585fc4dece68b79fa7912270a1fe8e85f244372f59eb7e8925e04";
   protected String commonToAddress = "TQjKWNDCLSgqUtg9vrjzZnWhhmsgNgTfmj";
   protected String commonToPrivateKey = "76fb5f55710c7ad6a98f73dd38a732f9a69a7b3ce700a694363a50572fa2842a";
   protected String commonWitnessAddress = "TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE";
   protected String commonWitnessPrivateKey = "0528dc17428585fc4dece68b79fa7912270a1fe8e85f244372f59eb7e8925e04";
-  protected String commonContractAddress1 = "TULWqmese4fpypNC1FyKGSDfHUJn1WkAdd";
-  protected String commonContractAddress2 = "TEKtGxq16xmf6nDPaVYQ4wZXjrtBUjiuzi";
-  protected String commonContractAddress3 = "TE2SuSLEgpnGjhWrA7DkAfi4BKQL2bX14k";
+  //protected String ContractAddress1 = stressContractAddress1;
+  //protected String ContractAddress2 = stressContractAddress2;
+  //protected String ContractAddress3 = stressContractAddress3;
+
+  //protected String commonContractAddress1 = Wallet.encode58Check(ContractAddress1.getBytes());
+  //protected String commonContractAddress2 = Wallet.encode58Check(ContractAddress2.getBytes());
+  //protected String commonContractAddress3 = Wallet.encode58Check(ContractAddress3.getBytes());
+  protected String commonContractAddress1 = "TYzeSFcC391njszpDz4mGkiDmEXuXwHPo8";
+  protected String commonContractAddress2 = "TV6tLh3hQthDPy9HJnyqeziXTEuALkvbGq";
+  protected String commonContractAddress3 = "TNHihYXXScd7QpkCLCYBnp1GUu4RyJT8H2";
 
 
 
@@ -86,6 +97,37 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
     }
 
     transaction = transactionBuilderSigned.build();
+    return transaction;
+  }
+
+  public static Transaction Multisign(Transaction transaction, String[] priKeys) {
+    Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
+    byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
+    List<Contract> listContract = transaction.getRawData().getContractList();
+    for (int i = 0; i < priKeys.length; i += 1) {
+      String priKey = priKeys[i];
+      ECKey temKey = null;
+      try {
+        BigInteger priK = new BigInteger(priKey, 16);
+        temKey = ECKey.fromPrivate(priK);
+      } catch (Exception ex) {
+        ex.printStackTrace();
+      }
+      ECKey ecKey = temKey;
+
+      transaction = TransactionUtils.sign(transaction, ecKey);
+     // TransactionSignWeight weight = blockingStubFull.getTransactionSignWeight(transaction);
+/*      if (weight.getResult().getCode()
+              == TransactionSignWeight.Result.response_code.ENOUGH_PERMISSION) {
+        break;
+      }
+      if (weight.getResult().getCode()
+              == TransactionSignWeight.Result.response_code.NOT_ENOUGH_PERMISSION) {
+        continue;
+      }*/
+    }
+
+    //transaction = transactionBuilderSigned.build();
     return transaction;
   }
 
