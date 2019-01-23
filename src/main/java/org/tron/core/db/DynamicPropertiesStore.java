@@ -155,6 +155,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   //This value is only allowed to be 0, 1, -1
   private static final byte[] ALLOW_TVM_TRANSFER_TRC10 = "ALLOW_TVM_TRANSFER_TRC10".getBytes();
 
+  private static final byte[] AVAILABLE_CONTRACT_TYPE = "AVAILABLE_CONTRACT_TYPE".getBytes();
+  private static final byte[] ACTIVE_DEFAULT_OPERATIONS = "ACTIVE_DEFAULT_OPERATIONS".getBytes();
+
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -465,6 +468,23 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveAllowTvmTransferTrc10(Args.getInstance().getAllowTvmTransferTrc10());
     }
+
+    try {
+      this.getAvailableContractType();
+    } catch (IllegalArgumentException e) {
+      String contractType = "7fff1fc0037e0000000000000000000000000000000000000000000000000000";
+      byte[] bytes = ByteArray.fromHexString(contractType);
+      this.saveAvailableContractType(bytes);
+    }
+
+    try {
+      this.getActiveDefaultOperations();
+    } catch (IllegalArgumentException e) {
+      String contractType = "7fff1fc0033e0000000000000000000000000000000000000000000000000000";
+      byte[] bytes = ByteArray.fromHexString(contractType);
+      this.saveActiveDefaultOperations(bytes);
+    }
+
 
     try {
       this.getAllowSameTokenName();
@@ -1185,6 +1205,33 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElseThrow(
             () -> new IllegalArgumentException("not found ALLOW_TVM_TRANSFER_TRC10"));
   }
+
+  public void saveAvailableContractType(byte[] value) {
+    this.put(AVAILABLE_CONTRACT_TYPE,
+        new BytesCapsule(value));
+  }
+
+  public byte[] getAvailableContractType() {
+    return Optional.ofNullable(getUnchecked(AVAILABLE_CONTRACT_TYPE))
+        .map(BytesCapsule::getData)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found AVAILABLE_CONTRACT_TYPE"));
+  }
+
+
+  public void saveActiveDefaultOperations(byte[] value) {
+    this.put(ACTIVE_DEFAULT_OPERATIONS,
+        new BytesCapsule(value));
+  }
+
+  public byte[] getActiveDefaultOperations() {
+    return Optional.ofNullable(getUnchecked(ACTIVE_DEFAULT_OPERATIONS))
+        .map(BytesCapsule::getData)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ACTIVE_DEFAULT_OPERATIONS"));
+  }
+
+
 
   public boolean supportDR() {
     return getAllowDelegateResource() == 1L;
