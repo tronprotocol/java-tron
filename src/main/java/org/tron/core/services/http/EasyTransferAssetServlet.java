@@ -60,8 +60,26 @@ public class EasyTransferAssetServlet extends HttpServlet {
       response.getWriter().println(Util.printEasyTransferResponse(responseBuild.build()));
     } catch (ParseException e) {
       logger.debug("ParseException: {}", e.getMessage());
+      returnBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+          .setMessage(ByteString.copyFromUtf8(e.getMessage()));
+      responseBuild.setResult(returnBuilder.build());
+      try {
+        response.getWriter().println(JsonFormat.printToString(responseBuild.build()));
+      } catch (IOException ioe) {
+        logger.debug("IOException: {}", ioe.getMessage());
+      }
+      return;
     } catch (IOException e) {
       logger.debug("IOException: {}", e.getMessage());
+      returnBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+          .setMessage(ByteString.copyFromUtf8(e.getMessage()));
+      responseBuild.setResult(returnBuilder.build());
+      try {
+        response.getWriter().println(JsonFormat.printToString(responseBuild.build()));
+      } catch (IOException ioe) {
+        logger.debug("IOException: {}", ioe.getMessage());
+      }
+      return;
     } catch (ContractValidateException e) {
       returnBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getMessage()));
