@@ -551,10 +551,10 @@ service Wallet {
     };
   };
   //Warning: do not invoke this interface provided by others.
-  rpc EasyTransferAssert (EasyTransferAssertMessage) returns (EasyTransferResponse) {
+  rpc EasyTransferAsset (EasyTransferAssetMessage) returns (EasyTransferResponse) {
   };
   //Warning: do not invoke this interface provided by others.
-  rpc EasyTransferAssertByPrivate (EasyTransferAssertByPrivateMessage) returns (EasyTransferResponse) {
+  rpc EasyTransferAssetByPrivate (EasyTransferAssetByPrivateMessage) returns (EasyTransferResponse) {
   };
   //Warning: do not invoke this interface provided by others.
   rpc EasyTransfer (EasyTransferMessage) returns (EasyTransferResponse) {
@@ -924,10 +924,10 @@ message EasyTransferMessage {
   int64 amount = 3;
 }
 
-message EasyTransferAssertMessage {
+message EasyTransferAssetMessage {
   bytes passPhrase = 1;
   bytes toAddress = 2;
-  string assertId = 3;
+  string assetId = 3;
   int64 amount = 4;
 }
 
@@ -937,10 +937,10 @@ message EasyTransferByPrivateMessage {
   int64 amount = 3;
 }
 
-message EasyTransferAssertByPrivateMessage {
+message EasyTransferAssetByPrivateMessage {
   bytes privateKey = 1;
   bytes toAddress = 2;
-  string assertId = 3;
+  string assetId = 3;
   int64 amount = 4;
 }
 
