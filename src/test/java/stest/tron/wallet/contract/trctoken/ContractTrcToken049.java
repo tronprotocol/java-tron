@@ -64,6 +64,9 @@ public class ContractTrcToken049 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+  /**
+   * constructor.
+   */
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
@@ -78,6 +81,9 @@ public class ContractTrcToken049 {
   private static int randomInt(int minInt, int maxInt) {
     return (int) Math.round(Math.random() * (maxInt - minInt) + minInt);
   }
+  /**
+   * constructor.
+   */
 
   public ByteString createAssetissue(byte[] devAddress, String devKey, String tokenName) {
 
@@ -110,7 +116,7 @@ public class ContractTrcToken049 {
   }
 
   @Test(enabled = true)
-  public void continueRun() {
+  public void deployTransferTokenContract() {
 
     Assert
         .assertTrue(PublicMethed.sendcoin(dev001Address, 2048000000, fromAddress,

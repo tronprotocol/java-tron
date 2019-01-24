@@ -79,7 +79,7 @@ public class ContractTrcToken050 {
 
 
   @Test(enabled = true)
-  public void continueRun() {
+  public void deployTransferTokenContract() {
 
     Assert
         .assertTrue(PublicMethed.sendcoin(dev001Address, 2048000000, fromAddress,
@@ -87,6 +87,7 @@ public class ContractTrcToken050 {
     Assert
         .assertTrue(PublicMethed.sendcoin(user001Address, 4048000000L, fromAddress,
             testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     // freeze balance
@@ -158,6 +159,7 @@ public class ContractTrcToken050 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     logger.info("beforeAssetIssueCount:" + beforeAssetIssueCount);
     logger.info("beforeAssetIssueContractAddress:" + beforeAssetIssueContractAddress);
+    logger.info("beforeAssetIssueDev:" + beforeAssetIssueDev);
 
     // user trigger A to transfer token to B
     String param =
@@ -196,13 +198,15 @@ public class ContractTrcToken050 {
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
     logger.info("afterAssetIssueCount:" + afterAssetIssueCount);
     logger.info("afterAssetIssueContractAddress:" + afterAssetIssueContractAddress);
+    logger.info("afterAssetIssueDev:" + afterAssetIssueDev);
 
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 1);
     Assert.assertEquals(beforeAssetIssueCount, afterAssetIssueCount);
     Assert.assertTrue(beforeAssetIssueContractAddress == afterAssetIssueContractAddress);
-    Assert.assertTrue(beforeAssetIssueDev == afterAssetIssueDev);
+    Assert.assertEquals(beforeAssetIssueDev, afterAssetIssueDev);
+
     PublicMethed.unFreezeBalance(dev001Address, dev001Key, 1,
         dev001Address, blockingStubFull);
     PublicMethed.unFreezeBalance(user001Address, user001Key, 1,
