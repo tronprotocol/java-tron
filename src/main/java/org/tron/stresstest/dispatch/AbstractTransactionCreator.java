@@ -116,18 +116,7 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
       ECKey ecKey = temKey;
 
       transaction = TransactionUtils.sign(transaction, ecKey);
-     // TransactionSignWeight weight = blockingStubFull.getTransactionSignWeight(transaction);
-/*      if (weight.getResult().getCode()
-              == TransactionSignWeight.Result.response_code.ENOUGH_PERMISSION) {
-        break;
-      }
-      if (weight.getResult().getCode()
-              == TransactionSignWeight.Result.response_code.NOT_ENOUGH_PERMISSION) {
-        continue;
-      }*/
     }
-
-    //transaction = transactionBuilderSigned.build();
     return transaction;
   }
 
