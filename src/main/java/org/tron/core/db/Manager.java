@@ -394,12 +394,7 @@ public class Manager {
             logger.error("unknown throwable happened in repush loop", throwable);
           } finally {
             if (tx != null) {
-              try {
-                getRepushTransactions().poll(1,TimeUnit.SECONDS);
-              } catch (InterruptedException e) {
-                logger.info(e.getMessage());
-                Thread.currentThread().interrupt();
-              }
+              getRepushTransactions().remove(tx);
             }
           }
         }
