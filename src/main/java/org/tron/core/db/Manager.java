@@ -388,16 +388,18 @@ public class Manager {
             if (tx != null) {
               this.rePush(tx);
             }
-          } catch (InterruptedException ex) {
-            logger.info(ex.getMessage());
-            Thread.currentThread().interrupt();
           } catch (Exception ex) {
             logger.error("unknown exception happened in repush loop", ex);
           } catch (Throwable throwable) {
             logger.error("unknown throwable happened in repush loop", throwable);
           } finally {
             if (tx != null) {
-              getRepushTransactions().remove(tx);
+              try {
+                getRepushTransactions().poll(1,TimeUnit.SECONDS);
+              } catch (InterruptedException e) {
+                logger.info(e.getMessage());
+                Thread.currentThread().interrupt();
+              }
             }
           }
         }
