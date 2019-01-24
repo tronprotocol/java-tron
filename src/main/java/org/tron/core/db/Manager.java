@@ -378,12 +378,13 @@ public class Manager {
   private Runnable repushLoop =
       () -> {
         while (isRunRepushThread) {
+          TransactionCapsule tx = null;
           try {
             if (isGeneratingBlock()) {
               TimeUnit.MILLISECONDS.sleep(10L);
               continue;
             }
-            TransactionCapsule tx = this.getRepushTransactions().poll(1, TimeUnit.SECONDS);
+            tx = getRepushTransactions().peek();
             if (tx != null) {
               this.rePush(tx);
             }
@@ -394,6 +395,10 @@ public class Manager {
             logger.error("unknown exception happened in repush loop", ex);
           } catch (Throwable throwable) {
             logger.error("unknown throwable happened in repush loop", throwable);
+          } finally {
+            if (tx != null) {
+              getRepushTransactions().remove(tx);
+            }
           }
         }
       };
@@ -739,7 +744,7 @@ public class Manager {
       pushTransactionQueue.add(trx);
     }
 
-    try{
+    try {
       if (!trx.validateSignature(this)) {
         throw new ValidateSignatureException("trans sig validate failed");
       }
@@ -1017,7 +1022,6 @@ public class Manager {
           // if event subscribe is enabled, post block trigger to queue
           postBlockTrigger(newBlock);
         } catch (Throwable throwable) {
-          logger.info("error block info:" + newBlock);
           logger.error(throwable.getMessage(), throwable);
           khaosDb.removeBlk(block.getBlockId());
           throw throwable;
