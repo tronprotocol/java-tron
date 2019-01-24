@@ -30,8 +30,6 @@
        </package>
        <package name="stest.tron.wallet.block">
        </package>
-       <package name="stest.tron.wallet.node">
-       </package>
      </packages>
    </test>
 

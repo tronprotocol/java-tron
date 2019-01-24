@@ -63,6 +63,9 @@ public class ContractTrcToken041 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+  /**
+   * constructor.
+   */
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
@@ -80,7 +83,7 @@ public class ContractTrcToken041 {
 
 
   @Test(enabled = true)
-  public void continueRun() {
+  public void deployTransferTokenContract() {
 
     Assert
         .assertTrue(PublicMethed.sendcoin(dev001Address, 2048000000, fromAddress,
@@ -109,7 +112,7 @@ public class ContractTrcToken041 {
     assetAccountId = PublicMethed.queryAccount(dev001Address, blockingStubFull).getAssetIssuedID();
     ByteString assetAccountDev = PublicMethed
         .queryAccount(dev001Address, blockingStubFull).getAssetIssuedID();
-    ByteString fakeTokenId = ByteString
+    final ByteString fakeTokenId = ByteString
         .copyFromUtf8(Long.toString(Long.valueOf(assetAccountDev.toStringUtf8()) + 100));
 
     // devAddress transfer token to A
@@ -165,7 +168,7 @@ public class ContractTrcToken041 {
             .toStringUtf8()
             + "\",\"105\"";
 
-    String triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
+    final String triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
         "TransferTokenTo(address,trcToken,uint256)",
         param, false, 0, 100000000L, fakeTokenId.toStringUtf8(),
         10000000L, user001Address, user001Key,
@@ -206,7 +209,9 @@ public class ContractTrcToken041 {
     PublicMethed.unFreezeBalance(user001Address, user001Key, 1,
         user001Address, blockingStubFull);
   }
-
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {
