@@ -78,7 +78,7 @@ public class ContractTrcToken048 {
 
 
   @Test(enabled = true)
-  public void continueRun() {
+  public void deployTransferTokenContract() {
 
     Assert
         .assertTrue(PublicMethed.sendcoin(dev001Address, 2048000000, fromAddress,

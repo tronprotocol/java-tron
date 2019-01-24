@@ -1,4 +1,4 @@
-package stest.tron.wallet.node;
+package stest.tron.wallet.manual;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -64,7 +64,7 @@ public class WalletTestNode001 {
   }
 
 
-  @Test
+  @Test(enabled = true,description = "List all nodes")
   public void testGetAllNode() {
     GrpcAPI.NodeList nodeList = blockingStubFull
         .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
