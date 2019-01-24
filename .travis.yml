@@ -20,6 +20,7 @@ matrix:
     -  "./gradlew build"
     - "./gradlew jacocoTestReport"
 
+
   - name: stest
     script:
     - sh tron.sh
