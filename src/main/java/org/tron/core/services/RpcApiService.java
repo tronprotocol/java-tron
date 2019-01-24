@@ -34,6 +34,8 @@ import org.tron.api.GrpcAPI.BlockReference;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.DelegatedResourceMessage;
+import org.tron.api.GrpcAPI.EasyTransferAssertByPrivateMessage;
+import org.tron.api.GrpcAPI.EasyTransferAssertMessage;
 import org.tron.api.GrpcAPI.EasyTransferByPrivateMessage;
 import org.tron.api.GrpcAPI.EasyTransferMessage;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
@@ -727,6 +729,39 @@ public class RpcApiService implements Service {
       return responseBuild.build();
     }
 
+    private EasyTransferResponse easyTransferAssert(byte[] privateKey, ByteString toAddress,
+        String assertId, long amount) {
+      TransactionCapsule transactionCapsule;
+      GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
+      EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
+      try {
+        ECKey ecKey = ECKey.fromPrivate(privateKey);
+        byte[] owner = ecKey.getAddress();
+        TransferAssetContract.Builder builder = TransferAssetContract.newBuilder();
+        builder.setOwnerAddress(ByteString.copyFrom(owner));
+        builder.setToAddress(toAddress);
+        builder.setAssetName(ByteString.copyFrom(assertId.getBytes()));
+        builder.setAmount(amount);
+        transactionCapsule = createTransactionCapsule(builder.build(),
+            ContractType.TransferAssetContract);
+        transactionCapsule.sign(privateKey);
+        GrpcAPI.Return retur = wallet.broadcastTransaction(transactionCapsule.getInstance());
+        responseBuild.setTransaction(transactionCapsule.getInstance());
+        responseBuild.setTxid(transactionCapsule.getTransactionId().getByteString());
+        responseBuild.setResult(retur);
+      } catch (ContractValidateException e) {
+        returnBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getMessage()));
+        responseBuild.setResult(returnBuilder.build());
+      } catch (Exception e) {
+        returnBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+        responseBuild.setResult(returnBuilder.build());
+      }
+
+      return responseBuild.build();
+    }
+
     @Override
     public void easyTransfer(EasyTransferMessage req,
         StreamObserver<EasyTransferResponse> responseObserver) {
@@ -737,10 +772,30 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void easyTransferAssert(EasyTransferAssertMessage req,
+        StreamObserver<EasyTransferResponse> responseObserver) {
+      byte[] privateKey = wallet.pass2Key(req.getPassPhrase().toByteArray());
+      EasyTransferResponse response = easyTransferAssert(privateKey, req.getToAddress(),
+          req.getAssertId(), req.getAmount());
+      responseObserver.onNext(response);
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void easyTransferByPrivate(EasyTransferByPrivateMessage req,
         StreamObserver<EasyTransferResponse> responseObserver) {
       byte[] privateKey = req.getPrivateKey().toByteArray();
       EasyTransferResponse response = easyTransfer(privateKey, req.getToAddress(), req.getAmount());
+      responseObserver.onNext(response);
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void easyTransferAssertByPrivate(EasyTransferAssertByPrivateMessage req,
+        StreamObserver<EasyTransferResponse> responseObserver) {
+      byte[] privateKey = req.getPrivateKey().toByteArray();
+      EasyTransferResponse response = easyTransferAssert(privateKey, req.getToAddress(),
+          req.getAssertId(), req.getAmount());
       responseObserver.onNext(response);
       responseObserver.onCompleted();
     }
