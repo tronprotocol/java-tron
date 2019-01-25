@@ -21,7 +21,7 @@ public class DailyBuildReport extends TestListenerAdapter {
   @Override
   public void onStart(ITestContext context) {
     reportPath = "Daily_Build_Report";
-    StringBuilder sb = new StringBuilder("Daily Build for stest report:\n");
+    StringBuilder sb = new StringBuilder("3.Stest report:\n");
     String res = sb.toString();
     try {
       Files.write((Paths.get(reportPath)), res.getBytes("utf-8"));
@@ -57,7 +57,7 @@ public class DailyBuildReport extends TestListenerAdapter {
     StringBuilder sb = new StringBuilder();
     sb.append("------------------------------------------------------------------------------\n");
     sb.append("Total: " + (passedNum + failedNum + skippedNum) +  "    " + "Passed: " + passedNum
-        + "    " + "Failed: " + failedNum + "    " +"Skipped: " + skippedNum + "\n");
+        + "    " + "Failed: " + failedNum + "    " + "Skipped: " + skippedNum + "\n");
     sb.append("------------------------------------------------------------------------------\n");
     sb.append("Passed list " + "\n");
     //sb.append("Passed case List: " + "\n");
