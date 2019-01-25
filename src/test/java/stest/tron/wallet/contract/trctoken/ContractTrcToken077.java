@@ -45,7 +45,6 @@ public class ContractTrcToken077 {
       .getStringList("fullnode.ip.list").get(0);
 
 
-
   byte[] contractAddress = null;
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());

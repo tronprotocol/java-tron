@@ -48,7 +48,6 @@ public class ContractTrcToken078 {
       .getStringList("fullnode.ip.list").get(0);
 
 
-
   byte[] contractAddress = null;
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
@@ -73,7 +72,6 @@ public class ContractTrcToken078 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-
 
     logger.info(Long.toString(PublicMethed.queryAccount(testNetAccountKey, blockingStubFull)
         .getBalance()));
@@ -234,6 +232,7 @@ public class ContractTrcToken078 {
     return b1;
 
   }
+
   /**
    * constructor.
    */

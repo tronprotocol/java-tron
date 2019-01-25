@@ -45,7 +45,6 @@ public class ContractTrcToken076 {
       .getStringList("fullnode.ip.list").get(0);
 
 
-
   byte[] contractAddress = null;
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
@@ -123,6 +122,7 @@ public class ContractTrcToken076 {
 
     Assert.assertTrue(returnnumber2 == 0);
   }
+
   /**
    * constructor.
    */
