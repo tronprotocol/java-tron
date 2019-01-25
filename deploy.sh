@@ -29,12 +29,9 @@ fi
 
 change_branch_CMD="sed -i '1c branch_name_in_CI=$TRAVIS_BRANCH' /data/workspace/docker_workspace/do_stest.sh"
 
-echo "$TRAVIS_BRANCH"
-
-
 if [[ "$TRAVIS_BRANCH" = "develop" || "$TRAVIS_BRANCH" = "master" ]];then
   echo "Init the docker stest env"
-
+  echo "'$stest_server' is stest server this time"
   ssh java-tron@$stest_server -p 22008 $change_branch_CMD
   `ssh java-tron@$stest_server -p 22008 sh /data/workspace/docker_workspace/do_stest.sh >$stestlogname 2>&1` &
   sleep 300 && echo $TRAVIS_BRANCH &
@@ -46,6 +43,7 @@ if [[ "$TRAVIS_BRANCH" = "develop" || "$TRAVIS_BRANCH" = "master" ]];then
     ssh java-tron@$stest_server -p 22008 $change_branch_CMD
     `ssh java-tron@$stest_server -p 22008 sh /data/workspace/docker_workspace/do_stest.sh >$stestlogname 2>&1` &
     sleep 300 && echo $TRAVIS_BRANCH &
+    wait
   fi
   if [[ `find $stestlogname -type f | xargs grep "Connection refused"` =~ "Connection refused" || `find $stestlogname -type f | xargs grep "stest FAILED"` =~ "stest FAILED" ]];
   then
@@ -54,6 +52,7 @@ if [[ "$TRAVIS_BRANCH" = "develop" || "$TRAVIS_BRANCH" = "master" ]];then
     ssh java-tron@$stest_server -p 22008 $change_branch_CMD
     `ssh java-tron@$stest_server -p 22008 sh /data/workspace/docker_workspace/do_stest.sh >$stestlogname 2>&1` &
     sleep 300 && echo $TRAVIS_BRANCH &
+    wait
   fi
   echo "stest start"
   cat $stestlogname | grep "Stest result is:" -A 10000
