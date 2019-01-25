@@ -80,7 +80,7 @@ public class ContractTrcToken051 {
   }
 
 
-  @Test(enabled = true, description = "TransferToken to contract address tokenID is 0")
+  @Test(enabled = true, description = "TransferToken to contract developer tokenID is 0")
   public void deployTransferTokenContract() {
 
     Assert
