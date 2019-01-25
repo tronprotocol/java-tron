@@ -36,20 +36,24 @@ if [[ "$TRAVIS_BRANCH" = "develop" || "$TRAVIS_BRANCH" = "master" ]];then
   echo "Init the docker stest env"
 
   ssh java-tron@$stest_server -p 22008 $change_branch_CMD
-  ssh java-tron@$stest_server -p 22008 sh /data/workspace/docker_workspace/do_stest.sh >$stestlogname 2>&1
+  `ssh java-tron@$stest_server -p 22008 sh /data/workspace/docker_workspace/do_stest.sh >$stestlogname 2>&1` &
+  sleep 300 && echo $TRAVIS_BRANCH &
+  wait
   if [[ `find $stestlogname -type f | xargs grep "Connection refused"` =~ "Connection refused" || `find $stestlogname -type f | xargs grep "stest FAILED"` =~ "stest FAILED" ]];
   then
     rm -f $stestlogname
-    echo "first if"
+    echo "first Retry stest task"
     ssh java-tron@$stest_server -p 22008 $change_branch_CMD
-    ssh java-tron@$stest_server -p 22008 sh /data/workspace/docker_workspace/do_stest.sh >$stestlogname 2>&1
+    `ssh java-tron@$stest_server -p 22008 sh /data/workspace/docker_workspace/do_stest.sh >$stestlogname 2>&1` &
+    sleep 300 && echo $TRAVIS_BRANCH &
   fi
   if [[ `find $stestlogname -type f | xargs grep "Connection refused"` =~ "Connection refused" || `find $stestlogname -type f | xargs grep "stest FAILED"` =~ "stest FAILED" ]];
   then
     rm -f $stestlogname
-    echo "second if"
+    echo "second Retry stest task"
     ssh java-tron@$stest_server -p 22008 $change_branch_CMD
-    ssh java-tron@$stest_server -p 22008 sh /data/workspace/docker_workspace/do_stest.sh >$stestlogname 2>&1
+    `ssh java-tron@$stest_server -p 22008 sh /data/workspace/docker_workspace/do_stest.sh >$stestlogname 2>&1` &
+    sleep 300 && echo $TRAVIS_BRANCH &
   fi
   echo "stest start"
   cat $stestlogname | grep "Stest result is:" -A 10000
