@@ -566,7 +566,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     while (spread.size() > 0 && getActivePeer().size() > 0) {
       logger.info("SPREAD {} advObjToSpread:{} spreadSize: {}", ++n, advObjToSpread.size(), spread.size());
 
-        if (advObjToSpread.size() - spread.size() < spread.size()) {
+        if (advObjToSpread.size()  < 3 * spread.size()) {
           ManagedChannel channelFull = null;
           WalletGrpc.WalletBlockingStub blockingStubFull = null;
           String fullnode = "47.94.239.172:50051";
