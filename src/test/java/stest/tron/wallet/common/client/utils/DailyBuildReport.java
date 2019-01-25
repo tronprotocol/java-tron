@@ -35,6 +35,7 @@ public class DailyBuildReport extends TestListenerAdapter {
     passedDescriptionList.append(result.getMethod().getRealClass() + ": "
         + result.getMethod().getDescription() + "\n");
     passedNum++;
+    result.getMethod()
   }
 
   @Override
@@ -55,21 +56,22 @@ public class DailyBuildReport extends TestListenerAdapter {
   @Override
   public void onFinish(ITestContext testContext) {
     StringBuilder sb = new StringBuilder();
-    sb.append("-------------------------------------------------\n");
-    sb.append("Total test case number: " + (passedNum + failedNum + skippedNum) + "\n");
-    sb.append("-------------------------------------------------\n");
-    sb.append("Passed case number: " + passedNum + "\n");
+    sb.append("------------------------------------------------------------------------------\n");
+    sb.append("Total: " + (passedNum + failedNum + skippedNum) +  "    " + "Passed: " + passedNum
+        + "    " + "Failed: " + failedNum + "    " +"Skipped: " + skippedNum + "\n");
+    sb.append("------------------------------------------------------------------------------\n");
+    sb.append("Passed list " + "\n");
     //sb.append("Passed case List: " + "\n");
     sb.append(passedDescriptionList.toString());
-    sb.append("-------------------------------------------------\n");
-    sb.append("Failed case number: " + failedNum + "\n");
+    sb.append("------------------------------------------------------------------------------\n");
+    sb.append("Failed list: " +  "\n");
     //sb.append("Failed case List: " + "\n");
     sb.append(failedDescriptionList.toString());
-    sb.append("-------------------------------------------------\n");
-    sb.append("Skipped case number: " + skippedNum + "\n");
+    sb.append("------------------------------------------------------------------------------\n");
+    sb.append("Skipped list: " + "\n");
     //sb.append("Skipped case List: " + "\n");
     sb.append(skippedDescriptionList.toString());
-    sb.append("-------------------------------------------------\n");
+    sb.append("----------------------------------------------------------------\n");
 
     String res = sb.toString();
     try {
